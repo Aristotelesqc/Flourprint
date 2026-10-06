@@ -18,6 +18,11 @@ type Anchor =
 
 - A pan-based anchor (#28) converts explicitly to `doughWeight`. Mass is never inferred from a
   volume.
+- Every ingredient of `kind: 'water'` adds to the pure-water pool. Any other ingredient may carry
+  a resolved `water` content (`known`, `estimated` with an optional range, or `unknown`); a
+  missing value means `unknown`.
+- Ingredients with role `topping` or `glaze` get grams from total flour but are excluded from the
+  dough weight, the final mix and the water balance.
 
 ## Components (preferments, scalds)
 
@@ -33,18 +38,27 @@ type Anchor =
 
 ## Edit commands
 
-| Command                                                      | Kept constant                  | Recomputed                                            | `IncompatibleConstraint` when…                                             |
-| ------------------------------------------------------------ | ------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------- |
-| `SetBakerPct(ing, pct)`                                      | anchor, other %                | grams                                                 | the ingredient is a flour (use `SetFlourBlend`)                            |
-| `SetFlourBlend(parts)`                                       | anchor, non-flour %            | grams                                                 | shares do not sum to 100, or a component allocation is exceeded            |
-| `SetIngredientGrams(ing, g, hold: 'otherGrams')` **default** | grams of the other ingredients | every %, total flour, anchor value (anchor kind kept) | total flour ≤ 0                                                            |
-| `SetIngredientGrams(ing, g, hold: 'anchor')`                 | anchor, other %                | the ingredient's %, then grams                        | g ≥ W + L; a flour under `flourTotal` without a designated absorbing flour |
-| `SetAnchor(anchor, 'rescale')`                               | %                              | grams                                                 | value ≤ 0                                                                  |
-| `SetAnchor(kind, 'reinterpret')`                             | grams and %                    | value of the new anchor                               | `pieces` without `count`                                                   |
+| Command                                                      | Kept constant                  | Recomputed                                            | `IncompatibleConstraint` when…                                               |
+| ------------------------------------------------------------ | ------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `SetBakerPct(ing, pct)`                                      | anchor, other %                | grams                                                 | the ingredient is a flour (use `SetFlourBlend`)                              |
+| `SetFlourBlend(parts)`                                       | anchor, non-flour %            | grams                                                 | shares do not sum to 100, or a component allocation is exceeded              |
+| `SetIngredientGrams(ing, g, hold: 'otherGrams')` **default** | grams of the other ingredients | every %, total flour, anchor value (anchor kind kept) | total flour ≤ 0                                                              |
+| `SetIngredientGrams(ing, g, hold: 'anchor')`                 | anchor, other %                | the ingredient's %, then grams                        | g ≥ W + L; a flour without a designated absorbing flour; absorbing flour < 0 |
+| `SetAnchor(anchor, 'rescale')`                               | %                              | grams                                                 | value ≤ 0                                                                    |
+| `SetAnchor(kind, 'reinterpret')`                             | grams and %                    | value of the new anchor                               | `pieces` without `count`                                                     |
 
 - Under `pieces` with `otherGrams`, `count` is kept and `gramsEach` is recomputed.
-- `hold: 'anchor'` under `doughWeight` (non-flour ingredient): `pct = g × S / (W + L − g)`, where S
-  is the sum of the other percentages including the 100 flour points.
+- With `otherGrams`, component amounts are "other grams" too: their flour, water and allocations
+  keep their grams, and their percentages are recomputed against the new total flour.
+- Losses are proportional to total flour: `L = λ × F`, with
+  `λ = Σ flourPct × hydrationPct × waterLossPct / 100³` over components. Hence
+  `W = F × (S / 100 − λ)` and, under `doughWeight`, `F = W / (S / 100 − λ)`.
+- `hold: 'anchor'` under `doughWeight` or `pieces` (non-flour ingredient): with S′ the sum of the
+  other percentages including the 100 flour points, `F = (W − g) / (S′ / 100 − λ)` and
+  `pct = 100 × g / F`. Without losses this is `pct = g × S′ / (W − g)`; in general it equals
+  `g × S′ / (W + L − g)` with L evaluated at the new F.
+- `hold: 'anchor'` on a flour: the other percentages and the anchor fix total flour, so another
+  flour must be designated to absorb the difference (`absorbInto`), under any anchor kind.
 - A real weighing during a bake is **not** a formula edit (see `bake-session.md`).
 - An impossible constraint returns a structured error (code, fields, explanation), never a silent
   correction.
@@ -71,6 +85,8 @@ interface WaterBalance {
 
 - An unknown fraction is **never** replaced by 0; it makes the total `incomplete`.
 - `topping` and `glaze` roles are excluded from the dough balance.
+- Components draw their water from the pure-water pool; drawing more than the pool is
+  `WaterAllocationExceeded`.
 - No quantity is called "conventional hydration". A consistency index is a model output (#27,
   N3) and is never called hydration.
 
