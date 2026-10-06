@@ -5,3 +5,7 @@ export * from './graph.js';
 export * from './numeric.js';
 export * from './formula/index.js';
 export * from './process/index.js';
+export * from './version.js';
+export * from './canonical-json.js';
+export * from './values.js';
+export * from './bake/index.js';

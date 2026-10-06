@@ -34,4 +34,5 @@ node apps/cli/dist/main.js --version
 
 ## Development order
 
-See ADR 0008. Current step: 4, bake session and history (`docs/contracts/bake-session.md`, `docs/contracts/history.md`).
+See ADR 0008. Current step: 5, persistence. The Android driver waits for spike #24 (real device); the
+SQLite Node adapter and the shared repository contract tests can start.

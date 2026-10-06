@@ -26,13 +26,14 @@ Add `--json` to any command for machine-readable output.
 
 ```text
 packages/core     domain (pure calculations), application (use cases, ports), contracts (boundaries)
+packages/adapters port implementations (memory today; SQLite with step 5)
 apps/cli          Commander CLI, a client of the engine
 docs/contracts    data semantics and reference fixtures
 docs/adr          architecture decisions
 examples          sample formula files for the CLI
 ```
 
-`packages/ui`, `packages/adapters` and `apps/mobile` arrive with steps 5 and 6 (ADR 0008).
+`packages/ui` and `apps/mobile` arrive with step 6 (ADR 0008).
 
 ## Language
 
