@@ -64,5 +64,6 @@ type Incorporation =
 - The scheduler only does time arithmetic. Biological continuity (fermentation during handling)
   belongs to #9/#29.
 
-Implemented utilities: `topologicalSort`, `isTopologicalOrder`, `validateReferences`
-(`@flourprint/core/domain`).
+Implementation (`@flourprint/core/domain`): `validateProcess`, `projectProcess`,
+`planIncorporations`, and the graph utilities `topologicalSort`, `isTopologicalOrder`,
+`validateReferences`.

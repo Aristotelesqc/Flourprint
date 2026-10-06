@@ -27,6 +27,10 @@ export default tseslint.config(
   ...tseslint.configs.strict,
   {
     languageOptions: { globals: { ...globals.node } },
+    rules: {
+      // Allow `const { omitted, ...rest } = value` to drop a field.
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+    },
   },
   {
     files: ['packages/core/src/domain/**/*.ts'],

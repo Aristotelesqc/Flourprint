@@ -34,4 +34,4 @@ node apps/cli/dist/main.js --version
 
 ## Development order
 
-See ADR 0008. Current step: 3, process model and projection (`docs/contracts/process.md`).
+See ADR 0008. Current step: 4, bake session and history (`docs/contracts/bake-session.md`, `docs/contracts/history.md`).

@@ -4,3 +4,4 @@ export * from './instant.js';
 export * from './graph.js';
 export * from './numeric.js';
 export * from './formula/index.js';
+export * from './process/index.js';
