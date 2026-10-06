@@ -1,17 +1,18 @@
 # Architecture Decision Records
 
-Un ADR consigne un choix d'architecture, ses alternatives et ses conséquences. Un ADR accepté
-n'est pas réécrit : on le remplace par un nouvel ADR qui le déclare `Remplacé`.
+An ADR records an architecture choice, its alternatives and its consequences. An accepted ADR is
+not rewritten: it is replaced by a new ADR that marks it `Superseded`.
 
-Modèle : `Statut`, `Contexte`, `Décision`, `Conséquences`.
+Template: `Status`, `Context`, `Decision`, `Consequences`.
 
-| ADR                                          | Titre                                      | Statut                                   |
-| -------------------------------------------- | ------------------------------------------ | ---------------------------------------- |
-| [0001](0001-engine-first-layers.md)          | Moteur d'abord, couches et packages        | Accepté                                  |
-| [0002](0002-stack.md)                        | Stack technique                            | Accepté, versions à compléter (#23, #24) |
-| [0003](0003-sqlite-json-documents.md)        | Documents JSON versionnés dans SQLite      | Accepté                                  |
-| [0004](0004-bake-events-only.md)             | Événements limités aux fournées            | Accepté                                  |
-| [0005](0005-process-dag.md)                  | Graphe de processus minimal                | Accepté                                  |
-| [0006](0006-numeric-representation.md)       | Représentation numérique et fixtures       | Accepté                                  |
-| [0007](0007-history-snapshots.md)            | Révision par référence, fournée par copie  | Accepté                                  |
-| [0008](0008-milestones-capability-levels.md) | Jalons Alpha / Engine MVP et niveaux N1–N3 | Accepté                                  |
+| ADR                                          | Title                                          | Status                                    |
+| -------------------------------------------- | ---------------------------------------------- | ----------------------------------------- |
+| [0001](0001-engine-first-layers.md)          | Engine first, layers and packages              | Accepted                                  |
+| [0002](0002-stack.md)                        | Technology stack                               | Accepted, versions to complete (#23, #24) |
+| [0003](0003-sqlite-json-documents.md)        | Versioned JSON documents in SQLite             | Accepted                                  |
+| [0004](0004-bake-events-only.md)             | Events for bakes only                          | Accepted                                  |
+| [0005](0005-process-dag.md)                  | Minimal process graph                          | Accepted                                  |
+| [0006](0006-numeric-representation.md)       | Numeric representation and fixtures            | Accepted                                  |
+| [0007](0007-history-snapshots.md)            | Revisions reference, bakes copy                | Accepted                                  |
+| [0008](0008-milestones-capability-levels.md) | Alpha / Engine MVP milestones and N1–N3 levels | Accepted                                  |
+| [0009](0009-english-and-i18n.md)             | English as project language, localizable UI    | Accepted                                  |

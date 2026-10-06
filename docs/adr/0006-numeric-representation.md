@@ -1,19 +1,19 @@
-# ADR 0006 : représentation numérique et fixtures de référence
+# ADR 0006: numeric representation and reference fixtures
 
-Statut : Accepté (#16, #19, #30)
+Status: Accepted (#16, #19, #30)
 
-## Décision
+## Decision
 
-- Calculs en `number` JS (double précision), sans arrondi intermédiaire; arrondi uniquement à
-  l'affichage ou à la pesée. Pas de bibliothèque décimale ni d'entiers en milligrammes.
-- Unités canoniques persistées : grammes, °C, secondes, instants UTC, pourcentages en points
+- Calculations use JS `number` (double precision) with no intermediate rounding; rounding happens
+  only for display or weighing. No decimal library, no integer milligrams.
+- Persisted canonical units: grams, °C, seconds, UTC instants, percentages in points
   (`docs/contracts/values-and-units.md`).
-- Fixtures de référence calculées hors du moteur (arithmétique rationnelle exacte, équations
-  documentées). Les sorties du CLI ne servent qu'à la régression après validation.
-- Comparaisons à tolérance relative déclarée par fixture (`1e-9` par défaut); égalité exacte pour
-  les IDs, séquences et valeurs discrètes.
+- Reference fixtures are computed outside the engine (exact rational arithmetic, documented
+  equations). CLI output is only used for regression tests after validation.
+- Comparisons use a relative tolerance declared per fixture (`1e-9` by default); exact equality
+  for IDs, sequences and discrete values.
 
-## Conséquences
+## Consequences
 
-Si un cas réel montre une dérive incompatible avec la tolérance, cet ADR sera remplacé avec un
-exemple chiffré.
+If a real case shows drift incompatible with the tolerance, this ADR is superseded with a worked
+example.

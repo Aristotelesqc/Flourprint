@@ -1,91 +1,90 @@
-# Contrat : formule (D1, D2)
+# Contract: formula (D1, D2)
 
-Statut : **approuvé** (issue #30). Issues liées : #3, #4, #19, #26.
+Status: **approved** (issue #30). Related issues: #3, #4, #19, #26.
 
-## Représentation
+## Representation
 
-- Chaque ingrédient porte un **pourcentage boulanger** (`bakerPct`, en points) rapporté à la
-  farine totale. Les grammes sont **toujours dérivés**.
-- Les farines forment un mélange (`flours[].sharePct`) dont les parts totalisent 100.
-- Une formule a **une seule ancre active** :
+- Each ingredient carries a **baker's percentage** (`bakerPct`, in points) relative to total
+  flour. Grams are **always derived**.
+- Flours form a blend (`flours[].sharePct`) whose shares sum to 100.
+- A formula has **exactly one active anchor**:
 
 ```ts
 type Anchor =
   | { kind: 'flourTotal'; grams: number }
-  | { kind: 'doughWeight'; grams: number } // pâte finale, après pertes déclarées
+  | { kind: 'doughWeight'; grams: number } // final dough, after declared losses
   | { kind: 'pieces'; count: number; gramsEach: number }; // doughWeight = count × gramsEach
 ```
 
-- Une ancre par moule (#28) se convertit explicitement en `doughWeight`. Jamais d'inférence de
-  masse depuis un volume.
+- A pan-based anchor (#28) converts explicitly to `doughWeight`. Mass is never inferred from a
+  volume.
 
-## Composants (préferments, scalds)
+## Components (preferments, scalds)
 
-- Un composant **prélève** sur les totaux de la formule : farine (`flourPct` de F, réparti selon un
-  `flourBlend` explicite), eau (`hydrationPct` de sa farine), autres ingrédients (`allocations`).
-  Il n'ajoute aucune masse.
-- Contrôle **farine par farine** : Σ des prélèvements d'une farine ≤ sa quantité dans la formule,
-  sinon `FlourAllocationExceeded { flour, requiredGrams, availableGrams }`. Même contrôle pour
-  l'eau et chaque ingrédient alloué.
-- Une perte (évaporation) **réduit** la masse. Elle est déclarée sur le composant
-  (`waterLossPct` de l'eau du composant), avec sa provenance; elle s'applique à l'étape du
-  composant. Aucun taux par défaut autre que 0.
+- A component **draws from** the formula totals: flour (`flourPct` of total flour, split by an
+  explicit `flourBlend`), water (`hydrationPct` of its own flour), other ingredients
+  (`allocations`). It adds no mass.
+- Allocation is checked **per flour**: the sum drawn from a flour must not exceed its amount in
+  the formula, otherwise `FlourAllocationExceeded { flour, requiredGrams, availableGrams }`. The
+  same check applies to water and to every allocated ingredient.
+- A loss (evaporation) **reduces** mass. It is declared on the component (`waterLossPct` of the
+  component's water) with its provenance, and applies at the component's step. The only default
+  is 0.
 
-## Commandes d'édition
+## Edit commands
 
-| Commande                                                    | Constant                       | Recalculé                                        | `IncompatibleConstraint` si…                                          |
-| ----------------------------------------------------------- | ------------------------------ | ------------------------------------------------ | --------------------------------------------------------------------- |
-| `SetBakerPct(ing, pct)`                                     | ancre, autres %                | grammes                                          | l'ingrédient est une farine (→ `SetFlourBlend`)                       |
-| `SetFlourBlend(parts)`                                      | ancre, % non-farine            | grammes                                          | Σ parts ≠ 100 ou allocation de composant dépassée                     |
-| `SetIngredientGrams(ing, g, hold: 'otherGrams')` **défaut** | grammes des autres ingrédients | tous les %, F, valeur de l'ancre (type conservé) | F ≤ 0                                                                 |
-| `SetIngredientGrams(ing, g, hold: 'anchor')`                | ancre, autres %                | % de l'ingrédient, puis grammes                  | g ≥ W + L; farine sous `flourTotal` sans farine d'absorption désignée |
-| `SetAnchor(anchor, 'rescale')`                              | %                              | grammes                                          | valeur ≤ 0                                                            |
-| `SetAnchor(kind, 'reinterpret')`                            | grammes et %                   | valeur de la nouvelle ancre                      | `pieces` sans `count`                                                 |
+| Command                                                      | Kept constant                  | Recomputed                                            | `IncompatibleConstraint` when…                                             |
+| ------------------------------------------------------------ | ------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------- |
+| `SetBakerPct(ing, pct)`                                      | anchor, other %                | grams                                                 | the ingredient is a flour (use `SetFlourBlend`)                            |
+| `SetFlourBlend(parts)`                                       | anchor, non-flour %            | grams                                                 | shares do not sum to 100, or a component allocation is exceeded            |
+| `SetIngredientGrams(ing, g, hold: 'otherGrams')` **default** | grams of the other ingredients | every %, total flour, anchor value (anchor kind kept) | total flour ≤ 0                                                            |
+| `SetIngredientGrams(ing, g, hold: 'anchor')`                 | anchor, other %                | the ingredient's %, then grams                        | g ≥ W + L; a flour under `flourTotal` without a designated absorbing flour |
+| `SetAnchor(anchor, 'rescale')`                               | %                              | grams                                                 | value ≤ 0                                                                  |
+| `SetAnchor(kind, 'reinterpret')`                             | grams and %                    | value of the new anchor                               | `pieces` without `count`                                                   |
 
-- Sous `pieces` avec `otherGrams` : `count` est conservé, `gramsEach` recalculé.
-- Équation de `hold: 'anchor'` sous `doughWeight` (ingrédient non-farine) :
-  `pct = g × S / (W + L − g)`, S = Σ des autres % avec les 100 points de farine.
-- Une pesée réelle pendant une fournée n'est **pas** une édition de formule
-  (voir `bake-session.md`).
-- Une contrainte impossible produit une erreur structurée (`code`, champs, explication), jamais
-  une correction silencieuse.
+- Under `pieces` with `otherGrams`, `count` is kept and `gramsEach` is recomputed.
+- `hold: 'anchor'` under `doughWeight` (non-flour ingredient): `pct = g × S / (W + L − g)`, where S
+  is the sum of the other percentages including the 100 flour points.
+- A real weighing during a bake is **not** a formula edit (see `bake-session.md`).
+- An impossible constraint returns a structured error (code, fields, explanation), never a silent
+  correction.
 
-## Grandeurs d'eau
+## Water quantities
 
-| Nom              | Définition                                                                             |
-| ---------------- | -------------------------------------------------------------------------------------- |
-| `flourTotal`     | toute la farine (mélange final + composants), aussi par farine                         |
-| `pureWaterTotal` | toute l'eau ajoutée comme ingrédient « eau », composants inclus                        |
-| `finalMixWater`  | `pureWaterTotal` − eau allouée aux composants; négatif → erreur                        |
-| `pureWaterPct`   | `100 × pureWaterTotal / flourTotal`                                                    |
-| `totalWater`     | `pureWaterTotal` + Σ (masse × fraction d'eau) des ingrédients au rôle `dough` − pertes |
-| `totalWaterPct`  | `100 × totalWater / flourTotal`                                                        |
+| Name             | Definition                                                                        |
+| ---------------- | --------------------------------------------------------------------------------- |
+| `flourTotal`     | all flour (final mix and components), also per flour                              |
+| `pureWaterTotal` | all water added as the "water" ingredient, components included                    |
+| `finalMixWater`  | `pureWaterTotal` − water allocated to components; negative → error                |
+| `pureWaterPct`   | `100 × pureWaterTotal / flourTotal`                                               |
+| `totalWater`     | `pureWaterTotal` + Σ (mass × water fraction) of `dough`-role ingredients − losses |
+| `totalWaterPct`  | `100 × totalWater / flourTotal`                                                   |
 
 ```ts
 interface WaterBalance {
-  value: number; // grammes, contributions connues et estimées
-  range?: [number, number]; // propagation des plages des contributions estimées
+  value: number; // grams, known and estimated contributions
+  range?: [number, number]; // propagated ranges of estimated contributions
   completeness: 'complete' | 'incomplete';
-  unknownContributors: string[]; // ingrédients dont la fraction d'eau est inconnue
+  unknownContributors: string[]; // ingredients whose water fraction is unknown
 }
 ```
 
-- Une fraction inconnue n'est **jamais** remplacée par 0; elle rend le total `incomplete`.
-- Rôles `topping` et `glaze` exclus du bilan de la pâte.
-- Aucune grandeur n'est nommée « hydratation conventionnelle ». Un indice de consistance est une
-  sortie de modèle (#27, N3), jamais appelé hydratation.
+- An unknown fraction is **never** replaced by 0; it makes the total `incomplete`.
+- `topping` and `glaze` roles are excluded from the dough balance.
+- No quantity is called "conventional hydration". A consistency index is a model output (#27,
+  N3) and is never called hydration.
 
-## Frontière Formula / Process
+## Formula / Process boundary
 
-La formule ne connaît pas les étapes. Les incorporations par étape du Process (autolyse,
-bassinage, ajout tardif) doivent totaliser exactement les quantités du mélange final; sinon erreur
-de validation (voir `process.md`).
+The formula knows nothing about steps. Per-step incorporations in the Process (autolyse,
+staged water additions, late additions) must add up exactly to the final-mix quantities, otherwise validation
+fails (see `process.md`).
 
-## Précision
+## Precision
 
-Calculs en `number` JS sans arrondi intermédiaire. Arrondi uniquement pour l'affichage ou la pesée.
-Tolérance de comparaison des fixtures : `1e-9` relatif. Voir ADR 0006.
+Calculations use JS `number` with no intermediate rounding. Rounding happens only for display or
+weighing. Fixture comparison tolerance: `1e-9` relative. See ADR 0006.
 
-## Références
+## References
 
-Cas chiffrés : `fixtures/` (lean-direct, poolish-tangzhong, enriched-milk-butter).
+Worked cases: `fixtures/` (lean-direct, poolish-tangzhong, enriched-milk-butter).

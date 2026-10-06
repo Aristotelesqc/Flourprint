@@ -1,30 +1,30 @@
-# ADR 0001 : moteur d'abord, couches et packages
+# ADR 0001: engine first, layers and packages
 
-Statut : Accepté (2026-10-06, #1, #22, #30)
+Status: Accepted (2026-10-06, #1, #22, #30)
 
-## Contexte
+## Context
 
-Le moteur de domaine est le produit. L'UI mobile, le CLI, les outils d'agents et un futur LLM en
-sont des clients. Les calculs ne doivent exister qu'à un seul endroit.
+The domain engine is the product. The mobile UI, the CLI, agent tools and a future LLM are its
+clients. Calculations must exist in exactly one place.
 
-## Décision
+## Decision
 
 ```text
-apps/mobile, apps/cli        assemblage et présentation
-packages/ui                  tokens et blocs Flourprint (aucun calcul boulanger)
-packages/adapters            implémentations des ports (SQLite, fichiers, natif)
-packages/core/contracts      schémas aux frontières (Zod), formats d'échange
-packages/core/application    cas d'usage et ports (Clock, IdGenerator, repositories)
-packages/core/domain         types, calculs et invariants purs
+apps/mobile, apps/cli        composition and presentation
+packages/ui                  Flourprint tokens and blocks (no baking math)
+packages/adapters            port implementations (SQLite, files, native)
+packages/core/contracts      boundary schemas (Zod), exchange formats
+packages/core/application    use cases and ports (Clock, IdGenerator, repositories)
+packages/core/domain         pure types, calculations and invariants
 ```
 
-- `core/domain` n'importe ni Node, ni Zod, ni React/Ionic/Capacitor, ni `application`/`contracts`.
-- `core/application` dépend du domaine; horloge, IDs et stockage sont injectés.
-- Exports publics par sous-chemins (`@flourprint/core/domain`…). Adaptateurs Android et Node dans
-  des entrées distinctes; jamais de réexport global.
-- Frontières vérifiées par ESLint (`no-restricted-imports`) et par un test d'architecture.
+- `core/domain` imports neither Node, Zod, React/Ionic/Capacitor, nor `application`/`contracts`.
+- `core/application` depends on the domain; clock, IDs and storage are injected.
+- Public exports through subpaths (`@flourprint/core/domain`, …). Android and Node adapters have
+  separate entry points; no global re-export.
+- Boundaries are enforced by ESLint (`no-restricted-imports`) and by an architecture test.
 
-## Conséquences
+## Consequences
 
-Un adaptateur sera séparé dans son propre package si les sous-chemins ne suffisent pas à isoler
-son installation ou son build. Le build mobile devra prouver qu'il n'embarque aucun module Node.
+An adapter moves to its own package if subpaths are not enough to isolate its installation or
+build. The mobile build must prove it bundles no Node module.

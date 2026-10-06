@@ -1,46 +1,45 @@
-# Contrat : processus (D3)
+# Contract: process (D3)
 
-Statut : **approuvé** (issue #30). Issues liées : #5, #9, #21, #28.
+Status: **approved** (issue #30). Related issues: #5, #9, #21, #28.
 
-## Modèle
+## Model
 
-Un processus est une liste ouverte d'**instances d'étapes** répétables (ID stable par instance),
-reliées par des dépendances fin → début. Le contenu métier d'une étape (opération, objet concerné,
-état de la pâte, conditions, incorporations) suit #5; ce contrat fixe le graphe et le temps.
+A process is an open list of repeatable **step instances** (one stable ID per instance), linked by
+finish-to-start dependencies. The business content of a step (operation, target, dough state,
+conditions, incorporations) follows #5; this contract fixes the graph and the timing.
 
 ```ts
 interface ProcessStep {
   id: StepId;
-  dependsOn: StepId[]; // fin → début
+  dependsOn: StepId[]; // finish-to-start
   schedule: 'asap' | 'alap';
-  plannedDurationS?: number; // absent = inconnu
-  endCriterion?: EndCriterion; // observation ou décision de l'utilisateur
+  plannedDurationS?: number; // absent = unknown
+  endCriterion?: EndCriterion; // observation or user decision
 }
 ```
 
 ## Validation
 
-- Références existantes, pas d'auto-dépendance, pas de cycle.
-- L'ordre de la liste est un **ordre topologique valide** : la liste mobile se lit de haut en bas.
-- Une étape ajoutée dans la liste reçoit par défaut `dependsOn = [étape précédente]`.
-- `alap` sans successeur → erreur.
-- Les incorporations par étape totalisent exactement les quantités du mélange final de la formule.
-- `dependsOn` n'est jamais accepté puis ignoré, ni supprimé à l'import.
+- References exist, no self-dependency, no cycle.
+- The list order is a **valid topological order**: the mobile list reads top to bottom.
+- A step added to the list gets `dependsOn = [previous step]` by default.
+- `alap` without a successor is an error.
+- Per-step incorporations add up exactly to the formula's final-mix quantities.
+- `dependsOn` is never accepted and then ignored, nor dropped on import.
 
 ## Projection
 
-- Modes : démarrer maintenant, démarrer à une heure, prêt pour une heure (cible : une étape
-  terminale désignée).
-- `asap` : au plus tôt après ses dépendances. `alap` : au plus tard, la référence étant la plus
-  tardive des heures de début planifiées de ses successeurs (préchauffage, tangzhong).
-- Recalcul pendant une fournée : figer les faits réels (débuts et fins enregistrés) → passe avant
-  pour les étapes `asap` → passe arrière pour les `alap` non commencées. Le recalcul couvre **tout
-  le plan futur**, pas seulement les successeurs de l'étape modifiée.
-- Une fin conditionnée à une observation, sans estimation acceptée, rend les heures en aval
+- Modes: start now, start at a time, ready by a time (target: a designated terminal step).
+- `asap`: as early as its dependencies allow. `alap`: as late as possible while still ending
+  before the **earliest** planned start of its successors (preheating, tangzhong).
+- Replanning during a bake: freeze recorded facts (actual starts and ends) → forward pass for
+  `asap` steps → backward pass for `alap` steps not yet started. Replanning covers **the whole
+  future plan**, not only successors of the changed step.
+- An end conditioned on an observation, without an accepted estimate, makes downstream times
   `unknownAfter: StepId[]`.
-- Aucune étape n'est terminée automatiquement parce que sa durée prévue est écoulée.
-- Le planificateur ne fait que de l'arithmétique de temps. La continuité biologique (fermentation
-  pendant les manipulations) relève de #9/#29.
+- No step completes automatically because its planned duration has elapsed.
+- The scheduler only does time arithmetic. Biological continuity (fermentation during handling)
+  belongs to #9/#29.
 
-Utilitaires implémentés : `topologicalSort`, `isTopologicalOrder`, `validateReferences`
+Implemented utilities: `topologicalSort`, `isTopologicalOrder`, `validateReferences`
 (`@flourprint/core/domain`).

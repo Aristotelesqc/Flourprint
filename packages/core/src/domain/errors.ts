@@ -1,6 +1,7 @@
 /**
  * Structured error shared by the engine, the CLI and the UI.
- * `code` is stable and machine-readable; `message` is for humans.
+ * `code` and `details` are stable data that clients localize; `message` is English developer
+ * text and is never shown to users as-is (ADR 0009).
  */
 export interface DomainError<C extends string = string, D = unknown> {
   readonly code: C;

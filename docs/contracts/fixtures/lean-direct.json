@@ -2,9 +2,14 @@
   "format": "flourprint-fixture/0",
   "id": "lean-direct",
   "contracts": ["formula.md"],
-  "description": "Pain direct mono-farine, ancre poids de pâte. Éditions en grammes avec hold otherGrams et hold anchor.",
+  "description": "Single-flour direct dough, dough-weight anchor. Gram edits with hold otherGrams and hold anchor.",
   "input": {
-    "flours": [{ "id": "bread-flour", "sharePct": 100 }],
+    "flours": [
+      {
+        "id": "bread-flour",
+        "sharePct": 100
+      }
+    ],
     "ingredients": [
       {
         "id": "water",
@@ -17,23 +22,37 @@
         "kind": "other",
         "bakerPct": 2,
         "role": "dough",
-        "water": { "status": "known", "valuePct": 0 }
+        "water": {
+          "status": "known",
+          "valuePct": 0
+        }
       },
       {
         "id": "instant-yeast",
         "kind": "other",
         "bakerPct": 0.5,
         "role": "dough",
-        "water": { "status": "unknown" }
+        "water": {
+          "status": "unknown"
+        }
       }
     ],
     "components": [],
-    "anchor": { "kind": "doughWeight", "grams": 1725 }
+    "anchor": {
+      "kind": "doughWeight",
+      "grams": 1725
+    }
   },
   "expected": {
     "flourTotal": 1000,
-    "flourByFlour": { "bread-flour": 1000 },
-    "grams": { "water": 700, "salt": 20, "instant-yeast": 5 },
+    "flourByFlour": {
+      "bread-flour": 1000
+    },
+    "grams": {
+      "water": 700,
+      "salt": 20,
+      "instant-yeast": 5
+    },
     "doughWeight": 1725,
     "pureWaterTotal": 700,
     "finalMixWater": 700,
@@ -55,10 +74,21 @@
         "hold": "otherGrams"
       },
       "expected": {
-        "anchor": { "kind": "doughWeight", "grams": 1727 },
+        "anchor": {
+          "kind": "doughWeight",
+          "grams": 1727
+        },
         "flourTotal": 1000,
-        "bakerPct": { "water": 70, "salt": 2.2, "instant-yeast": 0.5 },
-        "grams": { "water": 700, "salt": 22, "instant-yeast": 5 }
+        "bakerPct": {
+          "water": 70,
+          "salt": 2.2,
+          "instant-yeast": 0.5
+        },
+        "grams": {
+          "water": 700,
+          "salt": 22,
+          "instant-yeast": 5
+        }
       }
     },
     {
@@ -70,10 +100,21 @@
         "hold": "anchor"
       },
       "expected": {
-        "anchor": { "kind": "doughWeight", "grams": 1725 },
-        "bakerPct": { "water": 70, "salt": 2.202583675866119, "instant-yeast": 0.5 },
+        "anchor": {
+          "kind": "doughWeight",
+          "grams": 1725
+        },
+        "bakerPct": {
+          "water": 70,
+          "salt": 2.202583675866119,
+          "instant-yeast": 0.5
+        },
         "flourTotal": 998.8269794721408,
-        "grams": { "water": 699.1788856304985, "salt": 22, "instant-yeast": 4.994134897360704 }
+        "grams": {
+          "water": 699.1788856304985,
+          "salt": 22,
+          "instant-yeast": 4.994134897360704
+        }
       },
       "exact": {
         "bakerPct.salt": "3751/1703",
@@ -83,5 +124,7 @@
       }
     }
   ],
-  "tolerance": { "relative": 1e-9 }
+  "tolerance": {
+    "relative": 1e-9
+  }
 }

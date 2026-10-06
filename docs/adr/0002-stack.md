@@ -1,22 +1,23 @@
-# ADR 0002 : stack technique
+# ADR 0002: technology stack
 
-Statut : Accepté (#22, #30). Versions natives et pilotes à compléter après #23 et #24.
+Status: Accepted (#22, #30). Native versions and drivers to be completed after #23 and #24.
 
-## Décision
+## Decision
 
-pnpm workspaces, TypeScript strict, Vite, React + Ionic React, Capacitor (Android), Tailwind CSS v4
-avec thème partagé, Zod 4 aux frontières, React Hook Form, Commander (CLI), Vitest + fast-check,
-ESLint (typescript-eslint) + Prettier. SQLite derrière des repositories asynchrones.
+pnpm workspaces, strict TypeScript, Vite, React + Ionic React, Capacitor (Android), Tailwind CSS v4
+with a shared theme, Zod 4 at boundaries, React Hook Form, Commander (CLI), Vitest + fast-check,
+ESLint (typescript-eslint) + Prettier. SQLite behind asynchronous repositories.
 
-Différés : Zustand, Storybook, Playwright, ORM/query builder, updater LAN (#12), Drive (#11).
+Deferred: Zustand, Storybook, Playwright, ORM/query builder, LAN updater (#12), Drive (#11).
 
-## Versions retenues au scaffold
+## Versions chosen at scaffold time
 
-- Node ≥ 22 (runtime définitif choisi dans #24, notamment pour `node:sqlite`).
-- TypeScript `~6.0` : typescript-eslint ne prend pas encore en charge TypeScript 7.
+- Node ≥ 22 (the final runtime is chosen in #24, notably for `node:sqlite`).
+- TypeScript `~6.0`: typescript-eslint does not support TypeScript 7 yet.
 - pnpm 10.
 
-## Conséquences
+## Consequences
 
-Les spikes #23 (UI Android) et #24 (SQLite) fixent les versions de React, Ionic, Capacitor,
-Tailwind, des pilotes SQLite et des prérequis Android ; ils complètent cet ADR.
+Spikes #23 (Android UI) and #24 (SQLite) settle the versions of React, Ionic, Capacitor, Tailwind,
+the SQLite drivers and Android prerequisites; they complete this ADR. The i18n library is chosen
+with #23 (ADR 0009).

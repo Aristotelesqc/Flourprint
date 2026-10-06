@@ -1,19 +1,19 @@
-# ADR 0005 : graphe de processus minimal
+# ADR 0005: minimal process graph
 
-Statut : Accepté (#5, #30)
+Status: Accepted (#5, #30)
 
-## Contexte
+## Context
 
-Le protocole de référence (#5) contient des branches parallèles (poolish et autolyse, préchauffage
-pendant l'apprêt). Accepter `dependsOn` sans l'exécuter produirait des plannings faux.
+The reference protocol (#5) has parallel branches (poolish and autolyse, preheating during the
+final proof). Accepting `dependsOn` without executing it would produce wrong schedules.
 
-## Décision
+## Decision
 
-Petit DAG à dépendances fin → début, tri topologique, détection de cycles, ordonnancement
-`asap`/`alap`. Pas de moteur de workflow, pas de langage de règles. L'éditeur reste une liste mobile
-en ordre topologique, linéaire par défaut.
+A small DAG with finish-to-start dependencies, topological sort, cycle detection, and `asap`/`alap`
+scheduling. No workflow engine, no rule language. The editor stays a mobile list in topological
+order, linear by default.
 
-## Conséquences
+## Consequences
 
-Les dépendances début → début ou les délais entre étapes pourront s'ajouter sans migration. Le
-planificateur ne modélise pas la biologie.
+Start-to-start dependencies or lags between steps can be added later without migration. The
+scheduler does not model biology.

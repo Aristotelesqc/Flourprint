@@ -1,35 +1,37 @@
-# Instructions pour les agents (Claude, Codex, autres)
+# Agent instructions (Claude, Codex, others)
 
-## Sources de vérité
+## Sources of truth
 
-1. `docs/contracts/` : sémantique des données et des calculs. Ne pas la reconstruire à partir des
-   commentaires d'issues.
-2. `docs/adr/` : choix d'architecture.
-3. Issue #30 : trace de l'arbitrage; les issues décrivent les besoins, pas les contrats.
+1. `docs/contracts/`: data and calculation semantics. Do not reconstruct them from issue comments.
+2. `docs/adr/`: architecture decisions.
+3. Issue #30: record of the arbitration. Issues describe needs, not contracts.
 
-Une implémentation qui contredit un contrat est fausse. Un contrat à changer se modifie dans une PR
-dédiée, avant le code qui en dépend.
+An implementation that contradicts a contract is wrong. A contract that must change is changed in
+a dedicated pull request, before the code that depends on it.
 
-## Règles
+## Rules
 
-- Aucun calcul boulanger hors de `packages/core/domain` (ni UI, ni CLI, ni adaptateurs, ni SQL).
-- `core/domain` n'importe ni Node, ni Zod, ni UI/plateforme, ni `application`/`contracts`
-  (lint + test d'architecture).
-- Les fixtures de `docs/contracts/fixtures/` sont calculées hors du moteur; ne jamais les
-  régénérer à partir d'une sortie du moteur ou du CLI.
-- Unités persistées : grammes, °C, secondes, instants UTC, pourcentages en points.
-- Pas de nouvelle dépendance sans besoin démontré.
+- No baking math outside `packages/core/domain` (not in UI, CLI, adapters or SQL).
+- `core/domain` imports neither Node, Zod, UI/platform code nor `application`/`contracts`
+  (enforced by lint and an architecture test).
+- Fixtures in `docs/contracts/fixtures/` are computed outside the engine. Never regenerate them
+  from engine or CLI output.
+- Persisted units: grams, °C, seconds, UTC instants, percentages in points.
+- No new dependency without a demonstrated need.
+- English everywhere: code, comments, docs, commit messages, issues, pull requests.
+- No user-facing text hard-coded in UI components; use message keys (ADR 0009).
+- Every commit is pushed and lands in the MVP pull request.
 
-## Commandes
+## Commands
 
 ```bash
 pnpm install
-pnpm check        # format, lint, typecheck (sources + tests), tests
+pnpm check        # format, lint, typecheck (sources and tests), tests
 pnpm build        # tsc -b
-pnpm vitest run   # tests seuls (après build)
+pnpm vitest run   # tests only (after a build)
 node apps/cli/dist/main.js --version
 ```
 
-## Ordre de développement
+## Development order
 
-Voir ADR 0008. Étape courante : 2, contrat de formule (`docs/contracts/formula.md`).
+See ADR 0008. Current step: 2, formula contract (`docs/contracts/formula.md`).

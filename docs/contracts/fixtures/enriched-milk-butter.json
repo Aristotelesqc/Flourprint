@@ -2,45 +2,69 @@
   "format": "flourprint-fixture/0",
   "id": "enriched-milk-butter",
   "contracts": ["formula.md", "values-and-units.md"],
-  "description": "Pâte enrichie sans eau pure : lait à fraction d'eau estimée avec plage, beurre et levure à fraction inconnue. La fraction du lait est une donnée d'entrée du cas, pas une valeur de référence du registre.",
+  "description": "Enriched dough with no pure water: milk with an estimated water fraction and range, butter and yeast with unknown fractions. The milk fraction is an input of this case, not a registry reference value.",
   "input": {
-    "flours": [{ "id": "bread-flour", "sharePct": 100 }],
+    "flours": [
+      {
+        "id": "bread-flour",
+        "sharePct": 100
+      }
+    ],
     "ingredients": [
       {
         "id": "milk",
         "kind": "other",
         "bakerPct": 60,
         "role": "dough",
-        "water": { "status": "estimated", "valuePct": 87.5, "rangePct": [86, 89] }
+        "water": {
+          "status": "estimated",
+          "valuePct": 87.5,
+          "rangePct": [86, 89]
+        }
       },
       {
         "id": "butter",
         "kind": "other",
         "bakerPct": 10,
         "role": "dough",
-        "water": { "status": "unknown" }
+        "water": {
+          "status": "unknown"
+        }
       },
       {
         "id": "salt",
         "kind": "other",
         "bakerPct": 2,
         "role": "dough",
-        "water": { "status": "known", "valuePct": 0 }
+        "water": {
+          "status": "known",
+          "valuePct": 0
+        }
       },
       {
         "id": "instant-yeast",
         "kind": "other",
         "bakerPct": 1,
         "role": "dough",
-        "water": { "status": "unknown" }
+        "water": {
+          "status": "unknown"
+        }
       }
     ],
     "components": [],
-    "anchor": { "kind": "flourTotal", "grams": 500 }
+    "anchor": {
+      "kind": "flourTotal",
+      "grams": 500
+    }
   },
   "expected": {
     "flourTotal": 500,
-    "grams": { "milk": 300, "butter": 50, "salt": 10, "instant-yeast": 5 },
+    "grams": {
+      "milk": 300,
+      "butter": 50,
+      "salt": 10,
+      "instant-yeast": 5
+    },
     "doughWeight": 865,
     "pureWaterTotal": 0,
     "finalMixWater": 0,
@@ -53,5 +77,7 @@
     },
     "totalWaterPct": 52.5
   },
-  "tolerance": { "relative": 1e-9 }
+  "tolerance": {
+    "relative": 1e-9
+  }
 }

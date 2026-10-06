@@ -1,51 +1,51 @@
-# Contrat : historique et instantanés (D8)
+# Contract: history and snapshots (D8)
 
-Statut : **approuvé** (issue #30). Issues liées : #7, #10, #20, #26, #28, #29.
+Status: **approved** (issue #30). Related issues: #7, #10, #20, #26, #28, #29.
 
-## Références et versions
+## References and versions
 
-- Une `FormulaRevision` référence `ingredientId@version` (et profils `id@version`) sans copier
-  leurs propriétés.
-- Les versions du registre, des profils et des paramètres de modèles sont **immuables et jamais
-  supprimées** (archivage seulement).
+- A `FormulaRevision` references `ingredientId@version` (and profiles as `id@version`) without
+  copying their properties.
+- Versions of registry entries, profiles and model parameters are **immutable and never deleted**
+  (archived only).
 
-## Instantané de démarrage
+## Start snapshot
 
-L'instantané vit dans le payload de l'événement `BakeStarted`, source unique et immuable.
-`bakes.snapshot` n'est qu'un cache.
+The snapshot lives in the payload of the `BakeStarted` event, the single immutable source.
+`bakes.snapshot` is only a cache.
 
 ```ts
 interface BakeStartedPayload {
   revisions: { formula: RevisionRef; process: RevisionRef };
-  resolvedFormula: ResolvedFormula; // ancre, %, grammes, allocation par farine, composants, eau
+  resolvedFormula: ResolvedFormula; // anchor, %, grams, per-flour allocation, components, water
   usedProperties: Array<{ ingredient: string; version: number; key: string; value: PropertyValue }>;
-  resolvedProcess: ResolvedProcess; // paramètres d'équipement copiés
+  resolvedProcess: ResolvedProcess; // equipment parameters copied
   initialProjection: Projection;
   estimates: Record<StepId, Estimate>;
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
 }
 ```
 
-`usedProperties` ne contient que les propriétés effectivement consommées par le calcul.
+`usedProperties` contains only the properties actually consumed by the calculation.
 
-## Pendant la fournée
+## During the bake
 
-- Un override dont l'effet dépend du moteur stocke la saisie **et** les valeurs recalculées
-  affectées, avec les `ModelRef` utilisés.
-- Une projection est stockée lorsqu'elle est **acceptée** (replanification, override de plan). La
-  projection en direct se recalcule à partir des faits et n'est pas journalisée.
-- Règle : on stocke les valeurs **engagées** (décisions, projections acceptées, résultats métier
-  enregistrés), pas les aperçus ni les affichages transitoires.
+- An override whose effect depends on the engine stores the input **and** the affected
+  recomputed values, with the `ModelRef`s used.
+- A projection is stored when it is **accepted** (replanning, plan override). The live projection
+  is recomputed from facts and is not logged.
+- Rule: store **committed** values (decisions, accepted projections, recorded business results),
+  not previews or transient displays.
 
-## Relecture
+## Reading history
 
-- La relecture d'une fournée n'appelle jamais le moteur courant.
-- Les schémas d'événements sont versionnés; des upcasters changent la représentation sans
-  réinterpréter les valeurs métier.
-- « Recalculer avec le moteur actuel » est une comparaison explicite, jamais un remplacement.
+- Reading a bake never calls the current engine.
+- Event schemas are versioned; upcasters change representation without reinterpreting business
+  values.
+- "Recompute with the current engine" is an explicit comparison, never a replacement.
 
 ## Export
 
-- Sauvegarde complète : recettes, révisions, fournées, événements et toutes les versions de
-  registre, profils et paramètres de modèles qu'elles référencent.
-- Export de recettes : les révisions et les versions dont elles dépendent.
+- Full backup: recipes, revisions, bakes, events and every registry, profile and model-parameter
+  version they reference.
+- Recipe export: the revisions and the versions they depend on.

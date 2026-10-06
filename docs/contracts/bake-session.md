@@ -1,14 +1,14 @@
-# Contrat : session de fournée (D7)
+# Contract: bake session (D7)
 
-Statut : **approuvé** (issue #30). Issues liées : #6, #21, #24.
+Status: **approved** (issue #30). Related issues: #6, #21, #24.
 
-## Commandes et événements
+## Commands and events
 
 ```ts
 interface BakeCommand<P> {
-  commandId: string; // stable entre retries
+  commandId: string; // stable across retries
   bakeId: string;
-  expectedVersion: number; // dernier seq connu
+  expectedVersion: number; // last known seq
   issuedAt: Instant;
   payload: P;
 }
@@ -16,44 +16,43 @@ interface BakeCommand<P> {
 interface BakeEvent<P> {
   eventId: string;
   bakeId: string;
-  seq: number; // 1, 2, 3… par fournée
+  seq: number; // 1, 2, 3… per bake
   causationId: string; // commandId
-  occurredAt: Instant; // temps métier, déclarable par l'utilisateur
-  recordedAt: Instant; // horloge de l'appareil à l'écriture
+  occurredAt: Instant; // business time, may be declared by the user
+  recordedAt: Instant; // device clock at write time
   schemaVersion: number;
   type: string;
   payload: P;
 }
 ```
 
-## Domaine pur
+## Pure domain
 
-- `decide(state, command, now) → Result<EventPayload[], DomainError>` valide les transitions
-  (pas deux complétions d'une étape, correction ciblant un événement existant et corrigeable).
-- `evolve(state, event) → state` est **structurel** : il n'appelle jamais le moteur de calcul. Les
-  valeurs calculées sont dans les événements (`history.md`).
-- Une commande peut produire plusieurs événements, écrits atomiquement.
-- Corrections : événements typés (`StepTimeCorrected { targetEventId, newOccurredAt }`,
-  `StepCompletionRetracted { targetEventId }`…). L'original n'est jamais modifié.
-- Le réel (`actual`) comprend les heures, les observations et les mesures physiques facultatives
-  (`Observation`). Une donnée absente reste absente.
+- `decide(state, command, now) → Result<EventPayload[], DomainError>` validates transitions (no
+  double completion of a step, corrections target an existing correctable event).
+- `evolve(state, event) → state` is **structural**: it never calls the calculation engine.
+  Computed values live in the events (`history.md`).
+- One command may produce several events, written atomically.
+- Corrections are typed events (`StepTimeCorrected { targetEventId, newOccurredAt }`,
+  `StepCompletionRetracted { targetEventId }`, …). The original is never modified.
+- The actual record includes times, observations and optional physical measurements
+  (`Observation`). Missing data stays missing.
 
-## Repository (adaptateur SQLite)
+## Repository (SQLite adapter)
 
-Une transaction par commande :
+One transaction per command:
 
-1. `commandId` déjà enregistré avec le même hash de contenu → renvoyer le résultat stocké; hash
-   différent → `CommandIdReused`. **Ce contrôle précède le contrôle de version.**
-2. Version courante ≠ `expectedVersion` → `VersionConflict { currentVersion }`.
-3. Ajouter les événements (`UNIQUE(bake_id, seq)`), mettre à jour l'index, enregistrer la commande,
-   valider.
+1. `commandId` already recorded with the same content hash → return the stored result; different
+   hash → `CommandIdReused`. **This check runs before the version check.**
+2. Current version ≠ `expectedVersion` → `VersionConflict { currentVersion }`.
+3. Append the events (`UNIQUE(bake_id, seq)`), update the index row, record the command, commit.
 
-- Conflit **strict**, sans fusion de commandes compatibles : l'UI relit et redécide.
-- L'UI ne confirme une action qu'après le succès de l'écriture durable.
-- `BEGIN IMMEDIATE`, `SQLITE_BUSY` (connexion unique sur mobile, retries bornés) : à éprouver
-  dans #24.
+- **Strict** conflicts, no merging of compatible commands: the UI reloads and decides again.
+- The UI confirms an action only after the durable write succeeded.
+- `BEGIN IMMEDIATE` and `SQLITE_BUSY` handling (single connection on mobile, bounded retries) are
+  to be proven in #24.
 
-## Recettes
+## Recipes
 
-Pas d'événements pour les recettes : une modification crée une nouvelle révision, avec contrôle
-optimiste de la tête de révision attendue.
+Recipes have no events: an edit creates a new revision, with an optimistic check on the expected
+head revision.

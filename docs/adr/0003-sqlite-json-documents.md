@@ -1,25 +1,24 @@
-# ADR 0003 : documents JSON versionnés dans SQLite
+# ADR 0003: versioned JSON documents in SQLite
 
-Statut : Accepté (#10, #24, #30)
+Status: Accepted (#10, #24, #30)
 
-## Contexte
+## Context
 
-« Structure stable, contenu flexible » : un nouveau type de pain ou une nouvelle technique ne doit
-pas exiger de migration relationnelle. L'export, l'import et une future synchronisation doivent
-partager un seul format.
+"Stable structure, flexible content": a new bread type or technique must not require a relational
+migration. Export, import and a future sync must share a single format.
 
-## Décision
+## Decision
 
-- Tables peu nombreuses : recettes, révisions (document JSON), fournées, événements de fournée,
-  commandes traitées, métadonnées.
-- Les documents et événements sont la source de vérité; les colonnes d'index sont des projections
-  reconstructibles, mises à jour dans la même transaction.
-- Deux niveaux de migration : SQL (structure, rares) et contenu (`schemaVersion`). Migration de
-  contenu : décoder avec le contrat de la version d'entrée → migrer → valider le nouveau format →
-  appliquer durablement. Versions futures non supportées refusées explicitement.
-- Le même JSON sert à l'export, l'import et la sauvegarde.
+- Few tables: recipes, revisions (JSON document), bakes, bake events, processed commands,
+  metadata.
+- Documents and events are the source of truth; index columns are rebuildable projections,
+  updated in the same transaction.
+- Two migration levels: SQL (structure, rare) and content (`schemaVersion`). Content migration:
+  decode with the contract of the input version → migrate → validate the new format → apply
+  durably. Unsupported future versions are rejected explicitly.
+- The same JSON is used for export, import and backup.
 
-## Conséquences
+## Consequences
 
-#24 doit prouver : atomicité, reprise après arrêt forcé, migration échouée sans perte, reconstruction
-des index. Les colonnes générées SQLite ne sont qu'une option à vérifier sur les pilotes embarqués.
+#24 must prove atomicity, recovery after a forced stop, a failed migration without data loss, and
+index rebuilding. SQLite generated columns are only an option to check on the embedded drivers.

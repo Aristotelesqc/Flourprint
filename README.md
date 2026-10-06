@@ -1,17 +1,16 @@
 # Flourprint
 
-Moteur de formulation, de planification et de suivi de fournées de pain, local-first et
-mobile-first. Le moteur est le produit; l'application Android, le CLI et les futurs outils d'agents
-en sont des clients.
+Local-first, mobile-first engine for formulating, planning and logging bread bakes. The engine is
+the product; the Android app, the CLI and future agent tools are clients of the same engine.
 
-- Besoins et backlog : issues GitHub (arbitrage de référence : #30).
-- Contrats de données : [`docs/contracts/`](docs/contracts/README.md).
-- Décisions d'architecture : [`docs/adr/`](docs/adr/README.md).
-- Instructions pour les agents : [`AGENTS.md`](AGENTS.md).
+- Requirements and backlog: GitHub issues (reference decisions: #30).
+- Data contracts: [`docs/contracts/`](docs/contracts/README.md).
+- Architecture decisions: [`docs/adr/`](docs/adr/README.md).
+- Agent instructions: [`AGENTS.md`](AGENTS.md).
 
-## Démarrage
+## Getting started
 
-Prérequis : Node ≥ 22, pnpm 10 (`corepack enable`).
+Requirements: Node ≥ 22, pnpm 10 (`corepack enable`).
 
 ```bash
 pnpm install
@@ -19,13 +18,18 @@ pnpm check
 node apps/cli/dist/main.js --version
 ```
 
-## Structure
+## Layout
 
 ```text
-packages/core     domain (calculs purs), application (cas d'usage, ports), contracts (frontières)
-apps/cli          CLI Commander, client du moteur
-docs/contracts    sémantique des données et fixtures de référence
-docs/adr          décisions d'architecture
+packages/core     domain (pure calculations), application (use cases, ports), contracts (boundaries)
+apps/cli          Commander CLI, a client of the engine
+docs/contracts    data semantics and reference fixtures
+docs/adr          architecture decisions
 ```
 
-`packages/ui`, `packages/adapters` et `apps/mobile` arriveront avec les étapes 5 et 6 (ADR 0008).
+`packages/ui`, `packages/adapters` and `apps/mobile` arrive with steps 5 and 6 (ADR 0008).
+
+## Language
+
+The project language is English: code, comments, documentation, commits, issues and pull
+requests. The UI is localizable; see ADR 0009.

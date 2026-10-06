@@ -1,17 +1,17 @@
-# ADR 0004 : événements limités aux fournées
+# ADR 0004: events for bakes only
 
-Statut : Accepté (#6, #21, #30)
+Status: Accepted (#6, #21, #30)
 
-## Décision
+## Decision
 
-Seules les sessions de fournée sont représentées par un journal d'événements en ajout seul
-(`docs/contracts/bake-session.md`). Les recettes restent des documents versionnés par révisions.
-Pas d'event sourcing global.
+Only bake sessions are represented as an append-only event log
+(`docs/contracts/bake-session.md`). Recipes remain documents versioned through revisions. No
+global event sourcing.
 
-Commandes et événements sont distincts; idempotence par `commandId` avant le contrôle de
-`expectedVersion`; conflit strict; corrections typées; `evolve` structurel.
+Commands and events are distinct; idempotency by `commandId` is checked before `expectedVersion`;
+conflicts are strict; corrections are typed; `evolve` is structural.
 
-## Conséquences
+## Consequences
 
-La reprise après fermeture est une relecture du journal. Les valeurs calculées doivent être
-présentes dans les événements pour que la relecture n'appelle pas le moteur (ADR 0007).
+Resuming after the app is closed is a replay of the log. Computed values must be present in the
+events so that replay never calls the engine (ADR 0007).

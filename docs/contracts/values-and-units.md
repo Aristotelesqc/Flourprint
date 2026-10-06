@@ -1,24 +1,25 @@
-# Contrat : valeurs, unités, observations, estimations (D6)
+# Contract: values, units, observations, estimates (D6)
 
-Statut : **approuvé** (issue #30). Issues liées : #6, #9, #26, #27, #28, #29.
+Status: **approved** (issue #30). Related issues: #6, #9, #26, #27, #28, #29.
 
-## Unités canoniques des documents persistés
+## Canonical units in persisted documents
 
-| Grandeur    | Unité        | Convention                                                      |
-| ----------- | ------------ | --------------------------------------------------------------- |
-| masse       | gramme       | `number`                                                        |
-| température | °C           | `number`                                                        |
-| durée       | seconde      | `number`, champs suffixés `S` (`plannedDurationS`)              |
-| instant     | ISO 8601 UTC | chaîne terminée par `Z` (`Instant`)                             |
-| pourcentage | **points**   | 70 = 70 %, champs suffixés `Pct`; aucune fraction 0–1 persistée |
+| Quantity    | Unit         | Convention                                                     |
+| ----------- | ------------ | -------------------------------------------------------------- |
+| mass        | gram         | `number`                                                       |
+| temperature | °C           | `number`                                                       |
+| duration    | second       | `number`, fields suffixed `S` (`plannedDurationS`)             |
+| instant     | ISO 8601 UTC | string ending in `Z` (`Instant`)                               |
+| percentage  | **points**   | 70 = 70 %, fields suffixed `Pct`; no 0–1 fraction is persisted |
 
-Les fractions 0–1 n'existent que dans les calculs internes. `Quantity { value, unit }` n'est utilisé
-qu'aux frontières : saisie dans une autre unité, étiquettes de produit, import.
+0–1 fractions exist only inside calculations. `Quantity { value, unit }` is used only at
+boundaries: input in another unit, product labels, imports. Display units and number formats are
+a UI concern (ADR 0009).
 
 ## Provenance
 
-Pas d'enveloppe sur chaque nombre. La provenance d'une valeur planifiée est portée par la structure
-(révision de formule, événement d'override, référence de preset) et produite par `explain`.
+No envelope around every number. The provenance of a planned value is carried by structure
+(formula revision, override event, preset reference) and produced by `explain`.
 
 ## Types
 
@@ -28,7 +29,7 @@ interface Observation<T = number> {
   unit: Unit;
   observedAt: Instant;
   method?: 'measured' | 'reported';
-  uncertainty?: number; // précision de l'instrument, même unité
+  uncertainty?: number; // instrument precision, same unit
   note?: string;
 }
 
@@ -44,7 +45,7 @@ type Estimate<T = number> =
 type PropertyValue =
   | {
       status: 'known' | 'estimated';
-      value: number | boolean | string; // composition, pH, densité, activité, bio…
+      value: number | boolean | string; // composition, pH, density, enzyme activity, organic…
       unit?: Unit;
       basis?: 'per100g' | 'perServing' | 'dryMatter';
       source: SourceRef;
@@ -58,7 +59,9 @@ interface ModelRef {
 }
 ```
 
-- L'incertitude n'apparaît que là où elle a un sens : `Observation`, `Estimate`, `PropertyValue`.
-- Les paramètres d'un modèle sont des données versionnées et immuables, embarquées avec l'app et
-  exportées avec toute fournée qui les référence. Un hash éventuel ne sert qu'à l'intégrité.
-- Une suggestion calculée (`Estimate`) ne devient jamais une observation (`Observation`).
+- Uncertainty appears only where it is meaningful: `Observation`, `Estimate`, `PropertyValue`.
+- Model parameters are versioned, immutable data, shipped with the app and exported with any bake
+  that references them. A hash, if any, only checks integrity.
+- A computed suggestion (`Estimate`) never becomes an observation (`Observation`).
+- `assumptions`, `reason` and `missing` hold stable codes or English developer text; the UI
+  localizes them (ADR 0009).
