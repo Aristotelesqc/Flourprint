@@ -15,8 +15,12 @@ Requirements: Node ≥ 22, pnpm 10 (`corepack enable`).
 ```bash
 pnpm install
 pnpm check
-node apps/cli/dist/main.js --version
+node apps/cli/dist/main.js formula calculate examples/poolish-tangzhong.formula.json
+node apps/cli/dist/main.js formula scale examples/poolish-tangzhong.formula.json --pieces 2x900
+node apps/cli/dist/main.js formula explain examples/enriched-milk-butter.formula.json
 ```
+
+Add `--json` to any command for machine-readable output.
 
 ## Layout
 
@@ -25,6 +29,7 @@ packages/core     domain (pure calculations), application (use cases, ports), co
 apps/cli          Commander CLI, a client of the engine
 docs/contracts    data semantics and reference fixtures
 docs/adr          architecture decisions
+examples          sample formula files for the CLI
 ```
 
 `packages/ui`, `packages/adapters` and `apps/mobile` arrive with steps 5 and 6 (ADR 0008).
