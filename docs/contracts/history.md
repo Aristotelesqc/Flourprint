@@ -17,9 +17,10 @@ The snapshot lives in the payload of the `BakeStarted` event, the single immutab
 ```ts
 interface BakeStartedPayload {
   revisions: { formula: RevisionRef; process: RevisionRef };
+  formula: Formula; // the definition used, with its resolved ingredient properties
   resolvedFormula: ResolvedFormula; // anchor, %, grams, per-flour allocation, components, water
   usedProperties: Array<{ ingredient: string; version: number; key: string; value: PropertyValue }>;
-  resolvedProcess: ResolvedProcess; // equipment parameters copied
+  process: Process; // the definition used, equipment parameters copied
   initialProjection: Projection;
   estimates: Record<StepId, Estimate>;
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };

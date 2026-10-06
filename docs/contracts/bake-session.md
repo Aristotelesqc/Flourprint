@@ -38,12 +38,32 @@ interface BakeEvent<P> {
 - The actual record includes times, observations and optional physical measurements
   (`Observation`). Missing data stays missing.
 
+## Alpha commands and events
+
+| Command                      | Events                                                                       | Rules                                                                                                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; resolves the formula and projects the process                                                                                 |
+| `StartStep`                  | `StepStarted`                                                                | dependencies completed; not already started                                                                                              |
+| `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start), never after the completion |
+| `AdjustStep`                 | `OverrideApplied` (step duration or temperature)                             | step not completed                                                                                                                       |
+| `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                             |
+| `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                   |
+| `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                  |
+| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating or `Observation` measurement                                                                                 |
+| `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end                                                             |
+| `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                 |
+| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept                                                                                                           |
+
+Every command except `StartBake` requires an active bake. Business errors are typed codes
+(`StepAlreadyCompleted`, `DependenciesNotCompleted`, `BakeNotActive`, …).
+
 ## Repository (SQLite adapter)
 
 One transaction per command:
 
-1. `commandId` already recorded with the same content hash → return the stored result; different
-   hash → `CommandIdReused`. **This check runs before the version check.**
+1. `commandId` already recorded with the same content → return the stored result; different
+   content → `CommandIdReused`. Content is compared through its canonical JSON (sorted keys).
+   **This check runs before the version check.**
 2. Current version ≠ `expectedVersion` → `VersionConflict { currentVersion }`.
 3. Append the events (`UNIQUE(bake_id, seq)`), update the index row, record the command, commit.
 
