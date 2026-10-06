@@ -1,0 +1,252 @@
+import { domainError } from '../errors.js';
+import { RELATIVE_TOLERANCE, sum } from '../numeric.js';
+import { err, ok, type Result } from '../result.js';
+import type { FormulaError } from './errors.js';
+import {
+  anchorDoughWeight,
+  doughPctSum,
+  lossFactor,
+  resolveFormula,
+  validateAnchor,
+} from './resolve.js';
+import type { Anchor, AnchorKind, FlourShare, Formula, ResolvedFormula } from './types.js';
+
+/** Edit commands of docs/contracts/formula.md. */
+export type FormulaEdit =
+  | { readonly type: 'SetBakerPct'; readonly ingredient: string; readonly pct: number }
+  | { readonly type: 'SetFlourBlend'; readonly flours: readonly FlourShare[] }
+  | {
+      readonly type: 'SetIngredientGrams';
+      readonly ingredient: string;
+      readonly grams: number;
+      readonly hold?: 'otherGrams' | 'anchor';
+      /** Required with `hold: 'anchor'` when the edited ingredient is a flour. */
+      readonly absorbInto?: string;
+    }
+  | { readonly type: 'SetAnchor'; readonly mode: 'rescale'; readonly anchor: Anchor }
+  | {
+      readonly type: 'SetAnchor';
+      readonly mode: 'reinterpret';
+      readonly kind: AnchorKind;
+      /** Required when reinterpreting as `pieces`. */
+      readonly count?: number;
+    };
+
+const incompatible = (reason: string, field?: string): FormulaError =>
+  domainError(
+    'IncompatibleConstraint',
+    reason,
+    field === undefined ? { reason } : { reason, field },
+  );
+
+const unknownRef = (path: string, id: string): FormulaError =>
+  domainError('UnknownReference', `${path} references unknown ${id}`, { path, id });
+
+/** Applies an edit and returns the new formula, validated by a full resolution. */
+export const applyFormulaEdit = (
+  formula: Formula,
+  edit: FormulaEdit,
+): Result<Formula, FormulaError> => {
+  const next = computeEdit(formula, edit);
+  if (!next.ok) return next;
+  const resolved = resolveFormula(next.value);
+  return resolved.ok ? next : resolved;
+};
+
+const computeEdit = (formula: Formula, edit: FormulaEdit): Result<Formula, FormulaError> => {
+  switch (edit.type) {
+    case 'SetBakerPct':
+      return setBakerPct(formula, edit.ingredient, edit.pct);
+    case 'SetFlourBlend':
+      return ok({ ...formula, flours: edit.flours });
+    case 'SetIngredientGrams':
+      return edit.hold === 'anchor'
+        ? setGramsHoldingAnchor(formula, edit.ingredient, edit.grams, edit.absorbInto)
+        : setGramsHoldingOtherGrams(formula, edit.ingredient, edit.grams);
+    case 'SetAnchor':
+      if (edit.mode === 'rescale') {
+        const valid = validateAnchor(edit.anchor);
+        return valid.ok ? ok({ ...formula, anchor: edit.anchor }) : valid;
+      }
+      return reinterpretAnchor(formula, edit.kind, edit.count);
+  }
+};
+
+const setBakerPct = (
+  formula: Formula,
+  ingredient: string,
+  pct: number,
+): Result<Formula, FormulaError> => {
+  if (formula.flours.some((f) => f.id === ingredient)) {
+    return err(incompatible('Flour percentages change through SetFlourBlend', 'ingredient'));
+  }
+  if (!formula.ingredients.some((i) => i.id === ingredient)) {
+    return err(unknownRef('ingredient', ingredient));
+  }
+  return ok({
+    ...formula,
+    ingredients: formula.ingredients.map((i) =>
+      i.id === ingredient ? { ...i, bakerPct: pct } : i,
+    ),
+  });
+};
+
+/** Rewrites every percentage so that the given grams hold for total flour `flourTotal`. */
+const fromGrams = (
+  formula: Formula,
+  resolved: ResolvedFormula,
+  flourGrams: Readonly<Record<string, number>>,
+  ingredientGrams: Readonly<Record<string, number>>,
+): Formula => {
+  const flourTotal = sum(Object.values(flourGrams));
+  const pct = (grams: number) => (100 * grams) / flourTotal;
+  return {
+    ...formula,
+    flours: formula.flours.map((f) => ({ ...f, sharePct: pct(flourGrams[f.id] ?? 0) })),
+    ingredients: formula.ingredients.map((i) => ({
+      ...i,
+      bakerPct: pct(ingredientGrams[i.id] ?? 0),
+    })),
+    components: formula.components.map((c) => {
+      const kept = resolved.components[c.id];
+      if (!kept) return c;
+      const next = { ...c, flourPct: pct(kept.flour) };
+      return c.allocations
+        ? {
+            ...next,
+            allocations: c.allocations.map((a) => ({
+              ...a,
+              bakerPct: pct(kept.allocations[a.ingredient] ?? 0),
+            })),
+          }
+        : next;
+    }),
+    anchor: { kind: 'flourTotal', grams: flourTotal },
+  };
+};
+
+/** Gives `formula` an anchor of `kind` matching its current resolved quantities. */
+const anchorOfKind = (
+  resolved: ResolvedFormula,
+  kind: AnchorKind,
+  count?: number,
+): Result<Anchor, FormulaError> => {
+  switch (kind) {
+    case 'flourTotal':
+      return ok({ kind, grams: resolved.flourTotal });
+    case 'doughWeight':
+      return ok({ kind, grams: resolved.doughWeight });
+    case 'pieces':
+      if (count === undefined || !Number.isInteger(count) || count < 1) {
+        return err(incompatible('Reinterpreting as pieces needs a positive piece count', 'count'));
+      }
+      return ok({ kind, count, gramsEach: resolved.doughWeight / count });
+  }
+};
+
+const setGramsHoldingOtherGrams = (
+  formula: Formula,
+  ingredient: string,
+  grams: number,
+): Result<Formula, FormulaError> => {
+  if (!(Number.isFinite(grams) && grams >= 0)) {
+    return err(incompatible('Grams must be ≥ 0', 'grams'));
+  }
+  const current = resolveFormula(formula);
+  if (!current.ok) return current;
+  const isFlour = formula.flours.some((f) => f.id === ingredient);
+  if (!isFlour && !formula.ingredients.some((i) => i.id === ingredient)) {
+    return err(unknownRef('ingredient', ingredient));
+  }
+  const flourGrams = isFlour
+    ? { ...current.value.flourByFlour, [ingredient]: grams }
+    : current.value.flourByFlour;
+  const ingredientGrams = isFlour
+    ? current.value.grams
+    : { ...current.value.grams, [ingredient]: grams };
+  if (!(sum(Object.values(flourGrams)) > 0)) {
+    return err(incompatible('Total flour must stay above zero', 'grams'));
+  }
+
+  const rescaled = fromGrams(formula, current.value, flourGrams, ingredientGrams);
+  const resolved = resolveFormula(rescaled);
+  if (!resolved.ok) return resolved;
+  const anchor =
+    formula.anchor.kind === 'pieces'
+      ? anchorOfKind(resolved.value, 'pieces', formula.anchor.count)
+      : anchorOfKind(resolved.value, formula.anchor.kind);
+  return anchor.ok ? ok({ ...rescaled, anchor: anchor.value }) : anchor;
+};
+
+const setGramsHoldingAnchor = (
+  formula: Formula,
+  ingredient: string,
+  grams: number,
+  absorbInto: string | undefined,
+): Result<Formula, FormulaError> => {
+  if (!(Number.isFinite(grams) && grams >= 0)) {
+    return err(incompatible('Grams must be ≥ 0', 'grams'));
+  }
+  const current = resolveFormula(formula);
+  if (!current.ok) return current;
+  const flourTotal = current.value.flourTotal;
+
+  if (formula.flours.some((f) => f.id === ingredient)) {
+    if (absorbInto === undefined || absorbInto === ingredient) {
+      return err(
+        incompatible(
+          'Editing a flour while holding the anchor needs an absorbing flour',
+          'absorbInto',
+        ),
+      );
+    }
+    if (!formula.flours.some((f) => f.id === absorbInto)) {
+      return err(unknownRef('absorbInto', absorbInto));
+    }
+    const others = sum(
+      formula.flours
+        .filter((f) => f.id !== ingredient && f.id !== absorbInto)
+        .map((f) => current.value.flourByFlour[f.id] ?? 0),
+    );
+    const absorbed = flourTotal - grams - others;
+    if (absorbed < -RELATIVE_TOLERANCE * flourTotal) {
+      return err(incompatible(`Not enough ${absorbInto} to absorb the change`, 'grams'));
+    }
+    const sharePct = (id: string): number =>
+      id === ingredient
+        ? (100 * grams) / flourTotal
+        : id === absorbInto
+          ? (100 * Math.max(0, absorbed)) / flourTotal
+          : (100 * (current.value.flourByFlour[id] ?? 0)) / flourTotal;
+    return ok({
+      ...formula,
+      flours: formula.flours.map((f) => ({ ...f, sharePct: sharePct(f.id) })),
+    });
+  }
+
+  const target = formula.ingredients.find((i) => i.id === ingredient);
+  if (!target) return err(unknownRef('ingredient', ingredient));
+  const weight = anchorDoughWeight(formula.anchor);
+  if (weight === undefined || target.role !== 'dough') {
+    return setBakerPct(formula, ingredient, (100 * grams) / flourTotal);
+  }
+
+  const otherPct = doughPctSum(formula) - target.bakerPct;
+  const perFlour = otherPct / 100 - lossFactor(formula);
+  if (!(weight - grams > 0) || !(perFlour > 0)) {
+    return err(incompatible('The ingredient would exceed the anchored dough weight', 'grams'));
+  }
+  const newFlourTotal = (weight - grams) / perFlour;
+  return setBakerPct(formula, ingredient, (100 * grams) / newFlourTotal);
+};
+
+const reinterpretAnchor = (
+  formula: Formula,
+  kind: AnchorKind,
+  count: number | undefined,
+): Result<Formula, FormulaError> => {
+  const current = resolveFormula(formula);
+  if (!current.ok) return current;
+  const anchor = anchorOfKind(current.value, kind, count);
+  return anchor.ok ? ok({ ...formula, anchor: anchor.value }) : anchor;
+};
