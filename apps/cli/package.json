@@ -1,0 +1,22 @@
+{
+  "name": "@flourprint/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "flourprint": "./dist/main.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/program.d.ts",
+      "default": "./dist/program.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@flourprint/core": "workspace:*",
+    "commander": "^15.0.0"
+  }
+}

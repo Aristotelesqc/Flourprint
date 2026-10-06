@@ -1,0 +1,113 @@
+{
+  "format": "flourprint-fixture/0",
+  "id": "poolish-tangzhong",
+  "contracts": ["formula.md"],
+  "description": "Deux farines, poolish (farine à pain seule) et tangzhong, ancre farine totale. Variante avec perte d'eau du tangzhong et cas d'allocation impossible.",
+  "input": {
+    "flours": [
+      { "id": "bread-flour", "sharePct": 80 },
+      { "id": "whole-wheat", "sharePct": 20 }
+    ],
+    "ingredients": [
+      { "id": "water", "kind": "water", "bakerPct": 75, "role": "dough" },
+      {
+        "id": "salt",
+        "kind": "other",
+        "bakerPct": 2,
+        "role": "dough",
+        "water": { "status": "known", "valuePct": 0 }
+      },
+      {
+        "id": "instant-yeast",
+        "kind": "other",
+        "bakerPct": 0.4,
+        "role": "dough",
+        "water": { "status": "unknown" }
+      }
+    ],
+    "components": [
+      {
+        "id": "poolish",
+        "kind": "preferment",
+        "flourPct": 30,
+        "flourBlend": [{ "flour": "bread-flour", "sharePct": 100 }],
+        "hydrationPct": 100,
+        "allocations": [{ "ingredient": "instant-yeast", "bakerPct": 0.1 }]
+      },
+      {
+        "id": "tangzhong",
+        "kind": "scald",
+        "flourPct": 5,
+        "flourBlend": [{ "flour": "bread-flour", "sharePct": 100 }],
+        "hydrationPct": 500,
+        "waterLossPct": 0
+      }
+    ],
+    "anchor": { "kind": "flourTotal", "grams": 1000 }
+  },
+  "expected": {
+    "flourTotal": 1000,
+    "flourByFlour": { "bread-flour": 800, "whole-wheat": 200 },
+    "grams": { "water": 750, "salt": 20, "instant-yeast": 4 },
+    "components": {
+      "poolish": {
+        "flourByFlour": { "bread-flour": 300 },
+        "water": 300,
+        "allocations": { "instant-yeast": 1 },
+        "mass": 601
+      },
+      "tangzhong": {
+        "flourByFlour": { "bread-flour": 50 },
+        "water": 250,
+        "waterLoss": 0,
+        "mass": 300
+      }
+    },
+    "finalMix": {
+      "flourByFlour": { "bread-flour": 450, "whole-wheat": 200 },
+      "water": 200,
+      "grams": { "salt": 20, "instant-yeast": 3 },
+      "componentMasses": { "poolish": 601, "tangzhong": 300 }
+    },
+    "doughWeight": 1774,
+    "pureWaterTotal": 750,
+    "finalMixWater": 200,
+    "pureWaterPct": 75,
+    "totalWater": {
+      "value": 750,
+      "completeness": "incomplete",
+      "unknownContributors": ["instant-yeast"]
+    },
+    "totalWaterPct": 75
+  },
+  "variants": [
+    {
+      "id": "tangzhong-water-loss",
+      "change": { "components.tangzhong.waterLossPct": 8 },
+      "expected": {
+        "components": { "tangzhong": { "waterLoss": 20, "mass": 280 } },
+        "doughWeight": 1754,
+        "pureWaterTotal": 750,
+        "finalMixWater": 200,
+        "pureWaterPct": 75,
+        "totalWater": {
+          "value": 730,
+          "completeness": "incomplete",
+          "unknownContributors": ["instant-yeast"]
+        },
+        "totalWaterPct": 73
+      }
+    },
+    {
+      "id": "poolish-exceeds-whole-wheat",
+      "change": {
+        "components.poolish.flourBlend": [{ "flour": "whole-wheat", "sharePct": 100 }]
+      },
+      "expectedError": {
+        "code": "FlourAllocationExceeded",
+        "details": { "flour": "whole-wheat", "requiredGrams": 300, "availableGrams": 200 }
+      }
+    }
+  ],
+  "tolerance": { "relative": 1e-9 }
+}
