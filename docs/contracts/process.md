@@ -23,13 +23,36 @@ interface ProcessStep {
 - References exist, no self-dependency, no cycle.
 - The list order is a **valid topological order**: the mobile list reads top to bottom.
 - A step added to the list gets `dependsOn = [previous step]` by default.
-- `alap` without a successor is an error.
-- Per-step incorporations add up exactly to the formula's final-mix quantities.
+- `alap` without a successor, or without `plannedDurationS`, is an error.
+- `plannedDurationS` ≥ 0 when present.
+- Per-step incorporations add up exactly to the formula's final-mix quantities (see below).
 - `dependsOn` is never accepted and then ignored, nor dropped on import.
+
+## Incorporations
+
+A step may declare what it adds to the dough, as shares of final-mix items:
+
+```ts
+type Incorporation =
+  | { item: 'flour' | 'ingredient' | 'component'; id: string; sharePct: number }
+  | { item: 'water'; sharePct: number }; // the final-mix water pool
+```
+
+- `ingredient` refers to a non-water dough ingredient; `component` to a whole component.
+- Incorporations are optional. When a process declares any, every final-mix item with a positive
+  mass must be incorporated exactly once in total (shares summing to 100 across steps), and no
+  item may exceed 100. Unknown references are errors.
+- Grams per step are derived from the resolved formula, so they follow every rescaling.
 
 ## Projection
 
-- Modes: start now, start at a time, ready by a time (target: a designated terminal step).
+- Modes: start at a time (start now is start at `now`), or ready by a time for a designated
+  target step. Ready-by plans the whole process as early as possible from an origin, then shifts
+  the origin so the target ends at the requested time; it needs known durations up to the target
+  and is only valid before the bake has started.
+- A step's planned end is known only when its start is known and it has `plannedDurationS`.
+  Started and finished steps use their recorded times.
+- During a bake, steps not yet started cannot be planned before `now`.
 - `asap`: as early as its dependencies allow. `alap`: as late as possible while still ending
   before the **earliest** planned start of its successors (preheating, tangzhong).
 - Replanning during a bake: freeze recorded facts (actual starts and ends) → forward pass for
