@@ -3,25 +3,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterAll, describe, expect, it } from 'vitest';
-import {
-  MIGRATIONS,
-  openDatabase,
-  SqliteNodeBakeEventStore,
-  SqliteNodeRecipeRepository,
-} from '../src/sqlite-node/index.js';
-import {
-  describeBakeEventStoreContract,
-  describeRecipeRepositoryContract,
-} from './contract/stores.js';
+import type { Instant } from '@flourprint/core/domain';
+import { MIGRATIONS, openNodeSqlite, SqlRecipeRepository } from '../src/sqlite-node/index.js';
 
-const memoryDb = () => {
-  const db = openDatabase(':memory:');
+const open = async (path: string, migrations = MIGRATIONS) => {
+  const db = await openNodeSqlite(path, migrations);
   if (!db.ok) throw new Error(JSON.stringify(db.error));
   return db.value;
 };
-
-describeBakeEventStoreContract('sqlite-node', () => new SqliteNodeBakeEventStore(memoryDb()));
-describeRecipeRepositoryContract('sqlite-node', () => new SqliteNodeRecipeRepository(memoryDb()));
 
 describe('sqlite-node durability', () => {
   const dir = mkdtempSync(join(tmpdir(), 'flourprint-'));
@@ -30,9 +19,8 @@ describe('sqlite-node durability', () => {
 
   it('keeps data after the database is closed and reopened', async () => {
     const file = path('reopen.sqlite');
-    const first = openDatabase(file);
-    if (!first.ok) throw new Error('open failed');
-    await new SqliteNodeRecipeRepository(first.value).saveRevision({
+    const first = await open(file);
+    await new SqlRecipeRepository(first.driver).saveRevision({
       recipeId: 'r',
       name: 'R',
       expectedHead: 0,
@@ -43,57 +31,64 @@ describe('sqlite-node durability', () => {
         anchor: { kind: 'flourTotal', grams: 500 },
       },
       process: { steps: [] },
-      createdAt: '2026-10-07T08:00:00.000Z' as never,
+      createdAt: '2026-10-07T08:00:00.000Z' as Instant,
     });
-    first.value.close();
+    first.close();
 
-    const second = openDatabase(file);
-    if (!second.ok) throw new Error('reopen failed');
-    expect(await new SqliteNodeRecipeRepository(second.value).getRecipe('r')).toMatchObject({
+    const second = await open(file);
+    expect(await new SqlRecipeRepository(second.driver).getRecipe('r')).toMatchObject({
       headVersion: 1,
     });
-    second.value.close();
+    second.close();
   });
 
-  it('refuses a database written by a newer app', () => {
+  it('refuses a database written by a newer app', async () => {
     const file = path('newer.sqlite');
     const raw = new DatabaseSync(file);
-    raw.exec(`PRAGMA user_version = ${MIGRATIONS.length + 1}`);
+    raw.exec('CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value INTEGER NOT NULL)');
+    raw.exec(`INSERT INTO schema_meta VALUES ('schema_version', ${MIGRATIONS.length + 1})`);
     raw.close();
-    expect(openDatabase(file)).toMatchObject({
+    expect(await openNodeSqlite(file)).toMatchObject({
       ok: false,
       error: { code: 'UnsupportedDatabaseVersion' },
     });
   });
 
-  it('rolls back a failed migration and keeps the previous version usable', () => {
+  it('rolls back a failed migration and keeps the previous version usable', async () => {
     const file = path('failed.sqlite');
-    const v1 = openDatabase(file);
-    if (!v1.ok) throw new Error('open failed');
-    v1.value.prepare("INSERT INTO recipes VALUES ('r', 'R', 1, '2026-10-07T08:00:00.000Z')").run();
-    v1.value.close();
+    const v1 = await open(file);
+    v1.database
+      .prepare("INSERT INTO recipes VALUES ('r', 'R', 1, '2026-10-07T08:00:00.000Z')")
+      .run();
+    v1.close();
 
     const broken = [
       ...MIGRATIONS,
       { version: 2, sql: 'ALTER TABLE recipes ADD COLUMN tag TEXT; SELECT * FROM missing_table;' },
     ];
-    expect(openDatabase(file, broken)).toMatchObject({
+    expect(await openNodeSqlite(file, broken)).toMatchObject({
       ok: false,
       error: { code: 'MigrationFailed', details: { version: 2 } },
     });
 
-    const again = openDatabase(file);
-    if (!again.ok) throw new Error('reopen failed');
-    const columns = again.value.prepare('PRAGMA table_info(recipes)').all() as { name: string }[];
+    const again = await open(file);
+    const columns = again.database.prepare('PRAGMA table_info(recipes)').all() as {
+      name: string;
+    }[];
     expect(columns.map((c) => c.name)).not.toContain('tag');
-    expect(again.value.prepare('SELECT COUNT(*) AS n FROM recipes').get()).toEqual({ n: 1 });
-    again.value.close();
+    expect(again.database.prepare('SELECT COUNT(*) AS n FROM recipes').get()).toEqual({ n: 1 });
+    expect(
+      again.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
+    ).toEqual({ value: 1 });
+    again.close();
   });
 
   it('refuses revisions written with a newer document schema', async () => {
-    const db = memoryDb();
-    db.prepare("INSERT INTO revisions VALUES ('r', 1, 99, '{}', '2026-10-07T08:00:00.000Z')").run();
-    expect(await new SqliteNodeRecipeRepository(db).getRevision('r', 1)).toMatchObject({
+    const db = await open(':memory:');
+    db.database
+      .prepare("INSERT INTO revisions VALUES ('r', 1, 99, '{}', '2026-10-07T08:00:00.000Z')")
+      .run();
+    expect(await new SqlRecipeRepository(db.driver).getRevision('r', 1)).toMatchObject({
       ok: false,
       error: { code: 'UnsupportedDocumentVersion' },
     });

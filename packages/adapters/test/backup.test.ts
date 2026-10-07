@@ -9,9 +9,9 @@ import {
 import type { Formula, Instant, Process } from '@flourprint/core/domain';
 import { MemoryBakeEventStore, MemoryRecipeRepository } from '../src/memory/index.js';
 import {
-  openDatabase,
-  SqliteNodeBakeEventStore,
-  SqliteNodeRecipeRepository,
+  openNodeSqlite,
+  SqlBakeEventStore,
+  SqlRecipeRepository,
 } from '../src/sqlite-node/index.js';
 
 const at = (time: string) => `2026-10-07T${time}:00.000Z` as Instant;
@@ -43,12 +43,12 @@ const process: Process = {
   ],
 };
 
-const sqliteStores = (): BackupStores => {
-  const db = openDatabase(':memory:');
+const sqliteStores = async (): Promise<BackupStores> => {
+  const db = await openNodeSqlite(':memory:');
   if (!db.ok) throw new Error('open failed');
   return {
-    recipes: new SqliteNodeRecipeRepository(db.value),
-    bakes: new SqliteNodeBakeEventStore(db.value),
+    recipes: new SqlRecipeRepository(db.value.driver),
+    bakes: new SqlBakeEventStore(db.value.driver),
   };
 };
 
@@ -123,7 +123,7 @@ describe('backup', () => {
     expect(backup.ok).toBe(true);
     if (!backup.ok) return;
 
-    const target = sqliteStores();
+    const target = await sqliteStores();
     expect(await importBackup(target, JSON.parse(JSON.stringify(backup.value)))).toEqual({
       ok: true,
       value: undefined,
@@ -148,7 +148,7 @@ describe('backup', () => {
   });
 
   it('refuses newer and malformed backups', async () => {
-    const empty = sqliteStores();
+    const empty = await sqliteStores();
     const base = {
       kind: 'flourprint-backup',
       exportedAt: at('12:00'),

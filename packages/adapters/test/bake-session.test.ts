@@ -17,16 +17,24 @@ import {
   type Process,
 } from '@flourprint/core/domain';
 import { MemoryBakeEventStore } from '../src/memory/index.js';
-import { openDatabase, SqliteNodeBakeEventStore } from '../src/sqlite-node/index.js';
+import { openNodeSqlite, SqlBakeEventStore } from '../src/sqlite-node/index.js';
 
 const stores: Array<[string, () => BakeEventStore]> = [
   ['memory', () => new MemoryBakeEventStore()],
   [
     'sqlite-node',
     () => {
-      const db = openDatabase(':memory:');
-      if (!db.ok) throw new Error(JSON.stringify(db.error));
-      return new SqliteNodeBakeEventStore(db.value);
+      // A lazily opened SQLite store: the Session class builds its store synchronously.
+      const opening = openNodeSqlite(':memory:').then((db) => {
+        if (!db.ok) throw new Error(JSON.stringify(db.error));
+        return new SqlBakeEventStore(db.value.driver);
+      });
+      return {
+        findCommand: async (id) => (await opening).findCommand(id),
+        loadEvents: async (id) => (await opening).loadEvents(id),
+        append: async (input) => (await opening).append(input),
+        listBakes: async () => (await opening).listBakes(),
+      } satisfies BakeEventStore;
     },
   ],
 ];

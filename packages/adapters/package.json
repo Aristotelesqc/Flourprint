@@ -11,6 +11,14 @@
     "./sqlite-node": {
       "types": "./dist/sqlite-node/index.d.ts",
       "default": "./dist/sqlite-node/index.js"
+    },
+    "./sqlite-capacitor": {
+      "types": "./dist/sqlite-capacitor/index.d.ts",
+      "default": "./dist/sqlite-capacitor/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
     }
   },
   "files": [
@@ -18,5 +26,17 @@
   ],
   "dependencies": {
     "@flourprint/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@capacitor-community/sqlite": "^8.1.1",
+    "@capacitor/core": "^8.5.2"
+  },
+  "peerDependencies": {
+    "@capacitor-community/sqlite": "^8.1.1"
+  },
+  "peerDependenciesMeta": {
+    "@capacitor-community/sqlite": {
+      "optional": true
+    }
   }
 }

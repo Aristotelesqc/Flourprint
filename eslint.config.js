@@ -55,8 +55,8 @@ export default tseslint.config(
     },
   },
   {
-    // Memory and shared adapters also run in the mobile bundle: no Node modules.
-    files: ['packages/adapters/src/memory/**/*.ts', 'packages/adapters/src/shared/**/*.ts'],
+    // Adapters that run in the mobile bundle: no Node modules.
+    files: ['packages/adapters/src/{memory,shared,sql,testing,sqlite-capacitor}/**/*.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

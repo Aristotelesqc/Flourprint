@@ -1,16 +1,12 @@
-import { DatabaseSync } from 'node:sqlite';
 import { domainError, err, ok, type DomainError, type Result } from '@flourprint/core/domain';
-
-/**
- * SQLite on Node through the built-in `node:sqlite` module (no native dependency). Provisional
- * driver: spike #24 confirms it for the CLI and tests (docs/contracts/persistence.md).
- */
+import type { SqlDriver } from './driver.js';
 
 export interface Migration {
   readonly version: number;
   readonly sql: string;
 }
 
+/** Schema of docs/contracts/persistence.md. Append new versions; never edit applied ones. */
 export const MIGRATIONS: readonly Migration[] = [
   {
     version: 1,
@@ -58,46 +54,41 @@ export type OpenError =
   | DomainError<'UnsupportedDatabaseVersion', { databaseVersion: number; supportedVersion: number }>
   | DomainError<'MigrationFailed', { version: number; reason: string }>;
 
-/** Runs `work` in one `BEGIN IMMEDIATE` transaction, rolled back if it throws. */
-export const immediate = <T>(db: DatabaseSync, work: () => T): T => {
-  db.exec('BEGIN IMMEDIATE');
-  try {
-    const result = work();
-    db.exec('COMMIT');
-    return result;
-  } catch (error) {
-    db.exec('ROLLBACK');
-    throw error;
-  }
+export const schemaVersion = async (driver: SqlDriver): Promise<number> => {
+  await driver.execute(
+    'CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value INTEGER NOT NULL)',
+  );
+  const rows = await driver.query<{ value: number }>(
+    "SELECT value FROM schema_meta WHERE key = 'schema_version'",
+  );
+  return Number(rows[0]?.value ?? 0);
 };
 
-const userVersion = (db: DatabaseSync): number =>
-  Number((db.prepare('PRAGMA user_version').get() as { user_version: number }).user_version);
-
-/** Applies pending migrations, each in its own transaction (persistence.md). */
-export const migrate = (
-  db: DatabaseSync,
+/** Applies pending migrations, each in its own transaction; refuses newer databases. */
+export const migrate = async (
+  driver: SqlDriver,
   migrations: readonly Migration[] = MIGRATIONS,
-): Result<number, OpenError> => {
+): Promise<Result<number, OpenError>> => {
   const supportedVersion = migrations.at(-1)?.version ?? 0;
-  const databaseVersion = userVersion(db);
+  const databaseVersion = await schemaVersion(driver);
   if (databaseVersion > supportedVersion) {
     return err(
       domainError(
         'UnsupportedDatabaseVersion',
         `Database version ${databaseVersion} is newer than this app`,
-        {
-          databaseVersion,
-          supportedVersion,
-        },
+        { databaseVersion, supportedVersion },
       ),
     );
   }
   for (const migration of migrations.filter((m) => m.version > databaseVersion)) {
     try {
-      immediate(db, () => {
-        db.exec(migration.sql);
-        db.exec(`PRAGMA user_version = ${migration.version}`);
+      await driver.transaction(async (tx) => {
+        await tx.execute(migration.sql);
+        await tx.run(
+          `INSERT INTO schema_meta (key, value) VALUES ('schema_version', ?)
+           ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
+          [migration.version],
+        );
       });
     } catch (error) {
       return err(
@@ -108,21 +99,5 @@ export const migrate = (
       );
     }
   }
-  return ok(userVersion(db));
-};
-
-/** Opens (and migrates) a Flourprint database file; `:memory:` for tests. */
-export const openDatabase = (
-  path: string,
-  migrations: readonly Migration[] = MIGRATIONS,
-): Result<DatabaseSync, OpenError> => {
-  const db = new DatabaseSync(path);
-  if (path !== ':memory:') db.exec('PRAGMA journal_mode = WAL');
-  db.exec('PRAGMA busy_timeout = 5000');
-  const migrated = migrate(db, migrations);
-  if (!migrated.ok) {
-    db.close();
-    return migrated;
-  }
-  return ok(db);
+  return ok(await schemaVersion(driver));
 };
