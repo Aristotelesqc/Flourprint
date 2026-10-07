@@ -34,7 +34,7 @@ export const NumberField = ({ label, value, unit, onCommit }: Props) => {
   return (
     <IonInput
       aria-label={label}
-      className={`min-h-[var(--spacing-touch)] text-right ${invalid ? 'ion-invalid ion-touched' : ''}`}
+      className={`fp-number min-h-[var(--spacing-touch)] text-right ${invalid ? 'ion-invalid ion-touched' : ''}`}
       inputmode="decimal"
       value={text}
       {...(invalid ? { errorText: t('field.invalidNumber') } : {})}

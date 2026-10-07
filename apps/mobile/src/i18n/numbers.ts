@@ -11,12 +11,9 @@ export const parseDecimal = (text: string): number | undefined => {
   return Number.isFinite(value) ? value : undefined;
 };
 
-/** Grams under 100 keep one decimal so salt and yeast stay weighable. */
+/** Grams under 100 keep up to one decimal so salt and yeast stay weighable; no trailing zero. */
 export const formatGrams = (grams: number, locale: string): string =>
-  `${new Intl.NumberFormat(locale, {
-    maximumFractionDigits: grams < 100 ? 1 : 0,
-    minimumFractionDigits: grams < 100 ? 1 : 0,
-  }).format(grams)} g`;
+  `${new Intl.NumberFormat(locale, { maximumFractionDigits: grams < 100 ? 1 : 0 }).format(grams)} g`;
 
 export const formatPct = (pct: number, locale: string): string =>
   `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(pct)} %`;

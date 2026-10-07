@@ -20,7 +20,7 @@ interface Props {
 
 /** Explains a calculated value from the engine's own contributions (#8, #19). */
 export const WaterExplanation = ({ resolved, open, onClose }: Props) => {
-  const { t, grams, pct } = useMessages();
+  const { t, grams, pct, name } = useMessages();
   const water = resolved.totalWater;
   return (
     <IonModal isOpen={open} onDidDismiss={onClose}>
@@ -35,10 +35,10 @@ export const WaterExplanation = ({ resolved, open, onClose }: Props) => {
             <IonItem key={`${c.kind}-${c.source}`}>
               <IonLabel>
                 {c.kind === 'pureWater'
-                  ? t('explain.pureWater', { name: c.source })
+                  ? t('explain.pureWater', { name: name(c.source) })
                   : c.kind === 'loss'
-                    ? t('explain.loss', { name: c.source })
-                    : t('explain.ingredient', { name: c.source, status: c.status })}
+                    ? t('explain.loss', { name: name(c.source) })
+                    : t('explain.ingredient', { name: name(c.source), status: c.status })}
               </IonLabel>
               <span slot="end">
                 {grams(c.grams)}
@@ -48,7 +48,7 @@ export const WaterExplanation = ({ resolved, open, onClose }: Props) => {
           ))}
           {water.unknownContributors.map((id) => (
             <IonItem key={`unknown-${id}`}>
-              <IonLabel>{t('explain.unknown', { name: id })}</IonLabel>
+              <IonLabel>{t('explain.unknown', { name: name(id) })}</IonLabel>
             </IonItem>
           ))}
           <IonItem lines="none">

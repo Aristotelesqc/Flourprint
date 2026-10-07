@@ -19,16 +19,46 @@
   --ion-color-primary: var(--color-crust);
   --ion-color-primary-rgb: 138, 75, 31;
   --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
   --ion-color-primary-shade: #794219;
   --ion-color-primary-tint: #965d35;
   --ion-background-color: var(--color-crumb);
+  --ion-background-color-rgb: 246, 239, 227;
   --ion-text-color: var(--color-ink);
+  /* Ionic derives secondary text (unselected tabs, notes) from these. */
+  --ion-text-color-rgb: 43, 33, 24;
+  --ion-toolbar-background: var(--color-crumb);
+  --ion-item-background: transparent;
 }
 
+/*
+ * On top of Ionic's dark palette (main.tsx), so every Ionic color has a dark value. The palette
+ * uses `:root.md` / `:root.ios`; the same selectors are needed to win over it.
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --ion-background-color: #1d1712;
-    --ion-text-color: #f3ebe0;
+  :root,
+  :root.md,
+  :root.ios {
+    --color-crust: #e09a62;
+    --color-crumb: #1d1712;
+    --color-ink: #f3ebe0;
     --color-muted: #b9a998;
+    --color-alert: #f2b8b5;
+    --ion-color-primary-rgb: 224, 154, 98;
+    --ion-color-primary-contrast: #1d1712;
+    --ion-color-primary-contrast-rgb: 29, 23, 18;
+    --ion-color-primary-shade: #c58756;
+    --ion-color-primary-tint: #e3a472;
+    --ion-background-color-rgb: 29, 23, 18;
+    --ion-text-color-rgb: 243, 235, 224;
+    --ion-background-color: var(--color-crumb);
+    --ion-text-color: var(--color-ink);
+    --ion-toolbar-background: #261e17;
+    --ion-item-background: transparent;
   }
+}
+
+/* Editable numbers carry an underline; calculated values do not (#8). */
+.fp-number {
+  border-bottom: 1px solid var(--color-muted);
 }

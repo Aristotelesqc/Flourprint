@@ -7,7 +7,15 @@ const H = 3600;
 export const sampleRecipe: { id: string; name: string; formula: Formula; process: Process } = {
   id: 'poolish-tangzhong',
   name: 'Poolish + tangzhong',
-  formula: poolishTangzhong as Formula,
+  formula: {
+    ...(poolishTangzhong as Formula),
+    // Instant yeast is about 5 % water; an estimate keeps total water complete in the sample.
+    ingredients: (poolishTangzhong as Formula).ingredients.map((i) =>
+      i.id === 'instant-yeast'
+        ? { ...i, water: { status: 'estimated', valuePct: 5, rangePct: [4, 6] } }
+        : i,
+    ),
+  },
   process: {
     steps: [
       {

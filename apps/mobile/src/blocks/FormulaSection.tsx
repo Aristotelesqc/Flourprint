@@ -1,6 +1,7 @@
 import { IonNote } from '@ionic/react';
 import { useState, type ReactNode } from 'react';
 import type { Formula, FormulaEdit, ResolvedFormula } from '@flourprint/core/domain';
+import { editableNumber } from '../i18n/numbers';
 import { useMessages } from '../i18n/use-messages';
 import { NumberField } from './NumberField';
 import { WaterExplanation } from './WaterExplanation';
@@ -13,7 +14,7 @@ interface Props {
 
 /** Formula table, totals and explanations; every number comes from the engine (#8, #19). */
 export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
-  const { t, grams, pct } = useMessages();
+  const { t, grams, pct, name, locale } = useMessages();
   const [explaining, setExplaining] = useState(false);
   const anchor = formula.anchor;
   const anchorText =
@@ -29,9 +30,18 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
         <span className="text-right font-semibold">{t('formula.column.bakerPct')}</span>
         <span className="text-right font-semibold">{t('formula.column.grams')}</span>
         {Object.entries(resolved.flourByFlour).map(([id, flourGrams]) => (
-          <Row key={id} label={id} pct={pct((100 * flourGrams) / resolved.flourTotal)}>
+          <Row
+            key={id}
+            label={name(id)}
+            pct={
+              <Calculated
+                value={editableNumber((100 * flourGrams) / resolved.flourTotal, locale)}
+                unit="%"
+              />
+            }
+          >
             <NumberField
-              label={id}
+              label={name(id)}
               unit="g"
               value={flourGrams}
               onCommit={(value) =>
@@ -43,10 +53,10 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
         {formula.ingredients.map((ingredient) => (
           <Row
             key={ingredient.id}
-            label={ingredient.id}
+            label={name(ingredient.id)}
             pct={
               <NumberField
-                label={`${ingredient.id} %`}
+                label={`${name(ingredient.id)} %`}
                 unit="%"
                 value={ingredient.bakerPct}
                 onCommit={(value) =>
@@ -56,7 +66,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
             }
           >
             <NumberField
-              label={ingredient.id}
+              label={name(ingredient.id)}
               unit="g"
               value={resolved.grams[ingredient.id] ?? 0}
               onCommit={(value) =>
@@ -67,7 +77,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
         ))}
       </div>
 
-      <dl className="mt-4 grid grid-cols-[1fr_auto] gap-y-1">
+      <dl className="mt-4 grid grid-cols-[1fr_auto] items-center gap-y-1">
         <dt>{t('formula.total.flour')}</dt>
         <dd className="text-right">{grams(resolved.flourTotal)}</dd>
         <dt>{t('formula.total.dough')}</dt>
@@ -80,7 +90,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
         <dd className="text-right">
           <button
             type="button"
-            className="min-h-[var(--spacing-touch)] text-[var(--color-crust)] underline decoration-dotted"
+            className="min-h-[var(--spacing-touch)] border-0 bg-transparent p-0 text-[var(--color-crust)] underline decoration-dotted underline-offset-4"
             onClick={() => setExplaining(true)}
           >
             {grams(resolved.totalWater.value)} · {pct(resolved.totalWaterPct)}
@@ -90,7 +100,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
       {resolved.totalWater.completeness === 'incomplete' && (
         <IonNote>
           {t('formula.water.incomplete', {
-            ingredients: resolved.totalWater.unknownContributors.join(', '),
+            ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
           })}
         </IonNote>
       )}
@@ -98,22 +108,40 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
       {Object.keys(resolved.components).length > 0 && (
         <section className="mt-4">
           <h2 className="font-semibold">{t('formula.components')}</h2>
-          {Object.entries(resolved.components).map(([id, c]) => (
-            <p key={id}>
-              {id}: {grams(c.flour)} + {grams(c.water)} → {grams(c.mass)}
-            </p>
-          ))}
-          <h2 className="mt-2 font-semibold">{t('formula.finalMix')}</h2>
-          <p>
+          <ul className="mt-1 list-none pl-0">
+            {Object.entries(resolved.components).map(([id, c]) => {
+              const others = c.mass - c.flour - c.water;
+              return (
+                <li key={id} className="flex items-baseline justify-between gap-4 py-1">
+                  <span>
+                    {name(id)}
+                    <span className="block text-sm text-[var(--color-muted)]">
+                      {t('formula.component.detail', {
+                        flour: grams(c.flour),
+                        water: grams(c.water),
+                        others: others > 0.05 ? grams(others) : 'none',
+                      })}
+                    </span>
+                  </span>
+                  <span>{grams(c.mass)}</span>
+                </li>
+              );
+            })}
+          </ul>
+          <h2 className="mt-4 font-semibold">{t('formula.finalMix')}</h2>
+          <ul className="mt-1 list-none pl-0">
             {[
               ...Object.entries(resolved.finalMix.flourByFlour),
               ['water', resolved.finalMix.water] as const,
               ...Object.entries(resolved.finalMix.grams),
               ...Object.entries(resolved.finalMix.componentMasses),
-            ]
-              .map(([id, g]) => `${id} ${grams(g)}`)
-              .join(' · ')}
-          </p>
+            ].map(([id, g]) => (
+              <li key={id} className="flex justify-between gap-4 py-1">
+                <span>{name(id)}</span>
+                <span>{grams(g)}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       <WaterExplanation
@@ -124,6 +152,14 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
     </>
   );
 };
+
+/** A calculated value laid out like a NumberField, without the underline of editable values. */
+const Calculated = ({ value, unit }: { value: string; unit: string }) => (
+  <span className="flex min-h-[var(--spacing-touch)] items-center justify-end gap-2">
+    <span>{value}</span>
+    <span className="text-[var(--color-muted)]">{unit}</span>
+  </span>
+);
 
 const Row = ({ label, pct, children }: { label: string; pct: ReactNode; children: ReactNode }) => (
   <>
