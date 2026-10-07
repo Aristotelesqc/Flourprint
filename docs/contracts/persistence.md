@@ -38,11 +38,17 @@ bake_commands  (command_id TEXT PRIMARY KEY, bake_id TEXT NOT NULL, content TEXT
                 first_seq INTEGER NOT NULL, last_seq INTEGER NOT NULL)
 bakes          (bake_id TEXT PRIMARY KEY, summary TEXT NOT NULL, status TEXT NOT NULL,
                 updated_at TEXT NOT NULL)
+schema_meta    (key TEXT PRIMARY KEY, value INTEGER NOT NULL)
 ```
 
+The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node
+(`node:sqlite`) and Android (`@capacitor-community/sqlite`) only provide drivers. Every operation
+on a connection is serialized, so a transaction never interleaves with another operation.
+
 - Documents are JSON. Columns other than keys, versions and `document` are index projections.
-- The schema version is SQLite's `user_version`. Migrations run in one transaction each, in
-  order; a failure rolls back and leaves the previous version usable. A database newer than the
+- The schema version is stored in `schema_meta (key TEXT PRIMARY KEY, value INTEGER)` under the
+  key `schema_version`, not in `PRAGMA user_version`, which some drivers (Capacitor) manage
+  themselves. Migrations run in one transaction each, in order; a failure rolls back and leaves the previous version usable. A database newer than the
   app is refused (`UnsupportedDatabaseVersion`).
 - Every write that spans several rows is one transaction (`BEGIN IMMEDIATE`).
 
