@@ -53,10 +53,19 @@ export const openCapacitorSqlite = async (
   return ok({ driver, close });
 };
 
-/** Deletes a database file; used by the device checks on their own scratch database. */
+/**
+ * Deletes a database file; used by the device checks on their own scratch database. The plugin
+ * deletes only through a live connection (it throws "No available connection" otherwise), so one
+ * is created when needed. Errors propagate: a silent failure would leave stale data behind.
+ */
 export const deleteCapacitorDatabase = async (name: string): Promise<void> => {
-  if ((await connections.isConnection(name, false)).result) {
+  const existing = (await connections.isConnection(name, false)).result;
+  const db = existing
+    ? await connections.retrieveConnection(name, false)
+    : await connections.createConnection(name, false, 'no-encryption', 1, false);
+  try {
+    await db.delete();
+  } finally {
     await connections.closeConnection(name, false);
   }
-  await CapacitorSQLite.deleteDatabase({ database: name }).catch(() => undefined);
 };

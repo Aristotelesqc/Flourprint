@@ -10,7 +10,7 @@ import {
 
 /**
  * Device checks for spikes #23 and #24. The store contract runs on a scratch database
- * (`flourprint-checks`), never on the user's data.
+ * (`flourprint-checks-*`, one per check), never on the user's data.
  */
 
 const native = () => Capacitor.isNativePlatform();
@@ -24,13 +24,25 @@ export const runStoreChecks = async (): Promise<CheckResult[]> => {
     ];
   }
   const sqlite = await import('@flourprint/adapters/sqlite-capacitor');
-  let open: { close(): Promise<void> } | undefined;
+  // One scratch database per check: a check never sees data left by another one, even if a
+  // deletion fails. Each is deleted after use and failures are reported, not swallowed.
+  const run = Date.now().toString(36);
+  let count = 0;
+  let open: { name: string; close(): Promise<void> } | undefined;
+  const cleanup = async () => {
+    if (!open) return;
+    const { name, close } = open;
+    open = undefined;
+    await close();
+    await sqlite.deleteCapacitorDatabase(name);
+  };
   const freshDriver = async () => {
-    await open?.close();
-    await sqlite.deleteCapacitorDatabase('flourprint-checks');
-    const db = await sqlite.openCapacitorSqlite('flourprint-checks');
+    await cleanup();
+    const name = `flourprint-checks-${run}-${++count}`;
+    const db = await sqlite.openCapacitorSqlite(name);
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
-    open = db.value;
+    open = { name, close: db.value.close };
+    await assertEmpty(db.value.driver, name);
     return db.value.driver;
   };
   try {
@@ -47,8 +59,17 @@ export const runStoreChecks = async (): Promise<CheckResult[]> => {
       )),
     ];
   } finally {
-    await open?.close();
-    await sqlite.deleteCapacitorDatabase('flourprint-checks');
+    await cleanup();
+  }
+};
+
+const assertEmpty = async (
+  driver: import('@flourprint/adapters/sqlite-capacitor').CapacitorSqlite['driver'],
+  name: string,
+) => {
+  for (const table of ['recipes', 'revisions', 'bake_events', 'bake_commands', 'bakes']) {
+    const [row] = await driver.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`);
+    if (row?.n !== 0) throw new Error(`Scratch database ${name} is not empty (${table})`);
   }
 };
 
