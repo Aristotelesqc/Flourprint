@@ -4,7 +4,7 @@ import { IntlProvider } from 'react-intl';
 import { Navigate, Route } from 'react-router-dom';
 import { catalogs, type Locale } from './i18n/messages';
 import { DeviceChecksPage } from './pages/DeviceChecksPage';
-import { FormulaPage } from './pages/FormulaPage';
+import { RecipePage } from './pages/RecipePage';
 import { RecipesPage } from './pages/RecipesPage';
 import { DraftsProvider } from './services/drafts';
 import { ServicesProvider, type Services } from './services/services';
@@ -19,7 +19,7 @@ export const App = ({ services, locale }: { services: Services; locale: Locale }
           <IonReactRouter>
             <IonRouterOutlet>
               <Route path="/recipes" element={<RecipesPage />} />
-              <Route path="/recipes/:recipeId" element={<FormulaPage />} />
+              <Route path="/recipes/:recipeId" element={<RecipePage />} />
               <Route path="/device-checks" element={<DeviceChecksPage />} />
               <Route path="/" element={<Navigate to="/recipes" replace />} />
             </IonRouterOutlet>
