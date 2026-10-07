@@ -41,8 +41,11 @@ jobs:
           java-version: '21'
       - run: pnpm install --frozen-lockfile
       - name: Build identifiers
+        # On a pull request GITHUB_SHA is GitHub's temporary merge commit; label the branch commit.
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+          echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
           echo "FLOURPRINT_VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
       - run: pnpm build
       - run: pnpm build:mobile
