@@ -7,6 +7,10 @@
     "./memory": {
       "types": "./dist/memory/index.d.ts",
       "default": "./dist/memory/index.js"
+    },
+    "./sqlite-node": {
+      "types": "./dist/sqlite-node/index.d.ts",
+      "default": "./dist/sqlite-node/index.js"
     }
   },
   "files": [

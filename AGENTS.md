@@ -34,5 +34,5 @@ node apps/cli/dist/main.js --version
 
 ## Development order
 
-See ADR 0008. Current step: 5, persistence. The Android driver waits for spike #24 (real device); the
-SQLite Node adapter and the shared repository contract tests can start.
+See ADR 0008. Current step: 5, persistence. Done on Node: SQLite adapter (`@flourprint/adapters/sqlite-node`),
+shared contract tests. Waiting for spike #24: the Capacitor driver, which must pass the same suite.

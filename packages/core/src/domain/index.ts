@@ -9,3 +9,4 @@ export * from './version.js';
 export * from './canonical-json.js';
 export * from './values.js';
 export * from './bake/index.js';
+export * from './recipe/types.js';

@@ -15,6 +15,9 @@ Deferred: Zustand, Storybook, Playwright, ORM/query builder, LAN updater (#12), 
 - Node ≥ 22 (the final runtime is chosen in #24, notably for `node:sqlite`).
 - TypeScript `~6.0`: typescript-eslint does not support TypeScript 7 yet.
 - pnpm 10.
+- SQLite on Node (CLI, tests): the built-in `node:sqlite` module, **provisionally**. It needs no
+  native compilation, which matters for Windows. It is still flagged experimental on Node 22 and
+  prints a warning; spike #24 confirms or replaces it, together with the Capacitor driver.
 
 ## Consequences
 

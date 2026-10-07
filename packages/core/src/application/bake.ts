@@ -1,6 +1,8 @@
 import {
+  bakeSummary,
   canonicalJson,
   decide,
+  evolve,
   domainError,
   err,
   EVENT_SCHEMA_VERSION,
@@ -98,12 +100,18 @@ export const executeBakeCommand = async (
     payload: draft.payload,
   }));
 
+  const next = events.reduce(evolve, state);
   const appended = await deps.store.append({
     command: { commandId: command.commandId, bakeId: command.bakeId, content },
     expectedVersion: command.expectedVersion,
     events,
+    summary: bakeSummary(next, now),
   });
   if (!appended.ok) return appended;
-  const reloaded = await loadBake(deps.store, command.bakeId);
-  return reloaded.ok ? ok({ events: appended.value, state: reloaded.value }) : reloaded;
+  if (appended.value !== events) {
+    // A concurrent retry of the same command was stored first: read what was recorded.
+    const reloaded = await loadBake(deps.store, command.bakeId);
+    return reloaded.ok ? ok({ events: appended.value, state: reloaded.value }) : reloaded;
+  }
+  return ok({ events, state: next });
 };

@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
-import { executeBakeCommand, loadBake, type BakeDependencies } from '@flourprint/core/application';
+import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  executeBakeCommand,
+  loadBake,
+  type BakeDependencies,
+  type BakeEventStore,
+} from '@flourprint/core/application';
 import {
   replayBake,
   type BakeCommand,
@@ -12,6 +17,20 @@ import {
   type Process,
 } from '@flourprint/core/domain';
 import { MemoryBakeEventStore } from '../src/memory/index.js';
+import { openDatabase, SqliteNodeBakeEventStore } from '../src/sqlite-node/index.js';
+
+const stores: Array<[string, () => BakeEventStore]> = [
+  ['memory', () => new MemoryBakeEventStore()],
+  [
+    'sqlite-node',
+    () => {
+      const db = openDatabase(':memory:');
+      if (!db.ok) throw new Error(JSON.stringify(db.error));
+      return new SqliteNodeBakeEventStore(db.value);
+    },
+  ],
+];
+let makeStore: () => BakeEventStore = () => new MemoryBakeEventStore();
 
 /** End-to-end session tests through the application use case and the memory store. */
 const formula = (
@@ -70,7 +89,7 @@ const process_: Process = {
 const t = (time: string) => `2026-10-07T${time}:00.000Z` as Instant;
 
 class Session {
-  readonly store = new MemoryBakeEventStore();
+  readonly store = makeStore();
   #now = `2026-10-06T20:00:00.000Z` as Instant;
   #id = 0;
   #version = 0;
@@ -116,7 +135,11 @@ class Session {
   }
 }
 
-describe('bake session', () => {
+describe.each(stores)('bake session on %s', (_name, factory) => {
+  beforeEach(() => {
+    makeStore = factory;
+  });
+
   it('starts with a snapshot of the resolved formula and plan', async () => {
     const session = new Session();
     const { state, events } = await session.start();
@@ -336,6 +359,7 @@ describe('bake session', () => {
       command: { commandId: 'x', bakeId: 'bake-1', content: '{}' },
       expectedVersion: 0,
       events: [{ ...(started as BakeEvent), schemaVersion: 2 }],
+      summary: { bakeId: 'bake-1', status: 'active', version: 1, updatedAt: t('08:00') },
     });
     expect(await loadBake(store, 'bake-1')).toMatchObject({
       ok: false,

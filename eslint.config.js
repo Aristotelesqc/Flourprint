@@ -37,6 +37,16 @@ export default tseslint.config(
     rules: { 'no-restricted-imports': ['error', { patterns: domainForbidden }] },
   },
   {
+    // Memory and shared adapters also run in the mobile bundle: no Node modules.
+    files: ['packages/adapters/src/memory/**/*.ts', 'packages/adapters/src/shared/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['node:*'], message: 'Browser-safe adapters cannot use Node.' }] },
+      ],
+    },
+  },
+  {
     files: ['packages/core/src/application/**/*.ts'],
     rules: {
       'no-restricted-imports': [
