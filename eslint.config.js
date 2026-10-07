@@ -22,7 +22,7 @@ const domainForbidden = [
 ];
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', 'pnpm-lock.yaml'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', 'pnpm-lock.yaml', 'apps/mobile/android/**'] },
   js.configs.recommended,
   ...tseslint.configs.strict,
   {

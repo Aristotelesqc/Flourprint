@@ -22,6 +22,7 @@ import {
 import { NumberField } from '../blocks/NumberField';
 import { WaterExplanation } from '../blocks/WaterExplanation';
 import { useMessages } from '../i18n/use-messages';
+import { useDrafts } from '../services/drafts';
 import { useServices } from '../services/services';
 
 /**
@@ -31,6 +32,7 @@ import { useServices } from '../services/services';
 export const FormulaPage = () => {
   const recipeId = useParams<{ recipeId: string }>().recipeId ?? '';
   const services = useServices();
+  const drafts = useDrafts();
   const { t, grams, pct, error } = useMessages();
   const [base, setBase] = useState<{ name: string; revision: Revision }>();
   const [draft, setDraft] = useState<Revision['formula']>();
@@ -45,7 +47,7 @@ export const FormulaPage = () => {
       const revision = await services.recipes.getRevision(recipeId, recipe.headVersion);
       if (revision.ok && revision.value) {
         setBase({ name: recipe.name, revision: revision.value });
-        setDraft(revision.value.formula);
+        setDraft(drafts.get(recipeId, revision.value.version) ?? revision.value.formula);
       }
     })();
   }, [recipeId, services]);
@@ -59,6 +61,7 @@ export const FormulaPage = () => {
     setNotice(undefined);
     if (next.ok) {
       setDraft(next.value);
+      drafts.set(recipeId, base.revision.version, next.value);
       setFailure(undefined);
     } else {
       setFailure(next.error);
@@ -78,6 +81,7 @@ export const FormulaPage = () => {
       setFailure(saved.error);
       return;
     }
+    drafts.clear(recipeId);
     setBase({ name: base.name, revision: saved.value });
     setDraft(saved.value.formula);
     setNotice(t('formula.saved', { version: saved.value.version }));
@@ -222,7 +226,10 @@ export const FormulaPage = () => {
             <IonButton
               expand="block"
               fill="outline"
-              onClick={() => setDraft(base.revision.formula)}
+              onClick={() => {
+                drafts.clear(recipeId);
+                setDraft(base.revision.formula);
+              }}
             >
               {t('formula.discard')}
             </IonButton>

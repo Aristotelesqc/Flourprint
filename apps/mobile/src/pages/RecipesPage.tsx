@@ -46,6 +46,9 @@ export const RecipesPage = () => {
             ))}
           </IonList>
         )}
+        <IonItem routerLink="/device-checks" lines="none" detail className="mt-6">
+          <IonLabel color="medium">{t('recipes.deviceChecks')}</IonLabel>
+        </IonItem>
       </IonContent>
     </IonPage>
   );
