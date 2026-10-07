@@ -19,6 +19,10 @@ Deferred: Zustand, Storybook, Playwright, ORM/query builder, LAN updater (#12), 
   native compilation, which matters for Windows. It is still flagged experimental on Node 22 and
   prints a warning; spike #24 confirms or replaces it, together with the Capacitor driver.
 
+- Mobile app, **provisional until spike #23 runs on the device**: React 19.3, Ionic React 9.0 with
+  `@ionic/react-router` 9 (which requires React Router 6.x), Capacitor 8.5, Tailwind CSS 4.3
+  without Preflight, Vite 8, React Hook Form 7, `react-intl` 12.
+
 ## Consequences
 
 Spikes #23 (Android UI) and #24 (SQLite) settle the versions of React, Ionic, Capacitor, Tailwind,

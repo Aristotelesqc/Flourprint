@@ -21,3 +21,6 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm vitest run
       - run: node apps/cli/dist/main.js --version
+      - run: pnpm build:mobile
+      - name: Mobile bundle has no Node module
+        run: "! grep -l 'node:' apps/mobile/dist/assets/*.js"

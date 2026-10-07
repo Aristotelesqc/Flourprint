@@ -1,0 +1,34 @@
+/*
+ * Tailwind v4 without Preflight: Ionic keeps its own normalization (#22, #23).
+ * Shared tokens feed both Ionic (CSS variables) and Tailwind (@theme).
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme {
+  --color-crust: #8a4b1f;
+  --color-crumb: #f6efe3;
+  --color-ink: #2b2118;
+  --color-muted: #7a6a5a;
+  --color-alert: #b3261e;
+  --spacing-touch: 3rem;
+}
+
+:root {
+  --ion-color-primary: var(--color-crust);
+  --ion-color-primary-rgb: 138, 75, 31;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade: #794219;
+  --ion-color-primary-tint: #965d35;
+  --ion-background-color: var(--color-crumb);
+  --ion-text-color: var(--color-ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-background-color: #1d1712;
+    --ion-text-color: #f3ebe0;
+    --color-muted: #b9a998;
+  }
+}

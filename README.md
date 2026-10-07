@@ -28,12 +28,15 @@ Add `--json` to any command for machine-readable output.
 packages/core     domain (pure calculations), application (use cases, ports), contracts (boundaries)
 packages/adapters port implementations (memory today; SQLite with step 5)
 apps/cli          Commander CLI, a client of the engine
+apps/mobile       Ionic React + Capacitor app (browser exploration with memory stores today)
 docs/contracts    data semantics and reference fixtures
 docs/adr          architecture decisions
 examples          sample formula files for the CLI
 ```
 
-`packages/ui` and `apps/mobile` arrive with step 6 (ADR 0008).
+Run the app in a browser with `pnpm build && pnpm --filter @flourprint/mobile dev`. Data lives in
+memory until the Capacitor SQLite adapter lands (spike #24). `packages/ui` is extracted when blocks
+are shared by several screens.
 
 ## Language
 

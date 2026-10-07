@@ -22,7 +22,9 @@ The app itself must be able to support several languages.
   `reason`/`missing` are stable codes and data. `message` is English developer text, never shown
   as-is to users; the UI and CLI map codes to localized messages.
 - User content (recipe names, notes) is stored as entered and never translated.
-- The i18n library is chosen during #23, among libraries that support ICU messages and React.
+- The i18n library is `react-intl` (FormatJS, ICU messages), provisionally until #23 confirms it
+  on the device. Catalogs live in `apps/mobile/src/i18n/messages.ts`; a test checks that every
+  locale has exactly the English keys.
 
 ## Consequences
 

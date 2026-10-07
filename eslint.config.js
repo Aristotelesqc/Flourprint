@@ -37,6 +37,24 @@ export default tseslint.config(
     rules: { 'no-restricted-imports': ['error', { patterns: domainForbidden }] },
   },
   {
+    files: ['apps/mobile/**/*.{ts,tsx}'],
+    languageOptions: { globals: { ...globals.browser } },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['node:*'], message: 'The mobile bundle cannot use Node.' },
+            {
+              group: ['@flourprint/adapters/sqlite-node'],
+              message: 'The Node SQLite driver must never reach the mobile bundle (ADR 0001).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // Memory and shared adapters also run in the mobile bundle: no Node modules.
     files: ['packages/adapters/src/memory/**/*.ts', 'packages/adapters/src/shared/**/*.ts'],
     rules: {
