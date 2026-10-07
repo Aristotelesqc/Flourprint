@@ -7,6 +7,7 @@ the product; the Android app, the CLI and future agent tools are clients of the 
 - Data contracts: [`docs/contracts/`](docs/contracts/README.md).
 - Architecture decisions: [`docs/adr/`](docs/adr/README.md).
 - Agent instructions: [`AGENTS.md`](AGENTS.md).
+- Testing on an Android phone: [`docs/device-testing.md`](docs/device-testing.md).
 
 ## Getting started
 
