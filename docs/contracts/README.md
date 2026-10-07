@@ -10,6 +10,7 @@ fixtures conform to them. Architecture choices live in `../adr/`.
 | [process.md](process.md)                     | D3       | step graph, `asap`/`alap`, projection                       |
 | [bake-session.md](bake-session.md)           | D7       | commands, events, idempotency, corrections                  |
 | [history.md](history.md)                     | D8       | snapshots, committed values, export                         |
+| [persistence.md](persistence.md)             | —        | recipes, revisions, bake summaries, SQLite schema           |
 | [capability-levels.md](capability-levels.md) | D4, D5   | N1/N2/N3, Alpha and Engine MVP                              |
 | [fixtures/](fixtures/README.md)              | —        | reference cases computed outside the engine                 |
 
