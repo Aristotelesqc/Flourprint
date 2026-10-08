@@ -35,6 +35,7 @@ node apps/cli/dist/main.js --version
 ## Development order
 
 See ADR 0008. Current step: 6, UI for dogfooding. Step 5 is done: the Capacitor SQLite driver passed
-the shared store suite on a Pixel 9 Pro XL (spike #24; forced-stop marker still to confirm).
+the shared store suite on a Pixel 9 Pro XL ([report on #24](https://github.com/Aristotelesqc/Flourprint/issues/24#issuecomment-6063973643); forced-stop marker
+and upgrade still to confirm).
 `apps/mobile` follows the #8 mockups: recipe list, Formula, Process and History tabs, and bake mode on
 the bake session. Versions stay provisional until spike #23 closes.
