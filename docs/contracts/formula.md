@@ -19,8 +19,9 @@ type Anchor =
 - A pan-based anchor (#28) converts explicitly to `doughWeight`. Mass is never inferred from a
   volume.
 - Every ingredient of `kind: 'water'` adds to the pure-water pool. Any other ingredient may carry
-  a resolved `water` content (`known`, `estimated` with an optional range, or `unknown`); a
-  missing value means `unknown`.
+  a resolved composition: `water`, `fat` and `sugar` contents per 100 g of the ingredient, each
+  `known`, `estimated` (with an optional range) or `unknown`. A known or estimated content may name
+  its `source` (a table, a label, the owner). A missing content means `unknown`.
 - Ingredients with role `topping` or `glaze` get grams from total flour but are excluded from the
   dough weight, the final mix and the water balance.
 - Identifiers (flours, ingredients, components) are non-empty strings, unique across the formula.
@@ -98,6 +99,39 @@ interface WaterBalance {
   `WaterAllocationExceeded`.
 - No quantity is called "conventional hydration". A consistency index is a model output (#27,
   N3) and is never called hydration.
+
+## Fat and sugar
+
+| Name            | Definition                                                                 |
+| --------------- | -------------------------------------------------------------------------- |
+| `totalFat`      | Σ (mass × fat fraction) of non-flour, non-water `dough`-role ingredients   |
+| `totalFatPct`   | `100 × totalFat / flourTotal`                                              |
+| `totalSugar`    | Σ (mass × sugar fraction) of non-flour, non-water `dough`-role ingredients |
+| `totalSugarPct` | `100 × totalSugar / flourTotal`                                            |
+
+- Both use the shape of `WaterBalance` (value, range, completeness, unknown contributors), with
+  the same rule: an unknown content makes the total `incomplete`, never 0.
+- Flours contribute nothing: their own lipids and sugars belong to the flour, not to the
+  enrichment. `water` ingredients contribute 0.
+- They describe what the dough contains. How fat or sugar changes the way a dough behaves (an
+  "effective hydration") is a model output (#27, N3), never called hydration.
+
+## Component style
+
+The engine names a component from its liquid ratio
+`r = 100 × (component water + water of its allocated ingredients) / component flour`:
+
+| Kind         | Name                                                          |
+| ------------ | ------------------------------------------------------------- |
+| `scald`      | `tangzhong` when r ≥ 300, `yudane` when r ≤ 150, else `scald` |
+| `preferment` | `poolish` when r ≥ 90, `biga` when r ≤ 65, else `preferment`  |
+| others       | the kind itself                                               |
+
+- The style is derived, never stored: changing the ratio renames the component.
+- An allocated ingredient whose water content is unknown leaves the style undefined; the kind
+  is shown instead.
+- The thresholds are naming conventions, not physics. Sourdough cultures are not modelled yet
+  (#9); until they are, every preferment is named by its ratio.
 
 ## Formula / Process boundary
 
