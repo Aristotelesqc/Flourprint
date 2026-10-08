@@ -45,7 +45,7 @@ const isResolvedComponent = (value: unknown): boolean =>
   isAmounts(value.flourByFlour) &&
   isAmounts(value.allocations);
 
-const isWaterBalance = (value: unknown): boolean =>
+const isWaterBalance = (value: unknown): value is Json =>
   isObject(value) &&
   isNumber(value.value) &&
   (value.completeness === 'complete' || value.completeness === 'incomplete') &&
@@ -74,7 +74,11 @@ const isResolvedFormula = (value: unknown): boolean =>
   [value.finalMix.flourByFlour, value.finalMix.grams, value.finalMix.componentMasses].every(
     isAmounts,
   ) &&
-  isWaterBalance(value.totalWater);
+  isWaterBalance(value.totalWater) &&
+  isOptional(value.totalFat, isWaterBalance) &&
+  isOptional(value.totalSugar, isWaterBalance) &&
+  isOptional(value.totalFatPct, isNumber) &&
+  isOptional(value.totalSugarPct, isNumber);
 
 const isStepShape = (value: unknown): value is Json =>
   isObject(value) &&

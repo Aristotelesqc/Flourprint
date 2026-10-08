@@ -14,12 +14,19 @@ const anchorSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('pieces'), count: z.number().int(), gramsEach: nonNegative }),
 ]);
 
-const waterContentSchema = z.discriminatedUnion('status', [
-  z.strictObject({ status: z.literal('known'), valuePct: nonNegative }),
+const percent = z.number().min(0).max(100);
+
+const contentSchema = z.discriminatedUnion('status', [
+  z.strictObject({
+    status: z.literal('known'),
+    valuePct: percent,
+    source: z.string().min(1).optional(),
+  }),
   z.strictObject({
     status: z.literal('estimated'),
-    valuePct: nonNegative,
-    rangePct: z.tuple([nonNegative, nonNegative]).optional(),
+    valuePct: percent,
+    rangePct: z.tuple([percent, percent]).optional(),
+    source: z.string().min(1).optional(),
   }),
   z.strictObject({ status: z.literal('unknown') }),
 ]);
@@ -32,7 +39,9 @@ export const formulaSchema = z.strictObject({
       kind: z.enum(['water', 'other']),
       bakerPct: nonNegative,
       role: z.enum(['dough', 'topping', 'glaze']),
-      water: waterContentSchema.optional(),
+      water: contentSchema.optional(),
+      fat: contentSchema.optional(),
+      sugar: contentSchema.optional(),
     }),
   ),
   components: z.array(

@@ -15,15 +15,21 @@ export interface FlourShare {
   readonly sharePct: number;
 }
 
-/** Resolved water content of a non-water ingredient, per 100 g of that ingredient. */
-export type WaterContent =
-  | { readonly status: 'known'; readonly valuePct: number }
+/**
+ * Resolved content (water, fat or sugar) of a non-water ingredient, per 100 g of that
+ * ingredient. `source` names where a known or estimated value comes from.
+ */
+export type ContentPct =
+  | { readonly status: 'known'; readonly valuePct: number; readonly source?: string }
   | {
       readonly status: 'estimated';
       readonly valuePct: number;
       readonly rangePct?: readonly [number, number];
+      readonly source?: string;
     }
   | { readonly status: 'unknown' };
+
+export type WaterContent = ContentPct;
 
 export type IngredientRole = 'dough' | 'topping' | 'glaze';
 
@@ -34,7 +40,11 @@ export interface Ingredient {
   readonly bakerPct: number;
   readonly role: IngredientRole;
   /** Ignored for `water` ingredients; missing means unknown. */
-  readonly water?: WaterContent;
+  readonly water?: ContentPct;
+  /** Fat per 100 g; ignored for `water` ingredients; missing means unknown. */
+  readonly fat?: ContentPct;
+  /** Sugar per 100 g; ignored for `water` ingredients; missing means unknown. */
+  readonly sugar?: ContentPct;
 }
 
 export interface ComponentAllocation {
@@ -112,4 +122,9 @@ export interface ResolvedFormula {
   readonly pureWaterPct: number;
   readonly totalWater: WaterBalance;
   readonly totalWaterPct: number;
+  /** Added fat and sugar (formula.md); absent from snapshots taken before contract 0.2. */
+  readonly totalFat?: WaterBalance;
+  readonly totalFatPct?: number;
+  readonly totalSugar?: WaterBalance;
+  readonly totalSugarPct?: number;
 }

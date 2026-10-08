@@ -311,6 +311,8 @@ export const resolveFormula = (formula: Formula): Result<ResolvedFormula, Formul
   };
 
   const totalWater = waterBalance(formula, ingredientGrams, components);
+  const totalFat = contentBalance(formula, ingredientGrams, 'fat');
+  const totalSugar = contentBalance(formula, ingredientGrams, 'sugar');
   const doughWeight =
     flourTotal + sum(doughIngredients.map((i) => ingredientGrams[i.id] ?? 0)) - losses;
 
@@ -329,7 +331,54 @@ export const resolveFormula = (formula: Formula): Result<ResolvedFormula, Formul
     pureWaterPct: (100 * pureWaterTotal) / flourTotal,
     totalWater,
     totalWaterPct: (100 * totalWater.value) / flourTotal,
+    totalFat,
+    totalFatPct: (100 * totalFat.value) / flourTotal,
+    totalSugar,
+    totalSugarPct: (100 * totalSugar.value) / flourTotal,
   });
+};
+
+/** Added fat or sugar: non-water dough ingredients only; flours contribute nothing. */
+const contentBalance = (
+  formula: Formula,
+  ingredientGrams: Readonly<Record<string, number>>,
+  content: 'fat' | 'sugar',
+): WaterBalance => {
+  const contributions: WaterContribution[] = [];
+  const unknownContributors: string[] = [];
+  for (const ingredient of formula.ingredients.filter(inDough)) {
+    if (ingredient.kind === 'water') continue;
+    const mass = ingredientGrams[ingredient.id] ?? 0;
+    const value = ingredient[content] ?? { status: 'unknown' };
+    if (value.status === 'unknown') {
+      unknownContributors.push(ingredient.id);
+      continue;
+    }
+    contributions.push({
+      source: ingredient.id,
+      kind: 'ingredient',
+      grams: (mass * value.valuePct) / 100,
+      status: value.status,
+      ...(value.status === 'estimated' && value.rangePct
+        ? {
+            range: [(mass * value.rangePct[0]) / 100, (mass * value.rangePct[1]) / 100] as const,
+          }
+        : {}),
+    });
+  }
+  return withRange({
+    value: sum(contributions.map((c) => c.grams)),
+    completeness: unknownContributors.length === 0 ? 'complete' : 'incomplete',
+    unknownContributors,
+    contributions,
+  });
+};
+
+const withRange = (balance: WaterBalance): WaterBalance => {
+  if (!balance.contributions.some((c) => c.range)) return balance;
+  const low = sum(balance.contributions.map((c) => c.range?.[0] ?? c.grams));
+  const high = sum(balance.contributions.map((c) => c.range?.[1] ?? c.grams));
+  return { ...balance, range: [low, high] };
 };
 
 const waterBalance = (
@@ -339,7 +388,6 @@ const waterBalance = (
 ): WaterBalance => {
   const contributions: WaterContribution[] = [];
   const unknownContributors: string[] = [];
-  let hasRange = false;
 
   for (const ingredient of formula.ingredients.filter(inDough)) {
     const mass = ingredientGrams[ingredient.id] ?? 0;
@@ -359,7 +407,6 @@ const waterBalance = (
     }
     const grams = (mass * water.valuePct) / 100;
     if (water.status === 'estimated' && water.rangePct) {
-      hasRange = true;
       contributions.push({
         source: ingredient.id,
         kind: 'ingredient',
@@ -387,15 +434,10 @@ const waterBalance = (
     }
   }
 
-  const value = sum(contributions.map((c) => c.grams));
-  const balance: WaterBalance = {
-    value,
+  return withRange({
+    value: sum(contributions.map((c) => c.grams)),
     completeness: unknownContributors.length === 0 ? 'complete' : 'incomplete',
     unknownContributors,
     contributions,
-  };
-  if (!hasRange) return balance;
-  const low = sum(contributions.map((c) => c.range?.[0] ?? c.grams));
-  const high = sum(contributions.map((c) => c.range?.[1] ?? c.grams));
-  return { ...balance, range: [low, high] };
+  });
 };
