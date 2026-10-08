@@ -4,7 +4,7 @@
 
 1. `docs/contracts/`: data and calculation semantics. Do not reconstruct them from issue comments.
 2. `docs/adr/`: architecture decisions.
-3. Issue #30: record of the arbitration. Issues describe needs, not contracts.
+3. Issue #30: record of the arbitration and high-level backlog. Issues describe needs, not contracts.
 
 An implementation that contradicts a contract is wrong. A contract that must change is changed in
 a dedicated pull request, before the code that depends on it.
@@ -33,6 +33,10 @@ node apps/cli/dist/main.js --version
 ```
 
 ## Development order
+
+Issue #30 is the high-level backlog: it links the other issues and tracks the development order.
+When a step advances, update its status there, add a short comment on the issue concerned and keep
+the PR body current. No other tracking file.
 
 See ADR 0008. Current step: 6, UI for dogfooding. Step 5 is done: the Capacitor SQLite driver passed
 the shared store suite on a Pixel 9 Pro XL ([report on #24](https://github.com/Aristotelesqc/Flourprint/issues/24#issuecomment-6063973643); forced-stop marker
