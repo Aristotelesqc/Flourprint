@@ -87,7 +87,9 @@ on a connection is serialized, so a transaction never interleaves with another o
 ```
 
 - It is decoded and checked like a backup (same recipe and revision rules) before anything is
-  written.
+  written. Formula and process documents are decoded structurally first: every field's type and
+  every discriminant (roles, kinds, schedules, anchors, contents) is checked and unknown fields
+  are refused; business validation runs only on a well-formed document. Operation codes stay open.
 - Importing it is **additive** and one transaction:
   - a recipe whose id is absent is written with all its revisions, versions, dates and notes as
     recorded;

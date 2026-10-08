@@ -93,7 +93,10 @@ interface WaterBalance {
 }
 ```
 
-- An unknown fraction is **never** replaced by 0; it makes the total `incomplete`.
+- An unknown fraction is **never** replaced by 0; it makes the total `incomplete`. An ingredient
+  at 0 g contributes exactly nothing, so its unknown fraction leaves the total complete.
+- Water, fat and sugar contents are checked by the engine itself, whatever the entry point
+  (edit, save, start, import): values within [0, 100] and estimate ranges ordered around the value.
 - `topping` and `glaze` roles are excluded from the dough balance.
 - Components draw their water from the pure-water pool; drawing more than the pool is
   `WaterAllocationExceeded`.
