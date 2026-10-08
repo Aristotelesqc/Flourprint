@@ -21,6 +21,8 @@ a dedicated pull request, before the code that depends on it.
 - English everywhere: code, comments, docs, commit messages, issues, pull requests.
 - No user-facing text hard-coded in UI components; use message keys (ADR 0009).
 - Every commit is pushed and lands in the MVP pull request.
+- `dogfood/` holds the owner's personal recipes and their importer. Nothing in `packages/` or
+  `apps/` may refer to it; never hard-code those recipes in the product.
 
 ## Commands
 
