@@ -21,6 +21,9 @@ interface Props {
   /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
   readonly canStart: boolean;
   readonly onStart: (mode: ProjectionMode) => void;
+  /** A bake of this recipe in progress: the main action opens it; another start is explicit. */
+  readonly activeBakeId?: string;
+  readonly onOpenBake: (bakeId: string) => void;
 }
 
 /** `datetime-local` value (local time, minutes) ↔ UTC instant. */
@@ -47,7 +50,14 @@ interface Planned {
 }
 
 /** Process tab of the #8 mockups: plan by start or ready time, steps grouped by day. */
-export const ProcessSection = ({ process, onDurationChange, canStart, onStart }: Props) => {
+export const ProcessSection = ({
+  process,
+  onDurationChange,
+  canStart,
+  onStart,
+  activeBakeId,
+  onOpenBake,
+}: Props) => {
   const { t, error, stepName, locale } = useMessages();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
   const [when, setWhen] = useState(() => toLocalInput(nextQuarterHour()));
@@ -197,14 +207,29 @@ export const ProcessSection = ({ process, onDurationChange, canStart, onStart }:
       ))}
 
       {!canStart && <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>}
-      <IonButton
-        expand="block"
-        size="large"
-        disabled={!canStart || !projection.ok}
-        onClick={() => onStart(mode)}
-      >
-        {t('process.start')}
-      </IonButton>
+      {activeBakeId ? (
+        <>
+          <IonButton expand="block" size="large" onClick={() => onOpenBake(activeBakeId)}>
+            {t('process.openBake')}
+          </IonButton>
+          <IonButton
+            fill="clear"
+            disabled={!canStart || !projection.ok}
+            onClick={() => onStart(mode)}
+          >
+            {t('process.startAnother')}
+          </IonButton>
+        </>
+      ) : (
+        <IonButton
+          expand="block"
+          size="large"
+          disabled={!canStart || !projection.ok}
+          onClick={() => onStart(mode)}
+        >
+          {t('process.start')}
+        </IonButton>
+      )}
     </div>
   );
 };

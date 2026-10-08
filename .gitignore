@@ -3,3 +3,5 @@ dist/
 *.tsbuildinfo
 coverage/
 .DS_Store
+apps/mobile/test-results/
+apps/mobile/playwright-report/

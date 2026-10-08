@@ -8,7 +8,11 @@ pnpm workspaces, strict TypeScript, Vite, React + Ionic React, Capacitor (Androi
 with a shared theme, Zod 4 at boundaries, React Hook Form, Commander (CLI), Vitest + fast-check,
 ESLint (typescript-eslint) + Prettier. SQLite behind asynchronous repositories.
 
-Deferred: Zustand, Storybook, Playwright, ORM/query builder, LAN updater (#12), Drive (#11).
+Deferred: Zustand, Storybook, ORM/query builder, LAN updater (#12), Drive (#11).
+
+Playwright (`@playwright/test`, pinned) was deferred at scaffold time and is adopted now that real
+UI journeys exist (PR #31 audit): browser journeys run on the web build in CI, in French and
+English, with screenshots and traces as artifacts.
 
 ## Versions chosen at scaffold time
 
@@ -28,3 +32,16 @@ Deferred: Zustand, Storybook, Playwright, ORM/query builder, LAN updater (#12), 
 Spikes #23 (Android UI) and #24 (SQLite) settle the versions of React, Ionic, Capacitor, Tailwind,
 the SQLite drivers and Android prerequisites; they complete this ADR. The i18n library is chosen
 with #23 (ADR 0009).
+
+## Verification policy
+
+| Layer                       | Covers                                                                  |
+| --------------------------- | ----------------------------------------------------------------------- |
+| Vitest / fast-check         | engine invariants, commands, decoding, view logic, store contracts      |
+| Playwright on the web build | UI journeys, input behavior, double taps, locales, light/dark captures  |
+| Device checks in the APK    | Capacitor SQLite contract, forced-stop marker, offline start (#23, #24) |
+| The owner's phone           | keyboard, touch comfort, device quirks, milestone acceptance            |
+
+A small UI correction comes with an automated regression; the owner is asked to install an APK only
+for new native or device behavior, milestone acceptance, or a defect automation cannot reproduce.
+An emulator harness for native persistence (force-stop, upgrade) is still to be built.

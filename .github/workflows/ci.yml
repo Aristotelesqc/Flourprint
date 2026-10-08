@@ -24,6 +24,31 @@ jobs:
       - run: pnpm build:mobile
       - run: scripts/check-mobile-bundle.sh
 
+  e2e:
+    # Browser journeys on the web build (Playwright); screenshots and traces are kept as artifacts.
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm build:mobile
+      - run: pnpm --filter @flourprint/mobile exec playwright install --with-deps chromium
+      - run: pnpm --filter @flourprint/mobile e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flourprint-e2e-report
+          path: |
+            apps/mobile/playwright-report
+            apps/mobile/test-results
+          if-no-files-found: ignore
+
   android:
     # Debug APK for the device spikes (#23, #24); download it from the run's artifacts.
     needs: check

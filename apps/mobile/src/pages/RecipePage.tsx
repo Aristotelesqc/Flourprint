@@ -119,6 +119,12 @@ export const RecipePage = () => {
   const dirty = draft.formula !== base.revision.formula || draft.process !== base.revision.process;
   const active = bakes.find((b) => b.status === 'active');
 
+  // A double tap can reach a second button after the first navigation: never stack the same page.
+  const openBake = (bakeId: string) => {
+    const path = `/bakes/${bakeId}`;
+    if (window.location.pathname !== path) router.push(path);
+  };
+
   const update = (next: RecipeDraft) => {
     setDraft(next);
     drafts.set(recipeId, base.revision.version, next);
@@ -208,8 +214,12 @@ export const RecipePage = () => {
     }
     setStorageFailed(false);
     pendingStart.current = undefined;
-    if (result.value.ok) router.push(`/bakes/${ids.bakeId}`);
-    else setFailure(result.value.error);
+    if (!result.value.ok) {
+      setFailure(result.value.error);
+      return;
+    }
+    await refreshBakes();
+    openBake(ids.bakeId);
   };
 
   return (
@@ -233,7 +243,7 @@ export const RecipePage = () => {
               shape="round"
               color="primary"
               className="pr-2"
-              onClick={() => (active ? router.push(`/bakes/${active.bakeId}`) : setTab('process'))}
+              onClick={() => (active ? openBake(active.bakeId) : setTab('process'))}
             >
               {active ? t('recipe.baking') : t('recipe.bake')}
             </IonButton>
@@ -284,6 +294,8 @@ export const RecipePage = () => {
             onDurationChange={changeDuration}
             canStart={!dirty && !writes.busy}
             onStart={(mode) => void startBake(mode)}
+            {...(active ? { activeBakeId: active.bakeId } : {})}
+            onOpenBake={openBake}
           />
         </div>
         <div hidden={tab !== 'history'}>

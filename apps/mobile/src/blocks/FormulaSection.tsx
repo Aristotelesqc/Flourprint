@@ -179,7 +179,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
             <div key={ingredient.id} className={`${ROW} min-h-[60px] px-3`}>
               <span className="font-semibold">{name(ingredient.id)}</span>
               <NumberField
-                label={`${name(ingredient.id)} %`}
+                label={`${name(ingredient.id)}, ${t('formula.column.bakerPct')}`}
                 unit="%"
                 value={ingredient.bakerPct}
                 onCommit={(value) =>
