@@ -16,6 +16,18 @@ note? }`. Versions start at 1 and increase by one.
   declared by the process must match the formula's final mix (`process.md`). Persisted documents carry
   `schemaVersion`; unsupported versions are refused when read.
 
+## Recipe families
+
+- A **family** groups variants of one recipe: `{ id, name, pinnedRecipeId? }`. A recipe belongs
+  to at most one family (`familyId`). Each variant keeps its own revisions.
+- The **default variant** is the pinned recipe when it belongs to the family, otherwise the most
+  recently updated member (ties: smallest id). The recipe list shows a family once, through its
+  default variant.
+- Families are organisation, not recipe content: grouping, leaving and pinning create no
+  revision. Grouping (`groupRecipes(family, recipeIds)`) is one transaction. A family left with
+  no member is deleted. Pinning a recipe outside the family is refused (`NotInFamily`).
+- No recipe is grouped automatically: grouping is a user (or import) decision.
+
 ## Bakes
 
 - The event log follows `bake-session.md`. `append` also writes the bake summary row in the same
@@ -24,11 +36,13 @@ note? }`. Versions start at 1 and increase by one.
   `{ bakeId, status, recipeId?, recipeVersion?, startedAt?, endedAt?, version, updatedAt }`.
 - Summaries are rebuildable from the events at any time.
 
-## SQLite schema (version 1)
+## SQLite schema (version 2)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
-                updated_at TEXT NOT NULL)
+                updated_at TEXT NOT NULL, family_id TEXT)                      -- family_id: v2
+recipe_families (id TEXT PRIMARY KEY, name TEXT NOT NULL, pinned_recipe_id TEXT,
+                updated_at TEXT NOT NULL)                                      -- v2
 revisions      (recipe_id TEXT NOT NULL, version INTEGER NOT NULL, schema_version INTEGER NOT NULL,
                 document TEXT NOT NULL, created_at TEXT NOT NULL,
                 PRIMARY KEY (recipe_id, version))
@@ -61,9 +75,36 @@ on a connection is serialized, so a transaction never interleaves with another o
 - The restore is atomic: it writes everything in one transaction, into an empty database, or
   nothing. A failed restore leaves the target unchanged and can be retried.
 
+## Recipe files and additive import
+
+- A **recipes file** holds recipes only, never bakes, and is named distinctly from a full backup:
+
+```ts
+{
+  kind: 'flourprint-recipes', schemaVersion, exportedAt,
+  recipes: [{ id, name, familyId?, revisions }],
+  families: [{ id, name, pinnedRecipeId? }],
+}
+```
+
+- It is decoded and checked like a backup (same recipe and revision rules) before anything is
+  written.
+- Importing it is **additive** and one transaction:
+  - a recipe whose id is absent is written with all its revisions, versions, dates and notes as
+    recorded;
+  - a recipe whose id is present is skipped, never compared, merged or overwritten, even if it
+    was edited since;
+  - an absent family is created; a present family is left unchanged; a newly written recipe joins
+    its family.
+- The result lists the imported and the skipped recipe ids. Importing the same file again
+  imports nothing.
+- A full backup may also carry `families` and `familyId`; both are optional, so older backups
+  still restore.
+
 ## Shared contract tests
 
 Every implementation (memory, SQLite Node, SQLite Capacitor) runs the same contract test suite:
 idempotent retry, reused command id, version conflict, atomic rejection of an invalid batch,
-head conflicts, immutability of revisions. SQLite implementations add durability tests (reopen,
+head conflicts, immutability of revisions, families (grouping, pinning, default variant) and
+additive import (skips present ids, idempotent, atomic). SQLite implementations add durability tests (reopen,
 failed migration, newer database refused).
