@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   executeBakeCommand,
   exportBackup,
+  exportRecipes,
   importBackup,
+  importRecipes,
   saveRevision,
   type BackupStores,
 } from '@flourprint/core/application';
@@ -108,6 +110,16 @@ const seed = async (stores: BackupStores) => {
     createdAt: at('07:30'),
     note: 'more water',
   });
+  await saveRevision(stores.recipes, {
+    recipeId: 'lean-cold',
+    name: 'Lean, cold',
+    expectedHead: 0,
+    formula,
+    process,
+    createdAt: at('06:00'),
+  });
+  await stores.recipes.groupRecipes({ id: 'lean-family', name: 'Lean' }, ['lean', 'lean-cold']);
+  await stores.recipes.pinVariant('lean-family', 'lean-cold');
   let n = 0;
   let version = 0;
   const run = async (
@@ -173,6 +185,15 @@ describe.each([
     expect(JSON.parse(JSON.stringify(again))).toEqual({ ok: true, value: backup });
   });
 
+  it('restores a backup written before families', async () => {
+    const backup = await backupOf();
+    delete backup.families;
+    for (const recipe of backup.recipes) delete recipe.familyId;
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect(await target.recipes.listFamilies()).toEqual([]);
+  });
+
   it('refuses to import into a database that already has data', async () => {
     const target = await makeTarget();
     await seed(target);
@@ -184,6 +205,12 @@ describe.each([
 
   it.each<[string, (backup: Loose) => void, string]>([
     ['a newer document schema', (b) => (b.schemaVersion = 99), 'UnsupportedDocumentVersion'],
+    ['a recipe in a missing family', (b) => (b.families = []), 'InvalidBackup'],
+    [
+      'a pin on a recipe outside its family',
+      (b) => delete b.recipes.find((r: Loose) => r.id === 'lean-cold').familyId,
+      'InvalidBackup',
+    ],
     ['a missing schema version', (b) => delete b.schemaVersion, 'InvalidBackup'],
     [
       'a misnumbered last revision',
@@ -286,5 +313,65 @@ describe('restore on SQLite', () => {
     const retry = new SqlRestoreTarget(target.driver as SqlDriver);
     expect(await importBackup(retry, backup)).toEqual({ ok: true, value: undefined });
     expect((await exportBackup(target, at('12:00'))).ok).toBe(true);
+  });
+});
+
+describe.each([
+  ['memory', async () => memoryStores()],
+  ['sqlite-node', () => sqliteStores()],
+])('recipe file into %s', (_name, makeTarget) => {
+  const recipeFile = async () => {
+    const source = memoryStores();
+    await seed(source);
+    const file = await exportRecipes(source.recipes, at('12:00'));
+    if (!file.ok) throw new Error('export failed');
+    return JSON.parse(JSON.stringify(file.value)) as Loose;
+  };
+
+  it('holds recipes and families, never bakes', async () => {
+    const file = await recipeFile();
+    expect(file.kind).toBe('flourprint-recipes');
+    expect(file.bakes).toBeUndefined();
+    expect(file.families).toEqual([
+      { id: 'lean-family', name: 'Lean', pinnedRecipeId: 'lean-cold' },
+    ]);
+  });
+
+  it('adds absent recipes next to existing data, never overwrites, and is idempotent', async () => {
+    const target = await makeTarget();
+    await saveRevision(target.recipes, {
+      recipeId: 'lean',
+      name: 'My own lean',
+      expectedHead: 0,
+      formula,
+      process,
+      createdAt: at('05:00'),
+    });
+    const file = await recipeFile();
+    expect(await importRecipes(target.recipes, file)).toEqual({
+      ok: true,
+      value: { imported: ['lean-cold'], skipped: ['lean'] },
+    });
+    expect((await target.recipes.getRecipe('lean'))?.name).toBe('My own lean');
+    expect((await target.recipes.getRecipe('lean'))?.familyId).toBeUndefined();
+    expect((await target.recipes.getRecipe('lean-cold'))?.familyId).toBe('lean-family');
+    expect(await importRecipes(target.recipes, file)).toEqual({
+      ok: true,
+      value: { imported: [], skipped: ['lean', 'lean-cold'] },
+    });
+  });
+
+  it.each<[string, (file: Loose) => void]>([
+    ['a full backup', (f) => (f.kind = 'flourprint-backup')],
+    ['an invalid revision', (f) => (f.recipes[0].revisions[0].formula.flours = [])],
+    ['a misnumbered revision', (f) => (f.recipes[0].revisions[0].version = 2)],
+    ['a duplicate recipe', (f) => f.recipes.push(f.recipes[0])],
+  ])('refuses %s and writes nothing', async (_case, corrupt) => {
+    const file = await recipeFile();
+    corrupt(file);
+    const target = await makeTarget();
+    const result = await importRecipes(target.recipes, file);
+    expect(result.ok).toBe(false);
+    expect(await target.recipes.listRecipes()).toEqual([]);
   });
 });

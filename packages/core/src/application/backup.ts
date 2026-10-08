@@ -11,6 +11,7 @@ import {
   type Formula,
   type Instant,
   type Process,
+  type RecipeFamily,
   type Result,
   type Revision,
 } from '../domain/index.js';
@@ -20,6 +21,7 @@ import type {
   AppendInput,
   BakeEventStore,
   RecipeRepository,
+  RecordedRecipe,
   RestorePlan,
   RestoreTarget,
 } from './ports.js';
@@ -29,11 +31,9 @@ export interface Backup {
   readonly kind: 'flourprint-backup';
   readonly schemaVersion: number;
   readonly exportedAt: Instant;
-  readonly recipes: readonly {
-    readonly id: string;
-    readonly name: string;
-    readonly revisions: readonly Revision[];
-  }[];
+  readonly recipes: readonly RecordedRecipe[];
+  /** Optional so that backups written before families still restore. */
+  readonly families?: readonly RecipeFamily[];
   readonly bakes: readonly { readonly bakeId: string; readonly events: readonly BakeEvent[] }[];
 }
 
@@ -51,22 +51,37 @@ export type BackupError =
 const invalid = (reason: string): BackupError =>
   domainError('InvalidBackup', `Invalid backup: ${reason}`, { reason });
 
-/** Exports every recipe revision and every bake event log. */
-export const exportBackup = async (
-  stores: BackupStores,
-  exportedAt: Instant,
-): Promise<Result<Backup, BackupError>> => {
-  const recipes: Backup['recipes'][number][] = [];
-  for (const recipe of await stores.recipes.listRecipes()) {
+/** Every recipe with all its revisions, as recorded. */
+export const recordedRecipes = async (
+  repository: RecipeRepository,
+): Promise<Result<RecordedRecipe[], BackupError>> => {
+  const recipes: RecordedRecipe[] = [];
+  for (const recipe of await repository.listRecipes()) {
     const revisions: Revision[] = [];
     for (let version = 1; version <= recipe.headVersion; version++) {
-      const revision = await stores.recipes.getRevision(recipe.id, version);
+      const revision = await repository.getRevision(recipe.id, version);
       if (!revision.ok) return err(revision.error as BackupError);
       if (!revision.value) return err(invalid(`missing revision ${recipe.id}@${version}`));
       revisions.push(revision.value);
     }
-    recipes.push({ id: recipe.id, name: recipe.name, revisions });
+    recipes.push({
+      id: recipe.id,
+      name: recipe.name,
+      ...(recipe.familyId === undefined ? {} : { familyId: recipe.familyId }),
+      revisions,
+    });
   }
+  return ok(recipes);
+};
+
+/** Exports every recipe revision, every family and every bake event log. */
+export const exportBackup = async (
+  stores: BackupStores,
+  exportedAt: Instant,
+): Promise<Result<Backup, BackupError>> => {
+  const recipes = await recordedRecipes(stores.recipes);
+  if (!recipes.ok) return recipes;
+  const families = await stores.recipes.listFamilies();
   const bakes: Backup['bakes'][number][] = [];
   for (const summary of await stores.bakes.listBakes()) {
     bakes.push({ bakeId: summary.bakeId, events: await stores.bakes.loadEvents(summary.bakeId) });
@@ -75,7 +90,8 @@ export const exportBackup = async (
     kind: 'flourprint-backup',
     schemaVersion: DOCUMENT_SCHEMA_VERSION,
     exportedAt,
-    recipes,
+    recipes: recipes.value,
+    families,
     bakes,
   });
 };
@@ -87,7 +103,7 @@ class RefusedWith extends Error {
   }
 }
 
-const decodeRevision = (recipeId: string, index: number, value: unknown): Revision => {
+export const decodeRevision = (recipeId: string, index: number, value: unknown): Revision => {
   const where = `revision ${recipeId}@${index + 1}`;
   if (!isObject(value)) return refuse(`${where} is not an object`);
   if (value.recipeId !== recipeId || value.version !== index + 1) {
@@ -136,6 +152,62 @@ const decodeEvent = (bakeId: string, index: number, value: unknown): BakeEvent =
 };
 
 /**
+ * Decodes recipes with their revisions and the families they refer to (backups and recipe
+ * files). Throws `Refused` on the first problem.
+ */
+export const decodeRecipes = (
+  recipeInput: unknown,
+  familyInput: unknown,
+): { recipes: RecordedRecipe[]; families: RecipeFamily[] } => {
+  if (!Array.isArray(recipeInput) || !Array.isArray(familyInput)) {
+    return refuse('recipes and families must be lists');
+  }
+  const families: RecipeFamily[] = [];
+  for (const family of familyInput as unknown[]) {
+    if (!isObject(family) || !isId(family.id) || typeof family.name !== 'string') {
+      return refuse('a family has no valid id or name');
+    }
+    if (families.some((f) => f.id === family.id)) return refuse(`duplicate family ${family.id}`);
+    if (family.pinnedRecipeId !== undefined && !isId(family.pinnedRecipeId)) {
+      return refuse(`family ${family.id} has an invalid pin`);
+    }
+    families.push({
+      id: family.id,
+      name: family.name,
+      ...(family.pinnedRecipeId === undefined ? {} : { pinnedRecipeId: family.pinnedRecipeId }),
+    });
+  }
+  const recipes: RecordedRecipe[] = [];
+  for (const recipe of recipeInput as unknown[]) {
+    if (!isObject(recipe) || !isId(recipe.id) || typeof recipe.name !== 'string') {
+      return refuse('a recipe has no valid id or name');
+    }
+    const id = recipe.id;
+    if (recipes.some((r) => r.id === id)) return refuse(`duplicate recipe ${id}`);
+    if (!Array.isArray(recipe.revisions) || recipe.revisions.length === 0) {
+      return refuse(`recipe ${id} has no revision`);
+    }
+    const { familyId } = recipe;
+    if (familyId !== undefined && !families.some((f) => f.id === familyId)) {
+      return refuse(`recipe ${id} refers to a missing family`);
+    }
+    recipes.push({
+      id,
+      name: recipe.name,
+      ...(typeof familyId === 'string' ? { familyId } : {}),
+      revisions: (recipe.revisions as unknown[]).map((r, i) => decodeRevision(id, i, r)),
+    });
+  }
+  for (const family of families) {
+    const pin = family.pinnedRecipeId;
+    if (pin !== undefined && !recipes.some((r) => r.id === pin && r.familyId === family.id)) {
+      return refuse(`family ${family.id} pins a recipe that is not its variant`);
+    }
+  }
+  return { recipes, families };
+};
+
+/**
  * Decodes and checks a whole backup before anything is written (persistence.md): versions,
  * identifiers, numbering, formula/process consistency, event envelopes and references.
  */
@@ -162,24 +234,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
       return err(invalid('recipes and bakes must be lists'));
     }
 
-    const recipes: RestorePlan['recipes'][number][] = [];
-    const recipeIds = new Set<string>();
-    for (const recipe of input.recipes as unknown[]) {
-      if (!isObject(recipe) || !isId(recipe.id) || typeof recipe.name !== 'string') {
-        return err(invalid('a recipe has no valid id or name'));
-      }
-      if (recipeIds.has(recipe.id)) return err(invalid(`duplicate recipe ${recipe.id}`));
-      recipeIds.add(recipe.id);
-      if (!Array.isArray(recipe.revisions) || recipe.revisions.length === 0) {
-        return err(invalid(`recipe ${recipe.id} has no revision`));
-      }
-      const id = recipe.id;
-      recipes.push({
-        id,
-        name: recipe.name,
-        revisions: (recipe.revisions as unknown[]).map((r, i) => decodeRevision(id, i, r)),
-      });
-    }
+    const { recipes, families } = decodeRecipes(input.recipes, input.families ?? []);
 
     const bakes: AppendInput[] = [];
     const bakeIds = new Set<string>();
@@ -212,7 +267,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
         summary: bakeSummary(state, last.recordedAt),
       });
     }
-    return ok({ recipes, bakes });
+    return ok({ recipes, families, bakes });
   } catch (error) {
     if (error instanceof RefusedWith) return err(error.error);
     if (error instanceof Refused) return err(invalid(error.reason));

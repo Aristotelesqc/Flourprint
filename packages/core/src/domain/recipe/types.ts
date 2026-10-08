@@ -12,7 +12,32 @@ export interface Recipe {
   readonly name: string;
   readonly headVersion: number;
   readonly updatedAt: Instant;
+  /** Family this recipe is a variant of, if any. */
+  readonly familyId?: string;
 }
+
+/** Variants of one recipe (persistence.md, Recipe families). */
+export interface RecipeFamily {
+  readonly id: string;
+  readonly name: string;
+  readonly pinnedRecipeId?: string;
+}
+
+/**
+ * The variant shown for a family: the pinned member, otherwise the most recently updated one
+ * (ties: smallest id).
+ */
+export const defaultVariant = (
+  family: RecipeFamily,
+  recipes: readonly Recipe[],
+): Recipe | undefined => {
+  const members = recipes.filter((r) => r.familyId === family.id);
+  const pinned = members.find((r) => r.id === family.pinnedRecipeId);
+  if (pinned) return pinned;
+  return [...members].sort(
+    (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || (a.id < b.id ? -1 : 1),
+  )[0];
+};
 
 /** Immutable once written; holds the formula and the process together in Alpha. */
 export interface Revision {

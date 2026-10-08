@@ -27,7 +27,8 @@ export class MemoryRestoreTarget implements RestoreTarget {
         eventIds.add(event.eventId);
       }
     }
-    for (const recipe of plan.recipes) this.recipes.write(recipe.name, recipe.revisions);
+    for (const family of plan.families) this.recipes.writeFamily(family);
+    for (const recipe of plan.recipes) this.recipes.write(recipe);
     for (const bake of plan.bakes) this.bakes.write(bake);
     return ok(undefined);
   }

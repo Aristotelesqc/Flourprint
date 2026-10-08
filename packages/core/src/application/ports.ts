@@ -6,6 +6,7 @@ import type {
   Instant,
   Process,
   Recipe,
+  RecipeFamily,
   Result,
   Revision,
 } from '../domain/index.js';
@@ -67,7 +68,31 @@ export type RecipeStoreError =
   | DomainError<'HeadConflict', { recipeId: string; currentHead: number }>
   | DomainError<'UnsupportedDocumentVersion', { schemaVersion: number }>;
 
-/** Recipes and immutable revisions (docs/contracts/persistence.md). */
+export type FamilyError =
+  | DomainError<'RecipeNotFound', { recipeId: string }>
+  | DomainError<'FamilyNotFound', { familyId: string }>
+  | DomainError<'NotInFamily', { recipeId: string; familyId: string }>;
+
+/** A recipe with all its revisions, as recorded (backups, recipe files). */
+export interface RecordedRecipe {
+  readonly id: string;
+  readonly name: string;
+  readonly familyId?: string;
+  readonly revisions: readonly Revision[];
+}
+
+/** Recipes and families to add; checked before any write (persistence.md). */
+export interface RecipeImportPlan {
+  readonly recipes: readonly RecordedRecipe[];
+  readonly families: readonly RecipeFamily[];
+}
+
+export interface RecipeImportOutcome {
+  readonly imported: readonly string[];
+  readonly skipped: readonly string[];
+}
+
+/** Recipes, immutable revisions and families (docs/contracts/persistence.md). */
 export interface RecipeRepository {
   saveRevision(input: SaveRevisionInput): Promise<Result<Revision, RecipeStoreError>>;
   getRecipe(recipeId: string): Promise<Recipe | undefined>;
@@ -76,15 +101,27 @@ export interface RecipeRepository {
     recipeId: string,
     version: number,
   ): Promise<Result<Revision | undefined, RecipeStoreError>>;
+  listFamilies(): Promise<readonly RecipeFamily[]>;
+  /** Creates or renames the family and adds the recipes to it, in one transaction. */
+  groupRecipes(
+    family: { readonly id: string; readonly name: string },
+    recipeIds: readonly string[],
+  ): Promise<Result<void, FamilyError>>;
+  /** Removes the recipe from its family; a family left empty is deleted. */
+  leaveFamily(recipeId: string): Promise<Result<void, FamilyError>>;
+  /** Pins the default variant of a family, or unpins it with `undefined`. */
+  pinVariant(familyId: string, recipeId: string | undefined): Promise<Result<void, FamilyError>>;
+  /**
+   * Additive import in one transaction: absent recipe ids are written as recorded, present ones
+   * are skipped; absent families are created, present ones are left unchanged.
+   */
+  importRecipes(plan: RecipeImportPlan): Promise<RecipeImportOutcome>;
 }
 
 /** Everything a restore writes: revisions as recorded, one append per bake log. */
 export interface RestorePlan {
-  readonly recipes: readonly {
-    readonly id: string;
-    readonly name: string;
-    readonly revisions: readonly Revision[];
-  }[];
+  readonly recipes: readonly RecordedRecipe[];
+  readonly families: readonly RecipeFamily[];
   readonly bakes: readonly AppendInput[];
 }
 

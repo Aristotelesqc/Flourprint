@@ -1,5 +1,13 @@
 import type { AppendInput, BakeEventStore, RecipeRepository } from '@flourprint/core/application';
-import type { BakeEvent, BakeSummary, Formula, Instant, Process } from '@flourprint/core/domain';
+import {
+  defaultVariant,
+  type BakeEvent,
+  type BakeSummary,
+  type Formula,
+  type Instant,
+  type Process,
+  type Revision,
+} from '@flourprint/core/domain';
 
 /**
  * Shared store contract (docs/contracts/persistence.md) as plain async checks, so the same suite
@@ -184,6 +192,31 @@ const save = (repository: RecipeRepository, expectedHead: number, waterPct = 70)
     note: `water ${waterPct}`,
   });
 
+const saveAs = (repository: RecipeRepository, recipeId: string, createdAt: string) =>
+  repository.saveRevision({
+    recipeId,
+    name: recipeId,
+    expectedHead: 0,
+    formula: formula(70),
+    process,
+    createdAt: createdAt as Instant,
+  });
+
+const recorded = (recipeId: string, versions: number): Revision[] =>
+  Array.from({ length: versions }, (_, i) => ({
+    recipeId,
+    version: i + 1,
+    formula: formula(60 + i),
+    process,
+    createdAt: `2024-0${i + 1}-01T12:00:00.000Z` as Instant,
+    note: `v${i + 1}`,
+  }));
+
+const shownVariant = async (repository: RecipeRepository, familyId: string) => {
+  const family = (await repository.listFamilies()).find((f) => f.id === familyId);
+  return family && defaultVariant(family, await repository.listRecipes())?.id;
+};
+
 export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
   {
     name: 'creates numbered immutable revisions and moves the head',
@@ -220,6 +253,113 @@ export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
         (read.value.formula.ingredients[0] as { bakerPct: number }).bakerPct = 99;
       const again = await repository.getRevision('pullman', 1);
       equal(again.ok && again.value?.formula.ingredients[0]?.bakerPct, 70, 'stored value');
+    },
+  },
+  {
+    name: 'groups variants: the most recent is shown unless one is pinned',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'test-2', '2026-03-29T12:00:00.000Z');
+      await saveAs(repository, 'test-4', '2026-06-18T12:00:00.000Z');
+      await saveAs(repository, 'test-3', '2026-04-29T12:00:00.000Z');
+      equal(
+        code(
+          await repository.groupRecipes({ id: 'pz', name: 'Pullman' }, [
+            'test-2',
+            'test-3',
+            'test-4',
+          ]),
+        ),
+        'ok',
+        'group',
+      );
+      equal(await shownVariant(repository, 'pz'), 'test-4', 'most recent');
+      equal(code(await repository.pinVariant('pz', 'test-3')), 'ok', 'pin');
+      equal(await shownVariant(repository, 'pz'), 'test-3', 'pinned');
+      equal(code(await repository.pinVariant('pz', undefined)), 'ok', 'unpin');
+      equal(await shownVariant(repository, 'pz'), 'test-4', 'unpinned');
+      equal((await repository.getRecipe('test-2'))?.familyId, 'pz', 'member');
+      const revision = await repository.getRevision('test-2', 1);
+      equal(revision.ok && revision.value?.version, 1, 'grouping creates no revision');
+      equal((await repository.getRecipe('test-2'))?.headVersion, 1, 'head');
+    },
+  },
+  {
+    name: 'refuses to pin outside the family and to group unknown recipes',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'a', '2026-01-01T00:00:00.000Z');
+      await saveAs(repository, 'b', '2026-01-02T00:00:00.000Z');
+      await repository.groupRecipes({ id: 'f', name: 'F' }, ['a']);
+      equal(code(await repository.pinVariant('f', 'b')), 'NotInFamily', 'pin outsider');
+      equal(code(await repository.pinVariant('nope', 'a')), 'FamilyNotFound', 'unknown family');
+      equal(
+        code(await repository.groupRecipes({ id: 'f', name: 'F' }, ['a', 'ghost'])),
+        'RecipeNotFound',
+        'unknown recipe',
+      );
+      equal((await repository.getRecipe('b'))?.familyId, undefined, 'b untouched');
+    },
+  },
+  {
+    name: 'a leaving variant drops its pin; an emptied family is deleted',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'a', '2026-01-01T00:00:00.000Z');
+      await saveAs(repository, 'b', '2026-01-02T00:00:00.000Z');
+      await repository.groupRecipes({ id: 'f', name: 'F' }, ['a', 'b']);
+      await repository.pinVariant('f', 'a');
+      equal(code(await repository.leaveFamily('a')), 'ok', 'leave');
+      equal(
+        (await repository.listFamilies()).map((f) => f.pinnedRecipeId),
+        [undefined],
+        'pin',
+      );
+      await repository.leaveFamily('b');
+      equal(await repository.listFamilies(), [], 'families');
+    },
+  },
+  {
+    name: 'imports absent recipes as recorded, skips present ones, and is idempotent',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'kept', '2026-01-01T00:00:00.000Z');
+      const plan = {
+        recipes: [
+          { id: 'kept', name: 'Imported kept', revisions: recorded('kept', 1) },
+          { id: 'new', name: 'New', familyId: 'fam', revisions: recorded('new', 2) },
+        ],
+        families: [{ id: 'fam', name: 'Family', pinnedRecipeId: 'new' }],
+      };
+      equal(
+        await repository.importRecipes(plan),
+        { imported: ['new'], skipped: ['kept'] },
+        'first',
+      );
+      equal((await repository.getRecipe('kept'))?.name, 'kept', 'present recipe untouched');
+      const second = await repository.getRevision('new', 2);
+      equal(second.ok && second.value, recorded('new', 2)[1], 'revision as recorded');
+      equal((await repository.getRecipe('new'))?.headVersion, 2, 'head');
+      equal((await repository.getRecipe('new'))?.familyId, 'fam', 'family');
+      equal(await shownVariant(repository, 'fam'), 'new', 'pin');
+      equal(
+        await repository.importRecipes(plan),
+        { imported: [], skipped: ['kept', 'new'] },
+        'again',
+      );
+    },
+  },
+  {
+    name: 'an import does not create a family whose recipes were all skipped',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'kept', '2026-01-01T00:00:00.000Z');
+      await repository.importRecipes({
+        recipes: [{ id: 'kept', name: 'K', familyId: 'fam', revisions: recorded('kept', 1) }],
+        families: [{ id: 'fam', name: 'Family', pinnedRecipeId: 'kept' }],
+      });
+      equal(await repository.listFamilies(), [], 'families');
+      equal((await repository.getRecipe('kept'))?.familyId, undefined, 'recipe');
     },
   },
 ];

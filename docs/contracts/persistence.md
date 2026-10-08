@@ -41,8 +41,7 @@ note? }`. Versions start at 1 and increase by one.
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
                 updated_at TEXT NOT NULL, family_id TEXT)                      -- family_id: v2
-recipe_families (id TEXT PRIMARY KEY, name TEXT NOT NULL, pinned_recipe_id TEXT,
-                updated_at TEXT NOT NULL)                                      -- v2
+recipe_families (id TEXT PRIMARY KEY, name TEXT NOT NULL, pinned_recipe_id TEXT)  -- v2
 revisions      (recipe_id TEXT NOT NULL, version INTEGER NOT NULL, schema_version INTEGER NOT NULL,
                 document TEXT NOT NULL, created_at TEXT NOT NULL,
                 PRIMARY KEY (recipe_id, version))

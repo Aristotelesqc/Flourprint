@@ -48,6 +48,17 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 2,
+    sql: `
+      ALTER TABLE recipes ADD COLUMN family_id TEXT;
+      CREATE TABLE recipe_families (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        pinned_recipe_id TEXT
+      );
+    `,
+  },
 ];
 
 export type OpenError =

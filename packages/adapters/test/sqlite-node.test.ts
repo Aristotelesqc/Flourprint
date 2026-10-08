@@ -56,19 +56,25 @@ describe('sqlite-node durability', () => {
 
   it('rolls back a failed migration and keeps the previous version usable', async () => {
     const file = path('failed.sqlite');
-    const v1 = await open(file);
-    v1.database
-      .prepare("INSERT INTO recipes VALUES ('r', 'R', 1, '2026-10-07T08:00:00.000Z')")
+    const current = await open(file);
+    current.database
+      .prepare(
+        "INSERT INTO recipes (id, name, head_version, updated_at) VALUES ('r', 'R', 1, '2026-10-07T08:00:00.000Z')",
+      )
       .run();
-    v1.close();
+    current.close();
 
+    const next = MIGRATIONS.length + 1;
     const broken = [
       ...MIGRATIONS,
-      { version: 2, sql: 'ALTER TABLE recipes ADD COLUMN tag TEXT; SELECT * FROM missing_table;' },
+      {
+        version: next,
+        sql: 'ALTER TABLE recipes ADD COLUMN tag TEXT; SELECT * FROM missing_table;',
+      },
     ];
     expect(await openNodeSqlite(file, broken)).toMatchObject({
       ok: false,
-      error: { code: 'MigrationFailed', details: { version: 2 } },
+      error: { code: 'MigrationFailed', details: { version: next } },
     });
 
     const again = await open(file);
@@ -79,8 +85,32 @@ describe('sqlite-node durability', () => {
     expect(again.database.prepare('SELECT COUNT(*) AS n FROM recipes').get()).toEqual({ n: 1 });
     expect(
       again.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 1 });
+    ).toEqual({ value: MIGRATIONS.length });
     again.close();
+  });
+
+  it('upgrades a version 1 database to families without losing recipes', async () => {
+    const file = path('upgrade.sqlite');
+    const v1 = await open(file, MIGRATIONS.slice(0, 1));
+    v1.database
+      .prepare("INSERT INTO recipes VALUES ('r', 'R', 1, '2026-10-07T08:00:00.000Z')")
+      .run();
+    v1.close();
+
+    const v2 = await open(file);
+    const repository = new SqlRecipeRepository(v2.driver);
+    expect(await repository.getRecipe('r')).toEqual({
+      id: 'r',
+      name: 'R',
+      headVersion: 1,
+      updatedAt: '2026-10-07T08:00:00.000Z',
+    });
+    expect(await repository.groupRecipes({ id: 'f', name: 'F' }, ['r'])).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect((await repository.getRecipe('r'))?.familyId).toBe('f');
+    v2.close();
   });
 
   it('refuses revisions written with a newer document schema', async () => {
