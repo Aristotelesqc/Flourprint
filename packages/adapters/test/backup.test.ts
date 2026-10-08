@@ -212,6 +212,55 @@ describe.each([
       (b) => b.recipes[0].revisions.pop(),
       'InvalidBackup',
     ],
+    [
+      'a snapshot without its resolved formula',
+      (b) => delete b.bakes[0].events[0].payload.snapshot.resolvedFormula,
+      'InvalidBackup',
+    ],
+    [
+      'a malformed resolved snapshot',
+      (b) => (b.bakes[0].events[0].payload.snapshot.resolvedFormula.doughWeight = 'heavy'),
+      'InvalidBackup',
+    ],
+    [
+      'a malformed formula override',
+      (b) => (b.bakes[0].events[1].payload.derived.resolvedFormula = {}),
+      'InvalidBackup',
+    ],
+    [
+      'an unknown step reference',
+      (b) => (b.bakes[0].events[2].payload.stepId = 'ghost'),
+      'InvalidBackup',
+    ],
+    [
+      'a missing process revision',
+      (b) => (b.bakes[0].events[0].payload.snapshot.revisions.process.version = 9),
+      'InvalidBackup',
+    ],
+    [
+      'a log that does not start the bake',
+      (b) => (b.bakes[0].events[0].payload = { type: 'StepStarted', stepId: 'mix' }),
+      'InvalidBackup',
+    ],
+    [
+      'an unknown event type',
+      (b) => (b.bakes[0].events.at(-1).payload.type = 'Teleported'),
+      'InvalidBackup',
+    ],
+    [
+      'an event after the bake ended',
+      (b) => {
+        const events = b.bakes[0].events;
+        const last = events.at(-1);
+        events.push({
+          ...last,
+          eventId: 'late',
+          seq: last.seq + 1,
+          payload: { type: 'ObservationAdded', category: 'other', text: 'late' },
+        });
+      },
+      'InvalidBackup',
+    ],
     ['a reserved recipe id', (b) => (b.recipes[0].id = '__proto__'), 'InvalidBackup'],
     ['malformed content', (b) => (b.recipes[0].revisions[0].process = 'nope'), 'InvalidBackup'],
   ])('refuses %s, writes nothing and allows a clean retry', async (_case, corrupt, code) => {

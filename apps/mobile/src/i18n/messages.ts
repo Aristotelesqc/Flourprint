@@ -74,7 +74,7 @@ export const en = {
   'formula.stat.totalWater': 'Total water',
   'formula.stat.pureWater': 'Pure water',
   'formula.stat.totalWaterValue': '{pct}',
-  'formula.stat.totalWaterAtLeast': '≥ {pct}',
+  'formula.stat.totalWaterEstimate': '≈ {pct}',
   'formula.editRule':
     'Changing grams keeps the other quantities; changing a % keeps the quantity above.',
   'formula.component.flour': '{grams} flour',
@@ -274,7 +274,7 @@ export const fr: Catalog = {
   'formula.stat.totalWater': 'Eau totale',
   'formula.stat.pureWater': 'Eau pure',
   'formula.stat.totalWaterValue': '{pct}',
-  'formula.stat.totalWaterAtLeast': '≥ {pct}',
+  'formula.stat.totalWaterEstimate': '≈ {pct}',
   'formula.editRule':
     'Changer des grammes garde les autres quantités; changer un % garde la quantité ci-dessus.',
   'formula.component.flour': '{grams} de farine',

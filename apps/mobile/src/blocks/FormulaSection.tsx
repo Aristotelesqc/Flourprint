@@ -5,6 +5,7 @@ import { useMessages } from '../i18n/use-messages';
 import { NumberField } from '../ui/Field';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
+import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 
 interface Props {
@@ -120,12 +121,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
               <InfoIcon />
             </span>
             <span className="text-lg font-bold text-accent-text underline decoration-dotted underline-offset-4">
-              {t(
-                resolved.totalWater.completeness === 'complete'
-                  ? 'formula.stat.totalWaterValue'
-                  : 'formula.stat.totalWaterAtLeast',
-                { pct: pct(resolved.totalWaterPct) },
-              )}
+              {t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) })}
             </span>
           </button>
         </div>

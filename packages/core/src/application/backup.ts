@@ -3,10 +3,7 @@ import {
   DOCUMENT_SCHEMA_VERSION,
   domainError,
   err,
-  isReservedId,
   ok,
-  parseInstant,
-  replayBake,
   upcastEvent,
   validateRecipe,
   type BakeEvent,
@@ -17,6 +14,8 @@ import {
   type Result,
   type Revision,
 } from '../domain/index.js';
+import { checkBakeLog } from './backup-events.js';
+import { isCount, isId, isInstant, isObject, Refused, refuse } from './decode.js';
 import type {
   AppendInput,
   BakeEventStore,
@@ -81,26 +80,12 @@ export const exportBackup = async (
   });
 };
 
-// Decoding helpers: the backup is untrusted JSON until every field below has been checked.
-
-type Json = Record<string, unknown>;
-const isObject = (value: unknown): value is Json =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-const isId = (value: unknown): value is string =>
-  typeof value === 'string' && value.length > 0 && !isReservedId(value);
-const isInstant = (value: unknown): value is Instant =>
-  typeof value === 'string' && parseInstant(value).ok;
-const isCount = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isInteger(value) && value >= 1;
-
-class Refused extends Error {
+/** A refusal that carries its own typed error (an unsupported event version). */
+class RefusedWith extends Error {
   constructor(readonly error: BackupError) {
     super(error.message);
   }
 }
-const refuse = (reason: string): never => {
-  throw new Refused(invalid(reason));
-};
 
 const decodeRevision = (recipeId: string, index: number, value: unknown): Revision => {
   const where = `revision ${recipeId}@${index + 1}`;
@@ -146,7 +131,7 @@ const decodeEvent = (bakeId: string, index: number, value: unknown): BakeEvent =
     return refuse(`${where} has no payload`);
   }
   const upcast = upcastEvent(value as unknown as BakeEvent);
-  if (!upcast.ok) throw new Refused(upcast.error);
+  if (!upcast.ok) throw new RefusedWith(upcast.error);
   return upcast.value;
 };
 
@@ -213,11 +198,12 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
       }
       const last = events.at(-1);
       if (!last) continue;
-      const state = replayBake(bakeId, events);
-      const ref = state.snapshot?.revisions.formula;
-      const recipe = ref && recipes.find((r) => r.id === ref.id);
-      if (ref && !recipe?.revisions.some((r) => r.version === ref.version)) {
-        return err(invalid(`bake ${bakeId} refers to a revision missing from the backup`));
+      const state = checkBakeLog(bakeId, events);
+      for (const ref of Object.values(state.snapshot?.revisions ?? {})) {
+        const recipe = recipes.find((r) => r.id === ref.id);
+        if (!recipe?.revisions.some((r) => r.version === ref.version)) {
+          return err(invalid(`bake ${bakeId} refers to a revision missing from the backup`));
+        }
       }
       bakes.push({
         command: { commandId: `import:${bakeId}`, bakeId, content: 'import' },
@@ -228,7 +214,8 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     }
     return ok({ recipes, bakes });
   } catch (error) {
-    if (error instanceof Refused) return err(error.error);
+    if (error instanceof RefusedWith) return err(error.error);
+    if (error instanceof Refused) return err(invalid(error.reason));
     return err(invalid('malformed content'));
   }
 };
