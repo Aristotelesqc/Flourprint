@@ -1,64 +1,140 @@
 /*
  * Tailwind v4 without Preflight: Ionic keeps its own normalization (#22, #23).
- * Shared tokens feed both Ionic (CSS variables) and Tailwind (@theme).
+ * Shared tokens feed both Ionic (CSS variables) and Tailwind (@theme). Palette from the #8
+ * mockups: framed fields are editable, plain text is calculated.
  */
-@layer theme, base, components, utilities;
+@layer ionic, theme, base, components, utilities;
+/* Ionic's global CSS in the lowest layer, so Tailwind utilities always win over it. */
+@import '@ionic/react/css/core.css' layer(ionic);
+@import '@ionic/react/css/normalize.css' layer(ionic);
+@import '@ionic/react/css/structure.css' layer(ionic);
+@import '@ionic/react/css/typography.css' layer(ionic);
+@import '@ionic/react/css/padding.css' layer(ionic);
+@import '@ionic/react/css/palettes/dark.system.css' layer(ionic);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 @theme {
-  --color-crust: #8a4b1f;
-  --color-crumb: #f6efe3;
-  --color-ink: #2b2118;
-  --color-muted: #7a6a5a;
+  --color-bg: #f8f7f4;
+  --color-surface: #ffffff;
+  --color-ink: #1c1b19;
+  --color-muted: #69645c;
+  --color-line: #e4e0d8;
+  --color-track: #ebe8e2;
+  --color-field: #b9b3a8;
+  --color-field-bg: #fbfaf8;
+  --color-accent: #a9490a;
+  --color-on-accent: #ffffff;
+  --color-accent-text: #9a4209;
+  --color-accent-soft: rgb(169 73 10 / 0.1);
   --color-alert: #b3261e;
   --spacing-touch: 3rem;
 }
 
 :root {
-  --ion-color-primary: var(--color-crust);
-  --ion-color-primary-rgb: 138, 75, 31;
-  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary: var(--color-accent);
+  --ion-color-primary-rgb: 169, 73, 10;
+  --ion-color-primary-contrast: var(--color-on-accent);
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #794219;
-  --ion-color-primary-tint: #965d35;
-  --ion-background-color: var(--color-crumb);
-  --ion-background-color-rgb: 246, 239, 227;
+  --ion-color-primary-shade: #95400a;
+  --ion-color-primary-tint: #b25b23;
+  --ion-background-color: var(--color-bg);
+  --ion-background-color-rgb: 248, 247, 244;
   --ion-text-color: var(--color-ink);
   /* Ionic derives secondary text (unselected tabs, notes) from these. */
-  --ion-text-color-rgb: 43, 33, 24;
-  --ion-toolbar-background: var(--color-crumb);
+  --ion-text-color-rgb: 28, 27, 25;
+  --ion-toolbar-background: var(--color-bg);
+  --ion-toolbar-border-color: var(--color-line);
   --ion-item-background: transparent;
+  --ion-border-color: var(--color-line);
 }
 
 /*
- * On top of Ionic's dark palette (main.tsx), so every Ionic color has a dark value. The palette
- * uses `:root.md` / `:root.ios`; the same selectors are needed to win over it.
+ * Warm grey rather than black, muted accent (device feedback). On top of Ionic's dark palette
+ * (main.tsx), which uses `:root.md` / `:root.ios`; the same selectors are needed to win over it.
  */
 @media (prefers-color-scheme: dark) {
   :root,
   :root.md,
   :root.ios {
-    --color-crust: #cf8a5e;
-    --color-crumb: #201d1a;
+    --color-bg: #201d1a;
+    --color-surface: #2a2622;
     --color-ink: #e9e4dc;
     --color-muted: #b1aa9f;
+    --color-line: #3b3631;
+    --color-track: #322e29;
+    --color-field: #625b52;
+    --color-field-bg: #2e2a26;
+    --color-accent: #cf8a5e;
+    --color-on-accent: #201d1a;
+    --color-accent-text: #dba27c;
+    --color-accent-soft: rgb(207 138 94 / 0.16);
     --color-alert: #f2b8b5;
     --ion-color-primary-rgb: 207, 138, 94;
-    --ion-color-primary-contrast: #201d1a;
     --ion-color-primary-contrast-rgb: 32, 29, 26;
     --ion-color-primary-shade: #b67953;
     --ion-color-primary-tint: #d4966e;
+    --ion-background-color: var(--color-bg);
     --ion-background-color-rgb: 32, 29, 26;
-    --ion-text-color-rgb: 233, 228, 220;
-    --ion-background-color: var(--color-crumb);
     --ion-text-color: var(--color-ink);
-    --ion-toolbar-background: #2a2622;
+    --ion-text-color-rgb: 233, 228, 220;
+    --ion-toolbar-background: var(--color-bg);
+    --ion-toolbar-border-color: var(--color-line);
     --ion-item-background: transparent;
+    --ion-border-color: var(--color-line);
   }
 }
 
-/* Editable numbers carry an underline; calculated values do not (#8). */
-.fp-number {
-  border-bottom: 1px solid var(--color-muted);
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Base rules over Ionic's: sentence-case buttons, headings sized by the screens. */
+@layer base {
+  ion-button {
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  h1,
+  h2 {
+    margin: 0;
+    font-size: inherit;
+    font-weight: 700;
+  }
+}
+
+/* Layered, so that utilities on the same element still win. */
+@layer components {
+  /* Native inputs inside framed fields take the field's look. */
+  .fp-input {
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: right;
+  }
+
+  .fp-reset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+  }
+
+  ul.fp-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
+/* Unlayered: the focus frame wins over the field's border utility. */
+.fp-field:focus-within {
+  border-color: var(--color-accent);
 }

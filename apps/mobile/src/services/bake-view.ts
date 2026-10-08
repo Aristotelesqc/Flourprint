@@ -1,0 +1,105 @@
+import {
+  liveProjection,
+  type BakeState,
+  type Instant,
+  type ProcessStep,
+  type ProjectedStep,
+  type StepId,
+} from '@flourprint/core/domain';
+
+/**
+ * What bake mode shows (#8 "what do I do now?"), read from the bake state and its live projection.
+ * Presentation only: times come from the engine's projection, never recomputed here.
+ */
+export interface BakeStepView {
+  readonly step: ProcessStep;
+  readonly projected?: ProjectedStep;
+  readonly startedAt?: Instant;
+  readonly endedAt?: Instant;
+}
+
+export interface BakeView {
+  /** The step to act on: the running step ending first, else the next step that can start. */
+  readonly focus?: BakeStepView & { readonly running: boolean };
+  /** Other running steps (parallel branches such as an overnight preferment). */
+  readonly alsoRunning: readonly BakeStepView[];
+  /** Upcoming steps after the focus, in planned order. */
+  readonly next: readonly BakeStepView[];
+  /** 1-based position of the focus in planned order. */
+  readonly position: number;
+  readonly total: number;
+  readonly allDone: boolean;
+}
+
+export interface LogEntry {
+  readonly at: Instant;
+  readonly kind: 'started' | 'completed' | 'note';
+  readonly stepId?: StepId;
+  readonly text?: string;
+}
+
+const time = (instant: Instant | undefined): number =>
+  instant === undefined ? Number.POSITIVE_INFINITY : Date.parse(instant);
+
+export const bakeView = (state: BakeState, now: Instant): BakeView | undefined => {
+  const process = state.process;
+  const projection = liveProjection(state, now);
+  if (!process || !projection?.ok) return undefined;
+
+  const views: BakeStepView[] = process.steps.map((step) => {
+    const record = state.steps[step.id];
+    const projected = projection.value.steps[step.id];
+    return {
+      step,
+      ...(projected === undefined ? {} : { projected }),
+      ...(record?.startedAt === undefined ? {} : { startedAt: record.startedAt }),
+      ...(record?.endedAt === undefined ? {} : { endedAt: record.endedAt }),
+    };
+  });
+  const order = [...views].sort(
+    (a, b) =>
+      time(a.startedAt ?? a.projected?.start) - time(b.startedAt ?? b.projected?.start) ||
+      process.steps.indexOf(a.step) - process.steps.indexOf(b.step),
+  );
+  const done = (id: StepId) => state.steps[id]?.endedAt !== undefined;
+  const running = order
+    .filter((v) => v.startedAt !== undefined && v.endedAt === undefined)
+    .sort((a, b) => time(a.projected?.end) - time(b.projected?.end));
+  const ready = order.filter(
+    (v) => v.startedAt === undefined && v.endedAt === undefined && v.step.dependsOn.every(done),
+  );
+  const focusView = running[0] ?? ready[0];
+  const focus = focusView && { ...focusView, running: focusView.startedAt !== undefined };
+  const upcoming = order.filter(
+    (v) => v.startedAt === undefined && v.endedAt === undefined && v !== focusView,
+  );
+
+  return {
+    ...(focus === undefined ? {} : { focus }),
+    alsoRunning: running.filter((v) => v !== focusView),
+    next: upcoming.slice(0, 3),
+    position: focusView ? order.indexOf(focusView) + 1 : order.length,
+    total: order.length,
+    allDone: views.every((v) => v.endedAt !== undefined),
+  };
+};
+
+/** Starts, completions and notes, most recent first. */
+export const bakeLog = (state: BakeState): LogEntry[] => {
+  const entries: LogEntry[] = [];
+  for (const [stepId, record] of Object.entries(state.steps)) {
+    if (record.startedAt) entries.push({ at: record.startedAt, kind: 'started', stepId });
+    if (record.endedAt) entries.push({ at: record.endedAt, kind: 'completed', stepId });
+  }
+  for (const observation of state.observations) {
+    if (observation.payload.text) {
+      entries.push({
+        at: observation.occurredAt,
+        kind: 'note',
+        text: observation.payload.text,
+        ...(observation.payload.stepId === undefined ? {} : { stepId: observation.payload.stepId }),
+      });
+    }
+  }
+  return entries.sort((a, b) => time(b.at) - time(a.at));
+};

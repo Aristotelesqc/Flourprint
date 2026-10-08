@@ -3,6 +3,7 @@ import { IonReactRouter } from '@ionic/react-router';
 import { IntlProvider } from 'react-intl';
 import { Navigate, Route } from 'react-router-dom';
 import { catalogs, type Locale } from './i18n/messages';
+import { BakePage } from './pages/BakePage';
 import { DeviceChecksPage } from './pages/DeviceChecksPage';
 import { RecipePage } from './pages/RecipePage';
 import { RecipesPage } from './pages/RecipesPage';
@@ -20,6 +21,7 @@ export const App = ({ services, locale }: { services: Services; locale: Locale }
             <IonRouterOutlet>
               <Route path="/recipes" element={<RecipesPage />} />
               <Route path="/recipes/:recipeId" element={<RecipePage />} />
+              <Route path="/bakes/:bakeId" element={<BakePage />} />
               <Route path="/device-checks" element={<DeviceChecksPage />} />
               <Route path="/" element={<Navigate to="/recipes" replace />} />
             </IonRouterOutlet>

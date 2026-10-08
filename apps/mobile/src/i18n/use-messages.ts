@@ -21,6 +21,13 @@ export const useMessages = () => {
     return key in en ? t(key as MessageKey) : id;
   };
 
+  /** Display name of a process step: its own label, else its operation. */
+  const stepName = (step: { readonly operation: string; readonly label?: string }): string => {
+    if (step.label) return step.label;
+    const key = `operation.${step.operation}`;
+    return key in en ? t(key as MessageKey) : step.operation;
+  };
+
   /** Maps an engine error code to a localized message (engine messages are never shown). */
   const error = (failure: DomainError): string => {
     const key = `error.${failure.code}`;
@@ -34,5 +41,5 @@ export const useMessages = () => {
     return t(key as MessageKey, values);
   };
 
-  return { t, grams, pct, name, error, locale: intl.locale };
+  return { t, grams, pct, name, stepName, error, locale: intl.locale };
 };

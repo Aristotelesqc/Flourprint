@@ -34,7 +34,7 @@ node apps/cli/dist/main.js --version
 
 ## Development order
 
-See ADR 0008. Current step: 5, persistence. Done on Node: SQLite adapter (`@flourprint/adapters/sqlite-node`),
-shared contract tests, backups. Waiting for spike #24: the Capacitor driver, which must pass the same suite.
-Step 6 started in parallel: `apps/mobile` runs in a browser with memory stores (Formula screen). Its
-versions stay provisional until spike #23 runs on the device.
+See ADR 0008. Current step: 6, UI for dogfooding. Step 5 is done: the Capacitor SQLite driver passed
+the shared store suite on a Pixel 9 Pro XL (spike #24; forced-stop marker still to confirm).
+`apps/mobile` follows the #8 mockups: recipe list, Formula, Process and History tabs, and bake mode on
+the bake session. Versions stay provisional until spike #23 closes.

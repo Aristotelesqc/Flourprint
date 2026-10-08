@@ -1,26 +1,25 @@
-import {
-  IonBadge,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonNote,
-  IonSegment,
-  IonSegmentButton,
-} from '@ionic/react';
+import { IonButton } from '@ionic/react';
 import { useMemo, useState } from 'react';
 import {
   projectProcess,
   type Instant,
   type Process,
+  type ProjectedStep,
+  type ProcessStep,
   type ProjectionMode,
 } from '@flourprint/core/domain';
-import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
-import { NumberField } from './NumberField';
+import { formatDay, formatDayTime, formatTime, localDayKey } from '../i18n/time';
+import { DurationField } from '../ui/Field';
+import { Card, Rows, SectionTitle } from '../ui/Layout';
+import { Segmented } from '../ui/Segmented';
 
 interface Props {
   readonly process: Process;
   readonly onDurationChange: (stepId: string, durationS: number) => void;
+  /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
+  readonly canStart: boolean;
+  readonly onStart: (mode: ProjectionMode) => void;
 }
 
 /** `datetime-local` value (local time, minutes) ↔ UTC instant. */
@@ -37,101 +36,172 @@ const nextQuarterHour = (): Date => {
   return date;
 };
 
-/** Steps with their planned times, start-at or ready-by (#5, #17); times come from the engine. */
-export const ProcessSection = ({ process, onDurationChange }: Props) => {
-  const { t, error, locale } = useMessages();
+/** The step a "ready by" time refers to: the bake when there is one, else the last step. */
+const readyTarget = (process: Process): ProcessStep | undefined =>
+  process.steps.find((s) => s.operation === 'bake') ?? process.steps.at(-1);
+
+interface Planned {
+  readonly step: ProcessStep;
+  readonly planned?: ProjectedStep;
+}
+
+/** Process tab of the #8 mockups: plan by start or ready time, steps grouped by day. */
+export const ProcessSection = ({ process, onDurationChange, canStart, onStart }: Props) => {
+  const { t, error, stepName, locale } = useMessages();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
   const [when, setWhen] = useState(() => toLocalInput(nextQuarterHour()));
-  const target = process.steps.at(-1)?.id;
+  const target = readyTarget(process);
 
-  const projection = useMemo(() => {
+  const mode: ProjectionMode = useMemo(() => {
     const at = fromLocalInput(when);
-    const mode: ProjectionMode =
-      modeKind === 'readyBy' && target ? { kind: 'readyBy', at, target } : { kind: 'startAt', at };
-    return projectProcess(process, { mode });
-  }, [process, modeKind, when, target]);
+    return modeKind === 'readyBy' && target
+      ? { kind: 'readyBy', at, target: target.id }
+      : { kind: 'startAt', at };
+  }, [modeKind, when, target]);
+  const projection = useMemo(() => projectProcess(process, { mode }), [process, mode]);
 
-  const operation = (code: string) => {
-    const key = `operation.${code}`;
-    return key in en ? t(key as MessageKey) : code;
+  const planned: Planned[] = process.steps
+    .map((step) => {
+      const p = projection.ok ? projection.value.steps[step.id] : undefined;
+      return p === undefined ? { step } : { step, planned: p };
+    })
+    .sort(
+      (a, b) =>
+        (a.planned?.start ? Date.parse(a.planned.start) : Infinity) -
+          (b.planned?.start ? Date.parse(b.planned.start) : Infinity) ||
+        process.steps.indexOf(a.step) - process.steps.indexOf(b.step),
+    );
+  const days: { key: string; label: string; steps: Planned[] }[] = [];
+  for (const item of planned) {
+    const start = item.planned?.start;
+    const key = start ? localDayKey(start) : 'unknown';
+    const label = start ? formatDay(start, locale) : t('process.unknownDay');
+    const day = days.find((d) => d.key === key);
+    if (day) day.steps.push(item);
+    else days.push({ key, label, steps: [item] });
+  }
+
+  const first = planned[0];
+  const targetEnd = target && projection.ok ? projection.value.steps[target.id]?.end : undefined;
+  const summary =
+    modeKind === 'readyBy'
+      ? first?.planned?.start &&
+        t('process.summary.readyBy', {
+          step: stepName(first.step),
+          when: formatDayTime(first.planned.start, locale),
+        })
+      : target &&
+        targetEnd &&
+        t('process.summary.startAt', {
+          step: stepName(target),
+          when: formatDayTime(targetEnd, locale),
+        });
+  const nameOf = (id: string) => {
+    const step = process.steps.find((s) => s.id === id);
+    return step ? stepName(step) : id;
   };
-  const time = (instant: string | undefined) =>
-    instant === undefined
-      ? '?'
-      : new Intl.DateTimeFormat(locale, {
-          weekday: 'short',
-          hour: '2-digit',
-          minute: '2-digit',
-        }).format(new Date(instant));
-  const nameOf = (id: string) => operation(process.steps.find((s) => s.id === id)?.operation ?? id);
 
   return (
-    <>
-      <IonSegment
-        value={modeKind}
-        onIonChange={(e) => setModeKind(e.detail.value === 'readyBy' ? 'readyBy' : 'startAt')}
-      >
-        <IonSegmentButton value="startAt">
-          <IonLabel>{t('process.mode.startAt')}</IonLabel>
-        </IonSegmentButton>
-        <IonSegmentButton value="readyBy">
-          <IonLabel>{t('process.mode.readyBy')}</IonLabel>
-        </IonSegmentButton>
-      </IonSegment>
-      <label className="mt-3 flex min-h-[var(--spacing-touch)] items-center justify-between gap-2">
-        <span>{t('process.when')}</span>
-        <input
-          type="datetime-local"
-          className="rounded border border-[var(--color-muted)] bg-transparent p-2"
-          value={when}
-          onChange={(e) => e.target.value && setWhen(e.target.value)}
+    <div className="flex flex-col gap-4 pb-6">
+      <Card>
+        <Segmented
+          size="small"
+          value={modeKind}
+          options={[
+            { value: 'startAt', label: t('process.mode.startAt') },
+            { value: 'readyBy', label: t('process.mode.readyBy') },
+          ]}
+          onChange={setModeKind}
         />
-      </label>
-      {modeKind === 'readyBy' && target && (
-        <IonNote className="block">{t('process.readyTarget', { step: nameOf(target) })}</IonNote>
-      )}
-      {!projection.ok && (
-        <p role="alert" className="mt-2 text-[var(--color-alert)]">
-          {error(projection.error)}
-        </p>
-      )}
+        <label className="flex items-center justify-between gap-3">
+          <span>
+            {modeKind === 'readyBy' && target
+              ? t('process.when.readyBy', { step: stepName(target) })
+              : t('process.when.startAt')}
+          </span>
+          <input
+            type="datetime-local"
+            className="fp-field h-12 rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 font-bold text-ink"
+            value={when}
+            onChange={(e) => e.target.value && setWhen(e.target.value)}
+          />
+        </label>
+        {!projection.ok && (
+          <p role="alert" className="m-0 text-alert">
+            {error(projection.error)}
+          </p>
+        )}
+        {summary && (
+          <div className="flex items-center gap-2.5 border-t border-line pt-3">
+            <ClockIcon />
+            <span>{summary}</span>
+          </div>
+        )}
+      </Card>
 
-      <IonList className="mt-2">
-        {process.steps.map((step) => {
-          const planned = projection.ok ? projection.value.steps[step.id] : undefined;
-          return (
-            <IonItem key={step.id}>
-              <IonLabel className="ion-text-wrap">
-                <h2>
-                  {operation(step.operation)}{' '}
-                  {step.schedule === 'alap' && (
-                    <IonBadge color="medium">{t('process.alap')}</IonBadge>
-                  )}
-                </h2>
-                <p>
-                  {time(planned?.start)} → {time(planned?.end)}
-                </p>
-                {step.dependsOn.length > 0 && (
-                  <p>{t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })}</p>
-                )}
-                {planned && planned.unknownAfter.length > 0 && (
-                  <p>
-                    {t('process.unknown', { steps: planned.unknownAfter.map(nameOf).join(', ') })}
-                  </p>
-                )}
-              </IonLabel>
-              <div slot="end" className="w-28">
-                <NumberField
-                  label={`${step.id} ${t('process.duration')}`}
-                  unit="min"
-                  value={(step.plannedDurationS ?? 0) / 60}
-                  onCommit={(minutes) => onDurationChange(step.id, Math.round(minutes * 60))}
-                />
-              </div>
-            </IonItem>
-          );
-        })}
-      </IonList>
-    </>
+      {days.map((day) => (
+        <section key={day.key} className="flex flex-col gap-2">
+          <SectionTitle>{day.label}</SectionTitle>
+          <Rows>
+            {day.steps.map(({ step, planned: p }) => {
+              const hints = [
+                ...(step.schedule === 'alap' ? [t('process.alap')] : []),
+                ...(step.dependsOn.length > 0
+                  ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
+                  : []),
+                ...(p && p.unknownAfter.length > 0
+                  ? [t('process.unknown', { steps: p.unknownAfter.map(nameOf).join(', ') })]
+                  : []),
+              ];
+              return (
+                <div
+                  key={step.id}
+                  className="grid min-h-16 grid-cols-[52px_1fr_104px] items-center gap-2.5 px-3 py-2"
+                >
+                  <span className="font-bold">{p?.start ? formatTime(p.start, locale) : '—'}</span>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="font-semibold">{stepName(step)}</span>
+                    {hints.length > 0 && (
+                      <span className="text-[13px] text-muted">{hints.join(' · ')}</span>
+                    )}
+                  </div>
+                  <DurationField
+                    label={t('process.duration', { step: stepName(step) })}
+                    value={step.plannedDurationS ?? 0}
+                    onCommit={(seconds) => onDurationChange(step.id, seconds)}
+                  />
+                </div>
+              );
+            })}
+          </Rows>
+        </section>
+      ))}
+
+      {!canStart && <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>}
+      <IonButton
+        expand="block"
+        size="large"
+        disabled={!canStart || !projection.ok}
+        onClick={() => onStart(mode)}
+      >
+        {t('process.start')}
+      </IonButton>
+    </div>
   );
 };
+
+const ClockIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="var(--color-accent-text)"
+    strokeWidth="2"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+);
