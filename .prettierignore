@@ -1,3 +1,7 @@
 pnpm-lock.yaml
 dist/
 apps/mobile/android/
+# Dogfood data: legacy source kept verbatim, generated files written by the importer.
+dogfood/*/source/
+dogfood/*/converted/
+dogfood/*/migration-report/
