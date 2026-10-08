@@ -85,3 +85,12 @@ test('speaks English on an English device @en', async ({ page }) => {
   await expect(page.getByLabel('Water (g)', { exact: true })).toHaveValue('750');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
+
+test('opens on the recipes; diagnostics sit behind the advanced menu', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  await expect(page.getByText('Vérifications de l’appareil')).toBeHidden();
+  await page.getByLabel('Avancé').first().click();
+  await page.getByText('Vérifications de l’appareil').click();
+  await expect(page).toHaveURL(/\/device-checks$/);
+});

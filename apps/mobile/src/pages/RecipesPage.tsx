@@ -1,11 +1,4 @@
-import {
-  IonContent,
-  IonItem,
-  IonLabel,
-  IonPage,
-  IonRouterLink,
-  useIonViewWillEnter,
-} from '@ionic/react';
+import { IonContent, IonButton, IonPage, IonRouterLink, useIonViewWillEnter } from '@ionic/react';
 import { useState } from 'react';
 import {
   projectProcess,
@@ -74,7 +67,30 @@ export const RecipesPage = () => {
     <IonPage>
       <IonContent>
         <div className="flex flex-col gap-3 px-4 pt-[calc(var(--ion-safe-area-top,0px)+20px)] pb-8">
-          <h1 className="m-0 px-1 pb-1 text-[32px] font-bold">{t('recipes.title')}</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="m-0 px-1 pb-1 text-[32px] font-bold">{t('recipes.title')}</h1>
+            <IonButton
+              fill="clear"
+              color="medium"
+              routerLink="/advanced"
+              aria-label={t('advanced.title')}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <circle cx="5" cy="12" r="1" />
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="19" cy="12" r="1" />
+              </svg>
+            </IonButton>
+          </div>
           <SessionOnlyNotice />
           {readFailed && <p role="alert">{t('state.storageRead')}</p>}
           {running.map((bake) => (
@@ -84,9 +100,6 @@ export const RecipesPage = () => {
           {cards?.map((card) => (
             <RecipeCard key={card.recipe.id} card={card} now={now} />
           ))}
-          <IonItem routerLink="/device-checks" lines="none" detail className="mt-6">
-            <IonLabel color="medium">{t('recipes.deviceChecks')}</IonLabel>
-          </IonItem>
         </div>
       </IonContent>
     </IonPage>

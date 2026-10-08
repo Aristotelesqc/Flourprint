@@ -6,6 +6,7 @@
 export const en = {
   'app.title': 'Flourprint',
   'recipes.deviceChecks': 'Device checks',
+  'advanced.title': 'Advanced',
   'checks.title': 'Device checks',
   'checks.intro':
     'Checks for spikes #23 and #24. Run them on the phone, then copy the report into the issue.',
@@ -204,6 +205,7 @@ export type Catalog = Record<MessageKey, string>;
 export const fr: Catalog = {
   'app.title': 'Flourprint',
   'recipes.deviceChecks': 'Vérifications de l’appareil',
+  'advanced.title': 'Avancé',
   'checks.title': 'Vérifications de l’appareil',
   'checks.intro':
     'Vérifications des spikes #23 et #24. Lancez-les sur le téléphone, puis copiez le rapport dans l’issue.',
