@@ -1,23 +1,25 @@
 import {
   err,
   projectProcess,
-  resolveFormula,
-  type FormulaError,
-  type ProcessError,
+  validateRecipe,
+  type RecipeError,
   type Result,
   type Revision,
 } from '../domain/index.js';
 import type { RecipeRepository, RecipeStoreError, SaveRevisionInput } from './ports.js';
 
-export type SaveRevisionError = FormulaError | ProcessError | RecipeStoreError;
+export type SaveRevisionError = RecipeError | RecipeStoreError;
 
-/** Validates a formula and its process with the engine, then stores a new immutable revision. */
+/**
+ * Validates a formula and its process together with the engine (incorporations included), then
+ * stores a new immutable revision.
+ */
 export const saveRevision = async (
   repository: RecipeRepository,
   input: SaveRevisionInput,
 ): Promise<Result<Revision, SaveRevisionError>> => {
-  const resolved = resolveFormula(input.formula);
-  if (!resolved.ok) return resolved;
+  const valid = validateRecipe(input.formula, input.process);
+  if (!valid.ok) return valid;
   const projected = projectProcess(input.process, {
     mode: { kind: 'startAt', at: input.createdAt },
   });

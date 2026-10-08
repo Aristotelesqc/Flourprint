@@ -12,7 +12,7 @@ import {
   type Result,
   type Revision,
 } from '@flourprint/core/domain';
-import type { SqlDriver } from './driver.js';
+import type { SqlDriver, SqlExecutor } from './driver.js';
 
 interface RecipeRow {
   id: string;
@@ -27,6 +27,30 @@ const toRecipe = (row: RecipeRow): Recipe => ({
   headVersion: Number(row.head_version),
   updatedAt: row.updated_at as Recipe['updatedAt'],
 });
+
+/** Writes one revision and moves the recipe head to it; used by saves and restores. */
+export const insertRevision = async (
+  tx: SqlExecutor,
+  name: string,
+  revision: Revision,
+): Promise<void> => {
+  await tx.run(
+    'INSERT INTO revisions (recipe_id, version, schema_version, document, created_at) VALUES (?, ?, ?, ?, ?)',
+    [
+      revision.recipeId,
+      revision.version,
+      DOCUMENT_SCHEMA_VERSION,
+      JSON.stringify({ schemaVersion: DOCUMENT_SCHEMA_VERSION, ...revision }),
+      revision.createdAt,
+    ],
+  );
+  await tx.run(
+    `INSERT INTO recipes (id, name, head_version, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT (id) DO UPDATE SET name = excluded.name,
+       head_version = excluded.head_version, updated_at = excluded.updated_at`,
+    [revision.recipeId, name, revision.version, revision.createdAt],
+  );
+};
 
 /** Recipes and immutable revisions on any SQLite driver (docs/contracts/persistence.md). */
 export class SqlRecipeRepository implements RecipeRepository {
@@ -55,22 +79,7 @@ export class SqlRecipeRepository implements RecipeRepository {
         createdAt: input.createdAt,
         ...(input.note === undefined ? {} : { note: input.note }),
       };
-      await tx.run(
-        'INSERT INTO revisions (recipe_id, version, schema_version, document, created_at) VALUES (?, ?, ?, ?, ?)',
-        [
-          revision.recipeId,
-          revision.version,
-          DOCUMENT_SCHEMA_VERSION,
-          JSON.stringify({ schemaVersion: DOCUMENT_SCHEMA_VERSION, ...revision }),
-          revision.createdAt,
-        ],
-      );
-      await tx.run(
-        `INSERT INTO recipes (id, name, head_version, updated_at) VALUES (?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET name = excluded.name,
-           head_version = excluded.head_version, updated_at = excluded.updated_at`,
-        [input.recipeId, input.name, revision.version, input.createdAt],
-      );
+      await insertRevision(tx, input.name, revision);
       return ok(revision);
     });
   }

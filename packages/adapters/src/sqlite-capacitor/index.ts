@@ -9,7 +9,7 @@ import {
   type SqlDriver,
 } from '../sql/index.js';
 
-export { SqlBakeEventStore, SqlRecipeRepository } from '../sql/index.js';
+export { SqlBakeEventStore, SqlRecipeRepository, SqlRestoreTarget } from '../sql/index.js';
 
 /**
  * SQLite on Android through `@capacitor-community/sqlite`: the candidate driver of spike #24.

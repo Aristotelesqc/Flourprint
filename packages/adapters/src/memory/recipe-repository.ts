@@ -49,11 +49,32 @@ export class MemoryRecipeRepository implements RecipeRepository {
   }
 
   async getRecipe(recipeId: string): Promise<Recipe | undefined> {
-    return this.#recipes.get(recipeId);
+    const recipe = this.#recipes.get(recipeId);
+    return recipe && { ...recipe };
   }
 
   async listRecipes(): Promise<readonly Recipe[]> {
-    return [...this.#recipes.values()];
+    return [...this.#recipes.values()].map((recipe) => ({ ...recipe }));
+  }
+
+  /** Writes recorded revisions synchronously; restores use it to stay atomic. */
+  write(name: string, revisions: readonly Revision[]): void {
+    for (const revision of revisions) {
+      this.#revisions.set(
+        `${revision.recipeId}@${revision.version}`,
+        JSON.parse(JSON.stringify(revision)) as Revision,
+      );
+      this.#recipes.set(revision.recipeId, {
+        id: revision.recipeId,
+        name,
+        headVersion: revision.version,
+        updatedAt: revision.createdAt,
+      });
+    }
+  }
+
+  get isEmpty(): boolean {
+    return this.#recipes.size === 0;
   }
 
   async getRevision(

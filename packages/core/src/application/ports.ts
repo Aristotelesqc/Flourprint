@@ -77,3 +77,23 @@ export interface RecipeRepository {
     version: number,
   ): Promise<Result<Revision | undefined, RecipeStoreError>>;
 }
+
+/** Everything a restore writes: revisions as recorded, one append per bake log. */
+export interface RestorePlan {
+  readonly recipes: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly revisions: readonly Revision[];
+  }[];
+  readonly bakes: readonly AppendInput[];
+}
+
+export type RestoreError = DomainError<'TargetNotEmpty'>;
+
+/**
+ * Writes a checked restore plan atomically into an empty store (persistence.md): everything or
+ * nothing, the emptiness check included in the same transaction.
+ */
+export interface RestoreTarget {
+  restore(plan: RestorePlan): Promise<Result<void, RestoreError>>;
+}

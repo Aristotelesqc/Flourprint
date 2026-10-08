@@ -7,11 +7,18 @@ import {
   type BackupStores,
 } from '@flourprint/core/application';
 import type { Formula, Instant, Process } from '@flourprint/core/domain';
-import { MemoryBakeEventStore, MemoryRecipeRepository } from '../src/memory/index.js';
+import type { RestoreTarget } from '@flourprint/core/application';
+import {
+  MemoryBakeEventStore,
+  MemoryRecipeRepository,
+  MemoryRestoreTarget,
+} from '../src/memory/index.js';
+import type { SqlDriver } from '../src/sql/index.js';
 import {
   openNodeSqlite,
   SqlBakeEventStore,
   SqlRecipeRepository,
+  SqlRestoreTarget,
 } from '../src/sqlite-node/index.js';
 
 const at = (time: string) => `2026-10-07T${time}:00.000Z` as Instant;
@@ -43,13 +50,39 @@ const process: Process = {
   ],
 };
 
-const sqliteStores = async (): Promise<BackupStores> => {
+type Target = BackupStores & { readonly restore: RestoreTarget; readonly driver?: SqlDriver };
+
+/** SQLite stores; `failOnWrite` makes the n-th write of a restore throw, like a full disk. */
+const sqliteStores = async (failOnWrite?: number): Promise<Target> => {
   const db = await openNodeSqlite(':memory:');
   if (!db.ok) throw new Error('open failed');
-  return {
-    recipes: new SqlRecipeRepository(db.value.driver),
-    bakes: new SqlBakeEventStore(db.value.driver),
+  const driver = db.value.driver;
+  let writes = 0;
+  const failing: SqlDriver = {
+    ...driver,
+    transaction: (work) =>
+      driver.transaction((tx) =>
+        work({
+          ...tx,
+          run: async (sql, values) => {
+            if (++writes === failOnWrite) throw new Error('disk full');
+            return tx.run(sql, values);
+          },
+        }),
+      ),
   };
+  return {
+    recipes: new SqlRecipeRepository(driver),
+    bakes: new SqlBakeEventStore(driver),
+    restore: new SqlRestoreTarget(failOnWrite === undefined ? driver : failing),
+    driver,
+  };
+};
+
+const memoryStores = (): Target => {
+  const recipes = new MemoryRecipeRepository();
+  const bakes = new MemoryBakeEventStore();
+  return { recipes, bakes, restore: new MemoryRestoreTarget(recipes, bakes) };
 };
 
 /** Two revisions and a finished bake with an override, written through the use cases. */
@@ -112,65 +145,97 @@ const seed = async (stores: BackupStores) => {
   await run({ type: 'FinishBake' }, at('11:00'));
 };
 
-describe('backup', () => {
-  it('round-trips recipes, revisions and bake logs from memory to SQLite', async () => {
-    const source: BackupStores = {
-      recipes: new MemoryRecipeRepository(),
-      bakes: new MemoryBakeEventStore(),
-    };
-    await seed(source);
-    const backup = await exportBackup(source, at('12:00'));
-    expect(backup.ok).toBe(true);
-    if (!backup.ok) return;
+/** A backup as untrusted JSON: the tests corrupt it on purpose. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Loose = any;
 
-    const target = await sqliteStores();
-    expect(await importBackup(target, JSON.parse(JSON.stringify(backup.value)))).toEqual({
-      ok: true,
-      value: undefined,
-    });
+const backupOf = async () => {
+  const source = memoryStores();
+  await seed(source);
+  const backup = await exportBackup(source, at('12:00'));
+  if (!backup.ok) throw new Error('export failed');
+  return JSON.parse(JSON.stringify(backup.value)) as Loose;
+};
+
+const isEmpty = async (stores: BackupStores) =>
+  (await stores.recipes.listRecipes()).length === 0 &&
+  (await stores.bakes.listBakes()).length === 0;
+
+describe.each([
+  ['memory', async () => memoryStores()],
+  ['sqlite-node', () => sqliteStores()],
+])('backup into %s', (_name, makeTarget) => {
+  it('round-trips recipes, revisions and bake logs', async () => {
+    const backup = await backupOf();
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
     const again = await exportBackup(target, at('12:00'));
-    expect(again).toEqual(backup);
-    expect(await target.bakes.listBakes()).toEqual(await source.bakes.listBakes());
+    expect(JSON.parse(JSON.stringify(again))).toEqual({ ok: true, value: backup });
   });
 
   it('refuses to import into a database that already has data', async () => {
-    const source: BackupStores = {
-      recipes: new MemoryRecipeRepository(),
-      bakes: new MemoryBakeEventStore(),
-    };
-    await seed(source);
-    const backup = await exportBackup(source, at('12:00'));
-    if (!backup.ok) throw new Error('export failed');
-    expect(await importBackup(source, backup.value)).toMatchObject({
+    const target = await makeTarget();
+    await seed(target);
+    expect(await importBackup(target.restore, await backupOf())).toMatchObject({
       ok: false,
       error: { code: 'TargetNotEmpty' },
     });
   });
 
-  it('refuses newer and malformed backups', async () => {
-    const empty = await sqliteStores();
-    const base = {
-      kind: 'flourprint-backup',
-      exportedAt: at('12:00'),
-      recipes: [],
-      bakes: [],
-    } as const;
-    expect(await importBackup(empty, { ...base, schemaVersion: 99 })).toMatchObject({
+  it.each<[string, (backup: Loose) => void, string]>([
+    ['a newer document schema', (b) => (b.schemaVersion = 99), 'UnsupportedDocumentVersion'],
+    ['a missing schema version', (b) => delete b.schemaVersion, 'InvalidBackup'],
+    [
+      'a misnumbered last revision',
+      (b) => (b.recipes[0].revisions[1].version = 3),
+      'InvalidBackup',
+    ],
+    [
+      'an invalid last revision',
+      (b) => (b.recipes[0].revisions[1].formula.flours = []),
+      'InvalidBackup',
+    ],
+    [
+      'an impossible date',
+      (b) => (b.recipes[0].revisions[0].createdAt = '2026-02-30T07:00:00.000Z'),
+      'InvalidBackup',
+    ],
+    [
+      'a newer event schema',
+      (b) => (b.bakes[0].events.at(-1).schemaVersion = 2),
+      'UnsupportedEventVersion',
+    ],
+    ['a misnumbered event', (b) => (b.bakes[0].events[1].seq = 7), 'InvalidBackup'],
+    ['a duplicated bake', (b) => b.bakes.push(b.bakes[0]), 'InvalidBackup'],
+    [
+      'a bake referring to a missing revision',
+      (b) => b.recipes[0].revisions.pop(),
+      'InvalidBackup',
+    ],
+    ['a reserved recipe id', (b) => (b.recipes[0].id = '__proto__'), 'InvalidBackup'],
+    ['malformed content', (b) => (b.recipes[0].revisions[0].process = 'nope'), 'InvalidBackup'],
+  ])('refuses %s, writes nothing and allows a clean retry', async (_case, corrupt, code) => {
+    const backup = await backupOf();
+    const broken = JSON.parse(JSON.stringify(backup)) as Loose;
+    corrupt(broken);
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, broken)).toMatchObject({
       ok: false,
-      error: { code: 'UnsupportedDocumentVersion' },
+      error: { code },
     });
-    expect(
-      await importBackup(empty, {
-        ...base,
-        schemaVersion: 1,
-        recipes: [
-          {
-            id: 'x',
-            name: 'X',
-            revisions: [{ recipeId: 'x', version: 2, formula, process, createdAt: at('07:00') }],
-          },
-        ],
-      }),
-    ).toMatchObject({ ok: false, error: { code: 'InvalidBackup' } });
+    expect(await isEmpty(target)).toBe(true);
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+  });
+});
+
+describe('restore on SQLite', () => {
+  it('rolls back everything when a late write fails, then retries cleanly', async () => {
+    const backup = await backupOf();
+    const target = await sqliteStores(5);
+    await expect(importBackup(target.restore, backup)).rejects.toThrow('disk full');
+    expect(await isEmpty(target)).toBe(true);
+    const retry = new SqlRestoreTarget(target.driver as SqlDriver);
+    expect(await importBackup(retry, backup)).toEqual({ ok: true, value: undefined });
+    expect((await exportBackup(target, at('12:00'))).ok).toBe(true);
   });
 });

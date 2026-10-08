@@ -8,3 +8,4 @@ export {
 } from './migrations.js';
 export { SqlBakeEventStore } from './bake-event-store.js';
 export { SqlRecipeRepository } from './recipe-repository.js';
+export { SqlRestoreTarget } from './restore-target.js';

@@ -13,6 +13,7 @@ import {
 export {
   SqlBakeEventStore,
   SqlRecipeRepository,
+  SqlRestoreTarget,
   MIGRATIONS,
   type Migration,
 } from '../sql/index.js';

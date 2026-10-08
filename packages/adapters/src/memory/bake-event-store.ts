@@ -14,6 +14,8 @@ import {
 } from '@flourprint/core/domain';
 import { assertAppendable } from '../shared/append-checks.js';
 
+const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+
 /**
  * In-memory implementation of the bake event store protocol. Used by tests, the CLI and UI
  * exploration; it loses data when the process ends and does not validate SQLite behavior (#24).
@@ -23,16 +25,18 @@ export class MemoryBakeEventStore implements BakeEventStore {
   readonly #commands = new Map<string, StoredCommand>();
   readonly #summaries = new Map<string, BakeSummary>();
 
+  // Values are copied in and out, like rows of a database: a caller can never alter history.
   async findCommand(commandId: string): Promise<StoredCommand | undefined> {
-    return this.#commands.get(commandId);
+    const command = this.#commands.get(commandId);
+    return command && copy(command);
   }
 
   async loadEvents(bakeId: string): Promise<readonly BakeEvent[]> {
-    return [...(this.#events.get(bakeId) ?? [])];
+    return copy(this.#events.get(bakeId) ?? []);
   }
 
   async listBakes(): Promise<readonly BakeSummary[]> {
-    return [...this.#summaries.values()];
+    return copy([...this.#summaries.values()]);
   }
 
   async append(input: AppendInput): Promise<Result<readonly BakeEvent[], AppendError>> {
@@ -55,10 +59,25 @@ export class MemoryBakeEventStore implements BakeEventStore {
         domainError('VersionConflict', `Bake is at version ${currentVersion}`, { currentVersion }),
       );
     }
+    this.check(input);
+    this.write(input);
+    return ok(copy(input.events));
+  }
+
+  /** Throws on an integrity violation, before anything is written. */
+  check(input: AppendInput): void {
     assertAppendable(input, new Set([...this.#events.values()].flat().map((e) => e.eventId)));
-    this.#events.set(input.command.bakeId, [...log, ...input.events]);
-    this.#commands.set(input.command.commandId, { ...input.command, events: input.events });
-    this.#summaries.set(input.command.bakeId, input.summary);
-    return ok(input.events);
+  }
+
+  /** Writes a checked append synchronously; restores use it to stay atomic. */
+  write(input: AppendInput): void {
+    const log = this.#events.get(input.command.bakeId) ?? [];
+    this.#events.set(input.command.bakeId, [...log, ...copy(input.events)]);
+    this.#commands.set(input.command.commandId, copy({ ...input.command, events: input.events }));
+    this.#summaries.set(input.command.bakeId, copy(input.summary));
+  }
+
+  get isEmpty(): boolean {
+    return this.#summaries.size === 0 && this.#events.size === 0;
   }
 }

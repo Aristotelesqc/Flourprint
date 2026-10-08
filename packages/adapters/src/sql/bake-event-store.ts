@@ -52,6 +52,38 @@ const findCommand = async (
   };
 };
 
+/** Writes checked events, the command receipt and the summary; used by appends and restores. */
+export const writeAppend = async (tx: SqlExecutor, input: AppendInput): Promise<void> => {
+  assertAppendable(input, new Set());
+  for (const event of input.events) {
+    await tx.run(
+      'INSERT INTO bake_events (bake_id, seq, event_id, schema_version, document) VALUES (?, ?, ?, ?, ?)',
+      [event.bakeId, event.seq, event.eventId, event.schemaVersion, JSON.stringify(event)],
+    );
+  }
+  await tx.run(
+    'INSERT INTO bake_commands (command_id, bake_id, content, first_seq, last_seq) VALUES (?, ?, ?, ?, ?)',
+    [
+      input.command.commandId,
+      input.command.bakeId,
+      input.command.content,
+      input.expectedVersion + 1,
+      input.expectedVersion + input.events.length,
+    ],
+  );
+  await tx.run(
+    `INSERT INTO bakes (bake_id, summary, status, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT (bake_id) DO UPDATE SET summary = excluded.summary,
+       status = excluded.status, updated_at = excluded.updated_at`,
+    [
+      input.summary.bakeId,
+      JSON.stringify(input.summary),
+      input.summary.status,
+      input.summary.updatedAt,
+    ],
+  );
+};
+
 /** Bake event store on any SQLite driver (docs/contracts/bake-session.md, persistence.md). */
 export class SqlBakeEventStore implements BakeEventStore {
   constructor(private readonly driver: SqlDriver) {}
@@ -97,34 +129,7 @@ export class SqlBakeEventStore implements BakeEventStore {
           }),
         );
       }
-      assertAppendable(input, new Set());
-      for (const event of input.events) {
-        await tx.run(
-          'INSERT INTO bake_events (bake_id, seq, event_id, schema_version, document) VALUES (?, ?, ?, ?, ?)',
-          [event.bakeId, event.seq, event.eventId, event.schemaVersion, JSON.stringify(event)],
-        );
-      }
-      await tx.run(
-        'INSERT INTO bake_commands (command_id, bake_id, content, first_seq, last_seq) VALUES (?, ?, ?, ?, ?)',
-        [
-          input.command.commandId,
-          input.command.bakeId,
-          input.command.content,
-          input.expectedVersion + 1,
-          input.expectedVersion + input.events.length,
-        ],
-      );
-      await tx.run(
-        `INSERT INTO bakes (bake_id, summary, status, updated_at) VALUES (?, ?, ?, ?)
-         ON CONFLICT (bake_id) DO UPDATE SET summary = excluded.summary,
-           status = excluded.status, updated_at = excluded.updated_at`,
-        [
-          input.summary.bakeId,
-          JSON.stringify(input.summary),
-          input.summary.status,
-          input.summary.updatedAt,
-        ],
-      );
+      await writeAppend(tx, input);
       return ok(input.events);
     });
   }

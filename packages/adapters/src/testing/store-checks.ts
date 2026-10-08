@@ -137,6 +137,20 @@ export const bakeEventStoreChecks: readonly StoreCheck<BakeEventStore>[] = [
     },
   },
   {
+    name: 'returns copies that cannot alter stored events',
+    run: async (make) => {
+      const store = await make();
+      await store.append(append('b1', 'c1', 0, [event('b1', 1)]));
+      const [read] = await store.loadEvents('b1');
+      if (read) (read.payload as { stepId: string }).stepId = 'tampered';
+      const [summary] = await store.listBakes();
+      if (summary) (summary as { version: number }).version = 99;
+      const [again] = await store.loadEvents('b1');
+      equal(again?.payload.type === 'StepStarted' && again.payload.stepId, 's1', 'stored event');
+      equal((await store.listBakes())[0]?.version, 1, 'stored summary');
+    },
+  },
+  {
     name: 'serializes concurrent appends: exactly one wins',
     run: async (make) => {
       const store = await make();
