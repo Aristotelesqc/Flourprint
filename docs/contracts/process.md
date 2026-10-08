@@ -20,6 +20,8 @@ interface ProcessStep {
 
 ## Validation
 
+- Step ids are non-empty and unique; names of built-in object members (`__proto__`,
+  `constructor`, …) are refused, as in `formula.md`.
 - References exist, no self-dependency, no cycle.
 - The list order is a **valid topological order**: the mobile list reads top to bottom.
 - A step added to the list gets `dependsOn = [previous step]` by default.
