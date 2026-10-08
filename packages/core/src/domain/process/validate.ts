@@ -37,6 +37,9 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
   const hasSuccessor = new Set(process.steps.flatMap((step) => step.dependsOn));
   for (const [index, step] of process.steps.entries()) {
     const path = `steps[${index}]`;
+    if (step.schedule !== 'asap' && step.schedule !== 'alap') {
+      return err(invalid(`${path}.schedule`, 'must be asap or alap'));
+    }
     if (step.plannedDurationS !== undefined) {
       if (!(Number.isFinite(step.plannedDurationS) && step.plannedDurationS >= 0)) {
         return err(invalid(`${path}.plannedDurationS`, 'must be ≥ 0'));

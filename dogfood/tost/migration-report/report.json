@@ -1515,8 +1515,6 @@
         "Oven mode fan_oven, shape disc_pizza (#28)."
       ],
       "engine": [
-        "Fat total incomplete: unknown for diastatic-malt.",
-        "Sugar total incomplete: unknown for diastatic-malt.",
         "Planned times after tangzhong are unknown until those steps get a duration."
       ],
       "comparison": {

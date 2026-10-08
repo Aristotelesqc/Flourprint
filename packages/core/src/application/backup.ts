@@ -8,14 +8,13 @@ import {
   validateRecipe,
   type BakeEvent,
   type DomainError,
-  type Formula,
   type Instant,
-  type Process,
   type RecipeFamily,
   type Result,
   type Revision,
 } from '../domain/index.js';
 import { checkBakeLog } from './backup-events.js';
+import { decodeFormula, decodeProcess } from './documents.js';
 import { isCount, isId, isInstant, isObject, Refused, refuse } from './decode.js';
 import type {
   AppendInput,
@@ -113,18 +112,15 @@ export const decodeRevision = (recipeId: string, index: number, value: unknown):
   if (value.note !== undefined && typeof value.note !== 'string') {
     return refuse(`${where} has an invalid note`);
   }
-  let valid: ReturnType<typeof validateRecipe>;
-  try {
-    valid = validateRecipe(value.formula as Formula, value.process as Process);
-  } catch {
-    return refuse(`${where} is malformed`);
-  }
+  const formula = decodeFormula(value.formula, `${where} formula`);
+  const process = decodeProcess(value.process, `${where} process`);
+  const valid = validateRecipe(formula, process);
   if (!valid.ok) return refuse(`${where} is not valid: ${valid.error.code}`);
   return {
     recipeId,
     version: index + 1,
-    formula: value.formula as Formula,
-    process: value.process as Process,
+    formula,
+    process,
     createdAt: value.createdAt,
     ...(value.note === undefined ? {} : { note: value.note }),
   };

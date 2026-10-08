@@ -1182,8 +1182,6 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Engine**
 
-- Fat total incomplete: unknown for diastatic-malt.
-- Sugar total incomplete: unknown for diastatic-malt.
 - Planned times after tangzhong are unknown until those steps get a duration.
 
 **Assumptions**

@@ -11,6 +11,7 @@ import {
   refuse,
   type Json,
 } from './decode.js';
+import { decodeFormula, decodeProcess } from './documents.js';
 
 /**
  * Decodes one bake log from a backup (persistence.md): every payload is checked for its type's
@@ -32,12 +33,27 @@ const FORMULA_EDITS = new Set(['SetBakerPct', 'SetFlourBlend', 'SetIngredientGra
 const isRevisionRef = (value: unknown): boolean =>
   isObject(value) && isId(value.id) && isCount(value.version);
 
-const isFormulaShape = (value: unknown): boolean =>
+/** A structural decoder used as a predicate: true when it accepts the value. */
+const accepts =
+  (decode: (value: unknown, where: string) => unknown) =>
+  (value: unknown): boolean => {
+    try {
+      decode(value, 'value');
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+const isFormulaShape = accepts(decodeFormula);
+
+const isAnchor = (value: unknown): boolean =>
   isObject(value) &&
-  isObject(value.anchor) &&
-  [value.flours, value.ingredients, value.components].every(
-    (list) => Array.isArray(list) && list.every((item) => isObject(item) && isId(item.id)),
-  );
+  (((value.kind === 'flourTotal' || value.kind === 'doughWeight') && isNumber(value.grams)) ||
+    (value.kind === 'pieces' && isNumber(value.count) && isNumber(value.gramsEach)));
+
+const isModelRef = (value: unknown): boolean =>
+  isObject(value) && typeof value.id === 'string' && typeof value.version === 'string';
 
 const isResolvedComponent = (value: unknown): boolean =>
   isObject(value) &&
@@ -52,11 +68,18 @@ const isWaterBalance = (value: unknown): value is Json =>
   Array.isArray(value.unknownContributors) &&
   value.unknownContributors.every(isId) &&
   Array.isArray(value.contributions) &&
-  value.contributions.every((c) => isObject(c) && isId(c.source) && isNumber(c.grams));
+  value.contributions.every(
+    (c) =>
+      isObject(c) &&
+      isId(c.source) &&
+      isNumber(c.grams) &&
+      (c.status === 'known' || c.status === 'estimated') &&
+      ['pureWater', 'ingredient', 'loss'].includes(c.kind as string),
+  );
 
 const isResolvedFormula = (value: unknown): boolean =>
   isObject(value) &&
-  isObject(value.anchor) &&
+  isAnchor(value.anchor) &&
   [
     value.flourTotal,
     value.doughWeight,
@@ -80,35 +103,36 @@ const isResolvedFormula = (value: unknown): boolean =>
   isOptional(value.totalFatPct, isNumber) &&
   isOptional(value.totalSugarPct, isNumber);
 
-const isStepShape = (value: unknown): value is Json =>
-  isObject(value) &&
-  isId(value.id) &&
-  typeof value.operation === 'string' &&
-  Array.isArray(value.dependsOn) &&
-  value.dependsOn.every(isId) &&
-  (value.schedule === 'asap' || value.schedule === 'alap') &&
-  isOptional(value.plannedDurationS, isNumber);
+/** One process step, structurally (its references are checked by the caller). */
+const isStepShape = (value: unknown): value is Json => accepts(decodeProcess)({ steps: [value] });
 
 const isProcessShape = (value: unknown): boolean => {
-  if (!isObject(value) || !Array.isArray(value.steps)) return false;
-  const ids = new Set<string>();
-  for (const step of value.steps) {
-    if (!isStepShape(step) || ids.has(step.id as string)) return false;
-    ids.add(step.id as string);
-  }
-  return value.steps.every((step) =>
-    (step as Json & { dependsOn: string[] }).dependsOn.every((d) => ids.has(d)),
+  if (!accepts(decodeProcess)(value)) return false;
+  const steps = (value as Json & { steps: { id: string; dependsOn: string[] }[] }).steps;
+  const ids = new Set(steps.map((step) => step.id));
+  return (
+    ids.size === steps.length && steps.every((step) => step.dependsOn.every((d) => ids.has(d)))
   );
 };
 
+const isProjectionMode = (value: unknown): boolean =>
+  isObject(value) &&
+  ((value.kind === 'startAt' && isInstant(value.at)) ||
+    (value.kind === 'readyBy' && isInstant(value.at) && isId(value.target)));
+
+const isProjectedStep = (value: unknown): boolean =>
+  isObject(value) &&
+  ['done', 'inProgress', 'planned'].includes(value.status as string) &&
+  isOptional(value.start, isInstant) &&
+  isOptional(value.end, isInstant) &&
+  Array.isArray(value.unknownAfter) &&
+  value.unknownAfter.every(isId);
+
 const isProjection = (value: unknown): boolean =>
   isObject(value) &&
-  isObject(value.mode) &&
+  isProjectionMode(value.mode) &&
   isObject(value.steps) &&
-  Object.entries(value.steps).every(
-    ([id, s]) =>
-      isId(id) && isObject(s) && typeof s.status === 'string' && Array.isArray(s.unknownAfter),
-  );
+  Object.entries(value.steps).every(([id, s]) => isId(id) && isProjectedStep(s));
 
 const isMeasurement = (value: unknown): boolean =>
   isObject(value) &&
@@ -124,13 +148,29 @@ const isSnapshot = (value: unknown): boolean =>
   isFormulaShape(value.formula) &&
   isResolvedFormula(value.resolvedFormula) &&
   Array.isArray(value.usedProperties) &&
+  value.usedProperties.every(
+    (p) =>
+      isObject(p) &&
+      isId(p.ingredient) &&
+      isCount(p.version) &&
+      typeof p.key === 'string' &&
+      'value' in p,
+  ) &&
   isProcessShape(value.process) &&
   isProjection(value.initialProjection) &&
   isObject(value.estimates) &&
+  Object.entries(value.estimates).every(
+    ([id, e]) =>
+      isId(id) &&
+      isObject(e) &&
+      ['ok', 'unsupported', 'out_of_domain', 'insufficient_data'].includes(e.status as string) &&
+      (e.status !== 'ok' || (isNumber(e.value) && isModelRef(e.model))),
+  ) &&
   isObject(value.manifest) &&
   typeof value.manifest.engineVersion === 'string' &&
   typeof value.manifest.contractVersion === 'string' &&
-  Array.isArray(value.manifest.models);
+  Array.isArray(value.manifest.models) &&
+  value.manifest.models.every(isModelRef);
 
 /** Checks one payload against the state before it; throws `Refused` with the reason. */
 const checkPayload = (state: BakeState, payload: Json, where: string): void => {

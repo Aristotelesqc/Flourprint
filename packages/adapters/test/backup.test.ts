@@ -207,6 +207,55 @@ describe.each([
     ['a newer document schema', (b) => (b.schemaVersion = 99), 'UnsupportedDocumentVersion'],
     ['a recipe in a missing family', (b) => (b.families = []), 'InvalidBackup'],
     [
+      'an ingredient with an unknown role',
+      (b) => (b.recipes[0].revisions[0].formula.ingredients[1].role = 'doh'),
+      'InvalidBackup',
+    ],
+    [
+      'a step with an unknown schedule',
+      (b) => (b.recipes[0].revisions[0].process.steps[1].schedule = 'later'),
+      'InvalidBackup',
+    ],
+    [
+      'a formula with an unknown field',
+      (b) => (b.recipes[0].revisions[0].formula.extra = true),
+      'InvalidBackup',
+    ],
+    [
+      'a fat content above 100 %',
+      (b) =>
+        (b.recipes[0].revisions[0].formula.ingredients[1].fat = {
+          status: 'known',
+          valuePct: 250,
+        }),
+      'InvalidBackup',
+    ],
+    [
+      'a reversed sugar range',
+      (b) =>
+        (b.recipes[0].revisions[0].formula.ingredients[1].sugar = {
+          status: 'estimated',
+          valuePct: 5,
+          rangePct: [8, 2],
+        }),
+      'InvalidBackup',
+    ],
+    [
+      'a snapshot with an empty anchor',
+      (b) => (b.bakes[0].events[0].payload.snapshot.resolvedFormula.anchor = {}),
+      'InvalidBackup',
+    ],
+    [
+      'a snapshot with an empty projection',
+      (b) => (b.bakes[0].events[0].payload.snapshot.initialProjection = { mode: {}, steps: {} }),
+      'InvalidBackup',
+    ],
+    [
+      'a snapshot formula with an unknown role',
+      (b) => (b.bakes[0].events[0].payload.snapshot.formula.ingredients[1].role = 'doh'),
+      'InvalidBackup',
+    ],
+    [
       'a pin on a recipe outside its family',
       (b) => delete b.recipes.find((r: Loose) => r.id === 'lean-cold').familyId,
       'InvalidBackup',
@@ -366,6 +415,12 @@ describe.each([
     ['an invalid revision', (f) => (f.recipes[0].revisions[0].formula.flours = [])],
     ['a misnumbered revision', (f) => (f.recipes[0].revisions[0].version = 2)],
     ['a duplicate recipe', (f) => f.recipes.push(f.recipes[0])],
+    ['an unknown role', (f) => (f.recipes[0].revisions[0].formula.ingredients[1].role = 'doh')],
+    [
+      'a fat content above 100 %',
+      (f) =>
+        (f.recipes[0].revisions[0].formula.ingredients[1].fat = { status: 'known', valuePct: 250 }),
+    ],
   ])('refuses %s and writes nothing', async (_case, corrupt) => {
     const file = await recipeFile();
     corrupt(file);

@@ -5,6 +5,7 @@ import { err, ok, type Result } from '../result.js';
 import type { FormulaError } from './errors.js';
 import type {
   Anchor,
+  ContentPct,
   Formula,
   Ingredient,
   ResolvedComponent,
@@ -25,6 +26,30 @@ const checkId = (path: string, id: string): FormulaError | undefined => {
   if (typeof id !== 'string' || id.length === 0)
     return invalid(path, 'id must be a non-empty string');
   if (isReservedId(id)) return invalid(path, `reserved id ${id}`);
+  return undefined;
+};
+
+const ROLES: ReadonlySet<string> = new Set(['dough', 'topping', 'glaze']);
+const COMPONENT_KINDS: ReadonlySet<string> = new Set(['preferment', 'scald', 'soaker', 'custom']);
+
+/**
+ * A water, fat or sugar content: a known or estimated value within [0, 100], an estimate's range
+ * ordered and bracketing it, or unknown (formula.md).
+ */
+const checkContent = (path: string, content: ContentPct | undefined): FormulaError | undefined => {
+  if (content === undefined || content.status === 'unknown') return undefined;
+  if (content.status !== 'known' && content.status !== 'estimated') {
+    return invalid(path, 'status must be known, estimated or unknown');
+  }
+  if (!isFiniteNonNegative(content.valuePct) || content.valuePct > 100) {
+    return invalid(path, 'valuePct must be within [0, 100]');
+  }
+  if (content.status === 'estimated' && content.rangePct) {
+    const [low, high] = content.rangePct;
+    if (!(low >= 0 && low <= content.valuePct && content.valuePct <= high && high <= 100)) {
+      return invalid(path, 'rangePct must bracket valuePct within [0, 100]');
+    }
+  }
   return undefined;
 };
 
@@ -55,17 +80,15 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
     if (!isFiniteNonNegative(ingredient.bakerPct)) {
       return err(invalid(path, 'bakerPct must be ≥ 0'));
     }
-    const water = ingredient.water;
-    if (water && water.status !== 'unknown') {
-      if (!isFiniteNonNegative(water.valuePct) || water.valuePct > 100) {
-        return err(invalid(`${path}.water`, 'valuePct must be within [0, 100]'));
-      }
-      if (water.status === 'estimated' && water.rangePct) {
-        const [low, high] = water.rangePct;
-        if (!(low >= 0 && low <= water.valuePct && water.valuePct <= high && high <= 100)) {
-          return err(invalid(`${path}.water`, 'rangePct must bracket valuePct within [0, 100]'));
-        }
-      }
+    if (ingredient.kind !== 'water' && ingredient.kind !== 'other') {
+      return err(invalid(`${path}.kind`, 'kind must be water or other'));
+    }
+    if (!ROLES.has(ingredient.role)) {
+      return err(invalid(`${path}.role`, 'role must be dough, topping or glaze'));
+    }
+    for (const content of ['water', 'fat', 'sugar'] as const) {
+      const bad = checkContent(`${path}.${content}`, ingredient[content]);
+      if (bad) return err(bad);
     }
     ingredientIds.add(ingredient.id);
   }
@@ -82,6 +105,9 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
     )
       return err(invalid(path, `duplicate id ${component.id}`));
     componentIds.add(component.id);
+    if (!COMPONENT_KINDS.has(component.kind)) {
+      return err(invalid(`${path}.kind`, 'kind must be preferment, scald, soaker or custom'));
+    }
     if (!isFiniteNonNegative(component.flourPct) || component.flourPct > 100) {
       return err(invalid(path, 'flourPct must be within [0, 100]'));
     }
@@ -153,6 +179,8 @@ export const validateAnchor = (anchor: Anchor): Result<void, FormulaError> => {
       return positive(anchor.gramsEach)
         ? ok(undefined)
         : err(invalid('anchor.gramsEach', 'must be > 0'));
+    default:
+      return err(invalid('anchor.kind', 'must be flourTotal, doughWeight or pieces'));
   }
 };
 
@@ -351,7 +379,7 @@ const contentBalance = (
     const mass = ingredientGrams[ingredient.id] ?? 0;
     const value = ingredient[content] ?? { status: 'unknown' };
     if (value.status === 'unknown') {
-      unknownContributors.push(ingredient.id);
+      if (mass > 0) unknownContributors.push(ingredient.id);
       continue;
     }
     contributions.push({
@@ -402,7 +430,8 @@ const waterBalance = (
     }
     const water = ingredient.water ?? { status: 'unknown' };
     if (water.status === 'unknown') {
-      unknownContributors.push(ingredient.id);
+      // Nothing is unknown about zero grams.
+      if (mass > 0) unknownContributors.push(ingredient.id);
       continue;
     }
     const grams = (mass * water.valuePct) / 100;

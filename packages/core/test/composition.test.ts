@@ -93,6 +93,52 @@ describe('fat and sugar totals', () => {
   });
 });
 
+describe('composition checks in the domain', () => {
+  const butter = (content: Record<string, unknown>): Formula => ({
+    ...enriched,
+    ingredients: [
+      { id: 'water', kind: 'water', bakerPct: 70, role: 'dough' },
+      { id: 'butter', kind: 'other', bakerPct: 10, role: 'dough', ...content },
+    ],
+  });
+
+  it.each([
+    ['fat above 100 %', { fat: { status: 'known', valuePct: 250 } }],
+    ['a reversed sugar range', { sugar: { status: 'estimated', valuePct: 5, rangePct: [8, 2] } }],
+    [
+      'a range that misses its value',
+      { fat: { status: 'estimated', valuePct: 5, rangePct: [6, 9] } },
+    ],
+    ['an unknown status', { water: { status: 'guessed', valuePct: 5 } }],
+  ])('refuses %s', (_case, content) => {
+    expect(resolveFormula(butter(content)).ok).toBe(false);
+  });
+
+  it('refuses an unknown role, kind or anchor', () => {
+    const role = {
+      ...enriched,
+      ingredients: [{ id: 'b', kind: 'other', bakerPct: 10, role: 'doh' }],
+    };
+    expect(resolveFormula(role as unknown as Formula).ok).toBe(false);
+    const anchor = { ...enriched, anchor: {} };
+    expect(resolveFormula(anchor as unknown as Formula).ok).toBe(false);
+  });
+
+  it('counts nothing unknown about an ingredient at 0 g', () => {
+    const formula: Formula = {
+      ...enriched,
+      ingredients: [
+        { id: 'water', kind: 'water', bakerPct: 70, role: 'dough' },
+        { id: 'malt', kind: 'other', bakerPct: 0, role: 'dough' },
+      ],
+    };
+    const r = resolve(formula);
+    expect(r.totalWater.completeness).toBe('complete');
+    expect(r.totalFat?.unknownContributors).toEqual([]);
+    expect(r.totalSugar?.completeness).toBe('complete');
+  });
+});
+
 const withComponent = (component: Component, extra: Formula['ingredients'] = []): Formula => ({
   flours: [{ id: 'bread', sharePct: 100 }],
   ingredients: [{ id: 'water', kind: 'water', bakerPct: 80, role: 'dough' }, ...extra],
