@@ -1,12 +1,12 @@
 import { domainError, type DomainError } from '../errors.js';
 import { applyFormulaEdit } from '../formula/edit.js';
 import type { FormulaError } from '../formula/errors.js';
-import { resolveFormula } from '../formula/resolve.js';
 import type { Instant } from '../instant.js';
 import { projectProcess } from '../process/project.js';
 import type { Process, Projection, StepFact } from '../process/types.js';
-import { validateProcess, type ProcessError } from '../process/validate.js';
+import type { ProcessError } from '../process/validate.js';
 import { err, ok, type Result } from '../result.js';
+import { validateRecipe } from '../recipe/validate.js';
 import { CONTRACT_VERSION, ENGINE_VERSION } from '../version.js';
 import type { Estimate } from '../values.js';
 import type { BakeCommandPayload, BakeState, EventDraft } from './types.js';
@@ -79,6 +79,20 @@ const requireStep = (state: BakeState, stepId: string): Result<void, BakeError> 
     ? ok(undefined)
     : error('UnknownStep', `Unknown step ${stepId}`, { stepId });
 
+/** Latest recorded end among a step's dependencies, if any. */
+const dependencyEnd = (state: BakeState, process: Process, stepId: string): Instant | undefined =>
+  latest(
+    (process.steps.find((s) => s.id === stepId)?.dependsOn ?? []).flatMap((dep) => {
+      const end = state.steps[dep]?.endedAt;
+      return end === undefined ? [] : [end];
+    }),
+  );
+
+const beforeDependencies = (stepId: string) =>
+  error('InvalidTime', `${stepId} cannot start before its dependencies ended`, {
+    reason: 'start before a dependency ended',
+  });
+
 const pendingDependencies = (state: BakeState, process: Process, stepId: string): string[] =>
   (process.steps.find((s) => s.id === stepId)?.dependsOn ?? []).filter(
     (dep) => state.steps[dep]?.endedAt === undefined,
@@ -96,8 +110,9 @@ export const decide = (
   if (command.type === 'StartBake') {
     if (state.status !== 'notStarted')
       return error('BakeAlreadyStarted', 'The bake has already started', undefined);
-    const resolved = resolveFormula(command.formula);
-    if (!resolved.ok) return resolved;
+    const recipe = validateRecipe(command.formula, command.process);
+    if (!recipe.ok) return recipe;
+    const resolved = ok(recipe.value.resolved);
     const projection = projectProcess(command.process, { mode: command.mode });
     if (!projection.ok) return projection;
     return ok([
@@ -151,9 +166,12 @@ export const decide = (
           },
         );
       }
-      return ok([
-        { occurredAt: command.at ?? now, payload: { type: 'StepStarted', stepId: command.stepId } },
-      ]);
+      const at = command.at ?? now;
+      const ready = dependencyEnd(state, process, command.stepId);
+      if (ready !== undefined && seconds(at) < seconds(ready)) {
+        return beforeDependencies(command.stepId);
+      }
+      return ok([{ occurredAt: at, payload: { type: 'StepStarted', stepId: command.stepId } }]);
     }
 
     case 'CompleteStep': {
@@ -193,11 +211,9 @@ export const decide = (
           },
         );
       }
-      const dependencyEnds = (
-        process.steps.find((s) => s.id === command.stepId)?.dependsOn ?? []
-      ).map((dep) => state.steps[dep]?.endedAt as Instant);
-      const ready = latest(dependencyEnds) ?? state.startedAt ?? at;
-      const start = seconds(ready) <= seconds(at) ? ready : at;
+      // The implicit start sits at the latest dependency end, or the bake start (bake-session.md).
+      const start = dependencyEnd(state, process, command.stepId) ?? state.startedAt ?? at;
+      if (seconds(at) < seconds(start)) return beforeDependencies(command.stepId);
       return ok([
         { occurredAt: start, payload: { type: 'StepStarted', stepId: command.stepId } },
         completed,
@@ -240,8 +256,9 @@ export const decide = (
     case 'AdjustFormula': {
       const edited = applyFormulaEdit(state.formula, command.edit);
       if (!edited.ok) return edited;
-      const resolved = resolveFormula(edited.value);
-      if (!resolved.ok) return resolved;
+      const recipe = validateRecipe(edited.value, process);
+      if (!recipe.ok) return recipe;
+      const resolved = ok(recipe.value.resolved);
       return ok([
         {
           occurredAt: now,
@@ -276,7 +293,7 @@ export const decide = (
           : s,
       );
       steps.splice(steps.findIndex((s) => s.id === command.after) + 1, 0, step);
-      const valid = validateProcess({ steps });
+      const valid = validateRecipe(state.formula, { steps });
       if (!valid.ok) return valid;
       return ok([
         { occurredAt: now, payload: { type: 'StepInserted', after: command.after, step, rewired } },
@@ -334,6 +351,28 @@ export const decide = (
           targetEventId: command.targetEventId,
           reason: 'end before start',
         });
+      }
+      if (target.kind === 'start') {
+        const ready = dependencyEnd(state, process, target.stepId);
+        if (ready !== undefined && next < seconds(ready)) {
+          return error('InvalidCorrection', 'A step cannot start before its dependencies ended', {
+            targetEventId: command.targetEventId,
+            reason: 'start before a dependency ended',
+          });
+        }
+      } else {
+        const successorStarts = process.steps
+          .filter((s) => s.dependsOn.includes(target.stepId))
+          .flatMap((s) => {
+            const started = state.steps[s.id]?.startedAt;
+            return started === undefined ? [] : [seconds(started)];
+          });
+        if (successorStarts.some((start) => next > start)) {
+          return error('InvalidCorrection', 'A step cannot end after a following step started', {
+            targetEventId: command.targetEventId,
+            reason: 'end after a successor started',
+          });
+        }
       }
       return ok([
         {

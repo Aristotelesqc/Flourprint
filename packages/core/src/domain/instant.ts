@@ -9,7 +9,13 @@ const UTC_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
 export type InvalidInstant = DomainError<'InvalidInstant', { input: string }>;
 
 export const parseInstant = (input: string): Result<Instant, InvalidInstant> => {
-  if (!UTC_ISO.test(input) || Number.isNaN(Date.parse(input))) {
+  // Date.parse rolls impossible dates over (February 30 → March 2): compare back the fields.
+  const time = Date.parse(input);
+  if (
+    !UTC_ISO.test(input) ||
+    Number.isNaN(time) ||
+    new Date(time).toISOString().slice(0, 19) !== input.slice(0, 19)
+  ) {
     return err(domainError('InvalidInstant', `Not a UTC ISO 8601 instant: ${input}`, { input }));
   }
   return ok(input as Instant);

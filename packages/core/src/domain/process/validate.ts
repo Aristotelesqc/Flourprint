@@ -5,6 +5,7 @@ import {
   topologicalSort,
   type GraphError,
 } from '../graph.js';
+import { isReservedId } from '../ids.js';
 import { err, ok, type Result } from '../result.js';
 import type { Process } from './types.js';
 
@@ -20,6 +21,11 @@ const invalid = (path: string, reason: string): ProcessError =>
 
 /** Graph and timing rules of docs/contracts/process.md. */
 export const validateProcess = (process: Process): Result<void, ProcessError> => {
+  for (const [index, step] of process.steps.entries()) {
+    if (typeof step.id !== 'string' || step.id.length === 0 || isReservedId(step.id)) {
+      return err(invalid(`steps[${index}].id`, `invalid or reserved id ${String(step.id)}`));
+    }
+  }
   const graph = validateReferences(process.steps);
   if (!graph.ok) return graph;
   const sorted = topologicalSort(process.steps);

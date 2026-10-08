@@ -233,3 +233,13 @@ describe('planIncorporations', () => {
     });
   });
 });
+
+describe('step identifiers', () => {
+  it.each(['__proto__', 'constructor', ''])('refuses the step id "%s"', (id) => {
+    const process: Process = {
+      steps: [{ id, operation: 'mix', dependsOn: [], schedule: 'asap', plannedDurationS: 600 }],
+    };
+    const result = validateProcess(process);
+    expect(result.ok ? 'ok' : result.error.code).toBe('InvalidProcess');
+  });
+});

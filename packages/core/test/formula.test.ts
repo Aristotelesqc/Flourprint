@@ -323,3 +323,84 @@ describe('formula edits and errors', () => {
     ).toBe('UnknownReference');
   });
 });
+
+describe('formula references (Codex audit of PR #31)', () => {
+  const withPoolish = (poolish: Partial<Formula['components'][number]>): Formula => ({
+    ...lean,
+    components: [
+      {
+        id: 'poolish',
+        kind: 'preferment',
+        flourPct: 30,
+        flourBlend: [{ flour: 'bread', sharePct: 100 }],
+        hydrationPct: 100,
+        ...poolish,
+      },
+    ],
+  });
+  const reason = (formula: Formula) => {
+    const result = resolveFormula(formula);
+    return result.ok ? 'ok' : `${result.error.code}: ${result.error.message}`;
+  };
+
+  it('refuses a flour repeated in a component blend instead of losing half of it', () => {
+    const formula = withPoolish({
+      flourBlend: [
+        { flour: 'bread', sharePct: 50 },
+        { flour: 'bread', sharePct: 50 },
+      ],
+    });
+    expect(reason(formula)).toMatch(/^InvalidFormula: .*duplicate flour bread/);
+  });
+
+  it('refuses an ingredient allocated twice to the same component', () => {
+    const formula = withPoolish({
+      allocations: [
+        { ingredient: 'salt', bakerPct: 0.5 },
+        { ingredient: 'salt', bakerPct: 0.5 },
+      ],
+    });
+    expect(reason(formula)).toMatch(/^InvalidFormula: .*duplicate ingredient salt/);
+  });
+
+  it('refuses a topping or glaze allocated into the dough', () => {
+    const formula = withPoolish({ allocations: [{ ingredient: 'seeds', bakerPct: 1 }] });
+    expect(reason(formula)).toMatch(/^InvalidFormula: .*only dough ingredients/);
+  });
+
+  it.each(['__proto__', 'constructor', 'toString', 'hasOwnProperty', 'prototype'])(
+    'refuses the reserved identifier %s everywhere',
+    (id) => {
+      expect(errorCode(resolveFormula(withPoolish({ id })))).toBe('InvalidFormula');
+      expect(
+        errorCode(resolveFormula({ ...lean, flours: [{ id, sharePct: 100 }], components: [] })),
+      ).toBe('InvalidFormula');
+      expect(
+        errorCode(
+          resolveFormula({
+            ...lean,
+            ingredients: lean.ingredients.map((i) => (i.id === 'salt' ? { ...i, id } : i)),
+          }),
+        ),
+      ).toBe('InvalidFormula');
+    },
+  );
+
+  it('refuses a component named like a flour or an ingredient', () => {
+    expect(errorCode(resolveFormula(withPoolish({ id: 'salt' })))).toBe('InvalidFormula');
+    expect(errorCode(resolveFormula(withPoolish({ id: 'bread' })))).toBe('InvalidFormula');
+  });
+
+  it('keeps the final mix equal to the dough weight with allocations and evaporation', () => {
+    const r = resolved(
+      withPoolish({ allocations: [{ ingredient: 'salt', bakerPct: 1 }], waterLossPct: 10 }),
+    );
+    const finalMix =
+      sum(Object.values(r.finalMix.flourByFlour)) +
+      r.finalMix.water +
+      sum(Object.values(r.finalMix.grams)) +
+      sum(Object.values(r.finalMix.componentMasses));
+    expect(close(finalMix, r.doughWeight)).toBe(true);
+    expect(Object.keys(r.components)).toEqual(['poolish']);
+  });
+});

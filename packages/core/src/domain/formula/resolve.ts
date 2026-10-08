@@ -1,4 +1,5 @@
 import { domainError } from '../errors.js';
+import { isReservedId } from '../ids.js';
 import { approxAtMost, approxEqual, sum } from '../numeric.js';
 import { err, ok, type Result } from '../result.js';
 import type { FormulaError } from './errors.js';
@@ -20,11 +21,20 @@ const unknownRef = (path: string, id: string): FormulaError =>
 
 const isFiniteNonNegative = (value: number): boolean => Number.isFinite(value) && value >= 0;
 
+const checkId = (path: string, id: string): FormulaError | undefined => {
+  if (typeof id !== 'string' || id.length === 0)
+    return invalid(path, 'id must be a non-empty string');
+  if (isReservedId(id)) return invalid(path, `reserved id ${id}`);
+  return undefined;
+};
+
 /** Structural checks that do not depend on the anchor value. */
 export const validateFormula = (formula: Formula): Result<void, FormulaError> => {
   const flourIds = new Set<string>();
   for (const [index, flour] of formula.flours.entries()) {
     const path = `flours[${index}]`;
+    const badId = checkId(path, flour.id);
+    if (badId) return err(badId);
     if (flourIds.has(flour.id)) return err(invalid(path, `duplicate id ${flour.id}`));
     if (!isFiniteNonNegative(flour.sharePct)) return err(invalid(path, 'sharePct must be ≥ 0'));
     flourIds.add(flour.id);
@@ -37,6 +47,8 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
   const ingredientIds = new Set<string>();
   for (const [index, ingredient] of formula.ingredients.entries()) {
     const path = `ingredients[${index}]`;
+    const badId = checkId(path, ingredient.id);
+    if (badId) return err(badId);
     if (ingredientIds.has(ingredient.id) || flourIds.has(ingredient.id)) {
       return err(invalid(path, `duplicate id ${ingredient.id}`));
     }
@@ -61,7 +73,14 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
   const componentIds = new Set<string>();
   for (const [index, component] of formula.components.entries()) {
     const path = `components[${index}]`;
-    if (componentIds.has(component.id)) return err(invalid(path, `duplicate id ${component.id}`));
+    const badId = checkId(path, component.id);
+    if (badId) return err(badId);
+    if (
+      componentIds.has(component.id) ||
+      flourIds.has(component.id) ||
+      ingredientIds.has(component.id)
+    )
+      return err(invalid(path, `duplicate id ${component.id}`));
     componentIds.add(component.id);
     if (!isFiniteNonNegative(component.flourPct) || component.flourPct > 100) {
       return err(invalid(path, 'flourPct must be within [0, 100]'));
@@ -76,10 +95,15 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
     if (component.flourPct > 0 && component.flourBlend.length === 0) {
       return err(invalid(`${path}.flourBlend`, 'a component with flour needs a flour blend'));
     }
+    const blendFlours = new Set<string>();
     for (const [blendIndex, part] of component.flourBlend.entries()) {
       if (!flourIds.has(part.flour)) {
         return err(unknownRef(`${path}.flourBlend[${blendIndex}]`, part.flour));
       }
+      if (blendFlours.has(part.flour)) {
+        return err(invalid(`${path}.flourBlend[${blendIndex}]`, `duplicate flour ${part.flour}`));
+      }
+      blendFlours.add(part.flour);
       if (!isFiniteNonNegative(part.sharePct)) {
         return err(invalid(`${path}.flourBlend[${blendIndex}]`, 'sharePct must be ≥ 0'));
       }
@@ -90,6 +114,7 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
     ) {
       return err(invalid(`${path}.flourBlend`, 'shares must sum to 100'));
     }
+    const allocated = new Set<string>();
     for (const [allocIndex, allocation] of (component.allocations ?? []).entries()) {
       const allocPath = `${path}.allocations[${allocIndex}]`;
       const target = formula.ingredients.find((i) => i.id === allocation.ingredient);
@@ -97,6 +122,15 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
       if (target.kind === 'water') {
         return err(invalid(allocPath, 'component water is set by hydrationPct'));
       }
+      if (target.role !== 'dough') {
+        return err(
+          invalid(allocPath, `only dough ingredients can be allocated, not ${target.role}`),
+        );
+      }
+      if (allocated.has(target.id)) {
+        return err(invalid(allocPath, `duplicate ingredient ${target.id}`));
+      }
+      allocated.add(target.id);
       if (!isFiniteNonNegative(allocation.bakerPct)) {
         return err(invalid(allocPath, 'bakerPct must be ≥ 0'));
       }
@@ -181,7 +215,7 @@ export const resolveFormula = (formula: Formula): Result<ResolvedFormula, Formul
     doughIngredients.filter((i) => i.kind === 'water').map((i) => ingredientGrams[i.id] ?? 0),
   );
 
-  const components: Record<string, ResolvedComponent> = {};
+  const componentEntries: [string, ResolvedComponent][] = [];
   const drawnFlour = new Map<string, number>();
   const drawnIngredient = new Map<string, number>();
   let drawnWater = 0;
@@ -205,15 +239,19 @@ export const resolveFormula = (formula: Formula): Result<ResolvedFormula, Formul
     }
     drawnWater += water;
     losses += waterLoss;
-    components[component.id] = {
-      flourByFlour: componentFlour,
-      flour,
-      water,
-      waterLoss,
-      allocations,
-      mass: flour + water - waterLoss + sum(Object.values(allocations)),
-    };
+    componentEntries.push([
+      component.id,
+      {
+        flourByFlour: componentFlour,
+        flour,
+        water,
+        waterLoss,
+        allocations,
+        mass: flour + water - waterLoss + sum(Object.values(allocations)),
+      },
+    ]);
   }
+  const components = record(componentEntries);
 
   for (const flour of formula.flours) {
     const required = drawnFlour.get(flour.id) ?? 0;

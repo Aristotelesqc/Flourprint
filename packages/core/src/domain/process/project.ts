@@ -158,18 +158,21 @@ const earliestStart = (step: ProcessStep, slots: Map<StepId, Slot>, lowerBound: 
 };
 
 const build = (input: ProjectionInput, slots: Map<StepId, Slot>): Projection => {
-  const steps: Record<StepId, ProjectedStep> = {};
+  const steps: [StepId, ProjectedStep][] = [];
   for (const [id, slot] of slots) {
     const blockers = [
       ...(slot.start.known ? [] : slot.start.blockers),
       ...(slot.end.known ? [] : slot.end.blockers),
     ];
-    steps[id] = {
-      status: slot.status,
-      ...(slot.start.known ? { start: toInstant(slot.start.at) } : {}),
-      ...(slot.end.known ? { end: toInstant(slot.end.at) } : {}),
-      unknownAfter: [...new Set(blockers)].sort(),
-    };
+    steps.push([
+      id,
+      {
+        status: slot.status,
+        ...(slot.start.known ? { start: toInstant(slot.start.at) } : {}),
+        ...(slot.end.known ? { end: toInstant(slot.end.at) } : {}),
+        unknownAfter: [...new Set(blockers)].sort(),
+      },
+    ]);
   }
-  return { mode: input.mode, steps };
+  return { mode: input.mode, steps: Object.fromEntries(steps) };
 };

@@ -38,7 +38,7 @@ export const planIncorporations = (
 
   const items = finalMixItems(formula);
   const shares = new Map<string, number>();
-  const plan: Record<StepId, IncorporatedAmount[]> = {};
+  const plan = new Map<StepId, IncorporatedAmount[]>();
 
   for (const [index, step] of process.steps.entries()) {
     for (const [i, incorporation] of (step.incorporations ?? []).entries()) {
@@ -54,7 +54,9 @@ export const planIncorporations = (
         );
       }
       shares.set(key, (shares.get(key) ?? 0) + incorporation.sharePct);
-      (plan[step.id] ??= []).push({
+      const amounts = plan.get(step.id) ?? [];
+      plan.set(step.id, amounts);
+      amounts.push({
         item: incorporation.item,
         ...(incorporation.item === 'water' ? {} : { id: incorporation.id }),
         grams: (mass * incorporation.sharePct) / 100,
@@ -78,5 +80,5 @@ export const planIncorporations = (
       );
     }
   }
-  return ok(plan);
+  return ok(Object.fromEntries(plan));
 };

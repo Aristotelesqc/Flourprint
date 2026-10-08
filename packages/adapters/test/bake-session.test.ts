@@ -375,3 +375,103 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     });
   });
 });
+
+describe('recorded times follow the process edges (Codex audit of PR #31)', () => {
+  beforeEach(() => {
+    makeStore = () => new MemoryBakeEventStore();
+  });
+
+  const throughMix = async () => {
+    const session = new Session();
+    await session.start();
+    await session.at(t('08:00')).ok({ type: 'CompleteStep', stepId: 'poolish' });
+    await session.at(t('09:00')).ok({ type: 'CompleteStep', stepId: 'tangzhong' });
+    await session.at(t('10:00')).ok({ type: 'CompleteStep', stepId: 'mix' });
+    return session;
+  };
+  const code = (result: { ok: boolean; error?: { code: string } }) =>
+    result.ok ? 'ok' : result.error?.code;
+
+  it('refuses a start dated before a dependency ended', async () => {
+    const session = await throughMix();
+    expect(
+      code(await session.at(t('10:30')).run({ type: 'StartStep', stepId: 'bulk', at: t('09:30') })),
+    ).toBe('InvalidTime');
+    expect(code(await session.run({ type: 'StartStep', stepId: 'bulk', at: t('10:00') }))).toBe(
+      'ok',
+    );
+  });
+
+  it('refuses a completion dated before the implicit start', async () => {
+    const session = await throughMix();
+    expect(
+      code(
+        await session.at(t('10:30')).run({ type: 'CompleteStep', stepId: 'bulk', at: t('09:30') }),
+      ),
+    ).toBe('InvalidTime');
+  });
+
+  it('refuses corrections that cross a dependency edge', async () => {
+    const session = await throughMix();
+    const started = await session.at(t('10:05')).ok({ type: 'StartStep', stepId: 'bulk' });
+    const mixEnd = Object.entries(started.state.stepEvents).find(
+      ([, e]) => e.stepId === 'mix' && e.kind === 'end',
+    )?.[0] as string;
+    const bulkStart = started.state.steps.bulk?.startEventId as string;
+    expect(
+      code(
+        await session.run({
+          type: 'CorrectStepTime',
+          targetEventId: mixEnd,
+          newOccurredAt: t('10:30'),
+        }),
+      ),
+    ).toBe('InvalidCorrection');
+    expect(
+      code(
+        await session.run({
+          type: 'CorrectStepTime',
+          targetEventId: bulkStart,
+          newOccurredAt: t('09:45'),
+        }),
+      ),
+    ).toBe('InvalidCorrection');
+  });
+
+  it('refuses a start or an insertion whose incorporations do not match the formula', async () => {
+    const partial: Process = {
+      steps: process_.steps.map((s) =>
+        s.id === 'mix' ? { ...s, incorporations: [{ item: 'water', sharePct: 80 }] } : s,
+      ),
+    };
+    const session = new Session();
+    expect(
+      code(
+        await session.run({
+          type: 'StartBake',
+          revisions: { formula: { id: 'f', version: 1 }, process: { id: 'p', version: 1 } },
+          formula,
+          process: partial,
+          mode: { kind: 'startAt', at: t('08:00') },
+        }),
+      ),
+    ).toBe('IncompleteIncorporation');
+
+    const other = new Session();
+    await other.start();
+    expect(
+      code(
+        await other.run({
+          type: 'InsertStepAfter',
+          after: 'mix',
+          step: {
+            id: 'soak',
+            operation: 'rest',
+            schedule: 'asap',
+            incorporations: [{ item: 'ingredient', id: 'nuts', sharePct: 100 }],
+          },
+        }),
+      ),
+    ).toBe('UnknownReference');
+  });
+});
