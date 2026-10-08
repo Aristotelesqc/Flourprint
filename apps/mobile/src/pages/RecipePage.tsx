@@ -15,9 +15,12 @@ import { useParams } from 'react-router-dom';
 import { saveRevision } from '@flourprint/core/application';
 import {
   applyFormulaEdit,
+  defaultVariant,
   resolveFormula,
   validateRecipe,
   type BakeSummary,
+  type Recipe,
+  type RecipeFamily,
   type DomainError,
   type FormulaEdit,
   type ProjectionMode,
@@ -54,6 +57,7 @@ export const RecipePage = () => {
   const [storageFailed, setStorageFailed] = useState(false);
   const [notice, setNotice] = useState<string>();
   const [loading, setLoading] = useState<'loading' | 'missing' | 'failed' | 'ready'>('loading');
+  const [family, setFamily] = useState<{ family: RecipeFamily; members: readonly Recipe[] }>();
   const writes = useGuardedWrite();
   // A bake start whose outcome is unknown keeps its ids, so a retry cannot start a second bake.
   const pendingStart = useRef<{ bakeId: string; commandId: string }>(undefined);
@@ -73,12 +77,43 @@ export const RecipePage = () => {
         setBase({ name: recipe.name, revision: revision.value });
         setDraft(drafts.get(recipeId, revision.value.version) ?? { formula, process });
         setLoading('ready');
+        await loadFamily(recipe);
       } catch (error) {
         console.error(error);
         setLoading('failed');
       }
     })();
   }, [recipeId, services]);
+
+  /** The variants of the recipe's family, if it belongs to one (persistence.md). */
+  const loadFamily = async (recipe: Recipe) => {
+    if (recipe.familyId === undefined) {
+      setFamily(undefined);
+      return;
+    }
+    const found = (await services.recipes.listFamilies()).find((f) => f.id === recipe.familyId);
+    const members = (await services.recipes.listRecipes())
+      .filter((r) => r.familyId === recipe.familyId)
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+    setFamily(found && { family: found, members });
+  };
+
+  const pin = async (recipeIdToPin: string | undefined) => {
+    if (!family) return;
+    const result = await writes.run(() =>
+      services.recipes.pinVariant(family.family.id, recipeIdToPin),
+    );
+    if (!result.ok) {
+      setStorageFailed(result.reason === 'storage');
+      return;
+    }
+    if (!result.value.ok) {
+      setFailure(result.value.error);
+      return;
+    }
+    const recipe = await services.recipes.getRecipe(recipeId);
+    if (recipe) await loadFamily(recipe);
+  };
 
   const refreshBakes = useCallback(async () => {
     try {
@@ -249,6 +284,20 @@ export const RecipePage = () => {
             </IonButton>
           </IonButtons>
         </IonToolbar>
+        {family && (
+          <IonToolbar>
+            <Variants
+              family={family.family}
+              members={family.members}
+              current={recipeId}
+              busy={writes.busy}
+              onOpen={(id) => {
+                if (id !== recipeId) router.push(`/recipes/${id}`, 'none', 'replace');
+              }}
+              onPin={(id) => void pin(id)}
+            />
+          </IonToolbar>
+        )}
         <IonToolbar>
           <div className="px-4 pb-2">
             <Segmented
@@ -320,3 +369,84 @@ export const RecipePage = () => {
     </IonPage>
   );
 };
+
+/**
+ * Variants of a family: tap to open one; the star shows the variant opened by default, pinned
+ * by the user or else the most recent.
+ */
+const Variants = ({
+  family,
+  members,
+  current,
+  busy,
+  onOpen,
+  onPin,
+}: {
+  family: RecipeFamily;
+  members: readonly Recipe[];
+  current: string;
+  busy: boolean;
+  onOpen: (recipeId: string) => void;
+  onPin: (recipeId: string | undefined) => void;
+}) => {
+  const { t } = useMessages();
+  const shown = defaultVariant(family, members)?.id;
+  const pinned = family.pinnedRecipeId === current;
+  return (
+    <div className="flex flex-col gap-1.5 px-4 pb-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[13px] font-semibold text-muted">
+          {t('family.title', { family: family.name })}
+        </span>
+        <button
+          type="button"
+          className="fp-reset flex min-h-11 items-center gap-1.5 text-sm text-accent-text"
+          disabled={busy}
+          aria-pressed={pinned}
+          onClick={() => onPin(pinned ? undefined : current)}
+        >
+          <Star filled={shown === current} />
+          {pinned
+            ? t('family.unpin')
+            : shown === current
+              ? t('family.mostRecent')
+              : t('family.pin')}
+        </button>
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-1" role="list">
+        {members.map((member) => (
+          <button
+            key={member.id}
+            type="button"
+            role="listitem"
+            aria-current={member.id === current ? 'page' : undefined}
+            className={`fp-reset flex min-h-10 shrink-0 items-center gap-1 rounded-full border px-3 text-sm ${
+              member.id === current
+                ? 'border-accent bg-accent text-on-accent'
+                : 'border-line bg-surface text-ink'
+            }`}
+            onClick={() => onOpen(member.id)}
+          >
+            {member.id === shown && <Star filled small />}
+            {member.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Star = ({ filled, small = false }: { filled: boolean; small?: boolean }) => (
+  <svg
+    width={small ? 14 : 18}
+    height={small ? 14 : 18}
+    viewBox="0 0 24 24"
+    fill={filled ? 'currentColor' : 'none'}
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z" />
+  </svg>
+);

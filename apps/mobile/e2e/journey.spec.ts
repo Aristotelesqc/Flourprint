@@ -94,3 +94,70 @@ test('opens on the recipes; diagnostics sit behind the advanced menu', async ({ 
   await page.getByText('Vérifications de l’appareil').click();
   await expect(page).toHaveURL(/\/device-checks$/);
 });
+
+const variant = (id: string, name: string, createdAt: string) => ({
+  id,
+  name,
+  familyId: 'family-test',
+  revisions: [
+    {
+      recipeId: id,
+      version: 1,
+      createdAt,
+      formula: {
+        flours: [{ id: 'flour', sharePct: 100 }],
+        ingredients: [{ id: 'water', kind: 'water', bakerPct: 70, role: 'dough' }],
+        components: [],
+        anchor: { kind: 'flourTotal', grams: 500 },
+      },
+      process: {
+        steps: [{ id: 'mix', operation: 'mix', dependsOn: [], schedule: 'asap' }],
+      },
+    },
+  ],
+});
+
+test('imports a recipes file additively; a family shows one variant, the starred one', async ({
+  page,
+}) => {
+  const file = {
+    name: 'recettes.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        kind: 'flourprint-recipes',
+        schemaVersion: 1,
+        exportedAt: '2026-10-08T18:00:00.000Z',
+        recipes: [
+          variant('older', 'Pain test 1', '2026-01-01T12:00:00.000Z'),
+          variant('newer', 'Pain test 2', '2026-02-01T12:00:00.000Z'),
+        ],
+        families: [{ id: 'family-test', name: 'Pain test' }],
+      }),
+    ),
+  };
+  await page.goto('/advanced');
+  const picker = page.locator('input[type=file]');
+  await picker.setInputFiles(file);
+  await expect(page.getByText('2 recettes importées.')).toBeVisible();
+  await picker.setInputFiles(file);
+  await expect(page.getByText('Aucune nouvelle recette, 2 déjà présentes.')).toBeVisible();
+
+  // Ionic keeps hidden pages in the stack: only visible text counts.
+  const shown = (text: string) => page.getByText(text, { exact: true }).locator('visible=true');
+  await page.locator('ion-back-button:visible').click();
+  await expect(shown('Pain test 2')).toHaveCount(1);
+  await expect(shown('Pain test 1')).toHaveCount(0);
+  await expect(shown('2 variantes')).toHaveCount(1);
+
+  await shown('Pain test 2').click();
+  await page.getByRole('listitem').filter({ hasText: 'Pain test 1' }).click();
+  await expect(page.getByText('Variantes de Pain test')).toBeVisible();
+  await page.getByRole('button', { name: 'Afficher cette variante par défaut' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Afficher la plus récente par défaut' }),
+  ).toBeVisible();
+  await page.locator('ion-back-button:visible').click();
+  await expect(shown('Pain test 1')).toHaveCount(1);
+  await expect(shown('Pain test 2')).toHaveCount(0);
+});

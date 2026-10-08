@@ -1,6 +1,7 @@
 import { IonContent, IonButton, IonPage, IonRouterLink, useIonViewWillEnter } from '@ionic/react';
 import { useState } from 'react';
 import {
+  defaultVariant,
   projectProcess,
   resolveFormula,
   type BakeState,
@@ -19,9 +20,14 @@ interface Card {
   readonly recipe: Recipe;
   readonly revision?: Revision;
   readonly lastBaked?: Instant;
+  /** Number of variants when the recipe is the shown variant of a family. */
+  readonly variants?: number;
 }
 
-/** Recipe list of the #8 mockups: running bakes first, then one card per recipe. */
+/**
+ * Recipe list of the #8 mockups: running bakes first, then one card per recipe; a family shows
+ * once, through its default variant (persistence.md).
+ */
 export const RecipesPage = () => {
   const services = useServices();
   const { t } = useMessages();
@@ -33,10 +39,18 @@ export const RecipesPage = () => {
   const load = async () => {
     setNow(services.clock.now());
     const summaries = await services.bakes.listBakes();
-    const recipes = await services.recipes.listRecipes();
+    const all = await services.recipes.listRecipes();
+    const families = await services.recipes.listFamilies();
+    const shown = new Set(families.map((f) => defaultVariant(f, all)?.id));
+    const recipes = all.filter((r) => r.familyId === undefined || shown.has(r.id));
+    const variants = (recipe: Recipe) =>
+      recipe.familyId === undefined
+        ? undefined
+        : all.filter((r) => r.familyId === recipe.familyId).length;
     setCards(
       await Promise.all(
         recipes.map(async (recipe) => {
+          const count = variants(recipe);
           const revision = await services.recipes.getRevision(recipe.id, recipe.headVersion);
           const lastBaked = summaries
             .filter((s) => s.recipeId === recipe.id && s.status === 'finished' && s.endedAt)
@@ -47,6 +61,7 @@ export const RecipesPage = () => {
             recipe,
             ...(revision.ok && revision.value ? { revision: revision.value } : {}),
             ...(lastBaked ? { lastBaked } : {}),
+            ...(count === undefined ? {} : { variants: count }),
           };
         }),
       ),
@@ -153,7 +168,7 @@ const RunningBake = ({
 };
 
 const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
-  const { t, grams, pct, name, locale } = useMessages();
+  const { t, grams, pct, componentName, locale } = useMessages();
   const { recipe, revision } = card;
   const resolved = revision ? resolveFormula(revision.formula) : undefined;
   const projection = revision
@@ -167,14 +182,18 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
     if (ends.length > 0) duration = formatDuration((Math.max(...ends) - Date.parse(now)) / 1000);
   }
   const parts = revision?.formula.components
-    .map((c) => `${name(c.id)} ${pct(c.flourPct)}`)
+    .map((c) => `${componentName(revision.formula, c)} ${pct(c.flourPct)}`)
     .join(' · ');
   return (
     <IonRouterLink routerLink={`/recipes/${recipe.id}`} className="text-ink">
       <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-xl font-semibold">{recipe.name}</span>
-          <span className="text-[13px] text-muted">v{recipe.headVersion}</span>
+          <span className="shrink-0 text-[13px] text-muted">
+            {card.variants === undefined
+              ? `v${recipe.headVersion}`
+              : t('family.variants', { count: card.variants })}
+          </span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <Figure

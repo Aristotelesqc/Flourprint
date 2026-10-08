@@ -66,7 +66,10 @@ export class MemoryRecipeRepository implements RecipeRepository {
   }
 
   async listRecipes(): Promise<readonly Recipe[]> {
-    return [...this.#recipes.values()].map((recipe) => ({ ...recipe }));
+    // Same order as the SQLite stores: most recently updated first.
+    return [...this.#recipes.values()]
+      .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+      .map((recipe) => ({ ...recipe }));
   }
 
   async listFamilies(): Promise<readonly RecipeFamily[]> {

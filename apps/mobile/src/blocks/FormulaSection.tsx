@@ -22,7 +22,11 @@ const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
  * preparations and the final mix to weigh. Every number comes from the engine (#19).
  */
 export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
-  const { t, grams, pct, name, locale } = useMessages();
+  const { t, grams, pct, name, componentName, locale } = useMessages();
+  const componentLabel = (id: string) => {
+    const component = formula.components.find((c) => c.id === id);
+    return component ? componentName(formula, component) : name(id);
+  };
   const [explaining, setExplaining] = useState(false);
   // Weighed items remember the grams they were weighed at: a quantity change unchecks them.
   const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
@@ -33,7 +37,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
   const finalMix: { key: string; label: string; grams: number }[] = [
     ...Object.entries(resolved.finalMix.componentMasses).map(([id, g]) => ({
       key: `component:${id}`,
-      label: name(id),
+      label: componentLabel(id),
       grams: g,
     })),
     ...Object.entries(resolved.finalMix.flourByFlour).map(([id, g]) => ({
@@ -132,6 +136,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
             })}
           </p>
         )}
+        <Enrichment resolved={resolved} />
       </Card>
 
       <section>
@@ -221,7 +226,9 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
             return (
               <Card key={component.id} gap="gap-1.5">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[19px] font-semibold">{name(component.id)}</span>
+                  <span className="text-[19px] font-semibold">
+                    {componentName(formula, component)}
+                  </span>
                   <span className="text-lg font-bold">{grams(c.mass)}</span>
                 </div>
                 <span className="text-[15px]">{params.join(' · ')}</span>
@@ -275,6 +282,44 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
         onClose={() => setExplaining(false)}
       />
     </div>
+  );
+};
+
+const ENRICHED_PCT = 0.5;
+
+/**
+ * Added fat and sugar next to the water (formula.md, Fat and sugar), for enriched doughs; an
+ * unknown content keeps the total marked as an estimate.
+ */
+const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
+  const { t, pct, name } = useMessages();
+  const { totalFat, totalSugar, totalFatPct, totalSugarPct } = resolved;
+  if (!totalFat || !totalSugar || totalFatPct === undefined || totalSugarPct === undefined) {
+    return null;
+  }
+  // Yeast alone brings traces of fat: below half a point the dough is not enriched.
+  if (Math.max(totalFatPct, totalSugarPct) < ENRICHED_PCT) return null;
+  const unknown = [
+    ...new Set([...totalFat.unknownContributors, ...totalSugar.unknownContributors]),
+  ];
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-2">
+        <Stat
+          label={t('formula.stat.fat')}
+          value={t(totalWaterKey(totalFat), { pct: pct(totalFatPct) })}
+        />
+        <Stat
+          label={t('formula.stat.sugar')}
+          value={t(totalWaterKey(totalSugar), { pct: pct(totalSugarPct) })}
+        />
+      </div>
+      {unknown.length > 0 && (
+        <p className="m-0 text-sm text-muted">
+          {t('formula.enrichment.incomplete', { ingredients: unknown.map(name).join(', ') })}
+        </p>
+      )}
+    </>
   );
 };
 

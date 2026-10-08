@@ -1,5 +1,10 @@
 import { useIntl } from 'react-intl';
-import type { DomainError } from '@flourprint/core/domain';
+import {
+  componentStyle,
+  type Component,
+  type DomainError,
+  type Formula,
+} from '@flourprint/core/domain';
 import { en, type MessageKey } from './messages';
 import { formatGrams, formatPct } from './numbers';
 
@@ -21,6 +26,10 @@ export const useMessages = () => {
     return key in en ? t(key as MessageKey) : id;
   };
 
+  /** Display name of a component: its style from the liquid ratio, else its kind (formula.md). */
+  const componentName = (formula: Formula, component: Component): string =>
+    t(`style.${componentStyle(formula, component) ?? component.kind}`);
+
   /** Display name of a process step: its own label, else its operation. */
   const stepName = (step: { readonly operation: string; readonly label?: string }): string => {
     if (step.label) return step.label;
@@ -41,5 +50,5 @@ export const useMessages = () => {
     return t(key as MessageKey, values);
   };
 
-  return { t, grams, pct, name, stepName, error, locale: intl.locale };
+  return { t, grams, pct, name, componentName, stepName, error, locale: intl.locale };
 };
