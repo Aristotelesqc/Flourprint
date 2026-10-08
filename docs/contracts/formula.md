@@ -23,6 +23,9 @@ type Anchor =
   missing value means `unknown`.
 - Ingredients with role `topping` or `glaze` get grams from total flour but are excluded from the
   dough weight, the final mix and the water balance.
+- Identifiers (flours, ingredients, components) are non-empty strings, unique across the formula.
+  Names of built-in object members (`__proto__`, `constructor`, `toString`, …) are refused with
+  `InvalidFormula`, so that every identifier is safe as a key in JSON and in code.
 
 ## Components (preferments, scalds)
 
@@ -32,6 +35,12 @@ type Anchor =
 - Allocation is checked **per flour**: the sum drawn from a flour must not exceed its amount in
   the formula, otherwise `FlourAllocationExceeded { flour, requiredGrams, availableGrams }`. The
   same check applies to water and to every allocated ingredient.
+- Within one component, a flour appears at most once in `flourBlend` and an ingredient at most once
+  in `allocations`; a repeated reference is refused with `InvalidFormula` (never merged
+  silently). Only `dough`-role, non-water ingredients can be allocated: a component is part of the
+  dough, so a `topping` or `glaze` allocation is refused with `InvalidFormula`.
+- Invariant of every accepted formula: the final mix (flours, water, other dough ingredients and
+  component masses) weighs exactly `doughWeight`.
 - A loss (evaporation) **reduces** mass. It is declared on the component (`waterLossPct` of the
   component's water) with its provenance, and applies at the component's step. The only default
   is 0.

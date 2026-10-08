@@ -40,19 +40,24 @@ interface BakeEvent<P> {
 
 ## Alpha commands and events
 
-| Command                      | Events                                                                       | Rules                                                                                                                                    |
-| ---------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; resolves the formula and projects the process                                                                                 |
-| `StartStep`                  | `StepStarted`                                                                | dependencies completed; not already started                                                                                              |
-| `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start), never after the completion |
-| `AdjustStep`                 | `OverrideApplied` (step duration or temperature)                             | step not completed                                                                                                                       |
-| `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                             |
-| `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                   |
-| `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                  |
-| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating or `Observation` measurement                                                                                 |
-| `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end                                                             |
-| `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                 |
-| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept                                                                                                           |
+| Command                      | Events                                                                       | Rules                                                                                                                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; validates the formula, the process and their incorporations together, and projects the process                                                       |
+| `StartStep`                  | `StepStarted`                                                                | dependencies completed, and `at` not before their latest end; not already started                                                                               |
+| `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start); a completion before it is refused (`InvalidTime`) |
+| `AdjustStep`                 | `OverrideApplied` (step duration or temperature)                             | step not completed                                                                                                                                              |
+| `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                    |
+| `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                          |
+| `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                         |
+| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating or `Observation` measurement                                                                                                        |
+| `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start     |
+| `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                        |
+| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept                                                                                                                                  |
+
+Recorded times follow the finish-to-start edges of the process: a step never starts before every
+dependency has ended. Commands that would record or correct a contradicting time are refused, not
+adjusted. `AdjustFormula` and `InsertStepAfter` keep the formula and the process consistent,
+incorporations included (`process.md`).
 
 Every command except `StartBake` requires an active bake. Business errors are typed codes
 (`StepAlreadyCompleted`, `DependenciesNotCompleted`, `BakeNotActive`, …).

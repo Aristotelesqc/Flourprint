@@ -12,7 +12,8 @@ note? }`. Versions start at 1 and increase by one.
   and `revisions.process` therefore point to the same `{ id: recipeId, version }`.
 - Saving a revision states the head it was based on (`expectedHead`, 0 for a new recipe). A
   different current head returns `HeadConflict { currentHead }`; nothing is written.
-- Formula and process are validated by the engine before saving. Persisted documents carry
+- Formula and process are validated by the engine before saving, together: incorporations
+  declared by the process must match the formula's final mix (`process.md`). Persisted documents carry
   `schemaVersion`; unsupported versions are refused when read.
 
 ## Bakes
@@ -51,6 +52,14 @@ on a connection is serialized, so a transaction never interleaves with another o
   themselves. Migrations run in one transaction each, in order; a failure rolls back and leaves the previous version usable. A database newer than the
   app is refused (`UnsupportedDatabaseVersion`).
 - Every write that spans several rows is one transaction (`BEGIN IMMEDIATE`).
+
+## Restore
+
+- A backup is decoded from untrusted JSON and fully checked before anything is written: kind and
+  schema versions, identifiers, revision numbering, formula/process consistency, event envelopes,
+  sequence and upcasting.
+- The restore is atomic: it writes everything in one transaction, into an empty database, or
+  nothing. A failed restore leaves the target unchanged and can be retried.
 
 ## Shared contract tests
 

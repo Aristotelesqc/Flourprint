@@ -4,13 +4,13 @@ Status: **approved** (issue #30). Related issues: #6, #9, #26, #27, #28, #29.
 
 ## Canonical units in persisted documents
 
-| Quantity    | Unit         | Convention                                                     |
-| ----------- | ------------ | -------------------------------------------------------------- |
-| mass        | gram         | `number`                                                       |
-| temperature | °C           | `number`                                                       |
-| duration    | second       | `number`, fields suffixed `S` (`plannedDurationS`)             |
-| instant     | ISO 8601 UTC | string ending in `Z` (`Instant`)                               |
-| percentage  | **points**   | 70 = 70 %, fields suffixed `Pct`; no 0–1 fraction is persisted |
+| Quantity    | Unit         | Convention                                                      |
+| ----------- | ------------ | --------------------------------------------------------------- |
+| mass        | gram         | `number`                                                        |
+| temperature | °C           | `number`                                                        |
+| duration    | second       | `number`, fields suffixed `S` (`plannedDurationS`)              |
+| instant     | ISO 8601 UTC | string ending in `Z` (`Instant`), a real calendar date and time |
+| percentage  | **points**   | 70 = 70 %, fields suffixed `Pct`; no 0–1 fraction is persisted  |
 
 0–1 fractions exist only inside calculations. `Quantity { value, unit }` is used only at
 boundaries: input in another unit, product labels, imports. Display units and number formats are
