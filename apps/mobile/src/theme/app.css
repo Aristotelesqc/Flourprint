@@ -39,21 +39,21 @@
   :root,
   :root.md,
   :root.ios {
-    --color-crust: #e09a62;
-    --color-crumb: #1d1712;
-    --color-ink: #f3ebe0;
-    --color-muted: #b9a998;
+    --color-crust: #cf8a5e;
+    --color-crumb: #201d1a;
+    --color-ink: #e9e4dc;
+    --color-muted: #b1aa9f;
     --color-alert: #f2b8b5;
-    --ion-color-primary-rgb: 224, 154, 98;
-    --ion-color-primary-contrast: #1d1712;
-    --ion-color-primary-contrast-rgb: 29, 23, 18;
-    --ion-color-primary-shade: #c58756;
-    --ion-color-primary-tint: #e3a472;
-    --ion-background-color-rgb: 29, 23, 18;
-    --ion-text-color-rgb: 243, 235, 224;
+    --ion-color-primary-rgb: 207, 138, 94;
+    --ion-color-primary-contrast: #201d1a;
+    --ion-color-primary-contrast-rgb: 32, 29, 26;
+    --ion-color-primary-shade: #b67953;
+    --ion-color-primary-tint: #d4966e;
+    --ion-background-color-rgb: 32, 29, 26;
+    --ion-text-color-rgb: 233, 228, 220;
     --ion-background-color: var(--color-crumb);
     --ion-text-color: var(--color-ink);
-    --ion-toolbar-background: #261e17;
+    --ion-toolbar-background: #2a2622;
     --ion-item-background: transparent;
   }
 }
