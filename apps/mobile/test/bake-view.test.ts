@@ -76,4 +76,20 @@ describe('bake view', () => {
     ]);
     expect(bakeLog(state).map((e) => e.kind)).toEqual(['note', 'started']);
   });
+
+  it('offers the preheat that becomes due while the proof runs', async () => {
+    const state = await bake([
+      ['19:00', { type: 'CompleteStep', stepId: 'poolish' }],
+      ['19:01', { type: 'CompleteStep', stepId: 'tangzhong' }],
+      ['19:02', { type: 'CompleteStep', stepId: 'mix' }],
+      ['19:03', { type: 'CompleteStep', stepId: 'bulk' }],
+      ['19:04', { type: 'CompleteStep', stepId: 'shape' }],
+      ['19:05', { type: 'StartStep', stepId: 'proof' }],
+    ]);
+    // Proof ends at 21:05; the preheat (1 h, as late as possible) is planned from 20:05.
+    const view = bakeView(state, at('20:10'));
+    expect(view?.focus).toMatchObject({ step: { id: 'proof' }, running: true });
+    expect(view?.due.map((v) => v.step.id)).toEqual(['preheat']);
+    expect(view?.next.map((v) => v.step.id)).not.toContain('preheat');
+  });
 });

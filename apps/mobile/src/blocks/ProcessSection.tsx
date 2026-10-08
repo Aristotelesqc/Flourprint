@@ -16,7 +16,8 @@ import { Segmented } from '../ui/Segmented';
 
 interface Props {
   readonly process: Process;
-  readonly onDurationChange: (stepId: string, durationS: number) => void;
+  /** Undefined clears the duration (unknown); returns false when the change was refused. */
+  readonly onDurationChange: (stepId: string, durationS: number | undefined) => boolean;
   /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
   readonly canStart: boolean;
   readonly onStart: (mode: ProjectionMode) => void;
@@ -36,8 +37,8 @@ const nextQuarterHour = (): Date => {
   return date;
 };
 
-/** The step a "ready by" time refers to: the bake when there is one, else the last step. */
-const readyTarget = (process: Process): ProcessStep | undefined =>
+/** Default step a "ready by" time refers to: the bake when there is one, else the last step. */
+const defaultTarget = (process: Process): ProcessStep | undefined =>
   process.steps.find((s) => s.operation === 'bake') ?? process.steps.at(-1);
 
 interface Planned {
@@ -50,7 +51,8 @@ export const ProcessSection = ({ process, onDurationChange, canStart, onStart }:
   const { t, error, stepName, locale } = useMessages();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
   const [when, setWhen] = useState(() => toLocalInput(nextQuarterHour()));
-  const target = readyTarget(process);
+  const [targetId, setTargetId] = useState(() => defaultTarget(process)?.id);
+  const target = process.steps.find((s) => s.id === targetId) ?? defaultTarget(process);
 
   const mode: ProjectionMode = useMemo(() => {
     const at = fromLocalInput(when);
@@ -126,6 +128,22 @@ export const ProcessSection = ({ process, onDurationChange, canStart, onStart }:
             onChange={(e) => e.target.value && setWhen(e.target.value)}
           />
         </label>
+        {modeKind === 'readyBy' && (
+          <label className="flex items-center justify-between gap-3">
+            <span>{t('process.target')}</span>
+            <select
+              className="fp-field h-12 max-w-[60%] rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 text-ink"
+              value={target?.id}
+              onChange={(e) => setTargetId(e.target.value)}
+            >
+              {process.steps.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {stepName(s)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {!projection.ok && (
           <p role="alert" className="m-0 text-alert">
             {error(projection.error)}
@@ -167,7 +185,8 @@ export const ProcessSection = ({ process, onDurationChange, canStart, onStart }:
                   </div>
                   <DurationField
                     label={t('process.duration', { step: stepName(step) })}
-                    value={step.plannedDurationS ?? 0}
+                    value={step.plannedDurationS}
+                    optional={step.schedule !== 'alap'}
                     onCommit={(seconds) => onDurationChange(step.id, seconds)}
                   />
                 </div>

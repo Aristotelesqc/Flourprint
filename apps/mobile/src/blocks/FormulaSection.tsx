@@ -10,7 +10,8 @@ import { WaterExplanation } from './WaterExplanation';
 interface Props {
   readonly formula: Formula;
   readonly resolved: ResolvedFormula;
-  readonly onEdit: (edit: FormulaEdit) => void;
+  /** Returns false when the engine refused the edit; the page shows the reason. */
+  readonly onEdit: (edit: FormulaEdit) => boolean;
 }
 
 const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
@@ -22,17 +23,31 @@ const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
 export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
   const { t, grams, pct, name, locale } = useMessages();
   const [explaining, setExplaining] = useState(false);
-  const [weighed, setWeighed] = useState<ReadonlySet<string>>(new Set());
+  // Weighed items remember the grams they were weighed at: a quantity change unchecks them.
+  const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
   const anchor = formula.anchor;
 
   const rescale = (next: Anchor) => onEdit({ type: 'SetAnchor', mode: 'rescale', anchor: next });
 
-  const finalMix: [string, number][] = [
-    ...Object.entries(resolved.finalMix.componentMasses),
-    ...Object.entries(resolved.finalMix.flourByFlour),
-    ['water', resolved.finalMix.water],
-    ...Object.entries(resolved.finalMix.grams),
+  const finalMix: { key: string; label: string; grams: number }[] = [
+    ...Object.entries(resolved.finalMix.componentMasses).map(([id, g]) => ({
+      key: `component:${id}`,
+      label: name(id),
+      grams: g,
+    })),
+    ...Object.entries(resolved.finalMix.flourByFlour).map(([id, g]) => ({
+      key: `flour:${id}`,
+      label: name(id),
+      grams: g,
+    })),
+    { key: 'water', label: name('water'), grams: resolved.finalMix.water },
+    ...Object.entries(resolved.finalMix.grams).map(([id, g]) => ({
+      key: `ingredient:${id}`,
+      label: name(id),
+      grams: g,
+    })),
   ];
+  const isWeighed = (item: { key: string; grams: number }) => weighed.get(item.key) === item.grams;
 
   return (
     <div className="flex flex-col gap-5 pb-6">
@@ -48,7 +63,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
                 label: t(`formula.anchor.${kind}`),
               }))}
               onChange={(kind) =>
-                onEdit({
+                void onEdit({
                   type: 'SetAnchor',
                   mode: 'reinterpret',
                   kind,
@@ -94,7 +109,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
         )}
         <div className="grid grid-cols-3 gap-2 border-t border-line pt-3">
           <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
-          <Stat label={t('formula.stat.hydration')} value={pct(resolved.pureWaterPct)} />
+          <Stat label={t('formula.stat.pureWater')} value={pct(resolved.pureWaterPct)} />
           <button
             type="button"
             className="fp-reset flex flex-col items-start"
@@ -105,7 +120,12 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
               <InfoIcon />
             </span>
             <span className="text-lg font-bold text-accent-text underline decoration-dotted underline-offset-4">
-              {grams(resolved.totalWater.value)}
+              {t(
+                resolved.totalWater.completeness === 'complete'
+                  ? 'formula.stat.totalWaterValue'
+                  : 'formula.stat.totalWaterAtLeast',
+                { pct: pct(resolved.totalWaterPct) },
+              )}
             </span>
           </button>
         </div>
@@ -129,7 +149,9 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
             <div key={id} className={`${ROW} min-h-[60px] px-3`}>
               <span className="font-semibold">{name(id)}</span>
               <span className="flex items-center justify-end gap-1 pr-2.5">
-                <span>{editableNumber((100 * flourGrams) / resolved.flourTotal, locale)}</span>
+                <span>
+                  {editableNumber(formula.flours.find((f) => f.id === id)?.sharePct ?? 0, locale)}
+                </span>
                 <span className="text-muted">%</span>
               </span>
               <NumberField
@@ -152,6 +174,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
           gramsLabel={t('formula.column.grams')}
         />
         <Rows>
+          <p className="m-0 px-3 py-2 text-[13px] text-muted">{t('formula.editRule')}</p>
           {formula.ingredients.map((ingredient) => (
             <div key={ingredient.id} className={`${ROW} min-h-[60px] px-3`}>
               <span className="font-semibold">{name(ingredient.id)}</span>
@@ -182,7 +205,16 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
           {formula.components.map((component) => {
             const c = resolved.components[component.id];
             if (!c) return null;
-            const others = c.mass - c.flour - c.water;
+            const breakdown = [
+              t('formula.component.flour', { grams: grams(c.flour) }),
+              t('formula.component.water', { grams: grams(c.water) }),
+              ...Object.entries(c.allocations).map(([id, g]) =>
+                t('formula.component.allocation', { grams: grams(g), name: name(id) }),
+              ),
+              ...(c.waterLoss > 0
+                ? [t('formula.component.loss', { grams: grams(c.waterLoss) })]
+                : []),
+            ];
             const params = [
               t('formula.prep.flourPct', { pct: pct(component.flourPct) }),
               t('formula.prep.hydration', { pct: pct(component.hydrationPct) }),
@@ -197,13 +229,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
                   <span className="text-lg font-bold">{grams(c.mass)}</span>
                 </div>
                 <span className="text-[15px]">{params.join(' · ')}</span>
-                <span className="text-sm text-muted">
-                  {t('formula.component.detail', {
-                    flour: grams(c.flour),
-                    water: grams(c.water),
-                    others: others > 0.05 ? grams(others) : 'none',
-                  })}
-                </span>
+                <span className="text-sm text-muted">{breakdown.join(' · ')}</span>
               </Card>
             );
           })}
@@ -215,17 +241,17 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
           <SectionTitle>{t('formula.finalMix')}</SectionTitle>
           <span className="px-1 text-[13px] text-muted">
             {t('formula.finalMix.progress', {
-              done: finalMix.filter(([id]) => weighed.has(id)).length,
+              done: finalMix.filter(isWeighed).length,
               total: finalMix.length,
             })}
           </span>
         </div>
         <Rows>
-          {finalMix.map(([id, g]) => {
-            const done = weighed.has(id);
+          {finalMix.map((item) => {
+            const done = isWeighed(item);
             return (
               <label
-                key={id}
+                key={item.key}
                 className={`flex min-h-[52px] items-center gap-3 px-4 ${done ? 'text-muted line-through' : ''}`}
               >
                 <input
@@ -233,14 +259,14 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
                   className="size-[22px] accent-[var(--color-accent)]"
                   checked={done}
                   onChange={() => {
-                    const next = new Set(weighed);
-                    if (done) next.delete(id);
-                    else next.add(id);
+                    const next = new Map(weighed);
+                    if (done) next.delete(item.key);
+                    else next.set(item.key, item.grams);
                     setWeighed(next);
                   }}
                 />
-                <span className="flex-1">{name(id)}</span>
-                <span className="font-bold">{grams(g)}</span>
+                <span className="flex-1">{item.label}</span>
+                <span className="font-bold">{grams(item.grams)}</span>
               </label>
             );
           })}

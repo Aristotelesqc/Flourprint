@@ -16,6 +16,8 @@ export interface BakeStepView {
   readonly projected?: ProjectedStep;
   readonly startedAt?: Instant;
   readonly endedAt?: Instant;
+  /** Every dependency has ended: the step can start now (an early start is the user's choice). */
+  readonly ready: boolean;
 }
 
 export interface BakeView {
@@ -23,6 +25,8 @@ export interface BakeView {
   readonly focus?: BakeStepView & { readonly running: boolean };
   /** Other running steps (parallel branches such as an overnight preferment). */
   readonly alsoRunning: readonly BakeStepView[];
+  /** Steps that can start and whose planned start has come, besides the focus (preheat during proof). */
+  readonly due: readonly BakeStepView[];
   /** Upcoming steps after the focus, in planned order. */
   readonly next: readonly BakeStepView[];
   /** 1-based position of the focus in planned order. */
@@ -46,11 +50,16 @@ export const bakeView = (state: BakeState, now: Instant): BakeView | undefined =
   const projection = liveProjection(state, now);
   if (!process || !projection?.ok) return undefined;
 
+  const done = (id: StepId) => state.steps[id]?.endedAt !== undefined;
   const views: BakeStepView[] = process.steps.map((step) => {
     const record = state.steps[step.id];
     const projected = projection.value.steps[step.id];
     return {
       step,
+      ready:
+        record?.startedAt === undefined &&
+        record?.endedAt === undefined &&
+        step.dependsOn.every(done),
       ...(projected === undefined ? {} : { projected }),
       ...(record?.startedAt === undefined ? {} : { startedAt: record.startedAt }),
       ...(record?.endedAt === undefined ? {} : { endedAt: record.endedAt }),
@@ -61,23 +70,23 @@ export const bakeView = (state: BakeState, now: Instant): BakeView | undefined =
       time(a.startedAt ?? a.projected?.start) - time(b.startedAt ?? b.projected?.start) ||
       process.steps.indexOf(a.step) - process.steps.indexOf(b.step),
   );
-  const done = (id: StepId) => state.steps[id]?.endedAt !== undefined;
   const running = order
     .filter((v) => v.startedAt !== undefined && v.endedAt === undefined)
     .sort((a, b) => time(a.projected?.end) - time(b.projected?.end));
-  const ready = order.filter(
-    (v) => v.startedAt === undefined && v.endedAt === undefined && v.step.dependsOn.every(done),
-  );
+  const ready = order.filter((v) => v.ready);
   const focusView = running[0] ?? ready[0];
   const focus = focusView && { ...focusView, running: focusView.startedAt !== undefined };
   const upcoming = order.filter(
     (v) => v.startedAt === undefined && v.endedAt === undefined && v !== focusView,
   );
 
+  const due = ready.filter((v) => v !== focusView && time(v.projected?.start) <= time(now));
+
   return {
     ...(focus === undefined ? {} : { focus }),
     alsoRunning: running.filter((v) => v !== focusView),
-    next: upcoming.slice(0, 3),
+    due,
+    next: upcoming.filter((v) => !due.includes(v)).slice(0, 3),
     position: focusView ? order.indexOf(focusView) + 1 : order.length,
     total: order.length,
     allDone: views.every((v) => v.endedAt !== undefined),

@@ -7,16 +7,18 @@ import {
 import type { BakeCommandPayload, BakeState, Result, UpcastError } from '@flourprint/core/domain';
 import type { Services } from './services';
 
-/** Sends one command for the bake as last read (`expectedVersion`), with a fresh command id. */
+/** Sends one command for the bake as last read (`expectedVersion`). */
 export const sendBakeCommand = (
   services: Services,
   state: Pick<BakeState, 'bakeId' | 'version'>,
   payload: BakeCommandPayload,
+  /** Reuse the id of a command whose outcome is unknown, so a retry never acts twice (D7). */
+  commandId: string = services.ids.next(),
 ): Promise<Result<BakeCommandResult, ExecuteBakeError>> =>
   executeBakeCommand(
     { store: services.bakes, clock: services.clock, ids: services.ids },
     {
-      commandId: services.ids.next(),
+      commandId,
       bakeId: state.bakeId,
       expectedVersion: state.version,
       issuedAt: services.clock.now(),

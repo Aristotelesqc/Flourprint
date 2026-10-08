@@ -10,13 +10,13 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { saveRevision } from '@flourprint/core/application';
 import {
   applyFormulaEdit,
   resolveFormula,
-  validateProcess,
+  validateRecipe,
   type BakeSummary,
   type DomainError,
   type FormulaEdit,
@@ -30,6 +30,8 @@ import { useMessages } from '../i18n/use-messages';
 import { sendBakeCommand } from '../services/bakes';
 import { useDrafts, type RecipeDraft } from '../services/drafts';
 import { useServices } from '../services/services';
+import { useGuardedWrite } from '../services/writes';
+import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
 import { Segmented } from '../ui/Segmented';
 
 type Tab = 'formula' | 'process' | 'history';
@@ -49,33 +51,71 @@ export const RecipePage = () => {
   const [draft, setDraft] = useState<RecipeDraft>();
   const [bakes, setBakes] = useState<readonly BakeSummary[]>([]);
   const [failure, setFailure] = useState<DomainError>();
+  const [storageFailed, setStorageFailed] = useState(false);
   const [notice, setNotice] = useState<string>();
+  const [loading, setLoading] = useState<'loading' | 'missing' | 'failed' | 'ready'>('loading');
+  const writes = useGuardedWrite();
+  // A bake start whose outcome is unknown keeps its ids, so a retry cannot start a second bake.
+  const pendingStart = useRef<{ bakeId: string; commandId: string }>(undefined);
 
   useEffect(() => {
     void (async () => {
-      const recipe = await services.recipes.getRecipe(recipeId);
-      if (!recipe) return;
-      const revision = await services.recipes.getRevision(recipeId, recipe.headVersion);
-      if (revision.ok && revision.value) {
+      try {
+        const recipe = await services.recipes.getRecipe(recipeId);
+        const revision = recipe
+          ? await services.recipes.getRevision(recipeId, recipe.headVersion)
+          : undefined;
+        if (!recipe || !revision?.ok || !revision.value) {
+          setLoading(revision && !revision.ok ? 'failed' : 'missing');
+          return;
+        }
         const { formula, process } = revision.value;
         setBase({ name: recipe.name, revision: revision.value });
         setDraft(drafts.get(recipeId, revision.value.version) ?? { formula, process });
+        setLoading('ready');
+      } catch (error) {
+        console.error(error);
+        setLoading('failed');
       }
     })();
   }, [recipeId, services]);
 
   const refreshBakes = useCallback(async () => {
-    const all = await services.bakes.listBakes();
-    setBakes(
-      all
-        .filter((b) => b.recipeId === recipeId)
-        .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
-    );
+    try {
+      const all = await services.bakes.listBakes();
+      setBakes(
+        all
+          .filter((b) => b.recipeId === recipeId)
+          .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
+      );
+    } catch (error) {
+      console.error(error);
+      setStorageFailed(true);
+    }
   }, [services, recipeId]);
   useIonViewWillEnter(() => void refreshBakes(), [refreshBakes]);
 
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
-  if (!base || !draft || !resolved) return <IonPage />;
+  if (!base || !draft || !resolved) {
+    return (
+      <IonPage>
+        <IonHeader className="ion-no-border">
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonBackButton defaultHref="/recipes" />
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          {loading !== 'loading' && (
+            <p role="alert">
+              {t(loading === 'missing' ? 'state.recipeMissing' : 'state.storageRead')}
+            </p>
+          )}
+        </IonContent>
+      </IonPage>
+    );
+  }
   const dirty = draft.formula !== base.revision.formula || draft.process !== base.revision.process;
   const active = bakes.find((b) => b.status === 'active');
 
@@ -86,32 +126,45 @@ export const RecipePage = () => {
     setNotice(undefined);
   };
 
-  const editFormula = (command: FormulaEdit) => {
+  const editFormula = (command: FormulaEdit): boolean => {
     const next = applyFormulaEdit(draft.formula, command);
     if (next.ok) update({ ...draft, formula: next.value });
     else setFailure(next.error);
+    return next.ok;
   };
 
-  const changeDuration = (stepId: string, durationS: number) => {
+  const changeDuration = (stepId: string, durationS: number | undefined): boolean => {
     const process = {
-      steps: draft.process.steps.map((s) =>
-        s.id === stepId ? { ...s, plannedDurationS: durationS } : s,
-      ),
+      steps: draft.process.steps.map((s) => {
+        if (s.id !== stepId) return s;
+        const { plannedDurationS: _, ...rest } = s;
+        return durationS === undefined ? rest : { ...rest, plannedDurationS: durationS };
+      }),
     };
-    const valid = validateProcess(process);
+    const valid = validateRecipe(draft.formula, process);
     if (valid.ok) update({ ...draft, process });
     else setFailure(valid.error);
+    return valid.ok;
   };
 
   const save = async () => {
-    const saved = await saveRevision(services.recipes, {
-      recipeId,
-      name: base.name,
-      expectedHead: base.revision.version,
-      formula: draft.formula,
-      process: draft.process,
-      createdAt: services.clock.now(),
-    });
+    const result = await writes.run(() =>
+      saveRevision(services.recipes, {
+        recipeId,
+        name: base.name,
+        expectedHead: base.revision.version,
+        formula: draft.formula,
+        process: draft.process,
+        createdAt: services.clock.now(),
+      }),
+    );
+    if (!result.ok) {
+      // The draft stays; a lost response after commit shows as HeadConflict on retry.
+      setStorageFailed(result.reason === 'storage');
+      return;
+    }
+    setStorageFailed(false);
+    const saved = result.value;
     if (!saved.ok) {
       setFailure(saved.error);
       return;
@@ -131,20 +184,32 @@ export const RecipePage = () => {
   const startBake = async (mode: ProjectionMode) => {
     const { revision } = base;
     const ref = { id: revision.recipeId, version: revision.version };
-    const bakeId = services.ids.next();
-    const started = await sendBakeCommand(
-      services,
-      { bakeId, version: 0 },
-      {
-        type: 'StartBake',
-        revisions: { formula: ref, process: ref },
-        formula: revision.formula,
-        process: revision.process,
-        mode,
-      },
+    const ids = (pendingStart.current ??= {
+      bakeId: services.ids.next(),
+      commandId: services.ids.next(),
+    });
+    const result = await writes.run(() =>
+      sendBakeCommand(
+        services,
+        { bakeId: ids.bakeId, version: 0 },
+        {
+          type: 'StartBake',
+          revisions: { formula: ref, process: ref },
+          formula: revision.formula,
+          process: revision.process,
+          mode,
+        },
+        ids.commandId,
+      ),
     );
-    if (started.ok) router.push(`/bakes/${bakeId}`);
-    else setFailure(started.error);
+    if (!result.ok) {
+      setStorageFailed(result.reason === 'storage');
+      return;
+    }
+    setStorageFailed(false);
+    pendingStart.current = undefined;
+    if (result.value.ok) router.push(`/bakes/${ids.bakeId}`);
+    else setFailure(result.value.error);
   };
 
   return (
@@ -193,10 +258,17 @@ export const RecipePage = () => {
             {error(failure)}
           </p>
         )}
+        {storageFailed && (
+          <p role="alert" className="mt-0 mb-3 text-alert">
+            {t('state.storageWrite')}
+          </p>
+        )}
         {notice && <p className="mt-0 mb-3">{notice}</p>}
+        <SessionOnlyNotice />
 
-        {tab === 'formula' &&
-          (resolved.ok ? (
+        {/* Tabs stay mounted: a draft being typed and the weighing checklist survive a switch. */}
+        <div hidden={tab !== 'formula'}>
+          {resolved.ok ? (
             <FormulaSection
               formula={draft.formula}
               resolved={resolved.value}
@@ -204,16 +276,19 @@ export const RecipePage = () => {
             />
           ) : (
             <p role="alert">{error(resolved.error)}</p>
-          ))}
-        {tab === 'process' && (
+          )}
+        </div>
+        <div hidden={tab !== 'process'}>
           <ProcessSection
             process={draft.process}
             onDurationChange={changeDuration}
-            canStart={!dirty}
+            canStart={!dirty && !writes.busy}
             onStart={(mode) => void startBake(mode)}
           />
-        )}
-        {tab === 'history' && <HistorySection bakes={bakes} />}
+        </div>
+        <div hidden={tab !== 'history'}>
+          <HistorySection bakes={bakes} />
+        </div>
       </IonContent>
       {dirty && (
         <IonFooter>
@@ -223,7 +298,7 @@ export const RecipePage = () => {
               <IonButton fill="outline" onClick={discard}>
                 {t('draft.discard')}
               </IonButton>
-              <IonButton onClick={() => void save()}>
+              <IonButton disabled={writes.busy} onClick={() => void save()}>
                 {t('draft.save', { version: base.revision.version + 1 })}
               </IonButton>
             </div>

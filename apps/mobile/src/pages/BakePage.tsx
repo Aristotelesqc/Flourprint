@@ -7,6 +7,7 @@ import {
   IonPage,
   IonToolbar,
   useIonAlert,
+  useIonViewWillEnter,
 } from '@ionic/react';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
@@ -17,6 +18,7 @@ import { formatDuration, formatTime, parseDuration, editableDuration } from '../
 import { bakeLog, bakeView, type BakeStepView } from '../services/bake-view';
 import { sendBakeCommand } from '../services/bakes';
 import { useServices } from '../services/services';
+import { useGuardedWrite } from '../services/writes';
 import { SectionTitle } from '../ui/Layout';
 
 /** Bake mode (#8, #21): "what do I do now?" first; everything is recorded as bake events. */
@@ -28,46 +30,98 @@ export const BakePage = () => {
   const [state, setState] = useState<BakeState>();
   const [recipeName, setRecipeName] = useState<string>();
   const [failure, setFailure] = useState<DomainError>();
+  const [readFailed, setReadFailed] = useState(false);
   const [now, setNow] = useState<Instant>(services.clock.now());
+  const writes = useGuardedWrite();
+  // A command whose outcome is unknown (storage error): retried with the same id, never twice.
+  const [pending, setPending] = useState<{
+    commandId: string;
+    version: number;
+    payload: BakeCommandPayload;
+  }>();
 
   const reload = useCallback(async () => {
-    const loaded = await loadBake(services.bakes, bakeId);
-    if (!loaded.ok) {
-      setFailure(loaded.error);
-      return;
+    try {
+      const loaded = await loadBake(services.bakes, bakeId);
+      setNow(services.clock.now());
+      if (!loaded.ok) {
+        setFailure(loaded.error);
+        return;
+      }
+      setState(loaded.value);
+      const recipeId = loaded.value.snapshot?.revisions.formula.id;
+      if (recipeId) setRecipeName((await services.recipes.getRecipe(recipeId))?.name);
+    } catch (cause) {
+      console.error(cause);
+      setReadFailed(true);
     }
-    setState(loaded.value);
-    const recipeId = loaded.value.snapshot?.revisions.formula.id;
-    if (recipeId) setRecipeName((await services.recipes.getRecipe(recipeId))?.name);
   }, [services, bakeId]);
 
   useEffect(() => void reload(), [reload]);
+  // Ionic keeps inactive pages mounted: refresh when the page or the app becomes visible again.
+  useIonViewWillEnter(() => void reload(), [reload]);
   useEffect(() => {
-    const timer = setInterval(() => setNow(services.clock.now()), 15_000);
-    return () => clearInterval(timer);
-  }, [services]);
+    const tick = () => setNow(services.clock.now());
+    const timer = setInterval(tick, 15_000);
+    const resume = () => {
+      if (document.visibilityState === 'visible') void reload();
+    };
+    document.addEventListener('visibilitychange', resume);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', resume);
+    };
+  }, [services, reload]);
 
-  if (!state) {
+  if (!state || (state.status === 'notStarted' && state.version === 0)) {
     return (
       <IonPage>
+        <IonHeader className="ion-no-border">
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonBackButton defaultHref="/recipes" />
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
         <IonContent className="ion-padding">
           {failure && <p role="alert">{error(failure)}</p>}
+          {readFailed && <p role="alert">{t('state.storageRead')}</p>}
+          {state && <p role="alert">{t('state.bakeMissing')}</p>}
         </IonContent>
       </IonPage>
     );
   }
 
-  const send = async (payload: BakeCommandPayload) => {
-    const result = await sendBakeCommand(services, state, payload);
+  const execute = async (command: {
+    commandId: string;
+    version: number;
+    payload: BakeCommandPayload;
+  }) => {
+    const result = await writes.run(() =>
+      sendBakeCommand(
+        services,
+        { bakeId: state.bakeId, version: command.version },
+        command.payload,
+        command.commandId,
+      ),
+    );
     setNow(services.clock.now());
-    if (result.ok) {
-      setState(result.value.state);
+    if (!result.ok) {
+      if (result.reason === 'storage') setPending(command);
+      return;
+    }
+    setPending(undefined);
+    if (result.value.ok) {
+      setState(result.value.value.state);
       setFailure(undefined);
     } else {
-      setFailure(result.error);
-      if (result.error.code === 'VersionConflict') await reload();
+      setFailure(result.value.error);
+      if (result.value.error.code === 'VersionConflict') await reload();
     }
   };
+
+  const send = (payload: BakeCommandPayload) =>
+    execute({ commandId: services.ids.next(), version: state.version, payload });
 
   const view = state.status === 'active' ? bakeView(state, now) : undefined;
   const focus = view?.focus;
@@ -84,7 +138,10 @@ export const BakePage = () => {
         {
           name: 'duration',
           type: 'text',
-          value: editableDuration(target.step.plannedDurationS ?? 0),
+          value:
+            target.step.plannedDurationS === undefined
+              ? ''
+              : editableDuration(target.step.plannedDurationS),
           attributes: { inputmode: 'decimal' },
         },
       ],
@@ -165,6 +222,14 @@ export const BakePage = () => {
               {error(failure)}
             </p>
           )}
+          {pending && (
+            <div role="alert" className="flex items-center gap-3 rounded-xl bg-track p-3">
+              <span className="flex-1 text-alert">{t('state.storageWrite')}</span>
+              <IonButton disabled={writes.busy} onClick={() => void execute(pending)}>
+                {t('state.retry')}
+              </IonButton>
+            </div>
+          )}
 
           {state.status !== 'active' && (
             <h1 className="m-0 text-3xl font-bold">
@@ -179,6 +244,7 @@ export const BakePage = () => {
               <IonButton
                 expand="block"
                 className="h-[72px] text-[22px] font-bold [--border-radius:18px]"
+                disabled={writes.busy || pending !== undefined}
                 onClick={() =>
                   void send(
                     focus.running
@@ -216,6 +282,29 @@ export const BakePage = () => {
             </>
           )}
 
+          {view && view.due.length > 0 && (
+            <StepList title={t('bake.dueNow')}>
+              {view.due.map((v) => (
+                <StepLine
+                  key={v.step.id}
+                  time={v.projected?.start ? formatTime(v.projected.start, locale) : '—'}
+                  name={stepName(v.step)}
+                  detail={
+                    v.step.plannedDurationS === undefined
+                      ? ''
+                      : formatDuration(v.step.plannedDurationS)
+                  }
+                  action={{
+                    label: t('bake.startShort'),
+                    disabled: writes.busy || pending !== undefined,
+                    run: () => void send({ type: 'StartStep', stepId: v.step.id }),
+                  }}
+                  emphasized
+                />
+              ))}
+            </StepList>
+          )}
+
           {view?.allDone && (
             <>
               <p className="m-0 text-lg">{t('bake.allDone')}</p>
@@ -239,6 +328,11 @@ export const BakePage = () => {
                   detail={
                     v.projected?.end ? remainingText(v.projected.end, now, t) : t('bake.noDuration')
                   }
+                  action={{
+                    label: t('bake.doneShort'),
+                    disabled: writes.busy || pending !== undefined,
+                    run: () => void send({ type: 'CompleteStep', stepId: v.step.id }),
+                  }}
                 />
               ))}
             </StepList>
@@ -256,6 +350,15 @@ export const BakePage = () => {
                       ? ''
                       : formatDuration(v.step.plannedDurationS)
                   }
+                  {...(v.ready
+                    ? {
+                        action: {
+                          label: t('bake.startShort'),
+                          disabled: writes.busy || pending !== undefined,
+                          run: () => void send({ type: 'StartStep', stepId: v.step.id }),
+                        },
+                      }
+                    : {})}
                 />
               ))}
             </StepList>
@@ -336,7 +439,15 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
         <span className="text-lg text-muted">{unit}</span>
       </div>
       {focus.running && (
-        <div className="mt-2.5 h-2 rounded bg-track">
+        <div
+          className="mt-2.5 h-2 rounded bg-track"
+          role="progressbar"
+          aria-label={stepName(focus.step)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress * 100)}
+          aria-valuetext={unit ? `${big} ${unit}` : big}
+        >
           <div className="h-2 rounded bg-accent" style={{ width: `${progress * 100}%` }} />
         </div>
       )}
@@ -365,10 +476,34 @@ const StepList = ({ title, children }: { title: string; children: ReactNode }) =
   </section>
 );
 
-const StepLine = ({ time, name, detail }: { time: string; name: string; detail: string }) => (
-  <div className="grid grid-cols-[56px_1fr_auto] items-baseline gap-2.5 py-2.5">
+interface StepLineProps {
+  readonly time: string;
+  readonly name: string;
+  readonly detail: string;
+  /** A direct action on this step, for work that runs in parallel with the focus. */
+  readonly action?: { label: string; disabled: boolean; run: () => void };
+  readonly emphasized?: boolean;
+}
+
+const StepLine = ({ time, name, detail, action, emphasized = false }: StepLineProps) => (
+  <div className="grid min-h-12 grid-cols-[56px_1fr_auto] items-center gap-2.5 py-1.5">
     <span className="font-bold">{time}</span>
-    <span>{name}</span>
-    <span className="text-sm text-muted">{detail}</span>
+    <span className={emphasized ? 'font-bold text-accent-text' : ''}>
+      {name}
+      {detail && <span className="block text-sm font-normal text-muted">{detail}</span>}
+    </span>
+    {action ? (
+      <IonButton
+        size="small"
+        fill={emphasized ? 'solid' : 'outline'}
+        disabled={action.disabled}
+        onClick={action.run}
+        aria-label={`${action.label} ${name}`}
+      >
+        {action.label}
+      </IonButton>
+    ) : (
+      <span />
+    )}
   </div>
 );

@@ -20,6 +20,7 @@ import { formatDuration, formatRelative } from '../i18n/time';
 import { bakeView } from '../services/bake-view';
 import { activeBakes } from '../services/bakes';
 import { useServices } from '../services/services';
+import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
 
 interface Card {
   readonly recipe: Recipe;
@@ -34,32 +35,39 @@ export const RecipesPage = () => {
   const [cards, setCards] = useState<readonly Card[]>();
   const [running, setRunning] = useState<readonly BakeState[]>([]);
   const [now, setNow] = useState(services.clock.now());
+  const [readFailed, setReadFailed] = useState(false);
+
+  const load = async () => {
+    setNow(services.clock.now());
+    const summaries = await services.bakes.listBakes();
+    const recipes = await services.recipes.listRecipes();
+    setCards(
+      await Promise.all(
+        recipes.map(async (recipe) => {
+          const revision = await services.recipes.getRevision(recipe.id, recipe.headVersion);
+          const lastBaked = summaries
+            .filter((s) => s.recipeId === recipe.id && s.status === 'finished' && s.endedAt)
+            .map((s) => s.endedAt as Instant)
+            .sort()
+            .at(-1);
+          return {
+            recipe,
+            ...(revision.ok && revision.value ? { revision: revision.value } : {}),
+            ...(lastBaked ? { lastBaked } : {}),
+          };
+        }),
+      ),
+    );
+    setRunning((await activeBakes(services)).flatMap((r) => (r.ok ? [r.value] : [])));
+    setReadFailed(false);
+  };
 
   // Pages stay mounted in the Ionic stack: refresh when the view becomes active again.
   useIonViewWillEnter(() => {
-    void (async () => {
-      setNow(services.clock.now());
-      const summaries = await services.bakes.listBakes();
-      const recipes = await services.recipes.listRecipes();
-      setCards(
-        await Promise.all(
-          recipes.map(async (recipe) => {
-            const revision = await services.recipes.getRevision(recipe.id, recipe.headVersion);
-            const lastBaked = summaries
-              .filter((s) => s.recipeId === recipe.id && s.status === 'finished' && s.endedAt)
-              .map((s) => s.endedAt as Instant)
-              .sort()
-              .at(-1);
-            return {
-              recipe,
-              ...(revision.ok && revision.value ? { revision: revision.value } : {}),
-              ...(lastBaked ? { lastBaked } : {}),
-            };
-          }),
-        ),
-      );
-      setRunning((await activeBakes(services)).flatMap((r) => (r.ok ? [r.value] : [])));
-    })();
+    load().catch((error: unknown) => {
+      console.error(error);
+      setReadFailed(true);
+    });
   });
 
   return (
@@ -67,6 +75,8 @@ export const RecipesPage = () => {
       <IonContent>
         <div className="flex flex-col gap-3 px-4 pt-[calc(var(--ion-safe-area-top,0px)+20px)] pb-8">
           <h1 className="m-0 px-1 pb-1 text-[32px] font-bold">{t('recipes.title')}</h1>
+          <SessionOnlyNotice />
+          {readFailed && <p role="alert">{t('state.storageRead')}</p>}
           {running.map((bake) => (
             <RunningBake key={bake.bakeId} bake={bake} now={now} cards={cards ?? []} />
           ))}
