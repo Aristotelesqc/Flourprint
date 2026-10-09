@@ -51,7 +51,8 @@
   },
   "yeast": {
     "$comment": "Owner decision: active dry yeast everywhere, to adjust later.",
-    "id": "active-dry-yeast"
+    "id": "active-dry-yeast",
+    "form": "active-dry"
   },
   "ingredients": {
     "disc_honey": "honey",

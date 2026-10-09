@@ -77,7 +77,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode pizza_mode, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -132,7 +132,7 @@ TOST's stored dough differs from its own model by -0.01 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 21 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode pizza_mode, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -174,7 +174,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 25 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -219,7 +219,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 25 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).
 - Kneading improved, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_bread (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -270,7 +270,7 @@ TOST's stored dough differs from its own model by 0.34 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 25 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 
@@ -313,7 +313,7 @@ TOST's stored dough differs from its own model by 0.19 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 21 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading intense, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -357,7 +357,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 21 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -400,7 +400,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -450,7 +450,7 @@ TOST's stored dough differs from its own model by 0.64 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode brioche_mode, shape disc_wholemeal_loaf (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -501,7 +501,7 @@ TOST's stored dough differs from its own model by 0.02 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 25 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds false, autolysis false (#32).
 - Oven mode brioche_mode, shape disc_buns_burger (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -546,7 +546,7 @@ TOST's stored dough differs from its own model by 0.1 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 21 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading slow, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_buns_burger (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -589,7 +589,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -636,7 +636,7 @@ TOST's stored dough differs from its own model by -0.46 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 21 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_brioche (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -685,7 +685,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 21 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_wholemeal_loaf (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -740,7 +740,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_wholemeal_loaf (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -784,7 +784,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -837,7 +837,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 21 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode pizza_mode, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -889,7 +889,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds false, autolysis false (#32).
 - Oven mode no_cooking, shape disc_white_baguette (#28).
 
@@ -932,7 +932,7 @@ TOST's stored dough differs from its own model by 0.4 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 24 °C, ambient 21 °C (no field yet).
+- Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 - Starter settings of TOST (no preferment in this recipe).
@@ -986,7 +986,7 @@ TOST's stored dough differs from its own model by 0.09 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode brioche_mode, shape disc_wholemeal_loaf (#28).
 
@@ -1039,7 +1039,7 @@ TOST's stored dough differs from its own model by 0.09 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode brioche_mode, shape disc_wholemeal_loaf (#28).
 
@@ -1089,7 +1089,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode brioche_mode, shape disc_wholemeal_loaf (#28).
 
@@ -1141,7 +1141,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode brioche_mode, shape disc_wholemeal_loaf (#28).
 
@@ -1194,7 +1194,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode fan_oven, shape disc_pizza (#28).
 
@@ -1244,7 +1244,7 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 
 **Not migrated**
 
-- Target dough temperature 23 °C, ambient 21 °C (no field yet).
+- Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).
 - Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).
 - Oven mode brioche_mode, shape disc_wholemeal_loaf (#28).
 
@@ -1284,11 +1284,11 @@ TOST's stored dough differs from its own model by 0 g per piece (rounding).
 | `D_TIMING_PROOF_WARM_FERMENTATION` | business | proof duration in hours |
 | `D_TIMING_TOTAL_RECIPE` | derived | total duration in hours |
 | `D_YEAST_PERCENT` | business | yeast over the main flour |
-| `INT_AMBIENT_TEMPERATURE` | business | ambient temperature; no field yet, reported |
+| `INT_AMBIENT_TEMPERATURE` | business | ambient temperature, as the mix step temperature |
 | `INT_BREAD_BATCH_NUMBER` | business | pieces (anchor count) |
 | `INT_BREAD_COMPUTATION_DRIVER` | unknown | 600 flour entered, 700 dough entered (inferred) |
 | `INT_BREAD_WEIGHT` | derived | dough × 0.86, a baked-weight estimate |
-| `INT_DOUGH_TEMPERATURE` | business | target dough temperature; no field yet, reported |
+| `INT_DOUGH_TEMPERATURE` | business | target dough temperature; reported, basic mode kept (owner) |
 | `INT_DOUGH_WEIGHT` | derived | dough per piece without salt and yeast, rounded |
 | `INT_FERMENTATION_TEMPERATURE` | derived | equal to the ambient temperature |
 | `INT_FERMENT_PERCENT` | business | preferment flour over the main flour |

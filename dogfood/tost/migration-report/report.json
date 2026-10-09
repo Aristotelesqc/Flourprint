@@ -23,7 +23,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode pizza_mode, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -90,7 +90,7 @@
       ],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode pizza_mode, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -156,7 +156,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 25 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -210,7 +210,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 25 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).",
         "Kneading improved, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_bread (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -277,7 +277,7 @@
         "The note mentions a few spoons of gluten that are not in the formula."
       ],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 25 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28)."
       ],
@@ -338,7 +338,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading intense, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -396,7 +396,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -458,7 +458,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -520,7 +520,7 @@
       ],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -585,7 +585,7 @@
         "TOST's hydration (90 %) is below the water its model gives the extras: it would need -32.16 g of water. Imported with no added water."
       ],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 25 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds false, autolysis false (#32).",
         "Oven mode brioche_mode, shape disc_buns_burger (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -649,7 +649,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading slow, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_buns_burger (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -712,7 +712,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -771,7 +771,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_brioche (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -839,7 +839,7 @@
       ],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_wholemeal_loaf (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -908,7 +908,7 @@
         "TOST proof duration is -0.2749687557231218 h: left without a duration."
       ],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_wholemeal_loaf (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -970,7 +970,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -1034,7 +1034,7 @@
         "The note mentions 1 tablespoon of gluten flour and 1 % malt that are not in the formula."
       ],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode pizza_mode, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -1105,7 +1105,7 @@
         "TOST oven mode is \"no cooking\"."
       ],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds false, autolysis false (#32).",
         "Oven mode no_cooking, shape disc_white_baguette (#28)."
       ],
@@ -1163,7 +1163,7 @@
       "warnings": [],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 24 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28).",
         "Starter settings of TOST (no preferment in this recipe)."
@@ -1230,7 +1230,7 @@
       ],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
       ],
@@ -1302,7 +1302,7 @@
       ],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
       ],
@@ -1371,7 +1371,7 @@
       ],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
       ],
@@ -1443,7 +1443,7 @@
         "TOST proof duration is 0 h: left without a duration."
       ],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
       ],
@@ -1510,7 +1510,7 @@
         "diastatic-malt is at 0 g in TOST: kept at 0, remove it if it is not used."
       ],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode fan_oven, shape disc_pizza (#28)."
       ],
@@ -1578,7 +1578,7 @@
       ],
       "reviews": [],
       "dropped": [
-        "Target dough temperature 23 °C, ambient 21 °C (no field yet).",
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
         "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
         "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
       ],

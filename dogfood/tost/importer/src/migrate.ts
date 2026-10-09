@@ -9,6 +9,7 @@ import {
   type Process,
   type ProcessStep,
   type ResolvedFormula,
+  type YeastForm,
 } from '../../../../packages/core/dist/domain/index.js';
 import type { RecordedRecipe } from '../../../../packages/core/dist/application/index.js';
 import { parseFormula } from '../../../../packages/core/dist/contracts/index.js';
@@ -38,7 +39,7 @@ export interface Decisions {
     readonly default: Readonly<Record<string, FlourChoice>>;
     readonly byRecipe: Readonly<Record<string, Readonly<Record<string, FlourChoice>>>>;
   };
-  readonly yeast: { readonly id: string };
+  readonly yeast: { readonly id: string; readonly form: YeastForm };
   readonly ingredients: Readonly<Record<string, string>>;
   readonly compositions: Readonly<
     Record<string, { water?: ContentPct; fat?: ContentPct; sugar?: ContentPct } | string>
@@ -210,6 +211,7 @@ export const migrateRecipe = (tost: TostRecipe, decisions: Decisions): Migrated 
       bakerPct: pct(yeast),
       role: 'dough',
       ...composition(decisions.yeast.id),
+      yeast: { form: decisions.yeast.form },
     },
   ];
   if (tost.yeastType !== 'disc_active_dry_yeast') {
@@ -320,6 +322,7 @@ export const migrateRecipe = (tost: TostRecipe, decisions: Decisions): Migrated 
     dependsOn: steps.map((s) => s.id),
     schedule: 'asap',
     endCriterion: decision,
+    conditions: { location: 'counter', temperatureC: tost.temperaturesC.ambient },
   });
   const then = (step: Omit<ProcessStep, 'dependsOn' | 'schedule'>) => {
     const previous = steps.at(-1);
@@ -361,7 +364,7 @@ export const migrateRecipe = (tost: TostRecipe, decisions: Decisions): Migrated 
   const raw = tost.raw;
   if (raw.S_OPTION_OVEN_TYPE === 'no_cooking') reviews.push('TOST oven mode is "no cooking".');
   dropped.push(
-    `Target dough temperature ${tost.temperaturesC.dough} °C, ambient ${tost.temperaturesC.ambient} °C (no field yet).`,
+    `Target dough temperature ${tost.temperaturesC.dough} °C not imported: the recipe stays in basic mode (dough at the ambient ${tost.temperaturesC.ambient} °C of the mix step).`,
     `Kneading ${String(raw.S_OPTION_KNEADING)}, mixer ${String(raw.S_OPTION_TYPE_ROBOT)}, folds ${String(raw.B_OPTION_FOLD_DOUGH)}, autolysis ${String(raw.B_OPTION_AUTOLYSIS)} (#32).`,
     `Oven mode ${String(raw.S_OPTION_OVEN_TYPE)}, shape ${String(raw.S_BREAD_SHAPE)} (#28).`,
   );

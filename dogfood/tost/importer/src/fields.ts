@@ -35,8 +35,11 @@ export const FIELDS: Readonly<Record<string, readonly [FieldClass, string]>> = {
   D_COMPUTED_WARM_PROOF_TEMPERATURE: ['business', 'proof temperature (planned condition)'],
   B_SHAPE_BEFORE_BULK_COLD: ['business', 'shape before the cold retard'],
   B_SHAPE_BEFORE_PROOF_WARM: ['business', 'shape before the proof'],
-  INT_DOUGH_TEMPERATURE: ['business', 'target dough temperature; no field yet, reported'],
-  INT_AMBIENT_TEMPERATURE: ['business', 'ambient temperature; no field yet, reported'],
+  INT_DOUGH_TEMPERATURE: [
+    'business',
+    'target dough temperature; reported, basic mode kept (owner)',
+  ],
+  INT_AMBIENT_TEMPERATURE: ['business', 'ambient temperature, as the mix step temperature'],
   S_OPTION_OVEN_TYPE: ['business', 'oven mode; reported (#28)'],
   S_BREAD_SHAPE: ['business', 'shape; reported (#28)'],
   S_OPTION_KNEADING: ['business', 'kneading; reported (#32)'],

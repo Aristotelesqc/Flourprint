@@ -77,6 +77,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -170,6 +173,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -318,6 +325,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -455,6 +465,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -585,6 +599,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               }
             ],
@@ -604,6 +621,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 25
                 }
               },
               {
@@ -747,6 +768,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -852,6 +876,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 25
                 }
               },
               {
@@ -983,6 +1011,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -1076,6 +1107,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 25
                 }
               },
               {
@@ -1206,6 +1241,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -1267,6 +1305,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -1411,6 +1453,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -1483,6 +1528,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -1614,6 +1663,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               }
             ],
@@ -1657,6 +1709,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -1801,6 +1857,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -1859,6 +1918,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -2002,6 +2065,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -2165,6 +2231,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 25
                 }
               },
               {
@@ -2295,6 +2365,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -2404,6 +2477,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -2535,6 +2612,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               }
             ],
@@ -2578,6 +2658,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -2721,6 +2805,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -2884,6 +2971,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -3028,6 +3119,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -3104,6 +3198,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -3252,6 +3350,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -3328,6 +3429,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -3474,6 +3579,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -3546,6 +3654,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -3677,6 +3789,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -3814,6 +3929,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -3944,6 +4063,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               }
             ],
@@ -3989,6 +4111,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -4132,6 +4258,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -4208,6 +4337,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -4343,6 +4476,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -4431,6 +4567,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -4566,6 +4706,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -4648,6 +4791,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -4792,6 +4939,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -4880,6 +5030,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -5024,6 +5178,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               }
             ],
@@ -5097,6 +5254,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -5232,6 +5393,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -5343,6 +5507,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {
@@ -5474,6 +5642,9 @@
                     1
                   ],
                   "source": "USDA SR Legacy (approx.)"
+                },
+                "yeast": {
+                  "form": "active-dry"
                 }
               },
               {
@@ -5562,6 +5733,10 @@
                 "schedule": "asap",
                 "endCriterion": {
                   "kind": "userDecision"
+                },
+                "conditions": {
+                  "location": "counter",
+                  "temperatureC": 21
                 }
               },
               {

@@ -85,6 +85,14 @@ describe('TOST golden migrations', () => {
       conditions: { location: 'fridge', temperatureC: 4 },
     });
     expect(report.status).toBe('converted');
+    // Basic fermentation mode: the mix step carries the ambient, the yeast its form.
+    expect(revision.process.steps.find((s) => s.id === 'mix')?.conditions).toEqual({
+      location: 'counter',
+      temperatureC: expect.any(Number),
+    });
+    expect(revision.formula.ingredients.find((i) => i.id === 'active-dry-yeast')?.yeast).toEqual({
+      form: 'active-dry',
+    });
   });
 
   it('cold fermentation with tangzhong: Pizza nuit', () => {
