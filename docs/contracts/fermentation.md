@@ -13,7 +13,14 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
 - **Dough end point**: from the end of the mix to the start of the bake, the dough is "about
   doubled and ready". Bulk, cold retard, shaping and proof are counted together: the state is
   never reset between steps (#9).
+- **Dough steps**: the `asap` steps that come after the `mix` step and before the `bake` step
+  in the graph, in process order. `alap` steps (preheating) never hold the dough. Without a
+  `mix` step, the estimate is `insufficient_data`; without a `bake` step, every `asap` step after
+  the mix counts.
 - **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5).
+- A preferment is a `preferment`-kind component; its step is the step with the component's id.
+  Its yeast is its allocations of yeast-marked ingredients; with none, its estimate is
+  `insufficient_data`.
 - The model predicts this observable end point directly. It does not separate gas production
   from gas retention or volume yet (#33 objection 4).
 
@@ -93,6 +100,10 @@ T_base  = n × T_target + friction        (n = 3, or 4 with a preferment)
 | fresh-equivalent dose outside 0.01–3 %, dough below 1.7 °C or above 35 °C                                                     | `out_of_domain`                         |
 | a preferment; added sugar > 5 %; added fat > 3 %; salt outside 1.5–3 %; total water outside 55–75 %; a needed content unknown | `ok` with `extrapolations` listing each |
 | otherwise                                                                                                                     | `ok`                                    |
+
+Sugar and fat are the formula's `totalSugarPct` and `totalFatPct`; water is `totalWaterPct`.
+Salt is the ingredient with id `salt` until ingredients are typed (#26); a dough without one is
+outside the salt range.
 
 An extrapolated estimate is still given, with its reasons, because the owner's recipes need it
 (#33 objection 5); its band does not widen automatically, so the reasons are always shown next
