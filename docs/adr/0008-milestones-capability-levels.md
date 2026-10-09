@@ -1,6 +1,6 @@
 # ADR 0008: Alpha / Engine MVP milestones and N1–N3 levels
 
-Status: Accepted (#17, #29, #30)
+Status: Accepted (#17, #29, #30); amended by ADR 0010 (first fermentation model in Alpha)
 
 ## Decision
 

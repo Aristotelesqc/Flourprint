@@ -14,5 +14,6 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0005](0005-process-dag.md)                  | Minimal process graph                          | Accepted                                  |
 | [0006](0006-numeric-representation.md)       | Numeric representation and fixtures            | Accepted                                  |
 | [0007](0007-history-snapshots.md)            | Revisions reference, bakes copy                | Accepted                                  |
-| [0008](0008-milestones-capability-levels.md) | Alpha / Engine MVP milestones and N1–N3 levels | Accepted                                  |
+| [0008](0008-milestones-capability-levels.md) | Alpha / Engine MVP milestones and N1–N3 levels | Accepted, amended by 0010                 |
 | [0009](0009-english-and-i18n.md)             | English as project language, localizable UI    | Accepted                                  |
+| [0010](0010-fermentation-model-in-alpha.md)  | First fermentation model in Dogfood Alpha      | Accepted                                  |
