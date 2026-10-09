@@ -8,13 +8,14 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p apps/mobile && tsc -p apps/mobile/tsconfig.node.json",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p apps/mobile && tsc -p apps/mobile/tsconfig.node.json && tsc -p apps/desktop/tsconfig.e2e.json",
     "lint": "eslint .",
     "test": "tsc -b && vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && vitest run",
-    "build:mobile": "pnpm --filter @flourprint/mobile build"
+    "build:mobile": "pnpm --filter @flourprint/mobile build",
+    "build:desktop": "pnpm --filter @flourprint/desktop package"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

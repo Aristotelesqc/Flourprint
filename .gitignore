@@ -5,3 +5,5 @@ coverage/
 .DS_Store
 apps/mobile/test-results/
 apps/mobile/playwright-report/
+apps/desktop/out/
+apps/desktop/test-results/

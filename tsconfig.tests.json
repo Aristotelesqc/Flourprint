@@ -14,5 +14,5 @@
     "dogfood/*/importer/test",
     "*.config.ts"
   ],
-  "exclude": ["apps/mobile"]
+  "exclude": ["apps/mobile", "apps/desktop/e2e"]
 }

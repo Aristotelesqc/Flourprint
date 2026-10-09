@@ -9,11 +9,13 @@ import type {
 import { saveRevision } from '@flourprint/core/application';
 import type { Instant } from '@flourprint/core/domain';
 import { MemoryBakeEventStore, MemoryRecipeRepository } from '@flourprint/adapters/memory';
+import type { SqlBridge } from '@flourprint/adapters/sqlite-bridge';
 import { sampleRecipe } from './seed';
 
 /**
  * Composition root of the app (ADR 0001). On the device the stores are SQLite through Capacitor
- * (spike #24); in a browser they live in memory and are lost on reload.
+ * (spike #24), in the desktop shell SQLite through its bridge (ADR 0011); in a browser they live
+ * in memory and are lost on reload.
  */
 export interface Services {
   readonly recipes: RecipeRepository;
@@ -40,11 +42,35 @@ const seedIfEmpty = async (recipes: RecipeRepository): Promise<void> => {
   });
 };
 
+/** The SQLite bridge the desktop shell exposes (ADR 0011); absent in a browser and on Android. */
+const desktopBridge = (): SqlBridge | undefined => {
+  const candidate = (window as { flourprintDesktop?: { sql?: unknown } }).flourprintDesktop?.sql;
+  return typeof candidate === 'function' ? { call: candidate as SqlBridge['call'] } : undefined;
+};
+
 export const createServices = async (): Promise<Services> => {
   if (Capacitor.isNativePlatform()) {
     const { openCapacitorSqlite, SqlBakeEventStore, SqlRecipeRepository } =
       await import('@flourprint/adapters/sqlite-capacitor');
     const db = await openCapacitorSqlite('flourprint');
+    if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
+    const recipes = new SqlRecipeRepository(db.value.driver);
+    await seedIfEmpty(recipes);
+    return {
+      recipes,
+      bakes: new SqlBakeEventStore(db.value.driver),
+      clock,
+      ids,
+      storage: 'sqlite',
+      sqliteVersion: async () =>
+        (await db.value.driver.query<{ v: string }>('SELECT sqlite_version() AS v'))[0]?.v,
+    };
+  }
+  const desktop = desktopBridge();
+  if (desktop) {
+    const { openBridgeSqlite, SqlBakeEventStore, SqlRecipeRepository } =
+      await import('@flourprint/adapters/sqlite-bridge');
+    const db = await openBridgeSqlite(desktop);
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
     const recipes = new SqlRecipeRepository(db.value.driver);
     await seedIfEmpty(recipes);
