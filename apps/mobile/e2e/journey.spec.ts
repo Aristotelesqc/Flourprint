@@ -129,10 +129,7 @@ test('imports a recipes file additively; a family shows one variant, the starred
         schemaVersion: 1,
         exportedAt: '2026-10-08T18:00:00.000Z',
         recipes: [
-          {
-            ...variant('older', 'Pain test 1', '2026-01-01T12:00:00.000Z'),
-            review: { level: 'review', reasons: ['Proof time is negative in the source.'] },
-          },
+          variant('older', 'Pain test 1', '2026-01-01T12:00:00.000Z'),
           variant('newer', 'Pain test 2', '2026-02-01T12:00:00.000Z'),
         ],
         families: [{ id: 'family-test', name: 'Pain test' }],
@@ -163,15 +160,9 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await page.locator('ion-back-button:visible').click();
   await expect(shown('Pain test 1')).toHaveCount(1);
   await expect(shown('Pain test 2')).toHaveCount(0);
-  await expect(shown('À revoir')).toHaveCount(1);
-
-  // The import's qualification stays visible until the owner has checked the recipe.
-  await shown('Pain test 1').click();
-  await expect(page.getByText('Proof time is negative in the source.')).toBeVisible();
-  await page.getByRole('button', { name: 'C’est vérifié' }).click();
-  await expect(page.getByText('Proof time is negative in the source.')).toBeHidden();
 
   // A running bake of a variant not shown by default keeps its name on the recipe list.
+  await shown('Pain test 1').click();
   await page.getByRole('listitem').filter({ hasText: 'Pain test 2' }).click();
   await expect(shown('Pain test 2').first()).toBeVisible();
   await page.getByRole('button', { name: 'Processus' }).click();

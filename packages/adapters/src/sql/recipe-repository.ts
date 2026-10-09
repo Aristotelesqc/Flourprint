@@ -14,7 +14,6 @@ import {
   ok,
   type Recipe,
   type RecipeFamily,
-  type RecipeReview,
   type Result,
   type Revision,
 } from '@flourprint/core/domain';
@@ -26,7 +25,6 @@ interface RecipeRow {
   head_version: number;
   updated_at: string;
   family_id: string | null;
-  review: string | null;
 }
 
 interface FamilyRow {
@@ -41,9 +39,6 @@ const toRecipe = (row: RecipeRow): Recipe => ({
   headVersion: Number(row.head_version),
   updatedAt: row.updated_at as Recipe['updatedAt'],
   ...(row.family_id === null ? {} : { familyId: row.family_id }),
-  ...(row.review === null || row.review === undefined
-    ? {}
-    : { review: JSON.parse(row.review) as RecipeReview }),
 });
 
 const toFamily = (row: FamilyRow): RecipeFamily => ({
@@ -85,12 +80,6 @@ const setFamily = async (
 export const insertRecipe = async (tx: SqlExecutor, recipe: RecordedRecipe): Promise<void> => {
   for (const revision of recipe.revisions) await insertRevision(tx, recipe.name, revision);
   if (recipe.familyId !== undefined) await setFamily(tx, recipe.id, recipe.familyId);
-  if (recipe.review !== undefined) {
-    await tx.run('UPDATE recipes SET review = ? WHERE id = ?', [
-      JSON.stringify(recipe.review),
-      recipe.id,
-    ]);
-  }
 };
 
 export const insertFamily = async (tx: SqlExecutor, family: RecipeFamily): Promise<void> => {
@@ -277,17 +266,6 @@ export class SqlRecipeRepository implements RecipeRepository {
         );
       }
       return { imported, skipped };
-    });
-  }
-
-  acknowledgeReview(recipeId: string): Promise<Result<void, FamilyError>> {
-    return this.driver.transaction(async (tx) => {
-      const [row] = await tx.query<{ id: string }>('SELECT id FROM recipes WHERE id = ?', [
-        recipeId,
-      ]);
-      if (!row) return err(recipeNotFound(recipeId));
-      await tx.run('UPDATE recipes SET review = NULL WHERE id = ?', [recipeId]);
-      return ok(undefined);
     });
   }
 

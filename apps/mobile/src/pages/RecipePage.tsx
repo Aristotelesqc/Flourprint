@@ -22,7 +22,6 @@ import {
   type BakeSummary,
   type Recipe,
   type RecipeFamily,
-  type RecipeReview,
   type DomainError,
   type FormulaEdit,
   type ProjectionMode,
@@ -68,7 +67,6 @@ export const RecipePage = () => {
     commandId: string;
     payload: Extract<BakeCommandPayload, { type: 'StartBake' }>;
   }>(undefined);
-  const [review, setReview] = useState<RecipeReview>();
   const [readFailed, setReadFailed] = useState(false);
 
   useEffect(() => {
@@ -84,7 +82,6 @@ export const RecipePage = () => {
         }
         const { formula, process } = revision.value;
         setBase({ name: recipe.name, revision: revision.value });
-        setReview(recipe.review);
         setDraft(drafts.get(recipeId, revision.value.version) ?? { formula, process });
         setLoading('ready');
         await loadFamily(recipe);
@@ -131,20 +128,6 @@ export const RecipePage = () => {
       console.error(error);
       setReadFailed(true);
     }
-  };
-
-  const acknowledgeReview = async () => {
-    const result = await writes.run(() => services.recipes.acknowledgeReview(recipeId));
-    if (!result.ok) {
-      setStorageFailed(result.reason === 'storage');
-      return;
-    }
-    setStorageFailed(false);
-    if (!result.value.ok) {
-      setFailure(result.value.error);
-      return;
-    }
-    setReview(undefined);
   };
 
   const refreshBakes = useCallback(async () => {
@@ -362,13 +345,6 @@ export const RecipePage = () => {
             {t('state.storageRead')}
           </p>
         )}
-        {review && (
-          <ReviewNote
-            review={review}
-            busy={writes.busy}
-            onAcknowledge={() => void acknowledgeReview()}
-          />
-        )}
         <SessionOnlyNotice />
 
         {/* Tabs stay mounted: a draft being typed and the weighing checklist survive a switch. */}
@@ -496,43 +472,3 @@ const Star = ({ filled, small = false }: { filled: boolean; small?: boolean }) =
     <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z" />
   </svg>
 );
-
-/** An import's qualification, shown until the owner has checked the recipe (persistence.md). */
-const ReviewNote = ({
-  review,
-  busy,
-  onAcknowledge,
-}: {
-  review: RecipeReview;
-  busy: boolean;
-  onAcknowledge: () => void;
-}) => {
-  const { t } = useMessages();
-  const strong = review.level === 'review';
-  return (
-    <section
-      role={strong ? 'alert' : 'note'}
-      className={`mb-4 flex flex-col gap-2 rounded-2xl border p-4 ${
-        strong ? 'border-alert' : 'border-line bg-surface'
-      }`}
-    >
-      <strong className={strong ? 'text-alert' : ''}>
-        {t(strong ? 'review.titleReview' : 'review.titleWarning')}
-      </strong>
-      <ul className="m-0 flex flex-col gap-1 pl-5 text-[15px]">
-        {review.reasons.map((reason) => (
-          <li key={reason}>{reason}</li>
-        ))}
-      </ul>
-      <IonButton
-        fill="outline"
-        size="small"
-        className="self-start"
-        disabled={busy}
-        onClick={onAcknowledge}
-      >
-        {t('review.acknowledge')}
-      </IonButton>
-    </section>
-  );
-};

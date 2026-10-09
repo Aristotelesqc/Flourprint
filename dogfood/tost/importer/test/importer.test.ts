@@ -143,8 +143,6 @@ describe('TOST golden migrations', () => {
     expect(poolish?.allocations).toBeUndefined();
     expect(report.status).toBe('needs-review');
     expect(report.reviews).toContain('TOST oven mode is "no cooking".');
-    expect(one('poolish').recipe.review).toMatchObject({ level: 'review' });
-    expect(one('simple').recipe.review).toBeUndefined();
   });
 
   it('poolish and tangzhong: pullmanzong test 4, owner-stated poolish yeast', () => {

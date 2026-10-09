@@ -187,15 +187,6 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
   return (
     <IonRouterLink routerLink={`/recipes/${recipe.id}`} className="text-ink">
       <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
-        {recipe.review && (
-          <span
-            className={`self-start rounded-full px-2.5 py-0.5 text-[13px] font-semibold ${
-              recipe.review.level === 'review' ? 'bg-alert text-on-accent' : 'bg-track text-ink'
-            }`}
-          >
-            {t(recipe.review.level === 'review' ? 'review.badge' : 'review.badgeWarning')}
-          </span>
-        )}
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-xl font-semibold">{recipe.name}</span>
           <span className="shrink-0 text-[13px] text-muted">

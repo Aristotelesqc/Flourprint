@@ -415,14 +415,6 @@ describe.each([
     ['an invalid revision', (f) => (f.recipes[0].revisions[0].formula.flours = [])],
     ['a misnumbered revision', (f) => (f.recipes[0].revisions[0].version = 2)],
     ['a duplicate recipe', (f) => f.recipes.push(f.recipes[0])],
-    [
-      'a review note without reasons',
-      (f) => (f.recipes[0].review = { level: 'review', reasons: [] }),
-    ],
-    [
-      'a review note with an unknown level',
-      (f) => (f.recipes[0].review = { level: 'x', reasons: ['a'] }),
-    ],
     ['an unknown role', (f) => (f.recipes[0].revisions[0].formula.ingredients[1].role = 'doh')],
     [
       'a fat content above 100 %',

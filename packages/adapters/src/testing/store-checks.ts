@@ -350,31 +350,6 @@ export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
     },
   },
   {
-    name: 'keeps an imported review note across revisions until it is acknowledged',
-    run: async (make) => {
-      const repository = await make();
-      const review = { level: 'review' as const, reasons: ['Proof time is negative in TOST.'] };
-      await repository.importRecipes({
-        recipes: [{ id: 'checked', name: 'Checked', review, revisions: recorded('checked', 1) }],
-        families: [],
-      });
-      equal((await repository.getRecipe('checked'))?.review, review, 'imported note');
-      await repository.saveRevision({
-        recipeId: 'checked',
-        name: 'Checked',
-        expectedHead: 1,
-        formula: formula(71),
-        process,
-        createdAt: at,
-      });
-      equal((await repository.getRecipe('checked'))?.review, review, 'kept by a new revision');
-      equal(code(await repository.acknowledgeReview('checked')), 'ok', 'acknowledge');
-      equal((await repository.getRecipe('checked'))?.review, undefined, 'removed');
-      equal((await repository.getRecipe('checked'))?.headVersion, 2, 'no revision created');
-      equal(code(await repository.acknowledgeReview('ghost')), 'RecipeNotFound', 'unknown');
-    },
-  },
-  {
     name: 'an import does not create a family whose recipes were all skipped',
     run: async (make) => {
       const repository = await make();

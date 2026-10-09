@@ -28,15 +28,6 @@ note? }`. Versions start at 1 and increase by one.
   no member is deleted. Pinning a recipe outside the family is refused (`NotInFamily`).
 - No recipe is grouped automatically: grouping is a user (or import) decision.
 
-## Review notes
-
-- A recipe may carry a **review note**: `{ level: 'warning' | 'review', reasons: string[] }`, set
-  when it was imported from another tool with assumptions or doubtful values. `review` means the
-  recipe should not be baked before it is checked; `warning` means it is usable with caveats.
-- The note belongs to the recipe, not to a revision: saving a new revision keeps it. Only the
-  user removes it, by acknowledging it (`acknowledgeReview`); this creates no revision.
-- Recipe files and full backups carry it optionally, so files without it stay valid.
-
 ## Bakes
 
 - The event log follows `bake-session.md`. `append` also writes the bake summary row in the same
@@ -45,11 +36,11 @@ note? }`. Versions start at 1 and increase by one.
   `{ bakeId, status, recipeId?, recipeVersion?, startedAt?, endedAt?, version, updatedAt }`.
 - Summaries are rebuildable from the events at any time.
 
-## SQLite schema (version 3)
+## SQLite schema (version 2)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
-                updated_at TEXT NOT NULL, family_id TEXT, review TEXT)  -- family_id v2, review v3
+                updated_at TEXT NOT NULL, family_id TEXT)                      -- family_id: v2
 recipe_families (id TEXT PRIMARY KEY, name TEXT NOT NULL, pinned_recipe_id TEXT)  -- v2
 revisions      (recipe_id TEXT NOT NULL, version INTEGER NOT NULL, schema_version INTEGER NOT NULL,
                 document TEXT NOT NULL, created_at TEXT NOT NULL,
@@ -90,7 +81,7 @@ on a connection is serialized, so a transaction never interleaves with another o
 ```ts
 {
   kind: 'flourprint-recipes', schemaVersion, exportedAt,
-  recipes: [{ id, name, familyId?, review?, revisions }],
+  recipes: [{ id, name, familyId?, revisions }],
   families: [{ id, name, pinnedRecipeId? }],
 }
 ```
