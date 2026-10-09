@@ -176,3 +176,29 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await back.click();
   await expect(shown('Cuisson en cours · Pain test 2')).toHaveCount(1);
 });
+
+test('a locked total water holds while eggs are added; preparations are editable', async ({
+  page,
+}) => {
+  await openRecipe(page);
+  // 75 % water, no other water source but the yeast's estimate: lock it.
+  await page.getByText(/Barrer à/).click();
+  await expect(page.getByText('Eau totale barrée').first()).toBeVisible();
+  const water = page.getByText('Suit l’eau totale barrée');
+  await expect(water).toBeVisible();
+
+  await page.getByRole('button', { name: '+ Ajouter un ingrédient' }).click();
+  await page.getByLabel('+ Ajouter un ingrédient').selectOption({ label: 'Œuf' });
+  await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
+  const egg = page.getByLabel('Œuf (g)', { exact: true });
+  await egg.fill('100');
+  await egg.press('Enter');
+  // 100 g of egg at 76 % water: the added water drops by 76 g, total water stays.
+  await expect(page.getByText('Œuf ajouté')).toBeVisible();
+  await expect(page.getByText(/Eau, % boulanger : 75 % → 67,4 %/)).toBeVisible();
+
+  // The tangzhong's hydration is editable; 1:1 makes it a yudane.
+  await page.getByLabel('tangzhong, Hydratation (%)').fill('100');
+  await page.getByLabel('tangzhong, Hydratation (%)').press('Enter');
+  await expect(page.getByText('yudane').first()).toBeVisible();
+});

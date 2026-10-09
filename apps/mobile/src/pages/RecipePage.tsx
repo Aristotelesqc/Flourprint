@@ -24,6 +24,7 @@ import {
   type RecipeFamily,
   type DomainError,
   type FormulaEdit,
+  type Process,
   type ProjectionMode,
   type Revision,
 } from '@flourprint/core/domain';
@@ -187,6 +188,23 @@ export const RecipePage = () => {
     if (next.ok) update({ ...draft, formula: next.value });
     else setFailure(next.error);
     return next.ok;
+  };
+
+  /** A formula edit and the process change it needs (a preparation's step), validated together. */
+  const editStructure = (command: FormulaEdit, nextProcess?: Process): boolean => {
+    const next = applyFormulaEdit(draft.formula, command);
+    if (!next.ok) {
+      setFailure(next.error);
+      return false;
+    }
+    const process = nextProcess ?? draft.process;
+    const valid = validateRecipe(next.value, process);
+    if (!valid.ok) {
+      setFailure(valid.error);
+      return false;
+    }
+    update({ formula: next.value, process });
+    return true;
   };
 
   const changeDuration = (stepId: string, durationS: number | undefined): boolean => {
@@ -354,6 +372,10 @@ export const RecipePage = () => {
               formula={draft.formula}
               resolved={resolved.value}
               onEdit={editFormula}
+              base={base.revision.formula}
+              process={draft.process}
+              now={services.clock.now()}
+              onStructure={editStructure}
             />
           ) : (
             <p role="alert">{error(resolved.error)}</p>

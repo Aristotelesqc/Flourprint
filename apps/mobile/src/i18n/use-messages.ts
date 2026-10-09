@@ -37,15 +37,20 @@ export const useMessages = () => {
     return key in en ? t(key as MessageKey) : step.operation;
   };
 
+  const nameOf = (id: string) => name(id);
+
   /** Maps an engine error code to a localized message (engine messages are never shown). */
   const error = (failure: DomainError): string => {
-    const key = `error.${failure.code}`;
-    if (!(key in en)) return t('error.unknown', { code: failure.code });
     const details = (failure.details ?? {}) as Record<string, unknown>;
+    // A refusal may name its field for a more precise message (e.g. a locked total water).
+    const precise = `error.${failure.code}.${String(details.field)}`;
+    const key = precise in en ? precise : `error.${failure.code}`;
+    if (!(key in en)) return t('error.unknown', { code: failure.code });
     const values: Values = {};
     for (const [name, value] of Object.entries(details)) {
       if (typeof value === 'number') values[name.replace(/Grams$/, '')] = grams(value);
       else if (typeof value === 'string') values[name] = value;
+      else if (Array.isArray(value)) values[name] = value.map(String).map(nameOf).join(', ');
     }
     return t(key as MessageKey, values);
   };

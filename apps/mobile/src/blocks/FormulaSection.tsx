@@ -1,5 +1,11 @@
 import { useState, type ReactNode } from 'react';
-import type { Anchor, Formula, FormulaEdit, ResolvedFormula } from '@flourprint/core/domain';
+import type {
+  Anchor,
+  Formula,
+  FormulaEdit,
+  Process,
+  ResolvedFormula,
+} from '@flourprint/core/domain';
 import { editableNumber } from '../i18n/numbers';
 import { useMessages } from '../i18n/use-messages';
 import { NumberField } from '../ui/Field';
@@ -7,12 +13,27 @@ import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
+import {
+  AddIngredient,
+  AddPreparation,
+  ChangesSummary,
+  PreparationFields,
+  TimeSummary,
+  WaterLock,
+  type StructureEdit,
+} from './FormulaEditors';
 
 interface Props {
   readonly formula: Formula;
   readonly resolved: ResolvedFormula;
+  /** The saved revision's formula, to show what the draft changes. */
+  readonly base: Formula;
+  readonly process: Process;
+  readonly now: string;
   /** Returns false when the engine refused the edit; the page shows the reason. */
   readonly onEdit: (edit: FormulaEdit) => boolean;
+  /** A formula edit with the process change it needs (a preparation's step). */
+  readonly onStructure: StructureEdit;
 }
 
 const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
@@ -21,7 +42,15 @@ const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
  * Formula tab of the #8 mockups: quantity and key figures first, then flours, ingredients,
  * preparations and the final mix to weigh. Every number comes from the engine (#19).
  */
-export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
+export const FormulaSection = ({
+  formula,
+  resolved,
+  base,
+  process,
+  now,
+  onEdit,
+  onStructure,
+}: Props) => {
   const { t, grams, pct, name, componentName, locale } = useMessages();
   const componentLabel = (id: string) => {
     const component = formula.components.find((c) => c.id === id);
@@ -54,8 +83,12 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
   ];
   const isWeighed = (item: { key: string; grams: number }) => weighed.get(item.key) === item.grams;
 
+  const lockedWater = formula.waterTarget?.absorbInto;
+
   return (
     <div className="flex flex-col gap-5 pb-6">
+      <ChangesSummary base={base} formula={formula} />
+      <TimeSummary process={process} now={now} />
       <Card>
         <div className="flex items-center justify-between gap-3">
           <span className="font-bold">{t('formula.quantity')}</span>
@@ -137,6 +170,7 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
           </p>
         )}
         <Enrichment resolved={resolved} />
+        <WaterLock formula={formula} resolved={resolved} onEdit={onEdit} />
       </Card>
 
       <section>
@@ -176,31 +210,56 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
         />
         <Rows>
           <p className="m-0 px-3 py-2 text-[13px] text-muted">{t('formula.editRule')}</p>
-          {formula.ingredients.map((ingredient) => (
-            <div key={ingredient.id} className={`${ROW} min-h-[60px] px-3`}>
-              <span className="font-semibold">{name(ingredient.id)}</span>
-              <NumberField
-                label={`${name(ingredient.id)}, ${t('formula.column.bakerPct')}`}
-                unit="%"
-                value={ingredient.bakerPct}
-                onCommit={(value) =>
-                  onEdit({ type: 'SetBakerPct', ingredient: ingredient.id, pct: value })
-                }
-              />
-              <NumberField
-                label={name(ingredient.id)}
-                unit="g"
-                value={resolved.grams[ingredient.id] ?? 0}
-                onCommit={(value) =>
-                  onEdit({ type: 'SetIngredientGrams', ingredient: ingredient.id, grams: value })
-                }
-              />
-            </div>
-          ))}
+          {formula.ingredients.map((ingredient) =>
+            ingredient.id === lockedWater ? (
+              <div key={ingredient.id} className={`${ROW} min-h-[60px] px-3`}>
+                <span className="flex flex-col">
+                  <span className="font-semibold">{name(ingredient.id)}</span>
+                  <span className="text-[13px] text-muted">{t('formula.lock.follows')}</span>
+                </span>
+                <span className="pr-2.5 text-right">{pct(ingredient.bakerPct)}</span>
+                <span className="pr-2.5 text-right font-semibold">
+                  {grams(resolved.grams[ingredient.id] ?? 0)}
+                </span>
+              </div>
+            ) : (
+              <div key={ingredient.id} className={`${ROW} min-h-[60px] px-3`}>
+                <span className="flex min-w-0 flex-col items-start">
+                  <span className="font-semibold">{name(ingredient.id)}</span>
+                  <button
+                    type="button"
+                    className="fp-reset text-[13px] text-muted underline"
+                    onClick={() =>
+                      void onEdit({ type: 'RemoveIngredient', ingredient: ingredient.id })
+                    }
+                  >
+                    {t('formula.remove')}
+                  </button>
+                </span>
+                <NumberField
+                  label={`${name(ingredient.id)}, ${t('formula.column.bakerPct')}`}
+                  unit="%"
+                  value={ingredient.bakerPct}
+                  onCommit={(value) =>
+                    onEdit({ type: 'SetBakerPct', ingredient: ingredient.id, pct: value })
+                  }
+                />
+                <NumberField
+                  label={name(ingredient.id)}
+                  unit="g"
+                  value={resolved.grams[ingredient.id] ?? 0}
+                  onCommit={(value) =>
+                    onEdit({ type: 'SetIngredientGrams', ingredient: ingredient.id, grams: value })
+                  }
+                />
+              </div>
+            ),
+          )}
+          <AddIngredient formula={formula} onEdit={onEdit} />
         </Rows>
       </section>
 
-      {formula.components.length > 0 && (
+      {
         <section className="flex flex-col gap-2">
           <SectionTitle>{t('formula.preparations')}</SectionTitle>
           {formula.components.map((component) => {
@@ -233,11 +292,19 @@ export const FormulaSection = ({ formula, resolved, onEdit }: Props) => {
                 </div>
                 <span className="text-[15px]">{params.join(' · ')}</span>
                 <span className="text-sm text-muted">{breakdown.join(' · ')}</span>
+                <PreparationFields
+                  formula={formula}
+                  process={process}
+                  componentId={component.id}
+                  onEdit={onEdit}
+                  onStructure={onStructure}
+                />
               </Card>
             );
           })}
+          <AddPreparation formula={formula} process={process} onStructure={onStructure} />
         </section>
-      )}
+      }
 
       <section className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between">
