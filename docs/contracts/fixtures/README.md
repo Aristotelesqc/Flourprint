@@ -70,3 +70,11 @@ F = 1000: bread flour 800, whole wheat 200. Water 750, salt 20, yeast 4.
 F = 500: milk 300, butter 50, salt 10, yeast 5, W = 865. No pure water: `pureWaterPct` = 0. Milk
 estimated at 87.5 % [86; 89] → 262.5 g [258; 267]. Butter and yeast unknown → `incomplete`.
 `totalWaterPct` = 52.5.
+
+## Fermentation (`fermentation/`)
+
+`fermentation/cases.json` holds reference cases of the provisional fermentation model
+(fermentation.md), produced by `fermentation/generate.py` from the contract's equations: closed
+forms at constant temperature, an independent fine integration of the analytic dough temperature
+for the thermal lag. Keys of `expected` are paths in the engine's result; `tolerance` is
+absolute, in the unit of the value (seconds, percent, °C).
