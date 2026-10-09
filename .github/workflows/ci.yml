@@ -112,6 +112,10 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Electron binary
+        # pnpm may skip the package's own download (cached build); fetch it explicitly.
+        working-directory: apps/desktop
+        run: node node_modules/electron/install.js
       - name: Build identifiers
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
