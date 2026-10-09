@@ -46,6 +46,13 @@ type Incorporation =
   item may exceed 100. Unknown references are errors.
 - Grams per step are derived from the resolved formula, so they follow every rescaling.
 
+## Step removal
+
+Removing a step rewires each of its successors to the removed step's own dependencies, so the
+order around it is kept; incorporations it declared are removed with it and the result is
+validated like any process (a recipe whose incorporations no longer match its formula is
+refused).
+
 ## Projection
 
 - Modes: start at a time (start now is start at `now`), or ready by a time for a designated

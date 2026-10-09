@@ -70,6 +70,42 @@ type Anchor =
 - `hold: 'anchor'` on a flour: the other percentages and the anchor fix total flour, so another
   flour must be designated to absorb the difference (`absorbInto`), under any anchor kind.
 - A real weighing during a bake is **not** a formula edit (see `bake-session.md`).
+
+### Structure edits
+
+| Command                                | Effect                                                                            | Refused when…                                                  |
+| -------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `SetFlourBlend(parts)`                 | may also add or remove flours                                                     | a component still draws from a removed flour                   |
+| `AddIngredient(ingredient)`            | adds an ingredient with its %, kind, role and composition                         | the id is taken or reserved                                    |
+| `UpdateIngredient(id, changes)`        | changes kind, role or water/fat/sugar contents; the % is kept                     | the change breaks an allocation (e.g. a role other than dough) |
+| `RemoveIngredient(id)`                 | removes the ingredient                                                            | a component allocates it, or it absorbs the locked total water |
+| `AddComponent(component)`              | adds a preparation drawing from the formula totals                                | its draws exceed what the formula has                          |
+| `UpdateComponent(id, changes)`         | changes flour share, flour blend, hydration, loss, allocations or kind            | the draws exceed what the formula has                          |
+| `RemoveComponent(id)`                  | removes the preparation; its flour, water and ingredients return to the final mix | —                                                              |
+| `LockTotalWater(totalWaterPct, water)` | locks total water (see below)                                                     | see below                                                      |
+| `UnlockTotalWater`                     | removes the lock; every quantity keeps its current value                          | —                                                              |
+
+Every edit is validated by a full resolution; a refused edit changes nothing. Removing a
+component does not edit the process: the application removes or keeps the matching step
+explicitly (`process.md`, Step removal).
+
+### Locked total water
+
+- A formula may lock its total water: `waterTarget: { totalWaterPct, absorbInto }`, where
+  `absorbInto` is a `water`-kind, `dough`-role ingredient. Its percentage is then derived, never
+  edited directly:
+  `pct(absorbInto) = totalWaterPct − Σ pct(other water ingredients) − Σ pct(i) × water(i) / 100 + λw`,
+  over the other `dough` ingredients, with `λw = Σ flourPct × hydrationPct × waterLossPct / 100²`
+  the component losses in points of flour. Total water counts everything that brings water
+  (milk, eggs, honey, butter…), as `totalWater` does.
+- After every edit, the absorbing water is recomputed; with `hold: 'otherGrams'`, the absorbing
+  water is the one quantity whose grams are not kept. Editing the absorbing water directly is
+  refused (`IncompatibleConstraint`): change the target, or unlock.
+- Estimated contents count at their value; the derived water is then an estimate too.
+- Refused, with the reason and the ingredients concerned (`IncompatibleConstraint`):
+  - an ingredient with mass and an unknown water content (the total cannot be known);
+  - a target below the water the other ingredients already bring (negative added water).
+- A stored formula whose absorbing water does not match its lock is invalid (`InvalidFormula`).
 - An impossible constraint returns a structured error (code, fields, explanation), never a silent
   correction.
 
