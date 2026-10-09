@@ -65,11 +65,20 @@ export interface Component {
   readonly allocations?: readonly ComponentAllocation[];
 }
 
+/** A locked total water (formula.md, Locked total water). */
+export interface WaterTarget {
+  /** Total water in points of total flour, everything that brings water included. */
+  readonly totalWaterPct: number;
+  /** The `water` ingredient whose percentage is derived from the target. */
+  readonly absorbInto: string;
+}
+
 export interface Formula {
   readonly flours: readonly FlourShare[];
   readonly ingredients: readonly Ingredient[];
   readonly components: readonly Component[];
   readonly anchor: Anchor;
+  readonly waterTarget?: WaterTarget;
 }
 
 export interface WaterContribution {

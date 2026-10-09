@@ -12,4 +12,7 @@ export type FormulaError =
       'IngredientAllocationExceeded',
       { ingredient: string; requiredGrams: number; availableGrams: number }
     >
-  | DomainError<'IncompatibleConstraint', { reason: string; field?: string }>;
+  | DomainError<
+      'IncompatibleConstraint',
+      { reason: string; field?: string; ingredients?: readonly string[] }
+    >;

@@ -5,11 +5,33 @@ import type { FormulaError } from './errors.js';
 import {
   anchorDoughWeight,
   doughPctSum,
+  lockedWaterPct,
   lossFactor,
   resolveFormula,
   validateAnchor,
 } from './resolve.js';
-import type { Anchor, AnchorKind, FlourShare, Formula, ResolvedFormula } from './types.js';
+import type {
+  Anchor,
+  AnchorKind,
+  Component,
+  ContentPct,
+  FlourShare,
+  Formula,
+  Ingredient,
+  ResolvedFormula,
+} from './types.js';
+
+/** Changes to an ingredient that keep its percentage (formula.md, Structure edits). */
+export interface IngredientChanges {
+  readonly kind?: Ingredient['kind'];
+  readonly role?: Ingredient['role'];
+  readonly water?: ContentPct;
+  readonly fat?: ContentPct;
+  readonly sugar?: ContentPct;
+}
+
+/** Changes to a preparation; omitted fields are kept. */
+export type ComponentChanges = Partial<Omit<Component, 'id'>>;
 
 /** Edit commands of docs/contracts/formula.md. */
 export type FormulaEdit =
@@ -30,7 +52,23 @@ export type FormulaEdit =
       readonly kind: AnchorKind;
       /** Required when reinterpreting as `pieces`. */
       readonly count?: number;
-    };
+    }
+  | { readonly type: 'AddIngredient'; readonly ingredient: Ingredient }
+  | {
+      readonly type: 'UpdateIngredient';
+      readonly ingredient: string;
+      readonly changes: IngredientChanges;
+    }
+  | { readonly type: 'RemoveIngredient'; readonly ingredient: string }
+  | { readonly type: 'AddComponent'; readonly component: Component }
+  | {
+      readonly type: 'UpdateComponent';
+      readonly component: string;
+      readonly changes: ComponentChanges;
+    }
+  | { readonly type: 'RemoveComponent'; readonly component: string }
+  | { readonly type: 'LockTotalWater'; readonly totalWaterPct: number; readonly water: string }
+  | { readonly type: 'UnlockTotalWater' };
 
 const incompatible = (reason: string, field?: string): FormulaError =>
   domainError(
@@ -47,10 +85,39 @@ export const applyFormulaEdit = (
   formula: Formula,
   edit: FormulaEdit,
 ): Result<Formula, FormulaError> => {
-  const next = computeEdit(formula, edit);
+  const absorbing = formula.waterTarget?.absorbInto;
+  if (
+    absorbing !== undefined &&
+    (edit.type === 'SetBakerPct' || edit.type === 'SetIngredientGrams') &&
+    edit.ingredient === absorbing
+  ) {
+    return err(
+      incompatible(
+        'This water follows the locked total water: change the target or unlock',
+        'waterTarget.locked',
+      ),
+    );
+  }
+  const computed = computeEdit(formula, edit);
+  if (!computed.ok) return computed;
+  const next = relock(computed.value);
   if (!next.ok) return next;
   const resolved = resolveFormula(next.value);
   return resolved.ok ? next : resolved;
+};
+
+/** Gives the absorbing water the percentage its locked total water requires. */
+const relock = (formula: Formula): Result<Formula, FormulaError> => {
+  const target = formula.waterTarget;
+  if (!target) return ok(formula);
+  const pct = lockedWaterPct(formula);
+  if (!pct.ok) return pct;
+  return ok({
+    ...formula,
+    ingredients: formula.ingredients.map((i) =>
+      i.id === target.absorbInto ? { ...i, bakerPct: pct.value } : i,
+    ),
+  });
 };
 
 const computeEdit = (formula: Formula, edit: FormulaEdit): Result<Formula, FormulaError> => {
@@ -69,7 +136,76 @@ const computeEdit = (formula: Formula, edit: FormulaEdit): Result<Formula, Formu
         return valid.ok ? ok({ ...formula, anchor: edit.anchor }) : valid;
       }
       return reinterpretAnchor(formula, edit.kind, edit.count);
+    case 'AddIngredient':
+      return ok({ ...formula, ingredients: [...formula.ingredients, edit.ingredient] });
+    case 'UpdateIngredient':
+      return updateIngredient(formula, edit.ingredient, edit.changes);
+    case 'RemoveIngredient':
+      return removeIngredient(formula, edit.ingredient);
+    case 'AddComponent':
+      return ok({ ...formula, components: [...formula.components, edit.component] });
+    case 'UpdateComponent': {
+      if (!formula.components.some((c) => c.id === edit.component)) {
+        return err(unknownRef('component', edit.component));
+      }
+      return ok({
+        ...formula,
+        components: formula.components.map((c) =>
+          c.id === edit.component ? { ...c, ...edit.changes, id: c.id } : c,
+        ),
+      });
+    }
+    case 'RemoveComponent':
+      if (!formula.components.some((c) => c.id === edit.component)) {
+        return err(unknownRef('component', edit.component));
+      }
+      return ok({
+        ...formula,
+        components: formula.components.filter((c) => c.id !== edit.component),
+      });
+    case 'LockTotalWater':
+      return ok({
+        ...formula,
+        waterTarget: { totalWaterPct: edit.totalWaterPct, absorbInto: edit.water },
+      });
+    case 'UnlockTotalWater': {
+      const { waterTarget: _, ...rest } = formula;
+      return ok(rest);
+    }
   }
+};
+
+const updateIngredient = (
+  formula: Formula,
+  id: string,
+  changes: IngredientChanges,
+): Result<Formula, FormulaError> => {
+  if (!formula.ingredients.some((i) => i.id === id)) return err(unknownRef('ingredient', id));
+  return ok({
+    ...formula,
+    ingredients: formula.ingredients.map((i) => (i.id === id ? { ...i, ...changes, id } : i)),
+  });
+};
+
+const removeIngredient = (formula: Formula, id: string): Result<Formula, FormulaError> => {
+  if (!formula.ingredients.some((i) => i.id === id)) return err(unknownRef('ingredient', id));
+  if (formula.waterTarget?.absorbInto === id) {
+    return err(
+      incompatible('This water absorbs the locked total water: unlock first', 'waterTarget.locked'),
+    );
+  }
+  const allocating = formula.components.find((c) =>
+    (c.allocations ?? []).some((a) => a.ingredient === id),
+  );
+  if (allocating) {
+    return err(
+      incompatible(
+        `${allocating.id} uses ${id}: remove it from the preparation first`,
+        'allocation',
+      ),
+    );
+  }
+  return ok({ ...formula, ingredients: formula.ingredients.filter((i) => i.id !== id) });
 };
 
 const setBakerPct = (
@@ -168,7 +304,10 @@ const setGramsHoldingOtherGrams = (
     return err(incompatible('Total flour must stay above zero', 'grams'));
   }
 
-  const rescaled = fromGrams(formula, current.value, flourGrams, ingredientGrams);
+  // Under a lock, the absorbing water is the one quantity whose grams are not kept.
+  const relocked = relock(fromGrams(formula, current.value, flourGrams, ingredientGrams));
+  if (!relocked.ok) return relocked;
+  const rescaled = relocked.value;
   const resolved = resolveFormula(rescaled);
   if (!resolved.ok) return resolved;
   const anchor =

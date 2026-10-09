@@ -28,7 +28,20 @@ const OBSERVATION_CATEGORIES = new Set([
   'volume',
   'other',
 ]);
-const FORMULA_EDITS = new Set(['SetBakerPct', 'SetFlourBlend', 'SetIngredientGrams', 'SetAnchor']);
+const FORMULA_EDITS = new Set([
+  'SetBakerPct',
+  'SetFlourBlend',
+  'SetIngredientGrams',
+  'SetAnchor',
+  'AddIngredient',
+  'UpdateIngredient',
+  'RemoveIngredient',
+  'AddComponent',
+  'UpdateComponent',
+  'RemoveComponent',
+  'LockTotalWater',
+  'UnlockTotalWater',
+]);
 
 const isRevisionRef = (value: unknown): boolean =>
   isObject(value) && isId(value.id) && isCount(value.version);

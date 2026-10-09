@@ -58,6 +58,9 @@ export const formulaSchema = z.strictObject({
     }),
   ),
   anchor: anchorSchema,
+  waterTarget: z
+    .strictObject({ totalWaterPct: nonNegative, absorbInto: z.string().min(1) })
+    .optional(),
 });
 
 export interface BoundaryIssue {

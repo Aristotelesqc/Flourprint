@@ -152,12 +152,19 @@ const step: Check = (v, w) =>
 
 /** Refuses (throws `Refused`) unless the value has exactly the shape of a formula. */
 export const decodeFormula = (value: unknown, where: string): Formula => {
-  fields(value, where, {
-    flours: list(flour),
-    ingredients: list(ingredient),
-    components: list(component),
-    anchor,
-  });
+  fields(
+    value,
+    where,
+    {
+      flours: list(flour),
+      ingredients: list(ingredient),
+      components: list(component),
+      anchor,
+    },
+    {
+      waterTarget: (v, w) => fields(v, w, { totalWaterPct: number, absorbInto: string }),
+    },
+  );
   return value as Formula;
 };
 

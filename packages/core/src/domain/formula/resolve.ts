@@ -53,6 +53,63 @@ const checkContent = (path: string, content: ContentPct | undefined): FormulaErr
   return undefined;
 };
 
+/**
+ * Percentage the absorbing water must have for the locked total water (formula.md): the target
+ * minus every other water contribution, plus component losses, in points of total flour.
+ */
+export const lockedWaterPct = (formula: Formula): Result<number, FormulaError> => {
+  const target = formula.waterTarget;
+  if (!target) return err(invalid('waterTarget', 'no locked total water'));
+  if (!isFiniteNonNegative(target.totalWaterPct)) {
+    return err(invalid('waterTarget.totalWaterPct', 'must be ≥ 0'));
+  }
+  const absorbing = formula.ingredients.find((i) => i.id === target.absorbInto);
+  if (!absorbing) return err(unknownRef('waterTarget.absorbInto', target.absorbInto));
+  if (absorbing.kind !== 'water' || absorbing.role !== 'dough') {
+    return err(invalid('waterTarget.absorbInto', 'must be a water ingredient of the dough'));
+  }
+  let others = 0;
+  const unknown: string[] = [];
+  for (const ingredient of formula.ingredients) {
+    if (ingredient.id === absorbing.id || ingredient.role !== 'dough') continue;
+    if (ingredient.kind === 'water') {
+      others += ingredient.bakerPct;
+      continue;
+    }
+    const water = ingredient.water ?? { status: 'unknown' };
+    if (water.status === 'unknown') {
+      if (ingredient.bakerPct > 0) unknown.push(ingredient.id);
+      continue;
+    }
+    others += (ingredient.bakerPct * water.valuePct) / 100;
+  }
+  if (unknown.length > 0) {
+    return err(
+      domainError(
+        'IncompatibleConstraint',
+        `Total water cannot be locked: unknown water in ${unknown.join(', ')}`,
+        { reason: 'unknown water content', field: 'waterTarget.unknown', ingredients: unknown },
+      ),
+    );
+  }
+  const losses = sum(
+    formula.components.map(
+      (c) => (c.flourPct * c.hydrationPct * (c.waterLossPct ?? 0)) / 100 / 100,
+    ),
+  );
+  const pct = target.totalWaterPct - others + losses;
+  if (pct < -1e-9) {
+    return err(
+      domainError(
+        'IncompatibleConstraint',
+        'The other ingredients already bring more water than the locked total',
+        { reason: 'negative added water', field: 'waterTarget.tooLow' },
+      ),
+    );
+  }
+  return ok(Math.max(0, pct));
+};
+
 /** Structural checks that do not depend on the anchor value. */
 export const validateFormula = (formula: Formula): Result<void, FormulaError> => {
   const flourIds = new Set<string>();
@@ -163,7 +220,19 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
     }
   }
 
-  return validateAnchor(formula.anchor);
+  const anchor = validateAnchor(formula.anchor);
+  if (!anchor.ok) return anchor;
+  if (formula.waterTarget) {
+    const locked = lockedWaterPct(formula);
+    if (!locked.ok) return locked;
+    const absorbing = formula.ingredients.find((i) => i.id === formula.waterTarget?.absorbInto);
+    if (!absorbing || !approxEqual(absorbing.bakerPct, locked.value)) {
+      return err(
+        invalid('waterTarget', 'the absorbing water does not match the locked total water'),
+      );
+    }
+  }
+  return ok(undefined);
 };
 
 export const validateAnchor = (anchor: Anchor): Result<void, FormulaError> => {
