@@ -81,9 +81,13 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
 
   // Reinstalling over the app (as an update does) keeps the database.
-  await forceStop();
-  await device.installApk(apk as string, { args: ['-r'] });
-  page = await open();
+  page = await test.step('reinstall over the app, reopen', async () => {
+    await forceStop();
+    // Playwright's default arguments already replace the installed app (-r) and pass the size
+    // (-S) that `pm install` needs to read the APK from its input.
+    await device.installApk(apk as string);
+    return open();
+  });
   await page.getByText('Poolish + tangzhong').first().click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
   await forceStop();
