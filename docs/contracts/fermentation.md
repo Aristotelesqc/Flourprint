@@ -80,9 +80,14 @@ r(T)  = exp( (Ea / R) × (1 / 294.25 K − 1 / T) )      (r = 1 at 21.1 °C)
 Base-temperature method (French convention, also TOST's):
 
 ```text
-T_water = T_base − T_flour − T_room − T_preferment      (the last term only with a preferment)
-T_base  = n × T_target + friction        (n = 3, or 4 with a preferment)
+T_base  = n × T_target                   (n = 3, or 4 with a preferment)
+T_water = T_base − T_flour − T_room − T_preferment − friction
 ```
+
+The preferment term is present only with a preferment. Friction is heat the mixer adds, so it
+lowers the water temperature (King Arthur Baking, _Dough Temperature_, professional reference).
+Version 0.1.0 of this contract added it instead; that was an error, corrected on 2026-10-09
+(#33).
 
 - `T_room` is the mix step's condition temperature; `T_flour` defaults to `T_room`;
   `T_preferment` defaults to the preferment step's condition temperature.

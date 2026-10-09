@@ -543,7 +543,7 @@
         ]
       },
       "expected": {
-        "waterTemperatureC.value": 43
+        "waterTemperatureC.value": 33
       }
     }
   ]

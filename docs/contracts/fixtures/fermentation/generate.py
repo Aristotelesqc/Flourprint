@@ -117,12 +117,12 @@ cases.append({
     "tolerance": 60,
 })
 
-# 5. Water temperature, no preferment: 3 × 26 + 5 − 20 − 20 = 43.
+# 5. Water temperature, no preferment: 3 × 26 − 20 − 20 − 5 (friction) = 33.
 cases.append({
     "name": "water temperature, direct dough with friction",
     "formula": flour([salt(), yeast("instant", 0.5)]),
     "process": steps({"temperatureC": 20, "doughTemperatureC": 26, "frictionC": 5}, [{"id": "proof", "operation": "proof"}]),
-    "expected": {"waterTemperatureC.value": 43},
+    "expected": {"waterTemperatureC.value": 33},
 })
 
 print(json.dumps({"format": "flourprint-fixture/0", "contract": "fermentation.md", "model": {"id": "flourprint.commercial-yeast", "version": "0.1.0"}, "tolerance": 1, "cases": cases}, indent=2))
