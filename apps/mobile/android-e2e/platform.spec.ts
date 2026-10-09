@@ -8,15 +8,33 @@ test.describe.configure({ mode: 'serial' });
 
 let device: AndroidDevice;
 
+/**
+ * Starts the app and attaches to the WebView of this process: after a forced stop, the WebView of
+ * the previous process can still be listed for a moment, and attaching to it hangs.
+ */
 const open = async (): Promise<Page> => {
   await device.shell(`am start -W -n ${PKG}/.MainActivity`);
-  const webView = await device.webView({ pkg: PKG }, { timeout: 120_000 });
+  let pid = 0;
+  await expect
+    .poll(
+      async () => {
+        pid = Number((await device.shell(`pidof ${PKG}`)).toString().trim().split(/\s+/)[0]);
+        return device.webViews().some((w) => w.pkg() === PKG && w.pid() === pid);
+      },
+      { timeout: 120_000 },
+    )
+    .toBe(true);
+  const webView = device.webViews().find((w) => w.pkg() === PKG && w.pid() === pid);
+  if (!webView) throw new Error('WebView vanished');
   const page = await webView.page();
   await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible({ timeout: 60_000 });
   return page;
 };
 
-const forceStop = () => device.shell(`am force-stop ${PKG}`);
+const forceStop = async () => {
+  await device.shell(`am force-stop ${PKG}`);
+  await expect.poll(() => device.webViews().some((w) => w.pkg() === PKG)).toBe(false);
+};
 
 test.beforeAll(async () => {
   if (!apk) throw new Error('Set FLOURPRINT_APK to the debug APK.');
@@ -44,7 +62,7 @@ test('the shared storage contract passes on Capacitor SQLite', async () => {
 });
 
 test('a saved revision survives a forced stop and a reinstall', async () => {
-  let page = await open();
+  let page = await test.step('open and save v2', async () => open());
   // Native SQLite: no browser-preview notice.
   await expect(page.getByText(/Browser preview/)).toHaveCount(0);
   await page.getByText('Poolish + tangzhong').first().click();
@@ -55,8 +73,10 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
   await page.getByRole('button', { name: 'Save v2' }).click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
 
-  await forceStop();
-  page = await open();
+  page = await test.step('forced stop, reopen', async () => {
+    await forceStop();
+    return open();
+  });
   await page.getByText('Poolish + tangzhong').first().click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
 

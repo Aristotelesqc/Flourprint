@@ -11,6 +11,11 @@ export default defineConfig({
   timeout: 180_000,
   expect: { timeout: 20_000 },
   forbidOnly: !!process.env.CI,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
-  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure' },
+  reporter: process.env.CI
+    ? [
+        ['list', { printSteps: true }],
+        ['html', { open: 'never' }],
+      ]
+    : 'list',
+  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure', actionTimeout: 30_000 },
 });
