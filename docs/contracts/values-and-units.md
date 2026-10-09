@@ -34,7 +34,14 @@ interface Observation<T = number> {
 }
 
 type Estimate<T = number> =
-  | { status: 'ok'; value: T; range?: [T, T]; model: ModelRef; assumptions: string[] }
+  | {
+      status: 'ok';
+      value: T;
+      range?: [T, T];
+      model: ModelRef;
+      assumptions: string[];
+      extrapolations?: string[]; // outside the data the model was fitted on, still given
+    }
   | {
       status: 'unsupported' | 'out_of_domain' | 'insufficient_data';
       model?: ModelRef;
@@ -63,5 +70,7 @@ interface ModelRef {
 - Model parameters are versioned, immutable data, shipped with the app and exported with any bake
   that references them. A hash, if any, only checks integrity.
 - A computed suggestion (`Estimate`) never becomes an observation (`Observation`).
-- `assumptions`, `reason` and `missing` hold stable codes or English developer text; the UI
+- `extrapolations` lists, as stable codes, each reason the estimate lies outside the model's
+  fitted domain; the UI always shows them next to the value.
+- `assumptions`, `extrapolations`, `reason` and `missing` hold stable codes or English developer text; the UI
   localizes them (ADR 0009).

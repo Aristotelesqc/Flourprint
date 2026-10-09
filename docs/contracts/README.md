@@ -11,6 +11,7 @@ fixtures conform to them. Architecture choices live in `../adr/`.
 | [bake-session.md](bake-session.md)           | D7       | commands, events, idempotency, corrections                  |
 | [history.md](history.md)                     | D8       | snapshots, committed values, export                         |
 | [persistence.md](persistence.md)             | —        | recipes, revisions, bake summaries, SQLite schema           |
+| [fermentation.md](fermentation.md)           | D4, D5   | provisional commercial-yeast model, water temperature       |
 | [capability-levels.md](capability-levels.md) | D4, D5   | N1/N2/N3, Alpha and Engine MVP                              |
 | [fixtures/](fixtures/README.md)              | —        | reference cases computed outside the engine                 |
 

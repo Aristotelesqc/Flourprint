@@ -22,6 +22,9 @@ type Anchor =
   a resolved composition: `water`, `fat` and `sugar` contents per 100 g of the ingredient, each
   `known`, `estimated` (with an optional range) or `unknown`. A known or estimated content may name
   its `source` (a table, a label, the owner). A missing content means `unknown`.
+- An ingredient may be marked as commercial yeast: `yeast: { form: 'fresh' | 'active-dry' |
+'instant' }`. The fermentation model (fermentation.md) reads only this marker, never a name or
+  an id. A sourdough culture is not commercial yeast and stays unmarked.
 - Ingredients with role `topping` or `glaze` get grams from total flour but are excluded from the
   dough weight, the final mix and the water balance.
 - Identifiers (flours, ingredients, components) are non-empty strings, unique across the formula.

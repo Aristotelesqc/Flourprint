@@ -46,6 +46,22 @@ type Incorporation =
   item may exceed 100. Unknown references are errors.
 - Grams per step are derived from the resolved formula, so they follow every rescaling.
 
+## Step conditions
+
+```ts
+interface StepConditions {
+  location?: string; // open code: counter, fridge, proofer, oven…
+  temperatureC?: number; // ambient temperature of the step
+  doughTemperatureC?: number; // mix step only: target dough temperature (advanced mode)
+  frictionC?: number; // mix step only: mixer friction for the water temperature
+}
+```
+
+- `temperatureC` is the ambient the dough sits in. `doughTemperatureC` and `frictionC` are only
+  read on a `mix` step; elsewhere they are refused (`InvalidProcess`). Their use is defined in
+  fermentation.md.
+- All temperatures are in °C and finite; the scheduler ignores them.
+
 ## Step removal
 
 Removing a step rewires each of its successors to the removed step's own dependencies, so the
