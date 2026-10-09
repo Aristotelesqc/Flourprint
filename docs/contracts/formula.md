@@ -80,7 +80,7 @@ type Anchor =
 | -------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `SetFlourBlend(parts)`                 | may also add or remove flours                                                     | a component still draws from a removed flour                   |
 | `AddIngredient(ingredient)`            | adds an ingredient with its %, kind, role and composition                         | the id is taken or reserved                                    |
-| `UpdateIngredient(id, changes)`        | changes kind, role or water/fat/sugar contents; the % is kept                     | the change breaks an allocation (e.g. a role other than dough) |
+| `UpdateIngredient(id, changes)`        | changes kind, role, water/fat/sugar contents or yeast form; the % is kept         | the change breaks an allocation (e.g. a role other than dough) |
 | `RemoveIngredient(id)`                 | removes the ingredient                                                            | a component allocates it, or it absorbs the locked total water |
 | `AddComponent(component)`              | adds a preparation drawing from the formula totals                                | its draws exceed what the formula has                          |
 | `UpdateComponent(id, changes)`         | changes flour share, flour blend, hydration, loss, allocations or kind            | the draws exceed what the formula has                          |
