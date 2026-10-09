@@ -133,6 +133,35 @@ export const NumberField = ({ value, ...props }: NumberFieldProps) => {
   );
 };
 
+interface OptionalNumberFieldProps {
+  readonly label: string;
+  /** Undefined is an unknown value, shown empty, never as zero. */
+  readonly value: number | undefined;
+  readonly unit?: string;
+  /** An empty field commits `undefined`. */
+  readonly onCommit: Commit<number | undefined>;
+  readonly width?: string;
+}
+
+/** A number that may stay unknown, such as a temperature nobody measured. */
+export const OptionalNumberField = ({ value, ...props }: OptionalNumberFieldProps) => {
+  const { t, locale } = useMessages();
+  return (
+    <Field<number | undefined>
+      {...props}
+      text={value === undefined ? '' : editableNumber(value, locale)}
+      parse={(text) => {
+        if (text.trim() === '') return { ok: true, value: undefined };
+        const compact = text.trim().replace(/^[−-]/, '');
+        const parsed = parseDecimal(compact);
+        if (parsed === undefined) return { ok: false };
+        return { ok: true, value: compact === text.trim() ? parsed : -parsed };
+      }}
+      invalidText={t('field.invalidNumber')}
+    />
+  );
+};
+
 interface DurationFieldProps {
   readonly label: string;
   /** Seconds; undefined is an unknown duration, shown empty, never as zero. */

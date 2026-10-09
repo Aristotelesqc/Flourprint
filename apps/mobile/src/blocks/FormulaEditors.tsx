@@ -9,7 +9,6 @@ import {
   type ResolvedFormula,
 } from '@flourprint/core/domain';
 import { parseDecimal } from '../i18n/numbers';
-import { formatDuration } from '../i18n/time';
 import { useMessages } from '../i18n/use-messages';
 import { formulaChanges } from '../services/formula-changes';
 import {
@@ -17,7 +16,6 @@ import {
   withPreparationStep,
   type PreparationKind,
 } from '../services/preparations';
-import { recipeDuration } from '../services/recipe-duration';
 import { NumberField } from '../ui/Field';
 import { Card } from '../ui/Layout';
 import { totalWaterKey } from './water-label';
@@ -326,45 +324,6 @@ export const ChangesSummary = ({ base, formula }: { base: Formula; formula: Form
           </li>
         ))}
       </ul>
-    </Card>
-  );
-};
-
-const FERMENTATION_OPERATIONS = new Set(['preferment', 'bulk', 'retard', 'proof']);
-
-/** The recipe's times at a glance: total and each fermentation step, unknown ones named. */
-export const TimeSummary = ({ process, now }: { process: Process; now: string }) => {
-  const { t, stepName } = useMessages();
-  const length = recipeDuration(process, now as Parameters<typeof recipeDuration>[1]);
-  const total =
-    length.kind === 'complete'
-      ? formatDuration(length.seconds)
-      : length.kind === 'atLeast'
-        ? t('recipes.card.durationAtLeast', { duration: formatDuration(length.seconds) })
-        : t('formula.time.unknown');
-  const steps = process.steps.filter((s) => FERMENTATION_OPERATIONS.has(s.operation));
-  return (
-    <Card gap="gap-2">
-      <span className="flex items-baseline justify-between gap-3">
-        <span className="font-semibold">{t('formula.time.title')}</span>
-        <span className="text-lg font-bold">{total}</span>
-      </span>
-      <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[15px]">
-        {steps.map((step) => (
-          <li key={step.id} className="flex justify-between gap-3">
-            <span>{stepName(step)}</span>
-            <span className={step.plannedDurationS === undefined ? 'text-muted' : 'font-semibold'}>
-              {step.plannedDurationS === undefined
-                ? t('formula.time.stepUnknown')
-                : formatDuration(step.plannedDurationS)}
-              {step.conditions?.temperatureC === undefined
-                ? ''
-                : ` · ${step.conditions.temperatureC} °C`}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <span className="text-sm text-muted">{t('formula.time.notPredicted')}</span>
     </Card>
   );
 };

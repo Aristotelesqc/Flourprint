@@ -13,12 +13,12 @@ import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
+import { FermentationCard } from './Fermentation';
 import {
   AddIngredient,
   AddPreparation,
   ChangesSummary,
   PreparationFields,
-  TimeSummary,
   WaterLock,
   type StructureEdit,
 } from './FormulaEditors';
@@ -34,6 +34,8 @@ interface Props {
   readonly onEdit: (edit: FormulaEdit) => boolean;
   /** A formula edit with the process change it needs (a preparation's step). */
   readonly onStructure: StructureEdit;
+  /** A process change (temperatures, an applied duration); false when refused. */
+  readonly onProcess: (process: Process) => boolean;
 }
 
 const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
@@ -50,6 +52,7 @@ export const FormulaSection = ({
   now,
   onEdit,
   onStructure,
+  onProcess,
 }: Props) => {
   const { t, grams, pct, name, componentName, locale } = useMessages();
   const componentLabel = (id: string) => {
@@ -88,7 +91,13 @@ export const FormulaSection = ({
   return (
     <div className="flex flex-col gap-5 pb-6">
       <ChangesSummary base={base} formula={formula} />
-      <TimeSummary process={process} now={now} />
+      <FermentationCard
+        formula={formula}
+        process={process}
+        now={now}
+        onEdit={onEdit}
+        onProcess={onProcess}
+      />
       <Card>
         <div className="flex items-center justify-between gap-3">
           <span className="font-bold">{t('formula.quantity')}</span>

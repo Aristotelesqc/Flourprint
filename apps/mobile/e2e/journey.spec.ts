@@ -202,3 +202,28 @@ test('a locked total water holds while eggs are added; preparations are editable
   await page.getByLabel('tangzhong, Hydratation (%)').press('Enter');
   await expect(page.getByText('yudane').first()).toBeVisible();
 });
+
+test('fermentation: room temperature gives times, a yeast dose and, in advanced mode, the water', async ({
+  page,
+}) => {
+  await openRecipe(page);
+  await expect(
+    page.getByText('Entre la température ambiante pour avoir les temps.').first(),
+  ).toBeVisible();
+  const room = page.getByLabel('Température ambiante (°C)');
+  await room.fill('21');
+  await room.press('Enter');
+  await expect(page.getByText('modèle provisoire', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Aux temps prévus : .* du point final/).first()).toBeVisible();
+  // Applying a suggested dose is an explicit edit of the draft.
+  await page.getByRole('button', { name: 'Prendre cette dose' }).last().click();
+  await expect(unsaved(page).first()).toBeVisible();
+
+  await page.getByText('Avancé', { exact: true }).click();
+  const target = page.getByLabel('Température de pâte visée (°C)');
+  await target.fill('25');
+  await target.press('Enter');
+  // 4 × 25 − 21 (room) − 21 (flour) − 21 (poolish at room temperature) = 37
+  await expect(page.getByText('Eau à 37 °C')).toBeVisible();
+  await expect(page.getByText(/friction du pétrin non comptée/)).toBeVisible();
+});

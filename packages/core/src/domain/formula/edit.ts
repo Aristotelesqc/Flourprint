@@ -15,6 +15,7 @@ import type {
   AnchorKind,
   Component,
   ContentPct,
+  YeastMarker,
   FlourShare,
   Formula,
   Ingredient,
@@ -28,6 +29,7 @@ export interface IngredientChanges {
   readonly water?: ContentPct;
   readonly fat?: ContentPct;
   readonly sugar?: ContentPct;
+  readonly yeast?: YeastMarker;
 }
 
 /** Changes to a preparation; omitted fields are kept. */

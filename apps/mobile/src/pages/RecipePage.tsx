@@ -221,6 +221,13 @@ export const RecipePage = () => {
     return valid.ok;
   };
 
+  const changeProcess = (process: Process): boolean => {
+    const valid = validateRecipe(draft.formula, process);
+    if (valid.ok) update({ ...draft, process });
+    else setFailure(valid.error);
+    return valid.ok;
+  };
+
   const save = async () => {
     const result = await writes.run(() =>
       saveRevision(services.recipes, {
@@ -376,6 +383,7 @@ export const RecipePage = () => {
               process={draft.process}
               now={services.clock.now()}
               onStructure={editStructure}
+              onProcess={changeProcess}
             />
           ) : (
             <p role="alert">{error(resolved.error)}</p>
