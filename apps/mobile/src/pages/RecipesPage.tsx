@@ -2,7 +2,6 @@ import { IonContent, IonButton, IonPage, IonRouterLink, useIonViewWillEnter } fr
 import { useState } from 'react';
 import {
   defaultVariant,
-  projectProcess,
   resolveFormula,
   type BakeState,
   type Instant,
@@ -12,6 +11,7 @@ import {
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatRelative } from '../i18n/time';
 import { bakeView } from '../services/bake-view';
+import { recipeDuration } from '../services/recipe-duration';
 import { activeBakes } from '../services/bakes';
 import { useServices } from '../services/services';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
@@ -33,6 +33,8 @@ export const RecipesPage = () => {
   const { t } = useMessages();
   const [cards, setCards] = useState<readonly Card[]>();
   const [running, setRunning] = useState<readonly BakeState[]>([]);
+  // Every recipe, family variants included: a running bake may use a variant not shown as a card.
+  const [allRecipes, setAllRecipes] = useState<readonly Recipe[]>([]);
   const [now, setNow] = useState(services.clock.now());
   const [readFailed, setReadFailed] = useState(false);
 
@@ -41,6 +43,7 @@ export const RecipesPage = () => {
     const summaries = await services.bakes.listBakes();
     const all = await services.recipes.listRecipes();
     const families = await services.recipes.listFamilies();
+    setAllRecipes(all);
     const shown = new Set(families.map((f) => defaultVariant(f, all)?.id));
     const recipes = all.filter((r) => r.familyId === undefined || shown.has(r.id));
     const variants = (recipe: Recipe) =>
@@ -109,7 +112,7 @@ export const RecipesPage = () => {
           <SessionOnlyNotice />
           {readFailed && <p role="alert">{t('state.storageRead')}</p>}
           {running.map((bake) => (
-            <RunningBake key={bake.bakeId} bake={bake} now={now} cards={cards ?? []} />
+            <RunningBake key={bake.bakeId} bake={bake} now={now} recipes={allRecipes} />
           ))}
           {cards?.length === 0 && <p className="text-muted">{t('recipes.empty')}</p>}
           {cards?.map((card) => (
@@ -124,14 +127,14 @@ export const RecipesPage = () => {
 const RunningBake = ({
   bake,
   now,
-  cards,
+  recipes,
 }: {
   bake: BakeState;
   now: Instant;
-  cards: readonly Card[];
+  recipes: readonly Recipe[];
 }) => {
   const { t, stepName } = useMessages();
-  const recipe = cards.find((c) => c.recipe.id === bake.snapshot?.revisions.formula.id)?.recipe;
+  const recipe = recipes.find((r) => r.id === bake.snapshot?.revisions.formula.id);
   const focus = bakeView(bake, now)?.focus;
   let detail = '';
   if (focus) {
@@ -171,22 +174,28 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
   const { t, grams, pct, componentName, locale } = useMessages();
   const { recipe, revision } = card;
   const resolved = revision ? resolveFormula(revision.formula) : undefined;
-  const projection = revision
-    ? projectProcess(revision.process, { mode: { kind: 'startAt', at: now } })
-    : undefined;
-  let duration: string | undefined;
-  if (projection?.ok) {
-    const ends = Object.values(projection.value.steps).flatMap((s) =>
-      s.end ? [Date.parse(s.end)] : [],
-    );
-    if (ends.length > 0) duration = formatDuration((Math.max(...ends) - Date.parse(now)) / 1000);
-  }
+  const length = revision ? recipeDuration(revision.process, now) : undefined;
+  const duration =
+    length?.kind === 'complete'
+      ? formatDuration(length.seconds)
+      : length?.kind === 'atLeast'
+        ? t('recipes.card.durationAtLeast', { duration: formatDuration(length.seconds) })
+        : undefined;
   const parts = revision?.formula.components
     .map((c) => `${componentName(revision.formula, c)} ${pct(c.flourPct)}`)
     .join(' · ');
   return (
     <IonRouterLink routerLink={`/recipes/${recipe.id}`} className="text-ink">
       <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
+        {recipe.review && (
+          <span
+            className={`self-start rounded-full px-2.5 py-0.5 text-[13px] font-semibold ${
+              recipe.review.level === 'review' ? 'bg-alert text-on-accent' : 'bg-track text-ink'
+            }`}
+          >
+            {t(recipe.review.level === 'review' ? 'review.badge' : 'review.badgeWarning')}
+          </span>
+        )}
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-xl font-semibold">{recipe.name}</span>
           <span className="shrink-0 text-[13px] text-muted">

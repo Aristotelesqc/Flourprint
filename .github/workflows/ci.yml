@@ -21,6 +21,12 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm vitest run
       - run: node apps/cli/dist/main.js --version
+      - name: Dogfood recipes match their source and decisions
+        # Skipped once dogfood/ is removed.
+        if: hashFiles('dogfood/tost/importer/tsconfig.json') != ''
+        run: |
+          pnpm exec tsc -p dogfood/tost/importer
+          node dogfood/tost/importer/dist/main.js --check
       - run: pnpm build:mobile
       - run: scripts/check-mobile-bundle.sh
 

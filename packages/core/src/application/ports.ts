@@ -7,6 +7,7 @@ import type {
   Process,
   Recipe,
   RecipeFamily,
+  RecipeReview,
   Result,
   Revision,
 } from '../domain/index.js';
@@ -78,6 +79,7 @@ export interface RecordedRecipe {
   readonly id: string;
   readonly name: string;
   readonly familyId?: string;
+  readonly review?: RecipeReview;
   readonly revisions: readonly Revision[];
 }
 
@@ -116,6 +118,8 @@ export interface RecipeRepository {
    * are skipped; absent families are created, present ones are left unchanged.
    */
   importRecipes(plan: RecipeImportPlan): Promise<RecipeImportOutcome>;
+  /** Removes the recipe's review note once the user has read it; creates no revision. */
+  acknowledgeReview(recipeId: string): Promise<Result<void, FamilyError>>;
 }
 
 /** Everything a restore writes: revisions as recorded, one append per bake log. */

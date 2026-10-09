@@ -244,6 +244,12 @@
       "id": "tost-id_bread_3",
       "name": "Focaccia express",
       "familyId": "tost-family-focaccia",
+      "review": {
+        "level": "warning",
+        "reasons": [
+          "Flour disc_flour_brown is a TOST custom or unnamed flour: to identify."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_3",
@@ -913,6 +919,14 @@
       "id": "tost-id_bread_6",
       "name": "focaccia patates x2",
       "familyId": "tost-family-focaccia",
+      "review": {
+        "level": "review",
+        "reasons": [
+          "TOST stores a 20 % preferment with type \"no ferment\": not imported.",
+          "TOST's flour to add (825 g) differs from its flour weight (990 g).",
+          "The note mentions a few spoons of gluten that are not in the formula."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_6",
@@ -1731,6 +1745,12 @@
       "id": "tost-id_bread_12",
       "name": "pullmanzong 80%",
       "familyId": "tost-family-pullmanzong",
+      "review": {
+        "level": "warning",
+        "reasons": [
+          "TOST's dough weight differs from its own model by 0.64 g per piece."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_12",
@@ -1932,6 +1952,12 @@
     {
       "id": "tost-id_bread_14",
       "name": "Pain Burgers artisan",
+      "review": {
+        "level": "review",
+        "reasons": [
+          "TOST's hydration (90 %) is below the water its model gives the extras: it would need -32.16 g of water. Imported with no added water."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_14",
@@ -2958,6 +2984,12 @@
       "id": "tost-id_bread_19",
       "name": "Pain sandwich Milanaise #50",
       "familyId": "tost-family-pain-sandwich-50",
+      "review": {
+        "level": "warning",
+        "reasons": [
+          "Flour disc_flour_custo5 named la-milanaise-flour from the recipe name: to check."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_19",
@@ -3178,6 +3210,13 @@
       "id": "tost-id_bread_20",
       "name": "Pain sandwich #50 + épeautre",
       "familyId": "tost-family-pain-sandwich-50",
+      "review": {
+        "level": "review",
+        "reasons": [
+          "TOST proof duration is -0.2749687557231218 h: left without a duration.",
+          "Flour disc_flour_brown named spelt-flour from the recipe name: to check."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_20",
@@ -3607,6 +3646,12 @@
       "id": "tost-id_bread_23",
       "name": "Focaccia comptoir",
       "familyId": "tost-family-focaccia",
+      "review": {
+        "level": "review",
+        "reasons": [
+          "The note mentions 1 tablespoon of gluten flour and 1 % malt that are not in the formula."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_23",
@@ -3874,6 +3919,14 @@
     {
       "id": "tost-id_bread_24",
       "name": "Baguette",
+      "review": {
+        "level": "review",
+        "reasons": [
+          "TOST oven mode is \"no cooking\".",
+          "Flour disc_flour_custo3 is a TOST custom or unnamed flour: to identify.",
+          "Yeast in the poolish unknown: TOST does not export it."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_24",
@@ -4269,6 +4322,13 @@
       "id": "tost-id_bread_26",
       "name": "pullmanzong poolish",
       "familyId": "tost-family-pullmanzong",
+      "review": {
+        "level": "warning",
+        "reasons": [
+          "Flour disc_flour_brown is a TOST custom or unnamed flour: to identify.",
+          "Yeast in the poolish: 0.35 g, from the owner's recollection (TOST does not export it)."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_26",
@@ -4492,6 +4552,13 @@
       "id": "tost-id_bread_27",
       "name": "pullmanzong poolish test",
       "familyId": "tost-family-pullmanzong",
+      "review": {
+        "level": "warning",
+        "reasons": [
+          "Flour disc_flour_brown is a TOST custom or unnamed flour: to identify.",
+          "Yeast in the poolish unknown: TOST does not export it."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_27",
@@ -4722,6 +4789,12 @@
       "id": "tost-id_bread_28",
       "name": "pullmanzong poolish test 2",
       "familyId": "tost-family-pullmanzong",
+      "review": {
+        "level": "warning",
+        "reasons": [
+          "Yeast in the poolish: 0.35 g, from the owner's recollection (TOST does not export it)."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_28",
@@ -4954,6 +5027,14 @@
       "id": "tost-id_bread_29",
       "name": "pullmanzong poolish test 3",
       "familyId": "tost-family-pullmanzong",
+      "review": {
+        "level": "review",
+        "reasons": [
+          "TOST bulk duration is 0 h: left without a duration.",
+          "TOST proof duration is 0 h: left without a duration.",
+          "Yeast in the poolish: 0.35 g, from the owner's recollection (TOST does not export it)."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_29",
@@ -5162,6 +5243,13 @@
       "id": "tost-id_bread_30",
       "name": "Pizza comptoir poolish",
       "familyId": "tost-family-pizza",
+      "review": {
+        "level": "review",
+        "reasons": [
+          "diastatic-malt is at 0 g in TOST: kept at 0, remove it if it is not used.",
+          "Yeast in the poolish unknown: TOST does not export it."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_30",
@@ -5404,6 +5492,12 @@
       "id": "tost-id_bread_31",
       "name": "pullmanzong poolish test 4",
       "familyId": "tost-family-pullmanzong",
+      "review": {
+        "level": "warning",
+        "reasons": [
+          "Yeast in the poolish: 0.35 g, from the owner's recollection (TOST does not export it)."
+        ]
+      },
       "revisions": [
         {
           "recipeId": "tost-id_bread_31",

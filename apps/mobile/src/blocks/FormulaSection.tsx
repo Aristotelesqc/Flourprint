@@ -297,11 +297,12 @@ const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
   if (!totalFat || !totalSugar || totalFatPct === undefined || totalSugarPct === undefined) {
     return null;
   }
-  // Yeast alone brings traces of fat: below half a point the dough is not enriched.
-  if (Math.max(totalFatPct, totalSugarPct) < ENRICHED_PCT) return null;
   const unknown = [
     ...new Set([...totalFat.unknownContributors, ...totalSugar.unknownContributors]),
   ];
+  // Yeast alone brings traces of fat: below half a point the dough is not enriched, unless an
+  // ingredient's content is unknown, which may hide any amount.
+  if (Math.max(totalFatPct, totalSugarPct) < ENRICHED_PCT && unknown.length === 0) return null;
   return (
     <>
       <div className="grid grid-cols-3 gap-2">

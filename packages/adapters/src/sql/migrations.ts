@@ -59,6 +59,10 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 3,
+    sql: `ALTER TABLE recipes ADD COLUMN review TEXT;`,
+  },
 ];
 
 export type OpenError =

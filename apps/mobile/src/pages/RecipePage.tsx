@@ -18,9 +18,11 @@ import {
   defaultVariant,
   resolveFormula,
   validateRecipe,
+  type BakeCommandPayload,
   type BakeSummary,
   type Recipe,
   type RecipeFamily,
+  type RecipeReview,
   type DomainError,
   type FormulaEdit,
   type ProjectionMode,
@@ -59,8 +61,15 @@ export const RecipePage = () => {
   const [loading, setLoading] = useState<'loading' | 'missing' | 'failed' | 'ready'>('loading');
   const [family, setFamily] = useState<{ family: RecipeFamily; members: readonly Recipe[] }>();
   const writes = useGuardedWrite();
-  // A bake start whose outcome is unknown keeps its ids, so a retry cannot start a second bake.
-  const pendingStart = useRef<{ bakeId: string; commandId: string }>(undefined);
+  // A bake start whose outcome is unknown keeps its ids and its exact content: a retry resends
+  // the same command, so it can neither start a second bake nor reuse an id with other content.
+  const pendingStart = useRef<{
+    bakeId: string;
+    commandId: string;
+    payload: Extract<BakeCommandPayload, { type: 'StartBake' }>;
+  }>(undefined);
+  const [review, setReview] = useState<RecipeReview>();
+  const [readFailed, setReadFailed] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -75,6 +84,7 @@ export const RecipePage = () => {
         }
         const { formula, process } = revision.value;
         setBase({ name: recipe.name, revision: revision.value });
+        setReview(recipe.review);
         setDraft(drafts.get(recipeId, revision.value.version) ?? { formula, process });
         setLoading('ready');
         await loadFamily(recipe);
@@ -107,12 +117,34 @@ export const RecipePage = () => {
       setStorageFailed(result.reason === 'storage');
       return;
     }
+    setStorageFailed(false);
     if (!result.value.ok) {
       setFailure(result.value.error);
       return;
     }
-    const recipe = await services.recipes.getRecipe(recipeId);
-    if (recipe) await loadFamily(recipe);
+    // The pin is saved; a failed refresh only leaves the display stale, and says so.
+    try {
+      const recipe = await services.recipes.getRecipe(recipeId);
+      if (recipe) await loadFamily(recipe);
+      setReadFailed(false);
+    } catch (error) {
+      console.error(error);
+      setReadFailed(true);
+    }
+  };
+
+  const acknowledgeReview = async () => {
+    const result = await writes.run(() => services.recipes.acknowledgeReview(recipeId));
+    if (!result.ok) {
+      setStorageFailed(result.reason === 'storage');
+      return;
+    }
+    setStorageFailed(false);
+    if (!result.value.ok) {
+      setFailure(result.value.error);
+      return;
+    }
+    setReview(undefined);
   };
 
   const refreshBakes = useCallback(async () => {
@@ -225,22 +257,24 @@ export const RecipePage = () => {
   const startBake = async (mode: ProjectionMode) => {
     const { revision } = base;
     const ref = { id: revision.recipeId, version: revision.version };
-    const ids = (pendingStart.current ??= {
+    if (pendingStart.current) setNotice(t('recipe.retryStart'));
+    const pending = (pendingStart.current ??= {
       bakeId: services.ids.next(),
       commandId: services.ids.next(),
+      payload: {
+        type: 'StartBake',
+        revisions: { formula: ref, process: ref },
+        formula: revision.formula,
+        process: revision.process,
+        mode,
+      },
     });
     const result = await writes.run(() =>
       sendBakeCommand(
         services,
-        { bakeId: ids.bakeId, version: 0 },
-        {
-          type: 'StartBake',
-          revisions: { formula: ref, process: ref },
-          formula: revision.formula,
-          process: revision.process,
-          mode,
-        },
-        ids.commandId,
+        { bakeId: pending.bakeId, version: 0 },
+        pending.payload,
+        pending.commandId,
       ),
     );
     if (!result.ok) {
@@ -254,7 +288,7 @@ export const RecipePage = () => {
       return;
     }
     await refreshBakes();
-    openBake(ids.bakeId);
+    openBake(pending.bakeId);
   };
 
   return (
@@ -323,6 +357,18 @@ export const RecipePage = () => {
           </p>
         )}
         {notice && <p className="mt-0 mb-3">{notice}</p>}
+        {readFailed && (
+          <p role="alert" className="mt-0 mb-3 text-alert">
+            {t('state.storageRead')}
+          </p>
+        )}
+        {review && (
+          <ReviewNote
+            review={review}
+            busy={writes.busy}
+            onAcknowledge={() => void acknowledgeReview()}
+          />
+        )}
         <SessionOnlyNotice />
 
         {/* Tabs stay mounted: a draft being typed and the weighing checklist survive a switch. */}
@@ -413,25 +459,25 @@ const Variants = ({
               : t('family.pin')}
         </button>
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1" role="list">
+      <ul className="m-0 flex list-none gap-2 overflow-x-auto p-0 pb-1">
         {members.map((member) => (
-          <button
-            key={member.id}
-            type="button"
-            role="listitem"
-            aria-current={member.id === current ? 'page' : undefined}
-            className={`fp-reset flex min-h-10 shrink-0 items-center gap-1 rounded-full border px-3 text-sm ${
-              member.id === current
-                ? 'border-accent bg-accent text-on-accent'
-                : 'border-line bg-surface text-ink'
-            }`}
-            onClick={() => onOpen(member.id)}
-          >
-            {member.id === shown && <Star filled small />}
-            {member.name}
-          </button>
+          <li key={member.id} className="shrink-0">
+            <button
+              type="button"
+              aria-current={member.id === current ? 'page' : undefined}
+              className={`fp-reset flex min-h-10 shrink-0 items-center gap-1 rounded-full border px-3 text-sm ${
+                member.id === current
+                  ? 'border-accent bg-accent text-on-accent'
+                  : 'border-line bg-surface text-ink'
+              }`}
+              onClick={() => onOpen(member.id)}
+            >
+              {member.id === shown && <Star filled small />}
+              {member.name}
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };
@@ -450,3 +496,43 @@ const Star = ({ filled, small = false }: { filled: boolean; small?: boolean }) =
     <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z" />
   </svg>
 );
+
+/** An import's qualification, shown until the owner has checked the recipe (persistence.md). */
+const ReviewNote = ({
+  review,
+  busy,
+  onAcknowledge,
+}: {
+  review: RecipeReview;
+  busy: boolean;
+  onAcknowledge: () => void;
+}) => {
+  const { t } = useMessages();
+  const strong = review.level === 'review';
+  return (
+    <section
+      role={strong ? 'alert' : 'note'}
+      className={`mb-4 flex flex-col gap-2 rounded-2xl border p-4 ${
+        strong ? 'border-alert' : 'border-line bg-surface'
+      }`}
+    >
+      <strong className={strong ? 'text-alert' : ''}>
+        {t(strong ? 'review.titleReview' : 'review.titleWarning')}
+      </strong>
+      <ul className="m-0 flex flex-col gap-1 pl-5 text-[15px]">
+        {review.reasons.map((reason) => (
+          <li key={reason}>{reason}</li>
+        ))}
+      </ul>
+      <IonButton
+        fill="outline"
+        size="small"
+        className="self-start"
+        disabled={busy}
+        onClick={onAcknowledge}
+      >
+        {t('review.acknowledge')}
+      </IonButton>
+    </section>
+  );
+};

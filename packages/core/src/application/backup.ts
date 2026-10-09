@@ -10,6 +10,7 @@ import {
   type DomainError,
   type Instant,
   type RecipeFamily,
+  type RecipeReview,
   type Result,
   type Revision,
 } from '../domain/index.js';
@@ -67,6 +68,7 @@ export const recordedRecipes = async (
       id: recipe.id,
       name: recipe.name,
       ...(recipe.familyId === undefined ? {} : { familyId: recipe.familyId }),
+      ...(recipe.review === undefined ? {} : { review: recipe.review }),
       revisions,
     });
   }
@@ -147,6 +149,22 @@ const decodeEvent = (bakeId: string, index: number, value: unknown): BakeEvent =
   return upcast.value;
 };
 
+/** An optional review note: a level and at least one reason. */
+const decodeReview = (value: unknown, where: string): RecipeReview | undefined => {
+  if (value === undefined) return undefined;
+  if (
+    !isObject(value) ||
+    (value.level !== 'warning' && value.level !== 'review') ||
+    !Array.isArray(value.reasons) ||
+    value.reasons.length === 0 ||
+    !value.reasons.every((r) => typeof r === 'string') ||
+    Object.keys(value).some((k) => k !== 'level' && k !== 'reasons')
+  ) {
+    return refuse(`${where} has an invalid review note`);
+  }
+  return { level: value.level, reasons: value.reasons as string[] };
+};
+
 /**
  * Decodes recipes with their revisions and the families they refer to (backups and recipe
  * files). Throws `Refused` on the first problem.
@@ -187,10 +205,12 @@ export const decodeRecipes = (
     if (familyId !== undefined && !families.some((f) => f.id === familyId)) {
       return refuse(`recipe ${id} refers to a missing family`);
     }
+    const review = decodeReview(recipe.review, `recipe ${id}`);
     recipes.push({
       id,
       name: recipe.name,
       ...(typeof familyId === 'string' ? { familyId } : {}),
+      ...(review ? { review } : {}),
       revisions: (recipe.revisions as unknown[]).map((r, i) => decodeRevision(id, i, r)),
     });
   }

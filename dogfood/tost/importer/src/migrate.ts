@@ -419,6 +419,15 @@ export const migrateRecipe = (tost: TostRecipe, decisions: Decisions): Migrated 
       id: recipeId,
       name: tost.name,
       ...(family ? { familyId: family.id } : {}),
+      // The qualification travels with the recipe: the app shows it until the owner checks it.
+      ...(status === 'converted'
+        ? {}
+        : {
+            review: {
+              level: status === 'needs-review' ? ('review' as const) : ('warning' as const),
+              reasons: [...reviews, ...warnings],
+            },
+          }),
       revisions: [
         {
           recipeId,

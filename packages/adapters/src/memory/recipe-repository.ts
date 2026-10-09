@@ -50,26 +50,27 @@ export class MemoryRecipeRepository implements RecipeRepository {
 
   #writeRevision(name: string, revision: Revision): void {
     this.#revisions.set(`${revision.recipeId}@${revision.version}`, copy(revision));
-    const familyId = this.#recipes.get(revision.recipeId)?.familyId;
+    const current = this.#recipes.get(revision.recipeId);
     this.#recipes.set(revision.recipeId, {
       id: revision.recipeId,
       name,
       headVersion: revision.version,
       updatedAt: revision.createdAt,
-      ...(familyId === undefined ? {} : { familyId }),
+      ...(current?.familyId === undefined ? {} : { familyId: current.familyId }),
+      ...(current?.review === undefined ? {} : { review: current.review }),
     });
   }
 
   async getRecipe(recipeId: string): Promise<Recipe | undefined> {
     const recipe = this.#recipes.get(recipeId);
-    return recipe && { ...recipe };
+    return recipe && copy(recipe);
   }
 
   async listRecipes(): Promise<readonly Recipe[]> {
     // Same order as the SQLite stores: most recently updated first.
     return [...this.#recipes.values()]
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-      .map((recipe) => ({ ...recipe }));
+      .map((recipe) => copy(recipe));
   }
 
   async listFamilies(): Promise<readonly RecipeFamily[]> {
@@ -159,7 +160,18 @@ export class MemoryRecipeRepository implements RecipeRepository {
   /** Writes a recorded recipe synchronously; restores and imports use it to stay atomic. */
   write(recipe: RecordedRecipe): void {
     for (const revision of recipe.revisions) this.#writeRevision(recipe.name, revision);
+    const written = this.#recipes.get(recipe.id);
+    if (written && recipe.review)
+      this.#recipes.set(recipe.id, { ...written, review: copy(recipe.review) });
     if (recipe.familyId !== undefined) this.#setFamily(recipe.id, recipe.familyId);
+  }
+
+  async acknowledgeReview(recipeId: string): Promise<Result<void, FamilyError>> {
+    const recipe = this.#recipes.get(recipeId);
+    if (!recipe) return err(recipeNotFound(recipeId));
+    const { review: _, ...rest } = recipe;
+    this.#recipes.set(recipeId, rest);
+    return ok(undefined);
   }
 
   /** Writes a family as recorded (restores). */

@@ -240,6 +240,13 @@ export const en = {
   'family.pin': 'Show this variant by default',
   'family.unpin': 'Show the most recent by default',
   'family.mostRecent': 'Most recent is shown by default',
+  'recipes.card.durationAtLeast': '≥ {duration}',
+  'recipe.retryStart': 'The previous start was not confirmed: it is sent again exactly as it was.',
+  'review.badge': 'To review',
+  'review.badgeWarning': 'With caveats',
+  'review.titleReview': 'Check this recipe before baking it',
+  'review.titleWarning': 'Imported with caveats',
+  'review.acknowledge': 'I have checked it',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -484,6 +491,13 @@ export const fr: Catalog = {
   'family.pin': 'Afficher cette variante par défaut',
   'family.unpin': 'Afficher la plus récente par défaut',
   'family.mostRecent': 'La plus récente est affichée par défaut',
+  'recipes.card.durationAtLeast': '≥ {duration}',
+  'recipe.retryStart': 'Le démarrage précédent n’a pas été confirmé : il est renvoyé tel quel.',
+  'review.badge': 'À revoir',
+  'review.badgeWarning': 'Avec réserves',
+  'review.titleReview': 'À vérifier avant de cuire cette recette',
+  'review.titleWarning': 'Importée avec des réserves',
+  'review.acknowledge': 'C’est vérifié',
 };
 
 export const catalogs = { en, fr } as const;

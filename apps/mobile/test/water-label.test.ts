@@ -53,4 +53,20 @@ describe('total water label (PR #31 follow-up)', () => {
       ).key,
     ).toBe('formula.stat.totalWaterEstimate');
   });
+
+  it('marks an estimate without a range as an estimate too', () => {
+    const { key, water } = keyFor(
+      formula([
+        {
+          id: 'milk',
+          kind: 'other',
+          bakerPct: 10,
+          role: 'dough',
+          water: { status: 'estimated', valuePct: 88 },
+        },
+      ]),
+    );
+    expect(water.range).toBeUndefined();
+    expect(key).toBe('formula.stat.totalWaterEstimate');
+  });
 });

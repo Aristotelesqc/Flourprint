@@ -14,6 +14,14 @@ export interface Recipe {
   readonly updatedAt: Instant;
   /** Family this recipe is a variant of, if any. */
   readonly familyId?: string;
+  /** Left by an import until the user acknowledges it (persistence.md). */
+  readonly review?: RecipeReview;
+}
+
+/** `review`: check before baking; `warning`: usable with caveats. */
+export interface RecipeReview {
+  readonly level: 'warning' | 'review';
+  readonly reasons: readonly string[];
 }
 
 /** Variants of one recipe (persistence.md, Recipe families). */
