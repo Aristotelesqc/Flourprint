@@ -22,7 +22,16 @@ const domainForbidden = [
 ];
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', 'pnpm-lock.yaml', 'apps/mobile/android/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      'pnpm-lock.yaml',
+      'apps/mobile/android/**',
+      'apps/desktop/out/**',
+      'apps/desktop/test-results/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.strict,
   {
@@ -56,7 +65,9 @@ export default tseslint.config(
   },
   {
     // Adapters that run in the mobile bundle: no Node modules.
-    files: ['packages/adapters/src/{memory,shared,sql,testing,sqlite-capacitor}/**/*.ts'],
+    files: [
+      'packages/adapters/src/{memory,shared,sql,testing,sqlite-capacitor,sqlite-bridge}/**/*.ts',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',

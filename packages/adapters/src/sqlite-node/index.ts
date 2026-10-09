@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { ok, type Result } from '@flourprint/core/domain';
+import type { BridgeOp, SqlBridge } from '../sqlite-bridge/index.js';
 import {
   MIGRATIONS,
   migrate,
@@ -32,9 +33,7 @@ export const openNodeSqlite = async (
   path: string,
   migrations: readonly Migration[] = MIGRATIONS,
 ): Promise<Result<NodeSqlite, OpenError>> => {
-  const database = new DatabaseSync(path);
-  if (path !== ':memory:') database.exec('PRAGMA journal_mode = WAL');
-  database.exec('PRAGMA busy_timeout = 5000');
+  const database = openNodeDatabase(path);
   const params = (values: readonly SqlValue[] | undefined) => [...(values ?? [])];
   const driver = serializedDriver({
     execute: async (sql) => void database.exec(sql),
@@ -51,4 +50,57 @@ export const openNodeSqlite = async (
     return migrated;
   }
   return ok({ driver, database, close: () => database.close() });
+};
+
+const isSqlValue = (value: unknown): value is SqlValue =>
+  value === null || typeof value === 'string' || typeof value === 'number';
+
+/**
+ * The main-process side of the desktop bridge (ADR 0011): answers raw driver calls on one
+ * `node:sqlite` connection. Calls arrive one at a time (the renderer serializes them); each is
+ * checked, since it crosses a process boundary.
+ */
+export const nodeSqliteBridge = (database: DatabaseSync): SqlBridge => ({
+  call: async (op: BridgeOp, sql?: unknown, params?: unknown) => {
+    const statement = () => {
+      if (typeof sql !== 'string') throw new TypeError(`${op}: sql must be a string`);
+      return sql;
+    };
+    const values = () => {
+      if (params === undefined) return [];
+      if (!Array.isArray(params) || !params.every(isSqlValue)) {
+        throw new TypeError(`${op}: params must be strings, numbers or null`);
+      }
+      return params;
+    };
+    switch (op) {
+      case 'execute':
+        database.exec(statement());
+        return undefined;
+      case 'run':
+        database.prepare(statement()).run(...values());
+        return undefined;
+      case 'query':
+        return database.prepare(statement()).all(...values());
+      case 'begin':
+        database.exec('BEGIN IMMEDIATE');
+        return undefined;
+      case 'commit':
+        database.exec('COMMIT');
+        return undefined;
+      case 'rollback':
+        database.exec('ROLLBACK');
+        return undefined;
+      default:
+        throw new TypeError(`unknown bridge operation ${String(op)}`);
+    }
+  },
+});
+
+/** Opens the desktop database file the way the Node driver does (WAL, busy timeout). */
+export const openNodeDatabase = (path: string): DatabaseSync => {
+  const database = new DatabaseSync(path);
+  if (path !== ':memory:') database.exec('PRAGMA journal_mode = WAL');
+  database.exec('PRAGMA busy_timeout = 5000');
+  return database;
 };

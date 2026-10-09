@@ -12,6 +12,10 @@
       "types": "./dist/sqlite-node/index.d.ts",
       "default": "./dist/sqlite-node/index.js"
     },
+    "./sqlite-bridge": {
+      "types": "./dist/sqlite-bridge/index.d.ts",
+      "default": "./dist/sqlite-bridge/index.js"
+    },
     "./sqlite-capacitor": {
       "types": "./dist/sqlite-capacitor/index.d.ts",
       "default": "./dist/sqlite-capacitor/index.js"

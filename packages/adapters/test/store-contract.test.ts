@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import type { BakeEventStore, RecipeRepository } from '@flourprint/core/application';
 import { MemoryBakeEventStore, MemoryRecipeRepository } from '../src/memory/index.js';
+import { openBridgeSqlite } from '../src/sqlite-bridge/index.js';
 import {
+  nodeSqliteBridge,
+  openNodeDatabase,
   openNodeSqlite,
   SqlBakeEventStore,
   SqlRecipeRepository,
@@ -15,6 +18,13 @@ const sqlite = async () => {
   return db.value.driver;
 };
 
+/** The desktop driver: the bridge, answered in process by `node:sqlite` (ADR 0011). */
+const bridged = async () => {
+  const db = await openBridgeSqlite(nodeSqliteBridge(openNodeDatabase(':memory:')));
+  if (!db.ok) throw new Error(JSON.stringify(db.error));
+  return db.value.driver;
+};
+
 const implementations: Array<
   [string, () => Promise<BakeEventStore>, () => Promise<RecipeRepository>]
 > = [
@@ -23,6 +33,11 @@ const implementations: Array<
     'sqlite-node',
     async () => new SqlBakeEventStore(await sqlite()),
     async () => new SqlRecipeRepository(await sqlite()),
+  ],
+  [
+    'sqlite-bridge',
+    async () => new SqlBakeEventStore(await bridged()),
+    async () => new SqlRecipeRepository(await bridged()),
   ],
 ];
 
