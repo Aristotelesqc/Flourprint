@@ -361,10 +361,12 @@ const waterTemperature = (formula: Formula, process: Process): Estimate | undefi
   const frictionC = mix.conditions?.frictionC;
   if (frictionC === undefined) assumptions.push('friction_not_counted');
   const n = preferments.length > 0 ? 4 : 3;
-  const baseC = n * targetC + (frictionC ?? 0);
+  const baseC = n * targetC;
   const meanPrefermentC =
     prefermentC.length > 0 ? prefermentC.reduce((a, b) => a + b, 0) / prefermentC.length : 0;
-  const value = baseC - roomC - roomC - (preferments.length > 0 ? meanPrefermentC : 0);
+  // Friction is heat the mixer adds: it lowers the water temperature.
+  const value =
+    baseC - roomC - roomC - (preferments.length > 0 ? meanPrefermentC : 0) - (frictionC ?? 0);
   if (value < 0) assumptions.push('water_below_0C');
   if (value > 60) assumptions.push('water_above_60C');
   return { status: 'ok', value, model: FERMENTATION_MODEL, assumptions };
