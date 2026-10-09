@@ -56,7 +56,8 @@ schema_meta    (key TEXT PRIMARY KEY, value INTEGER NOT NULL)
 ```
 
 The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node
-(`node:sqlite`) and Android (`@capacitor-community/sqlite`) only provide drivers. Every operation
+(`node:sqlite`), Android (`@capacitor-community/sqlite`) and the desktop shell (a bridge to
+`node:sqlite` in Electron's main process, ADR 0011) only provide drivers. Every operation
 on a connection is serialized, so a transaction never interleaves with another operation.
 
 - Documents are JSON. Columns other than keys, versions and `document` are index projections.
@@ -104,7 +105,7 @@ on a connection is serialized, so a transaction never interleaves with another o
 
 ## Shared contract tests
 
-Every implementation (memory, SQLite Node, SQLite Capacitor) runs the same contract test suite:
+Every implementation (memory, SQLite Node, SQLite Capacitor, SQLite bridge) runs the same contract test suite:
 idempotent retry, reused command id, version conflict, atomic rejection of an invalid batch,
 head conflicts, immutability of revisions, families (grouping, pinning, default variant) and
 additive import (skips present ids, idempotent, atomic). SQLite implementations add durability tests (reopen,

@@ -17,3 +17,4 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0008](0008-milestones-capability-levels.md) | Alpha / Engine MVP milestones and N1–N3 levels | Accepted, amended by 0010                 |
 | [0009](0009-english-and-i18n.md)             | English as project language, localizable UI    | Accepted                                  |
 | [0010](0010-fermentation-model-in-alpha.md)  | First fermentation model in Dogfood Alpha      | Accepted                                  |
+| [0011](0011-desktop-simulator.md)            | A desktop shell to run the app on a PC         | Accepted                                  |
