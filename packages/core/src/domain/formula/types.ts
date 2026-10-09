@@ -45,6 +45,14 @@ export interface Ingredient {
   readonly fat?: ContentPct;
   /** Sugar per 100 g; ignored for `water` ingredients; missing means unknown. */
   readonly sugar?: ContentPct;
+  /** Marks commercial yeast for the fermentation model (fermentation.md). */
+  readonly yeast?: YeastMarker;
+}
+
+export type YeastForm = 'fresh' | 'active-dry' | 'instant';
+
+export interface YeastMarker {
+  readonly form: YeastForm;
 }
 
 export interface ComponentAllocation {

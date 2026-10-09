@@ -42,6 +42,7 @@ export const formulaSchema = z.strictObject({
       water: contentSchema.optional(),
       fat: contentSchema.optional(),
       sugar: contentSchema.optional(),
+      yeast: z.strictObject({ form: z.enum(['fresh', 'active-dry', 'instant']) }).optional(),
     }),
   ),
   components: z.array(

@@ -27,6 +27,8 @@ export type Estimate<T = number> =
       readonly range?: readonly [T, T];
       readonly model: ModelRef;
       readonly assumptions: readonly string[];
+      /** Stable codes: why the estimate lies outside the model's fitted domain. */
+      readonly extrapolations?: readonly string[];
     }
   | {
       readonly status: 'unsupported' | 'out_of_domain' | 'insufficient_data';

@@ -51,6 +51,19 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
         return err(invalid(path, 'an alap step needs plannedDurationS'));
       }
     }
+    const conditions = step.conditions ?? {};
+    for (const key of ['temperatureC', 'doughTemperatureC', 'frictionC'] as const) {
+      const value = conditions[key];
+      if (value !== undefined && !Number.isFinite(value)) {
+        return err(invalid(`${path}.conditions.${key}`, 'must be a finite temperature'));
+      }
+    }
+    if (
+      step.operation !== 'mix' &&
+      (conditions.doughTemperatureC !== undefined || conditions.frictionC !== undefined)
+    ) {
+      return err(invalid(`${path}.conditions`, 'dough temperature and friction are mix-step only'));
+    }
     for (const [i, incorporation] of (step.incorporations ?? []).entries()) {
       if (!(Number.isFinite(incorporation.sharePct) && incorporation.sharePct >= 0)) {
         return err(invalid(`${path}.incorporations[${i}].sharePct`, 'must be ≥ 0'));

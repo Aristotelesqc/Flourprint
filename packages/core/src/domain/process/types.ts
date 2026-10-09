@@ -21,6 +21,10 @@ export interface StepConditions {
   /** Open code such as `counter`, `fridge`, `proofer`, `oven`. */
   readonly location?: string;
   readonly temperatureC?: number;
+  /** Mix step only: target dough temperature, advanced mode (fermentation.md). */
+  readonly doughTemperatureC?: number;
+  /** Mix step only: mixer friction for the water temperature (fermentation.md). */
+  readonly frictionC?: number;
 }
 
 export interface ProcessStep {

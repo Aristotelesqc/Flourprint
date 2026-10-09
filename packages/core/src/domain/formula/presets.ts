@@ -33,6 +33,7 @@ export const INGREDIENT_PRESETS: readonly IngredientPreset[] = [
     ingredient: {
       kind: 'other',
       role: 'dough',
+      yeast: { form: 'instant' },
       water: est(5, 4, 8),
       fat: est(4.5, 1.3, 7.6),
       sugar: est(0, 0, 1),
@@ -43,6 +44,7 @@ export const INGREDIENT_PRESETS: readonly IngredientPreset[] = [
     ingredient: {
       kind: 'other',
       role: 'dough',
+      yeast: { form: 'active-dry' },
       water: est(6, 5, 8),
       fat: est(4.5, 1.3, 7.6),
       sugar: est(0, 0, 1),

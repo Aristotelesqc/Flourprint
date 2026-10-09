@@ -30,6 +30,7 @@ const checkId = (path: string, id: string): FormulaError | undefined => {
 };
 
 const ROLES: ReadonlySet<string> = new Set(['dough', 'topping', 'glaze']);
+const YEAST_FORMS: ReadonlySet<string> = new Set(['fresh', 'active-dry', 'instant']);
 const COMPONENT_KINDS: ReadonlySet<string> = new Set(['preferment', 'scald', 'soaker', 'custom']);
 
 /**
@@ -146,6 +147,9 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
     for (const content of ['water', 'fat', 'sugar'] as const) {
       const bad = checkContent(`${path}.${content}`, ingredient[content]);
       if (bad) return err(bad);
+    }
+    if (ingredient.yeast !== undefined && !YEAST_FORMS.has(ingredient.yeast.form)) {
+      return err(invalid(`${path}.yeast.form`, 'form must be fresh, active-dry or instant'));
     }
     ingredientIds.add(ingredient.id);
   }

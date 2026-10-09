@@ -92,7 +92,12 @@ const ingredient: Check = (v, w) =>
       bakerPct: number,
       role: oneOf('dough', 'topping', 'glaze'),
     },
-    { water: content, fat: content, sugar: content },
+    {
+      water: content,
+      fat: content,
+      sugar: content,
+      yeast: (y, yw) => fields(y, yw, { form: oneOf('fresh', 'active-dry', 'instant') }),
+    },
   );
 
 const component: Check = (v, w) =>
@@ -145,7 +150,13 @@ const step: Check = (v, w) =>
       label: string,
       plannedDurationS: number,
       endCriterion,
-      conditions: (c, cw) => fields(c, cw, {}, { location: string, temperatureC: number }),
+      conditions: (c, cw) =>
+        fields(
+          c,
+          cw,
+          {},
+          { location: string, temperatureC: number, doughTemperatureC: number, frictionC: number },
+        ),
       incorporations: list(incorporation),
     },
   );
