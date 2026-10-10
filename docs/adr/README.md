@@ -19,3 +19,4 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0010](0010-fermentation-model-in-alpha.md)  | First fermentation model in Dogfood Alpha      | Accepted                                  |
 | [0011](0011-desktop-simulator.md)            | A desktop shell to run the app on a PC         | Accepted                                  |
 | [0012](0012-bake-notifications.md)           | Notifications for running bakes                | Accepted                                  |
+| [0013](0013-web-preview-and-dev-channel.md)  | A web preview link and a remote-loaded dev APK | Accepted                                  |
