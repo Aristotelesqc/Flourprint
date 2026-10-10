@@ -3,6 +3,8 @@
  * grams. Grams are never stored: they are derived from percentages and the anchor.
  */
 
+import type { AcceptedSuggestion } from '../values.js';
+
 export type Anchor =
   | { readonly kind: 'flourTotal'; readonly grams: number }
   | { readonly kind: 'doughWeight'; readonly grams: number }
@@ -47,6 +49,8 @@ export interface Ingredient {
   readonly sugar?: ContentPct;
   /** Marks commercial yeast for the fermentation model (fermentation.md). */
   readonly yeast?: YeastMarker;
+  /** Set when `bakerPct` was taken from a model suggestion (fermentation.md). */
+  readonly accepted?: AcceptedSuggestion;
 }
 
 export type YeastForm = 'fresh' | 'active-dry' | 'instant';
@@ -58,6 +62,8 @@ export interface YeastMarker {
 export interface ComponentAllocation {
   readonly ingredient: string;
   readonly bakerPct: number;
+  /** Set when `bakerPct` was taken from a model suggestion (fermentation.md). */
+  readonly accepted?: AcceptedSuggestion;
 }
 
 export interface Component {

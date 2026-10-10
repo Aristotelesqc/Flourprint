@@ -158,6 +158,32 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     expect(state.snapshot?.estimates.bulk).toMatchObject({ status: 'unsupported' });
   });
 
+  it('keeps a dough ready observation in the journal without ending the step', async () => {
+    const session = new Session();
+    await session.start();
+    await session.at(t('09:00')).ok({ type: 'StartStep', stepId: 'poolish' });
+    await session.ok({
+      type: 'AddObservation',
+      stepId: 'poolish',
+      category: 'fermentation',
+      kind: 'doughReady',
+      criterion: 'poke',
+    });
+    const loaded = await loadBake(session.store, 'bake-1');
+    if (!loaded.ok) throw new Error('unreadable');
+    expect(loaded.value.observations.map((o) => o.payload)).toEqual([
+      {
+        type: 'ObservationAdded',
+        stepId: 'poolish',
+        category: 'fermentation',
+        kind: 'doughReady',
+        criterion: 'poke',
+      },
+    ]);
+    expect(loaded.value.observations[0]?.occurredAt).toBe(t('09:00'));
+    expect(loaded.value.steps.poolish?.endedAt).toBeUndefined();
+  });
+
   it('completes a step with an implicit start at the end of its dependencies', async () => {
     const session = new Session();
     await session.start();

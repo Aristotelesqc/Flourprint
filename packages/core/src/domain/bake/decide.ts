@@ -4,11 +4,12 @@ import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
 import { projectProcess } from '../process/project.js';
 import type { Process, Projection, StepFact } from '../process/types.js';
+import type { Formula } from '../formula/types.js';
 import type { ProcessError } from '../process/validate.js';
 import { err, ok, type Result } from '../result.js';
 import { validateRecipe } from '../recipe/validate.js';
 import { CONTRACT_VERSION, ENGINE_VERSION } from '../version.js';
-import type { Estimate } from '../values.js';
+import type { AcceptedSuggestion, Estimate, ModelRef } from '../values.js';
 import type { BakeCommandPayload, BakeState, EventDraft } from './types.js';
 
 export type BakeError =
@@ -29,6 +30,34 @@ export type BakeError =
 const UNSUPPORTED_FERMENTATION: Estimate = {
   status: 'unsupported',
   reason: 'no_fermentation_model',
+};
+
+/**
+ * Accepted suggestions still in effect in the started revision (fermentation.md): the value must
+ * still be the one that was applied. Steps carry their estimate; every model is listed once.
+ */
+const acceptedDecisions = (
+  formula: Formula,
+  process: Process,
+): { estimates: Record<string, Estimate>; models: ModelRef[] } => {
+  const models: ModelRef[] = [];
+  const list = (accepted: AcceptedSuggestion | undefined, current: number | undefined) => {
+    if (!accepted || accepted.appliedValue !== current) return undefined;
+    if (!models.some((m) => m.id === accepted.model.id && m.version === accepted.model.version)) {
+      models.push(accepted.model);
+    }
+    return accepted;
+  };
+  const estimates: Record<string, Estimate> = {};
+  for (const step of process.steps) {
+    const accepted = list(step.accepted, step.plannedDurationS);
+    estimates[step.id] = accepted ? accepted.estimate : UNSUPPORTED_FERMENTATION;
+  }
+  for (const ingredient of formula.ingredients) list(ingredient.accepted, ingredient.bakerPct);
+  for (const component of formula.components) {
+    for (const a of component.allocations ?? []) list(a.accepted, a.bakerPct);
+  }
+  return { estimates, models };
 };
 
 const seconds = (instant: Instant): number => Date.parse(instant) / 1000;
@@ -115,6 +144,7 @@ export const decide = (
     const resolved = ok(recipe.value.resolved);
     const projection = projectProcess(command.process, { mode: command.mode });
     if (!projection.ok) return projection;
+    const accepted = acceptedDecisions(command.formula, command.process);
     return ok([
       {
         occurredAt: now,
@@ -127,13 +157,11 @@ export const decide = (
             usedProperties: command.usedProperties ?? [],
             process: command.process,
             initialProjection: projection.value,
-            estimates: Object.fromEntries(
-              command.process.steps.map((s) => [s.id, UNSUPPORTED_FERMENTATION]),
-            ),
+            estimates: accepted.estimates,
             manifest: {
               engineVersion: ENGINE_VERSION,
               contractVersion: CONTRACT_VERSION,
-              models: [],
+              models: accepted.models,
             },
           },
         },
@@ -320,6 +348,20 @@ export const decide = (
           field: 'rating',
           reason: 'out of range',
         });
+      }
+      if (command.kind === 'doughReady') {
+        if (command.stepId === undefined) {
+          return error('InvalidCommand', 'A dough ready observation targets a step', {
+            field: 'stepId',
+            reason: 'required for doughReady',
+          });
+        }
+        if (command.category !== 'fermentation') {
+          return error('InvalidCommand', 'A dough ready observation is a fermentation one', {
+            field: 'category',
+            reason: 'must be fermentation for doughReady',
+          });
+        }
       }
       const { type, ...observation } = command;
       return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);

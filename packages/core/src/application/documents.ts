@@ -73,6 +73,32 @@ const range: Check = (value, where) => {
   }
 };
 
+const rangeBound = union('kind', {
+  finite: (v, w) => fields(v, w, { kind: string, value: number }),
+  beyondHorizon: (v, w) => fields(v, w, { kind: string, horizonS: number }),
+});
+
+const modelRef: Check = (v, w) => fields(v, w, { id: string, version: string });
+
+/** A portable estimate range: two bounds (values-and-units.md). */
+export const estimateRange: Check = (value, where) => {
+  if (!Array.isArray(value) || value.length !== 2) return refuse(`${where} must be two bounds`);
+  value.forEach((bound: unknown, i) => rangeBound(bound, `${where}[${i}]`));
+};
+
+/** The estimate that came with an applied suggestion: always `ok`. */
+const acceptedEstimate: Check = (v, w) =>
+  fields(
+    v,
+    w,
+    { status: oneOf('ok'), value: number, model: modelRef, assumptions: list(string) },
+    { range: estimateRange, extrapolations: list(string) },
+  );
+
+/** Provenance of an applied model suggestion (fermentation.md). */
+const accepted: Check = (v, w) =>
+  fields(v, w, { estimate: acceptedEstimate, appliedValue: number, model: modelRef });
+
 const content = union('status', {
   known: (v, w) => fields(v, w, { status: string, valuePct: number }, { source: string }),
   estimated: (v, w) =>
@@ -97,6 +123,7 @@ const ingredient: Check = (v, w) =>
       fat: content,
       sugar: content,
       yeast: (y, yw) => fields(y, yw, { form: oneOf('fresh', 'active-dry', 'instant') }),
+      accepted,
     },
   );
 
@@ -113,7 +140,9 @@ const component: Check = (v, w) =>
     },
     {
       waterLossPct: number,
-      allocations: list((a, aw) => fields(a, aw, { ingredient: string, bakerPct: number })),
+      allocations: list((a, aw) =>
+        fields(a, aw, { ingredient: string, bakerPct: number }, { accepted }),
+      ),
     },
   );
 
@@ -158,6 +187,7 @@ const step: Check = (v, w) =>
           { location: string, temperatureC: number, doughTemperatureC: number, frictionC: number },
         ),
       incorporations: list(incorporation),
+      accepted,
     },
   );
 

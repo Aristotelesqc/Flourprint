@@ -1,4 +1,5 @@
 import type { Instant } from '../instant.js';
+import type { AcceptedSuggestion } from '../values.js';
 
 /** Process model (docs/contracts/process.md). Durations are in seconds. */
 
@@ -39,6 +40,8 @@ export interface ProcessStep {
   readonly endCriterion?: EndCriterion;
   readonly conditions?: StepConditions;
   readonly incorporations?: readonly Incorporation[];
+  /** Set when `plannedDurationS` was taken from a model suggestion (fermentation.md). */
+  readonly accepted?: AcceptedSuggestion;
 }
 
 export interface Process {

@@ -31,6 +31,27 @@ const contentSchema = z.discriminatedUnion('status', [
   z.strictObject({ status: z.literal('unknown') }),
 ]);
 
+const modelRefSchema = z.strictObject({ id: z.string().min(1), version: z.string().min(1) });
+
+const boundSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('finite'), value: z.number() }),
+  z.strictObject({ kind: z.literal('beyondHorizon'), horizonS: z.number().positive() }),
+]);
+
+/** Provenance of an applied model suggestion (fermentation.md, Accepted suggestions). */
+export const acceptedSuggestionSchema = z.strictObject({
+  estimate: z.strictObject({
+    status: z.literal('ok'),
+    value: z.number(),
+    range: z.tuple([boundSchema, boundSchema]).optional(),
+    model: modelRefSchema,
+    assumptions: z.array(z.string()),
+    extrapolations: z.array(z.string()).optional(),
+  }),
+  appliedValue: z.number(),
+  model: modelRefSchema,
+});
+
 export const formulaSchema = z.strictObject({
   flours: z.array(z.strictObject({ id: z.string().min(1), sharePct: nonNegative })),
   ingredients: z.array(
@@ -43,6 +64,7 @@ export const formulaSchema = z.strictObject({
       fat: contentSchema.optional(),
       sugar: contentSchema.optional(),
       yeast: z.strictObject({ form: z.enum(['fresh', 'active-dry', 'instant']) }).optional(),
+      accepted: acceptedSuggestionSchema.optional(),
     }),
   ),
   components: z.array(
@@ -54,7 +76,13 @@ export const formulaSchema = z.strictObject({
       hydrationPct: nonNegative,
       waterLossPct: nonNegative.optional(),
       allocations: z
-        .array(z.strictObject({ ingredient: z.string().min(1), bakerPct: nonNegative }))
+        .array(
+          z.strictObject({
+            ingredient: z.string().min(1),
+            bakerPct: nonNegative,
+            accepted: acceptedSuggestionSchema.optional(),
+          }),
+        )
         .optional(),
     }),
   ),

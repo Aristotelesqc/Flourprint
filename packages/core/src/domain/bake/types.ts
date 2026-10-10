@@ -36,6 +36,12 @@ export interface BakeSnapshot {
 export type ObservationCategory =
   'crumb' | 'crust' | 'fermentation' | 'flavor' | 'handling' | 'volume' | 'other';
 
+/**
+ * Stable kind of an observation (bake-session.md). `doughReady`: the baker judges the dough ready
+ * to bake; calibration data for the end point of the fermentation model.
+ */
+export type ObservationKind = 'doughReady';
+
 export type StepAdjustment =
   | { readonly field: 'plannedDurationS'; readonly value: number }
   | { readonly field: 'temperatureC'; readonly value: number };
@@ -75,6 +81,9 @@ export type BakeCommandPayload =
       readonly type: 'AddObservation';
       readonly stepId?: StepId;
       readonly category: ObservationCategory;
+      readonly kind?: ObservationKind;
+      /** Stable code of what the baker went by (`poke`, `feel`, `time`, `other`). */
+      readonly criterion?: string;
       readonly text?: string;
       readonly rating?: number;
       readonly measurement?: Observation;
@@ -139,6 +148,8 @@ export type BakeEventPayload =
       readonly type: 'ObservationAdded';
       readonly stepId?: StepId;
       readonly category: ObservationCategory;
+      readonly kind?: ObservationKind;
+      readonly criterion?: string;
       readonly text?: string;
       readonly rating?: number;
       readonly measurement?: Observation;

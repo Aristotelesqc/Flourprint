@@ -11,7 +11,7 @@ import {
   refuse,
   type Json,
 } from './decode.js';
-import { decodeFormula, decodeProcess } from './documents.js';
+import { decodeFormula, decodeProcess, estimateRange } from './documents.js';
 
 /**
  * Decodes one bake log from a backup (persistence.md): every payload is checked for its type's
@@ -177,7 +177,10 @@ const isSnapshot = (value: unknown): boolean =>
       isId(id) &&
       isObject(e) &&
       ['ok', 'unsupported', 'out_of_domain', 'insufficient_data'].includes(e.status as string) &&
-      (e.status !== 'ok' || (isNumber(e.value) && isModelRef(e.model))),
+      (e.status !== 'ok' ||
+        (isNumber(e.value) &&
+          isModelRef(e.model) &&
+          isOptional(e.range, (r): r is unknown => accepts(estimateRange)(r)))),
   ) &&
   isObject(value.manifest) &&
   typeof value.manifest.engineVersion === 'string' &&
@@ -262,6 +265,10 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
       expect(
         (payload.stepId === undefined || knownStep(payload.stepId)) &&
           OBSERVATION_CATEGORIES.has(payload.category as string) &&
+          isOptional(payload.kind, (v): v is string => v === 'doughReady') &&
+          isOptional(payload.criterion, (v): v is string => typeof v === 'string') &&
+          (payload.kind !== 'doughReady' ||
+            (payload.stepId !== undefined && payload.category === 'fermentation')) &&
           isOptional(payload.text, (v): v is string => typeof v === 'string') &&
           isOptional(payload.rating, isNumber) &&
           (payload.measurement === undefined || isMeasurement(payload.measurement)),

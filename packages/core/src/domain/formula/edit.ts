@@ -1,6 +1,7 @@
 import { domainError } from '../errors.js';
-import { RELATIVE_TOLERANCE, sum } from '../numeric.js';
+import { RELATIVE_TOLERANCE, approxEqual, sum } from '../numeric.js';
 import { err, ok, type Result } from '../result.js';
+import type { AcceptedSuggestion } from '../values.js';
 import type { FormulaError } from './errors.js';
 import {
   anchorDoughWeight,
@@ -37,7 +38,13 @@ export type ComponentChanges = Partial<Omit<Component, 'id'>>;
 
 /** Edit commands of docs/contracts/formula.md. */
 export type FormulaEdit =
-  | { readonly type: 'SetBakerPct'; readonly ingredient: string; readonly pct: number }
+  | {
+      readonly type: 'SetBakerPct';
+      readonly ingredient: string;
+      readonly pct: number;
+      /** Provenance of `pct` when it is an applied model suggestion (fermentation.md). */
+      readonly accepted?: AcceptedSuggestion;
+    }
   | { readonly type: 'SetFlourBlend'; readonly flours: readonly FlourShare[] }
   | {
       readonly type: 'SetIngredientGrams';
@@ -102,10 +109,48 @@ export const applyFormulaEdit = (
   }
   const computed = computeEdit(formula, edit);
   if (!computed.ok) return computed;
-  const next = relock(computed.value);
+  const next = relock(settleAccepted(computed.value, edit));
   if (!next.ok) return next;
   const resolved = resolveFormula(next.value);
   return resolved.ok ? next : resolved;
+};
+
+/**
+ * Provenance of applied suggestions (fermentation.md): `accepted` survives only while the value
+ * it describes is untouched. An edit that writes the value (typed percentage, grams) removes it;
+ * any other edit keeps it as long as the percentage still equals the applied value.
+ */
+const settleAccepted = (formula: Formula, edit: FormulaEdit): Formula => {
+  const written =
+    edit.type === 'SetBakerPct' || edit.type === 'SetIngredientGrams' ? edit.ingredient : undefined;
+  const keep = (id: string, pct: number, accepted: AcceptedSuggestion | undefined) =>
+    accepted !== undefined && id !== written && approxEqual(accepted.appliedValue, pct);
+  const withAccepted = (id: string, pct: number, accepted: AcceptedSuggestion | undefined) =>
+    keep(id, pct, accepted) && accepted ? { accepted } : {};
+  return {
+    ...formula,
+    ingredients: formula.ingredients.map((i) => {
+      const { accepted, ...rest } = i;
+      const fresh =
+        edit.type === 'SetBakerPct' && edit.ingredient === i.id && edit.accepted
+          ? approxEqual(edit.accepted.appliedValue, i.bakerPct)
+            ? { accepted: edit.accepted }
+            : {}
+          : withAccepted(i.id, i.bakerPct, accepted);
+      return { ...rest, ...fresh };
+    }),
+    components: formula.components.map((c) =>
+      c.allocations
+        ? {
+            ...c,
+            allocations: c.allocations.map((a) => {
+              const { accepted, ...rest } = a;
+              return { ...rest, ...withAccepted(`${c.id}:${a.ingredient}`, a.bakerPct, accepted) };
+            }),
+          }
+        : c,
+    ),
+  };
 };
 
 /** Gives the absorbing water the percentage its locked total water requires. */

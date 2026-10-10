@@ -7,7 +7,14 @@ export {
   rate,
   type FermentationParameters,
 } from './model.js';
-export { simulate, solveDoseFactor, type Segment, type SimulationResult } from './simulate.js';
+export { READY_CALIBRATION, RIPE_TARGET, type PersonalCalibration } from './calibration.js';
+export {
+  HORIZON_S,
+  simulate,
+  solveDoseFactor,
+  type Segment,
+  type SimulationResult,
+} from './simulate.js';
 export {
   estimateFermentation,
   type FermentationEstimates,

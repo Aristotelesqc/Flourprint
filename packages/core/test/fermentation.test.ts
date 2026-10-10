@@ -43,8 +43,11 @@ describe('fermentation reference cases', () => {
       const tolerance = c.tolerance ?? file.tolerance;
       for (const [path, expected] of Object.entries(c.expected)) {
         const actual = at(result, path);
+        // Range bounds are portable objects; the fixtures list their finite values.
+        const finite = (bound: unknown) =>
+          typeof bound === 'object' && bound !== null && 'value' in bound ? bound.value : bound;
         const pairs = Array.isArray(expected)
-          ? expected.map((e, i) => [(actual as number[] | undefined)?.[i], e] as const)
+          ? expected.map((e, i) => [finite((actual as unknown[] | undefined)?.[i]), e] as const)
           : [[actual, expected] as const];
         for (const [a, e] of pairs) {
           expect(typeof a, path).toBe('number');
@@ -69,6 +72,48 @@ const withYeastForm = (formula: Formula, yeast: boolean): Formula => ({
 });
 const mix = (conditions: Record<string, unknown>): Process => ({
   steps: process.steps.map((s) => (s.id === 'mix' ? { ...s, conditions } : s)),
+});
+
+describe('ready to bake target (personal calibration)', () => {
+  it('reports the dough in percent of the planned fermentation, not of a doubling', () => {
+    // 1 % fresh at 21.1 °C for A hours reaches F = 1, half of the ready target 2.
+    const planned: Process = {
+      steps: process.steps.map((s) =>
+        s.id === 'proof' ? { ...s, plannedDurationS: 3.43 * 3600 } : s,
+      ),
+    };
+    const result = estimateFermentation(base, planned);
+    const pct = result.dough.progressPct;
+    expect(pct.status === 'ok' && pct.value).toBeCloseTo(50, 6);
+    // The band covers both ends of the target band (1.5 and 2.5) and the parameter corners.
+    expect(pct.status === 'ok' && pct.range?.every((b) => b.kind === 'finite')).toBe(true);
+    expect(pct.status === 'ok' && pct.assumptions).toContain('ready_target_progress:2');
+  });
+
+  it('takes the calibration as its own input, apart from the kinetic parameters', () => {
+    const duration = (readyProgress: number) => {
+      const d = estimateFermentation(base, process, {
+        readyProgress,
+        band: [readyProgress, readyProgress],
+      }).dough.duration;
+      return d.status === 'ok' ? d.value : NaN;
+    };
+    expect(duration(1)).toBeCloseTo(3.43 * 3600, 3);
+    expect(duration(2)).toBeCloseTo(2 * 3.43 * 3600, 3);
+  });
+
+  it('never puts Infinity in a range: an unreachable corner is beyondHorizon', () => {
+    const lean: Formula = {
+      ...base,
+      ingredients: base.ingredients.map((i) => (i.id === 'yeast' ? { ...i, bakerPct: 0.1 } : i)),
+    };
+    const duration = estimateFermentation(lean, mix({ temperatureC: 5 })).dough.duration;
+    expect(duration.status).toBe('ok');
+    if (duration.status !== 'ok') return;
+    expect(JSON.parse(JSON.stringify(duration.range))).toEqual(duration.range);
+    expect(duration.range?.[0].kind).toBe('finite');
+    expect(duration.range?.[1]).toEqual({ kind: 'beyondHorizon', horizonS: 21 * 24 * 3600 });
+  });
 });
 
 describe('fermentation domain', () => {

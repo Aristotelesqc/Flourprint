@@ -1,7 +1,8 @@
 import type { Component, Formula, Ingredient, YeastForm } from '../formula/types.js';
 import { resolveFormula } from '../formula/resolve.js';
 import type { Process, ProcessStep, StepId } from '../process/types.js';
-import type { Estimate } from '../values.js';
+import type { Estimate, RangeBound } from '../values.js';
+import { READY_CALIBRATION, RIPE_TARGET, type PersonalCalibration } from './calibration.js';
 import {
   CENTRAL,
   CORNERS,
@@ -9,7 +10,7 @@ import {
   FERMENTATION_MODEL,
   type FermentationParameters,
 } from './model.js';
-import { simulate, solveDoseFactor, type Segment } from './simulate.js';
+import { HORIZON_S, simulate, solveDoseFactor, type Segment } from './simulate.js';
 
 /** Estimates of one fermenting mass (fermentation.md, Results). */
 export interface MassEstimates {
@@ -17,7 +18,7 @@ export interface MassEstimates {
   readonly stepId?: StepId;
   /** Seconds the step needs to reach the end point, the other durations being as planned. */
   readonly duration: Estimate;
-  /** Progress at the end of the planned schedule, in percent of the end point. */
+  /** Progress at the end of the planned schedule, in percent of the planned fermentation (`F*`). */
   readonly progressPct: Estimate;
   /** Baker's percentage of each yeast for the planned schedule, in the ingredient's own form. */
   readonly yeastPct: Readonly<Record<string, Estimate>>;
@@ -61,6 +62,8 @@ interface Mass {
   readonly yeasts: readonly Yeast[];
   /** Converts a percentage of the mass's flour back to the unit the suggestion is given in. */
   readonly toSuggested: number;
+  /** End point of this mass: the dough's personal calibration, or ripe for a preferment. */
+  readonly calibration: PersonalCalibration;
   readonly startC: number;
   readonly segments: readonly Segment[];
   readonly assumptions: readonly string[];
@@ -72,19 +75,38 @@ interface Mass {
 const freshPct = (p: FermentationParameters, yeasts: readonly Yeast[], factor = 1) =>
   yeasts.reduce((sum, y) => sum + y.pct * factor * p.freshPerGram[y.form], 0);
 
+/** A bound of a band: a finite number, or a corner that never reaches the end point. */
+const bound = (value: number): RangeBound =>
+  Number.isFinite(value)
+    ? { kind: 'finite', value }
+    : { kind: 'beyondHorizon', horizonS: HORIZON_S };
+
+/**
+ * An estimate with the band over `values`. Only a duration can lie beyond the horizon; for any
+ * other quantity an unbounded corner leaves the band out and says so (`band_unbounded`).
+ */
 const ok = (
   value: number,
   values: readonly number[],
   mass: Mass,
-  assumptions: readonly string[] = mass.assumptions,
-): Estimate => ({
-  status: 'ok',
-  value,
-  range: [Math.min(value, ...values), Math.max(value, ...values)],
-  model: FERMENTATION_MODEL,
-  assumptions,
-  ...(mass.extrapolations.length > 0 ? { extrapolations: mass.extrapolations } : {}),
-});
+  options: { readonly assumptions?: readonly string[]; readonly duration?: boolean } = {},
+): Estimate => {
+  const assumptions = options.assumptions ?? mass.assumptions;
+  const all = [value, ...values.map((v) => (Number.isNaN(v) ? Infinity : v))];
+  const unbounded = options.duration !== true && all.some((v) => !Number.isFinite(v));
+  return {
+    status: 'ok',
+    value,
+    ...(unbounded ? {} : { range: [bound(Math.min(...all)), bound(Math.max(...all))] as const }),
+    model: FERMENTATION_MODEL,
+    assumptions: unbounded ? [...assumptions, 'band_unbounded'] : assumptions,
+    ...(mass.extrapolations.length > 0 ? { extrapolations: mass.extrapolations } : {}),
+  };
+};
+
+/** Every parameter corner combined with each end of the target's band. */
+const corners = (mass: Mass) =>
+  CORNERS.flatMap((p) => mass.calibration.band.map((target) => ({ p, target })));
 
 const inDomain = (mass: Mass): Failure | undefined => {
   const dose = freshPct(CENTRAL, mass.yeasts);
@@ -109,20 +131,30 @@ const estimateMass = (mass: Mass): MassEstimates => {
   let duration: Estimate;
   if (domain) duration = domain;
   else {
-    const run = (p: FermentationParameters) =>
-      simulate(p, { freshPct: freshPct(p, mass.yeasts), startC: mass.startC, segments: open });
-    const central = run(CENTRAL);
+    const run = (p: FermentationParameters, target: number) =>
+      simulate(p, {
+        freshPct: freshPct(p, mass.yeasts),
+        startC: mass.startC,
+        segments: open,
+        target,
+      });
+    const central = run(CENTRAL, mass.calibration.readyProgress);
     if (central.kind !== 'remaining') {
       duration = failure('out_of_domain', 'end_point_not_reached');
     } else {
-      const corners = CORNERS.map(run).map((r) => (r.kind === 'remaining' ? r.hours : Infinity));
+      const hours = corners(mass)
+        .map(({ p, target }) => run(p, target))
+        .map((r) => (r.kind === 'remaining' ? r.hours : Infinity));
       duration = ok(
         central.hours * 3600,
-        corners.map((h) => h * 3600),
+        hours.map((h) => h * 3600),
         mass,
-        central.reachedBefore
-          ? [...mass.assumptions, 'end_point_before_last_step']
-          : mass.assumptions,
+        {
+          duration: true,
+          assumptions: central.reachedBefore
+            ? [...mass.assumptions, 'end_point_before_last_step']
+            : mass.assumptions,
+        },
       );
     }
   }
@@ -132,15 +164,19 @@ const estimateMass = (mass: Mass): MassEstimates => {
   if (!planned) progressPct = failure('insufficient_data', 'duration_unknown', missing);
   else if (domain) progressPct = domain;
   else {
-    const at = (p: FermentationParameters) => {
+    const at = (p: FermentationParameters, target: number) => {
       const r = simulate(p, {
         freshPct: freshPct(p, mass.yeasts),
         startC: mass.startC,
         segments: mass.segments,
       });
-      return r.kind === 'progress' ? 100 * r.progress : NaN;
+      return r.kind === 'progress' ? (100 * r.progress) / target : NaN;
     };
-    progressPct = ok(at(CENTRAL), CORNERS.map(at), mass);
+    progressPct = ok(
+      at(CENTRAL, mass.calibration.readyProgress),
+      corners(mass).map(({ p, target }) => at(p, target)),
+      mass,
+    );
   }
 
   const base: readonly Yeast[] = mass.yeasts.some((y) => y.pct > 0)
@@ -152,15 +188,16 @@ const estimateMass = (mass: Mass): MassEstimates => {
       yeastPct[id] = failure('insufficient_data', 'duration_unknown', missing);
     }
   } else {
-    const factor = (p: FermentationParameters) =>
+    const factor = (p: FermentationParameters, target: number) =>
       solveDoseFactor(p, {
         freshPct: freshPct(p, base),
         startC: mass.startC,
         segments: mass.segments,
+        target,
       });
-    const central = factor(CENTRAL);
+    const central = factor(CENTRAL, mass.calibration.readyProgress);
     const solvedDose = central === undefined ? undefined : freshPct(CENTRAL, base, central);
-    const corners = CORNERS.map(factor);
+    const factors = corners(mass).map(({ p, target }) => factor(p, target));
     for (const yeast of base) {
       if (
         solvedDose === undefined ||
@@ -174,7 +211,7 @@ const estimateMass = (mass: Mass): MassEstimates => {
       const scale = yeast.pct * mass.toSuggested;
       yeastPct[yeast.id] = ok(
         (central ?? NaN) * scale,
-        corners.map((f) => (f ?? Infinity) * scale),
+        factors.map((f) => (f ?? Infinity) * scale),
         mass,
       );
     }
@@ -262,7 +299,11 @@ const doughExtrapolations = (formula: Formula): string[] | Failure => {
 const unplannedAssumptions = (unplanned: readonly StepId[]) =>
   unplanned.map((id) => `step_without_duration:${id}`);
 
-const doughMass = (formula: Formula, process: Process): Mass | Failure => {
+const doughMass = (
+  formula: Formula,
+  process: Process,
+  calibration: PersonalCalibration,
+): Mass | Failure => {
   const mix = process.steps.find((s) => s.operation === 'mix');
   if (!mix) return failure('insufficient_data', 'no_mix_step', ['mix']);
   const bake = process.steps.find((s) => s.operation === 'bake');
@@ -304,10 +345,12 @@ const doughMass = (formula: Formula, process: Process): Mass | Failure => {
       pct: i.bakerPct,
     })),
     toSuggested: 1,
+    calibration,
     startC: target ?? roomC,
     segments,
     assumptions: [
       target === undefined ? 'dough_temperature_from_ambient' : 'dough_temperature_target',
+      `ready_target_progress:${calibration.readyProgress}`,
       ...unplannedAssumptions(unplanned),
     ],
     extrapolations,
@@ -340,6 +383,7 @@ const prefermentMass = (
     stepId: step.id,
     yeasts,
     toSuggested: component.flourPct / 100,
+    calibration: RIPE_TARGET,
     startC: ambientC,
     segments: [
       step.plannedDurationS === undefined
@@ -387,9 +431,15 @@ const waterTemperature = (formula: Formula, process: Process): Estimate | undefi
 
 /**
  * Provisional fermentation estimates of a recipe (docs/contracts/fermentation.md). Pure: never
- * changes the recipe; applying a suggestion is an explicit edit.
+ * changes the recipe; applying a suggestion is an explicit edit. The dough's end point is the
+ * personal `calibration` (default: the provisional "ready to bake" target), apart from the
+ * kinetic parameters.
  */
-export const estimateFermentation = (formula: Formula, process: Process): FermentationEstimates => {
+export const estimateFermentation = (
+  formula: Formula,
+  process: Process,
+  calibration: PersonalCalibration = READY_CALIBRATION,
+): FermentationEstimates => {
   const yeastIds = formula.ingredients.filter(isYeast).map((i) => i.id);
   const preferments = formula.components.filter((c) => c.kind === 'preferment' && c.flourPct > 0);
   const water = waterTemperature(formula, process);
@@ -407,7 +457,7 @@ export const estimateFermentation = (formula: Formula, process: Process): Fermen
   const allocated = (c: Component) =>
     (c.allocations ?? []).map((a) => a.ingredient).filter((id) => yeastIds.includes(id));
   return {
-    dough: estimate(doughMass(formula, process), yeastIds),
+    dough: estimate(doughMass(formula, process, calibration), yeastIds),
     preferments: Object.fromEntries(
       preferments.map((c) => [c.id, estimate(prefermentMass(formula, process, c), allocated(c))]),
     ),
