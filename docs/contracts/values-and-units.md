@@ -41,6 +41,7 @@ type Estimate<T = number> =
       model: ModelRef;
       assumptions: string[];
       extrapolations?: string[]; // outside the data the model was fitted on, still given
+      calibration?: { id: string; version: string }; // readiness profile used (fermentation.md)
     }
   | {
       status: 'unsupported' | 'out_of_domain' | 'insufficient_data';
@@ -77,6 +78,7 @@ interface ModelRef {
   `beyondHorizon` says the band's corner did not reach the end point within `horizonS` seconds.
   Snapshots written before `0.4.0` hold plain numbers; reading them upcasts each number to
   `{ kind: 'finite', value }` without changing its value (history.md).
+- Every number of an `ok` estimate (value and finite bounds) is finite.
 - `extrapolations` lists, as stable codes, each reason the estimate lies outside the model's
   fitted domain; the UI always shows them next to the value.
 - `assumptions`, `extrapolations`, `reason` and `missing` hold stable codes or English developer text; the UI

@@ -42,7 +42,7 @@ interface BakeEvent<P> {
 
 | Command                      | Events                                                                       | Rules                                                                                                                                                           |
 | ---------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; validates the formula, the process and their incorporations together, and projects the process                                                       |
+| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; validates the formula, the process and their incorporations together, and projects the process; optional `origin`                                    |
 | `StartStep`                  | `StepStarted`                                                                | dependencies completed, and `at` not before their latest end; not already started                                                                               |
 | `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start); a completion before it is refused (`InvalidTime`) |
 | `AdjustStep`                 | `OverrideApplied` (step duration or temperature)                             | step not completed                                                                                                                                              |
@@ -55,12 +55,23 @@ interface BakeEvent<P> {
 | `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept                                                                                                                                  |
 
 `AddObservation` accepts an optional stable `kind`. `kind: 'doughReady'` records that the baker
-judges the dough ready to bake: it needs a `stepId` (the running fermentation step), has category
-`fermentation`, and may carry a short `criterion` code (`poke`, `feel`, `time`, `other`) and free
-`text`. The time of the observation is its `occurredAt` (now). It never completes the step nor
-changes the plan. These are the calibration data of the "ready to bake" target
-(`fermentation.md`): they are kept in the bake journal and shown in the bake history. Events
-without `kind` are unchanged.
+judges the dough ready for its next stage:
+
+- It needs a `stepId` that is **running** (started, not ended) and is a **dough step** (the `asap`
+  steps between the mix and the bake, `fermentation.md`). Anything else is refused
+  (`InvalidCommand`), as is a `doughReady` on an ended bake (`BakeNotActive`).
+- The domain records its `stage` in the event: `bake` when the step is the last dough step (ready
+  to bake), `shape` otherwise (ready to shape, e.g. at the end of the bulk). Only `stage: 'bake'`
+  observations are data for the readiness profile; `shape` ones are kept for later stage models.
+  Events written before `0.6.0` have no `stage`: unknown, never pooled with `bake`.
+- Category `fermentation`, an optional short `criterion` code (`poke`, `feel`, `time`, `other`)
+  and free `text`, shown in the journal. Its time is its `occurredAt` (now).
+- It never completes the step nor changes the plan. It is kept in the journal, shown in the bake
+  history and exported (history.md).
+
+Ordinary notes (no `kind`) may target any step, in any state, during or after the bake.
+
+`rating` is within [0, 5]. A backup holding a rating outside this range is refused.
 
 Recorded times follow the finish-to-start edges of the process: a step never starts before every
 dependency has ended. Commands that would record or correct a contradicting time are refused, not

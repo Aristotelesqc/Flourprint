@@ -2,8 +2,10 @@
 
 Status: **provisional** (owner decision of 2026-10-09, ADR 0010). Model
 `flourprint.commercial-yeast` version `0.1.0`. Its parameters come from a secondary source and are
-not validated on independent dough data; every estimate says so. They are replaced as soon as
-primary data is read (#33) or the owner's recorded bakes calibrate them (#14).
+not validated on independent dough data; every estimate says so. They change only through a new
+model version that passes the promotion gates of `docs/science/fermentation-model.md` (same
+observable, protocol close to home baking, validation on independent data): reading a paper is
+not enough. Recorded bakes calibrate the readiness profile (below, #14), not these constants.
 
 ## What it predicts
 
@@ -11,7 +13,7 @@ The time a dough or a commercial-yeast preferment takes to reach its end point, 
 needed for a given schedule. One forward `simulate()` serves both directions (#29).
 
 - **Dough end point**: from the end of the mix to the start of the bake, the dough is "ready to
-  bake" (the owner's readiness decision, see Personal calibration below). Bulk, cold retard,
+  bake" (the baker's readiness decision, see Readiness profiles below). Bulk, cold retard,
   shaping and proof are counted together: the state is never reset between steps (#9).
 - **Dough steps**: the `asap` steps that come after the `mix` step and before the `bake` step
   in the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
@@ -69,36 +71,49 @@ r(T)  = exp( (Ea / R) × (1 / 294.25 K − 1 / T) )      (r = 1 at 21.1 °C)
 - The **band** is the minimum and maximum over every combination of the parameter ranges; the
   value uses the central parameters. The band is not a confidence interval.
 
-## Personal calibration: "ready to bake"
+## Readiness profiles: when the dough is ready
 
 The kinetic law and its constants (`A`, `k`, `Ea`, conversions, `τ`) say how fast `F` grows. They
-do not say when a dough is ready. That is a decision of the baker, separate from the kinetic
-parameters, kept in its own object and passed to the dough estimate:
+do not say when a dough is ready to bake. That is the baker's decision, held in a **readiness
+profile**, separate from the kinetic parameters, versioned and named in every estimate that uses
+it:
 
 ```ts
-interface PersonalCalibration {
+interface ReadinessProfile {
+  id: string;
+  version: string;
   readyProgress: number; // F* of the dough
   band: [number, number]; // low and high F* used for the band
+  basis: string; // where the values come from
 }
+type ReadinessRef = { id: string; version: string };
 ```
 
-| Item                       | Value (provisional) | Band      | Basis                                                                                                                                                                                                |
-| -------------------------- | ------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `readyProgress` of a dough | 2.0                 | 1.5 – 2.5 | the owner's TOST schedules, used as examples (not as calibration data): they imply about twice Craig's time to "doubled once" for "ready to bake" after degassing, shaping and proof (review on #33) |
-| preferment end point       | 1                   | 1 – 1     | "ripe" (above), unchanged                                                                                                                                                                            |
+| Profile                             | `readyProgress` | Band      | Basis                                                                                                                                                                                                                          |
+| ----------------------------------- | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `flourprint.model-end-point` `1`    | 1.0             | 1.0 – 1.0 | the model's own end point, Craig's "about doubled once"; **the default**, uncalibrated                                                                                                                                         |
+| `flourprint.experimental-ready` `1` | 2.0             | 1.5 – 2.5 | an assumed prior, not measured: planned TOST schedules, read as examples, imply about twice Craig's time for "ready to bake" after degassing, shaping and proof (#33). The band is a sensitivity range, not a prediction error |
 
-- "Ready to bake" is an observable decision of the baker. It is distinct from gas produced, from
-  volume and from height. It is not a universal constant of the model.
-- The value is **provisional**. It is to be recalibrated from the bake journal's "dough ready"
-  observations (bake-session.md) and then kept as a versioned personal profile, not as a change of
-  the kinetic constants.
-- The dough's duration estimate and its inverse yeast dose target `F* = readyProgress` (the
-  reference case at 1 % fresh yeast and 21.1 °C therefore takes `2 × A` hours). The preferment's
-  target stays 1.
+- A recipe selects its profile on its process (`readiness?: ReadinessRef`, process.md). Without
+  one the default applies and the dough estimate adds the assumption `readiness_default`. Choosing
+  another profile is an explicit edit of the recipe, never a silent default.
+- An unknown profile makes the dough estimate `insufficient_data` (`readiness_profile_unknown`).
+- A profile is valid when `readyProgress` and both ends of `band` are finite and positive and
+  `band[0] ≤ readyProgress ≤ band[1]`. Otherwise the dough estimate is `unsupported`
+  (`invalid_readiness_profile`), never clamped.
+- An `ok` estimate never holds a non-finite value: a central result that is not finite makes the
+  estimate `insufficient_data` (`non_finite_result`).
+- The dough estimate names its profile in `calibration` (values-and-units.md) and lists its target
+  as the assumption `ready_target_progress:<value>`. An accepted suggestion keeps its estimate,
+  so bake snapshots and the feedback export (history.md) say which profile a plan used.
 - The band of a dough estimate is the minimum and maximum over every combination of the parameter
-  ranges **and** of the two ends of `band`. The dough's estimate lists the target it used as the
-  assumption code `ready_target_progress:<value>`.
-- The Izzreen M5 fit is research only: it is not adopted and changes none of this.
+  ranges **and** of the two ends of the profile's `band`.
+- A preferment's end point stays 1 ("ripe"); it is not a profile.
+- Recalibration from the bake journal's `doughReady` observations with `stage: 'bake'`
+  (bake-session.md) produces a new profile or profile version; it never changes the kinetic
+  constants. Automatic learning is deferred.
+- "Ready to bake" is an observable decision of the baker, distinct from gas produced, volume and
+  height. The Izzreen M5 fit is research only and changes none of this.
 
 ## Dough temperature
 
@@ -148,6 +163,10 @@ Sugar and fat are the formula's `totalSugarPct` and `totalFatPct`; water is `tot
 Salt is the ingredient with id `salt` until ingredients are typed (#26); a dough without one is
 outside the salt range.
 
+The domain is checked on the central value. The band of a yeast dose is the full envelope over
+every corner: corners outside 0.01–3 % fresh-equivalent are shown as computed, never clipped, and
+the estimate then carries the assumption `band_outside_domain`.
+
 An extrapolated estimate is still given, with its reasons, because the owner's recipes need it
 (#33 objection 5); its band does not widen automatically, so the reasons are always shown next
 to it. Sugar, salt, fat and water only gate the domain: they do not change the rate (#33
@@ -169,7 +188,8 @@ objection 2).
   assumptions.
 - A `range` bound is `{ kind: 'finite', value }` or, when a corner of the band never reaches the
   end point within the search horizon (21 days), `{ kind: 'beyondHorizon', horizonS }`: a bound is
-  never a raw `Infinity`, which JSON cannot carry. A dose band with an unbounded corner has no
+  never a raw `Infinity`, which JSON cannot carry. The interface shows it as "not reached within
+  21 days" (from `horizonS`), never as "no limit". A dose band with an unbounded corner has no
   `range` and the assumption `band_unbounded`.
 - Results are `Estimate`s (values-and-units.md) carrying `ModelRef { id:
 'flourprint.commercial-yeast', version: '0.1.0' }`, assumption codes and extrapolation codes.
@@ -189,8 +209,11 @@ interface AcceptedSuggestion {
 
 - `accepted` is optional on a process step (`plannedDurationS`, seconds), on a dough ingredient
   (`bakerPct`, points) and on a component allocation (`bakerPct`, points of total flour).
-- Any other edit of that value (a typed duration or percentage, a grams edit) removes `accepted`.
-  A consumer also ignores an `accepted` whose `appliedValue` differs from the current value.
+- Any other edit of that value (a typed duration or percentage, a grams edit of that item)
+  removes `accepted`, and so does an `AdjustStep` of that step's duration during a bake (the
+  effective step; the snapshot keeps the original). A consumer ignores an `accepted` whose
+  `appliedValue` differs from the current value by more than the formula's settlement tolerance
+  (1e-9 relative): settlement and consumption compare the same way.
 - `StartBake` copies the accepted decisions of the started revision into the snapshot
   (history.md). Replay never recomputes them.
 - Out of scope: staleness digests and exported parameter files.
@@ -215,3 +238,9 @@ percentage of the planned fermentation, portable `range` bounds (values-and-unit
 optional `accepted` provenance (formula.md, process.md, history.md) and the `doughReady`
 observation kind (bake-session.md). Documents of `0.3.0` stay readable unchanged: all additions
 are optional. The kinetic model keeps its version `0.1.0`; its parameters did not change.
+
+Version `0.6.0` replaces the single personal calibration by **readiness profiles**: the default
+is the model's own end point (`readyProgress` 1), the former 2.0 target is the selectable
+`flourprint.experimental-ready` profile, and dough estimates name their profile in `calibration`.
+It also validates profiles, forbids non-finite `ok` values and discloses dose bands outside the
+domain. Documents of `0.5.0` stay readable; a recipe without `readiness` now uses the default.

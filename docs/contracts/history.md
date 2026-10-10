@@ -24,8 +24,13 @@ interface BakeStartedPayload {
   initialProjection: Projection;
   estimates: Record<StepId, Estimate>; // accepted suggestion of the step, else unsupported
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
+  origin?: 'physical' | 'simulation'; // from StartBake; absent = unknown (written before 0.6.0)
 }
 ```
+
+`origin` says whether the bake was a real one or a simulation. It is set when the bake starts and
+never inferred later from the device that holds or exports it: restoring a backup on another
+device keeps it.
 
 `usedProperties` contains only the properties actually consumed by the calculation.
 
@@ -90,6 +95,7 @@ interface FeedbackExport {
 interface BakeDigest {
   bakeId: string;
   status: 'active' | 'finished' | 'abandoned';
+  origin: 'physical' | 'simulation' | 'unknown';
   recipe: { id: string; name?: string; version: number };
   startedAt?: Instant;
   endedAt?: Instant;
@@ -114,6 +120,7 @@ interface BakeDigest {
     elapsedInStepS?: number; // at − step start, when the step had started
     category: ObservationCategory;
     kind?: ObservationKind;
+    stage?: 'shape' | 'bake'; // doughReady only
     criterion?: string;
     text?: string;
     rating?: number;
@@ -131,8 +138,7 @@ interface BakeDigest {
 
 - The digest is derived from the events by the application, never by the current engine, and is
   never read back: the `backup` part is the record. Durations are differences of recorded instants.
-- The PC shell and the phone keep separate databases: each export says where it comes from
-  (`device.platform`). The simulation mode of #8 (not built yet) will add its mode to each
-  digest, so simulated bakes are exported too but never mixed with real ones.
+- `device` describes the exporting device only. Whether a bake was real is its own `origin`; an
+  `unknown` origin never enters a calibration as a measured bake.
 - The export is offered as one action that copies the document and, where the platform can,
   saves it as a file. Nothing is sent anywhere by the app.
