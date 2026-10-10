@@ -14,15 +14,57 @@ import {
 import { useRef, useState } from 'react';
 import { importRecipes } from '@flourprint/core/application';
 import { useMessages } from '../i18n/use-messages';
+import { feedbackFileName, feedbackJson } from '../services/feedback';
 import { useServices } from '../services/services';
 
 /** Advanced menu: recipe import, diagnostics and build details, kept off the main screens. */
 export const AdvancedPage = () => {
   const { t, error } = useMessages();
-  const { storage, recipes } = useServices();
+  const services = useServices();
+  const { storage, recipes, platform } = services;
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<{ text: string; alert: boolean }>();
+
+  const [exporting, setExporting] = useState(false);
+  const [exported, setExported] = useState<{ text: string; alert: boolean }>();
+
+  /** Everything recorded, for review by a person or an agent (history.md, feedback export). */
+  const exportAll = async (target: 'clipboard' | 'file') => {
+    setExporting(true);
+    setExported(undefined);
+    try {
+      const data = await feedbackJson(services);
+      if (!data) {
+        setExported({ text: t('advanced.exportFailed'), alert: true });
+        return;
+      }
+      const size = Math.ceil(new Blob([data.json]).size / 1024);
+      if (target === 'clipboard') {
+        try {
+          await navigator.clipboard.writeText(data.json);
+        } catch (failure) {
+          console.error(failure);
+          setExported({ text: t('advanced.copyFailed'), alert: true });
+          return;
+        }
+        setExported({ text: t('advanced.copied', { size, bakes: data.bakes }), alert: false });
+      } else {
+        const url = URL.createObjectURL(new Blob([data.json], { type: 'application/json' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = feedbackFileName(services.clock.now());
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        setExported({ text: t('advanced.saved', { size, bakes: data.bakes }), alert: false });
+      }
+    } catch (failure) {
+      console.error(failure);
+      setExported({ text: t('advanced.exportFailed'), alert: true });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   /** Additive import (persistence.md): recipes already here are skipped, never overwritten. */
   const importFile = async (file: File) => {
@@ -68,6 +110,31 @@ export const AdvancedPage = () => {
       </IonHeader>
       <IonContent>
         <IonList>
+          <IonListHeader>
+            <IonLabel>{t('advanced.feedback')}</IonLabel>
+          </IonListHeader>
+          <IonItem button detail disabled={exporting} onClick={() => void exportAll('clipboard')}>
+            <IonLabel>
+              {exporting ? t('advanced.exporting') : t('advanced.copyAll')}
+              <p>{t('advanced.copyAllHint')}</p>
+            </IonLabel>
+          </IonItem>
+          {/* The Android web view has no download: the clipboard is the way out there. */}
+          {platform !== 'android' && (
+            <IonItem button detail disabled={exporting} onClick={() => void exportAll('file')}>
+              <IonLabel>{t('advanced.saveAll')}</IonLabel>
+            </IonItem>
+          )}
+          {exported && (
+            <IonItem lines="none">
+              <IonLabel
+                role={exported.alert ? 'alert' : 'status'}
+                className={exported.alert ? 'text-alert' : ''}
+              >
+                {exported.text}
+              </IonLabel>
+            </IonItem>
+          )}
           <IonListHeader>
             <IonLabel>{t('advanced.recipes')}</IonLabel>
           </IonListHeader>

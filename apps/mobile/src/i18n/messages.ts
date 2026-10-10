@@ -229,6 +229,17 @@ export const en = {
   'formula.stat.fat': 'Fat',
   'formula.stat.sugar': 'Sugar',
   'formula.enrichment.incomplete': 'Unknown for: {ingredients}.',
+  'advanced.feedback': 'Data for review',
+  'advanced.copyAll': 'Copy all my data',
+  'advanced.copyAllHint':
+    'Recipes, bakes, notes and timings in one block, to paste to a person or an AI agent.',
+  'advanced.saveAll': 'Save all my data as a file',
+  'advanced.exporting': 'Preparing…',
+  'advanced.copied':
+    'Copied: {size} KB, {bakes, plural, =0 {no bake} one {# bake} other {# bakes}}.',
+  'advanced.saved': 'Saved: {size} KB, {bakes, plural, =0 {no bake} one {# bake} other {# bakes}}.',
+  'advanced.copyFailed': 'The copy failed.',
+  'advanced.exportFailed': 'The data could not be read.',
   'advanced.recipes': 'Recipes',
   'advanced.import': 'Import recipes…',
   'advanced.importHint':
@@ -587,6 +598,18 @@ export const fr: Catalog = {
   'formula.stat.fat': 'Matières grasses',
   'formula.stat.sugar': 'Sucres',
   'formula.enrichment.incomplete': 'Inconnu pour : {ingredients}.',
+  'advanced.feedback': 'Données pour analyse',
+  'advanced.copyAll': 'Copier toutes mes données',
+  'advanced.copyAllHint':
+    'Recettes, cuissons, notes et minutages en un seul bloc, à coller à une personne ou à un agent IA.',
+  'advanced.saveAll': 'Enregistrer toutes mes données dans un fichier',
+  'advanced.exporting': 'Préparation…',
+  'advanced.copied':
+    'Copié : {size} Ko, {bakes, plural, =0 {aucune cuisson} one {# cuisson} other {# cuissons}}.',
+  'advanced.saved':
+    'Enregistré : {size} Ko, {bakes, plural, =0 {aucune cuisson} one {# cuisson} other {# cuissons}}.',
+  'advanced.copyFailed': 'La copie a échoué.',
+  'advanced.exportFailed': 'Les données n’ont pas pu être lues.',
   'advanced.recipes': 'Recettes',
   'advanced.import': 'Importer des recettes…',
   'advanced.importHint':

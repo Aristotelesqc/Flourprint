@@ -23,10 +23,13 @@ export interface Services {
   readonly clock: Clock;
   readonly ids: IdGenerator;
   readonly storage: 'sqlite' | 'memory';
+  /** Where the app runs: the phone, the PC shell (ADR 0011) or a plain browser. */
+  readonly platform: 'android' | 'desktop' | 'web';
   /** SQLite library version, for the device checks page. */
   readonly sqliteVersion: () => Promise<string | undefined>;
 }
 
+const PLATFORM = Capacitor.getPlatform() === 'android' ? 'android' : 'web';
 const clock: Clock = { now: () => new Date().toISOString() as Instant };
 const ids: IdGenerator = { next: () => crypto.randomUUID() };
 
@@ -62,6 +65,7 @@ export const createServices = async (): Promise<Services> => {
       clock,
       ids,
       storage: 'sqlite',
+      platform: PLATFORM,
       sqliteVersion: async () =>
         (await db.value.driver.query<{ v: string }>('SELECT sqlite_version() AS v'))[0]?.v,
     };
@@ -80,6 +84,7 @@ export const createServices = async (): Promise<Services> => {
       clock,
       ids,
       storage: 'sqlite',
+      platform: 'desktop',
       sqliteVersion: async () =>
         (await db.value.driver.query<{ v: string }>('SELECT sqlite_version() AS v'))[0]?.v,
     };
@@ -92,6 +97,7 @@ export const createServices = async (): Promise<Services> => {
     clock,
     ids,
     storage: 'memory',
+    platform: 'web',
     sqliteVersion: async () => undefined,
   };
 };

@@ -94,6 +94,42 @@ test('dough ready is recorded on a running fermentation step without ending it',
   await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
 });
 
+test('copies all data for review, with the bake digest and its notes', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await page.getByRole('button', { name: 'Note', exact: true }).click();
+  await page.locator('textarea:visible').fill('Bulles fines');
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByText('Bulles fines')).toBeVisible();
+
+  // In-app navigation: the browser build keeps its data in memory only.
+  const advanced = page.getByLabel('Avancé').first();
+  while (!(await advanced.isVisible())) {
+    await page.locator('ion-back-button:visible').last().click();
+    await page.waitForTimeout(500);
+  }
+  await advanced.click();
+  await page.getByText('Copier toutes mes données').click();
+  await expect(page.getByRole('status')).toContainText('1 cuisson');
+  const copied = JSON.parse(await page.evaluate(() => navigator.clipboard.readText())) as {
+    kind: string;
+    device: { platform: string; timeZone: string };
+    bakes: { status: string; observations: { stepId?: string; text?: string }[] }[];
+  };
+  expect(copied.kind).toBe('flourprint-feedback');
+  expect(copied.device).toMatchObject({ platform: 'web', timeZone: 'America/Toronto' });
+  expect(copied.bakes[0]?.status).toBe('active');
+  expect(copied.bakes[0]?.observations).toEqual([
+    expect.objectContaining({ stepId: 'poolish', text: 'Bulles fines' }),
+  ]);
+});
+
 test('captures the main screens in light and dark', async ({ page }, testInfo) => {
   for (const colorScheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme });
