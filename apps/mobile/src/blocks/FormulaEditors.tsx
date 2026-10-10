@@ -198,6 +198,101 @@ export const AddIngredient = ({
   );
 };
 
+/** Flours with a display name (formula ids); any other name can be typed. */
+export const KNOWN_FLOURS: readonly string[] = [
+  'bread-flour',
+  'flour',
+  'whole-wheat',
+  'spelt-flour',
+  'brown-flour',
+  'tipo-00-flour',
+  'cornmeal',
+];
+
+/**
+ * Adds a flour to the blend at 0 %: the blend no longer adds up to 100 % until the shares are
+ * set, which a draft allows and the recipe check reports (drafts.md).
+ */
+export const AddFlour = ({
+  formula,
+  onEdit,
+}: {
+  formula: Formula;
+  onEdit: (edit: FormulaEdit) => boolean;
+}) => {
+  const { t, name } = useMessages();
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [choice, setChoice] = useState('');
+  const [custom, setCustom] = useState('');
+  const taken = new Set([
+    ...formula.flours.map((f) => f.id),
+    ...formula.ingredients.map((i) => i.id),
+    ...formula.components.map((c) => c.id),
+  ]);
+  const known = KNOWN_FLOURS.filter((f) => !taken.has(f));
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="fp-reset min-h-12 w-full px-4 text-left font-semibold text-accent-text"
+        onClick={() => setOpen(true)}
+      >
+        {t('formula.add.flour')}
+      </button>
+    );
+  }
+  const flourId = choice || custom.trim();
+  const add = () => {
+    if (!flourId || taken.has(flourId)) return;
+    if (
+      onEdit({ type: 'SetFlourBlend', flours: [...formula.flours, { id: flourId, sharePct: 0 }] })
+    ) {
+      setOpen(false);
+      setChoice('');
+      setCustom('');
+    }
+  };
+  return (
+    <div className="flex flex-col gap-2 px-4 py-3">
+      <label htmlFor={`${id}-flour`} className="text-sm font-semibold">
+        {t('formula.add.flour')}
+      </label>
+      <select
+        id={`${id}-flour`}
+        className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2"
+        value={choice}
+        onChange={(event) => setChoice(event.target.value)}
+      >
+        <option value="">{t('formula.add.other')}</option>
+        {known.map((f) => (
+          <option key={f} value={f}>
+            {name(f)}
+          </option>
+        ))}
+      </select>
+      {choice === '' && (
+        <input
+          aria-label={t('formula.add.name')}
+          placeholder={t('formula.add.name')}
+          className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2.5"
+          value={custom}
+          onChange={(event) => setCustom(event.target.value)}
+        />
+      )}
+      <span className="text-sm text-muted">{t('formula.add.flourHint')}</span>
+      <span className="flex gap-2">
+        <IonButton onClick={add} disabled={!flourId}>
+          {t('formula.add.confirm')}
+        </IonButton>
+        <IonButton fill="outline" onClick={() => setOpen(false)}>
+          {t('formula.add.cancel')}
+        </IonButton>
+      </span>
+    </div>
+  );
+};
+
 /** Buttons that add a preparation and the step that makes it. */
 export const AddPreparation = ({
   formula,

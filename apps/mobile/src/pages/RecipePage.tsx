@@ -7,22 +7,24 @@ import {
   IonHeader,
   IonPage,
   IonToolbar,
+  useIonAlert,
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { saveRevision } from '@flourprint/core/application';
+import { saveDraft, type Draft } from '@flourprint/core/application';
 import {
-  applyFormulaEdit,
+  applyDraftFormulaEdit,
+  checkRecipe,
   defaultVariant,
   resolveFormula,
-  validateRecipe,
   type BakeCommandPayload,
   type BakeSummary,
   type Recipe,
   type RecipeFamily,
   type DomainError,
+  type Formula,
   type FormulaEdit,
   type Process,
   type ProjectionMode,
@@ -33,7 +35,7 @@ import { HistorySection } from '../blocks/HistorySection';
 import { ProcessSection } from '../blocks/ProcessSection';
 import { useMessages } from '../i18n/use-messages';
 import { sendBakeCommand } from '../services/bakes';
-import { useDrafts, type RecipeDraft } from '../services/drafts';
+import { RecipeChecks } from '../blocks/RecipeChecks';
 import { useServices } from '../services/services';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
@@ -41,19 +43,30 @@ import { Segmented } from '../ui/Segmented';
 
 type Tab = 'formula' | 'process' | 'history';
 
+interface Working {
+  readonly formula: Formula;
+  readonly process: Process;
+}
+
 /**
- * A recipe: formula, process and history tabs over one draft (#8). The draft follows the policy
- * of `services/drafts`; only an explicit save writes a new immutable revision (#7, #23).
+ * A recipe, or a new recipe being built: formula, process and history tabs over one draft (#8).
+ * Edits are free and the draft is stored after each one (drafts.md); the recipe is checked on
+ * demand and before it is saved. Only a save writes a new immutable revision (#7, #23).
  */
 export const RecipePage = () => {
-  const recipeId = useParams<{ recipeId: string }>().recipeId ?? '';
+  const params = useParams<{ recipeId?: string; draftId?: string }>();
+  const draftId = params.draftId;
+  const recipeId = params.recipeId ?? '';
   const services = useServices();
-  const drafts = useDrafts();
   const router = useIonRouter();
+  const [presentAlert] = useIonAlert();
   const { t, error } = useMessages();
   const [tab, setTab] = useState<Tab>('formula');
   const [base, setBase] = useState<{ name: string; revision: Revision }>();
-  const [draft, setDraft] = useState<RecipeDraft>();
+  // The stored draft: absent on a recipe until its first edit.
+  const [stored, setStored] = useState<Draft>();
+  const [checking, setChecking] = useState(false);
+  const saving = useRef(Promise.resolve());
   const [bakes, setBakes] = useState<readonly BakeSummary[]>([]);
   const [failure, setFailure] = useState<DomainError>();
   const [storageFailed, setStorageFailed] = useState(false);
@@ -73,6 +86,21 @@ export const RecipePage = () => {
   useEffect(() => {
     void (async () => {
       try {
+        if (draftId !== undefined) {
+          // A new recipe being built (blank or from a template).
+          const found = await services.recipes.getDraft(draftId);
+          if (!found) {
+            setLoading('missing');
+            return;
+          }
+          if (found.origin.kind === 'revision') {
+            router.push(`/recipes/${found.origin.recipeId}`, 'none', 'replace');
+            return;
+          }
+          setStored(found);
+          setLoading('ready');
+          return;
+        }
         const recipe = await services.recipes.getRecipe(recipeId);
         const revision = recipe
           ? await services.recipes.getRevision(recipeId, recipe.headVersion)
@@ -81,9 +109,12 @@ export const RecipePage = () => {
           setLoading(revision && !revision.ok ? 'failed' : 'missing');
           return;
         }
-        const { formula, process } = revision.value;
         setBase({ name: recipe.name, revision: revision.value });
-        setDraft(drafts.get(recipeId, revision.value.version) ?? { formula, process });
+        // At most one draft per recipe: opening the recipe resumes it (drafts.md).
+        const resumed = (await services.recipes.listDrafts()).find(
+          (d) => d.origin.kind === 'revision' && d.origin.recipeId === recipeId,
+        );
+        setStored(resumed);
         setLoading('ready');
         await loadFamily(recipe);
       } catch (error) {
@@ -91,7 +122,7 @@ export const RecipePage = () => {
         setLoading('failed');
       }
     })();
-  }, [recipeId, services]);
+  }, [recipeId, draftId, services]);
 
   /** The variants of the recipe's family, if it belongs to one (persistence.md). */
   const loadFamily = async (recipe: Recipe) => {
@@ -146,8 +177,11 @@ export const RecipePage = () => {
   }, [services, recipeId]);
   useIonViewWillEnter(() => void refreshBakes(), [refreshBakes]);
 
+  const draft: Working | undefined = stored ?? base?.revision;
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
-  if (!base || !draft || !resolved) {
+  const issues = useMemo(() => (draft ? checkRecipe(draft.formula, draft.process) : []), [draft]);
+  const newRecipe = draftId !== undefined;
+  if ((!base && !newRecipe) || !draft || !resolved) {
     return (
       <IonPage>
         <IonHeader className="ion-no-border">
@@ -167,8 +201,10 @@ export const RecipePage = () => {
       </IonPage>
     );
   }
-  const dirty = draft.formula !== base.revision.formula || draft.process !== base.revision.process;
+  const dirty = stored !== undefined;
+  const name = stored?.name ?? base?.name ?? '';
   const active = bakes.find((b) => b.status === 'active');
+  const blocking = issues.filter((i) => i.severity === 'blocking').length;
 
   // A double tap can reach a second button after the first navigation: never stack the same page.
   const openBake = (bakeId: string) => {
@@ -176,68 +212,104 @@ export const RecipePage = () => {
     if (window.location.pathname !== path) router.push(path);
   };
 
-  const update = (next: RecipeDraft) => {
-    setDraft(next);
-    drafts.set(recipeId, base.revision.version, next);
+  /** Stores the draft after every edit, one write at a time; a failure is shown, never lost. */
+  const persist = (next: Draft) => {
+    saving.current = saving.current
+      .then(() => services.recipes.saveDraft(next))
+      .then(() => setStorageFailed(false))
+      .catch((cause: unknown) => {
+        console.error(cause);
+        setStorageFailed(true);
+      });
+  };
+
+  const update = (next: Working, rename?: string) => {
+    const now = services.clock.now();
+    const doc: Draft = stored
+      ? { ...stored, ...next, ...(rename === undefined ? {} : { name: rename }), updatedAt: now }
+      : {
+          id: services.ids.next(),
+          name: rename ?? name,
+          // Only a recipe has no stored draft yet: its first edit starts one.
+          origin: {
+            kind: 'revision',
+            recipeId,
+            baseVersion: base?.revision.version ?? 0,
+          },
+          ...next,
+          createdAt: now,
+          updatedAt: now,
+        };
+    setStored(doc);
+    persist(doc);
     setFailure(undefined);
     setNotice(undefined);
   };
 
   const editFormula = (command: FormulaEdit): boolean => {
-    const next = applyFormulaEdit(draft.formula, command);
+    const next = applyDraftFormulaEdit(draft.formula, command);
     if (next.ok) update({ ...draft, formula: next.value });
     else setFailure(next.error);
     return next.ok;
   };
 
-  /** A formula edit and the process change it needs (a preparation's step), validated together. */
+  /** A formula edit and the process change it needs (a preparation's step). */
   const editStructure = (command: FormulaEdit, nextProcess?: Process): boolean => {
-    const next = applyFormulaEdit(draft.formula, command);
+    const next = applyDraftFormulaEdit(draft.formula, command);
     if (!next.ok) {
       setFailure(next.error);
       return false;
     }
-    const process = nextProcess ?? draft.process;
-    const valid = validateRecipe(next.value, process);
-    if (!valid.ok) {
-      setFailure(valid.error);
-      return false;
-    }
-    update({ formula: next.value, process });
+    update({ formula: next.value, process: nextProcess ?? draft.process });
     return true;
   };
 
   const changeDuration = (stepId: string, durationS: number | undefined): boolean => {
-    const process = {
-      ...draft.process,
-      steps: draft.process.steps.map((s) => {
-        if (s.id !== stepId) return s;
-        // A typed duration is no longer an applied suggestion (fermentation.md).
-        const { plannedDurationS: _, accepted: __, ...rest } = s;
-        return durationS === undefined ? rest : { ...rest, plannedDurationS: durationS };
-      }),
-    };
-    const valid = validateRecipe(draft.formula, process);
-    if (valid.ok) update({ ...draft, process });
-    else setFailure(valid.error);
-    return valid.ok;
+    update({
+      ...draft,
+      process: {
+        ...draft.process,
+        steps: draft.process.steps.map((s) => {
+          if (s.id !== stepId) return s;
+          // A typed duration is no longer an applied suggestion (fermentation.md).
+          const { plannedDurationS: _, accepted: __, ...rest } = s;
+          return durationS === undefined ? rest : { ...rest, plannedDurationS: durationS };
+        }),
+      },
+    });
+    return true;
   };
 
   const changeProcess = (process: Process): boolean => {
-    const valid = validateRecipe(draft.formula, process);
-    if (valid.ok) update({ ...draft, process });
-    else setFailure(valid.error);
-    return valid.ok;
+    update({ ...draft, process });
+    return true;
   };
 
+  const rename = () =>
+    void presentAlert({
+      header: t('draft.rename'),
+      inputs: [{ name: 'name', type: 'text', value: name }],
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        {
+          text: t('bake.save'),
+          handler: (values: { name: string }) => {
+            const next = values.name.trim();
+            if (next === '') return false;
+            update(draft, next);
+            return true;
+          },
+        },
+      ],
+    });
+
+  /** Saves the draft as a recipe or a version; refused, with the list, while something blocks. */
   const save = async () => {
+    if (!stored) return;
+    await saving.current;
     const result = await writes.run(() =>
-      saveRevision(services.recipes, {
-        recipeId,
-        name: base.name,
-        expectedHead: base.revision.version,
-        formula: draft.formula,
-        process: draft.process,
+      saveDraft(services.recipes, stored, {
+        newRecipeId: services.ids.next(),
         createdAt: services.clock.now(),
       }),
     );
@@ -249,22 +321,48 @@ export const RecipePage = () => {
     setStorageFailed(false);
     const saved = result.value;
     if (!saved.ok) {
-      setFailure(saved.error);
+      if (saved.error.code === 'RecipeHasBlockingIssues') setChecking(true);
+      else setFailure(saved.error);
       return;
     }
-    drafts.clear(recipeId);
-    setBase({ name: base.name, revision: saved.value });
-    setDraft({ formula: saved.value.formula, process: saved.value.process });
+    setStored(undefined);
     setNotice(t('draft.saved', { version: saved.value.version }));
+    if (newRecipe) {
+      router.push(`/recipes/${saved.value.recipeId}`, 'none', 'replace');
+      return;
+    }
+    setBase({ name: stored.name, revision: saved.value });
   };
 
-  const discard = () => {
-    drafts.clear(recipeId);
-    setDraft({ formula: base.revision.formula, process: base.revision.process });
-    setFailure(undefined);
-  };
+  const discard = () =>
+    void presentAlert({
+      header: t(newRecipe ? 'draft.delete' : 'draft.discard'),
+      message: t(newRecipe ? 'draft.deleteConfirm' : 'draft.discardConfirm'),
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        {
+          text: t(newRecipe ? 'draft.delete' : 'draft.discard'),
+          role: 'destructive',
+          handler: () => {
+            const id = stored?.id;
+            setStored(undefined);
+            setFailure(undefined);
+            if (id !== undefined) {
+              saving.current = saving.current
+                .then(() => services.recipes.deleteDraft(id))
+                .catch((cause: unknown) => {
+                  console.error(cause);
+                  setStorageFailed(true);
+                });
+            }
+            if (newRecipe) router.push('/recipes', 'back', 'replace');
+          },
+        },
+      ],
+    });
 
   const startBake = async (mode: ProjectionMode) => {
+    if (!base) return;
     const { revision } = base;
     const ref = { id: revision.recipeId, version: revision.version };
     if (pendingStart.current) setNotice(t('recipe.retryStart'));
@@ -310,25 +408,34 @@ export const RecipePage = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/recipes" />
           </IonButtons>
-          <div className="min-w-0 px-1">
-            <div className="truncate text-[21px] font-bold">{base.name}</div>
+          <button
+            type="button"
+            className="fp-reset min-w-0 px-1 text-left"
+            aria-label={t('draft.rename')}
+            onClick={rename}
+          >
+            <div className="truncate text-[21px] font-bold">{name}</div>
             <div className="text-[13px] text-muted">
-              {t(dirty ? 'recipe.versionModified' : 'recipe.version', {
-                version: base.revision.version,
-              })}
+              {base
+                ? t(dirty ? 'recipe.versionModified' : 'recipe.version', {
+                    version: base.revision.version,
+                  })
+                : t('draft.newRecipe')}
             </div>
-          </div>
-          <IonButtons slot="end">
-            <IonButton
-              fill="solid"
-              shape="round"
-              color="primary"
-              className="pr-2"
-              onClick={() => (active ? openBake(active.bakeId) : setTab('process'))}
-            >
-              {active ? t('recipe.baking') : t('recipe.bake')}
-            </IonButton>
-          </IonButtons>
+          </button>
+          {base && (
+            <IonButtons slot="end">
+              <IonButton
+                fill="solid"
+                shape="round"
+                color="primary"
+                className="pr-2"
+                onClick={() => (active ? openBake(active.bakeId) : setTab('process'))}
+              >
+                {active ? t('recipe.baking') : t('recipe.bake')}
+              </IonButton>
+            </IonButtons>
+          )}
         </IonToolbar>
         {family && (
           <IonToolbar>
@@ -348,7 +455,10 @@ export const RecipePage = () => {
           <div className="px-4 pb-2">
             <Segmented
               value={tab}
-              options={(['formula', 'process', 'history'] as const).map((value) => ({
+              options={(base
+                ? (['formula', 'process', 'history'] as const)
+                : (['formula', 'process'] as const)
+              ).map((value) => ({
                 value,
                 label: t(`recipe.tab.${value}`),
               }))}
@@ -378,45 +488,62 @@ export const RecipePage = () => {
 
         {/* Tabs stay mounted: a draft being typed and the weighing checklist survive a switch. */}
         <div hidden={tab !== 'formula'}>
-          {resolved.ok ? (
-            <FormulaSection
-              formula={draft.formula}
-              resolved={resolved.value}
-              onEdit={editFormula}
-              base={base.revision.formula}
-              process={draft.process}
-              now={services.clock.now()}
-              onStructure={editStructure}
-              onProcess={changeProcess}
-            />
-          ) : (
-            <p role="alert">{error(resolved.error)}</p>
-          )}
+          <FormulaSection
+            formula={draft.formula}
+            {...(resolved.ok ? { resolved: resolved.value } : {})}
+            onEdit={editFormula}
+            base={base?.revision.formula ?? draft.formula}
+            process={draft.process}
+            now={services.clock.now()}
+            onStructure={editStructure}
+            onProcess={changeProcess}
+          />
         </div>
         <div hidden={tab !== 'process'}>
           <ProcessSection
             process={draft.process}
             onDurationChange={changeDuration}
-            canStart={!dirty && !writes.busy}
+            canStart={base !== undefined && !dirty && !writes.busy}
             onStart={(mode) => void startBake(mode)}
             {...(active ? { activeBakeId: active.bakeId } : {})}
             onOpenBake={openBake}
           />
         </div>
-        <div hidden={tab !== 'history'}>
-          <HistorySection bakes={bakes} />
-        </div>
+        {base && (
+          <div hidden={tab !== 'history'}>
+            <HistorySection bakes={bakes} />
+          </div>
+        )}
+        <RecipeChecks
+          open={checking}
+          issues={issues}
+          process={draft.process}
+          onClose={() => setChecking(false)}
+        />
       </IonContent>
       {dirty && (
         <IonFooter>
           <IonToolbar>
-            <div className="flex items-center gap-2 px-3 py-1.5">
-              <span className="flex-1 text-sm text-muted">{t('draft.unsaved')}</span>
+            <div className="flex flex-wrap items-center gap-2 px-3 py-1.5">
+              <span className="flex-1 text-sm text-muted">
+                {t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
+              </span>
+              <IonButton
+                fill="clear"
+                color={blocking > 0 ? 'danger' : 'medium'}
+                onClick={() => setChecking(true)}
+              >
+                {issues.length === 0
+                  ? t('check.button')
+                  : t('check.buttonCount', { count: issues.length })}
+              </IonButton>
               <IonButton fill="outline" onClick={discard}>
-                {t('draft.discard')}
+                {t(newRecipe ? 'draft.delete' : 'draft.discard')}
               </IonButton>
               <IonButton disabled={writes.busy} onClick={() => void save()}>
-                {t('draft.save', { version: base.revision.version + 1 })}
+                {newRecipe
+                  ? t('draft.saveRecipe')
+                  : t('draft.save', { version: (base?.revision.version ?? 0) + 1 })}
               </IonButton>
             </div>
           </IonToolbar>

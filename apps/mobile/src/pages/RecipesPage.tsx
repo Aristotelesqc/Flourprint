@@ -1,13 +1,25 @@
-import { IonContent, IonButton, IonPage, IonRouterLink, useIonViewWillEnter } from '@ionic/react';
+import {
+  IonContent,
+  IonButton,
+  IonPage,
+  IonRouterLink,
+  useIonRouter,
+  useIonViewWillEnter,
+} from '@ionic/react';
 import { useState } from 'react';
+import { blankRecipe, nextDraftName, type Draft } from '@flourprint/core/application';
 import {
   defaultVariant,
   resolveFormula,
   type BakeState,
   type Instant,
   type Recipe,
+  type Formula,
+  type Process,
+  type RecipeTemplate,
   type Revision,
 } from '@flourprint/core/domain';
+import { NewRecipe, useTemplateName } from '../blocks/NewRecipe';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatRelative } from '../i18n/time';
 import { bakeView } from '../services/bake-view';
@@ -30,7 +42,12 @@ interface Card {
  */
 export const RecipesPage = () => {
   const services = useServices();
-  const { t } = useMessages();
+  const router = useIonRouter();
+  const { t, locale } = useMessages();
+  const templateName = useTemplateName();
+  const [drafts, setDrafts] = useState<readonly Draft[]>([]);
+  const [choosing, setChoosing] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [cards, setCards] = useState<readonly Card[]>();
   const [running, setRunning] = useState<readonly BakeState[]>([]);
   // Every recipe, family variants included: a running bake may use a variant not shown as a card.
@@ -72,6 +89,7 @@ export const RecipesPage = () => {
       ),
     );
     const active = await activeBakes(services);
+    setDrafts(await services.recipes.listDrafts());
     setRunning(active.flatMap(({ result }) => (result.ok ? [result.value] : [])));
     setUnreadable(active.filter(({ result }) => !result.ok).length);
     setReadFailed(false);
@@ -84,6 +102,45 @@ export const RecipesPage = () => {
       setReadFailed(true);
     });
   });
+
+  /** A new draft named "<base> <n>", stored at once, then opened (drafts.md). */
+  const create = async (
+    base: string,
+    start: { formula: Formula; process: Process },
+    origin: Draft['origin'],
+  ) => {
+    setCreating(true);
+    try {
+      const taken = [
+        ...(await services.recipes.listRecipes()).map((r) => r.name),
+        ...(await services.recipes.listDrafts()).map((d) => d.name),
+      ];
+      const now = services.clock.now();
+      const draft: Draft = {
+        id: services.ids.next(),
+        name: nextDraftName(base, taken),
+        origin,
+        // A copy: the template itself never changes (drafts.md).
+        formula: structuredClone(start.formula),
+        process: structuredClone(start.process),
+        createdAt: now,
+        updatedAt: now,
+      };
+      await services.recipes.saveDraft(draft);
+      setChoosing(false);
+      router.push(`/drafts/${draft.id}`);
+    } catch (error) {
+      console.error(error);
+      setReadFailed(true);
+    } finally {
+      setCreating(false);
+    }
+  };
+  const fromTemplate = (template: RecipeTemplate) =>
+    void create(templateName(template.id), template, {
+      kind: 'template',
+      template: { id: template.id, version: template.version },
+    });
 
   return (
     <IonPage>
@@ -128,11 +185,48 @@ export const RecipesPage = () => {
           {running.map((bake) => (
             <RunningBake key={bake.bakeId} bake={bake} now={now} recipes={allRecipes} />
           ))}
+          <IonButton expand="block" fill="outline" onClick={() => setChoosing(true)}>
+            {t('recipes.new')}
+          </IonButton>
+          {drafts.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <h2 className="m-0 px-1 text-sm font-bold tracking-wider text-muted uppercase">
+                {t('recipes.drafts')}
+              </h2>
+              {drafts.map((draft) => (
+                <IonRouterLink
+                  key={draft.id}
+                  routerLink={
+                    draft.origin.kind === 'revision'
+                      ? `/recipes/${draft.origin.recipeId}`
+                      : `/drafts/${draft.id}`
+                  }
+                  className="text-ink"
+                >
+                  <div className="flex items-baseline justify-between gap-2 rounded-2xl border border-dashed border-line bg-surface px-4 py-3">
+                    <span className="font-semibold">{draft.name}</span>
+                    <span className="shrink-0 text-[13px] text-muted">
+                      {draft.origin.kind === 'revision'
+                        ? t('recipes.draftEdits')
+                        : formatRelative(draft.updatedAt, now, locale)}
+                    </span>
+                  </div>
+                </IonRouterLink>
+              ))}
+            </section>
+          )}
           {cards?.length === 0 && <p className="text-muted">{t('recipes.empty')}</p>}
           {cards?.map((card) => (
             <RecipeCard key={card.recipe.id} card={card} now={now} />
           ))}
         </div>
+        <NewRecipe
+          open={choosing}
+          busy={creating}
+          onBlank={() => void create(t('draft.blankName'), blankRecipe(), { kind: 'blank' })}
+          onTemplate={fromTemplate}
+          onClose={() => setChoosing(false)}
+        />
       </IonContent>
     </IonPage>
   );

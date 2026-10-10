@@ -6,7 +6,6 @@ import type {
   Process,
   ResolvedFormula,
 } from '@flourprint/core/domain';
-import { editableNumber } from '../i18n/numbers';
 import { useMessages } from '../i18n/use-messages';
 import { NumberField } from '../ui/Field';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
@@ -15,6 +14,7 @@ import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { FermentationCard } from './Fermentation';
 import {
+  AddFlour,
   AddIngredient,
   AddPreparation,
   ChangesSummary,
@@ -25,7 +25,8 @@ import {
 
 interface Props {
   readonly formula: Formula;
-  readonly resolved: ResolvedFormula;
+  /** Absent when the draft's formula cannot be resolved yet (drafts.md): grams show as "—". */
+  readonly resolved?: ResolvedFormula;
   /** The saved revision's formula, to show what the draft changes. */
   readonly base: Formula;
   readonly process: Process;
@@ -54,7 +55,7 @@ export const FormulaSection = ({
   onStructure,
   onProcess,
 }: Props) => {
-  const { t, grams, pct, name, componentName, locale } = useMessages();
+  const { t, grams, pct, name, componentName } = useMessages();
   const componentLabel = (id: string) => {
     const component = formula.components.find((c) => c.id === id);
     return component ? componentName(formula, component) : name(id);
@@ -66,24 +67,26 @@ export const FormulaSection = ({
 
   const rescale = (next: Anchor) => onEdit({ type: 'SetAnchor', mode: 'rescale', anchor: next });
 
-  const finalMix: { key: string; label: string; grams: number }[] = [
-    ...Object.entries(resolved.finalMix.componentMasses).map(([id, g]) => ({
-      key: `component:${id}`,
-      label: componentLabel(id),
-      grams: g,
-    })),
-    ...Object.entries(resolved.finalMix.flourByFlour).map(([id, g]) => ({
-      key: `flour:${id}`,
-      label: name(id),
-      grams: g,
-    })),
-    { key: 'water', label: name('water'), grams: resolved.finalMix.water },
-    ...Object.entries(resolved.finalMix.grams).map(([id, g]) => ({
-      key: `ingredient:${id}`,
-      label: name(id),
-      grams: g,
-    })),
-  ];
+  const finalMix: { key: string; label: string; grams: number }[] = !resolved
+    ? []
+    : [
+        ...Object.entries(resolved.finalMix.componentMasses).map(([id, g]) => ({
+          key: `component:${id}`,
+          label: componentLabel(id),
+          grams: g,
+        })),
+        ...Object.entries(resolved.finalMix.flourByFlour).map(([id, g]) => ({
+          key: `flour:${id}`,
+          label: name(id),
+          grams: g,
+        })),
+        { key: 'water', label: name('water'), grams: resolved.finalMix.water },
+        ...Object.entries(resolved.finalMix.grams).map(([id, g]) => ({
+          key: `ingredient:${id}`,
+          label: name(id),
+          grams: g,
+        })),
+      ];
   const isWeighed = (item: { key: string; grams: number }) => weighed.get(item.key) === item.grams;
 
   const lockedWater = formula.waterTarget?.absorbInto;
@@ -154,32 +157,40 @@ export const FormulaSection = ({
             />
           </LabeledField>
         )}
-        <div className="grid grid-cols-3 gap-2 border-t border-line pt-3">
-          <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
-          <Stat label={t('formula.stat.pureWater')} value={pct(resolved.pureWaterPct)} />
-          <button
-            type="button"
-            className="fp-reset flex flex-col items-start"
-            onClick={() => setExplaining(true)}
-          >
-            <span className="flex items-center gap-1 text-xs text-muted">
-              {t('formula.stat.totalWater')}
-              <InfoIcon />
-            </span>
-            <span className="text-lg font-bold text-accent-text underline decoration-dotted underline-offset-4">
-              {t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) })}
-            </span>
-          </button>
-        </div>
-        {resolved.totalWater.completeness === 'incomplete' && (
-          <p className="m-0 text-sm text-muted">
-            {t('formula.water.incomplete', {
-              ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
-            })}
+        {!resolved ? (
+          <p className="m-0 border-t border-line pt-3 text-sm text-muted">
+            {t('formula.unresolved')}
           </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-2 border-t border-line pt-3">
+              <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
+              <Stat label={t('formula.stat.pureWater')} value={pct(resolved.pureWaterPct)} />
+              <button
+                type="button"
+                className="fp-reset flex flex-col items-start"
+                onClick={() => setExplaining(true)}
+              >
+                <span className="flex items-center gap-1 text-xs text-muted">
+                  {t('formula.stat.totalWater')}
+                  <InfoIcon />
+                </span>
+                <span className="text-lg font-bold text-accent-text underline decoration-dotted underline-offset-4">
+                  {t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) })}
+                </span>
+              </button>
+            </div>
+            {resolved.totalWater.completeness === 'incomplete' && (
+              <p className="m-0 text-sm text-muted">
+                {t('formula.water.incomplete', {
+                  ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
+                })}
+              </p>
+            )}
+            <Enrichment resolved={resolved} />
+            <WaterLock formula={formula} resolved={resolved} onEdit={onEdit} />
+          </>
         )}
-        <Enrichment resolved={resolved} />
-        <WaterLock formula={formula} resolved={resolved} onEdit={onEdit} />
       </Card>
 
       <section>
@@ -189,25 +200,53 @@ export const FormulaSection = ({
           gramsLabel={t('formula.column.grams')}
         />
         <Rows>
-          {Object.entries(resolved.flourByFlour).map(([id, flourGrams]) => (
-            <div key={id} className={`${ROW} min-h-[60px] px-3`}>
-              <span className="font-semibold">{name(id)}</span>
-              <span className="flex items-center justify-end gap-1 pr-2.5">
-                <span>
-                  {editableNumber(formula.flours.find((f) => f.id === id)?.sharePct ?? 0, locale)}
-                </span>
-                <span className="text-muted">%</span>
+          {formula.flours.map((flour) => (
+            <div key={flour.id} className={`${ROW} min-h-[60px] px-3`}>
+              <span className="flex min-w-0 flex-col items-start">
+                <span className="font-semibold">{name(flour.id)}</span>
+                {formula.flours.length > 1 && (
+                  <button
+                    type="button"
+                    className="fp-reset text-[13px] text-muted underline"
+                    onClick={() =>
+                      void onEdit({
+                        type: 'SetFlourBlend',
+                        flours: formula.flours.filter((f) => f.id !== flour.id),
+                      })
+                    }
+                  >
+                    {t('formula.remove')}
+                  </button>
+                )}
               </span>
               <NumberField
-                label={name(id)}
-                unit="g"
-                value={flourGrams}
+                label={`${name(flour.id)}, ${t('formula.column.flourPct')}`}
+                unit="%"
+                value={flour.sharePct}
                 onCommit={(value) =>
-                  onEdit({ type: 'SetIngredientGrams', ingredient: id, grams: value })
+                  onEdit({
+                    type: 'SetFlourBlend',
+                    flours: formula.flours.map((f) =>
+                      f.id === flour.id ? { ...f, sharePct: value } : f,
+                    ),
+                  })
                 }
               />
+              {resolved ? (
+                <NumberField
+                  label={name(flour.id)}
+                  unit="g"
+                  value={resolved.flourByFlour[flour.id] ?? 0}
+                  onCommit={(value) =>
+                    onEdit({ type: 'SetIngredientGrams', ingredient: flour.id, grams: value })
+                  }
+                />
+              ) : (
+                <span className="pr-2.5 text-right text-muted">—</span>
+              )}
             </div>
           ))}
+          <AddFlour formula={formula} onEdit={onEdit} />
         </Rows>
       </section>
 
@@ -228,7 +267,7 @@ export const FormulaSection = ({
                 </span>
                 <span className="pr-2.5 text-right">{pct(ingredient.bakerPct)}</span>
                 <span className="pr-2.5 text-right font-semibold">
-                  {grams(resolved.grams[ingredient.id] ?? 0)}
+                  {resolved ? grams(resolved.grams[ingredient.id] ?? 0) : '—'}
                 </span>
               </div>
             ) : (
@@ -253,14 +292,22 @@ export const FormulaSection = ({
                     onEdit({ type: 'SetBakerPct', ingredient: ingredient.id, pct: value })
                   }
                 />
-                <NumberField
-                  label={name(ingredient.id)}
-                  unit="g"
-                  value={resolved.grams[ingredient.id] ?? 0}
-                  onCommit={(value) =>
-                    onEdit({ type: 'SetIngredientGrams', ingredient: ingredient.id, grams: value })
-                  }
-                />
+                {resolved ? (
+                  <NumberField
+                    label={name(ingredient.id)}
+                    unit="g"
+                    value={resolved.grams[ingredient.id] ?? 0}
+                    onCommit={(value) =>
+                      onEdit({
+                        type: 'SetIngredientGrams',
+                        ingredient: ingredient.id,
+                        grams: value,
+                      })
+                    }
+                  />
+                ) : (
+                  <span className="pr-2.5 text-right text-muted">—</span>
+                )}
               </div>
             ),
           )}
@@ -272,18 +319,19 @@ export const FormulaSection = ({
         <section className="flex flex-col gap-2">
           <SectionTitle>{t('formula.preparations')}</SectionTitle>
           {formula.components.map((component) => {
-            const c = resolved.components[component.id];
-            if (!c) return null;
-            const breakdown = [
-              t('formula.component.flour', { grams: grams(c.flour) }),
-              t('formula.component.water', { grams: grams(c.water) }),
-              ...Object.entries(c.allocations).map(([id, g]) =>
-                t('formula.component.allocation', { grams: grams(g), name: name(id) }),
-              ),
-              ...(c.waterLoss > 0
-                ? [t('formula.component.loss', { grams: grams(c.waterLoss) })]
-                : []),
-            ];
+            const c = resolved?.components[component.id];
+            const breakdown = !c
+              ? []
+              : [
+                  t('formula.component.flour', { grams: grams(c.flour) }),
+                  t('formula.component.water', { grams: grams(c.water) }),
+                  ...Object.entries(c.allocations).map(([id, g]) =>
+                    t('formula.component.allocation', { grams: grams(g), name: name(id) }),
+                  ),
+                  ...(c.waterLoss > 0
+                    ? [t('formula.component.loss', { grams: grams(c.waterLoss) })]
+                    : []),
+                ];
             const params = [
               t('formula.prep.flourPct', { pct: pct(component.flourPct) }),
               t('formula.prep.hydration', { pct: pct(component.hydrationPct) }),
@@ -297,10 +345,12 @@ export const FormulaSection = ({
                   <span className="text-[19px] font-semibold">
                     {componentName(formula, component)}
                   </span>
-                  <span className="text-lg font-bold">{grams(c.mass)}</span>
+                  <span className="text-lg font-bold">{c ? grams(c.mass) : '—'}</span>
                 </div>
                 <span className="text-[15px]">{params.join(' · ')}</span>
-                <span className="text-sm text-muted">{breakdown.join(' · ')}</span>
+                {breakdown.length > 0 && (
+                  <span className="text-sm text-muted">{breakdown.join(' · ')}</span>
+                )}
                 <PreparationFields
                   formula={formula}
                   process={process}
@@ -315,48 +365,52 @@ export const FormulaSection = ({
         </section>
       }
 
-      <section className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between">
-          <SectionTitle>{t('formula.finalMix')}</SectionTitle>
-          <span className="px-1 text-[13px] text-muted">
-            {t('formula.finalMix.progress', {
-              done: finalMix.filter(isWeighed).length,
-              total: finalMix.length,
+      {resolved && (
+        <section className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between">
+            <SectionTitle>{t('formula.finalMix')}</SectionTitle>
+            <span className="px-1 text-[13px] text-muted">
+              {t('formula.finalMix.progress', {
+                done: finalMix.filter(isWeighed).length,
+                total: finalMix.length,
+              })}
+            </span>
+          </div>
+          <Rows>
+            {finalMix.map((item) => {
+              const done = isWeighed(item);
+              return (
+                <label
+                  key={item.key}
+                  className={`flex min-h-[52px] items-center gap-3 px-4 ${done ? 'text-muted line-through' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="size-[22px] accent-[var(--color-accent)]"
+                    checked={done}
+                    onChange={() => {
+                      const next = new Map(weighed);
+                      if (done) next.delete(item.key);
+                      else next.set(item.key, item.grams);
+                      setWeighed(next);
+                    }}
+                  />
+                  <span className="flex-1">{item.label}</span>
+                  <span className="font-bold">{grams(item.grams)}</span>
+                </label>
+              );
             })}
-          </span>
-        </div>
-        <Rows>
-          {finalMix.map((item) => {
-            const done = isWeighed(item);
-            return (
-              <label
-                key={item.key}
-                className={`flex min-h-[52px] items-center gap-3 px-4 ${done ? 'text-muted line-through' : ''}`}
-              >
-                <input
-                  type="checkbox"
-                  className="size-[22px] accent-[var(--color-accent)]"
-                  checked={done}
-                  onChange={() => {
-                    const next = new Map(weighed);
-                    if (done) next.delete(item.key);
-                    else next.set(item.key, item.grams);
-                    setWeighed(next);
-                  }}
-                />
-                <span className="flex-1">{item.label}</span>
-                <span className="font-bold">{grams(item.grams)}</span>
-              </label>
-            );
-          })}
-        </Rows>
-      </section>
+          </Rows>
+        </section>
+      )}
 
-      <WaterExplanation
-        resolved={resolved}
-        open={explaining}
-        onClose={() => setExplaining(false)}
-      />
+      {resolved && (
+        <WaterExplanation
+          resolved={resolved}
+          open={explaining}
+          onClose={() => setExplaining(false)}
+        />
+      )}
     </div>
   );
 };

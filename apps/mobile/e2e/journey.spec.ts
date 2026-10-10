@@ -421,3 +421,41 @@ test('a proof running beside the preheat still takes its ready-to-bake mark', as
   await expect(page.getByRole('button', { name: 'Préchauffage terminé' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Terminé Apprêt' })).toBeVisible();
 });
+
+test('a template starts a named draft that becomes a recipe once saved', async ({ page }) => {
+  await page.goto('/recipes');
+  await page.getByRole('button', { name: '+ Nouvelle recette' }).click();
+  await page.getByText('Pizza néo-napolitaine', { exact: true }).click();
+  await expect(page).toHaveURL(/\/drafts\//);
+  await expect(page.getByText('Pizza néo-napolitaine 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Brouillon, pas encore enregistré').first()).toBeVisible();
+  // A template passes the check as is.
+  await page.getByRole('button', { name: 'Vérifier', exact: true }).click();
+  await expect(page.getByText('Rien à signaler')).toBeVisible();
+  await page.getByRole('button', { name: 'Fermer' }).click();
+  await page.getByRole('button', { name: 'Enregistrer comme recette' }).click();
+  await expect(page).toHaveURL(/\/recipes\/.+/);
+  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+});
+
+test('a blank recipe takes any edit; the check blocks the save and says why', async ({ page }) => {
+  await page.goto('/recipes');
+  await page.getByRole('button', { name: '+ Nouvelle recette' }).click();
+  await page.getByText('Recette vierge').first().click();
+  await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  // Flours that do not add up to 100 %: accepted in a draft, quantities shown as unknown.
+  const share = page.getByLabel('Farine à pain, % farine');
+  await share.fill('80');
+  await share.press('Enter');
+  await expect(page.getByText(/Les quantités ne peuvent pas encore être calculées/)).toBeVisible();
+  await page.getByRole('button', { name: 'Enregistrer comme recette' }).click();
+  await expect(page.getByText('À corriger avant d’enregistrer ou de cuire')).toBeVisible();
+  await page.getByRole('button', { name: 'Fermer' }).click();
+  await share.fill('100');
+  await share.press('Enter');
+  await expect(page.getByRole('button', { name: 'Vérifier', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Supprimer le brouillon' }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Supprimer le brouillon' }).click();
+  await expect(page).toHaveURL(/\/recipes$/);
+  await expect(page.getByText('Recette 1', { exact: true })).toBeHidden();
+});
