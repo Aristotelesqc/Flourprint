@@ -42,7 +42,9 @@ export interface LogEntry {
   readonly text?: string;
   /** Stable code of what the baker went by, for a dough ready mark. */
   readonly criterion?: string;
-  /** Overall rating of a review note, 1 to 5. */
+  /** Dough ready mark: the stage the dough was ready for (absent on marks before 0.6.0). */
+  readonly stage?: 'shape' | 'bake';
+  /** Overall rating of a review note, 0 to 5. */
   readonly rating?: number;
 }
 
@@ -112,13 +114,14 @@ export const bakeLog = (state: BakeState): LogEntry[] => {
   }
   for (const observation of state.observations) {
     if (observation.payload.kind === 'doughReady') {
+      const { stepId, stage, criterion, text } = observation.payload;
       entries.push({
         at: observation.occurredAt,
         kind: 'doughReady',
-        ...(observation.payload.stepId === undefined ? {} : { stepId: observation.payload.stepId }),
-        ...(observation.payload.criterion === undefined
-          ? {}
-          : { criterion: observation.payload.criterion }),
+        ...(stepId === undefined ? {} : { stepId }),
+        ...(stage === undefined ? {} : { stage }),
+        ...(criterion === undefined ? {} : { criterion }),
+        ...(text ? { text } : {}),
       });
     } else if (observation.payload.text || observation.payload.rating !== undefined) {
       const { text, rating, stepId } = observation.payload;

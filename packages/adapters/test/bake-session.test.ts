@@ -161,10 +161,13 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
   it('keeps a dough ready observation in the journal without ending the step', async () => {
     const session = new Session();
     await session.start();
-    await session.at(t('09:00')).ok({ type: 'StartStep', stepId: 'poolish' });
-    await session.ok({
+    await session.at(t('08:00')).ok({ type: 'CompleteStep', stepId: 'poolish' });
+    await session.ok({ type: 'CompleteStep', stepId: 'tangzhong' });
+    await session.at(t('08:15')).ok({ type: 'CompleteStep', stepId: 'mix' });
+    await session.ok({ type: 'StartStep', stepId: 'bulk' });
+    await session.at(t('09:00')).ok({
       type: 'AddObservation',
-      stepId: 'poolish',
+      stepId: 'bulk',
       category: 'fermentation',
       kind: 'doughReady',
       criterion: 'poke',
@@ -174,14 +177,15 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     expect(loaded.value.observations.map((o) => o.payload)).toEqual([
       {
         type: 'ObservationAdded',
-        stepId: 'poolish',
+        stepId: 'bulk',
         category: 'fermentation',
         kind: 'doughReady',
         criterion: 'poke',
+        stage: 'shape',
       },
     ]);
     expect(loaded.value.observations[0]?.occurredAt).toBe(t('09:00'));
-    expect(loaded.value.steps.poolish?.endedAt).toBeUndefined();
+    expect(loaded.value.steps.bulk?.endedAt).toBeUndefined();
   });
 
   it('completes a step with an implicit start at the end of its dependencies', async () => {

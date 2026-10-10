@@ -182,6 +182,7 @@ const isSnapshot = (value: unknown): boolean =>
           isModelRef(e.model) &&
           isOptional(e.range, (r): r is unknown => accepts(estimateRange)(r)))),
   ) &&
+  isOptional(value.origin, (v): v is string => v === 'physical' || v === 'simulation') &&
   isObject(value.manifest) &&
   typeof value.manifest.engineVersion === 'string' &&
   typeof value.manifest.contractVersion === 'string' &&
@@ -274,7 +275,8 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
           (payload.kind !== 'doughReady' ||
             (payload.stepId !== undefined && payload.category === 'fermentation')) &&
           isOptional(payload.text, (v): v is string => typeof v === 'string') &&
-          isOptional(payload.rating, isNumber) &&
+          isOptional(payload.rating, (v): v is number => isNumber(v) && v >= 0 && v <= 5) &&
+          isOptional(payload.stage, (v): v is string => v === 'shape' || v === 'bake') &&
           (payload.measurement === undefined || isMeasurement(payload.measurement)),
         `${where}: malformed observation`,
       );

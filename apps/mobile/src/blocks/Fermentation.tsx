@@ -63,6 +63,7 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
     changes: { [K in keyof StepConditions]?: StepConditions[K] | undefined },
   ) =>
     onProcess({
+      ...process,
       steps: process.steps.map((s) => {
         if (s.id !== stepId) return s;
         const conditions = Object.fromEntries(
@@ -79,6 +80,7 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
   const setDuration = (stepId: string, estimate: OkEstimate) => {
     const appliedValue = Math.max(ROUND_S, Math.round(estimate.value / ROUND_S) * ROUND_S);
     return onProcess({
+      ...process,
       steps: process.steps.map((s) =>
         s.id === stepId
           ? {

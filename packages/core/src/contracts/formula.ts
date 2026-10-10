@@ -47,6 +47,7 @@ export const acceptedSuggestionSchema = z.strictObject({
     model: modelRefSchema,
     assumptions: z.array(z.string()),
     extrapolations: z.array(z.string()).optional(),
+    calibration: modelRefSchema.optional(),
   }),
   appliedValue: z.number(),
   model: modelRefSchema,

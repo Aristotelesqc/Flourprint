@@ -46,6 +46,8 @@ export interface ProcessStep {
 
 export interface Process {
   readonly steps: readonly ProcessStep[];
+  /** Readiness profile of the dough (fermentation.md); absent = the default profile. */
+  readonly readiness?: { readonly id: string; readonly version: string };
 }
 
 /** Recorded facts of a bake, from the session log (bake-session.md). */

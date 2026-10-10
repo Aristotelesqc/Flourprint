@@ -92,7 +92,7 @@ const acceptedEstimate: Check = (v, w) =>
     v,
     w,
     { status: oneOf('ok'), value: number, model: modelRef, assumptions: list(string) },
-    { range: estimateRange, extrapolations: list(string) },
+    { range: estimateRange, extrapolations: list(string), calibration: modelRef },
   );
 
 /** Provenance of an applied model suggestion (fermentation.md). */
@@ -211,6 +211,6 @@ export const decodeFormula = (value: unknown, where: string): Formula => {
 
 /** Refuses (throws `Refused`) unless the value has exactly the shape of a process. */
 export const decodeProcess = (value: unknown, where: string): Process => {
-  fields(value, where, { steps: list(step) });
+  fields(value, where, { steps: list(step) }, { readiness: modelRef });
   return value as Process;
 };

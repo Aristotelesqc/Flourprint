@@ -458,6 +458,8 @@ describe('feedback export (history.md)', () => {
     expect(digest).toMatchObject({
       bakeId: 'bake-1',
       status: 'finished',
+      // Started without an origin: unknown, whatever the exporting device.
+      origin: 'unknown',
       recipe: { id: 'lean', name: 'Lean', version: 2 },
       startedAt: at('08:00'),
       endedAt: at('11:00'),

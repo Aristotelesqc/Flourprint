@@ -31,7 +31,11 @@ export interface BakeSnapshot {
     readonly contractVersion: string;
     readonly models: readonly ModelRef[];
   };
+  /** A real bake or a simulation, from StartBake; absent = unknown (history.md). */
+  readonly origin?: BakeOrigin;
 }
+
+export type BakeOrigin = 'physical' | 'simulation';
 
 export type ObservationCategory =
   'crumb' | 'crust' | 'fermentation' | 'flavor' | 'handling' | 'volume' | 'other';
@@ -56,6 +60,8 @@ export type BakeCommandPayload =
       readonly process: Process;
       readonly mode: ProjectionMode;
       readonly usedProperties?: readonly UsedProperty[];
+      /** A real bake or a simulation (history.md); absent = unknown. */
+      readonly origin?: BakeOrigin;
     }
   | { readonly type: 'StartStep'; readonly stepId: StepId; readonly at?: Instant }
   | {
@@ -149,6 +155,8 @@ export type BakeEventPayload =
       readonly stepId?: StepId;
       readonly category: ObservationCategory;
       readonly kind?: ObservationKind;
+      /** doughReady only: the stage the dough is ready for, set by the domain. */
+      readonly stage?: 'shape' | 'bake';
       readonly criterion?: string;
       readonly text?: string;
       readonly rating?: number;

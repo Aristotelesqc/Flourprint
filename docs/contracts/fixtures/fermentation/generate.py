@@ -1,6 +1,7 @@
 """Reference cases for docs/contracts/fermentation.md, computed outside the engine.
 
-The dough's end point is the personal calibration of fermentation.md (READY, band READY_BAND);
+The dough's end point is the readiness profile flourprint.experimental-ready@1 of fermentation.md
+(READY, band READY_BAND), named in the output so the test passes it explicitly;
 the preferment's end point is 1.
 
 Run: python3 -I generate.py > cases.json (in this directory)
@@ -151,4 +152,4 @@ cases.append({
     "expected": {"preferments.poolish.duration.value": A * H},
 })
 
-print(json.dumps({"format": "flourprint-fixture/0", "contract": "fermentation.md", "model": {"id": "flourprint.commercial-yeast", "version": "0.1.0"}, "calibration": {"readyProgress": READY, "band": list(READY_BAND)}, "tolerance": 1, "cases": cases}, indent=2))
+print(json.dumps({"format": "flourprint-fixture/0", "contract": "fermentation.md", "model": {"id": "flourprint.commercial-yeast", "version": "0.1.0"}, "readiness": {"id": "flourprint.experimental-ready", "version": "1"}, "calibration": {"readyProgress": READY, "band": list(READY_BAND)}, "tolerance": 1, "cases": cases}, indent=2))

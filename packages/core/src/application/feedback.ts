@@ -46,6 +46,7 @@ export interface ObservationDigest {
   readonly elapsedInStepS?: number;
   readonly category: ObservationCategory;
   readonly kind?: ObservationKind;
+  readonly stage?: 'shape' | 'bake';
   readonly criterion?: string;
   readonly text?: string;
   readonly rating?: number;
@@ -63,6 +64,8 @@ export interface AdjustmentDigest {
 export interface BakeDigest {
   readonly bakeId: string;
   readonly status: 'active' | 'finished' | 'abandoned';
+  /** Set at the start of the bake, never inferred from the exporting device (history.md). */
+  readonly origin: 'physical' | 'simulation' | 'unknown';
   readonly recipe: { readonly id: string; readonly name?: string; readonly version: number };
   readonly startedAt?: Instant;
   readonly endedAt?: Instant;
@@ -91,9 +94,11 @@ export const FEEDBACK_ABOUT =
   'Flourprint feedback export. `bakes` is a digest of each bake read from its event log: ' +
   'planned vs recorded step times (seconds, UTC instants), the accepted model estimate per step, ' +
   'observations and notes with the step they were taken on and the time elapsed in that step, ' +
-  'and adjustments made during the bake. `backup` is the authoritative record (recipes with ' +
+  'and adjustments made during the bake. Each bake says whether it was real or simulated ' +
+  '(`origin`; "unknown" for bakes recorded before this was asked); a doughReady observation ' +
+  'says the stage the dough was ready for (`stage`: shape or bake). `backup` is the authoritative record (recipes with ' +
   'every revision, raw bake events). Units: grams, degrees Celsius, seconds, baker percentages ' +
-  'in points. `device.platform` "desktop" is the PC simulator, "android" the phone. Contracts: ' +
+  'in points. `device` describes the exporting device only. Contracts: ' +
   'docs/contracts/history.md (feedback export), bake-session.md, fermentation.md.';
 
 const seconds = (from: Instant | undefined, to: Instant | undefined): number | undefined =>
@@ -175,6 +180,7 @@ export const bakeDigest = (
   return {
     bakeId,
     status: state.status,
+    origin: snapshot.origin ?? 'unknown',
     recipe: {
       id: recipeId,
       ...(name === undefined ? {} : { name }),

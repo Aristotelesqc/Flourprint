@@ -37,6 +37,8 @@ export type Estimate<T = number> =
       readonly assumptions: readonly string[];
       /** Stable codes: why the estimate lies outside the model's fitted domain. */
       readonly extrapolations?: readonly string[];
+      /** Readiness profile the estimate used (fermentation.md). */
+      readonly calibration?: { readonly id: string; readonly version: string };
     }
   | {
       readonly status: 'unsupported' | 'out_of_domain' | 'insufficient_data';

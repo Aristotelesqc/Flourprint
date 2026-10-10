@@ -42,6 +42,7 @@ export const withPreparationStep = (process: Process, component: Component): Pro
   if (process.steps.some((s) => s.id === component.id)) return process;
   const mix = process.steps.find((s) => s.operation === 'mix');
   return {
+    ...process,
     steps: [
       {
         id: component.id,

@@ -7,7 +7,17 @@ export {
   rate,
   type FermentationParameters,
 } from './model.js';
-export { READY_CALIBRATION, RIPE_TARGET, type PersonalCalibration } from './calibration.js';
+export {
+  EXPERIMENTAL_READY,
+  findReadinessProfile,
+  MODEL_END_POINT,
+  READINESS_PROFILES,
+  RIPE_TARGET,
+  validReadinessTarget,
+  type ReadinessProfile,
+  type ReadinessRef,
+  type ReadinessTarget,
+} from './calibration.js';
 export {
   HORIZON_S,
   simulate,
@@ -16,6 +26,7 @@ export {
   type SimulationResult,
 } from './simulate.js';
 export {
+  doughReadyStage,
   estimateFermentation,
   lastDoughStepId,
   type FermentationEstimates,

@@ -22,7 +22,7 @@ const updateStep = (state: BakeState, stepId: string, change: Partial<StepRecord
 const mapSteps = (
   process: Process | undefined,
   map: (step: ProcessStep) => ProcessStep,
-): Process => ({ steps: (process?.steps ?? []).map(map) });
+): Process => ({ ...process, steps: (process?.steps ?? []).map(map) });
 
 /**
  * Applies one recorded event. Purely structural: it never calls the calculation engine, so an
@@ -90,9 +90,12 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
         overrides: recorded,
         process: mapSteps(next.process, (s) => {
           if (s.id !== target.stepId) return s;
-          return target.field === 'plannedDurationS'
-            ? { ...s, plannedDurationS: effective }
-            : { ...s, conditions: { ...s.conditions, temperatureC: effective } };
+          if (target.field === 'plannedDurationS') {
+            // A manual duration is no longer the accepted suggestion (fermentation.md).
+            const { accepted: _accepted, ...manual } = s;
+            return { ...manual, plannedDurationS: effective };
+          }
+          return { ...s, conditions: { ...s.conditions, temperatureC: effective } };
         }),
       };
     }

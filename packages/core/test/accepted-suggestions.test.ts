@@ -9,7 +9,6 @@ import {
   initialBakeState,
   upcastEvent,
   type AcceptedSuggestion,
-  type BakeCommandPayload,
   type BakeEvent,
   type BakeState,
   type Formula,
@@ -346,20 +345,39 @@ describe('structural decoders and schema', () => {
 });
 
 describe('dough ready observation', () => {
-  const active = (): BakeState => {
-    const first = started(process);
-    return evolve(initialBakeState('b'), first);
+  /** A bake with the given steps started (and completed) in order. */
+  const at = (begun: string[], completed: string[] = []): BakeState => {
+    let state = evolve(initialBakeState('b'), started(process));
+    let seq = 1;
+    for (const stepId of begun) {
+      state = evolve(state, event(++seq, { type: 'StepStarted', stepId }));
+      if (completed.includes(stepId)) {
+        state = evolve(state, event(++seq, { type: 'StepCompleted', stepId }));
+      }
+    }
+    return state;
   };
-  const decideOne = (payload: BakeCommandPayload) => decide(active(), payload, T);
+  const ready = (state: BakeState, stepId: string) =>
+    decide(
+      state,
+      { type: 'AddObservation', stepId, category: 'fermentation', kind: 'doughReady' },
+      T,
+    );
 
-  it('is an ordinary observation with a stable kind, a step and a criterion', () => {
-    const result = decideOne({
-      type: 'AddObservation',
-      stepId: 'bulk',
-      category: 'fermentation',
-      kind: 'doughReady',
-      criterion: 'poke',
-    });
+  it('records the stage on a running dough step, without ending it', () => {
+    const state = at(['poolish', 'mix', 'bulk'], ['poolish', 'mix']);
+    const result = decide(
+      state,
+      {
+        type: 'AddObservation',
+        stepId: 'bulk',
+        category: 'fermentation',
+        kind: 'doughReady',
+        criterion: 'poke',
+        text: 'jiggly',
+      },
+      T,
+    );
     if (!result.ok) throw new Error(JSON.stringify(result.error));
     expect(result.value).toEqual([
       {
@@ -370,29 +388,53 @@ describe('dough ready observation', () => {
           category: 'fermentation',
           kind: 'doughReady',
           criterion: 'poke',
+          text: 'jiggly',
+          stage: 'shape',
         },
       },
     ]);
-    const state = evolve(active(), event(2, result.value[0]?.payload as BakeEvent['payload']));
-    // It never ends the step.
-    expect(state.observations).toHaveLength(1);
-    expect(state.steps.bulk?.endedAt).toBeUndefined();
-    expect(() =>
-      checkBakeLog('b', [
-        started(process),
-        event(2, result.value[0]?.payload as BakeEvent['payload']),
-      ]),
-    ).not.toThrow();
+    const next = evolve(state, event(9, result.value[0]?.payload as BakeEvent['payload']));
+    expect(next.observations).toHaveLength(1);
+    expect(next.steps.bulk?.endedAt).toBeUndefined();
+    expect(next.process).toEqual(state.process);
+    // The last dough step is ready to bake.
+    const proofing = at(['poolish', 'mix', 'bulk', 'proof'], ['poolish', 'mix', 'bulk']);
+    const onProof = ready(proofing, 'proof');
+    expect(onProof.ok && onProof.value[0]?.payload).toMatchObject({ stage: 'bake' });
+  });
+
+  it('refuses unstarted, completed and non-dough steps', () => {
+    const state = at(['poolish', 'mix', 'bulk'], ['poolish', 'mix', 'bulk']);
+    for (const [s, stepId] of [
+      [state, 'proof'], // not started
+      [state, 'bulk'], // completed
+      [at(['poolish']), 'poolish'], // running, but a preferment
+      [at(['poolish', 'mix'], ['poolish']), 'mix'], // running, but the mix
+    ] as const) {
+      expect(ready(s, stepId)).toMatchObject({ ok: false, error: { code: 'InvalidCommand' } });
+    }
   });
 
   it('needs a step and the fermentation category', () => {
+    const state = at(['poolish', 'mix', 'bulk'], ['poolish', 'mix']);
     expect(
-      decideOne({ type: 'AddObservation', category: 'fermentation', kind: 'doughReady' }).ok,
+      decide(state, { type: 'AddObservation', category: 'fermentation', kind: 'doughReady' }, T).ok,
     ).toBe(false);
     expect(
-      decideOne({ type: 'AddObservation', stepId: 'bulk', category: 'other', kind: 'doughReady' })
+      decide(
+        state,
+        { type: 'AddObservation', stepId: 'bulk', category: 'other', kind: 'doughReady' },
+        T,
+      ).ok,
+    ).toBe(false);
+  });
+
+  it('leaves ordinary notes free on any step', () => {
+    const state = at([]);
+    expect(
+      decide(state, { type: 'AddObservation', stepId: 'proof', category: 'other', text: 'plan' }, T)
         .ok,
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('is refused by the backup decoder when malformed', () => {
@@ -402,5 +444,95 @@ describe('dough ready observation', () => {
       kind: 'doughReady',
     });
     expect(() => checkBakeLog('b', [started(process), bad])).toThrow();
+    const badStage = event(2, {
+      type: 'ObservationAdded',
+      stepId: 'bulk',
+      category: 'fermentation',
+      kind: 'doughReady',
+      stage: 'eat' as 'bake',
+    });
+    expect(() => checkBakeLog('b', [started(process), badStage])).toThrow();
+  });
+});
+
+describe('ratings in backups', () => {
+  it.each([-1, 5.5, 100])('refuses a rating of %s', (rating) => {
+    const note = event(2, { type: 'ObservationAdded', category: 'crumb', rating });
+    expect(() => checkBakeLog('b', [started(process), note])).toThrow();
+  });
+
+  it.each([0, 3, 4.5, 5])('accepts a rating of %s', (rating) => {
+    const note = event(2, { type: 'ObservationAdded', category: 'crumb', rating });
+    expect(() => checkBakeLog('b', [started(process), note])).not.toThrow();
+  });
+});
+
+describe('accepted decisions through a bake', () => {
+  it('survive floating-point noise from an unrelated grams edit into the manifest', () => {
+    const accepted = suggestion(0.456);
+    const applied = apply(formula, {
+      type: 'SetBakerPct',
+      ingredient: 'yeast',
+      pct: 0.456,
+      accepted,
+    });
+    const edited = apply(applied, { type: 'SetIngredientGrams', ingredient: 'salt', grams: 22 });
+    expect(yeast(edited)?.accepted).toEqual(accepted);
+    const result = start(edited, process);
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const payload = result.value[0]?.payload;
+    if (payload?.type !== 'BakeStarted') throw new Error('no snapshot');
+    expect(payload.snapshot.manifest.models).toEqual([model]);
+  });
+
+  it('are cleared from the effective step by a manual duration override, same value or not', () => {
+    const proc: Process = {
+      steps: process.steps.map((s) => (s.id === 'bulk' ? { ...s, accepted: suggestion(7200) } : s)),
+    };
+    for (const value of [7200, 3600]) {
+      const first = started(proc);
+      const adjusted = decide(
+        evolve(initialBakeState('b'), first),
+        { type: 'AdjustStep', stepId: 'bulk', adjustment: { field: 'plannedDurationS', value } },
+        T,
+      );
+      if (!adjusted.ok) throw new Error(JSON.stringify(adjusted.error));
+      const events = [first, event(2, adjusted.value[0]?.payload as BakeEvent['payload'])];
+      const state = events.reduce(evolve, initialBakeState('b'));
+      const bulk = state.process?.steps.find((s) => s.id === 'bulk');
+      expect(bulk?.plannedDurationS).toBe(value);
+      expect(bulk).not.toHaveProperty('accepted');
+      // History keeps the original decision.
+      expect(state.snapshot?.process.steps.find((s) => s.id === 'bulk')?.accepted).toEqual(
+        suggestion(7200),
+      );
+    }
+  });
+});
+
+describe('bake origin', () => {
+  it('is copied into the snapshot when given, and absent (unknown) otherwise', () => {
+    const withOrigin = decide(
+      initialBakeState('b'),
+      {
+        type: 'StartBake',
+        revisions: { formula: { id: 'f', version: 1 }, process: { id: 'p', version: 1 } },
+        formula,
+        process,
+        mode: { kind: 'startAt', at: T },
+        origin: 'simulation',
+      },
+      T,
+    );
+    const payload = withOrigin.ok ? withOrigin.value[0]?.payload : undefined;
+    expect(payload?.type === 'BakeStarted' && payload.snapshot.origin).toBe('simulation');
+    expect(() => checkBakeLog('b', [event(1, payload as BakeEvent['payload'])])).not.toThrow();
+    const legacy = started(process).payload;
+    expect(legacy.type === 'BakeStarted' && 'origin' in legacy.snapshot).toBe(false);
+    const bad = {
+      ...(payload as object),
+      snapshot: { ...(payload as { snapshot: object }).snapshot, origin: 'dream' },
+    };
+    expect(() => checkBakeLog('b', [event(1, bad as BakeEvent['payload'])])).toThrow();
   });
 });

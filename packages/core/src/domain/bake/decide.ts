@@ -1,4 +1,5 @@
 import { domainError, type DomainError } from '../errors.js';
+import { doughReadyStage } from '../fermentation/estimate.js';
 import { applyFormulaEdit } from '../formula/edit.js';
 import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
@@ -6,6 +7,7 @@ import { projectProcess } from '../process/project.js';
 import type { Process, Projection, StepFact } from '../process/types.js';
 import type { Formula } from '../formula/types.js';
 import type { ProcessError } from '../process/validate.js';
+import { approxEqual } from '../numeric.js';
 import { err, ok, type Result } from '../result.js';
 import { validateRecipe } from '../recipe/validate.js';
 import { CONTRACT_VERSION, ENGINE_VERSION } from '../version.js';
@@ -42,7 +44,10 @@ const acceptedDecisions = (
 ): { estimates: Record<string, Estimate>; models: ModelRef[] } => {
   const models: ModelRef[] = [];
   const list = (accepted: AcceptedSuggestion | undefined, current: number | undefined) => {
-    if (!accepted || accepted.appliedValue !== current) return undefined;
+    // Same comparison as the formula's settlement (fermentation.md).
+    if (!accepted || current === undefined || !approxEqual(accepted.appliedValue, current)) {
+      return undefined;
+    }
     if (!models.some((m) => m.id === accepted.model.id && m.version === accepted.model.version)) {
       models.push(accepted.model);
     }
@@ -156,6 +161,23 @@ const observe = (
         reason: 'must be fermentation for doughReady',
       });
     }
+    // Only a running dough step can be judged ready now (bake-session.md).
+    const record = state.steps[command.stepId];
+    if (record?.startedAt === undefined || record.endedAt !== undefined) {
+      return error('InvalidCommand', 'A dough ready observation targets a running step', {
+        field: 'stepId',
+        reason: 'step not running',
+      });
+    }
+    const stage = state.process ? doughReadyStage(state.process, command.stepId) : undefined;
+    if (stage === undefined) {
+      return error('InvalidCommand', 'A dough ready observation targets a dough step', {
+        field: 'stepId',
+        reason: 'not a dough step',
+      });
+    }
+    const { type, ...observation } = command;
+    return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation, stage } }]);
   }
   const { type, ...observation } = command;
   return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);
@@ -197,6 +219,7 @@ export const decide = (
               contractVersion: CONTRACT_VERSION,
               models: accepted.models,
             },
+            ...(command.origin === undefined ? {} : { origin: command.origin }),
           },
         },
       },

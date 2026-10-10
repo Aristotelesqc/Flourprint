@@ -2,7 +2,15 @@ import type { Component, Formula, Ingredient, YeastForm } from '../formula/types
 import { resolveFormula } from '../formula/resolve.js';
 import type { Process, ProcessStep, StepId } from '../process/types.js';
 import type { Estimate, RangeBound } from '../values.js';
-import { READY_CALIBRATION, RIPE_TARGET, type PersonalCalibration } from './calibration.js';
+import {
+  findReadinessProfile,
+  MODEL_END_POINT,
+  RIPE_TARGET,
+  validReadinessTarget,
+  type ReadinessProfile,
+  type ReadinessRef,
+  type ReadinessTarget,
+} from './calibration.js';
 import {
   CENTRAL,
   CORNERS,
@@ -62,8 +70,10 @@ interface Mass {
   readonly yeasts: readonly Yeast[];
   /** Converts a percentage of the mass's flour back to the unit the suggestion is given in. */
   readonly toSuggested: number;
-  /** End point of this mass: the dough's personal calibration, or ripe for a preferment. */
-  readonly calibration: PersonalCalibration;
+  /** End point of this mass: the dough's readiness profile, or ripe for a preferment. */
+  readonly calibration: ReadinessTarget;
+  /** The readiness profile, named in the dough's estimates (fermentation.md). */
+  readonly profile?: ReadinessRef;
   readonly startC: number;
   readonly segments: readonly Segment[];
   readonly assumptions: readonly string[];
@@ -92,6 +102,8 @@ const ok = (
   options: { readonly assumptions?: readonly string[]; readonly duration?: boolean } = {},
 ): Estimate => {
   const assumptions = options.assumptions ?? mass.assumptions;
+  // An ok estimate never holds a non-finite value (values-and-units.md).
+  if (!Number.isFinite(value)) return failure('insufficient_data', 'non_finite_result');
   const all = [value, ...values.map((v) => (Number.isNaN(v) ? Infinity : v))];
   const unbounded = options.duration !== true && all.some((v) => !Number.isFinite(v));
   return {
@@ -101,6 +113,9 @@ const ok = (
     model: FERMENTATION_MODEL,
     assumptions: unbounded ? [...assumptions, 'band_unbounded'] : assumptions,
     ...(mass.extrapolations.length > 0 ? { extrapolations: mass.extrapolations } : {}),
+    ...(mass.profile
+      ? { calibration: { id: mass.profile.id, version: mass.profile.version } }
+      : {}),
   };
 };
 
@@ -209,10 +224,18 @@ const estimateMass = (mass: Mass): MassEstimates => {
         continue;
       }
       const scale = yeast.pct * mass.toSuggested;
+      // The band is the full envelope; corners outside the dose domain are disclosed, not clipped.
+      const outside = corners(mass).some(({ p }, i) => {
+        const f = factors[i];
+        if (f === undefined) return false;
+        const dose = freshPct(p, base, f);
+        return dose < DOMAIN.minFreshPct || dose > DOMAIN.maxFreshPct;
+      });
       yeastPct[yeast.id] = ok(
         (central ?? NaN) * scale,
         factors.map((f) => (f ?? Infinity) * scale),
         mass,
+        outside ? { assumptions: [...mass.assumptions, 'band_outside_domain'] } : {},
       );
     }
   }
@@ -311,6 +334,16 @@ const doughSteps = (process: Process): ProcessStep[] | undefined => {
   );
 };
 
+/**
+ * The stage a dough is judged ready for on this step (bake-session.md): `bake` on the last dough
+ * step, `shape` on an earlier one, none outside the dough steps.
+ */
+export const doughReadyStage = (process: Process, stepId: StepId): 'shape' | 'bake' | undefined => {
+  const steps = doughSteps(process) ?? [];
+  if (!steps.some((s) => s.id === stepId)) return undefined;
+  return steps.at(-1)?.id === stepId ? 'bake' : 'shape';
+};
+
 /** The last step the dough ferments in before the bake, if the process has one. */
 export const lastDoughStepId = (process: Process): StepId | undefined =>
   doughSteps(process)?.at(-1)?.id;
@@ -318,7 +351,8 @@ export const lastDoughStepId = (process: Process): StepId | undefined =>
 const doughMass = (
   formula: Formula,
   process: Process,
-  calibration: PersonalCalibration,
+  calibration: ReadinessProfile,
+  defaulted: boolean,
 ): Mass | Failure => {
   const mix = process.steps.find((s) => s.operation === 'mix');
   if (!mix) return failure('insufficient_data', 'no_mix_step', ['mix']);
@@ -357,11 +391,13 @@ const doughMass = (
     })),
     toSuggested: 1,
     calibration,
+    profile: calibration,
     startC: target ?? roomC,
     segments,
     assumptions: [
       target === undefined ? 'dough_temperature_from_ambient' : 'dough_temperature_target',
       `ready_target_progress:${calibration.readyProgress}`,
+      ...(defaulted ? ['readiness_default'] : []),
       ...unplannedAssumptions(unplanned),
     ],
     extrapolations,
@@ -410,6 +446,19 @@ const prefermentMass = (
   };
 };
 
+/** The dough's mass with its readiness profile, or why there is none (fermentation.md). */
+const doughOf = (
+  formula: Formula,
+  process: Process,
+  override: ReadinessProfile | undefined,
+): Mass | Failure => {
+  const selected =
+    override ?? (process.readiness ? findReadinessProfile(process.readiness) : MODEL_END_POINT);
+  if (!selected) return failure('insufficient_data', 'readiness_profile_unknown', ['readiness']);
+  if (!validReadinessTarget(selected)) return failure('unsupported', 'invalid_readiness_profile');
+  return doughMass(formula, process, selected, override === undefined && !process.readiness);
+};
+
 /** Base-temperature method (fermentation.md, Water temperature). */
 const waterTemperature = (formula: Formula, process: Process): Estimate | undefined => {
   const mix = process.steps.find((s) => s.operation === 'mix');
@@ -443,13 +492,13 @@ const waterTemperature = (formula: Formula, process: Process): Estimate | undefi
 /**
  * Provisional fermentation estimates of a recipe (docs/contracts/fermentation.md). Pure: never
  * changes the recipe; applying a suggestion is an explicit edit. The dough's end point is the
- * personal `calibration` (default: the provisional "ready to bake" target), apart from the
- * kinetic parameters.
+ * readiness profile the process selects (default: the model's own end point), apart from the
+ * kinetic parameters; `profile` overrides it (tests, comparisons).
  */
 export const estimateFermentation = (
   formula: Formula,
   process: Process,
-  calibration: PersonalCalibration = READY_CALIBRATION,
+  profile?: ReadinessProfile,
 ): FermentationEstimates => {
   const yeastIds = formula.ingredients.filter(isYeast).map((i) => i.id);
   const preferments = formula.components.filter((c) => c.kind === 'preferment' && c.flourPct > 0);
@@ -468,7 +517,7 @@ export const estimateFermentation = (
   const allocated = (c: Component) =>
     (c.allocations ?? []).map((a) => a.ingredient).filter((id) => yeastIds.includes(id));
   return {
-    dough: estimate(doughMass(formula, process, calibration), yeastIds),
+    dough: estimate(doughOf(formula, process, profile), yeastIds),
     preferments: Object.fromEntries(
       preferments.map((c) => [c.id, estimate(prefermentMass(formula, process, c), allocated(c))]),
     ),

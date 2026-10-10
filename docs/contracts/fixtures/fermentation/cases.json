@@ -5,6 +5,10 @@
     "id": "flourprint.commercial-yeast",
     "version": "0.1.0"
   },
+  "readiness": {
+    "id": "flourprint.experimental-ready",
+    "version": "1"
+  },
   "calibration": {
     "readyProgress": 2.0,
     "band": [1.5, 2.5]

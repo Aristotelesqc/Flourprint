@@ -3,6 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   estimateFermentation,
+  EXPERIMENTAL_READY,
+  findReadinessProfile,
+  MODEL_END_POINT,
   validateFormula,
   validateProcess,
   type Formula,
@@ -24,7 +27,10 @@ const file = JSON.parse(
     ),
     'utf8',
   ),
-) as { tolerance: number; cases: Case[] };
+) as { tolerance: number; readiness: { id: string; version: string }; cases: Case[] };
+// The cases are computed for the profile they name; the test passes it explicitly.
+const fixtureProfile = findReadinessProfile(file.readiness);
+if (!fixtureProfile) throw new Error('unknown fixture profile');
 
 const at = (value: unknown, path: string): unknown =>
   path
@@ -39,7 +45,7 @@ describe('fermentation reference cases', () => {
     it(c.name, () => {
       expect(validateFormula(c.formula).ok).toBe(true);
       expect(validateProcess(c.process).ok).toBe(true);
-      const result = estimateFermentation(c.formula, c.process);
+      const result = estimateFermentation(c.formula, c.process, fixtureProfile);
       const tolerance = c.tolerance ?? file.tolerance;
       for (const [path, expected] of Object.entries(c.expected)) {
         const actual = at(result, path);
@@ -74,32 +80,93 @@ const mix = (conditions: Record<string, unknown>): Process => ({
   steps: process.steps.map((s) => (s.id === 'mix' ? { ...s, conditions } : s)),
 });
 
-describe('ready to bake target (personal calibration)', () => {
-  it('reports the dough in percent of the planned fermentation, not of a doubling', () => {
-    // 1 % fresh at 21.1 °C for A hours reaches F = 1, half of the ready target 2.
-    const planned: Process = {
-      steps: process.steps.map((s) =>
-        s.id === 'proof' ? { ...s, plannedDurationS: 3.43 * 3600 } : s,
-      ),
-    };
-    const result = estimateFermentation(base, planned);
-    const pct = result.dough.progressPct;
-    expect(pct.status === 'ok' && pct.value).toBeCloseTo(50, 6);
-    // The band covers both ends of the target band (1.5 and 2.5) and the parameter corners.
-    expect(pct.status === 'ok' && pct.range?.every((b) => b.kind === 'finite')).toBe(true);
-    expect(pct.status === 'ok' && pct.assumptions).toContain('ready_target_progress:2');
+describe('readiness profiles', () => {
+  const planned: Process = {
+    steps: process.steps.map((s) =>
+      s.id === 'proof' ? { ...s, plannedDurationS: 3.43 * 3600 } : s,
+    ),
+  };
+  const value = (e: { status: string; value?: number }) => (e.status === 'ok' ? e.value : NaN);
+
+  it('defaults to the model end point, and says so', () => {
+    // 1 % fresh at 21.1 °C for A hours reaches F = 1: the whole planned fermentation.
+    const pct = estimateFermentation(base, planned).dough.progressPct;
+    expect(value(pct)).toBeCloseTo(100, 6);
+    expect(pct).toMatchObject({
+      calibration: { id: MODEL_END_POINT.id, version: MODEL_END_POINT.version },
+    });
+    expect(pct.status === 'ok' && pct.assumptions).toEqual(
+      expect.arrayContaining(['ready_target_progress:1', 'readiness_default']),
+    );
   });
 
-  it('takes the calibration as its own input, apart from the kinetic parameters', () => {
-    const duration = (readyProgress: number) => {
-      const d = estimateFermentation(base, process, {
-        readyProgress,
-        band: [readyProgress, readyProgress],
-      }).dough.duration;
-      return d.status === 'ok' ? d.value : NaN;
+  it('uses the profile the process selects, which changes predictions and is named', () => {
+    const selected: Process = {
+      ...planned,
+      readiness: { id: EXPERIMENTAL_READY.id, version: EXPERIMENTAL_READY.version },
     };
-    expect(duration(1)).toBeCloseTo(3.43 * 3600, 3);
-    expect(duration(2)).toBeCloseTo(2 * 3.43 * 3600, 3);
+    const result = estimateFermentation(base, selected).dough;
+    expect(value(result.progressPct)).toBeCloseTo(50, 6);
+    expect(value(result.duration)).toBeCloseTo(2 * 3.43 * 3600, 3);
+    expect(result.duration).toMatchObject({ calibration: { id: EXPERIMENTAL_READY.id } });
+    expect(result.progressPct.status === 'ok' && result.progressPct.assumptions).not.toContain(
+      'readiness_default',
+    );
+    // The band covers both ends of the profile band and the parameter corners.
+    expect(result.progressPct.status === 'ok' && result.progressPct.range?.length).toBe(2);
+    // The default recipe is not affected by another recipe's choice.
+    expect(value(estimateFermentation(base, planned).dough.progressPct)).toBeCloseTo(100, 6);
+  });
+
+  it('names an unknown profile as missing data', () => {
+    const unknown = { ...planned, readiness: { id: 'someone.else', version: '9' } };
+    expect(estimateFermentation(base, unknown).dough.duration).toMatchObject({
+      status: 'insufficient_data',
+      reason: 'readiness_profile_unknown',
+    });
+  });
+
+  it.each([
+    ['zero', 0, [0, 0]],
+    ['negative', -1, [-2, -0.5]],
+    ['NaN', NaN, [1, 2]],
+    ['infinite', Infinity, [1, Infinity]],
+    ['inverted band', 2, [2.5, 1.5]],
+    ['target outside its band', 3, [1.5, 2.5]],
+  ] as const)(
+    'refuses an invalid profile (%s), never an ok non-finite value',
+    (_n, ready, band) => {
+      const profile = {
+        ...MODEL_END_POINT,
+        readyProgress: ready,
+        band: [band[0], band[1]] as const,
+      };
+      const result = estimateFermentation(base, planned, profile).dough;
+      for (const e of [result.duration, result.progressPct, ...Object.values(result.yeastPct)]) {
+        expect(e).toMatchObject({ status: 'unsupported', reason: 'invalid_readiness_profile' });
+      }
+    },
+  );
+
+  it('keeps every ok value finite and JSON-portable', () => {
+    const result = estimateFermentation(base, planned);
+    for (const e of [result.dough.duration, result.dough.progressPct]) {
+      expect(JSON.parse(JSON.stringify(e))).toEqual(e);
+    }
+  });
+
+  it('discloses dose band corners outside the domain, never clipped', () => {
+    // 3.43 h at 21.1 °C with the experimental target needs ≈ 2.59 % fresh; corners go past 3 %.
+    const selected: Process = {
+      ...planned,
+      readiness: { id: EXPERIMENTAL_READY.id, version: EXPERIMENTAL_READY.version },
+    };
+    const dose = estimateFermentation(base, selected).dough.yeastPct.yeast;
+    expect(dose?.status).toBe('ok');
+    if (dose?.status !== 'ok') return;
+    expect(dose.assumptions).toContain('band_outside_domain');
+    const high = dose.range?.[1];
+    expect(high?.kind === 'finite' && high.value).toBeGreaterThan(3);
   });
 
   it('never puts Infinity in a range: an unreachable corner is beyondHorizon', () => {
@@ -107,7 +174,9 @@ describe('ready to bake target (personal calibration)', () => {
       ...base,
       ingredients: base.ingredients.map((i) => (i.id === 'yeast' ? { ...i, bakerPct: 0.1 } : i)),
     };
-    const duration = estimateFermentation(lean, mix({ temperatureC: 5 })).dough.duration;
+    // The experimental profile's high end (2.5) is the corner that never gets there.
+    const duration = estimateFermentation(lean, mix({ temperatureC: 5 }), EXPERIMENTAL_READY).dough
+      .duration;
     expect(duration.status).toBe('ok');
     if (duration.status !== 'ok') return;
     expect(JSON.parse(JSON.stringify(duration.range))).toEqual(duration.range);

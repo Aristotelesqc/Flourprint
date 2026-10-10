@@ -209,6 +209,7 @@ export const RecipePage = () => {
 
   const changeDuration = (stepId: string, durationS: number | undefined): boolean => {
     const process = {
+      ...draft.process,
       steps: draft.process.steps.map((s) => {
         if (s.id !== stepId) return s;
         // A typed duration is no longer an applied suggestion (fermentation.md).
