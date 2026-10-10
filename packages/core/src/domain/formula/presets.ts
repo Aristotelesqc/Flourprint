@@ -121,6 +121,16 @@ export const INGREDIENT_PRESETS: readonly IngredientPreset[] = [
     },
   },
   {
+    id: 'barley-malt-syrup',
+    ingredient: {
+      kind: 'other',
+      role: 'dough',
+      water: est(22, 18, 26, 'supplier specifications (approx.)'),
+      fat: est(0, 0, 0.5, 'supplier specifications (approx.)'),
+      sugar: est(60, 45, 75, 'supplier specifications (approx.)'),
+    },
+  },
+  {
     id: 'diastatic-malt',
     ingredient: {
       kind: 'other',

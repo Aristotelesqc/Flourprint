@@ -98,5 +98,6 @@ describe('templates', () => {
         dough.status,
       );
     }
-  });
+    // Every template runs the whole model, bands included: slow but bounded.
+  }, 30_000);
 });

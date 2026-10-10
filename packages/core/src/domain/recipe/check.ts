@@ -27,18 +27,19 @@ export const checkRecipe = (formula: Formula, process: Process): RecipeIssue[] =
   const valid = validateRecipe(formula, process);
   if (!valid.ok) {
     const { code, message, details } = valid.error;
-    const path =
-      details &&
-      typeof details === 'object' &&
-      'path' in details &&
-      typeof details.path === 'string'
-        ? details.path
-        : undefined;
+    // The error's own scalar details, so the interface can explain it like any engine error.
+    const scalars = Object.fromEntries(
+      Object.entries((details ?? {}) as Record<string, unknown>).filter(
+        (entry): entry is [string, string | number] =>
+          typeof entry[1] === 'string' || typeof entry[1] === 'number',
+      ),
+    );
+    const path = typeof scalars.path === 'string' ? scalars.path : undefined;
     issues.push({
       severity: 'blocking',
       code,
       ...(path === undefined ? {} : { path }),
-      details: { message },
+      details: { ...scalars, message },
     });
   }
 
