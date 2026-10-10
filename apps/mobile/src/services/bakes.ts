@@ -27,12 +27,17 @@ export const sendBakeCommand = (
     },
   ).finally(() => window.dispatchEvent(new Event(BAKES_CHANGED)));
 
-/** Active bakes with their state, most recently updated first. */
+/** Active bakes with their state (or why it cannot be read), most recently updated first. */
 export const activeBakes = async (
   services: Services,
-): Promise<Result<BakeState, UpcastError>[]> => {
+): Promise<{ readonly bakeId: string; readonly result: Result<BakeState, UpcastError> }[]> => {
   const summaries = (await services.bakes.listBakes())
     .filter((s) => s.status === 'active')
     .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
-  return Promise.all(summaries.map((s) => loadBake(services.bakes, s.bakeId)));
+  return Promise.all(
+    summaries.map(async (s) => ({
+      bakeId: s.bakeId,
+      result: await loadBake(services.bakes, s.bakeId),
+    })),
+  );
 };

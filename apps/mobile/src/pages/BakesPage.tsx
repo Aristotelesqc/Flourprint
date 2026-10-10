@@ -15,9 +15,9 @@ import { NoteSheet } from '../blocks/NoteSheet';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatTime } from '../i18n/time';
 import { bakeAlerts, bakeView, stepProgress } from '../services/bake-view';
-import { activeBakes, sendBakeCommand } from '../services/bakes';
+import { useBakeCommands, type CommandOutcome } from '../services/bake-commands';
+import { activeBakes } from '../services/bakes';
 import { useServices } from '../services/services';
-import { useGuardedWrite } from '../services/writes';
 
 interface Running {
   readonly state: BakeState;
@@ -29,15 +29,19 @@ export const BakesPage = () => {
   const services = useServices();
   const { t, error } = useMessages();
   const [bakes, setBakes] = useState<readonly Running[]>();
+  // Active bakes whose log this version cannot read: listed, never dropped silently.
+  const [unreadable, setUnreadable] = useState<readonly string[]>([]);
   const [now, setNow] = useState<Instant>(services.clock.now());
   const [readFailed, setReadFailed] = useState(false);
   const [failure, setFailure] = useState<{ bakeId: string; text: string }>();
   const [noteFor, setNoteFor] = useState<{ state: BakeState; stepId?: string }>();
-  const writes = useGuardedWrite();
+  const commands = useBakeCommands(services);
 
   const load = useCallback(async () => {
     try {
-      const states = (await activeBakes(services)).flatMap((r) => (r.ok ? [r.value] : []));
+      const active = await activeBakes(services);
+      setUnreadable(active.filter(({ result }) => !result.ok).map(({ bakeId }) => bakeId));
+      const states = active.flatMap(({ result }) => (result.ok ? [result.value] : []));
       const loaded = await Promise.all(
         states.map(async (state): Promise<Running> => {
           const id = state.snapshot?.revisions.formula.id;
@@ -67,17 +71,40 @@ export const BakesPage = () => {
     };
   }, [services, load]);
 
-  const send = async (state: BakeState, payload: BakeCommandPayload) => {
-    setFailure(undefined);
-    const result = await writes.run(() => sendBakeCommand(services, state, payload));
-    if (!result.ok) {
-      if (result.reason === 'storage') {
-        setFailure({ bakeId: state.bakeId, text: t('state.storageWrite') });
-      }
-    } else if (!result.value.ok) {
-      setFailure({ bakeId: state.bakeId, text: error(result.value.error) });
-    }
+  /** Applies an outcome to the card of its bake; resolves to a message when nothing was recorded. */
+  const settle = async (bakeId: string, outcome: CommandOutcome): Promise<string | undefined> => {
+    const text =
+      outcome.kind === 'ok'
+        ? undefined
+        : outcome.kind === 'rejected'
+          ? error(outcome.error)
+          : t(outcome.kind === 'storage' ? 'state.storageWrite' : 'state.writeBusy');
+    setFailure(text === undefined ? undefined : { bakeId, text });
     await load();
+    return text;
+  };
+
+  const send = async (state: BakeState, payload: BakeCommandPayload) =>
+    settle(state.bakeId, await commands.send(state, payload));
+
+  /** The uncertain command, resent with its original id (D7). */
+  const retry = async () => {
+    const bakeId = commands.pending?.bakeId;
+    if (bakeId) await settle(bakeId, await commands.retry());
+  };
+
+  /** A note closes only once durably written; an uncertain one is retried as is. */
+  const saveNote = async (state: BakeState, payload: BakeCommandPayload) => {
+    const { pending } = commands;
+    const retrying =
+      pending?.bakeId === state.bakeId &&
+      JSON.stringify(pending.payload) === JSON.stringify(payload);
+    const problem = await settle(
+      state.bakeId,
+      retrying ? await commands.retry() : await commands.send(state, payload),
+    );
+    if (problem === undefined) setNoteFor(undefined);
+    return problem;
   };
 
   const soonest = (state: BakeState) =>
@@ -97,14 +124,24 @@ export const BakesPage = () => {
       <IonContent className="ion-padding">
         <div className="flex flex-col gap-4">
           {readFailed && <p role="alert">{t('state.storageRead')}</p>}
-          {bakes?.length === 0 && <p className="text-muted">{t('bakes.empty')}</p>}
+          {unreadable.length > 0 && (
+            <p role="alert" className="m-0 text-alert">
+              {t('bakes.unreadable', { count: unreadable.length })}
+            </p>
+          )}
+          {bakes?.length === 0 && unreadable.length === 0 && (
+            <p className="text-muted">{t('bakes.empty')}</p>
+          )}
           {sorted.map((bake) => (
             <BakeCard
               key={bake.state.bakeId}
               bake={bake}
               now={now}
-              busy={writes.busy}
+              busy={commands.busy || commands.pending !== undefined}
               {...(failure?.bakeId === bake.state.bakeId ? { failure: failure.text } : {})}
+              {...(commands.pending?.bakeId === bake.state.bakeId
+                ? { onRetry: () => void retry() }
+                : {})}
               onSend={(payload) => void send(bake.state, payload)}
               onNote={(stepId) =>
                 setNoteFor({ state: bake.state, ...(stepId === undefined ? {} : { stepId }) })
@@ -117,10 +154,8 @@ export const BakesPage = () => {
             open
             state={noteFor.state}
             {...(noteFor.stepId === undefined ? {} : { stepId: noteFor.stepId })}
-            onSave={(payload) => {
-              setNoteFor(undefined);
-              void send(noteFor.state, payload);
-            }}
+            busy={commands.busy}
+            onSave={(payload) => saveNote(noteFor.state, payload)}
             onClose={() => setNoteFor(undefined)}
           />
         )}
@@ -134,6 +169,7 @@ const BakeCard = ({
   now,
   busy,
   failure,
+  onRetry,
   onSend,
   onNote,
 }: {
@@ -141,6 +177,8 @@ const BakeCard = ({
   now: Instant;
   busy: boolean;
   failure?: string;
+  /** The uncertain command of this bake, resent as is. */
+  onRetry?: () => void;
   onSend: (payload: BakeCommandPayload) => void;
   onNote: (stepId: string | undefined) => void;
 }) => {
@@ -224,6 +262,11 @@ const BakeCard = ({
         <p role="alert" className="m-0 text-alert">
           {failure}
         </p>
+      )}
+      {onRetry && (
+        <IonButton fill="outline" onClick={onRetry}>
+          {t('state.retry')}
+        </IonButton>
       )}
       <div className="grid grid-cols-[1fr_auto_auto] gap-2">
         {focus ? (

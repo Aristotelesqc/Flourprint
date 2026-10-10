@@ -77,19 +77,20 @@ test('dough ready is recorded on a running fermentation step without ending it',
 
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   // Not a dough step: no dough ready mark on the preferment.
-  await expect(page.getByRole('button', { name: 'Pâte prête' })).toBeHidden();
+  await expect(page.getByRole('button', { name: /Prête à/ })).toBeHidden();
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
   await page.getByRole('button', { name: 'Échaudage terminé' }).click();
   await page.getByRole('button', { name: 'Préferment terminé' }).click();
   await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
   await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
   await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
-  await page.getByRole('button', { name: 'Pâte prête' }).click();
+  // The bulk is followed by shaping: the dough is ready to shape, not to bake.
+  await page.getByRole('button', { name: 'Prête à façonner' }).click();
   await page.getByText('Test du doigt').click();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   // Recorded in the journal; the step is still running.
   await expect(page.locator('p:visible', { hasText: / · / }).first()).toContainText(
-    'Pâte prête (Pointage, Test du doigt)',
+    'Prête à façonner (Pointage, Test du doigt)',
   );
   await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
 });
@@ -304,14 +305,29 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   await expect(
     page.getByText(/Aux temps prévus : .* de la fermentation prévue/).first(),
   ).toBeVisible();
-  await expect(page.getByText(/La cible « prête à cuire » est provisoire/)).toBeVisible();
+  await expect(page.getByText(/La cible « prête à cuire » n’est pas calibrée/)).toBeVisible();
+  // The default target is the model's own end point; another one is an explicit choice.
+  await expect(
+    page.getByRole('button', { name: 'Point final du modèle', pressed: true }),
+  ).toBeVisible();
+  const progress = page.getByText(/Aux temps prévus : .* de la fermentation prévue/).first();
+  const before = await progress.textContent();
+  await page.getByRole('button', { name: 'Expérimentale (×2)' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Expérimentale (×2)', pressed: true }),
+  ).toBeVisible();
+  await expect(progress).not.toHaveText(before ?? '');
   await expect(page.getByText(/doublé/)).toBeHidden();
   // Applying a suggested dose is an explicit edit of the draft.
   await page.getByRole('button', { name: 'Prendre cette dose' }).last().click();
   await expect(unsaved(page).first()).toBeVisible();
   // Applying a suggested time is an explicit edit too, and the step shows the new time.
-  const useTime = page.getByRole('button', { name: 'Prendre ce temps' }).first();
-  if (await useTime.isVisible()) await useTime.click();
+  const useTime = page.getByRole('button', { name: 'Prendre ce temps' });
+  const offered = await useTime.count();
+  expect(offered).toBeGreaterThan(0);
+  await useTime.first().click();
+  // Applied with its provenance: no longer offered for that step.
+  await expect(useTime).toHaveCount(offered - 1);
 
   await page.getByText('Avancé', { exact: true }).click();
   const target = page.getByLabel('Température de pâte visée (°C)');
@@ -374,4 +390,34 @@ test('the advanced menu tells the state of reminders', async ({ page }) => {
   await expect(page.getByText('Rappels', { exact: true })).toBeVisible();
   // Headless Chromium never grants notifications; the state is still shown.
   await expect(page.getByText(/Les rappels (sont|ne sont)/)).toBeVisible();
+});
+
+test('a proof running beside the preheat still takes its ready-to-bake mark', async ({ page }) => {
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await expect(page).toHaveURL(/\/bakes\//);
+  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
+  await page.getByRole('button', { name: 'Échaudage terminé' }).click();
+  await page.getByRole('button', { name: 'Préferment terminé' }).click();
+  await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
+  await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
+  await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
+  await page.getByRole('button', { name: 'Pointage terminé' }).click();
+  await page.getByRole('button', { name: 'Commencer : Façonnage' }).click();
+  await page.getByRole('button', { name: 'Façonnage terminé' }).click();
+  await page.getByRole('button', { name: 'Commencer : Apprêt' }).click();
+  await page.getByRole('button', { name: 'Commencer Préchauffage' }).click();
+  // The preheat ends first and holds the focus; the proof runs beside it.
+  await expect(page.getByRole('button', { name: 'Préchauffage terminé' })).toBeVisible();
+  await page.getByRole('button', { name: 'Prête à cuire Apprêt' }).click();
+  await page.getByText('Toucher', { exact: true }).click();
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('p:visible', { hasText: / · / }).first()).toContainText(
+    'Prête à cuire (Apprêt, Toucher)',
+  );
+  // Neither step ended.
+  await expect(page.getByRole('button', { name: 'Préchauffage terminé' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Terminé Apprêt' })).toBeVisible();
 });

@@ -23,7 +23,16 @@ interface Props {
   readonly state: BakeState;
   /** The step the baker is on; the note is attached to it unless they pick another. */
   readonly stepId?: StepId;
-  readonly onSave: (payload: Extract<BakeCommandPayload, { type: 'AddObservation' }>) => void;
+  /** A write is running: saving waits for it. */
+  readonly busy: boolean;
+  /**
+   * Records the note; resolves to nothing once it is durably written (the page then closes the
+   * sheet), or to a message. The draft stays until then (a conflict, a storage error, a busy
+   * write), so a note is never lost before it is saved.
+   */
+  readonly onSave: (
+    payload: Extract<BakeCommandPayload, { type: 'AddObservation' }>,
+  ) => Promise<string | undefined>;
   readonly onClose: () => void;
 }
 
@@ -31,12 +40,14 @@ interface Props {
  * A note taken during or after a bake (bake-session.md): attached to a step and a category, so
  * that it can be read against the plan later (history.md, feedback export).
  */
-export const NoteSheet = ({ open, state, stepId, onSave, onClose }: Props) => {
+export const NoteSheet = ({ open, state, stepId, busy, onSave, onClose }: Props) => {
   const { t, stepName } = useMessages();
   const [text, setText] = useState('');
   const [step, setStep] = useState<StepId | undefined>(stepId);
   const [category, setCategory] = useState<ObservationCategory>(defaultCategory(state, stepId));
   const [rating, setRating] = useState<number>();
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<string>();
   const ended = state.status !== 'active';
 
   useEffect(() => {
@@ -45,6 +56,7 @@ export const NoteSheet = ({ open, state, stepId, onSave, onClose }: Props) => {
     setStep(stepId);
     setCategory(defaultCategory(state, stepId));
     setRating(undefined);
+    setProblem(undefined);
     // Reset only when the sheet opens: the state refreshes while it is open.
   }, [open]);
 
@@ -52,16 +64,24 @@ export const NoteSheet = ({ open, state, stepId, onSave, onClose }: Props) => {
     setStep(next);
     setCategory(defaultCategory(state, next));
   };
-  const save = () => {
+  const save = async () => {
     const trimmed = text.trim();
     if (trimmed === '' && rating === undefined) return;
-    onSave({
-      type: 'AddObservation',
-      category,
-      ...(step === undefined ? {} : { stepId: step }),
-      ...(trimmed === '' ? {} : { text: trimmed }),
-      ...(rating === undefined ? {} : { rating }),
-    });
+    setSaving(true);
+    setProblem(undefined);
+    try {
+      setProblem(
+        await onSave({
+          type: 'AddObservation',
+          category,
+          ...(step === undefined ? {} : { stepId: step }),
+          ...(trimmed === '' ? {} : { text: trimmed }),
+          ...(rating === undefined ? {} : { rating }),
+        }),
+      );
+    } finally {
+      setSaving(false);
+    }
   };
   const nameOf = (id: StepId) => {
     const found = state.process?.steps.find((s) => s.id === id);
@@ -77,7 +97,11 @@ export const NoteSheet = ({ open, state, stepId, onSave, onClose }: Props) => {
           </IonButtons>
           <IonTitle>{t('bake.noteTitle')}</IonTitle>
           <IonButtons slot="end">
-            <IonButton strong disabled={text.trim() === '' && rating === undefined} onClick={save}>
+            <IonButton
+              strong
+              disabled={saving || busy || (text.trim() === '' && rating === undefined)}
+              onClick={() => void save()}
+            >
               {t('bake.save')}
             </IonButton>
           </IonButtons>
@@ -85,6 +109,11 @@ export const NoteSheet = ({ open, state, stepId, onSave, onClose }: Props) => {
       </IonHeader>
       <IonContent className="ion-padding">
         <div className="flex flex-col gap-5">
+          {problem && (
+            <p role="alert" className="m-0 text-alert">
+              {problem}
+            </p>
+          )}
           <textarea
             aria-label={t('bake.noteTitle')}
             className="fp-reset min-h-32 w-full rounded-xl border border-line bg-surface p-3 text-lg"

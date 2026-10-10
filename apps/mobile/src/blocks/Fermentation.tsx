@@ -2,6 +2,8 @@ import { IonButton } from '@ionic/react';
 import { useId, useMemo, useState } from 'react';
 import {
   estimateFermentation,
+  EXPERIMENTAL_READY,
+  MODEL_END_POINT,
   type AcceptedSuggestion,
   type Estimate,
   type Formula,
@@ -32,8 +34,23 @@ const FERMENTATION_OPERATIONS = new Set(['preferment', 'bulk', 'retard', 'proof'
 const YEAST_FORMS: readonly YeastForm[] = ['active-dry', 'instant', 'fresh'];
 /** Applied durations are rounded to five minutes: nobody times a dough to the second. */
 const ROUND_S = 300;
+const applied = (seconds: number) => Math.max(ROUND_S, Math.round(seconds / ROUND_S) * ROUND_S);
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
+
+/** The readiness profiles a recipe can select (fermentation.md); the first is the default. */
+const PROFILES = [
+  {
+    profile: MODEL_END_POINT,
+    label: 'fermentation.readiness.model',
+    hint: 'fermentation.readinessHint.model',
+  },
+  {
+    profile: EXPERIMENTAL_READY,
+    label: 'fermentation.readiness.experimental',
+    hint: 'fermentation.readinessHint.experimental',
+  },
+] as const;
 
 interface Props {
   readonly formula: Formula;
@@ -78,7 +95,7 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
 
   /** Applies a suggested time and records where it came from (fermentation.md). */
   const setDuration = (stepId: string, estimate: OkEstimate) => {
-    const appliedValue = Math.max(ROUND_S, Math.round(estimate.value / ROUND_S) * ROUND_S);
+    const appliedValue = applied(estimate.value);
     return onProcess({
       ...process,
       steps: process.steps.map((s) =>
@@ -162,6 +179,8 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
         </>
       )}
 
+      <ReadinessChoice process={process} onProcess={onProcess} />
+
       <ul className="m-0 flex list-none flex-col gap-1 border-t border-line p-0 pt-2 text-[15px]">
         {steps.map((step) => (
           <li key={step.id} className="flex items-center justify-between gap-3">
@@ -232,6 +251,45 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
   );
 };
 
+/** The dough's readiness profile: an explicit choice of the recipe, never a silent default. */
+const ReadinessChoice = ({
+  process,
+  onProcess,
+}: {
+  process: Process;
+  onProcess: (process: Process) => boolean;
+}) => {
+  const { t } = useMessages();
+  const selected =
+    PROFILES.find(
+      ({ profile }) =>
+        profile.id === process.readiness?.id && profile.version === process.readiness.version,
+    ) ?? (process.readiness ? undefined : PROFILES[0]);
+  return (
+    <div className="flex flex-col gap-1.5 border-t border-line pt-2">
+      <span className="text-sm font-semibold">{t('fermentation.readiness')}</span>
+      <Segmented
+        size="small"
+        value={selected?.profile.id ?? ''}
+        options={PROFILES.map(({ profile, label }) => ({ value: profile.id, label: t(label) }))}
+        onChange={(id) => {
+          const choice = PROFILES.find(({ profile }) => profile.id === id);
+          if (!choice) return;
+          const { readiness: _previous, ...rest } = process;
+          onProcess(
+            choice === PROFILES[0]
+              ? rest
+              : { ...rest, readiness: { id: choice.profile.id, version: choice.profile.version } },
+          );
+        }}
+      />
+      <span className="text-sm text-muted">
+        {selected ? t(selected.hint) : t('fermentation.reason.readiness_profile_unknown')}
+      </span>
+    </div>
+  );
+};
+
 const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex items-center justify-between gap-3">
     <span>{label}</span>
@@ -242,7 +300,9 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
 const useEstimateText = () => {
   const { t, pct } = useMessages();
   const bound = (value: RangeBound, format: (v: number) => string) =>
-    value.kind === 'finite' ? format(value.value) : t('fermentation.unbounded');
+    value.kind === 'finite'
+      ? format(value.value)
+      : t('fermentation.unbounded', { days: Math.round(value.horizonS / 86_400) });
   const range = (e: Estimate, format: (v: number) => string) => {
     if (e.status !== 'ok') return '';
     if (!e.range) {
@@ -311,7 +371,11 @@ const Mass = ({
               })}{' '}
               <span className="text-muted">{range(duration, formatDuration)}</span>
             </span>
-            {Math.abs((step.plannedDurationS ?? -Infinity) - duration.value) > ROUND_S && (
+            {/* Offered unless the rounded value is already applied with its provenance. */}
+            {!(
+              step.plannedDurationS === applied(duration.value) &&
+              step.accepted?.appliedValue === step.plannedDurationS
+            ) && (
               <IonButton size="small" fill="outline" onClick={() => onDuration(step.id, duration)}>
                 {t('fermentation.applyDuration')}
               </IonButton>
@@ -330,6 +394,9 @@ const Mass = ({
       {dough && progressPct.status === 'ok' && (
         <span className="text-sm text-muted">{t('fermentation.readyTarget')}</span>
       )}
+      {yeasts.some(
+        ([, e]) => e.status === 'ok' && e.assumptions.includes('band_outside_domain'),
+      ) && <span className="text-sm text-muted">{t('fermentation.bandOutsideDomain')}</span>}
       {yeasts.map(([ingredient, estimate]) =>
         estimate.status === 'ok' ? (
           <span key={ingredient} className="flex items-center justify-between gap-2">

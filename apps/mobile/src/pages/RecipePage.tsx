@@ -277,6 +277,8 @@ export const RecipePage = () => {
         formula: revision.formula,
         process: revision.process,
         mode,
+        // The phone bakes for real; the PC shell and the browser preview simulate (history.md).
+        origin: services.platform === 'android' ? 'physical' : 'simulation',
       },
     });
     const result = await writes.run(() =>

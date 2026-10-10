@@ -28,7 +28,7 @@ export const NotificationSync = () => {
         try {
           const bakes = await Promise.all(
             (await activeBakes(services))
-              .flatMap((r) => (r.ok ? [r.value] : []))
+              .flatMap(({ result }) => (result.ok ? [result.value] : []))
               .map(async (state) => {
                 const id = state.snapshot?.revisions.formula.id;
                 const recipe = id ? (await services.recipes.getRecipe(id))?.name : undefined;

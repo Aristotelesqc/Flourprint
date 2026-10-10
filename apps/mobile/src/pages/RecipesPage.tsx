@@ -37,6 +37,8 @@ export const RecipesPage = () => {
   const [allRecipes, setAllRecipes] = useState<readonly Recipe[]>([]);
   const [now, setNow] = useState(services.clock.now());
   const [readFailed, setReadFailed] = useState(false);
+  // Running bakes this version cannot read: said, never hidden.
+  const [unreadable, setUnreadable] = useState(0);
 
   const load = async () => {
     setNow(services.clock.now());
@@ -69,7 +71,9 @@ export const RecipesPage = () => {
         }),
       ),
     );
-    setRunning((await activeBakes(services)).flatMap((r) => (r.ok ? [r.value] : [])));
+    const active = await activeBakes(services);
+    setRunning(active.flatMap(({ result }) => (result.ok ? [result.value] : [])));
+    setUnreadable(active.filter(({ result }) => !result.ok).length);
     setReadFailed(false);
   };
 
@@ -111,6 +115,11 @@ export const RecipesPage = () => {
           </div>
           <SessionOnlyNotice />
           {readFailed && <p role="alert">{t('state.storageRead')}</p>}
+          {unreadable > 0 && (
+            <p role="alert" className="m-0 text-alert">
+              {t('bakes.unreadable', { count: unreadable })}
+            </p>
+          )}
           {running.length > 1 && (
             <IonButton expand="block" fill="outline" routerLink="/bakes">
               {t('recipes.allBakes', { count: running.length })}

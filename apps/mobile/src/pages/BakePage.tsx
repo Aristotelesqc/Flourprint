@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { loadBake } from '@flourprint/core/application';
 import {
-  lastDoughStepId,
+  doughReadyStage,
   type BakeCommandPayload,
   type BakeState,
   type DomainError,
@@ -30,13 +30,11 @@ import {
   type BakeStepView,
   type LogEntry,
 } from '../services/bake-view';
-import { sendBakeCommand } from '../services/bakes';
+import { useBakeCommands, type CommandOutcome } from '../services/bake-commands';
 import { useServices } from '../services/services';
-import { useGuardedWrite } from '../services/writes';
 import { SectionTitle } from '../ui/Layout';
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
-const DOUGH_READY_OPERATIONS = new Set(['bulk', 'retard', 'proof']);
 const CRITERIA = ['poke', 'feel', 'time', 'other'] as const;
 
 /** Bake mode (#8, #21): "what do I do now?" first; everything is recorded as bake events. */
@@ -50,15 +48,10 @@ export const BakePage = () => {
   const [failure, setFailure] = useState<DomainError>();
   const [readFailed, setReadFailed] = useState(false);
   const [now, setNow] = useState<Instant>(services.clock.now());
-  const writes = useGuardedWrite();
+  const commands = useBakeCommands(services);
+  const { pending } = commands;
   // The note sheet, open on a step (or on the whole bake).
   const [noteOn, setNoteOn] = useState<{ stepId?: string }>();
-  // A command whose outcome is unknown (storage error): retried with the same id, never twice.
-  const [pending, setPending] = useState<{
-    commandId: string;
-    version: number;
-    payload: BakeCommandPayload;
-  }>();
 
   const reload = useCallback(async () => {
     try {
@@ -112,36 +105,36 @@ export const BakePage = () => {
     );
   }
 
-  const execute = async (command: {
-    commandId: string;
-    version: number;
-    payload: BakeCommandPayload;
-  }) => {
-    const result = await writes.run(() =>
-      sendBakeCommand(
-        services,
-        { bakeId: state.bakeId, version: command.version },
-        command.payload,
-        command.commandId,
-      ),
-    );
+  /** Applies the outcome of a command; resolves to a message when it was not recorded. */
+  const settle = async (outcome: CommandOutcome): Promise<string | undefined> => {
     setNow(services.clock.now());
-    if (!result.ok) {
-      if (result.reason === 'storage') setPending(command);
-      return;
-    }
-    setPending(undefined);
-    if (result.value.ok) {
-      setState(result.value.value.state);
-      setFailure(undefined);
-    } else {
-      setFailure(result.value.error);
-      if (result.value.error.code === 'VersionConflict') await reload();
+    switch (outcome.kind) {
+      case 'ok':
+        setState(outcome.state);
+        setFailure(undefined);
+        return undefined;
+      case 'rejected':
+        setFailure(outcome.error);
+        if (outcome.error.code === 'VersionConflict') await reload();
+        return error(outcome.error);
+      case 'storage':
+        return t('state.storageWrite');
+      case 'busy':
+        return t('state.writeBusy');
     }
   };
 
-  const send = (payload: BakeCommandPayload) =>
-    execute({ commandId: services.ids.next(), version: state.version, payload });
+  const send = async (payload: BakeCommandPayload) => settle(await commands.send(state, payload));
+
+  /** A note is closed only once it is durably written; an uncertain one is retried as is. */
+  const saveNote = async (payload: BakeCommandPayload): Promise<string | undefined> => {
+    const retrying = pending && JSON.stringify(pending.payload) === JSON.stringify(payload);
+    const problem = await settle(
+      retrying ? await commands.retry() : await commands.send(state, payload),
+    );
+    if (problem === undefined) setNoteOn(undefined);
+    return problem;
+  };
 
   const view = state.status === 'active' ? bakeView(state, now) : undefined;
   const focus = view?.focus;
@@ -189,15 +182,13 @@ export const BakePage = () => {
 
   const note = () => setNoteOn(focus ? { stepId: focus.step.id } : {});
 
-  /** The dough's fermentation steps: where the baker judges it ready (fermentation.md). */
-  const fermenting = (stepId: string) => {
-    const step = state.process?.steps.find((s) => s.id === stepId);
-    return (
-      step !== undefined &&
-      (DOUGH_READY_OPERATIONS.has(step.operation) ||
-        (state.process !== undefined && lastDoughStepId(state.process) === stepId))
-    );
-  };
+  /** The stage a running dough step can be judged ready for (bake-session.md), if any. */
+  const readyStage = (target: BakeStepView) =>
+    target.startedAt !== undefined && target.endedAt === undefined && state.process
+      ? doughReadyStage(state.process, target.step.id)
+      : undefined;
+  const readyLabel = (stage: 'shape' | 'bake') =>
+    t(stage === 'bake' ? 'bake.readyToBake' : 'bake.readyToShape');
 
   /** Records the time of the judgement and, optionally, what it went by. Never ends the step. */
   const doughReady = (stepId: string) =>
@@ -265,7 +256,10 @@ export const BakePage = () => {
           {pending && (
             <div role="alert" className="flex items-center gap-3 rounded-xl bg-track p-3">
               <span className="flex-1 text-alert">{t('state.storageWrite')}</span>
-              <IonButton disabled={writes.busy} onClick={() => void execute(pending)}>
+              <IonButton
+                disabled={commands.busy}
+                onClick={() => void commands.retry().then(settle)}
+              >
                 {t('state.retry')}
               </IonButton>
             </div>
@@ -284,7 +278,7 @@ export const BakePage = () => {
               <IonButton
                 expand="block"
                 className="h-[72px] text-[22px] font-bold [--border-radius:18px]"
-                disabled={writes.busy || pending !== undefined}
+                disabled={commands.busy || pending !== undefined}
                 onClick={() =>
                   void send(
                     focus.running
@@ -319,15 +313,21 @@ export const BakePage = () => {
                   {t('bake.note')}
                 </IonButton>
               </div>
-              {focus.running && fermenting(focus.step.id) && (
-                <IonButton
-                  fill="outline"
-                  disabled={writes.busy || pending !== undefined}
-                  onClick={() => doughReady(focus.step.id)}
-                >
-                  {t('bake.doughReady')}
-                </IonButton>
-              )}
+              {focus.running &&
+                (() => {
+                  const stage = readyStage(focus);
+                  return (
+                    stage && (
+                      <IonButton
+                        fill="outline"
+                        disabled={commands.busy || pending !== undefined}
+                        onClick={() => doughReady(focus.step.id)}
+                      >
+                        {readyLabel(stage)}
+                      </IonButton>
+                    )
+                  );
+                })()}
             </>
           )}
 
@@ -345,7 +345,7 @@ export const BakePage = () => {
                   }
                   action={{
                     label: t('bake.startShort'),
-                    disabled: writes.busy || pending !== undefined,
+                    disabled: commands.busy || pending !== undefined,
                     run: () => void send({ type: 'StartStep', stepId: v.step.id }),
                   }}
                   emphasized
@@ -379,9 +379,22 @@ export const BakePage = () => {
                   }
                   action={{
                     label: t('bake.doneShort'),
-                    disabled: writes.busy || pending !== undefined,
+                    disabled: commands.busy || pending !== undefined,
                     run: () => void send({ type: 'CompleteStep', stepId: v.step.id }),
                   }}
+                  {...(() => {
+                    // A proof running beside the preheat still takes its readiness mark.
+                    const stage = readyStage(v);
+                    return stage
+                      ? {
+                          extra: {
+                            label: readyLabel(stage),
+                            disabled: commands.busy || pending !== undefined,
+                            run: () => doughReady(v.step.id),
+                          },
+                        }
+                      : {};
+                  })()}
                 />
               ))}
             </StepList>
@@ -403,7 +416,7 @@ export const BakePage = () => {
                     ? {
                         action: {
                           label: t('bake.startShort'),
-                          disabled: writes.busy || pending !== undefined,
+                          disabled: commands.busy || pending !== undefined,
                           run: () => void send({ type: 'StartStep', stepId: v.step.id }),
                         },
                       }
@@ -432,16 +445,20 @@ export const BakePage = () => {
                           text: noteText(entry),
                         })
                     : entry.kind === 'doughReady'
-                      ? entry.criterion === undefined
-                        ? t('bake.log.doughReady', {
-                            time: formatTime(entry.at, locale),
-                            step: nameOf(entry.stepId),
-                          })
-                        : t('bake.log.doughReadyBy', {
-                            time: formatTime(entry.at, locale),
-                            step: nameOf(entry.stepId),
-                            criterion: criterionLabel(entry.criterion),
-                          })
+                      ? t('bake.log.ready', {
+                          time: formatTime(entry.at, locale),
+                          label:
+                            entry.stage === undefined
+                              ? t('bake.doughReady')
+                              : readyLabel(entry.stage),
+                          details: [
+                            nameOf(entry.stepId),
+                            ...(entry.criterion === undefined
+                              ? []
+                              : [criterionLabel(entry.criterion)]),
+                          ].join(', '),
+                          text: entry.text ?? '',
+                        })
                       : t(entry.kind === 'started' ? 'bake.log.started' : 'bake.log.completed', {
                           time: formatTime(entry.at, locale),
                           step: nameOf(entry.stepId),
@@ -454,7 +471,7 @@ export const BakePage = () => {
           {!focus && (
             <IonButton
               fill="outline"
-              disabled={writes.busy || pending !== undefined}
+              disabled={commands.busy || pending !== undefined}
               onClick={note}
             >
               {t('bake.addNote')}
@@ -471,10 +488,8 @@ export const BakePage = () => {
           open={noteOn !== undefined}
           state={state}
           {...(noteOn?.stepId === undefined ? {} : { stepId: noteOn.stepId })}
-          onSave={(payload) => {
-            setNoteOn(undefined);
-            void send(payload);
-          }}
+          busy={commands.busy}
+          onSave={saveNote}
           onClose={() => setNoteOn(undefined)}
         />
       </IonContent>
@@ -484,9 +499,15 @@ export const BakePage = () => {
 
 /** A note's text, with its rating as stars when it has one. */
 const noteText = (entry: LogEntry): string =>
-  [entry.rating === undefined ? '' : '★'.repeat(entry.rating), entry.text ?? '']
-    .filter((part) => part !== '')
-    .join(' ');
+  [ratingText(entry.rating), entry.text ?? ''].filter((part) => part !== '').join(' ');
+
+/** Stars for a whole rating in [0, 5]; any other recorded value as a number, never a crash. */
+const ratingText = (rating: number | undefined): string => {
+  if (rating === undefined || !Number.isFinite(rating)) return '';
+  return Number.isInteger(rating) && rating >= 0 && rating <= 5
+    ? '★'.repeat(rating)
+    : `${rating}/5`;
+};
 
 type Translate = ReturnType<typeof useMessages>['t'];
 
@@ -567,28 +588,41 @@ interface StepLineProps {
   readonly detail: string;
   /** A direct action on this step, for work that runs in parallel with the focus. */
   readonly action?: { label: string; disabled: boolean; run: () => void };
+  /** A second action, such as the readiness mark of a running dough step. */
+  readonly extra?: { label: string; disabled: boolean; run: () => void };
   readonly emphasized?: boolean;
 }
 
-const StepLine = ({ time, name, detail, action, emphasized = false }: StepLineProps) => (
+const StepLine = ({ time, name, detail, action, extra, emphasized = false }: StepLineProps) => (
   <div className="grid min-h-12 grid-cols-[56px_1fr_auto] items-center gap-2.5 py-1.5">
     <span className="font-bold">{time}</span>
     <span className={emphasized ? 'font-bold text-accent-text' : ''}>
       {name}
       {detail && <span className="block text-sm font-normal text-muted">{detail}</span>}
     </span>
-    {action ? (
-      <IonButton
-        size="small"
-        fill={emphasized ? 'solid' : 'outline'}
-        disabled={action.disabled}
-        onClick={action.run}
-        aria-label={`${action.label} ${name}`}
-      >
-        {action.label}
-      </IonButton>
-    ) : (
-      <span />
-    )}
+    <span className="flex flex-wrap justify-end gap-1">
+      {extra && (
+        <IonButton
+          size="small"
+          fill="outline"
+          disabled={extra.disabled}
+          onClick={extra.run}
+          aria-label={`${extra.label} ${name}`}
+        >
+          {extra.label}
+        </IonButton>
+      )}
+      {action && (
+        <IonButton
+          size="small"
+          fill={emphasized ? 'solid' : 'outline'}
+          disabled={action.disabled}
+          onClick={action.run}
+          aria-label={`${action.label} ${name}`}
+        >
+          {action.label}
+        </IonButton>
+      )}
+    </span>
   </div>
 );
