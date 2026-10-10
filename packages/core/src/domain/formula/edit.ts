@@ -116,6 +116,26 @@ export const applyFormulaEdit = (
 };
 
 /**
+ * The same edit in a draft (drafts.md): applied without the final resolution, so the formula may
+ * be left in a state that does not resolve. Refused only when it cannot be applied at all.
+ */
+export const applyDraftFormulaEdit = (
+  formula: Formula,
+  edit: FormulaEdit,
+): Result<Formula, FormulaError> => {
+  const strict = applyFormulaEdit(formula, edit);
+  // A rule of the edit itself (the locked water follows its target) still applies in a draft.
+  if (strict.ok || (strict.error.details as { field?: string }).field === 'waterTarget.locked') {
+    return strict;
+  }
+  const computed = computeEdit(formula, edit);
+  if (!computed.ok) return computed;
+  const settled = settleAccepted(computed.value, edit);
+  const locked = relock(settled);
+  return ok(locked.ok ? locked.value : settled);
+};
+
+/**
  * Provenance of applied suggestions (fermentation.md): `accepted` survives only while the value
  * it describes is untouched. An edit that writes the value (typed percentage, grams) removes it;
  * any other edit keeps it as long as the percentage still equals the applied value.

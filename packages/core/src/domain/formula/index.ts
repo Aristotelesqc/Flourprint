@@ -2,6 +2,7 @@ export * from './types.js';
 export * from './errors.js';
 export { lockedWaterPct, resolveFormula, validateFormula, validateAnchor } from './resolve.js';
 export {
+  applyDraftFormulaEdit,
   applyFormulaEdit,
   type ComponentChanges,
   type FormulaEdit,

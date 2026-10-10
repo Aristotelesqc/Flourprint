@@ -12,4 +12,6 @@ export * from './values.js';
 export * from './bake/index.js';
 export * from './recipe/types.js';
 export * from './recipe/validate.js';
+export * from './recipe/check.js';
+export * from './recipe/template.js';
 export { isReservedId } from './ids.js';

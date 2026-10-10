@@ -4,3 +4,4 @@ export * from './recipes.js';
 export * from './backup.js';
 export * from './recipe-file.js';
 export * from './feedback.js';
+export * from './templates/index.js';
