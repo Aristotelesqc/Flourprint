@@ -10,6 +10,7 @@ import { saveRevision } from '@flourprint/core/application';
 import type { Instant } from '@flourprint/core/domain';
 import { MemoryBakeEventStore, MemoryRecipeRepository } from '@flourprint/adapters/memory';
 import type { SqlBridge } from '@flourprint/adapters/sqlite-bridge';
+import { createNotifier, type Notifier } from './notifications';
 import { sampleRecipe } from './seed';
 
 /**
@@ -25,6 +26,8 @@ export interface Services {
   readonly storage: 'sqlite' | 'memory';
   /** Where the app runs: the phone, the PC shell (ADR 0011) or a plain browser. */
   readonly platform: 'android' | 'desktop' | 'web';
+  /** Reminders of running bakes (ADR 0012). */
+  readonly notifier: Notifier;
   /** SQLite library version, for the device checks page. */
   readonly sqliteVersion: () => Promise<string | undefined>;
 }
@@ -51,7 +54,11 @@ const desktopBridge = (): SqlBridge | undefined => {
   return typeof candidate === 'function' ? { call: candidate as SqlBridge['call'] } : undefined;
 };
 
-export const createServices = async (): Promise<Services> => {
+export const createServices = async (options: {
+  /** Name of the Android notification channel, in the device language. */
+  readonly reminderChannel: string;
+}): Promise<Services> => {
+  const notifier = createNotifier(options.reminderChannel);
   if (Capacitor.isNativePlatform()) {
     const { openCapacitorSqlite, SqlBakeEventStore, SqlRecipeRepository } =
       await import('@flourprint/adapters/sqlite-capacitor');
@@ -66,6 +73,7 @@ export const createServices = async (): Promise<Services> => {
       ids,
       storage: 'sqlite',
       platform: PLATFORM,
+      notifier,
       sqliteVersion: async () =>
         (await db.value.driver.query<{ v: string }>('SELECT sqlite_version() AS v'))[0]?.v,
     };
@@ -85,6 +93,7 @@ export const createServices = async (): Promise<Services> => {
       ids,
       storage: 'sqlite',
       platform: 'desktop',
+      notifier,
       sqliteVersion: async () =>
         (await db.value.driver.query<{ v: string }>('SELECT sqlite_version() AS v'))[0]?.v,
     };
@@ -98,6 +107,7 @@ export const createServices = async (): Promise<Services> => {
     ids,
     storage: 'memory',
     platform: 'web',
+    notifier,
     sqliteVersion: async () => undefined,
   };
 };

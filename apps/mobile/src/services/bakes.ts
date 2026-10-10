@@ -5,6 +5,7 @@ import {
   type ExecuteBakeError,
 } from '@flourprint/core/application';
 import type { BakeCommandPayload, BakeState, Result, UpcastError } from '@flourprint/core/domain';
+import { BAKES_CHANGED } from './notifications';
 import type { Services } from './services';
 
 /** Sends one command for the bake as last read (`expectedVersion`). */
@@ -24,7 +25,7 @@ export const sendBakeCommand = (
       issuedAt: services.clock.now(),
       payload,
     },
-  );
+  ).finally(() => window.dispatchEvent(new Event(BAKES_CHANGED)));
 
 /** Active bakes with their state, most recently updated first. */
 export const activeBakes = async (

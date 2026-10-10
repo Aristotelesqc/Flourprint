@@ -368,3 +368,10 @@ test('follows several bakes on one screen, with actions and notes per bake', asy
   await poolish.getByRole('link', { name: 'Ouvrir' }).click();
   await expect(page.getByText('Cuisine à 23 °C')).toBeVisible();
 });
+
+test('the advanced menu tells the state of reminders', async ({ page }) => {
+  await page.goto('/advanced');
+  await expect(page.getByText('Rappels', { exact: true })).toBeVisible();
+  // Headless Chromium never grants notifications; the state is still shown.
+  await expect(page.getByText(/Les rappels (sont|ne sont)/)).toBeVisible();
+});

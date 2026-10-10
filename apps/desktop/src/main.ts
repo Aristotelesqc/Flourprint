@@ -37,6 +37,8 @@ const ANDROID_UA =
   'Chrome/140.0.0.0 Mobile Safari/537.36';
 
 app.setName('Flourprint');
+// Windows shows web notifications (bake reminders, ADR 0012) only for an identified app.
+if (process.platform === 'win32') app.setAppUserModelId('app.flourprint');
 // Tests and side-by-side profiles point the shell at another data folder.
 if (process.env.FLOURPRINT_USER_DATA) app.setPath('userData', process.env.FLOURPRINT_USER_DATA);
 

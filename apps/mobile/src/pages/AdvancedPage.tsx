@@ -11,10 +11,11 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/react';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { importRecipes } from '@flourprint/core/application';
 import { useMessages } from '../i18n/use-messages';
 import { feedbackFileName, feedbackJson } from '../services/feedback';
+import { BAKES_CHANGED, type Permission } from '../services/notifications';
 import { useServices } from '../services/services';
 
 /** Advanced menu: recipe import, diagnostics and build details, kept off the main screens. */
@@ -25,6 +26,19 @@ export const AdvancedPage = () => {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<{ text: string; alert: boolean }>();
+
+  const { notifier } = services;
+  const [permission, setPermission] = useState<Permission>();
+  const [exact, setExact] = useState<boolean>();
+  const readReminders = useCallback(async () => {
+    try {
+      setPermission(await notifier.permission());
+      if (notifier.exact) setExact(await notifier.exact.check());
+    } catch (failure) {
+      console.error(failure);
+    }
+  }, [notifier]);
+  useEffect(() => void readReminders(), [readReminders]);
 
   const [exporting, setExporting] = useState(false);
   const [exported, setExported] = useState<{ text: string; alert: boolean }>();
@@ -132,6 +146,43 @@ export const AdvancedPage = () => {
                 className={exported.alert ? 'text-alert' : ''}
               >
                 {exported.text}
+              </IonLabel>
+            </IonItem>
+          )}
+          <IonListHeader>
+            <IonLabel>{t('advanced.notifications')}</IonLabel>
+          </IonListHeader>
+          <IonItem lines={permission === 'prompt' ? 'none' : 'full'}>
+            <IonLabel>
+              {notifier.kind === 'none'
+                ? t('advanced.notify.none')
+                : permission === undefined
+                  ? ''
+                  : t(`advanced.notify.${permission}`)}
+              {notifier.kind === 'web' && permission === 'granted' && (
+                <p>{t('advanced.notify.web')}</p>
+              )}
+            </IonLabel>
+          </IonItem>
+          {permission === 'prompt' && (
+            <IonItem
+              button
+              detail
+              onClick={() =>
+                void notifier
+                  .request()
+                  .then(readReminders)
+                  .then(() => window.dispatchEvent(new Event(BAKES_CHANGED)))
+              }
+            >
+              <IonLabel>{t('advanced.notify.allow')}</IonLabel>
+            </IonItem>
+          )}
+          {permission === 'granted' && exact === false && notifier.exact && (
+            <IonItem button detail onClick={() => void notifier.exact?.open().then(readReminders)}>
+              <IonLabel>
+                {t('advanced.notify.exact')}
+                <p>{t('advanced.notify.exactHint')}</p>
               </IonLabel>
             </IonItem>
           )}

@@ -10,6 +10,7 @@ import { DeviceChecksPage } from './pages/DeviceChecksPage';
 import { RecipePage } from './pages/RecipePage';
 import { RecipesPage } from './pages/RecipesPage';
 import { DraftsProvider } from './services/drafts';
+import { NotificationSync } from './services/NotificationSync';
 import { ServicesProvider, type Services } from './services/services';
 
 setupIonicReact();
@@ -20,6 +21,7 @@ export const App = ({ services, locale }: { services: Services; locale: Locale }
       <DraftsProvider>
         <IonApp>
           <IonReactRouter>
+            <NotificationSync />
             <IonRouterOutlet>
               <Route path="/recipes" element={<RecipesPage />} />
               <Route path="/recipes/:recipeId" element={<RecipePage />} />

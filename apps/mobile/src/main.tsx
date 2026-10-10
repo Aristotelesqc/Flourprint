@@ -10,7 +10,9 @@ document.documentElement.lang = locale;
 const root = createRoot(document.getElementById('root') as HTMLElement);
 
 try {
-  const services = await createServices();
+  const services = await createServices({
+    reminderChannel: catalogs[locale]['notify.channel'],
+  });
   root.render(
     <StrictMode>
       <App services={services} locale={locale} />

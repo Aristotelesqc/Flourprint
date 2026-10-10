@@ -4,6 +4,7 @@ import { executeBakeCommand } from '@flourprint/core/application';
 import type { BakeCommandPayload, BakeState, Instant } from '@flourprint/core/domain';
 import { bakeAlerts, bakeLog, bakeView, stepProgress } from '../src/services/bake-view';
 import { defaultCategory, noteSteps } from '../src/services/notes';
+import { reminderId, remindersFor } from '../src/services/notifications';
 import { sampleRecipe } from '../src/services/seed';
 
 const at = (time: string) => `2026-10-07T${time}:00.000Z` as Instant;
@@ -172,5 +173,37 @@ describe('bake alerts', () => {
 
   it('is empty once the bake has ended', async () => {
     expect(bakeAlerts(await bake([['19:05', { type: 'AbandonBake' }]]), at('19:30'))).toEqual([]);
+  });
+});
+
+describe('reminders', () => {
+  const texts = {
+    title: (alert: { kind: string }, step: string) => `${alert.kind} ${step}`,
+    body: (_alert: unknown, step: string, recipe: string) => `${recipe}: ${step}`,
+  };
+
+  it('schedules the future moments of every active bake, with stable ids', async () => {
+    const state = await bake([['19:01', { type: 'StartStep', stepId: 'poolish' }]]);
+    const reminders = remindersFor([{ state, recipe: 'Pain' }], at('19:30'), (_s, id) => id, texts);
+    expect(reminders.map((r) => r.title)).toEqual([
+      'start tangzhong',
+      'end poolish',
+      'start preheat',
+    ]);
+    expect(reminders[1]).toMatchObject({ body: 'Pain: poolish', bakeId: 'b' });
+    expect(reminders[1]?.id).toBe(reminderId('b:end:poolish'));
+    // Moments already past are not scheduled.
+    const later = remindersFor([{ state }], at('23:59'), (_s, id) => id, texts);
+    expect(later.every((r) => Date.parse(r.at) > Date.parse(at('23:59')))).toBe(true);
+  });
+
+  it('makes positive 31-bit ids', () => {
+    for (const key of ['a', 'b:end:poolish', 'x'.repeat(200)]) {
+      const id = reminderId(key);
+      expect(id).toBeGreaterThan(0);
+      expect(id).toBeLessThan(2 ** 31);
+      expect(Number.isInteger(id)).toBe(true);
+    }
+    expect(reminderId('b:end:poolish')).not.toBe(reminderId('b:start:poolish'));
   });
 });
