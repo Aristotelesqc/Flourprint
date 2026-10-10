@@ -61,9 +61,11 @@ r(T)  = exp( (Ea / R) × (1 / 294.25 K − 1 / T) )      (r = 1 at 21.1 °C)
   through the open-source transcription `tysonjf/weatherApp/src/engine/craigTable.ts`. It is a
   hobbyist model's output, not measured data, and its stated temperature function does not
   reproduce it (#33).
-- The temperature function is Arrhenius because it is the only form that fits the available
-  dough data (×1.13); #33 prefers Ratkowsky, which fits it within ×1.65 only. The form is to be
-  re-decided on primary dough data (#33 objection 1).
+- The temperature function is Arrhenius because it fits Craig's table best (×1.13, against
+  ×1.65 for Ratkowsky). That table is model output, not dough data. On measured dough data
+  (Izzreen 2016) a separable square-root form fits as well as Arrhenius, and a dose × temperature
+  interaction fits better. The form is to be re-decided on primary dough data; the evidence is in
+  `docs/science/fermentation-model.md`.
 - The **band** is the minimum and maximum over every combination of the parameter ranges; the
   value uses the central parameters. The band is not a confidence interval.
 
