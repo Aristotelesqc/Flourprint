@@ -11,4 +11,17 @@ export interface RecipeTemplate {
   readonly process: Process;
   /** Where the proportions come from (English). */
   readonly basis: string;
+  /** Typical ranges of the style, shown as a guide; never used in a calculation (drafts.md). */
+  readonly guide?: {
+    /** Stable codes; the unit follows the suffix (`_pct`, `_h`, `_c`, `_min`, `_s`, `_g`, `_w`). */
+    readonly ranges: readonly {
+      readonly key: string;
+      readonly low: number;
+      readonly high: number;
+    }[];
+    /** The document the ranges come from. */
+    readonly reference: string;
+    /** False until the sources were read in full. */
+    readonly verified: boolean;
+  };
 }

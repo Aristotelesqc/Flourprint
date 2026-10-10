@@ -44,22 +44,23 @@ export const brioche: RecipeTemplate = {
 
 export const burgerBuns: RecipeTemplate = {
   id: 'burger-buns',
-  version: '1',
+  version: '2',
   category: 'enriched',
   basis:
     'Typical proportions of soft burger buns from common bakery and home-baking formulas: ' +
-    'water and milk, about 10 % egg, 10 % butter, 8 % sugar, 2 % salt. A starting point, not a ' +
-    'tested recipe.',
+    'water and milk, about 12 % egg, 9 % butter, 8 % sugar, 1.8 % salt, 1.6 % instant yeast. A ' +
+    'starting point, not a tested recipe.' +
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
     ingredients: [
       preset('water', 30),
       preset('milk', 30),
-      preset('egg', 10),
-      preset('butter', 10),
+      preset('egg', 12),
+      preset('butter', 9),
       preset('sugar', 8),
-      preset('salt', 2),
-      preset('instant-yeast', 0.9),
+      preset('salt', 1.8),
+      preset('instant-yeast', 1.6),
     ],
     components: [],
     anchor: { kind: 'pieces', count: 8, gramsEach: 90 },
@@ -80,24 +81,25 @@ export const burgerBuns: RecipeTemplate = {
 
 export const pullman: RecipeTemplate = {
   id: 'pullman',
-  version: '1',
+  version: '2',
   category: 'pan',
   basis:
     'Typical proportions of a pullman (pain de mie) sandwich loaf from common bakery formulas: ' +
-    'water and milk, about 6 % butter, 6 % sugar, 2 % salt, about 1000 g of dough for a 13-inch ' +
-    'lidded pan. A starting point, not a tested recipe.',
+    'mostly milk, about 8 % butter, 6 % sugar, 2 % salt, about 1100 g of dough for a 13-inch ' +
+    'lidded pan. A starting point, not a tested recipe.' +
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
     ingredients: [
-      preset('water', 45),
-      preset('milk', 20),
-      preset('butter', 6),
+      preset('water', 20),
+      preset('milk', 42),
+      preset('butter', 8),
       preset('sugar', 6),
       preset('salt', 2),
-      preset('instant-yeast', 0.8),
+      preset('instant-yeast', 1.2),
     ],
     components: [],
-    anchor: { kind: 'doughWeight', grams: 1000 },
+    anchor: { kind: 'doughWeight', grams: 1100 },
   },
   process: {
     steps: [

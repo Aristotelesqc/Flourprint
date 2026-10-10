@@ -88,6 +88,11 @@ describe('templates', () => {
       // Templates have every step timed, a mix, a bake, salt and a sane water.
       expect(issues, template.id).toEqual([]);
       expect(template.basis.length, template.id).toBeGreaterThan(20);
+      // Every template has a guide whose ranges are ordered.
+      expect(template.guide?.ranges.length, template.id).toBeGreaterThan(0);
+      for (const range of template.guide?.ranges ?? []) {
+        expect(range.low, `${template.id} ${range.key}`).toBeLessThanOrEqual(range.high);
+      }
     }
   });
 

@@ -10,9 +10,9 @@ import {
   pizzaSicilian,
   pizzaTeglia,
 } from './pizzas.js';
+import { STYLE_GUIDES } from './guides.js';
 
-/** Templates shipped with the app (drafts.md, Templates). */
-export const RECIPE_TEMPLATES: readonly RecipeTemplate[] = [
+const TEMPLATES: readonly RecipeTemplate[] = [
   baguette,
   bouleDutchOven,
   brioche,
@@ -29,3 +29,9 @@ export const RECIPE_TEMPLATES: readonly RecipeTemplate[] = [
   pizzaSicilian,
   pizzaTeglia,
 ];
+
+/** Templates shipped with the app (drafts.md, Templates), each with its style guide when known. */
+export const RECIPE_TEMPLATES: readonly RecipeTemplate[] = TEMPLATES.map((template) => {
+  const guide = STYLE_GUIDES[template.id];
+  return guide ? { ...template, guide } : template;
+});

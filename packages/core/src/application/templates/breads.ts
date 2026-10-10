@@ -47,25 +47,26 @@ export const baguette: RecipeTemplate = {
 
 export const bouleDutchOven: RecipeTemplate = {
   id: 'boule-dutch-oven',
-  version: '1',
+  version: '2',
   category: 'bread',
   basis:
     'Typical proportions of a lean country-style loaf with commercial yeast, from common bakery and ' +
-    'home-baking formulas: bread flour with 10 % whole wheat, 72 % water, 2 % salt, 0.4 % instant ' +
-    'yeast, baked in a preheated Dutch oven. A starting point, not a tested recipe.',
+    'home-baking formulas: bread flour with 10 % whole wheat, 75 % water, 2 % salt, 0.4 % instant ' +
+    'yeast with a 5 h bulk, baked in a preheated Dutch oven. A starting point, not a tested recipe.' +
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
   formula: {
     flours: [
       { id: 'bread-flour', sharePct: 90 },
       { id: 'whole-wheat', sharePct: 10 },
     ],
-    ingredients: [preset('water', 72), preset('salt', 2), preset('instant-yeast', 0.4)],
+    ingredients: [preset('water', 75), preset('salt', 2), preset('instant-yeast', 0.4)],
     components: [],
     anchor: { kind: 'flourTotal', grams: 500 },
   },
   process: {
     steps: [
       step('mix', 'mix', [], 15 * MIN, room),
-      step('bulk', 'bulk', ['mix'], 2.5 * H),
+      step('bulk', 'bulk', ['mix'], 5 * H),
       step('preshape', 'preshape', ['bulk'], 25 * MIN),
       step('shape', 'shape', ['preshape'], 10 * MIN),
       step('proof', 'proof', ['shape'], H),
@@ -78,20 +79,21 @@ export const bouleDutchOven: RecipeTemplate = {
 
 export const ciabatta: RecipeTemplate = {
   id: 'ciabatta',
-  version: '1',
+  version: '2',
   category: 'bread',
   basis:
     'Typical proportions of a ciabatta with biga from common bakery formulas (e.g. Hamelman, ' +
-    'Bread): half the flour in a stiff biga, about 78 % water overall, 2.2 % salt, little yeast. ' +
-    'A starting point, not a tested recipe.',
+    'Bread): 30 % of the flour in a stiff biga, about 77 % water overall, 2 % salt, little yeast. ' +
+    'A starting point, not a tested recipe.' +
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
-    ingredients: [preset('water', 78), preset('salt', 2.2), preset('instant-yeast', 0.4)],
+    ingredients: [preset('water', 77), preset('salt', 2), preset('instant-yeast', 0.4)],
     components: [
       {
         id: 'biga',
         kind: 'preferment',
-        flourPct: 50,
+        flourPct: 30,
         flourBlend: [{ flour: 'bread-flour', sharePct: 100 }],
         hydrationPct: 55,
         allocations: [{ ingredient: 'instant-yeast', bakerPct: 0.05 }],
@@ -115,19 +117,20 @@ export const ciabatta: RecipeTemplate = {
 
 export const bagels: RecipeTemplate = {
   id: 'bagels',
-  version: '1',
+  version: '2',
   category: 'bread',
   basis:
     'Typical proportions of New York-style bagels from common bakery formulas (e.g. Hamelman, ' +
     'Bread): a stiff dough of strong flour at about 57 % water, 2 % salt, malt syrup, retarded ' +
-    'overnight, boiled then baked. A starting point, not a tested recipe.',
+    'overnight, boiled then baked. A starting point, not a tested recipe.' +
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
     ingredients: [
       preset('water', 57),
       preset('salt', 2),
       preset('instant-yeast', 0.7),
-      preset('barley-malt-syrup', 4),
+      preset('barley-malt-syrup', 3),
     ],
     components: [],
     anchor: { kind: 'pieces', count: 8, gramsEach: 110 },
@@ -142,7 +145,7 @@ export const bagels: RecipeTemplate = {
       step('proof', 'proof', ['retard'], 45 * MIN, room),
       alapStep('preheat', 'preheat', 45 * MIN),
       step('boil', 'boil', ['proof'], 15 * MIN),
-      step('bake', 'bake', ['boil', 'preheat'], 20 * MIN),
+      step('bake', 'bake', ['boil', 'preheat'], 18 * MIN),
       step('cool', 'cool', ['bake'], 30 * MIN),
     ],
   },
