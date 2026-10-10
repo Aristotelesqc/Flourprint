@@ -49,13 +49,13 @@ export interface LogEntry {
 const time = (instant: Instant | undefined): number =>
   instant === undefined ? Number.POSITIVE_INFINITY : Date.parse(instant);
 
-export const bakeView = (state: BakeState, now: Instant): BakeView | undefined => {
+/** Every step with its record and live projection, in process order. */
+const stepViews = (state: BakeState, now: Instant): BakeStepView[] | undefined => {
   const process = state.process;
   const projection = liveProjection(state, now);
   if (!process || !projection?.ok) return undefined;
-
   const done = (id: StepId) => state.steps[id]?.endedAt !== undefined;
-  const views: BakeStepView[] = process.steps.map((step) => {
+  return process.steps.map((step) => {
     const record = state.steps[step.id];
     const projected = projection.value.steps[step.id];
     return {
@@ -69,6 +69,12 @@ export const bakeView = (state: BakeState, now: Instant): BakeView | undefined =
       ...(record?.endedAt === undefined ? {} : { endedAt: record.endedAt }),
     };
   });
+};
+
+export const bakeView = (state: BakeState, now: Instant): BakeView | undefined => {
+  const process = state.process;
+  const views = stepViews(state, now);
+  if (!process || !views) return undefined;
   const order = [...views].sort(
     (a, b) =>
       time(a.startedAt ?? a.projected?.start) - time(b.startedAt ?? b.projected?.start) ||
@@ -137,4 +143,33 @@ export const stepProgress = (startMs: number, endMs: number, nowMs: number): num
   const span = endMs - startMs;
   if (!(span > 0)) return nowMs >= endMs ? 1 : 0;
   return Math.min(1, Math.max(0, (nowMs - startMs) / span));
+};
+
+/** A moment the baker has to act: a running step ends, or a ready step's planned start. */
+export interface BakeAlert {
+  readonly stepId: StepId;
+  readonly kind: 'end' | 'start';
+  readonly at: Instant;
+}
+
+/**
+ * The coming moments to act on a bake, soonest first, read from the live projection. A step that
+ * waits on a running one is not listed: the end of the running step already calls the baker.
+ */
+export const bakeAlerts = (state: BakeState, now: Instant): BakeAlert[] => {
+  const views = state.status === 'active' ? stepViews(state, now) : undefined;
+  if (!views) return [];
+  const running = views.filter((v) => v.startedAt !== undefined && v.endedAt === undefined);
+  const ready = views.filter((v) => v.ready);
+  const alerts: BakeAlert[] = [
+    ...running.flatMap((v) =>
+      v.projected?.end ? [{ stepId: v.step.id, kind: 'end' as const, at: v.projected.end }] : [],
+    ),
+    ...ready.flatMap((v) =>
+      v.projected?.start
+        ? [{ stepId: v.step.id, kind: 'start' as const, at: v.projected.start }]
+        : [],
+    ),
+  ];
+  return alerts.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 };

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MemoryBakeEventStore } from '@flourprint/adapters/memory';
 import { executeBakeCommand } from '@flourprint/core/application';
 import type { BakeCommandPayload, BakeState, Instant } from '@flourprint/core/domain';
-import { bakeLog, bakeView, stepProgress } from '../src/services/bake-view';
+import { bakeAlerts, bakeLog, bakeView, stepProgress } from '../src/services/bake-view';
 import { defaultCategory, noteSteps } from '../src/services/notes';
 import { sampleRecipe } from '../src/services/seed';
 
@@ -155,5 +155,22 @@ describe('notes', () => {
       ['20:00', { type: 'AddObservation', category: 'crumb', rating: 3 }],
     ]);
     expect(bakeLog(state)[0]).toEqual({ at: at('20:00'), kind: 'note', rating: 3 });
+  });
+});
+
+describe('bake alerts', () => {
+  it('calls at the end of running steps and the planned start of ready ones, soonest first', async () => {
+    const state = await bake([['19:01', { type: 'StartStep', stepId: 'poolish' }]]);
+    const alerts = bakeAlerts(state, at('19:30'));
+    // The scald is planned as late as possible: it starts an hour before the preferment ends.
+    expect(alerts.map((a) => [a.kind, a.stepId, a.at.slice(11, 16)])).toEqual([
+      ['start', 'tangzhong', '06:01'],
+      ['end', 'poolish', '07:01'],
+      ['start', 'preheat', expect.any(String)],
+    ]);
+  });
+
+  it('is empty once the bake has ended', async () => {
+    expect(bakeAlerts(await bake([['19:05', { type: 'AbandonBake' }]]), at('19:30'))).toEqual([]);
   });
 });

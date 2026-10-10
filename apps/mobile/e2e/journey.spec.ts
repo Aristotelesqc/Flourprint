@@ -321,3 +321,50 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   await expect(page.getByText('Eau à 37 °C')).toBeVisible();
   await expect(page.getByText(/friction du pétrin non comptée/)).toBeVisible();
 });
+
+test('follows several bakes on one screen, with actions and notes per bake', async ({ page }) => {
+  await page.goto('/advanced');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'recettes.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        kind: 'flourprint-recipes',
+        schemaVersion: 1,
+        exportedAt: '2026-10-08T18:00:00.000Z',
+        recipes: [variant('other', 'Pain test 1', '2026-01-01T12:00:00.000Z')],
+        families: [{ id: 'family-test', name: 'Pain test' }],
+      }),
+    ),
+  });
+  await expect(page.getByText('1 recette importée.')).toBeVisible();
+  const shown = (text: string) => page.getByText(text, { exact: true }).locator('visible=true');
+  const back = async () => {
+    await page.locator('ion-back-button:visible').last().click();
+    await page.waitForTimeout(500);
+  };
+  await back();
+  for (const name of ['Poolish + tangzhong', 'Pain test 1']) {
+    await shown(name).first().click();
+    await page.getByRole('button', { name: 'Processus' }).click();
+    await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+    await expect(page).toHaveURL(/\/bakes\//);
+    await back();
+    await back();
+  }
+
+  await page.getByText('Suivre les 2 cuissons').click();
+  await expect(page).toHaveURL(/\/bakes$/);
+  const poolish = page.getByRole('region', { name: 'Poolish + tangzhong' });
+  const lean = page.getByRole('region', { name: 'Pain test 1' });
+  await expect(poolish).toBeVisible();
+  await expect(lean).toBeVisible();
+
+  await lean.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
+  await expect(lean.getByRole('button', { name: 'Pétrissage terminé' })).toBeVisible();
+  await poolish.getByRole('button', { name: 'Note', exact: true }).click();
+  await page.locator('textarea:visible').fill('Cuisine à 23 °C');
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await poolish.getByRole('link', { name: 'Ouvrir' }).click();
+  await expect(page.getByText('Cuisine à 23 °C')).toBeVisible();
+});

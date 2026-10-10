@@ -111,6 +111,11 @@ export const RecipesPage = () => {
           </div>
           <SessionOnlyNotice />
           {readFailed && <p role="alert">{t('state.storageRead')}</p>}
+          {running.length > 1 && (
+            <IonButton expand="block" fill="outline" routerLink="/bakes">
+              {t('recipes.allBakes', { count: running.length })}
+            </IonButton>
+          )}
           {running.map((bake) => (
             <RunningBake key={bake.bakeId} bake={bake} now={now} recipes={allRecipes} />
           ))}
