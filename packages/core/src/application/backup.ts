@@ -16,8 +16,10 @@ import {
 import { checkBakeLog } from './backup-events.js';
 import { decodeFormula, decodeProcess } from './documents.js';
 import { isCount, isId, isInstant, isObject, Refused, refuse } from './decode.js';
+import { decodeDraft } from './drafts.js';
 import type {
   AppendInput,
+  Draft,
   BakeEventStore,
   RecipeRepository,
   RecordedRecipe,
@@ -34,6 +36,8 @@ export interface Backup {
   /** Optional so that backups written before families still restore. */
   readonly families?: readonly RecipeFamily[];
   readonly bakes: readonly { readonly bakeId: string; readonly events: readonly BakeEvent[] }[];
+  /** Optional so that backups written before drafts still restore (persistence.md). */
+  readonly drafts?: readonly Draft[];
 }
 
 export interface BackupStores {
@@ -92,6 +96,7 @@ export const exportBackup = async (
     recipes: recipes.value,
     families,
     bakes,
+    drafts: await stores.recipes.listDrafts(),
   });
 };
 
@@ -263,7 +268,14 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
         summary: bakeSummary(state, last.recordedAt),
       });
     }
-    return ok({ recipes, families, bakes });
+    if (input.drafts !== undefined && !Array.isArray(input.drafts)) {
+      return err(invalid('drafts must be a list'));
+    }
+    const drafts = ((input.drafts ?? []) as unknown[]).map(decodeDraft);
+    if (new Set(drafts.map((d) => d.id)).size !== drafts.length) {
+      return err(invalid('duplicate draft'));
+    }
+    return ok({ recipes, families, bakes, drafts });
   } catch (error) {
     if (error instanceof RefusedWith) return err(error.error);
     if (error instanceof Refused) return err(invalid(error.reason));

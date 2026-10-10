@@ -2,7 +2,7 @@ import type { RestorePlan, RestoreError, RestoreTarget } from '@flourprint/core/
 import { domainError, err, ok, type Result } from '@flourprint/core/domain';
 import { writeAppend } from './bake-event-store.js';
 import type { SqlDriver } from './driver.js';
-import { insertFamily, insertRecipe } from './recipe-repository.js';
+import { insertFamily, insertRecipe, writeDraft } from './recipe-repository.js';
 
 /**
  * Restores a checked backup plan in one transaction (persistence.md): the emptiness check and
@@ -22,6 +22,7 @@ export class SqlRestoreTarget implements RestoreTarget {
         );
       }
       for (const family of plan.families) await insertFamily(tx, family);
+      for (const draft of plan.drafts ?? []) await writeDraft(tx, draft);
       for (const recipe of plan.recipes) await insertRecipe(tx, recipe);
       for (const bake of plan.bakes) await writeAppend(tx, bake);
       return ok(undefined);

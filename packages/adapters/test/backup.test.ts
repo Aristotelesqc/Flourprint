@@ -121,6 +121,16 @@ const seed = async (stores: BackupStores) => {
   });
   await stores.recipes.groupRecipes({ id: 'lean-family', name: 'Lean' }, ['lean', 'lean-cold']);
   await stores.recipes.pinVariant('lean-family', 'lean-cold');
+  // A draft that does not resolve is kept as recorded.
+  await stores.recipes.saveDraft({
+    id: 'draft-1',
+    name: 'Baguette 1',
+    origin: { kind: 'template', template: { id: 'baguette', version: '1' } },
+    formula: { ...formula, flours: [{ id: 'flour', sharePct: 80 }] },
+    process,
+    createdAt: at('06:30'),
+    updatedAt: at('06:45'),
+  });
   let n = 0;
   let version = 0;
   const run = async (

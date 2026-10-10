@@ -3,5 +3,6 @@ export * from './bake.js';
 export * from './recipes.js';
 export * from './backup.js';
 export * from './recipe-file.js';
+export * from './drafts.js';
 export * from './feedback.js';
 export * from './templates/index.js';

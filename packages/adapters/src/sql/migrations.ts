@@ -59,6 +59,17 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 3,
+    sql: `
+      CREATE TABLE drafts (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        document TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `,
+  },
 ];
 
 export type OpenError =

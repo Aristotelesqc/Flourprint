@@ -62,6 +62,25 @@ export interface SaveRevisionInput {
   readonly process: Process;
   readonly createdAt: Instant;
   readonly note?: string;
+  /** The draft this revision comes from, deleted in the same transaction (drafts.md). */
+  readonly fromDraft?: string;
+}
+
+/** A recipe being built, not yet a revision (docs/contracts/drafts.md); it may fail the checks. */
+export interface Draft {
+  readonly id: string;
+  readonly name: string;
+  readonly origin:
+    | { readonly kind: 'blank' }
+    | {
+        readonly kind: 'template';
+        readonly template: { readonly id: string; readonly version: string };
+      }
+    | { readonly kind: 'revision'; readonly recipeId: string; readonly baseVersion: number };
+  readonly formula: Formula;
+  readonly process: Process;
+  readonly createdAt: Instant;
+  readonly updatedAt: Instant;
 }
 
 export type RecipeStoreError =
@@ -116,12 +135,20 @@ export interface RecipeRepository {
    * are skipped; absent families are created, present ones are left unchanged.
    */
   importRecipes(plan: RecipeImportPlan): Promise<RecipeImportOutcome>;
+  /** Drafts, most recently updated first (drafts.md). */
+  listDrafts(): Promise<readonly Draft[]>;
+  getDraft(draftId: string): Promise<Draft | undefined>;
+  /** Writes or replaces the draft; last write wins. */
+  saveDraft(draft: Draft): Promise<void>;
+  deleteDraft(draftId: string): Promise<void>;
 }
 
 /** Everything a restore writes: revisions as recorded, one append per bake log. */
 export interface RestorePlan {
   readonly recipes: readonly RecordedRecipe[];
   readonly families: readonly RecipeFamily[];
+  /** Optional so that plans and backups written before drafts still restore. */
+  readonly drafts?: readonly Draft[];
   readonly bakes: readonly AppendInput[];
 }
 

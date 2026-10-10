@@ -29,6 +29,7 @@ export class MemoryRestoreTarget implements RestoreTarget {
     }
     for (const family of plan.families) this.recipes.writeFamily(family);
     for (const recipe of plan.recipes) this.recipes.write(recipe);
+    for (const draft of plan.drafts ?? []) this.recipes.restoreDraft(draft);
     for (const bake of plan.bakes) this.bakes.write(bake);
     return ok(undefined);
   }

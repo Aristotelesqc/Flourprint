@@ -6,6 +6,7 @@ import type {
   RecipeStoreError,
   RecordedRecipe,
   SaveRevisionInput,
+  Draft,
 } from '@flourprint/core/application';
 import {
   domainError,
@@ -24,6 +25,7 @@ export class MemoryRecipeRepository implements RecipeRepository {
   readonly #recipes = new Map<string, Recipe>();
   readonly #revisions = new Map<string, Revision>();
   readonly #families = new Map<string, RecipeFamily>();
+  readonly #drafts = new Map<string, Draft>();
 
   async saveRevision(input: SaveRevisionInput): Promise<Result<Revision, RecipeStoreError>> {
     const current = this.#recipes.get(input.recipeId);
@@ -45,6 +47,7 @@ export class MemoryRecipeRepository implements RecipeRepository {
       ...(input.note === undefined ? {} : { note: input.note }),
     };
     this.#writeRevision(input.name, revision);
+    if (input.fromDraft !== undefined) this.#drafts.delete(input.fromDraft);
     return ok(revision);
   }
 
@@ -177,6 +180,30 @@ export class MemoryRecipeRepository implements RecipeRepository {
   ): Promise<Result<Revision | undefined, RecipeStoreError>> {
     const revision = this.#revisions.get(`${recipeId}@${version}`);
     return ok(revision === undefined ? undefined : copy(revision));
+  }
+
+  async listDrafts(): Promise<readonly Draft[]> {
+    return [...this.#drafts.values()]
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id))
+      .map(copy);
+  }
+
+  async getDraft(draftId: string): Promise<Draft | undefined> {
+    const draft = this.#drafts.get(draftId);
+    return draft && copy(draft);
+  }
+
+  async saveDraft(draft: Draft): Promise<void> {
+    this.#drafts.set(draft.id, copy(draft));
+  }
+
+  async deleteDraft(draftId: string): Promise<void> {
+    this.#drafts.delete(draftId);
+  }
+
+  /** Restore support: writes drafts as recorded. */
+  restoreDraft(draft: Draft): void {
+    this.#drafts.set(draft.id, copy(draft));
   }
 }
 

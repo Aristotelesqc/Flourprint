@@ -6,6 +6,7 @@ import type {
   RecipeStoreError,
   RecordedRecipe,
   SaveRevisionInput,
+  Draft,
 } from '@flourprint/core/application';
 import {
   DOCUMENT_SCHEMA_VERSION,
@@ -114,6 +115,28 @@ export const insertRevision = async (
   );
 };
 
+/** Writes or replaces a draft; used by saves and restores (persistence.md, Drafts). */
+export const writeDraft = async (tx: SqlExecutor, draft: Draft): Promise<void> => {
+  await tx.run(
+    `INSERT INTO drafts (id, name, document, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT (id) DO UPDATE SET name = excluded.name, document = excluded.document,
+       updated_at = excluded.updated_at`,
+    [
+      draft.id,
+      draft.name,
+      JSON.stringify({ schemaVersion: DOCUMENT_SCHEMA_VERSION, ...draft }),
+      draft.updatedAt,
+    ],
+  );
+};
+
+const toDraft = (document: string): Draft => {
+  const { schemaVersion: _version, ...draft } = JSON.parse(document) as Draft & {
+    schemaVersion: number;
+  };
+  return draft;
+};
+
 /** Recipes and immutable revisions on any SQLite driver (docs/contracts/persistence.md). */
 export class SqlRecipeRepository implements RecipeRepository {
   constructor(private readonly driver: SqlDriver) {}
@@ -142,6 +165,9 @@ export class SqlRecipeRepository implements RecipeRepository {
         ...(input.note === undefined ? {} : { note: input.note }),
       };
       await insertRevision(tx, input.name, revision);
+      if (input.fromDraft !== undefined) {
+        await tx.run('DELETE FROM drafts WHERE id = ?', [input.fromDraft]);
+      }
       return ok(revision);
     });
   }
@@ -291,5 +317,28 @@ export class SqlRecipeRepository implements RecipeRepository {
       schemaVersion: number;
     };
     return ok(revision);
+  }
+
+  async listDrafts(): Promise<readonly Draft[]> {
+    const rows = await this.driver.query<{ document: string }>(
+      'SELECT document FROM drafts ORDER BY updated_at DESC, id',
+    );
+    return rows.map((row) => toDraft(row.document));
+  }
+
+  async getDraft(draftId: string): Promise<Draft | undefined> {
+    const [row] = await this.driver.query<{ document: string }>(
+      'SELECT document FROM drafts WHERE id = ?',
+      [draftId],
+    );
+    return row ? toDraft(row.document) : undefined;
+  }
+
+  saveDraft(draft: Draft): Promise<void> {
+    return this.driver.transaction((tx) => writeDraft(tx, draft));
+  }
+
+  async deleteDraft(draftId: string): Promise<void> {
+    await this.driver.run('DELETE FROM drafts WHERE id = ?', [draftId]);
   }
 }

@@ -1,4 +1,9 @@
-import type { AppendInput, BakeEventStore, RecipeRepository } from '@flourprint/core/application';
+import type {
+  AppendInput,
+  BakeEventStore,
+  Draft,
+  RecipeRepository,
+} from '@flourprint/core/application';
 import {
   defaultVariant,
   type BakeEvent,
@@ -217,7 +222,65 @@ const shownVariant = async (repository: RecipeRepository, familyId: string) => {
   return family && defaultVariant(family, await repository.listRecipes())?.id;
 };
 
+const draft = (id: string, updatedAt: string, waterPct = 70): Draft => ({
+  id,
+  name: `Draft ${id}`,
+  origin: { kind: 'blank' },
+  formula: formula(waterPct),
+  process,
+  createdAt: at,
+  updatedAt: updatedAt as Instant,
+});
+
 export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
+  {
+    name: 'saves, replaces, lists and deletes drafts, apart from recipes',
+    run: async (make) => {
+      const repository = await make();
+      await repository.saveDraft(draft('a', '2024-01-01T12:00:00.000Z'));
+      await repository.saveDraft(draft('b', '2024-02-01T12:00:00.000Z'));
+      // An invalid recipe is a valid draft.
+      await repository.saveDraft(draft('a', '2024-03-01T12:00:00.000Z', -5));
+      const drafts = await repository.listDrafts();
+      equal(drafts.map((d) => d.id).join(','), 'a,b', 'most recent first');
+      equal((await repository.getDraft('a'))?.formula.ingredients[0]?.bakerPct, -5, 'replaced');
+      equal((await repository.listRecipes()).length, 0, 'no recipe');
+      await repository.deleteDraft('a');
+      equal((await repository.getDraft('a')) === undefined, true, 'deleted');
+      equal((await repository.listDrafts()).length, 1, 'one left');
+    },
+  },
+  {
+    name: 'turns a draft into a revision and deletes it in the same write',
+    run: async (make) => {
+      const repository = await make();
+      await repository.saveDraft(draft('d', '2024-01-01T12:00:00.000Z'));
+      const saved = await repository.saveRevision({
+        recipeId: 'new',
+        name: 'New',
+        expectedHead: 0,
+        formula: formula(70),
+        process,
+        createdAt: at,
+        fromDraft: 'd',
+      });
+      equal(code(saved), 'ok', 'saved');
+      equal((await repository.getDraft('d')) === undefined, true, 'draft gone');
+      // A refused save keeps the draft.
+      await repository.saveDraft(draft('e', '2024-01-01T12:00:00.000Z'));
+      const stale = await repository.saveRevision({
+        recipeId: 'new',
+        name: 'New',
+        expectedHead: 0,
+        formula: formula(70),
+        process,
+        createdAt: at,
+        fromDraft: 'e',
+      });
+      equal(code(stale), 'HeadConflict', 'conflict');
+      equal((await repository.getDraft('e'))?.id, 'e', 'draft kept');
+    },
+  },
   {
     name: 'creates numbered immutable revisions and moves the head',
     run: async (make) => {
