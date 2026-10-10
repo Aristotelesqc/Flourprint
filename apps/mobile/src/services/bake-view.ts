@@ -37,9 +37,11 @@ export interface BakeView {
 
 export interface LogEntry {
   readonly at: Instant;
-  readonly kind: 'started' | 'completed' | 'note';
+  readonly kind: 'started' | 'completed' | 'note' | 'doughReady';
   readonly stepId?: StepId;
   readonly text?: string;
+  /** Stable code of what the baker went by, for a dough ready mark. */
+  readonly criterion?: string;
 }
 
 const time = (instant: Instant | undefined): number =>
@@ -93,7 +95,7 @@ export const bakeView = (state: BakeState, now: Instant): BakeView | undefined =
   };
 };
 
-/** Starts, completions and notes, most recent first. */
+/** Starts, completions, dough ready marks and notes, most recent first. */
 export const bakeLog = (state: BakeState): LogEntry[] => {
   const entries: LogEntry[] = [];
   for (const [stepId, record] of Object.entries(state.steps)) {
@@ -101,7 +103,16 @@ export const bakeLog = (state: BakeState): LogEntry[] => {
     if (record.endedAt) entries.push({ at: record.endedAt, kind: 'completed', stepId });
   }
   for (const observation of state.observations) {
-    if (observation.payload.text) {
+    if (observation.payload.kind === 'doughReady') {
+      entries.push({
+        at: observation.occurredAt,
+        kind: 'doughReady',
+        ...(observation.payload.stepId === undefined ? {} : { stepId: observation.payload.stepId }),
+        ...(observation.payload.criterion === undefined
+          ? {}
+          : { criterion: observation.payload.criterion }),
+      });
+    } else if (observation.payload.text) {
       entries.push({
         at: observation.occurredAt,
         kind: 'note',

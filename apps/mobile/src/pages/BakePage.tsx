@@ -12,7 +12,14 @@ import {
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { loadBake } from '@flourprint/core/application';
-import type { BakeCommandPayload, BakeState, DomainError, Instant } from '@flourprint/core/domain';
+import {
+  lastDoughStepId,
+  type BakeCommandPayload,
+  type BakeState,
+  type DomainError,
+  type Instant,
+} from '@flourprint/core/domain';
+import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatTime, parseDuration, editableDuration } from '../i18n/time';
 import { bakeLog, bakeView, stepProgress, type BakeStepView } from '../services/bake-view';
@@ -20,6 +27,10 @@ import { sendBakeCommand } from '../services/bakes';
 import { useServices } from '../services/services';
 import { useGuardedWrite } from '../services/writes';
 import { SectionTitle } from '../ui/Layout';
+
+const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
+const DOUGH_READY_OPERATIONS = new Set(['bulk', 'retard', 'proof']);
+const CRITERIA = ['poke', 'feel', 'time', 'other'] as const;
 
 /** Bake mode (#8, #21): "what do I do now?" first; everything is recorded as bake events. */
 export const BakePage = () => {
@@ -126,6 +137,10 @@ export const BakePage = () => {
   const view = state.status === 'active' ? bakeView(state, now) : undefined;
   const focus = view?.focus;
   const log = bakeLog(state);
+  const criterionLabel = (code: string) => {
+    const key = `bake.doughReady.${code}`;
+    return isKey(key) ? t(key) : code;
+  };
   const nameOf = (id: string | undefined) => {
     const step = state.process?.steps.find((s) => s.id === id);
     return step ? stepName(step) : (id ?? '');
@@ -179,6 +194,43 @@ export const BakePage = () => {
               category: 'other',
               text,
               ...(focus ? { stepId: focus.step.id } : {}),
+            });
+            return true;
+          },
+        },
+      ],
+    });
+
+  /** The dough's fermentation steps: where the baker judges it ready (fermentation.md). */
+  const fermenting = (stepId: string) => {
+    const step = state.process?.steps.find((s) => s.id === stepId);
+    return (
+      step !== undefined &&
+      (DOUGH_READY_OPERATIONS.has(step.operation) ||
+        (state.process !== undefined && lastDoughStepId(state.process) === stepId))
+    );
+  };
+
+  /** Records the time of the judgement and, optionally, what it went by. Never ends the step. */
+  const doughReady = (stepId: string) =>
+    void presentAlert({
+      header: t('bake.doughReadyTitle'),
+      inputs: CRITERIA.map((criterion) => ({
+        type: 'radio' as const,
+        label: t(`bake.doughReady.${criterion}`),
+        value: criterion,
+      })),
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        {
+          text: t('bake.save'),
+          handler: (criterion: string | undefined) => {
+            void send({
+              type: 'AddObservation',
+              stepId,
+              category: 'fermentation',
+              kind: 'doughReady',
+              ...(criterion === undefined ? {} : { criterion }),
             });
             return true;
           },
@@ -279,6 +331,15 @@ export const BakePage = () => {
                   {t('bake.note')}
                 </IonButton>
               </div>
+              {focus.running && fermenting(focus.step.id) && (
+                <IonButton
+                  fill="outline"
+                  disabled={writes.busy || pending !== undefined}
+                  onClick={() => doughReady(focus.step.id)}
+                >
+                  {t('bake.doughReady')}
+                </IonButton>
+              )}
             </>
           )}
 
@@ -376,10 +437,21 @@ export const BakePage = () => {
                         time: formatTime(entry.at, locale),
                         text: entry.text ?? '',
                       })
-                    : t(entry.kind === 'started' ? 'bake.log.started' : 'bake.log.completed', {
-                        time: formatTime(entry.at, locale),
-                        step: nameOf(entry.stepId),
-                      })}
+                    : entry.kind === 'doughReady'
+                      ? entry.criterion === undefined
+                        ? t('bake.log.doughReady', {
+                            time: formatTime(entry.at, locale),
+                            step: nameOf(entry.stepId),
+                          })
+                        : t('bake.log.doughReadyBy', {
+                            time: formatTime(entry.at, locale),
+                            step: nameOf(entry.stepId),
+                            criterion: criterionLabel(entry.criterion),
+                          })
+                      : t(entry.kind === 'started' ? 'bake.log.started' : 'bake.log.completed', {
+                          time: formatTime(entry.at, locale),
+                          step: nameOf(entry.stepId),
+                        })}
                 </p>
               ))}
             </StepList>

@@ -299,6 +299,22 @@ const doughExtrapolations = (formula: Formula): string[] | Failure => {
 const unplannedAssumptions = (unplanned: readonly StepId[]) =>
   unplanned.map((id) => `step_without_duration:${id}`);
 
+/** The `asap` steps between the mix and the bake, in process order (fermentation.md). */
+const doughSteps = (process: Process): ProcessStep[] | undefined => {
+  const mix = process.steps.find((s) => s.operation === 'mix');
+  if (!mix) return undefined;
+  const bake = process.steps.find((s) => s.operation === 'bake');
+  const after = descendants(process, mix.id);
+  const before = bake ? ancestors(process, bake.id) : undefined;
+  return process.steps.filter(
+    (s) => s.schedule === 'asap' && after.has(s.id) && s !== bake && (!before || before.has(s.id)),
+  );
+};
+
+/** The last step the dough ferments in before the bake, if the process has one. */
+export const lastDoughStepId = (process: Process): StepId | undefined =>
+  doughSteps(process)?.at(-1)?.id;
+
 const doughMass = (
   formula: Formula,
   process: Process,
@@ -306,12 +322,7 @@ const doughMass = (
 ): Mass | Failure => {
   const mix = process.steps.find((s) => s.operation === 'mix');
   if (!mix) return failure('insufficient_data', 'no_mix_step', ['mix']);
-  const bake = process.steps.find((s) => s.operation === 'bake');
-  const after = descendants(process, mix.id);
-  const before = bake ? ancestors(process, bake.id) : undefined;
-  const steps = process.steps.filter(
-    (s) => s.schedule === 'asap' && after.has(s.id) && s !== bake && (!before || before.has(s.id)),
-  );
+  const steps = doughSteps(process) ?? [];
   const last = steps.at(-1);
   if (!last) return failure('insufficient_data', 'no_fermentation_step');
   // One dough, one timeline: each dough step must come after the previous one. Parallel dough

@@ -211,7 +211,8 @@ export const RecipePage = () => {
     const process = {
       steps: draft.process.steps.map((s) => {
         if (s.id !== stepId) return s;
-        const { plannedDurationS: _, ...rest } = s;
+        // A typed duration is no longer an applied suggestion (fermentation.md).
+        const { plannedDurationS: _, accepted: __, ...rest } = s;
         return durationS === undefined ? rest : { ...rest, plannedDurationS: durationS };
       }),
     };

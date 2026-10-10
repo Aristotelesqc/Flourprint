@@ -67,6 +67,33 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await expect(page.getByRole('button', { name: 'Voir la cuisson en cours' })).toBeVisible();
 });
 
+test('dough ready is recorded on a running fermentation step without ending it', async ({
+  page,
+}) => {
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await expect(page).toHaveURL(/\/bakes\//);
+
+  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  // Not a dough step: no dough ready mark on the preferment.
+  await expect(page.getByRole('button', { name: 'Pâte prête' })).toBeHidden();
+  await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
+  await page.getByRole('button', { name: 'Échaudage terminé' }).click();
+  await page.getByRole('button', { name: 'Préferment terminé' }).click();
+  await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
+  await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
+  await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
+  await page.getByRole('button', { name: 'Pâte prête' }).click();
+  await page.getByText('Test du doigt').click();
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  // Recorded in the journal; the step is still running.
+  await expect(page.locator('p:visible', { hasText: / · / }).first()).toContainText(
+    'Pâte prête (Pointage, Test du doigt)',
+  );
+  await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
+});
+
 test('captures the main screens in light and dark', async ({ page }, testInfo) => {
   for (const colorScheme of ['light', 'dark'] as const) {
     await page.emulateMedia({ colorScheme });
@@ -214,10 +241,18 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   await room.fill('21');
   await room.press('Enter');
   await expect(page.getByText('modèle provisoire', { exact: true })).toBeVisible();
-  await expect(page.getByText(/Aux temps prévus : .* du point final/).first()).toBeVisible();
+  // The dough's progress is a share of the planned fermentation, with a provisional target.
+  await expect(
+    page.getByText(/Aux temps prévus : .* de la fermentation prévue/).first(),
+  ).toBeVisible();
+  await expect(page.getByText(/La cible « prête à cuire » est provisoire/)).toBeVisible();
+  await expect(page.getByText(/doublé/)).toBeHidden();
   // Applying a suggested dose is an explicit edit of the draft.
   await page.getByRole('button', { name: 'Prendre cette dose' }).last().click();
   await expect(unsaved(page).first()).toBeVisible();
+  // Applying a suggested time is an explicit edit too, and the step shows the new time.
+  const useTime = page.getByRole('button', { name: 'Prendre ce temps' }).first();
+  if (await useTime.isVisible()) await useTime.click();
 
   await page.getByText('Avancé', { exact: true }).click();
   const target = page.getByLabel('Température de pâte visée (°C)');

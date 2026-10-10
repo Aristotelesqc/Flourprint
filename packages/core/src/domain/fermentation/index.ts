@@ -17,6 +17,7 @@ export {
 } from './simulate.js';
 export {
   estimateFermentation,
+  lastDoughStepId,
   type FermentationEstimates,
   type MassEstimates,
 } from './estimate.js';

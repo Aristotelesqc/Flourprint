@@ -77,6 +77,27 @@ describe('bake view', () => {
     expect(bakeLog(state).map((e) => e.kind)).toEqual(['note', 'started']);
   });
 
+  it('logs a dough ready mark with its criterion, even without a note', async () => {
+    const state = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      [
+        '19:05',
+        {
+          type: 'AddObservation',
+          stepId: 'poolish',
+          category: 'fermentation',
+          kind: 'doughReady',
+          criterion: 'poke',
+        },
+      ],
+    ]);
+    expect(bakeLog(state)[0]).toMatchObject({
+      kind: 'doughReady',
+      stepId: 'poolish',
+      criterion: 'poke',
+    });
+  });
+
   it('offers the preheat that becomes due while the proof runs', async () => {
     const state = await bake([
       ['19:00', { type: 'CompleteStep', stepId: 'poolish' }],

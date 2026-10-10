@@ -2,12 +2,15 @@ import { IonButton } from '@ionic/react';
 import { useId, useMemo, useState } from 'react';
 import {
   estimateFermentation,
+  type AcceptedSuggestion,
   type Estimate,
   type Formula,
   type FormulaEdit,
   type MassEstimates,
+  type OkEstimate,
   type Process,
   type ProcessStep,
+  type RangeBound,
   type StepConditions,
   type YeastForm,
 } from '@flourprint/core/domain';
@@ -72,14 +75,21 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
       }),
     });
 
-  const setDuration = (stepId: string, seconds: number) =>
-    onProcess({
+  /** Applies a suggested time and records where it came from (fermentation.md). */
+  const setDuration = (stepId: string, estimate: OkEstimate) => {
+    const appliedValue = Math.max(ROUND_S, Math.round(estimate.value / ROUND_S) * ROUND_S);
+    return onProcess({
       steps: process.steps.map((s) =>
         s.id === stepId
-          ? { ...s, plannedDurationS: Math.max(ROUND_S, Math.round(seconds / ROUND_S) * ROUND_S) }
+          ? {
+              ...s,
+              plannedDurationS: appliedValue,
+              accepted: { estimate, appliedValue, model: estimate.model },
+            }
           : s,
       ),
     });
+  };
 
   const steps = process.steps.filter((s) => FERMENTATION_OPERATIONS.has(s.operation));
 
@@ -184,7 +194,7 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
           mass={mass}
           step={process.steps.find((s) => s.id === mass.stepId)}
           onDuration={setDuration}
-          onYeast={(ingredient, pct) => {
+          onYeast={(ingredient, accepted) => {
             const component = formula.components.find((c) => c.id === id);
             if (!component) return false;
             return onEdit({
@@ -192,7 +202,9 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
               component: id,
               changes: {
                 allocations: (component.allocations ?? []).map((a) =>
-                  a.ingredient === ingredient ? { ...a, bakerPct: pct } : a,
+                  a.ingredient === ingredient
+                    ? { ...a, bakerPct: accepted.appliedValue, accepted }
+                    : a,
                 ),
               },
             });
@@ -202,9 +214,12 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
       <Mass
         title={t('fermentation.dough')}
         mass={estimates.dough}
+        dough
         step={process.steps.find((s) => s.id === estimates.dough.stepId)}
         onDuration={setDuration}
-        onYeast={(ingredient, pct) => onEdit({ type: 'SetBakerPct', ingredient, pct })}
+        onYeast={(ingredient, accepted) =>
+          onEdit({ type: 'SetBakerPct', ingredient, pct: accepted.appliedValue, accepted })
+        }
       />
       {estimates.dough.duration.status === 'unsupported' &&
         estimates.dough.duration.reason === 'no_commercial_yeast' && (
@@ -224,12 +239,18 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
 
 const useEstimateText = () => {
   const { t, pct } = useMessages();
-  const bound = (value: number, format: (v: number) => string) =>
-    Number.isFinite(value) ? format(value) : t('fermentation.unbounded');
-  const range = (e: Estimate, format: (v: number) => string) =>
-    e.status === 'ok' && e.range
-      ? t('fermentation.range', { low: bound(e.range[0], format), high: bound(e.range[1], format) })
-      : '';
+  const bound = (value: RangeBound, format: (v: number) => string) =>
+    value.kind === 'finite' ? format(value.value) : t('fermentation.unbounded');
+  const range = (e: Estimate, format: (v: number) => string) => {
+    if (e.status !== 'ok') return '';
+    if (!e.range) {
+      return e.assumptions.includes('band_unbounded') ? t('fermentation.bandUnbounded') : '';
+    }
+    return t('fermentation.range', {
+      low: bound(e.range[0], format),
+      high: bound(e.range[1], format),
+    });
+  };
   const reason = (e: Estimate) => {
     if (e.status === 'ok') return '';
     const key = `fermentation.reason.${e.reason}`;
@@ -249,15 +270,18 @@ const useEstimateText = () => {
 const Mass = ({
   title,
   mass,
+  dough = false,
   step,
   onDuration,
   onYeast,
 }: {
   title: string;
   mass: MassEstimates;
+  /** The dough ends at the provisional "ready to bake" target, a preferment when ripe. */
+  dough?: boolean;
   step: ProcessStep | undefined;
-  onDuration: (stepId: string, seconds: number) => boolean;
-  onYeast: (ingredient: string, pct: number) => boolean;
+  onDuration: (stepId: string, estimate: OkEstimate) => boolean;
+  onYeast: (ingredient: string, accepted: AcceptedSuggestion) => boolean;
 }) => {
   const { t, name, stepName } = useMessages();
   const { range, reason, extrapolations, pct } = useEstimateText();
@@ -286,11 +310,7 @@ const Mass = ({
               <span className="text-muted">{range(duration, formatDuration)}</span>
             </span>
             {Math.abs((step.plannedDurationS ?? -Infinity) - duration.value) > ROUND_S && (
-              <IonButton
-                size="small"
-                fill="outline"
-                onClick={() => onDuration(step.id, duration.value)}
-              >
+              <IonButton size="small" fill="outline" onClick={() => onDuration(step.id, duration)}>
                 {t('fermentation.applyDuration')}
               </IonButton>
             )}
@@ -299,9 +319,14 @@ const Mass = ({
       )}
       {progressPct.status === 'ok' && (
         <span className="text-[15px]">
-          {t('fermentation.progress', { pct: pct(progressPct.value) })}{' '}
+          {t(dough ? 'fermentation.progressReady' : 'fermentation.progress', {
+            pct: pct(progressPct.value),
+          })}{' '}
           <span className="text-muted">{range(progressPct, pct)}</span>
         </span>
+      )}
+      {dough && progressPct.status === 'ok' && (
+        <span className="text-sm text-muted">{t('fermentation.readyTarget')}</span>
       )}
       {yeasts.map(([ingredient, estimate]) =>
         estimate.status === 'ok' ? (
@@ -313,7 +338,10 @@ const Mass = ({
             <IonButton
               size="small"
               fill="outline"
-              onClick={() => onYeast(ingredient, Math.round(estimate.value * 1000) / 1000)}
+              onClick={() => {
+                const appliedValue = Math.round(estimate.value * 1000) / 1000;
+                onYeast(ingredient, { estimate, appliedValue, model: estimate.model });
+              }}
             >
               {t('fermentation.applyYeast')}
             </IonButton>
