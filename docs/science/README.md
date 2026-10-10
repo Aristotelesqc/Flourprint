@@ -23,6 +23,9 @@ pull request.
   and its changelog by model version.
 - `data/`: transcribed source tables (CSV) with a metadata file each (source, DOI, formula,
   endpoint, what the temperature means, who transcribed it, read status, `source_verified`).
+- `data/style-guides.md` and `.json`: consensus ranges and starting points per template style,
+  with sources, read through web-search excerpts only (`source_verified: false`): a reference for
+  template versions, not a contract.
 - `scripts/`: small reproducible scripts that recompute fits from `data/`. They import nothing
   from the application and are not engine code.
 

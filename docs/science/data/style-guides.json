@@ -1,0 +1,1866 @@
+{
+  "generated": "2026-10-10",
+  "method": "See style-guides.md. Pages were read through web-search excerpts only (direct page fetching was blocked by the environment's network policy); every figure was taken from an excerpt attributed to the cited page. Computed values are flagged in notes.",
+  "styles": [
+    {
+      "style": "baguette",
+      "traits_en": "Long thin lean loaf of wheat flour, water, salt and yeast (French 'tradition' rules allow only these plus levain and three minor flour adjuncts, no additives, no freezing); thin crisp crust from a hot, steamed hearth bake and an open crumb, usually with a poolish.",
+      "consensus": "strong for proportions (four formulas agree within a few points); weak for bulk and proof times (not tied to a source in what could be read)",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 66,
+          "high": 71,
+          "unit": "% flour",
+          "sources": [9, 10, 11, 12],
+          "note": "71 is computed from the King Arthur handout weights (327 g water / 462 g flour)"
+        },
+        {
+          "key": "salt_pct",
+          "low": 2.0,
+          "high": 2.2,
+          "unit": "% flour",
+          "sources": [9, 10, 11, 12],
+          "note": "2.2 computed from the handout (10 g / 462 g)"
+        },
+        {
+          "key": "preferment_pct",
+          "low": 30,
+          "high": 33,
+          "unit": "% of total flour in a 100 % hydration poolish",
+          "sources": [9, 11]
+        },
+        {
+          "key": "yeast_instant_pct",
+          "low": 0.36,
+          "high": 0.47,
+          "unit": "% flour, overall",
+          "sources": [9, 10],
+          "note": "Hamelman's book states fresh yeast; these are instant-yeast conversions by the page authors"
+        },
+        {
+          "key": "poolish_h",
+          "low": 12,
+          "high": 15,
+          "unit": "h at room temperature",
+          "sources": [11, 13],
+          "note": "classic baguettes recipe states about 14 h"
+        },
+        {
+          "key": "bake_c",
+          "low": 230,
+          "high": 260,
+          "unit": "deg C (450-500 F), stone with steam",
+          "sources": [11, 13]
+        },
+        {
+          "key": "bake_min",
+          "low": 25,
+          "high": 30,
+          "unit": "min",
+          "sources": [11],
+          "note": "single source"
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 68,
+        "salt_pct": 2.0,
+        "preferment_pct": 33,
+        "poolish_hydration_pct": 100,
+        "yeast_instant_pct": 0.35,
+        "poolish_h": 12,
+        "bake_c": 245,
+        "bake_min": 25
+      },
+      "starting_point_why": "Middle of four agreeing formulas; Hamelman's 33 % poolish is the most cited structure.",
+      "template_deviations": [],
+      "template_note": "All template values lie inside the ranges (water 68, salt 2, poolish 33 %, instant yeast 0.3 just under the 0.36 low end, 12 h poolish, 25 min bake). No change needed; bulk 2 h and proof 1 h are plausible but not sourced here.",
+      "sources": [9, 10, 11, 12, 13, 14]
+    },
+    {
+      "style": "boule-dutch-oven",
+      "traits_en": "Round lean loaf baked in a preheated covered pot that traps steam for the first part of the bake, then uncovered to brown; higher hydration than a baguette and either a slow low-yeast fermentation or a cold rest.",
+      "consensus": "moderate: hydration and salt agree; yeast depends on the schedule (low yeast with long room bulk, or more yeast with a cold rest); bake temperature from one source only",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 72,
+          "high": 80,
+          "unit": "% flour",
+          "sources": [15, 16, 17],
+          "note": "Forkish 72, King Arthur no-knead 75, Lahey 80 (computed from weights)"
+        },
+        {
+          "key": "salt_pct",
+          "low": 2.0,
+          "high": 2.3,
+          "unit": "% flour",
+          "sources": [15, 16, 17],
+          "note": "Lahey 2.3 with Diamond Crystal kosher salt"
+        },
+        {
+          "key": "yeast_instant_pct",
+          "low": 0.2,
+          "high": 0.4,
+          "unit": "% flour, long room fermentation",
+          "sources": [15, 16],
+          "note": "King Arthur uses 1.5 % with 2 h room + at least 2 h in the fridge [17]"
+        },
+        {
+          "key": "bulk_h",
+          "low": 5,
+          "high": 5,
+          "unit": "h at room temperature with 0.4 % instant yeast",
+          "sources": [15],
+          "note": "single source; Lahey ferments 12-18 h at about 21 C with 0.23 % [16]"
+        },
+        {
+          "key": "proof_h",
+          "low": 1.25,
+          "high": 1.25,
+          "unit": "h",
+          "sources": [15],
+          "note": "single source"
+        },
+        {
+          "key": "bake_c",
+          "low": 230,
+          "high": 230,
+          "unit": "deg C (450 F), pot preheated at least 30 min",
+          "sources": [16],
+          "note": "single source"
+        },
+        {
+          "key": "bake_min",
+          "low": 45,
+          "high": 60,
+          "unit": "min (30 covered, then 15-30 uncovered)",
+          "sources": [16],
+          "note": "single source"
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 75,
+        "salt_pct": 2.0,
+        "yeast_instant_pct": 0.4,
+        "bulk_h": 5,
+        "proof_h": 1.25,
+        "bake_c": 230,
+        "bake_min": 50
+      },
+      "starting_point_why": "75 % sits between Forkish and Lahey; 0.4 % instant yeast only works with a long bulk (Forkish: about 5 h).",
+      "template_deviations": [
+        {
+          "key": "bulk_h",
+          "template": 2.5,
+          "recommended": 5,
+          "note": "With 0.4 % instant yeast at 21 C the source schedule is about 5 h of bulk; either lengthen the bulk or raise the yeast to about 1 %."
+        },
+        {
+          "key": "hydration_pct",
+          "template": 72,
+          "recommended": 75,
+          "note": "72 is the low end of the range; the 10 % whole wheat in the template supports a little more water. Optional."
+        }
+      ],
+      "sources": [15, 16, 17]
+    },
+    {
+      "style": "ciabatta",
+      "traits_en": "Flat, slipper-shaped Italian loaf from a very wet dough, usually built on a stiff biga, barely shaped, giving a large irregular open crumb and thin crust.",
+      "consensus": "moderate: salt and process agree; biga share varies 20-40 %; final hydration seen from one named source (76 %)",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 76,
+          "high": 76,
+          "unit": "% flour",
+          "sources": [18],
+          "note": "single source; other pages describe ciabatta as 75-80 % without a figure tied to a page"
+        },
+        {
+          "key": "salt_pct",
+          "low": 2.0,
+          "high": 2.0,
+          "unit": "% flour",
+          "sources": [18, 20]
+        },
+        {
+          "key": "preferment_pct",
+          "low": 20,
+          "high": 40,
+          "unit": "% of total flour in a biga",
+          "sources": [18, 19, 20],
+          "note": "King Arthur 30, BAKERpedia 40, Jay Arr 20"
+        },
+        {
+          "key": "biga_hydration_pct",
+          "low": 50,
+          "high": 60,
+          "unit": "% of biga flour",
+          "sources": [19, 20]
+        },
+        {
+          "key": "biga_h",
+          "low": 12,
+          "high": 16,
+          "unit": "h at 16-21 C",
+          "sources": [18, 20]
+        },
+        {
+          "key": "bulk_h",
+          "low": 2,
+          "high": 3,
+          "unit": "h with folds",
+          "sources": [18, 20]
+        },
+        {
+          "key": "proof_h",
+          "low": 0.75,
+          "high": 1,
+          "unit": "h",
+          "sources": [20],
+          "note": "single source"
+        },
+        {
+          "key": "bake_c",
+          "low": 238,
+          "high": 238,
+          "unit": "deg C (460 F) with steam",
+          "sources": [18, 20]
+        },
+        {
+          "key": "bake_min",
+          "low": 25,
+          "high": 36,
+          "unit": "min",
+          "sources": [18, 20]
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 77,
+        "salt_pct": 2.0,
+        "preferment_pct": 30,
+        "biga_hydration_pct": 55,
+        "biga_h": 14,
+        "bulk_h": 2.5,
+        "proof_h": 0.75,
+        "bake_c": 238,
+        "bake_min": 28
+      },
+      "starting_point_why": "King Arthur's professional formula (30 % biga, 76 % water, 2 % salt) is the best-documented anchor.",
+      "template_deviations": [
+        {
+          "key": "preferment_pct",
+          "template": 50,
+          "recommended": 30,
+          "note": "50 % biga is above the 20-40 % range seen; reduce to 30-35 %."
+        },
+        {
+          "key": "salt_pct",
+          "template": 2.2,
+          "recommended": 2.0,
+          "note": "Sources give 2 %."
+        }
+      ],
+      "sources": [18, 19, 20]
+    },
+    {
+      "style": "bagels",
+      "traits_en": "Ring-shaped rolls from a very stiff, strong-flour dough sweetened with malt, retarded cold overnight, boiled briefly and baked hot, giving a dense chewy crumb and shiny crust.",
+      "consensus": "strong for hydration (55-60 %); malt, salt and bake time each from one or two sources",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 55,
+          "high": 60,
+          "unit": "% flour",
+          "sources": [21, 22, 24],
+          "note": "Perfect Loaf 55, Hamelman 58, DiMuzio 60, Foodgeek about 55"
+        },
+        {
+          "key": "salt_pct",
+          "low": 1.9,
+          "high": 1.9,
+          "unit": "% flour",
+          "sources": [21],
+          "note": "single source"
+        },
+        {
+          "key": "malt_syrup_pct",
+          "low": 3,
+          "high": 3,
+          "unit": "% flour (plus 0.75 % diastatic malt)",
+          "sources": [21],
+          "note": "single source; Hamelman uses diastatic malt powder [22]"
+        },
+        {
+          "key": "cold_retard_h",
+          "low": 12,
+          "high": 16,
+          "unit": "h, overnight in the fridge",
+          "sources": [21, 22],
+          "note": "'overnight' in both; hours are an interpretation"
+        },
+        {
+          "key": "boil_s",
+          "low": 60,
+          "high": 120,
+          "unit": "s total, about 1 min per side or less",
+          "sources": [22],
+          "note": "single source"
+        },
+        {
+          "key": "bake_c",
+          "low": 260,
+          "high": 260,
+          "unit": "deg C (500 F)",
+          "sources": [22, 23],
+          "note": "several other King Arthur bagel recipes bake at 425 F (218 C)"
+        },
+        {
+          "key": "bake_min",
+          "low": 15,
+          "high": 18,
+          "unit": "min",
+          "sources": [22],
+          "note": "single source"
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 57,
+        "salt_pct": 2.0,
+        "malt_syrup_pct": 3,
+        "cold_retard_h": 12,
+        "bake_c": 250,
+        "bake_min": 18
+      },
+      "starting_point_why": "57 % is the centre of three agreeing formulas; 3 % malt syrup follows the only formula that gives a percentage.",
+      "template_deviations": [
+        {
+          "key": "malt_syrup_pct",
+          "template": 4,
+          "recommended": 3,
+          "note": "Only source with a figure uses 3 % syrup (plus diastatic malt)."
+        },
+        {
+          "key": "bake_min",
+          "template": 20,
+          "recommended": 18,
+          "note": "Sources bake 15-18 min at 500 F; 20 min fits a 425 F oven."
+        }
+      ],
+      "sources": [21, 22, 23, 24]
+    },
+    {
+      "style": "focaccia",
+      "traits_en": "Oily pan flatbread, dimpled before baking. Two families: Genoese (fugassa) at moderate hydration with oil in the dough and a water-oil-salt brine on top; and the high-hydration pan focaccia of US home baking.",
+      "consensus": "two distinct families; within each the sources agree, but the template mixes them (Genoese label, high-hydration numbers)",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 61,
+          "high": 70,
+          "unit": "% flour, Genoese family",
+          "sources": [25, 26]
+        },
+        {
+          "key": "fat_pct",
+          "low": 6,
+          "high": 6.5,
+          "unit": "% flour olive oil in the dough, Genoese family",
+          "sources": [25, 26]
+        },
+        {
+          "key": "hydration_pct_high",
+          "low": 76,
+          "high": 80,
+          "unit": "% flour, high-hydration family",
+          "sources": [27, 28]
+        },
+        {
+          "key": "fat_pct_high",
+          "low": 2,
+          "high": 2,
+          "unit": "% flour olive oil in the dough, high-hydration family",
+          "sources": [28],
+          "note": "single source; pan and top are oiled separately"
+        },
+        {
+          "key": "salt_pct",
+          "low": 1.8,
+          "high": 2.0,
+          "unit": "% flour in the dough (brine or flaky salt on top is extra)",
+          "sources": [27, 28]
+        },
+        {
+          "key": "yeast_instant_pct",
+          "low": 0.3,
+          "high": 0.3,
+          "unit": "% flour",
+          "sources": [27],
+          "note": "single source; Genoese recipes use 0.3 % fresh yeast (3 g/kg) [25, 26]"
+        },
+        {
+          "key": "proof_h",
+          "low": 1,
+          "high": 1.5,
+          "unit": "h in the pan (2-3 h if the dough was refrigerated)",
+          "sources": [29],
+          "note": "single source for yeasted dough"
+        },
+        {
+          "key": "bake_c",
+          "low": 232,
+          "high": 246,
+          "unit": "deg C (450-475 F)",
+          "sources": [28, 29]
+        },
+        {
+          "key": "bake_min",
+          "low": 15,
+          "high": 30,
+          "unit": "min",
+          "sources": [28, 29]
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 78,
+        "salt_pct": 2.0,
+        "fat_pct": 3,
+        "yeast_instant_pct": 0.4,
+        "bulk_h": 2,
+        "proof_h": 1.25,
+        "bake_c": 240,
+        "bake_min": 22
+      },
+      "starting_point_why": "Keeps the template's high-hydration family (78 %, inside 76-80) with sourced salt; oil between the families. For a true Genoese focaccia use 65 % water and 6 % oil instead.",
+      "template_deviations": [
+        {
+          "key": "salt_pct",
+          "template": 2.5,
+          "recommended": 2.0,
+          "note": "Dough salt in sources is 1.8-2 %; topping salt comes on top of that."
+        },
+        {
+          "key": "basis",
+          "template": "Genoese-style, 80 % water",
+          "recommended": "high-hydration pan focaccia",
+          "note": "80 % is outside the Genoese 61-70 %; either relabel the basis or switch to 65 % water and 6 % oil."
+        }
+      ],
+      "sources": [25, 26, 27, 28, 29]
+    },
+    {
+      "style": "brioche",
+      "traits_en": "French bread enriched with eggs and a large share of butter (here about half the flour weight) and some sugar; butter is worked in after gluten development and the dough is chilled overnight before shaping.",
+      "consensus": "strong (three formulas built on Hamelman / King Arthur agree on 50 % egg, 50 % butter, 12 % sugar)",
+      "ranges": [
+        {
+          "key": "egg_pct",
+          "low": 50,
+          "high": 50,
+          "unit": "% flour",
+          "sources": [30, 31, 32]
+        },
+        {
+          "key": "fat_pct",
+          "low": 50,
+          "high": 50,
+          "unit": "% flour, butter",
+          "sources": [30, 31, 32]
+        },
+        {
+          "key": "sugar_pct",
+          "low": 12,
+          "high": 12,
+          "unit": "% flour",
+          "sources": [30, 31, 32]
+        },
+        {
+          "key": "salt_pct",
+          "low": 1.6,
+          "high": 2.5,
+          "unit": "% flour",
+          "sources": [30, 31, 32],
+          "note": "Zeb Bakes reduced the salt to 1.6"
+        },
+        {
+          "key": "water_pct",
+          "low": 9,
+          "high": 9,
+          "unit": "% flour, extra liquid besides egg",
+          "sources": [30],
+          "note": "single source"
+        },
+        {
+          "key": "cold_retard_h",
+          "low": 8,
+          "high": 16,
+          "unit": "h, overnight",
+          "sources": [30, 33]
+        },
+        {
+          "key": "proof_h",
+          "low": 2,
+          "high": 3,
+          "unit": "h after shaping (up to 5 h from a cold pan)",
+          "sources": [33, 74]
+        },
+        {
+          "key": "bake_c",
+          "low": 175,
+          "high": 200,
+          "unit": "deg C (350 F, or 390 F then lower)",
+          "sources": [33, 34]
+        },
+        {
+          "key": "bake_min",
+          "low": 30,
+          "high": 35,
+          "unit": "min, loaf, to about 88 C (190 F) inside",
+          "sources": [33, 34]
+        }
+      ],
+      "starting_point": {
+        "egg_pct": 50,
+        "fat_pct": 50,
+        "sugar_pct": 12,
+        "salt_pct": 2.0,
+        "milk_pct": 10,
+        "cold_retard_h": 12,
+        "proof_h": 2.5,
+        "bake_c": 180,
+        "bake_min": 32
+      },
+      "starting_point_why": "The Hamelman / King Arthur structure; salt at 2 % between the reduced and full versions.",
+      "template_deviations": [],
+      "template_note": "All template values lie inside the ranges. Yeast (0.9 % instant) could not be checked: the King Arthur professional formula lists 7 % yeast without the yeast form in the excerpt.",
+      "sources": [30, 31, 32, 33, 34, 74]
+    },
+    {
+      "style": "burger-buns",
+      "traits_en": "Soft, lightly enriched round rolls (milk or water, a little egg, butter and sugar), proofed warm and baked moderately to a thin soft crust.",
+      "consensus": "moderate: three home recipes agree on enrichment ranges; several King Arthur figures are converted from volumes",
+      "ranges": [
+        {
+          "key": "liquid_pct",
+          "low": 41,
+          "high": 83,
+          "unit": "% flour, water and/or milk (excluding egg)",
+          "sources": [35, 36, 37],
+          "note": "King Arthur 41-54 water; Pretty Simple Sweet about 53 water + milk; Cloudy Kitchen 83 milk including a tangzhong"
+        },
+        {
+          "key": "egg_pct",
+          "low": 12,
+          "high": 13,
+          "unit": "% flour (one egg per 360-450 g flour)",
+          "sources": [35, 36],
+          "note": "egg weight assumed 50 g"
+        },
+        {
+          "key": "fat_pct",
+          "low": 7,
+          "high": 12,
+          "unit": "% flour, butter",
+          "sources": [35, 36]
+        },
+        {
+          "key": "sugar_pct",
+          "low": 5,
+          "high": 12,
+          "unit": "% flour",
+          "sources": [35, 36, 37]
+        },
+        {
+          "key": "salt_pct",
+          "low": 1.8,
+          "high": 1.8,
+          "unit": "% flour",
+          "sources": [35, 36],
+          "note": "King Arthur value converted from 1 1/4 tsp"
+        },
+        {
+          "key": "yeast_instant_pct",
+          "low": 1.6,
+          "high": 2.2,
+          "unit": "% flour",
+          "sources": [35, 36, 37],
+          "note": "King Arthur value converted from 1 tbsp"
+        },
+        {
+          "key": "bulk_h",
+          "low": 1,
+          "high": 2,
+          "unit": "h",
+          "sources": [35],
+          "note": "single source"
+        },
+        {
+          "key": "bake_c",
+          "low": 190,
+          "high": 190,
+          "unit": "deg C (375 F)",
+          "sources": [35],
+          "note": "single source"
+        },
+        {
+          "key": "bake_min",
+          "low": 15,
+          "high": 18,
+          "unit": "min",
+          "sources": [35],
+          "note": "single source"
+        }
+      ],
+      "starting_point": {
+        "water_pct": 25,
+        "milk_pct": 30,
+        "egg_pct": 12,
+        "fat_pct": 9,
+        "sugar_pct": 8,
+        "salt_pct": 1.8,
+        "yeast_instant_pct": 1.6,
+        "bulk_h": 1.5,
+        "proof_h": 1,
+        "bake_c": 190,
+        "bake_min": 16
+      },
+      "starting_point_why": "Centre of three recipes; the yeast must match their 1-2 h rise times.",
+      "template_deviations": [
+        {
+          "key": "yeast_instant_pct",
+          "template": 0.9,
+          "recommended": 1.6,
+          "note": "Below the 1.6-2.2 % that the sources use for the same 1.5 h bulk + 1 h proof."
+        },
+        {
+          "key": "egg_pct",
+          "template": 10,
+          "recommended": 12,
+          "note": "Slightly under one egg per 400 g flour."
+        },
+        {
+          "key": "salt_pct",
+          "template": 2.0,
+          "recommended": 1.8,
+          "note": "Minor."
+        }
+      ],
+      "sources": [35, 36, 37]
+    },
+    {
+      "style": "pullman",
+      "traits_en": "Square sandwich loaf (pain de mie) baked in a lidded Pullman pan, giving a flat top, thin soft crust and fine close crumb; dough is milk-based with moderate butter and sugar.",
+      "consensus": "moderate: enrichment ranges agree across four formulas; yeast from one source; 13-inch dough weight varies 1070-1300 g",
+      "ranges": [
+        {
+          "key": "milk_pct",
+          "low": 58,
+          "high": 66,
+          "unit": "% flour (often all milk; King Arthur mixes milk, water and dry milk)",
+          "sources": [38, 39, 40]
+        },
+        {
+          "key": "fat_pct",
+          "low": 8,
+          "high": 13,
+          "unit": "% flour, butter",
+          "sources": [38, 39, 40]
+        },
+        {
+          "key": "sugar_pct",
+          "low": 5,
+          "high": 10,
+          "unit": "% flour",
+          "sources": [38, 39],
+          "note": "Bread Experience uses 4.6 % honey [40]"
+        },
+        {
+          "key": "salt_pct",
+          "low": 1.7,
+          "high": 2.0,
+          "unit": "% flour",
+          "sources": [38, 39, 40]
+        },
+        {
+          "key": "yeast_instant_pct",
+          "low": 1.5,
+          "high": 1.5,
+          "unit": "% flour",
+          "sources": [38],
+          "note": "single source"
+        },
+        {
+          "key": "dough_g_13in",
+          "low": 1069,
+          "high": 1300,
+          "unit": "g per 13 x 4 x 4 in pan",
+          "sources": [41, 42]
+        },
+        {
+          "key": "bake_c",
+          "low": 175,
+          "high": 193,
+          "unit": "deg C (350-380 F), lidded",
+          "sources": [38, 43, 44]
+        },
+        {
+          "key": "bake_min",
+          "low": 35,
+          "high": 50,
+          "unit": "min, to about 88 C (190 F) inside",
+          "sources": [38, 41, 43, 44]
+        }
+      ],
+      "starting_point": {
+        "water_pct": 20,
+        "milk_pct": 42,
+        "fat_pct": 8,
+        "sugar_pct": 6,
+        "salt_pct": 2.0,
+        "yeast_instant_pct": 1.2,
+        "dough_g": 1100,
+        "bake_c": 180,
+        "bake_min": 42
+      },
+      "starting_point_why": "62 % total liquid with most of it milk, butter at the low end of the range, and a dough weight that fills a 13-inch pan.",
+      "template_deviations": [
+        {
+          "key": "fat_pct",
+          "template": 6,
+          "recommended": 8,
+          "note": "Butter below the 8-13 % range."
+        },
+        {
+          "key": "dough_g",
+          "template": 1000,
+          "recommended": 1100,
+          "note": "Under the 1069-1300 g quoted for a 13-inch Pullman pan."
+        },
+        {
+          "key": "yeast_instant_pct",
+          "template": 0.8,
+          "recommended": 1.2,
+          "note": "Single source uses 1.5 %; 0.8 % is slow for a 1.5 h bulk and 1 h proof."
+        },
+        {
+          "key": "milk_pct",
+          "template": 20,
+          "recommended": 42,
+          "note": "Sources are milk-dominant (template 45 water + 20 milk); total liquid 65 % is fine."
+        }
+      ],
+      "sources": [38, 39, 40, 41, 42, 43, 44]
+    },
+    {
+      "style": "shokupan",
+      "traits_en": "Japanese milk bread loaf: a pre-gelatinised flour paste (tangzhong at about 1:5, or yudane at about 1:1) lets a milk-enriched dough hold more water, giving a very soft, fine, moist crumb.",
+      "consensus": "moderate: liquid, sugar and salt agree; butter varies widely (4-16 %); yeast from one source",
+      "ranges": [
+        {
+          "key": "liquid_pct",
+          "low": 66,
+          "high": 76,
+          "unit": "% flour, milk and water (egg excluded)",
+          "sources": [45, 46]
+        },
+        {
+          "key": "sugar_pct",
+          "low": 6,
+          "high": 10,
+          "unit": "% flour",
+          "sources": [39, 45, 46]
+        },
+        {
+          "key": "fat_pct",
+          "low": 4,
+          "high": 16,
+          "unit": "% flour, butter",
+          "sources": [39, 45, 46]
+        },
+        {
+          "key": "salt_pct",
+          "low": 1.7,
+          "high": 2.0,
+          "unit": "% flour",
+          "sources": [39, 45, 46]
+        },
+        {
+          "key": "egg_pct",
+          "low": 0,
+          "high": 16.5,
+          "unit": "% flour, optional",
+          "sources": [45]
+        },
+        {
+          "key": "scald_flour_pct",
+          "low": 5,
+          "high": 7,
+          "unit": "% of flour in a 1:5 tangzhong",
+          "sources": [47],
+          "note": "yudane variant uses about 20 % of the flour at 1:1 [46]"
+        },
+        {
+          "key": "yeast_instant_pct",
+          "low": 1.2,
+          "high": 1.2,
+          "unit": "% flour",
+          "sources": [46],
+          "note": "single source"
+        },
+        {
+          "key": "bake_c",
+          "low": 177,
+          "high": 210,
+          "unit": "deg C",
+          "sources": [46, 47, 48, 49]
+        },
+        {
+          "key": "bake_min",
+          "low": 25,
+          "high": 35,
+          "unit": "min, to at least 88-93 C inside",
+          "sources": [46, 47, 48, 49]
+        }
+      ],
+      "starting_point": {
+        "water_pct": 38,
+        "milk_pct": 35,
+        "fat_pct": 8,
+        "sugar_pct": 8,
+        "salt_pct": 1.8,
+        "yeast_instant_pct": 1.0,
+        "scald_flour_pct": 6,
+        "bake_c": 180,
+        "bake_min": 30
+      },
+      "starting_point_why": "Middle of the ranges; the template is already there.",
+      "template_deviations": [],
+      "template_note": "All template values lie inside the ranges. Instant yeast 0.9 % is a little under the single sourced 1.2 %; acceptable.",
+      "sources": [39, 45, 46, 47, 48, 49]
+    },
+    {
+      "style": "pizza-neo-neapolitan",
+      "traits_en": "Neapolitan-style round pizza (soft, puffy, leopard-spotted rim, thin centre) adapted to home ovens: often higher hydration and longer cold fermentation than the AVPN rules allow, baked on steel or stone at the oven's maximum.",
+      "consensus": "moderate: home adaptations agree on cold fermentation and steel at maximum heat; hydration spread 60-72 %",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 60,
+          "high": 72,
+          "unit": "% flour",
+          "sources": [6, 7, 8],
+          "note": "Fond 60-62 for home bakers; forum 65-68; Baking Steel 70-72"
+        },
+        {
+          "key": "salt_pct",
+          "low": 2.2,
+          "high": 3.75,
+          "unit": "% flour",
+          "sources": [3],
+          "note": "derived from AVPN 40-60 g per litre of water and 1.6-1.8 kg flour per litre"
+        },
+        {
+          "key": "cold_retard_h",
+          "low": 24,
+          "high": 72,
+          "unit": "h at fridge temperature",
+          "sources": [6, 8]
+        },
+        {
+          "key": "bake_c",
+          "low": 260,
+          "high": 290,
+          "unit": "deg C (500-550 F), steel preheated at maximum",
+          "sources": [6, 7]
+        },
+        {
+          "key": "bake_min",
+          "low": 5,
+          "high": 8,
+          "unit": "min per pizza in a home oven",
+          "sources": [7],
+          "note": "single source"
+        },
+        {
+          "key": "ball_g",
+          "low": 200,
+          "high": 280,
+          "unit": "g",
+          "sources": [1],
+          "note": "AVPN rule, used here as the style reference"
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 65,
+        "salt_pct": 2.8,
+        "yeast_instant_pct": 0.1,
+        "bulk_h": 2,
+        "cold_retard_h": 24,
+        "proof_h": 3,
+        "ball_g": 260,
+        "bake_c": 280,
+        "bake_min": 6
+      },
+      "starting_point_why": "65 % is the centre of the home-oven spread and above the AVPN ceiling, which is what neo-Neapolitan means here.",
+      "template_deviations": [
+        {
+          "key": "hydration_pct",
+          "template": 62,
+          "recommended": 65,
+          "note": "62 is the AVPN ceiling; home-oven adaptations sit at 65-72 %. Optional."
+        }
+      ],
+      "reference_rules": {
+        "name": "AVPN Verace Pizza Napoletana (true Neapolitan)",
+        "water_per_flour": "1 litre of water per 1.6-1.8 kg of flour, i.e. about 55.6-62.5 % hydration [3]",
+        "salt": "40-60 g per litre of water, i.e. about 2.2-3.75 % of flour [3]",
+        "yeast": "0.1-3 g fresh brewer's yeast per litre of water (about 0.006-0.19 % of flour); dry yeast at one third of the fresh weight; sourdough 5-20 % of flour [3]",
+        "flour": "soft wheat type 00 (2019+ editions also allow 0 and 1, per forum reports [75]), W 250-320 in the 2024 edition [1], W 250-310 in 2022",
+        "fermentation": "12-24 h in total at 16-22 C, controlled cells at 18-20 C and 60-70 % humidity allowed (2024) [2]; older editions: about 2 h bulk then 4-6 h in balls at 20-25 C [2, 5]",
+        "balls": "200-280 g for a 22-35 cm pizza [1]",
+        "bake": "wood-fired dome about 485 C, floor about 380-430 C [1]; oven at 430-480 C [4]; 60-90 s [1, 4]"
+      },
+      "sources": [1, 2, 3, 4, 5, 6, 7, 8, 75]
+    },
+    {
+      "style": "pizza-roman",
+      "traits_en": "Roman 'tonda' (scrocchiarella): thin, crisp round pizza with almost no rim, from a low-hydration dough with a little oil, rolled out with a pin from a small ball.",
+      "consensus": "strong on hydration (55-60 %) and the 180 g ball; oil and salt vary; flour in Italian sources is type 0 W 240-300 rather than 00",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 55,
+          "high": 60,
+          "unit": "% flour",
+          "sources": [50, 51, 52, 53]
+        },
+        {
+          "key": "fat_pct",
+          "low": 0,
+          "high": 3,
+          "unit": "% flour, olive oil",
+          "sources": [50, 51, 52, 53, 54],
+          "note": "Molino Vigevano 0, Napo 1.1, Confraternita 1.2, Everybodypizza 2, Food & Nature 3"
+        },
+        {
+          "key": "salt_pct",
+          "low": 2.0,
+          "high": 3.0,
+          "unit": "% flour",
+          "sources": [50, 51, 52, 53, 54]
+        },
+        {
+          "key": "flour_w",
+          "low": 240,
+          "high": 300,
+          "unit": "W, type 0 or 'pizza' flour",
+          "sources": [50, 51, 52]
+        },
+        {
+          "key": "ball_g",
+          "low": 180,
+          "high": 180,
+          "unit": "g for a 28-32 cm pizza",
+          "sources": [50, 51, 54]
+        },
+        {
+          "key": "cold_retard_h",
+          "low": 16,
+          "high": 24,
+          "unit": "h at about 4-8 C",
+          "sources": [52, 53, 55]
+        },
+        {
+          "key": "proof_h",
+          "low": 2,
+          "high": 4,
+          "unit": "h at room temperature before rolling",
+          "sources": [52, 53, 55]
+        },
+        {
+          "key": "bake_c",
+          "low": 360,
+          "high": 400,
+          "unit": "deg C on the stone of a pizza oven",
+          "sources": [55],
+          "note": "single source; no sourced home-oven figure"
+        },
+        {
+          "key": "bake_min",
+          "low": 2,
+          "high": 3,
+          "unit": "min in a pizza oven",
+          "sources": [55],
+          "note": "single source"
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 57,
+        "fat_pct": 1.5,
+        "salt_pct": 2.5,
+        "yeast_instant_pct": 0.2,
+        "cold_retard_h": 24,
+        "proof_h": 2,
+        "ball_g": 180
+      },
+      "starting_point_why": "Centre of five formulas; 180 g is the ball weight every source that names one agrees on.",
+      "template_deviations": [
+        {
+          "key": "fat_pct",
+          "template": 3,
+          "recommended": 1.5,
+          "note": "3 % is the top of the 0-3 % spread; most sources use 1-2 %."
+        },
+        {
+          "key": "ball_g",
+          "template": 200,
+          "recommended": 180,
+          "note": "Sources agree on 180 g (one professional recipe uses about 200 g for a 35 cm pizza)."
+        },
+        {
+          "key": "flour",
+          "template": "tipo-00-flour",
+          "recommended": "type 0, W 240-300",
+          "note": "Italian sources specify type 0 or 'pizza' flour of medium strength; 00 is acceptable if its W is similar."
+        }
+      ],
+      "sources": [50, 51, 52, 53, 54, 55]
+    },
+    {
+      "style": "pizza-teglia",
+      "traits_en": "Roman pan pizza (pizza in teglia / al taglio): very high hydration dough from strong flour, long cold maturation, stretched gently into an oiled rectangular pan, with an airy crumb and crisp base.",
+      "consensus": "strong on hydration (about 80 %) and long cold maturation; salt and oil from one detailed source",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 75,
+          "high": 90,
+          "unit": "% flour (80 % 'optimal')",
+          "sources": [56, 57, 59],
+          "note": "Confraternita allows 75-100 with 80 optimal; Pizza Italiana Academy 80-90; one shop 85"
+        },
+        {
+          "key": "flour_w",
+          "low": 300,
+          "high": 380,
+          "unit": "W",
+          "sources": [57, 58]
+        },
+        {
+          "key": "salt_pct",
+          "low": 2.5,
+          "high": 2.5,
+          "unit": "% flour",
+          "sources": [58],
+          "note": "single source (APITER)"
+        },
+        {
+          "key": "fat_pct",
+          "low": 3.2,
+          "high": 3.2,
+          "unit": "% flour, olive oil",
+          "sources": [58],
+          "note": "single source, computed from 9 g per 280 g flour"
+        },
+        {
+          "key": "cold_retard_h",
+          "low": 18,
+          "high": 72,
+          "unit": "h at controlled or fridge temperature",
+          "sources": [57, 58, 59]
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 80,
+        "salt_pct": 2.5,
+        "fat_pct": 3,
+        "yeast_instant_pct": 0.3,
+        "cold_retard_h": 48
+      },
+      "starting_point_why": "80 % is the value the Confraternita disciplinare calls optimal; 48 h sits in the middle of 18-72 h.",
+      "template_deviations": [
+        {
+          "key": "cold_retard_h",
+          "template": 24,
+          "recommended": 48,
+          "note": "24 h is inside 18-72 h; 48 h is the more cited value. Optional."
+        }
+      ],
+      "template_note": "Template water, salt and oil match the sources. Bake temperature and time could not be tied to a source.",
+      "sources": [56, 57, 58, 59]
+    },
+    {
+      "style": "pizza-new-york",
+      "traits_en": "Large, thin, foldable round pizza from high-gluten flour with a little oil and often sugar, cold-fermented for one to three days and baked in a deck oven (at home: steel or stone at maximum heat).",
+      "consensus": "strong on hydration and fermentation; salt figure not tied to a specific page",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 59,
+          "high": 65,
+          "unit": "% flour",
+          "sources": [60, 61, 62]
+        },
+        {
+          "key": "fat_pct",
+          "low": 2,
+          "high": 3,
+          "unit": "% flour, oil",
+          "sources": [61]
+        },
+        {
+          "key": "sugar_pct",
+          "low": 1,
+          "high": 2,
+          "unit": "% flour, optional",
+          "sources": [61]
+        },
+        {
+          "key": "yeast_instant_pct",
+          "low": 0.25,
+          "high": 0.4,
+          "unit": "% flour for 24-48 h cold",
+          "sources": [61]
+        },
+        {
+          "key": "cold_retard_h",
+          "low": 24,
+          "high": 72,
+          "unit": "h",
+          "sources": [60, 61, 62]
+        },
+        {
+          "key": "ball_g",
+          "low": 280,
+          "high": 400,
+          "unit": "g (280-300 for 12-14 in; 345-400 for 15-16 in)",
+          "sources": [60, 61]
+        },
+        {
+          "key": "bake_c",
+          "low": 260,
+          "high": 260,
+          "unit": "deg C (500 F) on a preheated steel",
+          "sources": [62],
+          "note": "single source"
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 63,
+        "salt_pct": 2.0,
+        "fat_pct": 2,
+        "sugar_pct": 1.5,
+        "yeast_instant_pct": 0.3,
+        "cold_retard_h": 48,
+        "proof_h": 2,
+        "ball_g": 280
+      },
+      "starting_point_why": "Middle of the ranges; 48 h is the cold time one source calls the sweet spot.",
+      "template_deviations": [],
+      "template_note": "All template values lie inside the ranges (62 % water, 2 % oil, 1.5 % sugar, 2 % salt, 0.4 % yeast with 24 h cold, 280 g balls for 12-14 in pizzas). Salt about 2 % is common but could not be tied to a page.",
+      "sources": [60, 61, 62]
+    },
+    {
+      "style": "pizza-sicilian",
+      "traits_en": "Thick, airy rectangular pan pizza (New York 'Sicilian' or slab) baked in a well-oiled sheet pan so the base fries crisp; the Palermo sfincione is a related soft, oily, semolina-flour style.",
+      "consensus": "moderate: hydration spread 64-83 %, centred near 73 %; salt agrees; oil and yeast from one source",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 64,
+          "high": 83,
+          "unit": "% flour",
+          "sources": [63, 64, 65, 66],
+          "note": "King Arthur 73.5, Hammy's 73, Sip and Feast 64, Wordloaf 83"
+        },
+        {
+          "key": "salt_pct",
+          "low": 2.0,
+          "high": 2.0,
+          "unit": "% flour",
+          "sources": [64, 65]
+        },
+        {
+          "key": "fat_pct",
+          "low": 3,
+          "high": 3,
+          "unit": "% flour olive oil in the dough, plus about 30 g in the pan",
+          "sources": [64],
+          "note": "single source"
+        },
+        {
+          "key": "yeast_instant_pct",
+          "low": 0.33,
+          "high": 0.33,
+          "unit": "% flour with 12-48 h cold",
+          "sources": [64],
+          "note": "single source"
+        },
+        {
+          "key": "dough_g_half_sheet",
+          "low": 1070,
+          "high": 1200,
+          "unit": "g per 13 x 18 in pan",
+          "sources": [64, 66]
+        },
+        {
+          "key": "bake_c",
+          "low": 245,
+          "high": 260,
+          "unit": "deg C (475-500 F)",
+          "sources": [64, 66]
+        },
+        {
+          "key": "bake_min",
+          "low": 13,
+          "high": 24,
+          "unit": "min",
+          "sources": [64, 66]
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 72,
+        "salt_pct": 2.0,
+        "fat_pct": 3,
+        "sugar_pct": 0,
+        "yeast_instant_pct": 0.5,
+        "bulk_h": 2,
+        "proof_h": 1.5,
+        "dough_g": 1070,
+        "bake_c": 250,
+        "bake_min": 20
+      },
+      "starting_point_why": "Two independent formulas agree at 73 %; 0.5 % yeast suits the template's same-day schedule (the 0.33 % source ferments cold 12-48 h).",
+      "template_deviations": [
+        {
+          "key": "fat_pct",
+          "template": 4,
+          "recommended": 3,
+          "note": "Above the single sourced 3 %."
+        },
+        {
+          "key": "salt_pct",
+          "template": 2.2,
+          "recommended": 2.0,
+          "note": "Minor."
+        }
+      ],
+      "sources": [63, 64, 65, 66]
+    },
+    {
+      "style": "pizza-chicago",
+      "traits_en": "Chicago deep dish: a low-hydration, fat-rich crust (corn oil, butter, sometimes cornmeal or semolina) pressed up the sides of a deep round pan, filled with cheese then sauce, baked fairly long at moderate heat.",
+      "consensus": "moderate: hydration 45-52 % and high fat agree; fat type, cornmeal or semolina and salt vary by imitator; bake time from one source",
+      "ranges": [
+        {
+          "key": "hydration_pct",
+          "low": 45,
+          "high": 52,
+          "unit": "% flour",
+          "sources": [67, 68, 69, 70],
+          "note": "King Arthur about 49 (computed), Real Deep Dish 50, Ryan's 52, Big Green Egg forum 45"
+        },
+        {
+          "key": "fat_pct",
+          "low": 10,
+          "high": 23,
+          "unit": "% flour, oil and/or butter",
+          "sources": [67, 68, 69, 70]
+        },
+        {
+          "key": "cornmeal_or_semolina_pct",
+          "low": 7,
+          "high": 25,
+          "unit": "% of flour (cornmeal about 7 in King Arthur; semolina 15-25 in clone recipes)",
+          "sources": [67, 68, 69, 73]
+        },
+        {
+          "key": "yeast_active_dry_pct",
+          "low": 0.5,
+          "high": 0.75,
+          "unit": "% flour",
+          "sources": [69, 70]
+        },
+        {
+          "key": "salt_pct",
+          "low": 1,
+          "high": 1,
+          "unit": "% flour",
+          "sources": [69],
+          "note": "single source"
+        },
+        {
+          "key": "bake_c",
+          "low": 218,
+          "high": 218,
+          "unit": "deg C (425 F)",
+          "sources": [67, 71]
+        },
+        {
+          "key": "bake_min",
+          "low": 25,
+          "high": 28,
+          "unit": "min, 9-inch pan",
+          "sources": [72],
+          "note": "single source"
+        }
+      ],
+      "starting_point": {
+        "hydration_pct": 50,
+        "fat_pct": 18,
+        "cornmeal_pct": 7,
+        "salt_pct": 1.5,
+        "yeast_instant_pct": 0.5,
+        "bake_c": 218,
+        "bake_min": 30
+      },
+      "starting_point_why": "Real Deep Dish's 50 % water and a fat level in the middle of the clones; a 12-inch pan needs a little more time than the 9-inch source.",
+      "template_deviations": [
+        {
+          "key": "hydration_pct",
+          "template": 52,
+          "recommended": 50,
+          "note": "52 is the top of the range and its author later advised about 5 points less."
+        },
+        {
+          "key": "bake_min",
+          "template": 35,
+          "recommended": 30,
+          "note": "Single source bakes 25-28 min in a 9-inch pan; the template's 12-inch pan justifies a few more minutes."
+        }
+      ],
+      "template_note": "Fat 18 % (10 butter + 8 oil) and 10 % cornmeal are inside the spreads.",
+      "sources": [67, 68, 69, 70, 71, 72, 73]
+    }
+  ],
+  "sources": [
+    {
+      "id": 1,
+      "title": "AVPN International Regulations (Disciplinare), 2024 edition, English",
+      "site": "pizzanapoletana.org",
+      "url": "https://www.pizzanapoletana.org/public/pdf/Disciplinare-2024-ENG.pdf",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 2,
+      "title": "AVPN Disciplinare internazionale, 2024 edition, Italian",
+      "site": "pizzanapoletana.org",
+      "url": "https://www.pizzanapoletana.org/public/pdf/Disciplinare-2024-ITA.pdf",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 3,
+      "title": "AVPN International Regulation, 2022 edition, English",
+      "site": "pizzanapoletana.org",
+      "url": "https://www.pizzanapoletana.org/public/pdf/Disciplinare_AVPN_2022_en.pdf",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 4,
+      "title": "AVPN International Regulations (web page)",
+      "site": "pizzanapoletana.org",
+      "url": "https://www.pizzanapoletana.org/en/ricetta_pizza_napoletana",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 5,
+      "title": "Puntata, staglio e appretto: tutto sull'impasto",
+      "site": "Sfida Pizza",
+      "url": "https://sfidapizza.it/puntata-staglio-appretto/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 6,
+      "title": "Neapolitan Pizza Dough for Your Home Oven (Forget the 900F Rule)",
+      "site": "Baking Steel",
+      "url": "https://bakingsteel.com/blogs/recipes/neapolitan-pizza-dough-for-your-home-oven-forget-the-900-f-rule",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 7,
+      "title": "Pizza Making Forum post on hydration vs bake temperature (msg 775892)",
+      "site": "pizzamaking.com",
+      "url": "https://www.pizzamaking.com/forum/index.php?msg=775892",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 8,
+      "title": "Neapolitan Pizza Dough Recipe: AVPN Guide for Home",
+      "site": "Fond",
+      "url": "https://fond.kitchen/guides/pizza-dough/neapolitan-pizza-dough/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 9,
+      "title": "Poolish Baguettes (Hamelman formula)",
+      "site": "The Fresh Loaf",
+      "url": "https://www.thefreshloaf.com/handbook/poolish-baguettes",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 10,
+      "title": "Jeffrey Hamelman's Poolish Baguette (Adapted)",
+      "site": "Dawghouse Bakery",
+      "url": "https://dawghousebakery.com/2021/02/27/jeffrey-hamelmans-poolish-baguette-adapted/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 11,
+      "title": "Baguettes, class handout (May 2024)",
+      "site": "King Arthur Baking",
+      "url": "https://shop.kingarthurbaking.com/content/class-pdfs/Baguettes_May_2024.pdf",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 12,
+      "title": "French Bread with Poolish (professional formula)",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/pro/formulas/french-bread-with-poolish",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 13,
+      "title": "Classic Baguettes Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/classic-baguettes-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 14,
+      "title": "Baguette tradition : ce que la mention garantit vraiment (decree 93-1074)",
+      "site": "Le Pain Francais",
+      "url": "https://lepainfrancais.fr/culture-pain/baguette-de-tradition-francaise/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 15,
+      "title": "Ken Forkish, Flour Water Salt Yeast (2012), Saturday White Bread (ingredient table seen only as search excerpts; no licensed online copy opened)",
+      "site": "book",
+      "url": null,
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 16,
+      "title": "Jim Lahey's No-Knead Bread",
+      "site": "Leite's Culinaria",
+      "url": "https://leitesculinaria.com/99521/recipes-jim-laheys-no-knead-bread.html",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 17,
+      "title": "No-Knead Crusty White Bread Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/no-knead-crusty-white-bread-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 18,
+      "title": "Ciabatta (professional formula)",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/pro/formulas/ciabatta",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 19,
+      "title": "Biga",
+      "site": "BAKERpedia",
+      "url": "https://bakerpedia.com/processes/biga/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 20,
+      "title": "Ciabatta Guide: The High-Hydration Bread",
+      "site": "Jay Arr Bread",
+      "url": "https://jayarrbread.com/blog/ciabatta-guide",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 21,
+      "title": "Sourdough Bagel (New York Style)",
+      "site": "The Perfect Loaf",
+      "url": "https://www.theperfectloaf.com/sourdough-bagel/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 22,
+      "title": "Bagel Problems! (Hamelman and DiMuzio formulas discussed)",
+      "site": "The Fresh Loaf",
+      "url": "https://www.thefreshloaf.com/node/14251/bagel-problems",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 23,
+      "title": "Bagels with Pate Fermentee Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/bagels-with-pate-fermentee-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 24,
+      "title": "Sourdough Bagels Recipe",
+      "site": "Foodgeek",
+      "url": "https://foodgeek.io/en/sourdough-bagels-recipe/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 25,
+      "title": "Focaccia genovese (Annalisamamykitchen)",
+      "site": "GialloZafferano blogs",
+      "url": "https://blog.giallozafferano.it/mamykitchen/ricetta-focaccia-genovese/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 26,
+      "title": "Focaccia Genovese: croccante e saporita (Gingernigella)",
+      "site": "GialloZafferano blogs",
+      "url": "https://blog.giallozafferano.it/gingernigella/focaccia-genovese-croccante-saporita/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 27,
+      "title": "High Hydration Focaccia Recipe (80%)",
+      "site": "Baking Steel",
+      "url": "https://bakingsteel.com/blogs/recipes/crispy-focaccia-bread-recipe-baked-on-a-steel",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 28,
+      "title": "A Simple Sourdough Focaccia",
+      "site": "The Perfect Loaf",
+      "url": "https://www.theperfectloaf.com/a-simple-focaccia/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 29,
+      "title": "Big and Bubbly Focaccia Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/big-and-bubbly-focaccia-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 30,
+      "title": "Brioche (professional formula)",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/pro/formulas/brioche",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 31,
+      "title": "Brioche Guide: The Science of Rich Dough",
+      "site": "Jay Arr Bread",
+      "url": "https://jayarrbread.com/blog/brioche-guide/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 32,
+      "title": "Jeffrey Hamelman's Brioche",
+      "site": "Zeb Bakes",
+      "url": "https://zebbakes.com/2010/11/30/jeffrey-hamelmans-brioche/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 33,
+      "title": "Brioche Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/brioche-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 34,
+      "title": "Brioche",
+      "site": "RecipeTin Eats",
+      "url": "https://www.recipetineats.com/brioche/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 35,
+      "title": "Beautiful Burger Buns Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/beautiful-burger-buns-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 36,
+      "title": "Homemade Burger Buns (Super Soft)",
+      "site": "Cloudy Kitchen",
+      "url": "https://cloudykitchen.com/blog/super-soft-burger-buns/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 37,
+      "title": "Homemade Hamburger Buns",
+      "site": "Pretty. Simple. Sweet.",
+      "url": "https://prettysimplesweet.com/hamburger-buns/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 38,
+      "title": "Pain de Mie Recipe: The Perfect-Crumb Pullman Loaf",
+      "site": "Jay Arr Bread",
+      "url": "https://jayarrbread.com/blog/pain-de-mie-pullman-loaf/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 39,
+      "title": "Recipe: shokupain de mie",
+      "site": "Wordloaf (Andrew Janjigian)",
+      "url": "https://wordloaf.substack.com/p/recipe-shokupain-de-mie",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 40,
+      "title": "Sourdough Pain de Mie with up to 30% Kamut or Spelt",
+      "site": "Bread Experience",
+      "url": "https://www.breadexperience.com/sourdough-pain-de-mie-spelt-kamut/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 41,
+      "title": "Easy Pullman Sandwich Bread - Pain de Mie",
+      "site": "Veena Azmanov Kitchen",
+      "url": "https://veenaazmanov.com/pullman-sandwich-bread-pain-de-mie/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 42,
+      "title": "Pain de Mie Sandwich Bread",
+      "site": "The Perfect Loaf",
+      "url": "https://www.theperfectloaf.com/pain-de-mie/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 43,
+      "title": "Pain de Mie Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/pain-de-mie-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 44,
+      "title": "Pain de Mie with a Starter Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/pain-de-mie-with-a-starter-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 45,
+      "title": "Sourdough Shokupan (Japanese Milk Bread)",
+      "site": "The Perfect Loaf",
+      "url": "https://www.theperfectloaf.com/sourdough-shokupan-japanese-milk-bread/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 46,
+      "title": "Shokupan Recipe (Japanese Milk Bread Loaf)",
+      "site": "Chopstick Chronicles",
+      "url": "https://www.chopstickchronicles.com/shokupan-japanese-fluffy-white-bread/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 47,
+      "title": "Fluffy Japanese milk bread loaf recipe (Shokupan)",
+      "site": "The Bread She Bakes",
+      "url": "https://www.thebreadshebakes.com/2019/03/homemade-japanese-milk-bread-loaf-recipe-shokupan/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 48,
+      "title": "Shokupan (Japanese Milk Bread)",
+      "site": "Just One Cookbook",
+      "url": "https://www.justonecookbook.com/japanese-milk-bread-shokupan/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 49,
+      "title": "Japanese Milk Bread Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/japanese-milk-bread-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 50,
+      "title": "Pizza Scrocchiarella Romana",
+      "site": "Molino Vigevano",
+      "url": "https://molinovigevano.com/pizza-scrocchiarella-romana/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 51,
+      "title": "Pizza tonda 'scrocchiarella romana' nel forno di casa",
+      "site": "Food & Nature",
+      "url": "https://www.foodandnature.it/pizza-tonda-scrocchiarella-romana-nel-forno-di-casa/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 52,
+      "title": "Pizza scrocchia, la tonda romana (quotes a Confraternita della Pizza recipe; attribution of the excerpt to this page is probable, not certain)",
+      "site": "Un condominio in cucina",
+      "url": "https://uncondominioincucina.blogspot.com/2016/05/pizza-scrocchia-la-tonda-romana.html",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 53,
+      "title": "Roman Thin (Tonda Romana) Pizza Dough Recipe & Calculator",
+      "site": "Everybodypizza",
+      "url": "https://everybodypizza.com/styles/bari/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 54,
+      "title": "Tonda Romana Pizza Dough Recipe",
+      "site": "Napo",
+      "url": "https://www.napo.pizza/en/recipes/en-tonda-romana",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 55,
+      "title": "Classic Doughs - Romana Tonda",
+      "site": "Delivita",
+      "url": "https://delivita.com/blogs/recipes/classic-doughs-romana-tonda",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 56,
+      "title": "Disciplinare di produzione della Autentica Pizza in Teglia alla Romana",
+      "site": "La Confraternita della Pizza",
+      "url": "https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 57,
+      "title": "Pizza in Teglia Romana",
+      "site": "Pizza Italiana Academy",
+      "url": "https://www.pizzaitalianacademy.it/detnews.asp?idnews=90",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 58,
+      "title": "Pizza in teglia alla romana ad alta idratazione, disciplinare APITER",
+      "site": "Trattoria da Martina",
+      "url": "https://www.trattoriadamartina.com/2017/09/pizza-in-teglia-alla-romana-ad-alta-idratazione/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 59,
+      "title": "Roman Pizza, Long Attention Pan",
+      "site": "Pizza Today",
+      "url": "https://pizzatoday.com/news/roman-pizza-long-attention-pan-knead-to-know/617431/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 60,
+      "title": "Homemade Pizza Dough and New York Pizza (Cold Ferment)",
+      "site": "Sip and Feast",
+      "url": "https://www.sipandfeast.com/homemade-pizza-dough-new-york-pizza/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 61,
+      "title": "New York Pizza Dough Recipe: 48-Hour Cold Ferment",
+      "site": "Fond",
+      "url": "https://fond.kitchen/guides/pizza-dough/ny-style-pizza-dough/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 62,
+      "title": "New York Style Pizza Dough (24 Hours), Baked on Steel",
+      "site": "Baking Steel",
+      "url": "https://bakingsteel.com/blogs/recipes/new-york-style-pizza-dough-24-hours",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 63,
+      "title": "Sicilian-Style Pizza Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/sicilian-style-pizza-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 64,
+      "title": "Sheet-Pan Pizza: A Reliable Half-Sheet Recipe",
+      "site": "The Pan Has Opinions (hammyspizza.com)",
+      "url": "https://hammyspizza.com/sheet-pan-pizza/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 65,
+      "title": "New York Sicilian Pizza",
+      "site": "Sip and Feast",
+      "url": "https://www.sipandfeast.com/new-york-sicilian-pizza/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 66,
+      "title": "Recipe: Sicilian Slab Pizza",
+      "site": "Wordloaf (Andrew Janjigian)",
+      "url": "https://wordloaf.substack.com/p/recipe-sicilian-slab-pizza",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 67,
+      "title": "Chicago-Style Deep Dish Pizza Recipe",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/chicago-style-deep-dish-pizza-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 68,
+      "title": "Chicago Style Deep Dish Pizza (PDF)",
+      "site": "Real Deep Dish",
+      "url": "https://www.realdeepdish.com/RealDeepDish-201211.pdf",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 69,
+      "title": "Deep dish with semolina",
+      "site": "Ryan's Pizza Blog",
+      "url": "http://ryanspizzablog.blogspot.com/2012/10/deep-dish-with-semolina.html",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 70,
+      "title": "MUST READ for chicago style pizza (Malnati-style formula; attribution between two threads of this forum is probable, not certain)",
+      "site": "Big Green Egg forum",
+      "url": "https://eggheadforum.com/discussion/631875/must-read-for-chicago-style-pizza",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 71,
+      "title": "Chicago Deep Dish Pizza",
+      "site": "Red Star Yeast",
+      "url": "https://redstaryeast.com/recipes/chicago-deep-dish-pizza/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 72,
+      "title": "Chicago Style Deep Dish Pizza",
+      "site": "The Fresh Cooky",
+      "url": "https://www.thefreshcooky.com/chicago-style-deep-dish-pizza-recipe/",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 73,
+      "title": "Malnati Deep Dish with Semolina",
+      "site": "pizzamaking.com",
+      "url": "https://www.pizzamaking.com/forum/index.php?topic=6480.0",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 74,
+      "title": "Brioche French Toast Recipe (cold brioche pan proof)",
+      "site": "King Arthur Baking",
+      "url": "https://www.kingarthurbaking.com/recipes/brioche-french-toast-recipe",
+      "accessed": "2026-10-10"
+    },
+    {
+      "id": 75,
+      "title": "Pizza Making Forum: AVPN discussion (one of several forum messages returned; which message carries the 2019 flour-type remark is uncertain)",
+      "site": "pizzamaking.com",
+      "url": "https://www.pizzamaking.com/forum/index.php?msg=580345",
+      "accessed": "2026-10-10"
+    }
+  ]
+}
