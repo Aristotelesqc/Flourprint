@@ -12,6 +12,8 @@ import {
 
 /** docs/contracts/drafts.md: checks, draft edits, the blank recipe and the templates. */
 const blank = blankRecipe();
+const [water, salt] = blank.formula.ingredients;
+if (!water || !salt) throw new Error('blank recipe changed');
 
 describe('checkRecipe', () => {
   it('finds nothing to say about the blank recipe', () => {
@@ -33,8 +35,8 @@ describe('checkRecipe', () => {
     const formula: Formula = {
       ...blank.formula,
       ingredients: [
-        { ...blank.formula.ingredients[0]!, bakerPct: 30 },
-        { ...blank.formula.ingredients[1]!, bakerPct: 5 },
+        { ...water, bakerPct: 30 },
+        { ...salt, bakerPct: 5 },
       ],
     };
     const process = {
@@ -52,7 +54,7 @@ describe('checkRecipe', () => {
         'water_outside_45_to_90',
       ].sort(),
     );
-    const noSalt = { ...blank.formula, ingredients: [blank.formula.ingredients[0]!] };
+    const noSalt = { ...blank.formula, ingredients: [water] };
     expect(checkRecipe(noSalt, blank.process).map((i) => i.code)).toContain('salt_missing');
   });
 });
