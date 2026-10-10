@@ -10,6 +10,10 @@ android {
         // CI passes the build number so each APK installs over the previous one (#12, #24).
         versionCode Integer.parseInt(System.getenv("FLOURPRINT_VERSION_CODE") ?: "1")
         versionName System.getenv("FLOURPRINT_BUILD") ?: "dev"
+        // Dev channel (ADR 0013): a second app that loads the web preview, beside the normal one.
+        def dev = project.findProperty("flourprintChannel") == "dev"
+        if (dev) applicationIdSuffix ".dev"
+        manifestPlaceholders = [appLabel: dev ? "Flourprint Dev" : "Flourprint"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

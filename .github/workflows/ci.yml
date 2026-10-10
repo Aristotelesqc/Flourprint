@@ -92,8 +92,57 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: flourprint-debug-apk
-          path: flourprint-*.apk
+          path: flourprint-${{ env.FLOURPRINT_BUILD }}.apk
           retention-days: 30
+      - name: Dev channel APK (ADR 0013)
+        # Same shell, but the web view loads the web preview: install once, restart to update.
+        env:
+          FLOURPRINT_DEV_URL: ${{ vars.FLOURPRINT_WEB_URL || 'https://flourprint-aristotelesqc.pages.dev' }}
+        run: |
+          pnpm --filter @flourprint/mobile exec cap sync android
+          (cd apps/mobile/android && ./gradlew assembleDebug --no-daemon -PflourprintChannel=dev)
+          mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk "flourprint-dev-${FLOURPRINT_BUILD}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flourprint-dev-apk
+          path: flourprint-dev-${{ env.FLOURPRINT_BUILD }}.apk
+          retention-days: 30
+
+  web:
+    # Web preview (ADR 0013), deployed to Cloudflare Pages when its secrets are set.
+    needs: check
+    runs-on: ubuntu-latest
+    concurrency: web-preview
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PAGES_PROJECT: flourprint-aristotelesqc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build identifiers
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - run: pnpm build
+      - run: pnpm build:mobile
+      - name: Deploy to Cloudflare Pages
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          # Creates the project on the first run; later runs find it already there.
+          npx --yes wrangler@4 pages project create "$PAGES_PROJECT" --production-branch main || true
+          npx --yes wrangler@4 pages deploy apps/mobile/dist --project-name "$PAGES_PROJECT" \
+            --branch main --commit-hash "${FLOURPRINT_BUILD#*-}" --commit-dirty=true
+          echo "Web preview ${FLOURPRINT_BUILD}: https://${PAGES_PROJECT}.pages.dev" >> "$GITHUB_STEP_SUMMARY"
+      - name: Preview not deployed
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: |
+          echo "No Cloudflare secrets: the web preview was not deployed (ADR 0013)." >> "$GITHUB_STEP_SUMMARY"
 
   desktop:
     # Desktop shell for Windows (ADR 0011): smoke test, then the folder to unzip and run.
