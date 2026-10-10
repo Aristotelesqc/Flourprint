@@ -109,6 +109,10 @@ test('the Android back button returns to the recipe list', async () => {
   const page = await open();
   await page.getByText('Poolish + tangzhong').first().click();
   await expect(page).toHaveURL(/\/recipes\/.+/);
+  // The URL changes when the page transition starts; a back press during it is dropped by Ionic.
+  // The earlier test saved a second version: any version number will do.
+  await expect(page.getByText(/^Version \d+$/).first()).toBeVisible();
+  await page.waitForTimeout(600);
   await device.shell('input keyevent KEYCODE_BACK');
   await expect(page).toHaveURL(/\/recipes$/);
   await forceStop();
