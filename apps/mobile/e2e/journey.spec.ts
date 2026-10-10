@@ -424,7 +424,7 @@ test('a proof running beside the preheat still takes its ready-to-bake mark', as
 
 test('a template starts a named draft that becomes a recipe once saved', async ({ page }) => {
   await page.goto('/recipes');
-  await page.getByRole('button', { name: '+ Nouvelle recette' }).click();
+  await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Pizza néo-napolitaine', { exact: true }).click();
   await expect(page).toHaveURL(/\/drafts\//);
   await expect(page.getByText('Pizza néo-napolitaine 1', { exact: true })).toBeVisible();
@@ -440,7 +440,7 @@ test('a template starts a named draft that becomes a recipe once saved', async (
 
 test('a blank recipe takes any edit; the check blocks the save and says why', async ({ page }) => {
   await page.goto('/recipes');
-  await page.getByRole('button', { name: '+ Nouvelle recette' }).click();
+  await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Recette vierge').first().click();
   await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
   // Flours that do not add up to 100 %: accepted in a draft, quantities shown as unknown.

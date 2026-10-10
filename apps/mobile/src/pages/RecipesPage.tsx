@@ -20,6 +20,7 @@ import {
   type Revision,
 } from '@flourprint/core/domain';
 import { NewRecipe, useTemplateName } from '../blocks/NewRecipe';
+import { AppBar, AppBarButton, MoreIcon, PlusIcon, TimerIcon } from '../ui/AppBar';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatRelative } from '../i18n/time';
 import { bakeView } from '../services/bake-view';
@@ -144,32 +145,20 @@ export const RecipesPage = () => {
 
   return (
     <IonPage>
+      <AppBar>
+        <AppBarButton label={t('bakes.title')} routerLink="/bakes" count={running.length}>
+          <TimerIcon />
+        </AppBarButton>
+        <AppBarButton label={t('new.title')} onClick={() => setChoosing(true)}>
+          <PlusIcon />
+        </AppBarButton>
+        <AppBarButton label={t('advanced.title')} routerLink="/advanced">
+          <MoreIcon />
+        </AppBarButton>
+      </AppBar>
       <IonContent>
-        <div className="flex flex-col gap-3 px-4 pt-[calc(var(--ion-safe-area-top,0px)+20px)] pb-8">
-          <div className="flex items-center justify-between">
-            <h1 className="m-0 px-1 pb-1 text-[32px] font-bold">{t('recipes.title')}</h1>
-            <IonButton
-              fill="clear"
-              color="medium"
-              routerLink="/advanced"
-              aria-label={t('advanced.title')}
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <circle cx="5" cy="12" r="1" />
-                <circle cx="12" cy="12" r="1" />
-                <circle cx="19" cy="12" r="1" />
-              </svg>
-            </IonButton>
-          </div>
+        <div className="flex flex-col gap-3 px-4 pt-2 pb-8">
+          <h1 className="m-0 px-1 text-[26px] font-bold">{t('recipes.title')}</h1>
           <SessionOnlyNotice />
           {readFailed && <p role="alert">{t('state.storageRead')}</p>}
           {unreadable > 0 && (
@@ -185,9 +174,6 @@ export const RecipesPage = () => {
           {running.map((bake) => (
             <RunningBake key={bake.bakeId} bake={bake} now={now} recipes={allRecipes} />
           ))}
-          <IonButton expand="block" fill="outline" onClick={() => setChoosing(true)}>
-            {t('recipes.new')}
-          </IonButton>
           {drafts.length > 0 && (
             <section className="flex flex-col gap-2">
               <h2 className="m-0 px-1 text-sm font-bold tracking-wider text-muted uppercase">
