@@ -82,6 +82,11 @@ interface RecipeTemplate {
   formula: Formula;
   process: Process;
   basis: string; // where the proportions come from (English)
+  guide?: {
+    ranges: { key: string; low: number; high: number }[]; // typical ranges of the style
+    reference: string; // the document the ranges come from
+    verified: boolean; // false until the sources were read in full
+  };
 }
 ```
 
@@ -92,5 +97,10 @@ interface RecipeTemplate {
   when they describe the style (for example `water_outside_45_to_90` never applies to a template).
 - Proportions are typical values of the style from general baking references, stated in `basis`;
   they are starting points, not tested recipes. They never come from the owner's dogfood recipes.
+- A template may carry a **style guide**: the style's typical ranges (as data, keyed by stable
+  codes such as `hydration_pct`, `salt_pct`, `bulk_h`, `bake_c`; the unit follows the suffix) and
+  the document they come from. The interface shows it with the style's traits (localized text)
+  and says when the ranges are not verified. A guide describes the style; it never changes a
+  recipe or a check.
 - The blank recipe is not a template: flour 100 %, water 65 %, salt 2 %, instant yeast 0.5 %, and
   the steps mix, bulk, shape, proof, bake, with durations.
