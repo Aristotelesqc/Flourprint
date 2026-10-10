@@ -49,7 +49,7 @@ interface BakeEvent<P> {
 | `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                    |
 | `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                          |
 | `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                         |
-| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below)                                                                                      |
+| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                  |
 | `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start     |
 | `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                        |
 | `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept                                                                                                                                  |
@@ -67,7 +67,9 @@ dependency has ended. Commands that would record or correct a contradicting time
 adjusted. `AdjustFormula` and `InsertStepAfter` keep the formula and the process consistent,
 incorporations included (`process.md`).
 
-Every command except `StartBake` requires an active bake. Business errors are typed codes
+Every command except `StartBake` and `AddObservation` requires an active bake. `AddObservation`
+also applies to a finished or abandoned bake (the review after the bake: crumb, flavor, what went
+wrong); `kind: 'doughReady'` still needs an active bake. It never reopens the bake. Business errors are typed codes
 (`StepAlreadyCompleted`, `DependenciesNotCompleted`, `BakeNotActive`, …).
 
 ## Repository (SQLite adapter)

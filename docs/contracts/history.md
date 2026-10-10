@@ -63,3 +63,75 @@ Accepted suggestions (`fermentation.md`):
 - Full backup: recipes, revisions, bakes, events and every registry, profile and model-parameter
   version they reference.
 - Recipe export: the revisions and the versions they depend on.
+
+## Feedback export
+
+A **feedback export** gathers everything the app recorded, so the owner can hand it to a person
+or an agent to check the model and the app against what happened. It is one JSON document:
+
+```ts
+interface FeedbackExport {
+  kind: 'flourprint-feedback';
+  schemaVersion: number;
+  exportedAt: Instant;
+  about: string; // a short English description of the structure, for the reader
+  device: {
+    platform: 'android' | 'desktop' | 'web'; // desktop: the PC shell (ADR 0011)
+    storage: 'sqlite' | 'memory';
+    build: string;
+    locale: string;
+    timeZone: string; // IANA zone of the device at export time
+    utcOffsetMinutes: number; // at export time
+  };
+  backup: Backup; // the full backup, unchanged: restorable as is
+  bakes: BakeDigest[]; // one per bake, read from its events
+}
+
+interface BakeDigest {
+  bakeId: string;
+  status: 'active' | 'finished' | 'abandoned';
+  recipe: { id: string; name?: string; version: number };
+  startedAt?: Instant;
+  endedAt?: Instant;
+  manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
+  steps: Array<{
+    id: StepId;
+    operation: string;
+    label?: string;
+    plannedStartAt?: Instant; // initial projection at start
+    plannedEndAt?: Instant;
+    plannedDurationS?: number; // effective plan (after adjustments)
+    baselineDurationS?: number; // plan at start
+    estimate?: Estimate; // accepted suggestion at start, when the step had one
+    startedAt?: Instant;
+    endedAt?: Instant;
+    actualDurationS?: number; // endedAt − startedAt
+  }>;
+  observations: Array<{
+    at: Instant;
+    recordedAt: Instant;
+    stepId?: StepId;
+    elapsedInStepS?: number; // at − step start, when the step had started
+    category: ObservationCategory;
+    kind?: ObservationKind;
+    criterion?: string;
+    text?: string;
+    rating?: number;
+    measurement?: Observation;
+  }>;
+  adjustments: Array<{
+    at: Instant;
+    stepId?: StepId;
+    field: string;
+    value: unknown;
+    reason?: string;
+  }>;
+}
+```
+
+- The digest is derived from the events by the application, never by the current engine, and is
+  never read back: the `backup` part is the record. Durations are differences of recorded instants.
+- Simulated and real bakes are told apart by `device.platform` of the export they come from
+  (the PC shell and the phone keep separate databases).
+- The export is offered as one action that copies the document and, where the platform can,
+  saves it as a file. Nothing is sent anywhere by the app.
