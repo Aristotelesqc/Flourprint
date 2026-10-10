@@ -178,6 +178,14 @@ The engine names a component from its liquid ratio
 - The thresholds are naming conventions, not physics. Sourdough cultures are not modelled yet
   (#9); until they are, every preferment is named by its ratio.
 
+## Accepted suggestions
+
+An ingredient and a component allocation may carry `accepted?: AcceptedSuggestion`
+(`fermentation.md`) when their `bakerPct` was taken from a model suggestion ("use this dose");
+`appliedValue` is that percentage in points. It is optional, and every other edit of that
+`bakerPct` (`SetBakerPct` without it, `SetIngredientGrams`, a replaced allocation) removes it.
+`SetBakerPct` and `UpdateComponent` accept it together with the value they write.
+
 ## Formula / Process boundary
 
 The formula knows nothing about steps. Per-step incorporations in the Process (autolyse,

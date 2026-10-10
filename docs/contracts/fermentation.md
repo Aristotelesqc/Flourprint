@@ -10,16 +10,16 @@ primary data is read (#33) or the owner's recorded bakes calibrate them (#14).
 The time a dough or a commercial-yeast preferment takes to reach its end point, and the yeast
 needed for a given schedule. One forward `simulate()` serves both directions (#29).
 
-- **Dough end point**: from the end of the mix to the start of the bake, the dough is "about
-  doubled and ready". Bulk, cold retard, shaping and proof are counted together: the state is
-  never reset between steps (#9).
+- **Dough end point**: from the end of the mix to the start of the bake, the dough is "ready to
+  bake" (the owner's readiness decision, see Personal calibration below). Bulk, cold retard,
+  shaping and proof are counted together: the state is never reset between steps (#9).
 - **Dough steps**: the `asap` steps that come after the `mix` step and before the `bake` step
   in the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
   one sequence, each after the previous one; dough steps in parallel (two rests side by side)
   are `insufficient_data` (`non_linear_dough_path`) until split masses are modelled. Without a
   `mix` step, the estimate is `insufficient_data`; without a `bake` step, every `asap` step after
   the mix counts.
-- **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5).
+- **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5), at progress 1.
 - A preferment is a `preferment`-kind component; its step is the step with the component's id.
   Its yeast is its allocations of yeast-marked ingredients; with none, its estimate is
   `insufficient_data`.
@@ -28,7 +28,10 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
 
 ## State and equations
 
-One state per fermenting mass, its progress `F` (0 at the start, 1 at the end point):
+One state per fermenting mass, its progress `F` (0 at the start). The unit of `F` is Craig's:
+`F = 1` is "about doubled once" in his table. It is internal to the model. With stretch-and-folds,
+degassing and shaping the volume of a dough is not observable, so no interface presents a volume
+or a "doubled" target. Each mass has an end-point target `F*` (below):
 
 ```text
 dF/dt = (d / 1 %)^k / A × r(T(t))           [per hour]
@@ -37,8 +40,8 @@ r(T)  = exp( (Ea / R) × (1 / 294.25 K − 1 / T) )      (r = 1 at 21.1 °C)
 
 - `d`: fresh-yeast-equivalent dose in percent of the flour of that mass. Dry yeast converts by
   mass: fresh = instant / 0.33, fresh = active dry / 0.40.
-- At constant temperature, `t = A × d^−k / r(T)`. Inverse: the dose that gives `F = 1` at the end of
-  a schedule is found by bisection on `simulate()`, never by a separate formula.
+- At constant temperature, `t = F* × A × d^−k / r(T)`. Inverse: the dose that gives `F = F*` at the
+  end of a schedule is found by bisection on `simulate()`, never by a separate formula.
 - A preferment uses the same law with the yeast and flour allocated to it. The final dough's
   dose counts all the yeast of the dough (preferment and final mix) over all its flour; the
   preferment's yeast growth before the mix is not modelled (an extrapolation, below).
@@ -63,6 +66,37 @@ r(T)  = exp( (Ea / R) × (1 / 294.25 K − 1 / T) )      (r = 1 at 21.1 °C)
   re-decided on primary dough data (#33 objection 1).
 - The **band** is the minimum and maximum over every combination of the parameter ranges; the
   value uses the central parameters. The band is not a confidence interval.
+
+## Personal calibration: "ready to bake"
+
+The kinetic law and its constants (`A`, `k`, `Ea`, conversions, `τ`) say how fast `F` grows. They
+do not say when a dough is ready. That is a decision of the baker, separate from the kinetic
+parameters, kept in its own object and passed to the dough estimate:
+
+```ts
+interface PersonalCalibration {
+  readyProgress: number; // F* of the dough
+  band: [number, number]; // low and high F* used for the band
+}
+```
+
+| Item                       | Value (provisional) | Band      | Basis                                                                                                                                                                                                |
+| -------------------------- | ------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `readyProgress` of a dough | 2.0                 | 1.5 – 2.5 | the owner's TOST schedules, used as examples (not as calibration data): they imply about twice Craig's time to "doubled once" for "ready to bake" after degassing, shaping and proof (review on #33) |
+| preferment end point       | 1                   | 1 – 1     | "ripe" (above), unchanged                                                                                                                                                                            |
+
+- "Ready to bake" is an observable decision of the baker. It is distinct from gas produced, from
+  volume and from height. It is not a universal constant of the model.
+- The value is **provisional**. It is to be recalibrated from the bake journal's "dough ready"
+  observations (bake-session.md) and then kept as a versioned personal profile, not as a change of
+  the kinetic constants.
+- The dough's duration estimate and its inverse yeast dose target `F* = readyProgress` (the
+  reference case at 1 % fresh yeast and 21.1 °C therefore takes `2 × A` hours). The preferment's
+  target stays 1.
+- The band of a dough estimate is the minimum and maximum over every combination of the parameter
+  ranges **and** of the two ends of `band`. The dough's estimate lists the target it used as the
+  assumption code `ready_target_progress:<value>`.
+- The Izzreen M5 fit is research only: it is not adopted and changes none of this.
 
 ## Dough temperature
 
@@ -122,15 +156,42 @@ objection 2).
 - Per fermenting mass: the estimated duration of its last fermentation step (the proof for the
   dough, the preferment step for a preferment) given the planned durations of the others, as an
   `Estimate` in seconds with its band.
-- The progress reached at the end of the planned schedule, when every duration is planned.
+- The progress reached at the end of the planned schedule, when every duration is planned, as
+  `progressPct = 100 × F / F*`: a percentage of the planned fermentation (of the end point of that
+  mass). The interface shows it as such, labels the target "provisional" and never as a volume.
 - The yeast for the planned schedule (inverse), in the yeast ingredient's own form, as a baker's
   percentage with its band.
 - Estimates never end a step and never change the recipe by themselves: applying a suggested
   duration or dose is an explicit edit.
 - Steps without a duration other than the estimated one count as 0 and are listed in the
   assumptions.
+- A `range` bound is `{ kind: 'finite', value }` or, when a corner of the band never reaches the
+  end point within the search horizon (21 days), `{ kind: 'beyondHorizon', horizonS }`: a bound is
+  never a raw `Infinity`, which JSON cannot carry. A dose band with an unbounded corner has no
+  `range` and the assumption `band_unbounded`.
 - Results are `Estimate`s (values-and-units.md) carrying `ModelRef { id:
 'flourprint.commercial-yeast', version: '0.1.0' }`, assumption codes and extrapolation codes.
+
+## Accepted suggestions (provenance)
+
+Applying a suggestion ("use this time", "use this dose") is an explicit edit. It also records
+where the value came from, on the edited item itself:
+
+```ts
+interface AcceptedSuggestion {
+  estimate: Estimate & { status: 'ok' }; // the estimate shown, as it was
+  appliedValue: number; // the value actually written, after rounding
+  model: ModelRef;
+}
+```
+
+- `accepted` is optional on a process step (`plannedDurationS`, seconds), on a dough ingredient
+  (`bakerPct`, points) and on a component allocation (`bakerPct`, points of total flour).
+- Any other edit of that value (a typed duration or percentage, a grams edit) removes `accepted`.
+  A consumer also ignores an `accepted` whose `appliedValue` differs from the current value.
+- `StartBake` copies the accepted decisions of the started revision into the snapshot
+  (history.md). Replay never recomputes them.
+- Out of scope: staleness digests and exported parameter files.
 
 ## Validation data (independent of the fit)
 
@@ -144,6 +205,11 @@ Reference cases for tests are computed outside the engine from the equations abo
 
 ## Versions
 
-This contract adds `yeast` on ingredients (formula.md), `doughTemperatureC` and `frictionC` on
-step conditions (process.md) and `extrapolations` on estimates (values-and-units.md), all
-optional: `CONTRACT_VERSION` becomes `0.3.0` and documents of `0.2.0` stay readable unchanged.
+Version `0.3.0` of this contract added `yeast` on ingredients (formula.md), `doughTemperatureC` and
+`frictionC` on step conditions (process.md) and `extrapolations` on estimates (values-and-units.md).
+
+Version `0.4.0` adds the personal calibration of the dough end point (`readyProgress` 2.0), the
+percentage of the planned fermentation, portable `range` bounds (values-and-units.md), the
+optional `accepted` provenance (formula.md, process.md, history.md) and the `doughReady`
+observation kind (bake-session.md). Documents of `0.3.0` stay readable unchanged: all additions
+are optional. The kinetic model keeps its version `0.1.0`; its parameters did not change.

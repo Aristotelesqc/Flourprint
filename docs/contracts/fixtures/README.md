@@ -78,3 +78,6 @@ estimated at 87.5 % [86; 89] → 262.5 g [258; 267]. Butter and yeast unknown �
 forms at constant temperature, an independent fine integration of the analytic dough temperature
 for the thermal lag. Keys of `expected` are paths in the engine's result; `tolerance` is
 absolute, in the unit of the value (seconds, percent, °C).
+A `range` expected value lists the two finite bounds (seconds). The dough cases use the provisional
+personal calibration `readyProgress` 2.0, band 1.5–2.5 (fermentation.md, recorded in the file's
+`calibration` field); the preferment case keeps its end point at 1.

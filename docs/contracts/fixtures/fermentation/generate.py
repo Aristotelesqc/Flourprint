@@ -1,5 +1,8 @@
 """Reference cases for docs/contracts/fermentation.md, computed outside the engine.
 
+The dough's end point is the personal calibration of fermentation.md (READY, band READY_BAND);
+the preferment's end point is 1.
+
 Run: python3 -I generate.py > cases.json (in this directory)
 Closed forms where the temperature is constant; otherwise a fine trapezoid on the analytic dough
 temperature (first-order lag), independent of the engine's integrator.
@@ -10,6 +13,7 @@ import math
 R = 8.314462618
 TREF = 294.25
 A, K, EA, TAU = 3.43, 0.729, 98300.0, 1.5
+READY, READY_BAND = 2.0, (1.5, 2.5)  # dough end point F*, provisional (fermentation.md)
 FRESH = {"fresh": 1.0, "active-dry": 1 / 0.40, "instant": 1 / 0.33}
 H = 3600
 
@@ -61,13 +65,16 @@ def lagged_gain(d, t0, ta, hours, n=200000):
 
 cases = []
 
-# 1. 1 % fresh at 21.1 °C: the end point takes A hours; the band is A × [0.75, 1.25] since
-#    d^−k = 1 and r = 1 for every corner.
+# 1. 1 % fresh at 21.1 °C: the dough takes READY × A hours; every other corner factor is 1
+#    (d^−k = 1, r = 1), so the band is A × [0.75, 1.25] × READY_BAND.
 cases.append({
     "name": "reference point: 1 % fresh yeast at 21.1 °C",
     "formula": flour([salt(), yeast("fresh", 1)]),
     "process": steps({"temperatureC": 21.1}, [{"id": "proof", "operation": "proof"}]),
-    "expected": {"dough.duration.value": A * H, "dough.duration.range": [0.75 * A * H, 1.25 * A * H]},
+    "expected": {
+        "dough.duration.value": READY * A * H,
+        "dough.duration.range": [0.75 * READY_BAND[0] * A * H, 1.25 * READY_BAND[1] * A * H],
+    },
 })
 
 # 2. 0.5 % instant in a fridge at 4 °C from the start: constant temperature, t = A d^−k / r(4).
@@ -76,11 +83,11 @@ cases.append({
     "name": "constant 4 °C, 0.5 % instant",
     "formula": flour([salt(), yeast("instant", 0.5)]),
     "process": steps({"temperatureC": 4}, [{"id": "retard", "operation": "bulk"}]),
-    "expected": {"dough.duration.value": A * d ** -K / r(4) * H},
+    "expected": {"dough.duration.value": READY * A * d ** -K / r(4) * H},
 })
 
-# 3. Inverse: 2 h + 1 h at 25 °C, active dry. d^k / A × r(25) × 3 = 1.
-d = (A / (3 * r(25))) ** (1 / K)
+# 3. Inverse: 2 h + 1 h at 25 °C, active dry. d^k / A × r(25) × 3 = READY.
+d = (READY * A / (3 * r(25))) ** (1 / K)
 cases.append({
     "name": "inverse dose: 3 h at 25 °C, active dry",
     "formula": flour([salt(), yeast("active-dry", 0.5)]),
@@ -90,7 +97,7 @@ cases.append({
     ]),
     "expected": {
         "dough.yeastPct.yeast.value": d / FRESH["active-dry"],
-        "dough.progressPct.value": 100 * (0.5 * FRESH["active-dry"]) ** K / A * r(25) * 3,
+        "dough.progressPct.value": 100 * (0.5 * FRESH["active-dry"]) ** K / A * r(25) * 3 / READY,
     },
 })
 
@@ -102,7 +109,7 @@ t0 = 24.0
 lo, hi = 0.0, 500.0
 for _ in range(60):
     mid = (lo + hi) / 2
-    if g1 + lagged_gain(d, t0, 4, mid, n=20000) >= 1:
+    if g1 + lagged_gain(d, t0, 4, mid, n=20000) >= READY:
         hi = mid
     else:
         lo = mid
@@ -125,4 +132,23 @@ cases.append({
     "expected": {"waterTemperatureC.value": 33},
 })
 
-print(json.dumps({"format": "flourprint-fixture/0", "contract": "fermentation.md", "model": {"id": "flourprint.commercial-yeast", "version": "0.1.0"}, "tolerance": 1, "cases": cases}, indent=2))
+# 6. A preferment keeps the end point 1: a poolish with 0.2 % of the total flour as fresh yeast in
+#    20 % of the flour is 1 % fresh in the poolish; at 21.1 °C it is ripe after A hours.
+poolish = flour([salt(), yeast("fresh", 0.2)])
+poolish["components"] = [{
+    "id": "poolish", "kind": "preferment", "flourPct": 20,
+    "flourBlend": [{"flour": "flour", "sharePct": 100}], "hydrationPct": 100,
+    "allocations": [{"ingredient": "yeast", "bakerPct": 0.2}],
+}]
+pf = steps({"temperatureC": 21.1, "doughTemperatureC": 24}, [{"id": "proof", "operation": "proof"}])
+pf["steps"] = [{"id": "poolish", "operation": "preferment", "dependsOn": [], "schedule": "asap", "conditions": {"temperatureC": 21.1}}] + [
+    {**st, "dependsOn": ["poolish"]} if st["id"] == "mix" else st for st in pf["steps"]
+]
+cases.append({
+    "name": "preferment keeps its own end point (progress 1)",
+    "formula": poolish,
+    "process": pf,
+    "expected": {"preferments.poolish.duration.value": A * H},
+})
+
+print(json.dumps({"format": "flourprint-fixture/0", "contract": "fermentation.md", "model": {"id": "flourprint.commercial-yeast", "version": "0.1.0"}, "calibration": {"readyProgress": READY, "band": list(READY_BAND)}, "tolerance": 1, "cases": cases}, indent=2))

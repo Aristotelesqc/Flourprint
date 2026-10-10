@@ -37,7 +37,7 @@ type Estimate<T = number> =
   | {
       status: 'ok';
       value: T;
-      range?: [T, T];
+      range?: [RangeBound<T>, RangeBound<T>];
       model: ModelRef;
       assumptions: string[];
       extrapolations?: string[]; // outside the data the model was fitted on, still given
@@ -48,6 +48,9 @@ type Estimate<T = number> =
       missing?: string[];
       reason: string;
     };
+
+type RangeBound<T = number> =
+  { kind: 'finite'; value: T } | { kind: 'beyondHorizon'; horizonS: number }; // never reached within the search horizon
 
 type PropertyValue =
   | {
@@ -70,6 +73,10 @@ interface ModelRef {
 - Model parameters are versioned, immutable data, shipped with the app and exported with any bake
   that references them. A hash, if any, only checks integrity.
 - A computed suggestion (`Estimate`) never becomes an observation (`Observation`).
+- A `range` bound is never a raw number that could be `Infinity` (JSON turns it into `null`).
+  `beyondHorizon` says the band's corner did not reach the end point within `horizonS` seconds.
+  Snapshots written before `0.4.0` hold plain numbers; reading them upcasts each number to
+  `{ kind: 'finite', value }` without changing its value (history.md).
 - `extrapolations` lists, as stable codes, each reason the estimate lies outside the model's
   fitted domain; the UI always shows them next to the value.
 - `assumptions`, `extrapolations`, `reason` and `missing` hold stable codes or English developer text; the UI

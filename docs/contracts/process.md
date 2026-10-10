@@ -15,8 +15,12 @@ interface ProcessStep {
   schedule: 'asap' | 'alap';
   plannedDurationS?: number; // absent = unknown
   endCriterion?: EndCriterion; // observation or user decision
+  accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
 }
 ```
+
+`AcceptedSuggestion` is defined in `fermentation.md`. For a step, `appliedValue` is
+`plannedDurationS` in seconds. Any other edit of `plannedDurationS` removes `accepted`.
 
 ## Validation
 

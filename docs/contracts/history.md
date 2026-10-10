@@ -22,12 +22,25 @@ interface BakeStartedPayload {
   usedProperties: Array<{ ingredient: string; version: number; key: string; value: PropertyValue }>;
   process: Process; // the definition used, equipment parameters copied
   initialProjection: Projection;
-  estimates: Record<StepId, Estimate>;
+  estimates: Record<StepId, Estimate>; // accepted suggestion of the step, else unsupported
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
 }
 ```
 
 `usedProperties` contains only the properties actually consumed by the calculation.
+
+Accepted suggestions (`fermentation.md`):
+
+- For each step of the started process whose `accepted.appliedValue` equals its
+  `plannedDurationS`, `estimates[step.id]` is that `accepted.estimate`; the other steps keep the
+  `unsupported` estimate with reason `no_fermentation_model`. Accepted doses stay with the
+  ingredients and allocations of the snapshot's `formula`.
+- `manifest.models` lists the `ModelRef` of every accepted suggestion still in effect (steps,
+  ingredients and allocations), once each.
+- Replay never recomputes them.
+- Estimate `range` bounds follow `values-and-units.md`. Events written before `0.4.0` may hold
+  numeric bounds; the upcaster rewrites each as `{ kind: 'finite', value }`. The event schema
+  version stays `1`: the representation is read in both forms and always rewritten.
 
 ## During the bake
 

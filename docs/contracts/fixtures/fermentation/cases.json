@@ -5,6 +5,10 @@
     "id": "flourprint.commercial-yeast",
     "version": "0.1.0"
   },
+  "calibration": {
+    "readyProgress": 2.0,
+    "band": [1.5, 2.5]
+  },
   "tolerance": 1,
   "cases": [
     {
@@ -107,8 +111,8 @@
         ]
       },
       "expected": {
-        "dough.duration.value": 12348.0,
-        "dough.duration.range": [9261.0, 15435.000000000002]
+        "dough.duration.value": 24696.0,
+        "dough.duration.range": [13891.5, 38587.5]
       }
     },
     {
@@ -211,7 +215,7 @@
         ]
       },
       "expected": {
-        "dough.duration.value": 108812.53213351559
+        "dough.duration.value": 217625.06426703118
       }
     },
     {
@@ -322,8 +326,8 @@
         ]
       },
       "expected": {
-        "dough.yeastPct.yeast.value": 0.2337510487709782,
-        "dough.progressPct.value": 174.0715442107326
+        "dough.yeastPct.yeast.value": 0.6049076686619828,
+        "dough.progressPct.value": 87.0357721053663
       }
     },
     {
@@ -437,7 +441,7 @@
         ]
       },
       "expected": {
-        "dough.duration.value": 306850.4416015308
+        "dough.duration.value": 783039.7688154657
       },
       "tolerance": 60
     },
@@ -544,6 +548,138 @@
       },
       "expected": {
         "waterTemperatureC.value": 33
+      }
+    },
+    {
+      "name": "preferment keeps its own end point (progress 1)",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 0.2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [
+          {
+            "id": "poolish",
+            "kind": "preferment",
+            "flourPct": 20,
+            "flourBlend": [
+              {
+                "flour": "flour",
+                "sharePct": 100
+              }
+            ],
+            "hydrationPct": 100,
+            "allocations": [
+              {
+                "ingredient": "yeast",
+                "bakerPct": 0.2
+              }
+            ]
+          }
+        ],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "poolish",
+            "operation": "preferment",
+            "dependsOn": [],
+            "schedule": "asap",
+            "conditions": {
+              "temperatureC": 21.1
+            }
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["poolish"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 21.1,
+              "doughTemperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "id": "proof",
+            "operation": "proof"
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["proof", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "preferments.poolish.duration.value": 12348.0
       }
     }
   ]

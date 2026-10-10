@@ -49,10 +49,18 @@ interface BakeEvent<P> {
 | `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                    |
 | `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                          |
 | `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                         |
-| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating or `Observation` measurement                                                                                                        |
+| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below)                                                                                      |
 | `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start     |
 | `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                        |
 | `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept                                                                                                                                  |
+
+`AddObservation` accepts an optional stable `kind`. `kind: 'doughReady'` records that the baker
+judges the dough ready to bake: it needs a `stepId` (the running fermentation step), has category
+`fermentation`, and may carry a short `criterion` code (`poke`, `feel`, `time`, `other`) and free
+`text`. The time of the observation is its `occurredAt` (now). It never completes the step nor
+changes the plan. These are the calibration data of the "ready to bake" target
+(`fermentation.md`): they are kept in the bake journal and shown in the bake history. Events
+without `kind` are unchanged.
 
 Recorded times follow the finish-to-start edges of the process: a step never starts before every
 dependency has ended. Commands that would record or correct a contradicting time are refused, not
