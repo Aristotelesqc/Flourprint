@@ -32,6 +32,7 @@ import {
 } from '../services/bake-view';
 import { useBakeCommands, type CommandOutcome } from '../services/bake-commands';
 import { useServices } from '../services/services';
+import { InfoButton } from '../ui/InfoButton';
 import { SectionTitle } from '../ui/Layout';
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
@@ -318,13 +319,16 @@ export const BakePage = () => {
                   const stage = readyStage(focus);
                   return (
                     stage && (
-                      <IonButton
-                        fill="outline"
-                        disabled={commands.busy || pending !== undefined}
-                        onClick={() => doughReady(focus.step.id)}
-                      >
-                        {readyLabel(stage)}
-                      </IonButton>
+                      <div className="flex items-center justify-center gap-3">
+                        <IonButton
+                          fill="outline"
+                          disabled={commands.busy || pending !== undefined}
+                          onClick={() => doughReady(focus.step.id)}
+                        >
+                          {readyLabel(stage)}
+                        </IonButton>
+                        <InfoButton topic="readyMark" term={t('bake.doughReady')} />
+                      </div>
                     )
                   );
                 })()}
@@ -368,7 +372,10 @@ export const BakePage = () => {
           )}
 
           {view && view.alsoRunning.length > 0 && (
-            <StepList title={t('bake.alsoRunning')}>
+            <StepList
+              title={t('bake.alsoRunning')}
+              help={<InfoButton topic="bakeFocus" term={t('bake.alsoRunning')} />}
+            >
               {view.alsoRunning.map((v) => (
                 <StepLine
                   key={v.step.id}
@@ -536,8 +543,9 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
       : 0;
   return (
     <section className="flex flex-col gap-1.5">
-      <span className="text-sm font-bold tracking-wider text-accent-text uppercase">
+      <span className="flex items-center gap-1.5 text-sm font-bold tracking-wider text-accent-text uppercase">
         {t(focus.running ? 'bake.now' : 'bake.upNext')}
+        <InfoButton topic="bakeFocus" term={t(focus.running ? 'bake.now' : 'bake.upNext')} />
       </span>
       <h1 className="m-0 text-[40px] leading-tight font-bold">{stepName(focus.step)}</h1>
       <div className="flex items-baseline gap-2.5">
@@ -573,10 +581,19 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
   );
 };
 
-const StepList = ({ title, children }: { title: string; children: ReactNode }) => (
+const StepList = ({
+  title,
+  help,
+  children,
+}: {
+  title: string;
+  help?: ReactNode;
+  children: ReactNode;
+}) => (
   <section className="flex flex-col">
-    <div className="pb-1">
+    <div className="flex items-center gap-1.5 pb-1">
       <SectionTitle>{title}</SectionTitle>
+      {help}
     </div>
     <div className="[&>*]:border-t [&>*]:border-line">{children}</div>
   </section>

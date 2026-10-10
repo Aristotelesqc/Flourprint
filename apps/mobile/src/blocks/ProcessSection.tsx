@@ -11,6 +11,7 @@ import {
 import { useMessages } from '../i18n/use-messages';
 import { formatDay, formatDayTime, formatTime, localDayKey } from '../i18n/time';
 import { DurationField } from '../ui/Field';
+import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
 
@@ -116,6 +117,10 @@ export const ProcessSection = ({
   return (
     <div className="flex flex-col gap-4 pb-6">
       <Card>
+        <span className="flex items-center gap-1.5 font-bold">
+          {t('process.plan')}
+          <InfoButton topic="startMode" term={t('process.plan')} />
+        </span>
         <Segmented
           size="small"
           value={modeKind}
@@ -173,7 +178,6 @@ export const ProcessSection = ({
           <Rows>
             {day.steps.map(({ step, planned: p }) => {
               const hints = [
-                ...(step.schedule === 'alap' ? [t('process.alap')] : []),
                 ...(step.dependsOn.length > 0
                   ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
                   : []),
@@ -189,8 +193,17 @@ export const ProcessSection = ({
                   <span className="font-bold">{p?.start ? formatTime(p.start, locale) : '—'}</span>
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className="font-semibold">{stepName(step)}</span>
-                    {hints.length > 0 && (
-                      <span className="text-[13px] text-muted">{hints.join(' · ')}</span>
+                    {(hints.length > 0 || step.schedule === 'alap') && (
+                      <span className="text-[13px] text-muted">
+                        {step.schedule === 'alap' && (
+                          <span className="mr-1 inline-flex items-center gap-1 font-semibold">
+                            {t('process.alap')}
+                            <InfoButton topic="alap" term={t('process.alap')} />
+                          </span>
+                        )}
+                        {step.schedule === 'alap' && hints.length > 0 && ' · '}
+                        {hints.join(' · ')}
+                      </span>
                     )}
                   </div>
                   <DurationField

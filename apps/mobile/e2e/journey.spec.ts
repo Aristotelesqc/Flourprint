@@ -269,9 +269,9 @@ test('a locked total water holds while eggs are added; preparations are editable
 }) => {
   await openRecipe(page);
   // 75 % water, no other water source but the yeast's estimate: lock it.
-  await page.getByText(/Barrer à/).click();
-  await expect(page.getByText('Eau totale barrée').first()).toBeVisible();
-  const water = page.getByText('Suit l’eau totale barrée');
+  await page.getByText(/Verrouiller à/).click();
+  await expect(page.getByText('Eau totale verrouillée').first()).toBeVisible();
+  const water = page.getByText('Suit l’eau totale verrouillée');
   await expect(water).toBeVisible();
 
   await page.getByRole('button', { name: '+ Ajouter un ingrédient' }).click();
@@ -451,7 +451,7 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await page.getByText('Recette vierge').first().click();
   await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
   // Flours that do not add up to 100 %: accepted in a draft, quantities shown as unknown.
-  const share = page.getByLabel('Farine à pain, % farine');
+  const share = page.getByLabel('Farine à pain, Part');
   await share.fill('80');
   await share.press('Enter');
   await expect(page.getByText(/Les quantités ne peuvent pas encore être calculées/)).toBeVisible();
@@ -465,4 +465,19 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await page.locator('ion-alert').getByRole('button', { name: 'Supprimer le brouillon' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
   await expect(page.getByText('Recette 1', { exact: true })).toBeHidden();
+});
+
+test('an info button opens a bottom sheet that explains the term and closes', async ({ page }) => {
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Explication : Taille de la recette' }).click();
+  const sheet = page.locator('ion-modal:visible');
+  await expect(sheet.getByRole('heading', { name: /Taille de la recette/ })).toBeVisible();
+  await expect(sheet).toContainText('Chaque gramme de la recette');
+  await sheet.getByRole('button', { name: 'En savoir plus' }).click();
+  await expect(sheet).toContainText('pertes déclarées');
+  await sheet.getByRole('button', { name: 'Fermer' }).click();
+  await expect(page.locator('ion-modal:visible')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Explication : Eau ajoutée' }).click();
+  await expect(page.locator('ion-modal:visible')).toContainText('Eau ajoutée et eau totale');
 });

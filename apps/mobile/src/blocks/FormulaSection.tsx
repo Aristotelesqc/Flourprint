@@ -8,6 +8,7 @@ import type {
 } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
 import { NumberField } from '../ui/Field';
+import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
 import { totalWaterKey } from './water-label';
@@ -94,16 +95,12 @@ export const FormulaSection = ({
   return (
     <div className="flex flex-col gap-5 pb-6">
       <ChangesSummary base={base} formula={formula} />
-      <FermentationCard
-        formula={formula}
-        process={process}
-        now={now}
-        onEdit={onEdit}
-        onProcess={onProcess}
-      />
       <Card>
         <div className="flex items-center justify-between gap-3">
-          <span className="font-bold">{t('formula.quantity')}</span>
+          <span className="flex items-center gap-1.5 font-bold">
+            {t('formula.quantity')}
+            <InfoButton topic="anchor" term={t('formula.quantity')} />
+          </span>
           <div className="w-56">
             <Segmented
               size="small"
@@ -165,7 +162,11 @@ export const FormulaSection = ({
           <>
             <div className="grid grid-cols-3 gap-2 border-t border-line pt-3">
               <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
-              <Stat label={t('formula.stat.pureWater')} value={pct(resolved.pureWaterPct)} />
+              <Stat
+                label={t('formula.stat.pureWater')}
+                value={pct(resolved.pureWaterPct)}
+                help={<InfoButton topic="water" term={t('formula.stat.pureWater')} />}
+              />
               <button
                 type="button"
                 className="fp-reset flex flex-col items-start"
@@ -255,6 +256,7 @@ export const FormulaSection = ({
           title={t('formula.group.ingredients')}
           pctLabel={t('formula.column.bakerPct')}
           gramsLabel={t('formula.column.grams')}
+          help={<InfoButton topic="bakerPct" term={t('formula.column.bakerPct')} />}
         />
         <Rows>
           <p className="m-0 px-3 py-2 text-[13px] text-muted">{t('formula.editRule')}</p>
@@ -317,7 +319,13 @@ export const FormulaSection = ({
 
       {
         <section className="flex flex-col gap-2">
-          <SectionTitle>{t('formula.preparations')}</SectionTitle>
+          <span className="flex items-center gap-1.5">
+            <SectionTitle>{t('formula.preparations')}</SectionTitle>
+            <InfoButton topic="preparations" term={t('formula.preparations')} />
+          </span>
+          {formula.components.length === 0 && (
+            <p className="m-0 px-1 text-sm text-muted">{t('formula.prep.empty')}</p>
+          )}
           {formula.components.map((component) => {
             const c = resolved?.components[component.id];
             const breakdown = !c
@@ -365,10 +373,21 @@ export const FormulaSection = ({
         </section>
       }
 
+      <FermentationCard
+        formula={formula}
+        process={process}
+        now={now}
+        onEdit={onEdit}
+        onProcess={onProcess}
+      />
+
       {resolved && (
         <section className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between">
-            <SectionTitle>{t('formula.finalMix')}</SectionTitle>
+            <span className="flex items-center gap-1.5">
+              <SectionTitle>{t('formula.finalMix')}</SectionTitle>
+              <InfoButton topic="finalMix" term={t('formula.finalMix')} />
+            </span>
             <span className="px-1 text-[13px] text-muted">
               {t('formula.finalMix.progress', {
                 done: finalMix.filter(isWeighed).length,
@@ -458,13 +477,18 @@ const GroupHeader = ({
   title,
   pctLabel,
   gramsLabel,
+  help,
 }: {
   title: string;
   pctLabel: string;
   gramsLabel: string;
+  help?: ReactNode;
 }) => (
   <div className={`${ROW} px-4 pb-1.5 text-[13px] font-semibold text-muted`}>
-    <span className="tracking-wide uppercase">{title}</span>
+    <span className="flex items-center gap-1.5">
+      <span className="tracking-wide uppercase">{title}</span>
+      {help}
+    </span>
     <span className="text-right">{pctLabel}</span>
     <span className="text-right">{gramsLabel}</span>
   </div>
@@ -477,9 +501,12 @@ const LabeledField = ({ label, children }: { label: string; children: ReactNode 
   </div>
 );
 
-const Stat = ({ label, value }: { label: string; value: string }) => (
+const Stat = ({ label, value, help }: { label: string; value: string; help?: ReactNode }) => (
   <div className="flex flex-col">
-    <span className="text-xs text-muted">{label}</span>
+    <span className="flex items-center gap-1 text-xs text-muted">
+      {label}
+      {help}
+    </span>
     <span className="text-lg font-bold">{value}</span>
   </div>
 );

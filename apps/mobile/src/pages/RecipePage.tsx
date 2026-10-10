@@ -40,6 +40,7 @@ import { StyleGuide } from '../blocks/StyleGuide';
 import { useServices } from '../services/services';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
+import { InfoButton } from '../ui/InfoButton';
 import { Segmented } from '../ui/Segmented';
 
 type Tab = 'formula' | 'process' | 'history';
@@ -538,8 +539,12 @@ export const RecipePage = () => {
         <IonFooter>
           <IonToolbar>
             <div className="flex flex-wrap items-center gap-2 px-3 py-1.5">
-              <span className="flex-1 text-sm text-muted">
+              <span className="flex flex-1 items-center gap-1.5 text-sm text-muted">
                 {t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
+                <InfoButton
+                  topic="draft"
+                  term={t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
+                />
               </span>
               <IonButton
                 fill="clear"

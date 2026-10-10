@@ -17,6 +17,7 @@ import {
   type PreparationKind,
 } from '../services/preparations';
 import { NumberField } from '../ui/Field';
+import { InfoButton } from '../ui/InfoButton';
 import { Card } from '../ui/Layout';
 import { totalWaterKey } from './water-label';
 
@@ -48,8 +49,12 @@ export const WaterLock = ({
   return (
     <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
       <span className="flex flex-col">
-        <span className="font-semibold">
+        <span className="flex items-center gap-1.5 font-semibold">
           {target ? t('formula.lock.locked') : t('formula.lock.unlocked')}
+          <InfoButton
+            topic="lock"
+            term={target ? t('formula.lock.locked') : t('formula.lock.unlocked')}
+          />
         </span>
         <span className="text-sm text-muted">
           {target ? t('formula.lock.lockedHint') : t('formula.lock.unlockedHint')}

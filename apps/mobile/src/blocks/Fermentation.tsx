@@ -21,6 +21,7 @@ import { formatDuration } from '../i18n/time';
 import { useMessages } from '../i18n/use-messages';
 import { recipeDuration } from '../services/recipe-duration';
 import { OptionalNumberField } from '../ui/Field';
+import { InfoButton } from '../ui/InfoButton';
 import { Card } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
 
@@ -116,7 +117,10 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
     <Card gap="gap-3">
       <span className="flex items-baseline justify-between gap-3">
         <span className="flex items-baseline gap-2">
-          <span className="font-semibold">{t('fermentation.title')}</span>
+          <span className="flex items-center gap-1.5 font-semibold">
+            {t('fermentation.title')}
+            <InfoButton topic="fermentation" term={t('fermentation.title')} />
+          </span>
           <span className="rounded-full border border-line px-2 text-xs whitespace-nowrap text-muted">
             {t('fermentation.provisional')}
           </span>
@@ -151,7 +155,10 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
           </Row>
           {advanced ? (
             <>
-              <Row label={t('fermentation.target')}>
+              <Row
+                label={t('fermentation.target')}
+                help={<InfoButton topic="waterTemp" term={t('fermentation.target')} />}
+              >
                 <OptionalNumberField
                   label={t('fermentation.target')}
                   unit="°C"
@@ -181,7 +188,10 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
 
       <ReadinessChoice process={process} onProcess={onProcess} />
 
-      <ul className="m-0 flex list-none flex-col gap-1 border-t border-line p-0 pt-2 text-[15px]">
+      <span className="border-t border-line pt-2 text-sm font-semibold">
+        {t('fermentation.steps')}
+      </span>
+      <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[15px]">
         {steps.map((step) => (
           <li key={step.id} className="flex items-center justify-between gap-3">
             <span className="flex flex-col">
@@ -267,7 +277,10 @@ const ReadinessChoice = ({
     ) ?? (process.readiness ? undefined : PROFILES[0]);
   return (
     <div className="flex flex-col gap-1.5 border-t border-line pt-2">
-      <span className="text-sm font-semibold">{t('fermentation.readiness')}</span>
+      <span className="flex items-center gap-1.5 text-sm font-semibold">
+        {t('fermentation.readiness')}
+        <InfoButton topic="readiness" term={t('fermentation.readiness')} />
+      </span>
       <Segmented
         size="small"
         value={selected?.profile.id ?? ''}
@@ -290,9 +303,20 @@ const ReadinessChoice = ({
   );
 };
 
-const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Row = ({
+  label,
+  help,
+  children,
+}: {
+  label: string;
+  help?: React.ReactNode;
+  children: React.ReactNode;
+}) => (
   <div className="flex items-center justify-between gap-3">
-    <span>{label}</span>
+    <span className="flex items-center gap-1.5">
+      {label}
+      {help}
+    </span>
     {children}
   </div>
 );
@@ -353,7 +377,12 @@ const Mass = ({
   const yeasts = Object.entries(yeastPct);
   return (
     <section className="flex flex-col gap-1.5 border-t border-line pt-2">
-      <span className="font-semibold">{title}</span>
+      <span className="flex items-center gap-1.5 font-semibold">
+        {title}
+        {duration.status === 'ok' && (
+          <InfoButton topic="modelTime" term={t('fermentation.timeTerm')} />
+        )}
+      </span>
       {duration.status !== 'ok' ? (
         <span className="text-sm">{reason(duration)}</span>
       ) : (
@@ -422,7 +451,10 @@ const Mass = ({
         ),
       )}
       {extrapolations(duration) && (
-        <span className="text-sm text-alert">{extrapolations(duration)}</span>
+        <span className="flex items-start gap-1.5 text-sm text-alert">
+          <span>{extrapolations(duration)}</span>
+          <InfoButton topic="extrapolation" term={t('fermentation.extrapolationTerm')} />
+        </span>
       )}
     </section>
   );
@@ -438,8 +470,9 @@ const WaterTemperature = ({ estimate }: { estimate: Estimate }) => {
   });
   return (
     <span className="flex flex-col">
-      <span className="text-lg font-bold">
+      <span className="flex items-center gap-1.5 text-lg font-bold">
         {t('fermentation.water', { temperature: `${Math.round(estimate.value)} °C` })}
+        <InfoButton topic="waterTemp" term={t('fermentation.waterTerm')} />
       </span>
       {notes.length > 0 && <span className="text-sm text-muted">{notes.join(' · ')}</span>}
     </span>

@@ -12,6 +12,7 @@ import {
 import type { Process, RecipeIssue } from '@flourprint/core/domain';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
+import { InfoButton } from '../ui/InfoButton';
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
 
@@ -56,6 +57,10 @@ export const RecipeChecks = ({
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">
+        <p className="mt-0 flex items-start gap-1.5 text-muted">
+          <span>{t('check.intro')}</span>
+          <InfoButton topic="check" term={t('check.title')} />
+        </p>
         {issues.length === 0 && <p role="status">{t('check.none')}</p>}
         {blocking.length > 0 && (
           <>
