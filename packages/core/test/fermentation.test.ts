@@ -190,9 +190,53 @@ describe('fermentation domain', () => {
     // 0.2 % of total flour over 20 % of it: 1 % fresh in the poolish at 21.1 °C → A hours.
     const poolish = result.preferments.poolish?.duration;
     expect(poolish?.status === 'ok' && poolish.value).toBeCloseTo(3.43 * 3600, 3);
+    // The preferment's own estimate is qualified too (audit C4).
+    expect(poolish?.status === 'ok' && poolish.extrapolations).toEqual(['preferment']);
     expect(result.dough.duration.status === 'ok' && result.dough.duration.extrapolations).toContain(
       'preferment',
     );
+  });
+
+  it('refuses parallel dough steps instead of adding their times (audit C2)', () => {
+    const [mixStep] = process.steps;
+    if (!mixStep) throw new Error('no mix step');
+    const parallel: Process = {
+      steps: [
+        { ...mixStep, plannedDurationS: 0 },
+        {
+          id: 'rest-a',
+          operation: 'rest',
+          dependsOn: ['mix'],
+          schedule: 'asap',
+          plannedDurationS: 3600,
+        },
+        {
+          id: 'rest-b',
+          operation: 'rest',
+          dependsOn: ['mix'],
+          schedule: 'asap',
+          plannedDurationS: 3600,
+        },
+        {
+          id: 'proof',
+          operation: 'proof',
+          dependsOn: ['rest-a', 'rest-b'],
+          schedule: 'asap',
+          plannedDurationS: 3600,
+        },
+        ...process.steps
+          .filter((s) => s.id === 'preheat' || s.id === 'bake')
+          .map((s) => (s.id === 'bake' ? { ...s, dependsOn: ['proof', 'preheat'] } : s)),
+      ],
+    };
+    expect(validateProcess(parallel).ok).toBe(true);
+    expect(estimateFermentation(base, parallel).dough.duration).toMatchObject({
+      status: 'insufficient_data',
+      reason: 'non_linear_dough_path',
+      missing: ['rest-b'],
+    });
+    // The parallel preheat branch is not on the dough path and stays allowed.
+    expect(estimateFermentation(base, process).dough.duration.status).toBe('ok');
   });
 
   it('refuses dough temperature and friction outside the mix step', () => {

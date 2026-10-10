@@ -273,6 +273,19 @@ const doughMass = (formula: Formula, process: Process): Mass | Failure => {
   );
   const last = steps.at(-1);
   if (!last) return failure('insufficient_data', 'no_fermentation_step');
+  // One dough, one timeline: each dough step must come after the previous one. Parallel dough
+  // steps would be counted end to end, more time than really elapses (audit C2 of 15e52e3).
+  const unordered = steps.filter((s, i) => {
+    const previous = steps[i - 1];
+    return previous !== undefined && !ancestors(process, s.id).has(previous.id);
+  });
+  if (unordered.length > 0) {
+    return failure(
+      'insufficient_data',
+      'non_linear_dough_path',
+      unordered.map((s) => s.id),
+    );
+  }
   const roomC =
     mix.conditions?.temperatureC ??
     steps.find((s) => s.conditions?.temperatureC !== undefined)?.conditions?.temperatureC;
@@ -337,7 +350,7 @@ const prefermentMass = (
       'dough_temperature_from_ambient',
       ...(step.conditions?.temperatureC === undefined ? ['preferment_at_room_temperature'] : []),
     ],
-    extrapolations: [],
+    extrapolations: ['preferment'],
     unplanned: [],
   };
 };
