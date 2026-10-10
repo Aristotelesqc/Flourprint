@@ -384,6 +384,28 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     });
   });
 
+  it('records review notes after the end, but no dough ready mark', async () => {
+    const session = new Session();
+    await session.start();
+    await session.at(t('16:00')).ok({ type: 'FinishBake' });
+    await session.at(t('18:00')).ok({ type: 'AddObservation', category: 'crumb', text: 'open' });
+    expect(
+      await session.run({
+        type: 'AddObservation',
+        stepId: 'poolish',
+        category: 'fermentation',
+        kind: 'doughReady',
+      }),
+    ).toMatchObject({ ok: false, error: { code: 'BakeNotActive' } });
+    const reopened = await loadBake(session.store, 'bake-1');
+    if (!reopened.ok) throw new Error('unreadable');
+    expect(reopened.value.status).toBe('finished');
+    expect(reopened.value.endedAt).toBe(t('16:00'));
+    expect(reopened.value.observations.map((o) => [o.occurredAt, o.payload.text])).toEqual([
+      [t('18:00'), 'open'],
+    ]);
+  });
+
   it('refuses events written by a newer schema', async () => {
     const session = new Session();
     await session.start();

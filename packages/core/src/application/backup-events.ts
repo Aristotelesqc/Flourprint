@@ -196,8 +196,12 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
 
   if (state.status === 'notStarted') {
     expect(payload.type === 'BakeStarted', `${where}: a bake log starts with BakeStarted`);
-  } else {
-    expect(state.status === 'active', `${where}: the bake had already ended`);
+  } else if (state.status !== 'active') {
+    // After the end only notes of the review (bake-session.md).
+    expect(
+      payload.type === 'ObservationAdded' && payload.kind !== 'doughReady',
+      `${where}: the bake had already ended`,
+    );
   }
 
   switch (payload.type) {

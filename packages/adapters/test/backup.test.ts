@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   executeBakeCommand,
   exportBackup,
+  exportFeedback,
   exportRecipes,
   importBackup,
   importRecipes,
@@ -153,8 +154,13 @@ const seed = async (stores: BackupStores) => {
     { type: 'AdjustFormula', edit: { type: 'SetBakerPct', ingredient: 'salt', pct: 2.2 } },
     at('08:01'),
   );
+  await run(
+    { type: 'AddObservation', stepId: 'mix', category: 'handling', text: 'sticky' },
+    at('08:05'),
+  );
   await run({ type: 'CompleteStep', stepId: 'mix' }, at('08:10'));
   await run({ type: 'FinishBake' }, at('11:00'));
+  await run({ type: 'AddObservation', category: 'crumb', text: 'tight' }, at('11:30'));
 };
 
 /** A backup as untrusted JSON: the tests corrupt it on purpose. */
@@ -332,7 +338,7 @@ describe.each([
           ...last,
           eventId: 'late',
           seq: last.seq + 1,
-          payload: { type: 'ObservationAdded', category: 'other', text: 'late' },
+          payload: { type: 'StepStarted', stepId: 'mix' },
         });
       },
       'InvalidBackup',
@@ -428,5 +434,56 @@ describe.each([
     const result = await importRecipes(target.recipes, file);
     expect(result.ok).toBe(false);
     expect(await target.recipes.listRecipes()).toEqual([]);
+  });
+});
+
+describe('feedback export (history.md)', () => {
+  it('carries the full backup and a digest of each bake read from its events', async () => {
+    const stores = memoryStores();
+    await seed(stores);
+    const device = {
+      platform: 'desktop',
+      storage: 'sqlite',
+      build: 'test',
+      locale: 'fr-CA',
+      timeZone: 'America/Toronto',
+      utcOffsetMinutes: -240,
+    } as const;
+    const result = await exportFeedback(stores, at('12:00'), device);
+    if (!result.ok) throw new Error('export failed');
+    const backup = await exportBackup(stores, at('12:00'));
+    expect(result.value).toMatchObject({ kind: 'flourprint-feedback', device });
+    expect(result.value.backup).toEqual(backup.ok ? backup.value : undefined);
+    const [digest] = result.value.bakes;
+    expect(digest).toMatchObject({
+      bakeId: 'bake-1',
+      status: 'finished',
+      recipe: { id: 'lean', name: 'Lean', version: 2 },
+      startedAt: at('08:00'),
+      endedAt: at('11:00'),
+    });
+    expect(digest?.steps.find((s) => s.id === 'mix')).toMatchObject({
+      startedAt: at('08:00'),
+      endedAt: at('08:10'),
+      actualDurationS: 600,
+    });
+    expect(digest?.observations).toEqual([
+      {
+        at: at('08:05'),
+        recordedAt: at('08:05'),
+        stepId: 'mix',
+        elapsedInStepS: 300,
+        category: 'handling',
+        text: 'sticky',
+      },
+      { at: at('11:30'), recordedAt: at('11:30'), category: 'crumb', text: 'tight' },
+    ]);
+    expect(digest?.adjustments).toEqual([
+      {
+        at: at('08:01'),
+        field: 'formula',
+        value: { type: 'SetBakerPct', ingredient: 'salt', pct: 2.2 },
+      },
+    ]);
   });
 });

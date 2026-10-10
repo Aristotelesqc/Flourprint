@@ -127,6 +127,40 @@ const pendingDependencies = (state: BakeState, process: Process, stepId: string)
     (dep) => state.steps[dep]?.endedAt === undefined,
   );
 
+/** Notes and marks: during the bake, and after its end for the review (bake-session.md). */
+const observe = (
+  state: BakeState,
+  command: Extract<BakeCommandPayload, { type: 'AddObservation' }>,
+  now: Instant,
+): Result<EventDraft[], BakeError> => {
+  if (command.stepId !== undefined) {
+    const known = requireStep(state, command.stepId);
+    if (!known.ok) return known;
+  }
+  if (command.rating !== undefined && !(command.rating >= 0 && command.rating <= 5)) {
+    return error('InvalidCommand', 'Rating must be within [0, 5]', {
+      field: 'rating',
+      reason: 'out of range',
+    });
+  }
+  if (command.kind === 'doughReady') {
+    if (command.stepId === undefined) {
+      return error('InvalidCommand', 'A dough ready observation targets a step', {
+        field: 'stepId',
+        reason: 'required for doughReady',
+      });
+    }
+    if (command.category !== 'fermentation') {
+      return error('InvalidCommand', 'A dough ready observation is a fermentation one', {
+        field: 'category',
+        reason: 'must be fermentation for doughReady',
+      });
+    }
+  }
+  const { type, ...observation } = command;
+  return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);
+};
+
 /**
  * Validates a command against the current state and returns the events to record
  * (docs/contracts/bake-session.md). `now` is the injected clock.
@@ -169,6 +203,13 @@ export const decide = (
     ]);
   }
 
+  if (
+    command.type === 'AddObservation' &&
+    (state.status === 'finished' || state.status === 'abandoned') &&
+    command.kind !== 'doughReady'
+  ) {
+    return observe(state, command, now);
+  }
   if (state.status !== 'active' || !state.process || !state.formula) {
     return error('BakeNotActive', `The bake is ${state.status}`, { status: state.status });
   }
@@ -338,34 +379,8 @@ export const decide = (
       ]);
     }
 
-    case 'AddObservation': {
-      if (command.stepId !== undefined) {
-        const known = requireStep(state, command.stepId);
-        if (!known.ok) return known;
-      }
-      if (command.rating !== undefined && !(command.rating >= 0 && command.rating <= 5)) {
-        return error('InvalidCommand', 'Rating must be within [0, 5]', {
-          field: 'rating',
-          reason: 'out of range',
-        });
-      }
-      if (command.kind === 'doughReady') {
-        if (command.stepId === undefined) {
-          return error('InvalidCommand', 'A dough ready observation targets a step', {
-            field: 'stepId',
-            reason: 'required for doughReady',
-          });
-        }
-        if (command.category !== 'fermentation') {
-          return error('InvalidCommand', 'A dough ready observation is a fermentation one', {
-            field: 'category',
-            reason: 'must be fermentation for doughReady',
-          });
-        }
-      }
-      const { type, ...observation } = command;
-      return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);
-    }
+    case 'AddObservation':
+      return observe(state, command, now);
 
     case 'CorrectStepTime': {
       const target = state.stepEvents[command.targetEventId];

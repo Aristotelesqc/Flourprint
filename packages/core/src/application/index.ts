@@ -3,3 +3,4 @@ export * from './bake.js';
 export * from './recipes.js';
 export * from './backup.js';
 export * from './recipe-file.js';
+export * from './feedback.js';
