@@ -196,6 +196,58 @@ const poolish: Formula = {
 
 const [poolishComponent] = poolish.components as [Formula['components'][number]];
 
+describe('locked total water with grams held on the anchor (audit C1 of 15e52e3)', () => {
+  // W = 1800, H = 75 %, milk 86 % water, salt 2 %: F = (1800 − 0.14 × 300) / 1.77.
+  const anchored: Formula = {
+    ...enriched,
+    ingredients: enriched.ingredients.map((i) =>
+      i.id === 'milk' ? { ...i, water: { status: 'known', valuePct: 86 } } : i,
+    ),
+    anchor: { kind: 'doughWeight', grams: 1800 },
+  };
+  const resolved = (formula: Formula) => {
+    const r = resolveFormula(formula);
+    if (!r.ok) throw new Error(r.error.code);
+    return r.value;
+  };
+
+  it('keeps the requested grams, the dough weight and the total water', () => {
+    const edited = apply(anchored, lock(75), {
+      type: 'SetIngredientGrams',
+      ingredient: 'milk',
+      grams: 300,
+      hold: 'anchor',
+    });
+    const r = resolved(edited);
+    expect(r.grams.milk).toBeCloseTo(300, 9);
+    expect(r.doughWeight).toBeCloseTo(1800, 9);
+    expect(r.totalWaterPct).toBeCloseTo(75, 9);
+    expect(r.flourTotal).toBeCloseTo((1800 - 0.14 * 300) / 1.77, 9);
+  });
+
+  it('holds a pieces anchor the same way', () => {
+    const pieces = apply(
+      { ...anchored, anchor: { kind: 'pieces', count: 4, gramsEach: 450 } },
+      lock(75),
+      { type: 'SetIngredientGrams', ingredient: 'salt', grams: 25, hold: 'anchor' },
+    );
+    const r = resolved(pieces);
+    expect(r.grams.salt).toBeCloseTo(25, 9);
+    expect(r.doughWeight).toBeCloseTo(1800, 9);
+    expect(r.totalWaterPct).toBeCloseTo(75, 9);
+  });
+
+  it('leaves the default hold (other grams) unchanged: the anchor follows', () => {
+    const before = resolved(apply(anchored, lock(75)));
+    const r = resolved(
+      apply(anchored, lock(75), { type: 'SetIngredientGrams', ingredient: 'milk', grams: 300 }),
+    );
+    expect(r.grams.milk).toBeCloseTo(300, 9);
+    expect(r.flourTotal).toBeCloseTo(before.flourTotal, 9);
+    expect(r.totalWaterPct).toBeCloseTo(75, 9);
+  });
+});
+
 describe('structure edits', () => {
   it('changes a preparation and refuses draws beyond the formula', () => {
     const wetter = apply(poolish, {

@@ -372,13 +372,28 @@ const setGramsHoldingAnchor = (
     return setBakerPct(formula, ingredient, (100 * grams) / flourTotal);
   }
 
-  const otherPct = doughPctSum(formula) - target.bakerPct;
+  // Under a locked total water, the absorbing water moves with the ingredient: it loses the
+  // water the ingredient brings (fraction q), so only the rest, (1 − q), adds to the dough.
+  const q = lockedWaterFraction(formula, target);
+  const otherPct = doughPctSum(formula) - target.bakerPct + target.bakerPct * q;
   const perFlour = otherPct / 100 - lossFactor(formula);
-  if (!(weight - grams > 0) || !(perFlour > 0)) {
+  const rest = weight - grams * (1 - q);
+  if (!(rest > 0) || !(weight - grams > 0) || !(perFlour > 0)) {
     return err(incompatible('The ingredient would exceed the anchored dough weight', 'grams'));
   }
-  const newFlourTotal = (weight - grams) / perFlour;
+  const newFlourTotal = rest / perFlour;
   return setBakerPct(formula, ingredient, (100 * grams) / newFlourTotal);
+};
+
+/**
+ * Water fraction of an ingredient as the locked total water counts it (0 without a lock). An
+ * unknown content with mass makes the lock fail when it is reapplied, so 0 is never used for it.
+ */
+const lockedWaterFraction = (formula: Formula, ingredient: Ingredient): number => {
+  if (!formula.waterTarget || ingredient.role !== 'dough') return 0;
+  if (ingredient.kind === 'water') return 1;
+  const water = ingredient.water;
+  return water && water.status !== 'unknown' ? water.valuePct / 100 : 0;
 };
 
 const reinterpretAnchor = (
