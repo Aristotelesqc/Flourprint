@@ -143,16 +143,28 @@ Consequences:
   readiness judgement is the practical end point, and the product must not present volume or a
   "doubled" target.
 
-## 4. The "ready" target is a personal calibration parameter
+## 4. The "ready" target is a readiness profile, not a constant
 
-`readyProgress` is not a constant of nature. Its provisional value is **2.0** (band 1.5 to 2.5), about
-twice Craig's unit, in force as `F* = 2.0` in contract 0.4.0. Basis: the owner's TOST schedules, used
-as examples, on which model 0.1.0 reads a median of about 180 to 200 % of `F = 1` at the planned
-times. That makes `F* = 2.0` consistent with them by construction. It is not independent validation
-(DERIVED / FITTED from examples, ASSUMED as a calibration).
+`readyProgress` is not a constant of nature. Since contract 0.6.0 it lives in a **readiness
+profile** that each recipe selects explicitly (fermentation.md):
 
-It is to be recalibrated from recorded "Dough ready" observations (bake journal) and kept as a
-versioned personal profile (section 11). Changing it must not change a kinetic constant. The GPT
+- `flourprint.model-end-point` 1, the default: `F* = 1`, the model's own end point (Craig's "about
+  doubled once"). Uncalibrated (ASSUMED as the reference).
+- `flourprint.experimental-ready` 1, selectable: `F* = 2.0`, band 1.5 to 2.5. Basis: the owner's
+  TOST schedules, used as examples, on which model 0.1.0 reads a median of about 180 to 200 % of
+  `F = 1` at the planned times. That makes `F* = 2.0` consistent with them by construction. It is
+  not independent validation (DERIVED from examples, ASSUMED as a prior). The band is a
+  sensitivity range, not a measured prediction error.
+
+Contract 0.4.0 applied 2.0 to every recipe; the follow-up audit of PR #31 showed this silently
+turned an owner-specific prior into a product default (at 1 % fresh and 21.1 °C it doubles the
+planned time and raises the inverse dose for 3.43 h from 1.00 % to 2.59 % fresh). Planned
+schedules cannot separate readiness from kinetic rate, temperature history and end-point
+definition.
+
+Recalibration uses recorded `doughReady` observations with `stage: 'bake'` (bake journal) and
+produces a new profile version (section 11). `stage: 'shape'` marks (end of bulk) are a different
+end point and are not pooled with it. Changing a profile never changes a kinetic constant. The GPT
 audit's warning applies: TOST schedules span bulk, degassing, shaping and proof, so they do not
 identify a new kinetic `A`.
 
@@ -440,6 +452,7 @@ details match the paper; measure the dough temperature during the owner's cold r
 | 0.1.0 (model)  | 2026-10-09        | First commercial-yeast model (owner decision of that date): `A` 3.43 h, `k` 0.729, `Ea` 98.3 kJ/mol fitted on Craig's table. Provisional (ADR 0010). Unchanged since.                                              |
 | contract 0.3.0 | date not recorded | Yeast on ingredients, dough temperature and friction on steps, extrapolations on estimates. No change of model parameters.                                                                                         |
 | contract 0.4.0 | date not recorded | Personal calibration of the dough end point (`readyProgress` 2.0), percentage of planned fermentation, portable range bounds, accepted-suggestion provenance, `doughReady` observation. Kinetic model still 0.1.0. |
+| contract 0.6.0 | 2026-10-10        | Readiness profiles: default `F* = 1` (model end point), the 2.0 prior made selectable (`flourprint.experimental-ready`); `doughReady` stage; bake origin. Kinetic model still 0.1.0.                               |
 | science doc    | 2026-10-10        | This document: provenance of 0.1.0, Izzreen Table I and fits M1/M2/M5/M6 (M5 research-only), sugar and salt datasets flagged unverified, bibliography corrected, promotion gates. No model change.                 |
 
 Any future model version adds a row here with the evidence it rests on.
