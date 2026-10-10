@@ -1,0 +1,5 @@
+sucrose_label_pct_dry_flour,sucrose_recipe_pct_as_is_flour,yeast_label_pct_fresh_dry_flour,yeast_recipe_pct_fresh_as_is_flour,temperature_c,co2_3h_ml_per_10g_flour_dough,co2_3h_sd,source_verified
+0,0,8,7,30,107.9,1.0,false
+7,6,8,7,30,203.7,2.9,false
+14,12,8,7,30,157.7,0.4,false
+21,18,8,7,30,94.3,4.8,false
