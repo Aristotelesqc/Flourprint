@@ -14,7 +14,9 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   doubled and ready". Bulk, cold retard, shaping and proof are counted together: the state is
   never reset between steps (#9).
 - **Dough steps**: the `asap` steps that come after the `mix` step and before the `bake` step
-  in the graph, in process order. `alap` steps (preheating) never hold the dough. Without a
+  in the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
+  one sequence, each after the previous one; dough steps in parallel (two rests side by side)
+  are `insufficient_data` (`non_linear_dough_path`) until split masses are modelled. Without a
   `mix` step, the estimate is `insufficient_data`; without a `bake` step, every `asap` step after
   the mix counts.
 - **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5).
@@ -98,13 +100,13 @@ Version 0.1.0 of this contract added it instead; that was an error, corrected on
 
 ## Domain
 
-| Condition                                                                                                                     | Result                                  |
-| ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| no ingredient marked as commercial yeast, or a sourdough culture                                                              | `unsupported`                           |
-| a step's temperature unknown, or the yeast form unknown                                                                       | `insufficient_data` (named)             |
-| fresh-equivalent dose outside 0.01–3 %, dough below 1.7 °C or above 35 °C                                                     | `out_of_domain`                         |
-| a preferment; added sugar > 5 %; added fat > 3 %; salt outside 1.5–3 %; total water outside 55–75 %; a needed content unknown | `ok` with `extrapolations` listing each |
-| otherwise                                                                                                                     | `ok`                                    |
+| Condition                                                                                                                                                                         | Result                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| no ingredient marked as commercial yeast, or a sourdough culture                                                                                                                  | `unsupported`                           |
+| a step's temperature unknown, or the yeast form unknown                                                                                                                           | `insufficient_data` (named)             |
+| fresh-equivalent dose outside 0.01–3 %, dough below 1.7 °C or above 35 °C                                                                                                         | `out_of_domain`                         |
+| a preferment (on the dough and on the preferment's own estimate); added sugar > 5 %; added fat > 3 %; salt outside 1.5–3 %; total water outside 55–75 %; a needed content unknown | `ok` with `extrapolations` listing each |
+| otherwise                                                                                                                                                                         | `ok`                                    |
 
 Sugar and fat are the formula's `totalSugarPct` and `totalFatPct`; water is `totalWaterPct`.
 Salt is the ingredient with id `salt` until ingredients are typed (#26); a dough without one is

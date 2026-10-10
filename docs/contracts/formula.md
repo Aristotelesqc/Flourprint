@@ -102,7 +102,10 @@ explicitly (`process.md`, Step removal).
   the component losses in points of flour. Total water counts everything that brings water
   (milk, eggs, honey, butter…), as `totalWater` does.
 - After every edit, the absorbing water is recomputed; with `hold: 'otherGrams'`, the absorbing
-  water is the one quantity whose grams are not kept. Editing the absorbing water directly is
+  water is the one quantity whose grams are not kept. With `hold: 'anchor'`, the requested
+  grams, the anchor and the target are all kept: the solve counts that the absorbing water gives
+  up the water the edited ingredient brings (`p = g·S' / (W + L − g·(1 − q))`, with `q` its water
+  fraction and `S'` including that water). Editing the absorbing water directly is
   refused (`IncompatibleConstraint`): change the target, or unlock.
 - Estimated contents count at their value; the derived water is then an estimate too.
 - Refused, with the reason and the ingredients concerned (`IncompatibleConstraint`):
