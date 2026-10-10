@@ -133,11 +133,13 @@ jobs:
       - run: pnpm build:mobile
       - name: Deploy to Cloudflare Pages
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           # Creates the project on the first run; later runs find it already there.
           npx --yes wrangler@4 pages project create "$PAGES_PROJECT" --production-branch main || true
           npx --yes wrangler@4 pages deploy apps/mobile/dist --project-name "$PAGES_PROJECT" \
-            --branch main --commit-hash "${FLOURPRINT_BUILD#*-}" --commit-dirty=true
+            --branch main --commit-hash "$HEAD_SHA" --commit-message "$FLOURPRINT_BUILD" --commit-dirty=true
           echo "Web preview ${FLOURPRINT_BUILD}: https://${PAGES_PROJECT}.pages.dev" >> "$GITHUB_STEP_SUMMARY"
       - name: Preview not deployed
         if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
