@@ -3,6 +3,7 @@ import { MemoryBakeEventStore } from '@flourprint/adapters/memory';
 import { executeBakeCommand } from '@flourprint/core/application';
 import type { BakeCommandPayload, BakeState, Instant } from '@flourprint/core/domain';
 import { bakeLog, bakeView, stepProgress } from '../src/services/bake-view';
+import { defaultCategory, noteSteps } from '../src/services/notes';
 import { sampleRecipe } from '../src/services/seed';
 
 const at = (time: string) => `2026-10-07T${time}:00.000Z` as Instant;
@@ -126,5 +127,33 @@ describe('step progress (audit C6 of 15e52e3)', () => {
     expect(stepProgress(1000, 2000, 1500)).toBe(0.5);
     expect(stepProgress(1000, 2000, 9000)).toBe(1);
     expect(stepProgress(Number.NaN, 2000, 1500)).toBe(0);
+  });
+});
+
+describe('notes', () => {
+  it('offers running steps first, then done ones, then the rest', async () => {
+    const state = await bake([
+      ['19:01', { type: 'CompleteStep', stepId: 'preheat' }],
+      ['19:02', { type: 'StartStep', stepId: 'poolish' }],
+    ]);
+    expect(noteSteps(state).slice(0, 3)).toEqual(['poolish', 'preheat', 'tangzhong']);
+  });
+
+  it('starts a note in the category of its step, and in crumb after the end', async () => {
+    const state = await bake([]);
+    expect(defaultCategory(state, 'poolish')).toBe('fermentation');
+    expect(defaultCategory(state, 'mix')).toBe('handling');
+    expect(defaultCategory(state, 'bake')).toBe('crust');
+    expect(defaultCategory(state, undefined)).toBe('other');
+    const ended = await bake([['19:05', { type: 'AbandonBake' }]]);
+    expect(defaultCategory(ended, undefined)).toBe('crumb');
+  });
+
+  it('logs a rating-only review note', async () => {
+    const state = await bake([
+      ['19:05', { type: 'AbandonBake' }],
+      ['20:00', { type: 'AddObservation', category: 'crumb', rating: 3 }],
+    ]);
+    expect(bakeLog(state)[0]).toEqual({ at: at('20:00'), kind: 'note', rating: 3 });
   });
 });

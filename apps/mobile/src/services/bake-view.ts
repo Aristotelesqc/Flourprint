@@ -42,6 +42,8 @@ export interface LogEntry {
   readonly text?: string;
   /** Stable code of what the baker went by, for a dough ready mark. */
   readonly criterion?: string;
+  /** Overall rating of a review note, 1 to 5. */
+  readonly rating?: number;
 }
 
 const time = (instant: Instant | undefined): number =>
@@ -112,12 +114,14 @@ export const bakeLog = (state: BakeState): LogEntry[] => {
           ? {}
           : { criterion: observation.payload.criterion }),
       });
-    } else if (observation.payload.text) {
+    } else if (observation.payload.text || observation.payload.rating !== undefined) {
+      const { text, rating, stepId } = observation.payload;
       entries.push({
         at: observation.occurredAt,
         kind: 'note',
-        text: observation.payload.text,
-        ...(observation.payload.stepId === undefined ? {} : { stepId: observation.payload.stepId }),
+        ...(text ? { text } : {}),
+        ...(rating === undefined ? {} : { rating }),
+        ...(stepId === undefined ? {} : { stepId }),
       });
     }
   }

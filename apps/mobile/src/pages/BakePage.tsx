@@ -19,10 +19,17 @@ import {
   type DomainError,
   type Instant,
 } from '@flourprint/core/domain';
+import { NoteSheet } from '../blocks/NoteSheet';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatTime, parseDuration, editableDuration } from '../i18n/time';
-import { bakeLog, bakeView, stepProgress, type BakeStepView } from '../services/bake-view';
+import {
+  bakeLog,
+  bakeView,
+  stepProgress,
+  type BakeStepView,
+  type LogEntry,
+} from '../services/bake-view';
 import { sendBakeCommand } from '../services/bakes';
 import { useServices } from '../services/services';
 import { useGuardedWrite } from '../services/writes';
@@ -44,6 +51,8 @@ export const BakePage = () => {
   const [readFailed, setReadFailed] = useState(false);
   const [now, setNow] = useState<Instant>(services.clock.now());
   const writes = useGuardedWrite();
+  // The note sheet, open on a step (or on the whole bake).
+  const [noteOn, setNoteOn] = useState<{ stepId?: string }>();
   // A command whose outcome is unknown (storage error): retried with the same id, never twice.
   const [pending, setPending] = useState<{
     commandId: string;
@@ -178,28 +187,7 @@ export const BakePage = () => {
       ],
     });
 
-  const note = () =>
-    void presentAlert({
-      header: t('bake.noteTitle'),
-      inputs: [{ name: 'text', type: 'textarea', placeholder: t('bake.notePlaceholder') }],
-      buttons: [
-        { text: t('bake.cancel'), role: 'cancel' },
-        {
-          text: t('bake.save'),
-          handler: (values: { text: string }) => {
-            const text = values.text.trim();
-            if (text === '') return true;
-            void send({
-              type: 'AddObservation',
-              category: 'other',
-              text,
-              ...(focus ? { stepId: focus.step.id } : {}),
-            });
-            return true;
-          },
-        },
-      ],
-    });
+  const note = () => setNoteOn(focus ? { stepId: focus.step.id } : {});
 
   /** The dough's fermentation steps: where the baker judges it ready (fermentation.md). */
   const fermenting = (stepId: string) => {
@@ -433,10 +421,16 @@ export const BakePage = () => {
                   className="m-0 py-2 text-sm text-muted"
                 >
                   {entry.kind === 'note'
-                    ? t('bake.log.note', {
-                        time: formatTime(entry.at, locale),
-                        text: entry.text ?? '',
-                      })
+                    ? entry.stepId === undefined
+                      ? t('bake.log.note', {
+                          time: formatTime(entry.at, locale),
+                          text: noteText(entry),
+                        })
+                      : t('bake.log.noteOn', {
+                          time: formatTime(entry.at, locale),
+                          step: nameOf(entry.stepId),
+                          text: noteText(entry),
+                        })
                     : entry.kind === 'doughReady'
                       ? entry.criterion === undefined
                         ? t('bake.log.doughReady', {
@@ -457,16 +451,42 @@ export const BakePage = () => {
             </StepList>
           )}
 
+          {!focus && (
+            <IonButton
+              fill="outline"
+              disabled={writes.busy || pending !== undefined}
+              onClick={note}
+            >
+              {t('bake.addNote')}
+            </IonButton>
+          )}
+
           {state.status === 'active' && (
             <IonButton fill="clear" color="medium" onClick={abandon}>
               {t('bake.abandon')}
             </IonButton>
           )}
         </div>
+        <NoteSheet
+          open={noteOn !== undefined}
+          state={state}
+          {...(noteOn?.stepId === undefined ? {} : { stepId: noteOn.stepId })}
+          onSave={(payload) => {
+            setNoteOn(undefined);
+            void send(payload);
+          }}
+          onClose={() => setNoteOn(undefined)}
+        />
       </IonContent>
     </IonPage>
   );
 };
+
+/** A note's text, with its rating as stars when it has one. */
+const noteText = (entry: LogEntry): string =>
+  [entry.rating === undefined ? '' : '★'.repeat(entry.rating), entry.text ?? '']
+    .filter((part) => part !== '')
+    .join(' ');
 
 type Translate = ReturnType<typeof useMessages>['t'];
 

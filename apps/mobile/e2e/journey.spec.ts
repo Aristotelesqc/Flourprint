@@ -94,6 +94,29 @@ test('dough ready is recorded on a running fermentation step without ending it',
   await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
 });
 
+test('a note attaches to a step; an ended bake takes a rated review note', async ({ page }) => {
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await page.getByRole('button', { name: 'Note', exact: true }).click();
+  // Attached to the running step by default; the baker may pick another.
+  await expect(page.getByRole('button', { name: 'Préferment', pressed: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Fermentation', pressed: true })).toBeVisible();
+  await page.locator('textarea:visible').fill('Bulles fines');
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByText('Préferment : Bulles fines')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Abandonner' }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Abandonner' }).click();
+  await page.getByRole('button', { name: 'Ajouter une note' }).click();
+  await expect(page.getByRole('button', { name: 'Mie', pressed: true })).toBeVisible();
+  await page.getByRole('button', { name: '★★★★', exact: true }).click();
+  await page.locator('textarea:visible').fill('Mie serrée');
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
+});
+
 test('copies all data for review, with the bake digest and its notes', async ({
   page,
   context,
@@ -106,7 +129,7 @@ test('copies all data for review, with the bake digest and its notes', async ({
   await page.getByRole('button', { name: 'Note', exact: true }).click();
   await page.locator('textarea:visible').fill('Bulles fines');
   await page.getByRole('button', { name: 'Enregistrer' }).click();
-  await expect(page.getByText('Bulles fines')).toBeVisible();
+  await expect(page.getByText('Préferment : Bulles fines')).toBeVisible();
 
   // In-app navigation: the browser build keeps its data in memory only.
   const advanced = page.getByLabel('Avancé').first();
