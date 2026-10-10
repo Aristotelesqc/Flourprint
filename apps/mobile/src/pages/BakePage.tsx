@@ -15,7 +15,7 @@ import { loadBake } from '@flourprint/core/application';
 import type { BakeCommandPayload, BakeState, DomainError, Instant } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatTime, parseDuration, editableDuration } from '../i18n/time';
-import { bakeLog, bakeView, type BakeStepView } from '../services/bake-view';
+import { bakeLog, bakeView, stepProgress, type BakeStepView } from '../services/bake-view';
 import { sendBakeCommand } from '../services/bakes';
 import { useServices } from '../services/services';
 import { useGuardedWrite } from '../services/writes';
@@ -419,14 +419,7 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
   }
   const progress =
     focus.running && startedAt && projected?.end
-      ? Math.min(
-          1,
-          Math.max(
-            0,
-            (Date.parse(now) - Date.parse(startedAt)) /
-              (Date.parse(projected.end) - Date.parse(startedAt)),
-          ),
-        )
+      ? stepProgress(Date.parse(startedAt), Date.parse(projected.end), Date.parse(now))
       : 0;
   return (
     <section className="flex flex-col gap-1.5">

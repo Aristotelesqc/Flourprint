@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MemoryBakeEventStore } from '@flourprint/adapters/memory';
 import { executeBakeCommand } from '@flourprint/core/application';
 import type { BakeCommandPayload, BakeState, Instant } from '@flourprint/core/domain';
-import { bakeLog, bakeView } from '../src/services/bake-view';
+import { bakeLog, bakeView, stepProgress } from '../src/services/bake-view';
 import { sampleRecipe } from '../src/services/seed';
 
 const at = (time: string) => `2026-10-07T${time}:00.000Z` as Instant;
@@ -91,5 +91,19 @@ describe('bake view', () => {
     expect(view?.focus).toMatchObject({ step: { id: 'proof' }, running: true });
     expect(view?.due.map((v) => v.step.id)).toEqual(['preheat']);
     expect(view?.next.map((v) => v.step.id)).not.toContain('preheat');
+  });
+});
+
+describe('step progress (audit C6 of 15e52e3)', () => {
+  it('stays a number for an instantaneous step', () => {
+    expect(stepProgress(1000, 1000, 1000)).toBe(1);
+    expect(stepProgress(1000, 1000, 999)).toBe(0);
+  });
+
+  it('is clamped to [0, 1] for future and overdue steps', () => {
+    expect(stepProgress(1000, 2000, 500)).toBe(0);
+    expect(stepProgress(1000, 2000, 1500)).toBe(0.5);
+    expect(stepProgress(1000, 2000, 9000)).toBe(1);
+    expect(stepProgress(Number.NaN, 2000, 1500)).toBe(0);
   });
 });

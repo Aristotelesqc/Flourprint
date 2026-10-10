@@ -112,3 +112,14 @@ export const bakeLog = (state: BakeState): LogEntry[] => {
   }
   return entries.sort((a, b) => time(b.at) - time(a.at));
 };
+
+/**
+ * Share of a running step's planned time already elapsed, in [0, 1]. An instantaneous step (no
+ * planned span) reads full once its planned instant is reached; it never ends the step itself.
+ */
+export const stepProgress = (startMs: number, endMs: number, nowMs: number): number => {
+  if (![startMs, endMs, nowMs].every(Number.isFinite)) return 0;
+  const span = endMs - startMs;
+  if (!(span > 0)) return nowMs >= endMs ? 1 : 0;
+  return Math.min(1, Math.max(0, (nowMs - startMs) / span));
+};
