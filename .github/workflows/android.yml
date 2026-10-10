@@ -13,6 +13,10 @@ on:
       - apps/mobile/src/services/services.tsx
       - packages/adapters/src/sql/**
       - packages/adapters/src/sqlite-capacitor/**
+      - packages/adapters/src/testing/**
+      - packages/adapters/package.json
+      - apps/mobile/src/services/device-checks.ts
+      - pnpm-lock.yaml
       - .github/workflows/android.yml
   workflow_dispatch:
 
