@@ -71,6 +71,70 @@ export const en = {
   'draft.save': 'Save v{version}',
   'draft.saved': 'Saved as version {version}.',
   'draft.discard': 'Discard',
+  'guide.title': 'About this style',
+  'guide.unverified':
+    'Typical ranges gathered from baking references, not yet checked against the full sources.',
+  'guide.ranges': 'Usual ranges',
+  'guide.use': 'Start from this template',
+  'guide.key.hydration_pct': 'Water',
+  'guide.key.hydration_pct_high': 'Water (high-hydration family)',
+  'guide.key.salt_pct': 'Salt',
+  'guide.key.sugar_pct': 'Sugar',
+  'guide.key.fat_pct': 'Fat',
+  'guide.key.fat_pct_high': 'Fat (high-hydration family)',
+  'guide.key.egg_pct': 'Eggs',
+  'guide.key.milk_pct': 'Milk',
+  'guide.key.water_pct': 'Water besides eggs',
+  'guide.key.liquid_pct': 'Water and milk',
+  'guide.key.yeast_instant_pct': 'Instant yeast',
+  'guide.key.yeast_active_dry_pct': 'Active dry yeast',
+  'guide.key.preferment_pct': 'Flour in the preferment',
+  'guide.key.biga_hydration_pct': 'Biga hydration',
+  'guide.key.scald_flour_pct': 'Flour in the tangzhong',
+  'guide.key.malt_syrup_pct': 'Malt syrup',
+  'guide.key.cornmeal_or_semolina_pct': 'Cornmeal or semolina',
+  'guide.key.poolish_h': 'Poolish',
+  'guide.key.biga_h': 'Biga',
+  'guide.key.bulk_h': 'Bulk',
+  'guide.key.cold_retard_h': 'Cold fermentation',
+  'guide.key.proof_h': 'Proof',
+  'guide.key.boil_s': 'Boil',
+  'guide.key.bake_c': 'Oven',
+  'guide.key.bake_min': 'Bake',
+  'guide.key.ball_g': 'Dough ball',
+  'guide.key.dough_g_13in': 'Dough for a 13-inch pan',
+  'guide.key.dough_g_half_sheet': 'Dough for a half-sheet pan',
+  'guide.key.flour_w': 'Flour strength (W)',
+  'template.baguette.traits':
+    'A long, thin lean loaf of flour, water, salt and yeast, usually on a poolish, baked hot with steam for a thin crisp crust and an open crumb.',
+  'template.boule-dutch-oven.traits':
+    'A round lean loaf baked in a preheated covered pot that traps steam, then uncovered to brown; wetter than a baguette, with a slow, low-yeast fermentation.',
+  'template.ciabatta.traits':
+    'A flat Italian slipper loaf from a very wet dough built on a stiff biga, barely shaped, with a large irregular crumb and a thin crust.',
+  'template.bagels.traits':
+    'Rings of a very stiff, strong dough sweetened with malt, retarded overnight, briefly boiled and baked hot: dense, chewy and shiny.',
+  'template.focaccia.traits':
+    'An oily, dimpled pan flatbread. Genoese fugassa sits near 65 % water with a water-oil-salt brine on top; this high-hydration pan version is airier.',
+  'template.brioche.traits':
+    'A French bread rich in eggs and butter (about half the flour weight each) with some sugar; the butter goes in after the gluten develops and the dough rests cold overnight.',
+  'template.burger-buns.traits':
+    'Soft, lightly enriched round rolls (milk, a little egg, butter and sugar), proofed warm and baked moderately to a thin soft crust.',
+  'template.pullman.traits':
+    'A square sandwich loaf (pain de mie) baked in a lidded pan: flat top, thin soft crust, fine close crumb, from a milk dough with moderate butter and sugar.',
+  'template.shokupan.traits':
+    'Japanese milk bread: a cooked flour paste (tangzhong, about 1:5) lets a milk dough hold more water, for a very soft, fine, moist crumb.',
+  'template.pizza-neo-neapolitan.traits':
+    'A Neapolitan-style round pizza (soft, puffy, spotted rim, thin centre) adapted to home ovens: wetter dough and longer cold fermentation than the AVPN rules allow.',
+  'template.pizza-roman.traits':
+    'Roman tonda: a thin, crisp round pizza with almost no rim, from a low-hydration dough with a little oil, rolled out from a small ball.',
+  'template.pizza-teglia.traits':
+    'Roman pan pizza: a very wet dough of strong flour, matured cold for a day or more, stretched into an oiled pan: airy crumb, crisp base.',
+  'template.pizza-new-york.traits':
+    'A large, thin, foldable pizza from strong flour with a little oil and often sugar, cold-fermented for one to three days.',
+  'template.pizza-sicilian.traits':
+    'A thick, airy rectangular pan pizza baked in a well-oiled sheet pan so the base fries crisp.',
+  'template.pizza-chicago.traits':
+    'Deep dish: a low-hydration, fat-rich crust pressed up the sides of a deep round pan, filled with cheese then sauce, baked fairly long at moderate heat.',
   'draft.rename': 'Rename',
   'draft.delete': 'Delete the draft',
   'draft.deleteConfirm': 'Delete this draft? This cannot be undone.',
@@ -545,6 +609,70 @@ export const fr: Catalog = {
   'draft.save': 'Enregistrer v{version}',
   'draft.saved': 'Version {version} enregistrée.',
   'draft.discard': 'Annuler',
+  'guide.title': 'À propos de ce style',
+  'guide.unverified':
+    'Fourchettes typiques tirées de références de boulangerie, pas encore vérifiées dans les sources complètes.',
+  'guide.ranges': 'Fourchettes habituelles',
+  'guide.use': 'Partir de ce modèle',
+  'guide.key.hydration_pct': 'Eau',
+  'guide.key.hydration_pct_high': 'Eau (famille très hydratée)',
+  'guide.key.salt_pct': 'Sel',
+  'guide.key.sugar_pct': 'Sucre',
+  'guide.key.fat_pct': 'Gras',
+  'guide.key.fat_pct_high': 'Gras (famille très hydratée)',
+  'guide.key.egg_pct': 'Œufs',
+  'guide.key.milk_pct': 'Lait',
+  'guide.key.water_pct': 'Eau en plus des œufs',
+  'guide.key.liquid_pct': 'Eau et lait',
+  'guide.key.yeast_instant_pct': 'Levure instantanée',
+  'guide.key.yeast_active_dry_pct': 'Levure sèche active',
+  'guide.key.preferment_pct': 'Farine dans le préferment',
+  'guide.key.biga_hydration_pct': 'Hydratation de la biga',
+  'guide.key.scald_flour_pct': 'Farine dans le tangzhong',
+  'guide.key.malt_syrup_pct': 'Sirop de malt',
+  'guide.key.cornmeal_or_semolina_pct': 'Semoule de maïs ou de blé',
+  'guide.key.poolish_h': 'Poolish',
+  'guide.key.biga_h': 'Biga',
+  'guide.key.bulk_h': 'Pointage',
+  'guide.key.cold_retard_h': 'Fermentation au froid',
+  'guide.key.proof_h': 'Apprêt',
+  'guide.key.boil_s': 'Ébullition',
+  'guide.key.bake_c': 'Four',
+  'guide.key.bake_min': 'Cuisson',
+  'guide.key.ball_g': 'Pâton',
+  'guide.key.dough_g_13in': 'Pâte pour un moule de 13 po',
+  'guide.key.dough_g_half_sheet': 'Pâte pour une demi-plaque',
+  'guide.key.flour_w': 'Force de la farine (W)',
+  'template.baguette.traits':
+    'Un pain long et mince, de farine, eau, sel et levure, souvent sur poolish, cuit très chaud avec buée : croûte fine et croustillante, mie ouverte.',
+  'template.boule-dutch-oven.traits':
+    'Un pain rond maigre cuit dans une cocotte préchauffée et couverte qui garde la vapeur, puis découverte pour dorer ; plus hydraté qu’une baguette, fermentation lente avec peu de levure.',
+  'template.ciabatta.traits':
+    'Un pain plat italien en forme de pantoufle, d’une pâte très hydratée sur biga ferme, à peine façonné : grosse mie irrégulière, croûte fine.',
+  'template.bagels.traits':
+    'Des anneaux de pâte très ferme et forte, sucrée au malt, retardés une nuit, pochés brièvement puis cuits chauds : denses, élastiques et brillants.',
+  'template.focaccia.traits':
+    'Un pain plat huilé et alvéolé, cuit en plaque. La fugassa génoise est vers 65 % d’eau avec une saumure eau-huile-sel ; cette version très hydratée est plus aérée.',
+  'template.brioche.traits':
+    'Un pain français riche en œufs et en beurre (environ la moitié du poids de farine chacun) avec un peu de sucre ; le beurre entre après le développement du gluten et la pâte repose au froid une nuit.',
+  'template.burger-buns.traits':
+    'Des petits pains ronds et moelleux, légèrement enrichis (lait, un peu d’œuf, beurre, sucre), apprêtés au chaud et cuits modérément pour une croûte fine et tendre.',
+  'template.pullman.traits':
+    'Un pain de mie carré cuit dans un moule couvert : dessus plat, croûte fine et tendre, mie fine et serrée, d’une pâte au lait avec un peu de beurre et de sucre.',
+  'template.shokupan.traits':
+    'Le pain au lait japonais : une pâte de farine cuite (tangzhong, environ 1:5) permet à une pâte au lait de retenir plus d’eau, pour une mie très tendre, fine et humide.',
+  'template.pizza-neo-neapolitan.traits':
+    'Une pizza ronde de style napolitain (bord gonflé et tacheté, centre mince) adaptée au four maison : pâte plus hydratée et fermentation au froid plus longue que ce que permet l’AVPN.',
+  'template.pizza-roman.traits':
+    'La tonda romaine : une pizza ronde mince et croustillante, presque sans bord, d’une pâte peu hydratée avec un peu d’huile, abaissée au rouleau à partir d’un petit pâton.',
+  'template.pizza-teglia.traits':
+    'La pizza romaine en plaque : une pâte très hydratée de farine forte, maturée au froid un jour ou plus, étirée dans une plaque huilée : mie aérée, dessous croustillant.',
+  'template.pizza-new-york.traits':
+    'Une grande pizza mince et pliable, de farine forte avec un peu d’huile et souvent de sucre, fermentée au froid un à trois jours.',
+  'template.pizza-sicilian.traits':
+    'Une pizza épaisse et aérée, rectangulaire, cuite dans une plaque bien huilée pour que le dessous frise et croustille.',
+  'template.pizza-chicago.traits':
+    'La deep dish : une croûte peu hydratée et riche en gras, montée sur les bords d’un moule rond profond, garnie de fromage puis de sauce, cuite assez longtemps à chaleur modérée.',
   'draft.rename': 'Renommer',
   'draft.delete': 'Supprimer le brouillon',
   'draft.deleteConfirm': 'Supprimer ce brouillon ? C’est définitif.',

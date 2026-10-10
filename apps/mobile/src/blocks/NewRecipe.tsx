@@ -12,8 +12,10 @@ import {
 } from '@ionic/react';
 import { RECIPE_TEMPLATES } from '@flourprint/core/application';
 import type { RecipeTemplate } from '@flourprint/core/domain';
+import { useState } from 'react';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
+import { StyleGuide } from './StyleGuide';
 
 const CATEGORIES: readonly RecipeTemplate['category'][] = [
   'bread',
@@ -49,6 +51,8 @@ export const NewRecipe = ({
 }) => {
   const { t } = useMessages();
   const templateName = useTemplateName();
+  // A template opens its style guide first; starting from it is a second, explicit tap.
+  const [selected, setSelected] = useState<string>();
   return (
     <IonModal isOpen={open} onDidDismiss={onClose}>
       <IonHeader>
@@ -79,15 +83,27 @@ export const NewRecipe = ({
                   <IonLabel>{t(`new.category.${category}`)}</IonLabel>
                 </IonListHeader>
                 {templates.map((template) => (
-                  <IonItem
-                    key={template.id}
-                    button
-                    detail
-                    disabled={busy}
-                    onClick={() => onTemplate(template)}
-                  >
-                    <IonLabel>{templateName(template.id)}</IonLabel>
-                  </IonItem>
+                  <div key={template.id}>
+                    <IonItem
+                      button
+                      detail={false}
+                      disabled={busy}
+                      aria-expanded={selected === template.id}
+                      onClick={() =>
+                        setSelected(selected === template.id ? undefined : template.id)
+                      }
+                    >
+                      <IonLabel>{templateName(template.id)}</IonLabel>
+                    </IonItem>
+                    {selected === template.id && (
+                      <div className="flex flex-col gap-2 px-4 py-3">
+                        <StyleGuide template={template} />
+                        <IonButton disabled={busy} onClick={() => onTemplate(template)}>
+                          {t('guide.use')}
+                        </IonButton>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             );

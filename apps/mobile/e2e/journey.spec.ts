@@ -426,7 +426,14 @@ test('a template starts a named draft that becomes a recipe once saved', async (
   await page.goto('/recipes');
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Pizza néo-napolitaine', { exact: true }).click();
+  // The style guide comes first: traits and usual ranges, marked as not yet verified.
+  const guide = page.getByRole('region', { name: 'À propos de ce style' });
+  await expect(guide).toContainText('Fourchettes habituelles');
+  await expect(guide).toContainText('pas encore vérifiées');
+  await page.getByRole('button', { name: 'Partir de ce modèle' }).click();
   await expect(page).toHaveURL(/\/drafts\//);
+  // The draft keeps the guide of its template.
+  await expect(page.getByRole('region', { name: 'À propos de ce style' })).toBeVisible();
   await expect(page.getByText('Pizza néo-napolitaine 1', { exact: true })).toBeVisible();
   await expect(page.getByText('Brouillon, pas encore enregistré').first()).toBeVisible();
   // A template passes the check as is.

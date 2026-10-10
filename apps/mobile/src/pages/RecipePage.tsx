@@ -13,7 +13,7 @@ import {
 } from '@ionic/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { saveDraft, type Draft } from '@flourprint/core/application';
+import { RECIPE_TEMPLATES, saveDraft, type Draft } from '@flourprint/core/application';
 import {
   applyDraftFormulaEdit,
   checkRecipe,
@@ -36,6 +36,7 @@ import { ProcessSection } from '../blocks/ProcessSection';
 import { useMessages } from '../i18n/use-messages';
 import { sendBakeCommand } from '../services/bakes';
 import { RecipeChecks } from '../blocks/RecipeChecks';
+import { StyleGuide } from '../blocks/StyleGuide';
 import { useServices } from '../services/services';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
@@ -488,6 +489,18 @@ export const RecipePage = () => {
 
         {/* Tabs stay mounted: a draft being typed and the weighing checklist survive a switch. */}
         <div hidden={tab !== 'formula'}>
+          {(() => {
+            const origin = stored?.origin;
+            const template =
+              origin?.kind === 'template'
+                ? RECIPE_TEMPLATES.find((tpl) => tpl.id === origin.template.id)
+                : undefined;
+            return template ? (
+              <div className="mb-5">
+                <StyleGuide template={template} />
+              </div>
+            ) : null;
+          })()}
           <FormulaSection
             formula={draft.formula}
             {...(resolved.ok ? { resolved: resolved.value } : {})}
