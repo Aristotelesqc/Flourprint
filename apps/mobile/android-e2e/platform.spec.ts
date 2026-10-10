@@ -51,8 +51,20 @@ test.afterAll(async () => {
 
 test('the shared storage contract passes on Capacitor SQLite', async () => {
   const page = await open();
-  await page.goto('https://localhost/device-checks');
-  await page.getByText('Run the storage checks').click();
+  // Navigate inside the app (no WebView reload, which reopens the native connection).
+  await page.evaluate(() => {
+    window.history.pushState({}, '', '/device-checks');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  const run = page.getByText('Run the storage checks');
+  try {
+    await expect(run).toBeVisible({ timeout: 60_000 });
+  } catch (error) {
+    // Print what the app shows instead, so the job log explains the failure.
+    console.log(`URL ${page.url()}\n${await page.locator('body').innerText()}`);
+    throw error;
+  }
+  await run.click();
   const summary = page.getByText(/\d+ of \d+ checks passed/);
   await expect(summary).toBeVisible({ timeout: 120_000 });
   const [passed, total] = ((await summary.textContent()) ?? '').match(/\d+/g) ?? [];
