@@ -200,3 +200,9 @@ weighing. Fixture comparison tolerance: `1e-9` relative. See ADR 0006.
 ## References
 
 Worked cases: `fixtures/` (lean-direct, poolish-tangzhong, enriched-milk-butter).
+
+## Drafts
+
+In a draft (`drafts.md`) an edit is applied without the final resolution: the formula may be
+left in a state that does not resolve, and `checkRecipe` lists what is wrong. A revision is
+always resolvable.

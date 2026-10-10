@@ -36,7 +36,18 @@ note? }`. Versions start at 1 and increase by one.
   `{ bakeId, status, recipeId?, recipeVersion?, startedAt?, endedAt?, version, updatedAt }`.
 - Summaries are rebuildable from the events at any time.
 
-## SQLite schema (version 2)
+## Drafts
+
+- Drafts (`drafts.md`) are stored apart from recipes: `{ id, name, origin, formula, process,
+createdAt, updatedAt }` as one JSON document. `saveDraft` writes or replaces it; `deleteDraft`
+  removes it. Their documents are decoded structurally when read, like revisions, but not
+  validated: a draft may fail the recipe checks.
+- Saving a draft as a recipe or a version writes the revision and deletes the draft in **one
+  transaction**.
+- A full backup carries `drafts` (optional, so older backups still restore); a restore writes them
+  as recorded.
+
+## SQLite schema (version 3)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
@@ -53,6 +64,8 @@ bake_commands  (command_id TEXT PRIMARY KEY, bake_id TEXT NOT NULL, content TEXT
 bakes          (bake_id TEXT PRIMARY KEY, summary TEXT NOT NULL, status TEXT NOT NULL,
                 updated_at TEXT NOT NULL)
 schema_meta    (key TEXT PRIMARY KEY, value INTEGER NOT NULL)
+drafts         (id TEXT PRIMARY KEY, name TEXT NOT NULL, document TEXT NOT NULL,
+                updated_at TEXT NOT NULL)                                          -- v3
 ```
 
 The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node
@@ -108,5 +121,6 @@ on a connection is serialized, so a transaction never interleaves with another o
 Every implementation (memory, SQLite Node, SQLite Capacitor, SQLite bridge) runs the same contract test suite:
 idempotent retry, reused command id, version conflict, atomic rejection of an invalid batch,
 head conflicts, immutability of revisions, families (grouping, pinning, default variant) and
-additive import (skips present ids, idempotent, atomic). SQLite implementations add durability tests (reopen,
+additive import (skips present ids, idempotent, atomic) and drafts (save, replace, delete, and
+the atomic promotion of a draft to a recipe or a version). SQLite implementations add durability tests (reopen,
 failed migration, newer database refused).
