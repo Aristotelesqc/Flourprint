@@ -41,6 +41,23 @@ const open = async (): Promise<Page> => {
   return page;
 };
 
+/**
+ * A system dialog (another app "not responding") holding the focus gets the key presses meant for
+ * the app (seen on CI: backEvents 0, focus on the launcher's ANR window). Close it first.
+ */
+const dismissSystemDialog = async () => {
+  const focus = (await device.shell('dumpsys window | grep mCurrentFocus')).toString();
+  if (focus.includes(PKG)) return;
+  await device
+    .shell('am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS')
+    .catch(() => undefined);
+  if (/Not Responding/i.test(focus)) {
+    // The dialog's default button is "Wait": it closes the dialog and leaves the app alone.
+    await device.shell('input keyevent KEYCODE_ENTER').catch(() => undefined);
+  }
+  await device.shell(`am start -n ${PKG}/.MainActivity`).catch(() => undefined);
+};
+
 const forceStop = async () => {
   await device.shell(`am force-stop ${PKG}`);
   await expect.poll(() => device.webViews().some((w) => w.pkg() === PKG)).toBe(false);
@@ -51,6 +68,9 @@ test.beforeAll(async () => {
   const [first] = await android.devices();
   if (!first) throw new Error('No Android device or emulator.');
   device = first;
+  // The emulator's own launcher sometimes stops answering on a loaded CI runner; its "not
+  // responding" dialog then takes the focus and every key press (back included). Do not show it.
+  await device.shell('settings put global hide_error_dialogs 1').catch(() => undefined);
   await device.shell(`pm uninstall ${PKG}`).catch(() => undefined);
   await device.installApk(apk);
 });
@@ -136,7 +156,10 @@ test('the Android back button returns to the recipe list', async () => {
   // (at most three presses, each given time to navigate).
   try {
     await expect(async () => {
-      if (!/\/recipes$/.test(page.url())) await device.shell('input keyevent KEYCODE_BACK');
+      if (!/\/recipes$/.test(page.url())) {
+        await dismissSystemDialog();
+        await device.shell('input keyevent KEYCODE_BACK');
+      }
       await expect(page).toHaveURL(/\/recipes$/, { timeout: 5_000 });
     }).toPass({ timeout: 20_000, intervals: [1_000, 2_000] });
   } catch (cause) {
