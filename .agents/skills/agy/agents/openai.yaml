@@ -1,0 +1,4 @@
+interface:
+  display_name: 'AGY Gemini delegation'
+  short_description: 'Delegate scoped work to Gemini through AGY'
+  default_prompt: 'Use $agy to delegate this task to Gemini and verify the result.'

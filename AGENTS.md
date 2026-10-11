@@ -38,6 +38,17 @@ a dedicated pull request, before the code that depends on it.
 - `dogfood/` holds the owner's personal recipes and their importer. Nothing in `packages/` or
   `apps/` may refer to it; never hard-code those recipes in the product.
 
+## Repository skills
+
+Reusable agent workflows live in `.agents/skills/`; repository contracts and ADRs remain the
+sources of truth. Read a skill's entrypoint before using its procedure or helper scripts.
+
+- **AGY / Gemini delegation**: [.agents/skills/agy/SKILL.md](.agents/skills/agy/SKILL.md).
+  Use for AGY/Gemini reviews, research or assigned implementation. Codex invocation: `$agy`;
+  Claude Code invocation: `/agy` through its thin routing skill; other hosts can read the
+  canonical entrypoint directly. The skill does not authorize extra sharing,
+  publishing, permission changes or overlapping writers.
+
 ## Commands
 
 ```bash

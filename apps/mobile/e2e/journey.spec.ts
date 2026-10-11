@@ -530,6 +530,7 @@ test('a template starts a named draft that becomes a recipe once saved', async (
   await page.getByRole('button', { name: 'Partir de ce modèle' }).click();
   await expect(page).toHaveURL(/\/drafts\//);
   // The draft keeps the guide of its template.
+  await expect(page.locator('ion-modal:visible')).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'À propos de ce style' })).toBeVisible();
   await expect(page.getByText('Pizza néo-napolitaine 1', { exact: true })).toBeVisible();
   await expect(page.getByText('Brouillon, pas encore enregistré').first()).toBeVisible();
