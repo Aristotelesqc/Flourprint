@@ -77,13 +77,12 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: pnpm install --frozen-lockfile
-      - name: Build identifiers
+      - name: Build names (ADR 0016)
         # On a pull request GITHUB_SHA is GitHub's temporary merge commit; label the branch commit.
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
-          echo "FLOURPRINT_VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/build-id.mjs
       - run: pnpm build
       - run: pnpm build:mobile
       - run: pnpm --filter @flourprint/mobile exec cap sync android
@@ -132,10 +131,11 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Build identifiers
+      - name: Build names (ADR 0016)
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/build-id.mjs
       - run: pnpm build
       - run: pnpm build:mobile
       - name: Deploy to Cloudflare Pages
@@ -201,10 +201,11 @@ jobs:
         # pnpm may skip the package's own download (cached build); fetch it explicitly.
         working-directory: apps/desktop
         run: node node_modules/electron/install.js
-      - name: Build identifiers
+      - name: Build names (ADR 0016)
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/build-id.mjs
       - run: pnpm build
       - run: pnpm build:mobile
       - run: pnpm build:desktop
@@ -214,3 +215,102 @@ jobs:
           name: flourprint-desktop-windows
           path: apps/desktop/out/Flourprint-win32-x64
           retention-days: 30
+
+  version:
+    # A pull request into main is a release: it must raise the version above the latest release
+    # tag (ADR 0016).
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Version above the latest release
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          LATEST=$(git ls-remote --tags --refs origin 'v*' | sed 's|.*refs/tags/v||' | sort -V | tail -1)
+          echo "Version ${VERSION}, latest release ${LATEST:-none}"
+          HIGHEST=$(printf '%s\n%s\n' "$LATEST" "$VERSION" | sort -V | tail -1)
+          if [ -n "$LATEST" ] && { [ "$LATEST" = "$VERSION" ] || [ "$HIGHEST" != "$VERSION" ]; }; then
+            echo "::error::package.json version ${VERSION} must be above the latest release v${LATEST} (ADR 0016)."
+            exit 1
+          fi
+
+  release:
+    # A push to main whose version has no tag yet publishes the release v<version> (ADR 0016).
+    if: github.event_name == 'push' && github.ref_name == 'main'
+    needs: [e2e, android, desktop]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Release needed
+        id: tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v${VERSION}" > /dev/null; then
+            echo "v${VERSION} is already released; nothing to publish." >> "$GITHUB_STEP_SUMMARY"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.tag.outputs.publish == 'true'
+        run: pnpm install --frozen-lockfile && pnpm build
+      - if: steps.tag.outputs.publish == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: flourprint-debug-apk
+          path: release
+      - if: steps.tag.outputs.publish == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: flourprint-desktop-windows
+          path: desktop/Flourprint-win32-x64
+      - name: Publish the release
+        if: steps.tag.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          (cd desktop && zip -qr "../release/flourprint-${VERSION}-windows-x64.zip" Flourprint-win32-x64)
+          ls release
+          PR=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[0].number // empty')
+          VERSIONS=$(cd packages/core && node --input-type=module -e "const d = await import('./dist/domain/index.js'); console.log('Contracts ' + d.CONTRACT_VERSION + ', engine ' + d.ENGINE_VERSION + ', fermentation model ' + d.FERMENTATION_MODEL.id + ' ' + d.FERMENTATION_MODEL.version + '.')")
+          {
+            if [ -n "$PR" ]; then echo "Changes: #${PR}."; echo; fi
+            echo "$VERSIONS"
+            echo
+            echo "\`flourprint-${VERSION}.apk\`: the Android app (installs over earlier releases, data kept)."
+            echo "\`flourprint-${VERSION}-windows-x64.zip\`: the Windows desktop shell, to unzip and run."
+          } > notes.md
+          gh release create "v${VERSION}" release/* --target "$GITHUB_SHA" --title "Flourprint ${VERSION}" --notes-file notes.md
+
+  dev-channel:
+    # A push to dev replaces the rolling pre-release dev-channel and its dev APK (ADR 0016).
+    if: github.event_name == 'push' && github.ref_name == 'dev'
+    needs: android
+    runs-on: ubuntu-latest
+    concurrency: dev-channel
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: flourprint-dev-apk
+          path: artifact
+      - name: Replace the dev-channel pre-release
+        run: |
+          mv artifact/*.apk flourprint-dev.apk
+          gh release delete dev-channel --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create dev-channel flourprint-dev.apk --repo "$GITHUB_REPOSITORY" --prerelease \
+            --target "$GITHUB_SHA" --title "Dev channel" \
+            --notes "Dev APK (app.flourprint.dev). It loads https://dev.flourprint-aristotelesqc.pages.dev, the integration branch of the open major pull request: install once, restart the app to update. Last rebuilt from ${GITHUB_SHA::7}."

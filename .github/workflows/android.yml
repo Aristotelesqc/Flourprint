@@ -47,12 +47,11 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: pnpm install --frozen-lockfile
-      - name: Build identifiers
+      - name: Build names (ADR 0016)
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
-          echo "FLOURPRINT_VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/build-id.mjs
       - run: pnpm build
       - run: pnpm build:mobile
       - run: pnpm --filter @flourprint/mobile exec cap sync android
