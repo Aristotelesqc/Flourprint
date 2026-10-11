@@ -41,7 +41,7 @@ test('an invalid entry stays visible and marked', async ({ page }) => {
 test('a double tap starts one bake; parallel steps run with real overlap', async ({ page }) => {
   await openRecipe(page);
   await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la cuisson' }).dblclick();
+  await page.getByRole('button', { name: 'Démarrer la fournée' }).dblclick();
   await expect(page).toHaveURL(/\/bakes\//);
 
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
@@ -64,7 +64,7 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await expect(page.locator('ion-item:visible')).toHaveCount(1);
   await expect(page.locator('ion-item:visible')).toContainText('En cours');
   await page.getByRole('button', { name: 'Processus' }).click();
-  await expect(page.getByRole('button', { name: 'Voir la cuisson en cours' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Voir la fournée en cours' })).toBeVisible();
 });
 
 test('dough ready is recorded on a running fermentation step without ending it', async ({
@@ -72,7 +72,7 @@ test('dough ready is recorded on a running fermentation step without ending it',
 }) => {
   await openRecipe(page);
   await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
   await expect(page).toHaveURL(/\/bakes\//);
 
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
@@ -98,7 +98,7 @@ test('dough ready is recorded on a running fermentation step without ending it',
 test('a note attaches to a step; an ended bake takes a rated review note', async ({ page }) => {
   await openRecipe(page);
   await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Note', exact: true }).click();
   // Attached to the running step by default; the baker may pick another.
@@ -125,7 +125,7 @@ test('copies all data for review, with the bake digest and its notes', async ({
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await openRecipe(page);
   await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Note', exact: true }).click();
   await page.locator('textarea:visible').fill('Bulles fines');
@@ -140,7 +140,7 @@ test('copies all data for review, with the bake digest and its notes', async ({
   }
   await advanced.click();
   await page.getByText('Copier toutes mes données').click();
-  await expect(page.getByRole('status')).toContainText('1 cuisson');
+  await expect(page.getByRole('status')).toContainText('1 fournée');
   const copied = JSON.parse(await page.evaluate(() => navigator.clipboard.readText())) as {
     kind: string;
     device: { platform: string; timeZone: string };
@@ -253,7 +253,7 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await page.getByRole('listitem').filter({ hasText: 'Pain test 2' }).click();
   await expect(shown('Pain test 2').first()).toBeVisible();
   await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
   await expect(page).toHaveURL(/\/bakes\//);
   const back = page.locator('ion-back-button:visible');
   await expect(back).toHaveCount(1);
@@ -261,7 +261,7 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await expect(page).toHaveURL(/\/recipes\/newer$/);
   await expect(back).toHaveCount(1);
   await back.click();
-  await expect(shown('Cuisson en cours · Pain test 2')).toHaveCount(1);
+  await expect(shown('Fournée en cours · Pain test 2')).toHaveCount(1);
 });
 
 test('a locked total water holds while eggs are added; preparations are editable', async ({
@@ -363,13 +363,13 @@ test('follows several bakes on one screen, with actions and notes per bake', asy
   for (const name of ['Poolish + tangzhong', 'Pain test 1']) {
     await shown(name).first().click();
     await page.getByRole('button', { name: 'Processus' }).click();
-    await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+    await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
     await expect(page).toHaveURL(/\/bakes\//);
     await back();
     await back();
   }
 
-  await page.getByText('Suivre les 2 cuissons').click();
+  await page.getByText('Suivre les 2 fournées').click();
   await expect(page).toHaveURL(/\/bakes$/);
   const poolish = page.getByRole('region', { name: 'Poolish + tangzhong' });
   const lean = page.getByRole('region', { name: 'Pain test 1' });
@@ -395,7 +395,7 @@ test('the advanced menu tells the state of reminders', async ({ page }) => {
 test('a proof running beside the preheat still takes its ready-to-bake mark', async ({ page }) => {
   await openRecipe(page);
   await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la cuisson' }).click();
+  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
   await expect(page).toHaveURL(/\/bakes\//);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
@@ -456,7 +456,7 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await share.press('Enter');
   await expect(page.getByText(/Les quantités ne peuvent pas encore être calculées/)).toBeVisible();
   await page.getByRole('button', { name: 'Enregistrer comme recette' }).click();
-  await expect(page.getByText('À corriger avant d’enregistrer ou de cuire')).toBeVisible();
+  await expect(page.getByText('À corriger avant d’enregistrer ou de démarrer')).toBeVisible();
   await page.getByRole('button', { name: 'Fermer' }).click();
   await share.fill('100');
   await share.press('Enter');

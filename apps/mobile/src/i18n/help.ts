@@ -207,7 +207,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.fermentation.title': 'Fermentation estimée',
   'help.fermentation.body1':
-    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes. Le modèle est provisoire : il est ajusté sur une table de levure publiée, pas encore sur les cuissons enregistrées.',
+    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes. Le modèle est provisoire : il est ajusté sur une table de levure publiée, pas encore sur les fournées enregistrées.',
   'help.fermentation.body2':
     'Le mode de base prend la pâte à la température ambiante. Le mode avancé permet de viser une température de pâte et donne la température de l’eau à utiliser.',
   'help.fermentation.body3':
@@ -223,7 +223,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.readiness.body3':
     'Expérimentale (×2) : une cible supposée, environ deux fois le temps du modèle, non mesurée. Sa fourchette est une plage de sensibilité, pas une marge d’erreur.',
   'help.readiness.more':
-    'Les repères « Prête à cuire » notés en cuisson sont gardés pour calibrer cette cible plus tard. Rien n’est encore appris automatiquement.',
+    'Les repères « Prête à cuire » notés pendant une fournée sont gardés pour calibrer cette cible plus tard. Rien n’est encore appris automatiquement.',
 
   'help.modelTime.title': 'Temps du modèle et sa fourchette',
   'help.modelTime.body1':
@@ -266,7 +266,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.startMode.body2':
     'Prêt pour : choisir quand une étape cible doit se terminer (la cuisson par défaut) ; l’app remonte le temps pour indiquer quand commencer. Toutes les durées jusqu’à cette étape doivent être connues.',
   'help.startMode.body3':
-    'Démarrer la cuisson prend le mode et l’heure affichés ici comme plan. Les étapes restent ajustables pendant la cuisson.',
+    'Démarrer la fournée prend le mode et l’heure affichés ici comme plan. Les étapes restent ajustables pendant la fournée.',
 
   'help.readyMark.title': 'Repères de pâte prête',
   'help.readyMark.body1':
@@ -286,7 +286,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.check.title': 'Vérification de la recette',
   'help.check.body1':
-    'La vérification regarde toute la recette. Les points « À corriger » bloquent l’enregistrement et la cuisson : des farines qui ne font pas 100 %, une préparation plus grosse que la pâte, aucune étape…',
+    'La vérification regarde toute la recette. Les points « À corriger » bloquent l’enregistrement et le démarrage : des farines qui ne font pas 100 %, une préparation plus grosse que la pâte, aucune étape…',
   'help.check.body2':
     'Les points « À vérifier » sont des avertissements qui ne bloquent jamais : pas de sel ou un sel inhabituel (hors de 1 à 3,5 %), une eau totale hors de 45 à 90 %, ni levure ni préferment, pas d’étape de pétrissage ou de cuisson, une étape sans durée.',
   'help.check.body3':
@@ -296,5 +296,5 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.draft.body1':
     'Chaque modification est gardée sur le téléphone comme brouillon pendant la saisie : il est possible de fermer l’app et de revenir. Ce n’est pas encore une version.',
   'help.draft.body2':
-    'Enregistrer vérifie la recette puis crée la version suivante ; les versions précédentes restent intactes et une cuisson garde la version dont elle est partie. Abandonner jette le brouillon. Une cuisson ne démarre que d’une version enregistrée.',
+    'Enregistrer vérifie la recette puis crée la version suivante ; les versions précédentes restent intactes et une fournée garde la version dont elle est partie. Abandonner jette le brouillon. Une fournée ne démarre que d’une version enregistrée.',
 };
