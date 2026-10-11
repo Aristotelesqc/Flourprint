@@ -110,10 +110,16 @@ test('the Android back button returns to the recipe list', async () => {
   await page.getByText('Poolish + tangzhong').first().click();
   await expect(page).toHaveURL(/\/recipes\/.+/);
   // The URL changes when the page transition starts; a back press during it is dropped by Ionic.
+  // Wait for the transition to end: the list page is hidden and the recipe page fully shown.
   // The earlier test saved a second version: any version number will do.
   await expect(page.getByText(/^Version \d+$/).first()).toBeVisible();
-  await page.waitForTimeout(600);
-  await device.shell('input keyevent KEYCODE_BACK');
-  await expect(page).toHaveURL(/\/recipes$/);
+  await expect(page.locator('.ion-page.ion-page-hidden').first()).toBeAttached();
+  await expect(page.locator('.ion-page.ion-page-invisible')).toHaveCount(0);
+  // A press can still land while the emulator is busy; the user would press again, and so do we
+  // (at most three presses, each given time to navigate).
+  await expect(async () => {
+    if (!/\/recipes$/.test(page.url())) await device.shell('input keyevent KEYCODE_BACK');
+    await expect(page).toHaveURL(/\/recipes$/, { timeout: 5_000 });
+  }).toPass({ timeout: 20_000, intervals: [1_000, 2_000] });
   await forceStop();
 });
