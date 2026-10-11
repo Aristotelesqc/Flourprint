@@ -75,6 +75,42 @@ interface StepConditions {
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
 
+## Techniques (#32, first slice)
+
+A step may describe **how** it is done. This is recorded data: no duration, end or dough state is
+predicted from it until the mixing model of #32 exists.
+
+```ts
+interface ProcessStep {
+  // …
+  technique?: StepTechnique;
+}
+
+interface StepTechnique {
+  method?: string; // open code, see below
+  phases?: Array<{ speed: 'low' | 'medium' | 'high'; durationS: number }>; // machine mixing, in order
+  folds?: { count: number; intervalS: number; style?: string }; // sets of folds during the step
+  endCheck?: string; // open code: windowpane, doughTemperature, feel, time, other
+}
+```
+
+- Operation codes stay open. Codes the app names: `autolyse` (flour and water rest), `fermentolyse`
+  (flour, water and leavening, salt later), `mix`, `fold`, `bulk`, `rest`, `degas`, `divide`,
+  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `cool`, and the preparation steps.
+- `method` codes the app names: on `mix`, `hand`, `slapAndFold`, `rubaud`, `standMixer`, `spiral`,
+  `foodProcessor`, `noKnead`; on `fold` and in `folds.style`, `stretchAndFold`, `coilFold`,
+  `lamination`. Any other code is kept and shown as given.
+- `phases`: each `durationS` > 0. The editor writes the step's `plannedDurationS` as the sum of
+  the phases when they change: the baker's own numbers, not a prediction. The domain never derives
+  one from the other.
+- `folds`: `count` is an integer ≥ 1 and `intervalS` > 0. Set `k` (1 … `count`) is due at the
+  step's start + `k × intervalS`; due times follow the recorded start during a bake. Folds make
+  sense on a step the dough ferments through (typically `bulk`); they do not split it, so the
+  fermentation estimate still sees one step.
+- `endCheck` names what ends the step for the baker; with `endCriterion` it is shown, never acted
+  on.
+- An invalid technique (a phase or interval ≤ 0, a non-integer count) is `InvalidProcess`.
+
 ## Step removal
 
 Removing a step rewires each of its successors to the removed step's own dependencies, so the

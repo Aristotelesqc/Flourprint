@@ -69,6 +69,14 @@ judges the dough ready for its next stage:
 - It never completes the step nor changes the plan. It is kept in the journal, shown in the bake
   history and exported (history.md).
 
+`kind: 'fold'` records one set of folds done (process.md, techniques):
+
+- It needs a running `stepId` whose technique has `folds`, and `set` (1 … `count`); anything else
+  is `InvalidCommand`. Category `handling`, optional `text`. A set may be recorded early, late,
+  twice or not at all: the record is what happened, the plan is unchanged.
+- Reminders (ADR 0012) include each fold set not yet recorded, at its due time from the step's
+  recorded start.
+
 Ordinary notes (no `kind`) may target any step, in any state, during or after the bake.
 
 `rating` is within [0, 5]. A backup holding a rating outside this range is refused.

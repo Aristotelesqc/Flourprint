@@ -66,6 +66,7 @@ checkRecipe(formula, process): RecipeIssue[]
 | `no_mix_step`            | no step with operation `mix`                                                  |
 | `no_bake_step`           | no step with operation `bake`                                                 |
 | `step_without_duration`  | an `asap` step without a planned duration (one issue per step, `path` its id) |
+| `folds_exceed_step`      | `folds.count × folds.intervalS` exceeds the step's planned duration           |
 
 - The ranges are deliberately wide (bagels near 55 %, focaccia near 85 % total water); they flag
   likely typos, not style choices.
