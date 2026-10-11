@@ -20,6 +20,8 @@ export interface PropertyForm {
   readonly basis: FlourPctBasis;
   readonly source: FlourSourceKind;
   readonly detail: string;
+  /** The recorded value is an estimate (a built-in's typical value, copied by customizing it). */
+  readonly estimated: boolean;
 }
 
 export interface FlourForm {
@@ -40,7 +42,7 @@ const BOOLEAN: Kind = { type: 'boolean' };
 
 const propertyForm = (property: PropertyValue, locale: string): PropertyForm => {
   if (property.status === 'unknown') {
-    return { value: '', basis: 'asIs', source: 'package', detail: '' };
+    return { value: '', basis: 'asIs', source: 'package', detail: '', estimated: false };
   }
   const { value } = property;
   return {
@@ -50,8 +52,18 @@ const propertyForm = (property: PropertyValue, locale: string): PropertyForm => 
       : 'asIs',
     source: property.source.kind,
     detail: property.source.detail ?? '',
+    estimated: property.status === 'estimated',
   };
 };
+
+/**
+ * The form with a typed value. Typing over an estimate replaces it with the baker's own value:
+ * its reference source no longer applies, so the source starts again from the package label.
+ */
+export const withPropertyValue = (form: PropertyForm, value: string): PropertyForm =>
+  form.estimated
+    ? { ...form, value, estimated: false, source: 'package', detail: '' }
+    : { ...form, value };
 
 export const flourForm = (entry: FlourEntry, name: string, locale: string): FlourForm => ({
   name,
@@ -155,8 +167,8 @@ export const formChanges = (
   };
 };
 
-/** Number of properties with a value (unknown ones excluded). */
+/** Number of known properties (unknown and estimated ones excluded). */
 export const knownCount = (entry: FlourEntry): number =>
   [entry.organic, ...FLOUR_PROPERTY_KEYS.map((key) => entry.properties[key])].filter(
-    (p) => p.status !== 'unknown',
+    (p) => p.status === 'known',
   ).length;

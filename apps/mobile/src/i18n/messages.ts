@@ -46,6 +46,13 @@ export const en = {
   'state.storageWrite': 'Nothing could be saved. Your changes are kept; try again.',
   'state.storageInit': 'Flourprint could not open its data. Close and reopen the app.',
   'state.sessionOnly': 'Browser preview: data lives in this tab only and is lost on reload.',
+  'state.browserKept': 'Browser preview: data is kept in this browser, on this device only.',
+  'state.browserUnreadable':
+    'The data saved in this browser could not be read: it is kept aside and the app starts empty.',
+  'advanced.browserErase': 'Erase this browser’s data',
+  'advanced.browserEraseHint': 'Recipes, drafts, flours and bakes kept by the browser preview.',
+  'advanced.browserEraseConfirm':
+    'Everything the browser preview kept is erased and the page reloads empty. Copy your data first to keep it.',
   'state.retry': 'Try again',
   'recipes.title': 'Recipes',
   'recipes.empty': 'No recipe yet. Tap + to start from a template or a blank recipe.',
@@ -77,11 +84,24 @@ export const en = {
   'guide.title': 'About this style',
   'guide.unverified':
     'Typical ranges gathered from baking references, not yet checked against the full sources.',
-  'guide.ranges': 'Usual ranges',
+  'guide.ranges': 'Selected recipe reference values',
+  'guide.basis': 'Source and editorial choices (English)',
+  'guide.referenceNote':
+    'Values describe the selected published variant, not a consensus or a prediction.',
   'guide.use': 'Start from this template',
   'guide.key.hydration_pct': 'Water',
   'guide.key.hydration_pct_high': 'Water (high-hydration family)',
   'guide.key.salt_pct': 'Salt',
+  'guide.key.hydration_max_pct': 'Pure water (source maximum)',
+  'guide.key.butter_pct': 'Butter (ingredient mass)',
+  'guide.key.oil_pct': 'Dough oil',
+  'guide.key.added_fats_pct': 'Oil and butter (ingredient mass)',
+  'guide.key.non_diastatic_malt_pct': 'Non-diastatic malt powder',
+  'guide.key.cornmeal_pct': 'Cornmeal in total flour',
+  'guide.key.cold_retard_min_h': 'Cold rest (source minimum)',
+  'guide.key.cold_retard_max_h': 'Cold use window (source maximum)',
+  'guide.key.bake_max_c': 'Professional oven (guide maximum)',
+  'guide.key.simmer_per_side_s': 'Simmer per side, per bagel',
   'guide.key.sugar_pct': 'Sugar',
   'guide.key.fat_pct': 'Fat',
   'guide.key.fat_pct_high': 'Fat (high-hydration family)',
@@ -115,21 +135,21 @@ export const en = {
   'template.ciabatta.traits':
     'A flat Italian slipper loaf from a very wet dough built on a stiff biga, barely shaped, with a large irregular crumb and a thin crust.',
   'template.bagels.traits':
-    'Rings of a very stiff, strong dough sweetened with malt, retarded overnight, briefly boiled and baked hot: dense, chewy and shiny.',
+    'Same-day water bagels with non-diastatic malt powder: shaped rings, briefly simmered on each side, then baked on a sheet. No overnight retard in this variant.',
   'template.focaccia.traits':
-    'An oily, dimpled pan flatbread. Genoese fugassa sits near 65 % water with a water-oil-salt brine on top; this high-hydration pan version is airier.',
+    'A high-hydration, folded and dimpled flatbread in a square pan. Dough oil is separate from pan and surface oil; a final rack finish uses the switched-off oven.',
   'template.brioche.traits':
-    'A French bread rich in eggs and butter (about half the flour weight each) with some sugar; the butter goes in after the gluten develops and the dough rests cold overnight.',
+    'An egg- and butter-rich French loaf with fresh yeast. Butter is incorporated after initial mixing; this variant selects a one-hour cold rest before shaping.',
   'template.burger-buns.traits':
-    'Soft, lightly enriched round rolls (milk, a little egg, butter and sugar), proofed warm and baked moderately to a thin soft crust.',
+    'Soft round rolls enriched with egg, butter and sugar, from a water-based dough without milk. Finishing butter is separate from dough butter.',
   'template.pullman.traits':
-    'A square sandwich loaf (pain de mie) baked in a lidded pan: flat top, thin soft crust, fine close crumb, from a milk dough with moderate butter and sugar.',
+    'A square sandwich loaf baked in a lidded 13-inch pan. This water-based pain de mie has butter, sugar and malt syrup, without milk or egg.',
   'template.shokupan.traits':
-    'Japanese milk bread: a cooked flour paste (tangzhong, about 1:5) lets a milk dough hold more water, for a very soft, fine, moist crumb.',
+    'An enriched Japanese milk loaf with a cooked tangzhong. This variant uses both water and milk in the paste, with a combined liquid-to-scald-flour ratio of about 6.1:1.',
   'template.pizza-neo-neapolitan.traits':
-    'A Neapolitan-style round pizza (soft, puffy, spotted rim, thin centre) adapted to home ovens: wetter dough and longer cold fermentation than the AVPN rules allow.',
+    'A home-oven pizza baked on a steel: 24 hours of room bulk followed by 48 hours cold, then balling and a separate final rise. This is a home adaptation, not an AVPN certification.',
   'template.pizza-roman.traits':
-    'Roman tonda: a thin, crisp round pizza with almost no rim, from a low-hydration dough with a little oil, rolled out from a small ball.',
+    'A thin, crisp Roman round pizza from the selected direct professional formula: small balls, no dough oil, and a hot pizza oven.',
   'template.pizza-teglia.traits':
     'Roman pan pizza: a very wet dough of strong flour, matured cold for a day or more, stretched into an oiled pan: airy crumb, crisp base.',
   'template.pizza-new-york.traits':
@@ -137,7 +157,7 @@ export const en = {
   'template.pizza-sicilian.traits':
     'A thick, airy rectangular pan pizza baked in a well-oiled sheet pan so the base fries crisp.',
   'template.pizza-chicago.traits':
-    'Deep dish: a low-hydration, fat-rich crust pressed up the sides of a deep round pan, filled with cheese then sauce, baked fairly long at moderate heat.',
+    'A deep-dish home variant with cornmeal, olive oil and butter in the dough, baked in a cast-iron skillet. Cornmeal is included in the flour denominator; no separate final proof is prescribed.',
   'draft.rename': 'Rename',
   'draft.delete': 'Delete the draft',
   'draft.deleteConfirm': 'Delete this draft? This cannot be undone.',
@@ -154,7 +174,7 @@ export const en = {
   'check.no_steps': 'The process has no step.',
   'check.salt_missing': 'No salt: add it with “Add an ingredient”.',
   'check.salt_outside_1_to_3_5': 'Salt at {pct}: unusual (1 to 3.5 % is expected).',
-  'check.water_outside_45_to_90': 'Total water at {pct}: unusual (45 to 90 %).',
+  'check.water_outside_45_to_90': 'Hydration at {pct}: unusual (45 to 90 %).',
   'check.no_leavening': 'No yeast and no preferment: the dough will not rise.',
   'check.no_mix_step': 'No mix step.',
   'check.no_bake_step': 'No bake step.',
@@ -200,7 +220,7 @@ export const en = {
   'formula.anchorField.count': 'Number of pieces',
   'formula.anchorField.gramsEach': 'Weight of a piece',
   'formula.stat.dough': 'Dough',
-  'formula.stat.totalWater': 'Total water',
+  'formula.stat.hydration': 'Hydration',
   'formula.stat.pureWater': 'Added water',
   'formula.stat.totalWaterValue': '{pct}',
   'formula.stat.totalWaterEstimate': '≈ {pct}',
@@ -209,19 +229,19 @@ export const en = {
   'formula.component.water': '{grams} water',
   'formula.component.allocation': '{grams} {name}',
   'formula.component.loss': '−{grams} evaporated',
-  'formula.water.incomplete': 'Total water is incomplete: unknown water in {ingredients}.',
+  'formula.water.incomplete': 'Hydration is incomplete: unknown water in {ingredients}.',
   'formula.group.flours': 'Flours',
   'formula.group.ingredients': 'Ingredients',
   'formula.column.flourPct': 'Share',
   'formula.column.bakerPct': 'Baker %',
-  'formula.column.grams': 'Grams',
+  'formula.column.grams': 'Weight',
   'formula.preparations': 'Preparations',
   'formula.prep.flourPct': '{pct} of the flour',
   'formula.prep.hydration': '{pct} hydration',
   'formula.prep.allocation': '{name} {pct}',
   'formula.finalMix': 'Final mix · to weigh',
   'formula.finalMix.progress': '{done} of {total}',
-  'explain.title': 'Where total water comes from',
+  'explain.title': 'Where the water comes from',
   'explain.pureWater': '{name} (added water)',
   'explain.ingredient': '{name} ({status, select, known {known} estimated {estimated} other {}})',
   'explain.loss': 'Loss in {name}',
@@ -413,6 +433,10 @@ export const en = {
   'name.water': 'Water',
   'name.salt': 'Salt',
   'name.instant-yeast': 'Instant yeast',
+  'name.fresh-yeast': 'Fresh yeast',
+  'name.yeast': 'Yeast (form unspecified)',
+  'name.milk-powder': 'Milk powder',
+  'name.non-diastatic-malt-powder': 'Non-diastatic malt powder',
   'name.poolish': 'poolish',
   'name.tangzhong': 'tangzhong',
   'name.flour': 'Flour',
@@ -483,14 +507,11 @@ export const en = {
   'family.pin': 'Show this variant by default',
   'family.unpin': 'Show the most recent by default',
   'family.mostRecent': 'Most recent is shown by default',
-  'formula.lock.locked': 'Total water locked',
-  'formula.lock.unlocked': 'Total water free',
-  'formula.lock.lockedHint': 'Added water follows when other ingredients bring water.',
-  'formula.lock.unlockedHint': 'Lock it to keep this wetness while you change ingredients.',
-  'formula.lock.target': 'Locked total water',
-  'formula.lock.lock': 'Lock at {pct}',
-  'formula.lock.unlockShort': 'Unlock',
-  'formula.lock.follows': 'Follows the locked total water',
+  'formula.lock.follows': 'Follows the locked hydration',
+  'formula.hydration.lock': 'Lock the hydration at {pct}',
+  'formula.hydration.unlock': 'Unlock the hydration',
+  'formula.hydration.breakdown': 'Where the water comes from',
+  'formula.removeNamed': 'Remove: {name}',
   'formula.remove': 'Remove',
   'formula.add.ingredient': '+ Add an ingredient',
   'formula.add.flour': '+ Add a flour',
@@ -506,7 +527,6 @@ export const en = {
   'formula.add.tangzhong': '+ Tangzhong',
   'formula.prep.flourField': 'Share of the flour',
   'formula.prep.hydrationField': 'Hydration',
-  'formula.prep.remove': 'Remove the {name}',
   'formula.changes.title': 'Changes not saved yet',
   'formula.changes.added': '{name} added',
   'formula.changes.removed': '{name} removed',
@@ -515,8 +535,8 @@ export const en = {
   'formula.changes.field.sharePct': 'share',
   'formula.changes.field.flourPct': 'share of the flour',
   'formula.changes.field.hydrationPct': 'hydration',
-  'formula.changes.locked': 'Total water locked at {pct}',
-  'formula.changes.unlocked': 'Total water unlocked',
+  'formula.changes.locked': 'Hydration locked at {pct}',
+  'formula.changes.unlocked': 'Hydration unlocked',
   'formula.changes.anchor': 'Recipe size changed',
   'formula.time.title': 'Times',
   'fermentation.title': 'Fermentation',
@@ -581,11 +601,11 @@ export const en = {
   'fermentation.form.fresh': 'fresh',
   'fermentation.markYeastConfirm': 'Mark as yeast',
   'error.IncompatibleConstraint.waterTarget.locked':
-    'This water follows the locked total water: change the target or unlock it.',
+    'This water follows the locked hydration: change the hydration or unlock it.',
   'error.IncompatibleConstraint.waterTarget.unknown':
-    'Total water cannot be locked: the water content of {ingredients} is unknown.',
+    'The hydration cannot be locked: the water content of {ingredients} is unknown.',
   'error.IncompatibleConstraint.waterTarget.tooLow':
-    'The other ingredients already bring more water than this total.',
+    'The other ingredients already bring more water than this hydration.',
   'error.IncompatibleConstraint.allocation':
     'A preparation uses this ingredient: remove it there first.',
   'recipes.card.durationAtLeast': '≥ {duration}',
@@ -668,7 +688,38 @@ export const en = {
   'flours.known':
     '{count, plural, =0 {No property known} one {# property known} other {# properties known}}',
   'flours.builtInNote':
-    'A built-in flour has no composition and is never edited. Customize it to record what the bag or the mill says.',
+    'A built-in flour describes a category, not a bag: its values are typical and unverified (≈). It is never edited: customize it to record what the bag or the mill says.',
+  'flours.typical': 'Typical values',
+  'flours.estimateValue': '≈ {value} ± {uncertainty}',
+  'flours.estimatedHint': 'Typical value of the category: replace it with the bag’s.',
+  'flours.summary.estimate': '≈ {value}',
+  'flours.summary.proteinPct': 'Protein {value}',
+  'flours.summary.ashPct': 'Ash {value}',
+  'flours.summary.fallingNumberS': 'Falling number {value}',
+  'flours.summary.alveographW': 'W {value}',
+  'flours.summary.alveographPL': 'P/L {value}',
+  'flours.summary.malted': 'malted',
+  'flours.summary.organic': 'organic',
+  'flour.all-purpose-flour.description':
+    'White wheat flour for most uses: breads, cakes, cookies. In Canada it is milled from hard wheat, strong enough for bread.',
+  'flour.bread-flour.description':
+    'White wheat flour with more protein than all-purpose, for breads that need strong gluten.',
+  'flour.bise-flour.description':
+    'High-extraction flour, between white and whole grain: part of the bran is kept. Used for country breads.',
+  'flour.whole-wheat.description':
+    'In Canada, flour that keeps the bran but may have part of the germ removed (to verify). Used for whole wheat breads, often blended with white flour.',
+  'flour.whole-grain-wheat.description':
+    'Flour milled from the whole kernel: bran, germ and endosperm. Used for whole grain breads.',
+  'flour.flour.description':
+    'Generic flour, kept for the recipes that name it without saying which.',
+  'flour.spelt-flour.description':
+    'Flour from spelt, an old wheat species. Its gluten is more fragile than bread wheat’s; it can be white or whole grain.',
+  'flour.brown-flour.description':
+    'Wheat flour that keeps part of the bran, between white and whole wheat.',
+  'flour.tipo-00-flour.description':
+    'Italian grade of the most finely milled white flour. Its protein depends on the use: pizza grades are the strong ones.',
+  'flour.cornmeal.description':
+    'Coarsely ground dried corn, without gluten-forming proteins. Used for cornbread, polenta or to dust a peel.',
   'flours.customize': 'Customize',
   'flours.save': 'Save',
   'flours.saving': 'Saving…',
@@ -772,6 +823,15 @@ export const fr: Catalog = {
   'state.storageInit': 'Flourprint n’a pas pu ouvrir ses données. Fermer puis rouvrir l’app.',
   'state.sessionOnly':
     'Aperçu navigateur : les données restent dans cet onglet et disparaissent au rechargement.',
+  'state.browserKept':
+    'Aperçu navigateur : les données sont gardées dans ce navigateur, sur cet appareil seulement.',
+  'state.browserUnreadable':
+    'Les données gardées dans ce navigateur n’ont pas pu être lues : elles sont mises de côté et l’app démarre vide.',
+  'advanced.browserErase': 'Effacer les données du navigateur',
+  'advanced.browserEraseHint':
+    'Recettes, brouillons, farines et fournées gardés par l’aperçu navigateur.',
+  'advanced.browserEraseConfirm':
+    'Tout ce que l’aperçu navigateur a gardé est effacé et la page se recharge vide. Copier les données avant pour les garder.',
   'state.retry': 'Réessayer',
   'recipes.title': 'Recettes',
   'recipes.empty':
@@ -805,11 +865,24 @@ export const fr: Catalog = {
   'guide.title': 'À propos de ce style',
   'guide.unverified':
     'Fourchettes typiques tirées de références de boulangerie, pas encore vérifiées dans les sources complètes.',
-  'guide.ranges': 'Fourchettes habituelles',
+  'guide.ranges': 'Valeurs de référence de la recette retenue',
+  'guide.basis': 'Source et choix éditoriaux (anglais)',
+  'guide.referenceNote':
+    'Ces valeurs décrivent la variante publiée retenue, sans constituer un consensus ni une prédiction.',
   'guide.use': 'Partir de ce modèle',
   'guide.key.hydration_pct': 'Eau',
   'guide.key.hydration_pct_high': 'Eau (famille très hydratée)',
   'guide.key.salt_pct': 'Sel',
+  'guide.key.hydration_max_pct': 'Eau pure (maximum publié)',
+  'guide.key.butter_pct': 'Beurre (masse de l’ingrédient)',
+  'guide.key.oil_pct': 'Huile dans la pâte',
+  'guide.key.added_fats_pct': 'Huile et beurre (masse des ingrédients)',
+  'guide.key.non_diastatic_malt_pct': 'Malt en poudre non diastatique',
+  'guide.key.cornmeal_pct': 'Semoule de maïs dans le total de farine',
+  'guide.key.cold_retard_min_h': 'Repos au froid (minimum publié)',
+  'guide.key.cold_retard_max_h': 'Délai d’utilisation au froid (maximum publié)',
+  'guide.key.bake_max_c': 'Four professionnel (maximum du guide)',
+  'guide.key.simmer_per_side_s': 'Pochage par côté, par bagel',
   'guide.key.sugar_pct': 'Sucre',
   'guide.key.fat_pct': 'Gras',
   'guide.key.fat_pct_high': 'Gras (famille très hydratée)',
@@ -843,21 +916,21 @@ export const fr: Catalog = {
   'template.ciabatta.traits':
     'Un pain plat italien en forme de pantoufle, d’une pâte très hydratée sur biga ferme, à peine façonné : grosse mie irrégulière, croûte fine.',
   'template.bagels.traits':
-    'Des anneaux de pâte très ferme et forte, sucrée au malt, retardés une nuit, pochés brièvement puis cuits chauds : denses, élastiques et brillants.',
+    'Des bagels à préparer le jour même, avec du malt en poudre non diastatique : des anneaux pochés brièvement de chaque côté, puis cuits sur plaque. Cette variante ne comporte pas de repos au froid une nuit.',
   'template.focaccia.traits':
-    'Un pain plat huilé et alvéolé, cuit en plaque. La fugassa génoise est vers 65 % d’eau avec une saumure eau-huile-sel ; cette version très hydratée est plus aérée.',
+    'Un pain plat très hydraté, plié puis alvéolé dans un moule carré. L’huile de la pâte est distincte de celle du moule et de la surface ; la finition sur grille utilise le four éteint.',
   'template.brioche.traits':
-    'Un pain français riche en œufs et en beurre (environ la moitié du poids de farine chacun) avec un peu de sucre ; le beurre entre après le développement du gluten et la pâte repose au froid une nuit.',
+    'Un pain français riche en œufs et en beurre, avec de la levure fraîche. Le beurre est incorporé après le pétrissage initial ; cette variante retient un repos au froid d’une heure avant le façonnage.',
   'template.burger-buns.traits':
-    'Des petits pains ronds et moelleux, légèrement enrichis (lait, un peu d’œuf, beurre, sucre), apprêtés au chaud et cuits modérément pour une croûte fine et tendre.',
+    'Des petits pains ronds et moelleux enrichis d’œuf, de beurre et de sucre, avec une pâte à base d’eau, sans lait. Le beurre de finition est distinct du beurre dans la pâte.',
   'template.pullman.traits':
-    'Un pain de mie carré cuit dans un moule couvert : dessus plat, croûte fine et tendre, mie fine et serrée, d’une pâte au lait avec un peu de beurre et de sucre.',
+    'Un pain de mie carré cuit dans un moule couvert de 13 po. Cette pâte à base d’eau contient du beurre, du sucre et du sirop de malt, sans lait ni œuf.',
   'template.shokupan.traits':
-    'Le pain au lait japonais : une pâte de farine cuite (tangzhong, environ 1:5) permet à une pâte au lait de retenir plus d’eau, pour une mie très tendre, fine et humide.',
+    'Un pain au lait japonais enrichi avec un tangzhong cuit. Cette variante utilise de l’eau et du lait dans la pâte cuite, pour un rapport liquide total sur farine du tangzhong d’environ 6,1:1.',
   'template.pizza-neo-neapolitan.traits':
-    'Une pizza ronde de style napolitain (bord gonflé et tacheté, centre mince) adaptée au four maison : pâte plus hydratée et fermentation au froid plus longue que ce que permet l’AVPN.',
+    'Une pizza au four maison sur acier : un pointage de 24 heures à température ambiante puis 48 heures au froid, suivi du boulage et d’un apprêt distinct. Une adaptation domestique, sans certification AVPN.',
   'template.pizza-roman.traits':
-    'La tonda romaine : une pizza ronde mince et croustillante, presque sans bord, d’une pâte peu hydratée avec un peu d’huile, abaissée au rouleau à partir d’un petit pâton.',
+    'Une pizza romaine ronde, mince et croustillante, selon la formule professionnelle directe retenue : de petits pâtons, sans huile dans la pâte, avec un four à pizza très chaud.',
   'template.pizza-teglia.traits':
     'La pizza romaine en plaque : une pâte très hydratée de farine forte, maturée au froid un jour ou plus, étirée dans une plaque huilée : mie aérée, dessous croustillant.',
   'template.pizza-new-york.traits':
@@ -865,7 +938,7 @@ export const fr: Catalog = {
   'template.pizza-sicilian.traits':
     'Une pizza épaisse et aérée, rectangulaire, cuite dans une plaque bien huilée pour que le dessous frise et croustille.',
   'template.pizza-chicago.traits':
-    'La deep dish : une croûte peu hydratée et riche en gras, montée sur les bords d’un moule rond profond, garnie de fromage puis de sauce, cuite assez longtemps à chaleur modérée.',
+    'Une variante domestique de deep dish avec de la semoule de maïs, de l’huile d’olive et du beurre dans la pâte, cuite en poêle de fonte. La semoule entre dans le total de farine ; aucun apprêt distinct n’est prescrit.',
   'draft.rename': 'Renommer',
   'draft.delete': 'Supprimer le brouillon',
   'draft.deleteConfirm': 'Supprimer ce brouillon ? C’est définitif.',
@@ -882,7 +955,7 @@ export const fr: Catalog = {
   'check.no_steps': 'Le processus n’a aucune étape.',
   'check.salt_missing': 'Pas de sel : l’ajouter avec « Ajouter un ingrédient ».',
   'check.salt_outside_1_to_3_5': 'Sel à {pct} : inhabituel (1 à 3,5 % attendu).',
-  'check.water_outside_45_to_90': 'Eau totale à {pct} : inhabituel (45 à 90 %).',
+  'check.water_outside_45_to_90': 'Hydratation à {pct} : inhabituelle (45 à 90 %).',
   'check.no_leavening': 'Ni levure ni préferment : la pâte ne lèvera pas.',
   'check.no_mix_step': 'Aucune étape de pétrissage.',
   'check.no_bake_step': 'Aucune étape de cuisson.',
@@ -929,7 +1002,7 @@ export const fr: Catalog = {
   'formula.anchorField.count': 'Nombre de pâtons',
   'formula.anchorField.gramsEach': 'Poids d’un pâton',
   'formula.stat.dough': 'Pâte',
-  'formula.stat.totalWater': 'Eau totale',
+  'formula.stat.hydration': 'Hydratation',
   'formula.stat.pureWater': 'Eau ajoutée',
   'formula.stat.totalWaterValue': '{pct}',
   'formula.stat.totalWaterEstimate': '≈ {pct}',
@@ -939,19 +1012,19 @@ export const fr: Catalog = {
   'formula.component.water': '{grams} d’eau',
   'formula.component.allocation': '{grams} {name}',
   'formula.component.loss': '−{grams} d’évaporation',
-  'formula.water.incomplete': 'Eau totale incomplète : eau inconnue dans {ingredients}.',
+  'formula.water.incomplete': 'Hydratation incomplète : eau inconnue dans {ingredients}.',
   'formula.group.flours': 'Farines',
   'formula.group.ingredients': 'Ingrédients',
   'formula.column.flourPct': 'Part',
   'formula.column.bakerPct': '% boulanger',
-  'formula.column.grams': 'Grammes',
+  'formula.column.grams': 'Poids',
   'formula.preparations': 'Préparations',
   'formula.prep.flourPct': '{pct} de la farine',
   'formula.prep.hydration': '{pct} d’hydratation',
   'formula.prep.allocation': '{name} {pct}',
   'formula.finalMix': 'Pétrissage final · à peser',
   'formula.finalMix.progress': '{done} sur {total}',
-  'explain.title': 'D’où vient l’eau totale',
+  'explain.title': 'D’où vient l’eau',
   'explain.pureWater': '{name} (eau ajoutée)',
   'explain.ingredient': '{name} ({status, select, known {connue} estimated {estimée} other {}})',
   'explain.loss': 'Perte dans {name}',
@@ -1145,6 +1218,10 @@ export const fr: Catalog = {
   'name.water': 'Eau',
   'name.salt': 'Sel',
   'name.instant-yeast': 'Levure instantanée',
+  'name.fresh-yeast': 'Levure fraîche',
+  'name.yeast': 'Levure (forme non précisée)',
+  'name.milk-powder': 'Lait en poudre',
+  'name.non-diastatic-malt-powder': 'Malt en poudre non diastatique',
   'name.poolish': 'poolish',
   'name.tangzhong': 'tangzhong',
   'name.flour': 'Farine',
@@ -1217,16 +1294,11 @@ export const fr: Catalog = {
   'family.pin': 'Afficher cette variante par défaut',
   'family.unpin': 'Afficher la plus récente par défaut',
   'family.mostRecent': 'La plus récente est affichée par défaut',
-  'formula.lock.locked': 'Eau totale verrouillée',
-  'formula.lock.unlocked': 'Eau totale libre',
-  'formula.lock.lockedHint':
-    'L’eau ajoutée s’ajuste quand d’autres ingrédients apportent de l’eau.',
-  'formula.lock.unlockedHint':
-    'La verrouiller pour garder cette humidité en changeant les ingrédients.',
-  'formula.lock.target': 'Eau totale verrouillée',
-  'formula.lock.lock': 'Verrouiller à {pct}',
-  'formula.lock.unlockShort': 'Déverrouiller',
-  'formula.lock.follows': 'Suit l’eau totale verrouillée',
+  'formula.lock.follows': 'Suit l’hydratation verrouillée',
+  'formula.hydration.lock': 'Verrouiller l’hydratation à {pct}',
+  'formula.hydration.unlock': 'Déverrouiller l’hydratation',
+  'formula.hydration.breakdown': 'D’où vient l’eau',
+  'formula.removeNamed': 'Retirer : {name}',
   'formula.remove': 'Retirer',
   'formula.add.ingredient': '+ Ajouter un ingrédient',
   'formula.add.flour': '+ Ajouter une farine',
@@ -1244,7 +1316,6 @@ export const fr: Catalog = {
   'formula.add.tangzhong': '+ Tangzhong',
   'formula.prep.flourField': 'Part de la farine',
   'formula.prep.hydrationField': 'Hydratation',
-  'formula.prep.remove': 'Retirer : {name}',
   'formula.changes.title': 'Modifications non enregistrées',
   'formula.changes.added': '{name} ajouté',
   'formula.changes.removed': '{name} retiré',
@@ -1253,8 +1324,8 @@ export const fr: Catalog = {
   'formula.changes.field.sharePct': 'part',
   'formula.changes.field.flourPct': 'part de la farine',
   'formula.changes.field.hydrationPct': 'hydratation',
-  'formula.changes.locked': 'Eau totale verrouillée à {pct}',
-  'formula.changes.unlocked': 'Eau totale déverrouillée',
+  'formula.changes.locked': 'Hydratation verrouillée à {pct}',
+  'formula.changes.unlocked': 'Hydratation déverrouillée',
   'formula.changes.anchor': 'Taille de la recette modifiée',
   'formula.time.title': 'Temps',
   'fermentation.title': 'Fermentation',
@@ -1321,11 +1392,11 @@ export const fr: Catalog = {
   'fermentation.form.fresh': 'fraîche',
   'fermentation.markYeastConfirm': 'Marquer comme levure',
   'error.IncompatibleConstraint.waterTarget.locked':
-    'Cette eau suit l’eau totale verrouillée : changer la cible ou la déverrouiller.',
+    'Cette eau suit l’hydratation verrouillée : changer l’hydratation ou la déverrouiller.',
   'error.IncompatibleConstraint.waterTarget.unknown':
-    'Impossible de verrouiller l’eau totale : la teneur en eau de {ingredients} est inconnue.',
+    'Impossible de verrouiller l’hydratation : la teneur en eau de {ingredients} est inconnue.',
   'error.IncompatibleConstraint.waterTarget.tooLow':
-    'Les autres ingrédients apportent déjà plus d’eau que ce total.',
+    'Les autres ingrédients apportent déjà plus d’eau que cette hydratation.',
   'error.IncompatibleConstraint.allocation':
     'Une préparation utilise cet ingrédient : le retirer d’abord de la préparation.',
   'recipes.card.durationAtLeast': '≥ {duration}',
@@ -1412,7 +1483,38 @@ export const fr: Catalog = {
   'flours.known':
     '{count, plural, =0 {Aucune propriété connue} one {# propriété connue} other {# propriétés connues}}',
   'flours.builtInNote':
-    'Une farine de base n’a aucune composition et ne se modifie pas. La personnaliser pour noter ce qu’indiquent le sac ou le meunier.',
+    'Une farine de base décrit une catégorie, pas un sac : ses valeurs sont typiques et non vérifiées (≈). Elle ne se modifie pas : la personnaliser pour noter ce qu’indiquent le sac ou le meunier.',
+  'flours.typical': 'Valeurs typiques',
+  'flours.estimateValue': '≈ {value} ± {uncertainty}',
+  'flours.estimatedHint': 'Valeur typique de la catégorie : la remplacer par celle du sac.',
+  'flours.summary.estimate': '≈ {value}',
+  'flours.summary.proteinPct': 'Protéines {value}',
+  'flours.summary.ashPct': 'Cendres {value}',
+  'flours.summary.fallingNumberS': 'Indice de chute {value}',
+  'flours.summary.alveographW': 'W {value}',
+  'flours.summary.alveographPL': 'P/L {value}',
+  'flours.summary.malted': 'maltée',
+  'flours.summary.organic': 'bio',
+  'flour.all-purpose-flour.description':
+    'Farine de blé blanche pour la plupart des usages : pains, gâteaux, biscuits. Au Canada, elle est moulue à partir de blés forts et convient au pain.',
+  'flour.bread-flour.description':
+    'Farine de blé blanche plus riche en protéines que la tout usage, pour les pains qui demandent un gluten fort.',
+  'flour.bise-flour.description':
+    'Farine à haut taux d’extraction, entre la blanche et l’intégrale : une partie du son est conservée. Pour les pains de campagne.',
+  'flour.whole-wheat.description':
+    'Au Canada, farine qui garde le son mais dont une partie du germe peut être retirée (à vérifier). Pour les pains de blé entier, souvent en mélange avec de la farine blanche.',
+  'flour.whole-grain-wheat.description':
+    'Farine moulue à partir du grain entier : son, germe et amande. Pour les pains intégraux.',
+  'flour.flour.description':
+    'Farine générique, conservée pour les recettes qui la nomment sans préciser laquelle.',
+  'flour.spelt-flour.description':
+    'Farine d’épeautre, une ancienne espèce de blé. Son gluten est plus fragile que celui du blé tendre ; elle peut être blanche ou intégrale.',
+  'flour.brown-flour.description':
+    'Farine de blé qui garde une partie du son, entre la blanche et le blé entier.',
+  'flour.tipo-00-flour.description':
+    'Catégorie italienne de la farine blanche la plus finement moulue. Ses protéines dépendent de l’usage : les farines à pizza sont les plus fortes.',
+  'flour.cornmeal.description':
+    'Maïs séché moulu grossièrement, sans protéines qui forment du gluten. Pour le pain de maïs, la polenta ou pour fariner une pelle.',
   'flours.customize': 'Personnaliser',
   'flours.save': 'Enregistrer',
   'flours.saving': 'Enregistrement…',

@@ -13,15 +13,23 @@ import {
   MemoryBakeEventStore,
   MemoryFlourRegistry,
   MemoryRecipeRepository,
+  MemoryRestoreTarget,
 } from '@flourprint/adapters/memory';
 import type { SqlBridge } from '@flourprint/adapters/sqlite-bridge';
+import {
+  browserSnapshotAvailable,
+  clearBrowserSnapshot,
+  keepBrowserSnapshot,
+  restoreBrowserSnapshot,
+  type SnapshotLoad,
+} from './browser-snapshot';
 import { createNotifier, type Notifier } from './notifications';
 import { sampleRecipe } from './seed';
 
 /**
  * Composition root of the app (ADR 0001). On the device the stores are SQLite through Capacitor
  * (spike #24), in the desktop shell SQLite through its bridge (ADR 0011); in a browser they live
- * in memory and are lost on reload.
+ * in memory, kept across reloads by a snapshot in IndexedDB (ADR 0015).
  */
 export interface Services {
   readonly recipes: RecipeRepository;
@@ -37,6 +45,11 @@ export interface Services {
   readonly notifier: Notifier;
   /** SQLite library version, for the device checks page. */
   readonly sqliteVersion: () => Promise<string | undefined>;
+  /** Browser only (ADR 0015): what the start-up restore found, and erasing the saved data. */
+  readonly browserData?: {
+    readonly loaded: SnapshotLoad;
+    readonly erase: () => Promise<void>;
+  };
 }
 
 const PLATFORM = Capacitor.getPlatform() === 'android' ? 'android' : 'web';
@@ -108,17 +121,34 @@ export const createServices = async (options: {
     };
   }
   const recipes = new MemoryRecipeRepository();
-  await seedIfEmpty(recipes);
+  const bakes = new MemoryBakeEventStore();
+  const flours = new MemoryFlourRegistry();
+  let browserData: Services['browserData'];
+  if (browserSnapshotAvailable()) {
+    const loaded = await restoreBrowserSnapshot(new MemoryRestoreTarget(recipes, bakes, flours));
+    await seedIfEmpty(recipes);
+    const stop = keepBrowserSnapshot({ recipes, bakes, flours }, clock.now);
+    browserData = {
+      loaded,
+      erase: async () => {
+        stop();
+        await clearBrowserSnapshot();
+      },
+    };
+  } else {
+    await seedIfEmpty(recipes);
+  }
   return {
     recipes,
-    bakes: new MemoryBakeEventStore(),
-    flours: new MemoryFlourRegistry(),
+    bakes,
+    flours,
     clock,
     ids,
     storage: 'memory',
     platform: 'web',
     notifier,
     sqliteVersion: async () => undefined,
+    ...(browserData ? { browserData } : {}),
   };
 };
 

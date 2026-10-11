@@ -31,9 +31,9 @@ interface BakeStartedPayload {
 
 `origin` says whether the bake was a real one or a simulation. It is set when the bake starts and
 never inferred later from the device that holds or exports it: restoring a backup on another
-device keeps it. The baker chooses it when starting (owner decision of 2026-10-11); the app
-only proposes a default (real on the phone, simulation on the PC shell and the web preview).
-History and statistics keep real and simulated bakes apart, and a bake shows which it is.
+device keeps it. It follows the simulation mode in force when the bake starts (ADR 0014):
+`simulation` while the mode is on, `physical` otherwise. History and statistics show the bakes of
+the current mode only; a bake without `origin` counts as real.
 
 `usedProperties` contains only the properties actually consumed by the calculation.
 

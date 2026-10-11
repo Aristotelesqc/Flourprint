@@ -47,6 +47,13 @@ createdAt, updatedAt }` as one JSON document. `saveDraft` writes or replaces it;
 - A full backup carries `drafts` (optional, so older backups still restore); a restore writes them
   as recorded.
 
+## Erasing a history
+
+`deleteBakes(origin)` deletes every bake of that origin (`physical` also takes bakes without
+`origin`): their events, command records and summaries, in one transaction. It is the only way a
+bake log is ever deleted, triggered by the baker (ADR 0014). Recipes, drafts and flours are
+untouched.
+
 ## Flour registry
 
 Personal flour entries (`flours.md`) are stored by `(id, version)`; a version is never rewritten.

@@ -1,6 +1,5 @@
 import type { RecipeTemplate } from '@flourprint/core/domain';
 import { en, type MessageKey } from '../i18n/messages';
-import { editableNumber } from '../i18n/numbers';
 import { useMessages } from '../i18n/use-messages';
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
@@ -21,14 +20,15 @@ const unitOf = (key: string): string => {
 };
 
 /**
- * What a style usually looks like (drafts.md, Templates): its traits and typical ranges, with a
- * note while the sources are not verified. A guide, never a rule: nothing is checked against it.
+ * Published reference values for the selected variant, with its source and editorial choices.
+ * A guide, never a rule: nothing is checked against it.
  */
 export const StyleGuide = ({ template }: { template: RecipeTemplate }) => {
   const { t, locale } = useMessages();
   const traits = `template.${template.id}.traits`;
   const guide = template.guide;
-  const number = (value: number) => editableNumber(value, locale);
+  const number = (value: number) =>
+    new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
   return (
     <section
       aria-label={t('guide.title')}
@@ -38,9 +38,14 @@ export const StyleGuide = ({ template }: { template: RecipeTemplate }) => {
         {t('guide.title')}
       </span>
       {isKey(traits) && <p className="m-0 text-[15px]">{t(traits)}</p>}
+      <details className="text-sm text-muted">
+        <summary className="cursor-pointer">{t('guide.basis')}</summary>
+        <p className="mt-2 mb-0 whitespace-pre-line">{template.basis}</p>
+      </details>
       {guide && guide.ranges.length > 0 && (
         <>
           <span className="text-sm font-semibold">{t('guide.ranges')}</span>
+          <p className="m-0 text-xs text-muted">{t('guide.referenceNote')}</p>
           <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[15px]">
             {guide.ranges.map((range) => {
               const label = `guide.key.${range.key}`;

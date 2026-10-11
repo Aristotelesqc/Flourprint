@@ -10,6 +10,7 @@ import {
   IonPage,
   IonTitle,
   IonToolbar,
+  useIonAlert,
 } from '@ionic/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { importRecipes } from '@flourprint/core/application';
@@ -22,7 +23,23 @@ import { useServices } from '../services/services';
 export const AdvancedPage = () => {
   const { t, error } = useMessages();
   const services = useServices();
-  const { storage, recipes, platform } = services;
+  const { storage, recipes, platform, browserData } = services;
+  const [presentAlert] = useIonAlert();
+  const eraseBrowserData = () =>
+    void presentAlert({
+      header: t('advanced.browserErase'),
+      message: t('advanced.browserEraseConfirm'),
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        {
+          text: t('advanced.browserErase'),
+          role: 'destructive',
+          handler: () => {
+            void browserData?.erase().then(() => window.location.reload());
+          },
+        },
+      ],
+    });
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<{ text: string; alert: boolean }>();
@@ -146,6 +163,14 @@ export const AdvancedPage = () => {
                 className={exported.alert ? 'text-alert' : ''}
               >
                 {exported.text}
+              </IonLabel>
+            </IonItem>
+          )}
+          {browserData && (
+            <IonItem button detail onClick={eraseBrowserData}>
+              <IonLabel>
+                {t('advanced.browserErase')}
+                <p>{t('advanced.browserEraseHint')}</p>
               </IonLabel>
             </IonItem>
           )}

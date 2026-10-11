@@ -27,21 +27,15 @@ export const helpEn = {
   'help.bakerPct.more':
     'In the Flours table, “Share” is different: it is the part of each flour in the flour blend, and the shares add up to 100 %.',
 
-  'help.water.title': 'Added water and total water',
-  'help.water.body1':
-    'Added water is the water you put in as the “Water” ingredient, preparations included, in % of the flour.',
-  'help.water.body2':
-    'Total water also counts the water brought by milk, eggs, honey, butter and the other ingredients, minus losses such as evaporation. It is the figure that describes how wet the dough really is.',
-  'help.water.body3':
-    'When an ingredient’s water content is unknown, total water is flagged as incomplete or shown as an estimate (≈): it is never counted as zero. Tap the total water figure to see where it comes from.',
-
-  'help.lock.title': 'Locked total water',
-  'help.lock.body1':
-    'Locking fixes total water at the percentage shown. The added water then adjusts by itself when another ingredient brings water (eggs, milk…), so the dough keeps the same wetness.',
-  'help.lock.body2':
-    'While locked, the added water can no longer be edited: change the locked target, or unlock. Unlocking keeps every current quantity.',
-  'help.lock.more':
-    'Without the lock, adding 100 g of egg raises total water. With it, the added water goes down by the water the egg brings.',
+  'help.hydration.title': 'Hydration and added water',
+  'help.hydration.body1':
+    'Hydration here is total water in % of the flour: every ingredient that brings water counts (water, milk, eggs, honey, butter…), minus losses such as the evaporation of a tangzhong. It is not the usual water-to-flour ratio: with milk or eggs it is higher than the added water.',
+  'help.hydration.body2':
+    'Added water is only the “Water” ingredient, preparations included. Typing a hydration locks it (the lock icon): it is kept while you change ingredients, and the added water adjusts. Adding 100 g of egg then lowers the added water by the water the egg brings.',
+  'help.hydration.body3':
+    'The lock icon locks the hydration at its current value, or unlocks it; unlocking keeps every quantity as it is. While locked, the added water cannot be edited directly: change the hydration, or unlock.',
+  'help.hydration.more':
+    'When an ingredient’s water content is unknown, the hydration is flagged as incomplete or shown as an estimate (≈): it is never counted as zero. “Where the water comes from” lists each contribution.',
 
   'help.preparations.title': 'Preparations',
   'help.preparations.body1':
@@ -158,7 +152,7 @@ export const helpEn = {
   'help.check.body1':
     'The check looks at the whole recipe. “To fix” points block saving and baking: flours that do not add up to 100 %, a preparation larger than the dough, no step…',
   'help.check.body2':
-    '“To check” points are warnings and never block: no salt or unusual salt (outside 1 to 3.5 %), total water outside 45 to 90 %, no yeast and no preferment, no mix or bake step, a step without duration, folds that last longer than their step.',
+    '“To check” points are warnings and never block: no salt or unusual salt (outside 1 to 3.5 %), hydration outside 45 to 90 %, no yeast and no preferment, no mix or bake step, a step without duration, folds that last longer than their step.',
   'help.check.body3':
     'The ranges are wide on purpose: they flag likely typos, not style choices. The check runs when you ask for it and before saving.',
 
@@ -180,7 +174,7 @@ export const helpEn = {
   'help.flours.body1':
     'Each bake records which flours it used and the version of their entry, with what is known about them: protein, ash, falling number, alveograph W and P/L, malt added. No calculation uses these properties yet; they are kept to calibrate the models later.',
   'help.flours.body2':
-    'An empty property is unknown, never zero. Built-in flours carry no composition, since a generic name does not say it: customize one to fill in what the bag or the mill says. Each save is a new version; earlier bakes keep theirs.',
+    'An empty property is unknown, never zero. Built-in flours describe a category: their values are typical and unverified (≈), never those of a bag. Customize one to fill in what the bag or the mill says. Each save is a new version; earlier bakes keep theirs.',
   'help.flours.body3':
     'A percentage has a basis: as sold, at 14 % moisture (common for protein and ash on mill sheets) or on dry matter. A label value given per serving is converted to % of the flour and stays “as sold”.',
   'help.flours.more':
@@ -211,21 +205,15 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.bakerPct.more':
     'Dans le tableau des farines, « Part » est différente : c’est la part de chaque farine dans le mélange de farines, et les parts font 100 %.',
 
-  'help.water.title': 'Eau ajoutée et eau totale',
-  'help.water.body1':
-    'L’eau ajoutée est l’eau mise comme ingrédient « Eau », préparations comprises, en % de la farine.',
-  'help.water.body2':
-    'L’eau totale compte aussi l’eau apportée par le lait, les œufs, le miel, le beurre et les autres ingrédients, moins les pertes comme l’évaporation. C’est le chiffre qui dit à quel point la pâte est vraiment humide.',
-  'help.water.body3':
-    'Quand la teneur en eau d’un ingrédient est inconnue, l’eau totale est signalée incomplète ou affichée comme estimation (≈) : elle n’est jamais comptée comme zéro. Toucher le chiffre de l’eau totale pour voir d’où il vient.',
-
-  'help.lock.title': 'Eau totale verrouillée',
-  'help.lock.body1':
-    'Verrouiller fixe l’eau totale au pourcentage affiché. L’eau ajoutée s’ajuste alors d’elle-même quand un autre ingrédient apporte de l’eau (œufs, lait…) : la pâte garde la même humidité.',
-  'help.lock.body2':
-    'Tant qu’elle est verrouillée, l’eau ajoutée ne se modifie plus : changer la cible verrouillée, ou déverrouiller. Déverrouiller garde toutes les quantités actuelles.',
-  'help.lock.more':
-    'Sans verrou, ajouter 100 g d’œuf augmente l’eau totale. Avec le verrou, l’eau ajoutée baisse de l’eau que l’œuf apporte.',
+  'help.hydration.title': 'Hydratation et eau ajoutée',
+  'help.hydration.body1':
+    'L’hydratation est ici l’eau totale en % de la farine : chaque ingrédient qui apporte de l’eau compte (eau, lait, œufs, miel, beurre…), moins les pertes comme l’évaporation d’un tangzhong. Ce n’est pas le rapport habituel eau sur farine : avec du lait ou des œufs, elle dépasse l’eau ajoutée.',
+  'help.hydration.body2':
+    'L’eau ajoutée est seulement l’ingrédient « Eau », préparations comprises. Saisir une hydratation la verrouille (l’icône de cadenas) : elle est gardée quand les ingrédients changent, et l’eau ajoutée s’ajuste. Ajouter 100 g d’œuf baisse alors l’eau ajoutée de l’eau que l’œuf apporte.',
+  'help.hydration.body3':
+    'Le cadenas verrouille l’hydratation à sa valeur actuelle, ou la déverrouille ; déverrouiller garde chaque quantité telle quelle. Tant qu’elle est verrouillée, l’eau ajoutée ne se modifie pas directement : changer l’hydratation, ou déverrouiller.',
+  'help.hydration.more':
+    'Quand la teneur en eau d’un ingrédient est inconnue, l’hydratation est signalée incomplète ou affichée comme estimation (≈) : elle n’est jamais comptée comme zéro. « D’où vient l’eau » détaille chaque apport.',
 
   'help.preparations.title': 'Préparations',
   'help.preparations.body1':
@@ -342,7 +330,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.check.body1':
     'La vérification regarde toute la recette. Les points « À corriger » bloquent l’enregistrement et le démarrage : des farines qui ne font pas 100 %, une préparation plus grosse que la pâte, aucune étape…',
   'help.check.body2':
-    'Les points « À vérifier » sont des avertissements qui ne bloquent jamais : pas de sel ou un sel inhabituel (hors de 1 à 3,5 %), une eau totale hors de 45 à 90 %, ni levure ni préferment, pas d’étape de pétrissage ou de cuisson, une étape sans durée, des rabats plus longs que leur étape.',
+    'Les points « À vérifier » sont des avertissements qui ne bloquent jamais : pas de sel ou un sel inhabituel (hors de 1 à 3,5 %), une hydratation hors de 45 à 90 %, ni levure ni préferment, pas d’étape de pétrissage ou de cuisson, une étape sans durée, des rabats plus longs que leur étape.',
   'help.check.body3':
     'Les fourchettes sont larges exprès : elles signalent les fautes de frappe probables, pas des choix de style. La vérification se lance à la demande et avant d’enregistrer.',
 
@@ -364,7 +352,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.flours.body1':
     'Chaque fournée enregistre les farines utilisées et la version de leur fiche, avec ce qui en est connu : protéines, cendres, indice de chute, W et P/L de l’alvéographe, malt ajouté. Aucun calcul n’utilise encore ces propriétés ; elles sont gardées pour calibrer les modèles plus tard.',
   'help.flours.body2':
-    'Une propriété vide est inconnue, jamais zéro. Les farines de base n’ont aucune composition, un nom générique ne la dit pas : en personnaliser une pour saisir ce qu’indiquent le sac ou le meunier. Chaque enregistrement crée une nouvelle version ; les fournées passées gardent la leur.',
+    'Une propriété vide est inconnue, jamais zéro. Les farines de base décrivent une catégorie : leurs valeurs sont typiques et non vérifiées (≈), jamais celles d’un sac. En personnaliser une pour saisir ce qu’indiquent le sac ou le meunier. Chaque enregistrement crée une nouvelle version ; les fournées passées gardent la leur.',
   'help.flours.body3':
     'Un pourcentage a une base : tel que vendu, à 14 % d’humidité (courant pour les protéines et les cendres sur les fiches de meunerie) ou sur matière sèche. Une valeur d’étiquette par portion est convertie en % de la farine et reste « tel que vendu ».',
   'help.flours.more':

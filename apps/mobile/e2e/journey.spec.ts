@@ -264,14 +264,16 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await expect(shown('Fournée en cours · Pain test 2')).toHaveCount(1);
 });
 
-test('a locked total water holds while eggs are added; preparations are editable', async ({
+test('a locked hydration holds while eggs are added; preparations are editable', async ({
   page,
 }) => {
   await openRecipe(page);
-  // 75 % water, no other water source but the yeast's estimate: lock it.
-  await page.getByText(/Verrouiller à/).click();
-  await expect(page.getByText('Eau totale verrouillée').first()).toBeVisible();
-  const water = page.getByText('Suit l’eau totale verrouillée');
+  // 75 % water, no other water source but the yeast's estimate: lock it at its current value.
+  await page.getByRole('button', { name: /Verrouiller l’hydratation à/ }).click();
+  await expect(
+    page.getByRole('button', { name: 'Déverrouiller l’hydratation', pressed: true }),
+  ).toBeVisible();
+  const water = page.getByText('Suit l’hydratation verrouillée');
   await expect(water).toBeVisible();
 
   await page.getByRole('button', { name: '+ Ajouter un ingrédient' }).click();
@@ -288,6 +290,52 @@ test('a locked total water holds while eggs are added; preparations are editable
   await page.getByLabel('tangzhong, Hydratation (%)').fill('100');
   await page.getByLabel('tangzhong, Hydratation (%)').press('Enter');
   await expect(page.getByText('yudane').first()).toBeVisible();
+
+  // A preparation is removed by a compact button that still names it.
+  await page.getByRole('button', { name: 'Retirer : yudane' }).click();
+  await expect(page.getByRole('button', { name: 'Retirer : yudane' })).toHaveCount(0);
+});
+
+test('typing a hydration locks it there; an egg then lowers the added water', async ({ page }) => {
+  await openRecipe(page);
+  await expect(page.getByText('Poids', { exact: true }).first()).toBeVisible();
+  // The flour's registry entry is summarized under its name.
+  await expect(page.getByText('Protéines ≈ 13,5 %').first()).toBeVisible();
+
+  const hydration = page.getByLabel('Hydratation (%)', { exact: true });
+  await hydration.fill('70');
+  await hydration.press('Enter');
+  await expect(
+    page.getByRole('button', { name: 'Déverrouiller l’hydratation', pressed: true }),
+  ).toBeVisible();
+  await expect(hydration).toHaveValue('70');
+  await expect(page.getByText('Hydratation verrouillée à 70 %')).toBeVisible();
+  // Only the shown page: during a transition Ionic keeps the previous one in the DOM.
+  const added = page
+    .locator('.ion-page:not(.ion-page-hidden)')
+    .getByText('Eau ajoutée', { exact: true })
+    .filter({ visible: true })
+    .first()
+    .locator('..');
+  // Ionic briefly keeps both transition views visible; wait for the active summary.
+  await expect(added).toHaveCount(1);
+  const before = await added.textContent();
+
+  await page.getByRole('button', { name: '+ Ajouter un ingrédient' }).click();
+  await page.getByLabel('+ Ajouter un ingrédient').selectOption({ label: 'Œuf' });
+  await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
+  const egg = page.getByLabel('Œuf (g)', { exact: true });
+  await egg.fill('100');
+  await egg.press('Enter');
+  await expect(page.getByText('Œuf ajouté')).toBeVisible();
+  // The hydration stays at 70 %; the added water gives up the egg's water.
+  await expect(hydration).toHaveValue('70');
+  await expect(added).not.toHaveText(before ?? '');
+
+  // The lock icon unlocks: every quantity keeps its value.
+  await page.getByRole('button', { name: 'Déverrouiller l’hydratation' }).click();
+  await expect(page.getByRole('button', { name: /Verrouiller l’hydratation à/ })).toBeVisible();
+  await expect(page.getByText('Suit l’hydratation verrouillée')).toHaveCount(0);
 });
 
 test('fermentation: room temperature gives times, a yeast dose and, in advanced mode, the water', async ({
@@ -426,10 +474,12 @@ test('a template starts a named draft that becomes a recipe once saved', async (
   await page.goto('/recipes');
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Pizza néo-napolitaine', { exact: true }).click();
-  // The style guide comes first: traits and usual ranges, marked as not yet verified.
+  // The selected source and its editorial decisions remain visible before starting a draft.
   const guide = page.getByRole('region', { name: 'À propos de ce style' });
-  await expect(guide).toContainText('Fourchettes habituelles');
-  await expect(guide).toContainText('pas encore vérifiées');
+  await expect(guide).toContainText('Valeurs de référence de la recette retenue');
+  await expect(guide).toContainText('sans constituer un consensus ni une prédiction');
+  await guide.getByText('Source et choix éditoriaux (anglais)', { exact: true }).click();
+  await expect(guide).toContainText('Baking Steel');
   await page.getByRole('button', { name: 'Partir de ce modèle' }).click();
   await expect(page).toHaveURL(/\/drafts\//);
   // The draft keeps the guide of its template.
@@ -482,8 +532,8 @@ test('an info button opens a bottom sheet that explains the term and closes', as
   await sheet.getByRole('button', { name: 'Fermer' }).click();
   await expect(page.locator('ion-modal:visible')).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Explication : Eau ajoutée' }).click();
-  await expect(page.locator('ion-modal:visible')).toContainText('Eau ajoutée et eau totale');
+  await page.getByRole('button', { name: 'Explication : Hydratation', exact: true }).click();
+  await expect(page.locator('ion-modal:visible')).toContainText('Hydratation et eau ajoutée');
 });
 
 test('the planner can follow now; starting always starts now', async ({ page }) => {
@@ -515,9 +565,13 @@ test('a customized flour keeps its properties and is offered by the flour picker
   // A built-in flour is read-only: customizing it gives a personal copy to fill in.
   await page.locator('ion-item:visible', { hasText: 'Farine à pain' }).first().click();
   const sheet = page.locator('ion-modal:visible');
-  await expect(sheet.getByText(/Une farine de base n’a aucune composition/)).toBeVisible();
+  await expect(sheet.getByText(/Une farine de base décrit une catégorie/)).toBeVisible();
+  await expect(sheet.getByText(/plus riche en protéines que la tout usage/)).toBeVisible();
+  await expect(sheet.getByText('≈ 13,5 % ± 1 %')).toBeVisible();
   await sheet.getByRole('button', { name: 'Personnaliser' }).click();
   await expect(sheet.getByLabel('Nom', { exact: true })).toHaveValue('Farine à pain');
+  // The typical protein is copied; typing the bag's value replaces it.
+  await expect(sheet.getByLabel('Protéines (%) : valeur')).toHaveValue('13,5');
   await sheet.getByLabel('Protéines (%) : valeur').fill('13,2');
   await sheet.getByLabel('Protéines (%) : base').selectOption({ label: 'Tel que vendu' });
   await sheet
@@ -555,7 +609,7 @@ test('a customized flour keeps its properties and is offered by the flour picker
   expect(copied.backup.flours).toEqual([
     expect.objectContaining({
       version: 1,
-      basedOn: { id: 'bread-flour', version: 1 },
+      basedOn: { id: 'bread-flour', version: 2 },
       properties: expect.objectContaining({
         proteinPct: {
           status: 'known',
@@ -623,4 +677,28 @@ test('bake mode shows the next fold set and records it in the log', async ({ pag
   await expect(folds).toContainText('Série 2/3');
   // The step keeps running: a set never ends it.
   await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
+});
+
+test('the browser preview keeps its data across a reload, until it is erased', async ({ page }) => {
+  await page.goto('/recipes');
+  await expect(page.getByText(/gardées dans ce navigateur/)).toBeVisible();
+  await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
+  await page.getByText('Recette vierge').first().click();
+  await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  // The snapshot is saved every few seconds and when the page is hidden.
+  await page.waitForTimeout(3_500);
+  await page.reload();
+  await page.goto('/recipes');
+  await expect(page.getByText('Recette 1').first()).toBeVisible();
+
+  await page.goto('/advanced');
+  await page.getByText('Effacer les données du navigateur').click();
+  await page
+    .locator('ion-alert')
+    .getByRole('button', { name: 'Effacer les données du navigateur' })
+    .click();
+  await expect(page.getByText('Recette 1')).toHaveCount(0);
+  await page.goto('/recipes');
+  await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible();
+  await expect(page.getByText('Recette 1')).toHaveCount(0);
 });

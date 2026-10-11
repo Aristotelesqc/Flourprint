@@ -20,3 +20,5 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0011](0011-desktop-simulator.md)            | A desktop shell to run the app on a PC         | Accepted                                  |
 | [0012](0012-bake-notifications.md)           | Notifications for running bakes                | Accepted                                  |
 | [0013](0013-web-preview-and-dev-channel.md)  | A web preview link and a remote-loaded dev APK | Accepted                                  |
+| [0014](0014-simulation-mode.md)              | Simulation mode                                | Accepted                                  |
+| [0015](0015-browser-persistence.md)          | Persistent data in the browser preview         | Accepted                                  |
