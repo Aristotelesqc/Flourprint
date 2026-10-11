@@ -693,11 +693,14 @@ test('the browser preview keeps its data across a reload, until it is erased', a
 
   await page.goto('/advanced');
   await page.getByText('Effacer les données du navigateur').click();
-  await page
-    .locator('ion-alert')
-    .getByRole('button', { name: 'Effacer les données du navigateur' })
-    .click();
-  await expect(page.getByText('Recette 1')).toHaveCount(0);
+  // Erasing reloads the page: wait for that reload before navigating, or the two collide.
+  await Promise.all([
+    page.waitForEvent('load'),
+    page
+      .locator('ion-alert')
+      .getByRole('button', { name: 'Effacer les données du navigateur' })
+      .click(),
+  ]);
   await page.goto('/recipes');
   await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible();
   await expect(page.getByText('Recette 1')).toHaveCount(0);
