@@ -53,7 +53,8 @@ export const AppBarButton = ({
     {...(routerLink === undefined ? {} : { routerLink })}
     {...(onClick === undefined ? {} : { onClick })}
   >
-    <span className="relative inline-flex">
+    {/* Clicks go to the button itself: slotted content must not catch them. */}
+    <span className="pointer-events-none relative inline-flex">
       {children}
       {count !== undefined && count > 0 && (
         <span className="absolute -top-1.5 -right-2 min-w-4 rounded-full bg-accent px-1 text-center text-[11px] leading-4 font-bold text-on-accent">

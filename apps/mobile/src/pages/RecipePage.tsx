@@ -618,7 +618,7 @@ export const RecipePage = () => {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <IonButton fill="outline" className="m-0 h-auto min-h-11" onClick={discard}>
-                  <span className="py-1 leading-tight whitespace-normal">
+                  <span className="pointer-events-none py-1 leading-tight whitespace-normal">
                     {t(newRecipe ? 'draft.delete' : 'draft.discard')}
                   </span>
                 </IonButton>
@@ -627,7 +627,7 @@ export const RecipePage = () => {
                   disabled={writes.busy}
                   onClick={() => void save()}
                 >
-                  <span className="py-1 leading-tight whitespace-normal">
+                  <span className="pointer-events-none py-1 leading-tight whitespace-normal">
                     {newRecipe
                       ? t('draft.saveRecipe')
                       : t('draft.save', { version: (base?.revision.version ?? 0) + 1 })}
