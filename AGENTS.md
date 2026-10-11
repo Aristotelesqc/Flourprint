@@ -22,7 +22,16 @@ a dedicated pull request, before the code that depends on it.
 - No user-facing text hard-coded in UI components; use message keys (ADR 0009).
 - French UI text never addresses the user (no "tu", no "vous"): instructions and actions use the
   infinitive ("Pétrir 8 min à basse vitesse"), explanations an impersonal voice.
-- Every commit is pushed and lands in the MVP pull request.
+- Every commit is pushed. Work lands in focused pull requests against `main` (ADR 0008,
+  workflow): one per contract change or reviewed implementation slice, never back into #31.
+- Run `pnpm check`, `pnpm build` and the full Playwright run before every push of code; a red push
+  is fixed first.
+- One writer at a time for overlapping files. The interface (#35) is implemented by Gemini under
+  Codex; other agents work in non-overlapping areas unless the owner assigns otherwise.
+- Feature priorities belong to the owner. Complexity changes how work is split and what evidence
+  it needs, never whether a required feature is delivered; any proposed scope reduction is shown
+  to the owner with its reason and an alternative. A real bake is calibration evidence, not a gate
+  for N1/N2 features (`docs/contracts/capability-levels.md`).
 - Before changing fermentation equations, parameters, domains or end-point semantics, read
   `docs/science/fermentation-model.md` and `docs/contracts/fermentation.md`. A new coefficient needs
   provenance in the science document.
@@ -45,8 +54,12 @@ Issue #30 is the high-level backlog: it links the other issues and tracks the de
 When a step advances, update its status there, add a short comment on the issue concerned and keep
 the PR body current. No other tracking file.
 
-See ADR 0008. Current step: 6, UI for dogfooding. Step 5 is done: the Capacitor SQLite driver passed
-the shared store suite on a Pixel 9 Pro XL ([report on #24](https://github.com/Aristotelesqc/Flourprint/issues/24#issuecomment-6063973643); forced-stop marker
-and upgrade still to confirm).
-`apps/mobile` follows the #8 mockups: recipe list, Formula, Process and History tabs, and bake mode on
-the bake session. Versions stay provisional until spike #23 closes.
+See ADR 0008. The proof-of-concept baseline (PR #31: steps 1 to 6 of the first development order,
+with the data collection, simulation mode and first fermentation model) is merged into `main`.
+Current phase: **hardening, essential-feature completion and interface refinement**, in reviewed
+slices. The workstreams and their acceptance are listed on
+[#30](https://github.com/Aristotelesqc/Flourprint/issues/30#issuecomment-6110929842): interaction and
+visual foundation (#35), Recipe / Planning / Preparation roles, the session lifecycle and outcomes,
+multi-method cooking and documented modes (#28), the complete manual registry (#26), and
+reliability. Open device checks (#24 upgrade, reminders with the app closed, a real bake) stay
+tracked, not claimed done.
