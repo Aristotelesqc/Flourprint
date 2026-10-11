@@ -89,15 +89,20 @@ export const DoughResult = ({
   let main: ReactNode;
   if (duration.status !== 'ok') {
     main = <span className="text-[15px]">{reason(duration)}</span>;
-  } else if (before && step) {
-    main = <Headline>{t('fermentation.reachedBefore', { step: stepName(step) })}</Headline>;
   } else if (progressPct.status === 'ok') {
     main = (
       <>
         <Headline>{t('fermentation.result.covers', { pct: wholePct(progressPct.value) })}</Headline>
         <ProgressBar value={progressPct.value} label={wholePct(progressPct.value)} />
+        {before && step && (
+          <span className="text-sm text-muted">
+            {t('fermentation.reachedBefore', { step: stepName(step) })}
+          </span>
+        )}
       </>
     );
+  } else if (before && step) {
+    main = <Headline>{t('fermentation.reachedBefore', { step: stepName(step) })}</Headline>;
   } else if (step) {
     main = (
       <Headline>
@@ -250,7 +255,7 @@ const Headline = ({ children }: { children: ReactNode }) => {
   );
 };
 
-/** How far the plan goes, capped at a full bar; past the target the bar turns solid ink. */
+/** How far the plan goes, capped at a full bar; the line above gives the exact figure. */
 const ProgressBar = ({ value, label }: { value: number; label: string }) => (
   <div
     role="progressbar"
@@ -261,7 +266,7 @@ const ProgressBar = ({ value, label }: { value: number; label: string }) => (
     className="h-2 overflow-hidden rounded-full bg-track"
   >
     <div
-      className={`h-full rounded-full ${value > 100 ? 'bg-ink' : 'bg-accent'}`}
+      className="h-full rounded-full bg-accent"
       style={{ width: `${Math.max(0, Math.min(value, 100))}%` }}
     />
   </div>

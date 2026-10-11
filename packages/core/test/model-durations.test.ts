@@ -10,6 +10,7 @@ import { decodeProcess } from '../src/application/documents.js';
 import {
   checkRecipe,
   doughReadyStage,
+  doughStepAmbients,
   doughSteps,
   estimateFermentation,
   lastDoughStepId,
@@ -75,7 +76,26 @@ describe('dough steps', () => {
   it('leave the boil out of the bagels template', () => {
     const steps = ids(doughSteps(template('bagels').process));
     expect(steps).not.toContain('boil');
-    expect(steps?.at(-1)).toBe('proof');
+    expect(steps?.at(-1)).toBe('shape');
+  });
+});
+
+describe('dough step ambients', () => {
+  it('follow each step, else the previous one, from the room temperature', () => {
+    const process: Process = {
+      steps: [
+        step('mix', 'mix', [], 600, { conditions: { temperatureC: 21 } }),
+        step('bulk', 'bulk', ['mix'], H),
+        step('retard', 'retard', ['bulk'], 12 * H, {
+          conditions: { location: 'fridge', temperatureC: 4 },
+        }),
+        step('shape', 'shape', ['retard'], 600),
+        step('proof', 'proof', ['shape'], H, { conditions: { temperatureC: 24 } }),
+        step('bake', 'bake', ['proof'], 1800),
+      ],
+    };
+    expect(doughStepAmbients(process)).toEqual({ bulk: 21, retard: 4, shape: 4, proof: 24 });
+    expect(doughStepAmbients({ steps: [step('bulk', 'bulk', [])] })).toEqual({});
   });
 });
 
@@ -231,7 +251,12 @@ describe('fermentation schedules', () => {
   });
 
   it('replace the dough steps between the mix and the bake, keeping the folds', () => {
-    const process = ok(applySchedule(boule.process, 'cold-bulk'));
+    const folds = { count: 4, intervalS: 1800, style: 'stretchAndFold' };
+    const folded: Process = {
+      ...boule.process,
+      steps: boule.process.steps.map((s) => (s.id === 'bulk' ? { ...s, technique: { folds } } : s)),
+    };
+    const process = ok(applySchedule(folded, 'cold-bulk'));
     expect(process.steps.map((s) => s.id)).toEqual([
       'mix',
       'bulk',
@@ -243,10 +268,13 @@ describe('fermentation schedules', () => {
       'cool',
     ]);
     const byId = (id: string) => process.steps.find((s) => s.id === id);
-    expect(byId('bulk')).toMatchObject({ dependsOn: ['mix'], plannedDurationS: H });
-    expect(byId('bulk')?.technique?.folds).toEqual(
-      boule.process.steps.find((s) => s.id === 'bulk')?.technique?.folds,
-    );
+    // Room steps take the room temperature of the replaced steps (the bulk's 22.2 °C).
+    expect(byId('bulk')).toMatchObject({
+      dependsOn: ['mix'],
+      plannedDurationS: H,
+      conditions: { temperatureC: 22.2 },
+    });
+    expect(byId('bulk')?.technique?.folds).toEqual(folds);
     expect(byId('cold-bulk')).toMatchObject({
       operation: 'retard',
       plannedDurationS: 18 * H,
@@ -256,11 +284,9 @@ describe('fermentation schedules', () => {
     expect(byId('shape')?.plannedDurationS).toBe(600);
     expect(byId('proof')).toMatchObject({
       plannedDurationS: 2 * H,
-      conditions: { temperatureC: 21 },
+      conditions: { temperatureC: 22.2 },
       durationMode: 'model',
     });
-    // The bulk before the fridge follows the mix's room temperature.
-    expect(byId('bulk')?.conditions).toBeUndefined();
     expect(byId('bake')?.dependsOn).toEqual(['proof', 'preheat']);
     expect(validateProcess(process).ok).toBe(true);
   });
@@ -271,7 +297,7 @@ describe('fermentation schedules', () => {
     const dough = doughSteps(process) ?? [];
     expect(dough.map((s) => s.id)).toEqual(['bulk', 'shape', 'cold-proof']);
     expect(process.steps.find((s) => s.id === 'boil')?.dependsOn).toEqual(['cold-proof']);
-    // The replaced proof was at 21 °C, the retard at 4 °C: room steps take 21 °C.
+    // The replaced bulk was at 21 °C: room steps take it; the cold proof is in the fridge.
     expect(dough[0]?.conditions).toEqual({ temperatureC: 21 });
     expect(dough[2]?.conditions).toEqual({ location: 'fridge', temperatureC: 4 });
   });
@@ -295,6 +321,25 @@ describe('fermentation schedules', () => {
       error: { code: 'UnknownSchedule' },
     });
     expect(applySchedule({ steps: [] }, 'bulk-proof').ok).toBe(false);
+  });
+
+  it('take the mix temperature after a cold step when no replaced step has a room one', () => {
+    const process = ok(
+      applySchedule(
+        {
+          steps: [
+            step('mix', 'mix', [], 600, { conditions: { temperatureC: 20 } }),
+            step('bulk', 'bulk', ['mix'], H),
+            step('bake', 'bake', ['bulk'], 1800),
+          ],
+        },
+        'cold-bulk',
+      ),
+    );
+    const byId = (id: string) => process.steps.find((s) => s.id === id);
+    expect(byId('bulk')?.conditions).toBeUndefined();
+    expect(byId('shape')?.conditions).toEqual({ temperatureC: 20 });
+    expect(byId('proof')?.conditions).toEqual({ temperatureC: 20 });
   });
 
   it('insert after the mix when no dough step exists, before what followed the mix', () => {

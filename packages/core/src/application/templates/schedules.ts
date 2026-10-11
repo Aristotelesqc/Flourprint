@@ -80,7 +80,7 @@ const invalid = (path: string, reason: string): ApplyScheduleError =>
   domainError('InvalidProcess', `${path}: ${reason}`, { path, reason });
 
 /** A step sits in the cold when it is in the fridge or below 10 °C (a cellar is not the fridge). */
-const isCold = (step: ProcessStep) =>
+export const isColdStep = (step: ProcessStep) =>
   step.conditions?.location === 'fridge' ||
   (step.conditions?.temperatureC !== undefined && step.conditions.temperatureC < 10);
 
@@ -129,7 +129,7 @@ export const applySchedule = (
     taken.add(id);
     return id;
   };
-  const roomC = replaced.find((s) => !isCold(s) && s.conditions?.temperatureC !== undefined)
+  const roomC = replaced.find((s) => !isColdStep(s) && s.conditions?.temperatureC !== undefined)
     ?.conditions?.temperatureC;
   const folds = replaced.find((s) => s.operation === 'bulk' && s.technique?.folds)?.technique
     ?.folds;

@@ -1,5 +1,6 @@
 import { IonButton, useIonAlert } from '@ionic/react';
 import { useId, useState } from 'react';
+import { isColdStep } from '@flourprint/core/application';
 import {
   insertStepAfter,
   removeStep,
@@ -112,7 +113,7 @@ const StepRow = ({
   const detailId = useId();
   const name = stepName(step);
   const auto = step.durationMode === 'model';
-  const fridge = step.conditions?.location === 'fridge';
+  const fridge = isColdStep(step);
   const paused = auto && estimate?.status !== 'ok';
 
   /** Auto on this step; the previous Auto step keeps its last time, now typed by hand. */

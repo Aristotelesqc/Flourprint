@@ -85,7 +85,7 @@ export const helpEn = {
   'help.extrapolation.body1':
     'The model was fitted on a limited range of doughs. When the recipe goes beyond it, the estimate is still given, with the reasons, but it is less reliable.',
   'help.extrapolation.body2':
-    'The reasons: a preferment, more than 5 % sugar, more than 3 % fat, salt outside 1.5 to 3 %, total water outside 55 to 75 %, or an unknown content (sugar or fat unknown: an ingredient’s composition is not known). They only flag the estimate; they do not change the computation.',
+    'The reasons: a preferment, more than 5 % sugar, more than 3 % fat, salt outside 1.5 to 3 %, hydration outside 55 to 75 %, or an unknown content (sugar, fat or hydration unknown: an ingredient’s composition is not known). They only flag the estimate; they do not change the computation.',
   'help.extrapolation.body3':
     'The range does not widen by itself: read the figure as an order of magnitude and watch the dough.',
 
@@ -263,7 +263,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.extrapolation.body1':
     'Le modèle est ajusté sur une plage limitée de pâtes. Quand la recette en sort, l’estimation est quand même donnée, avec les raisons, mais elle est moins fiable.',
   'help.extrapolation.body2':
-    'Les raisons : un préferment, plus de 5 % de sucre, plus de 3 % de gras, un sel hors de 1,5 à 3 %, une eau totale hors de 55 à 75 %, ou une teneur inconnue (sucre ou gras inconnu : la composition d’un ingrédient n’est pas connue). Elles signalent l’estimation sans changer le calcul.',
+    'Les raisons : un préferment, plus de 5 % de sucre, plus de 3 % de gras, un sel hors de 1,5 à 3 %, une hydratation hors de 55 à 75 %, ou une teneur inconnue (sucre, gras ou hydratation inconnus : la composition d’un ingrédient n’est pas connue). Elles signalent l’estimation sans changer le calcul.',
   'help.extrapolation.body3':
     'La fourchette ne s’élargit pas toute seule : lire le chiffre comme un ordre de grandeur et surveiller la pâte.',
 

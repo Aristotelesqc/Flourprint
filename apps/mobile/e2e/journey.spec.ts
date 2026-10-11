@@ -348,28 +348,26 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   const room = page.getByLabel('Température ambiante (°C)');
   await room.fill('21');
   await room.press('Enter');
-  await expect(page.getByText('modèle provisoire', { exact: true })).toBeVisible();
-  // The dough's progress is a share of the planned fermentation, with a provisional target.
-  await expect(
-    page.getByText(/Aux temps prévus : .* de la fermentation prévue/).first(),
-  ).toBeVisible();
-  await expect(page.getByText(/La cible « prête à cuire » n’est pas calibrée/)).toBeVisible();
-  // The default target is the model's own end point; another one is an explicit choice.
-  await expect(
-    page.getByRole('button', { name: 'Point final du modèle', pressed: true }),
-  ).toBeVisible();
-  const progress = page.getByText(/Aux temps prévus : .* de la fermentation prévue/).first();
+  await expect(page.getByText('provisoire', { exact: true }).first()).toBeVisible();
+  // One readable result line: whole percentages of the target, never "100,03 %".
+  const progress = page.getByText(/^Le plan atteint \d+ % de la cible$/).first();
+  await expect(progress).toBeVisible();
+  // The target and the ranges sit behind "Details", in plain sentences.
+  await page.getByRole('button', { name: 'Détails' }).first().click();
+  await expect(page.getByText(/le plan atteint entre .* de la cible/).first()).toBeVisible();
+  const readiness = page.getByLabel('Cible « prête à cuire »', { exact: true });
+  await expect(readiness).toHaveValue('flourprint.model-end-point');
   const before = await progress.textContent();
-  await page.getByRole('button', { name: 'Expérimentale (×2)' }).click();
-  await expect(
-    page.getByRole('button', { name: 'Expérimentale (×2)', pressed: true }),
-  ).toBeVisible();
+  await readiness.selectOption({ label: 'Expérimentale (×2)' });
   await expect(progress).not.toHaveText(before ?? '');
   await expect(page.getByText(/doublé/)).toBeHidden();
   // Applying a suggested dose is an explicit edit of the draft.
-  await page.getByRole('button', { name: 'Prendre cette dose' }).last().click();
+  await page
+    .getByRole('button', { name: /^Utiliser .* de / })
+    .first()
+    .click();
   await expect(unsaved(page).first()).toBeVisible();
-  // Applying a suggested time is an explicit edit too, and the step shows the new time.
+  // Applying a suggested time is an explicit edit too.
   const useTime = page.getByRole('button', { name: 'Prendre ce temps' });
   const offered = await useTime.count();
   expect(offered).toBeGreaterThan(0);
@@ -384,6 +382,50 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   // 4 × 25 − 21 (room) − 21 (flour) − 21 (poolish at room temperature) = 37
   await expect(page.getByText('Eau à 37 °C')).toBeVisible();
   await expect(page.getByText(/friction du pétrin non comptée/)).toBeVisible();
+});
+
+const startTemplate = async (page: Page, name: string) => {
+  await page.goto('/recipes');
+  await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
+  await page.getByText(name, { exact: true }).click();
+  await page.getByRole('button', { name: 'Partir de ce modèle' }).click();
+  await expect(page).toHaveURL(/\/drafts\//);
+};
+
+test('a fermentation schedule replaces the dough steps; Auto fills a step from the model', async ({
+  page,
+}) => {
+  await startTemplate(page, 'Pain boule en cocotte');
+  await page
+    .getByLabel('Horaire', { exact: true })
+    .selectOption({ label: 'Pointage lent au froid' });
+  await page.getByRole('button', { name: 'Appliquer', exact: true }).click();
+  // The cold step is in the fridge at 4 °C.
+  await expect(page.getByLabel('Retard au froid, température (°C)')).toHaveValue('4');
+  await expect(page.getByText('frigo', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Retard au froid, durée')).toHaveValue('18 h');
+  // The schedule's last step follows the model: its time is filled by it.
+  const auto = page.getByRole('button', { name: 'Apprêt : durée selon le modèle' });
+  await expect(auto).toHaveAttribute('aria-pressed', 'true');
+  await auto.click();
+  await expect(auto).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByLabel('Apprêt, durée')).toBeVisible();
+  await auto.click();
+  await expect(auto).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Apprêt, durée')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: /^Apprêt : environ \d.* selon le modèle, détails$/ }),
+  ).toHaveText(/≈ \d/);
+  // Only one step follows the model: Auto on the bulk puts the proof back to manual.
+  await page.getByRole('button', { name: 'Pointage : durée selon le modèle' }).click();
+  await expect(auto).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('the boil of bagels ends the dough: it is not a fermentation step', async ({ page }) => {
+  await startTemplate(page, 'Bagels');
+  await expect(page.getByRole('button', { name: 'Retirer Façonnage' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retirer Ébullition' })).toHaveCount(0);
+  await expect(page.getByLabel('Ébullition, durée')).toHaveCount(0);
 });
 
 test('follows several bakes on one screen, with actions and notes per bake', async ({ page }) => {

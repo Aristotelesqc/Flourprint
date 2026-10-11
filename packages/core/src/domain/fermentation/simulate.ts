@@ -32,6 +32,60 @@ export const HORIZON_S = MAX_OPEN_H * 3600;
 const temperatureAt = (p: FermentationParameters, fromC: number, ambientC: number, h: number) =>
   p.tauH === 0 ? ambientC : ambientC + (fromC - ambientC) * Math.exp(-h / p.tauH);
 
+/**
+ * Once the dough is within this of the ambient (°C), the rest of the segment is integrated in
+ * closed form: the rate is linearized around the ambient, `f ≈ f_a × (1 + κ δ e^(−h/τ))`, whose
+ * integral is exact; the neglected term is of order (κ δ)², about 1e-6 of the rate here. Long cold
+ * retards would otherwise cost thousands of integration steps. Same model, same equations.
+ */
+const SETTLED_C = 0.01;
+
+interface Tail {
+  /** Rate at the ambient, per hour. */
+  readonly rate: number;
+  /** Progress gained over the next `hours`. */
+  readonly over: (hours: number) => number;
+  /** Hours needed to gain `needed`, or undefined beyond `within`. */
+  readonly hoursFor: (needed: number, within: number) => number | undefined;
+}
+
+/** The closed-form rest of a segment from `h`, when the dough is settled there. */
+const tailFrom = (
+  p: FermentationParameters,
+  freshPct: number,
+  fromC: number,
+  ambientC: number,
+  h: number,
+): Tail | undefined => {
+  const delta = temperatureAt(p, fromC, ambientC, h) - ambientC;
+  if (Math.abs(delta) >= SETTLED_C) return undefined;
+  const rate = progressPerHour(p, freshPct, ambientC);
+  // d ln f / dT at the ambient, numerically, so that this does not restate the rate law.
+  const eps = 0.01;
+  const kappa =
+    rate > 0
+      ? (Math.log(progressPerHour(p, freshPct, ambientC + eps)) -
+          Math.log(progressPerHour(p, freshPct, ambientC - eps))) /
+        (2 * eps)
+      : 0;
+  const tau = p.tauH;
+  const over = (hours: number) =>
+    rate * (hours + (tau === 0 ? 0 : kappa * delta * tau * (1 - Math.exp(-hours / tau))));
+  const hoursFor = (needed: number, within: number) => {
+    if (needed <= 0) return 0;
+    if (!(rate > 0) || over(within) < needed) return undefined;
+    let hours = Math.min(within, needed / rate);
+    for (let i = 0; i < 20; i++) {
+      const slope = rate * (1 + (tau === 0 ? 0 : kappa * delta * Math.exp(-hours / tau)));
+      const next = Math.min(within, Math.max(0, hours - (over(hours) - needed) / slope));
+      if (Math.abs(next - hours) < 1e-12) return next;
+      hours = next;
+    }
+    return hours;
+  };
+  return { rate, over, hoursFor };
+};
+
 /** Progress gained over [h0, h1] of a segment (Simpson on one interval). */
 const gain = (
   p: FermentationParameters,
@@ -61,6 +115,18 @@ export const simulate = (p: FermentationParameters, input: SimulationInput): Sim
     const n = Math.max(1, Math.ceil(total / DT_H));
     const dt = total / n;
     for (let i = 0; i < n; i++) {
+      const tail = tailFrom(p, input.freshPct, doughC, segment.ambientC, i * dt);
+      if (tail) {
+        const left = total - i * dt;
+        if (open) {
+          const needed = tail.hoursFor(target - progress, left);
+          return needed === undefined
+            ? { kind: 'notReached' }
+            : { kind: 'remaining', hours: i * dt + needed, reachedBefore: false };
+        }
+        progress += tail.over(left);
+        break;
+      }
       const g = gain(p, input.freshPct, doughC, segment.ambientC, i * dt, (i + 1) * dt);
       if (open && progress + g >= target) {
         return {
@@ -93,6 +159,11 @@ const advance = (
   const dt = segment.hours / n;
   let progress = state.progress;
   for (let i = 0; i < n; i++) {
+    const tail = tailFrom(p, freshPct, state.doughC, segment.ambientC, i * dt);
+    if (tail) {
+      progress += tail.over(segment.hours - i * dt);
+      break;
+    }
     progress += gain(p, freshPct, state.doughC, segment.ambientC, i * dt, (i + 1) * dt);
   }
   return { progress, doughC: temperatureAt(p, state.doughC, segment.ambientC, segment.hours) };
