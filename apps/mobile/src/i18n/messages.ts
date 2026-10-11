@@ -84,11 +84,24 @@ export const en = {
   'guide.title': 'About this style',
   'guide.unverified':
     'Typical ranges gathered from baking references, not yet checked against the full sources.',
-  'guide.ranges': 'Usual ranges',
+  'guide.ranges': 'Selected recipe reference values',
+  'guide.basis': 'Source and editorial choices (English)',
+  'guide.referenceNote':
+    'Values describe the selected published variant, not a consensus or a prediction.',
   'guide.use': 'Start from this template',
   'guide.key.hydration_pct': 'Water',
   'guide.key.hydration_pct_high': 'Water (high-hydration family)',
   'guide.key.salt_pct': 'Salt',
+  'guide.key.hydration_max_pct': 'Pure water (source maximum)',
+  'guide.key.butter_pct': 'Butter (ingredient mass)',
+  'guide.key.oil_pct': 'Dough oil',
+  'guide.key.added_fats_pct': 'Oil and butter (ingredient mass)',
+  'guide.key.non_diastatic_malt_pct': 'Non-diastatic malt powder',
+  'guide.key.cornmeal_pct': 'Cornmeal in total flour',
+  'guide.key.cold_retard_min_h': 'Cold rest (source minimum)',
+  'guide.key.cold_retard_max_h': 'Cold use window (source maximum)',
+  'guide.key.bake_max_c': 'Professional oven (guide maximum)',
+  'guide.key.simmer_per_side_s': 'Simmer per side, per bagel',
   'guide.key.sugar_pct': 'Sugar',
   'guide.key.fat_pct': 'Fat',
   'guide.key.fat_pct_high': 'Fat (high-hydration family)',
@@ -122,21 +135,21 @@ export const en = {
   'template.ciabatta.traits':
     'A flat Italian slipper loaf from a very wet dough built on a stiff biga, barely shaped, with a large irregular crumb and a thin crust.',
   'template.bagels.traits':
-    'Rings of a very stiff, strong dough sweetened with malt, retarded overnight, briefly boiled and baked hot: dense, chewy and shiny.',
+    'Same-day water bagels with non-diastatic malt powder: shaped rings, briefly simmered on each side, then baked on a sheet. No overnight retard in this variant.',
   'template.focaccia.traits':
-    'An oily, dimpled pan flatbread. Genoese fugassa sits near 65 % water with a water-oil-salt brine on top; this high-hydration pan version is airier.',
+    'A high-hydration, folded and dimpled flatbread in a square pan. Dough oil is separate from pan and surface oil; a final rack finish uses the switched-off oven.',
   'template.brioche.traits':
-    'A French bread rich in eggs and butter (about half the flour weight each) with some sugar; the butter goes in after the gluten develops and the dough rests cold overnight.',
+    'An egg- and butter-rich French loaf with fresh yeast. Butter is incorporated after initial mixing; this variant selects a one-hour cold rest before shaping.',
   'template.burger-buns.traits':
-    'Soft, lightly enriched round rolls (milk, a little egg, butter and sugar), proofed warm and baked moderately to a thin soft crust.',
+    'Soft round rolls enriched with egg, butter and sugar, from a water-based dough without milk. Finishing butter is separate from dough butter.',
   'template.pullman.traits':
-    'A square sandwich loaf (pain de mie) baked in a lidded pan: flat top, thin soft crust, fine close crumb, from a milk dough with moderate butter and sugar.',
+    'A square sandwich loaf baked in a lidded 13-inch pan. This water-based pain de mie has butter, sugar and malt syrup, without milk or egg.',
   'template.shokupan.traits':
-    'Japanese milk bread: a cooked flour paste (tangzhong, about 1:5) lets a milk dough hold more water, for a very soft, fine, moist crumb.',
+    'An enriched Japanese milk loaf with a cooked tangzhong. This variant uses both water and milk in the paste, with a combined liquid-to-scald-flour ratio of about 6.1:1.',
   'template.pizza-neo-neapolitan.traits':
-    'A Neapolitan-style round pizza (soft, puffy, spotted rim, thin centre) adapted to home ovens: wetter dough and longer cold fermentation than the AVPN rules allow.',
+    'A home-oven pizza baked on a steel: 24 hours of room bulk followed by 48 hours cold, then balling and a separate final rise. This is a home adaptation, not an AVPN certification.',
   'template.pizza-roman.traits':
-    'Roman tonda: a thin, crisp round pizza with almost no rim, from a low-hydration dough with a little oil, rolled out from a small ball.',
+    'A thin, crisp Roman round pizza from the selected direct professional formula: small balls, no dough oil, and a hot pizza oven.',
   'template.pizza-teglia.traits':
     'Roman pan pizza: a very wet dough of strong flour, matured cold for a day or more, stretched into an oiled pan: airy crumb, crisp base.',
   'template.pizza-new-york.traits':
@@ -144,7 +157,7 @@ export const en = {
   'template.pizza-sicilian.traits':
     'A thick, airy rectangular pan pizza baked in a well-oiled sheet pan so the base fries crisp.',
   'template.pizza-chicago.traits':
-    'Deep dish: a low-hydration, fat-rich crust pressed up the sides of a deep round pan, filled with cheese then sauce, baked fairly long at moderate heat.',
+    'A deep-dish home variant with cornmeal, olive oil and butter in the dough, baked in a cast-iron skillet. Cornmeal is included in the flour denominator; no separate final proof is prescribed.',
   'draft.rename': 'Rename',
   'draft.delete': 'Delete the draft',
   'draft.deleteConfirm': 'Delete this draft? This cannot be undone.',
@@ -420,6 +433,10 @@ export const en = {
   'name.water': 'Water',
   'name.salt': 'Salt',
   'name.instant-yeast': 'Instant yeast',
+  'name.fresh-yeast': 'Fresh yeast',
+  'name.yeast': 'Yeast (form unspecified)',
+  'name.milk-powder': 'Milk powder',
+  'name.non-diastatic-malt-powder': 'Non-diastatic malt powder',
   'name.poolish': 'poolish',
   'name.tangzhong': 'tangzhong',
   'name.flour': 'Flour',
@@ -809,11 +826,24 @@ export const fr: Catalog = {
   'guide.title': 'À propos de ce style',
   'guide.unverified':
     'Fourchettes typiques tirées de références de boulangerie, pas encore vérifiées dans les sources complètes.',
-  'guide.ranges': 'Fourchettes habituelles',
+  'guide.ranges': 'Valeurs de référence de la recette retenue',
+  'guide.basis': 'Source et choix éditoriaux (anglais)',
+  'guide.referenceNote':
+    'Ces valeurs décrivent la variante publiée retenue, sans constituer un consensus ni une prédiction.',
   'guide.use': 'Partir de ce modèle',
   'guide.key.hydration_pct': 'Eau',
   'guide.key.hydration_pct_high': 'Eau (famille très hydratée)',
   'guide.key.salt_pct': 'Sel',
+  'guide.key.hydration_max_pct': 'Eau pure (maximum publié)',
+  'guide.key.butter_pct': 'Beurre (masse de l’ingrédient)',
+  'guide.key.oil_pct': 'Huile dans la pâte',
+  'guide.key.added_fats_pct': 'Huile et beurre (masse des ingrédients)',
+  'guide.key.non_diastatic_malt_pct': 'Malt en poudre non diastatique',
+  'guide.key.cornmeal_pct': 'Semoule de maïs dans le total de farine',
+  'guide.key.cold_retard_min_h': 'Repos au froid (minimum publié)',
+  'guide.key.cold_retard_max_h': 'Délai d’utilisation au froid (maximum publié)',
+  'guide.key.bake_max_c': 'Four professionnel (maximum du guide)',
+  'guide.key.simmer_per_side_s': 'Pochage par côté, par bagel',
   'guide.key.sugar_pct': 'Sucre',
   'guide.key.fat_pct': 'Gras',
   'guide.key.fat_pct_high': 'Gras (famille très hydratée)',
@@ -847,21 +877,21 @@ export const fr: Catalog = {
   'template.ciabatta.traits':
     'Un pain plat italien en forme de pantoufle, d’une pâte très hydratée sur biga ferme, à peine façonné : grosse mie irrégulière, croûte fine.',
   'template.bagels.traits':
-    'Des anneaux de pâte très ferme et forte, sucrée au malt, retardés une nuit, pochés brièvement puis cuits chauds : denses, élastiques et brillants.',
+    'Des bagels à préparer le jour même, avec du malt en poudre non diastatique : des anneaux pochés brièvement de chaque côté, puis cuits sur plaque. Cette variante ne comporte pas de repos au froid une nuit.',
   'template.focaccia.traits':
-    'Un pain plat huilé et alvéolé, cuit en plaque. La fugassa génoise est vers 65 % d’eau avec une saumure eau-huile-sel ; cette version très hydratée est plus aérée.',
+    'Un pain plat très hydraté, plié puis alvéolé dans un moule carré. L’huile de la pâte est distincte de celle du moule et de la surface ; la finition sur grille utilise le four éteint.',
   'template.brioche.traits':
-    'Un pain français riche en œufs et en beurre (environ la moitié du poids de farine chacun) avec un peu de sucre ; le beurre entre après le développement du gluten et la pâte repose au froid une nuit.',
+    'Un pain français riche en œufs et en beurre, avec de la levure fraîche. Le beurre est incorporé après le pétrissage initial ; cette variante retient un repos au froid d’une heure avant le façonnage.',
   'template.burger-buns.traits':
-    'Des petits pains ronds et moelleux, légèrement enrichis (lait, un peu d’œuf, beurre, sucre), apprêtés au chaud et cuits modérément pour une croûte fine et tendre.',
+    'Des petits pains ronds et moelleux enrichis d’œuf, de beurre et de sucre, avec une pâte à base d’eau, sans lait. Le beurre de finition est distinct du beurre dans la pâte.',
   'template.pullman.traits':
-    'Un pain de mie carré cuit dans un moule couvert : dessus plat, croûte fine et tendre, mie fine et serrée, d’une pâte au lait avec un peu de beurre et de sucre.',
+    'Un pain de mie carré cuit dans un moule couvert de 13 po. Cette pâte à base d’eau contient du beurre, du sucre et du sirop de malt, sans lait ni œuf.',
   'template.shokupan.traits':
-    'Le pain au lait japonais : une pâte de farine cuite (tangzhong, environ 1:5) permet à une pâte au lait de retenir plus d’eau, pour une mie très tendre, fine et humide.',
+    'Un pain au lait japonais enrichi avec un tangzhong cuit. Cette variante utilise de l’eau et du lait dans la pâte cuite, pour un rapport liquide total sur farine du tangzhong d’environ 6,1:1.',
   'template.pizza-neo-neapolitan.traits':
-    'Une pizza ronde de style napolitain (bord gonflé et tacheté, centre mince) adaptée au four maison : pâte plus hydratée et fermentation au froid plus longue que ce que permet l’AVPN.',
+    'Une pizza au four maison sur acier : un pointage de 24 heures à température ambiante puis 48 heures au froid, suivi du boulage et d’un apprêt distinct. Une adaptation domestique, sans certification AVPN.',
   'template.pizza-roman.traits':
-    'La tonda romaine : une pizza ronde mince et croustillante, presque sans bord, d’une pâte peu hydratée avec un peu d’huile, abaissée au rouleau à partir d’un petit pâton.',
+    'Une pizza romaine ronde, mince et croustillante, selon la formule professionnelle directe retenue : de petits pâtons, sans huile dans la pâte, avec un four à pizza très chaud.',
   'template.pizza-teglia.traits':
     'La pizza romaine en plaque : une pâte très hydratée de farine forte, maturée au froid un jour ou plus, étirée dans une plaque huilée : mie aérée, dessous croustillant.',
   'template.pizza-new-york.traits':
@@ -869,7 +899,7 @@ export const fr: Catalog = {
   'template.pizza-sicilian.traits':
     'Une pizza épaisse et aérée, rectangulaire, cuite dans une plaque bien huilée pour que le dessous frise et croustille.',
   'template.pizza-chicago.traits':
-    'La deep dish : une croûte peu hydratée et riche en gras, montée sur les bords d’un moule rond profond, garnie de fromage puis de sauce, cuite assez longtemps à chaleur modérée.',
+    'Une variante domestique de deep dish avec de la semoule de maïs, de l’huile d’olive et du beurre dans la pâte, cuite en poêle de fonte. La semoule entre dans le total de farine ; aucun apprêt distinct n’est prescrit.',
   'draft.rename': 'Renommer',
   'draft.delete': 'Supprimer le brouillon',
   'draft.deleteConfirm': 'Supprimer ce brouillon ? C’est définitif.',
@@ -1149,6 +1179,10 @@ export const fr: Catalog = {
   'name.water': 'Eau',
   'name.salt': 'Sel',
   'name.instant-yeast': 'Levure instantanée',
+  'name.fresh-yeast': 'Levure fraîche',
+  'name.yeast': 'Levure (forme non précisée)',
+  'name.milk-powder': 'Lait en poudre',
+  'name.non-diastatic-malt-powder': 'Malt en poudre non diastatique',
   'name.poolish': 'poolish',
   'name.tangzhong': 'tangzhong',
   'name.flour': 'Farine',

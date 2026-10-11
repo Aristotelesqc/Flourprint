@@ -85,7 +85,7 @@ describe('templates', () => {
       expect(valid.ok, template.id).toBe(true);
       const issues = checkRecipe(template.formula, template.process);
       expect(blockingIssues(issues), template.id).toEqual([]);
-      // Templates have every step timed, a mix, a bake, salt and a sane water.
+      // Source recipes need no fabricated inputs to pass a prediction model.
       expect(issues, template.id).toEqual([]);
       expect(template.basis.length, template.id).toBeGreaterThan(20);
       // Every template has a guide whose ranges are ordered.
@@ -96,13 +96,15 @@ describe('templates', () => {
     }
   });
 
-  it('give the fermentation model what it needs (a room temperature and a yeast)', () => {
+  it('keep manual plans usable independently of predictive support', () => {
     for (const template of RECIPE_TEMPLATES) {
       const dough = estimateFermentation(template.formula, template.process).dough.duration;
-      expect(['ok', 'out_of_domain'], `${template.id}: ${JSON.stringify(dough)}`).toContain(
-        dough.status,
-      );
+      expect(
+        ['ok', 'out_of_domain', 'unsupported', 'insufficient_data'],
+        `${template.id}: ${JSON.stringify(dough)}`,
+      ).toContain(dough.status);
+      expect(template.process.steps.every((step) => step.accepted === undefined)).toBe(true);
     }
-    // Every template runs the whole model, bands included: slow but bounded.
+    // A missing yeast form is an evidence gap, not a reason to change the recipe.
   }, 30_000);
 });
