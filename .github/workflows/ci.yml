@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # main: released work. dev: the open integration branch (the major pull request), which the
+    # dev channel follows (ADR 0013).
+    branches: [main, dev]
   pull_request:
 
 env:
@@ -97,7 +99,8 @@ jobs:
       - name: Dev channel APK (ADR 0013)
         # Same shell, but the web view loads the web preview: install once, restart to update.
         env:
-          FLOURPRINT_DEV_URL: ${{ vars.FLOURPRINT_WEB_URL || 'https://flourprint-aristotelesqc.pages.dev' }}
+          # The dev APK always loads the integration branch: the open major pull request.
+          FLOURPRINT_DEV_URL: ${{ vars.FLOURPRINT_DEV_URL || 'https://dev.flourprint-aristotelesqc.pages.dev' }}
         run: |
           pnpm --filter @flourprint/mobile exec cap sync android
           (cd apps/mobile/android && ./gradlew assembleDebug --no-daemon -PflourprintChannel=dev)
@@ -112,8 +115,8 @@ jobs:
     # Web preview (ADR 0013), deployed to Cloudflare Pages when its secrets are set.
     needs: check
     runs-on: ubuntu-latest
-    # main deploys the main address; each pull request its own pr-<number> address.
-    concurrency: web-preview-${{ github.event.pull_request.number || 'main' }}
+    # main and dev deploy their own address; each pull request its own pr-<number> address.
+    concurrency: web-preview-${{ github.event.pull_request.number || github.ref_name }}
     permissions:
       contents: read
       pull-requests: write
@@ -141,11 +144,15 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # main is the production branch (the main address, loaded by the dev APK); a pull request
-          # deploys to its own alias, so previews never overwrite each other or main (ADR 0013).
+          # main is the production branch (the main address). dev, the integration branch of the
+          # open major pull request, has the address the dev APK loads. Every other pull request
+          # deploys to its own alias, so no preview overwrites another (ADR 0013).
           if [ -n "$PR_NUMBER" ]; then
             BRANCH="pr-${PR_NUMBER}"
             URL="https://${BRANCH}.${PAGES_PROJECT}.pages.dev"
+          elif [ "$GITHUB_REF_NAME" = dev ]; then
+            BRANCH=dev
+            URL="https://dev.${PAGES_PROJECT}.pages.dev"
           else
             BRANCH=main
             URL="https://${PAGES_PROJECT}.pages.dev"
@@ -165,7 +172,7 @@ jobs:
         run: |
           # One comment per pull request, edited on every push: the address never changes,
           # the line under it says which commit it serves.
-          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_BUILD}\` (commit ${HEAD_SHA}). Updated on every push; main stays at https://${PAGES_PROJECT}.pages.dev."
+          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_BUILD}\` (commit ${HEAD_SHA}). Updated on every push. The dev channel (dev APK) follows https://dev.${PAGES_PROJECT}.pages.dev; main is https://${PAGES_PROJECT}.pages.dev."
           gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --edit-last --body "$BODY" \
             || gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$BODY"
       - name: Preview not deployed
