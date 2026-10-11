@@ -15,8 +15,9 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
 - **Dough end point**: from the end of the mix to the start of the bake, the dough is "ready to
   bake" (the baker's readiness decision, see Readiness profiles below). Bulk, cold retard,
   shaping and proof are counted together: the state is never reset between steps (#9).
-- **Dough steps**: the `asap` steps that come after the `mix` step and before the `bake` step
-  in the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
+- **Dough steps**: the `asap` steps that come after the `mix` step and before the first **heat
+  step** (`bake` or `boil`: boiling bagels or pretzels ends the fermentation as baking does) in
+  the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
   one sequence, each after the previous one; dough steps in parallel (two rests side by side)
   are `insufficient_data` (`non_linear_dough_path`) until split masses are modelled. Without a
   `mix` step, the estimate is `insufficient_data`; without a `bake` step, every `asap` step after
@@ -217,6 +218,21 @@ interface AcceptedSuggestion {
 - `StartBake` copies the accepted decisions of the started revision into the snapshot
   (history.md). Replay never recomputes them.
 - Out of scope: staleness digests and exported parameter files.
+
+### Model-driven duration
+
+A dough step may be set to follow the model (`ProcessStep.durationMode: 'model'`, process.md):
+
+- At most **one** dough step per dough is model-driven: the model solves one unknown, the time of
+  that step given the planned durations of the others (as "use this time" does). A second one is
+  `InvalidProcess`.
+- While a recipe or draft is edited, the editor (application layer, not the domain) applies the
+  current suggestion to that step after every edit, as an accepted suggestion: `plannedDurationS`
+  is the suggestion rounded to 5 minutes, with its `accepted` provenance. The stored value is
+  always explicit; when the estimate is not `ok`, the step keeps its last value and the editor
+  says why.
+- A bake never changes a duration by itself: the snapshot keeps the values of the started
+  revision, and `AdjustStep` during a bake makes the step manual for that bake.
 
 ## Validation data (independent of the fit)
 

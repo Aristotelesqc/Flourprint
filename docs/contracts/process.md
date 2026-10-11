@@ -16,6 +16,7 @@ interface ProcessStep {
   plannedDurationS?: number; // absent = unknown
   endCriterion?: EndCriterion; // observation or user decision
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
+  durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one dough step (fermentation.md)
 }
 ```
 

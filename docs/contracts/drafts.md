@@ -73,6 +73,25 @@ checkRecipe(formula, process): RecipeIssue[]
 - Checks are computed by `@flourprint/core/domain` only. The UI shows them on demand ("Check the
   recipe") and as a count while editing, and runs them before saving or baking.
 
+## Fermentation schedules
+
+A **fermentation schedule** is a preset for the dough steps between the mix and the first heat
+step (fermentation.md). Applying one to a draft replaces those steps with the schedule's steps,
+each with its operation, duration, location and temperature, linked in order after the mix and
+before the steps that followed the replaced ones. It refuses (`InvalidProcess`) when a replaced
+step carries incorporations or a technique other than folds. Folds of a replaced bulk are kept on
+the schedule's bulk.
+
+| id               | Steps (defaults)                                                           |
+| ---------------- | -------------------------------------------------------------------------- |
+| `bulk-proof`     | bulk 2 h at room · shape · proof 1 h at room                               |
+| `cold-bulk`      | bulk 1 h at room · cold bulk 18 h at 4 °C · shape · proof 2 h at room      |
+| `cold-proof`     | bulk 2 h at room · shape · cold proof 14 h at 4 °C (baked from the fridge) |
+| `same-day-short` | bulk 1 h at room · shape · proof 45 min at room                            |
+
+Schedules are versioned data in the application layer, like templates; the last dough step of each
+is `durationMode: 'model'`. A schedule is a starting point: every value stays editable.
+
 ## Templates
 
 ```ts

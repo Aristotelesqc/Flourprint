@@ -144,6 +144,10 @@ interface WaterBalance {
   `WaterAllocationExceeded`.
 - No quantity is called "conventional hydration". A consistency index is a model output (#27,
   N3) and is never called hydration.
+- The app labels `totalWaterPct` **Hydration** (owner decision of 2026-10-11): it is total water
+  as defined above, every water-bearing ingredient included, not the conventional water-to-flour
+  ratio. Typing a hydration locks total water at that value (`LockTotalWater`); `pureWaterPct` is
+  shown as "added water".
 
 ## Fat and sugar
 

@@ -50,9 +50,29 @@ interface FlourEntry {
 
 ## Built-in entries
 
-Built-in entries ship with the app, are versioned and immutable, and carry **no composition**:
-every property is `unknown` (#26: a generic name does not justify a precise composition). They
-give a recipe a named flour without creating one.
+Built-in entries ship with the app, are versioned and immutable. They give a recipe a named flour
+without creating one, with a short **description** (message key `flour.<id>.description`).
+
+Version 2 of the built-ins (owner decision of 2026-10-11) adds **typical** values where a generic
+name supports one: `status: 'estimated'`, a central value with its `uncertainty` (half the typical
+range), `source: { kind: 'reference', detail }` naming where the range comes from. They describe
+the category, not a bag: a personal entry with the bag's own values replaces them, and they stay
+unverified until checked against sources (#34). Every other property stays `unknown`.
+
+| id                  | Protein (as sold, points) | Note                                         |
+| ------------------- | ------------------------- | -------------------------------------------- |
+| `all-purpose-flour` | 12.5 ± 1.0                | Canadian all-purpose is made from hard wheat |
+| `bread-flour`       | 13.5 ± 1.0                |                                              |
+| `bise-flour`        | 12.5 ± 1.5                |                                              |
+| `whole-wheat`       | 13.5 ± 1.5                |                                              |
+| `whole-grain-wheat` | 13.5 ± 1.5                |                                              |
+| `spelt-flour`       | 13.0 ± 2.0                |                                              |
+| `tipo-00-flour`     | 12.0 ± 1.5                | pizza grades are the strong end              |
+| `brown-flour`       | 12.5 ± 1.5                |                                              |
+| `cornmeal`          | 7.5 ± 1.0                 | no gluten-forming proteins                   |
+
+The generic `flour` entry stays for recipes that name it but is not offered in the flour picker
+or listed in the registry.
 
 | id                  | Name (fr)                 | cereal | refinement | Note                                                           |
 | ------------------- | ------------------------- | ------ | ---------- | -------------------------------------------------------------- |
