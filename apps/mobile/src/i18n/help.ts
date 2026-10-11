@@ -59,13 +59,13 @@ export const helpEn = {
 
   'help.fermentation.title': 'Estimated fermentation',
   'help.fermentation.body1':
-    'The app estimates how long the dough needs to ferment from the yeast dose, the temperatures and the planned durations of your steps. The model is provisional: it is fitted on a published yeast table, not yet on your own bakes.',
+    'The app estimates how long the dough needs to ferment from the yeast dose, the temperatures and the planned durations of the dough steps (between the mix and the bake, or the boil for bagels). They count as one fermentation: the dough’s state is not reset between them.',
   'help.fermentation.body2':
-    'Basic mode takes the dough at room temperature. Advanced mode lets you aim at a dough temperature and gives the water temperature to use.',
+    'Basic mode takes the dough at room temperature. Advanced mode aims at a dough temperature and gives the water temperature to use. Each step has its own place: room, or fridge at 4 °C.',
   'help.fermentation.body3':
-    'The recipe never changes by itself: “Use this time” and “Use this dose” are edits that you choose.',
+    'The result line tells how far the plan takes the dough towards its “ready to bake” target; “Details” gives the ranges in plain words. The recipe changes only by an edit: a step on Auto, “Use this time” or “Use” for the yeast.',
   'help.fermentation.more':
-    'The steps between the mix and the bake are counted together as one fermentation; the dough’s state is not reset between them. Preferments are estimated apart. Without an ingredient marked as commercial yeast there is no estimate.',
+    'The model is provisional: it is fitted on a published yeast table, not yet on recorded bakes, and its range shows how far off it can be. Preferments are estimated apart. Without an ingredient marked as commercial yeast there is no estimate.',
 
   'help.readiness.title': '“Ready to bake” target',
   'help.readiness.body1':
@@ -79,21 +79,39 @@ export const helpEn = {
 
   'help.modelTime.title': 'Model time and its range',
   'help.modelTime.body1':
-    'The time the last fermentation step needs for the dough to reach its target, given the yeast dose and the planned durations of the other steps.',
+    'The time one dough step needs for the dough to reach its target, given the yeast dose and the planned durations of the other steps: the step on Auto, otherwise the last dough step.',
   'help.modelTime.body2':
-    'The range in brackets comes from the model’s uncertain parameters (speed, sensitivity to temperature, yeast conversion). It is not a confidence interval: the real time can fall outside it.',
+    'The range comes from the model’s uncertain parameters (speed, sensitivity to temperature, yeast conversion) and from the target’s own range. It is not a confidence interval: the real time can fall outside it.',
   'help.modelTime.body3':
     '“Not reached within 21 days” means one end of the range never reaches the target; “no reliable range” means no range could be computed. “Use this time” writes the value, rounded to 5 minutes, into the step.',
   'help.modelTime.more':
-    '“At the planned times: 90 %” is how far the dough gets with the durations you planned, as a percentage of its target. Under 100 %, the plan stops before the target. It is not a volume.',
+    '“The plan reaches 90 % of the target” is how far the dough gets with the planned durations. Under 100 %, the plan stops before the target; over 100 %, it goes past it. It is not a volume.',
 
   'help.extrapolation.title': 'Outside the model’s data',
   'help.extrapolation.body1':
-    'The model was fitted on a limited range of doughs. When your recipe goes beyond it, the estimate is still given, with the reasons, but it is less reliable.',
+    'The model was fitted on a limited range of doughs. When the recipe goes beyond it, the estimate is still given, with the reasons, but it is less reliable.',
   'help.extrapolation.body2':
-    'The reasons: a preferment, more than 5 % sugar, more than 3 % fat, salt outside 1.5 to 3 %, total water outside 55 to 75 %, or an unknown content. They only flag the estimate; they do not change the computation.',
+    'The reasons: a preferment, more than 5 % sugar, more than 3 % fat, salt outside 1.5 to 3 %, total water outside 55 to 75 %, or an unknown content (sugar or fat unknown: an ingredient’s composition is not known). They only flag the estimate; they do not change the computation.',
   'help.extrapolation.body3':
     'The range does not widen by itself: read the figure as an order of magnitude and watch the dough.',
+
+  'help.schedule.title': 'Fermentation schedules',
+  'help.schedule.body1':
+    'A schedule replaces the dough steps, between the mix and the bake, with a usual sequence: bulk and proof; a slow cold bulk (18 h at 4 °C); a cold-retarded proof (14 h at 4 °C, baked from the fridge); or a short same-day plan.',
+  'help.schedule.body2':
+    'Steps in the cold are set to the fridge at 4 °C; the others stay at room temperature. The folds of the bulk are kept. Steps that add ingredients or carry another technique are not replaced: the schedule is refused.',
+  'help.schedule.body3':
+    'The last step of a schedule is on Auto: its time follows the model. Every value stays editable.',
+
+  'help.autoDuration.title': 'Duration from the model (Auto)',
+  'help.autoDuration.body1':
+    'A step on Auto takes the time the model gives so that the dough reaches its target at the end of the dough steps, the other durations being as planned. It is updated after every edit of the recipe.',
+  'help.autoDuration.body2':
+    'Only one step can be on Auto: the model solves one unknown. Choosing Auto on another step puts the previous one back to its last time, typed by hand from then on.',
+  'help.autoDuration.body3':
+    'The stored time is always explicit, rounded to 5 minutes, and recorded as taken from the model. When the model cannot estimate it (a temperature missing, for example), the step keeps its last time.',
+  'help.autoDuration.more':
+    'A bake never changes a time by itself: it uses the times of the saved version. Changing the step’s time during a bake makes it manual for that bake.',
 
   'help.waterTemp.title': 'Dough temperature and water temperature',
   'help.waterTemp.body1':
@@ -225,13 +243,13 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.fermentation.title': 'Fermentation estimée',
   'help.fermentation.body1':
-    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes. Le modèle est provisoire : il est ajusté sur une table de levure publiée, pas encore sur les fournées enregistrées.',
+    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes de la pâte (entre le pétrissage et la cuisson, ou l’ébullition pour les bagels). Elles comptent comme une seule fermentation : l’état de la pâte n’est pas remis à zéro entre elles.',
   'help.fermentation.body2':
-    'Le mode de base prend la pâte à la température ambiante. Le mode avancé permet de viser une température de pâte et donne la température de l’eau à utiliser.',
+    'Le mode de base prend la pâte à la température ambiante. Le mode avancé vise une température de pâte et donne la température de l’eau à utiliser. Chaque étape a son lieu : ambiante, ou frigo à 4 °C.',
   'help.fermentation.body3':
-    'La recette ne change jamais toute seule : « Prendre ce temps » et « Prendre cette dose » sont des modifications à choisir.',
+    'La ligne de résultat indique jusqu’où le plan mène la pâte vers sa cible « prête à cuire » ; « Détails » donne les fourchettes en phrases simples. La recette ne change que par une modification : une étape en Auto, « Prendre ce temps » ou « Utiliser » pour la levure.',
   'help.fermentation.more':
-    'Les étapes entre le pétrissage et la cuisson sont comptées ensemble comme une seule fermentation ; l’état de la pâte n’est pas remis à zéro entre elles. Les préferments sont estimés à part. Sans ingrédient marqué comme levure commerciale, il n’y a pas d’estimation.',
+    'Le modèle est provisoire : il est ajusté sur une table de levure publiée, pas encore sur les fournées enregistrées, et sa fourchette montre de combien il peut se tromper. Les préferments sont estimés à part. Sans ingrédient marqué comme levure commerciale, il n’y a pas d’estimation.',
 
   'help.readiness.title': 'Cible « prête à cuire »',
   'help.readiness.body1':
@@ -245,21 +263,39 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.modelTime.title': 'Temps du modèle et sa fourchette',
   'help.modelTime.body1':
-    'Le temps dont la dernière étape de fermentation a besoin pour que la pâte atteigne sa cible, vu la dose de levure et les durées prévues des autres étapes.',
+    'Le temps dont une étape de la pâte a besoin pour que la pâte atteigne sa cible, vu la dose de levure et les durées prévues des autres étapes : l’étape en Auto, sinon la dernière étape de la pâte.',
   'help.modelTime.body2':
-    'La fourchette entre parenthèses vient des paramètres incertains du modèle (vitesse, sensibilité à la température, conversion de la levure). Ce n’est pas un intervalle de confiance : le temps réel peut en sortir.',
+    'La fourchette vient des paramètres incertains du modèle (vitesse, sensibilité à la température, conversion de la levure) et de la fourchette de la cible. Ce n’est pas un intervalle de confiance : le temps réel peut en sortir.',
   'help.modelTime.body3':
     '« Pas atteinte en 21 jours » veut dire qu’une borne de la fourchette n’atteint jamais la cible ; « pas de fourchette fiable », qu’aucune fourchette n’a pu être calculée. « Prendre ce temps » écrit la valeur, arrondie à 5 minutes, dans l’étape.',
   'help.modelTime.more':
-    '« Aux temps prévus : 90 % » indique jusqu’où la pâte va avec les durées prévues, en pourcentage de sa cible. Sous 100 %, le plan s’arrête avant la cible. Ce n’est pas un volume.',
+    '« Le plan atteint 90 % de la cible » indique jusqu’où la pâte va avec les durées prévues. Sous 100 %, le plan s’arrête avant la cible ; au-dessus, il la dépasse. Ce n’est pas un volume.',
 
   'help.extrapolation.title': 'Hors des données du modèle',
   'help.extrapolation.body1':
     'Le modèle est ajusté sur une plage limitée de pâtes. Quand la recette en sort, l’estimation est quand même donnée, avec les raisons, mais elle est moins fiable.',
   'help.extrapolation.body2':
-    'Les raisons : un préferment, plus de 5 % de sucre, plus de 3 % de gras, un sel hors de 1,5 à 3 %, une eau totale hors de 55 à 75 %, ou une teneur inconnue. Elles signalent l’estimation sans changer le calcul.',
+    'Les raisons : un préferment, plus de 5 % de sucre, plus de 3 % de gras, un sel hors de 1,5 à 3 %, une eau totale hors de 55 à 75 %, ou une teneur inconnue (sucre ou gras inconnu : la composition d’un ingrédient n’est pas connue). Elles signalent l’estimation sans changer le calcul.',
   'help.extrapolation.body3':
     'La fourchette ne s’élargit pas toute seule : lire le chiffre comme un ordre de grandeur et surveiller la pâte.',
+
+  'help.schedule.title': 'Horaires de fermentation',
+  'help.schedule.body1':
+    'Un horaire remplace les étapes de la pâte, entre le pétrissage et la cuisson, par une suite habituelle : pointage et apprêt ; pointage lent au froid (18 h à 4 °C) ; apprêt bloqué au froid (14 h à 4 °C, cuit à la sortie du frigo) ; ou un plan court le même jour.',
+  'help.schedule.body2':
+    'Les étapes au froid sont placées au frigo à 4 °C ; les autres restent à la température ambiante. Les rabats du pointage sont gardés. Des étapes qui ajoutent des ingrédients ou portent une autre technique ne sont pas remplacées : l’horaire est refusé.',
+  'help.schedule.body3':
+    'La dernière étape d’un horaire est en Auto : son temps suit le modèle. Toutes les valeurs restent modifiables.',
+
+  'help.autoDuration.title': 'Durée selon le modèle (Auto)',
+  'help.autoDuration.body1':
+    'Une étape en Auto prend le temps que donne le modèle pour que la pâte atteigne sa cible à la fin des étapes de la pâte, les autres durées restant celles prévues. Il est mis à jour après chaque modification de la recette.',
+  'help.autoDuration.body2':
+    'Une seule étape peut être en Auto : le modèle résout une seule inconnue. Choisir Auto sur une autre étape remet la précédente à son dernier temps, saisi à la main dès lors.',
+  'help.autoDuration.body3':
+    'Le temps enregistré est toujours explicite, arrondi à 5 minutes, et noté comme tiré du modèle. Quand le modèle ne peut pas l’estimer (une température manquante, par exemple), l’étape garde son dernier temps.',
+  'help.autoDuration.more':
+    'Une fournée ne change jamais un temps d’elle-même : elle suit les temps de la version enregistrée. Changer le temps de l’étape pendant une fournée la rend manuelle pour cette fournée.',
 
   'help.waterTemp.title': 'Température de pâte et température de l’eau',
   'help.waterTemp.body1':

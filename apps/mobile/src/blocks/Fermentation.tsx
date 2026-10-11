@@ -1,57 +1,43 @@
-import { IonButton } from '@ionic/react';
+import { IonButton, useIonAlert } from '@ionic/react';
 import { useId, useMemo, useState } from 'react';
 import {
+  applySchedule,
+  FERMENTATION_SCHEDULES,
+  roundedDurationS,
+} from '@flourprint/core/application';
+import {
+  doughStepAmbients,
+  doughSteps,
   estimateFermentation,
-  EXPERIMENTAL_READY,
-  MODEL_END_POINT,
-  type AcceptedSuggestion,
+  updateStep,
   type Estimate,
   type Formula,
   type FormulaEdit,
-  type MassEstimates,
   type OkEstimate,
   type Process,
-  type ProcessStep,
-  type RangeBound,
-  type StepConditions,
   type YeastForm,
 } from '@flourprint/core/domain';
 import { en, type MessageKey } from '../i18n/messages';
-import { formatDuration } from '../i18n/time';
 import { useMessages } from '../i18n/use-messages';
-import { recipeDuration } from '../services/recipe-duration';
-import { OptionalNumberField } from '../ui/Field';
+import { DurationField, OptionalNumberField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { Card } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
+import { DoughSteps } from './fermentation/DoughSteps';
+import { DoughResult, PrefermentResult } from './fermentation/Result';
+import { useEstimateText, withConditions } from './fermentation/text';
 
 /**
- * Fermentation times from the provisional model (docs/contracts/fermentation.md, ADR 0010).
- * Basic mode takes the dough at room temperature; advanced mode aims at a dough temperature and
- * gives the water temperature. Suggestions change the recipe only when the user applies them.
+ * Fermentation from the provisional model (docs/contracts/fermentation.md, ADR 0010), read top to
+ * bottom: conditions, schedule, the dough steps with their place, temperature and time, then one
+ * result line. Basic mode takes the dough at room temperature; advanced mode aims at a dough
+ * temperature and gives the water temperature. Suggestions change the recipe only when applied,
+ * or on the one step set to Auto (applied by the editor after every edit).
  */
 
-const FERMENTATION_OPERATIONS = new Set(['preferment', 'bulk', 'retard', 'proof']);
 const YEAST_FORMS: readonly YeastForm[] = ['active-dry', 'instant', 'fresh'];
-/** Applied durations are rounded to five minutes: nobody times a dough to the second. */
-const ROUND_S = 300;
-const applied = (seconds: number) => Math.max(ROUND_S, Math.round(seconds / ROUND_S) * ROUND_S);
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
-
-/** The readiness profiles a recipe can select (fermentation.md); the first is the default. */
-const PROFILES = [
-  {
-    profile: MODEL_END_POINT,
-    label: 'fermentation.readiness.model',
-    hint: 'fermentation.readinessHint.model',
-  },
-  {
-    profile: EXPERIMENTAL_READY,
-    label: 'fermentation.readiness.experimental',
-    hint: 'fermentation.readinessHint.experimental',
-  },
-] as const;
 
 interface Props {
   readonly formula: Formula;
@@ -61,42 +47,18 @@ interface Props {
   readonly onProcess: (process: Process) => boolean;
 }
 
-export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: Props) => {
-  const { t, name, stepName, componentName } = useMessages();
+export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props) => {
+  const { t, componentName } = useMessages();
   const estimates = useMemo(() => estimateFermentation(formula, process), [formula, process]);
   const mix = process.steps.find((s) => s.operation === 'mix');
+  const dough = useMemo(() => doughSteps(process) ?? [], [process]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const advanced = advancedOpen || mix?.conditions?.doughTemperatureC !== undefined;
-
-  const length = recipeDuration(process, now as Parameters<typeof recipeDuration>[1]);
-  const total =
-    length.kind === 'complete'
-      ? formatDuration(length.seconds)
-      : length.kind === 'atLeast'
-        ? t('recipes.card.durationAtLeast', { duration: formatDuration(length.seconds) })
-        : t('formula.time.unknown');
-
-  const setConditions = (
-    stepId: string,
-    changes: { [K in keyof StepConditions]?: StepConditions[K] | undefined },
-  ) =>
-    onProcess({
-      ...process,
-      steps: process.steps.map((s) => {
-        if (s.id !== stepId) return s;
-        const conditions = Object.fromEntries(
-          Object.entries({ ...s.conditions, ...changes }).filter(([, v]) => v !== undefined),
-        );
-        const { conditions: _, ...rest } = s;
-        return Object.keys(conditions).length === 0
-          ? rest
-          : { ...rest, conditions: conditions as StepConditions };
-      }),
-    });
+  const preferments = formula.components.filter((c) => c.kind === 'preferment' && c.flourPct > 0);
 
   /** Applies a suggested time and records where it came from (fermentation.md). */
   const setDuration = (stepId: string, estimate: OkEstimate) => {
-    const appliedValue = applied(estimate.value);
+    const appliedValue = roundedDurationS(estimate.value);
     return onProcess({
       ...process,
       steps: process.steps.map((s) =>
@@ -110,50 +72,55 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
       ),
     });
   };
-
-  const steps = process.steps.filter((s) => FERMENTATION_OPERATIONS.has(s.operation));
+  const doughYeast = (ingredient: string) =>
+    formula.ingredients.find((i) => i.id === ingredient)?.bakerPct;
 
   return (
     <Card gap="gap-3">
-      <span className="flex items-baseline justify-between gap-3">
-        <span className="flex items-baseline gap-2">
-          <span className="flex items-center gap-1.5 font-semibold">
-            {t('fermentation.title')}
-            <InfoButton topic="fermentation" term={t('fermentation.title')} />
-          </span>
-          <span className="rounded-full border border-line px-2 text-xs whitespace-nowrap text-muted">
-            {t('fermentation.provisional')}
-          </span>
+      <span className="flex items-center justify-between gap-3">
+        <span className="flex items-center gap-1.5 text-[19px] font-semibold">
+          {t('fermentation.title')}
+          <InfoButton topic="fermentation" term={t('fermentation.title')} />
         </span>
-        <span className="text-lg font-bold whitespace-nowrap">{total}</span>
+        {mix && (
+          <span className="w-[11.5rem] shrink-0">
+            <Segmented
+              size="small"
+              value={advanced ? 'advanced' : 'basic'}
+              options={[
+                { value: 'basic', label: t('fermentation.mode.basic') },
+                { value: 'advanced', label: t('fermentation.mode.advanced') },
+              ]}
+              onChange={(mode) => {
+                setAdvancedOpen(mode === 'advanced');
+                if (mode === 'basic') {
+                  onProcess(
+                    withConditions(process, mix.id, {
+                      doughTemperatureC: undefined,
+                      frictionC: undefined,
+                    }),
+                  );
+                }
+              }}
+            />
+          </span>
+        )}
       </span>
 
       {mix && (
-        <>
-          <Segmented
-            size="small"
-            value={advanced ? 'advanced' : 'basic'}
-            options={[
-              { value: 'basic', label: t('fermentation.mode.basic') },
-              { value: 'advanced', label: t('fermentation.mode.advanced') },
-            ]}
-            onChange={(mode) => {
-              setAdvancedOpen(mode === 'advanced');
-              if (mode === 'basic') {
-                setConditions(mix.id, { doughTemperatureC: undefined, frictionC: undefined });
-              }
-            }}
-          />
+        <div className="flex flex-col gap-2">
           <Row label={t('fermentation.room')}>
             <OptionalNumberField
               label={t('fermentation.room')}
               unit="°C"
               width="6.5rem"
               value={mix.conditions?.temperatureC}
-              onCommit={(value) => setConditions(mix.id, { temperatureC: value })}
+              onCommit={(value) =>
+                onProcess(withConditions(process, mix.id, { temperatureC: value }))
+              }
             />
           </Row>
-          {advanced ? (
+          {advanced && (
             <>
               <Row
                 label={t('fermentation.target')}
@@ -164,7 +131,9 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
                   unit="°C"
                   width="6.5rem"
                   value={mix.conditions?.doughTemperatureC}
-                  onCommit={(value) => setConditions(mix.id, { doughTemperatureC: value })}
+                  onCommit={(value) =>
+                    onProcess(withConditions(process, mix.id, { doughTemperatureC: value }))
+                  }
                 />
               </Row>
               <Row label={t('fermentation.friction')}>
@@ -173,133 +142,193 @@ export const FermentationCard = ({ formula, process, now, onEdit, onProcess }: P
                   unit="°C"
                   width="6.5rem"
                   value={mix.conditions?.frictionC}
-                  onCommit={(value) => setConditions(mix.id, { frictionC: value })}
+                  onCommit={(value) =>
+                    onProcess(withConditions(process, mix.id, { frictionC: value }))
+                  }
                 />
               </Row>
               {estimates.waterTemperatureC && (
                 <WaterTemperature estimate={estimates.waterTemperatureC} />
               )}
             </>
-          ) : (
-            <span className="text-sm text-muted">{t('fermentation.basicHint')}</span>
           )}
-        </>
+          <ScheduleRow process={process} replaced={dough.length} onProcess={onProcess} />
+        </div>
       )}
 
-      <ReadinessChoice process={process} onProcess={onProcess} />
-
-      <span className="border-t border-line pt-2 text-sm font-semibold">
-        {t('fermentation.steps')}
-      </span>
-      <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[15px]">
-        {steps.map((step) => (
-          <li key={step.id} className="flex items-center justify-between gap-3">
-            <span className="flex flex-col">
-              <span>{stepName(step)}</span>
-              <span
-                className={step.plannedDurationS === undefined ? 'text-muted' : 'font-semibold'}
-              >
-                {step.plannedDurationS === undefined
-                  ? t('formula.time.stepUnknown')
-                  : formatDuration(step.plannedDurationS)}
-              </span>
-            </span>
-            <OptionalNumberField
-              label={t('fermentation.stepTemperature', { step: stepName(step) })}
-              unit="°C"
-              width="6.5rem"
-              value={step.conditions?.temperatureC}
-              onCommit={(value) => setConditions(step.id, { temperatureC: value })}
-            />
-          </li>
-        ))}
-      </ul>
-
-      {Object.entries(estimates.preferments).map(([id, mass]) => (
-        <Mass
-          key={id}
-          title={(() => {
-            const component = formula.components.find((c) => c.id === id);
-            return component ? componentName(formula, component) : name(id);
-          })()}
-          mass={mass}
-          step={process.steps.find((s) => s.id === mass.stepId)}
-          onDuration={setDuration}
-          onYeast={(ingredient, accepted) => {
-            const component = formula.components.find((c) => c.id === id);
-            if (!component) return false;
-            return onEdit({
-              type: 'UpdateComponent',
-              component: id,
-              changes: {
-                allocations: (component.allocations ?? []).map((a) =>
-                  a.ingredient === ingredient
-                    ? { ...a, bakerPct: accepted.appliedValue, accepted }
-                    : a,
-                ),
-              },
-            });
-          }}
+      {mix && (
+        <DoughSteps
+          process={process}
+          mix={mix}
+          steps={dough}
+          duration={estimates.dough.duration}
+          estimatedStepId={estimates.dough.stepId}
+          reservedIds={formula.components.map((c) => c.id)}
+          ambients={doughStepAmbients(process)}
+          onProcess={onProcess}
         />
-      ))}
-      <Mass
-        title={t('fermentation.dough')}
+      )}
+
+      <DoughResult
         mass={estimates.dough}
-        dough
         step={process.steps.find((s) => s.id === estimates.dough.stepId)}
+        currentYeast={doughYeast}
         onDuration={setDuration}
         onYeast={(ingredient, accepted) =>
           onEdit({ type: 'SetBakerPct', ingredient, pct: accepted.appliedValue, accepted })
         }
+        process={process}
+        onProcess={onProcess}
       />
       {estimates.dough.duration.status === 'unsupported' &&
         estimates.dough.duration.reason === 'no_commercial_yeast' && (
           <MarkYeast formula={formula} onEdit={onEdit} />
         )}
-      <span className="text-sm text-muted">{t('fermentation.footnote')}</span>
+
+      {preferments.length > 0 && (
+        <section className="flex flex-col gap-2 border-t border-line pt-3">
+          <span className="text-sm font-semibold">{t('fermentation.preferments')}</span>
+          {preferments.map((component) => {
+            const mass = estimates.preferments[component.id];
+            const step = process.steps.find((s) => s.id === component.id);
+            const title = componentName(formula, component);
+            return (
+              <div key={component.id} className="flex flex-col gap-1.5">
+                <span className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate font-semibold">{title}</span>
+                  {step && (
+                    <>
+                      <OptionalNumberField
+                        label={t('fermentation.stepTemperature', { step: title })}
+                        unit="°C"
+                        width="5.75rem"
+                        value={step.conditions?.temperatureC}
+                        onCommit={(value) =>
+                          onProcess(withConditions(process, step.id, { temperatureC: value }))
+                        }
+                      />
+                      <DurationField
+                        label={t('fermentation.stepDuration', { step: title })}
+                        value={step.plannedDurationS}
+                        optional
+                        width="6.5rem"
+                        onCommit={(seconds) =>
+                          onProcess(updateStep(process, step.id, { plannedDurationS: seconds }))
+                        }
+                      />
+                    </>
+                  )}
+                </span>
+                {mass && (
+                  <PrefermentResult
+                    mass={mass}
+                    step={step}
+                    currentYeast={(ingredient) =>
+                      component.allocations?.find((a) => a.ingredient === ingredient)?.bakerPct
+                    }
+                    onDuration={setDuration}
+                    onYeast={(ingredient, accepted) =>
+                      onEdit({
+                        type: 'UpdateComponent',
+                        component: component.id,
+                        changes: {
+                          allocations: (component.allocations ?? []).map((a) =>
+                            a.ingredient === ingredient
+                              ? { ...a, bakerPct: accepted.appliedValue, accepted }
+                              : a,
+                          ),
+                        },
+                      })
+                    }
+                  />
+                )}
+              </div>
+            );
+          })}
+        </section>
+      )}
     </Card>
   );
 };
 
-/** The dough's readiness profile: an explicit choice of the recipe, never a silent default. */
-const ReadinessChoice = ({
+/** Replaces the dough steps with a fermentation schedule (drafts.md), after a confirmation. */
+const ScheduleRow = ({
   process,
+  replaced,
   onProcess,
 }: {
   process: Process;
+  replaced: number;
   onProcess: (process: Process) => boolean;
 }) => {
-  const { t } = useMessages();
-  const selected =
-    PROFILES.find(
-      ({ profile }) =>
-        profile.id === process.readiness?.id && profile.version === process.readiness.version,
-    ) ?? (process.readiness ? undefined : PROFILES[0]);
+  const { t, stepName, error } = useMessages();
+  const id = useId();
+  const [presentAlert] = useIonAlert();
+  const [refusal, setRefusal] = useState<string>();
+  const nameOf = (scheduleId: string) => {
+    const key = `schedule.${scheduleId}`;
+    return isKey(key) ? t(key) : scheduleId;
+  };
+  const apply = (scheduleId: string) => {
+    const result = applySchedule(process, scheduleId);
+    if (!result.ok) {
+      setRefusal(
+        result.error.code === 'InvalidProcess'
+          ? t('fermentation.schedule.refused')
+          : error(result.error),
+      );
+      return;
+    }
+    setRefusal(undefined);
+    onProcess(result.value);
+  };
+  const choose = (scheduleId: string) => {
+    if (replaced === 0) {
+      apply(scheduleId);
+      return;
+    }
+    void presentAlert({
+      header: t('fermentation.schedule.confirmTitle', { name: nameOf(scheduleId) }),
+      message: t('fermentation.schedule.confirmMessage', {
+        steps: (doughSteps(process) ?? []).map(stepName).join(', '),
+      }),
+      buttons: [
+        { text: t('fermentation.cancel'), role: 'cancel' },
+        { text: t('fermentation.schedule.apply'), handler: () => apply(scheduleId) },
+      ],
+    });
+  };
   return (
-    <div className="flex flex-col gap-1.5 border-t border-line pt-2">
-      <span className="flex items-center gap-1.5 text-sm font-semibold">
-        {t('fermentation.readiness')}
-        <InfoButton topic="readiness" term={t('fermentation.readiness')} />
-      </span>
-      <Segmented
-        size="small"
-        value={selected?.profile.id ?? ''}
-        options={PROFILES.map(({ profile, label }) => ({ value: profile.id, label: t(label) }))}
-        onChange={(id) => {
-          const choice = PROFILES.find(({ profile }) => profile.id === id);
-          if (!choice) return;
-          const { readiness: _previous, ...rest } = process;
-          onProcess(
-            choice === PROFILES[0]
-              ? rest
-              : { ...rest, readiness: { id: choice.profile.id, version: choice.profile.version } },
-          );
-        }}
-      />
-      <span className="text-sm text-muted">
-        {selected ? t(selected.hint) : t('fermentation.reason.readiness_profile_unknown')}
-      </span>
-    </div>
+    <>
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex items-center gap-1.5">
+          <label htmlFor={id}>{t('fermentation.schedule')}</label>
+          <InfoButton topic="schedule" term={t('fermentation.schedule.term')} />
+        </span>
+        <select
+          id={id}
+          className="fp-field h-11 max-w-[12.5rem] min-w-0 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2 text-ink"
+          value=""
+          onChange={(event) => {
+            if (event.target.value) choose(event.target.value);
+          }}
+        >
+          <option value="" disabled>
+            {t('fermentation.schedule.pick')}
+          </option>
+          {FERMENTATION_SCHEDULES.map((s) => (
+            <option key={s.id} value={s.id}>
+              {nameOf(s.id)}
+            </option>
+          ))}
+        </select>
+      </div>
+      {refusal && (
+        <p role="alert" className="m-0 text-sm text-alert">
+          {refusal}
+        </p>
+      )}
+    </>
   );
 };
 
@@ -320,145 +349,6 @@ const Row = ({
     {children}
   </div>
 );
-
-const useEstimateText = () => {
-  const { t, pct } = useMessages();
-  const bound = (value: RangeBound, format: (v: number) => string) =>
-    value.kind === 'finite'
-      ? format(value.value)
-      : t('fermentation.unbounded', { days: Math.round(value.horizonS / 86_400) });
-  const range = (e: Estimate, format: (v: number) => string) => {
-    if (e.status !== 'ok') return '';
-    if (!e.range) {
-      return e.assumptions.includes('band_unbounded') ? t('fermentation.bandUnbounded') : '';
-    }
-    return t('fermentation.range', {
-      low: bound(e.range[0], format),
-      high: bound(e.range[1], format),
-    });
-  };
-  const reason = (e: Estimate) => {
-    if (e.status === 'ok') return '';
-    const key = `fermentation.reason.${e.reason}`;
-    return isKey(key) ? t(key) : t('fermentation.reason.other', { reason: e.reason });
-  };
-  const extrapolations = (e: Estimate) => {
-    if (e.status !== 'ok' || !e.extrapolations || e.extrapolations.length === 0) return '';
-    const reasons = e.extrapolations.map((code) => {
-      const key = `fermentation.extra.${code}`;
-      return isKey(key) ? t(key) : code;
-    });
-    return t('fermentation.extrapolated', { reasons: reasons.join(', ') });
-  };
-  return { range, reason, extrapolations, pct };
-};
-
-const Mass = ({
-  title,
-  mass,
-  dough = false,
-  step,
-  onDuration,
-  onYeast,
-}: {
-  title: string;
-  mass: MassEstimates;
-  /** The dough ends at the provisional "ready to bake" target, a preferment when ripe. */
-  dough?: boolean;
-  step: ProcessStep | undefined;
-  onDuration: (stepId: string, estimate: OkEstimate) => boolean;
-  onYeast: (ingredient: string, accepted: AcceptedSuggestion) => boolean;
-}) => {
-  const { t, name, stepName } = useMessages();
-  const { range, reason, extrapolations, pct } = useEstimateText();
-  const { duration, progressPct, yeastPct } = mass;
-  const before =
-    duration.status === 'ok' && duration.assumptions.includes('end_point_before_last_step');
-  const yeasts = Object.entries(yeastPct);
-  return (
-    <section className="flex flex-col gap-1.5 border-t border-line pt-2">
-      <span className="flex items-center gap-1.5 font-semibold">
-        {title}
-        {duration.status === 'ok' && (
-          <InfoButton topic="modelTime" term={t('fermentation.timeTerm')} />
-        )}
-      </span>
-      {duration.status !== 'ok' ? (
-        <span className="text-sm">{reason(duration)}</span>
-      ) : (
-        step &&
-        (before ? (
-          <span className="text-[15px]">
-            {t('fermentation.reachedBefore', { step: stepName(step) })}
-          </span>
-        ) : (
-          <span className="flex items-center justify-between gap-2">
-            <span className="text-[15px]">
-              {t('fermentation.needs', {
-                step: stepName(step),
-                duration: formatDuration(duration.value),
-              })}{' '}
-              <span className="text-muted">{range(duration, formatDuration)}</span>
-            </span>
-            {/* Offered unless the rounded value is already applied with its provenance. */}
-            {!(
-              step.plannedDurationS === applied(duration.value) &&
-              step.accepted?.appliedValue === step.plannedDurationS
-            ) && (
-              <IonButton size="small" fill="outline" onClick={() => onDuration(step.id, duration)}>
-                {t('fermentation.applyDuration')}
-              </IonButton>
-            )}
-          </span>
-        ))
-      )}
-      {progressPct.status === 'ok' && (
-        <span className="text-[15px]">
-          {t(dough ? 'fermentation.progressReady' : 'fermentation.progress', {
-            pct: pct(progressPct.value),
-          })}{' '}
-          <span className="text-muted">{range(progressPct, pct)}</span>
-        </span>
-      )}
-      {dough && progressPct.status === 'ok' && (
-        <span className="text-sm text-muted">{t('fermentation.readyTarget')}</span>
-      )}
-      {yeasts.some(
-        ([, e]) => e.status === 'ok' && e.assumptions.includes('band_outside_domain'),
-      ) && <span className="text-sm text-muted">{t('fermentation.bandOutsideDomain')}</span>}
-      {yeasts.map(([ingredient, estimate]) =>
-        estimate.status === 'ok' ? (
-          <span key={ingredient} className="flex items-center justify-between gap-2">
-            <span className="text-[15px]">
-              {t('fermentation.yeast', { name: name(ingredient), pct: pct(estimate.value) })}{' '}
-              <span className="text-muted">{range(estimate, pct)}</span>
-            </span>
-            <IonButton
-              size="small"
-              fill="outline"
-              onClick={() => {
-                const appliedValue = Math.round(estimate.value * 1000) / 1000;
-                onYeast(ingredient, { estimate, appliedValue, model: estimate.model });
-              }}
-            >
-              {t('fermentation.applyYeast')}
-            </IonButton>
-          </span>
-        ) : duration.status !== 'ok' && duration.reason === estimate.reason ? null : (
-          <span key={ingredient} className="text-sm text-muted">
-            {reason(estimate)}
-          </span>
-        ),
-      )}
-      {extrapolations(duration) && (
-        <span className="flex items-start gap-1.5 text-sm text-alert">
-          <span>{extrapolations(duration)}</span>
-          <InfoButton topic="extrapolation" term={t('fermentation.extrapolationTerm')} />
-        </span>
-      )}
-    </section>
-  );
-};
 
 const WaterTemperature = ({ estimate }: { estimate: Estimate }) => {
   const { t } = useMessages();

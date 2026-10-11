@@ -325,6 +325,29 @@ export const doughReadyStage = (process: Process, stepId: StepId): 'shape' | 'ba
 export const lastDoughStepId = (process: Process): StepId | undefined =>
   doughSteps(process)?.at(-1)?.id;
 
+/** The room temperature the dough starts from: the mix's, else the first dough step's. */
+const roomOf = (mix: ProcessStep, steps: readonly ProcessStep[]) =>
+  mix.conditions?.temperatureC ??
+  steps.find((s) => s.conditions?.temperatureC !== undefined)?.conditions?.temperatureC;
+
+/**
+ * The ambient each dough step is estimated at (fermentation.md, Dough temperature): its own
+ * condition temperature, else the previous one's, starting from the room temperature. A step
+ * without a known ambient is left out.
+ */
+export const doughStepAmbients = (process: Process): Readonly<Record<StepId, number>> => {
+  const mix = process.steps.find((s) => s.operation === 'mix');
+  const steps = doughSteps(process) ?? [];
+  if (!mix) return {};
+  let ambientC = roomOf(mix, steps);
+  const result: Record<StepId, number> = {};
+  for (const step of steps) {
+    ambientC = step.conditions?.temperatureC ?? ambientC;
+    if (ambientC !== undefined) result[step.id] = ambientC;
+  }
+  return result;
+};
+
 const doughMass = (
   formula: Formula,
   process: Process,
@@ -353,9 +376,7 @@ const doughMass = (
       unordered.map((s) => s.id),
     );
   }
-  const roomC =
-    mix.conditions?.temperatureC ??
-    steps.find((s) => s.conditions?.temperatureC !== undefined)?.conditions?.temperatureC;
+  const roomC = roomOf(mix, steps);
   if (roomC === undefined) {
     return failure('insufficient_data', 'temperature_unknown', [`${mix.id}.temperatureC`]);
   }

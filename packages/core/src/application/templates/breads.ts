@@ -4,7 +4,7 @@ import { alapStep, H, MIN, preset, step } from './build.js';
 /** Lean breads (drafts.md, Templates): proportions are typical of the style, not tested recipes. */
 
 const room = { conditions: { temperatureC: 21 } } as const;
-const fridge = { conditions: { temperatureC: 4 } } as const;
+const fridge = { conditions: { location: 'fridge', temperatureC: 4 } } as const;
 
 export const baguette: RecipeTemplate = {
   id: 'baguette',
@@ -125,13 +125,14 @@ export const ciabatta: RecipeTemplate = {
 
 export const bagels: RecipeTemplate = {
   id: 'bagels',
-  version: '2',
+  version: '3',
   category: 'bread',
   basis:
     'Typical proportions of New York-style bagels from common bakery formulas (e.g. Hamelman, ' +
     'Bread): a stiff dough of strong flour at about 57 % water, 2 % salt, malt syrup, retarded ' +
     'overnight, boiled then baked. A starting point, not a tested recipe.' +
-    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).' +
+    ' Version 3 places the cold retard in the fridge (step location fridge).',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
     ingredients: [

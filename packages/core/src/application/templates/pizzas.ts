@@ -4,7 +4,7 @@ import { alapStep, H, MIN, preset, step } from './build.js';
 /** Focaccia and pizzas (drafts.md, Templates): typical proportions, not tested recipes. */
 
 const room = { conditions: { temperatureC: 21 } } as const;
-const fridge = { conditions: { temperatureC: 4 } } as const;
+const fridge = { conditions: { location: 'fridge', temperatureC: 4 } } as const;
 
 export const focaccia: RecipeTemplate = {
   id: 'focaccia',
@@ -46,14 +46,15 @@ export const focaccia: RecipeTemplate = {
 
 export const pizzaNeoNeapolitan: RecipeTemplate = {
   id: 'pizza-neo-neapolitan',
-  version: '2',
+  version: '3',
   category: 'pizza',
   basis:
     'Typical proportions of a Neapolitan-style dough within the AVPN disciplinare ranges ' +
     '(tipo 00 flour, 2.8 % salt, very little yeast), adapted to a home oven: 65 % water (home ' +
     'adaptations sit at 60-72 %, above the AVPN 55.6-62.5 %) and 24-48 h of cold fermentation. ' +
     'A starting point, not a tested recipe.' +
-    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).' +
+    ' Version 3 places the cold retard in the fridge (step location fridge).',
   formula: {
     flours: [{ id: 'tipo-00-flour', sharePct: 100 }],
     ingredients: [preset('water', 65), preset('salt', 2.8), preset('instant-yeast', 0.1)],
@@ -75,14 +76,15 @@ export const pizzaNeoNeapolitan: RecipeTemplate = {
 
 export const pizzaRoman: RecipeTemplate = {
   id: 'pizza-roman',
-  version: '2',
+  version: '3',
   category: 'pizza',
   basis:
     'Typical proportions of a thin, crisp Roman tonda from common pizzeria formulas: tipo 00 ' +
     'flour (Italian sources favour type 0, W 240-300), about 56 % water, 1.5 % olive oil, 2.5 % ' +
     'salt, 180 g balls rolled thin, a day of cold fermentation. A starting point, not a tested ' +
     'recipe.' +
-    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).' +
+    ' Version 3 places the cold retard in the fridge (step location fridge).',
   formula: {
     flours: [{ id: 'tipo-00-flour', sharePct: 100 }],
     ingredients: [
@@ -109,13 +111,14 @@ export const pizzaRoman: RecipeTemplate = {
 
 export const pizzaNewYork: RecipeTemplate = {
   id: 'pizza-new-york',
-  version: '2',
+  version: '3',
   category: 'pizza',
   basis:
     'Typical proportions of a New York-style dough from common pizzeria and home-baking formulas: ' +
     'strong flour, about 62 % water, 2 % olive oil, 1.5 % sugar, 2 % salt, 1-3 days of cold ' +
     'fermentation (48 h here). A starting point, not a tested recipe.' +
-    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).' +
+    ' Version 3 places the cold retard in the fridge (step location fridge).',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
     ingredients: [
@@ -215,14 +218,15 @@ export const pizzaSicilian: RecipeTemplate = {
 
 export const pizzaTeglia: RecipeTemplate = {
   id: 'pizza-teglia',
-  version: '2',
+  version: '3',
   category: 'pizza',
   basis:
     'Typical proportions of a Roman pan pizza (pizza in teglia) from common pizzeria formulas: ' +
     'strong flour, a very high water of about 80 %, 3 % olive oil, 2.5 % salt, 1-2 days of cold ' +
     'bulk fermentation (48 h here), stretched into an oiled pan. A starting point, not a tested ' +
     'recipe.' +
-    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).' +
+    ' Version 3 places the cold retard in the fridge (step location fridge).',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
     ingredients: [

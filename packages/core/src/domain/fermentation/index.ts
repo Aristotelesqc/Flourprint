@@ -28,6 +28,7 @@ export {
 } from './simulate.js';
 export {
   doughReadyStage,
+  doughStepAmbients,
   estimateFermentation,
   lastDoughStepId,
   type FermentationEstimates,
