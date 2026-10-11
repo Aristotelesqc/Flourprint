@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { blankRecipe, nextDraftName, saveDraft, type Draft } from '@flourprint/core/application';
+import {
+  blankRecipe,
+  decodeDraft,
+  nextDraftName,
+  RECIPE_TEMPLATES,
+  saveDraft,
+  type Draft,
+} from '@flourprint/core/application';
 import type { Instant } from '@flourprint/core/domain';
 import { MemoryRecipeRepository } from '../src/memory/index.js';
 
@@ -24,6 +31,34 @@ describe('generated draft names', () => {
 });
 
 describe('saving a draft', () => {
+  it.each(RECIPE_TEMPLATES)(
+    'loads and saves sourced template $id without predictions',
+    async (template) => {
+      const repository = new MemoryRecipeRepository();
+      const original: Draft = {
+        id: `draft-${template.id}`,
+        name: template.id,
+        origin: { kind: 'template', template: { id: template.id, version: template.version } },
+        formula: structuredClone(template.formula),
+        process: structuredClone(template.process),
+        createdAt: at,
+        updatedAt: at,
+      };
+      const loaded = decodeDraft(JSON.parse(JSON.stringify(original)), 0);
+      expect(loaded).toEqual(original);
+      await repository.saveDraft(loaded);
+      const saved = await saveDraft(repository, loaded, {
+        newRecipeId: template.id,
+        createdAt: at,
+      });
+      expect(saved.ok).toBe(true);
+      if (!saved.ok) throw new Error(JSON.stringify(saved.error));
+      expect(saved.value.formula).toEqual(template.formula);
+      expect(saved.value.process).toEqual(template.process);
+      expect(await repository.listDrafts()).toEqual([]);
+    },
+  );
+
   it('creates a recipe from a new draft and deletes the draft', async () => {
     const repository = new MemoryRecipeRepository();
     await repository.saveDraft(draft());

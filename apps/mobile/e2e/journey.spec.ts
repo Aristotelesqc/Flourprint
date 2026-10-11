@@ -314,6 +314,8 @@ test('typing a hydration locks it there; an egg then lowers the added water', as
     .getByText('Eau ajoutée', { exact: true })
     .filter({ visible: true })
     .locator('..');
+  // Ionic briefly keeps both transition views visible; wait for the active summary.
+  await expect(added).toHaveCount(1);
   const before = await added.textContent();
 
   await page.getByRole('button', { name: '+ Ajouter un ingrédient' }).click();
@@ -469,10 +471,12 @@ test('a template starts a named draft that becomes a recipe once saved', async (
   await page.goto('/recipes');
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Pizza néo-napolitaine', { exact: true }).click();
-  // The style guide comes first: traits and usual ranges, marked as not yet verified.
+  // The selected source and its editorial decisions remain visible before starting a draft.
   const guide = page.getByRole('region', { name: 'À propos de ce style' });
-  await expect(guide).toContainText('Fourchettes habituelles');
-  await expect(guide).toContainText('pas encore vérifiées');
+  await expect(guide).toContainText('Valeurs de référence de la recette retenue');
+  await expect(guide).toContainText('sans constituer un consensus ni une prédiction');
+  await guide.getByText('Source et choix éditoriaux (anglais)', { exact: true }).click();
+  await expect(guide).toContainText('Baking Steel');
   await page.getByRole('button', { name: 'Partir de ce modèle' }).click();
   await expect(page).toHaveURL(/\/drafts\//);
   // The draft keeps the guide of its template.

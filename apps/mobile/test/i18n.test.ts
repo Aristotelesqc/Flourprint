@@ -1,8 +1,24 @@
 import { describe, expect, it } from 'vitest';
+import { RECIPE_TEMPLATES } from '@flourprint/core/application';
 import { catalogs, en, pickLocale } from '../src/i18n/messages';
 import { editableNumber, formatGrams, parseDecimal } from '../src/i18n/numbers';
 
 describe('message catalogs', () => {
+  it('localizes every selected-source guide key and ingredient name', () => {
+    for (const template of RECIPE_TEMPLATES) {
+      for (const range of template.guide?.ranges ?? []) {
+        expect(Object.hasOwn(en, `guide.key.${range.key}`), `${template.id}: ${range.key}`).toBe(
+          true,
+        );
+      }
+      for (const ingredient of template.formula.ingredients) {
+        expect(Object.hasOwn(en, `name.${ingredient.id}`), `${template.id}: ${ingredient.id}`).toBe(
+          true,
+        );
+      }
+    }
+  });
+
   it.each(Object.entries(catalogs))('%s has exactly the English keys', (_locale, catalog) => {
     expect(Object.keys(catalog).sort()).toEqual(Object.keys(en).sort());
     expect(Object.values(catalog).every((text) => text.trim().length > 0)).toBe(true);
