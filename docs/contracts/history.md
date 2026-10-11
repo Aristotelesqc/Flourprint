@@ -122,6 +122,7 @@ interface BakeDigest {
     category: ObservationCategory;
     kind?: ObservationKind;
     stage?: 'shape' | 'bake'; // doughReady only
+    set?: number; // fold only: the set done (process.md, techniques)
     criterion?: string;
     text?: string;
     rating?: number;
