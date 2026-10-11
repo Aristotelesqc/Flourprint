@@ -1,7 +1,7 @@
 import { IonButton } from '@ionic/react';
 import { useId, useState } from 'react';
 import {
-  BUILT_IN_FLOURS,
+  OFFERED_BUILT_IN_FLOURS,
   INGREDIENT_PRESETS,
   removeStep,
   type FlourEntry,
@@ -33,68 +33,85 @@ const absorbingWater = (formula: Formula) =>
   formula.ingredients.find((i) => i.kind === 'water' && i.role === 'dough')?.id;
 
 /**
- * Total water, with a lock: unlocked, it follows the ingredients; locked, the target holds and the
- * added water follows (eggs or milk lower it).
+ * Hydration (formula.md): total water in % of the flour, every water-bearing ingredient counted.
+ * Typing a value locks total water there (`LockTotalWater`, the added water absorbing changes);
+ * the lock icon locks at the current value or unlocks. A formula without a dough water ingredient
+ * has nothing to absorb a target, so its hydration is shown, not edited.
  */
-export const WaterLock = ({
+export const Hydration = ({
   formula,
   resolved,
   onEdit,
+  onExplain,
 }: {
   formula: Formula;
   resolved: ResolvedFormula;
   onEdit: (edit: FormulaEdit) => boolean;
+  /** Opens the breakdown of where the water comes from. */
+  onExplain: () => void;
 }) => {
   const { t, pct } = useMessages();
-  const water = absorbingWater(formula);
-  if (!water) return null;
   const target = formula.waterTarget;
+  const water = target?.absorbInto ?? absorbingWater(formula);
+  const label = t('formula.stat.hydration');
+  const estimate = totalWaterKey(resolved.totalWater) === 'formula.stat.totalWaterEstimate';
+  const shown = t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) });
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
-      <span className="flex flex-col">
+    <div className="flex flex-col gap-1 border-t border-line pt-3">
+      <div className="flex items-center justify-between gap-3">
         <span className="flex items-center gap-1.5 font-semibold">
-          {target ? t('formula.lock.locked') : t('formula.lock.unlocked')}
-          <InfoButton
-            topic="lock"
-            term={target ? t('formula.lock.locked') : t('formula.lock.unlocked')}
-          />
+          {label}
+          <InfoButton topic="hydration" term={label} />
         </span>
-        <span className="text-sm text-muted">
-          {target ? t('formula.lock.lockedHint') : t('formula.lock.unlockedHint')}
-        </span>
-      </span>
-      {target ? (
-        <span className="flex items-center gap-2">
-          <NumberField
-            label={t('formula.lock.target')}
-            unit="%"
-            width="6.5rem"
-            value={target.totalWaterPct}
-            onCommit={(value) =>
-              onEdit({ type: 'LockTotalWater', totalWaterPct: value, water: target.absorbInto })
-            }
-          />
-          <IonButton fill="clear" onClick={() => onEdit({ type: 'UnlockTotalWater' })}>
-            <LockIcon locked={false} />
-            <span className="ml-1">{t('formula.lock.unlockShort')}</span>
-          </IonButton>
-        </span>
-      ) : (
-        <IonButton
-          fill="outline"
-          className="shrink-0"
-          onClick={() =>
-            onEdit({ type: 'LockTotalWater', totalWaterPct: resolved.totalWaterPct, water })
-          }
-        >
-          <LockIcon locked />
-          <span className="ml-1">
-            {t('formula.lock.lock', {
-              pct: t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) }),
-            })}
+        {water ? (
+          <span className="flex items-center gap-1.5">
+            {estimate && (
+              <span className="text-lg font-bold" aria-hidden="true">
+                ≈
+              </span>
+            )}
+            <NumberField
+              label={label}
+              unit="%"
+              size="large"
+              width="7.5rem"
+              value={target?.totalWaterPct ?? resolved.totalWaterPct}
+              onCommit={(value) => onEdit({ type: 'LockTotalWater', totalWaterPct: value, water })}
+            />
+            <button
+              type="button"
+              aria-pressed={target !== undefined}
+              aria-label={
+                target ? t('formula.hydration.unlock') : t('formula.hydration.lock', { pct: shown })
+              }
+              title={
+                target ? t('formula.hydration.unlock') : t('formula.hydration.lock', { pct: shown })
+              }
+              className={`fp-reset inline-flex size-11 shrink-0 items-center justify-center rounded-full ${
+                target ? 'bg-accent text-on-accent' : 'border-[1.5px] border-field text-ink'
+              }`}
+              onClick={() =>
+                void onEdit(
+                  target
+                    ? { type: 'UnlockTotalWater' }
+                    : { type: 'LockTotalWater', totalWaterPct: resolved.totalWaterPct, water },
+                )
+              }
+            >
+              <LockIcon locked={target !== undefined} />
+            </button>
           </span>
-        </IonButton>
-      )}
+        ) : (
+          <span className="text-xl font-bold">{shown}</span>
+        )}
+      </div>
+      <button
+        type="button"
+        className="fp-reset self-start text-sm text-accent-text underline decoration-dotted underline-offset-4"
+        onClick={onExplain}
+      >
+        {t('formula.hydration.breakdown')}
+      </button>
     </div>
   );
 };
@@ -231,7 +248,7 @@ export const AddFlour = ({
   ]);
   const byName = (a: FlourEntry, b: FlourEntry) => flourName(a).localeCompare(flourName(b));
   const personal = catalog.personal.filter((f) => !f.archived && !taken.has(f.id)).sort(byName);
-  const builtIn = BUILT_IN_FLOURS.filter((f) => !taken.has(f.id));
+  const builtIn = OFFERED_BUILT_IN_FLOURS.filter((f) => !taken.has(f.id));
   if (!open) {
     return (
       <button
@@ -378,7 +395,8 @@ export const PreparationFields = ({
       </span>
       <button
         type="button"
-        className="fp-reset min-h-11 self-start text-sm font-semibold text-alert"
+        aria-label={t('formula.removeNamed', { name: label })}
+        className="fp-reset min-h-11 self-start text-[13px] text-muted underline"
         onClick={() =>
           onStructure(
             { type: 'RemoveComponent', component: component.id },
@@ -386,7 +404,7 @@ export const PreparationFields = ({
           )
         }
       >
-        {t('formula.prep.remove', { name: label })}
+        {t('formula.remove')}
       </button>
     </div>
   );

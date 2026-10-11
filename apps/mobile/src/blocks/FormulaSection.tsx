@@ -11,6 +11,8 @@ import { NumberField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
+import { flourSummary } from '../services/flour-summary';
+import { useFlourCatalog } from '../services/flours';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { FermentationCard } from './Fermentation';
@@ -20,7 +22,7 @@ import {
   AddPreparation,
   ChangesSummary,
   PreparationFields,
-  WaterLock,
+  Hydration,
   type StructureEdit,
 } from './FormulaEditors';
 
@@ -160,27 +162,12 @@ export const FormulaSection = ({
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2 border-t border-line pt-3">
-              <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
-              <Stat
-                label={t('formula.stat.pureWater')}
-                value={pct(resolved.pureWaterPct)}
-                help={<InfoButton topic="water" term={t('formula.stat.pureWater')} />}
-              />
-              <button
-                type="button"
-                className="fp-reset flex flex-col items-start"
-                onClick={() => setExplaining(true)}
-              >
-                <span className="flex items-center gap-1 text-xs text-muted">
-                  {t('formula.stat.totalWater')}
-                  <InfoIcon />
-                </span>
-                <span className="text-lg font-bold text-accent-text underline decoration-dotted underline-offset-4">
-                  {t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) })}
-                </span>
-              </button>
-            </div>
+            <Hydration
+              formula={formula}
+              resolved={resolved}
+              onEdit={onEdit}
+              onExplain={() => setExplaining(true)}
+            />
             {resolved.totalWater.completeness === 'incomplete' && (
               <p className="m-0 text-sm text-muted">
                 {t('formula.water.incomplete', {
@@ -188,8 +175,11 @@ export const FormulaSection = ({
                 })}
               </p>
             )}
+            <div className="grid grid-cols-3 gap-2">
+              <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
+              <Stat label={t('formula.stat.pureWater')} value={pct(resolved.pureWaterPct)} />
+            </div>
             <Enrichment resolved={resolved} />
-            <WaterLock formula={formula} resolved={resolved} onEdit={onEdit} />
           </>
         )}
       </Card>
@@ -205,9 +195,11 @@ export const FormulaSection = ({
             <div key={flour.id} className={`${ROW} min-h-[60px] px-3`}>
               <span className="flex min-w-0 flex-col items-start">
                 <span className="font-semibold">{name(flour.id)}</span>
+                <FlourSummary id={flour.id} />
                 {formula.flours.length > 1 && (
                   <button
                     type="button"
+                    aria-label={t('formula.removeNamed', { name: name(flour.id) })}
                     className="fp-reset text-[13px] text-muted underline"
                     onClick={() =>
                       void onEdit({
@@ -278,6 +270,7 @@ export const FormulaSection = ({
                   <span className="font-semibold">{name(ingredient.id)}</span>
                   <button
                     type="button"
+                    aria-label={t('formula.removeNamed', { name: name(ingredient.id) })}
                     className="fp-reset text-[13px] text-muted underline"
                     onClick={() =>
                       void onEdit({ type: 'RemoveIngredient', ingredient: ingredient.id })
@@ -501,28 +494,17 @@ const LabeledField = ({ label, children }: { label: string; children: ReactNode 
   </div>
 );
 
-const Stat = ({ label, value, help }: { label: string; value: string; help?: ReactNode }) => (
+const Stat = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col">
-    <span className="flex items-center gap-1 text-xs text-muted">
-      {label}
-      {help}
-    </span>
+    <span className="text-xs text-muted">{label}</span>
     <span className="text-lg font-bold">{value}</span>
   </div>
 );
 
-const InfoIcon = () => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 11v5M12 8h.01" />
-  </svg>
-);
+/** What the registry knows about a flour, in one line; nothing without an entry (flours.md). */
+const FlourSummary = ({ id }: { id: string }) => {
+  const { t, locale } = useMessages();
+  const entry = useFlourCatalog().entry(id);
+  const summary = entry ? flourSummary(entry, t, locale) : '';
+  return summary === '' ? null : <span className="text-[13px] text-muted">{summary}</span>;
+};
