@@ -112,7 +112,11 @@ jobs:
     # Web preview (ADR 0013), deployed to Cloudflare Pages when its secrets are set.
     needs: check
     runs-on: ubuntu-latest
-    concurrency: web-preview
+    # main deploys the main address; each pull request its own pr-<number> address.
+    concurrency: web-preview-${{ github.event.pull_request.number || 'main' }}
+    permissions:
+      contents: read
+      pull-requests: write
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -135,12 +139,35 @@ jobs:
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          # main is the production branch (the main address, loaded by the dev APK); a pull request
+          # deploys to its own alias, so previews never overwrite each other or main (ADR 0013).
+          if [ -n "$PR_NUMBER" ]; then
+            BRANCH="pr-${PR_NUMBER}"
+            URL="https://${BRANCH}.${PAGES_PROJECT}.pages.dev"
+          else
+            BRANCH=main
+            URL="https://${PAGES_PROJECT}.pages.dev"
+          fi
           # Creates the project on the first run; later runs find it already there.
           npx --yes wrangler@4 pages project create "$PAGES_PROJECT" --production-branch main || true
           npx --yes wrangler@4 pages deploy apps/mobile/dist --project-name "$PAGES_PROJECT" \
-            --branch main --commit-hash "$HEAD_SHA" --commit-message "$FLOURPRINT_BUILD" --commit-dirty=true
-          echo "Web preview ${FLOURPRINT_BUILD}: https://${PAGES_PROJECT}.pages.dev" >> "$GITHUB_STEP_SUMMARY"
+            --branch "$BRANCH" --commit-hash "$HEAD_SHA" --commit-message "$FLOURPRINT_BUILD" --commit-dirty=true
+          echo "Web preview ${FLOURPRINT_BUILD}: ${URL}" >> "$GITHUB_STEP_SUMMARY"
+          echo "PREVIEW_URL=${URL}" >> "$GITHUB_ENV"
+      - name: Link the preview on the pull request
+        if: github.event.pull_request.number && env.PREVIEW_URL != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # One comment per pull request, edited on every push: the address never changes,
+          # the line under it says which commit it serves.
+          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_BUILD}\` (commit ${HEAD_SHA}). Updated on every push; main stays at https://${PAGES_PROJECT}.pages.dev."
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --edit-last --body "$BODY" \
+            || gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$BODY"
       - name: Preview not deployed
         if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
         run: |
