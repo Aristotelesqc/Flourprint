@@ -39,6 +39,8 @@ interface FieldProps<V> {
   readonly onCommit: Commit<V>;
   readonly size?: 'regular' | 'large';
   readonly width?: string;
+  /** Shown while empty: a value that applies without being stored (e.g. an inherited one). */
+  readonly placeholder?: string;
 }
 
 /**
@@ -55,6 +57,7 @@ const Field = <V,>({
   onCommit,
   size = 'regular',
   width = '100%',
+  placeholder,
 }: FieldProps<V>) => {
   const id = useId();
   const errorId = `${id}-error`;
@@ -86,6 +89,7 @@ const Field = <V,>({
           aria-describedby={invalid ? errorId : undefined}
           className="fp-input w-full"
           inputMode="decimal"
+          placeholder={placeholder}
           enterKeyHint="done"
           value={text}
           onChange={(event) => setText(event.target.value)}
@@ -141,6 +145,7 @@ interface OptionalNumberFieldProps {
   /** An empty field commits `undefined`. */
   readonly onCommit: Commit<number | undefined>;
   readonly width?: string;
+  readonly placeholder?: string;
 }
 
 /** A number that may stay unknown, such as a temperature nobody measured. */

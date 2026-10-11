@@ -91,8 +91,9 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
         process: mapSteps(next.process, (s) => {
           if (s.id !== target.stepId) return s;
           if (target.field === 'plannedDurationS') {
-            // A manual duration is no longer the accepted suggestion (fermentation.md).
-            const { accepted: _accepted, ...manual } = s;
+            // A manual duration is no longer the accepted suggestion, nor model-driven, for this
+            // bake (fermentation.md); the snapshot keeps the original.
+            const { accepted: _accepted, durationMode: _mode, ...manual } = s;
             return { ...manual, plannedDurationS: effective };
           }
           return { ...s, conditions: { ...s.conditions, temperatureC: effective } };

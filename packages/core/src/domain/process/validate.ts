@@ -7,6 +7,7 @@ import {
 } from '../graph.js';
 import { isReservedId } from '../ids.js';
 import { err, ok, type Result } from '../result.js';
+import { doughSteps } from './dough.js';
 import type { Process, ProcessStep } from './types.js';
 
 export type ProcessError =
@@ -99,6 +100,19 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
     }
     const technique = validateTechnique(step.technique, `${path}.technique`);
     if (technique !== undefined) return err(technique);
+    if (
+      step.durationMode !== undefined &&
+      step.durationMode !== 'manual' &&
+      step.durationMode !== 'model'
+    ) {
+      return err(invalid(`${path}.durationMode`, 'must be manual or model'));
+    }
+  }
+  // The model solves one unknown: at most one dough step follows it (fermentation.md).
+  const driven = (doughSteps(process) ?? []).filter((s) => s.durationMode === 'model');
+  if (driven.length > 1) {
+    const index = process.steps.indexOf(driven[1] as ProcessStep);
+    return err(invalid(`steps[${index}].durationMode`, 'at most one dough step follows the model'));
   }
   return ok(undefined);
 };

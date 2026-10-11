@@ -13,7 +13,13 @@ import {
 } from '@ionic/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { flourRefsOf, RECIPE_TEMPLATES, saveDraft, type Draft } from '@flourprint/core/application';
+import {
+  applyModelDurations,
+  flourRefsOf,
+  RECIPE_TEMPLATES,
+  saveDraft,
+  type Draft,
+} from '@flourprint/core/application';
 import {
   applyDraftFormulaEdit,
   checkRecipe,
@@ -227,7 +233,13 @@ export const RecipePage = () => {
       });
   };
 
-  const update = (next: Working, rename?: string) => {
+  const update = (edited: Working, rename?: string) => {
+    // The model-driven step follows the model after every edit (fermentation.md); when the
+    // estimate is not ok it keeps its last time and the fermentation card says why.
+    const next = {
+      ...edited,
+      process: applyModelDurations(edited.formula, edited.process).process,
+    };
     const now = services.clock.now();
     const doc: Draft = stored
       ? { ...stored, ...next, ...(rename === undefined ? {} : { name: rename }), updatedAt: now }
@@ -275,8 +287,8 @@ export const RecipePage = () => {
         ...draft.process,
         steps: draft.process.steps.map((s) => {
           if (s.id !== stepId) return s;
-          // A typed duration is no longer an applied suggestion (fermentation.md).
-          const { plannedDurationS: _, accepted: __, ...rest } = s;
+          // A typed duration is no longer an applied suggestion, nor model-driven (fermentation.md).
+          const { plannedDurationS: _, accepted: __, durationMode: ___, ...rest } = s;
           return durationS === undefined ? rest : { ...rest, plannedDurationS: durationS };
         }),
       },

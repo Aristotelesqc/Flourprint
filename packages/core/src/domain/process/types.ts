@@ -71,6 +71,11 @@ export interface ProcessStep {
   /** Set when `plannedDurationS` was taken from a model suggestion (fermentation.md). */
   readonly accepted?: AcceptedSuggestion;
   readonly technique?: StepTechnique;
+  /**
+   * `model`: the duration follows the fermentation model, applied by the editor as an accepted
+   * suggestion (fermentation.md, Model-driven duration). Absent = `manual`.
+   */
+  readonly durationMode?: 'manual' | 'model';
 }
 
 export interface Process {
