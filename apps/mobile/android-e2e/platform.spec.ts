@@ -27,7 +27,17 @@ const open = async (): Promise<Page> => {
   const webView = device.webViews().find((w) => w.pkg() === PKG && w.pid() === pid);
   if (!webView) throw new Error('WebView vanished');
   const page = await webView.page();
-  await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible({ timeout: 60_000 });
+  try {
+    await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible({ timeout: 60_000 });
+  } catch (cause) {
+    // Say what the WebView showed instead: a blank page, an error state, another route.
+    const url = page.url();
+    const body = await page
+      .locator('body')
+      .innerText({ timeout: 5_000 })
+      .catch(() => '(no body)');
+    throw new Error(`Recipe list not shown at ${url}: ${body.slice(0, 400)}`, { cause });
+  }
   return page;
 };
 
