@@ -125,11 +125,38 @@ test('the Android back button returns to the recipe list', async () => {
   await expect(page.getByText(/^Version \d+$/).first()).toBeVisible();
   await expect(page.locator('.ion-page.ion-page-hidden').first()).toBeAttached();
   await expect(page.locator('.ion-page.ion-page-invisible')).toHaveCount(0);
+  // Count the back events Ionic receives, to tell a press that never reached the WebView from
+  // one the app received and did not act on.
+  await page.evaluate(() => {
+    const w = window as unknown as { fpBackEvents: number };
+    w.fpBackEvents = 0;
+    document.addEventListener('ionBackButton', () => (w.fpBackEvents += 1));
+  });
   // A press can still land while the emulator is busy; the user would press again, and so do we
   // (at most three presses, each given time to navigate).
-  await expect(async () => {
-    if (!/\/recipes$/.test(page.url())) await device.shell('input keyevent KEYCODE_BACK');
-    await expect(page).toHaveURL(/\/recipes$/, { timeout: 5_000 });
-  }).toPass({ timeout: 20_000, intervals: [1_000, 2_000] });
+  try {
+    await expect(async () => {
+      if (!/\/recipes$/.test(page.url())) await device.shell('input keyevent KEYCODE_BACK');
+      await expect(page).toHaveURL(/\/recipes$/, { timeout: 5_000 });
+    }).toPass({ timeout: 20_000, intervals: [1_000, 2_000] });
+  } catch (cause) {
+    const state = await page
+      .evaluate(() => ({
+        backEvents: (window as unknown as { fpBackEvents: number }).fpBackEvents,
+        visibility: document.visibilityState,
+        focused: document.hasFocus(),
+        overlays: [...document.querySelectorAll('ion-modal, ion-alert, ion-action-sheet')]
+          .filter((o) => !o.classList.contains('overlay-hidden'))
+          .map((o) => o.tagName.toLowerCase()),
+        pages: [...document.querySelectorAll('.ion-page')].map((p) => p.className),
+      }))
+      .catch((error: unknown) => String(error));
+    const focus = (await device.shell('dumpsys window | grep -E "mCurrentFocus|mFocusedApp"'))
+      .toString()
+      .trim();
+    throw new Error(`Back press did not navigate: ${JSON.stringify(state)} · ${focus}`, {
+      cause,
+    });
+  }
   await forceStop();
 });
