@@ -484,6 +484,30 @@ describe.each([
     expect(await isEmpty(target)).toBe(true);
     expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
   });
+
+  it('restores a bake that recorded a built-in flour at version 1, refuses an unknown version', async () => {
+    const backup = await backupOf();
+    const withBuiltIn = (version: number): Loose => {
+      const copy = JSON.parse(JSON.stringify(backup)) as Loose;
+      const snapshot = copy.bakes[0].events[0].payload.snapshot;
+      snapshot.formula.flours[0].id = 'bread-flour';
+      snapshot.flours = [{ id: 'bread-flour', version }];
+      return copy;
+    };
+    // Built-in entries are code: version 1 stays resolvable after version 2 (flours.md).
+    for (const version of [1, 2]) {
+      const target = await makeTarget();
+      expect(await importBackup(target.restore, withBuiltIn(version))).toEqual({
+        ok: true,
+        value: undefined,
+      });
+    }
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, withBuiltIn(3))).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidBackup' },
+    });
+  });
 });
 
 describe('restore on SQLite', () => {

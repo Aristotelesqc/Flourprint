@@ -293,7 +293,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
       for (const ref of state.snapshot?.flours ?? []) {
         const known =
           flours.some((f) => f.id === ref.id && f.version === ref.version) ||
-          (builtInFlour(ref.id)?.version ?? 0) >= ref.version;
+          builtInFlour(ref.id, ref.version) !== undefined;
         if (!known) {
           return err(invalid(`bake ${bakeId} refers to a flour entry missing from the backup`));
         }

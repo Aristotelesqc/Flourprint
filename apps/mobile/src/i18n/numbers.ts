@@ -18,6 +18,9 @@ export const formatGrams = (grams: number, locale: string): string =>
 export const formatPct = (pct: number, locale: string): string =>
   `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(pct)} %`;
 
+export const formatNumber = (value: number, locale: string): string =>
+  new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
+
 /** Editable text for a value, without grouping so it parses back. */
 export const editableNumber = (value: number, locale: string): string =>
   new Intl.NumberFormat(locale, { maximumFractionDigits: 2, useGrouping: false }).format(value);

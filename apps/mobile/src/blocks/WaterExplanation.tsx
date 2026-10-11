@@ -53,7 +53,7 @@ export const WaterExplanation = ({ resolved, open, onClose }: Props) => {
           ))}
           <IonItem lines="none">
             <IonLabel>
-              <strong>{t('formula.stat.totalWater')}</strong>
+              <strong>{t('formula.stat.hydration')}</strong>
             </IonLabel>
             <strong slot="end">
               {grams(water.value)} · {pct(resolved.totalWaterPct)}

@@ -18,7 +18,6 @@ import {
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { archiveFlour, saveFlourEntry, type SaveFlourError } from '@flourprint/core/application';
 import {
-  BUILT_IN_FLOURS,
   builtInFlour,
   CEREALS,
   customizeFlour,
@@ -28,22 +27,27 @@ import {
   FLOUR_SOURCE_KINDS,
   newFlourEntry,
   nextFlourVersion,
+  OFFERED_BUILT_IN_FLOURS,
   REFINEMENTS,
   withFlourChanges,
   type FlourEntry,
   type FlourPropertyKey,
   type Instant,
+  type PropertyValue,
 } from '@flourprint/core/domain';
-import type { MessageKey } from '../i18n/messages';
+import { en, type MessageKey } from '../i18n/messages';
+import { formatNumber } from '../i18n/numbers';
 import { useMessages } from '../i18n/use-messages';
 import {
   flourForm,
   formChanges,
   knownCount,
   propertyValid,
+  withPropertyValue,
   type FlourForm,
   type PropertyForm,
 } from '../services/flour-form';
+import { flourSummary } from '../services/flour-summary';
 import { newFlourId, useFlourCatalog } from '../services/flours';
 import { useServices } from '../services/services';
 import { useGuardedWrite } from '../services/writes';
@@ -132,7 +136,7 @@ export const FloursPage = () => {
           <IonListHeader>
             <IonLabel>{t('flours.builtIn')}</IonLabel>
           </IonListHeader>
-          {BUILT_IN_FLOURS.map((entry) => (
+          {OFFERED_BUILT_IN_FLOURS.map((entry) => (
             <FlourItem
               key={entry.id}
               entry={entry}
@@ -146,11 +150,19 @@ export const FloursPage = () => {
   );
 };
 
+/** The description of a built-in entry (message key `flour.<id>.description`), if it has one. */
+const descriptionKey = (entry: FlourEntry): MessageKey | undefined => {
+  const key = `flour.${entry.id}.description`;
+  return entry.builtIn && key in en ? (key as MessageKey) : undefined;
+};
+
 const FlourItem = ({ entry, onOpen }: { entry: FlourEntry; onOpen: () => void }) => {
-  const { t, flourName, name } = useMessages();
+  const { t, flourName, name, locale } = useMessages();
+  const description = descriptionKey(entry);
   const details = [
     [entry.brand, entry.product].filter(Boolean).join(' '),
-    entry.classification ? `${entry.classification.system} ${entry.classification.code}` : '',
+    // Classification and values: known plain, estimated with ≈ (built-in typical values).
+    flourSummary(entry, t, locale),
     entry.basedOn ? t('flours.basedOn', { name: name(entry.basedOn.id) }) : '',
     entry.builtIn ? '' : t('flours.version', { version: entry.version }),
     entry.builtIn ? '' : t('flours.known', { count: knownCount(entry) }),
@@ -164,6 +176,7 @@ const FlourItem = ({ entry, onOpen }: { entry: FlourEntry; onOpen: () => void })
             {t('flours.archived')}
           </span>
         )}
+        {description && <p>{t(description)}</p>}
         {details.length > 0 && <p>{details.join(' · ')}</p>}
       </IonLabel>
     </IonItem>
@@ -296,8 +309,12 @@ const FlourSheet = ({
           <div className="flex flex-col gap-4 pb-8">
             {readOnly && (
               <>
-                <p className="m-0 text-muted">{t('flours.builtInNote')}</p>
+                {descriptionKey(target.entry) && (
+                  <p className="m-0">{t(descriptionKey(target.entry) as MessageKey)}</p>
+                )}
+                <p className="m-0 text-sm text-muted">{t('flours.builtInNote')}</p>
                 <IonButton onClick={customize}>{t('flours.customize')}</IonButton>
+                <TypicalValues entry={target.entry} />
               </>
             )}
             {!readOnly && target.entry.basedOn && (
@@ -517,7 +534,7 @@ const PropertyFields = ({
           aria-label={t('flours.field.value', { property: label })}
           className={fieldClass}
           value={form.value}
-          onChange={(event) => onChange({ value: event.target.value })}
+          onChange={(event) => onChange(withPropertyValue(form, event.target.value))}
         >
           <option value="">{t('flours.unknown')}</option>
           <option value="true">{t('flours.yes')}</option>
@@ -533,7 +550,7 @@ const PropertyFields = ({
             placeholder={t('flours.unknown')}
             className={fieldClass}
             value={form.value}
-            onChange={(event) => onChange({ value: event.target.value })}
+            onChange={(event) => onChange(withPropertyValue(form, event.target.value))}
           />
           {bad && (
             <span id={`${id}-error`} className="text-sm text-alert">
@@ -542,6 +559,7 @@ const PropertyFields = ({
           )}
         </>
       )}
+      {form.estimated && <span className="text-sm text-muted">{t('flours.estimatedHint')}</span>}
       {known && kind === 'pct' && (
         <select
           aria-label={t('flours.field.basis', { property: label })}
@@ -580,5 +598,41 @@ const PropertyFields = ({
         </>
       )}
     </fieldset>
+  );
+};
+
+/**
+ * The values a built-in gives for its category (flours.md, version 2): estimated, with their
+ * uncertainty; unknown ones are left out.
+ */
+const TypicalValues = ({ entry }: { entry: FlourEntry }) => {
+  const { t, pct, locale } = useMessages();
+  const rows = FLOUR_PROPERTY_KEYS.flatMap((key) => {
+    const property: PropertyValue = entry.properties[key];
+    if (property.status === 'unknown' || typeof property.value !== 'number') return [];
+    const pctKind = FLOUR_PROPERTY_KINDS[key].type === 'pct';
+    const format = (n: number) => (pctKind ? pct(n) : formatNumber(n, locale));
+    const value =
+      property.status === 'estimated' && property.uncertainty !== undefined
+        ? t('flours.estimateValue', {
+            value: format(property.value),
+            uncertainty: format(property.uncertainty),
+          })
+        : format(property.value);
+    return [{ key, label: t(`flours.prop.${key}` as MessageKey), value }];
+  });
+  if (rows.length === 0) return null;
+  return (
+    <>
+      <SectionTitle>{t('flours.typical')}</SectionTitle>
+      <dl className="m-0 flex flex-col gap-1">
+        {rows.map((row) => (
+          <div key={row.key} className="flex justify-between gap-3">
+            <dt>{row.label}</dt>
+            <dd className="m-0 font-semibold">{row.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </>
   );
 };
