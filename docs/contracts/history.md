@@ -25,6 +25,7 @@ interface BakeStartedPayload {
   estimates: Record<StepId, Estimate>; // accepted suggestion of the step, else unsupported
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
   origin?: 'physical' | 'simulation'; // from StartBake; absent = unknown (written before 0.6.0)
+  flours?: Array<{ id: string; version: number }>; // registry entries used (flours.md); absent before 0.8.0
 }
 ```
 

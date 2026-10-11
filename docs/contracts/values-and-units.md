@@ -58,7 +58,7 @@ type PropertyValue =
       status: 'known' | 'estimated';
       value: number | boolean | string; // composition, pH, density, enzyme activity, organic…
       unit?: Unit;
-      basis?: 'per100g' | 'perServing' | 'dryMatter';
+      basis?: 'per100g' | 'perServing' | 'dryMatter' | 'asIs' | 'moisture14'; // flours.md
       source: SourceRef;
       uncertainty?: number;
     }

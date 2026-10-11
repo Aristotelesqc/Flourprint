@@ -13,6 +13,7 @@ fixtures conform to them. Architecture choices live in `../adr/`.
 | [persistence.md](persistence.md)             | —        | recipes, revisions, bake summaries, SQLite schema           |
 | [fermentation.md](fermentation.md)           | D4, D5   | provisional commercial-yeast model, water temperature       |
 | [drafts.md](drafts.md)                       | —        | free drafts, recipe checks, templates                       |
+| [flours.md](flours.md)                       | —        | flour registry, built-in flours, flour refs in bakes        |
 | [capability-levels.md](capability-levels.md) | D4, D5   | N1/N2/N3, Alpha and Engine MVP                              |
 | [fixtures/](fixtures/README.md)              | —        | reference cases computed outside the engine                 |
 

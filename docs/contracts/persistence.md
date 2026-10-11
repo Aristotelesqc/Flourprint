@@ -47,7 +47,13 @@ createdAt, updatedAt }` as one JSON document. `saveDraft` writes or replaces it;
 - A full backup carries `drafts` (optional, so older backups still restore); a restore writes them
   as recorded.
 
-## SQLite schema (version 3)
+## Flour registry
+
+Personal flour entries (`flours.md`) are stored by `(id, version)`; a version is never rewritten.
+Writing an entry whose version is not the next one for its id is refused (`HeadConflict`).
+Built-in entries are code and are not stored.
+
+## SQLite schema (version 4)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
@@ -66,6 +72,9 @@ bakes          (bake_id TEXT PRIMARY KEY, summary TEXT NOT NULL, status TEXT NOT
 schema_meta    (key TEXT PRIMARY KEY, value INTEGER NOT NULL)
 drafts         (id TEXT PRIMARY KEY, name TEXT NOT NULL, document TEXT NOT NULL,
                 updated_at TEXT NOT NULL)                                          -- v3
+flours         (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER NOT NULL,
+                schema_version INTEGER NOT NULL, document TEXT NOT NULL,
+                created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v4
 ```
 
 The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node
@@ -113,8 +122,8 @@ on a connection is serialized, so a transaction never interleaves with another o
     its family.
 - The result lists the imported and the skipped recipe ids. Importing the same file again
   imports nothing.
-- A full backup may also carry `families` and `familyId`; both are optional, so older backups
-  still restore.
+- A full backup may also carry `families` and `familyId`, and `flours` (every personal flour entry
+  version); all are optional, so older backups still restore.
 
 ## Shared contract tests
 
@@ -122,5 +131,6 @@ Every implementation (memory, SQLite Node, SQLite Capacitor, SQLite bridge) runs
 idempotent retry, reused command id, version conflict, atomic rejection of an invalid batch,
 head conflicts, immutability of revisions, families (grouping, pinning, default variant) and
 additive import (skips present ids, idempotent, atomic) and drafts (save, replace, delete, and
-the atomic promotion of a draft to a recipe or a version). SQLite implementations add durability tests (reopen,
+the atomic promotion of a draft to a recipe or a version) and personal flours (versions, archive,
+next-version check). SQLite implementations add durability tests (reopen,
 failed migration, newer database refused).
