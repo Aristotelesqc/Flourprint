@@ -7,3 +7,4 @@ export * from './drafts.js';
 export * from './flours.js';
 export * from './feedback.js';
 export * from './templates/index.js';
+export * from './model-durations.js';

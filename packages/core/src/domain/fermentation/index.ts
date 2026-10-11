@@ -22,6 +22,7 @@ export {
   HORIZON_S,
   simulate,
   solveDoseFactor,
+  solveOpenSegment,
   type Segment,
   type SimulationResult,
 } from './simulate.js';

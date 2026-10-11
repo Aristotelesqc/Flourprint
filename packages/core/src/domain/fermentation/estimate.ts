@@ -1,5 +1,6 @@
 import type { Component, Formula, Ingredient, YeastForm } from '../formula/types.js';
 import { resolveFormula } from '../formula/resolve.js';
+import { ancestors, doughSteps } from '../process/dough.js';
 import type { Process, ProcessStep, StepId } from '../process/types.js';
 import type { Estimate, RangeBound } from '../values.js';
 import {
@@ -18,11 +19,20 @@ import {
   FERMENTATION_MODEL,
   type FermentationParameters,
 } from './model.js';
-import { HORIZON_S, simulate, solveDoseFactor, type Segment } from './simulate.js';
+import {
+  HORIZON_S,
+  simulate,
+  solveDoseFactor,
+  solveOpenSegment,
+  type Segment,
+} from './simulate.js';
 
 /** Estimates of one fermenting mass (fermentation.md, Results). */
 export interface MassEstimates {
-  /** The step whose duration is estimated: the last dough step, or the preferment step. */
+  /**
+   * The step whose duration is estimated: the model-driven dough step, else the last dough step;
+   * the preferment step for a preferment.
+   */
   readonly stepId?: StepId;
   /** Seconds the step needs to reach the end point, the other durations being as planned. */
   readonly duration: Estimate;
@@ -76,6 +86,8 @@ interface Mass {
   readonly profile?: ReadinessRef;
   readonly startC: number;
   readonly segments: readonly Segment[];
+  /** Index in `segments` of the step whose duration is estimated. */
+  readonly openIndex: number;
   readonly assumptions: readonly string[];
   readonly extrapolations: readonly string[];
   /** Ids of the other steps, without a planned duration (they count as 0). */
@@ -136,9 +148,7 @@ const inDomain = (mass: Mass): Failure | undefined => {
 };
 
 const estimateMass = (mass: Mass): MassEstimates => {
-  const open = mass.segments.map((s, i) =>
-    i === mass.segments.length - 1 ? { ambientC: s.ambientC } : s,
-  );
+  const open = mass.segments.map((s, i) => (i === mass.openIndex ? { ambientC: s.ambientC } : s));
   const planned = mass.segments.every((s) => s.hours !== undefined);
   const yeastIds = mass.yeasts.map((y) => y.id);
   const domain = inDomain(mass);
@@ -147,7 +157,7 @@ const estimateMass = (mass: Mass): MassEstimates => {
   if (domain) duration = domain;
   else {
     const run = (p: FermentationParameters, target: number) =>
-      simulate(p, {
+      solveOpenSegment(p, {
         freshPct: freshPct(p, mass.yeasts),
         startC: mass.startC,
         segments: open,
@@ -174,7 +184,7 @@ const estimateMass = (mass: Mass): MassEstimates => {
     }
   }
 
-  const missing = mass.segments.at(-1)?.hours === undefined ? [mass.stepId] : [];
+  const missing = mass.segments[mass.openIndex]?.hours === undefined ? [mass.stepId] : [];
   let progressPct: Estimate;
   if (!planned) progressPct = failure('insufficient_data', 'duration_unknown', missing);
   else if (domain) progressPct = domain;
@@ -243,44 +253,23 @@ const estimateMass = (mass: Mass): MassEstimates => {
   return { stepId: mass.stepId, duration, progressPct, yeastPct };
 };
 
-const descendants = (process: Process, from: StepId): Set<StepId> => {
-  const found = new Set<StepId>();
-  for (const step of process.steps) {
-    if (step.dependsOn.some((d) => d === from || found.has(d))) found.add(step.id);
-  }
-  return found;
-};
-
-const ancestors = (process: Process, of: StepId): Set<StepId> => {
-  const byId = new Map(process.steps.map((s) => [s.id, s]));
-  const found = new Set<StepId>();
-  const visit = (id: StepId) => {
-    for (const d of byId.get(id)?.dependsOn ?? []) {
-      if (!found.has(d)) {
-        found.add(d);
-        visit(d);
-      }
-    }
-  };
-  visit(of);
-  return found;
-};
-
 const isYeast = (i: Ingredient): i is Ingredient & { yeast: { form: YeastForm } } =>
   i.yeast !== undefined && i.role === 'dough';
 
+/** The segments of `steps`; a step without a duration counts as 0, but the open one stays open. */
 const segmentsOf = (
   steps: readonly ProcessStep[],
   firstC: number,
+  openIndex: number,
 ): { segments: Segment[]; unplanned: StepId[] } => {
   let ambientC = firstC;
   const unplanned: StepId[] = [];
   const segments = steps.map((step, index) => {
     ambientC = step.conditions?.temperatureC ?? ambientC;
-    const last = index === steps.length - 1;
-    if (step.plannedDurationS === undefined && !last) unplanned.push(step.id);
+    const open = index === openIndex;
+    if (step.plannedDurationS === undefined && !open) unplanned.push(step.id);
     const hours =
-      step.plannedDurationS === undefined ? (last ? undefined : 0) : step.plannedDurationS / 3600;
+      step.plannedDurationS === undefined ? (open ? undefined : 0) : step.plannedDurationS / 3600;
     return hours === undefined ? { ambientC } : { hours, ambientC };
   });
   return { segments, unplanned };
@@ -322,18 +311,6 @@ const doughExtrapolations = (formula: Formula): string[] | Failure => {
 const unplannedAssumptions = (unplanned: readonly StepId[]) =>
   unplanned.map((id) => `step_without_duration:${id}`);
 
-/** The `asap` steps between the mix and the bake, in process order (fermentation.md). */
-const doughSteps = (process: Process): ProcessStep[] | undefined => {
-  const mix = process.steps.find((s) => s.operation === 'mix');
-  if (!mix) return undefined;
-  const bake = process.steps.find((s) => s.operation === 'bake');
-  const after = descendants(process, mix.id);
-  const before = bake ? ancestors(process, bake.id) : undefined;
-  return process.steps.filter(
-    (s) => s.schedule === 'asap' && after.has(s.id) && s !== bake && (!before || before.has(s.id)),
-  );
-};
-
 /**
  * The stage a dough is judged ready for on this step (bake-session.md): `bake` on the last dough
  * step, `shape` on an earlier one, none outside the dough steps.
@@ -344,7 +321,7 @@ export const doughReadyStage = (process: Process, stepId: StepId): 'shape' | 'ba
   return steps.at(-1)?.id === stepId ? 'bake' : 'shape';
 };
 
-/** The last step the dough ferments in before the bake, if the process has one. */
+/** The last step the dough ferments in before the first heat step, if the process has one. */
 export const lastDoughStepId = (process: Process): StepId | undefined =>
   doughSteps(process)?.at(-1)?.id;
 
@@ -359,6 +336,10 @@ const doughMass = (
   const steps = doughSteps(process) ?? [];
   const last = steps.at(-1);
   if (!last) return failure('insufficient_data', 'no_fermentation_step');
+  // The model solves one unknown: the model-driven step's time, else the last step's.
+  const driven = steps.findIndex((s) => s.durationMode === 'model');
+  const openIndex = driven < 0 ? steps.length - 1 : driven;
+  const solved = steps[openIndex] as ProcessStep;
   // One dough, one timeline: each dough step must come after the previous one. Parallel dough
   // steps would be counted end to end, more time than really elapses (audit C2 of 15e52e3).
   const unordered = steps.filter((s, i) => {
@@ -380,10 +361,10 @@ const doughMass = (
   }
   const extrapolations = doughExtrapolations(formula);
   if (!Array.isArray(extrapolations)) return extrapolations;
-  const { segments, unplanned } = segmentsOf(steps, roomC);
+  const { segments, unplanned } = segmentsOf(steps, roomC, openIndex);
   const target = mix.conditions?.doughTemperatureC;
   return {
-    stepId: last.id,
+    stepId: solved.id,
     yeasts: formula.ingredients.filter(isYeast).map((i) => ({
       id: i.id,
       form: i.yeast.form,
@@ -394,6 +375,7 @@ const doughMass = (
     profile: calibration,
     startC: target ?? roomC,
     segments,
+    openIndex,
     assumptions: [
       target === undefined ? 'dough_temperature_from_ambient' : 'dough_temperature_target',
       `ready_target_progress:${calibration.readyProgress}`,
@@ -437,6 +419,7 @@ const prefermentMass = (
         ? { ambientC }
         : { hours: step.plannedDurationS / 3600, ambientC },
     ],
+    openIndex: 0,
     assumptions: [
       'dough_temperature_from_ambient',
       ...(step.conditions?.temperatureC === undefined ? ['preferment_at_room_temperature'] : []),

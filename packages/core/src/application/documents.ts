@@ -205,6 +205,7 @@ const step: Check = (v, w) =>
       incorporations: list(incorporation),
       accepted,
       technique,
+      durationMode: oneOf('manual', 'model'),
     },
   );
 

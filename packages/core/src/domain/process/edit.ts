@@ -53,11 +53,13 @@ export interface StepChanges {
   readonly schedule?: ProcessStep['schedule'];
   readonly plannedDurationS?: number | undefined;
   readonly technique?: ProcessStep['technique'] | undefined;
+  readonly durationMode?: ProcessStep['durationMode'] | undefined;
 }
 
 /**
- * Changes a step's operation, label, schedule, planned duration or technique. A new planned
- * duration drops the applied-suggestion provenance (fermentation.md). The caller validates.
+ * Changes a step's operation, label, schedule, planned duration, technique or duration mode. A new
+ * planned duration drops the applied-suggestion provenance and, unless the changes set a mode,
+ * makes the step manual (fermentation.md): a typed time is the baker's. The caller validates.
  */
 export const updateStep = (process: Process, stepId: StepId, changes: StepChanges): Process => ({
   ...process,
@@ -66,9 +68,12 @@ export const updateStep = (process: Process, stepId: StepId, changes: StepChange
     const durationChanged =
       'plannedDurationS' in changes && changes.plannedDurationS !== s.plannedDurationS;
     const merged: Record<string, unknown> = { ...s, ...changes };
+    const dropped = durationChanged
+      ? ['accepted', ...('durationMode' in changes ? [] : ['durationMode'])]
+      : [];
     const next = Object.fromEntries(
       Object.entries(merged).filter(
-        ([key, value]) => value !== undefined && !(durationChanged && key === 'accepted'),
+        ([key, value]) => value !== undefined && !dropped.includes(key),
       ),
     );
     return next as unknown as ProcessStep;

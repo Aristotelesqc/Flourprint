@@ -487,7 +487,9 @@ describe('accepted decisions through a bake', () => {
 
   it('are cleared from the effective step by a manual duration override, same value or not', () => {
     const proc: Process = {
-      steps: process.steps.map((s) => (s.id === 'bulk' ? { ...s, accepted: suggestion(7200) } : s)),
+      steps: process.steps.map((s) =>
+        s.id === 'bulk' ? { ...s, accepted: suggestion(7200), durationMode: 'model' as const } : s,
+      ),
     };
     for (const value of [7200, 3600]) {
       const first = started(proc);
@@ -502,10 +504,12 @@ describe('accepted decisions through a bake', () => {
       const bulk = state.process?.steps.find((s) => s.id === 'bulk');
       expect(bulk?.plannedDurationS).toBe(value);
       expect(bulk).not.toHaveProperty('accepted');
+      // A model-driven step becomes manual for this bake (fermentation.md).
+      expect(bulk).not.toHaveProperty('durationMode');
       // History keeps the original decision.
-      expect(state.snapshot?.process.steps.find((s) => s.id === 'bulk')?.accepted).toEqual(
-        suggestion(7200),
-      );
+      const original = state.snapshot?.process.steps.find((s) => s.id === 'bulk');
+      expect(original?.accepted).toEqual(suggestion(7200));
+      expect(original?.durationMode).toBe('model');
     }
   });
 });

@@ -1,6 +1,6 @@
 import { progressPerHour, type FermentationParameters } from './model.js';
 
-/** One stretch of time at one ambient temperature; `hours` is undefined for the open last step. */
+/** One stretch of time at one ambient temperature; `hours` is undefined for the open step. */
 export interface Segment {
   readonly hours?: number;
   readonly ambientC: number;
@@ -75,6 +75,68 @@ export const simulate = (p: FermentationParameters, input: SimulationInput): Sim
     doughC = temperatureAt(p, doughC, segment.ambientC, total);
   }
   return { kind: 'progress', progress };
+};
+
+interface State {
+  readonly progress: number;
+  readonly doughC: number;
+}
+
+/** Runs one planned segment, with the same steps as `simulate`. */
+const advance = (
+  p: FermentationParameters,
+  freshPct: number,
+  state: State,
+  segment: { readonly hours: number; readonly ambientC: number },
+): State => {
+  const n = Math.max(1, Math.ceil(segment.hours / DT_H));
+  const dt = segment.hours / n;
+  let progress = state.progress;
+  for (let i = 0; i < n; i++) {
+    progress += gain(p, freshPct, state.doughC, segment.ambientC, i * dt, (i + 1) * dt);
+  }
+  return { progress, doughC: temperatureAt(p, state.doughC, segment.ambientC, segment.hours) };
+};
+
+/**
+ * The hours the one open segment needs so that progress reaches the target at the end of the
+ * schedule, every other segment as planned (fermentation.md, Model-driven duration). An open last
+ * segment is `simulate`; an open earlier one is solved by bisection on the same forward model,
+ * never by a separate formula. Segments other than the open one need their hours.
+ */
+export const solveOpenSegment = (
+  p: FermentationParameters,
+  input: SimulationInput,
+): SimulationResult => {
+  const index = input.segments.findIndex((s) => s.hours === undefined);
+  if (index < 0 || index === input.segments.length - 1) return simulate(p, input);
+  const target = input.target ?? 1;
+  const planned = (s: Segment) => ({ hours: s.hours ?? 0, ambientC: s.ambientC });
+  let start: State = { progress: 0, doughC: input.startC };
+  for (const s of input.segments.slice(0, index))
+    start = advance(p, input.freshPct, start, planned(s));
+  const ambientC = (input.segments[index] as Segment).ambientC;
+  const tail = input.segments.slice(index + 1).map(planned);
+  const at = (hours: number) =>
+    tail.reduce(
+      (state, s) => advance(p, input.freshPct, state, s),
+      advance(p, input.freshPct, start, { hours, ambientC }),
+    ).progress;
+  if (at(0) >= target) return { kind: 'remaining', hours: 0, reachedBefore: true };
+  // Doubling, then bisection: the open step is usually hours, not weeks.
+  let low = 0;
+  let high = 1;
+  while (at(high) < target) {
+    if (high >= MAX_OPEN_H) return { kind: 'notReached' };
+    low = high;
+    high = Math.min(MAX_OPEN_H, high * 2);
+  }
+  for (let i = 0; i < 30 && high - low > 1e-4; i++) {
+    const mid = (low + high) / 2;
+    if (at(mid) >= target) high = mid;
+    else low = mid;
+  }
+  return { kind: 'remaining', hours: (low + high) / 2, reachedBefore: false };
 };
 
 /**
