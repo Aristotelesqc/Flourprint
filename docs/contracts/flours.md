@@ -58,7 +58,7 @@ give a recipe a named flour without creating one.
 | ------------------- | ------------------------- | ------ | ---------- | -------------------------------------------------------------- |
 | `all-purpose-flour` | Farine blanche tout usage | wheat  | white      |                                                                |
 | `bread-flour`       | Farine à pain             | wheat  | white      |                                                                |
-| `no-50-flour`       | Farine #50                | wheat  | unknown    | named as the owner buys it; properties to fill from the bag    |
+| `bise-flour`        | Farine bise               | wheat  | partial    | high-extraction flour, between white and whole grain           |
 | `whole-wheat`       | Farine de blé entier      | wheat  | partial    | Canada: bran kept, part of the germ may be removed (to verify) |
 | `whole-grain-wheat` | Farine de blé intégral    | wheat  | wholeGrain | the whole kernel                                               |
 | `flour`             | Farine                    | wheat  | unknown    | generic, kept for existing recipes                             |

@@ -42,7 +42,7 @@ const builtIn = (
 export const BUILT_IN_FLOURS: readonly FlourEntry[] = [
   builtIn('all-purpose-flour', 'wheat', 'white'),
   builtIn('bread-flour', 'wheat', 'white'),
-  builtIn('no-50-flour', 'wheat', 'unknown'),
+  builtIn('bise-flour', 'wheat', 'partial'),
   builtIn('whole-wheat', 'wheat', 'partial'),
   builtIn('whole-grain-wheat', 'wheat', 'wholeGrain'),
   builtIn('flour', 'wheat', 'unknown'),

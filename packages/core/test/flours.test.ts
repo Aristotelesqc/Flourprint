@@ -21,7 +21,7 @@ describe('built-in flour entries (flours.md)', () => {
     expect(BUILT_IN_FLOURS.map((f) => f.id)).toEqual([
       'all-purpose-flour',
       'bread-flour',
-      'no-50-flour',
+      'bise-flour',
       'whole-wheat',
       'whole-grain-wheat',
       'flour',
