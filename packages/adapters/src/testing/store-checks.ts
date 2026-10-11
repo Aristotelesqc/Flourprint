@@ -2,12 +2,14 @@ import type {
   AppendInput,
   BakeEventStore,
   Draft,
+  FlourRegistry,
   RecipeRepository,
 } from '@flourprint/core/application';
 import {
   defaultVariant,
   type BakeEvent,
   type BakeSummary,
+  type FlourEntry,
   type Formula,
   type Instant,
   type Process,
@@ -423,6 +425,97 @@ export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
       });
       equal(await repository.listFamilies(), [], 'families');
       equal((await repository.getRecipe('kept'))?.familyId, undefined, 'recipe');
+    },
+  },
+];
+
+const flour = (id: string, version: number, changes: Partial<FlourEntry> = {}): FlourEntry => ({
+  id,
+  version,
+  name: `Flour ${id}`,
+  builtIn: false,
+  cereal: 'wheat',
+  refinement: 'white',
+  organic: { status: 'unknown' },
+  properties: {
+    proteinPct: {
+      status: 'known',
+      value: 12 + version / 10,
+      unit: 'pct',
+      basis: 'moisture14',
+      source: { kind: 'package' },
+    },
+    ashPct: { status: 'unknown' },
+    fallingNumberS: { status: 'unknown' },
+    alveographW: { status: 'unknown' },
+    alveographPL: { status: 'unknown' },
+    malted: { status: 'known', value: true, source: { kind: 'producer', detail: 'spec sheet' } },
+  },
+  archived: false,
+  createdAt: `2026-10-0${version}T08:00:00.000Z` as Instant,
+  ...changes,
+});
+
+/** Personal flour entries (persistence.md, Flour registry). */
+export const flourRegistryChecks: readonly StoreCheck<FlourRegistry>[] = [
+  {
+    name: 'writes flour versions in order, keeps earlier ones and lists the latest',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      equal(code(await registry.saveFlour(flour('mine', 1))), 'ok', 'v1');
+      equal(code(await registry.saveFlour(flour('mine', 2, { brand: 'Mill' }))), 'ok', 'v2');
+      equal(code(await registry.saveFlour(flour('a-other', 1))), 'ok', 'other v1');
+      const latest = await registry.listFlours();
+      equal(
+        latest.map((f) => `${f.id}@${f.version}`),
+        ['a-other@1', 'mine@2'],
+        'latest of each id',
+      );
+      equal(latest[1], flour('mine', 2, { brand: 'Mill' }), 'stored as written');
+      equal(await registry.getFlour('mine', 1), { ok: true, value: flour('mine', 1) }, 'v1 kept');
+      equal(await registry.getFlour('mine', 3), { ok: true }, 'absent version');
+      equal(
+        (await registry.listFlourVersions()).map((f) => `${f.id}@${f.version}`),
+        ['a-other@1', 'mine@1', 'mine@2'],
+        'every version',
+      );
+    },
+  },
+  {
+    name: 'refuses a flour version that is not the next one and writes nothing',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      await registry.saveFlour(flour('mine', 1));
+      const again = await registry.saveFlour(flour('mine', 1, { brand: 'Other' }));
+      equal(code(again), 'HeadConflict', 'rewrite');
+      equal(
+        again.ok ? undefined : again.error.details,
+        { flourId: 'mine', currentHead: 1 },
+        'head',
+      );
+      equal(code(await registry.saveFlour(flour('mine', 3))), 'HeadConflict', 'skip');
+      equal(code(await registry.saveFlour(flour('new', 2))), 'HeadConflict', 'new at 2');
+      equal(
+        (await registry.listFlourVersions()).map((f) => `${f.id}@${f.version}`),
+        ['mine@1'],
+        'nothing written',
+      );
+      equal((await registry.getFlour('mine', 1)).ok, true, 'v1 unchanged');
+    },
+  },
+  {
+    name: 'archives a flour as a new version; earlier versions still resolve',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      await registry.saveFlour(flour('mine', 1));
+      await registry.saveFlour(flour('mine', 2, { archived: true }));
+      equal(
+        (await registry.listFlours()).map((f) => [f.version, f.archived]),
+        [[2, true]],
+        'archived head listed',
+      );
+      const first = await registry.getFlour('mine', 1);
+      equal(first.ok && first.value?.archived, false, 'v1 not archived');
     },
   },
 ];

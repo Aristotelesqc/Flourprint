@@ -1,8 +1,13 @@
 import { Capacitor } from '@capacitor/core';
-import type { BakeEventStore, RecipeRepository } from '@flourprint/core/application';
-import { MemoryBakeEventStore, MemoryRecipeRepository } from '@flourprint/adapters/memory';
+import type { BakeEventStore, FlourRegistry, RecipeRepository } from '@flourprint/core/application';
+import {
+  MemoryBakeEventStore,
+  MemoryFlourRegistry,
+  MemoryRecipeRepository,
+} from '@flourprint/adapters/memory';
 import {
   bakeEventStoreChecks,
+  flourRegistryChecks,
   recipeRepositoryChecks,
   runChecks,
   type CheckResult,
@@ -21,6 +26,7 @@ export const runStoreChecks = async (): Promise<CheckResult[]> => {
     return [
       ...(await runChecks(bakeEventStoreChecks, async () => new MemoryBakeEventStore(), now)),
       ...(await runChecks(recipeRepositoryChecks, async () => new MemoryRecipeRepository(), now)),
+      ...(await runChecks(flourRegistryChecks, async () => new MemoryFlourRegistry(), now)),
     ];
   }
   const sqlite = await import('@flourprint/adapters/sqlite-capacitor');
@@ -57,6 +63,11 @@ export const runStoreChecks = async (): Promise<CheckResult[]> => {
         async () => new sqlite.SqlRecipeRepository(await freshDriver()),
         now,
       )),
+      ...(await runChecks<FlourRegistry>(
+        flourRegistryChecks,
+        async () => new sqlite.SqlFlourRegistry(await freshDriver()),
+        now,
+      )),
     ];
   } finally {
     await cleanup();
@@ -67,7 +78,7 @@ const assertEmpty = async (
   driver: import('@flourprint/adapters/sqlite-capacitor').CapacitorSqlite['driver'],
   name: string,
 ) => {
-  for (const table of ['recipes', 'revisions', 'bake_events', 'bake_commands', 'bakes']) {
+  for (const table of ['recipes', 'revisions', 'bake_events', 'bake_commands', 'bakes', 'flours']) {
     const [row] = await driver.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`);
     if (row?.n !== 0) throw new Error(`Scratch database ${name} is not empty (${table})`);
   }

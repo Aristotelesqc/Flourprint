@@ -60,3 +60,27 @@ export interface AcceptedSuggestion {
   readonly appliedValue: number;
   readonly model: ModelRef;
 }
+
+/** Where a property value comes from (values-and-units.md; kinds of flours.md). */
+export interface SourceRef {
+  readonly kind: 'package' | 'producer' | 'lab' | 'reference' | 'personal';
+  readonly detail?: string;
+}
+
+/** Unit of a property value: a canonical unit, or one a property defines (alveograph W). */
+export type PropertyUnit = Unit | '1e-4 J';
+
+/** Basis of a composition value (values-and-units.md, flours.md). */
+export type PropertyBasis = 'per100g' | 'perServing' | 'dryMatter' | 'asIs' | 'moisture14';
+
+/** A recorded property of an ingredient; unknown is never zero and never a default. */
+export type PropertyValue =
+  | {
+      readonly status: 'known' | 'estimated';
+      readonly value: number | boolean | string;
+      readonly unit?: PropertyUnit;
+      readonly basis?: PropertyBasis;
+      readonly source: SourceRef;
+      readonly uncertainty?: number;
+    }
+  | { readonly status: 'unknown' };

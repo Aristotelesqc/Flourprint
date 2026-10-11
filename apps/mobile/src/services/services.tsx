@@ -3,12 +3,17 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type {
   BakeEventStore,
   Clock,
+  FlourRegistry,
   IdGenerator,
   RecipeRepository,
 } from '@flourprint/core/application';
 import { saveRevision } from '@flourprint/core/application';
 import type { Instant } from '@flourprint/core/domain';
-import { MemoryBakeEventStore, MemoryRecipeRepository } from '@flourprint/adapters/memory';
+import {
+  MemoryBakeEventStore,
+  MemoryFlourRegistry,
+  MemoryRecipeRepository,
+} from '@flourprint/adapters/memory';
 import type { SqlBridge } from '@flourprint/adapters/sqlite-bridge';
 import { createNotifier, type Notifier } from './notifications';
 import { sampleRecipe } from './seed';
@@ -21,6 +26,8 @@ import { sampleRecipe } from './seed';
 export interface Services {
   readonly recipes: RecipeRepository;
   readonly bakes: BakeEventStore;
+  /** Personal flour entries (flours.md); built-in entries are code. */
+  readonly flours: FlourRegistry;
   readonly clock: Clock;
   readonly ids: IdGenerator;
   readonly storage: 'sqlite' | 'memory';
@@ -60,7 +67,7 @@ export const createServices = async (options: {
 }): Promise<Services> => {
   const notifier = createNotifier(options.reminderChannel);
   if (Capacitor.isNativePlatform()) {
-    const { openCapacitorSqlite, SqlBakeEventStore, SqlRecipeRepository } =
+    const { openCapacitorSqlite, SqlBakeEventStore, SqlFlourRegistry, SqlRecipeRepository } =
       await import('@flourprint/adapters/sqlite-capacitor');
     const db = await openCapacitorSqlite('flourprint');
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
@@ -69,6 +76,7 @@ export const createServices = async (options: {
     return {
       recipes,
       bakes: new SqlBakeEventStore(db.value.driver),
+      flours: new SqlFlourRegistry(db.value.driver),
       clock,
       ids,
       storage: 'sqlite',
@@ -80,7 +88,7 @@ export const createServices = async (options: {
   }
   const desktop = desktopBridge();
   if (desktop) {
-    const { openBridgeSqlite, SqlBakeEventStore, SqlRecipeRepository } =
+    const { openBridgeSqlite, SqlBakeEventStore, SqlFlourRegistry, SqlRecipeRepository } =
       await import('@flourprint/adapters/sqlite-bridge');
     const db = await openBridgeSqlite(desktop);
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
@@ -89,6 +97,7 @@ export const createServices = async (options: {
     return {
       recipes,
       bakes: new SqlBakeEventStore(db.value.driver),
+      flours: new SqlFlourRegistry(db.value.driver),
       clock,
       ids,
       storage: 'sqlite',
@@ -103,6 +112,7 @@ export const createServices = async (options: {
   return {
     recipes,
     bakes: new MemoryBakeEventStore(),
+    flours: new MemoryFlourRegistry(),
     clock,
     ids,
     storage: 'memory',

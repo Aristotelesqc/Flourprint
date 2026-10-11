@@ -2,6 +2,7 @@ import type {
   BakeEvent,
   BakeSummary,
   DomainError,
+  FlourEntry,
   Formula,
   Instant,
   Process,
@@ -149,6 +150,8 @@ export interface RestorePlan {
   readonly families: readonly RecipeFamily[];
   /** Optional so that plans and backups written before drafts still restore. */
   readonly drafts?: readonly Draft[];
+  /** Every personal flour entry version (flours.md); optional, like drafts. */
+  readonly flours?: readonly FlourEntry[];
   readonly bakes: readonly AppendInput[];
 }
 
@@ -160,4 +163,22 @@ export type RestoreError = DomainError<'TargetNotEmpty'>;
  */
 export interface RestoreTarget {
   restore(plan: RestorePlan): Promise<Result<void, RestoreError>>;
+}
+
+export type FlourStoreError =
+  | DomainError<'HeadConflict', { flourId: string; currentHead: number }>
+  | DomainError<'UnsupportedDocumentVersion', { schemaVersion: number }>;
+
+/**
+ * Personal flour entries (docs/contracts/flours.md, persistence.md): stored by (id, version), a
+ * version is never rewritten. Built-in entries are code and are never stored here.
+ */
+export interface FlourRegistry {
+  /** The latest version of every personal entry, archived ones included, by id. */
+  listFlours(): Promise<readonly FlourEntry[]>;
+  getFlour(id: string, version: number): Promise<Result<FlourEntry | undefined, FlourStoreError>>;
+  /** Every version of every personal entry, by id then version (backups). */
+  listFlourVersions(): Promise<readonly FlourEntry[]>;
+  /** Writes the entry when its version is the next one for its id, else `HeadConflict`. */
+  saveFlour(entry: FlourEntry): Promise<Result<FlourEntry, FlourStoreError>>;
 }

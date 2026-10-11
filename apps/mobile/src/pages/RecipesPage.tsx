@@ -20,7 +20,7 @@ import {
   type Revision,
 } from '@flourprint/core/domain';
 import { NewRecipe, useTemplateName } from '../blocks/NewRecipe';
-import { AppBar, AppBarButton, MoreIcon, PlusIcon, TimerIcon } from '../ui/AppBar';
+import { AppBar, AppBarButton, FlourIcon, MoreIcon, PlusIcon, TimerIcon } from '../ui/AppBar';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatRelative } from '../i18n/time';
 import { bakeView } from '../services/bake-view';
@@ -151,6 +151,9 @@ export const RecipesPage = () => {
         </AppBarButton>
         <AppBarButton label={t('new.title')} onClick={() => setChoosing(true)}>
           <PlusIcon />
+        </AppBarButton>
+        <AppBarButton label={t('flours.title')} routerLink="/flours">
+          <FlourIcon />
         </AppBarButton>
         <AppBarButton label={t('advanced.title')} routerLink="/advanced">
           <MoreIcon />

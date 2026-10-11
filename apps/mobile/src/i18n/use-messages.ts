@@ -3,8 +3,10 @@ import {
   componentStyle,
   type Component,
   type DomainError,
+  type FlourEntry,
   type Formula,
 } from '@flourprint/core/domain';
+import { useFlourCatalog } from '../services/flours';
 import { en, type MessageKey } from './messages';
 import { formatGrams, formatPct } from './numbers';
 
@@ -16,14 +18,25 @@ export const useMessages = () => {
   const t = (key: MessageKey, values?: Values): string => intl.formatMessage({ id: key }, values);
   const grams = (value: number) => formatGrams(value, intl.locale);
   const pct = (value: number) => formatPct(value, intl.locale);
+  const flours = useFlourCatalog();
 
-  /**
-   * Display name of an ingredient, flour or component. Interim: known ids map to catalog keys
-   * until the ingredient registry (#26) provides names; an unknown id is shown as is.
-   */
-  const name = (id: string): string => {
+  /** Display name of a flour entry: a personal one by its name, a built-in one by message key. */
+  const flourName = (entry: FlourEntry): string =>
+    !entry.builtIn && entry.name ? entry.name : catalogName(entry.id);
+
+  const catalogName = (id: string): string => {
     const key = `name.${id}`;
     return key in en ? t(key as MessageKey) : id;
+  };
+
+  /**
+   * Display name of an ingredient, flour or component: a personal flour entry by its name
+   * (flours.md), else a known id by its catalog key until the ingredient registry (#26) covers
+   * the other ingredients; an unknown id is shown as is.
+   */
+  const name = (id: string): string => {
+    const entry = flours.entry(id);
+    return entry ? flourName(entry) : catalogName(id);
   };
 
   /** Display name of a component: its style from the liquid ratio, else its kind (formula.md). */
@@ -55,5 +68,5 @@ export const useMessages = () => {
     return t(key as MessageKey, values);
   };
 
-  return { t, grams, pct, name, componentName, stepName, error, locale: intl.locale };
+  return { t, grams, pct, name, flourName, componentName, stepName, error, locale: intl.locale };
 };

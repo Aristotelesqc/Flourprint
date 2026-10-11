@@ -94,3 +94,11 @@ export const MoreIcon = () =>
       <circle cx="19" cy="12" r="1" />
     </>,
   );
+/** A flour sack: the flour registry. */
+export const FlourIcon = () =>
+  icon(
+    <>
+      <path d="M8 4h8l-1 3c3 2 4 5 4 8a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5c0-3 1-6 4-8z" />
+      <path d="M9 7h6M10 14h4" />
+    </>,
+  );

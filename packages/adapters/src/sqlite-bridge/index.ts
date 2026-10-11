@@ -9,7 +9,12 @@ import {
   type SqlValue,
 } from '../sql/index.js';
 
-export { SqlBakeEventStore, SqlRecipeRepository, SqlRestoreTarget } from '../sql/index.js';
+export {
+  SqlBakeEventStore,
+  SqlFlourRegistry,
+  SqlRecipeRepository,
+  SqlRestoreTarget,
+} from '../sql/index.js';
 
 /**
  * SQLite behind a message bridge (ADR 0011): the desktop shell runs `node:sqlite` in Electron's

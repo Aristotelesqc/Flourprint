@@ -4,6 +4,7 @@ import {
   replayBake,
   type BakeEvent,
   type Estimate,
+  type FlourRef,
   type Instant,
   type ModelRef,
   type Observation,
@@ -74,6 +75,8 @@ export interface BakeDigest {
     readonly contractVersion: string;
     readonly models: readonly ModelRef[];
   };
+  /** Registry flour entries the bake used (flours.md); absent for bakes before 0.8.0. */
+  readonly flours?: readonly FlourRef[];
   readonly steps: readonly StepDigest[];
   readonly observations: readonly ObservationDigest[];
   readonly adjustments: readonly AdjustmentDigest[];
@@ -96,10 +99,15 @@ export const FEEDBACK_ABOUT =
   'observations and notes with the step they were taken on and the time elapsed in that step, ' +
   'and adjustments made during the bake. Each bake says whether it was real or simulated ' +
   '(`origin`; "unknown" for bakes recorded before this was asked); a doughReady observation ' +
-  'says the stage the dough was ready for (`stage`: shape or bake). `backup` is the authoritative record (recipes with ' +
+  'says the stage the dough was ready for (`stage`: shape or bake). `flours` lists the flour ' +
+  'registry entries ({id, version}) the bake used; absent for bakes recorded before the registry ' +
+  '(unknown). Built-in entries are code and carry no composition; personal entries, with every ' +
+  'version, are in `backup.flours`. Their properties (protein, ash, falling number, alveograph, ' +
+  'malted) are recorded for later calibration and used by no calculation; unknown is never zero. ' +
+  '`backup` is the authoritative record (recipes with ' +
   'every revision, raw bake events). Units: grams, degrees Celsius, seconds, baker percentages ' +
   'in points. `device` describes the exporting device only. Contracts: ' +
-  'docs/contracts/history.md (feedback export), bake-session.md, fermentation.md.';
+  'docs/contracts/history.md (feedback export), bake-session.md, fermentation.md, flours.md.';
 
 const seconds = (from: Instant | undefined, to: Instant | undefined): number | undefined =>
   from === undefined || to === undefined
@@ -189,6 +197,7 @@ export const bakeDigest = (
     ...(state.startedAt === undefined ? {} : { startedAt: state.startedAt }),
     ...(state.endedAt === undefined ? {} : { endedAt: state.endedAt }),
     manifest: snapshot.manifest,
+    ...(snapshot.flours === undefined ? {} : { flours: snapshot.flours }),
     steps,
     observations,
     adjustments,

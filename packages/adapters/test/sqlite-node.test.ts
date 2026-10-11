@@ -4,7 +4,12 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { afterAll, describe, expect, it } from 'vitest';
 import type { Instant } from '@flourprint/core/domain';
-import { MIGRATIONS, openNodeSqlite, SqlRecipeRepository } from '../src/sqlite-node/index.js';
+import {
+  MIGRATIONS,
+  openNodeSqlite,
+  SqlFlourRegistry,
+  SqlRecipeRepository,
+} from '../src/sqlite-node/index.js';
 
 const open = async (path: string, migrations = MIGRATIONS) => {
   const db = await openNodeSqlite(path, migrations);
@@ -119,6 +124,34 @@ describe('sqlite-node durability', () => {
       .prepare("INSERT INTO revisions VALUES ('r', 1, 99, '{}', '2026-10-07T08:00:00.000Z')")
       .run();
     expect(await new SqlRecipeRepository(db.driver).getRevision('r', 1)).toMatchObject({
+      ok: false,
+      error: { code: 'UnsupportedDocumentVersion' },
+    });
+  });
+  it('upgrades a version 3 database to the flour registry, keeping its drafts', async () => {
+    const file = path('upgrade-flours.sqlite');
+    const v3 = await open(file, MIGRATIONS.slice(0, 3));
+    v3.database
+      .prepare("INSERT INTO drafts VALUES ('d', 'D', '{}', '2026-10-07T08:00:00.000Z')")
+      .run();
+    v3.close();
+
+    const v4 = await open(file);
+    expect(v4.database.prepare('SELECT COUNT(*) AS n FROM drafts').get()).toEqual({ n: 1 });
+    const registry = new SqlFlourRegistry(v4.driver);
+    expect(await registry.listFlours()).toEqual([]);
+    expect(
+      v4.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
+    ).toEqual({ value: 4 });
+    v4.close();
+  });
+
+  it('refuses flour entries written with a newer document schema', async () => {
+    const db = await open(':memory:');
+    db.database
+      .prepare("INSERT INTO flours VALUES ('f', 1, 0, 99, '{}', '2026-10-07T08:00:00.000Z')")
+      .run();
+    expect(await new SqlFlourRegistry(db.driver).getFlour('f', 1)).toMatchObject({
       ok: false,
       error: { code: 'UnsupportedDocumentVersion' },
     });

@@ -10,6 +10,7 @@ export * from './version.js';
 export * from './canonical-json.js';
 export * from './values.js';
 export * from './bake/index.js';
+export * from './flour/index.js';
 export * from './recipe/types.js';
 export * from './recipe/validate.js';
 export * from './recipe/check.js';

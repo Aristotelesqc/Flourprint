@@ -13,7 +13,7 @@ import {
 } from '@ionic/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { RECIPE_TEMPLATES, saveDraft, type Draft } from '@flourprint/core/application';
+import { flourRefsOf, RECIPE_TEMPLATES, saveDraft, type Draft } from '@flourprint/core/application';
 import {
   applyDraftFormulaEdit,
   checkRecipe,
@@ -35,6 +35,7 @@ import { HistorySection } from '../blocks/HistorySection';
 import { ProcessSection } from '../blocks/ProcessSection';
 import { useMessages } from '../i18n/use-messages';
 import { sendBakeCommand } from '../services/bakes';
+import { useFlourCatalog } from '../services/flours';
 import { RecipeChecks } from '../blocks/RecipeChecks';
 import { StyleGuide } from '../blocks/StyleGuide';
 import { useServices } from '../services/services';
@@ -60,6 +61,7 @@ export const RecipePage = () => {
   const draftId = params.draftId;
   const recipeId = params.recipeId ?? '';
   const services = useServices();
+  const flourCatalog = useFlourCatalog();
   const router = useIonRouter();
   const [presentAlert] = useIonAlert();
   const { t, error } = useMessages();
@@ -381,6 +383,11 @@ export const RecipePage = () => {
         mode,
         // The phone bakes for real; the PC shell and the browser preview simulate (history.md).
         origin: services.platform === 'android' ? 'physical' : 'simulation',
+        // The current registry version of each flour that has an entry (flours.md).
+        flours: flourRefsOf(
+          revision.formula.flours.map((f) => f.id),
+          flourCatalog.personal,
+        ),
       },
     });
     const result = await writes.run(() =>

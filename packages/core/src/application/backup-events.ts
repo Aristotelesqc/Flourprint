@@ -183,6 +183,7 @@ const isSnapshot = (value: unknown): boolean =>
           isOptional(e.range, (r): r is unknown => accepts(estimateRange)(r)))),
   ) &&
   isOptional(value.origin, (v): v is string => v === 'physical' || v === 'simulation') &&
+  isOptional(value.flours, (v): v is unknown[] => Array.isArray(v) && v.every(isRevisionRef)) &&
   isObject(value.manifest) &&
   typeof value.manifest.engineVersion === 'string' &&
   typeof value.manifest.contractVersion === 'string' &&

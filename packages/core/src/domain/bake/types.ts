@@ -1,5 +1,6 @@
 import type { Formula, ResolvedFormula } from '../formula/types.js';
 import type { FormulaEdit } from '../formula/edit.js';
+import type { FlourRef } from '../flour/types.js';
 import type { Instant } from '../instant.js';
 import type { Process, ProcessStep, Projection, ProjectionMode, StepId } from '../process/types.js';
 import type { Estimate, ModelRef, Observation } from '../values.js';
@@ -33,6 +34,8 @@ export interface BakeSnapshot {
   };
   /** A real bake or a simulation, from StartBake; absent = unknown (history.md). */
   readonly origin?: BakeOrigin;
+  /** Registry entries of the formula's flours (flours.md); absent before 0.8.0 = unknown. */
+  readonly flours?: readonly FlourRef[];
 }
 
 export type BakeOrigin = 'physical' | 'simulation';
@@ -62,6 +65,8 @@ export type BakeCommandPayload =
       readonly usedProperties?: readonly UsedProperty[];
       /** A real bake or a simulation (history.md); absent = unknown. */
       readonly origin?: BakeOrigin;
+      /** Current registry version of each formula flour that has an entry (flours.md). */
+      readonly flours?: readonly FlourRef[];
     }
   | { readonly type: 'StartStep'; readonly stepId: StepId; readonly at?: Instant }
   | {

@@ -201,6 +201,29 @@ export const decide = (
     const projection = projectProcess(command.process, { mode: command.mode });
     if (!projection.ok) return projection;
     const accepted = acceptedDecisions(command.formula, command.process);
+    const formulaFlours = new Set(command.formula.flours.map((f) => f.id));
+    const seen = new Set<string>();
+    for (const ref of command.flours ?? []) {
+      if (!formulaFlours.has(ref.id)) {
+        return error('InvalidCommand', `${ref.id} is not a flour of the started formula`, {
+          field: 'flours',
+          reason: 'not a flour of the formula',
+        });
+      }
+      if (seen.has(ref.id)) {
+        return error('InvalidCommand', `${ref.id} is listed twice`, {
+          field: 'flours',
+          reason: 'duplicate flour',
+        });
+      }
+      if (!Number.isInteger(ref.version) || ref.version < 1) {
+        return error('InvalidCommand', `${ref.id} has an invalid version`, {
+          field: 'flours',
+          reason: 'invalid version',
+        });
+      }
+      seen.add(ref.id);
+    }
     return ok([
       {
         occurredAt: now,
@@ -220,6 +243,9 @@ export const decide = (
               models: accepted.models,
             },
             ...(command.origin === undefined ? {} : { origin: command.origin }),
+            ...(command.flours === undefined
+              ? {}
+              : { flours: command.flours.map((f) => ({ id: f.id, version: f.version })) }),
           },
         },
       },

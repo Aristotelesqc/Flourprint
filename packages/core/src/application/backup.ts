@@ -6,7 +6,9 @@ import {
   ok,
   upcastEvent,
   validateRecipe,
+  builtInFlour,
   type BakeEvent,
+  type FlourEntry,
   type DomainError,
   type Instant,
   type RecipeFamily,
@@ -17,10 +19,12 @@ import { checkBakeLog } from './backup-events.js';
 import { decodeFormula, decodeProcess } from './documents.js';
 import { isCount, isId, isInstant, isObject, Refused, refuse } from './decode.js';
 import { decodeDraft } from './drafts.js';
+import { decodeFlourEntry } from './flours.js';
 import type {
   AppendInput,
   Draft,
   BakeEventStore,
+  FlourRegistry,
   RecipeRepository,
   RecordedRecipe,
   RestorePlan,
@@ -38,11 +42,14 @@ export interface Backup {
   readonly bakes: readonly { readonly bakeId: string; readonly events: readonly BakeEvent[] }[];
   /** Optional so that backups written before drafts still restore (persistence.md). */
   readonly drafts?: readonly Draft[];
+  /** Every personal flour entry version (flours.md); optional, so older backups still restore. */
+  readonly flours?: readonly FlourEntry[];
 }
 
 export interface BackupStores {
   readonly recipes: RecipeRepository;
   readonly bakes: BakeEventStore;
+  readonly flours: FlourRegistry;
 }
 
 export type BackupError =
@@ -97,6 +104,7 @@ export const exportBackup = async (
     families,
     bakes,
     drafts: await stores.recipes.listDrafts(),
+    flours: await stores.flours.listFlourVersions(),
   });
 };
 
@@ -208,6 +216,23 @@ export const decodeRecipes = (
   return { recipes, families };
 };
 
+/** Personal flour entries: each one valid, versions of an id numbered 1..n (flours.md). */
+const decodeFlours = (input: readonly unknown[]): FlourEntry[] => {
+  const flours = input.map((value, i) => decodeFlourEntry(value, `flour ${i + 1}`));
+  const versions = new Map<string, number[]>();
+  for (const entry of flours) {
+    if (entry.builtIn) return refuse(`flour ${entry.id} is a built-in entry`);
+    versions.set(entry.id, [...(versions.get(entry.id) ?? []), entry.version]);
+  }
+  for (const [id, list] of versions) {
+    const sorted = [...list].sort((a, b) => a - b);
+    if (sorted.some((version, i) => version !== i + 1)) {
+      return refuse(`versions of flour ${id} are not numbered 1..n`);
+    }
+  }
+  return flours;
+};
+
 /**
  * Decodes and checks a whole backup before anything is written (persistence.md): versions,
  * identifiers, numbering, formula/process consistency, event envelopes and references.
@@ -236,6 +261,10 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     }
 
     const { recipes, families } = decodeRecipes(input.recipes, input.families ?? []);
+    if (input.flours !== undefined && !Array.isArray(input.flours)) {
+      return err(invalid('flours must be a list'));
+    }
+    const flours = decodeFlours((input.flours ?? []) as unknown[]);
 
     const bakes: AppendInput[] = [];
     const bakeIds = new Set<string>();
@@ -261,6 +290,14 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
           return err(invalid(`bake ${bakeId} refers to a revision missing from the backup`));
         }
       }
+      for (const ref of state.snapshot?.flours ?? []) {
+        const known =
+          flours.some((f) => f.id === ref.id && f.version === ref.version) ||
+          (builtInFlour(ref.id)?.version ?? 0) >= ref.version;
+        if (!known) {
+          return err(invalid(`bake ${bakeId} refers to a flour entry missing from the backup`));
+        }
+      }
       bakes.push({
         command: { commandId: `import:${bakeId}`, bakeId, content: 'import' },
         expectedVersion: 0,
@@ -275,7 +312,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     if (new Set(drafts.map((d) => d.id)).size !== drafts.length) {
       return err(invalid('duplicate draft'));
     }
-    return ok({ recipes, families, bakes, drafts });
+    return ok({ recipes, families, bakes, drafts, flours });
   } catch (error) {
     if (error instanceof RefusedWith) return err(error.error);
     if (error instanceof Refused) return err(invalid(error.reason));

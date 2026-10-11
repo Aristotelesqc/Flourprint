@@ -526,4 +526,26 @@ describe('recorded times follow the process edges (Codex audit of PR #31)', () =
       ),
     ).toBe('UnknownReference');
   });
+  it('records the registry flours of the started formula and refuses others', async () => {
+    const start = (flours: { id: string; version: number }[]) => ({
+      type: 'StartBake' as const,
+      revisions: { formula: { id: 'f', version: 1 }, process: { id: 'p', version: 1 } },
+      formula,
+      process: process_,
+      mode: { kind: 'startAt' as const, at: t('08:00') },
+      flours,
+    });
+    const flourId = formula.flours[0]?.id ?? '';
+    const refused = await new Session().run(start([{ id: 'rye-flour-x', version: 1 }]));
+    expect(refused).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidCommand', details: { field: 'flours' } },
+    });
+    const session = new Session();
+    const { state } = await session.ok(start([{ id: flourId, version: 2 }]));
+    expect(state.snapshot?.flours).toEqual([{ id: flourId, version: 2 }]);
+    // Without refs (older clients), the snapshot has none: unknown.
+    const { state: plain } = await new Session().start();
+    expect(plain.snapshot && 'flours' in plain.snapshot).toBe(false);
+  });
 });

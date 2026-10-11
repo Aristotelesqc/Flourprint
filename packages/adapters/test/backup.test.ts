@@ -6,13 +6,23 @@ import {
   exportRecipes,
   importBackup,
   importRecipes,
+  saveFlourEntry,
   saveRevision,
   type BackupStores,
 } from '@flourprint/core/application';
-import type { Formula, Instant, Process } from '@flourprint/core/domain';
+import {
+  builtInFlour,
+  customizeFlour,
+  nextFlourVersion,
+  type FlourEntry,
+  type Formula,
+  type Instant,
+  type Process,
+} from '@flourprint/core/domain';
 import type { RestoreTarget } from '@flourprint/core/application';
 import {
   MemoryBakeEventStore,
+  MemoryFlourRegistry,
   MemoryRecipeRepository,
   MemoryRestoreTarget,
 } from '../src/memory/index.js';
@@ -20,6 +30,7 @@ import type { SqlDriver } from '../src/sql/index.js';
 import {
   openNodeSqlite,
   SqlBakeEventStore,
+  SqlFlourRegistry,
   SqlRecipeRepository,
   SqlRestoreTarget,
 } from '../src/sqlite-node/index.js';
@@ -77,6 +88,7 @@ const sqliteStores = async (failOnWrite?: number): Promise<Target> => {
   return {
     recipes: new SqlRecipeRepository(driver),
     bakes: new SqlBakeEventStore(driver),
+    flours: new SqlFlourRegistry(driver),
     restore: new SqlRestoreTarget(failOnWrite === undefined ? driver : failing),
     driver,
   };
@@ -85,7 +97,8 @@ const sqliteStores = async (failOnWrite?: number): Promise<Target> => {
 const memoryStores = (): Target => {
   const recipes = new MemoryRecipeRepository();
   const bakes = new MemoryBakeEventStore();
-  return { recipes, bakes, restore: new MemoryRestoreTarget(recipes, bakes) };
+  const flours = new MemoryFlourRegistry();
+  return { recipes, bakes, flours, restore: new MemoryRestoreTarget(recipes, bakes, flours) };
 };
 
 /** Two revisions and a finished bake with an override, written through the use cases. */
@@ -131,6 +144,31 @@ const seed = async (stores: BackupStores) => {
     createdAt: at('06:30'),
     updatedAt: at('06:45'),
   });
+  // The formula's flour as a personal registry entry, edited once (flours.md).
+  const bread = customizeFlour(builtInFlour('bread-flour') as FlourEntry, {
+    id: 'bread',
+    name: 'My bread flour',
+    createdAt: at('05:00'),
+  });
+  await saveFlourEntry(stores.flours, bread);
+  const edited = nextFlourVersion(
+    bread,
+    {
+      properties: {
+        ...bread.properties,
+        proteinPct: {
+          status: 'known',
+          value: 13.2,
+          unit: 'pct',
+          basis: 'asIs',
+          source: { kind: 'package' },
+        },
+      },
+    },
+    at('05:30'),
+  );
+  if (!edited.ok) throw new Error('edit failed');
+  await saveFlourEntry(stores.flours, edited.value);
   let n = 0;
   let version = 0;
   const run = async (
@@ -157,6 +195,7 @@ const seed = async (stores: BackupStores) => {
       formula: tweaked,
       process,
       mode: { kind: 'startAt', at: at('08:00') },
+      flours: [{ id: 'bread', version: 2 }],
     },
     at('08:00'),
   );
@@ -187,7 +226,8 @@ const backupOf = async () => {
 
 const isEmpty = async (stores: BackupStores) =>
   (await stores.recipes.listRecipes()).length === 0 &&
-  (await stores.bakes.listBakes()).length === 0;
+  (await stores.bakes.listBakes()).length === 0 &&
+  (await stores.flours.listFlourVersions()).length === 0;
 
 describe.each([
   ['memory', async () => memoryStores()],
@@ -208,6 +248,15 @@ describe.each([
     const target = await makeTarget();
     expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
     expect(await target.recipes.listFamilies()).toEqual([]);
+  });
+
+  it('restores a backup written before the flour registry', async () => {
+    const backup = await backupOf();
+    delete backup.flours;
+    delete backup.bakes[0].events[0].payload.snapshot.flours;
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect(await target.flours.listFlours()).toEqual([]);
   });
 
   it('refuses to import into a database that already has data', async () => {
@@ -354,6 +403,24 @@ describe.each([
       'InvalidBackup',
     ],
     ['a reserved recipe id', (b) => (b.recipes[0].id = '__proto__'), 'InvalidBackup'],
+    ['a gap in flour versions', (b) => b.flours.shift(), 'InvalidBackup'],
+    [
+      'a bake referring to a missing flour entry',
+      (b) => (b.bakes[0].events[0].payload.snapshot.flours[0].version = 3),
+      'InvalidBackup',
+    ],
+    [
+      'a flour property without a source',
+      (b) => (b.flours[1].properties.ashPct = { status: 'known', value: 'none' }),
+      'InvalidBackup',
+    ],
+    [
+      'a flour protein above 100 %',
+      (b) => (b.flours[1].properties.proteinPct.value = 132),
+      'InvalidBackup',
+    ],
+    ['a flour with an unknown field', (b) => (b.flours[0].extra = true), 'InvalidBackup'],
+    ['a built-in flour entry', (b) => (b.flours[0].builtIn = true), 'InvalidBackup'],
     ['malformed content', (b) => (b.recipes[0].revisions[0].process = 'nope'), 'InvalidBackup'],
   ])('refuses %s, writes nothing and allows a clean retry', async (_case, corrupt, code) => {
     const backup = await backupOf();
@@ -471,6 +538,7 @@ describe('feedback export (history.md)', () => {
       // Started without an origin: unknown, whatever the exporting device.
       origin: 'unknown',
       recipe: { id: 'lean', name: 'Lean', version: 2 },
+      flours: [{ id: 'bread', version: 2 }],
       startedAt: at('08:00'),
       endedAt: at('11:00'),
     });

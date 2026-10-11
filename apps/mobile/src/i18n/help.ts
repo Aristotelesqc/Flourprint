@@ -149,6 +149,15 @@ export const helpEn = {
     'Every edit is kept on the phone as a draft while you type: you can close the app and come back. It is not a version yet.',
   'help.draft.body2':
     'Saving checks the recipe, then creates the next version; earlier versions stay unchanged and a bake keeps the version it started from. Discarding throws the draft away. A bake starts only from a saved version.',
+  'help.flours.title': 'Flours and their properties',
+  'help.flours.body1':
+    'Each bake records which flours it used and the version of their entry, with what is known about them: protein, ash, falling number, alveograph W and P/L, malt added. No calculation uses these properties yet; they are kept to calibrate the models later.',
+  'help.flours.body2':
+    'An empty property is unknown, never zero. Built-in flours carry no composition, since a generic name does not say it: customize one to fill in what the bag or the mill says. Each save is a new version; earlier bakes keep theirs.',
+  'help.flours.body3':
+    'A percentage has a basis: as sold, at 14 % moisture (common for protein and ash on mill sheets) or on dry matter. A label value given per serving is converted to % of the flour and stays “as sold”.',
+  'help.flours.more':
+    'The classification (T65, 00, #50…) is shown as given; nothing is inferred from it. Archiving hides a flour from the picker; recipes and bakes that use it still show it.',
 } as const;
 
 export const helpFr: Record<keyof typeof helpEn, string> = {
@@ -297,4 +306,13 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
     'Chaque modification est gardée sur le téléphone comme brouillon pendant la saisie : il est possible de fermer l’app et de revenir. Ce n’est pas encore une version.',
   'help.draft.body2':
     'Enregistrer vérifie la recette puis crée la version suivante ; les versions précédentes restent intactes et une fournée garde la version dont elle est partie. Abandonner jette le brouillon. Une fournée ne démarre que d’une version enregistrée.',
+  'help.flours.title': 'Farines et leurs propriétés',
+  'help.flours.body1':
+    'Chaque fournée enregistre les farines utilisées et la version de leur fiche, avec ce qui en est connu : protéines, cendres, indice de chute, W et P/L de l’alvéographe, malt ajouté. Aucun calcul n’utilise encore ces propriétés ; elles sont gardées pour calibrer les modèles plus tard.',
+  'help.flours.body2':
+    'Une propriété vide est inconnue, jamais zéro. Les farines de base n’ont aucune composition, un nom générique ne la dit pas : en personnaliser une pour saisir ce qu’indiquent le sac ou le meunier. Chaque enregistrement crée une nouvelle version ; les fournées passées gardent la leur.',
+  'help.flours.body3':
+    'Un pourcentage a une base : tel que vendu, à 14 % d’humidité (courant pour les protéines et les cendres sur les fiches de meunerie) ou sur matière sèche. Une valeur d’étiquette par portion est convertie en % de la farine et reste « tel que vendu ».',
+  'help.flours.more':
+    'La classification (T65, 00, #50…) est affichée telle quelle ; rien n’en est déduit. Archiver retire une farine du choix ; les recettes et les fournées qui l’utilisent l’affichent toujours.',
 };

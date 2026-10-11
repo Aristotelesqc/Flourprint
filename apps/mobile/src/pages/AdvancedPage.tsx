@@ -189,6 +189,12 @@ export const AdvancedPage = () => {
           <IonListHeader>
             <IonLabel>{t('advanced.recipes')}</IonLabel>
           </IonListHeader>
+          <IonItem routerLink="/flours" detail>
+            <IonLabel>
+              {t('advanced.flours')}
+              <p>{t('advanced.floursHint')}</p>
+            </IonLabel>
+          </IonItem>
           <IonItem button detail disabled={busy} onClick={() => input.current?.click()}>
             <IonLabel>
               {busy ? t('advanced.importing') : t('advanced.import')}

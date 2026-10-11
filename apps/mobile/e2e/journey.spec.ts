@@ -497,3 +497,71 @@ test('the planner can follow now; starting always starts now', async ({ page }) 
   // The timers run from the tap (08:00), not from the planned 14:00 three days later.
   await expect(page.getByText(/Début prévu 0?8[:h]00/).first()).toBeVisible();
 });
+
+test('a customized flour keeps its properties and is offered by the flour picker', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/recipes');
+  await page.getByLabel('Farines', { exact: true }).first().click();
+  await expect(page).toHaveURL(/\/flours$/);
+  await expect(page.getByText('Aucune farine personnelle pour l’instant.')).toBeVisible();
+
+  // A built-in flour is read-only: customizing it gives a personal copy to fill in.
+  await page.locator('ion-item:visible', { hasText: 'Farine à pain' }).first().click();
+  const sheet = page.locator('ion-modal:visible');
+  await expect(sheet.getByText(/Une farine de base n’a aucune composition/)).toBeVisible();
+  await sheet.getByRole('button', { name: 'Personnaliser' }).click();
+  await expect(sheet.getByLabel('Nom', { exact: true })).toHaveValue('Farine à pain');
+  await sheet.getByLabel('Protéines (%) : valeur').fill('13,2');
+  await sheet.getByLabel('Protéines (%) : base').selectOption({ label: 'Tel que vendu' });
+  await sheet
+    .getByLabel('Protéines (%) : source', { exact: true })
+    .selectOption({ label: 'Étiquette de l’emballage' });
+  await sheet.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('ion-modal:visible')).toHaveCount(0);
+  const mine = page.locator('ion-item:visible', { hasText: '1 propriété connue' });
+  await expect(mine).toContainText('Farine à pain');
+  await expect(mine).toContainText('Version 1');
+
+  // In a recipe, the picker offers it among the personal flours.
+  await page.locator('ion-back-button:visible').click();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await page.getByRole('button', { name: '+ Ajouter une farine' }).click();
+  const picker = page.locator('select:visible').filter({ has: page.locator('optgroup') });
+  const personal = picker.locator('optgroup[label="Farines personnelles"] option');
+  await expect(personal).toHaveText(['Farine à pain']);
+  await picker.selectOption((await personal.getAttribute('value')) ?? '');
+  await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
+  await expect(page.getByLabel('Farine à pain, Part')).toHaveCount(2);
+
+  // The entry, with its source and basis, is in the data copied for review.
+  const advanced = page.getByLabel('Avancé').first();
+  while (!(await advanced.isVisible())) {
+    await page.locator('ion-back-button:visible').last().click();
+    await page.waitForTimeout(500);
+  }
+  await advanced.click();
+  await page.getByText('Copier toutes mes données').click();
+  await expect(page.getByRole('status')).toBeVisible();
+  const copied = JSON.parse(await page.evaluate(() => navigator.clipboard.readText())) as {
+    backup: { flours: { version: number; basedOn: unknown; properties: unknown }[] };
+  };
+  expect(copied.backup.flours).toEqual([
+    expect.objectContaining({
+      version: 1,
+      basedOn: { id: 'bread-flour', version: 1 },
+      properties: expect.objectContaining({
+        proteinPct: {
+          status: 'known',
+          value: 13.2,
+          unit: 'pct',
+          basis: 'asIs',
+          source: { kind: 'package' },
+        },
+        ashPct: { status: 'unknown' },
+      }),
+    }),
+  ]);
+});

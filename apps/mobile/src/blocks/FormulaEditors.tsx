@@ -1,8 +1,10 @@
 import { IonButton } from '@ionic/react';
 import { useId, useState } from 'react';
 import {
+  BUILT_IN_FLOURS,
   INGREDIENT_PRESETS,
   removeStep,
+  type FlourEntry,
   type Formula,
   type FormulaEdit,
   type Process,
@@ -10,6 +12,7 @@ import {
 } from '@flourprint/core/domain';
 import { parseDecimal } from '../i18n/numbers';
 import { useMessages } from '../i18n/use-messages';
+import { useFlourCatalog } from '../services/flours';
 import { formulaChanges } from '../services/formula-changes';
 import {
   newPreparation,
@@ -203,19 +206,9 @@ export const AddIngredient = ({
   );
 };
 
-/** Flours with a display name (formula ids); any other name can be typed. */
-export const KNOWN_FLOURS: readonly string[] = [
-  'bread-flour',
-  'flour',
-  'whole-wheat',
-  'spelt-flour',
-  'brown-flour',
-  'tipo-00-flour',
-  'cornmeal',
-];
-
 /**
- * Adds a flour to the blend at 0 %: the blend no longer adds up to 100 % until the shares are
+ * Adds a flour to the blend at 0 %, picked from the registry (personal entries not archived, then
+ * built-in ones; flours.md) or typed as a free name. The blend no longer adds up to 100 % until the shares are
  * set, which a draft allows and the recipe check reports (drafts.md).
  */
 export const AddFlour = ({
@@ -225,7 +218,8 @@ export const AddFlour = ({
   formula: Formula;
   onEdit: (edit: FormulaEdit) => boolean;
 }) => {
-  const { t, name } = useMessages();
+  const { t, flourName } = useMessages();
+  const catalog = useFlourCatalog();
   const id = useId();
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState('');
@@ -235,7 +229,9 @@ export const AddFlour = ({
     ...formula.ingredients.map((i) => i.id),
     ...formula.components.map((c) => c.id),
   ]);
-  const known = KNOWN_FLOURS.filter((f) => !taken.has(f));
+  const byName = (a: FlourEntry, b: FlourEntry) => flourName(a).localeCompare(flourName(b));
+  const personal = catalog.personal.filter((f) => !f.archived && !taken.has(f.id)).sort(byName);
+  const builtIn = BUILT_IN_FLOURS.filter((f) => !taken.has(f.id));
   if (!open) {
     return (
       <button
@@ -270,11 +266,22 @@ export const AddFlour = ({
         onChange={(event) => setChoice(event.target.value)}
       >
         <option value="">{t('formula.add.other')}</option>
-        {known.map((f) => (
-          <option key={f} value={f}>
-            {name(f)}
-          </option>
-        ))}
+        {personal.length > 0 && (
+          <optgroup label={t('flours.personal')}>
+            {personal.map((f) => (
+              <option key={f.id} value={f.id}>
+                {flourName(f)}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        <optgroup label={t('flours.builtIn')}>
+          {builtIn.map((f) => (
+            <option key={f.id} value={f.id}>
+              {flourName(f)}
+            </option>
+          ))}
+        </optgroup>
       </select>
       {choice === '' && (
         <input
