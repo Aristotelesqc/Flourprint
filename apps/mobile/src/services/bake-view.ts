@@ -1,4 +1,5 @@
 import {
+  foldSchedule,
   liveProjection,
   type BakeState,
   type Instant,
@@ -37,7 +38,7 @@ export interface BakeView {
 
 export interface LogEntry {
   readonly at: Instant;
-  readonly kind: 'started' | 'completed' | 'note' | 'doughReady';
+  readonly kind: 'started' | 'completed' | 'note' | 'doughReady' | 'fold';
   readonly stepId?: StepId;
   readonly text?: string;
   /** Stable code of what the baker went by, for a dough ready mark. */
@@ -46,6 +47,9 @@ export interface LogEntry {
   readonly stage?: 'shape' | 'bake';
   /** Overall rating of a review note, 0 to 5. */
   readonly rating?: number;
+  /** Fold mark: the set done and the step's set count. */
+  readonly set?: number;
+  readonly count?: number;
 }
 
 const time = (instant: Instant | undefined): number =>
@@ -105,7 +109,40 @@ export const bakeView = (state: BakeState, now: Instant): BakeView | undefined =
   };
 };
 
-/** Starts, completions, dough ready marks and notes, most recent first. */
+/** Fold sets of a running step (bake-session.md): which are recorded, and the next one due. */
+export interface FoldStatus {
+  readonly count: number;
+  /** Distinct sets recorded, in increasing order. */
+  readonly done: readonly number[];
+  /** The lowest set not recorded yet, with its due time from the recorded start. */
+  readonly next?: { readonly set: number; readonly at: Instant };
+}
+
+export const foldStatus = (state: BakeState, stepId: StepId): FoldStatus | undefined => {
+  const step = state.process?.steps.find((s) => s.id === stepId);
+  const folds = step?.technique?.folds;
+  const startedAt = state.steps[stepId]?.startedAt;
+  if (!step || !folds || startedAt === undefined) return undefined;
+  const done = [
+    ...new Set(
+      state.observations.flatMap((o) =>
+        o.payload.kind === 'fold' && o.payload.stepId === stepId && o.payload.set !== undefined
+          ? [o.payload.set]
+          : [],
+      ),
+    ),
+  ].sort((a, b) => a - b);
+  const due = foldSchedule(step, startedAt);
+  const index = due.findIndex((_, i) => !done.includes(i + 1));
+  const at = due[index];
+  return {
+    count: folds.count,
+    done,
+    ...(at === undefined ? {} : { next: { set: index + 1, at } }),
+  };
+};
+
+/** Starts, completions, dough ready marks, fold sets and notes, most recent first. */
 export const bakeLog = (state: BakeState): LogEntry[] => {
   const entries: LogEntry[] = [];
   for (const [stepId, record] of Object.entries(state.steps)) {
@@ -121,6 +158,17 @@ export const bakeLog = (state: BakeState): LogEntry[] => {
         ...(stepId === undefined ? {} : { stepId }),
         ...(stage === undefined ? {} : { stage }),
         ...(criterion === undefined ? {} : { criterion }),
+        ...(text ? { text } : {}),
+      });
+    } else if (observation.payload.kind === 'fold') {
+      const { stepId, set, text } = observation.payload;
+      const count = state.process?.steps.find((s) => s.id === stepId)?.technique?.folds?.count;
+      entries.push({
+        at: observation.occurredAt,
+        kind: 'fold',
+        ...(stepId === undefined ? {} : { stepId }),
+        ...(set === undefined ? {} : { set }),
+        ...(count === undefined ? {} : { count }),
         ...(text ? { text } : {}),
       });
     } else if (observation.payload.text || observation.payload.rating !== undefined) {
@@ -148,11 +196,17 @@ export const stepProgress = (startMs: number, endMs: number, nowMs: number): num
   return Math.min(1, Math.max(0, (nowMs - startMs) / span));
 };
 
-/** A moment the baker has to act: a running step ends, or a ready step's planned start. */
+/**
+ * A moment the baker has to act: a running step ends, a ready step's planned start, or a fold set
+ * of a running step falls due.
+ */
 export interface BakeAlert {
   readonly stepId: StepId;
-  readonly kind: 'end' | 'start';
+  readonly kind: 'end' | 'start' | 'fold';
   readonly at: Instant;
+  /** Fold alerts: the set due and the step's set count. */
+  readonly set?: number;
+  readonly count?: number;
 }
 
 /**
@@ -173,6 +227,17 @@ export const bakeAlerts = (state: BakeState, now: Instant): BakeAlert[] => {
         ? [{ stepId: v.step.id, kind: 'start' as const, at: v.projected.start }]
         : [],
     ),
+    // Each fold set not recorded yet, at its due time from the recorded start (bake-session.md).
+    ...running.flatMap((v) => {
+      const folds = v.step.technique?.folds;
+      if (!folds || v.startedAt === undefined) return [];
+      const done = foldStatus(state, v.step.id)?.done ?? [];
+      return foldSchedule(v.step, v.startedAt).flatMap((at, i) =>
+        done.includes(i + 1)
+          ? []
+          : [{ stepId: v.step.id, kind: 'fold' as const, at, set: i + 1, count: folds.count }],
+      );
+    }),
   ];
   return alerts.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 };

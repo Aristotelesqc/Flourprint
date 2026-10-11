@@ -85,6 +85,20 @@ export const checkRecipe = (formula: Formula, process: Process): RecipeIssue[] =
         details: { step: step.id },
       });
     }
+    // Recorded technique only: folds that outlast the step are likely a typo (process.md).
+    const folds = step.technique?.folds;
+    if (
+      folds !== undefined &&
+      step.plannedDurationS !== undefined &&
+      folds.count * folds.intervalS > step.plannedDurationS
+    ) {
+      issues.push({
+        severity: 'warning',
+        code: 'folds_exceed_step',
+        path: `steps.${step.id}.technique.folds`,
+        details: { step: step.id },
+      });
+    }
   }
   return issues;
 };

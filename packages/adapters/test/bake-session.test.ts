@@ -12,6 +12,7 @@ import {
   type BakeCommand,
   type BakeCommandPayload,
   type BakeEvent,
+  type BakeState,
   type Formula,
   type Instant,
   type Process,
@@ -132,12 +133,12 @@ class Session {
     return result.value;
   }
 
-  async start() {
+  async start(process: Process = process_) {
     return this.ok({
       type: 'StartBake',
       revisions: { formula: { id: 'f', version: 1 }, process: { id: 'p', version: 1 } },
       formula,
-      process: process_,
+      process,
       mode: { kind: 'startAt', at: `2026-10-06T20:00:00.000Z` as Instant },
     });
   }
@@ -408,6 +409,94 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     expect(reopened.value.observations.map((o) => [o.occurredAt, o.payload.text])).toEqual([
       [t('18:00'), 'open'],
     ]);
+  });
+
+  it('records fold sets on a running step with folds, in any order, without changing the plan', async () => {
+    const withFolds: Process = {
+      steps: process_.steps.map((s) =>
+        s.id === 'bulk' ? { ...s, technique: { folds: { count: 3, intervalS: 1800 } } } : s,
+      ),
+    };
+    const session = new Session();
+    await session.start(withFolds);
+    const fold = (stepId: string, set?: number) =>
+      session.run({
+        type: 'AddObservation',
+        stepId,
+        category: 'handling',
+        kind: 'fold',
+        ...(set === undefined ? {} : { set }),
+      });
+    // Not running yet.
+    expect(await fold('bulk', 1)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidCommand', details: { field: 'stepId', reason: 'step not running' } },
+    });
+    await session.at(t('08:00')).ok({ type: 'CompleteStep', stepId: 'poolish' });
+    await session.ok({ type: 'CompleteStep', stepId: 'tangzhong' });
+    await session.at(t('08:15')).ok({ type: 'StartStep', stepId: 'mix' });
+    // A running step without folds.
+    expect(await fold('mix', 1)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidCommand', details: { reason: 'step without folds' } },
+    });
+    await session.ok({ type: 'CompleteStep', stepId: 'mix' });
+    await session.ok({ type: 'StartStep', stepId: 'bulk' });
+    const before = (await loadBake(session.store, 'bake-1')) as { ok: true; value: BakeState };
+    for (const set of [0, 4, 1.5, undefined]) {
+      expect(await fold('bulk', set)).toMatchObject({
+        ok: false,
+        error: { code: 'InvalidCommand', details: { field: 'set' } },
+      });
+    }
+    expect(
+      await session.run({
+        type: 'AddObservation',
+        stepId: 'bulk',
+        category: 'fermentation',
+        kind: 'fold',
+        set: 1,
+      }),
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidCommand', details: { field: 'category' } },
+    });
+    expect(
+      await session.run({ type: 'AddObservation', stepId: 'bulk', category: 'handling', set: 1 }),
+    ).toMatchObject({ ok: false, error: { code: 'InvalidCommand', details: { field: 'set' } } });
+    // Late, early and repeated sets are recorded as they happened.
+    await session.at(t('09:00')).ok({
+      type: 'AddObservation',
+      stepId: 'bulk',
+      category: 'handling',
+      kind: 'fold',
+      set: 2,
+      text: 'late',
+    });
+    expect((await fold('bulk', 2)).ok).toBe(true);
+    expect((await fold('bulk', 1)).ok).toBe(true);
+    const loaded = await loadBake(session.store, 'bake-1');
+    if (!loaded.ok) throw new Error('unreadable');
+    expect(loaded.value.observations.map((o) => o.payload)).toEqual([
+      {
+        type: 'ObservationAdded',
+        stepId: 'bulk',
+        category: 'handling',
+        kind: 'fold',
+        set: 2,
+        text: 'late',
+      },
+      { type: 'ObservationAdded', stepId: 'bulk', category: 'handling', kind: 'fold', set: 2 },
+      { type: 'ObservationAdded', stepId: 'bulk', category: 'handling', kind: 'fold', set: 1 },
+    ]);
+    expect(loaded.value.process).toEqual(before.value.process);
+    expect(loaded.value.steps.bulk?.endedAt).toBeUndefined();
+    // Once the step has ended, no more sets.
+    await session.ok({ type: 'CompleteStep', stepId: 'bulk' });
+    expect(await fold('bulk', 3)).toMatchObject({ ok: false, error: { code: 'InvalidCommand' } });
+    // Once the bake has ended, a fold is refused like a dough ready mark.
+    await session.ok({ type: 'FinishBake' });
+    expect(await fold('bulk', 3)).toMatchObject({ ok: false, error: { code: 'BakeNotActive' } });
   });
 
   it('refuses events written by a newer schema', async () => {

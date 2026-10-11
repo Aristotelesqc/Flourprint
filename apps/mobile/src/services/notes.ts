@@ -11,7 +11,16 @@ export const NOTE_CATEGORIES: readonly ObservationCategory[] = [
 ];
 
 const FERMENTATION = new Set(['preferment', 'levain', 'bulk', 'retard', 'proof']);
-const HANDLING = new Set(['autolyse', 'mix', 'fold', 'divide', 'preshape', 'shape', 'laminate']);
+const HANDLING = new Set([
+  'autolyse',
+  'mix',
+  'fold',
+  'degas',
+  'divide',
+  'preshape',
+  'shape',
+  'laminate',
+]);
 
 /** A sensible first category for a note on this step; the baker can change it. */
 export const defaultCategory = (

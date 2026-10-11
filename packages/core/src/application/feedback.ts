@@ -49,6 +49,8 @@ export interface ObservationDigest {
   readonly kind?: ObservationKind;
   readonly stage?: 'shape' | 'bake';
   readonly criterion?: string;
+  /** fold observation: the set done, 1 … the step's fold count. */
+  readonly set?: number;
   readonly text?: string;
   readonly rating?: number;
   readonly measurement?: Observation;
@@ -99,7 +101,11 @@ export const FEEDBACK_ABOUT =
   'observations and notes with the step they were taken on and the time elapsed in that step, ' +
   'and adjustments made during the bake. Each bake says whether it was real or simulated ' +
   '(`origin`; "unknown" for bakes recorded before this was asked); a doughReady observation ' +
-  'says the stage the dough was ready for (`stage`: shape or bake). `flours` lists the flour ' +
+  'says the stage the dough was ready for (`stage`: shape or bake); a fold observation says ' +
+  "which set of folds was done (`set`, 1 … the count of the step technique's folds; a set may " +
+  'be early, late, repeated or missing). Step techniques (method, mixing phases, folds, end ' +
+  'check) are in the recipe revisions and bake snapshots of `backup`: recorded only, nothing ' +
+  'is predicted from them. `flours` lists the flour ' +
   'registry entries ({id, version}) the bake used; absent for bakes recorded before the registry ' +
   '(unknown). Built-in entries are code and carry no composition; personal entries, with every ' +
   'version, are in `backup.flours`. Their properties (protein, ash, falling number, alveograph, ' +
@@ -107,7 +113,8 @@ export const FEEDBACK_ABOUT =
   '`backup` is the authoritative record (recipes with ' +
   'every revision, raw bake events). Units: grams, degrees Celsius, seconds, baker percentages ' +
   'in points. `device` describes the exporting device only. Contracts: ' +
-  'docs/contracts/history.md (feedback export), bake-session.md, fermentation.md, flours.md.';
+  'docs/contracts/history.md (feedback export), bake-session.md, process.md, fermentation.md, ' +
+  'flours.md.';
 
 const seconds = (from: Instant | undefined, to: Instant | undefined): number | undefined =>
   from === undefined || to === undefined

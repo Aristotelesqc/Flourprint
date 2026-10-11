@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { MemoryBakeEventStore } from '@flourprint/adapters/memory';
 import { executeBakeCommand } from '@flourprint/core/application';
-import type { BakeCommandPayload, BakeState, Instant } from '@flourprint/core/domain';
-import { bakeAlerts, bakeLog, bakeView, stepProgress } from '../src/services/bake-view';
+import type { BakeCommandPayload, BakeState, Instant, Process } from '@flourprint/core/domain';
+import { bakeAlerts, bakeLog, bakeView, foldStatus, stepProgress } from '../src/services/bake-view';
 import { defaultCategory, noteSteps } from '../src/services/notes';
 import { reminderId, remindersFor } from '../src/services/notifications';
 import { sampleRecipe } from '../src/services/seed';
@@ -10,7 +10,10 @@ import { sampleRecipe } from '../src/services/seed';
 const at = (time: string) => `2026-10-07T${time}:00.000Z` as Instant;
 
 /** Runs commands at the given times on a fresh bake of the sample recipe (#17). */
-const bake = async (commands: [string, BakeCommandPayload][]): Promise<BakeState> => {
+const bake = async (
+  commands: [string, BakeCommandPayload][],
+  process: Process = sampleRecipe.process,
+): Promise<BakeState> => {
   const store = new MemoryBakeEventStore();
   let n = 0;
   let state: BakeState | undefined;
@@ -22,7 +25,7 @@ const bake = async (commands: [string, BakeCommandPayload][]): Promise<BakeState
         type: 'StartBake',
         revisions: { formula: ref, process: ref },
         formula: sampleRecipe.formula,
-        process: sampleRecipe.process,
+        process,
         mode: { kind: 'startAt', at: at('19:00') },
       },
     ],
@@ -212,5 +215,67 @@ describe('reminders', () => {
       expect(Number.isInteger(id)).toBe(true);
     }
     expect(reminderId('b:end:poolish')).not.toBe(reminderId('b:start:poolish'));
+  });
+});
+
+describe('fold sets (bake-session.md)', () => {
+  const withFolds: Process = {
+    steps: sampleRecipe.process.steps.map((s) =>
+      s.id === 'bulk' ? { ...s, technique: { folds: { count: 3, intervalS: 20 * 60 } } } : s,
+    ),
+  };
+  const toBulk: [string, BakeCommandPayload][] = [
+    ['19:01', { type: 'CompleteStep', stepId: 'tangzhong' }],
+    ['19:02', { type: 'CompleteStep', stepId: 'poolish' }],
+    ['19:03', { type: 'CompleteStep', stepId: 'mix' }],
+    ['19:10', { type: 'StartStep', stepId: 'bulk' }],
+  ];
+  const fold = (set: number): BakeCommandPayload => ({
+    type: 'AddObservation',
+    stepId: 'bulk',
+    category: 'handling',
+    kind: 'fold',
+    set,
+  });
+
+  it('gives the next set due from the recorded start', async () => {
+    const state = await bake([...toBulk, ['19:31', fold(1)]], withFolds);
+    expect(foldStatus(state, 'bulk')).toEqual({
+      count: 3,
+      done: [1],
+      next: { set: 2, at: at('19:50') },
+    });
+    expect(foldStatus(state, 'mix')).toBeUndefined();
+    const all = await bake(
+      [...toBulk, ['19:31', fold(1)], ['19:40', fold(3)], ['19:41', fold(2)]],
+      withFolds,
+    );
+    expect(foldStatus(all, 'bulk')).toEqual({ count: 3, done: [1, 2, 3] });
+  });
+
+  it('reminds each set not recorded yet, and logs the recorded ones', async () => {
+    const state = await bake([...toBulk, ['19:31', fold(1)]], withFolds);
+    const folds = bakeAlerts(state, at('19:35')).filter((a) => a.kind === 'fold');
+    expect(folds).toEqual([
+      { stepId: 'bulk', kind: 'fold', at: at('19:50'), set: 2, count: 3 },
+      { stepId: 'bulk', kind: 'fold', at: at('20:10'), set: 3, count: 3 },
+    ]);
+    expect(bakeLog(state)[0]).toEqual({
+      at: at('19:31'),
+      kind: 'fold',
+      stepId: 'bulk',
+      set: 1,
+      count: 3,
+    });
+    const texts = {
+      title: (alert: { kind: string; set?: number }, step: string) =>
+        `${alert.kind}${alert.set ?? ''} ${step}`,
+      body: (_alert: unknown, step: string) => step,
+    };
+    const reminders = remindersFor([{ state }], at('19:35'), (_s, id) => id, texts);
+    expect(reminders.filter((r) => r.title.startsWith('fold')).map((r) => r.id)).toEqual([
+      reminderId('b:fold2:bulk'),
+      reminderId('b:fold3:bulk'),
+    ]);
   });
 });

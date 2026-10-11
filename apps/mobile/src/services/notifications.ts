@@ -60,7 +60,9 @@ export const remindersFor = (
       .map((alert) => {
         const step = stepName(state, alert.stepId);
         return {
-          id: reminderId(`${state.bakeId}:${alert.kind}:${alert.stepId}`),
+          id: reminderId(
+            `${state.bakeId}:${alert.kind}${alert.set === undefined ? '' : alert.set}:${alert.stepId}`,
+          ),
           at: alert.at,
           title: texts.title(alert, step),
           body: texts.body(alert, step, recipe ?? ''),

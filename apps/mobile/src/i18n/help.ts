@@ -140,7 +140,7 @@ export const helpEn = {
   'help.check.body1':
     'The check looks at the whole recipe. “To fix” points block saving and baking: flours that do not add up to 100 %, a preparation larger than the dough, no step…',
   'help.check.body2':
-    '“To check” points are warnings and never block: no salt or unusual salt (outside 1 to 3.5 %), total water outside 45 to 90 %, no yeast and no preferment, no mix or bake step, a step without duration.',
+    '“To check” points are warnings and never block: no salt or unusual salt (outside 1 to 3.5 %), total water outside 45 to 90 %, no yeast and no preferment, no mix or bake step, a step without duration, folds that last longer than their step.',
   'help.check.body3':
     'The ranges are wide on purpose: they flag likely typos, not style choices. The check runs when you ask for it and before saving.',
 
@@ -149,6 +149,15 @@ export const helpEn = {
     'Every edit is kept on the phone as a draft while you type: you can close the app and come back. It is not a version yet.',
   'help.draft.body2':
     'Saving checks the recipe, then creates the next version; earlier versions stay unchanged and a bake keeps the version it started from. Discarding throws the draft away. A bake starts only from a saved version.',
+  'help.technique.title': 'Step technique',
+  'help.technique.body1':
+    'A step can record how it is done: the method (by hand, spiral mixer…), the mixing phases, sets of folds and what tells that the step is over. It is a record: nothing is predicted from it yet, neither a duration, nor an end, nor the state of the dough.',
+  'help.technique.body2':
+    'Mixing phases add up to the step: changing them writes their sum as the planned duration. The duration stays editable; it is then no longer the sum.',
+  'help.technique.body3':
+    'Fold sets are due from the real start of the step: set 1 one interval after it starts, set 2 two intervals after, and so on. Bake mode shows the next set and a reminder calls for each set not yet done. A set can be recorded early, late or twice; the plan does not change.',
+  'help.technique.more':
+    'Folds do not split the step: the fermentation estimate still sees one step. Sets × interval longer than the step is flagged by the recipe check.',
   'help.flours.title': 'Flours and their properties',
   'help.flours.body1':
     'Each bake records which flours it used and the version of their entry, with what is known about them: protein, ash, falling number, alveograph W and P/L, malt added. No calculation uses these properties yet; they are kept to calibrate the models later.',
@@ -297,7 +306,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.check.body1':
     'La vérification regarde toute la recette. Les points « À corriger » bloquent l’enregistrement et le démarrage : des farines qui ne font pas 100 %, une préparation plus grosse que la pâte, aucune étape…',
   'help.check.body2':
-    'Les points « À vérifier » sont des avertissements qui ne bloquent jamais : pas de sel ou un sel inhabituel (hors de 1 à 3,5 %), une eau totale hors de 45 à 90 %, ni levure ni préferment, pas d’étape de pétrissage ou de cuisson, une étape sans durée.',
+    'Les points « À vérifier » sont des avertissements qui ne bloquent jamais : pas de sel ou un sel inhabituel (hors de 1 à 3,5 %), une eau totale hors de 45 à 90 %, ni levure ni préferment, pas d’étape de pétrissage ou de cuisson, une étape sans durée, des rabats plus longs que leur étape.',
   'help.check.body3':
     'Les fourchettes sont larges exprès : elles signalent les fautes de frappe probables, pas des choix de style. La vérification se lance à la demande et avant d’enregistrer.',
 
@@ -306,6 +315,15 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
     'Chaque modification est gardée sur le téléphone comme brouillon pendant la saisie : il est possible de fermer l’app et de revenir. Ce n’est pas encore une version.',
   'help.draft.body2':
     'Enregistrer vérifie la recette puis crée la version suivante ; les versions précédentes restent intactes et une fournée garde la version dont elle est partie. Abandonner jette le brouillon. Une fournée ne démarre que d’une version enregistrée.',
+  'help.technique.title': 'Technique de l’étape',
+  'help.technique.body1':
+    'Une étape peut noter comment elle se fait : la méthode (à la main, pétrin à spirale…), les phases de pétrissage, les séries de rabats et ce qui indique la fin de l’étape. C’est un enregistrement : rien n’en est encore prédit, ni une durée, ni une fin, ni l’état de la pâte.',
+  'help.technique.body2':
+    'Les phases de pétrissage forment l’étape : les modifier écrit leur somme comme durée prévue. La durée reste modifiable ; elle n’est alors plus la somme.',
+  'help.technique.body3':
+    'Les séries de rabats sont dues à partir du début réel de l’étape : la série 1 un intervalle après le début, la série 2 deux intervalles après, et ainsi de suite. Le mode fournée affiche la prochaine série, et un rappel est envoyé pour chaque série pas encore faite. Une série peut être notée en avance, en retard ou deux fois ; le plan ne change pas.',
+  'help.technique.more':
+    'Les rabats ne découpent pas l’étape : l’estimation de fermentation voit toujours une seule étape. Un nombre de séries × intervalle plus long que l’étape est signalé par la vérification.',
   'help.flours.title': 'Farines et leurs propriétés',
   'help.flours.body1':
     'Chaque fournée enregistre les farines utilisées et la version de leur fiche, avec ce qui en est connu : protéines, cendres, indice de chute, W et P/L de l’alvéographe, malt ajouté. Aucun calcul n’utilise encore ces propriétés ; elles sont gardées pour calibrer les modèles plus tard.',

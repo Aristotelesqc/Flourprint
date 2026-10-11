@@ -45,9 +45,10 @@ export type ObservationCategory =
 
 /**
  * Stable kind of an observation (bake-session.md). `doughReady`: the baker judges the dough ready
- * to bake; calibration data for the end point of the fermentation model.
+ * for its next stage; calibration data for the end point of the fermentation model. `fold`: one
+ * set of folds done on a running step whose technique has folds.
  */
-export type ObservationKind = 'doughReady';
+export type ObservationKind = 'doughReady' | 'fold';
 
 export type StepAdjustment =
   | { readonly field: 'plannedDurationS'; readonly value: number }
@@ -95,6 +96,8 @@ export type BakeCommandPayload =
       readonly kind?: ObservationKind;
       /** Stable code of what the baker went by (`poke`, `feel`, `time`, `other`). */
       readonly criterion?: string;
+      /** fold only: the set done, 1 … `folds.count`. */
+      readonly set?: number;
       readonly text?: string;
       readonly rating?: number;
       readonly measurement?: Observation;
@@ -163,6 +166,8 @@ export type BakeEventPayload =
       /** doughReady only: the stage the dough is ready for, set by the domain. */
       readonly stage?: 'shape' | 'bake';
       readonly criterion?: string;
+      /** fold only: the set done, 1 … `folds.count`. */
+      readonly set?: number;
       readonly text?: string;
       readonly rating?: number;
       readonly measurement?: Observation;

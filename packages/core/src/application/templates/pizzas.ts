@@ -8,14 +8,16 @@ const fridge = { conditions: { temperatureC: 4 } } as const;
 
 export const focaccia: RecipeTemplate = {
   id: 'focaccia',
-  version: '2',
+  version: '3',
   category: 'flatbread',
   basis:
     'Typical proportions of a high-hydration pan focaccia from common home-baking formulas ' +
     '(not the Genoese fugassa, which sits near 65 % water and 6 % oil): about 78 % water, 3 % ' +
     'olive oil in the dough, 2 % salt, baked in an oiled pan. A starting point, not a tested ' +
     'recipe.' +
-    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).' +
+    ' Version 3 records the usual sets of stretch and folds during the bulk (process.md, Techniques): ' +
+    'recorded only, nothing is predicted from them.',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
     ingredients: [
@@ -30,7 +32,9 @@ export const focaccia: RecipeTemplate = {
   process: {
     steps: [
       step('mix', 'mix', [], 10 * MIN, room),
-      step('bulk', 'bulk', ['mix'], 2 * H),
+      step('bulk', 'bulk', ['mix'], 2 * H, {
+        technique: { folds: { count: 3, intervalS: 30 * MIN, style: 'stretchAndFold' } },
+      }),
       step('shape', 'shape', ['bulk'], 15 * MIN),
       step('proof', 'proof', ['shape'], 1.5 * H),
       alapStep('preheat', 'preheat', 45 * MIN),

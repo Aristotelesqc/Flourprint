@@ -7,7 +7,7 @@ import {
 } from '../graph.js';
 import { isReservedId } from '../ids.js';
 import { err, ok, type Result } from '../result.js';
-import type { Process } from './types.js';
+import type { Process, ProcessStep } from './types.js';
 
 export type ProcessError =
   | GraphError
@@ -18,6 +18,34 @@ export type ProcessError =
 
 const invalid = (path: string, reason: string): ProcessError =>
   domainError('InvalidProcess', `${path}: ${reason}`, { path, reason });
+
+const SPEEDS: readonly string[] = ['low', 'medium', 'high'];
+
+/** Techniques (process.md): recorded data, checked only for values that cannot be meant. */
+const validateTechnique = (
+  technique: ProcessStep['technique'],
+  path: string,
+): ProcessError | undefined => {
+  if (technique === undefined) return undefined;
+  for (const [i, phase] of (technique.phases ?? []).entries()) {
+    if (!SPEEDS.includes(phase.speed)) {
+      return invalid(`${path}.phases[${i}].speed`, 'must be low, medium or high');
+    }
+    if (!(Number.isFinite(phase.durationS) && phase.durationS > 0)) {
+      return invalid(`${path}.phases[${i}].durationS`, 'must be > 0');
+    }
+  }
+  const folds = technique.folds;
+  if (folds !== undefined) {
+    if (!(Number.isInteger(folds.count) && folds.count >= 1)) {
+      return invalid(`${path}.folds.count`, 'must be an integer ≥ 1');
+    }
+    if (!(Number.isFinite(folds.intervalS) && folds.intervalS > 0)) {
+      return invalid(`${path}.folds.intervalS`, 'must be > 0');
+    }
+  }
+  return undefined;
+};
 
 /** Graph and timing rules of docs/contracts/process.md. */
 export const validateProcess = (process: Process): Result<void, ProcessError> => {
@@ -69,6 +97,8 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
         return err(invalid(`${path}.incorporations[${i}].sharePct`, 'must be ≥ 0'));
       }
     }
+    const technique = validateTechnique(step.technique, `${path}.technique`);
+    if (technique !== undefined) return err(technique);
   }
   return ok(undefined);
 };

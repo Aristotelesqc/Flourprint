@@ -1,6 +1,7 @@
 import { IonButton } from '@ionic/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import {
+  insertStepAfter,
   projectProcess,
   type Instant,
   type Process,
@@ -15,11 +16,17 @@ import { DurationField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
+import { newStepId, STEP_OPERATIONS } from '../services/process-edit';
+import { StepSheet, techniqueSummary } from './StepSheet';
 
 interface Props {
   readonly process: Process;
   /** Undefined clears the duration (unknown); returns false when the change was refused. */
   readonly onDurationChange: (stepId: string, durationS: number | undefined) => boolean;
+  /** Structure and technique edits (add, remove, technique); false when refused. */
+  readonly onProcessChange: (process: Process) => boolean;
+  /** Ids of the formula's preparations: their steps are removed through the preparation. */
+  readonly preparationIds: readonly string[];
   /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
   readonly canStart: boolean;
   /** Starts the bake from the moment of the tap, whatever time the planner shows. */
@@ -56,6 +63,8 @@ interface Planned {
 export const ProcessSection = ({
   process,
   onDurationChange,
+  onProcessChange,
+  preparationIds,
   canStart,
   onStart,
   activeBakeId,
@@ -76,6 +85,8 @@ export const ProcessSection = ({
     return () => clearInterval(timer);
   }, [followsClock, services]);
   const [targetId, setTargetId] = useState(() => defaultTarget(process)?.id);
+  // The step whose technique sheet is open.
+  const [editing, setEditing] = useState<string>();
   const target = process.steps.find((s) => s.id === targetId) ?? defaultTarget(process);
 
   const mode: ProjectionMode = useMemo(() => {
@@ -221,7 +232,19 @@ export const ProcessSection = ({
                 >
                   <span className="font-bold">{p?.start ? formatTime(p.start, locale) : '—'}</span>
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <span className="font-semibold">{stepName(step)}</span>
+                    <button
+                      type="button"
+                      className="fp-reset min-h-8 text-left font-semibold text-accent-text"
+                      aria-label={t('process.editStep', { step: stepName(step) })}
+                      onClick={() => setEditing(step.id)}
+                    >
+                      {stepName(step)}
+                    </button>
+                    {step.technique && (
+                      <span className="text-[13px] text-ink">
+                        {techniqueSummary(t, step.technique)}
+                      </span>
+                    )}
                     {(hints.length > 0 || step.schedule === 'alap') && (
                       <span className="text-[13px] text-muted">
                         {step.schedule === 'alap' && (
@@ -248,6 +271,29 @@ export const ProcessSection = ({
         </section>
       ))}
 
+      <Rows>
+        <AddStep
+          process={process}
+          onAdd={(after, operation) =>
+            onProcessChange(
+              insertStepAfter(process, after, {
+                id: newStepId(process, operation, preparationIds),
+                operation,
+                schedule: 'asap',
+              }),
+            )
+          }
+        />
+      </Rows>
+      <StepSheet
+        open={editing !== undefined}
+        step={process.steps.find((s) => s.id === editing)}
+        process={process}
+        preparation={editing !== undefined && preparationIds.includes(editing)}
+        onChange={onProcessChange}
+        onClose={() => setEditing(undefined)}
+      />
+
       {!canStart && <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>}
       {canStart && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
@@ -271,6 +317,84 @@ export const ProcessSection = ({
           {t('process.start')}
         </IonButton>
       )}
+    </div>
+  );
+};
+
+/** Inserts a step after a chosen one (the last by default), with no duration yet. */
+const AddStep = ({
+  process,
+  onAdd,
+}: {
+  process: Process;
+  onAdd: (after: string, operation: string) => boolean;
+}) => {
+  const { t, stepName } = useMessages();
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [after, setAfter] = useState<string>();
+  const [operation, setOperation] = useState<string>(STEP_OPERATIONS[0]);
+  const anchor = process.steps.find((s) => s.id === after) ?? process.steps.at(-1);
+  if (!open || !anchor) {
+    return (
+      <button
+        type="button"
+        className="fp-reset min-h-12 w-full px-4 text-left font-semibold text-accent-text disabled:text-muted"
+        disabled={process.steps.length === 0}
+        onClick={() => setOpen(true)}
+      >
+        {t('process.addStep')}
+      </button>
+    );
+  }
+  const selectClass =
+    'fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2 text-ink';
+  return (
+    <div className="flex flex-col gap-2 px-4 py-3">
+      <span className="text-sm font-semibold">{t('process.addStep')}</span>
+      <label htmlFor={`${id}-after`} className="text-sm">
+        {t('process.addStep.after')}
+      </label>
+      <select
+        id={`${id}-after`}
+        className={selectClass}
+        value={anchor.id}
+        onChange={(event) => setAfter(event.target.value)}
+      >
+        {process.steps.map((s) => (
+          <option key={s.id} value={s.id}>
+            {stepName(s)}
+          </option>
+        ))}
+      </select>
+      <label htmlFor={`${id}-operation`} className="text-sm">
+        {t('process.addStep.operation')}
+      </label>
+      <select
+        id={`${id}-operation`}
+        className={selectClass}
+        value={operation}
+        onChange={(event) => setOperation(event.target.value)}
+      >
+        {STEP_OPERATIONS.map((code) => (
+          <option key={code} value={code}>
+            {stepName({ operation: code })}
+          </option>
+        ))}
+      </select>
+      <span className="text-sm text-muted">{t('process.addStep.hint')}</span>
+      <span className="flex gap-2">
+        <IonButton
+          onClick={() => {
+            if (onAdd(anchor.id, operation)) setOpen(false);
+          }}
+        >
+          {t('process.addStep.confirm')}
+        </IonButton>
+        <IonButton fill="outline" onClick={() => setOpen(false)}>
+          {t('process.addStep.cancel')}
+        </IonButton>
+      </span>
     </div>
   );
 };

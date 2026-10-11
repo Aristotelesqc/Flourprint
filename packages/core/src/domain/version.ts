@@ -1,5 +1,5 @@
 /** Version of the data contracts described in docs/contracts/. */
-export const CONTRACT_VERSION = '0.8.0';
+export const CONTRACT_VERSION = '0.9.0';
 
 /** Version of the calculation engine recorded in bake snapshots (D8). */
 export const ENGINE_VERSION = '0.5.0';

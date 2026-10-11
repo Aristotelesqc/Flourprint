@@ -47,13 +47,15 @@ export const baguette: RecipeTemplate = {
 
 export const bouleDutchOven: RecipeTemplate = {
   id: 'boule-dutch-oven',
-  version: '2',
+  version: '3',
   category: 'bread',
   basis:
     'Typical proportions of a lean country-style loaf with commercial yeast, from common bakery and ' +
     'home-baking formulas: bread flour with 10 % whole wheat, 75 % water, 2 % salt, 0.4 % instant ' +
     'yeast with a 5 h bulk, baked in a preheated Dutch oven. A starting point, not a tested recipe.' +
-    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).' +
+    ' Version 3 records the usual sets of stretch and folds during the bulk (process.md, Techniques): ' +
+    'recorded only, nothing is predicted from them.',
   formula: {
     flours: [
       { id: 'bread-flour', sharePct: 90 },
@@ -66,7 +68,9 @@ export const bouleDutchOven: RecipeTemplate = {
   process: {
     steps: [
       step('mix', 'mix', [], 15 * MIN, room),
-      step('bulk', 'bulk', ['mix'], 5 * H),
+      step('bulk', 'bulk', ['mix'], 5 * H, {
+        technique: { folds: { count: 4, intervalS: 30 * MIN, style: 'stretchAndFold' } },
+      }),
       step('preshape', 'preshape', ['bulk'], 25 * MIN),
       step('shape', 'shape', ['preshape'], 10 * MIN),
       step('proof', 'proof', ['shape'], H),
@@ -79,13 +83,15 @@ export const bouleDutchOven: RecipeTemplate = {
 
 export const ciabatta: RecipeTemplate = {
   id: 'ciabatta',
-  version: '2',
+  version: '3',
   category: 'bread',
   basis:
     'Typical proportions of a ciabatta with biga from common bakery formulas (e.g. Hamelman, ' +
     'Bread): 30 % of the flour in a stiff biga, about 77 % water overall, 2 % salt, little yeast. ' +
     'A starting point, not a tested recipe.' +
-    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).',
+    ' Version 2 follows docs/science/data/style-guides.md (ranges read through search excerpts, unverified).' +
+    ' Version 3 records the usual sets of stretch and folds during the bulk (process.md, Techniques): ' +
+    'recorded only, nothing is predicted from them.',
   formula: {
     flours: [{ id: 'bread-flour', sharePct: 100 }],
     ingredients: [preset('water', 77), preset('salt', 2), preset('instant-yeast', 0.4)],
@@ -105,7 +111,9 @@ export const ciabatta: RecipeTemplate = {
     steps: [
       step('biga', 'preferment', [], 14 * H, { conditions: { temperatureC: 18 } }),
       step('mix', 'mix', ['biga'], 15 * MIN, room),
-      step('bulk', 'bulk', ['mix'], 2.5 * H),
+      step('bulk', 'bulk', ['mix'], 2.5 * H, {
+        technique: { folds: { count: 3, intervalS: 30 * MIN, style: 'stretchAndFold' } },
+      }),
       step('divide', 'divide', ['bulk'], 10 * MIN),
       step('proof', 'proof', ['divide'], 45 * MIN),
       alapStep('preheat', 'preheat', 45 * MIN),

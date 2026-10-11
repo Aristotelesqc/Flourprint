@@ -20,12 +20,14 @@ import {
   type Instant,
 } from '@flourprint/core/domain';
 import { NoteSheet } from '../blocks/NoteSheet';
+import { techniqueSummary } from '../blocks/StepSheet';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatTime, parseDuration, editableDuration } from '../i18n/time';
 import {
   bakeLog,
   bakeView,
+  foldStatus,
   stepProgress,
   type BakeStepView,
   type LogEntry,
@@ -218,6 +220,44 @@ export const BakePage = () => {
       ],
     });
 
+  /** Records one set of folds; the plan never changes (bake-session.md). */
+  const recordFold = (stepId: string, set: number) =>
+    void send({ type: 'AddObservation', stepId, category: 'handling', kind: 'fold', set });
+
+  /** The next set not recorded yet; once all are, the baker picks which one was done again. */
+  const foldDone = (stepId: string) => {
+    const status = foldStatus(state, stepId);
+    if (!status) return;
+    if (status.next) {
+      recordFold(stepId, status.next.set);
+      return;
+    }
+    void presentAlert({
+      header: t('bake.fold.pick'),
+      inputs: Array.from({ length: status.count }, (_, i) => ({
+        type: 'radio' as const,
+        label: t('bake.fold.set', { set: i + 1 }),
+        value: i + 1,
+      })),
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        {
+          text: t('bake.save'),
+          handler: (set: number | undefined) => {
+            if (set === undefined) return false;
+            recordFold(stepId, set);
+            return true;
+          },
+        },
+      ],
+    });
+  };
+
+  // Running steps with folds: the focus first, then the parallel ones.
+  const foldSteps = [...(focus?.running ? [focus] : []), ...(view?.alsoRunning ?? [])].filter(
+    (v) => v.step.technique?.folds !== undefined,
+  );
+
   const abandon = () =>
     void presentAlert({
       header: t('bake.abandon'),
@@ -335,6 +375,42 @@ export const BakePage = () => {
             </>
           )}
 
+          {foldSteps.map((v) => {
+            const status = foldStatus(state, v.step.id);
+            if (!status) return null;
+            const next = status.next;
+            const seconds = next ? (Date.parse(next.at) - Date.parse(now)) / 1000 : 0;
+            return (
+              <section
+                key={`fold-${v.step.id}`}
+                aria-label={t('bake.fold.title', { step: stepName(v.step) })}
+                className="flex items-center gap-3 rounded-xl border border-line bg-surface p-3"
+              >
+                <span className="flex flex-1 flex-col">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-muted">
+                    {t('bake.fold.title', { step: stepName(v.step) })}
+                    <InfoButton topic="technique" term={t('technique.title')} />
+                  </span>
+                  <span className={`font-bold ${next && seconds < 0 ? 'text-alert' : ''}`}>
+                    {next
+                      ? t(seconds >= 0 ? 'bake.fold.next' : 'bake.fold.overdue', {
+                          set: next.set,
+                          count: status.count,
+                          time: formatDuration(seconds),
+                        })
+                      : t('bake.fold.allDone', { count: status.count })}
+                  </span>
+                </span>
+                <IonButton
+                  disabled={commands.busy || pending !== undefined}
+                  onClick={() => foldDone(v.step.id)}
+                >
+                  {t('bake.fold.done')}
+                </IonButton>
+              </section>
+            );
+          })}
+
           {view && view.due.length > 0 && (
             <StepList title={t('bake.dueNow')}>
               {view.due.map((v) => (
@@ -437,7 +513,7 @@ export const BakePage = () => {
             <StepList title={t('bake.log')}>
               {log.slice(0, state.status === 'active' ? 3 : undefined).map((entry) => (
                 <p
-                  key={`${entry.kind}-${entry.at}-${entry.stepId ?? ''}`}
+                  key={`${entry.kind}-${entry.at}-${entry.stepId ?? ''}-${entry.set ?? ''}`}
                   className="m-0 py-2 text-sm text-muted"
                 >
                   {entry.kind === 'note'
@@ -451,25 +527,32 @@ export const BakePage = () => {
                           step: nameOf(entry.stepId),
                           text: noteText(entry),
                         })
-                    : entry.kind === 'doughReady'
-                      ? t('bake.log.ready', {
+                    : entry.kind === 'fold'
+                      ? t('bake.log.fold', {
                           time: formatTime(entry.at, locale),
-                          label:
-                            entry.stage === undefined
-                              ? t('bake.doughReady')
-                              : readyLabel(entry.stage),
-                          details: [
-                            nameOf(entry.stepId),
-                            ...(entry.criterion === undefined
-                              ? []
-                              : [criterionLabel(entry.criterion)]),
-                          ].join(', '),
-                          text: entry.text ?? '',
-                        })
-                      : t(entry.kind === 'started' ? 'bake.log.started' : 'bake.log.completed', {
-                          time: formatTime(entry.at, locale),
+                          set: entry.set ?? '?',
+                          count: entry.count ?? '?',
                           step: nameOf(entry.stepId),
-                        })}
+                        })
+                      : entry.kind === 'doughReady'
+                        ? t('bake.log.ready', {
+                            time: formatTime(entry.at, locale),
+                            label:
+                              entry.stage === undefined
+                                ? t('bake.doughReady')
+                                : readyLabel(entry.stage),
+                            details: [
+                              nameOf(entry.stepId),
+                              ...(entry.criterion === undefined
+                                ? []
+                                : [criterionLabel(entry.criterion)]),
+                            ].join(', '),
+                            text: entry.text ?? '',
+                          })
+                        : t(entry.kind === 'started' ? 'bake.log.started' : 'bake.log.completed', {
+                            time: formatTime(entry.at, locale),
+                            step: nameOf(entry.stepId),
+                          })}
                 </p>
               ))}
             </StepList>
@@ -548,6 +631,9 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
         <InfoButton topic="bakeFocus" term={t(focus.running ? 'bake.now' : 'bake.upNext')} />
       </span>
       <h1 className="m-0 text-[40px] leading-tight font-bold">{stepName(focus.step)}</h1>
+      {focus.step.technique && (
+        <span className="text-[15px] text-muted">{techniqueSummary(t, focus.step.technique)}</span>
+      )}
       <div className="flex items-baseline gap-2.5">
         <span className="text-[52px] leading-none font-bold">{big}</span>
         <span className="text-lg text-muted">{unit}</span>

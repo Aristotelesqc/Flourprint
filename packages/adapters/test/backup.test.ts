@@ -53,13 +53,28 @@ const formula: Formula = {
 };
 const process: Process = {
   steps: [
-    { id: 'mix', operation: 'mix', dependsOn: [], schedule: 'asap', plannedDurationS: 600 },
+    {
+      id: 'mix',
+      operation: 'mix',
+      dependsOn: [],
+      schedule: 'asap',
+      plannedDurationS: 600,
+      technique: {
+        method: 'spiral',
+        phases: [
+          { speed: 'low', durationS: 240 },
+          { speed: 'medium', durationS: 360 },
+        ],
+        endCheck: 'windowpane',
+      },
+    },
     {
       id: 'bulk',
       operation: 'bulk',
       dependsOn: ['mix'],
       schedule: 'asap',
       plannedDurationS: 10800,
+      technique: { folds: { count: 3, intervalS: 1800, style: 'coilFold' } },
     },
   ],
 };
@@ -208,6 +223,11 @@ const seed = async (stores: BackupStores) => {
     at('08:05'),
   );
   await run({ type: 'CompleteStep', stepId: 'mix' }, at('08:10'));
+  await run({ type: 'StartStep', stepId: 'bulk' }, at('08:10'));
+  await run(
+    { type: 'AddObservation', stepId: 'bulk', category: 'handling', kind: 'fold', set: 1 },
+    at('08:42'),
+  );
   await run({ type: 'FinishBake' }, at('11:00'));
   await run({ type: 'AddObservation', category: 'crumb', text: 'tight' }, at('11:30'));
 };
@@ -402,6 +422,36 @@ describe.each([
       },
       'InvalidBackup',
     ],
+    [
+      'a mixing phase at an unknown speed',
+      (b) => (b.recipes[0].revisions[0].process.steps[0].technique.phases[0].speed = 'turbo'),
+      'InvalidBackup',
+    ],
+    [
+      'a fold count that is not an integer',
+      (b) => (b.recipes[0].revisions[0].process.steps[1].technique.folds.count = 2.5),
+      'InvalidBackup',
+    ],
+    [
+      'a fold set beyond the step count',
+      (b) => {
+        const fold = b.bakes[0].events.find(
+          (e: Loose) => e.payload.type === 'ObservationAdded' && e.payload.kind === 'fold',
+        );
+        fold.payload.set = 4;
+      },
+      'InvalidBackup',
+    ],
+    [
+      'a set on an ordinary note',
+      (b) => {
+        const note = b.bakes[0].events.find(
+          (e: Loose) => e.payload.type === 'ObservationAdded' && e.payload.text === 'sticky',
+        );
+        note.payload.set = 1;
+      },
+      'InvalidBackup',
+    ],
     ['a reserved recipe id', (b) => (b.recipes[0].id = '__proto__'), 'InvalidBackup'],
     ['a gap in flour versions', (b) => b.flours.shift(), 'InvalidBackup'],
     [
@@ -555,6 +605,15 @@ describe('feedback export (history.md)', () => {
         elapsedInStepS: 300,
         category: 'handling',
         text: 'sticky',
+      },
+      {
+        at: at('08:42'),
+        recordedAt: at('08:42'),
+        stepId: 'bulk',
+        elapsedInStepS: 1920,
+        category: 'handling',
+        kind: 'fold',
+        set: 1,
       },
       { at: at('11:30'), recordedAt: at('11:30'), category: 'crumb', text: 'tight' },
     ]);

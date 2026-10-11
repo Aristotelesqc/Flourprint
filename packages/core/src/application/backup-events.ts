@@ -190,6 +190,18 @@ const isSnapshot = (value: unknown): boolean =>
   Array.isArray(value.manifest.models) &&
   value.manifest.models.every(isModelRef);
 
+/** A fold set within 1 … count of the step's folds (bake-session.md). */
+const isFoldSet = (state: BakeState, stepId: unknown, set: unknown): boolean => {
+  const folds = state.process?.steps.find((s) => s.id === stepId)?.technique?.folds;
+  return (
+    folds !== undefined &&
+    typeof set === 'number' &&
+    Number.isInteger(set) &&
+    set >= 1 &&
+    set <= folds.count
+  );
+};
+
 /** Checks one payload against the state before it; throws `Refused` with the reason. */
 const checkPayload = (state: BakeState, payload: Json, where: string): void => {
   const stepIds = new Set((state.process?.steps ?? []).map((s) => s.id));
@@ -201,7 +213,7 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
   } else if (state.status !== 'active') {
     // After the end only notes of the review (bake-session.md).
     expect(
-      payload.type === 'ObservationAdded' && payload.kind !== 'doughReady',
+      payload.type === 'ObservationAdded' && payload.kind === undefined,
       `${where}: the bake had already ended`,
     );
   }
@@ -271,10 +283,13 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
       expect(
         (payload.stepId === undefined || knownStep(payload.stepId)) &&
           OBSERVATION_CATEGORIES.has(payload.category as string) &&
-          isOptional(payload.kind, (v): v is string => v === 'doughReady') &&
+          isOptional(payload.kind, (v): v is string => v === 'doughReady' || v === 'fold') &&
           isOptional(payload.criterion, (v): v is string => typeof v === 'string') &&
           (payload.kind !== 'doughReady' ||
             (payload.stepId !== undefined && payload.category === 'fermentation')) &&
+          (payload.kind === 'fold'
+            ? payload.category === 'handling' && isFoldSet(state, payload.stepId, payload.set)
+            : payload.set === undefined) &&
           isOptional(payload.text, (v): v is string => typeof v === 'string') &&
           isOptional(payload.rating, (v): v is number => isNumber(v) && v >= 0 && v <= 5) &&
           isOptional(payload.stage, (v): v is string => v === 'shape' || v === 'bake') &&

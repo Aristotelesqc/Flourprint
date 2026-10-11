@@ -165,6 +165,22 @@ const incorporation = union('item', {
   water: (v, w) => fields(v, w, { item: string, sharePct: number }),
 });
 
+/** Techniques (process.md): method, end check and fold style stay open codes. */
+const technique: Check = (v, w) =>
+  fields(
+    v,
+    w,
+    {},
+    {
+      method: string,
+      phases: list((p, pw) =>
+        fields(p, pw, { speed: oneOf('low', 'medium', 'high'), durationS: number }),
+      ),
+      folds: (f, fw) => fields(f, fw, { count: number, intervalS: number }, { style: string }),
+      endCheck: string,
+    },
+  );
+
 const step: Check = (v, w) =>
   fields(
     v,
@@ -188,6 +204,7 @@ const step: Check = (v, w) =>
         ),
       incorporations: list(incorporation),
       accepted,
+      technique,
     },
   );
 

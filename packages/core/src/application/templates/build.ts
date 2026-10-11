@@ -3,6 +3,7 @@ import {
   type Ingredient,
   type ProcessStep,
   type StepConditions,
+  type StepTechnique,
 } from '../../domain/index.js';
 
 /** Helpers to write recipe templates and the blank recipe as data (drafts.md). */
@@ -23,7 +24,11 @@ export const step = (
   operation: string,
   after: readonly string[],
   durationS: number,
-  options: { readonly conditions?: StepConditions; readonly label?: string } = {},
+  options: {
+    readonly conditions?: StepConditions;
+    readonly label?: string;
+    readonly technique?: StepTechnique;
+  } = {},
 ): ProcessStep => ({
   id,
   operation,
@@ -32,6 +37,7 @@ export const step = (
   plannedDurationS: durationS,
   ...(options.conditions ? { conditions: options.conditions } : {}),
   ...(options.label ? { label: options.label } : {}),
+  ...(options.technique ? { technique: options.technique } : {}),
 });
 
 /** An `alap` step (preheating): as late as possible before its successors. */

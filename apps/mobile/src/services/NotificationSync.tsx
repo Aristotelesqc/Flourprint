@@ -45,13 +45,17 @@ export const NotificationSync = () => {
             },
             {
               title: (alert, step) =>
-                translate(alert.kind === 'end' ? 'notify.end.title' : 'notify.start.title', {
+                translate(`notify.${alert.kind}.title`, {
                   step,
+                  set: alert.set ?? '',
+                  count: alert.count ?? '',
                 }),
               body: (alert, step, recipe) =>
-                translate(alert.kind === 'end' ? 'notify.end.body' : 'notify.start.body', {
+                translate(`notify.${alert.kind}.body`, {
                   step,
                   recipe,
+                  set: alert.set ?? '',
+                  count: alert.count ?? '',
                 }),
             },
           );

@@ -526,6 +526,8 @@ export const RecipePage = () => {
           <ProcessSection
             process={draft.process}
             onDurationChange={changeDuration}
+            onProcessChange={changeProcess}
+            preparationIds={draft.formula.components.map((c) => c.id)}
             canStart={base !== undefined && !dirty && !writes.busy}
             onStart={() => void startBake()}
             {...(active ? { activeBakeId: active.bakeId } : {})}

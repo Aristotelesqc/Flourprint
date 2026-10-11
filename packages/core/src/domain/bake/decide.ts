@@ -148,6 +148,13 @@ const observe = (
       reason: 'out of range',
     });
   }
+  if (command.kind === 'fold') return observeFold(state, command, now);
+  if (command.set !== undefined) {
+    return error('InvalidCommand', 'Only a fold observation has a set', {
+      field: 'set',
+      reason: 'set without kind fold',
+    });
+  }
   if (command.kind === 'doughReady') {
     if (command.stepId === undefined) {
       return error('InvalidCommand', 'A dough ready observation targets a step', {
@@ -178,6 +185,57 @@ const observe = (
     }
     const { type, ...observation } = command;
     return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation, stage } }]);
+  }
+  const { type, ...observation } = command;
+  return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);
+};
+
+/**
+ * One set of folds done (bake-session.md): on a running step whose technique has folds, with a
+ * set within 1 … count. Early, late, repeated or missing sets are all recorded as they happened;
+ * the plan never changes.
+ */
+const observeFold = (
+  state: BakeState,
+  command: Extract<BakeCommandPayload, { type: 'AddObservation' }>,
+  now: Instant,
+): Result<EventDraft[], BakeError> => {
+  if (command.stepId === undefined) {
+    return error('InvalidCommand', 'A fold observation targets a step', {
+      field: 'stepId',
+      reason: 'required for fold',
+    });
+  }
+  if (command.category !== 'handling') {
+    return error('InvalidCommand', 'A fold observation is a handling one', {
+      field: 'category',
+      reason: 'must be handling for fold',
+    });
+  }
+  const record = state.steps[command.stepId];
+  if (
+    state.status !== 'active' ||
+    record?.startedAt === undefined ||
+    record.endedAt !== undefined
+  ) {
+    return error('InvalidCommand', 'A fold observation targets a running step', {
+      field: 'stepId',
+      reason: 'step not running',
+    });
+  }
+  const folds = state.process?.steps.find((s) => s.id === command.stepId)?.technique?.folds;
+  if (folds === undefined) {
+    return error('InvalidCommand', 'The step has no folds', {
+      field: 'stepId',
+      reason: 'step without folds',
+    });
+  }
+  const set = command.set;
+  if (set === undefined || !Number.isInteger(set) || set < 1 || set > folds.count) {
+    return error('InvalidCommand', `The set must be within 1 … ${folds.count}`, {
+      field: 'set',
+      reason: 'out of range',
+    });
   }
   const { type, ...observation } = command;
   return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);
@@ -255,7 +313,8 @@ export const decide = (
   if (
     command.type === 'AddObservation' &&
     (state.status === 'finished' || state.status === 'abandoned') &&
-    command.kind !== 'doughReady'
+    command.kind !== 'doughReady' &&
+    command.kind !== 'fold'
   ) {
     return observe(state, command, now);
   }

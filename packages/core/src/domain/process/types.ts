@@ -28,6 +28,34 @@ export interface StepConditions {
   readonly frictionC?: number;
 }
 
+/** Machine mixing phase (process.md, Techniques). */
+export interface MixPhase {
+  readonly speed: 'low' | 'medium' | 'high';
+  readonly durationS: number;
+}
+
+/** Sets of folds during a step: set `k` is due at the step's start + `k × intervalS`. */
+export interface StepFolds {
+  readonly count: number;
+  readonly intervalS: number;
+  /** Open code: `stretchAndFold`, `coilFold`, `lamination`, … */
+  readonly style?: string;
+}
+
+/**
+ * How a step is done (process.md, Techniques, #32 first slice). Recorded data only: no duration,
+ * end or dough state is predicted from it.
+ */
+export interface StepTechnique {
+  /** Open code: `hand`, `slapAndFold`, `rubaud`, `standMixer`, `spiral`, … */
+  readonly method?: string;
+  /** Machine mixing phases, in order. */
+  readonly phases?: readonly MixPhase[];
+  readonly folds?: StepFolds;
+  /** Open code of what ends the step for the baker: `windowpane`, `doughTemperature`, … */
+  readonly endCheck?: string;
+}
+
 export interface ProcessStep {
   readonly id: StepId;
   /** Open operation code (`autolyse`, `mix`, `fold`, `bulk`, `shape`, `bake`, …), see #5. */
@@ -42,6 +70,7 @@ export interface ProcessStep {
   readonly incorporations?: readonly Incorporation[];
   /** Set when `plannedDurationS` was taken from a model suggestion (fermentation.md). */
   readonly accepted?: AcceptedSuggestion;
+  readonly technique?: StepTechnique;
 }
 
 export interface Process {

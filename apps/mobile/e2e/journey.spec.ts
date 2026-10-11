@@ -458,6 +458,10 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await page.getByRole('button', { name: 'Enregistrer comme recette' }).click();
   await expect(page.getByText('À corriger avant d’enregistrer ou de démarrer')).toBeVisible();
   await page.getByRole('button', { name: 'Fermer' }).click();
+  // Ionic gives the focus back to the save button once the sheet is gone: wait for it, or the
+  // Enter below can land on that button and save the recipe.
+  await expect(page.getByText('À corriger avant d’enregistrer ou de démarrer')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Enregistrer comme recette' })).toBeFocused();
   await share.fill('100');
   await share.press('Enter');
   await expect(page.getByRole('button', { name: 'Vérifier', exact: true })).toBeVisible();
@@ -564,4 +568,59 @@ test('a customized flour keeps its properties and is offered by the flour picker
       }),
     }),
   ]);
+});
+
+/** Sets 3 folds 20 min apart on the bulk, from the Process tab of the open recipe. */
+const foldTheBulk = async (page: Page) => {
+  await page.getByRole('button', { name: 'Modifier l’étape Pointage' }).click();
+  const sheet = page.locator('ion-modal:visible');
+  await sheet.getByLabel('Nombre de séries').fill('3');
+  await sheet.getByLabel('Nombre de séries').press('Enter');
+  await sheet.getByLabel('Intervalle entre les séries').fill('20 min');
+  await sheet.getByLabel('Intervalle entre les séries').press('Enter');
+  await sheet.getByRole('button', { name: 'Fermer' }).click();
+  await expect(page.locator('ion-modal:visible')).toHaveCount(0);
+};
+
+test('a draft takes a new step and a step technique, shown under the step', async ({ page }) => {
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  await page.getByRole('button', { name: '+ Ajouter une étape' }).click();
+  await page.getByLabel('Après', { exact: true }).selectOption({ label: 'Pointage' });
+  await page.getByLabel('Nouvelle étape', { exact: true }).selectOption({ label: 'Dégazage' });
+  await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Modifier l’étape Dégazage' })).toBeVisible();
+  await expect(unsaved(page).first()).toBeVisible();
+  // The new step sits between the bulk and the shaping.
+  await expect(page.getByText('Après Dégazage')).toBeVisible();
+
+  await foldTheBulk(page);
+  await expect(page.getByText('3 séries de rabats / 20 min')).toBeVisible();
+});
+
+test('bake mode shows the next fold set and records it in the log', async ({ page }) => {
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  await foldTheBulk(page);
+  await page.getByRole('button', { name: 'Enregistrer v2' }).click();
+  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
+  await expect(page).toHaveURL(/\/bakes\//);
+  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
+  await page.getByRole('button', { name: 'Échaudage terminé' }).click();
+  await page.getByRole('button', { name: 'Préferment terminé' }).click();
+  await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
+  await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
+  await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
+
+  const folds = page.getByRole('region', { name: 'Rabats : Pointage' });
+  await expect(folds).toContainText('Série 1/3 · dans 20 min');
+  await folds.getByRole('button', { name: 'Rabat fait' }).click();
+  await expect(page.locator('p:visible', { hasText: / · / }).first()).toContainText(
+    'Rabats 1/3 faits (Pointage)',
+  );
+  await expect(folds).toContainText('Série 2/3');
+  // The step keeps running: a set never ends it.
+  await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
 });
