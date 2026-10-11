@@ -232,6 +232,11 @@ export const en = {
   'process.mode.startAt': 'Start at',
   'process.mode.readyBy': 'Ready by',
   'process.when.startAt': 'Start',
+  'process.when.now': 'Now',
+  'process.when.chosen': 'At a time',
+  'process.when.time': 'Start time',
+  'process.startsNow':
+    'The bake starts when you tap: its timers run from that moment. The times above are for planning.',
   'process.when.readyBy': 'End of {step}',
   'process.summary.startAt': '{step} ends {when}',
   'process.summary.readyBy': 'Start {step} {when}',
@@ -783,6 +788,11 @@ export const fr: Catalog = {
   'process.mode.startAt': 'Commencer à',
   'process.mode.readyBy': 'Prêt pour',
   'process.when.startAt': 'Début',
+  'process.when.now': 'Maintenant',
+  'process.when.chosen': 'À une heure',
+  'process.when.time': 'Heure de début',
+  'process.startsNow':
+    'La fournée démarre au moment du toucher : ses minuteries partent de là. Les heures ci-dessus servent à planifier.',
   'process.when.readyBy': 'Fin : {step}',
   'process.summary.startAt': '{step} se termine {when}',
   'process.summary.readyBy': 'Commencer : {step}, {when}',

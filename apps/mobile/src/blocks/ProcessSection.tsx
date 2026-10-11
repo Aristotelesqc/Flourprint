@@ -1,5 +1,5 @@
 import { IonButton } from '@ionic/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   projectProcess,
   type Instant,
@@ -9,6 +9,7 @@ import {
   type ProjectionMode,
 } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
+import { useServices } from '../services/services';
 import { formatDay, formatDayTime, formatTime, localDayKey } from '../i18n/time';
 import { DurationField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
@@ -21,7 +22,8 @@ interface Props {
   readonly onDurationChange: (stepId: string, durationS: number | undefined) => boolean;
   /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
   readonly canStart: boolean;
-  readonly onStart: (mode: ProjectionMode) => void;
+  /** Starts the bake from the moment of the tap, whatever time the planner shows. */
+  readonly onStart: () => void;
   /** A bake of this recipe in progress: the main action opens it; another start is explicit. */
   readonly activeBakeId?: string;
   readonly onOpenBake: (bakeId: string) => void;
@@ -60,17 +62,28 @@ export const ProcessSection = ({
   onOpenBake,
 }: Props) => {
   const { t, error, stepName, locale } = useMessages();
+  const services = useServices();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
+  // "Now" follows the clock, so the planned times are those of a bake started at this moment.
+  const [fromNow, setFromNow] = useState(true);
+  const [now, setNow] = useState(() => services.clock.now());
   const [when, setWhen] = useState(() => toLocalInput(nextQuarterHour()));
+  const followsClock = modeKind === 'startAt' && fromNow;
+  useEffect(() => {
+    if (!followsClock) return;
+    setNow(services.clock.now());
+    const timer = setInterval(() => setNow(services.clock.now()), 15_000);
+    return () => clearInterval(timer);
+  }, [followsClock, services]);
   const [targetId, setTargetId] = useState(() => defaultTarget(process)?.id);
   const target = process.steps.find((s) => s.id === targetId) ?? defaultTarget(process);
 
   const mode: ProjectionMode = useMemo(() => {
-    const at = fromLocalInput(when);
+    const at = followsClock ? now : fromLocalInput(when);
     return modeKind === 'readyBy' && target
       ? { kind: 'readyBy', at, target: target.id }
       : { kind: 'startAt', at };
-  }, [modeKind, when, target]);
+  }, [modeKind, followsClock, now, when, target]);
   const projection = useMemo(() => projectProcess(process, { mode }), [process, mode]);
 
   const planned: Planned[] = process.steps
@@ -130,19 +143,35 @@ export const ProcessSection = ({
           ]}
           onChange={setModeKind}
         />
-        <label className="flex items-center justify-between gap-3">
-          <span>
-            {modeKind === 'readyBy' && target
-              ? t('process.when.readyBy', { step: stepName(target) })
-              : t('process.when.startAt')}
-          </span>
-          <input
-            type="datetime-local"
-            className="fp-field h-12 rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 font-bold text-ink"
-            value={when}
-            onChange={(e) => e.target.value && setWhen(e.target.value)}
-          />
-        </label>
+        {modeKind === 'startAt' && (
+          <div className="flex items-center justify-between gap-3">
+            <span>{t('process.when.startAt')}</span>
+            <Segmented
+              size="small"
+              value={fromNow ? 'now' : 'chosen'}
+              options={[
+                { value: 'now', label: t('process.when.now') },
+                { value: 'chosen', label: t('process.when.chosen') },
+              ]}
+              onChange={(value) => setFromNow(value === 'now')}
+            />
+          </div>
+        )}
+        {!followsClock && (
+          <label className="flex items-center justify-between gap-3">
+            <span>
+              {modeKind === 'readyBy' && target
+                ? t('process.when.readyBy', { step: stepName(target) })
+                : t('process.when.time')}
+            </span>
+            <input
+              type="datetime-local"
+              className="fp-field h-12 rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 font-bold text-ink"
+              value={when}
+              onChange={(e) => e.target.value && setWhen(e.target.value)}
+            />
+          </label>
+        )}
         {modeKind === 'readyBy' && (
           <label className="flex items-center justify-between gap-3">
             <span>{t('process.target')}</span>
@@ -220,16 +249,15 @@ export const ProcessSection = ({
       ))}
 
       {!canStart && <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>}
+      {canStart && !followsClock && (
+        <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
+      )}
       {activeBakeId ? (
         <>
           <IonButton expand="block" size="large" onClick={() => onOpenBake(activeBakeId)}>
             {t('process.openBake')}
           </IonButton>
-          <IonButton
-            fill="clear"
-            disabled={!canStart || !projection.ok}
-            onClick={() => onStart(mode)}
-          >
+          <IonButton fill="clear" disabled={!canStart || !projection.ok} onClick={onStart}>
             {t('process.startAnother')}
           </IonButton>
         </>
@@ -238,7 +266,7 @@ export const ProcessSection = ({
           expand="block"
           size="large"
           disabled={!canStart || !projection.ok}
-          onClick={() => onStart(mode)}
+          onClick={onStart}
         >
           {t('process.start')}
         </IonButton>

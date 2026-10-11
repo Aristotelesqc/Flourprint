@@ -481,3 +481,19 @@ test('an info button opens a bottom sheet that explains the term and closes', as
   await page.getByRole('button', { name: 'Explication : Eau ajoutée' }).click();
   await expect(page.locator('ion-modal:visible')).toContainText('Eau ajoutée et eau totale');
 });
+
+test('the planner can follow now; starting always starts now', async ({ page }) => {
+  await page.clock.install({ time: new Date('2026-03-02T08:00:00-05:00') });
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  // "Now" is the default: no time to pick, the plan starts at the current time.
+  await expect(page.getByRole('button', { name: 'Maintenant' })).toBeVisible();
+  await expect(page.locator('input[type="datetime-local"]')).toBeHidden();
+  await page.getByRole('button', { name: 'À une heure' }).click();
+  await page.locator('input[type="datetime-local"]').fill('2026-03-05T14:00');
+  await expect(page.getByText(/La fournée démarre au moment du toucher/)).toBeVisible();
+  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
+  await expect(page).toHaveURL(/\/bakes\//);
+  // The timers run from the tap (08:00), not from the planned 14:00 three days later.
+  await expect(page.getByText(/Début prévu 0?8[:h]00/).first()).toBeVisible();
+});

@@ -363,8 +363,10 @@ export const RecipePage = () => {
       ],
     });
 
-  const startBake = async (mode: ProjectionMode) => {
+  /** A bake starts now: its timers run from the tap, whatever time the planner showed. */
+  const startBake = async () => {
     if (!base) return;
+    const mode: ProjectionMode = { kind: 'startAt', at: services.clock.now() };
     const { revision } = base;
     const ref = { id: revision.recipeId, version: revision.version };
     if (pendingStart.current) setNotice(t('recipe.retryStart'));
@@ -518,7 +520,7 @@ export const RecipePage = () => {
             process={draft.process}
             onDurationChange={changeDuration}
             canStart={base !== undefined && !dirty && !writes.busy}
-            onStart={(mode) => void startBake(mode)}
+            onStart={() => void startBake()}
             {...(active ? { activeBakeId: active.bakeId } : {})}
             onOpenBake={openBake}
           />

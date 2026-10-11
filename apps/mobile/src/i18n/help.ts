@@ -114,11 +114,11 @@ export const helpEn = {
 
   'help.startMode.title': 'Start at, or ready by',
   'help.startMode.body1':
-    'Start at: you choose when the first step begins, and the app computes the time of every step, down to the end of the recipe.',
+    'Start at: now, or a chosen time. The app computes the time of every step, down to the end of the recipe. “Now” follows the clock.',
   'help.startMode.body2':
     'Ready by: you choose when a target step must end (the bake by default) and the app works backward to tell you when to start. Every duration up to that step must be known.',
   'help.startMode.body3':
-    'Starting the bake takes the mode and the time shown here as the plan. You can still adjust the steps while baking.',
+    'Starting the bake always starts it now: its timers run from the tap, whatever time is planned here. You can still adjust the steps while baking.',
 
   'help.readyMark.title': 'Dough-ready marks',
   'help.readyMark.body1':
@@ -262,11 +262,11 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.startMode.title': 'Commencer à, ou prêt pour',
   'help.startMode.body1':
-    'Commencer à : choisir quand la première étape commence, et l’app calcule l’heure de chaque étape, jusqu’à la fin de la recette.',
+    'Commencer à : maintenant, ou à une heure choisie. L’app calcule l’heure de chaque étape, jusqu’à la fin de la recette. « Maintenant » suit l’horloge.',
   'help.startMode.body2':
     'Prêt pour : choisir quand une étape cible doit se terminer (la cuisson par défaut) ; l’app remonte le temps pour indiquer quand commencer. Toutes les durées jusqu’à cette étape doivent être connues.',
   'help.startMode.body3':
-    'Démarrer la fournée prend le mode et l’heure affichés ici comme plan. Les étapes restent ajustables pendant la fournée.',
+    'Démarrer la fournée la démarre toujours maintenant : ses minuteries partent du toucher, quelle que soit l’heure planifiée ici. Les étapes restent ajustables pendant la fournée.',
 
   'help.readyMark.title': 'Repères de pâte prête',
   'help.readyMark.body1':
