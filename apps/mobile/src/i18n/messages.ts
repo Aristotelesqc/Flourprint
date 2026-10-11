@@ -46,6 +46,13 @@ export const en = {
   'state.storageWrite': 'Nothing could be saved. Your changes are kept; try again.',
   'state.storageInit': 'Flourprint could not open its data. Close and reopen the app.',
   'state.sessionOnly': 'Browser preview: data lives in this tab only and is lost on reload.',
+  'state.browserKept': 'Browser preview: data is kept in this browser, on this device only.',
+  'state.browserUnreadable':
+    'The data saved in this browser could not be read: it is kept aside and the app starts empty.',
+  'advanced.browserErase': 'Erase this browser’s data',
+  'advanced.browserEraseHint': 'Recipes, drafts, flours and bakes kept by the browser preview.',
+  'advanced.browserEraseConfirm':
+    'Everything the browser preview kept is erased and the page reloads empty. Copy your data first to keep it.',
   'state.retry': 'Try again',
   'recipes.title': 'Recipes',
   'recipes.empty': 'No recipe yet. Tap + to start from a template or a blank recipe.',
@@ -760,6 +767,15 @@ export const fr: Catalog = {
   'state.storageInit': 'Flourprint n’a pas pu ouvrir ses données. Fermer puis rouvrir l’app.',
   'state.sessionOnly':
     'Aperçu navigateur : les données restent dans cet onglet et disparaissent au rechargement.',
+  'state.browserKept':
+    'Aperçu navigateur : les données sont gardées dans ce navigateur, sur cet appareil seulement.',
+  'state.browserUnreadable':
+    'Les données gardées dans ce navigateur n’ont pas pu être lues : elles sont mises de côté et l’app démarre vide.',
+  'advanced.browserErase': 'Effacer les données du navigateur',
+  'advanced.browserEraseHint':
+    'Recettes, brouillons, farines et fournées gardés par l’aperçu navigateur.',
+  'advanced.browserEraseConfirm':
+    'Tout ce que l’aperçu navigateur a gardé est effacé et la page se recharge vide. Copier les données avant pour les garder.',
   'state.retry': 'Réessayer',
   'recipes.title': 'Recettes',
   'recipes.empty':

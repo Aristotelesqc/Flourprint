@@ -310,9 +310,12 @@ test('typing a hydration locks it there; an egg then lowers the added water', as
   ).toBeVisible();
   await expect(hydration).toHaveValue('70');
   await expect(page.getByText('Hydratation verrouillée à 70 %')).toBeVisible();
+  // Only the shown page: during a transition Ionic keeps the previous one in the DOM.
   const added = page
+    .locator('.ion-page:not(.ion-page-hidden)')
     .getByText('Eau ajoutée', { exact: true })
     .filter({ visible: true })
+    .first()
     .locator('..');
   const before = await added.textContent();
 
@@ -670,4 +673,28 @@ test('bake mode shows the next fold set and records it in the log', async ({ pag
   await expect(folds).toContainText('Série 2/3');
   // The step keeps running: a set never ends it.
   await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
+});
+
+test('the browser preview keeps its data across a reload, until it is erased', async ({ page }) => {
+  await page.goto('/recipes');
+  await expect(page.getByText(/gardées dans ce navigateur/)).toBeVisible();
+  await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
+  await page.getByText('Recette vierge').first().click();
+  await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  // The snapshot is saved every few seconds and when the page is hidden.
+  await page.waitForTimeout(3_500);
+  await page.reload();
+  await page.goto('/recipes');
+  await expect(page.getByText('Recette 1').first()).toBeVisible();
+
+  await page.goto('/advanced');
+  await page.getByText('Effacer les données du navigateur').click();
+  await page
+    .locator('ion-alert')
+    .getByRole('button', { name: 'Effacer les données du navigateur' })
+    .click();
+  await expect(page.getByText('Recette 1')).toHaveCount(0);
+  await page.goto('/recipes');
+  await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible();
+  await expect(page.getByText('Recette 1')).toHaveCount(0);
 });
