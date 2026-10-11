@@ -5,8 +5,10 @@ import type { Services } from './services';
 export const feedbackJson = async (
   services: Services,
 ): Promise<{ json: string; bakes: number } | undefined> => {
-  const now = services.clock.now();
-  const result = await exportFeedback(services, now, {
+  const now = services.realClock.now();
+  // Both worlds, each bake with its origin (ADR 0014).
+  const stores = { recipes: services.recipes, bakes: services.allBakes, flours: services.flours };
+  const result = await exportFeedback(stores, now, {
     platform: services.platform,
     storage: services.storage,
     build: __APP_BUILD__,

@@ -9,15 +9,22 @@ import {
   IonListHeader,
   IonPage,
   IonTitle,
+  IonToggle,
   IonToolbar,
   useIonAlert,
 } from '@ionic/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { importRecipes } from '@flourprint/core/application';
+import type { BakeOrigin, TemperatureContext } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
 import { feedbackFileName, feedbackJson } from '../services/feedback';
 import { BAKES_CHANGED, type Permission } from '../services/notifications';
 import { useServices } from '../services/services';
+import { usePreferences } from '../services/use-preferences';
+import { Segmented } from '../ui/Segmented';
+import { SimulationBanner } from '../ui/SimulationBanner';
+
+const CONTEXTS: readonly TemperatureContext[] = ['oven', 'cold', 'ambient'];
 
 /** Advanced menu: recipe import, diagnostics and build details, kept off the main screens. */
 export const AdvancedPage = () => {
@@ -40,6 +47,46 @@ export const AdvancedPage = () => {
         },
       ],
     });
+  const preferences = usePreferences();
+  const [erased, setErased] = useState<{ text: string; alert: boolean }>();
+
+  /** Erases one history after a confirmation naming its bakes (ADR 0014, persistence.md). */
+  const eraseHistory = async (origin: BakeOrigin) => {
+    setErased(undefined);
+    let count: number;
+    try {
+      count = (await services.bakes.listBakesOf(origin)).length;
+    } catch (failure) {
+      console.error(failure);
+      setErased({ text: t('state.storageRead'), alert: true });
+      return;
+    }
+    const title = t(origin === 'simulation' ? 'advanced.eraseSimulation' : 'advanced.eraseReal');
+    void presentAlert({
+      header: title,
+      message: t('advanced.eraseConfirm', { count }),
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        {
+          text: t('advanced.erase'),
+          role: 'destructive',
+          handler: () => {
+            void services.bakes
+              .deleteBakes(origin)
+              .then((deleted) =>
+                setErased({ text: t('advanced.erased', { count: deleted }), alert: false }),
+              )
+              .catch((failure: unknown) => {
+                console.error(failure);
+                setErased({ text: t('advanced.eraseFailed'), alert: true });
+              })
+              .finally(() => window.dispatchEvent(new Event(BAKES_CHANGED)));
+          },
+        },
+      ],
+    });
+  };
+
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<{ text: string; alert: boolean }>();
@@ -84,7 +131,7 @@ export const AdvancedPage = () => {
         const url = URL.createObjectURL(new Blob([data.json], { type: 'application/json' }));
         const link = document.createElement('a');
         link.href = url;
-        link.download = feedbackFileName(services.clock.now());
+        link.download = feedbackFileName(services.realClock.now());
         link.click();
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
         setExported({ text: t('advanced.saved', { size, bakes: data.bakes }), alert: false });
@@ -138,9 +185,56 @@ export const AdvancedPage = () => {
           </IonButtons>
           <IonTitle>{t('advanced.title')}</IonTitle>
         </IonToolbar>
+        <SimulationBanner />
       </IonHeader>
       <IonContent>
         <IonList>
+          <IonListHeader>
+            <IonLabel>{t('advanced.simulation')}</IonLabel>
+          </IonListHeader>
+          <IonItem>
+            <IonToggle
+              checked={preferences.simulation}
+              onIonChange={(event) => services.preferences.setSimulation(event.detail.checked)}
+            >
+              <IonLabel>
+                {t('advanced.simulation.toggle')}
+                <p className="whitespace-normal">{t('advanced.simulation.hint')}</p>
+              </IonLabel>
+            </IonToggle>
+          </IonItem>
+          <IonItem routerLink="/stats" detail>
+            <IonLabel>
+              {t('advanced.stats')}
+              <p>{t('advanced.statsHint')}</p>
+            </IonLabel>
+          </IonItem>
+          <IonListHeader>
+            <IonLabel>{t('advanced.units')}</IonLabel>
+          </IonListHeader>
+          {CONTEXTS.map((context) => (
+            <IonItem key={context} lines="none">
+              <div className="flex w-full items-center justify-between gap-3 py-1">
+                <span id={`unit-${context}`}>{t(`advanced.units.${context}`)}</span>
+                <span className="w-36 shrink-0" aria-labelledby={`unit-${context}`} role="group">
+                  <Segmented
+                    size="small"
+                    value={preferences.units[context]}
+                    options={[
+                      { value: 'C', label: '°C' },
+                      { value: 'F', label: '°F' },
+                    ]}
+                    onChange={(unit) => services.preferences.setUnit(context, unit)}
+                  />
+                </span>
+              </div>
+            </IonItem>
+          ))}
+          <IonItem>
+            <IonLabel>
+              <p className="whitespace-normal">{t('advanced.units.hint')}</p>
+            </IonLabel>
+          </IonItem>
           <IonListHeader>
             <IonLabel>{t('advanced.feedback')}</IonLabel>
           </IonListHeader>
@@ -171,6 +265,27 @@ export const AdvancedPage = () => {
               <IonLabel>
                 {t('advanced.browserErase')}
                 <p>{t('advanced.browserEraseHint')}</p>
+              </IonLabel>
+            </IonItem>
+          )}
+          <IonListHeader>
+            <IonLabel>{t('advanced.history')}</IonLabel>
+          </IonListHeader>
+          {(['physical', 'simulation'] as const).map((origin) => (
+            <IonItem key={origin} button detail onClick={() => void eraseHistory(origin)}>
+              <IonLabel>
+                {t(origin === 'simulation' ? 'advanced.eraseSimulation' : 'advanced.eraseReal')}
+                <p>{t('advanced.eraseHint')}</p>
+              </IonLabel>
+            </IonItem>
+          ))}
+          {erased && (
+            <IonItem lines="none">
+              <IonLabel
+                role={erased.alert ? 'alert' : 'status'}
+                className={erased.alert ? 'text-alert' : ''}
+              >
+                {erased.text}
               </IonLabel>
             </IonItem>
           )}

@@ -2,12 +2,13 @@ import { useIonRouter } from '@ionic/react';
 import { useEffect, useRef } from 'react';
 import { useMessages } from '../i18n/use-messages';
 import { activeBakes } from './bakes';
-import { BAKES_CHANGED, remindersFor } from './notifications';
+import { BAKES_CHANGED, onRealClock, remindersFor } from './notifications';
 import { useServices } from './services';
 
 /**
- * Keeps the system reminders in step with the running bakes (ADR 0012): at start-up, after every
- * bake command and when the app comes back to the foreground. Renders nothing.
+ * Keeps the system reminders in step with the running bakes of the current world (ADR 0012,
+ * ADR 0014): at start-up, after every bake command, when the simulation mode or its clock changes
+ * and when the app comes back to the foreground. Renders nothing.
  */
 export const NotificationSync = () => {
   const services = useServices();
@@ -36,7 +37,8 @@ export const NotificationSync = () => {
               }),
           );
           const { t: translate, stepName: nameStep } = texts.current;
-          const reminders = remindersFor(
+          const { simulation, offsetMs } = services.preferences.get();
+          const due = remindersFor(
             bakes,
             services.clock.now(),
             (state, stepId) => {
@@ -59,6 +61,7 @@ export const NotificationSync = () => {
                 }),
             },
           );
+          const reminders = onRealClock(due, simulation ? offsetMs : 0);
           // Ask once per session, and only when there is something to remind.
           if (reminders.length > 0 && !asked.current) {
             asked.current = true;
@@ -74,6 +77,7 @@ export const NotificationSync = () => {
       if (document.visibilityState === 'visible') sync();
     };
     sync();
+    const stopPreferences = services.preferences.subscribe(sync);
     window.addEventListener(BAKES_CHANGED, sync);
     document.addEventListener('visibilitychange', resume);
     const stop = notifier.onOpen((bakeId) => navigate.current(`/bakes/${bakeId}`));
@@ -81,6 +85,7 @@ export const NotificationSync = () => {
       window.removeEventListener(BAKES_CHANGED, sync);
       document.removeEventListener('visibilitychange', resume);
       stop();
+      stopPreferences();
     };
   }, [services]);
 

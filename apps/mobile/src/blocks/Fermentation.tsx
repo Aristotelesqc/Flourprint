@@ -9,6 +9,7 @@ import {
   doughStepAmbients,
   doughSteps,
   estimateFermentation,
+  temperatureContext,
   updateStep,
   type Estimate,
   type Formula,
@@ -19,7 +20,8 @@ import {
 } from '@flourprint/core/domain';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
-import { DurationField, OptionalNumberField } from '../ui/Field';
+import { DurationField, TemperatureField } from '../ui/Field';
+import { useTemperature } from '../i18n/temperature';
 import { InfoButton } from '../ui/InfoButton';
 import { Card } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
@@ -110,9 +112,9 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
       {mix && (
         <div className="flex flex-col gap-2">
           <Row label={t('fermentation.room')}>
-            <OptionalNumberField
+            <TemperatureField
               label={t('fermentation.room')}
-              unit="°C"
+              context="ambient"
               width="6.5rem"
               value={mix.conditions?.temperatureC}
               onCommit={(value) =>
@@ -126,9 +128,9 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
                 label={t('fermentation.target')}
                 help={<InfoButton topic="waterTemp" term={t('fermentation.target')} />}
               >
-                <OptionalNumberField
+                <TemperatureField
                   label={t('fermentation.target')}
-                  unit="°C"
+                  context="ambient"
                   width="6.5rem"
                   value={mix.conditions?.doughTemperatureC}
                   onCommit={(value) =>
@@ -137,9 +139,10 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
                 />
               </Row>
               <Row label={t('fermentation.friction')}>
-                <OptionalNumberField
+                <TemperatureField
                   label={t('fermentation.friction')}
-                  unit="°C"
+                  context="ambient"
+                  difference
                   width="6.5rem"
                   value={mix.conditions?.frictionC}
                   onCommit={(value) =>
@@ -198,9 +201,9 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
                   <span className="min-w-0 flex-1 truncate font-semibold">{title}</span>
                   {step && (
                     <>
-                      <OptionalNumberField
+                      <TemperatureField
                         label={t('fermentation.stepTemperature', { step: title })}
-                        unit="°C"
+                        context={temperatureContext(step)}
                         width="5.75rem"
                         value={step.conditions?.temperatureC}
                         onCommit={(value) =>
@@ -352,16 +355,24 @@ const Row = ({
 
 const WaterTemperature = ({ estimate }: { estimate: Estimate }) => {
   const { t } = useMessages();
+  const temperature = useTemperature();
   const { reason } = useEstimateText();
   if (estimate.status !== 'ok') return <span className="text-sm">{reason(estimate)}</span>;
+  // The limits named by the notes, in the device's unit.
+  const limits = {
+    low: temperature.format(0, 'ambient'),
+    high: temperature.format(60, 'ambient'),
+  };
   const notes = estimate.assumptions.flatMap((code) => {
     const key = `fermentation.note.${code}`;
-    return isKey(key) ? [t(key)] : [];
+    return isKey(key) ? [t(key, limits)] : [];
   });
   return (
     <span className="flex flex-col">
       <span className="flex items-center gap-1.5 text-lg font-bold">
-        {t('fermentation.water', { temperature: `${Math.round(estimate.value)} °C` })}
+        {t('fermentation.water', {
+          temperature: temperature.format(estimate.value, 'ambient', { digits: 0 }),
+        })}
         <InfoButton topic="waterTemp" term={t('fermentation.waterTerm')} />
       </span>
       {notes.length > 0 && <span className="text-sm text-muted">{notes.join(' · ')}</span>}

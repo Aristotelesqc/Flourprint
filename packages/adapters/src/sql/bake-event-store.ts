@@ -1,14 +1,16 @@
-import type {
-  AppendError,
-  AppendInput,
-  BakeEventStore,
-  StoredCommand,
+import {
+  bakeWorld,
+  type AppendError,
+  type AppendInput,
+  type BakeEventStore,
+  type StoredCommand,
 } from '@flourprint/core/application';
 import {
   domainError,
   err,
   ok,
   type BakeEvent,
+  type BakeOrigin,
   type BakeSummary,
   type Result,
 } from '@flourprint/core/domain';
@@ -101,6 +103,29 @@ export class SqlBakeEventStore implements BakeEventStore {
       'SELECT summary FROM bakes ORDER BY updated_at DESC',
     );
     return rows.map((row) => JSON.parse(row.summary) as BakeSummary);
+  }
+
+  /** The origin is read from each bake's start event in code, never by SQL (persistence.md). */
+  deleteBakes(origin: BakeOrigin): Promise<number> {
+    return this.driver.transaction(async (tx) => {
+      const rows = await tx.query<{ bake_id: string }>(
+        'SELECT bake_id FROM bake_events UNION SELECT bake_id FROM bakes',
+      );
+      let deleted = 0;
+      for (const { bake_id: bakeId } of rows) {
+        const [first] = await tx.query<{ document: string }>(
+          'SELECT document FROM bake_events WHERE bake_id = ? ORDER BY seq LIMIT 1',
+          [bakeId],
+        );
+        const started = first ? [JSON.parse(first.document) as BakeEvent] : [];
+        if (bakeWorld(started) !== origin) continue;
+        await tx.run('DELETE FROM bake_events WHERE bake_id = ?', [bakeId]);
+        await tx.run('DELETE FROM bake_commands WHERE bake_id = ?', [bakeId]);
+        await tx.run('DELETE FROM bakes WHERE bake_id = ?', [bakeId]);
+        deleted += 1;
+      }
+      return deleted;
+    });
   }
 
   append(input: AppendInput): Promise<Result<readonly BakeEvent[], AppendError>> {

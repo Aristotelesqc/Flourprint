@@ -58,6 +58,18 @@ const event = (bakeId: string, seq: number, eventId = `${bakeId}-e${seq}`): Bake
   payload: { type: 'StepStarted', stepId: `s${seq}` },
 });
 
+/** A start event carrying only what the stores read: the snapshot's origin (history.md). */
+const started = (bakeId: string, origin: 'physical' | 'simulation' | undefined): BakeEvent => ({
+  ...event(bakeId, 1),
+  payload: {
+    type: 'BakeStarted',
+    snapshot: (origin === undefined ? {} : { origin }) as Extract<
+      BakeEvent['payload'],
+      { type: 'BakeStarted' }
+    >['snapshot'],
+  },
+});
+
 const summary = (bakeId: string, version: number): BakeSummary => ({
   bakeId,
   status: 'active',
@@ -163,6 +175,37 @@ export const bakeEventStoreChecks: readonly StoreCheck<BakeEventStore>[] = [
       const [again] = await store.loadEvents('b1');
       equal(again?.payload.type === 'StepStarted' && again.payload.stepId, 's1', 'stored event');
       equal((await store.listBakes())[0]?.version, 1, 'stored summary');
+    },
+  },
+  {
+    name: 'erases the bakes of one origin with their commands and summaries',
+    run: async (make) => {
+      const store = await make();
+      await store.append(append('real', 'c1', 0, [started('real', 'physical'), event('real', 2)]));
+      await store.append(append('old', 'c2', 0, [started('old', undefined)]));
+      await store.append(append('sim', 'c3', 0, [started('sim', 'simulation')]));
+      await store.append(append('sim', 'c4', 1, [event('sim', 2)]));
+      equal(await store.deleteBakes('simulation'), 1, 'simulated bakes deleted');
+      equal(
+        (await store.listBakes()).map((s) => s.bakeId).sort(),
+        ['old', 'real'],
+        'summaries left',
+      );
+      equal(await store.loadEvents('sim'), [], 'simulated events');
+      equal(await store.findCommand('c4'), undefined, 'simulated command');
+      equal((await store.findCommand('c1'))?.bakeId, 'real', 'real command kept');
+      // A bake without origin counts as real.
+      equal(await store.deleteBakes('physical'), 2, 'real bakes deleted');
+      equal(await store.listBakes(), [], 'no summary left');
+      equal(await store.loadEvents('old'), [], 'events without origin');
+      equal(await store.findCommand('c1'), undefined, 'real command');
+      equal(await store.deleteBakes('physical'), 0, 'nothing left to delete');
+      // The erased ids can be used again from version 0.
+      equal(
+        code(await store.append(append('sim', 'c5', 0, [event('sim', 1, 'new')]))),
+        'ok',
+        'reuse',
+      );
     },
   },
   {

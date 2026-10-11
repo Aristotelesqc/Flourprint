@@ -25,6 +25,7 @@ import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatTime, parseDuration, editableDuration } from '../i18n/time';
 import {
+  bakeAlerts,
   bakeLog,
   bakeView,
   foldStatus,
@@ -33,8 +34,11 @@ import {
   type LogEntry,
 } from '../services/bake-view';
 import { useBakeCommands, type CommandOutcome } from '../services/bake-commands';
+import { BAKES_CHANGED } from '../services/notifications';
 import { useServices } from '../services/services';
+import { usePreferences } from '../services/use-preferences';
 import { InfoButton } from '../ui/InfoButton';
+import { SimulationBanner } from '../ui/SimulationBanner';
 import { SectionTitle } from '../ui/Layout';
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
@@ -55,6 +59,7 @@ export const BakePage = () => {
   const { pending } = commands;
   // The note sheet, open on a step (or on the whole bake).
   const [noteOn, setNoteOn] = useState<{ stepId?: string }>();
+  const { simulation } = usePreferences();
 
   const reload = useCallback(async () => {
     try {
@@ -73,7 +78,8 @@ export const BakePage = () => {
     }
   }, [services, bakeId]);
 
-  useEffect(() => void reload(), [reload]);
+  // A bake of the other world reads as absent (ADR 0014): reload when the mode changes.
+  useEffect(() => void reload(), [reload, simulation]);
   // Ionic keeps inactive pages mounted: refresh when the page or the app becomes visible again.
   useIonViewWillEnter(() => void reload(), [reload]);
   useEffect(() => {
@@ -258,6 +264,17 @@ export const BakePage = () => {
     (v) => v.step.technique?.folds !== undefined,
   );
 
+  /** Simulated time moves forward only (ADR 0014); reminders follow the new clock. */
+  const advance = (ms: number) => {
+    services.preferences.advance(ms);
+    setNow(services.clock.now());
+    window.dispatchEvent(new Event(BAKES_CHANGED));
+  };
+  const nextMoment =
+    simulation && state.status === 'active'
+      ? bakeAlerts(state, now).find((alert) => Date.parse(alert.at) > Date.parse(now))
+      : undefined;
+
   const abandon = () =>
     void presentAlert({
       header: t('bake.abandon'),
@@ -286,6 +303,7 @@ export const BakePage = () => {
             </span>
           )}
         </IonToolbar>
+        <SimulationBanner />
       </IonHeader>
       <IonContent className="ion-padding">
         <div className="flex flex-col gap-5">
@@ -566,6 +584,41 @@ export const BakePage = () => {
             >
               {t('bake.addNote')}
             </IonButton>
+          )}
+
+          {simulation && state.status === 'active' && (
+            <section
+              aria-label={t('sim.advance')}
+              className="flex flex-col gap-2 rounded-xl border border-dashed border-accent p-3"
+            >
+              <SectionTitle>{t('sim.advance')}</SectionTitle>
+              <IonButton
+                fill="outline"
+                disabled={nextMoment === undefined}
+                onClick={() =>
+                  nextMoment &&
+                  advance(Date.parse(nextMoment.at) - Date.parse(services.clock.now()))
+                }
+              >
+                {t('sim.advance.next')}
+              </IonButton>
+              <span className="text-center text-sm text-muted">
+                {nextMoment
+                  ? t('sim.advance.nextAt', {
+                      time: formatTime(nextMoment.at, locale),
+                      step: nameOf(nextMoment.stepId),
+                    })
+                  : t('sim.advance.none')}
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <IonButton fill="outline" onClick={() => advance(15 * 60_000)}>
+                  {t('sim.advance.quarter')}
+                </IonButton>
+                <IonButton fill="outline" onClick={() => advance(3_600_000)}>
+                  {t('sim.advance.hour')}
+                </IonButton>
+              </div>
+            </section>
           )}
 
           {state.status === 'active' && (

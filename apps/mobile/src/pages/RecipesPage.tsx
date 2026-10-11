@@ -116,7 +116,7 @@ export const RecipesPage = () => {
         ...(await services.recipes.listRecipes()).map((r) => r.name),
         ...(await services.recipes.listDrafts()).map((d) => d.name),
       ];
-      const now = services.clock.now();
+      const now = services.realClock.now();
       const draft: Draft = {
         id: services.ids.next(),
         name: nextDraftName(base, taken),
@@ -197,7 +197,7 @@ export const RecipesPage = () => {
                     <span className="shrink-0 text-[13px] text-muted">
                       {draft.origin.kind === 'revision'
                         ? t('recipes.draftEdits')
-                        : formatRelative(draft.updatedAt, now, locale)}
+                        : formatRelative(draft.updatedAt, services.realClock.now(), locale)}
                     </span>
                   </div>
                 </IonRouterLink>

@@ -9,6 +9,7 @@ export * from './fermentation/index.js';
 export * from './version.js';
 export * from './canonical-json.js';
 export * from './values.js';
+export * from './temperature-units.js';
 export * from './bake/index.js';
 export * from './flour/index.js';
 export * from './recipe/types.js';

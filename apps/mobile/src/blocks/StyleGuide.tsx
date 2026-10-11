@@ -1,5 +1,6 @@
 import type { RecipeTemplate } from '@flourprint/core/domain';
 import { en, type MessageKey } from '../i18n/messages';
+import { useTemperature } from '../i18n/temperature';
 import { useMessages } from '../i18n/use-messages';
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
@@ -8,11 +9,17 @@ const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
 const UNITS: readonly [string, string][] = [
   ['_pct', '%'],
   ['_h', 'h'],
-  ['_c', '°C'],
   ['_min', 'min'],
   ['_s', 's'],
   ['_w', ''],
 ];
+/** A temperature range: `_c` codes; the guide's are oven temperatures (`bake_…`). */
+const temperatureOf = (key: string) =>
+  key.replace(/_high$/, '').endsWith('_c')
+    ? key.startsWith('bake')
+      ? ('oven' as const)
+      : ('ambient' as const)
+    : undefined;
 const unitOf = (key: string): string => {
   const base = key.replace(/_high$/, '').replace(/_13in$|_half_sheet$/, '');
   if (base.endsWith('_g')) return 'g';
@@ -25,6 +32,7 @@ const unitOf = (key: string): string => {
  */
 export const StyleGuide = ({ template }: { template: RecipeTemplate }) => {
   const { t, locale } = useMessages();
+  const temperature = useTemperature();
   const traits = `template.${template.id}.traits`;
   const guide = template.guide;
   const number = (value: number) =>
@@ -49,11 +57,15 @@ export const StyleGuide = ({ template }: { template: RecipeTemplate }) => {
           <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[15px]">
             {guide.ranges.map((range) => {
               const label = `guide.key.${range.key}`;
-              const unit = unitOf(range.key);
+              const context = temperatureOf(range.key);
+              const unit = context ? temperature.unit(context) : unitOf(range.key);
+              // Temperatures in the device's unit, whole degrees (values-and-units.md).
+              const shown = (value: number) =>
+                context ? temperature.editable(value, context) : number(value);
               const value =
                 range.low === range.high
-                  ? number(range.low)
-                  : `${number(range.low)}–${number(range.high)}`;
+                  ? shown(range.low)
+                  : `${shown(range.low)}–${shown(range.high)}`;
               return (
                 <div key={range.key} className="contents">
                   <dt className="text-muted">{isKey(label) ? t(label) : range.key}</dt>

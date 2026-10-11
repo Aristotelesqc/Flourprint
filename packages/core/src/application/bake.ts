@@ -12,6 +12,7 @@ import {
   type BakeCommand,
   type BakeError,
   type BakeEvent,
+  type BakeOrigin,
   type BakeState,
   type Result,
   type UpcastError,
@@ -43,6 +44,15 @@ export const loadBake = async (
     upcast.push(current.value);
   }
   return ok(replayBake(bakeId, upcast));
+};
+
+/**
+ * The world a bake belongs to (history.md, ADR 0014), read from its BakeStarted snapshot: a bake
+ * without `origin` (recorded before 0.6.0, or with no start event) counts as real.
+ */
+export const bakeWorld = (events: readonly BakeEvent[]): BakeOrigin => {
+  const started = events.find((e) => e.payload.type === 'BakeStarted');
+  return (started?.payload.type === 'BakeStarted' && started.payload.snapshot.origin) || 'physical';
 };
 
 const contentOf = (command: BakeCommand): string =>

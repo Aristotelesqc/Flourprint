@@ -71,6 +71,17 @@ export const remindersFor = (
       }),
   );
 
+/**
+ * The system fires at real times: a reminder of a simulated bake, due on the simulated clock,
+ * fires that offset earlier (ADR 0014).
+ */
+export const onRealClock = (reminders: readonly Reminder[], offsetMs: number): Reminder[] =>
+  reminders.map((r) =>
+    offsetMs === 0
+      ? r
+      : { ...r, at: new Date(Date.parse(r.at) - offsetMs).toISOString() as Instant },
+  );
+
 const nativeNotifier = (channelName: string): Notifier => {
   const plugin = import('@capacitor/local-notifications').then(async ({ LocalNotifications }) => {
     await LocalNotifications.createChannel({

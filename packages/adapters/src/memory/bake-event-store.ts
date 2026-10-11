@@ -1,14 +1,16 @@
-import type {
-  AppendError,
-  AppendInput,
-  BakeEventStore,
-  StoredCommand,
+import {
+  bakeWorld,
+  type AppendError,
+  type AppendInput,
+  type BakeEventStore,
+  type StoredCommand,
 } from '@flourprint/core/application';
 import {
   domainError,
   err,
   ok,
   type BakeEvent,
+  type BakeOrigin,
   type BakeSummary,
   type Result,
 } from '@flourprint/core/domain';
@@ -62,6 +64,23 @@ export class MemoryBakeEventStore implements BakeEventStore {
     this.check(input);
     this.write(input);
     return ok(copy(input.events));
+  }
+
+  async deleteBakes(origin: BakeOrigin): Promise<number> {
+    // Every map is changed synchronously: no other call can see a half-erased history.
+    const bakeIds = new Set(
+      [...new Set([...this.#events.keys(), ...this.#summaries.keys()])].filter(
+        (bakeId) => bakeWorld(this.#events.get(bakeId) ?? []) === origin,
+      ),
+    );
+    for (const bakeId of bakeIds) {
+      this.#events.delete(bakeId);
+      this.#summaries.delete(bakeId);
+    }
+    for (const [commandId, command] of this.#commands) {
+      if (bakeIds.has(command.bakeId)) this.#commands.delete(commandId);
+    }
+    return bakeIds.size;
   }
 
   /** Throws on an integrity violation, before anything is written. */

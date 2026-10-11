@@ -35,6 +35,7 @@ const stores: Array<[string, () => BakeEventStore]> = [
         loadEvents: async (id) => (await opening).loadEvents(id),
         append: async (input) => (await opening).append(input),
         listBakes: async () => (await opening).listBakes(),
+        deleteBakes: async (origin) => (await opening).deleteBakes(origin),
       } satisfies BakeEventStore;
     },
   ],

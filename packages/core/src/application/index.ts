@@ -8,3 +8,4 @@ export * from './flours.js';
 export * from './feedback.js';
 export * from './templates/index.js';
 export * from './model-durations.js';
+export * from './stats.js';

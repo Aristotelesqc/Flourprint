@@ -1,5 +1,6 @@
 import type {
   BakeEvent,
+  BakeOrigin,
   BakeSummary,
   DomainError,
   FlourEntry,
@@ -52,6 +53,12 @@ export interface BakeEventStore {
   loadEvents(bakeId: string): Promise<readonly BakeEvent[]>;
   append(input: AppendInput): Promise<Result<readonly BakeEvent[], AppendError>>;
   listBakes(): Promise<readonly BakeSummary[]>;
+  /**
+   * Erases every bake of that origin (persistence.md, ADR 0014): events, command records and
+   * summaries, in one transaction; `physical` also takes bakes without `origin`. Resolves to the
+   * number of bakes deleted.
+   */
+  deleteBakes(origin: BakeOrigin): Promise<number>;
 }
 
 export interface SaveRevisionInput {

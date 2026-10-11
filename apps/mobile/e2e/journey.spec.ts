@@ -8,6 +8,19 @@ const openRecipe = async (page: Page) => {
 
 const unsaved = (page: Page) => page.getByText('Modifications non enregistrées');
 
+/** The header's start button of the open recipe (it reads "En cours" while a bake runs). */
+const headerStart = (page: Page) =>
+  page.locator('ion-header:visible').getByRole('button', { name: 'Démarrer', exact: true });
+
+/** Starts a bake now from the recipe header, through its confirmation, and opens it. */
+const startBake = async (page: Page) => {
+  await headerStart(page).click();
+  const alert = page.locator('ion-alert');
+  await expect(alert).toContainText('Démarrer la fournée maintenant ?');
+  await alert.getByRole('button', { name: 'Démarrer' }).click();
+  await expect(page).toHaveURL(/\/bakes\//);
+};
+
 test('typed decimals commit, and leaving an untouched field changes nothing', async ({ page }) => {
   await openRecipe(page);
   const saltGrams = page.getByLabel('Sel (g)', { exact: true });
@@ -40,8 +53,10 @@ test('an invalid entry stays visible and marked', async ({ page }) => {
 
 test('a double tap starts one bake; parallel steps run with real overlap', async ({ page }) => {
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la fournée' }).dblclick();
+  // A double tap opens one confirmation; a double tap on it starts one bake.
+  await headerStart(page).dblclick();
+  await expect(page.locator('ion-alert')).toHaveCount(1);
+  await page.locator('ion-alert').getByRole('button', { name: 'Démarrer' }).dblclick();
   await expect(page).toHaveURL(/\/bakes\//);
 
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
@@ -71,9 +86,7 @@ test('dough ready is recorded on a running fermentation step without ending it',
   page,
 }) => {
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
-  await expect(page).toHaveURL(/\/bakes\//);
+  await startBake(page);
 
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   // Not a dough step: no dough ready mark on the preferment.
@@ -97,8 +110,7 @@ test('dough ready is recorded on a running fermentation step without ending it',
 
 test('a note attaches to a step; an ended bake takes a rated review note', async ({ page }) => {
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
+  await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Note', exact: true }).click();
   // Attached to the running step by default; the baker may pick another.
@@ -124,8 +136,7 @@ test('copies all data for review, with the bake digest and its notes', async ({
 }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
+  await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Note', exact: true }).click();
   await page.locator('textarea:visible').fill('Bulles fines');
@@ -252,9 +263,7 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await shown('Pain test 1').click();
   await page.getByRole('listitem').filter({ hasText: 'Pain test 2' }).click();
   await expect(shown('Pain test 2').first()).toBeVisible();
-  await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
-  await expect(page).toHaveURL(/\/bakes\//);
+  await startBake(page);
   const back = page.locator('ion-back-button:visible');
   await expect(back).toHaveCount(1);
   await back.click();
@@ -452,9 +461,7 @@ test('follows several bakes on one screen, with actions and notes per bake', asy
   await back();
   for (const name of ['Poolish + tangzhong', 'Pain test 1']) {
     await shown(name).first().click();
-    await page.getByRole('button', { name: 'Processus' }).click();
-    await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
-    await expect(page).toHaveURL(/\/bakes\//);
+    await startBake(page);
     await back();
     await back();
   }
@@ -484,9 +491,7 @@ test('the advanced menu tells the state of reminders', async ({ page }) => {
 
 test('a proof running beside the preheat still takes its ready-to-bake mark', async ({ page }) => {
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
-  await expect(page).toHaveURL(/\/bakes\//);
+  await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
   await page.getByRole('button', { name: 'Échaudage terminé' }).click();
@@ -588,8 +593,7 @@ test('the planner can follow now; starting always starts now', async ({ page }) 
   await page.getByRole('button', { name: 'À une heure' }).click();
   await page.locator('input[type="datetime-local"]').fill('2026-03-05T14:00');
   await expect(page.getByText(/La fournée démarre au moment du toucher/)).toBeVisible();
-  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
-  await expect(page).toHaveURL(/\/bakes\//);
+  await startBake(page);
   // The timers run from the tap (08:00), not from the planned 14:00 three days later.
   await expect(page.getByText(/Début prévu 0?8[:h]00/).first()).toBeVisible();
 });
@@ -700,8 +704,7 @@ test('bake mode shows the next fold set and records it in the log', async ({ pag
   await foldTheBulk(page);
   await page.getByRole('button', { name: 'Enregistrer v2' }).click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Démarrer la fournée' }).click();
-  await expect(page).toHaveURL(/\/bakes\//);
+  await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
   await page.getByRole('button', { name: 'Échaudage terminé' }).click();
@@ -746,4 +749,117 @@ test('the browser preview keeps its data across a reload, until it is erased', a
   await page.goto('/recipes');
   await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible();
   await expect(page.getByText('Recette 1')).toHaveCount(0);
+});
+
+/** Back to the recipe list in the app (the browser build keeps its data in memory). */
+const backToRecipes = async (page: Page) => {
+  while (new URL(page.url()).pathname !== '/recipes') {
+    await page.locator('ion-back-button:visible').last().click();
+    await page.waitForTimeout(500);
+  }
+  await expect(page.getByRole('heading', { name: 'Recettes' }).locator('visible=true')).toHaveCount(
+    1,
+  );
+};
+
+/** Opens the sample recipe from the recipe list shown. */
+const openShownRecipe = (page: Page) =>
+  page.getByText('Poolish + tangzhong').locator('visible=true').first().click();
+
+const openAdvanced = async (page: Page) => {
+  await backToRecipes(page);
+  await page.getByLabel('Avancé').locator('visible=true').first().click();
+  await expect(page).toHaveURL(/\/advanced$/);
+};
+
+const setSimulation = async (page: Page, on: boolean) => {
+  const toggle = page.getByRole('switch', { name: /Mode simulation/ });
+  if ((await toggle.getAttribute('aria-checked')) !== String(on)) await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-checked', String(on));
+};
+
+test('a simulated bake keeps to its own world, on a clock that can be advanced', async ({
+  page,
+}) => {
+  await page.goto('/advanced');
+  await setSimulation(page, true);
+  await expect(page.getByText(/Mode simulation · heure simulée/)).toBeVisible();
+  await backToRecipes(page);
+  await openShownRecipe(page);
+  await headerStart(page).click();
+  await expect(page.locator('ion-alert')).toContainText('historique de simulation');
+  await page.locator('ion-alert').getByRole('button', { name: 'Démarrer' }).click();
+  await expect(page).toHaveURL(/\/bakes\//);
+
+  // The preferment runs 12 h; the scald starts as late as it can, 11 h from now.
+  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  const advance = page.getByRole('region', { name: 'Avancer le temps' });
+  await expect(advance).toContainText('Échaudage');
+  await advance.getByRole('button', { name: 'Au prochain moment prévu' }).click();
+  await expect(page.getByText('À faire aussi maintenant')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Commencer Échaudage' })).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Préferment' })).toHaveAttribute(
+    'aria-valuetext',
+    '1 h restantes',
+  );
+
+  // Real mode: the simulated bake is gone from the bakes and the history.
+  await openAdvanced(page);
+  await setSimulation(page, false);
+  await expect(page.getByText(/Mode simulation · heure simulée/)).toHaveCount(0);
+  await backToRecipes(page);
+  await page.getByLabel('Fournées en cours').locator('visible=true').first().click();
+  await expect(page.getByText(/Aucune fournée en cours/)).toBeVisible();
+  await backToRecipes(page);
+  await openShownRecipe(page);
+  await page.getByRole('button', { name: 'Historique' }).click();
+  await expect(page.getByText(/Aucune fournée pour l’instant/)).toBeVisible();
+
+  // Simulation again: it is back.
+  await openAdvanced(page);
+  await setSimulation(page, true);
+  await backToRecipes(page);
+  await page.getByLabel('Fournées en cours').locator('visible=true').first().click();
+  await expect(page.getByRole('region', { name: 'Poolish + tangzhong' })).toBeVisible();
+
+  // Its statistics, then erasing the simulation history.
+  await openAdvanced(page);
+  await page.locator('ion-item[router-link="/stats"]:visible').click();
+  await expect(page.getByText('Fournées simulées')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Dernières fournées' })).toContainText(
+    'Poolish + tangzhong',
+  );
+  await page.locator('ion-back-button:visible').last().click();
+  await expect(page).toHaveURL(/\/advanced$/);
+  await page.getByText('Effacer l’historique de simulation').locator('visible=true').click();
+  await expect(page.locator('ion-alert')).toContainText('1 fournée sera effacée');
+  await page.locator('ion-alert').getByRole('button', { name: 'Effacer' }).click();
+  await expect(page.getByText('1 fournée effacée.')).toBeVisible();
+  await backToRecipes(page);
+  await page.getByLabel('Fournées en cours').locator('visible=true').first().click();
+  await expect(page.getByText(/Aucune fournée en cours/)).toBeVisible();
+});
+
+test('temperatures follow the unit chosen for their context', async ({ page }) => {
+  await openRecipe(page);
+  const room = page.getByLabel('Température ambiante (°C)');
+  await room.fill('21');
+  await room.press('Enter');
+  await expect(unsaved(page).first()).toBeVisible();
+
+  await openAdvanced(page);
+  await page.getByRole('group', { name: 'Ambiante' }).getByRole('button', { name: '°F' }).click();
+  await backToRecipes(page);
+  await openShownRecipe(page);
+  const fahrenheit = page.getByLabel('Température ambiante (°F)');
+  await expect(fahrenheit).toHaveValue('70');
+  await fahrenheit.fill('75');
+  await fahrenheit.press('Enter');
+
+  // Stored in °C: 75 °F is 23.9 °C.
+  await openAdvanced(page);
+  await page.getByRole('group', { name: 'Ambiante' }).getByRole('button', { name: '°C' }).click();
+  await backToRecipes(page);
+  await openShownRecipe(page);
+  await expect(page.getByLabel('Température ambiante (°C)')).toHaveValue('23,9');
 });

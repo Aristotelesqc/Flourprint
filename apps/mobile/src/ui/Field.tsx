@@ -1,5 +1,7 @@
 import { useEffect, useId, useState } from 'react';
+import type { TemperatureContext } from '@flourprint/core/domain';
 import { editableNumber, parseDecimal } from '../i18n/numbers';
+import { useTemperature } from '../i18n/temperature';
 import { editableDuration, parseDuration } from '../i18n/time';
 import { useMessages } from '../i18n/use-messages';
 
@@ -148,20 +150,68 @@ interface OptionalNumberFieldProps {
   readonly placeholder?: string;
 }
 
-/** A number that may stay unknown, such as a temperature nobody measured. */
+/** An optional signed number: empty is unknown (`undefined`), a leading minus is accepted. */
+const parseOptional = (text: string): { ok: true; value: number | undefined } | { ok: false } => {
+  if (text.trim() === '') return { ok: true, value: undefined };
+  const compact = text.trim().replace(/^[−-]/, '');
+  const parsed = parseDecimal(compact);
+  if (parsed === undefined) return { ok: false };
+  return { ok: true, value: compact === text.trim() ? parsed : -parsed };
+};
+
+/** A number that may stay unknown, such as a quantity nobody measured. */
 export const OptionalNumberField = ({ value, ...props }: OptionalNumberFieldProps) => {
   const { t, locale } = useMessages();
   return (
     <Field<number | undefined>
       {...props}
       text={value === undefined ? '' : editableNumber(value, locale)}
-      parse={(text) => {
-        if (text.trim() === '') return { ok: true, value: undefined };
-        const compact = text.trim().replace(/^[−-]/, '');
-        const parsed = parseDecimal(compact);
-        if (parsed === undefined) return { ok: false };
-        return { ok: true, value: compact === text.trim() ? parsed : -parsed };
-      }}
+      parse={parseOptional}
+      invalidText={t('field.invalidNumber')}
+    />
+  );
+};
+
+interface TemperatureFieldProps {
+  readonly label: string;
+  /** Stored °C; undefined is an unknown temperature, shown empty, never as zero. */
+  readonly value: number | undefined;
+  /** Which display unit applies (values-and-units.md). */
+  readonly context: TemperatureContext;
+  /** A difference such as a mixer friction: converted by the scale only. */
+  readonly difference?: boolean;
+  /** An empty field commits `undefined`; a typed value is committed in °C. */
+  readonly onCommit: Commit<number | undefined>;
+  readonly width?: string;
+  /** °C shown while empty, such as the inherited ambient. */
+  readonly placeholderC?: number;
+}
+
+/** A temperature typed and shown in the unit of its context, stored in °C. */
+export const TemperatureField = ({
+  value,
+  context,
+  difference = false,
+  onCommit,
+  placeholderC,
+  ...props
+}: TemperatureFieldProps) => {
+  const { t } = useMessages();
+  const temperature = useTemperature();
+  return (
+    <Field<number | undefined>
+      {...props}
+      unit={temperature.unit(context)}
+      text={value === undefined ? '' : temperature.editable(value, context, difference)}
+      {...(placeholderC === undefined
+        ? {}
+        : { placeholder: temperature.editable(placeholderC, context, difference) })}
+      parse={parseOptional}
+      onCommit={(typed) =>
+        onCommit(
+          typed === undefined ? undefined : temperature.toCelsius(typed, context, difference),
+        )
+      }
       invalidText={t('field.invalidNumber')}
     />
   );

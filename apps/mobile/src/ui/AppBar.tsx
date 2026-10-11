@@ -1,6 +1,7 @@
 import { IonButton, IonButtons, IonHeader, IonToolbar } from '@ionic/react';
 import type { ReactNode } from 'react';
 import { useMessages } from '../i18n/use-messages';
+import { SimulationBanner } from './SimulationBanner';
 
 /** Placeholder mark until the logo exists: a rounded square with an ear of wheat. */
 export const AppMark = () => (
@@ -26,6 +27,7 @@ export const AppBar = ({ children }: { children?: ReactNode }) => {
         </div>
         <IonButtons slot="end">{children}</IonButtons>
       </IonToolbar>
+      <SimulationBanner />
     </IonHeader>
   );
 };

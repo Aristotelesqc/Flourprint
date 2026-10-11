@@ -10,6 +10,7 @@ import { DeviceChecksPage } from './pages/DeviceChecksPage';
 import { FloursPage } from './pages/FloursPage';
 import { RecipePage } from './pages/RecipePage';
 import { RecipesPage } from './pages/RecipesPage';
+import { StatsPage } from './pages/StatsPage';
 import { FlourCatalogProvider } from './services/flours';
 import { NotificationSync } from './services/NotificationSync';
 import { ServicesProvider, type Services } from './services/services';
@@ -31,6 +32,7 @@ export const App = ({ services, locale }: { services: Services; locale: Locale }
               <Route path="/bakes/:bakeId" element={<BakePage />} />
               <Route path="/flours" element={<FloursPage />} />
               <Route path="/advanced" element={<AdvancedPage />} />
+              <Route path="/stats" element={<StatsPage />} />
               <Route path="/device-checks" element={<DeviceChecksPage />} />
               <Route path="/" element={<Navigate to="/recipes" replace />} />
             </IonRouterOutlet>

@@ -29,7 +29,7 @@ interface Props {
   readonly preparationIds: readonly string[];
   /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
   readonly canStart: boolean;
-  /** Starts the bake from the moment of the tap, whatever time the planner shows. */
+  /** Starts another bake from the moment of the tap, whatever time the planner shows. */
   readonly onStart: () => void;
   /** A bake of this recipe in progress: the main action opens it; another start is explicit. */
   readonly activeBakeId?: string;
@@ -298,7 +298,8 @@ export const ProcessSection = ({
       {canStart && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
       )}
-      {activeBakeId ? (
+      {/* The header's button starts a bake; a second one at once is started from here. */}
+      {activeBakeId && (
         <>
           <IonButton expand="block" size="large" onClick={() => onOpenBake(activeBakeId)}>
             {t('process.openBake')}
@@ -307,15 +308,6 @@ export const ProcessSection = ({
             {t('process.startAnother')}
           </IonButton>
         </>
-      ) : (
-        <IonButton
-          expand="block"
-          size="large"
-          disabled={!canStart || !projection.ok}
-          onClick={onStart}
-        >
-          {t('process.start')}
-        </IonButton>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { IonContent, IonModal } from '@ionic/react';
 import { useState } from 'react';
 import { en, type MessageKey } from '../i18n/messages';
+import { useTemperature } from '../i18n/temperature';
 import { useMessages } from '../i18n/use-messages';
 
 /** A help topic: the `<topic>` of the `help.<topic>.title` keys. */
@@ -23,13 +24,21 @@ export const InfoSheet = ({
   onClose: () => void;
 }) => {
   const { t } = useMessages();
+  const temperature = useTemperature();
   const [more, setMore] = useState(false);
+  // Temperatures named by the explanations, in the device's units (values-and-units.md).
+  const values = {
+    fridge: temperature.format(4, 'cold'),
+    noFriction: temperature.format(0, 'ambient', { difference: true }),
+    waterLow: temperature.format(0, 'ambient'),
+    waterHigh: temperature.format(60, 'ambient'),
+  };
   const paragraphs = (['body1', 'body2', 'body3'] as const).flatMap((part) => {
     const key = `help.${topic}.${part}`;
-    return isKey(key) ? [t(key)] : [];
+    return isKey(key) ? [t(key, values)] : [];
   });
   const detailKey = `help.${topic}.more`;
-  const detail = isKey(detailKey) ? t(detailKey) : undefined;
+  const detail = isKey(detailKey) ? t(detailKey, values) : undefined;
   return (
     <IonModal
       isOpen={open}

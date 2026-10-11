@@ -18,6 +18,8 @@ import { bakeAlerts, bakeView, stepProgress } from '../services/bake-view';
 import { useBakeCommands, type CommandOutcome } from '../services/bake-commands';
 import { activeBakes } from '../services/bakes';
 import { useServices } from '../services/services';
+import { usePreferences } from '../services/use-preferences';
+import { SimulationBanner } from '../ui/SimulationBanner';
 
 interface Running {
   readonly state: BakeState;
@@ -36,6 +38,7 @@ export const BakesPage = () => {
   const [failure, setFailure] = useState<{ bakeId: string; text: string }>();
   const [noteFor, setNoteFor] = useState<{ state: BakeState; stepId?: string }>();
   const commands = useBakeCommands(services);
+  const { simulation, offsetMs } = usePreferences();
 
   const load = useCallback(async () => {
     try {
@@ -59,6 +62,8 @@ export const BakesPage = () => {
   }, [services]);
 
   useIonViewWillEnter(() => void load(), [load]);
+  // Only the bakes of the current mode, on its clock (ADR 0014).
+  useEffect(() => void load(), [load, simulation, offsetMs]);
   useEffect(() => {
     const timer = setInterval(() => setNow(services.clock.now()), 15_000);
     const resume = () => {
@@ -120,6 +125,7 @@ export const BakesPage = () => {
           </IonButtons>
           <IonTitle>{t('bakes.title')}</IonTitle>
         </IonToolbar>
+        <SimulationBanner />
       </IonHeader>
       <IonContent className="ion-padding">
         <div className="flex flex-col gap-4">

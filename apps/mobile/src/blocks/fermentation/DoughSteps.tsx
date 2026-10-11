@@ -4,16 +4,16 @@ import { isColdStep } from '@flourprint/core/application';
 import {
   insertStepAfter,
   removeStep,
+  temperatureContext,
   updateStep,
   type Estimate,
   type Process,
   type ProcessStep,
 } from '@flourprint/core/domain';
-import { editableNumber } from '../../i18n/numbers';
 import { editableDuration, formatDuration } from '../../i18n/time';
 import { useMessages } from '../../i18n/use-messages';
 import { newStepId } from '../../services/process-edit';
-import { DurationField, OptionalNumberField } from '../../ui/Field';
+import { DurationField, TemperatureField } from '../../ui/Field';
 import { InfoButton } from '../../ui/InfoButton';
 import { useEstimateText, withConditions } from './text';
 
@@ -106,7 +106,7 @@ const StepRow = ({
   ambientC: number | undefined;
   onProcess: (process: Process) => boolean;
 }) => {
-  const { t, stepName, locale } = useMessages();
+  const { t, stepName } = useMessages();
   const { ends } = useEstimateText();
   const [presentAlert] = useIonAlert();
   const [open, setOpen] = useState(false);
@@ -170,12 +170,13 @@ const StepRow = ({
         </button>
       </span>
       <span className="flex items-center gap-2">
-        <OptionalNumberField
+        <TemperatureField
           label={t('fermentation.stepTemperature', { step: name })}
-          unit="°C"
+          // A step the card marks cold reads in the cold unit (values-and-units.md).
+          context={fridge ? 'cold' : temperatureContext(step)}
           width="5.75rem"
           value={step.conditions?.temperatureC}
-          {...(ambientC === undefined ? {} : { placeholder: editableNumber(ambientC, locale) })}
+          {...(ambientC === undefined ? {} : { placeholderC: ambientC })}
           onCommit={(value) => onProcess(withConditions(process, step.id, { temperatureC: value }))}
         />
         {auto ? (

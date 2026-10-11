@@ -55,7 +55,7 @@ export const helpEn = {
   'help.fermentation.body1':
     'The app estimates how long the dough needs to ferment from the yeast dose, the temperatures and the planned durations of the dough steps (between the mix and the bake, or the boil for bagels). They count as one fermentation: the dough’s state is not reset between them.',
   'help.fermentation.body2':
-    'Basic mode takes the dough at room temperature. Advanced mode aims at a dough temperature and gives the water temperature to use. Each step has its own place: room, or fridge at 4 °C.',
+    'Basic mode takes the dough at room temperature. Advanced mode aims at a dough temperature and gives the water temperature to use. Each step has its own place: room, or fridge at {fridge}.',
   'help.fermentation.body3':
     'The result line tells how far the plan takes the dough towards its “ready to bake” target; “Details” gives the ranges in plain words. The recipe changes only by an edit: a step on Auto, “Use this time” or “Use” for the yeast.',
   'help.fermentation.more':
@@ -91,9 +91,9 @@ export const helpEn = {
 
   'help.schedule.title': 'Fermentation schedules',
   'help.schedule.body1':
-    'A schedule replaces the dough steps, between the mix and the bake, with a usual sequence: bulk and proof; a slow cold bulk (18 h at 4 °C); a cold-retarded proof (14 h at 4 °C, baked from the fridge); or a short same-day plan.',
+    'A schedule replaces the dough steps, between the mix and the bake, with a usual sequence: bulk and proof; a slow cold bulk (18 h at {fridge}); a cold-retarded proof (14 h at {fridge}, baked from the fridge); or a short same-day plan.',
   'help.schedule.body2':
-    'Steps in the cold are set to the fridge at 4 °C; the others stay at room temperature. The folds of the bulk are kept. Steps that add ingredients or carry another technique are not replaced: the schedule is refused.',
+    'Steps in the cold are set to the fridge at {fridge}; the others stay at room temperature. The folds of the bulk are kept. Steps that add ingredients or carry another technique are not replaced: the schedule is refused.',
   'help.schedule.body3':
     'The last step of a schedule is on Auto: its time follows the model. Every value stays editable.',
 
@@ -113,8 +113,9 @@ export const helpEn = {
   'help.waterTemp.body2':
     'Base-temperature method: base = 3 × target (4 × with a preferment); water = base − flour − room − preferment − mixer friction. The flour is taken at room temperature and a preferment at its step’s temperature.',
   'help.waterTemp.body3':
-    'Friction is heat the mixer adds, so it lowers the water temperature. It counts as 0 °C until you set it, and the result then says so. A few measured doughs will tell you your mixer’s value.',
-  'help.waterTemp.more': 'A result below 0 °C or above 60 °C is flagged, never clipped.',
+    'Friction is heat the mixer adds, so it lowers the water temperature. It counts as {noFriction} until you set it, and the result then says so. A few measured doughs will tell you your mixer’s value.',
+  'help.waterTemp.more':
+    'A result below {waterLow} or above {waterHigh} is flagged, never clipped.',
 
   'help.alap.title': 'As late as possible',
   'help.alap.body1':
@@ -233,7 +234,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.fermentation.body1':
     'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes de la pâte (entre le pétrissage et la cuisson, ou l’ébullition pour les bagels). Elles comptent comme une seule fermentation : l’état de la pâte n’est pas remis à zéro entre elles.',
   'help.fermentation.body2':
-    'Le mode de base prend la pâte à la température ambiante. Le mode avancé vise une température de pâte et donne la température de l’eau à utiliser. Chaque étape a son lieu : ambiante, ou frigo à 4 °C.',
+    'Le mode de base prend la pâte à la température ambiante. Le mode avancé vise une température de pâte et donne la température de l’eau à utiliser. Chaque étape a son lieu : ambiante, ou frigo à {fridge}.',
   'help.fermentation.body3':
     'La ligne de résultat indique jusqu’où le plan mène la pâte vers sa cible « prête à cuire » ; « Détails » donne les fourchettes en phrases simples. La recette ne change que par une modification : une étape en Auto, « Prendre ce temps » ou « Utiliser » pour la levure.',
   'help.fermentation.more':
@@ -269,9 +270,9 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.schedule.title': 'Horaires de fermentation',
   'help.schedule.body1':
-    'Un horaire remplace les étapes de la pâte, entre le pétrissage et la cuisson, par une suite habituelle : pointage et apprêt ; pointage lent au froid (18 h à 4 °C) ; apprêt bloqué au froid (14 h à 4 °C, cuit à la sortie du frigo) ; ou un plan court le même jour.',
+    'Un horaire remplace les étapes de la pâte, entre le pétrissage et la cuisson, par une suite habituelle : pointage et apprêt ; pointage lent au froid (18 h à {fridge}) ; apprêt bloqué au froid (14 h à {fridge}, cuit à la sortie du frigo) ; ou un plan court le même jour.',
   'help.schedule.body2':
-    'Les étapes au froid sont placées au frigo à 4 °C ; les autres restent à la température ambiante. Les rabats du pointage sont gardés. Des étapes qui ajoutent des ingrédients ou portent une autre technique ne sont pas remplacées : l’horaire est refusé.',
+    'Les étapes au froid sont placées au frigo à {fridge} ; les autres restent à la température ambiante. Les rabats du pointage sont gardés. Des étapes qui ajoutent des ingrédients ou portent une autre technique ne sont pas remplacées : l’horaire est refusé.',
   'help.schedule.body3':
     'La dernière étape d’un horaire est en Auto : son temps suit le modèle. Toutes les valeurs restent modifiables.',
 
@@ -291,8 +292,9 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.waterTemp.body2':
     'Méthode de la température de base : base = 3 × visée (4 × avec un préferment) ; eau = base − farine − ambiante − préferment − friction du pétrin. La farine est prise à l’ambiante et un préferment à la température de son étape.',
   'help.waterTemp.body3':
-    'La friction est la chaleur que le pétrin ajoute : elle baisse donc la température de l’eau. Elle compte pour 0 °C tant qu’elle n’est pas réglée, et le résultat le dit. Quelques pâtes mesurées donneront la valeur du pétrin.',
-  'help.waterTemp.more': 'Un résultat sous 0 °C ou au-dessus de 60 °C est signalé, jamais tronqué.',
+    'La friction est la chaleur que le pétrin ajoute : elle baisse donc la température de l’eau. Elle compte pour {noFriction} tant qu’elle n’est pas réglée, et le résultat le dit. Quelques pâtes mesurées donneront la valeur du pétrin.',
+  'help.waterTemp.more':
+    'Un résultat sous {waterLow} ou au-dessus de {waterHigh} est signalé, jamais tronqué.',
 
   'help.alap.title': 'Le plus tard possible',
   'help.alap.body1':

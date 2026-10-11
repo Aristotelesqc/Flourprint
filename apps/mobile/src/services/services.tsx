@@ -24,7 +24,9 @@ import {
   type SnapshotLoad,
 } from './browser-snapshot';
 import { createNotifier, type Notifier } from './notifications';
+import { createPreferences, currentWorld, worldClock, type PreferenceStore } from './preferences';
 import { sampleRecipe } from './seed';
+import { worldBakes, type WorldBakeStore } from './world-bakes';
 
 /**
  * Composition root of the app (ADR 0001). On the device the stores are SQLite through Capacitor
@@ -33,10 +35,18 @@ import { sampleRecipe } from './seed';
  */
 export interface Services {
   readonly recipes: RecipeRepository;
-  readonly bakes: BakeEventStore;
+  /** The bakes of the current world only, real or simulated (ADR 0014). */
+  readonly bakes: WorldBakeStore;
+  /** Every bake of both worlds: backups, the browser snapshot and the feedback export. */
+  readonly allBakes: BakeEventStore;
   /** Personal flour entries (flours.md); built-in entries are code. */
   readonly flours: FlourRegistry;
+  /** The clock of the current world: the real one plus the offset in simulation (ADR 0014). */
   readonly clock: Clock;
+  /** The real clock, for what both worlds share: recipes, drafts, flours, exports. */
+  readonly realClock: Clock;
+  /** Device preferences: simulation mode, its offset, temperature units. */
+  readonly preferences: PreferenceStore;
   readonly ids: IdGenerator;
   readonly storage: 'sqlite' | 'memory';
   /** Where the app runs: the phone, the PC shell (ADR 0011) or a plain browser. */
@@ -53,7 +63,7 @@ export interface Services {
 }
 
 const PLATFORM = Capacitor.getPlatform() === 'android' ? 'android' : 'web';
-const clock: Clock = { now: () => new Date().toISOString() as Instant };
+const realClock: Clock = { now: () => new Date().toISOString() as Instant };
 const ids: IdGenerator = { next: () => crypto.randomUUID() };
 
 const seedIfEmpty = async (recipes: RecipeRepository): Promise<void> => {
@@ -64,8 +74,20 @@ const seedIfEmpty = async (recipes: RecipeRepository): Promise<void> => {
     expectedHead: 0,
     formula: sampleRecipe.formula,
     process: sampleRecipe.process,
-    createdAt: clock.now(),
+    createdAt: realClock.now(),
   });
+};
+
+/** What every platform shares around its stores: the preferences, the world view and clocks. */
+const worlds = (bakes: BakeEventStore) => {
+  const preferences = createPreferences();
+  return {
+    bakes: worldBakes(bakes, () => currentWorld(preferences.get())),
+    allBakes: bakes,
+    clock: worldClock(preferences, realClock),
+    realClock,
+    preferences,
+  };
 };
 
 /** The SQLite bridge the desktop shell exposes (ADR 0011); absent in a browser and on Android. */
@@ -88,9 +110,8 @@ export const createServices = async (options: {
     await seedIfEmpty(recipes);
     return {
       recipes,
-      bakes: new SqlBakeEventStore(db.value.driver),
+      ...worlds(new SqlBakeEventStore(db.value.driver)),
       flours: new SqlFlourRegistry(db.value.driver),
-      clock,
       ids,
       storage: 'sqlite',
       platform: PLATFORM,
@@ -109,9 +130,8 @@ export const createServices = async (options: {
     await seedIfEmpty(recipes);
     return {
       recipes,
-      bakes: new SqlBakeEventStore(db.value.driver),
+      ...worlds(new SqlBakeEventStore(db.value.driver)),
       flours: new SqlFlourRegistry(db.value.driver),
-      clock,
       ids,
       storage: 'sqlite',
       platform: 'desktop',
@@ -127,7 +147,7 @@ export const createServices = async (options: {
   if (browserSnapshotAvailable()) {
     const loaded = await restoreBrowserSnapshot(new MemoryRestoreTarget(recipes, bakes, flours));
     await seedIfEmpty(recipes);
-    const stop = keepBrowserSnapshot({ recipes, bakes, flours }, clock.now);
+    const stop = keepBrowserSnapshot({ recipes, bakes, flours }, realClock.now);
     browserData = {
       loaded,
       erase: async () => {
@@ -140,9 +160,8 @@ export const createServices = async (options: {
   }
   return {
     recipes,
-    bakes,
+    ...worlds(bakes),
     flours,
-    clock,
     ids,
     storage: 'memory',
     platform: 'web',

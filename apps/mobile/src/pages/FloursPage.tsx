@@ -81,7 +81,11 @@ export const FloursPage = () => {
   const create = () =>
     setTarget({
       kind: 'create',
-      entry: newFlourEntry({ id: '', name: t('flours.newName'), createdAt: services.clock.now() }),
+      entry: newFlourEntry({
+        id: '',
+        name: t('flours.newName'),
+        createdAt: services.realClock.now(),
+      }),
     });
 
   return (
@@ -207,7 +211,7 @@ const FlourSheet = ({
     // Reset only when another entry is opened: the names refresh while the sheet is open.
   }, [target]);
 
-  const now = (): Instant => services.clock.now();
+  const now = (): Instant => services.realClock.now();
 
   const failed = async (failure: SaveFlourError) => {
     if (failure.code === 'HeadConflict' && target) {

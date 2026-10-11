@@ -63,7 +63,7 @@ export const en = {
   'recipes.card.neverBaked': 'Never baked',
   'recipes.activeBake': 'Baking now · {recipe}',
   'bakes.title': 'Bakes in progress',
-  'bakes.empty': 'No bake in progress. Start one from the Process tab of a recipe.',
+  'bakes.empty': 'No bake in progress. Start one with the Bake button of a recipe.',
   'bakes.open': 'Open',
   'bakes.unreadable':
     '{count, plural, one {# running bake cannot be read by this version} other {# running bakes cannot be read by this version}}.',
@@ -266,7 +266,6 @@ export const en = {
   'process.after': 'After {steps}',
   'process.unknown': 'Time unknown until {steps} ends',
   'process.duration': 'Duration of {step}',
-  'process.start': 'Start the bake',
   'process.openBake': 'Open the bake in progress',
   'process.startAnother': 'Start another bake',
   'process.saveFirst': 'Save the changes before starting a bake.',
@@ -349,7 +348,7 @@ export const en = {
   'notify.fold.title': 'Folds: set {set}/{count}',
   'notify.fold.body': '{recipe} · {step}, set {set} due',
   'check.folds_exceed_step': 'The folds of {step} last longer than the step.',
-  'history.empty': 'No bake yet. Start one from the Process tab.',
+  'history.empty': 'No bake yet. Start one with the Bake button.',
   'history.item': '{date} · version {version}',
   'history.status.notStarted': 'Not started',
   'history.status.active': 'In progress',
@@ -550,8 +549,8 @@ export const en = {
   'fermentation.note.friction_not_counted': 'mixer friction not counted',
   'fermentation.note.preferment_at_room_temperature': 'preferment taken at room temperature',
   'fermentation.note.flour_at_room_temperature': 'flour at room temperature',
-  'fermentation.note.water_below_0C': 'below 0 °C: not reachable with water alone',
-  'fermentation.note.water_above_60C': 'above 60 °C: too hot for the yeast',
+  'fermentation.note.water_below_0C': 'below {low}: not reachable with water alone',
+  'fermentation.note.water_above_60C': 'above {high}: too hot for the yeast',
   'fermentation.stepTemperature': '{step}, temperature',
   'fermentation.unbounded': 'not reached within {days} days',
   'fermentation.reachedBefore': 'The target is reached before {step}.',
@@ -583,7 +582,7 @@ export const en = {
   'fermentation.reason.dose_outside_domain':
     'The yeast dose is outside the model’s range (0.01 to 3 % fresh-yeast equivalent).',
   'fermentation.reason.temperature_outside_domain':
-    'A temperature is outside the model’s range (1.7 to 35 °C).',
+    'A temperature is outside the model’s range ({low} to {high}).',
   'fermentation.reason.end_point_not_reached':
     'The dough would not reach its end point within three weeks.',
   'fermentation.reason.no_mix_step': 'The process has no mix step.',
@@ -775,6 +774,69 @@ export const en = {
   'error.InvalidFlourEntry': 'This flour entry is not valid.',
   'advanced.flours': 'Flours',
   'advanced.floursHint': 'Built-in and personal flours, with what is known about them',
+  // Simulation mode (ADR 0014)
+  'sim.banner': 'Simulation mode · simulated time {time}',
+  'sim.advance': 'Advance time',
+  'sim.advance.next': 'To the next planned moment',
+  'sim.advance.nextAt': '{time} · {step}',
+  'sim.advance.none': 'No planned moment ahead.',
+  'sim.advance.quarter': '+15 min',
+  'sim.advance.hour': '+1 h',
+  'advanced.simulation': 'Simulation',
+  'advanced.simulation.toggle': 'Simulation mode',
+  'advanced.simulation.hint':
+    'Bakes started while it is on are simulated: they have their own history and statistics, and time can be advanced. Recipes, drafts and flours are shared.',
+  'advanced.history': 'Bake history',
+  'advanced.stats': 'Statistics',
+  'advanced.statsHint': 'Bakes of the current mode, real or simulated',
+  'advanced.eraseReal': 'Erase the real history',
+  'advanced.eraseSimulation': 'Erase the simulation history',
+  'advanced.eraseHint': 'Every bake of this kind, running ones included. Recipes are kept.',
+  'advanced.eraseConfirm':
+    '{count, plural, =0 {No bake to erase.} one {# bake will be erased, running ones included.} other {# bakes will be erased, running ones included.}} This cannot be undone: copy all data first to keep a record.',
+  'advanced.erase': 'Erase',
+  'advanced.erased':
+    '{count, plural, =0 {No bake erased.} one {# bake erased.} other {# bakes erased.}}',
+  'advanced.eraseFailed': 'The history could not be erased.',
+  // Temperature display units (values-and-units.md)
+  'advanced.units': 'Temperature units',
+  'advanced.units.oven': 'Oven',
+  'advanced.units.cold': 'Cold',
+  'advanced.units.ambient': 'Ambient',
+  'advanced.units.hint':
+    'Oven: bake, preheat, boil. Cold: fridge, freezer, retard. Ambient: everything else, dough and water included. Values are always stored in °C.',
+  'recipe.startConfirm': 'Start the bake now?',
+  'recipe.startConfirmSimulation': 'Simulation mode: the bake goes to the simulation history.',
+  'recipe.startNow': 'Start',
+  // Statistics (ADR 0014)
+  'stats.title': 'Statistics',
+  'stats.mode.physical': 'Real bakes',
+  'stats.mode.simulation': 'Simulated bakes',
+  'stats.empty': 'No bake yet in this mode.',
+  'stats.counts': 'Bakes',
+  'stats.total': 'Total',
+  'stats.finished': 'Finished',
+  'stats.abandoned': 'Abandoned',
+  'stats.active': 'In progress',
+  'stats.recipes': 'Most baked',
+  'stats.bakeCount': '{count, plural, one {# bake} other {# bakes}}',
+  'stats.durations': 'Planned and recorded times',
+  'stats.durationsHint':
+    'Median by operation: the plan at the start of the bake against the time recorded.',
+  'stats.durationLine': '{planned} planned · {recorded} recorded · n = {n}',
+  'stats.longer': '+{duration}',
+  'stats.shorter': '−{duration}',
+  'stats.onPlan': 'on plan',
+  'stats.readiness': '“Dough ready” marks',
+  'stats.readinessCount': '{count, plural, one {# mark} other {# marks}}',
+  'stats.readinessCompared':
+    'Median time in the step at the mark: {recorded}; model: {model} ({difference}), over {n, plural, one {# mark} other {# marks}}.',
+  'stats.readinessNoModel': 'No mark on a step with a model estimate yet.',
+  'stats.ratings': 'Average rating',
+  'stats.ratingLine': '{average}/5 · {n, plural, one {# rating} other {# ratings}}',
+  'stats.recent': 'Last bakes',
+  'stats.recentLine': '{date} · {status}',
+  'stats.nothing': 'Nothing recorded yet.',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -843,8 +905,7 @@ export const fr: Catalog = {
   'recipes.card.neverBaked': 'Jamais cuite',
   'recipes.activeBake': 'Fournée en cours · {recipe}',
   'bakes.title': 'Fournées en cours',
-  'bakes.empty':
-    'Aucune fournée en cours. En démarrer une depuis l’onglet Processus d’une recette.',
+  'bakes.empty': 'Aucune fournée en cours. En démarrer une avec le bouton Démarrer d’une recette.',
   'bakes.open': 'Ouvrir',
   'bakes.unreadable':
     '{count, plural, one {# fournée en cours ne peut pas être lue par cette version} other {# fournées en cours ne peuvent pas être lues par cette version}}.',
@@ -1049,7 +1110,6 @@ export const fr: Catalog = {
   'process.after': 'Après {steps}',
   'process.unknown': 'Heure inconnue tant que {steps} n’est pas terminé',
   'process.duration': 'Durée : {step}',
-  'process.start': 'Démarrer la fournée',
   'process.openBake': 'Voir la fournée en cours',
   'process.startAnother': 'Démarrer une autre fournée',
   'process.saveFirst': 'Enregistrer les modifications avant de démarrer une fournée.',
@@ -1133,7 +1193,7 @@ export const fr: Catalog = {
   'notify.fold.title': 'Rabats : série {set}/{count}',
   'notify.fold.body': '{recipe} · {step}, série {set} prévue',
   'check.folds_exceed_step': 'Les rabats de {step} durent plus longtemps que l’étape.',
-  'history.empty': 'Aucune fournée pour l’instant. En démarrer une depuis l’onglet Processus.',
+  'history.empty': 'Aucune fournée pour l’instant. En démarrer une avec le bouton Démarrer.',
   'history.item': '{date} · version {version}',
   'history.status.notStarted': 'Pas commencée',
   'history.status.active': 'En cours',
@@ -1339,8 +1399,8 @@ export const fr: Catalog = {
   'fermentation.note.friction_not_counted': 'friction du pétrin non comptée',
   'fermentation.note.preferment_at_room_temperature': 'préferment pris à l’ambiante',
   'fermentation.note.flour_at_room_temperature': 'farine à l’ambiante',
-  'fermentation.note.water_below_0C': 'sous 0 °C : impossible avec de l’eau seule',
-  'fermentation.note.water_above_60C': 'au-dessus de 60 °C : trop chaud pour la levure',
+  'fermentation.note.water_below_0C': 'sous {low} : impossible avec de l’eau seule',
+  'fermentation.note.water_above_60C': 'au-dessus de {high} : trop chaud pour la levure',
   'fermentation.stepTemperature': '{step}, température',
   'fermentation.unbounded': 'pas atteinte en {days} jours',
   'fermentation.reachedBefore': 'La cible est atteinte avant {step}.',
@@ -1373,7 +1433,7 @@ export const fr: Catalog = {
   'fermentation.reason.dose_outside_domain':
     'La dose de levure sort du domaine du modèle (0,01 à 3 % en équivalent levure fraîche).',
   'fermentation.reason.temperature_outside_domain':
-    'Une température sort du domaine du modèle (1,7 à 35 °C).',
+    'Une température sort du domaine du modèle ({low} à {high}).',
   'fermentation.reason.end_point_not_reached':
     'La pâte n’atteindrait pas son point final en trois semaines.',
   'fermentation.reason.no_mix_step': 'Le processus n’a pas d’étape de pétrissage.',
@@ -1571,6 +1631,71 @@ export const fr: Catalog = {
   'error.InvalidFlourEntry': 'Cette fiche de farine n’est pas valide.',
   'advanced.flours': 'Farines',
   'advanced.floursHint': 'Farines de base et personnelles, avec ce qui en est connu',
+  // Mode simulation (ADR 0014)
+  'sim.banner': 'Mode simulation · heure simulée {time}',
+  'sim.advance': 'Avancer le temps',
+  'sim.advance.next': 'Au prochain moment prévu',
+  'sim.advance.nextAt': '{time} · {step}',
+  'sim.advance.none': 'Aucun moment prévu à venir.',
+  'sim.advance.quarter': '+15 min',
+  'sim.advance.hour': '+1 h',
+  'advanced.simulation': 'Simulation',
+  'advanced.simulation.toggle': 'Mode simulation',
+  'advanced.simulation.hint':
+    'Les fournées démarrées pendant ce mode sont simulées : elles ont leur propre historique et leurs statistiques, et le temps peut être avancé. Recettes, brouillons et farines sont communs.',
+  'advanced.history': 'Historique des fournées',
+  'advanced.stats': 'Statistiques',
+  'advanced.statsHint': 'Fournées du mode actuel, réel ou simulation',
+  'advanced.eraseReal': 'Effacer l’historique réel',
+  'advanced.eraseSimulation': 'Effacer l’historique de simulation',
+  'advanced.eraseHint': 'Toutes les fournées de ce type, en cours comprises. Les recettes restent.',
+  'advanced.eraseConfirm':
+    '{count, plural, =0 {Aucune fournée à effacer.} one {# fournée sera effacée, en cours comprises.} other {# fournées seront effacées, en cours comprises.}} C’est irréversible : copier toutes les données avant, pour en garder une trace.',
+  'advanced.erase': 'Effacer',
+  'advanced.erased':
+    '{count, plural, =0 {Aucune fournée effacée.} one {# fournée effacée.} other {# fournées effacées.}}',
+  'advanced.eraseFailed': 'L’historique n’a pas pu être effacé.',
+  // Unités de température (values-and-units.md)
+  'advanced.units': 'Unités de température',
+  'advanced.units.oven': 'Four',
+  'advanced.units.cold': 'Froid',
+  'advanced.units.ambient': 'Ambiante',
+  'advanced.units.hint':
+    'Four : cuisson, préchauffage, ébullition. Froid : frigo, congélateur, retard. Ambiante : tout le reste, pâte et eau comprises. Les valeurs sont toujours enregistrées en °C.',
+  'recipe.startConfirm': 'Démarrer la fournée maintenant ?',
+  'recipe.startConfirmSimulation':
+    'Mode simulation : la fournée ira dans l’historique de simulation.',
+  'recipe.startNow': 'Démarrer',
+  // Statistiques (ADR 0014)
+  'stats.title': 'Statistiques',
+  'stats.mode.physical': 'Fournées réelles',
+  'stats.mode.simulation': 'Fournées simulées',
+  'stats.empty': 'Aucune fournée pour l’instant dans ce mode.',
+  'stats.counts': 'Fournées',
+  'stats.total': 'Total',
+  'stats.finished': 'Terminées',
+  'stats.abandoned': 'Abandonnées',
+  'stats.active': 'En cours',
+  'stats.recipes': 'Recettes les plus faites',
+  'stats.bakeCount': '{count, plural, one {# fournée} other {# fournées}}',
+  'stats.durations': 'Temps prévus et enregistrés',
+  'stats.durationsHint':
+    'Médiane par opération : le plan au démarrage de la fournée face au temps enregistré.',
+  'stats.durationLine': '{planned} prévu · {recorded} enregistré · n = {n}',
+  'stats.longer': '+{duration}',
+  'stats.shorter': '−{duration}',
+  'stats.onPlan': 'comme prévu',
+  'stats.readiness': 'Marques « pâte prête »',
+  'stats.readinessCount': '{count, plural, one {# marque} other {# marques}}',
+  'stats.readinessCompared':
+    'Temps médian dans l’étape à la marque : {recorded} ; modèle : {model} ({difference}), sur {n, plural, one {# marque} other {# marques}}.',
+  'stats.readinessNoModel':
+    'Aucune marque sur une étape avec une estimation du modèle pour l’instant.',
+  'stats.ratings': 'Note moyenne',
+  'stats.ratingLine': '{average}/5 · {n, plural, one {# note} other {# notes}}',
+  'stats.recent': 'Dernières fournées',
+  'stats.recentLine': '{date} · {status}',
+  'stats.nothing': 'Rien d’enregistré pour l’instant.',
 };
 
 export const catalogs = { en, fr } as const;

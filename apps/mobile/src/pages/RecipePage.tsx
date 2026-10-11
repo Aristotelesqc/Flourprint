@@ -44,7 +44,10 @@ import { sendBakeCommand } from '../services/bakes';
 import { useFlourCatalog } from '../services/flours';
 import { RecipeChecks } from '../blocks/RecipeChecks';
 import { StyleGuide } from '../blocks/StyleGuide';
+import { currentWorld } from '../services/preferences';
 import { useServices } from '../services/services';
+import { usePreferences } from '../services/use-preferences';
+import { SimulationBanner } from '../ui/SimulationBanner';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
 import { InfoButton } from '../ui/InfoButton';
@@ -92,6 +95,8 @@ export const RecipePage = () => {
     payload: Extract<BakeCommandPayload, { type: 'StartBake' }>;
   }>(undefined);
   const [readFailed, setReadFailed] = useState(false);
+  const { simulation } = usePreferences();
+  const confirming = useRef(false);
 
   useEffect(() => {
     void (async () => {
@@ -186,6 +191,8 @@ export const RecipePage = () => {
     }
   }, [services, recipeId]);
   useIonViewWillEnter(() => void refreshBakes(), [refreshBakes]);
+  // The History tab and the header button follow the simulation mode (ADR 0014).
+  useEffect(() => void refreshBakes(), [refreshBakes, simulation]);
 
   const draft: Working | undefined = stored ?? base?.revision;
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
@@ -240,7 +247,7 @@ export const RecipePage = () => {
       ...edited,
       process: applyModelDurations(edited.formula, edited.process).process,
     };
-    const now = services.clock.now();
+    const now = services.realClock.now();
     const doc: Draft = stored
       ? { ...stored, ...next, ...(rename === undefined ? {} : { name: rename }), updatedAt: now }
       : {
@@ -326,7 +333,7 @@ export const RecipePage = () => {
     const result = await writes.run(() =>
       saveDraft(services.recipes, stored, {
         newRecipeId: services.ids.next(),
-        createdAt: services.clock.now(),
+        createdAt: services.realClock.now(),
       }),
     );
     if (!result.ok) {
@@ -393,8 +400,8 @@ export const RecipePage = () => {
         formula: revision.formula,
         process: revision.process,
         mode,
-        // The phone bakes for real; the PC shell and the browser preview simulate (history.md).
-        origin: services.platform === 'android' ? 'physical' : 'simulation',
+        // The simulation mode in force decides, on every platform (ADR 0014).
+        origin: currentWorld(services.preferences.get()),
         // The current registry version of each flour that has an entry (flours.md).
         flours: flourRefsOf(
           revision.formula.flours.map((f) => f.id),
@@ -422,6 +429,28 @@ export const RecipePage = () => {
     }
     await refreshBakes();
     openBake(pending.bakeId);
+  };
+
+  /** Starts a bake now, once confirmed; a bake starts from the saved revision only. */
+  const confirmStart = () => {
+    // A double tap opens one confirmation, not two stacked ones.
+    if (confirming.current) return;
+    confirming.current = true;
+    void presentAlert({
+      onDidDismiss: () => {
+        confirming.current = false;
+      },
+      ...(dirty
+        ? { header: t('recipe.bake'), message: t('process.saveFirst'), buttons: [t('help.close')] }
+        : {
+            header: t('recipe.startConfirm'),
+            ...(simulation ? { message: t('recipe.startConfirmSimulation') } : {}),
+            buttons: [
+              { text: t('bake.cancel'), role: 'cancel' },
+              { text: t('recipe.startNow'), handler: () => void startBake() },
+            ],
+          }),
+    });
   };
 
   return (
@@ -453,13 +482,15 @@ export const RecipePage = () => {
                 shape="round"
                 color="primary"
                 className="pr-2"
-                onClick={() => (active ? openBake(active.bakeId) : setTab('process'))}
+                disabled={!active && writes.busy}
+                onClick={() => (active ? openBake(active.bakeId) : confirmStart())}
               >
                 {active ? t('recipe.baking') : t('recipe.bake')}
               </IonButton>
             </IonButtons>
           )}
         </IonToolbar>
+        <SimulationBanner />
         {family && (
           <IonToolbar>
             <Variants
@@ -529,7 +560,7 @@ export const RecipePage = () => {
             onEdit={editFormula}
             base={base?.revision.formula ?? draft.formula}
             process={draft.process}
-            now={services.clock.now()}
+            now={services.realClock.now()}
             onStructure={editStructure}
             onProcess={changeProcess}
           />
@@ -541,7 +572,7 @@ export const RecipePage = () => {
             onProcessChange={changeProcess}
             preparationIds={draft.formula.components.map((c) => c.id)}
             canStart={base !== undefined && !dirty && !writes.busy}
-            onStart={() => void startBake()}
+            onStart={confirmStart}
             {...(active ? { activeBakeId: active.bakeId } : {})}
             onOpenBake={openBake}
           />

@@ -1,5 +1,12 @@
-import type { Estimate, Process, RangeBound, StepConditions } from '@flourprint/core/domain';
+import {
+  DOMAIN,
+  type Estimate,
+  type Process,
+  type RangeBound,
+  type StepConditions,
+} from '@flourprint/core/domain';
 import { en, type MessageKey } from '../../i18n/messages';
+import { useTemperature } from '../../i18n/temperature';
 import { useMessages } from '../../i18n/use-messages';
 
 /** Presentation helpers of the fermentation card: wording only, no baking math. */
@@ -27,6 +34,7 @@ export const withConditions = (
 
 export const useEstimateText = () => {
   const { t, pct } = useMessages();
+  const temperature = useTemperature();
   /** A percentage for the main line: whole numbers only, never "100,03 %". */
   const wholePct = (value: number) => pct(Math.round(value));
   const bound = (value: RangeBound, format: (v: number) => string) =>
@@ -41,7 +49,12 @@ export const useEstimateText = () => {
   const reason = (e: Estimate) => {
     if (e.status === 'ok') return '';
     const key = `fermentation.reason.${e.reason}`;
-    return isKey(key) ? t(key) : t('fermentation.reason.other', { reason: e.reason });
+    // The model's temperature domain, in the device's unit.
+    const limits = {
+      low: temperature.format(DOMAIN.minDoughC, 'ambient'),
+      high: temperature.format(DOMAIN.maxDoughC, 'ambient'),
+    };
+    return isKey(key) ? t(key, limits) : t('fermentation.reason.other', { reason: e.reason });
   };
   const extrapolations = (e: Estimate) => {
     if (e.status !== 'ok' || !e.extrapolations || e.extrapolations.length === 0) return '';
