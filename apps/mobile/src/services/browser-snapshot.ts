@@ -1,0 +1,106 @@
+import { exportBackup, importBackup, type BackupStores } from '@flourprint/core/application';
+import type { Instant } from '@flourprint/core/domain';
+import type { RestoreTarget } from '@flourprint/core/application';
+
+/**
+ * The browser preview's memory stores, kept across reloads (ADR 0015): a full backup document in
+ * IndexedDB, restored at start-up through the normal restore path and saved again when it changes.
+ * Never used on Android or in the desktop shell, which have SQLite.
+ */
+
+const DB = 'flourprint-preview';
+const STORE = 'snapshots';
+const CURRENT = 'backup';
+const UNREADABLE = 'backup-unreadable';
+const SAVE_EVERY_MS = 3_000;
+
+const open = (): Promise<IDBDatabase> =>
+  new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(STORE);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
+  });
+
+const run = async <T>(
+  mode: IDBTransactionMode,
+  action: (store: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> => {
+  const db = await open();
+  try {
+    return await new Promise<T>((resolve, reject) => {
+      const request = action(db.transaction(STORE, mode).objectStore(STORE));
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'));
+    });
+  } finally {
+    db.close();
+  }
+};
+
+const read = (key: string) => run<unknown>('readonly', (s) => s.get(key));
+const write = (key: string, value: string) => run('readwrite', (s) => s.put(value, key));
+
+export const browserSnapshotAvailable = (): boolean => typeof indexedDB !== 'undefined';
+
+/** What the start-up restore found: nothing, a restored snapshot, or one set aside. */
+export type SnapshotLoad = 'empty' | 'restored' | 'unreadable';
+
+/**
+ * Restores the saved snapshot into empty stores. A snapshot that does not decode or restore is
+ * kept aside under another key, never overwritten, and the app starts empty.
+ */
+export const restoreBrowserSnapshot = async (target: RestoreTarget): Promise<SnapshotLoad> => {
+  const saved = await read(CURRENT).catch(() => undefined);
+  if (typeof saved !== 'string') return 'empty';
+  try {
+    const restored = await importBackup(target, JSON.parse(saved));
+    if (restored.ok) return 'restored';
+    console.error('Browser snapshot not restored', restored.error);
+  } catch (cause) {
+    console.error('Browser snapshot not restored', cause);
+  }
+  await write(UNREADABLE, saved).catch(() => undefined);
+  await run('readwrite', (s) => s.delete(CURRENT)).catch(() => undefined);
+  return 'unreadable';
+};
+
+/** Saves the stores whenever their content changed; returns a function that stops it. */
+export const keepBrowserSnapshot = (stores: BackupStores, now: () => Instant): (() => void) => {
+  let last: string | undefined;
+  let busy = false;
+  const save = async () => {
+    if (busy) return;
+    busy = true;
+    try {
+      const backup = await exportBackup(stores, now());
+      if (!backup.ok) return;
+      // Compare without the export time, which changes on every save.
+      const content = JSON.stringify({ ...backup.value, exportedAt: undefined });
+      if (content === last) return;
+      await write(CURRENT, JSON.stringify(backup.value));
+      last = content;
+    } catch (cause) {
+      console.error('Browser snapshot not saved', cause);
+    } finally {
+      busy = false;
+    }
+  };
+  const timer = setInterval(() => void save(), SAVE_EVERY_MS);
+  const onHide = () => {
+    if (document.visibilityState === 'hidden') void save();
+  };
+  document.addEventListener('visibilitychange', onHide);
+  window.addEventListener('pagehide', onHide);
+  void save();
+  return () => {
+    clearInterval(timer);
+    document.removeEventListener('visibilitychange', onHide);
+    window.removeEventListener('pagehide', onHide);
+  };
+};
+
+/** Advanced → erase the browser's data: the snapshot goes; the page reloads empty. */
+export const clearBrowserSnapshot = async (): Promise<void> => {
+  await run('readwrite', (s) => s.clear());
+};

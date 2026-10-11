@@ -1,0 +1,54 @@
+{
+  "flours": [
+    {
+      "id": "bread-flour",
+      "sharePct": 100
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "milk",
+      "kind": "other",
+      "bakerPct": 60,
+      "role": "dough",
+      "water": {
+        "status": "estimated",
+        "valuePct": 87.5,
+        "rangePct": [86, 89]
+      }
+    },
+    {
+      "id": "butter",
+      "kind": "other",
+      "bakerPct": 10,
+      "role": "dough",
+      "water": {
+        "status": "unknown"
+      }
+    },
+    {
+      "id": "salt",
+      "kind": "other",
+      "bakerPct": 2,
+      "role": "dough",
+      "water": {
+        "status": "known",
+        "valuePct": 0
+      }
+    },
+    {
+      "id": "instant-yeast",
+      "kind": "other",
+      "bakerPct": 1,
+      "role": "dough",
+      "water": {
+        "status": "unknown"
+      }
+    }
+  ],
+  "components": [],
+  "anchor": {
+    "kind": "flourTotal",
+    "grams": 500
+  }
+}

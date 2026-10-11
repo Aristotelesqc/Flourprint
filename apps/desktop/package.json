@@ -1,0 +1,21 @@
+{
+  "name": "@flourprint/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Flourprint desktop shell: the mobile web build in a phone-sized Electron window (ADR 0011).",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "node scripts/package.mjs",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@flourprint/adapters": "workspace:*",
+    "@flourprint/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "electron": "44.4.5"
+  }
+}

@@ -1,0 +1,182 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # Only the desktop job needs Electron's binary.
+  ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm vitest run
+      - run: node apps/cli/dist/main.js --version
+      - name: Dogfood recipes match their source and decisions
+        # Skipped once dogfood/ is removed.
+        if: hashFiles('dogfood/tost/importer/tsconfig.json') != ''
+        run: |
+          pnpm exec tsc -p dogfood/tost/importer
+          node dogfood/tost/importer/dist/main.js --check
+      - run: pnpm build:mobile
+      - run: scripts/check-mobile-bundle.sh
+
+  e2e:
+    # Browser journeys on the web build (Playwright); screenshots and traces are kept as artifacts.
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm build:mobile
+      - run: pnpm --filter @flourprint/mobile exec playwright install --with-deps chromium
+      - run: pnpm --filter @flourprint/mobile e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flourprint-e2e-report
+          path: |
+            apps/mobile/playwright-report
+            apps/mobile/test-results
+          if-no-files-found: ignore
+
+  android:
+    # Debug APK for the device spikes (#23, #24); download it from the run's artifacts.
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: pnpm install --frozen-lockfile
+      - name: Build identifiers
+        # On a pull request GITHUB_SHA is GitHub's temporary merge commit; label the branch commit.
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
+          echo "FLOURPRINT_VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+      - run: pnpm build
+      - run: pnpm build:mobile
+      - run: pnpm --filter @flourprint/mobile exec cap sync android
+      - run: ./gradlew assembleDebug --no-daemon
+        working-directory: apps/mobile/android
+      - name: Name the APK after the build
+        run: mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk "flourprint-${FLOURPRINT_BUILD}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flourprint-debug-apk
+          path: flourprint-${{ env.FLOURPRINT_BUILD }}.apk
+          retention-days: 30
+      - name: Dev channel APK (ADR 0013)
+        # Same shell, but the web view loads the web preview: install once, restart to update.
+        env:
+          FLOURPRINT_DEV_URL: ${{ vars.FLOURPRINT_WEB_URL || 'https://flourprint-aristotelesqc.pages.dev' }}
+        run: |
+          pnpm --filter @flourprint/mobile exec cap sync android
+          (cd apps/mobile/android && ./gradlew assembleDebug --no-daemon -PflourprintChannel=dev)
+          mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk "flourprint-dev-${FLOURPRINT_BUILD}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flourprint-dev-apk
+          path: flourprint-dev-${{ env.FLOURPRINT_BUILD }}.apk
+          retention-days: 30
+
+  web:
+    # Web preview (ADR 0013), deployed to Cloudflare Pages when its secrets are set.
+    needs: check
+    runs-on: ubuntu-latest
+    concurrency: web-preview
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PAGES_PROJECT: flourprint-aristotelesqc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build identifiers
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - run: pnpm build
+      - run: pnpm build:mobile
+      - name: Deploy to Cloudflare Pages
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # Creates the project on the first run; later runs find it already there.
+          npx --yes wrangler@4 pages project create "$PAGES_PROJECT" --production-branch main || true
+          npx --yes wrangler@4 pages deploy apps/mobile/dist --project-name "$PAGES_PROJECT" \
+            --branch main --commit-hash "$HEAD_SHA" --commit-message "$FLOURPRINT_BUILD" --commit-dirty=true
+          echo "Web preview ${FLOURPRINT_BUILD}: https://${PAGES_PROJECT}.pages.dev" >> "$GITHUB_STEP_SUMMARY"
+      - name: Preview not deployed
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: |
+          echo "No Cloudflare secrets: the web preview was not deployed (ADR 0013)." >> "$GITHUB_STEP_SUMMARY"
+
+  desktop:
+    # Desktop shell for Windows (ADR 0011): smoke test, then the folder to unzip and run.
+    needs: check
+    runs-on: windows-latest
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: ''
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Electron binary
+        # pnpm may skip the package's own download (cached build); fetch it explicitly.
+        working-directory: apps/desktop
+        run: node node_modules/electron/install.js
+      - name: Build identifiers
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: echo "FLOURPRINT_BUILD=${GITHUB_RUN_NUMBER}-${HEAD_SHA::7}" >> "$GITHUB_ENV"
+      - run: pnpm build
+      - run: pnpm build:mobile
+      - run: pnpm build:desktop
+      - run: pnpm --filter @flourprint/desktop e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flourprint-desktop-windows
+          path: apps/desktop/out/Flourprint-win32-x64
+          retention-days: 30

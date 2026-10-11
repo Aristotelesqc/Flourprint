@@ -1,0 +1,76 @@
+{
+  "flours": [
+    {
+      "id": "bread-flour",
+      "sharePct": 80
+    },
+    {
+      "id": "whole-wheat",
+      "sharePct": 20
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "water",
+      "kind": "water",
+      "bakerPct": 75,
+      "role": "dough"
+    },
+    {
+      "id": "salt",
+      "kind": "other",
+      "bakerPct": 2,
+      "role": "dough",
+      "water": {
+        "status": "known",
+        "valuePct": 0
+      }
+    },
+    {
+      "id": "instant-yeast",
+      "kind": "other",
+      "bakerPct": 0.4,
+      "role": "dough",
+      "water": {
+        "status": "unknown"
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "poolish",
+      "kind": "preferment",
+      "flourPct": 30,
+      "flourBlend": [
+        {
+          "flour": "bread-flour",
+          "sharePct": 100
+        }
+      ],
+      "hydrationPct": 100,
+      "allocations": [
+        {
+          "ingredient": "instant-yeast",
+          "bakerPct": 0.1
+        }
+      ]
+    },
+    {
+      "id": "tangzhong",
+      "kind": "scald",
+      "flourPct": 5,
+      "flourBlend": [
+        {
+          "flour": "bread-flour",
+          "sharePct": 100
+        }
+      ],
+      "hydrationPct": 500,
+      "waterLossPct": 0
+    }
+  ],
+  "anchor": {
+    "kind": "flourTotal",
+    "grams": 1000
+  }
+}

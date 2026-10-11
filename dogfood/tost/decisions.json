@@ -1,0 +1,260 @@
+{
+  "$comment": "Owner decisions for the TOST import (#18, 2026-10-08). Dogfood data, never product code.",
+  "source": {
+    "file": "source/2026_10_08_14_12_all_BreadRecipesJSON.txt",
+    "exportedAt": "2026-10-08T18:12:00.000Z"
+  },
+  "timeZone": "America/Toronto",
+  "recipeIdPrefix": "tost-",
+  "tostWaterModel": {
+    "$comment": "Solids fractions TOST applies to extras, reverse-engineered from INT_DOUGH_WEIGHT. Used only to rebuild the water TOST had the owner weigh; never as composition.",
+    "solids": {
+      "disc_tangzhong": 0.17,
+      "disc_honey": 0.82,
+      "disc_milk": 0.05,
+      "disc_butter": 0.83,
+      "disc_egg": 0.23,
+      "disc_sugar": 1,
+      "disc_olive_oil": 0.5,
+      "disc_sour_cream": 0.2,
+      "disc_cider_vinegar": 0,
+      "disc_diastasic_malt": 1
+    }
+  },
+  "tangzhong": {
+    "$comment": "Imported recipes keep TOST's 17 % flour so that weighings stay identical; new tangzhong in the app default to 1:5.",
+    "flourFraction": 0.17,
+    "flour": "main"
+  },
+  "poolish": {
+    "flour": "main",
+    "$comment": "TOST does not export the yeast it puts in a poolish. Owner recollection: about 0.35 g for the pullmanzong poolish around 1600 g.",
+    "yeastGramsByRecipe": {
+      "id_bread_26": 0.35,
+      "id_bread_28": 0.35,
+      "id_bread_29": 0.35,
+      "id_bread_31": 0.35
+    }
+  },
+  "flours": {
+    "default": {
+      "disc_flour": { "id": "flour", "confidence": "tost" },
+      "disc_flour_brown": { "id": "brown-flour", "confidence": "unknown" },
+      "disc_flour_custo3": { "id": "custom-flour-3", "confidence": "unknown" },
+      "disc_flour_custo5": { "id": "la-milanaise-flour", "confidence": "guess-from-recipe-name" }
+    },
+    "byRecipe": {
+      "id_bread_20": {
+        "disc_flour_brown": { "id": "spelt-flour", "confidence": "guess-from-recipe-name" }
+      }
+    }
+  },
+  "yeast": {
+    "$comment": "Owner decision: active dry yeast everywhere, to adjust later.",
+    "id": "active-dry-yeast",
+    "form": "active-dry"
+  },
+  "ingredients": {
+    "disc_honey": "honey",
+    "disc_milk": "milk",
+    "disc_butter": "butter",
+    "disc_egg": "egg",
+    "disc_sugar": "sugar",
+    "disc_olive_oil": "olive-oil",
+    "disc_sour_cream": "sour-cream",
+    "disc_cider_vinegar": "cider-vinegar",
+    "disc_diastasic_malt": "diastatic-malt"
+  },
+  "compositions": {
+    "$comment": "Physical contents per 100 g, estimates with ranges; the source names the reference. Values to refine with the ingredient registry (#26).",
+    "salt": {
+      "water": { "status": "known", "valuePct": 0, "source": "sodium chloride" },
+      "fat": { "status": "known", "valuePct": 0, "source": "sodium chloride" },
+      "sugar": { "status": "known", "valuePct": 0, "source": "sodium chloride" }
+    },
+    "active-dry-yeast": {
+      "water": {
+        "status": "estimated",
+        "valuePct": 6,
+        "rangePct": [5, 8],
+        "source": "USDA SR Legacy and FNRI food composition tables (approx.)"
+      },
+      "fat": {
+        "status": "estimated",
+        "valuePct": 4.5,
+        "rangePct": [1.3, 7.6],
+        "source": "tables disagree: FNRI 1.3 g, USDA 7.6 g per 100 g"
+      },
+      "sugar": {
+        "status": "estimated",
+        "valuePct": 0,
+        "rangePct": [0, 1],
+        "source": "USDA SR Legacy (approx.)"
+      }
+    },
+    "honey": {
+      "water": {
+        "status": "estimated",
+        "valuePct": 17,
+        "rangePct": [15, 20],
+        "source": "USDA SR Legacy (approx.)"
+      },
+      "fat": { "status": "known", "valuePct": 0, "source": "USDA SR Legacy" },
+      "sugar": {
+        "status": "estimated",
+        "valuePct": 82,
+        "rangePct": [79, 85],
+        "source": "USDA SR Legacy (approx.)"
+      }
+    },
+    "milk": {
+      "water": {
+        "status": "estimated",
+        "valuePct": 89,
+        "rangePct": [87.5, 91],
+        "source": "USDA SR Legacy, milk 3.25 % to skim; fat level not recorded by TOST"
+      },
+      "fat": {
+        "status": "estimated",
+        "valuePct": 2,
+        "rangePct": [0.1, 3.6],
+        "source": "USDA SR Legacy, milk 3.25 % to skim; fat level not recorded by TOST"
+      },
+      "sugar": {
+        "status": "estimated",
+        "valuePct": 5,
+        "rangePct": [4.8, 5.2],
+        "source": "USDA SR Legacy (lactose, approx.)"
+      }
+    },
+    "butter": {
+      "water": {
+        "status": "estimated",
+        "valuePct": 16,
+        "rangePct": [15, 18],
+        "source": "USDA SR Legacy (approx.)"
+      },
+      "fat": {
+        "status": "estimated",
+        "valuePct": 81,
+        "rangePct": [80, 83],
+        "source": "USDA SR Legacy (approx.)"
+      },
+      "sugar": {
+        "status": "estimated",
+        "valuePct": 0,
+        "rangePct": [0, 0.1],
+        "source": "USDA SR Legacy (approx.)"
+      }
+    },
+    "egg": {
+      "water": {
+        "status": "estimated",
+        "valuePct": 76,
+        "rangePct": [75, 77],
+        "source": "USDA SR Legacy, whole egg (approx.)"
+      },
+      "fat": {
+        "status": "estimated",
+        "valuePct": 9.5,
+        "rangePct": [9, 10.5],
+        "source": "USDA SR Legacy, whole egg (approx.)"
+      },
+      "sugar": {
+        "status": "estimated",
+        "valuePct": 0.4,
+        "rangePct": [0.2, 0.6],
+        "source": "USDA SR Legacy, whole egg (approx.)"
+      }
+    },
+    "sugar": {
+      "water": { "status": "known", "valuePct": 0, "source": "granulated sugar" },
+      "fat": { "status": "known", "valuePct": 0, "source": "granulated sugar" },
+      "sugar": { "status": "known", "valuePct": 100, "source": "granulated sugar" }
+    },
+    "olive-oil": {
+      "water": { "status": "known", "valuePct": 0, "source": "oil contains no water" },
+      "fat": { "status": "known", "valuePct": 100, "source": "oil" },
+      "sugar": { "status": "known", "valuePct": 0, "source": "oil" }
+    },
+    "sour-cream": {
+      "water": {
+        "status": "estimated",
+        "valuePct": 76,
+        "rangePct": [71, 80],
+        "source": "USDA SR Legacy 19.4 % fat to 14 % sour cream (approx.)"
+      },
+      "fat": {
+        "status": "estimated",
+        "valuePct": 16,
+        "rangePct": [12, 20],
+        "source": "USDA SR Legacy 19.4 % fat to 14 % sour cream (approx.)"
+      },
+      "sugar": {
+        "status": "estimated",
+        "valuePct": 3,
+        "rangePct": [2.5, 4],
+        "source": "USDA SR Legacy (approx.)"
+      }
+    },
+    "cider-vinegar": {
+      "water": {
+        "status": "estimated",
+        "valuePct": 94,
+        "rangePct": [93, 95],
+        "source": "USDA SR Legacy (approx.)"
+      },
+      "fat": { "status": "known", "valuePct": 0, "source": "USDA SR Legacy" },
+      "sugar": {
+        "status": "estimated",
+        "valuePct": 0.4,
+        "rangePct": [0, 1],
+        "source": "USDA SR Legacy (approx.)"
+      }
+    },
+    "diastatic-malt": {
+      "water": {
+        "status": "estimated",
+        "valuePct": 6,
+        "rangePct": [5.5, 7],
+        "source": "supplier specifications (Hefe Schweiz 5.5-7 %, BEST Malz 7 %)"
+      }
+    }
+  },
+  "families": [
+    {
+      "id": "tost-family-pullmanzong",
+      "name": "pullmanzong",
+      "members": [
+        "id_bread_12",
+        "id_bread_26",
+        "id_bread_27",
+        "id_bread_28",
+        "id_bread_29",
+        "id_bread_31"
+      ]
+    },
+    {
+      "id": "tost-family-pizza",
+      "name": "Pizza",
+      "members": ["id_bread_8", "id_bread_9", "id_bread_16", "id_bread_22", "id_bread_30"]
+    },
+    {
+      "id": "tost-family-focaccia",
+      "name": "Focaccia",
+      "members": ["id_bread_2", "id_bread_3", "id_bread_6", "id_bread_23"]
+    },
+    {
+      "id": "tost-family-pain-sandwich-50",
+      "name": "Pain sandwich #50",
+      "members": ["id_bread_19", "id_bread_20"]
+    }
+  ],
+  "reviews": {
+    "$comment": "Reasons found by reading the notes; objective anomalies are detected by the importer.",
+    "id_bread_6": ["The note mentions a few spoons of gluten that are not in the formula."],
+    "id_bread_23": [
+      "The note mentions 1 tablespoon of gluten flour and 1 % malt that are not in the formula."
+    ]
+  }
+}

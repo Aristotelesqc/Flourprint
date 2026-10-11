@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+.DS_Store
+apps/mobile/test-results/
+apps/mobile/playwright-report/
+apps/desktop/out/
+apps/desktop/test-results/
+
+# Agent worktrees (local only)
+.claude/worktrees/

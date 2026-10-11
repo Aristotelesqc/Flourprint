@@ -1,0 +1,83 @@
+# Reference fixtures
+
+Expected values **computed outside the engine**, with exact rational arithmetic, from the equations
+below (ADR 0006, issue #30). They are authoritative: if the engine disagrees, the engine is wrong,
+unless the fixture is corrected explicitly and with a justification.
+
+CLI output is never used to create or update a fixture.
+
+## Format `flourprint-fixture/0`
+
+| Field       | Role                                                                            |
+| ----------- | ------------------------------------------------------------------------------- |
+| `input`     | formula as the engine receives it, with resolved ingredient properties          |
+| `expected`  | expected outputs (grams, and `Pct` values in points; see `values-and-units.md`) |
+| `edits`     | edit commands applied to `input`, each with its own `expected`                  |
+| `variants`  | targeted changes to `input` (`change`) with their result or error               |
+| `exact`     | exact rational values where the decimal is rounded                              |
+| `tolerance` | numeric comparison tolerance                                                    |
+
+The format is version 0: `input` field names may follow the types defined in step 2 (formula).
+**Values** do not change with the format.
+
+## Equations
+
+Notation: F total flour, `pct_i` baker's percentage of ingredient i, S = sum of `pct` (including
+the 100 flour points), L declared losses in grams.
+
+- Grams: `g_i = F × pct_i / 100`.
+- Dough weight: `W = F × S / 100 − L`.
+- `doughWeight` anchor: `F = 100 × (W + L) / S`.
+- `SetIngredientGrams(i, g, hold: 'anchor')`, non-flour ingredient, S excluding i:
+  `pct_i = g × S / (W + L − g)`.
+- `SetIngredientGrams(i, g, hold: 'otherGrams')`: other grams are kept, `pct = 100 × g / F`, the
+  anchor takes the new value.
+- Component: flour `= F × flourPct / 100`, split by `flourBlend`; water
+  `= component flour × hydrationPct / 100`; loss `= component water × waterLossPct / 100`.
+- Final mix: formula totals − component allocations, flour by flour.
+- `pureWaterPct = 100 × pureWaterTotal / F`; `totalWaterPct = 100 × totalWater / F`.
+- `totalWater = pureWaterTotal + Σ g_i × waterPct_i / 100 − L`, over `dough`-role ingredients whose
+  fraction is known or estimated. `range` only propagates the ranges of estimated contributions;
+  unknown contributions make the total `incomplete`.
+
+## Cases
+
+### `lean-direct.json`
+
+S = 100 + 70 + 2 + 0.5 = 172.5; W = 1725 → F = 1000. Water 700, salt 20, yeast 5.
+
+- `otherGrams`, salt set to 22 g: F stays 1000, salt = 2.2 %, W = 1727.
+- `anchor`, salt set to 22 g: S without salt = 170.5; `pct_salt = 22 × 170.5 / 1703 = 3751/1703 ≈
+2.2025837`; F = 172500 / (170.5 + 3751/1703) = 340600/341 ≈ 998.82698. Water = 238420/341,
+  yeast = 1703/341, total = 1725.
+
+### `poolish-tangzhong.json`
+
+F = 1000: bread flour 800, whole wheat 200. Water 750, salt 20, yeast 4.
+
+- Poolish: 300 g bread flour, water 300, yeast 1 (0.1 % of F) → 601 g.
+- Tangzhong: 50 g bread flour, water 250 (500 % hydration) → 300 g.
+- Per-flour check: bread flour drawn 350 ≤ 800.
+- Final mix: bread flour 450, whole wheat 200, water 750 − 300 − 250 = 200, salt 20, yeast 3.
+  873 + 601 + 300 = 1774 = W.
+- Variant, 8 % loss of the tangzhong water: L = 20 → tangzhong 280, W = 1754, `totalWater` 730
+  (73 %), `pureWaterPct` unchanged at 75.
+- Variant, whole-wheat poolish: 300 g required > 200 g available → `FlourAllocationExceeded`, even
+  though 300 < F.
+
+### `enriched-milk-butter.json`
+
+F = 500: milk 300, butter 50, salt 10, yeast 5, W = 865. No pure water: `pureWaterPct` = 0. Milk
+estimated at 87.5 % [86; 89] → 262.5 g [258; 267]. Butter and yeast unknown → `incomplete`.
+`totalWaterPct` = 52.5.
+
+## Fermentation (`fermentation/`)
+
+`fermentation/cases.json` holds reference cases of the provisional fermentation model
+(fermentation.md), produced by `fermentation/generate.py` from the contract's equations: closed
+forms at constant temperature, an independent fine integration of the analytic dough temperature
+for the thermal lag. Keys of `expected` are paths in the engine's result; `tolerance` is
+absolute, in the unit of the value (seconds, percent, °C).
+A `range` expected value lists the two finite bounds (seconds). The dough cases use the provisional
+personal calibration `readyProgress` 2.0, band 1.5–2.5 (fermentation.md, recorded in the file's
+`calibration` field); the preferment case keeps its end point at 1.

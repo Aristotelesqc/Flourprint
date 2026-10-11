@@ -1,0 +1,1628 @@
+{
+  "source": "source/2026_10_08_14_12_all_BreadRecipesJSON.txt",
+  "sha256": "6c1ce871d66f7c836a9d465019b7ad9e0878d93e2d63d0005c8ab1830da7530b",
+  "reports": [
+    {
+      "legacyId": "id_bread_2",
+      "recipeId": "tost-id_bread_2",
+      "name": "Focaccia",
+      "status": "converted",
+      "anchor": "1 × 1829.4 g",
+      "createdAt": "2022-08-05T12:48:01.000Z",
+      "family": "Focaccia",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode pizza_mode, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 889.37,
+          "tangzhong": 310,
+          "water": 473.63,
+          "salt": 26.68,
+          "yeast": 2.69,
+          "extras": {
+            "olive-oil": 115,
+            "cider-vinegar": 12
+          },
+          "dough": 1800,
+          "hydrationPct": 90,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 942.07,
+          "pureWater": 730.93,
+          "finalMixWater": 473.63,
+          "doughWeight": 1829.37,
+          "pureWaterPct": 77.59,
+          "totalWaterPct": 78.8,
+          "totalWaterComplete": true,
+          "totalFatPct": 12.22,
+          "totalSugarPct": 0.01,
+          "components": {
+            "tangzhong": {
+              "flour": 52.7,
+              "water": 257.3
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_3",
+      "recipeId": "tost-id_bread_3",
+      "name": "Focaccia express",
+      "status": "converted-with-warning",
+      "anchor": "1 × 1865.3 g",
+      "createdAt": "2022-09-10T00:02:46.000Z",
+      "family": "Focaccia",
+      "flours": [
+        "disc_flour → flour (90.59 % of the main flour)",
+        "disc_flour_brown → brown-flour (9.41 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Tangzhong and poolish flour drawn from the main flour (flour) only.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Flour disc_flour_brown is a TOST custom or unnamed flour: to identify."
+      ],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode pizza_mode, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Fat total incomplete: unknown for diastatic-malt.",
+        "Sugar total incomplete: unknown for diastatic-malt.",
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 850,
+          "tangzhong": 343,
+          "water": 461.01,
+          "salt": 25.5,
+          "yeast": 5.77,
+          "extras": {
+            "olive-oil": 127,
+            "cider-vinegar": 39,
+            "diastatic-malt": 4,
+            "honey": 10
+          },
+          "dough": 1834,
+          "hydrationPct": 100,
+          "doughResidualPerPiece": -0.01
+        },
+        "flourprint": {
+          "flourTotal": 908.31,
+          "pureWater": 745.7,
+          "finalMixWater": 461.01,
+          "doughWeight": 1865.28,
+          "pureWaterPct": 82.1,
+          "totalWaterPct": 86.39,
+          "totalWaterComplete": true,
+          "totalFatPct": 14.01,
+          "totalSugarPct": 0.92,
+          "components": {
+            "tangzhong": {
+              "flour": 58.31,
+              "water": 284.69
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_4",
+      "recipeId": "tost-id_bread_4",
+      "name": "PAIN (4)",
+      "status": "converted",
+      "anchor": "12 × 128.7 g",
+      "createdAt": "2022-11-20T23:38:45.000Z",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after mix are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 882.35,
+          "tangzhong": 0,
+          "water": 617.65,
+          "salt": 26.47,
+          "yeast": 17.65,
+          "extras": {},
+          "dough": 1500,
+          "hydrationPct": 70,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 882.35,
+          "pureWater": 617.65,
+          "finalMixWater": 617.65,
+          "doughWeight": 1544.12,
+          "pureWaterPct": 70,
+          "totalWaterPct": 70.12,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.09,
+          "totalSugarPct": 0,
+          "components": {}
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_5",
+      "recipeId": "tost-id_bread_5",
+      "name": "PAIN (5)",
+      "status": "converted",
+      "anchor": "1 × 753.8 g",
+      "createdAt": "2022-12-21T15:30:42.000Z",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).",
+        "Kneading improved, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_bread (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 400,
+          "tangzhong": 120,
+          "water": 0,
+          "salt": 8.8,
+          "yeast": 10,
+          "extras": {
+            "milk": 210,
+            "honey": 5
+          },
+          "dough": 735,
+          "hydrationPct": 75,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 420.4,
+          "pureWater": 99.6,
+          "finalMixWater": 0,
+          "doughWeight": 753.8,
+          "pureWaterPct": 23.69,
+          "totalWaterPct": 68.49,
+          "totalWaterComplete": true,
+          "totalFatPct": 1.11,
+          "totalSugarPct": 3.47,
+          "components": {
+            "tangzhong": {
+              "flour": 20.4,
+              "water": 99.6
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_6",
+      "recipeId": "tost-id_bread_6",
+      "name": "focaccia patates x2",
+      "status": "needs-review",
+      "anchor": "1 × 2000.9 g",
+      "createdAt": "2023-04-01T15:28:14.000Z",
+      "family": "Focaccia",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [
+        "TOST stores a 20 % preferment with type \"no ferment\": not imported.",
+        "TOST's flour to add (825 g) differs from its flour weight (990 g).",
+        "The note mentions a few spoons of gluten that are not in the formula."
+      ],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 990,
+          "tangzhong": 198,
+          "water": 660.66,
+          "salt": 29.7,
+          "yeast": 5.53,
+          "extras": {
+            "olive-oil": 102,
+            "cider-vinegar": 15
+          },
+          "dough": 1966,
+          "hydrationPct": 90,
+          "doughResidualPerPiece": 0.34
+        },
+        "flourprint": {
+          "flourTotal": 1023.66,
+          "pureWater": 825,
+          "finalMixWater": 660.66,
+          "doughWeight": 2000.89,
+          "pureWaterPct": 80.59,
+          "totalWaterPct": 82,
+          "totalWaterComplete": true,
+          "totalFatPct": 9.99,
+          "totalSugarPct": 0.01,
+          "components": {
+            "tangzhong": {
+              "flour": 33.66,
+              "water": 164.34
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_7",
+      "recipeId": "tost-id_bread_7",
+      "name": "Pizzas pochettes",
+      "status": "converted",
+      "anchor": "32 × 45.7 g",
+      "createdAt": "2023-04-23T16:19:37.000Z",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading intense, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after mix are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 800,
+          "tangzhong": 0,
+          "water": 506,
+          "salt": 24,
+          "yeast": 35.38,
+          "extras": {
+            "olive-oil": 32,
+            "sugar": 64
+          },
+          "dough": 1408,
+          "hydrationPct": 65.25,
+          "doughResidualPerPiece": 0.19
+        },
+        "flourprint": {
+          "flourTotal": 800,
+          "pureWater": 506,
+          "finalMixWater": 506,
+          "doughWeight": 1461.38,
+          "pureWaterPct": 63.25,
+          "totalWaterPct": 63.52,
+          "totalWaterComplete": true,
+          "totalFatPct": 4.2,
+          "totalSugarPct": 8,
+          "components": {}
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_8",
+      "recipeId": "tost-id_bread_8",
+      "name": "Pizza express",
+      "status": "converted",
+      "anchor": "4 × 277.5 g",
+      "createdAt": "2023-05-23T17:36:19.000Z",
+      "family": "Pizza",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 619.44,
+          "tangzhong": 120,
+          "water": 332.56,
+          "salt": 18.58,
+          "yeast": 11.54,
+          "extras": {
+            "honey": 8
+          },
+          "dough": 1080,
+          "hydrationPct": 70,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 639.84,
+          "pureWater": 432.16,
+          "finalMixWater": 332.56,
+          "doughWeight": 1110.12,
+          "pureWaterPct": 67.54,
+          "totalWaterPct": 67.86,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.08,
+          "totalSugarPct": 1.03,
+          "components": {
+            "tangzhong": {
+              "flour": 20.4,
+              "water": 99.6
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_9",
+      "recipeId": "tost-id_bread_9",
+      "name": "Pizza 1.1",
+      "status": "converted",
+      "anchor": "12 × 276.1 g",
+      "createdAt": "2023-05-25T14:04:19.000Z",
+      "family": "Pizza",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 1869.88,
+          "tangzhong": 360,
+          "water": 1010.12,
+          "salt": 56.1,
+          "yeast": 16.83,
+          "extras": {},
+          "dough": 3240,
+          "hydrationPct": 70,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 1931.08,
+          "pureWater": 1308.92,
+          "finalMixWater": 1010.12,
+          "doughWeight": 3312.93,
+          "pureWaterPct": 67.78,
+          "totalWaterPct": 67.83,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.04,
+          "totalSugarPct": 0,
+          "components": {
+            "tangzhong": {
+              "flour": 61.2,
+              "water": 298.8
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_12",
+      "recipeId": "tost-id_bread_12",
+      "name": "pullmanzong 80%",
+      "status": "converted-with-warning",
+      "anchor": "3 × 1730.1 g",
+      "createdAt": "2023-08-02T13:42:17.000Z",
+      "family": "pullmanzong",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "TOST's dough weight differs from its own model by 0.64 g per piece."
+      ],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Fat total incomplete: unknown for diastatic-malt.",
+        "Sugar total incomplete: unknown for diastatic-malt.",
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 2733,
+          "tangzhong": 1104,
+          "water": 1270.08,
+          "salt": 60.13,
+          "yeast": 17.21,
+          "extras": {
+            "diastatic-malt": 6
+          },
+          "dough": 5115,
+          "hydrationPct": 80,
+          "doughResidualPerPiece": 0.64
+        },
+        "flourprint": {
+          "flourTotal": 2920.68,
+          "pureWater": 2186.4,
+          "finalMixWater": 1270.08,
+          "doughWeight": 5190.42,
+          "pureWaterPct": 74.86,
+          "totalWaterPct": 74.91,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.03,
+          "totalSugarPct": 0,
+          "components": {
+            "tangzhong": {
+              "flour": 187.68,
+              "water": 916.32
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_14",
+      "recipeId": "tost-id_bread_14",
+      "name": "Pain Burgers artisan",
+      "status": "needs-review",
+      "anchor": "8 × 145.3 g",
+      "createdAt": "2024-01-07T03:55:02.000Z",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [
+        "TOST's hydration (90 %) is below the water its model gives the extras: it would need -32.16 g of water. Imported with no added water."
+      ],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 25 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds false, autolysis false (#32).",
+        "Oven mode brioche_mode, shape disc_buns_burger (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 496,
+          "tangzhong": 104,
+          "water": 0,
+          "salt": 10.91,
+          "yeast": 15.38,
+          "extras": {
+            "sugar": 16,
+            "butter": 88,
+            "egg": 184,
+            "milk": 248
+          },
+          "dough": 1104,
+          "hydrationPct": 90,
+          "doughResidualPerPiece": 0.02
+        },
+        "flourprint": {
+          "flourTotal": 513.68,
+          "pureWater": 86.32,
+          "finalMixWater": 0,
+          "doughWeight": 1162.3,
+          "pureWaterPct": 16.8,
+          "totalWaterPct": 89.92,
+          "totalWaterComplete": true,
+          "totalFatPct": 18.38,
+          "totalSugarPct": 5.67,
+          "components": {
+            "tangzhong": {
+              "flour": 17.68,
+              "water": 86.32
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_15",
+      "recipeId": "tost-id_bread_15",
+      "name": "PAIN (15)",
+      "status": "converted",
+      "anchor": "16 × 195.5 g",
+      "createdAt": "2024-05-03T15:44:31.000Z",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading slow, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_buns_burger (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 1600,
+          "tangzhong": 480,
+          "water": 366.4,
+          "salt": 32,
+          "yeast": 42.31,
+          "extras": {
+            "milk": 528,
+            "butter": 80
+          },
+          "dough": 3056,
+          "hydrationPct": 80,
+          "doughResidualPerPiece": 0.1
+        },
+        "flourprint": {
+          "flourTotal": 1681.6,
+          "pureWater": 764.8,
+          "finalMixWater": 366.4,
+          "doughWeight": 3128.71,
+          "pureWaterPct": 45.48,
+          "totalWaterPct": 74.34,
+          "totalWaterComplete": true,
+          "totalFatPct": 4.59,
+          "totalSugarPct": 1.57,
+          "components": {
+            "tangzhong": {
+              "flour": 81.6,
+              "water": 398.4
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_16",
+      "recipeId": "tost-id_bread_16",
+      "name": "Pizza nuit",
+      "status": "converted",
+      "anchor": "14 × 276.1 g",
+      "createdAt": "2024-07-05T23:51:47.000Z",
+      "family": "Pizza",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 2181.53,
+          "tangzhong": 420,
+          "water": 1178.47,
+          "salt": 65.45,
+          "yeast": 19.63,
+          "extras": {},
+          "dough": 3780,
+          "hydrationPct": 70,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 2252.93,
+          "pureWater": 1527.07,
+          "finalMixWater": 1178.47,
+          "doughWeight": 3865.08,
+          "pureWaterPct": 67.78,
+          "totalWaterPct": 67.83,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.04,
+          "totalSugarPct": 0,
+          "components": {
+            "tangzhong": {
+              "flour": 71.4,
+              "water": 348.6
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_18",
+      "recipeId": "tost-id_bread_18",
+      "name": "Shokupan",
+      "status": "converted",
+      "anchor": "2 × 1156 g",
+      "createdAt": "2024-12-30T20:37:58.000Z",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_brioche (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 1417.71,
+          "tangzhong": 560,
+          "water": 1.2,
+          "salt": 24.1,
+          "yeast": 23.08,
+          "extras": {
+            "milk": 90,
+            "sugar": 56,
+            "butter": 80,
+            "egg": 60
+          },
+          "dough": 2264,
+          "hydrationPct": 43.12,
+          "doughResidualPerPiece": -0.46
+        },
+        "flourprint": {
+          "flourTotal": 1512.91,
+          "pureWater": 466,
+          "finalMixWater": 1.2,
+          "doughWeight": 2312.09,
+          "pureWaterPct": 30.8,
+          "totalWaterPct": 40.05,
+          "totalWaterComplete": true,
+          "totalFatPct": 4.85,
+          "totalSugarPct": 4.01,
+          "components": {
+            "tangzhong": {
+              "flour": 95.2,
+              "water": 464.8
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_19",
+      "recipeId": "tost-id_bread_19",
+      "name": "Pain sandwich Milanaise #50",
+      "status": "converted-with-warning",
+      "anchor": "2 × 1627 g",
+      "createdAt": "2025-01-31T16:40:31.000Z",
+      "family": "Pain sandwich #50",
+      "flours": [
+        "disc_flour_custo5 → la-milanaise-flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Yeast disc_dry_yeast recorded as active-dry-yeast (owner decision).",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Flour disc_flour_custo5 named la-milanaise-flour from the recipe name: to check."
+      ],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_wholemeal_loaf (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 1666.01,
+          "tangzhong": 600,
+          "water": 687.99,
+          "salt": 41.65,
+          "yeast": 12.45,
+          "extras": {
+            "sour-cream": 246
+          },
+          "dough": 3200,
+          "hydrationPct": 83,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 1768.01,
+          "pureWater": 1185.99,
+          "finalMixWater": 687.99,
+          "doughWeight": 3254.1,
+          "pureWaterPct": 67.08,
+          "totalWaterPct": 77.7,
+          "totalWaterComplete": true,
+          "totalFatPct": 2.26,
+          "totalSugarPct": 0.42,
+          "components": {
+            "tangzhong": {
+              "flour": 102,
+              "water": 498
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_20",
+      "recipeId": "tost-id_bread_20",
+      "name": "Pain sandwich #50 + épeautre",
+      "status": "needs-review",
+      "anchor": "2 × 1627 g",
+      "createdAt": "2025-02-09T14:51:41.000Z",
+      "family": "Pain sandwich #50",
+      "flours": [
+        "disc_flour → flour (50 % of the main flour)",
+        "disc_flour_brown → spelt-flour (50 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Tangzhong and poolish flour drawn from the main flour (flour) only.",
+        "Yeast disc_dry_yeast recorded as active-dry-yeast (owner decision).",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Flour disc_flour_brown named spelt-flour from the recipe name: to check."
+      ],
+      "reviews": [
+        "TOST proof duration is -0.2749687557231218 h: left without a duration."
+      ],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_wholemeal_loaf (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 1666.01,
+          "tangzhong": 600,
+          "water": 687.99,
+          "salt": 41.65,
+          "yeast": 12.45,
+          "extras": {
+            "sour-cream": 246
+          },
+          "dough": 3200,
+          "hydrationPct": 83,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 1768.01,
+          "pureWater": 1185.99,
+          "finalMixWater": 687.99,
+          "doughWeight": 3254.1,
+          "pureWaterPct": 67.08,
+          "totalWaterPct": 77.7,
+          "totalWaterComplete": true,
+          "totalFatPct": 2.26,
+          "totalSugarPct": 0.42,
+          "components": {
+            "tangzhong": {
+              "flour": 102,
+              "water": 498
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_22",
+      "recipeId": "tost-id_bread_22",
+      "name": "Pizza comptoir",
+      "status": "converted",
+      "anchor": "6 × 274.7 g",
+      "createdAt": "2025-08-25T01:59:06.000Z",
+      "family": "Pizza",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 929.15,
+          "tangzhong": 180,
+          "water": 498.85,
+          "salt": 27.87,
+          "yeast": 0.38,
+          "extras": {
+            "honey": 12
+          },
+          "dough": 1620,
+          "hydrationPct": 70,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 959.75,
+          "pureWater": 648.25,
+          "finalMixWater": 498.85,
+          "doughWeight": 1648.26,
+          "pureWaterPct": 67.54,
+          "totalWaterPct": 67.76,
+          "totalWaterComplete": true,
+          "totalFatPct": 0,
+          "totalSugarPct": 1.03,
+          "components": {
+            "tangzhong": {
+              "flour": 30.6,
+              "water": 149.4
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_23",
+      "recipeId": "tost-id_bread_23",
+      "name": "Focaccia comptoir",
+      "status": "needs-review",
+      "anchor": "1 × 1831.9 g",
+      "createdAt": "2025-08-25T13:06:48.000Z",
+      "family": "Focaccia",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [
+        "The note mentions 1 tablespoon of gluten flour and 1 % malt that are not in the formula."
+      ],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode pizza_mode, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Fat total incomplete: unknown for diastatic-malt.",
+        "Sugar total incomplete: unknown for diastatic-malt.",
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 882.88,
+          "tangzhong": 308,
+          "water": 467.12,
+          "salt": 26.49,
+          "yeast": 5.41,
+          "extras": {
+            "olive-oil": 115,
+            "cider-vinegar": 12,
+            "honey": 13,
+            "diastatic-malt": 2
+          },
+          "dough": 1800,
+          "hydrationPct": 90,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 935.24,
+          "pureWater": 722.76,
+          "finalMixWater": 467.12,
+          "doughWeight": 1831.9,
+          "pureWaterPct": 77.28,
+          "totalWaterPct": 78.77,
+          "totalWaterComplete": true,
+          "totalFatPct": 12.32,
+          "totalSugarPct": 1.14,
+          "components": {
+            "tangzhong": {
+              "flour": 52.36,
+              "water": 255.64
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_24",
+      "recipeId": "tost-id_bread_24",
+      "name": "Baguette",
+      "status": "needs-review",
+      "anchor": "1 × 1814.5 g",
+      "createdAt": "2025-08-26T02:11:30.000Z",
+      "flours": [
+        "disc_flour_custo3 → custom-flour-3 (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Flour disc_flour_custo3 is a TOST custom or unnamed flour: to identify.",
+        "Yeast in the poolish unknown: TOST does not export it."
+      ],
+      "reviews": [
+        "TOST oven mode is \"no cooking\"."
+      ],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds false, autolysis false (#32).",
+        "Oven mode no_cooking, shape disc_white_baguette (#28)."
+      ],
+      "engine": [
+        "Planned times after mix are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 782.61,
+          "tangzhong": 0,
+          "water": 1017.39,
+          "salt": 14.09,
+          "yeast": 0.38,
+          "extras": {},
+          "dough": 1800,
+          "hydrationPct": 130,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 782.61,
+          "pureWater": 1017.39,
+          "finalMixWater": 915.65,
+          "doughWeight": 1814.47,
+          "pureWaterPct": 130,
+          "totalWaterPct": 130,
+          "totalWaterComplete": true,
+          "totalFatPct": 0,
+          "totalSugarPct": 0,
+          "components": {
+            "poolish": {
+              "flour": 78.26,
+              "water": 101.74
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_25",
+      "recipeId": "tost-id_bread_25",
+      "name": "PAIN (25)",
+      "status": "converted",
+      "anchor": "16 × 103.1 g",
+      "createdAt": "2026-01-20T16:04:54.000Z",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 24 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28).",
+        "Starter settings of TOST (no preferment in this recipe)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 944,
+          "tangzhong": 304,
+          "water": 217.6,
+          "salt": 18,
+          "yeast": 38.46,
+          "extras": {
+            "sour-cream": 128
+          },
+          "dough": 1600,
+          "hydrationPct": 60.63,
+          "doughResidualPerPiece": 0.4
+        },
+        "flourprint": {
+          "flourTotal": 995.68,
+          "pureWater": 469.92,
+          "finalMixWater": 217.6,
+          "doughWeight": 1650.06,
+          "pureWaterPct": 47.2,
+          "totalWaterPct": 57.2,
+          "totalWaterComplete": true,
+          "totalFatPct": 2.23,
+          "totalSugarPct": 0.39,
+          "components": {
+            "tangzhong": {
+              "flour": 51.68,
+              "water": 252.32
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_26",
+      "recipeId": "tost-id_bread_26",
+      "name": "pullmanzong poolish",
+      "status": "converted-with-warning",
+      "anchor": "3 × 1728.5 g",
+      "createdAt": "2026-02-16T15:50:05.000Z",
+      "family": "pullmanzong",
+      "flours": [
+        "disc_flour → flour (97.6 % of the main flour)",
+        "disc_flour_brown → brown-flour (2.4 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Tangzhong and poolish flour drawn from the main flour (flour) only.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Flour disc_flour_brown is a TOST custom or unnamed flour: to identify.",
+        "Yeast in the poolish: 0.35 g, from the owner's recollection (TOST does not export it)."
+      ],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
+      ],
+      "engine": [
+        "Fat total incomplete: unknown for diastatic-malt.",
+        "Sugar total incomplete: unknown for diastatic-malt.",
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 2745,
+          "tangzhong": 969,
+          "water": 1391.73,
+          "salt": 60.39,
+          "yeast": 13.46,
+          "extras": {
+            "diastatic-malt": 6
+          },
+          "dough": 5112,
+          "hydrationPct": 80,
+          "doughResidualPerPiece": 0.09
+        },
+        "flourprint": {
+          "flourTotal": 2909.73,
+          "pureWater": 2196,
+          "finalMixWater": 568.23,
+          "doughWeight": 5185.58,
+          "pureWaterPct": 75.47,
+          "totalWaterPct": 75.51,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.02,
+          "totalSugarPct": 0,
+          "components": {
+            "tangzhong": {
+              "flour": 164.73,
+              "water": 804.27
+            },
+            "poolish": {
+              "flour": 823.5,
+              "water": 823.5
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_27",
+      "recipeId": "tost-id_bread_27",
+      "name": "pullmanzong poolish test",
+      "status": "converted-with-warning",
+      "anchor": "3 × 1729.2 g",
+      "createdAt": "2026-02-28T20:10:05.000Z",
+      "family": "pullmanzong",
+      "flours": [
+        "disc_flour → flour (97.6 % of the main flour)",
+        "disc_flour_brown → brown-flour (2.4 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Tangzhong and poolish flour drawn from the main flour (flour) only.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Flour disc_flour_brown is a TOST custom or unnamed flour: to identify.",
+        "Yeast in the poolish unknown: TOST does not export it."
+      ],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
+      ],
+      "engine": [
+        "Fat total incomplete: unknown for diastatic-malt.",
+        "Sugar total incomplete: unknown for diastatic-malt.",
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 2745,
+          "tangzhong": 969,
+          "water": 1391.73,
+          "salt": 60.39,
+          "yeast": 15.38,
+          "extras": {
+            "diastatic-malt": 6
+          },
+          "dough": 5112,
+          "hydrationPct": 80,
+          "doughResidualPerPiece": 0.09
+        },
+        "flourprint": {
+          "flourTotal": 2909.73,
+          "pureWater": 2196,
+          "finalMixWater": 705.48,
+          "doughWeight": 5187.5,
+          "pureWaterPct": 75.47,
+          "totalWaterPct": 75.52,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.02,
+          "totalSugarPct": 0,
+          "components": {
+            "tangzhong": {
+              "flour": 164.73,
+              "water": 804.27
+            },
+            "poolish": {
+              "flour": 686.25,
+              "water": 686.25
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_28",
+      "recipeId": "tost-id_bread_28",
+      "name": "pullmanzong poolish test 2",
+      "status": "converted-with-warning",
+      "anchor": "3 × 1725.2 g",
+      "createdAt": "2026-03-29T18:44:56.000Z",
+      "family": "pullmanzong",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Yeast in the poolish: 0.35 g, from the owner's recollection (TOST does not export it)."
+      ],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
+      ],
+      "engine": [
+        "Fat total incomplete: unknown for diastatic-malt.",
+        "Sugar total incomplete: unknown for diastatic-malt.",
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 2738.77,
+          "tangzhong": 966,
+          "water": 1389.23,
+          "salt": 60.25,
+          "yeast": 15.35,
+          "extras": {
+            "diastatic-malt": 6
+          },
+          "dough": 5100,
+          "hydrationPct": 80,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 2902.99,
+          "pureWater": 2191.01,
+          "finalMixWater": 567.6,
+          "doughWeight": 5175.6,
+          "pureWaterPct": 75.47,
+          "totalWaterPct": 75.52,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.02,
+          "totalSugarPct": 0,
+          "components": {
+            "tangzhong": {
+              "flour": 164.22,
+              "water": 801.78
+            },
+            "poolish": {
+              "flour": 821.63,
+              "water": 821.63
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_29",
+      "recipeId": "tost-id_bread_29",
+      "name": "pullmanzong poolish test 3",
+      "status": "needs-review",
+      "anchor": "3 × 1725.1 g",
+      "createdAt": "2026-04-29T18:14:22.000Z",
+      "family": "pullmanzong",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Yeast in the poolish: 0.35 g, from the owner's recollection (TOST does not export it)."
+      ],
+      "reviews": [
+        "TOST bulk duration is 0 h: left without a duration.",
+        "TOST proof duration is 0 h: left without a duration."
+      ],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 2729.92,
+          "tangzhong": 1095,
+          "water": 1275.08,
+          "salt": 60.06,
+          "yeast": 15.3,
+          "extras": {},
+          "dough": 5100,
+          "hydrationPct": 80,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 2916.07,
+          "pureWater": 2183.93,
+          "finalMixWater": 456.11,
+          "doughWeight": 5175.36,
+          "pureWaterPct": 74.89,
+          "totalWaterPct": 74.92,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.02,
+          "totalSugarPct": 0,
+          "components": {
+            "tangzhong": {
+              "flour": 186.15,
+              "water": 908.85
+            },
+            "poolish": {
+              "flour": 818.98,
+              "water": 818.98
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_30",
+      "recipeId": "tost-id_bread_30",
+      "name": "Pizza comptoir poolish",
+      "status": "needs-review",
+      "anchor": "8 × 276.3 g",
+      "createdAt": "2026-06-14T13:52:22.000Z",
+      "family": "Pizza",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Yeast in the poolish unknown: TOST does not export it."
+      ],
+      "reviews": [
+        "diastatic-malt is at 0 g in TOST: kept at 0, remove it if it is not used."
+      ],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode fan_oven, shape disc_pizza (#28)."
+      ],
+      "engine": [
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 1238.87,
+          "tangzhong": 240,
+          "water": 665.13,
+          "salt": 37.17,
+          "yeast": 13.08,
+          "extras": {
+            "honey": 16,
+            "diastatic-malt": 0
+          },
+          "dough": 2160,
+          "hydrationPct": 70,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 1279.67,
+          "pureWater": 864.33,
+          "finalMixWater": 45.69,
+          "doughWeight": 2210.24,
+          "pureWaterPct": 67.54,
+          "totalWaterPct": 67.82,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.05,
+          "totalSugarPct": 1.03,
+          "components": {
+            "tangzhong": {
+              "flour": 40.8,
+              "water": 199.2
+            },
+            "poolish": {
+              "flour": 619.44,
+              "water": 619.44
+            }
+          }
+        }
+      }
+    },
+    {
+      "legacyId": "id_bread_31",
+      "recipeId": "tost-id_bread_31",
+      "name": "pullmanzong poolish test 4",
+      "status": "converted-with-warning",
+      "anchor": "3 × 1725.1 g",
+      "createdAt": "2026-06-18T17:45:04.000Z",
+      "family": "pullmanzong",
+      "flours": [
+        "disc_flour → flour (100 % of the main flour)"
+      ],
+      "assumptions": [
+        "Salt and yeast percentages are taken relative to the main flour, as TOST shows them.",
+        "Tangzhong: 17 % flour (TOST), from the main flour.",
+        "Water to weigh rebuilt from TOST: hydration × main flour − water TOST attributes to extras.",
+        "Anchor: pieces × grams each, so that the flour to weigh stays the one TOST gave; the piece weight now includes salt and yeast.",
+        "Mix, shape and bake have no duration in TOST: they end when the baker says so (#32)."
+      ],
+      "warnings": [
+        "Yeast in the poolish: 0.35 g, from the owner's recollection (TOST does not export it)."
+      ],
+      "reviews": [],
+      "dropped": [
+        "Target dough temperature 23 °C not imported: the recipe stays in basic mode (dough at the ambient 21 °C of the mix step).",
+        "Kneading no_kneading, mixer kitchenaid, folds true, autolysis false (#32).",
+        "Oven mode brioche_mode, shape disc_wholemeal_loaf (#28)."
+      ],
+      "engine": [
+        "Fat total incomplete: unknown for diastatic-malt.",
+        "Sugar total incomplete: unknown for diastatic-malt.",
+        "Planned times after tangzhong are unknown until those steps get a duration."
+      ],
+      "comparison": {
+        "tost": {
+          "mainFlour": 2726.58,
+          "tangzhong": 1095,
+          "water": 1272.42,
+          "salt": 59.98,
+          "yeast": 15.38,
+          "extras": {
+            "diastatic-malt": 6
+          },
+          "dough": 5100,
+          "hydrationPct": 80,
+          "doughResidualPerPiece": 0
+        },
+        "flourprint": {
+          "flourTotal": 2912.73,
+          "pureWater": 2181.27,
+          "finalMixWater": 454.44,
+          "doughWeight": 5175.37,
+          "pureWaterPct": 74.89,
+          "totalWaterPct": 74.93,
+          "totalWaterComplete": true,
+          "totalFatPct": 0.02,
+          "totalSugarPct": 0,
+          "components": {
+            "tangzhong": {
+              "flour": 186.15,
+              "water": 908.85
+            },
+            "poolish": {
+              "flour": 817.97,
+              "water": 817.97
+            }
+          }
+        }
+      }
+    }
+  ]
+}
