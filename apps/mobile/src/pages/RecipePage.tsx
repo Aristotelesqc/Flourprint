@@ -592,31 +592,48 @@ export const RecipePage = () => {
       {dirty && (
         <IonFooter>
           <IonToolbar>
-            <div className="flex flex-wrap items-center gap-2 px-3 py-1.5">
-              <span className="flex flex-1 items-center gap-1.5 text-sm text-muted">
-                {t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
-                <InfoButton
-                  topic="draft"
-                  term={t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
-                />
-              </span>
-              <IonButton
-                fill="clear"
-                color={blocking > 0 ? 'danger' : 'medium'}
-                onClick={() => setChecking(true)}
-              >
-                {issues.length === 0
-                  ? t('check.button')
-                  : t('check.buttonCount', { count: issues.length })}
-              </IonButton>
-              <IonButton fill="outline" onClick={discard}>
-                {t(newRecipe ? 'draft.delete' : 'draft.discard')}
-              </IonButton>
-              <IonButton disabled={writes.busy} onClick={() => void save()}>
-                {newRecipe
-                  ? t('draft.saveRecipe')
-                  : t('draft.save', { version: (base?.revision.version ?? 0) + 1 })}
-              </IonButton>
+            {/* Two rows so nothing is clipped at phone width: what the draft is, then its actions. */}
+            <div className="flex flex-col gap-1.5 px-4 py-2">
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
+                  <span className="truncate">
+                    {t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
+                  </span>
+                  <InfoButton
+                    topic="draft"
+                    term={t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
+                  />
+                </span>
+                <IonButton
+                  size="small"
+                  fill="clear"
+                  className="m-0 shrink-0"
+                  color={blocking > 0 ? 'danger' : 'medium'}
+                  onClick={() => setChecking(true)}
+                >
+                  {issues.length === 0
+                    ? t('check.button')
+                    : t('check.buttonCount', { count: issues.length })}
+                </IonButton>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <IonButton fill="outline" className="m-0 h-auto min-h-11" onClick={discard}>
+                  <span className="py-1 leading-tight whitespace-normal">
+                    {t(newRecipe ? 'draft.delete' : 'draft.discard')}
+                  </span>
+                </IonButton>
+                <IonButton
+                  className="m-0 h-auto min-h-11"
+                  disabled={writes.busy}
+                  onClick={() => void save()}
+                >
+                  <span className="py-1 leading-tight whitespace-normal">
+                    {newRecipe
+                      ? t('draft.saveRecipe')
+                      : t('draft.save', { version: (base?.revision.version ?? 0) + 1 })}
+                  </span>
+                </IonButton>
+              </div>
             </div>
           </IonToolbar>
         </IonFooter>
