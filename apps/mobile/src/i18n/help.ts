@@ -161,7 +161,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.anchor.body1':
     'La taille fixe la fournée. Chaque gramme de la recette en est calculé, avec les pourcentages.',
   'help.anchor.body2':
-    'Farine : tu donnes le poids total de farine. Pâte : tu donnes le poids de la pâte finale et la farine en découle. Pâtons : tu donnes un nombre et le poids d’un pâton ; la pâte pèse nombre × poids.',
+    'Farine : indiquer le poids total de farine. Pâte : indiquer le poids de la pâte finale ; la farine en découle. Pâtons : indiquer un nombre et le poids d’un pâton ; la pâte pèse nombre × poids.',
   'help.anchor.body3':
     'Changer de type garde tous les grammes et pourcentages : c’est la même taille vue autrement. Changer la valeur met tous les grammes à l’échelle et garde les pourcentages.',
   'help.anchor.more':
@@ -177,17 +177,17 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.water.title': 'Eau ajoutée et eau totale',
   'help.water.body1':
-    'L’eau ajoutée est l’eau que tu mets comme ingrédient « Eau », préparations comprises, en % de la farine.',
+    'L’eau ajoutée est l’eau mise comme ingrédient « Eau », préparations comprises, en % de la farine.',
   'help.water.body2':
     'L’eau totale compte aussi l’eau apportée par le lait, les œufs, le miel, le beurre et les autres ingrédients, moins les pertes comme l’évaporation. C’est le chiffre qui dit à quel point la pâte est vraiment humide.',
   'help.water.body3':
-    'Quand la teneur en eau d’un ingrédient est inconnue, l’eau totale est signalée incomplète ou affichée comme estimation (≈) : elle n’est jamais comptée comme zéro. Touche le chiffre de l’eau totale pour voir d’où il vient.',
+    'Quand la teneur en eau d’un ingrédient est inconnue, l’eau totale est signalée incomplète ou affichée comme estimation (≈) : elle n’est jamais comptée comme zéro. Toucher le chiffre de l’eau totale pour voir d’où il vient.',
 
   'help.lock.title': 'Eau totale verrouillée',
   'help.lock.body1':
     'Verrouiller fixe l’eau totale au pourcentage affiché. L’eau ajoutée s’ajuste alors d’elle-même quand un autre ingrédient apporte de l’eau (œufs, lait…) : la pâte garde la même humidité.',
   'help.lock.body2':
-    'Tant qu’elle est verrouillée, l’eau ajoutée ne se modifie plus : change la cible verrouillée, ou déverrouille. Déverrouiller garde toutes les quantités actuelles.',
+    'Tant qu’elle est verrouillée, l’eau ajoutée ne se modifie plus : changer la cible verrouillée, ou déverrouiller. Déverrouiller garde toutes les quantités actuelles.',
   'help.lock.more':
     'Sans verrou, ajouter 100 g d’œuf augmente l’eau totale. Avec le verrou, l’eau ajoutée baisse de l’eau que l’œuf apporte.',
 
@@ -201,29 +201,29 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.finalMix.title': 'Pétrissage final à peser',
   'help.finalMix.body1':
-    'Ce que tu pèses au pétrissage : chaque préparation comme un seul élément prêt, la farine restante, l’eau restante après celle des préparations, et les autres ingrédients.',
+    'Ce qui est pesé au pétrissage : chaque préparation comme un seul élément prêt, la farine restante, l’eau restante après celle des préparations, et les autres ingrédients.',
   'help.finalMix.body2':
     'Cocher un élément est une liste de contrôle pour cette séance seulement. Rien n’est enregistré, et un changement de quantité décoche.',
 
   'help.fermentation.title': 'Fermentation estimée',
   'help.fermentation.body1':
-    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues de tes étapes. Le modèle est provisoire : il est ajusté sur une table de levure publiée, pas encore sur tes propres cuissons.',
+    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes. Le modèle est provisoire : il est ajusté sur une table de levure publiée, pas encore sur les cuissons enregistrées.',
   'help.fermentation.body2':
     'Le mode de base prend la pâte à la température ambiante. Le mode avancé permet de viser une température de pâte et donne la température de l’eau à utiliser.',
   'help.fermentation.body3':
-    'La recette ne change jamais toute seule : « Prendre ce temps » et « Prendre cette dose » sont des modifications que tu choisis.',
+    'La recette ne change jamais toute seule : « Prendre ce temps » et « Prendre cette dose » sont des modifications à choisir.',
   'help.fermentation.more':
     'Les étapes entre le pétrissage et la cuisson sont comptées ensemble comme une seule fermentation ; l’état de la pâte n’est pas remis à zéro entre elles. Les préferments sont estimés à part. Sans ingrédient marqué comme levure commerciale, il n’y a pas d’estimation.',
 
   'help.readiness.title': 'Cible « prête à cuire »',
   'help.readiness.body1':
-    '« Prête à cuire » est ton propre jugement ; le modèle a besoin d’une cible pour le représenter. Ce choix fixe cette cible pour toute la pâte.',
+    '« Prête à cuire » est un jugement personnel ; le modèle a besoin d’une cible pour le représenter. Ce choix fixe cette cible pour toute la pâte.',
   'help.readiness.body2':
-    'Point final du modèle (par défaut) : le point final du modèle lui-même, « à peu près doublé une fois » dans sa table d’origine. Non calibré sur tes pâtes.',
+    'Point final du modèle (par défaut) : le point final du modèle lui-même, « à peu près doublé une fois » dans sa table d’origine. Non calibré sur des pâtes réelles.',
   'help.readiness.body3':
     'Expérimentale (×2) : une cible supposée, environ deux fois le temps du modèle, non mesurée. Sa fourchette est une plage de sensibilité, pas une marge d’erreur.',
   'help.readiness.more':
-    'Les repères « Prête à cuire » que tu notes en cuisson sont gardés pour calibrer cette cible plus tard. Rien n’est encore appris automatiquement.',
+    'Les repères « Prête à cuire » notés en cuisson sont gardés pour calibrer cette cible plus tard. Rien n’est encore appris automatiquement.',
 
   'help.modelTime.title': 'Temps du modèle et sa fourchette',
   'help.modelTime.body1':
@@ -233,44 +233,44 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.modelTime.body3':
     '« Pas atteinte en 21 jours » veut dire qu’une borne de la fourchette n’atteint jamais la cible ; « pas de fourchette fiable », qu’aucune fourchette n’a pu être calculée. « Prendre ce temps » écrit la valeur, arrondie à 5 minutes, dans l’étape.',
   'help.modelTime.more':
-    '« Aux temps prévus : 90 % » dit jusqu’où la pâte va avec les durées que tu as prévues, en pourcentage de sa cible. Sous 100 %, le plan s’arrête avant la cible. Ce n’est pas un volume.',
+    '« Aux temps prévus : 90 % » indique jusqu’où la pâte va avec les durées prévues, en pourcentage de sa cible. Sous 100 %, le plan s’arrête avant la cible. Ce n’est pas un volume.',
 
   'help.extrapolation.title': 'Hors des données du modèle',
   'help.extrapolation.body1':
-    'Le modèle est ajusté sur une plage limitée de pâtes. Quand ta recette en sort, l’estimation est quand même donnée, avec les raisons, mais elle est moins fiable.',
+    'Le modèle est ajusté sur une plage limitée de pâtes. Quand la recette en sort, l’estimation est quand même donnée, avec les raisons, mais elle est moins fiable.',
   'help.extrapolation.body2':
     'Les raisons : un préferment, plus de 5 % de sucre, plus de 3 % de gras, un sel hors de 1,5 à 3 %, une eau totale hors de 55 à 75 %, ou une teneur inconnue. Elles signalent l’estimation sans changer le calcul.',
   'help.extrapolation.body3':
-    'La fourchette ne s’élargit pas toute seule : lis le chiffre comme un ordre de grandeur et surveille la pâte.',
+    'La fourchette ne s’élargit pas toute seule : lire le chiffre comme un ordre de grandeur et surveiller la pâte.',
 
   'help.waterTemp.title': 'Température de pâte et température de l’eau',
   'help.waterTemp.body1':
-    'En mode avancé, tu donnes la température de pâte visée après le pétrissage. L’estimation de fermentation part de cette valeur, et l’app calcule la température de l’eau à utiliser.',
+    'En mode avancé, on indique la température de pâte visée après le pétrissage. L’estimation de fermentation part de cette valeur, et l’app calcule la température de l’eau à utiliser.',
   'help.waterTemp.body2':
     'Méthode de la température de base : base = 3 × visée (4 × avec un préferment) ; eau = base − farine − ambiante − préferment − friction du pétrin. La farine est prise à l’ambiante et un préferment à la température de son étape.',
   'help.waterTemp.body3':
-    'La friction est la chaleur que le pétrin ajoute : elle baisse donc la température de l’eau. Elle compte pour 0 °C tant que tu ne la règles pas, et le résultat le dit. Quelques pâtes mesurées te donneront la valeur de ton pétrin.',
+    'La friction est la chaleur que le pétrin ajoute : elle baisse donc la température de l’eau. Elle compte pour 0 °C tant qu’elle n’est pas réglée, et le résultat le dit. Quelques pâtes mesurées donneront la valeur du pétrin.',
   'help.waterTemp.more': 'Un résultat sous 0 °C ou au-dessus de 60 °C est signalé, jamais tronqué.',
 
   'help.alap.title': 'Le plus tard possible',
   'help.alap.body1':
     'La plupart des étapes commencent dès que les précédentes sont finies. Une étape « le plus tard possible » (le préchauffage, par exemple) est planifiée à l’envers : elle se termine juste avant la première étape qui la suit.',
   'help.alap.body2':
-    'Le four ne chauffe donc pas pendant des heures : il est programmé à rebours depuis le moment où tu en as besoin. Une telle étape a besoin d’une durée.',
+    'Le four ne chauffe donc pas pendant des heures : il est programmé à rebours depuis le moment où il est nécessaire. Une telle étape a besoin d’une durée.',
   'help.alap.body3':
     'Le plan est recalculé quand une heure change, et aucune étape ne se termine toute seule quand sa durée prévue est écoulée.',
 
   'help.startMode.title': 'Commencer à, ou prêt pour',
   'help.startMode.body1':
-    'Commencer à : tu choisis quand la première étape commence, et l’app calcule l’heure de chaque étape, jusqu’à la fin de la recette.',
+    'Commencer à : choisir quand la première étape commence, et l’app calcule l’heure de chaque étape, jusqu’à la fin de la recette.',
   'help.startMode.body2':
-    'Prêt pour : tu choisis quand une étape cible doit se terminer (la cuisson par défaut) et l’app remonte le temps pour te dire quand commencer. Toutes les durées jusqu’à cette étape doivent être connues.',
+    'Prêt pour : choisir quand une étape cible doit se terminer (la cuisson par défaut) ; l’app remonte le temps pour indiquer quand commencer. Toutes les durées jusqu’à cette étape doivent être connues.',
   'help.startMode.body3':
-    'Démarrer la cuisson prend le mode et l’heure affichés ici comme plan. Tu peux encore ajuster les étapes pendant la cuisson.',
+    'Démarrer la cuisson prend le mode et l’heure affichés ici comme plan. Les étapes restent ajustables pendant la cuisson.',
 
   'help.readyMark.title': 'Repères de pâte prête',
   'help.readyMark.body1':
-    '« Prête à façonner » et « Prête à cuire » notent le moment où tu juges la pâte prête, et à quoi tu t’es fié (test du doigt, toucher, temps). Ils ne terminent jamais l’étape et ne changent pas le plan.',
+    '« Prête à façonner » et « Prête à cuire » notent le moment où la pâte est jugée prête, et ce sur quoi ce jugement repose (test du doigt, toucher, temps). Ils ne terminent jamais l’étape et ne changent pas le plan.',
   'help.readyMark.body2':
     'Le bouton apparaît sur une étape de fermentation en cours : « Prête à cuire » sur la dernière avant la cuisson (en général l’apprêt), « Prête à façonner » sur les autres (la fin du pointage, par exemple).',
   'help.readyMark.body3':
@@ -294,7 +294,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.draft.title': 'Modifications non enregistrées et versions',
   'help.draft.body1':
-    'Chaque modification est gardée sur le téléphone comme brouillon pendant que tu saisis : tu peux fermer l’app et revenir. Ce n’est pas encore une version.',
+    'Chaque modification est gardée sur le téléphone comme brouillon pendant la saisie : il est possible de fermer l’app et de revenir. Ce n’est pas encore une version.',
   'help.draft.body2':
     'Enregistrer vérifie la recette puis crée la version suivante ; les versions précédentes restent intactes et une cuisson garde la version dont elle est partie. Abandonner jette le brouillon. Une cuisson ne démarre que d’une version enregistrée.',
 };

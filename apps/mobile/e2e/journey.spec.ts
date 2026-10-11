@@ -295,7 +295,7 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
 }) => {
   await openRecipe(page);
   await expect(
-    page.getByText('Entre la température ambiante pour avoir les temps.').first(),
+    page.getByText('Entrer la température ambiante pour avoir les temps.').first(),
   ).toBeVisible();
   const room = page.getByLabel('Température ambiante (°C)');
   await room.fill('21');

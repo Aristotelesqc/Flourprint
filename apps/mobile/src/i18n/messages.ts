@@ -557,7 +557,7 @@ export const fr: Catalog = {
   'advanced.title': 'Avancé',
   'checks.title': 'Vérifications de l’appareil',
   'checks.intro':
-    'Vérifications des spikes #23 et #24. Lancez-les sur le téléphone, puis copiez le rapport dans l’issue.',
+    'Vérifications des spikes #23 et #24. Les lancer sur le téléphone, puis copier le rapport dans l’issue.',
   'checks.environment': 'Environnement',
   'checks.build': 'Build',
   'checks.platform': 'Plateforme',
@@ -570,7 +570,7 @@ export const fr: Catalog = {
   'checks.summary': '{passed} vérifications réussies sur {total}',
   'checks.markerTitle': 'Résiste à un arrêt forcé',
   'checks.markerHelp':
-    'Écrivez un marqueur, forcez l’arrêt de l’app dans les paramètres Android, rouvrez-la : la même heure doit s’afficher ici. Idem après l’installation d’un APK plus récent.',
+    'Écrire un marqueur, forcer l’arrêt de l’app dans les paramètres Android, la rouvrir : la même heure doit s’afficher ici. Idem après l’installation d’un APK plus récent.',
   'checks.markerWrite': 'Écrire un marqueur maintenant',
   'checks.markerLast': 'Dernier marqueur : {time}',
   'checks.markerNone': 'Aucun marqueur pour l’instant.',
@@ -578,25 +578,25 @@ export const fr: Catalog = {
   'checks.manualTitle': 'À vérifier à la main',
   'checks.manual.offline': 'Mode avion activé, PC éteint : l’app s’ouvre et affiche la recette.',
   'checks.manual.decimal':
-    'Dans la formule, tapez 2,2 puis 2.2 dans un champ : les deux sont acceptés.',
+    'Dans la formule, taper 2,2 puis 2.2 dans un champ : les deux sont acceptés.',
   'checks.manual.keyboard':
     'Le clavier affiche des chiffres et un séparateur décimal; le champ reste visible.',
   'checks.manual.draft':
-    'Modifiez une valeur, revenez à la liste, rouvrez la recette : la modification est toujours là.',
+    'Modifier une valeur, revenir à la liste, rouvrir la recette : la modification est toujours là.',
   'checks.manual.theme': 'Le texte est lisible en mode clair et en mode sombre.',
   'checks.copy': 'Copier le rapport',
   'checks.copied': 'Rapport copié.',
   'state.recipeMissing': 'Cette recette n’existe pas.',
   'state.bakeMissing': 'Cette cuisson n’existe pas.',
-  'state.storageRead': 'Les données n’ont pas pu être lues. Fermez puis rouvrez l’app.',
-  'state.storageWrite': 'Rien n’a pu être enregistré. Vos modifications sont gardées; réessayez.',
-  'state.storageInit': 'Flourprint n’a pas pu ouvrir ses données. Fermez puis rouvrez l’app.',
+  'state.storageRead': 'Les données n’ont pas pu être lues. Fermer puis rouvrir l’app.',
+  'state.storageWrite': 'Rien n’a pu être enregistré. Les modifications sont gardées; réessayer.',
+  'state.storageInit': 'Flourprint n’a pas pu ouvrir ses données. Fermer puis rouvrir l’app.',
   'state.sessionOnly':
     'Aperçu navigateur : les données restent dans cet onglet et disparaissent au rechargement.',
   'state.retry': 'Réessayer',
   'recipes.title': 'Recettes',
   'recipes.empty':
-    'Aucune recette pour l’instant. Touche + pour partir d’un modèle ou d’une recette vierge.',
+    'Aucune recette pour l’instant. Toucher + pour partir d’un modèle ou d’une recette vierge.',
   'recipes.card.dough': 'Pâte',
   'recipes.card.hydration': 'Eau ajoutée',
   'recipes.card.duration': 'Durée',
@@ -604,7 +604,7 @@ export const fr: Catalog = {
   'recipes.card.neverBaked': 'Jamais cuite',
   'recipes.activeBake': 'Cuisson en cours · {recipe}',
   'bakes.title': 'Cuissons en cours',
-  'bakes.empty': 'Aucune cuisson en cours. Lance-en une depuis l’onglet Processus d’une recette.',
+  'bakes.empty': 'Aucune cuisson en cours. En lancer une depuis l’onglet Processus d’une recette.',
   'bakes.open': 'Ouvrir',
   'bakes.unreadable':
     '{count, plural, one {# cuisson en cours ne peut pas être lue par cette version} other {# cuissons en cours ne peuvent pas être lues par cette version}}.',
@@ -700,7 +700,7 @@ export const fr: Catalog = {
   'check.button': 'Vérifier',
   'check.buttonCount': '{count, plural, one {# point à vérifier} other {# points à vérifier}}',
   'check.no_steps': 'Le processus n’a aucune étape.',
-  'check.salt_missing': 'Pas de sel : ajoute-le avec « Ajouter un ingrédient ».',
+  'check.salt_missing': 'Pas de sel : l’ajouter avec « Ajouter un ingrédient ».',
   'check.salt_outside_1_to_3_5': 'Sel à {pct} : inhabituel (1 à 3,5 % attendu).',
   'check.water_outside_45_to_90': 'Eau totale à {pct} : inhabituel (45 à 90 %).',
   'check.no_leavening': 'Ni levure ni préferment : la pâte ne lèvera pas.',
@@ -777,8 +777,8 @@ export const fr: Catalog = {
   'explain.loss': 'Perte dans {name}',
   'explain.unknown': '{name} : inconnue',
   'explain.close': 'Fermer',
-  'field.invalidNumber': 'Entrez un nombre.',
-  'field.invalidDuration': 'Entrez une durée comme 45 min ou 1 h 30.',
+  'field.invalidNumber': 'Entrer un nombre.',
+  'field.invalidDuration': 'Entrer une durée comme 45 min ou 1 h 30.',
   'process.mode.startAt': 'Commencer à',
   'process.mode.readyBy': 'Prêt pour',
   'process.when.startAt': 'Début',
@@ -794,7 +794,7 @@ export const fr: Catalog = {
   'process.start': 'Démarrer la cuisson',
   'process.openBake': 'Voir la cuisson en cours',
   'process.startAnother': 'Démarrer une autre cuisson',
-  'process.saveFirst': 'Enregistrez les modifications avant de démarrer une cuisson.',
+  'process.saveFirst': 'Enregistrer les modifications avant de démarrer une cuisson.',
   'operation.preferment': 'Préferment',
   'operation.scald': 'Échaudage',
   'operation.autolyse': 'Autolyse',
@@ -811,7 +811,7 @@ export const fr: Catalog = {
   'operation.preheat': 'Préchauffage',
   'operation.bake': 'Cuisson',
   'operation.cool': 'Refroidissement',
-  'history.empty': 'Aucune cuisson pour l’instant. Lance-en une depuis l’onglet Processus.',
+  'history.empty': 'Aucune cuisson pour l’instant. En lancer une depuis l’onglet Processus.',
   'history.item': '{date} · version {version}',
   'history.status.notStarted': 'Pas commencée',
   'history.status.active': 'En cours',
@@ -837,8 +837,8 @@ export const fr: Catalog = {
   'bake.readyToBake': 'Prête à cuire',
   'bake.log.ready': '{time} · {label} ({details}) {text}',
   'state.writeBusy':
-    'Une autre modification est en cours d’enregistrement. Réessaie dans un instant.',
-  'bake.doughReadyTitle': 'Pâte prête : à quoi te fies-tu ?',
+    'Une autre modification est en cours d’enregistrement. Réessayer dans un instant.',
+  'bake.doughReadyTitle': 'Pâte prête : sur quoi se fier ?',
   'bake.doughReady.poke': 'Test du doigt',
   'bake.doughReady.feel': 'Toucher',
   'bake.doughReady.time': 'Temps',
@@ -885,8 +885,8 @@ export const fr: Catalog = {
     'Les préparations demandent {required} d’eau, mais la formule n’en contient que {available}.',
   'error.IncompatibleConstraint': 'Cette modification est impossible avec la quantité actuelle.',
   'error.InvalidFormula': 'Cette valeur n’est pas valide.',
-  'error.HeadConflict': 'La recette a changé entre-temps. Rechargez-la avant d’enregistrer.',
-  'error.DependenciesNotCompleted': 'Terminez d’abord les étapes précédentes.',
+  'error.HeadConflict': 'La recette a changé entre-temps. La recharger avant d’enregistrer.',
+  'error.DependenciesNotCompleted': 'Terminer d’abord les étapes précédentes.',
   'error.StepAlreadyCompleted': 'Cette étape est déjà terminée.',
   'error.StepAlreadyStarted': 'Cette étape a déjà commencé.',
   'error.BakeNotActive': 'Cette cuisson n’est pas en cours.',
@@ -952,7 +952,7 @@ export const fr: Catalog = {
   'advanced.recipes': 'Recettes',
   'advanced.import': 'Importer des recettes…',
   'advanced.importHint':
-    'Ajoute les recettes d’un fichier de recettes Flourprint. Les recettes déjà présentes restent telles quelles.',
+    'Ajouter les recettes d’un fichier de recettes Flourprint. Les recettes déjà présentes restent telles quelles.',
   'advanced.importing': 'Import en cours…',
   'advanced.imported':
     '{imported, plural, =0 {Aucune nouvelle recette} one {# recette importée} other {# recettes importées}}{skipped, plural, =0 {} one {, # déjà présente} other {, # déjà présentes}}.',
@@ -973,7 +973,7 @@ export const fr: Catalog = {
   'formula.lock.lockedHint':
     'L’eau ajoutée s’ajuste quand d’autres ingrédients apportent de l’eau.',
   'formula.lock.unlockedHint':
-    'Verrouille-la pour garder cette humidité en changeant les ingrédients.',
+    'La verrouiller pour garder cette humidité en changeant les ingrédients.',
   'formula.lock.target': 'Eau totale verrouillée',
   'formula.lock.lock': 'Verrouiller à {pct}',
   'formula.lock.unlockShort': 'Déverrouiller',
@@ -982,13 +982,13 @@ export const fr: Catalog = {
   'formula.add.ingredient': '+ Ajouter un ingrédient',
   'formula.add.flour': '+ Ajouter une farine',
   'formula.add.flourHint':
-    'Elle est ajoutée à 0 % : règle les parts pour que les farines fassent 100 %.',
+    'Elle est ajoutée à 0 % : régler les parts pour que les farines fassent 100 %.',
   'formula.unresolved':
-    'Les quantités ne peuvent pas encore être calculées : vérifie la recette pour voir pourquoi.',
+    'Les quantités ne peuvent pas encore être calculées : vérifier la recette pour voir pourquoi.',
   'formula.add.other': 'Autre…',
   'formula.add.name': 'Nom',
   'formula.add.water': 'Teneur en eau en % (vide si inconnue)',
-  'formula.add.hint': 'Il est ajouté à 0 % : règle sa quantité dans la liste.',
+  'formula.add.hint': 'Il est ajouté à 0 % : régler sa quantité dans la liste.',
   'formula.add.confirm': 'Ajouter',
   'formula.add.cancel': 'Annuler',
   'formula.add.poolish': '+ Poolish',
@@ -1035,7 +1035,7 @@ export const fr: Catalog = {
   'fermentation.progress': 'Aux temps prévus : {pct} du point final',
   'fermentation.progressReady': 'Aux temps prévus : {pct} de la fermentation prévue',
   'fermentation.readyTarget':
-    'La cible « prête à cuire » n’est pas calibrée : tes repères « Prête à cuire » la calibreront.',
+    'La cible « prête à cuire » n’est pas calibrée : les repères « Prête à cuire » la calibreront.',
   'fermentation.bandUnbounded': '(pas de fourchette fiable)',
   'fermentation.readiness': 'Cible « prête à cuire »',
   'fermentation.readiness.model': 'Point final du modèle',
@@ -1062,7 +1062,7 @@ export const fr: Catalog = {
   'fermentation.extra.fat_unknown': 'gras inconnu',
   'fermentation.extra.water_unknown': 'eau inconnue',
   'fermentation.reason.no_commercial_yeast': 'Aucun ingrédient n’est marqué comme levure.',
-  'fermentation.reason.temperature_unknown': 'Entre la température ambiante pour avoir les temps.',
+  'fermentation.reason.temperature_unknown': 'Entrer la température ambiante pour avoir les temps.',
   'fermentation.reason.dose_outside_domain':
     'La dose de levure sort du domaine du modèle (0,01 à 3 % en équivalent levure fraîche).',
   'fermentation.reason.temperature_outside_domain':
@@ -1073,10 +1073,10 @@ export const fr: Catalog = {
   'fermentation.reason.no_fermentation_step': 'Aucune étape de fermentation après le pétrissage.',
   'fermentation.reason.formula_invalid': 'La formule n’est pas valide.',
   'fermentation.reason.preferment_yeast_unknown':
-    'La levure de ce préferment est inconnue : donne-lui de la levure.',
+    'La levure de ce préferment est inconnue : lui donner de la levure.',
   'fermentation.reason.no_preferment_step': 'Ce préferment n’a pas d’étape.',
   'fermentation.reason.duration_unknown':
-    'Donne un temps à chaque étape pour avoir la dose de levure.',
+    'Donner un temps à chaque étape pour avoir la dose de levure.',
   'fermentation.reason.other': 'Pas d’estimation ({reason}).',
   'fermentation.markYeast': 'Quel ingrédient est la levure ?',
   'fermentation.yeastForm': 'Forme de levure',
@@ -1085,15 +1085,15 @@ export const fr: Catalog = {
   'fermentation.form.fresh': 'fraîche',
   'fermentation.markYeastConfirm': 'Marquer comme levure',
   'fermentation.footnote':
-    'Modèle provisoire ajusté sur une table de levure publiée, à calibrer sur tes cuissons. La fourchette montre de combien il peut se tromper.',
+    'Modèle provisoire ajusté sur une table de levure publiée, à calibrer sur les cuissons. La fourchette montre de combien il peut se tromper.',
   'error.IncompatibleConstraint.waterTarget.locked':
-    'Cette eau suit l’eau totale verrouillée : change la cible ou déverrouille-la.',
+    'Cette eau suit l’eau totale verrouillée : changer la cible ou la déverrouiller.',
   'error.IncompatibleConstraint.waterTarget.unknown':
     'Impossible de verrouiller l’eau totale : la teneur en eau de {ingredients} est inconnue.',
   'error.IncompatibleConstraint.waterTarget.tooLow':
     'Les autres ingrédients apportent déjà plus d’eau que ce total.',
   'error.IncompatibleConstraint.allocation':
-    'Une préparation utilise cet ingrédient : retire-le d’abord de la préparation.',
+    'Une préparation utilise cet ingrédient : le retirer d’abord de la préparation.',
   'recipes.card.durationAtLeast': '≥ {duration}',
   'recipe.retryStart': 'Le démarrage précédent n’a pas été confirmé : il est renvoyé tel quel.',
   'check.intro':

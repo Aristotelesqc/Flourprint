@@ -20,6 +20,8 @@ a dedicated pull request, before the code that depends on it.
 - No new dependency without a demonstrated need.
 - English everywhere: code, comments, docs, commit messages, issues, pull requests.
 - No user-facing text hard-coded in UI components; use message keys (ADR 0009).
+- French UI text never addresses the user (no "tu", no "vous"): instructions and actions use the
+  infinitive ("Pétrir 8 min à basse vitesse"), explanations an impersonal voice.
 - Every commit is pushed and lands in the MVP pull request.
 - Before changing fermentation equations, parameters, domains or end-point semantics, read
   `docs/science/fermentation-model.md` and `docs/contracts/fermentation.md`. A new coefficient needs
