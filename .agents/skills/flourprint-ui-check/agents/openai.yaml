@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint UI verification'
+  short_description: 'Verify UI journeys and route native evidence'
+  default_prompt: 'Use $flourprint-ui-check for this task and report the evidence and remaining limits.'
