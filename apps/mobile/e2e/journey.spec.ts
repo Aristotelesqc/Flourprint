@@ -1017,6 +1017,16 @@ test('the browser preview keeps its data across a reload, until it is erased', a
   await expect(page.getByText('Aucune recette', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('Poolish + tangzhong')).toHaveCount(0);
   await expect(page.getByText('Recette 1')).toHaveCount(0);
+
+  // Development builds can load the sample again, for trying the app or reviewing it.
+  await page.goto('/advanced');
+  await page.getByText('Charger les recettes d’exemple').click();
+  await expect(page.getByText('1 recette importée.')).toBeVisible();
+  await page.getByText('Charger les recettes d’exemple').click();
+  await expect(page.getByText('Aucune nouvelle recette, 1 déjà présente.')).toBeVisible();
+  // In-app navigation: a reload could come before the snapshot is saved.
+  await goBack(page);
+  await expect(page.getByText('Poolish + tangzhong').locator('visible=true')).toHaveCount(1);
 });
 
 /** Back to the recipe list in the app (the browser build keeps its data in memory). */
