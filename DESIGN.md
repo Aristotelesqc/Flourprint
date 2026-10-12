@@ -195,6 +195,8 @@ The target is a reusable Flourprint component layer with consistent behavior and
 - **Sheets and help:** concise explanations with optional detail; accessible close action,
   containment, dismissal and focus return. Native keyboard/system-back behavior needs native
   evidence when affected; browser tests alone do not establish it.
+  Complete the new-recipe chooser's dismissal before navigating to its saved draft. Pending
+  creation prevents duplicate activation and user dismissal; ordinary cancellation stays on the list.
 - **Timeline:** show dependencies, parallel work and uncertainty without making elapsed time
   a biological readiness score. Editing links return to the corresponding Recipe step.
 

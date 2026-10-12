@@ -102,9 +102,29 @@ for (const english of [false, true]) {
           const scroll = await (
             host as HTMLElement & { getScrollElement(): Promise<HTMLElement> }
           ).getScrollElement();
-          return { width: scroll.clientWidth, scrollWidth: scroll.scrollWidth };
+          const view = host.getBoundingClientRect();
+          const outside =
+            scroll.scrollWidth > scroll.clientWidth
+              ? [...host.querySelectorAll('*')]
+                  .filter((element) => {
+                    const rect = element.getBoundingClientRect();
+                    return (
+                      rect.width > 0 && (rect.right > view.right + 1 || rect.left < view.left - 1)
+                    );
+                  })
+                  .slice(0, 8)
+                  .map((element) => ({
+                    tag: element.tagName,
+                    classes: element.getAttribute('class'),
+                    text: element.textContent?.slice(0, 80),
+                    bounds: element.getBoundingClientRect().toJSON(),
+                  }))
+              : [];
+          return { width: scroll.clientWidth, scrollWidth: scroll.scrollWidth, outside };
         });
-      expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.width);
+      expect(dimensions.scrollWidth, JSON.stringify(dimensions)).toBeLessThanOrEqual(
+        dimensions.width,
+      );
     };
     await assertNoOverflow();
     const text = await details.innerText();

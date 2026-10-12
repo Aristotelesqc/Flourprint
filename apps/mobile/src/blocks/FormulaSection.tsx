@@ -45,7 +45,7 @@ interface Props {
   readonly hydrationRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
+export const ROW = 'grid grid-cols-[minmax(0,1fr)_88px_104px] items-center gap-2';
 
 /**
  * Formula tab of the #8 mockups: quantity and key figures first, then flours, ingredients,
@@ -427,9 +427,9 @@ export const GroupHeader = ({
   help?: ReactNode;
 }) => (
   <div className={`${ROW} px-4 pb-1.5 text-[13px] font-semibold text-muted`}>
-    <span className="flex items-center gap-1.5">
-      <span className="tracking-wide uppercase">{title}</span>
-      {help}
+    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <span className="min-w-0 tracking-wide uppercase break-words">{title}</span>
+      {help && <span className="shrink-0">{help}</span>}
     </span>
     <span className="text-right">{pctLabel}</span>
     <span className="text-right">{gramsLabel}</span>

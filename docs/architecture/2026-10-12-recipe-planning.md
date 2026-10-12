@@ -1,8 +1,8 @@
 # Recipe authoring and generated Planning — 2026-10-12
 
 Reviewed implementation slice for #71 / #35, with the separate motion exploration in #73.
-The final integration baseline is `dev` `2be27f5f0fc63890c3a0d0ed2626c1824d61df7b`, including
-Preparation outcomes, equipment persistence and recipe trash. This document records presentation
+The final integration baseline is `dev` `d65d82fd22a4b062cd5628bdba9f0ab3634de54b`, including
+Preparation outcomes, equipment persistence, recipe trash and the optional non-release sample loader. This document records presentation
 and verification; the existing contracts remain authoritative.
 
 ## Result and ownership
@@ -78,6 +78,22 @@ Its first candidate combined conflicting wrap utilities and still failed. Codex 
 computed CSS and text bounds, verified `overflow-wrap: anywhere` in a disposable context, and
 removed the competing `break-words` utility before rerunning the suite.
 
+The first CI run on `7a79d4b` passed 73 of 76 journeys and exposed additional failures absent
+from local Chrome: the new-recipe chooser remained above a created draft, and the equipment
+journeys measured a 366px scroll width at 360px. Downloaded CI screenshots and contexts were
+inspected before correction. A focused Gemini session (`104c770e-6719-4ce2-af27-9b49740db92d`)
+queues the saved draft route and navigates only after the chooser's actual dismissal. Codex
+adds a synchronous creation guard and blocks user dismissal during the pending save. Cancellation
+with no pending route never navigates; a repeated creation activation makes one draft.
+
+The width failure was isolated to the shared ingredient group header and reproduced locally
+at 22/24px text: its automatic first-track minimum pushed the final Weight column outside the
+viewport. Its correction and verification retain complete labels, help and numeric columns;
+overflow assertions are kept and report offending elements on failure. Final CI results are
+recorded on the PR; an earlier local pass does not substitute for the required CI gate.
+The grid correction came from session `3b3f61d2-3db9-4a1a-9884-c6c046e6b26f`; independent
+post-fix measurements also show no overflow at 20/22/24px in either locale.
+
 ## Verification and limits
 
 Repository checks, production build and the full FR/EN browser suite are required before push.
@@ -97,7 +113,8 @@ Browser focus and overlay evidence does not establish Android IME, hardware/gest
 TalkBack or WebView frame pacing. The targeted native cases are hydration shortcut entry with
 the keyboard closed/open, opening/dismissing/reopening a method sheet, cancelling/confirming
 removal, returning to Planning with pending text and time/scroll retained, and navigating away
-with a guarded draft. These remain explicit native evidence gaps; this web-only slice does not
+with a guarded draft, plus chooser cancellation/back during a pending creation and its
+dismissal before draft navigation. These remain explicit native evidence gaps; this web-only slice does not
 require reinstalling an APK for every text/layout adjustment.
 
 ## Remaining interface work

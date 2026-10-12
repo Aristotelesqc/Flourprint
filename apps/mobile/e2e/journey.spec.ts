@@ -778,6 +778,7 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Recette vierge').first().click();
   await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  await expect(page.locator('ion-modal:not(.overlay-hidden)')).toHaveCount(0);
   // Flours that do not add up to 100 %: accepted in a draft, quantities shown as unknown.
   const share = page.getByLabel('Farine à pain, Part');
   await share.fill('80');
