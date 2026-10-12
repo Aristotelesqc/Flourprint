@@ -194,7 +194,7 @@ jobs:
         run: |
           # One comment per pull request, edited on every push: the address never changes,
           # the line under it says which commit it serves.
-          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_BUILD}\` (commit ${HEAD_SHA}). Updated on every push. The dev channel (dev APK) follows https://dev.${PAGES_PROJECT}.pages.dev; main is https://${PAGES_PROJECT}.pages.dev."
+          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_LABEL}\` (\`${FLOURPRINT_BUILD}\`, commit ${HEAD_SHA}). Updated on every push. The dev channel (dev APK) follows https://dev.${PAGES_PROJECT}.pages.dev; main is https://${PAGES_PROJECT}.pages.dev."
           gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --edit-last --body "$BODY" \
             || gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$BODY"
       - name: Preview not deployed

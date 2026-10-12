@@ -41,15 +41,33 @@ export const AppMark = () => {
   );
 };
 
-/** The app's top bar: mark and name on the left, the screen's actions on the right. */
+/**
+ * The app's top bar: mark, name and build label on the left, the screen's actions on the right.
+ * The label (ADR 0016) says which build runs: `v0.2.0` for a release, the commit's code name for
+ * a dev or pull request build.
+ */
 export const AppBar = ({ children }: { children?: ReactNode }) => {
   const { t } = useMessages();
   return (
     <IonHeader className="ion-no-border">
       <IonToolbar>
-        <div slot="start" className="flex items-center gap-2 pl-4">
-          <AppMark />
-          <span className="text-[19px] font-bold tracking-tight">{t('app.title')}</span>
+        <div slot="start" className="flex min-w-0 items-center gap-2 pl-4">
+          <span className="shrink-0">
+            <AppMark />
+          </span>
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="text-[19px] font-bold tracking-tight whitespace-nowrap">
+              {t('app.title')}
+            </span>
+            {/* On a very narrow phone the label is cut, never wrapped. */}
+            <span
+              className="truncate text-[11px] tracking-tight text-muted"
+              title={__APP_LABEL__}
+              data-testid="app-build-label"
+            >
+              {__APP_LABEL__}
+            </span>
+          </span>
         </div>
         <IonButtons slot="end">{children}</IonButtons>
       </IonToolbar>

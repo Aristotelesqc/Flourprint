@@ -8,6 +8,7 @@ export default defineConfig({
   // ADR 0016: CI sets the build name (scripts/build-id.mjs); a local build is `<version>-local`.
   define: {
     __APP_BUILD__: JSON.stringify(process.env.FLOURPRINT_BUILD ?? `${rootPackage.version}-local`),
+    __APP_LABEL__: JSON.stringify(process.env.FLOURPRINT_LABEL ?? `v${rootPackage.version}-local`),
   },
   build: { outDir: 'dist', sourcemap: true },
 });
