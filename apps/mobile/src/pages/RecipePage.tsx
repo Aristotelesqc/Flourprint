@@ -53,6 +53,7 @@ import { SimulationBanner } from '../ui/SimulationBanner';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
 import { Segmented } from '../ui/Segmented';
+import { ValidationProvider, useValidation, useValidationActions } from '../ui/ValidationContext';
 
 type Tab = 'formula' | 'process' | 'history';
 
@@ -67,6 +68,14 @@ interface Working {
  * demand and before it is saved. Only a save writes a new immutable revision (#7, #23).
  */
 export const RecipePage = () => {
+  return (
+    <ValidationProvider>
+      <RecipePageContent />
+    </ValidationProvider>
+  );
+};
+
+const RecipePageContent = () => {
   const params = useParams<{ recipeId?: string; draftId?: string }>();
   const draftId = params.draftId;
   const recipeId = params.recipeId ?? '';
@@ -79,6 +88,7 @@ export const RecipePage = () => {
   const [base, setBase] = useState<{ name: string; revision: Revision }>();
   // The stored draft: absent on a recipe until its first edit.
   const [stored, setStored] = useState<Draft>();
+  const latestDraft = useRef<Draft | undefined>(undefined);
   const [checking, setChecking] = useState(false);
   const saving = useRef(Promise.resolve());
   const [bakes, setBakes] = useState<readonly BakeSummary[]>([]);
@@ -100,6 +110,9 @@ export const RecipePage = () => {
   const [readFailed, setReadFailed] = useState(false);
   const { simulation } = usePreferences();
   const confirming = useRef(false);
+  const { hasInvalid } = useValidation();
+  const validationActions = useValidationActions();
+  const [editorGeneration, setEditorGeneration] = useState(0);
 
   useEffect(() => {
     void (async () => {
@@ -116,6 +129,7 @@ export const RecipePage = () => {
             return;
           }
           setStored(found);
+          latestDraft.current = found;
           setLoading('ready');
           return;
         }
@@ -133,6 +147,7 @@ export const RecipePage = () => {
           (d) => d.origin.kind === 'revision' && d.origin.recipeId === recipeId,
         );
         setStored(resumed);
+        latestDraft.current = resumed;
         setLoading('ready');
         await loadFamily(recipe);
       } catch (error) {
@@ -274,6 +289,7 @@ export const RecipePage = () => {
           updatedAt: now,
         };
     setStored(doc);
+    latestDraft.current = doc;
     persist(doc);
     setFailure(undefined);
     setNotice(undefined);
@@ -338,10 +354,13 @@ export const RecipePage = () => {
 
   /** Saves the draft as a recipe or a version; refused, with the list, while something blocks. */
   const save = async () => {
-    if (!stored) return;
+    if (validationActions?.isBlocked()) return;
     await saving.current;
+    if (validationActions?.isBlocked()) return;
+    const target = latestDraft.current;
+    if (!target) return;
     const result = await writes.run(() =>
-      saveDraft(services.recipes, stored, {
+      saveDraft(services.recipes, target, {
         newRecipeId: services.ids.next(),
         createdAt: services.realClock.now(),
       }),
@@ -359,12 +378,13 @@ export const RecipePage = () => {
       return;
     }
     setStored(undefined);
+    latestDraft.current = undefined;
     setNotice(t('draft.saved', { version: saved.value.version }));
     if (newRecipe) {
       router.push(`/recipes/${saved.value.recipeId}`, 'none', 'replace');
       return;
     }
-    setBase({ name: stored.name, revision: saved.value });
+    setBase({ name: target.name, revision: saved.value });
   };
 
   const discard = () =>
@@ -379,6 +399,9 @@ export const RecipePage = () => {
           handler: () => {
             const id = stored?.id;
             setStored(undefined);
+            latestDraft.current = undefined;
+            // An explicit discard also abandons raw text that never entered the draft.
+            setEditorGeneration((generation) => generation + 1);
             setFailure(undefined);
             if (id !== undefined) {
               saving.current = saving.current
@@ -551,7 +574,7 @@ export const RecipePage = () => {
         <SessionOnlyNotice />
 
         {/* Tabs stay mounted: a draft being typed and the weighing checklist survive a switch. */}
-        <div hidden={tab !== 'formula'}>
+        <div key={`formula-${editorGeneration}`} hidden={tab !== 'formula'}>
           {(() => {
             const origin = stored?.origin;
             const template =
@@ -574,7 +597,7 @@ export const RecipePage = () => {
             onProcess={changeProcess}
           />
         </div>
-        <div hidden={tab !== 'process'}>
+        <div key={`process-${editorGeneration}`} hidden={tab !== 'process'}>
           <ProcessSection
             process={draft.process}
             onDurationChange={changeDuration}
@@ -614,6 +637,7 @@ export const RecipePage = () => {
         issuesCount={issues.length}
         blockingCount={blocking}
         busy={writes.busy}
+        hasInvalid={hasInvalid}
         onSave={() => void save()}
         onDiscard={discard}
         onCheck={() => setChecking(true)}
