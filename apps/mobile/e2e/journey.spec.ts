@@ -6,6 +6,18 @@ const openRecipe = async (page: Page) => {
   await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
 };
 
+/**
+ * One step back in the app, returning once the navigation and the Ionic page transition are over:
+ * the URL changed and a single page of the outlet is left shown (the leaving one is hidden when
+ * its transition ends). Clicking again earlier would hit the leaving page's back button.
+ */
+const goBack = async (page: Page) => {
+  const before = page.url();
+  await page.locator('ion-back-button:visible').last().click();
+  await expect(page).not.toHaveURL(before);
+  await expect(page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)')).toHaveCount(1);
+};
+
 const unsaved = (page: Page) => page.getByText('Modifications non enregistrées');
 
 /** The header's start button of the open recipe (it reads "En cours" while a bake runs). */
@@ -146,8 +158,7 @@ test('copies all data for review, with the bake digest and its notes', async ({
   // In-app navigation: the browser build keeps its data in memory only.
   const advanced = page.getByLabel('Avancé').first();
   while (!(await advanced.isVisible())) {
-    await page.locator('ion-back-button:visible').last().click();
-    await page.waitForTimeout(500);
+    await goBack(page);
   }
   await advanced.click();
   await page.getByText('Copier toutes mes données').click();
@@ -471,8 +482,7 @@ test('follows several bakes on one screen, with actions and notes per bake', asy
   await expect(page.getByText('1 recette importée.')).toBeVisible();
   const shown = (text: string) => page.getByText(text, { exact: true }).locator('visible=true');
   const back = async () => {
-    await page.locator('ion-back-button:visible').last().click();
-    await page.waitForTimeout(500);
+    await goBack(page);
   };
   await back();
   for (const name of ['Poolish + tangzhong', 'Pain test 1']) {
@@ -664,8 +674,7 @@ test('a customized flour keeps its properties and is offered by the flour picker
   // The entry, with its source and basis, is in the data copied for review.
   const advanced = page.getByLabel('Avancé').first();
   while (!(await advanced.isVisible())) {
-    await page.locator('ion-back-button:visible').last().click();
-    await page.waitForTimeout(500);
+    await goBack(page);
   }
   await advanced.click();
   await page.getByText('Copier toutes mes données').click();
@@ -751,8 +760,30 @@ test('the browser preview keeps its data across a reload, until it is erased', a
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Recette vierge').first().click();
   await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
-  // The snapshot is saved every few seconds and when the page is hidden.
-  await page.waitForTimeout(3_500);
+  // The snapshot is saved every few seconds and when the page is hidden: wait for the saved
+  // snapshot itself to hold the new recipe, not for a delay.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((resolve) => {
+              const open = indexedDB.open('flourprint-preview', 1);
+              open.onerror = () => resolve(false);
+              open.onsuccess = () => {
+                const db = open.result;
+                const read = db.transaction('snapshots').objectStore('snapshots').get('backup');
+                read.onerror = () => resolve(false);
+                read.onsuccess = () => {
+                  db.close();
+                  resolve(typeof read.result === 'string' && read.result.includes('Recette 1'));
+                };
+              };
+            }),
+        ),
+      { timeout: 15_000 },
+    )
+    .toBe(true);
   await page.reload();
   await page.goto('/recipes');
   await expect(page.getByText('Recette 1').first()).toBeVisible();
@@ -775,8 +806,7 @@ test('the browser preview keeps its data across a reload, until it is erased', a
 /** Back to the recipe list in the app (the browser build keeps its data in memory). */
 const backToRecipes = async (page: Page) => {
   while (new URL(page.url()).pathname !== '/recipes') {
-    await page.locator('ion-back-button:visible').last().click();
-    await page.waitForTimeout(500);
+    await goBack(page);
   }
   await expect(page.getByRole('heading', { name: 'Recettes' }).locator('visible=true')).toHaveCount(
     1,
@@ -802,6 +832,9 @@ const setSimulation = async (page: Page, on: boolean) => {
 test('a simulated bake keeps to its own world, on a clock that can be advanced', async ({
   page,
 }) => {
+  // The longest journey (about 20 s on a fast machine): it crosses eleven page transitions, so
+  // a slow runner needs more than the default budget. Every assertion keeps its own timeout.
+  test.slow();
   await page.goto('/advanced');
   await setSimulation(page, true);
   await expect(page.getByText(/Mode simulation · heure simulée/)).toBeVisible();
@@ -850,7 +883,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await expect(page.getByRole('region', { name: 'Dernières fournées' })).toContainText(
     'Poolish + tangzhong',
   );
-  await page.locator('ion-back-button:visible').last().click();
+  await goBack(page);
   await expect(page).toHaveURL(/\/advanced$/);
   await page.getByText('Effacer l’historique de simulation').locator('visible=true').click();
   await expect(page.locator('ion-alert')).toContainText('1 fournée sera effacée');
