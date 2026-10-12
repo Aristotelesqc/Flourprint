@@ -82,6 +82,15 @@ export const onRealClock = (reminders: readonly Reminder[], offsetMs: number): R
       : { ...r, at: new Date(Date.parse(r.at) - offsetMs).toISOString() as Instant },
   );
 
+/** Pending reminder ids that the new set no longer contains: the ones to cancel. */
+export const staleReminderIds = (
+  pending: readonly number[],
+  next: readonly Pick<Reminder, 'id'>[],
+): number[] => {
+  const kept = new Set(next.map((r) => r.id));
+  return pending.filter((id) => !kept.has(id));
+};
+
 const nativeNotifier = (channelName: string): Notifier => {
   const plugin = import('@capacitor/local-notifications').then(async ({ LocalNotifications }) => {
     await LocalNotifications.createChannel({
@@ -101,22 +110,28 @@ const nativeNotifier = (channelName: string): Notifier => {
     replace: async (reminders) => {
       const notifications = await plugin;
       const pending = await notifications.getPending();
-      if (pending.notifications.length > 0) {
-        await notifications.cancel({
-          notifications: pending.notifications.map((n) => ({ id: n.id })),
+      // Schedule first, then cancel only what is no longer wanted: scheduling an existing id
+      // replaces it, so no moment passes without the reminders, and a failed schedule keeps
+      // the previous set rather than none (audit FP-AUD-009).
+      if (reminders.length > 0) {
+        await notifications.schedule({
+          notifications: reminders.map((r) => ({
+            id: r.id,
+            title: r.title,
+            body: r.body,
+            channelId: CHANNEL,
+            schedule: { at: new Date(r.at), allowWhileIdle: true },
+            extra: { bakeId: r.bakeId },
+          })),
         });
       }
-      if (reminders.length === 0) return;
-      await notifications.schedule({
-        notifications: reminders.map((r) => ({
-          id: r.id,
-          title: r.title,
-          body: r.body,
-          channelId: CHANNEL,
-          schedule: { at: new Date(r.at), allowWhileIdle: true },
-          extra: { bakeId: r.bakeId },
-        })),
-      });
+      const stale = staleReminderIds(
+        pending.notifications.map((n) => n.id),
+        reminders,
+      );
+      if (stale.length > 0) {
+        await notifications.cancel({ notifications: stale.map((id) => ({ id })) });
+      }
     },
     onOpen: (handler) => {
       const listener = plugin.then((notifications) =>
