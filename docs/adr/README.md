@@ -23,3 +23,4 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0014](0014-simulation-mode.md)              | Simulation mode                                | Accepted                                  |
 | [0015](0015-browser-persistence.md)          | Persistent data in the browser preview         | Accepted                                  |
 | [0016](0016-versions-and-releases.md)        | App versions and releases                      | Accepted                                  |
+| [0017](0017-design-brief.md)                 | Shared DESIGN.md brief for the interface       | Accepted; no stack migration              |

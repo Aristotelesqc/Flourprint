@@ -6,6 +6,10 @@
 2. `docs/adr/`: architecture decisions.
 3. Issue #30: record of the arbitration and high-level backlog. Issues describe needs, not contracts.
 
+For interface work, also read root [DESIGN.md](DESIGN.md): visual identity, current tokens and
+component/interaction guidance (ADR 0017). Update it with reviewed presentation changes. It does
+not override contracts or select a component/router dependency; prototypes remain identified.
+
 An implementation that contradicts a contract is wrong. A contract that must change is changed in
 a dedicated pull request, before the code that depends on it.
 
