@@ -79,13 +79,13 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
 
   return (
     <Card gap="gap-3">
-      <span className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-3">
         <span className="flex items-center gap-1.5 text-[19px] font-semibold">
           {t('fermentation.title')}
           <InfoButton topic="fermentation" term={t('fermentation.title')} />
         </span>
         {mix && (
-          <span className="w-[11.5rem] shrink-0">
+          <div className="w-full min-[420px]:w-[11.5rem] shrink-0">
             <Segmented
               size="small"
               value={advanced ? 'advanced' : 'basic'}
@@ -105,9 +105,9 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
                 }
               }}
             />
-          </span>
+          </div>
         )}
-      </span>
+      </div>
 
       {mix && (
         <div className="flex flex-col gap-2">
