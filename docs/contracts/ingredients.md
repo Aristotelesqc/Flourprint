@@ -344,7 +344,7 @@ until a contract adds volume input, no command converts with it (open choice).
 
 ## Persistence
 
-SQLite schema 5 adds `ingredients (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER
+(Schema 5 is the `equipment` table of `equipment.md`, #62.) SQLite schema 6 adds `ingredients (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER
 NOT NULL, schema_version INTEGER NOT NULL, document TEXT NOT NULL, created_at TEXT NOT NULL,
 PRIMARY KEY (id, version))`, the same shape as `flours`. Built-in entries are not stored: they are
 code. A full backup holds every personal entry version (optional `ingredients`, so older backups
@@ -430,7 +430,7 @@ ferme` (`basedOn: { id: 'egg', version: 1 }`) and enters the water. A later app 
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `formula.md`          | `Ingredient.entry`, three commands, identifier note                                                                                                                                          |
 | `history.md`          | pins, `usedProperties`, registry references, backup, feedback export                                                                                                                         |
-| `persistence.md`      | `ingredients` table, schema 5, backup and recipes file fields, shared tests                                                                                                                  |
+| `persistence.md`      | `ingredients` table, schema 6, backup and recipes file fields, shared tests                                                                                                                  |
 | `values-and-units.md` | property units `g/mL` and `°L`; composition basis                                                                                                                                            |
 | `drafts.md`           | `salt_missing` and `no_leavening` recognize entries                                                                                                                                          |
 | Code                  | `core/domain` entry type, validation, mapping and commands; `application` registry service and ports; `adapters` memory and SQL stores and migration; UI picker and editor with message keys |

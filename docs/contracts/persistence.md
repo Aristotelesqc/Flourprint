@@ -66,7 +66,7 @@ Personal ingredient entries (`ingredients.md`) are stored by `(id, version)` lik
 is never rewritten, and a version that is not the next one for its id is refused (`HeadConflict`).
 Built-in entries are code and are not stored.
 
-## SQLite schema (version 5)
+## SQLite schema (version 6)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
@@ -90,7 +90,7 @@ flours         (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER NOT
                 created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v4
 ingredients    (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER NOT NULL,
                 schema_version INTEGER NOT NULL, document TEXT NOT NULL,
-                created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v5
+                created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v6
 ```
 
 The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node
