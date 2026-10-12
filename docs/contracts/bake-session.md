@@ -13,7 +13,7 @@ contracts keep "bake" for the session.
 
 ## Lifecycle
 
-A session is `active` from `BakeStarted`, then ends once, `finished` or `abandoned`:
+A session is `active` from `BakeStarted`, then ends, `finished` or `abandoned`:
 
 - **finished** (`FinishBake`): the preparation reached a usable result, cooked or not. Its
   **outcome** says which (below).
@@ -27,12 +27,25 @@ elapsed. Holding the dough (a cold retard, an extra rest) is a step, added with
 `InsertStepAfter`, not a pause of the session.
 
 Several sessions may be active at once, and steps without a dependency between them may run in
-parallel (process.md). A finished or abandoned session is never reopened; its data are kept.
+parallel (process.md). Ending a session keeps all its data.
+
+**Reopening.** `ReopenBake` makes a finished or abandoned session active again (`BakeReopened`),
+for instance to put underbaked bread back in the oven after declaring it done. The earlier end
+stays in the log; the session then ends again with a new `FinishBake` or `AbandonBake`, and only
+its latest end counts (status, outcome, end time). The reopened session takes commands as any
+active one, reminders included. Reopening is never required: a baker who does not keep such a
+detailed record simply finishes.
+
+**Going back to a stage.** Doing a step again once it is done (bagels returned to the pot for
+longer) is a new step, inserted with `InsertStepAfter` after the step last done, with the same
+operation: the first time stays recorded as it happened, the second is recorded as its own step.
+`RetractCompletion` is for a completion recorded by mistake (the step was not finished), not for
+a step done twice.
 
 ## Cooking stages
 
 A **cooking step** is a step whose operation is a cooking operation (process.md): `bake`,
-`boil`, `steam`, `fry`, `panCook`. A process may hold zero, one or several of them, in
+`boil`, `steam`, `fry`, `panCook`, `grill`. A process may hold zero, one or several of them, in
 sequence (boil then bake for bagels; panCook then bake under the broiler) or not. The heat
 setting of a stage (oven mode, burner level…) belongs to #28 and does not change what a stage is.
 
@@ -64,7 +77,7 @@ interface PreparationOutcome {
 - `FinishBake` takes an optional `outcome`. Without one, the event has no outcome and the result
   is **unknown**, exactly as for events written before `0.11.0`. An unknown result is never read
   as cooked, whatever steps were completed.
-- `CorrectOutcome { outcome }` replaces the outcome of a **finished** session with a typed
+- `CorrectOutcome { outcome }` changes only the outcome, without reopening: it replaces the outcome of a **finished** session with a typed
   `OutcomeCorrected` event; the original `BakeFinished` stays in the log. On an active or
   abandoned session it is refused with `NotFinished`. The latest `OutcomeCorrected` wins.
 
@@ -120,6 +133,7 @@ interface BakeEvent<P> {
 | `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                        |
 | `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept; `FinishBake` takes an optional `outcome` (above), recorded in its event                                                         |
 | `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                           |
+| `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                     |
 
 `AddObservation` accepts an optional stable `kind`. `kind: 'doughReady'` records that the baker
 judges the dough ready for its next stage:
@@ -153,7 +167,8 @@ dependency has ended. Commands that would record or correct a contradicting time
 adjusted. `AdjustFormula` and `InsertStepAfter` keep the formula and the process consistent,
 incorporations included (`process.md`).
 
-Every command except `StartBake`, `AddObservation` and `CorrectOutcome` requires an active bake. `AddObservation`
+Every command except `StartBake`, `AddObservation`, `CorrectOutcome` and `ReopenBake` requires an
+active bake. `AddObservation`
 also applies to a finished or abandoned bake (the review after the bake: crumb, flavor, what went
 wrong); `kind: 'doughReady'` still needs an active bake. It never reopens the bake. Business errors are typed codes
 (`StepAlreadyCompleted`, `DependenciesNotCompleted`, `BakeNotActive`, …).

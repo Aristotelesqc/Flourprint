@@ -146,8 +146,9 @@ interface BakeDigest {
 
 - The digest is derived from the events by the application, never by the current engine, and is
   never read back: the `backup` part is the record. Durations are differences of recorded instants.
-- `outcome` is the latest `OutcomeCorrected`, else the `BakeFinished` outcome, else `unknown`;
-  it is absent on active and abandoned sessions. The feedback export's `schemaVersion` is bumped
+- `status`, `endedAt` and `outcome` follow the session's latest end (a reopened session is
+  `active` until it ends again). `outcome` is the latest `OutcomeCorrected` after that end, else
+  that `BakeFinished`'s outcome, else `unknown`; it is absent on active and abandoned sessions. The feedback export's `schemaVersion` is bumped
   for `outcome` and `cooking`.
 - `device` describes the exporting device only. Whether a bake was real is its own `origin`; an
   `unknown` origin never enters a calibration as a measured bake.
@@ -180,6 +181,10 @@ Each line is one session, in a world holding only it. `stages` lists the complet
 | Loaf finished before `0.11.0` (no outcome), its `bake` step completed         | finished  | `unknown`        | finished 1, unknown 1        | bake 1            |
 | Loaf abandoned after its `bake` step (burnt)                                  | abandoned | none             | abandoned 1                  | bake 1            |
 | Loaf proofed in the oven's Proof mode (`proof`), then `bake`; finished cooked | finished  | `cooked`         | finished 1, cooked 1         | bake 1            |
+| Bagels boiled, returned to the pot (inserted `boil`), then baked              | finished  | `cooked`         | finished 1, cooked 1         | boil 2, bake 1    |
+| Focaccia on a gas barbecue (`grill`)                                          | finished  | `cooked`         | finished 1, cooked 1         | grill 1           |
+| Finished `cooked`, reopened, an inserted `bake` done, finished `cooked` again | finished  | `cooked`         | finished 1, cooked 1         | bake 2            |
+| Finished `cooked`, then reopened and not yet ended                            | active    | none             | active 1                     | as recorded       |
 | Two loaves of one dough: one baked, one frozen                                | finished  | `cookedAndDough` | finished 1, cookedAndDough 1 | bake 1            |
 | Finished as `dough`, then corrected to `cooked` (`OutcomeCorrected`)          | finished  | `cooked`         | finished 1, cooked 1         | as recorded       |
 

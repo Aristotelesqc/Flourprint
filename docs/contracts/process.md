@@ -97,13 +97,16 @@ interface StepTechnique {
 
 - Operation codes stay open. Codes the app names: `autolyse` (flour and water rest), `fermentolyse`
   (flour, water and leavening, salt later), `mix`, `fold`, `bulk`, `rest`, `degas`, `divide`,
-  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `boil`, `steam`, `fry`, `panCook`, `cool`, and the preparation steps.
+  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `boil`, `steam`, `fry`, `panCook`, `grill`, `cool`, and the preparation steps.
 - **Cooking operations**: `bake` (oven, whatever its mode), `boil` (water: bagels, pretzels,
-  poached doughs), `steam`, `fry` (in oil) and `panCook` (skillet, griddle, plancha). They are the cooking stages of a session (bake-session.md) and the heat
+  poached doughs), `steam`, `fry` (in oil), `panCook` (skillet, griddle, plancha) and `grill` (on a
+  grate over flame or coals: barbecue, gas grill). They are the cooking stages of a session (bake-session.md) and the heat
   steps that end the fermentation (fermentation.md). `preheat` is not one (it heats equipment,
   not the dough), nor is `proof` done in an oven's Proof mode: the operation says what happens to
   the dough, the place or appliance mode does not (#28). `steam` is cooking in steam (steamed
-  buns); an oven bake with steam stays `bake`, its steam being a setting (#28).
+  buns); an oven bake with steam stays `bake`, its steam being a setting (#28). Likewise the oven's
+  broil mode (Gril in French) is a setting of `bake`, distinct from the `grill` operation; the
+  interface names them so they cannot be confused.
 - `method` codes the app names: on `mix`, `hand`, `slapAndFold`, `rubaud`, `standMixer`, `spiral`,
   `foodProcessor`, `noKnead`; on `fold` and in `folds.style`, `stretchAndFold`, `coilFold`,
   `lamination`. Any other code is kept and shown as given.
