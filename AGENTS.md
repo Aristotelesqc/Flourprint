@@ -57,12 +57,15 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
   publishing, permission changes or overlapping writers.
 - **UI verification**: [.agents/skills/flourprint-ui-check/SKILL.md](.agents/skills/flourprint-ui-check/SKILL.md).
   Use for browser/visual acceptance and selecting the native evidence needed for a UI change.
+- **UI mockups**: [.agents/skills/flourprint-ui-mockups/SKILL.md](.agents/skills/flourprint-ui-mockups/SKILL.md).
+  Use for Gemini-generated visual proposals, Codex verification, hosted galleries and the
+  owner's requested approval before redesign implementation; not as a gate for routine fixes.
 - **Contract changes**: [.agents/skills/flourprint-contract-change/SKILL.md](.agents/skills/flourprint-contract-change/SKILL.md).
   Use for semantic/persisted changes, independent fixtures and consumer/compatibility impact.
 - **Scientific evidence**: [.agents/skills/flourprint-science/SKILL.md](.agents/skills/flourprint-science/SKILL.md).
   Use for source/data/fit audits and prediction limits; research does not approve a model change.
 
-These three skills also have thin Claude Code routing entrypoints. They reuse current contracts,
+These skills also have thin Claude Code routing entrypoints. They reuse current contracts,
 ADRs and tools rather than introducing another source of product decisions or a tracking system.
 
 ## Commands
