@@ -31,6 +31,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint
+      - name: AGY launcher protocol checks (offline)
+        run: python3 -m unittest discover -s .agents/skills/agy/scripts -p 'test_*.py'
       - run: pnpm typecheck
       - run: pnpm vitest run
       - run: node apps/cli/dist/main.js --version
