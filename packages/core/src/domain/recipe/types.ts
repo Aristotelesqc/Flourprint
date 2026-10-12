@@ -14,6 +14,8 @@ export interface Recipe {
   readonly updatedAt: Instant;
   /** Family this recipe is a variant of, if any. */
   readonly familyId?: string;
+  /** When the recipe was put in the trash; absent for a recipe that is not (persistence.md). */
+  readonly trashedAt?: Instant;
 }
 
 /** Variants of one recipe (persistence.md, Recipe families). */
@@ -25,13 +27,15 @@ export interface RecipeFamily {
 
 /**
  * The variant shown for a family: the pinned member, otherwise the most recently updated one
- * (ties: smallest id).
+ * (ties: smallest id). Members in the trash never count.
  */
 export const defaultVariant = (
   family: RecipeFamily,
   recipes: readonly Recipe[],
 ): Recipe | undefined => {
-  const members = recipes.filter((r) => r.familyId === family.id);
+  const members = recipes.filter(
+    (r) => r.familyId === family.id && r.trashedAt === undefined,
+  );
   const pinned = members.find((r) => r.id === family.pinnedRecipeId);
   if (pinned) return pinned;
   return [...members].sort(

@@ -41,8 +41,8 @@ const problemOf = (equipment: StepEquipment) => {
 };
 
 describe('contract version', () => {
-  it('is 0.12.0 with equipment', () => {
-    expect(CONTRACT_VERSION).toBe('0.12.0');
+  it('is 0.13.0 with equipment', () => {
+    expect(CONTRACT_VERSION).toBe('0.13.0');
   });
 });
 

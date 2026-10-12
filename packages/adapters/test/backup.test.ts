@@ -333,6 +333,7 @@ const backupOf = async () => {
 
 const isEmpty = async (stores: BackupStores) =>
   (await stores.recipes.listRecipes()).length === 0 &&
+  (await stores.recipes.listTrash()).length === 0 &&
   (await stores.bakes.listBakes()).length === 0 &&
   (await stores.flours.listFlourVersions()).length === 0 &&
   (await stores.equipment.listEquipmentVersions()).length === 0;
@@ -347,6 +348,56 @@ describe.each([
     expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
     const again = await exportBackup(target, at('12:00'));
     expect(JSON.parse(JSON.stringify(again))).toEqual({ ok: true, value: backup });
+  });
+
+  it('carries the trash: trashedAt is recorded and a restore keeps it', async () => {
+    const source = memoryStores();
+    await seed(source);
+    await source.recipes.trashRecipe('lean-cold', at('09:30'));
+    const exported = await exportBackup(source, at('12:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    expect(backup.recipes.find((r: Loose) => r.id === 'lean-cold').trashedAt).toBe(
+      at('09:30'),
+    );
+    expect(backup.recipes.find((r: Loose) => r.id === 'lean').trashedAt).toBeUndefined();
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect((await target.recipes.listTrash()).map((r) => r.id)).toEqual(['lean-cold']);
+    expect((await target.recipes.listRecipes()).map((r) => r.id)).toEqual(['lean']);
+    const again = await exportBackup(target, at('12:00'));
+    expect(JSON.parse(JSON.stringify(again))).toEqual({ ok: true, value: backup });
+  });
+
+  it('keeps a family whose members are all in the trash in the backup', async () => {
+    const source = memoryStores();
+    await seed(source);
+    await source.recipes.trashRecipe('lean', at('09:30'));
+    await source.recipes.trashRecipe('lean-cold', at('09:31'));
+    expect(await source.recipes.listFamilies()).toEqual([]);
+    const exported = await exportBackup(source, at('12:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    expect(backup.families).toHaveLength(1);
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect((await target.recipes.getRecipe('lean-cold'))?.familyId).toBe('lean-family');
+  });
+
+  it('restores a backup written after its recipe was deleted, bakes untouched', async () => {
+    const source = memoryStores();
+    await seed(source);
+    const before = await source.bakes.loadEvents('bake-1');
+    await source.recipes.trashRecipe('lean', at('09:30'));
+    await source.recipes.deleteRecipe('lean');
+    expect(await source.bakes.loadEvents('bake-1')).toEqual(before);
+    const exported = await exportBackup(source, at('12:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect(await target.recipes.getRecipe('lean')).toBeUndefined();
+    expect(await target.bakes.loadEvents('bake-1')).toEqual(before);
   });
 
   it('restores a backup written before families', async () => {
@@ -806,6 +857,34 @@ describe.each([
     expect(file.families).toEqual([
       { id: 'lean-family', name: 'Lean', pinnedRecipeId: 'lean-cold' },
     ]);
+  });
+
+  it('never carries a recipe from the trash, nor a pin on one', async () => {
+    const source = memoryStores();
+    await seed(source);
+    await source.recipes.trashRecipe('lean-cold', at('09:30'));
+    const exported = await exportRecipes(source.recipes, at('12:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const file = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    expect(file.recipes.map((r: Loose) => r.id)).toEqual(['lean']);
+    expect(file.recipes[0].trashedAt).toBeUndefined();
+    expect(file.families).toEqual([{ id: 'lean-family', name: 'Lean' }]);
+    const target = await makeTarget();
+    expect(await importRecipes(target.recipes, file)).toEqual({
+      ok: true,
+      value: { imported: ['lean'], skipped: [] },
+    });
+  });
+
+  it('refuses a recipes file that carries a trashed recipe', async () => {
+    const file = await recipeFile();
+    file.recipes[0].trashedAt = at('09:30');
+    const target = await makeTarget();
+    expect(await importRecipes(target.recipes, file)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidRecipeFile' },
+    });
+    expect(await target.recipes.listTrash()).toEqual([]);
   });
 
   it('adds absent recipes next to existing data, never overwrites, and is idempotent', async () => {

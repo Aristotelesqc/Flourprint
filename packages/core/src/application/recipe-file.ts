@@ -33,7 +33,7 @@ export type RecipeFileError =
 const invalid = (reason: string): RecipeFileError =>
   domainError('InvalidRecipeFile', `Invalid recipe file: ${reason}`, { reason });
 
-/** Exports every recipe with all its revisions, and every family. */
+/** Exports every recipe outside the trash with all its revisions, and every family. */
 export const exportRecipes = async (
   repository: RecipeRepository,
   exportedAt: Instant,
@@ -45,7 +45,12 @@ export const exportRecipes = async (
     schemaVersion: DOCUMENT_SCHEMA_VERSION,
     exportedAt,
     recipes: recipes.value,
-    families: await repository.listFamilies(),
+    // A pin on a recipe left in the trash is not shared: the file stays self-consistent.
+    families: (await repository.listFamilies()).map(({ pinnedRecipeId, ...family }) =>
+      pinnedRecipeId !== undefined && recipes.value.some((r) => r.id === pinnedRecipeId)
+        ? { ...family, pinnedRecipeId }
+        : family,
+    ),
   });
 };
 
@@ -66,7 +71,12 @@ export const decodeRecipeFile = (input: unknown): Result<RecipeImportPlan, Recip
   }
   if (!isInstant(input.exportedAt)) return err(invalid('no valid exportedAt'));
   try {
-    return ok(decodeRecipes(input.recipes, input.families));
+    const plan = decodeRecipes(input.recipes, input.families);
+    // Sharing never sends the trash: a recipes file carries no trashed recipe.
+    if (plan.recipes.some((recipe) => recipe.trashedAt !== undefined)) {
+      return err(invalid('a recipes file carries no recipe from the trash'));
+    }
+    return ok(plan);
   } catch (error) {
     if (error instanceof Refused) return err(invalid(error.reason));
     return err(invalid('malformed content'));

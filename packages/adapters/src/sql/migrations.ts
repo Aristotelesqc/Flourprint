@@ -99,6 +99,12 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 6,
+    sql: `
+      ALTER TABLE recipes ADD COLUMN trashed_at TEXT;
+    `,
+  },
 ];
 
 export type OpenError =
