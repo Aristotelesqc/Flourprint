@@ -63,7 +63,7 @@ export const DraftActionBar = ({
           <div className="flex h-11 items-stretch gap-2">
             <IonButton
               fill="outline"
-              className="m-0 h-11 w-16 shrink-0 [--padding-end:0px] [--padding-start:0px]"
+              className="m-0 h-11 min-w-0 flex-1 [--padding-end:0px] [--padding-start:0px]"
               aria-label={t('draft.review')}
               title={t('draft.review')}
               disabled={!dirty}
@@ -76,7 +76,7 @@ export const DraftActionBar = ({
             </IonButton>
             <IonButton
               fill="outline"
-              className="m-0 h-11 w-16 shrink-0 [--padding-end:0px] [--padding-start:0px]"
+              className="m-0 h-11 min-w-0 flex-1 [--padding-end:0px] [--padding-start:0px]"
               color={blockingCount > 0 ? 'danger' : 'medium'}
               aria-label={
                 issuesCount === 0
@@ -105,7 +105,7 @@ export const DraftActionBar = ({
             </IonButton>
             <IonButton
               fill="outline"
-              className="m-0 h-11 w-16 shrink-0 [--padding-end:0px] [--padding-start:0px]"
+              className="m-0 h-11 min-w-0 flex-1 [--padding-end:0px] [--padding-start:0px]"
               aria-label={t(newRecipe ? 'draft.delete' : 'draft.discard')}
               title={t(newRecipe ? 'draft.delete' : 'draft.discard')}
               disabled={(!dirty && !hasInvalid) || busy}
@@ -117,7 +117,7 @@ export const DraftActionBar = ({
               </span>
             </IonButton>
             <IonButton
-              className="m-0 h-11 min-w-0 flex-1"
+              className="m-0 h-11 min-w-0 flex-[1.6]"
               aria-label={
                 newRecipe
                   ? t('draft.saveRecipe')
@@ -126,7 +126,9 @@ export const DraftActionBar = ({
               disabled={!dirty || busy || hasInvalid}
               onClick={onSave}
             >
-              <span className="pointer-events-none truncate">{t('draft.saveShort')}</span>
+              <span className="pointer-events-none text-xs leading-tight">
+                {t('draft.saveShort')}
+              </span>
             </IonButton>
           </div>
         </div>

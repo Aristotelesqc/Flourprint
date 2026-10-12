@@ -131,11 +131,19 @@ Recipe presents composition and authored method. Planning presents generated pro
 time controls and a shortcut to the single Recipe step editor. Preparation presents actual work.
 Follow the contracts for semantics; do not build a second editable recipe inside Planning.
 
-**Proposed consultation/editing composition:** saved recipes open for reading with explicit
+**Consultation/editing composition (#67):** saved recipes open for reading with explicit
 Edit, Plan and Start actions. New or resumed drafts open for editing after hydration. Consultation
 does not reserve an empty 88px draft footer. Once editing starts, first modification and validity
 feedback keep the primary controls stable. A deliberate mode change may rearrange the screen;
 retain understandable scroll/focus and preserve or guard all pending raw input.
+
+The implementation uses `FormulaConsultation` and the precise formula editor, with one mounted
+`ProcessSection` whose authoring controls depend on edit mode. Planner inputs survive mode changes.
+`WeighingChecklist` shares temporary page state between views; changed quantities clear the affected
+checks. The checklist survives panel/mode switches and raw-only discard, but is not saved to history
+and resets when the page is recreated or the app reloads. Domain drafts persist accepted edits;
+unparsed raw strings remain in mounted fields, not in the durable draft. A mode command blurs only
+the focused field through its normal commit path, then checks synchronous draft/validation state.
 
 Keep quantities and the temporary weighing checklist accessible. Clarify that checklist scope;
 do not imply a recorded preparation or remove the aid while session persistence is unavailable.
