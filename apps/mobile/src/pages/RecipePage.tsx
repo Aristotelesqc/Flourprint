@@ -35,6 +35,8 @@ import {
   type ProjectionMode,
   type Revision,
 } from '@flourprint/core/domain';
+import { FormulaConsultation } from '../blocks/FormulaConsultation';
+import { buildFinalMixItems } from '../blocks/WeighingChecklist';
 import { FormulaSection } from '../blocks/FormulaSection';
 import { HistorySection } from '../blocks/HistorySection';
 import { ProcessSection } from '../blocks/ProcessSection';
@@ -64,8 +66,8 @@ interface Working {
 
 /**
  * A recipe, or a new recipe being built: formula, process and history tabs over one draft (#8).
- * Edits are free and the draft is stored after each one (drafts.md); the recipe is checked on
- * demand and before it is saved. Only a save writes a new immutable revision (#7, #23).
+ * Saved recipes open read-first in consultation mode with explicit Edit and Plan actions (#67).
+ * Edits are free in editing mode and the draft is stored after each one (drafts.md).
  */
 export const RecipePage = () => {
   return (
@@ -83,10 +85,9 @@ const RecipePageContent = () => {
   const flourCatalog = useFlourCatalog();
   const router = useIonRouter();
   const [presentAlert] = useIonAlert();
-  const { t, error } = useMessages();
+  const { t, error, name: ingredientName, componentName } = useMessages();
   const [tab, setTab] = useState<Tab>('formula');
   const [base, setBase] = useState<{ name: string; revision: Revision }>();
-  // The stored draft: absent on a recipe until its first edit.
   const [stored, setStored] = useState<Draft>();
   const latestDraft = useRef<Draft | undefined>(undefined);
   const [checking, setChecking] = useState(false);
@@ -99,9 +100,8 @@ const RecipePageContent = () => {
   const [family, setFamily] = useState<{ family: RecipeFamily; members: readonly Recipe[] }>();
   const writes = useGuardedWrite();
   const contentRef = useRef<HTMLIonContentElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
   const [reviewing, setReviewing] = useState(false);
-  // A bake start whose outcome is unknown keeps its ids and its exact content: a retry resends
-  // the same command, so it can neither start a second bake nor reuse an id with other content.
   const pendingStart = useRef<{
     bakeId: string;
     commandId: string;
@@ -114,11 +114,28 @@ const RecipePageContent = () => {
   const validationActions = useValidationActions();
   const [editorGeneration, setEditorGeneration] = useState(0);
 
+  // Explicit consultation vs editing state initialized once after hydration (#67)
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasEnteredEdit, setHasEnteredEdit] = useState(false);
+
+  // Shared temporary weighing checklist lifted to page level (#67)
+  const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
+  const toggleWeighed = useCallback((key: string, grams: number) => {
+    setWeighed((prev) => {
+      const next = new Map(prev);
+      if (next.get(key) === grams) {
+        next.delete(key);
+      } else {
+        next.set(key, grams);
+      }
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     void (async () => {
       try {
         if (draftId !== undefined) {
-          // A new recipe being built (blank or from a template).
           const found = await services.recipes.getDraft(draftId);
           if (!found) {
             setLoading('missing');
@@ -130,6 +147,8 @@ const RecipePageContent = () => {
           }
           setStored(found);
           latestDraft.current = found;
+          setIsEditing(true);
+          setHasEnteredEdit(true);
           setLoading('ready');
           return;
         }
@@ -142,12 +161,14 @@ const RecipePageContent = () => {
           return;
         }
         setBase({ name: recipe.name, revision: revision.value });
-        // At most one draft per recipe: opening the recipe resumes it (drafts.md).
         const resumed = (await services.recipes.listDrafts()).find(
           (d) => d.origin.kind === 'revision' && d.origin.recipeId === recipeId,
         );
         setStored(resumed);
         latestDraft.current = resumed;
+        const shouldEdit = resumed !== undefined;
+        setIsEditing(shouldEdit);
+        setHasEnteredEdit(shouldEdit);
         setLoading('ready');
         await loadFamily(recipe);
       } catch (error) {
@@ -157,7 +178,6 @@ const RecipePageContent = () => {
     })();
   }, [recipeId, draftId, services]);
 
-  /** The variants of the recipe's family, if it belongs to one (persistence.md). */
   const loadFamily = async (recipe: Recipe) => {
     if (recipe.familyId === undefined) {
       setFamily(undefined);
@@ -184,7 +204,6 @@ const RecipePageContent = () => {
       setFailure(result.value.error);
       return;
     }
-    // The pin is saved; a failed refresh only leaves the display stale, and says so.
     try {
       const recipe = await services.recipes.getRecipe(recipeId);
       if (recipe) await loadFamily(recipe);
@@ -209,7 +228,6 @@ const RecipePageContent = () => {
     }
   }, [services, recipeId]);
   useIonViewWillEnter(() => void refreshBakes(), [refreshBakes]);
-  // The History tab and the header button follow the simulation mode (ADR 0014).
   useEffect(() => void refreshBakes(), [refreshBakes, simulation]);
 
   const draft: Working | undefined = stored ?? base?.revision;
@@ -222,7 +240,23 @@ const RecipePageContent = () => {
   );
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
   const issues = useMemo(() => (draft ? checkRecipe(draft.formula, draft.process) : []), [draft]);
+  useEffect(() => {
+    if (!draft || !resolved?.ok) return;
+    const quantities = new Map(
+      buildFinalMixItems(draft.formula, resolved.value, ingredientName, componentName).map(
+        (item) => [item.key, item.grams],
+      ),
+    );
+    setWeighed((previous) => {
+      const next = new Map(previous);
+      for (const [key, grams] of previous) {
+        if (quantities.get(key) !== grams) next.delete(key);
+      }
+      return next.size === previous.size ? previous : next;
+    });
+  }, [draft, resolved, ingredientName, componentName]);
   const newRecipe = draftId !== undefined;
+
   if ((!base && !newRecipe) || !draft || !resolved) {
     return (
       <IonPage>
@@ -243,18 +277,17 @@ const RecipePageContent = () => {
       </IonPage>
     );
   }
+
   const dirty = stored !== undefined;
   const name = stored?.name ?? base?.name ?? '';
   const active = bakes.find((b) => b.status === 'active');
   const blocking = issues.filter((i) => i.severity === 'blocking').length;
 
-  // A double tap can reach a second button after the first navigation: never stack the same page.
   const openBake = (bakeId: string) => {
     const path = `/bakes/${bakeId}`;
     if (window.location.pathname !== path) router.push(path);
   };
 
-  /** Stores the draft after every edit, one write at a time; a failure is shown, never lost. */
   const persist = (next: Draft) => {
     saving.current = saving.current
       .then(() => services.recipes.saveDraft(next))
@@ -266,19 +299,17 @@ const RecipePageContent = () => {
   };
 
   const update = (edited: Working, rename?: string) => {
-    // The model-driven step follows the model after every edit (fermentation.md); when the
-    // estimate is not ok it keeps its last time and the fermentation card says why.
     const next = {
       ...edited,
       process: applyModelDurations(edited.formula, edited.process).process,
     };
     const now = services.realClock.now();
-    const doc: Draft = stored
-      ? { ...stored, ...next, ...(rename === undefined ? {} : { name: rename }), updatedAt: now }
+    const current = latestDraft.current;
+    const doc: Draft = current
+      ? { ...current, ...next, ...(rename === undefined ? {} : { name: rename }), updatedAt: now }
       : {
           id: services.ids.next(),
           name: rename ?? name,
-          // Only a recipe has no stored draft yet: its first edit starts one.
           origin: {
             kind: 'revision',
             recipeId,
@@ -296,31 +327,32 @@ const RecipePageContent = () => {
   };
 
   const editFormula = (command: FormulaEdit): boolean => {
-    const next = applyDraftFormulaEdit(draft.formula, command);
-    if (next.ok) update({ ...draft, formula: next.value });
+    const current = latestDraft.current ?? draft;
+    const next = applyDraftFormulaEdit(current.formula, command);
+    if (next.ok) update({ ...current, formula: next.value });
     else setFailure(next.error);
     return next.ok;
   };
 
-  /** A formula edit and the process change it needs (a preparation's step). */
   const editStructure = (command: FormulaEdit, nextProcess?: Process): boolean => {
-    const next = applyDraftFormulaEdit(draft.formula, command);
+    const current = latestDraft.current ?? draft;
+    const next = applyDraftFormulaEdit(current.formula, command);
     if (!next.ok) {
       setFailure(next.error);
       return false;
     }
-    update({ formula: next.value, process: nextProcess ?? draft.process });
+    update({ formula: next.value, process: nextProcess ?? current.process });
     return true;
   };
 
   const changeDuration = (stepId: string, durationS: number | undefined): boolean => {
+    const current = latestDraft.current ?? draft;
     update({
-      ...draft,
+      ...current,
       process: {
-        ...draft.process,
-        steps: draft.process.steps.map((s) => {
+        ...current.process,
+        steps: current.process.steps.map((s) => {
           if (s.id !== stepId) return s;
-          // A typed duration is no longer an applied suggestion, nor model-driven (fermentation.md).
           const { plannedDurationS: _, accepted: __, durationMode: ___, ...rest } = s;
           return durationS === undefined ? rest : { ...rest, plannedDurationS: durationS };
         }),
@@ -330,7 +362,7 @@ const RecipePageContent = () => {
   };
 
   const changeProcess = (process: Process): boolean => {
-    update({ ...draft, process });
+    update({ ...(latestDraft.current ?? draft), process });
     return true;
   };
 
@@ -345,15 +377,23 @@ const RecipePageContent = () => {
           handler: (values: { name: string }) => {
             const next = values.name.trim();
             if (next === '') return false;
-            update(draft, next);
+            update(latestDraft.current ?? draft, next);
             return true;
           },
         },
       ],
     });
 
-  /** Saves the draft as a recipe or a version; refused, with the list, while something blocks. */
+  // Commit only the focused field through its normal blur path, including keyboard/AT activation.
+  const blurActiveEditor = () => {
+    const focused = document.activeElement;
+    if (focused instanceof HTMLInputElement && contentRef.current?.contains(focused)) {
+      focused.blur();
+    }
+  };
+
   const save = async () => {
+    blurActiveEditor();
     if (validationActions?.isBlocked()) return;
     await saving.current;
     if (validationActions?.isBlocked()) return;
@@ -366,7 +406,6 @@ const RecipePageContent = () => {
       }),
     );
     if (!result.ok) {
-      // The draft stays; a lost response after commit shows as HeadConflict on retry.
       setStorageFailed(result.reason === 'storage');
       return;
     }
@@ -385,9 +424,12 @@ const RecipePageContent = () => {
       return;
     }
     setBase({ name: target.name, revision: saved.value });
+    setIsEditing(false);
+    setEditorGeneration((generation) => generation + 1);
+    requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
   };
 
-  const discard = () =>
+  const discard = () => {
     void presentAlert({
       header: t(newRecipe ? 'draft.delete' : 'draft.discard'),
       message: t(newRecipe ? 'draft.deleteConfirm' : 'draft.discardConfirm'),
@@ -400,7 +442,6 @@ const RecipePageContent = () => {
             const id = stored?.id;
             setStored(undefined);
             latestDraft.current = undefined;
-            // An explicit discard also abandons raw text that never entered the draft.
             setEditorGeneration((generation) => generation + 1);
             setFailure(undefined);
             if (id !== undefined) {
@@ -411,13 +452,17 @@ const RecipePageContent = () => {
                   setStorageFailed(true);
                 });
             }
-            if (newRecipe) router.push('/recipes', 'back', 'replace');
+            if (newRecipe) {
+              router.push('/recipes', 'back', 'replace');
+            } else {
+              setIsEditing(false);
+            }
           },
         },
       ],
     });
+  };
 
-  /** A bake starts now: its timers run from the tap, whatever time the planner showed. */
   const startBake = async () => {
     if (!base) return;
     const mode: ProjectionMode = { kind: 'startAt', at: services.clock.now() };
@@ -433,9 +478,7 @@ const RecipePageContent = () => {
         formula: revision.formula,
         process: revision.process,
         mode,
-        // The simulation mode in force decides, on every platform (ADR 0014).
         origin: currentWorld(services.preferences.get()),
-        // The current registry version of each flour that has an entry (flours.md).
         flours: flourRefsOf(
           revision.formula.flours.map((f) => f.id),
           flourCatalog.personal,
@@ -464,16 +507,15 @@ const RecipePageContent = () => {
     openBake(pending.bakeId);
   };
 
-  /** Starts a bake now, once confirmed; a bake starts from the saved revision only. */
   const confirmStart = () => {
-    // A double tap opens one confirmation, not two stacked ones.
+    blurActiveEditor();
     if (confirming.current) return;
     confirming.current = true;
     void presentAlert({
       onDidDismiss: () => {
         confirming.current = false;
       },
-      ...(dirty
+      ...(latestDraft.current !== undefined || validationActions?.isBlocked()
         ? { header: t('recipe.bake'), message: t('process.saveFirst'), buttons: [t('help.close')] }
         : {
             header: t('recipe.startConfirm'),
@@ -486,6 +528,33 @@ const RecipePageContent = () => {
     });
   };
 
+  const enterEditing = () => {
+    setIsEditing(true);
+    setHasEnteredEdit(true);
+    requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
+  };
+
+  const leaveEditing = async () => {
+    blurActiveEditor();
+    if (validationActions?.isBlocked()) {
+      setNotice(t('draft.invalid'));
+      return;
+    }
+    await saving.current;
+    if (validationActions?.isBlocked() || latestDraft.current !== undefined) {
+      setNotice(t(validationActions?.isBlocked() ? 'draft.invalid' : 'draft.unsaved'));
+      return;
+    }
+    setIsEditing(false);
+    requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
+  };
+
+  const origin = stored?.origin;
+  const template =
+    origin?.kind === 'template'
+      ? RECIPE_TEMPLATES.find((tpl) => tpl.id === origin.template.id)
+      : undefined;
+
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
@@ -493,36 +562,83 @@ const RecipePageContent = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/recipes" />
           </IonButtons>
-          <button
-            type="button"
-            className="fp-reset min-w-0 px-1 text-left"
-            aria-label={t('draft.rename')}
-            onClick={rename}
+
+          <div
+            ref={titleRef}
+            tabIndex={-1}
+            className="min-w-0 outline-none"
+            role="heading"
+            aria-level={1}
+            aria-label={name}
           >
-            <div className="truncate text-[21px] font-bold">{name}</div>
-            <div className="text-[13px] text-muted">
-              {base
-                ? t('recipe.version', {
-                    version: base.revision.version,
-                  })
-                : t('draft.newRecipe')}
-            </div>
-          </button>
-          {base && (
-            <IonButtons slot="end">
+            {isEditing ? (
+              <button
+                type="button"
+                className="fp-reset min-w-0 px-1 text-left"
+                aria-label={t('draft.rename')}
+                onClick={rename}
+              >
+                <div className="truncate text-[21px] font-bold">{name}</div>
+                <div className="text-[13px] text-muted">
+                  {base
+                    ? t('recipe.version', { version: base.revision.version })
+                    : t('draft.newRecipe')}
+                </div>
+              </button>
+            ) : (
+              <div className="min-w-0 px-1 text-left">
+                <div className="truncate text-[21px] font-bold">{name}</div>
+                <div className="text-[13px] text-muted">
+                  {base
+                    ? t('recipe.version', { version: base.revision.version })
+                    : t('draft.newRecipe')}
+                </div>
+              </div>
+            )}
+          </div>
+          <IonButtons slot="end">
+            {base && (
               <IonButton
                 fill="solid"
                 shape="round"
                 color="primary"
-                className="pr-2"
+                className="pr-2 text-xs"
                 disabled={!active && writes.busy}
                 onClick={() => (active ? openBake(active.bakeId) : confirmStart())}
               >
                 {active ? t('recipe.baking') : t('recipe.bake')}
               </IonButton>
-            </IonButtons>
-          )}
+            )}
+          </IonButtons>
         </IonToolbar>
+        {!newRecipe && (
+          <IonToolbar>
+            <div className="flex min-h-12 flex-wrap items-center gap-2 px-4 py-1">
+              {!isEditing ? (
+                <>
+                  <IonButton fill="outline" className="m-0 min-h-11" onClick={enterEditing}>
+                    {t('recipe.edit')}
+                  </IonButton>
+                  <IonButton
+                    fill="outline"
+                    className="m-0 min-h-11"
+                    onClick={() => switchTab('process')}
+                  >
+                    {t('recipe.plan')}
+                  </IonButton>
+                </>
+              ) : !newRecipe ? (
+                <IonButton
+                  fill="outline"
+                  className="m-0 min-h-11"
+                  onClick={() => void leaveEditing()}
+                >
+                  {t('recipe.consultation')}
+                </IonButton>
+              ) : null}
+            </div>
+          </IonToolbar>
+        )}
         <SimulationBanner />
         {family && (
           <IonToolbar>
@@ -573,47 +689,57 @@ const RecipePageContent = () => {
         )}
         <SessionOnlyNotice />
 
-        {/* Tabs stay mounted: a draft being typed and the weighing checklist survive a switch. */}
-        <div key={`formula-${editorGeneration}`} hidden={tab !== 'formula'}>
-          {(() => {
-            const origin = stored?.origin;
-            const template =
-              origin?.kind === 'template'
-                ? RECIPE_TEMPLATES.find((tpl) => tpl.id === origin.template.id)
-                : undefined;
-            return template ? (
+        {!isEditing && (
+          <div hidden={tab !== 'formula'}>
+            <FormulaConsultation
+              formula={draft.formula}
+              {...(resolved.ok ? { resolved: resolved.value } : {})}
+              process={draft.process}
+              weighed={weighed}
+              onToggleWeighed={toggleWeighed}
+            />
+          </div>
+        )}
+        {hasEnteredEdit && (
+          <div key={`formula-${editorGeneration}`} hidden={!isEditing || tab !== 'formula'}>
+            {template && (
               <div className="mb-5">
                 <StyleGuide template={template} />
               </div>
-            ) : null;
-          })()}
-          <FormulaSection
-            formula={draft.formula}
-            {...(resolved.ok ? { resolved: resolved.value } : {})}
-            onEdit={editFormula}
-            process={draft.process}
-            now={services.realClock.now()}
-            onStructure={editStructure}
-            onProcess={changeProcess}
-          />
-        </div>
-        <div key={`process-${editorGeneration}`} hidden={tab !== 'process'}>
+            )}
+            <FormulaSection
+              formula={draft.formula}
+              {...(resolved.ok ? { resolved: resolved.value } : {})}
+              onEdit={editFormula}
+              process={draft.process}
+              now={services.realClock.now()}
+              onStructure={editStructure}
+              onProcess={changeProcess}
+              weighed={weighed}
+              onToggleWeighed={toggleWeighed}
+            />
+          </div>
+        )}
+        <div hidden={tab !== 'process'}>
           <ProcessSection
             process={draft.process}
             onDurationChange={changeDuration}
             onProcessChange={changeProcess}
             preparationIds={draft.formula.components.map((c) => c.id)}
-            canStart={base !== undefined && !dirty && !writes.busy}
+            canStart={base !== undefined && !dirty && !hasInvalid && !writes.busy}
             onStart={confirmStart}
             {...(active ? { activeBakeId: active.bakeId } : {})}
             onOpenBake={openBake}
+            editable={isEditing}
           />
         </div>
+
         {base && (
           <div hidden={tab !== 'history'}>
             <HistorySection bakes={bakes} />
           </div>
         )}
+
         <RecipeChecks
           open={checking}
           issues={issues}
@@ -630,27 +756,25 @@ const RecipePageContent = () => {
           onClose={() => setReviewing(false)}
         />
       </IonContent>
-      <DraftActionBar
-        dirty={dirty}
-        newRecipe={newRecipe}
-        {...(base ? { baseVersion: base.revision.version } : {})}
-        issuesCount={issues.length}
-        blockingCount={blocking}
-        busy={writes.busy}
-        hasInvalid={hasInvalid}
-        onSave={() => void save()}
-        onDiscard={discard}
-        onCheck={() => setChecking(true)}
-        onReview={() => setReviewing(true)}
-      />
+      {isEditing && (
+        <DraftActionBar
+          dirty={dirty}
+          newRecipe={newRecipe}
+          {...(base ? { baseVersion: base.revision.version } : {})}
+          issuesCount={issues.length}
+          blockingCount={blocking}
+          busy={writes.busy}
+          hasInvalid={hasInvalid}
+          onSave={() => void save()}
+          onDiscard={discard}
+          onCheck={() => setChecking(true)}
+          onReview={() => setReviewing(true)}
+        />
+      )}
     </IonPage>
   );
 };
 
-/**
- * Variants of a family: tap to open one; the star shows the variant opened by default, pinned
- * by the user or else the most recent.
- */
 const Variants = ({
   family,
   members,
