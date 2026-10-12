@@ -5,6 +5,8 @@ title: '[Bug] Short description'
 labels: ['status:backlog']
 ---
 
+<!-- Labels: status:backlog plus one area: label; the owner sets priority:. -->
+
 ## Where
 
 Build name (Advanced → build, e.g. `0.2.0-dev.140+653e47d`), platform (Android APK, dev APK, web

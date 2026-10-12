@@ -74,6 +74,13 @@ tracking file).
   `status:ready` (acceptance and evidence clear), `status:in-progress` (someone works on it),
   `status:review` (a pull request awaits review), `status:blocked` (say why in a comment),
   `status:verified` (acceptance shown, awaiting the owner's close). Closed means done.
+- **Other labels**, one of each per open issue when known:
+  - `priority:p0` to `priority:p3`: set or changed by the owner only; an agent may propose one in
+    a comment.
+  - `area:engine`, `area:science`, `area:data` (persistence, backup, history), `area:ui`,
+    `area:platform` (Android, desktop shell, CI, delivery), `area:docs`, `area:governance`.
+  - `milestone:alpha` (Dogfood Alpha), `milestone:engine-mvp`, `milestone:later`.
+  - Queries combine them, for example `is:issue is:open label:status:ready label:priority:p1`.
 - **Who changes them**: the agent starting work sets `status:in-progress`; opening its pull request
   sets `status:review`. A merged pull request does not finish an issue: it goes back to
   `status:in-progress` while acceptance remains open, or to `status:verified` with the evidence in a

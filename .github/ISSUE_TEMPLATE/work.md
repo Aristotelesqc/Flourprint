@@ -5,6 +5,9 @@ title: '[Area] Short need'
 labels: ['status:backlog']
 ---
 
+<!-- Labels: status:backlog plus one area: and one milestone: label when known; the owner sets
+priority:. See AGENTS.md, Development order. -->
+
 ## Need
 
 What the baker or the project needs, and why. Describe the need, not a solution.
