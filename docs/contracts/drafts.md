@@ -50,9 +50,12 @@ interface RecipeIssue {
   path?: string; // the field concerned, e.g. "ingredients.salt.bakerPct", "steps.bulk"
   details?: Record<string, string | number>;
 }
-checkRecipe(formula, process): RecipeIssue[]
+checkRecipe(formula, process, entryFamilies?: Record<string, IngredientFamily>): RecipeIssue[]
 ```
 
+- `entryFamilies` maps a formula ingredient id to the family of the registry entry it pins
+  (`ingredients.md`). The application resolves it; the domain never reads the registry or `entry`,
+  and without it only the ingredient ids and the yeast marks count.
 - **Blocking**: every error of `validateRecipe` (formula, process and incorporations, with its own
   code), a recipe without a step.
 - **Warning** (never blocks):

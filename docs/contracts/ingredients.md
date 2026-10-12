@@ -249,6 +249,8 @@ with the package's own values replaces them.
 - A partial entry is valid: only the family and the kind are required to be set (`family:
 'unknown'` is allowed). A handmade product without a barcode is a normal entry.
 - Writing a version that is not the next one for its id is refused (`HeadConflict`).
+- A personal entry has a non-empty `name`, and its id is never a built-in id, as for equipment
+  (`equipment.md`).
 - Two entries may share a name: names are labels, not keys.
 
 ## Formulas
@@ -329,13 +331,17 @@ until a contract adds volume input, no command converts with it (open choice).
 
 - `StartBake` takes no new field. The snapshot's `formula` already holds, for each ingredient,
   the pinned `entry` and the copied contents (`history.md`).
-- Starting a bake validates that every pin resolves to a stored or built-in version; an
-  ingredient with a pin that does not resolve is refused with `UnknownIngredientEntry
-{ ingredient, entry }`, so that a bake always records properties it can show later. (A saved
-  revision with such a pin is valid, see Formulas.)
+- Starting a bake validates that every pin resolves to a stored or built-in version. The
+  application checks it against the registry before it sends `StartBake` (the domain has no
+  registry); an ingredient with a pin that does not resolve is refused with
+  `UnknownIngredientEntry { ingredient, entry }` and no command is sent, so that a bake always
+  records properties it can show later. (A saved revision with such a pin is valid, see
+  Formulas.)
 - `usedProperties` of the payload (`history.md`) lists, for each pinned ingredient, the properties
   actually consumed: `waterPct`, `fatPct` and `sugarPct` when known or estimated, and
-  `leavening` for a commercial yeast, each with the entry id and version and its value.
+  `leavening` for a commercial yeast, each with the entry id and version, the formula
+  ingredient it was consumed for (`formulaIngredient`) and its value. Two ingredients pinning the
+  same entry (butter in the dough and in the glaze) give separate rows.
 - Snapshots written before this contract have no pinned entries: unknown, not "no registry
   ingredient". Their formulas are valid and replay unchanged.
 - Editing, archiving or deleting nothing of the registry changes a started bake: it keeps the
@@ -344,7 +350,8 @@ until a contract adds volume input, no command converts with it (open choice).
 
 ## Persistence
 
-(Schema 5 is the `equipment` table of `equipment.md`, #62.) SQLite schema 6 adds `ingredients (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER
+(Schema 5 is the `equipment` table of `equipment.md`, #62.) SQLite schema 6
+adds `ingredients (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER
 NOT NULL, schema_version INTEGER NOT NULL, document TEXT NOT NULL, created_at TEXT NOT NULL,
 PRIMARY KEY (id, version))`, the same shape as `flours`. Built-in entries are not stored: they are
 code. A full backup holds every personal entry version (optional `ingredients`, so older backups
@@ -358,7 +365,7 @@ restore); a restore validates them like any document (`persistence.md`).
   versions that its revisions pin. An additive import writes the versions that are absent and
   skips those present, never comparing or overwriting. Without them, imported recipes keep
   working through their copied contents.
-- Migration 4 → 5 creates the empty table. Existing databases, recipes, revisions and events are
+- Migration 5 → 6 creates the empty table. Existing databases, recipes, revisions and events are
   readable without change; there is no downgrade (a newer database or formula document is
   refused).
 - The registry is available offline: it lives in the same database as everything else.

@@ -23,7 +23,13 @@ interface BakeStartedPayload {
   revisions: { formula: RevisionRef; process: RevisionRef };
   formula: Formula; // the definition used, with its resolved ingredient properties
   resolvedFormula: ResolvedFormula; // anchor, %, grams, per-flour allocation, components, water
-  usedProperties: Array<{ ingredient: string; version: number; key: string; value: PropertyValue }>;
+  usedProperties: Array<{
+    ingredient: string; // the registry entry id
+    version: number; // the registry entry version
+    formulaIngredient?: string; // the formula ingredient consumed; set for pinned entries
+    key: string;
+    value: PropertyValue;
+  }>;
   process: Process; // the definition used, equipment parameters copied
   initialProjection: Projection;
   estimates: Record<StepId, Estimate>; // accepted suggestion of the step, else unsupported
@@ -40,7 +46,8 @@ device keeps it. It follows the simulation mode in force when the bake starts (A
 the current mode only; a bake without `origin` counts as real.
 
 `usedProperties` contains only the properties actually consumed by the calculation. For an
-ingredient with an `entry`, `ingredient` is the entry id and the keys are `waterPct`, `fatPct`,
+ingredient with an `entry`, `ingredient` and `version` name the entry, `formulaIngredient` the
+formula's ingredient, and the keys are `waterPct`, `fatPct`,
 `sugarPct` and `leavening` as far as they were consumed (`ingredients.md`, Bakes). The pinned
 entries are read from `formula`; `BakeStartedPayload` gains no field for them, and a snapshot
 written before the ingredient registry has no pin (unknown, not "no registry ingredient").
@@ -157,8 +164,8 @@ interface BakeDigest {
   never read back: the `backup` part is the record. Durations are differences of recorded instants.
 - `status`, `endedAt` and `outcome` follow the session's latest end (a reopened session is
   `active` until it ends again). `outcome` is the latest `OutcomeCorrected` after that end, else
-  that `BakeFinished`'s outcome, else `unknown`; it is absent on active and abandoned sessions. The feedback export's `schemaVersion` is bumped
-  for `outcome`, `cooking` and `ingredients`. `ingredients` is read from the snapshot formula's
+  that `BakeFinished`'s outcome, else `unknown`; it is absent on active and abandoned sessions. The feedback export's `schemaVersion` is 2
+  for `outcome` and `cooking`, and 3 with `ingredients`. `ingredients` is read from the snapshot formula's
   pins and absent when there are none.
 - `device` describes the exporting device only. Whether a bake was real is its own `origin`; an
   `unknown` origin never enters a calibration as a measured bake.
