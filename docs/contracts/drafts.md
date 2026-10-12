@@ -59,10 +59,10 @@ checkRecipe(formula, process): RecipeIssue[]
 
 | Code                     | When                                                                          |
 | ------------------------ | ----------------------------------------------------------------------------- |
-| `salt_missing`           | no dough ingredient with id `salt` (until ingredients are typed, #26)         |
+| `salt_missing`           | no dough ingredient with id `salt` or with an `entry` of family `salt`        |
 | `salt_outside_1_to_3_5`  | salt below 1 % or above 3.5 % of the flour                                    |
 | `water_outside_45_to_90` | total water below 45 % or above 90 % of the flour, when it is complete        |
-| `no_leavening`           | no ingredient marked as yeast and no preferment                               |
+| `no_leavening`           | no ingredient marked as yeast, none with a `leaven` entry, and no preferment  |
 | `no_mix_step`            | no step with operation `mix`                                                  |
 | `no_bake_step`           | no cooking step (process.md); a dough-only recipe stays valid                 |
 | `step_without_duration`  | an `asap` step without a planned duration (one issue per step, `path` its id) |

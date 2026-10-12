@@ -84,6 +84,10 @@ interface ModelRef {
 }
 ```
 
+- Units of a `PropertyValue` are the canonical ones, `%` (points) and the property units named by
+  their contract: `'1e-4 J'` (alveograph W, `flours.md`), `'g/mL'` (density) and `'°L'`
+  (Lintner, diastatic power) in `ingredients.md`. A composition of an ingredient is always in
+  points of product mass with `basis: 'per100g'`.
 - Uncertainty appears only where it is meaningful: `Observation`, `Estimate`, `PropertyValue`.
 - Model parameters are versioned, immutable data, shipped with the app and exported with any bake
   that references them. A hash, if any, only checks integrity.

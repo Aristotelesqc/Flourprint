@@ -6,7 +6,10 @@ Status: **approved** (issue #30); outcome, cooking stages and statistics amended
 ## References and versions
 
 - A `FormulaRevision` references `ingredientId@version` (and profiles as `id@version`) without
-  copying their properties.
+  copying their properties. Flours are referenced by id and recorded at bake start (`flours.md`).
+  An ingredient with a registry entry carries the pinned `entry: { id, version }` in the formula
+  together with the contents consumed by calculations (`ingredients.md`); this is the one place
+  where a formula copies registry values, so that its numbers never depend on a later edit.
 - Versions of registry entries, profiles and model parameters are **immutable and never deleted**
   (archived only).
 
@@ -36,7 +39,11 @@ device keeps it. It follows the simulation mode in force when the bake starts (A
 `simulation` while the mode is on, `physical` otherwise. History and statistics show the bakes of
 the current mode only; a bake without `origin` counts as real.
 
-`usedProperties` contains only the properties actually consumed by the calculation.
+`usedProperties` contains only the properties actually consumed by the calculation. For an
+ingredient with an `entry`, `ingredient` is the entry id and the keys are `waterPct`, `fatPct`,
+`sugarPct` and `leavening` as far as they were consumed (`ingredients.md`, Bakes). The pinned
+entries are read from `formula`; `BakeStartedPayload` gains no field for them, and a snapshot
+written before the ingredient registry has no pin (unknown, not "no registry ingredient").
 
 Accepted suggestions (`fermentation.md`):
 
@@ -69,8 +76,8 @@ Accepted suggestions (`fermentation.md`):
 
 ## Export
 
-- Full backup: recipes, revisions, bakes, events and every registry, profile and model-parameter
-  version they reference.
+- Full backup: recipes, revisions, bakes, events and every registry (flour and ingredient),
+  profile and model-parameter version they reference.
 - Recipe export: the revisions and the versions they depend on.
 
 ## Feedback export
@@ -107,6 +114,7 @@ interface BakeDigest {
   startedAt?: Instant;
   endedAt?: Instant;
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
+  ingredients?: Array<{ ingredient: string; entry: { id: string; version: number } }>; // pins of the snapshot formula
   steps: Array<{
     id: StepId;
     operation: string;
@@ -150,7 +158,8 @@ interface BakeDigest {
 - `status`, `endedAt` and `outcome` follow the session's latest end (a reopened session is
   `active` until it ends again). `outcome` is the latest `OutcomeCorrected` after that end, else
   that `BakeFinished`'s outcome, else `unknown`; it is absent on active and abandoned sessions. The feedback export's `schemaVersion` is bumped
-  for `outcome` and `cooking`.
+  for `outcome`, `cooking` and `ingredients`. `ingredients` is read from the snapshot formula's
+  pins and absent when there are none.
 - `device` describes the exporting device only. Whether a bake was real is its own `origin`; an
   `unknown` origin never enters a calibration as a measured bake.
 - The export is offered as one action that copies the document and, where the platform can,
