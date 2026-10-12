@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint scientific evidence'
+  short_description: 'Verify sources, data provenance and model limits'
+  default_prompt: 'Use $flourprint-science for this task and report the evidence and remaining limits.'

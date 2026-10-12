@@ -51,6 +51,15 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
   Claude Code invocation: `/agy` through its thin routing skill; other hosts can read the
   canonical entrypoint directly. The skill does not authorize extra sharing,
   publishing, permission changes or overlapping writers.
+- **UI verification**: [.agents/skills/flourprint-ui-check/SKILL.md](.agents/skills/flourprint-ui-check/SKILL.md).
+  Use for browser/visual acceptance and selecting the native evidence needed for a UI change.
+- **Contract changes**: [.agents/skills/flourprint-contract-change/SKILL.md](.agents/skills/flourprint-contract-change/SKILL.md).
+  Use for semantic/persisted changes, independent fixtures and consumer/compatibility impact.
+- **Scientific evidence**: [.agents/skills/flourprint-science/SKILL.md](.agents/skills/flourprint-science/SKILL.md).
+  Use for source/data/fit audits and prediction limits; research does not approve a model change.
+
+These three skills also have thin Claude Code routing entrypoints. They reuse current contracts,
+ADRs and tools rather than introducing another source of product decisions or a tracking system.
 
 ## Commands
 
@@ -58,9 +67,14 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
 pnpm install
 pnpm check        # format, lint, typecheck (sources and tests), tests
 pnpm build        # tsc -b
+pnpm build:mobile
+pnpm --filter @flourprint/mobile e2e  # full browser Playwright suite, FR and EN
 pnpm vitest run   # tests only (after a build)
 node apps/cli/dist/main.js --version
 ```
+
+The full Playwright run above is the browser suite. Native/emulator/device evidence is selected
+for affected behavior under ADR 0016 and `docs/device-testing.md`, not run on every code push.
 
 ## Development order
 

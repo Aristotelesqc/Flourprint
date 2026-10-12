@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint contract changes'
+  short_description: 'Trace semantics, fixtures and compatibility changes'
+  default_prompt: 'Use $flourprint-contract-change for this task and report the evidence and remaining limits.'
