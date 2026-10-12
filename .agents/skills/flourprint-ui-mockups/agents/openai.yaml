@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint UI mockups'
+  short_description: 'Review and host Gemini mockups before redesign'
+  default_prompt: 'Use $flourprint-ui-mockups to prepare and verify the requested visual proposal, host the review within existing authorization, and report its approval status.'
