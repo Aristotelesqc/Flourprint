@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Page } from '@playwright/test';
 
 const enterEditing = async (page: Page) => {
   const english = (await page.locator('html').getAttribute('lang'))?.startsWith('en');
@@ -1003,7 +1004,9 @@ test('the browser preview keeps its data across a reload, until it is erased', a
       .click(),
   ]);
   await page.goto('/recipes');
-  await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible();
+  // Nothing is seeded: erasing leaves an empty list, not the reference recipe.
+  await expect(page.getByText('Aucune recette', { exact: false }).first()).toBeVisible();
+  await expect(page.getByText('Poolish + tangzhong')).toHaveCount(0);
   await expect(page.getByText('Recette 1')).toHaveCount(0);
 });
 

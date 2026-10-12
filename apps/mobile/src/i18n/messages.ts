@@ -7,6 +7,29 @@ import { helpEn, helpFr } from './help';
 
 export const en = {
   ...helpEn,
+  'recipe.trash': 'Move to trash',
+  'recipe.trash.title': 'Move to trash?',
+  'recipe.trash.confirm':
+    '“{name}” leaves the recipe list. Its versions and its bakes are kept, and it can be restored from the trash.',
+  'recipe.trashed': 'This recipe is in the trash. Restore it to edit it or start a bake.',
+  'recipe.deleted': 'Deleted recipe',
+  'trash.title': 'Trash',
+  'trash.hint': 'Recipes stay here until deleted by hand. Bakes already made are kept either way.',
+  'trash.empty': 'The trash is empty.',
+  'trash.item': 'In the trash {when} · version {version}',
+  'trash.restore': 'Restore',
+  'trash.delete': 'Delete permanently',
+  'trash.delete.confirm':
+    '“{name}” and all its versions will be deleted for good. This cannot be undone. Bakes already made are kept.',
+  'trash.emptyAll': 'Empty trash',
+  'trash.emptyAll.confirm':
+    '{count, plural, one {# recipe} other {# recipes}} and all their versions will be deleted for good. This cannot be undone. Bakes already made are kept.',
+  'advanced.trash': 'Trash',
+  'advanced.trashHint': 'Restore a recipe or delete it for good.',
+  'error.RecipeTrashed': 'This recipe is in the trash. Restore it first.',
+  'error.NotFound': 'This recipe no longer exists.',
+  'error.AlreadyTrashed': 'This recipe is already in the trash.',
+  'error.NotTrashed': 'This recipe is not in the trash.',
   'recipe.edit': 'Edit',
   'recipe.plan': 'Plan',
   'recipe.consultation': 'Read recipe',
@@ -905,6 +928,31 @@ export type Catalog = Record<MessageKey, string>;
 
 export const fr: Catalog = {
   ...helpFr,
+  'recipe.trash': 'Mettre à la corbeille',
+  'recipe.trash.title': 'Mettre à la corbeille ?',
+  'recipe.trash.confirm':
+    '« {name} » quitte la liste des recettes. Ses versions et ses fournées sont conservées, et la recette peut être restaurée depuis la corbeille.',
+  'recipe.trashed':
+    'Cette recette est dans la corbeille. La restaurer pour la modifier ou démarrer une fournée.',
+  'recipe.deleted': 'Recette supprimée',
+  'trash.title': 'Corbeille',
+  'trash.hint':
+    'Les recettes restent ici jusqu’à leur suppression manuelle. Les fournées déjà faites sont conservées dans tous les cas.',
+  'trash.empty': 'La corbeille est vide.',
+  'trash.item': 'À la corbeille {when} · version {version}',
+  'trash.restore': 'Restaurer',
+  'trash.delete': 'Supprimer définitivement',
+  'trash.delete.confirm':
+    '« {name} » et toutes ses versions seront supprimées pour de bon. Cette action est irréversible. Les fournées déjà faites sont conservées.',
+  'trash.emptyAll': 'Vider la corbeille',
+  'trash.emptyAll.confirm':
+    '{count, plural, one {# recette} other {# recettes}} et toutes leurs versions seront supprimées pour de bon. Cette action est irréversible. Les fournées déjà faites sont conservées.',
+  'advanced.trash': 'Corbeille',
+  'advanced.trashHint': 'Restaurer une recette ou la supprimer définitivement.',
+  'error.RecipeTrashed': 'Cette recette est dans la corbeille. La restaurer d’abord.',
+  'error.NotFound': 'Cette recette n’existe plus.',
+  'error.AlreadyTrashed': 'Cette recette est déjà dans la corbeille.',
+  'error.NotTrashed': 'Cette recette n’est pas dans la corbeille.',
   'recipe.edit': 'Modifier',
   'recipe.plan': 'Planifier',
   'recipe.consultation': 'Lire la recette',

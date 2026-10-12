@@ -8,7 +8,6 @@ import type {
   IdGenerator,
   RecipeRepository,
 } from '@flourprint/core/application';
-import { saveRevision } from '@flourprint/core/application';
 import type { Instant } from '@flourprint/core/domain';
 import {
   MemoryBakeEventStore,
@@ -27,7 +26,6 @@ import {
 } from './browser-snapshot';
 import { createNotifier, type Notifier } from './notifications';
 import { createPreferences, currentWorld, worldClock, type PreferenceStore } from './preferences';
-import { sampleRecipe } from './seed';
 import { worldBakes, type WorldBakeStore } from './world-bakes';
 
 /**
@@ -72,18 +70,6 @@ const PLATFORM = Capacitor.getPlatform() === 'android' ? 'android' : 'web';
 const realClock: Clock = { now: () => new Date().toISOString() as Instant };
 const ids: IdGenerator = { next: () => crypto.randomUUID() };
 
-const seedIfEmpty = async (recipes: RecipeRepository): Promise<void> => {
-  if ((await recipes.listRecipes()).length > 0) return;
-  await saveRevision(recipes, {
-    recipeId: sampleRecipe.id,
-    name: sampleRecipe.name,
-    expectedHead: 0,
-    formula: sampleRecipe.formula,
-    process: sampleRecipe.process,
-    createdAt: realClock.now(),
-  });
-};
-
 /** What every platform shares around its stores: the preferences, the world view and clocks. */
 const worlds = (bakes: BakeEventStore) => {
   const preferences = createPreferences();
@@ -118,7 +104,6 @@ export const createServices = async (options: {
     const db = await openCapacitorSqlite('flourprint');
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
     const recipes = new SqlRecipeRepository(db.value.driver);
-    await seedIfEmpty(recipes);
     return {
       recipes,
       ...worlds(new SqlBakeEventStore(db.value.driver)),
@@ -144,7 +129,6 @@ export const createServices = async (options: {
     const db = await openBridgeSqlite(desktop);
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
     const recipes = new SqlRecipeRepository(db.value.driver);
-    await seedIfEmpty(recipes);
     return {
       recipes,
       ...worlds(new SqlBakeEventStore(db.value.driver)),
@@ -167,7 +151,6 @@ export const createServices = async (options: {
     const loaded = await restoreBrowserSnapshot(
       new MemoryRestoreTarget(recipes, bakes, flours, equipment),
     );
-    await seedIfEmpty(recipes);
     const keeper = keepBrowserSnapshot({ recipes, bakes, flours, equipment }, realClock.now);
     browserData = {
       loaded,
@@ -177,8 +160,6 @@ export const createServices = async (options: {
       },
       flush: keeper.flush,
     };
-  } else {
-    await seedIfEmpty(recipes);
   }
   return {
     recipes,

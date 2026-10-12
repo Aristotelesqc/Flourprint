@@ -217,11 +217,11 @@ const BakeCard = ({
   }
   return (
     <section
-      aria-label={bake.recipe ?? state.bakeId}
+      aria-label={bake.recipe ?? t('recipe.deleted')}
       className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-lg font-semibold">{bake.recipe}</span>
+        <span className="truncate text-lg font-semibold">{bake.recipe ?? t('recipe.deleted')}</span>
         {view && (
           <span className="shrink-0 text-sm text-muted">
             {t('bake.position', { index: view.position, total: view.total })}

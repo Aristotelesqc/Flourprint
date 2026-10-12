@@ -1,4 +1,5 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
+import type { Locator, Page } from '@playwright/test';
 
 const rectangle = async (locator: Locator) => {
   const box = await locator.boundingBox();

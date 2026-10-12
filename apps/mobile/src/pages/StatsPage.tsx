@@ -37,7 +37,11 @@ export const StatsPage = () => {
 
   const load = useCallback(async () => {
     try {
-      const names = new Map((await services.recipes.listRecipes()).map((r) => [r.id, r.name]));
+      const known = [
+        ...(await services.recipes.listRecipes()),
+        ...(await services.recipes.listTrash()),
+      ];
+      const names = new Map(known.map((r) => [r.id, r.name]));
       const summaries = await services.bakes.listBakes();
       const digests = await Promise.all(
         summaries.map(async (s) =>

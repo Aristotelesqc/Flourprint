@@ -472,6 +472,159 @@ export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
       equal((await repository.getRecipe('kept'))?.familyId, undefined, 'recipe');
     },
   },
+  {
+    name: 'trashes and restores a recipe without a revision; the trash lists latest first',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'a', '2026-01-01T00:00:00.000Z');
+      await saveAs(repository, 'b', '2026-01-02T00:00:00.000Z');
+      const first = '2026-02-01T00:00:00.000Z' as Instant;
+      const second = '2026-02-02T00:00:00.000Z' as Instant;
+      equal(code(await repository.trashRecipe('a', first)), 'ok', 'trash a');
+      equal(code(await repository.trashRecipe('b', second)), 'ok', 'trash b');
+      equal(
+        (await repository.listRecipes()).map((r) => r.id),
+        [],
+        'out of the list',
+      );
+      equal(
+        (await repository.listTrash()).map((r) => r.id),
+        ['b', 'a'],
+        'trash order',
+      );
+      equal((await repository.getRecipe('a'))?.trashedAt, first, 'trashedAt');
+      equal((await repository.getRecipe('a'))?.headVersion, 1, 'no revision');
+      equal(code(await repository.trashRecipe('a', second)), 'AlreadyTrashed', 'again');
+      equal(code(await repository.restoreRecipe('a')), 'ok', 'restore');
+      equal(code(await repository.restoreRecipe('a')), 'NotTrashed', 'restore twice');
+      equal(code(await repository.trashRecipe('ghost', first)), 'NotFound', 'trash unknown');
+      equal(code(await repository.restoreRecipe('ghost')), 'NotFound', 'restore unknown');
+      const restored = await repository.getRecipe('a');
+      equal(restored?.trashedAt, undefined, 'cleared');
+      equal(restored?.name, 'a', 'name kept');
+      equal(
+        (await repository.listRecipes()).map((r) => r.id),
+        ['a'],
+        'back in the list',
+      );
+      equal(
+        (await repository.listTrash()).map((r) => r.id),
+        ['b'],
+        'trash',
+      );
+    },
+  },
+  {
+    name: 'refuses a revision of a trashed recipe and a version of a missing one',
+    run: async (make) => {
+      const repository = await make();
+      await save(repository, 0);
+      await repository.trashRecipe('pullman', at);
+      equal(code(await save(repository, 1, 75)), 'RecipeTrashed', 'trashed');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 1, 'head');
+      await repository.restoreRecipe('pullman');
+      equal(code(await save(repository, 1, 75)), 'ok', 'after restore');
+      await repository.trashRecipe('pullman', at);
+      await repository.deleteRecipe('pullman');
+      equal(code(await save(repository, 2, 80)), 'NotFound', 'deleted');
+    },
+  },
+  {
+    name: 'a trashed member leaves the family default; an all-trashed family is not listed',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'a', '2026-01-01T00:00:00.000Z');
+      await saveAs(repository, 'b', '2026-01-02T00:00:00.000Z');
+      await repository.groupRecipes({ id: 'f', name: 'F' }, ['a', 'b']);
+      await repository.pinVariant('f', 'b');
+      equal(await shownVariant(repository, 'f'), 'b', 'pinned');
+      await repository.trashRecipe('b', at);
+      equal(await shownVariant(repository, 'f'), 'a', 'pin in the trash is skipped');
+      await repository.trashRecipe('a', at);
+      equal(await repository.listFamilies(), [], 'not listed');
+      equal(
+        (await repository.listFamilies({ all: true })).map((f) => f.id),
+        ['f'],
+        'listed for backups',
+      );
+      await repository.restoreRecipe('b');
+      equal(await shownVariant(repository, 'f'), 'b', 'restored pin');
+      equal((await repository.getRecipe('b'))?.familyId, 'f', 'membership kept');
+    },
+  },
+  {
+    name: 'deletes only a trashed recipe, with its revisions, leaving its family',
+    run: async (make) => {
+      const repository = await make();
+      await save(repository, 0);
+      await save(repository, 1, 72);
+      await saveAs(repository, 'other', '2026-01-01T00:00:00.000Z');
+      equal(code(await repository.deleteRecipe('pullman')), 'NotTrashed', 'not trashed');
+      equal(code(await repository.deleteRecipe('ghost')), 'NotFound', 'unknown');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 2, 'kept');
+      await repository.groupRecipes({ id: 'f', name: 'F' }, ['pullman', 'other']);
+      await repository.pinVariant('f', 'pullman');
+      await repository.trashRecipe('pullman', at);
+      equal(code(await repository.deleteRecipe('pullman')), 'ok', 'delete');
+      equal(await repository.getRecipe('pullman'), undefined, 'recipe gone');
+      equal(await repository.getRevision('pullman', 1), { ok: true, value: undefined }, 'rev 1');
+      equal(await repository.getRevision('pullman', 2), { ok: true, value: undefined }, 'rev 2');
+      equal(await repository.listTrash(), [], 'trash empty');
+      equal(
+        (await repository.listFamilies()).map((f) => f.pinnedRecipeId),
+        [undefined],
+        'pin cleared',
+      );
+      equal((await repository.getRecipe('other'))?.familyId, 'f', 'family kept');
+      await repository.trashRecipe('other', at);
+      await repository.deleteRecipe('other');
+      equal(await repository.listFamilies({ all: true }), [], 'empty family deleted');
+    },
+  },
+  {
+    name: 'empties the trash: every trashed recipe goes, the others stay',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'a', '2026-01-01T00:00:00.000Z');
+      await saveAs(repository, 'b', '2026-01-02T00:00:00.000Z');
+      await saveAs(repository, 'c', '2026-01-03T00:00:00.000Z');
+      await repository.trashRecipe('a', '2026-02-01T00:00:00.000Z' as Instant);
+      await repository.trashRecipe('c', '2026-02-02T00:00:00.000Z' as Instant);
+      equal(await repository.emptyTrash(), ['c', 'a'], 'ids');
+      equal(await repository.listTrash(), [], 'trash');
+      equal(await repository.getRecipe('a'), undefined, 'a gone');
+      equal(await repository.getRevision('c', 1), { ok: true, value: undefined }, 'c revision');
+      equal(
+        (await repository.listRecipes()).map((r) => r.id),
+        ['b'],
+        'b stays',
+      );
+      equal(await repository.emptyTrash(), [], 'nothing left');
+    },
+  },
+  {
+    name: 'imports a recorded trashed recipe into the trash',
+    run: async (make) => {
+      const repository = await make();
+      await repository.importRecipes({
+        recipes: [
+          {
+            id: 'gone',
+            name: 'Gone',
+            trashedAt: '2026-02-01T00:00:00.000Z' as Instant,
+            revisions: recorded('gone', 1),
+          },
+        ],
+        families: [],
+      });
+      equal(
+        (await repository.listTrash()).map((r) => r.id),
+        ['gone'],
+        'trash',
+      );
+      equal(await repository.listRecipes(), [], 'list');
+    },
+  },
 ];
 
 const flour = (id: string, version: number, changes: Partial<FlourEntry> = {}): FlourEntry => ({

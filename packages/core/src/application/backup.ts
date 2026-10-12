@@ -69,12 +69,20 @@ export type BackupError =
 const invalid = (reason: string): BackupError =>
   domainError('InvalidBackup', `Invalid backup: ${reason}`, { reason });
 
-/** Every recipe with all its revisions, as recorded. */
+/**
+ * Every recipe with all its revisions, as recorded. Recipes in the trash are included only when
+ * `withTrash` is set (full backups); a recipes file never carries them (persistence.md).
+ */
 export const recordedRecipes = async (
   repository: RecipeRepository,
+  options: { readonly withTrash?: boolean } = {},
 ): Promise<Result<RecordedRecipe[], BackupError>> => {
   const recipes: RecordedRecipe[] = [];
-  for (const recipe of await repository.listRecipes()) {
+  const listed = [
+    ...(await repository.listRecipes()),
+    ...(options.withTrash ? await repository.listTrash() : []),
+  ];
+  for (const recipe of listed) {
     const revisions: Revision[] = [];
     for (let version = 1; version <= recipe.headVersion; version++) {
       const revision = await repository.getRevision(recipe.id, version);
@@ -86,6 +94,7 @@ export const recordedRecipes = async (
       id: recipe.id,
       name: recipe.name,
       ...(recipe.familyId === undefined ? {} : { familyId: recipe.familyId }),
+      ...(recipe.trashedAt === undefined ? {} : { trashedAt: recipe.trashedAt }),
       revisions,
     });
   }
@@ -97,9 +106,9 @@ export const exportBackup = async (
   stores: BackupStores,
   exportedAt: Instant,
 ): Promise<Result<Backup, BackupError>> => {
-  const recipes = await recordedRecipes(stores.recipes);
+  const recipes = await recordedRecipes(stores.recipes, { withTrash: true });
   if (!recipes.ok) return recipes;
-  const families = await stores.recipes.listFamilies();
+  const families = await stores.recipes.listFamilies({ all: true });
   const bakes: Backup['bakes'][number][] = [];
   for (const summary of await stores.bakes.listBakes()) {
     bakes.push({ bakeId: summary.bakeId, events: await stores.bakes.loadEvents(summary.bakeId) });
@@ -205,7 +214,10 @@ export const decodeRecipes = (
     if (!Array.isArray(recipe.revisions) || recipe.revisions.length === 0) {
       return refuse(`recipe ${id} has no revision`);
     }
-    const { familyId } = recipe;
+    const { familyId, trashedAt } = recipe;
+    if (trashedAt !== undefined && !isInstant(trashedAt)) {
+      return refuse(`recipe ${id} has an invalid trashedAt`);
+    }
     if (familyId !== undefined && !families.some((f) => f.id === familyId)) {
       return refuse(`recipe ${id} refers to a missing family`);
     }
@@ -213,6 +225,7 @@ export const decodeRecipes = (
       id,
       name: recipe.name,
       ...(typeof familyId === 'string' ? { familyId } : {}),
+      ...(trashedAt === undefined ? {} : { trashedAt }),
       revisions: (recipe.revisions as unknown[]).map((r, i) => decodeRevision(id, i, r)),
     });
   }
@@ -314,9 +327,11 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
       const last = events.at(-1);
       if (!last) continue;
       const state = checkBakeLog(bakeId, events);
+      // A bake carries its own snapshot, so a recipe deleted from the trash may be absent from the
+      // backup (persistence.md, Recipe trash); a recipe that is present must hold the revision.
       for (const ref of Object.values(state.snapshot?.revisions ?? {})) {
         const recipe = recipes.find((r) => r.id === ref.id);
-        if (!recipe?.revisions.some((r) => r.version === ref.version)) {
+        if (recipe && !recipe.revisions.some((r) => r.version === ref.version)) {
           return err(invalid(`bake ${bakeId} refers to a revision missing from the backup`));
         }
       }

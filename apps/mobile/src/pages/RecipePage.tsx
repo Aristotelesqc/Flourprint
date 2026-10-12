@@ -32,8 +32,10 @@ import {
   type DomainError,
   type Formula,
   type FormulaEdit,
+  type Instant,
   type Process,
   type ProjectionMode,
+  type Result,
   type Revision,
 } from '@flourprint/core/domain';
 import { FormulaConsultation } from '../blocks/FormulaConsultation';
@@ -97,6 +99,8 @@ const RecipePageContent = () => {
   const [failure, setFailure] = useState<DomainError>();
   const [storageFailed, setStorageFailed] = useState(false);
   const [notice, setNotice] = useState<string>();
+  // Set while the recipe is in the trash: it is then read-only until restored.
+  const [trashedAt, setTrashedAt] = useState<Instant>();
   const [loading, setLoading] = useState<'loading' | 'missing' | 'failed' | 'ready'>('loading');
   const [family, setFamily] = useState<{ family: RecipeFamily; members: readonly Recipe[] }>();
   const writes = useGuardedWrite();
@@ -142,7 +146,11 @@ const RecipePageContent = () => {
             setLoading('missing');
             return;
           }
-          if (found.origin.kind === 'revision') {
+          // The edits of a deleted recipe stand alone and can be saved as a new recipe.
+          if (
+            found.origin.kind === 'revision' &&
+            (await services.recipes.getRecipe(found.origin.recipeId))
+          ) {
             router.push(`/recipes/${found.origin.recipeId}`, 'none', 'replace');
             return;
           }
@@ -162,12 +170,13 @@ const RecipePageContent = () => {
           return;
         }
         setBase({ name: recipe.name, revision: revision.value });
+        setTrashedAt(recipe.trashedAt);
         const resumed = (await services.recipes.listDrafts()).find(
           (d) => d.origin.kind === 'revision' && d.origin.recipeId === recipeId,
         );
         setStored(resumed);
         latestDraft.current = resumed;
-        const shouldEdit = resumed !== undefined;
+        const shouldEdit = resumed !== undefined && recipe.trashedAt === undefined;
         setIsEditing(shouldEdit);
         setHasEnteredEdit(shouldEdit);
         setLoading('ready');
@@ -180,7 +189,7 @@ const RecipePageContent = () => {
   }, [recipeId, draftId, services]);
 
   const loadFamily = async (recipe: Recipe) => {
-    if (recipe.familyId === undefined) {
+    if (recipe.familyId === undefined || recipe.trashedAt !== undefined) {
       setFamily(undefined);
       return;
     }
@@ -404,6 +413,8 @@ const RecipePageContent = () => {
       saveDraft(services.recipes, target, {
         newRecipeId: services.ids.next(),
         createdAt: services.realClock.now(),
+        // A draft of a version whose recipe was deleted becomes a new recipe.
+        asNewRecipe: newRecipe,
       }),
     );
     if (!result.ok) {
@@ -532,6 +543,51 @@ const RecipePageContent = () => {
     });
   };
 
+  /** Runs a trash operation; resolves to whether it was applied, saying why when not. */
+  const changeTrash = async (work: () => Promise<Result<void, DomainError>>): Promise<boolean> => {
+    const result = await writes.run(work);
+    if (!result.ok) {
+      setStorageFailed(result.reason === 'storage');
+      return false;
+    }
+    setStorageFailed(false);
+    if (!result.value.ok) {
+      setFailure(result.value.error);
+      return false;
+    }
+    setFailure(undefined);
+    return true;
+  };
+
+  const confirmTrash = () =>
+    void presentAlert({
+      header: t('recipe.trash.title'),
+      message: t('recipe.trash.confirm', { name }),
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        {
+          text: t('recipe.trash'),
+          role: 'destructive',
+          handler: () => {
+            void (async () => {
+              const at = services.realClock.now();
+              if (await changeTrash(() => services.recipes.trashRecipe(recipeId, at))) {
+                router.push('/recipes', 'back', 'replace');
+              }
+            })();
+          },
+        },
+      ],
+    });
+
+  const restore = async () => {
+    if (await changeTrash(() => services.recipes.restoreRecipe(recipeId))) {
+      setTrashedAt(undefined);
+      const recipe = await services.recipes.getRecipe(recipeId);
+      if (recipe) await loadFamily(recipe);
+    }
+  };
+
   const enterEditing = () => {
     setIsEditing(true);
     setHasEnteredEdit(true);
@@ -601,7 +657,7 @@ const RecipePageContent = () => {
             )}
           </div>
           <IonButtons slot="end">
-            {base && (
+            {base && trashedAt === undefined && (
               <IonButton
                 fill="solid"
                 shape="round"
@@ -618,7 +674,16 @@ const RecipePageContent = () => {
         {!newRecipe && (
           <IonToolbar>
             <div className="flex min-h-12 flex-wrap items-center gap-2 px-4 py-1">
-              {!isEditing ? (
+              {trashedAt !== undefined ? (
+                <IonButton
+                  fill="outline"
+                  className="m-0 min-h-11"
+                  disabled={writes.busy}
+                  onClick={() => void restore()}
+                >
+                  {t('trash.restore')}
+                </IonButton>
+              ) : !isEditing ? (
                 <>
                   <IonButton fill="outline" className="m-0 min-h-11" onClick={enterEditing}>
                     {t('recipe.edit')}
@@ -629,6 +694,15 @@ const RecipePageContent = () => {
                     onClick={() => switchTab('process')}
                   >
                     {t('recipe.plan')}
+                  </IonButton>
+                  <IonButton
+                    fill="outline"
+                    color="danger"
+                    className="m-0 min-h-11"
+                    disabled={writes.busy}
+                    onClick={confirmTrash}
+                  >
+                    {t('recipe.trash')}
                   </IonButton>
                 </>
               ) : !newRecipe ? (
@@ -685,6 +759,11 @@ const RecipePageContent = () => {
             {t('state.storageWrite')}
           </p>
         )}
+        {trashedAt !== undefined && (
+          <p role="status" className="mt-0 mb-3">
+            {t('recipe.trashed')}
+          </p>
+        )}
         {notice && <p className="mt-0 mb-3">{notice}</p>}
         {readFailed && (
           <p role="alert" className="mt-0 mb-3 text-alert">
@@ -730,7 +809,9 @@ const RecipePageContent = () => {
             onDurationChange={changeDuration}
             onProcessChange={changeProcess}
             preparationIds={draft.formula.components.map((c) => c.id)}
-            canStart={base !== undefined && !dirty && !hasInvalid && !writes.busy}
+            canStart={
+              base !== undefined && trashedAt === undefined && !dirty && !hasInvalid && !writes.busy
+            }
             onStart={confirmStart}
             {...(active ? { activeBakeId: active.bakeId } : {})}
             onOpenBake={openBake}
