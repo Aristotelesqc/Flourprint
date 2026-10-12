@@ -49,7 +49,27 @@ conflict with it.
 - A push to `dev` replaces the rolling pre-release **`dev-channel`**, holding
   `flourprint-dev.apk`. The dev APK loads `https://dev.flourprint-aristotelesqc.pages.dev`, so it
   rarely needs reinstalling; the release page is its stable download link.
-- Pull requests publish no release; their APKs remain CI artifacts for testing only.
+- Pull requests publish no release and build no APK: they are tried on their own web preview
+  address. An APK of a pull request is built on demand (run the CI workflow on its branch).
+
+### CI budget
+
+The repository is private: GitHub Actions minutes are counted (2 000 a month on the free plan,
+Windows minutes count double). The first week used the month: every push to a pull request built
+two APKs, the Windows shell and often the emulator suite, about 25 billed minutes each. From now
+on:
+
+| Trigger                    | Jobs                                                                      |
+| -------------------------- | ------------------------------------------------------------------------- |
+| push to a pull request     | checks, browser journeys, web preview (about 6 minutes)                   |
+| push to `dev`              | the same, plus both APKs and the `dev-channel` pre-release                |
+| push to `main`             | the same, plus the Windows shell and the release                          |
+| pull request into `main`   | the same as a pull request, plus the version check and the emulator suite |
+| on demand (`Run workflow`) | everything on any branch; the emulator suite also on demand               |
+
+A newer push to the same pull request cancels its run in progress. Agents run the
+checks and the browser journeys locally before pushing (AGENTS.md); CI confirms them, it is not
+where they are first tried.
 
 ### Signing
 
