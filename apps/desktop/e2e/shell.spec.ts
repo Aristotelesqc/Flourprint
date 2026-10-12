@@ -115,7 +115,14 @@ const recipesFile = {
 
 const loadSample = async (page: Page): Promise<void> => {
   await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
-  if (await page.getByText('Pain simple').first().isVisible()) return;
+  // The list loads after the heading: wait a moment for the recipe before deciding to import it.
+  const present = await page
+    .getByText('Pain simple')
+    .first()
+    .waitFor({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (present) return;
   await page.evaluate(() => {
     window.history.pushState({}, '', '/advanced');
     window.dispatchEvent(new PopStateEvent('popstate'));
@@ -125,7 +132,10 @@ const loadSample = async (page: Page): Promise<void> => {
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(recipesFile)),
   });
-  await expect(page.getByText('1 recette importée.')).toBeVisible();
+  // Imported now, or already there if the list was only slow to show it.
+  await expect(
+    page.getByText(/^(1 recette importée|Aucune nouvelle recette, 1 déjà présente)\.$/),
+  ).toBeVisible();
   await page.evaluate(() => {
     window.history.pushState({}, '', '/recipes');
     window.dispatchEvent(new PopStateEvent('popstate'));

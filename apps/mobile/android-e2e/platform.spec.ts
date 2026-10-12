@@ -20,14 +20,24 @@ const loadSample = async (page: Page): Promise<void> => {
       window.history.pushState({}, '', to);
       window.dispatchEvent(new PopStateEvent('popstate'));
     }, path);
-  if (await page.getByText('Poolish + tangzhong').first().isVisible()) return;
+  // The list loads after the heading: wait a moment for the recipe before deciding to import it.
+  const present = await page
+    .getByText('Poolish + tangzhong')
+    .first()
+    .waitFor({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (present) return;
   await goTo('/advanced');
   await page.locator('input[type=file]').setInputFiles({
     name: 'recipes.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(sampleRecipesFile())),
   });
-  await expect(page.getByText('1 recipe imported.')).toBeVisible();
+  // Imported now, or already there if the list was only slow to show it.
+  await expect(
+    page.getByText(/^(1 recipe imported|No new recipe, 1 already here)\.$/),
+  ).toBeVisible();
   await goTo('/recipes');
 };
 
