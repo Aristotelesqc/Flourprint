@@ -292,8 +292,12 @@ test('a locked hydration holds while eggs are added; preparations are editable',
   await egg.fill('100');
   await egg.press('Enter');
   // 100 g of egg at 76 % water: the added water drops by 76 g, total water stays.
+  await page.getByRole('button', { name: 'Examiner les modifications' }).click();
   await expect(page.getByText('Œuf ajouté')).toBeVisible();
   await expect(page.getByText(/Eau, % boulanger : 75 % → 67,4 %/)).toBeVisible();
+  const review = page.locator('ion-modal:not(.overlay-hidden)');
+  await review.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(review).toBeHidden();
 
   // The tangzhong's hydration is editable; 1:1 makes it a yudane.
   await page.getByLabel('tangzhong, Hydratation (%)').fill('100');
@@ -318,7 +322,11 @@ test('typing a hydration locks it there; an egg then lowers the added water', as
     page.getByRole('button', { name: 'Déverrouiller l’hydratation', pressed: true }),
   ).toBeVisible();
   await expect(hydration).toHaveValue('70');
+  await page.getByRole('button', { name: 'Examiner les modifications' }).click();
   await expect(page.getByText('Hydratation verrouillée à 70 %')).toBeVisible();
+  const review = page.locator('ion-modal:not(.overlay-hidden)');
+  await review.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(review).toBeHidden();
   // Only the shown page: during a transition Ionic keeps the previous one in the DOM.
   const added = page
     .locator('.ion-page:not(.ion-page-hidden)')
@@ -336,7 +344,10 @@ test('typing a hydration locks it there; an egg then lowers the added water', as
   const egg = page.getByLabel('Œuf (g)', { exact: true });
   await egg.fill('100');
   await egg.press('Enter');
-  await expect(page.getByText('Œuf ajouté')).toBeVisible();
+  await page.getByRole('button', { name: 'Examiner les modifications' }).click();
+  await expect(review.getByText('Œuf ajouté')).toBeVisible();
+  await review.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(review).toBeHidden();
   // The hydration stays at 70 %; the added water gives up the egg's water.
   await expect(hydration).toHaveValue('70');
   await expect(added).not.toHaveText(before ?? '');

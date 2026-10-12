@@ -10,3 +10,7 @@ apps/desktop/test-results/
 
 # Agent worktrees (local only)
 .claude/worktrees/
+
+# Private AGY prompts, raw logs and reports
+.agy-runs/
+__pycache__/

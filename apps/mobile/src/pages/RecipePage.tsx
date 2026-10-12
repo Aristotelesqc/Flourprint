@@ -3,7 +3,6 @@ import {
   IonButton,
   IonButtons,
   IonContent,
-  IonFooter,
   IonHeader,
   IonPage,
   IonToolbar,
@@ -39,6 +38,9 @@ import {
 import { FormulaSection } from '../blocks/FormulaSection';
 import { HistorySection } from '../blocks/HistorySection';
 import { ProcessSection } from '../blocks/ProcessSection';
+import { ChangeReviewSheet } from '../blocks/ChangeReviewSheet';
+import { DraftActionBar } from '../blocks/DraftActionBar';
+import { usePanelScroll } from '../ui/PanelContext';
 import { useMessages } from '../i18n/use-messages';
 import { sendBakeCommand } from '../services/bakes';
 import { useFlourCatalog } from '../services/flours';
@@ -50,7 +52,6 @@ import { usePreferences } from '../services/use-preferences';
 import { SimulationBanner } from '../ui/SimulationBanner';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
-import { InfoButton } from '../ui/InfoButton';
 import { Segmented } from '../ui/Segmented';
 
 type Tab = 'formula' | 'process' | 'history';
@@ -87,6 +88,8 @@ export const RecipePage = () => {
   const [loading, setLoading] = useState<'loading' | 'missing' | 'failed' | 'ready'>('loading');
   const [family, setFamily] = useState<{ family: RecipeFamily; members: readonly Recipe[] }>();
   const writes = useGuardedWrite();
+  const contentRef = useRef<HTMLIonContentElement>(null);
+  const [reviewing, setReviewing] = useState(false);
   // A bake start whose outcome is unknown keeps its ids and its exact content: a retry resends
   // the same command, so it can neither start a second bake nor reuse an id with other content.
   const pendingStart = useRef<{
@@ -195,6 +198,13 @@ export const RecipePage = () => {
   useEffect(() => void refreshBakes(), [refreshBakes, simulation]);
 
   const draft: Working | undefined = stored ?? base?.revision;
+  const { switchTab } = usePanelScroll(
+    contentRef,
+    tab,
+    setTab,
+    draftId ?? recipeId,
+    loading === 'ready',
+  );
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
   const issues = useMemo(() => (draft ? checkRecipe(draft.formula, draft.process) : []), [draft]);
   const newRecipe = draftId !== undefined;
@@ -469,7 +479,7 @@ export const RecipePage = () => {
             <div className="truncate text-[21px] font-bold">{name}</div>
             <div className="text-[13px] text-muted">
               {base
-                ? t(dirty ? 'recipe.versionModified' : 'recipe.version', {
+                ? t('recipe.version', {
                     version: base.revision.version,
                   })
                 : t('draft.newRecipe')}
@@ -516,12 +526,12 @@ export const RecipePage = () => {
                 value,
                 label: t(`recipe.tab.${value}`),
               }))}
-              onChange={setTab}
+              onChange={switchTab}
             />
           </div>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding">
+      <IonContent ref={contentRef} className="ion-padding">
         {failure && (
           <p role="alert" className="mt-0 mb-3 text-alert">
             {error(failure)}
@@ -558,7 +568,6 @@ export const RecipePage = () => {
             formula={draft.formula}
             {...(resolved.ok ? { resolved: resolved.value } : {})}
             onEdit={editFormula}
-            base={base?.revision.formula ?? draft.formula}
             process={draft.process}
             now={services.realClock.now()}
             onStructure={editStructure}
@@ -588,56 +597,28 @@ export const RecipePage = () => {
           process={draft.process}
           onClose={() => setChecking(false)}
         />
+        <ChangeReviewSheet
+          open={reviewing}
+          {...(base
+            ? { baseFormula: base.revision.formula, baseProcess: base.revision.process }
+            : {})}
+          currentFormula={draft.formula}
+          currentProcess={draft.process}
+          onClose={() => setReviewing(false)}
+        />
       </IonContent>
-      {dirty && (
-        <IonFooter>
-          <IonToolbar>
-            {/* Two rows so nothing is clipped at phone width: what the draft is, then its actions. */}
-            <div className="flex flex-col gap-1.5 px-4 py-2">
-              <div className="flex min-w-0 items-center justify-between gap-2">
-                <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted">
-                  <span className="truncate">
-                    {t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
-                  </span>
-                  <InfoButton
-                    topic="draft"
-                    term={t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')}
-                  />
-                </span>
-                <IonButton
-                  size="small"
-                  fill="clear"
-                  className="m-0 shrink-0"
-                  color={blocking > 0 ? 'danger' : 'medium'}
-                  onClick={() => setChecking(true)}
-                >
-                  {issues.length === 0
-                    ? t('check.button')
-                    : t('check.buttonCount', { count: issues.length })}
-                </IonButton>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <IonButton fill="outline" className="m-0 h-auto min-h-11" onClick={discard}>
-                  <span className="pointer-events-none py-1 leading-tight whitespace-normal">
-                    {t(newRecipe ? 'draft.delete' : 'draft.discard')}
-                  </span>
-                </IonButton>
-                <IonButton
-                  className="m-0 h-auto min-h-11"
-                  disabled={writes.busy}
-                  onClick={() => void save()}
-                >
-                  <span className="pointer-events-none py-1 leading-tight whitespace-normal">
-                    {newRecipe
-                      ? t('draft.saveRecipe')
-                      : t('draft.save', { version: (base?.revision.version ?? 0) + 1 })}
-                  </span>
-                </IonButton>
-              </div>
-            </div>
-          </IonToolbar>
-        </IonFooter>
-      )}
+      <DraftActionBar
+        dirty={dirty}
+        newRecipe={newRecipe}
+        {...(base ? { baseVersion: base.revision.version } : {})}
+        issuesCount={issues.length}
+        blockingCount={blocking}
+        busy={writes.busy}
+        onSave={() => void save()}
+        onDiscard={discard}
+        onCheck={() => setChecking(true)}
+        onReview={() => setReviewing(true)}
+      />
     </IonPage>
   );
 };
