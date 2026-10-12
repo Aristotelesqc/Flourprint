@@ -1,8 +1,6 @@
 import { IonButton } from '@ionic/react';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  insertStepAfter,
-  intendedOutcome,
   projectProcess,
   temperatureContext,
   type Instant,
@@ -15,22 +13,15 @@ import { useMessages } from '../i18n/use-messages';
 import { useServices } from '../services/services';
 import { formatDay, formatDayTime, formatDuration, formatTime, localDayKey } from '../i18n/time';
 import { useTemperature } from '../i18n/temperature';
-import { DurationField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
-import { newStepId, STEP_OPERATIONS } from '../services/process-edit';
-import { OUTCOME_CHOICES, outcomeFromKey, outcomeKey, useOutcomeText } from './Outcome';
-import { StepSheet, techniqueSummary } from './StepSheet';
+import { RecipeOutcome } from './RecipeOutcome';
+import { StepEquipmentDetails } from './StepEquipmentDetails';
+import { techniqueSummary } from './StepSheet';
 
 interface Props {
   readonly process: Process;
-  /** Undefined clears the duration (unknown); returns false when the change was refused. */
-  readonly onDurationChange: (stepId: string, durationS: number | undefined) => boolean;
-  /** Structure and technique edits (add, remove, technique); false when refused. */
-  readonly onProcessChange: (process: Process) => boolean;
-  /** Ids of the formula's preparations: their steps are removed through the preparation. */
-  readonly preparationIds: readonly string[];
   /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
   readonly canStart: boolean;
   /** Starts another bake from the moment of the tap, whatever time the planner shows. */
@@ -38,8 +29,8 @@ interface Props {
   /** A bake of this recipe in progress: the main action opens it; another start is explicit. */
   readonly activeBakeId?: string;
   readonly onOpenBake: (bakeId: string) => void;
-  /** Whether authored steps are editable or read-only projection/consultation (#67). */
-  readonly editable?: boolean;
+  /** Shortcut to edit a specific step in the authored method in Recipe tab (#71). */
+  readonly onEditStepInRecipe?: (stepId: string) => void;
 }
 
 /** `datetime-local` value (local time, minutes) ↔ UTC instant. */
@@ -65,17 +56,14 @@ interface Planned {
   readonly planned?: ProjectedStep;
 }
 
-/** Process tab of the #8 mockups: plan by start or ready time, steps grouped by day. */
+/** Planning tab (#71): read-only projected timeline with time/target controls and edit-in-Recipe shortcuts. */
 export const ProcessSection = ({
   process,
-  onDurationChange,
-  onProcessChange,
-  preparationIds,
   canStart,
   onStart,
   activeBakeId,
   onOpenBake,
-  editable = true,
+  onEditStepInRecipe,
 }: Props) => {
   const { t, error, stepName, locale } = useMessages();
   const temperature = useTemperature();
@@ -92,7 +80,6 @@ export const ProcessSection = ({
     return () => clearInterval(timer);
   }, [followsClock, services]);
   const [targetId, setTargetId] = useState(() => defaultTarget(process)?.id);
-  const [editing, setEditing] = useState<string>();
   const target = process.steps.find((s) => s.id === targetId) ?? defaultTarget(process);
 
   const mode: ProjectionMode = useMemo(() => {
@@ -161,7 +148,7 @@ export const ProcessSection = ({
           onChange={setModeKind}
         />
         {modeKind === 'startAt' && (
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span>{t('process.when.startAt')}</span>
             <Segmented
               size="small"
@@ -175,25 +162,25 @@ export const ProcessSection = ({
           </div>
         )}
         {!followsClock && (
-          <label className="flex items-center justify-between gap-3">
-            <span>
+          <label className="flex flex-wrap items-center justify-between gap-2">
+            <span className="min-w-0">
               {modeKind === 'readyBy' && target
                 ? t('process.when.readyBy', { step: stepName(target) })
                 : t('process.when.time')}
             </span>
             <input
               type="datetime-local"
-              className="fp-field h-12 rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 font-bold text-ink"
+              className="fp-field h-12 w-full min-w-0 max-w-full rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 font-bold text-ink sm:w-auto"
               value={when}
               onChange={(e) => e.target.value && setWhen(e.target.value)}
             />
           </label>
         )}
         {modeKind === 'readyBy' && (
-          <label className="flex items-center justify-between gap-3">
+          <label className="flex flex-wrap items-center justify-between gap-2">
             <span>{t('process.target')}</span>
             <select
-              className="fp-field h-12 max-w-[60%] rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 text-ink"
+              className="fp-field h-12 w-full min-w-0 max-w-full rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 text-ink sm:w-auto sm:max-w-[60%]"
               value={target?.id}
               onChange={(e) => setTargetId(e.target.value)}
             >
@@ -234,73 +221,74 @@ export const ProcessSection = ({
               return (
                 <div
                   key={step.id}
-                  className="grid min-h-16 grid-cols-[52px_1fr_104px] items-center gap-2.5 px-3 py-2"
+                  className="flex flex-col gap-2 border-b border-line/40 px-3 py-3 last:border-b-0"
                 >
-                  <span className="font-bold">{p?.start ? formatTime(p.start, locale) : '—'}</span>
-                  <div className="flex min-w-0 flex-col gap-0.5">
-                    {editable ? (
-                      <button
-                        type="button"
-                        className="fp-reset min-h-8 text-left font-semibold text-accent-text"
-                        aria-label={t('process.editStep', { step: stepName(step) })}
-                        onClick={() => setEditing(step.id)}
-                      >
-                        {stepName(step)}
-                      </button>
-                    ) : (
-                      <span className="min-h-8 py-1 font-semibold text-ink">{stepName(step)}</span>
-                    )}
-                    {step.technique && (
-                      <span className="text-[13px] text-ink">
-                        {techniqueSummary(t, step.technique)}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="w-14 shrink-0 font-bold text-ink">
+                        {p?.start ? formatTime(p.start, locale) : '—'}
                       </span>
-                    )}
-                    {step.conditions && (
-                      <span className="text-[13px] text-muted">
-                        {[
-                          step.conditions.location,
-                          step.conditions.temperatureC !== undefined
-                            ? temperature.format(
-                                step.conditions.temperatureC,
-                                temperatureContext(step),
-                              )
-                            : undefined,
-                          step.conditions.doughTemperatureC !== undefined
-                            ? `${t('fermentation.target')}: ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
-                            : undefined,
-                          step.conditions.frictionC !== undefined
-                            ? `${t('fermentation.friction')}: ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
-                            : undefined,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
+                      <span className="font-semibold text-ink">{stepName(step)}</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <span className="font-medium text-ink">
+                        {step.durationMode === 'model'
+                          ? step.plannedDurationS !== undefined
+                            ? `≈ ${formatDuration(step.plannedDurationS)}`
+                            : t('fermentation.auto')
+                          : step.plannedDurationS !== undefined
+                            ? formatDuration(step.plannedDurationS)
+                            : '—'}
                       </span>
-                    )}
-                    {(hints.length > 0 || step.schedule === 'alap') && (
-                      <span className="text-[13px] text-muted">
-                        {step.schedule === 'alap' && (
-                          <span className="mr-1 inline-flex items-center gap-1 font-semibold">
-                            {t('process.alap')}
-                            <InfoButton topic="alap" term={t('process.alap')} />
-                          </span>
-                        )}
-                        {step.schedule === 'alap' && hints.length > 0 && ' · '}
-                        {hints.join(' · ')}
-                      </span>
-                    )}
+                      {onEditStepInRecipe && (
+                        <button
+                          type="button"
+                          className="fp-reset inline-flex min-h-12 items-center justify-center rounded-lg border border-line bg-surface px-3 text-xs font-semibold text-accent-text shadow-sm hover:bg-field-bg active:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          aria-label={t('planning.editStepInRecipe', { step: stepName(step) })}
+                          onClick={() => onEditStepInRecipe(step.id)}
+                        >
+                          {t('planning.editInRecipe')}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  {editable ? (
-                    <DurationField
-                      label={t('process.duration', { step: stepName(step) })}
-                      value={step.plannedDurationS}
-                      optional={step.schedule !== 'alap'}
-                      onCommit={(seconds) => onDurationChange(step.id, seconds)}
-                    />
-                  ) : (
-                    <span className="text-right font-medium text-ink">
-                      {step.plannedDurationS !== undefined
-                        ? formatDuration(step.plannedDurationS)
-                        : '—'}
+                  {step.technique && (
+                    <span className="text-[13px] text-ink">
+                      {techniqueSummary(t, step.technique)}
+                    </span>
+                  )}
+                  {step.conditions && (
+                    <span className="text-[13px] text-muted">
+                      {[
+                        step.conditions.location,
+                        step.conditions.temperatureC !== undefined
+                          ? temperature.format(
+                              step.conditions.temperatureC,
+                              temperatureContext(step),
+                            )
+                          : undefined,
+                        step.conditions.doughTemperatureC !== undefined
+                          ? `${t('fermentation.target')}: ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
+                          : undefined,
+                        step.conditions.frictionC !== undefined
+                          ? `${t('fermentation.friction')}: ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
+                          : undefined,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  )}
+                  <StepEquipmentDetails step={step} />
+                  {(hints.length > 0 || step.schedule === 'alap') && (
+                    <span className="text-[13px] text-muted">
+                      {step.schedule === 'alap' && (
+                        <span className="mr-1 inline-flex items-center gap-1 font-semibold">
+                          {t('process.alap')}
+                          <InfoButton topic="alap" term={t('process.alap')} />
+                        </span>
+                      )}
+                      {step.schedule === 'alap' && hints.length > 0 && ' · '}
+                      {hints.join(' · ')}
                     </span>
                   )}
                 </div>
@@ -310,40 +298,13 @@ export const ProcessSection = ({
         </section>
       ))}
 
-      {editable && (
-        <Rows>
-          <AddStep
-            process={process}
-            onAdd={(after, operation) =>
-              onProcessChange(
-                insertStepAfter(process, after, {
-                  id: newStepId(process, operation, preparationIds),
-                  operation,
-                  schedule: 'asap',
-                }),
-              )
-            }
-          />
-        </Rows>
+      <div className="pt-1">
+        <RecipeOutcome process={process} editable={false} />
+      </div>
+
+      {!canStart && onEditStepInRecipe && (
+        <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>
       )}
-
-      {editable && (
-        <StepSheet
-          open={editing !== undefined}
-          step={process.steps.find((s) => s.id === editing)}
-          process={process}
-          preparation={editing !== undefined && preparationIds.includes(editing)}
-          onChange={onProcessChange}
-          onClose={() => setEditing(undefined)}
-        />
-      )}
-
-      {/* How the recipe ends shows in consultation too; only editing changes it. */}
-      <Rows>
-        <IntendedOutcome process={process} disabled={!editable} onChange={onProcessChange} />
-      </Rows>
-
-      {!canStart && <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>}
       {canStart && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
       )}
@@ -357,128 +318,6 @@ export const ProcessSection = ({
           </IonButton>
         </>
       )}
-    </div>
-  );
-};
-
-const AddStep = ({
-  process,
-  onAdd,
-}: {
-  process: Process;
-  onAdd: (after: string, operation: string) => boolean;
-}) => {
-  const { t, stepName } = useMessages();
-  const id = useId();
-  const [open, setOpen] = useState(false);
-  const [after, setAfter] = useState<string>();
-  const [operation, setOperation] = useState<string>(STEP_OPERATIONS[0]);
-  const anchor = process.steps.find((s) => s.id === after) ?? process.steps.at(-1);
-  if (!open || !anchor) {
-    return (
-      <button
-        type="button"
-        className="fp-reset min-h-12 w-full px-4 text-left font-semibold text-accent-text disabled:text-muted"
-        disabled={process.steps.length === 0}
-        onClick={() => setOpen(true)}
-      >
-        {t('process.addStep')}
-      </button>
-    );
-  }
-  const selectClass =
-    'fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2 text-ink';
-  return (
-    <div className="flex flex-col gap-2 px-4 py-3">
-      <span className="text-sm font-semibold">{t('process.addStep')}</span>
-      <label htmlFor={`${id}-after`} className="text-sm">
-        {t('process.addStep.after')}
-      </label>
-      <select
-        id={`${id}-after`}
-        className={selectClass}
-        value={anchor.id}
-        onChange={(event) => setAfter(event.target.value)}
-      >
-        {process.steps.map((s) => (
-          <option key={s.id} value={s.id}>
-            {stepName(s)}
-          </option>
-        ))}
-      </select>
-      <label htmlFor={`${id}-operation`} className="text-sm">
-        {t('process.addStep.operation')}
-      </label>
-      <select
-        id={`${id}-operation`}
-        className={selectClass}
-        value={operation}
-        onChange={(event) => setOperation(event.target.value)}
-      >
-        {STEP_OPERATIONS.map((code) => (
-          <option key={code} value={code}>
-            {stepName({ operation: code })}
-          </option>
-        ))}
-      </select>
-      <span className="text-sm text-muted">{t('process.addStep.hint')}</span>
-      <span className="flex gap-2">
-        <IonButton
-          onClick={() => {
-            if (onAdd(anchor.id, operation)) setOpen(false);
-          }}
-        >
-          {t('process.addStep.confirm')}
-        </IonButton>
-        <IonButton fill="outline" onClick={() => setOpen(false)}>
-          {t('process.addStep.cancel')}
-        </IonButton>
-      </span>
-    </div>
-  );
-};
-
-/**
- * How the recipe ends (bake-session.md, Outcome): recorded when the bake is finished with one
- * tap. Automatic follows the steps: cooked with a cooking step, else the raw dough.
- */
-const IntendedOutcome = ({
-  process,
-  disabled,
-  onChange,
-}: {
-  process: Process;
-  disabled: boolean;
-  onChange: (process: Process) => boolean;
-}) => {
-  const { t } = useMessages();
-  const text = useOutcomeText();
-  const id = useId();
-  const { intendedOutcome: chosen, ...rest } = process;
-  const automatic = intendedOutcome(rest);
-  return (
-    <div className="flex flex-col gap-2 px-4 py-3">
-      <label htmlFor={id} className="text-sm font-semibold">
-        {t('process.intendedOutcome')}
-      </label>
-      <select
-        id={id}
-        className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2 text-ink"
-        value={chosen === undefined ? '' : outcomeKey(chosen)}
-        disabled={disabled}
-        onChange={(event) => {
-          const outcome = outcomeFromKey(event.target.value);
-          onChange(outcome === undefined ? rest : { ...rest, intendedOutcome: outcome });
-        }}
-      >
-        <option value="">{t('outcome.auto', { outcome: text(automatic) })}</option>
-        {OUTCOME_CHOICES.map((choice) => (
-          <option key={outcomeKey(choice)} value={outcomeKey(choice)}>
-            {text(choice)}
-          </option>
-        ))}
-      </select>
-      <span className="text-sm text-muted">{t('process.intendedOutcomeHint')}</span>
     </div>
   );
 };

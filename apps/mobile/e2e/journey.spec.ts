@@ -4,6 +4,11 @@ import type { Page } from '@playwright/test';
 const enterEditing = async (page: Page) => {
   const english = (await page.locator('html').getAttribute('lang'))?.startsWith('en');
   const edit = page.getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true });
+  const reading = page.getByRole('button', {
+    name: english ? 'Read recipe' : 'Lire la recette',
+    exact: true,
+  });
+  await expect(edit.or(reading).filter({ visible: true })).toBeVisible();
   if (await edit.isVisible()) await edit.click();
 };
 
@@ -36,7 +41,7 @@ const headerStart = (page: Page) =>
 const startBake = async (page: Page) => {
   await headerStart(page).click();
   const alert = page.locator('ion-alert');
-  await expect(alert).toContainText('Démarrer la fournée maintenant ?');
+  await expect(alert).toContainText('Démarrer la préparation maintenant ?');
   await alert.getByRole('button', { name: 'Démarrer' }).click();
   await expect(page).toHaveURL(/\/bakes\//);
 };
@@ -100,8 +105,8 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   // One bake despite the double tap (the header's "En cours" button is not a history item).
   await expect(page.locator('ion-item:visible')).toHaveCount(1);
   await expect(page.locator('ion-item:visible')).toContainText('En cours');
-  await page.getByRole('button', { name: 'Processus' }).click();
-  await expect(page.getByRole('button', { name: 'Voir la fournée en cours' })).toBeVisible();
+  await page.getByRole('button', { name: 'Planification' }).click();
+  await expect(page.getByRole('button', { name: 'Voir la préparation en cours' })).toBeVisible();
 });
 
 test('dough ready is recorded on a running fermentation step without ending it', async ({
@@ -217,10 +222,10 @@ test('finishes as frozen dough before its planned bake, keeping the steps as rec
 
 test('a recipe states how it ends', async ({ page }) => {
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
   const ends = page.getByLabel('Fin prévue');
   await expect(ends.locator('option:checked')).toHaveText('Automatique : Cuit');
   await ends.selectOption({ label: 'Pâte crue, congelée' });
+  await expect(ends.locator('option').filter({ hasText: 'Automatique : Cuit' })).toHaveCount(1);
   await expect(unsaved(page).first()).toBeVisible();
   // Every accepted combination has its option, including a mixed result given away.
   await ends.selectOption({ label: 'Cuit et pâte crue, donnée' });
@@ -812,13 +817,13 @@ test('an info button opens a bottom sheet that explains the term and closes', as
 test('the planner can follow now; starting always starts now', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-03-02T08:00:00-05:00') });
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
+  await page.getByRole('button', { name: 'Planification' }).click();
   // "Now" is the default: no time to pick, the plan starts at the current time.
   await expect(page.getByRole('button', { name: 'Maintenant' })).toBeVisible();
   await expect(page.locator('input[type="datetime-local"]')).toBeHidden();
   await page.getByRole('button', { name: 'À une heure' }).click();
   await page.locator('input[type="datetime-local"]').fill('2026-03-05T14:00');
-  await expect(page.getByText(/La fournée démarre au moment du toucher/)).toBeVisible();
+  await expect(page.getByText(/La préparation démarre au moment du toucher/)).toBeVisible();
   await startBake(page);
   // The timers run from the tap (08:00), not from the planned 14:00 three days later.
   await expect(page.getByText(/Début prévu 0?8[:h]00/).first()).toBeVisible();
@@ -896,7 +901,7 @@ test('a customized flour keeps its properties and is offered by the flour picker
   ]);
 });
 
-/** Sets 3 folds 20 min apart on the bulk, from the Process tab of the open recipe. */
+/** Sets 3 folds 20 min apart on the bulk, from the authored Method in the Recipe tab. */
 const foldTheBulk = async (page: Page) => {
   await page.getByRole('button', { name: 'Modifier l’étape Pointage' }).click();
   const sheet = page.locator('ion-modal:visible');
@@ -910,23 +915,27 @@ const foldTheBulk = async (page: Page) => {
 
 test('a draft takes a new step and a step technique, shown under the step', async ({ page }) => {
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
-  await page.getByRole('button', { name: '+ Ajouter une étape' }).click();
+  await page
+    .getByTestId('recipe-method')
+    .filter({ visible: true })
+    .getByRole('button', { name: '+ Ajouter une étape' })
+    .click();
   await page.getByLabel('Après', { exact: true }).selectOption({ label: 'Pointage' });
   await page.getByLabel('Nouvelle étape', { exact: true }).selectOption({ label: 'Dégazage' });
   await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Modifier l’étape Dégazage' })).toBeVisible();
   await expect(unsaved(page).first()).toBeVisible();
   // The new step sits between the bulk and the shaping.
-  await expect(page.getByText('Après Dégazage')).toBeVisible();
+  await expect(page.getByText('Après Dégazage').filter({ visible: true })).toBeVisible();
 
   await foldTheBulk(page);
-  await expect(page.getByText('3 séries de rabats / 20 min')).toBeVisible();
+  await expect(
+    page.getByText('3 séries de rabats / 20 min').filter({ visible: true }),
+  ).toBeVisible();
 });
 
 test('bake mode shows the next fold set and records it in the log', async ({ page }) => {
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus' }).click();
   await foldTheBulk(page);
   await page.getByRole('button', { name: 'Enregistrer v2' }).click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();

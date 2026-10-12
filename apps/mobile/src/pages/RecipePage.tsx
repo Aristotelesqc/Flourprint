@@ -24,6 +24,7 @@ import {
   applyDraftFormulaEdit,
   checkRecipe,
   defaultVariant,
+  doughSteps,
   resolveFormula,
   type BakeCommandPayload,
   type BakeSummary,
@@ -43,6 +44,7 @@ import { buildFinalMixItems } from '../blocks/WeighingChecklist';
 import { FormulaSection } from '../blocks/FormulaSection';
 import { HistorySection } from '../blocks/HistorySection';
 import { ProcessSection } from '../blocks/ProcessSection';
+import { RecipeMethod } from '../blocks/RecipeMethod';
 import { ChangeReviewSheet } from '../blocks/ChangeReviewSheet';
 import { DraftActionBar } from '../blocks/DraftActionBar';
 import { usePanelScroll } from '../ui/PanelContext';
@@ -122,6 +124,8 @@ const RecipePageContent = () => {
   // Explicit consultation vs editing state initialized once after hydration (#67)
   const [isEditing, setIsEditing] = useState(false);
   const [hasEnteredEdit, setHasEnteredEdit] = useState(false);
+  const [targetedStepId, setTargetedStepId] = useState<string>();
+  const [returnToPlanning, setReturnToPlanning] = useState(false);
 
   // Shared temporary weighing checklist lifted to page level (#67)
   const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
@@ -248,6 +252,88 @@ const RecipePageContent = () => {
     draftId ?? recipeId,
     loading === 'ready',
   );
+
+  const handleClearTargetedStep = useCallback(() => {
+    setTargetedStepId(undefined);
+  }, []);
+
+  const editStepInRecipe = useCallback(
+    (stepId: string) => {
+      if (trashedAt !== undefined) return;
+      setIsEditing(true);
+      setHasEnteredEdit(true);
+      setReturnToPlanning(true);
+      setTargetedStepId(stepId);
+      switchTab('formula');
+    },
+    [switchTab, trashedAt],
+  );
+
+  const handleReturnToPlanning = useCallback(() => {
+    setReturnToPlanning(false);
+    setTargetedStepId(undefined);
+    switchTab('process');
+  }, [switchTab]);
+
+  const hydrationRef = useRef<HTMLDivElement>(null);
+  const hydrationFrameRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (hydrationFrameRef.current !== undefined) {
+        cancelAnimationFrame(hydrationFrameRef.current);
+      }
+    };
+  }, []);
+
+  const editHydration = useCallback(() => {
+    if (trashedAt !== undefined) return;
+    setIsEditing(true);
+    setHasEnteredEdit(true);
+    switchTab('formula');
+    void contentRef.current?.getScrollElement().then((el) => {
+      el.scrollTop = 0;
+    });
+    if (hydrationFrameRef.current !== undefined) {
+      cancelAnimationFrame(hydrationFrameRef.current);
+    }
+    hydrationFrameRef.current = requestAnimationFrame(() => {
+      hydrationFrameRef.current = requestAnimationFrame(() => {
+        const el = hydrationRef.current;
+        if (el && document.contains(el) && !el.closest('[hidden], .ion-page-hidden')) {
+          el.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+          el.focus({ preventScroll: true });
+        } else if (!el) {
+          titleRef.current?.focus({ preventScroll: true });
+        }
+      });
+    });
+  }, [switchTab, trashedAt]);
+
+  const fermentationRef = useRef<HTMLDivElement>(null);
+
+  const handleEditFermentation = useCallback(() => {
+    setIsEditing(true);
+    setHasEnteredEdit(true);
+    switchTab('formula');
+    requestAnimationFrame(() => {
+      if (fermentationRef.current) {
+        fermentationRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+        fermentationRef.current.focus({ preventScroll: true });
+      }
+    });
+  }, [switchTab]);
+
+  const fermentationStepIds = useMemo(() => {
+    if (!draft) return new Set<string>();
+    const ids = new Set<string>();
+    for (const s of doughSteps(draft.process) ?? []) ids.add(s.id);
+    for (const c of draft.formula.components) {
+      if (c.kind === 'preferment' && c.flourPct > 0) ids.add(c.id);
+    }
+    return ids;
+  }, [draft]);
+
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
   const issues = useMemo(() => (draft ? checkRecipe(draft.formula, draft.process) : []), [draft]);
   useEffect(() => {
@@ -591,6 +677,7 @@ const RecipePageContent = () => {
   const enterEditing = () => {
     setIsEditing(true);
     setHasEnteredEdit(true);
+    switchTab('formula');
     requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
   };
 
@@ -606,6 +693,7 @@ const RecipePageContent = () => {
       return;
     }
     setIsEditing(false);
+    switchTab('formula');
     requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
   };
 
@@ -780,7 +868,16 @@ const RecipePageContent = () => {
               process={draft.process}
               weighed={weighed}
               onToggleWeighed={toggleWeighed}
+              {...(trashedAt === undefined ? { onEditHydration: editHydration } : {})}
             />
+            <div className="mt-5">
+              <RecipeMethod
+                process={draft.process}
+                preparationIds={draft.formula.components.map((c) => c.id)}
+                editable={false}
+                fermentationStepIds={fermentationStepIds}
+              />
+            </div>
           </div>
         )}
         {hasEnteredEdit && (
@@ -800,22 +897,35 @@ const RecipePageContent = () => {
               onProcess={changeProcess}
               weighed={weighed}
               onToggleWeighed={toggleWeighed}
+              fermentationRef={fermentationRef}
+              hydrationRef={hydrationRef}
             />
+            <div className="mt-5">
+              <RecipeMethod
+                process={draft.process}
+                onDurationChange={changeDuration}
+                onProcessChange={changeProcess}
+                preparationIds={draft.formula.components.map((c) => c.id)}
+                editable={true}
+                {...(targetedStepId !== undefined ? { targetedStepId } : {})}
+                onClearTargetedStep={handleClearTargetedStep}
+                {...(returnToPlanning ? { onReturnToPlanning: handleReturnToPlanning } : {})}
+                fermentationStepIds={fermentationStepIds}
+                onEditFermentation={handleEditFermentation}
+              />
+            </div>
           </div>
         )}
         <div hidden={tab !== 'process'}>
           <ProcessSection
             process={draft.process}
-            onDurationChange={changeDuration}
-            onProcessChange={changeProcess}
-            preparationIds={draft.formula.components.map((c) => c.id)}
             canStart={
               base !== undefined && trashedAt === undefined && !dirty && !hasInvalid && !writes.busy
             }
             onStart={confirmStart}
             {...(active ? { activeBakeId: active.bakeId } : {})}
             onOpenBake={openBake}
-            editable={isEditing}
+            {...(trashedAt === undefined ? { onEditStepInRecipe: editStepInRecipe } : {})}
           />
         </div>
 

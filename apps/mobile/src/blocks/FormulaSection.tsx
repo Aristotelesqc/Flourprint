@@ -41,6 +41,8 @@ interface Props {
   /** Shared weighing checklist state lifted to page (#67). */
   readonly weighed: ReadonlyMap<string, number>;
   readonly onToggleWeighed: (key: string, grams: number) => void;
+  readonly fermentationRef?: React.RefObject<HTMLDivElement | null>;
+  readonly hydrationRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
@@ -59,6 +61,8 @@ export const FormulaSection = ({
   onProcess,
   weighed,
   onToggleWeighed,
+  fermentationRef,
+  hydrationRef,
 }: Props) => {
   const { t, grams, pct, name, componentName } = useMessages();
   const [explaining, setExplaining] = useState(false);
@@ -136,6 +140,7 @@ export const FormulaSection = ({
         ) : (
           <>
             <Hydration
+              ref={hydrationRef}
               formula={formula}
               resolved={resolved}
               onEdit={onEdit}
@@ -337,13 +342,21 @@ export const FormulaSection = ({
         <AddPreparation formula={formula} process={process} onStructure={onStructure} />
       </section>
 
-      <FermentationCard
-        formula={formula}
-        process={process}
-        now={now}
-        onEdit={onEdit}
-        onProcess={onProcess}
-      />
+      <div
+        ref={fermentationRef}
+        id="fermentation-settings"
+        data-testid="fermentation-card"
+        tabIndex={-1}
+        className="outline-none"
+      >
+        <FermentationCard
+          formula={formula}
+          process={process}
+          now={now}
+          onEdit={onEdit}
+          onProcess={onProcess}
+        />
+      </div>
 
       {resolved && (
         <WeighingChecklist
