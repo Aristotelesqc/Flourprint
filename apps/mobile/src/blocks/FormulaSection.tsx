@@ -20,7 +20,6 @@ import {
   AddFlour,
   AddIngredient,
   AddPreparation,
-  ChangesSummary,
   PreparationFields,
   Hydration,
   type StructureEdit,
@@ -30,8 +29,6 @@ interface Props {
   readonly formula: Formula;
   /** Absent when the draft's formula cannot be resolved yet (drafts.md): grams show as "—". */
   readonly resolved?: ResolvedFormula;
-  /** The saved revision's formula, to show what the draft changes. */
-  readonly base: Formula;
   readonly process: Process;
   readonly now: string;
   /** Returns false when the engine refused the edit; the page shows the reason. */
@@ -51,7 +48,6 @@ const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
 export const FormulaSection = ({
   formula,
   resolved,
-  base,
   process,
   now,
   onEdit,
@@ -96,7 +92,6 @@ export const FormulaSection = ({
 
   return (
     <div className="flex flex-col gap-5 pb-6">
-      <ChangesSummary base={base} formula={formula} />
       <Card>
         <div className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-1.5 font-bold">
