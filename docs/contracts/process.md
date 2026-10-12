@@ -26,8 +26,12 @@ A process may also name the readiness profile of its dough (`fermentation.md`):
 interface Process {
   steps: ProcessStep[];
   readiness?: { id: string; version: string }; // absent = the default profile
+  intendedOutcome?: PreparationOutcome; // absent = derived (bake-session.md, Outcome)
 }
 ```
+
+`intendedOutcome` is how the recipe ends: cooked, or a raw dough frozen, refrigerated… It is the
+default outcome when a session finishes (bake-session.md); an invalid one is `InvalidProcess`.
 
 `AcceptedSuggestion` is defined in `fermentation.md`. For a step, `appliedValue` is
 `plannedDurationS` in seconds. Any other edit of `plannedDurationS` removes `accepted`.
@@ -97,7 +101,16 @@ interface StepTechnique {
 
 - Operation codes stay open. Codes the app names: `autolyse` (flour and water rest), `fermentolyse`
   (flour, water and leavening, salt later), `mix`, `fold`, `bulk`, `rest`, `degas`, `divide`,
-  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `cool`, and the preparation steps.
+  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `boil`, `steam`, `fry`, `panCook`, `grill`, `cool`, and the preparation steps.
+- **Cooking operations**: `bake` (oven, whatever its mode), `boil` (water: bagels, pretzels,
+  poached doughs), `steam`, `fry` (in oil), `panCook` (skillet, griddle, plancha) and `grill` (on a
+  grate over flame or coals: barbecue, gas grill). They are the cooking stages of a session (bake-session.md) and the heat
+  steps that end the fermentation (fermentation.md). `preheat` is not one (it heats equipment,
+  not the dough), nor is `proof` done in an oven's Proof mode: the operation says what happens to
+  the dough, the place or appliance mode does not (#28). `steam` is cooking in steam (steamed
+  buns); an oven bake with steam stays `bake`, its steam being a setting (#28). Likewise the oven's
+  broil mode (Gril in French) is a setting of `bake`, distinct from the `grill` operation; the
+  interface names them so they cannot be confused.
 - `method` codes the app names: on `mix`, `hand`, `slapAndFold`, `rubaud`, `standMixer`, `spiral`,
   `foodProcessor`, `noKnead`; on `fold` and in `folds.style`, `stretchAndFold`, `coilFold`,
   `lamination`. Any other code is kept and shown as given.
