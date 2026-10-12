@@ -185,6 +185,30 @@ jobs:
             --branch "$BRANCH" --commit-hash "$HEAD_SHA" --commit-message "$FLOURPRINT_BUILD" --commit-dirty=true
           echo "Web preview ${FLOURPRINT_BUILD}: ${URL}" >> "$GITHUB_STEP_SUMMARY"
           echo "PREVIEW_URL=${URL}" >> "$GITHUB_ENV"
+      - name: Dev address follows main when dev has nothing newer
+        # The dev APK loads the dev address (ADR 0013). When the dev branch is gone, or main
+        # already holds all of it (just after a release), main is deployed there too, built as the
+        # dev channel so the dev APK keeps its "load the latest dev build" action (ADR 0016).
+        if: >-
+          github.event_name == 'push' && github.ref_name == 'main' &&
+          env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          # ls-remote exits 2 when dev does not exist; any other failure stops the step.
+          status=0
+          git ls-remote --exit-code --heads origin dev >/dev/null || status=$?
+          if [ "$status" = 0 ]; then
+            git fetch --quiet --unshallow origin main +refs/heads/dev:refs/remotes/origin/dev
+            if ! git merge-base --is-ancestor origin/dev HEAD; then
+              echo "dev has commits main does not: the dev address keeps the dev branch." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          elif [ "$status" != 2 ]; then
+            exit "$status"
+          fi
+          FLOURPRINT_CHANNEL=dev pnpm build:mobile
+          npx --yes wrangler@4 pages deploy apps/mobile/dist --project-name "$PAGES_PROJECT" \
+            --branch dev --commit-hash "$GITHUB_SHA" --commit-message "$FLOURPRINT_BUILD (main)" --commit-dirty=true
+          echo "Dev address now serves main (${FLOURPRINT_BUILD})." >> "$GITHUB_STEP_SUMMARY"
       - name: Link the preview on the pull request
         if: github.event.pull_request.number && env.PREVIEW_URL != ''
         env:
@@ -194,7 +218,7 @@ jobs:
         run: |
           # One comment per pull request, edited on every push: the address never changes,
           # the line under it says which commit it serves.
-          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_BUILD}\` (commit ${HEAD_SHA}). Updated on every push. The dev channel (dev APK) follows https://dev.${PAGES_PROJECT}.pages.dev; main is https://${PAGES_PROJECT}.pages.dev."
+          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_LABEL}\` (\`${FLOURPRINT_BUILD}\`, commit ${HEAD_SHA}). Updated on every push. The dev channel (dev APK) follows https://dev.${PAGES_PROJECT}.pages.dev; main is https://${PAGES_PROJECT}.pages.dev."
           gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --edit-last --body "$BODY" \
             || gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$BODY"
       - name: Preview not deployed

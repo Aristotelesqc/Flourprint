@@ -187,8 +187,13 @@ test('speaks English on an English device @en', async ({ page }) => {
 test('opens on the recipes; diagnostics sit behind the advanced menu', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  // ADR 0016: the app bar names the running build (`v0.2.0-local` in this test build).
+  await expect(page.getByTestId('app-build-label').first()).toHaveText(/^v\d+\.\d+\.\d+(-|$)/);
   await expect(page.getByText('Vérifications de l’appareil')).toBeHidden();
   await page.getByLabel('Avancé').first().click();
+  // A non-release build offers to load the latest deployment; this one is already it.
+  await page.getByText('Charger la dernière version dev').click();
+  await expect(page.getByText(/est déjà la dernière version/)).toBeVisible();
   await page.getByText('Vérifications de l’appareil').click();
   await expect(page).toHaveURL(/\/device-checks$/);
 });

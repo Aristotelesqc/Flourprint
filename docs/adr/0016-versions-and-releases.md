@@ -29,12 +29,25 @@ major pull request (ADR 0013).
 
 `scripts/build-id.mjs` derives, for every CI job, from the root version, the branch and the run:
 
-| Build                     | Version name (shown in Advanced and the feedback export) |
-| ------------------------- | -------------------------------------------------------- |
-| `main`                    | `0.2.0`                                                  |
-| `dev`                     | `0.2.0-dev.<run>+<sha7>`                                 |
-| pull request `<n>`        | `0.2.0-pr.<n>.<run>+<sha7>`                              |
-| local (no CI environment) | `0.2.0-local`                                            |
+| Build                     | Version name (Advanced, feedback export) | Label (app bar)      |
+| ------------------------- | ---------------------------------------- | -------------------- |
+| `main`                    | `0.2.0`                                  | `v0.2.0`             |
+| `dev`                     | `0.2.0-dev.<run>+<sha7>`                 | `v0.2.0-<code-name>` |
+| pull request `<n>`        | `0.2.0-pr.<n>.<run>+<sha7>`              | `v0.2.0-<code-name>` |
+| local (no CI environment) | `0.2.0-local`                            | `v0.2.0-local`       |
+
+The app bar shows the label under the app name, so the baker sees which build runs, on the
+release APK as on the dev APK and the web previews (explicit owner request of 2026-10-12). The
+**code name** (`crispy-pretzel`, `weird-puffin`…) tells apart the thin slices of commits
+between two versions. It is an adjective and a noun picked from the commit hash
+(`scripts/build-names.mjs`), never drawn at random: the dev APK and the dev site built from one
+commit show the same name. The version name keeps the run and the short hash for exact tracing.
+
+Every build publishes `build.json` (build, label, channel) next to the app. Builds other than a
+release offer **Load the latest dev build** in Advanced (owner request of 2026-10-12): it reads
+`build.json` without cache and reloads the app when a newer build is deployed, for a dev APK whose
+WebView still shows an older one. Release builds never show it; they change only by installing a
+new APK.
 
 Android `versionCode` = `MAJOR × 1 000 000 + MINOR × 1 000 + PATCH`, so a newer release always
 installs over an older one. Dev builds have their own application id (ADR 0013) and never

@@ -33,6 +33,9 @@ on its plan. The offline APK of Dogfood Alpha (step 7) must stay self-contained.
   pull request with every minor pull request merged into it. Restarting the app picks up the latest
   deploy. A pull request not yet merged into `dev` is tried at its own address in a browser. It
   installs beside the normal APK and keeps its own data.
+- When the `dev` branch is gone, or `main` already holds all of it (right after a release), a push
+  to `main` also deploys `main` to the `dev` address, built as the dev channel: the dev APK then
+  follows `main` until `dev` has something newer (owner request of 2026-10-12).
 - The normal APK is unchanged: bundled, offline, the one for real bakes and step 7.
 - A native change (a plugin, a permission, Capacitor itself) still needs the dev APK reinstalled.
 
