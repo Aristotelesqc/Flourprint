@@ -185,6 +185,8 @@ type Material =
 - A step's `profile` lets the Preparation show both names ("Convection · Convection Bake"). A mode
   the profile does not map stays the recipe's requirement until the baker picks an alternative;
   nothing is substituted silently, and a profile without `steam` never gains it.
+- A `documented` mapping names its closest Flourprint mode and a `source`; an `approximate` one
+  names its mode; an `unknown` one names none.
 - Versions, archiving and customizing a built-in follow flours.md: editing writes a new version;
   recipes and Preparations keep the version they reference.
 
@@ -220,6 +222,8 @@ There is no built-in appliance: the Flourprint modes are the default. The equipm
   a step not completed (another setpoint, the lid off sooner, another vessel). It is recorded as
   `OverrideApplied { stepId, field: 'equipment', value }`; the snapshot keeps the plan. An entry
   newly referenced by the override is copied into the event.
+  `InsertStepAfter` likewise copies the entries its new step references that the session does
+  not hold yet. The equipment override carries no `unit`: its value is a whole `StepEquipment`.
 - A change in the middle of a running stage that the baker wants dated (the lid removed after
   20 min) is a phase: complete the step and insert the next one (`InsertStepAfter`), whose
   `equipment` says what changed.
