@@ -25,10 +25,7 @@ const mapSteps = (
   map: (step: ProcessStep) => ProcessStep,
 ): Process => ({ ...process, steps: (process?.steps ?? []).map(map) });
 
-const withCopies = (
-  state: BakeState,
-  copies: readonly EquipmentEntry[] | undefined,
-): BakeState =>
+const withCopies = (state: BakeState, copies: readonly EquipmentEntry[] | undefined): BakeState =>
   copies === undefined || copies.length === 0
     ? state
     : { ...state, equipment: [...(state.equipment ?? []), ...copies] };

@@ -86,7 +86,8 @@ export const stepEquipmentProblem = (
     if (bad) return bad;
   }
   if (e.mode !== undefined) {
-    if (!OVEN_MODES.includes(e.mode as never)) return problem(`${path}.mode`, 'is not a known mode');
+    if (!OVEN_MODES.includes(e.mode as never))
+      return problem(`${path}.mode`, 'is not a known mode');
     if (e.appliance !== 'oven') return problem(`${path}.mode`, 'needs the appliance oven');
   }
   if (e.nativeMode !== undefined && !isText(e.nativeMode)) {
@@ -145,7 +146,11 @@ export const stepEquipmentProblem = (
   if (e.preheated !== undefined) {
     const preheated = e.preheated;
     if (!isObject(preheated)) return problem(`${path}.preheated`, 'must be an object');
-    const bad = onlyKeys(preheated, new Set(['appliance', 'support', 'vessel']), `${path}.preheated`);
+    const bad = onlyKeys(
+      preheated,
+      new Set(['appliance', 'support', 'vessel']),
+      `${path}.preheated`,
+    );
     if (bad) return bad;
     for (const key of ['appliance', 'support', 'vessel']) {
       const value = preheated[key];
@@ -160,7 +165,10 @@ export const stepEquipmentProblem = (
     if (!isObject(load)) return problem(`${path}.load`, 'must be an object');
     const bad = onlyKeys(load, new Set(['pieces', 'massG']), `${path}.load`);
     if (bad) return bad;
-    if (load.pieces !== undefined && !(Number.isInteger(load.pieces) && (load.pieces as number) >= 1)) {
+    if (
+      load.pieces !== undefined &&
+      !(Number.isInteger(load.pieces) && (load.pieces as number) >= 1)
+    ) {
       return problem(`${path}.load.pieces`, 'must be an integer ≥ 1');
     }
     if (load.massG !== undefined && !(isFinite(load.massG) && load.massG > 0)) {

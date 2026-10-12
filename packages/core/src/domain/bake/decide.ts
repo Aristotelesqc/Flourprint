@@ -559,7 +559,11 @@ export const decide = (
       steps.splice(steps.findIndex((s) => s.id === command.after) + 1, 0, step);
       const valid = validateRecipe(state.formula, { steps });
       if (!valid.ok) return valid;
-      const copies = newEquipmentCopies(usesOf(step.equipment), state.equipment ?? [], command.equipment);
+      const copies = newEquipmentCopies(
+        usesOf(step.equipment),
+        state.equipment ?? [],
+        command.equipment,
+      );
       if (!copies.ok) return copies;
       return ok([
         {

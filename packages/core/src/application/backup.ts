@@ -332,7 +332,9 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
         if (copy.builtIn) continue;
         const entry = equipment.find((e) => e.id === copy.id && e.version === copy.version);
         if (!entry || canonicalJson(entry) !== canonicalJson(copy)) {
-          return err(invalid(`bake ${bakeId} refers to an equipment entry missing from the backup`));
+          return err(
+            invalid(`bake ${bakeId} refers to an equipment entry missing from the backup`),
+          );
         }
       }
       bakes.push({

@@ -1,9 +1,5 @@
 export * from './types.js';
-export {
-  BUILT_IN_EQUIPMENT,
-  BUILT_IN_EQUIPMENT_VERSION,
-  builtInEquipment,
-} from './builtin.js';
+export { BUILT_IN_EQUIPMENT, BUILT_IN_EQUIPMENT_VERSION, builtInEquipment } from './builtin.js';
 export {
   customizeEquipment,
   newEquipmentEntry,

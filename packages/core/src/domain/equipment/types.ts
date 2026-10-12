@@ -4,13 +4,7 @@ import type { PropertyValue, SourceRef } from '../values.js';
 /** Equipment and cooking settings (docs/contracts/equipment.md). Recorded data, never predicted. */
 
 export type ApplianceKind =
-  | 'oven'
-  | 'stovetop'
-  | 'grill'
-  | 'steamer'
-  | 'fryer'
-  | 'proofer'
-  | 'other';
+  'oven' | 'stovetop' | 'grill' | 'steamer' | 'fryer' | 'proofer' | 'other';
 export const APPLIANCE_KINDS: readonly ApplianceKind[] = [
   'oven',
   'stovetop',
@@ -149,13 +143,7 @@ export const MATERIALS: readonly Material[] = [
 ];
 
 export type Coating =
-  | 'none'
-  | 'nonStick'
-  | 'silicone'
-  | 'enamel'
-  | 'seasoning'
-  | 'other'
-  | 'unknown';
+  'none' | 'nonStick' | 'silicone' | 'enamel' | 'seasoning' | 'other' | 'unknown';
 export const COATINGS: readonly Coating[] = [
   'none',
   'nonStick',

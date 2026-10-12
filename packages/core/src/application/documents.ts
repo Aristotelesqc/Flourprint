@@ -225,7 +225,8 @@ export const stepEquipment: Check = (v, w) =>
           item: equipmentRef,
           cover: oneOf('open', 'covered', 'closed', 'unknown'),
         }),
-      preheated: (p, pw) => fields(p, pw, {}, { appliance: preheat, support: preheat, vessel: preheat }),
+      preheated: (p, pw) =>
+        fields(p, pw, {}, { appliance: preheat, support: preheat, vessel: preheat }),
       rack: string,
       load: (l, lw) => fields(l, lw, {}, { pieces: number, massG: number }),
     },

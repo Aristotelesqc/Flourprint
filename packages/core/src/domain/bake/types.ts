@@ -66,8 +66,7 @@ export type NumericStepAdjustment =
 
 /** What AdjustStep may change: a duration, a temperature, or the equipment used (equipment.md). */
 export type StepAdjustment =
-  | NumericStepAdjustment
-  | { readonly field: 'equipment'; readonly value: StepEquipment };
+  NumericStepAdjustment | { readonly field: 'equipment'; readonly value: StepEquipment };
 
 // Commands
 
@@ -173,7 +172,11 @@ export type BakeEventPayload =
   | {
       /** The settings actually used on a step; the snapshot keeps the plan (equipment.md). */
       readonly type: 'OverrideApplied';
-      readonly target: { readonly kind: 'step'; readonly stepId: StepId; readonly field: 'equipment' };
+      readonly target: {
+        readonly kind: 'step';
+        readonly stepId: StepId;
+        readonly field: 'equipment';
+      };
       /** The planned settings; null when the step had none. */
       readonly baseline: StepEquipment | null;
       readonly effective: StepEquipment;

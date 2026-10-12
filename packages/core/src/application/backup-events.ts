@@ -180,9 +180,7 @@ const isEntryList = (value: unknown): value is EquipmentEntry[] =>
 
 const stepUses = (steps: readonly Pick<ProcessStep, 'equipment'>[]): EquipmentUse[] =>
   steps.flatMap((step, i) =>
-    step.equipment === undefined
-      ? []
-      : equipmentUses(step.equipment, `steps[${i}].equipment`),
+    step.equipment === undefined ? [] : equipmentUses(step.equipment, `steps[${i}].equipment`),
   );
 
 /** Snapshot copies: valid, and every reference of the process resolves to the right kind. */
