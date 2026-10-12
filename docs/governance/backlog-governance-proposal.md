@@ -1,5 +1,11 @@
 # Backlog governance proposal
 
+> **Owner decision of 2026-10-12.** No Projects board for now: status lives in `status:` labels on
+> the issues and in a status table in #30, readable and writable by every agent without extra
+> tokens (`AGENTS.md`, Development order). A Projects board can later be added as a view over those
+> labels. The rest of this proposal (evidence before Done, owner-only priorities, report-only
+> reconciliation) stands.
+
 **Status:** Proposed, non-normative until owner approval.  
 **Parent:** [#30](https://github.com/Aristotelesqc/Flourprint/issues/30)  
 **Audit:** [2026-10-11 independent review](../audits/2026-10-11-independent-review.md)
