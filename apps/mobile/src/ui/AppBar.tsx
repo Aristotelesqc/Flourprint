@@ -1,19 +1,45 @@
 import { IonButton, IonButtons, IonHeader, IonToolbar } from '@ionic/react';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { useMessages } from '../i18n/use-messages';
 import { SimulationBanner } from './SimulationBanner';
 
-/** Placeholder mark until the logo exists: a rounded square with an ear of wheat. */
-export const AppMark = () => (
-  <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
-    <rect width="32" height="32" rx="8" fill="var(--color-accent)" />
-    <g fill="none" stroke="var(--color-on-accent)" strokeWidth="2" strokeLinecap="round">
-      <path d="M16 26V9" />
-      <path d="M16 13c-2.5-.5-4-2.3-4-4.5 2.5.3 4 1.9 4 4.5zM16 13c2.5-.5 4-2.3 4-4.5-2.5.3-4 1.9-4 4.5z" />
-      <path d="M16 19c-2.5-.5-4-2.3-4-4.5 2.5.3 4 1.9 4 4.5zM16 19c2.5-.5 4-2.3 4-4.5-2.5.3-4 1.9-4 4.5z" />
-    </g>
-  </svg>
-);
+/**
+ * The Flourprint logo (resources/mark.svg): a loaf with three scores under a dimension line, on
+ * the launcher icon's visible area. Gradient ids are per instance: Ionic keeps hidden pages, and
+ * their app bars, in the DOM.
+ */
+export const AppMark = () => {
+  // useId may contain characters a url(#…) reference does not take.
+  const id = `mark${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const cream = '#fbefd9';
+  return (
+    <svg width="30" height="30" viewBox="18 18 72 72" aria-hidden="true">
+      <defs>
+        <linearGradient id={`${id}bg`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#4a2614" />
+          <stop offset="1" stopColor="#7d4626" />
+        </linearGradient>
+        <linearGradient id={`${id}loaf`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#e8954e" />
+          <stop offset="1" stopColor="#b4561c" />
+        </linearGradient>
+      </defs>
+      <rect x="18" y="18" width="72" height="72" rx="18" fill={`url(#${id}bg)`} />
+      <g stroke={cream} strokeLinecap="round" strokeWidth="3.2" fill="none">
+        <path d="M34 30V40M74 30V40M39 35H69" />
+      </g>
+      <path d="M35.5 35 41.5 31.2V38.8ZM72.5 35 66.5 31.2V38.8Z" fill={cream} />
+      <path
+        d="M30.57 71.33C30.57 54.28 42.28 45.77 54 45.77S77.43 54.28 77.43 71.33C77.43 79.84 65.72 83.04 54 83.04S30.57 79.84 30.57 71.33Z"
+        fill={`url(#${id}loaf)`}
+      />
+      <path
+        d="M38.86 70.28Q45.29 66.85 46.78 59.72 40.35 63.15 38.86 70.28ZM47.93 73.09Q57.66 67.75 60.07 56.91 50.34 62.25 47.93 73.09ZM61.22 70.28Q67.65 66.85 69.14 59.72 62.71 63.15 61.22 70.28Z"
+        fill={cream}
+      />
+    </svg>
+  );
+};
 
 /** The app's top bar: mark and name on the left, the screen's actions on the right. */
 export const AppBar = ({ children }: { children?: ReactNode }) => {

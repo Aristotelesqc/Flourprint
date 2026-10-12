@@ -1,3 +1,5 @@
+<img src="apps/mobile/public/favicon.svg" alt="" width="96" height="96" />
+
 # Flourprint
 
 Local-first, mobile-first engine for formulating, planning and logging bread bakes. The engine is
