@@ -3,6 +3,11 @@
 **Status:** Investigation request, not an ADR or an instruction to stop ongoing #35 implementation.  
 **Related:** [#35](https://github.com/Aristotelesqc/Flourprint/issues/35), [independent audit](../audits/2026-10-11-independent-review.md)
 
+**Exploration update:** The owner authorized the comparison. See the
+[four AGY reviewer digests, Codex arbitration and measured current baseline](2026-10-12-material3-exploration.md).
+The first stable-editing slice has landed in `dev`; the bounded comparative prototype remains
+to implement. No library selection or Ionic replacement is approved by these reports alone.
+
 ## Decision to make
 
 Which mobile presentation/navigation approach best implements Flourprint's own warm identity, modern Android Material 3 conventions, precise recipe editing and offline execution, without unnecessary long-term dependence on an Ionic-specific widget/navigation layer?
