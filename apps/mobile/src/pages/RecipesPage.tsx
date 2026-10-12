@@ -52,10 +52,17 @@ export const RecipesPage = () => {
   const [creating, setCreating] = useState(false);
   const [cards, setCards] = useState<readonly Card[]>();
   const [running, setRunning] = useState<readonly BakeState[]>([]);
-  // Every recipe, family variants included: a running bake may use a variant not shown as a card.
+  // Every recipe, trashed ones and family variants included: a running bake may use a variant not
+  // shown as a card, or a recipe put in the trash since.
   const [allRecipes, setAllRecipes] = useState<readonly Recipe[]>([]);
   const [now, setNow] = useState(services.clock.now());
   const [readFailed, setReadFailed] = useState(false);
+  // Drafts of a version read as edits of their recipe while it exists, in the trash or not; once
+  // it is deleted they stand alone and can be saved as a new recipe (persistence.md).
+  const editsOf = ({ origin }: Draft): string | undefined =>
+    origin.kind === 'revision' && allRecipes.some((recipe) => recipe.id === origin.recipeId)
+      ? origin.recipeId
+      : undefined;
   // Running bakes this version cannot read: said, never hidden.
   const [unreadable, setUnreadable] = useState(0);
 
@@ -64,7 +71,8 @@ export const RecipesPage = () => {
     const summaries = await services.bakes.listBakes();
     const all = await services.recipes.listRecipes();
     const families = await services.recipes.listFamilies();
-    setAllRecipes(all);
+    // The trash too: a running bake may use a recipe put there since.
+    setAllRecipes([...all, ...(await services.recipes.listTrash())]);
     const shown = new Set(families.map((f) => defaultVariant(f, all)?.id));
     const recipes = all.filter((r) => r.familyId === undefined || shown.has(r.id));
     const variants = (recipe: Recipe) =>
@@ -188,8 +196,8 @@ export const RecipesPage = () => {
                 <IonRouterLink
                   key={draft.id}
                   routerLink={
-                    draft.origin.kind === 'revision'
-                      ? `/recipes/${draft.origin.recipeId}`
+                    editsOf(draft) !== undefined
+                      ? `/recipes/${editsOf(draft)}`
                       : `/drafts/${draft.id}`
                   }
                   className="text-ink"
@@ -197,7 +205,7 @@ export const RecipesPage = () => {
                   <div className="flex items-baseline justify-between gap-2 rounded-2xl border border-dashed border-line bg-surface px-4 py-3">
                     <span className="font-semibold">{draft.name}</span>
                     <span className="shrink-0 text-[13px] text-muted">
-                      {draft.origin.kind === 'revision'
+                      {editsOf(draft) !== undefined
                         ? t('recipes.draftEdits')
                         : formatRelative(draft.updatedAt, services.realClock.now(), locale)}
                     </span>
@@ -248,7 +256,7 @@ const RunningBake = ({
       <div className="flex items-center gap-3.5 rounded-2xl bg-accent px-4 py-3.5 text-on-accent">
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-semibold opacity-85">
-            {t('recipes.activeBake', { recipe: recipe?.name ?? '' })}
+            {t('recipes.activeBake', { recipe: recipe?.name ?? t('recipe.deleted') })}
           </div>
           <div className="text-[19px] font-bold">{detail}</div>
         </div>

@@ -31,12 +31,18 @@ export type SaveDraftError =
 /**
  * Saves a draft as a recipe (`blank`, `template`: a new recipe with `newRecipeId`) or as a version
  * of its recipe (`revision`), and deletes the draft in the same transaction (drafts.md). Refused
- * while the recipe has a blocking issue.
+ * while the recipe has a blocking issue. A draft of a version whose recipe was deleted is saved
+ * as a new recipe with `asNewRecipe` (persistence.md, Recipe trash); as a version it is refused
+ * (`NotFound`).
  */
 export const saveDraft = async (
   repository: RecipeRepository,
   draft: Draft,
-  options: { readonly newRecipeId: string; readonly createdAt: Instant },
+  options: {
+    readonly newRecipeId: string;
+    readonly createdAt: Instant;
+    readonly asNewRecipe?: boolean;
+  },
 ): Promise<Result<Revision, SaveDraftError>> => {
   const blocking = blockingIssues(checkRecipe(draft.formula, draft.process));
   if (blocking.length > 0) {
@@ -47,7 +53,7 @@ export const saveDraft = async (
     );
   }
   const target =
-    draft.origin.kind === 'revision'
+    draft.origin.kind === 'revision' && options.asNewRecipe !== true
       ? { recipeId: draft.origin.recipeId, expectedHead: draft.origin.baseVersion }
       : { recipeId: options.newRecipeId, expectedHead: 0 };
   return saveRevision(repository, {

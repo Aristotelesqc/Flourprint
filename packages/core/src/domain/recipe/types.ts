@@ -33,9 +33,7 @@ export const defaultVariant = (
   family: RecipeFamily,
   recipes: readonly Recipe[],
 ): Recipe | undefined => {
-  const members = recipes.filter(
-    (r) => r.familyId === family.id && r.trashedAt === undefined,
-  );
+  const members = recipes.filter((r) => r.familyId === family.id && r.trashedAt === undefined);
   const pinned = members.find((r) => r.id === family.pinnedRecipeId);
   if (pinned) return pinned;
   return [...members].sort(

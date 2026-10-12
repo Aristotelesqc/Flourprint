@@ -1,5 +1,5 @@
 import type { Formula, Process } from '@flourprint/core/domain';
-import poolishTangzhong from '../../../../examples/poolish-tangzhong.formula.json';
+import poolishTangzhong from '../../../../examples/poolish-tangzhong.formula.json' with { type: 'json' };
 
 const H = 3600;
 

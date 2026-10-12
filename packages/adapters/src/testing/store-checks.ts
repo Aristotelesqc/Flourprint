@@ -617,7 +617,11 @@ export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
         ],
         families: [],
       });
-      equal((await repository.listTrash()).map((r) => r.id), ['gone'], 'trash');
+      equal(
+        (await repository.listTrash()).map((r) => r.id),
+        ['gone'],
+        'trash',
+      );
       equal(await repository.listRecipes(), [], 'list');
     },
   },

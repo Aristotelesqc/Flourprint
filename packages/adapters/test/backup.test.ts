@@ -357,9 +357,7 @@ describe.each([
     const exported = await exportBackup(source, at('12:00'));
     if (!exported.ok) throw new Error('export failed');
     const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
-    expect(backup.recipes.find((r: Loose) => r.id === 'lean-cold').trashedAt).toBe(
-      at('09:30'),
-    );
+    expect(backup.recipes.find((r: Loose) => r.id === 'lean-cold').trashedAt).toBe(at('09:30'));
     expect(backup.recipes.find((r: Loose) => r.id === 'lean').trashedAt).toBeUndefined();
     const target = await makeTarget();
     expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });

@@ -184,9 +184,10 @@ describe('sqlite-node durability', () => {
     });
     expect((await repository.listRecipes()).map((r) => r.id)).toEqual(['r']);
     expect(await repository.listTrash()).toEqual([]);
-    expect(
-      await repository.trashRecipe('r', '2026-10-08T08:00:00.000Z' as Instant),
-    ).toEqual({ ok: true, value: undefined });
+    expect(await repository.trashRecipe('r', '2026-10-08T08:00:00.000Z' as Instant)).toEqual({
+      ok: true,
+      value: undefined,
+    });
     expect((await repository.listTrash()).map((r) => r.id)).toEqual(['r']);
     expect(
       v6.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),

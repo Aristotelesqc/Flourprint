@@ -55,7 +55,7 @@ export const BakePage = () => {
   const outcomeText = useOutcomeText();
   const pickOutcome = useOutcomePicker();
   const [state, setState] = useState<BakeState>();
-  const [recipeName, setRecipeName] = useState<string>();
+  const [recipeName, setRecipeName] = useState<string | null>();
   const [failure, setFailure] = useState<DomainError>();
   const [readFailed, setReadFailed] = useState(false);
   const [now, setNow] = useState<Instant>(services.clock.now());
@@ -75,7 +75,8 @@ export const BakePage = () => {
       }
       setState(loaded.value);
       const recipeId = loaded.value.snapshot?.revisions.formula.id;
-      if (recipeId) setRecipeName((await services.recipes.getRecipe(recipeId))?.name);
+      // A deleted recipe leaves its bakes in place: `null` reads as a deleted recipe.
+      if (recipeId) setRecipeName((await services.recipes.getRecipe(recipeId))?.name ?? null);
     } catch (cause) {
       console.error(cause);
       setReadFailed(true);
@@ -311,7 +312,9 @@ export const BakePage = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/recipes" />
           </IonButtons>
-          <div className="truncate px-1 text-sm text-muted">{recipeName}</div>
+          <div className="truncate px-1 text-sm text-muted">
+            {recipeName === null ? t('recipe.deleted') : recipeName}
+          </div>
           {view && focus && (
             <span slot="end" className="pr-4 text-sm text-muted">
               {t('bake.position', { index: view.position, total: view.total })}
