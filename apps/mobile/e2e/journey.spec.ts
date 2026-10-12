@@ -184,6 +184,19 @@ test('speaks English on an English device @en', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
+test('pulling the recipe list down checks for a newer dev build', async ({ page }) => {
+  await page.goto('/recipes');
+  await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  // A non-release build (this one is local): the same check as in Advanced.
+  const box = await page.getByRole('heading', { name: 'Recettes' }).boundingBox();
+  if (!box) throw new Error('no heading');
+  await page.mouse.move(box.x + 20, box.y + 5);
+  await page.mouse.down();
+  for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  await page.mouse.up();
+  await expect(page.getByText(/est déjà la dernière version/)).toBeVisible();
+});
+
 test('opens on the recipes; diagnostics sit behind the advanced menu', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
