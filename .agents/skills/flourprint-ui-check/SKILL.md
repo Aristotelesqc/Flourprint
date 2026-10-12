@@ -26,6 +26,10 @@ delegation is requested or required. The verifier owns the acceptance evidence.
   claim and interaction, not solely by whether native files changed.
 - Use disposable browser contexts and synthetic/importable fixtures. Preserve personal recipes
   and the existing device app/data; a reload, force-stop, uninstall and upgrade are distinct tests.
+- The app seeds no recipe. On a preview, dev or local build, Advanced → "Charger les recettes
+  d'exemple" / "Load the sample recipes" adds the reference "Poolish + tangzhong" (a recipe already
+  there is kept); release builds do not offer it. Automated suites load the same sample from
+  `apps/mobile/test/fixtures/sample-recipe.ts`.
 
 ## Verify the change and its adjacent workflow
 

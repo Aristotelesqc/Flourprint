@@ -18,6 +18,7 @@ import { importRecipes } from '@flourprint/core/application';
 import type { BakeOrigin, TemperatureContext } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
 import { offersDevUpdate } from '../services/dev-update';
+import { sampleRecipesFile } from '../services/sample-recipes';
 import { useDevUpdate } from '../services/use-dev-update';
 import { feedbackFileName, feedbackJson } from '../services/feedback';
 import { BAKES_CHANGED, type Permission } from '../services/notifications';
@@ -147,13 +148,14 @@ export const AdvancedPage = () => {
   };
 
   /** Additive import (persistence.md): recipes already here are skipped, never overwritten. */
-  const importFile = async (file: File) => {
+  /** Additive import of a recipes file (persistence.md): from a file, or the sample on dev builds. */
+  const importData = async (read: () => Promise<unknown>) => {
     setBusy(true);
     setOutcome(undefined);
     try {
       let data: unknown;
       try {
-        data = JSON.parse(await file.text());
+        data = await read();
       } catch {
         setOutcome({ text: t('advanced.importUnreadable'), alert: true });
         return;
@@ -368,9 +370,24 @@ export const AdvancedPage = () => {
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = '';
-              if (file) void importFile(file);
+              if (file) void importData(async () => JSON.parse(await file.text()));
             }}
           />
+          {offersDevUpdate(__APP_CHANNEL__) && (
+            <IonItem
+              button
+              detail
+              disabled={busy}
+              onClick={() =>
+                void importData(async () => sampleRecipesFile(new Date().toISOString()))
+              }
+            >
+              <IonLabel>
+                {t('advanced.sample')}
+                <p>{t('advanced.sampleHint')}</p>
+              </IonLabel>
+            </IonItem>
+          )}
           <IonItem routerLink="/device-checks" detail>
             <IonLabel>{t('recipes.deviceChecks')}</IonLabel>
           </IonItem>
