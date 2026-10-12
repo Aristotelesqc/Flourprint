@@ -6,10 +6,17 @@ const rectangle = async (locator: Locator) => {
   return box;
 };
 
+const enterEditing = async (page: Page) => {
+  const english = (await page.locator('html').getAttribute('lang'))?.startsWith('en');
+  const edit = page.getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true });
+  if (await edit.isVisible()) await edit.click();
+};
+
 const openRecipe = async (page: Page) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
   await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await enterEditing(page);
   await expect(content(page)).toHaveCount(1);
 };
 
@@ -220,7 +227,7 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   // 6. Save succeeds and creates Version 2
   await saveButton.click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
-  await expect(footer.getByRole('status')).toHaveText('À jour');
+  await expect(footer).toHaveCount(0);
 
   // 7. Route return retains valid saved quantities
   // The preview snapshots asynchronously (ADR 0015). Wait for the saved revision,
@@ -256,6 +263,7 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   await page.goto(`${savedOrigin}/recipes`);
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await enterEditing(page);
   await expect(page.getByLabel('Sel (g)', { exact: true })).toHaveValue('22');
   await expect(page.getByLabel('Eau (g)', { exact: true })).toHaveValue('720');
 });
@@ -307,6 +315,8 @@ test('discard abandons raw invalid text and a later edit can be saved', async ({
     .locator('ion-alert')
     .getByRole('button', { name: 'Abandonner les modifications' })
     .click();
+  await expect(footer).toHaveCount(0);
+  await enterEditing(page);
   await expect(water).toHaveValue('750');
   await expect(water).not.toHaveAttribute('aria-invalid', 'true');
   await expect(footer.getByRole('status')).toHaveText('À jour');
@@ -333,6 +343,7 @@ test('domain-refused quantity blocks save until the stored value is restored', a
   await expect(save).toBeEnabled();
   await save.click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await enterEditing(page);
   await expect(salt).toHaveValue('22');
 });
 
