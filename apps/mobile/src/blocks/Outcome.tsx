@@ -63,7 +63,11 @@ export const useOutcomePicker = () => {
           type: 'radio' as const,
           label: t(`outcome.dough.${dough ?? 'unknown'}`),
           value: dough ?? '',
-          checked: current?.result === result && (current.dough ?? '') === (dough ?? ''),
+          // Another result than the current one starts from "not said", so saving never does nothing.
+          checked:
+            current?.result === result
+              ? (current.dough ?? '') === (dough ?? '')
+              : dough === undefined,
         })),
         buttons: buttons((value) => {
           if (value === undefined) return false;

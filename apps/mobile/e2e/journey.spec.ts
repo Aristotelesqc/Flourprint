@@ -166,6 +166,13 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
   await expect(page.getByTestId('bake-outcome')).toHaveText(
     'Résultat : Cuit et pâte crue, congelée',
   );
+  // Another result starts from "not said": saving at once records it.
+  await page.getByRole('button', { name: 'Modifier le résultat' }).click();
+  await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('ion-alert')).toContainText('Devenir de la pâte crue');
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Pâte crue');
 });
 
 test('finishes as frozen dough before its planned bake, keeping the steps as recorded', async ({
