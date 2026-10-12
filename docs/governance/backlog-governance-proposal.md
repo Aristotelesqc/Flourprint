@@ -9,7 +9,7 @@
 1. Owner decisions + approved contracts and ADRs define product intent and semantics.
 2. Issues enumerate scope and verifiable acceptance; they link contracts and other related issues.
 3. PRs and checks establish **implementation evidence**, not automatic completion of a parent feature.
-4. GitHub Projects V2 mirrors *operational* state. It does not independently define requirements.
+4. GitHub Projects V2 mirrors _operational_ state. It does not independently define requirements.
 5. An optional Backlog Steward detects inconsistencies and makes narrowly scoped, sourced proposals.
 
 Do not automatically close/mark Done an issue just because one related PR is merged, especially for N1+N2+N3 split work and on-device verification. Equally, do not mark a slice blocked solely because future numerical prediction remains unvalidated.
@@ -18,14 +18,14 @@ Do not automatically close/mark Done an issue just because one related PR is mer
 
 **Project title:** Flourprint | Delivery & Verification
 
-| Field | Type | Values / policy |
-|---|---|---|
-| Status | Single select | Backlog, Ready, In progress, Review, Verified, Done |
-| Priority | Single select | P0, P1, P2, P3. Owner-approved; no unapproved priority changes by agents |
-| Milestone | Single select | Dogfood Alpha, Engine MVP, Later |
-| Area | Single select | Architecture, Engine, Science, Recipe UX, Planning UX, Preparation UX, Data, Platform, Documentation, Governance |
-| Owner | Assignee / text | Agent or human responsible for next action (not authoritative code ownership) |
-| Verification | Single select | Missing, Partial, Passed, Not applicable |
+| Field        | Type            | Values / policy                                                                                                  |
+| ------------ | --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Status       | Single select   | Backlog, Ready, In progress, Review, Verified, Done                                                              |
+| Priority     | Single select   | P0, P1, P2, P3. Owner-approved; no unapproved priority changes by agents                                         |
+| Milestone    | Single select   | Dogfood Alpha, Engine MVP, Later                                                                                 |
+| Area         | Single select   | Architecture, Engine, Science, Recipe UX, Planning UX, Preparation UX, Data, Platform, Documentation, Governance |
+| Owner        | Assignee / text | Agent or human responsible for next action (not authoritative code ownership)                                    |
+| Verification | Single select   | Missing, Partial, Passed, Not applicable                                                                         |
 
 Keep issue text as the canonical N1/N2/N3 requirement and detailed test-case inventory. Project fields are searchable views, not duplicate contracts.
 
@@ -36,7 +36,7 @@ Keep issue text as the canonical N1/N2/N3 requirement and detailed test-case inv
 - **In progress:** active implementation or investigation with linked branch/PR where possible.
 - **Review:** change submitted; feedback and tests pending.
 - **Verified:** acceptance evidence for the item exists and has been reviewed, pending admin closure or integration.
-- **Done:** evidence confirms the *entire item scope* and remaining follow-ups are explicitly linked, not silently discarded.
+- **Done:** evidence confirms the _entire item scope_ and remaining follow-ups are explicitly linked, not silently discarded.
 
 **Automation recommendation:** moving an issue to Review can follow a linked PR, but merged PR must **not** auto-set Done. Native GitHub Project workflows may assist intake and review, with verified close-out decided by evidence.
 
@@ -68,6 +68,7 @@ This template is a **proposal**, not yet a forced CI gate; amend AGENTS.md only 
 Inputs: changed issues, linked PRs, merged commits, contracts/ADRs, tests and Projects status.
 
 Outputs: a concise reconciliation report containing:
+
 - detected drift and exact source URL/SHA/line;
 - suggested target issue and action;
 - confidence and what evidence remains missing;

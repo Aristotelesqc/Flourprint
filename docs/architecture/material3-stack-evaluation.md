@@ -24,11 +24,11 @@ An Ionic component operating in `md` mode is not by itself proof of comprehensiv
 
 ## Options for a bounded spike
 
-| Option | Benefits | Questions |
-|---|---|---|
-| A. Retain Ionic React navigation; use Flourprint tokens and replace only obstructive widgets | Minimum code churn; existing functionality | Are IonRouterOutlet, IonContent scroll and overlays creating persistent focus/back/scroll friction? |
-| B. React Router + Capacitor + accessible React primitives, Flourprint M3 component layer | Removes Ionic-specific router/screen semantics; full control over UI | How much new navigation/dialog/keyboard/back infrastructure must be maintained? |
-| C. React + Capacitor + **verified maintained** Material 3 third-party components | Potential native-feeling interaction and less custom widget work | Is the library truly M3, well maintained, accessible, and compatible with React/Capacitor/WebView, FR/EN and app shell? |
+| Option                                                                                       | Benefits                                                             | Questions                                                                                                               |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| A. Retain Ionic React navigation; use Flourprint tokens and replace only obstructive widgets | Minimum code churn; existing functionality                           | Are IonRouterOutlet, IonContent scroll and overlays creating persistent focus/back/scroll friction?                     |
+| B. React Router + Capacitor + accessible React primitives, Flourprint M3 component layer     | Removes Ionic-specific router/screen semantics; full control over UI | How much new navigation/dialog/keyboard/back infrastructure must be maintained?                                         |
+| C. React + Capacitor + **verified maintained** Material 3 third-party components             | Potential native-feeling interaction and less custom widget work     | Is the library truly M3, well maintained, accessible, and compatible with React/Capacitor/WebView, FR/EN and app shell? |
 
 **Do not equate Material UI (MUI) with comprehensive M3 out of the box.** Also verify current maintenance status before selecting Google's Material Web web components. A dependency should not be chosen for its name or screenshot alone.
 
