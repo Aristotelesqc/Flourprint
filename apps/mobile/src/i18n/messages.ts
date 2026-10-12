@@ -507,6 +507,8 @@ export const en = {
   'advanced.devUpdate.current': '{label} is already the latest build.',
   'advanced.devUpdate.loading': 'Loading {label}…',
   'advanced.devUpdate.unreachable': 'The site cannot be reached. Check the connection.',
+  'advanced.devUpdate.saveFailed':
+    'A newer build is available, but the data could not be saved first: nothing was reloaded.',
   'advanced.import': 'Import recipes…',
   'advanced.importHint':
     'Adds the recipes of a Flourprint recipes file. Recipes already here are kept as they are.',
@@ -1374,6 +1376,8 @@ export const fr: Catalog = {
   'advanced.devUpdate.current': '{label} est déjà la dernière version.',
   'advanced.devUpdate.loading': 'Chargement de {label}…',
   'advanced.devUpdate.unreachable': 'Site injoignable. Vérifier la connexion.',
+  'advanced.devUpdate.saveFailed':
+    'Une version plus récente est disponible, mais les données n’ont pas pu être enregistrées d’abord : rien n’a été rechargé.',
   'advanced.import': 'Importer des recettes…',
   'advanced.importHint':
     'Ajouter les recettes d’un fichier de recettes Flourprint. Les recettes déjà présentes restent telles quelles.',

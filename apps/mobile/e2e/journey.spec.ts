@@ -197,6 +197,60 @@ test('pulling the recipe list down checks for a newer dev build', async ({ page 
   await expect(page.getByText(/est déjà la dernière version/)).toBeVisible();
 });
 
+/** Pulls the recipe list down, as a finger would. */
+const pullRecipes = async (page: Page) => {
+  const box = await page
+    .getByRole('heading', { name: 'Recettes' })
+    .locator('visible=true')
+    .boundingBox();
+  if (!box) throw new Error('no heading');
+  await page.mouse.move(box.x + 20, box.y + 5);
+  await page.mouse.down();
+  for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  await page.mouse.up();
+};
+
+test('a newer dev build loads only after the browser data is saved', async ({ page }) => {
+  // A deployment newer than this build; then the same build once reloaded.
+  let newer = true;
+  await page.route('**/build.json*', (route) =>
+    route.fulfill({
+      json: newer
+        ? { build: '0.2.0-dev.999+newer', label: 'v0.2.0-newer-build', channel: 'dev' }
+        : { build: '0.2.0-local', label: 'v0.2.0-local', channel: 'local' },
+    }),
+  );
+  await page.goto('/recipes');
+  await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
+  await page.getByText('Recette vierge').first().click();
+  await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  // At once back to the list, in the app (a navigation would reload the page), and pull: no
+  // wait for the periodic snapshot.
+  await page.locator('ion-back-button:visible').last().click();
+  await expect(page.getByRole('heading', { name: 'Recettes' }).locator('visible=true')).toHaveCount(
+    1,
+  );
+  const reloaded = page.waitForEvent('load');
+  // The gesture itself is covered above; here the refresher of the shown list fires directly.
+  await page.evaluate(() => {
+    const refresher = document.querySelector(
+      'ion-router-outlet > .ion-page:not(.ion-page-hidden) ion-refresher',
+    );
+    refresher?.dispatchEvent(new CustomEvent('ionRefresh', { detail: { complete: () => {} } }));
+  });
+  await reloaded;
+  newer = false;
+  await expect(page.getByText('Recette 1').first()).toBeVisible();
+});
+
+test('an unreachable site reloads nothing', async ({ page }) => {
+  await page.route('**/build.json*', (route) => route.abort());
+  await page.goto('/recipes');
+  await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  await pullRecipes(page);
+  await expect(page.getByText(/Site injoignable/)).toBeVisible();
+});
+
 test('opens on the recipes; diagnostics sit behind the advanced menu', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();

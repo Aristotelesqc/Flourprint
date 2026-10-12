@@ -17,7 +17,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { importRecipes } from '@flourprint/core/application';
 import type { BakeOrigin, TemperatureContext } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
-import { fetchDeployedBuild, offersDevUpdate } from '../services/dev-update';
+import { offersDevUpdate } from '../services/dev-update';
+import { useDevUpdate } from '../services/use-dev-update';
 import { feedbackFileName, feedbackJson } from '../services/feedback';
 import { BAKES_CHANGED, type Permission } from '../services/notifications';
 import { useServices } from '../services/services';
@@ -388,17 +389,14 @@ export const AdvancedPage = () => {
 const DevUpdateItem = () => {
   const { t } = useMessages();
   const [status, setStatus] = useState<string>();
+  const check = useDevUpdate(async (message) => {
+    setStatus(message);
+    // Let the message paint before a reload replaces the page.
+    await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+  });
   const update = async () => {
     setStatus(t('advanced.devUpdate.checking'));
-    const deployed = await fetchDeployedBuild();
-    if (deployed === undefined) {
-      setStatus(t('advanced.devUpdate.unreachable'));
-    } else if (deployed.build === __APP_BUILD__) {
-      setStatus(t('advanced.devUpdate.current', { label: __APP_LABEL__ }));
-    } else {
-      setStatus(t('advanced.devUpdate.loading', { label: deployed.label }));
-      window.location.reload();
-    }
+    await check();
   };
   return (
     <>
