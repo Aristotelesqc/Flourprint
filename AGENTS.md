@@ -22,8 +22,11 @@ a dedicated pull request, before the code that depends on it.
 - No user-facing text hard-coded in UI components; use message keys (ADR 0009).
 - French UI text never addresses the user (no "tu", no "vous"): instructions and actions use the
   infinitive ("Pétrir 8 min à basse vitesse"), explanations an impersonal voice.
-- Every commit is pushed. Work lands in focused pull requests against `main` (ADR 0008,
-  workflow): one per contract change or reviewed implementation slice, never back into #31.
+- Every commit is pushed. Work lands in focused pull requests (ADR 0008, workflow): one per
+  contract change or reviewed implementation slice, never back into #31. They target `dev`, the
+  integration branch of the open major pull request (`dev` → `main`), and are merged into it once
+  green and reviewed; the dev channel (dev APK, `dev` preview address) follows `dev` (ADR 0013).
+  Only the owner decides when the major pull request is merged into `main`.
 - Run `pnpm check`, `pnpm build` and the full Playwright run before every push of code; a red push
   is fixed first.
 - One writer at a time for overlapping files. The interface (#35) is implemented by Gemini under

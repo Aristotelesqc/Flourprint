@@ -22,3 +22,4 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0013](0013-web-preview-and-dev-channel.md)  | A web preview link and a remote-loaded dev APK | Accepted                                  |
 | [0014](0014-simulation-mode.md)              | Simulation mode                                | Accepted                                  |
 | [0015](0015-browser-persistence.md)          | Persistent data in the browser preview         | Accepted                                  |
+| [0016](0016-versions-and-releases.md)        | App versions and releases                      | Accepted                                  |
