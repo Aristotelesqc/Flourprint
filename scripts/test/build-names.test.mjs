@@ -8,7 +8,13 @@ const ci = { GITHUB_ACTIONS: 'true', GITHUB_RUN_NUMBER: '156', HEAD_SHA: SHA };
 describe('build names (ADR 0016)', () => {
   it('names a release by its version only', () => {
     const names = buildNames('0.2.0', { ...ci, GITHUB_REF_NAME: 'main' });
-    expect(names).toEqual({ version: '0.2.0', build: '0.2.0', label: 'v0.2.0', versionCode: 2000 });
+    expect(names).toEqual({
+      version: '0.2.0',
+      build: '0.2.0',
+      label: 'v0.2.0',
+      channel: 'release',
+      versionCode: 2000,
+    });
   });
 
   it('gives dev and pull request builds the code name of their commit', () => {
@@ -16,15 +22,21 @@ describe('build names (ADR 0016)', () => {
     expect(buildNames('0.2.0', { ...ci, GITHUB_REF_NAME: 'dev' })).toMatchObject({
       build: '0.2.0-dev.156+4e3dd94',
       label: `v0.2.0-${name}`,
+      channel: 'dev',
     });
     expect(buildNames('0.2.0', { ...ci, PR_NUMBER: '53' })).toMatchObject({
       build: '0.2.0-pr.53.156+4e3dd94',
       label: `v0.2.0-${name}`,
+      channel: 'preview',
     });
   });
 
   it('names a local build without a code name', () => {
-    expect(buildNames('0.2.0', {})).toMatchObject({ build: '0.2.0-local', label: 'v0.2.0-local' });
+    expect(buildNames('0.2.0', {})).toMatchObject({
+      build: '0.2.0-local',
+      label: 'v0.2.0-local',
+      channel: 'local',
+    });
   });
 
   it('refuses a version that does not fit a versionCode', () => {

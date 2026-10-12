@@ -43,6 +43,12 @@ between two versions. It is an adjective and a noun picked from the commit hash
 (`scripts/build-names.mjs`), never drawn at random: the dev APK and the dev site built from one
 commit show the same name. The version name keeps the run and the short hash for exact tracing.
 
+Every build publishes `build.json` (build, label, channel) next to the app. Builds other than a
+release offer **Load the latest dev build** in Advanced (owner request of 2026-10-12): it reads
+`build.json` without cache and reloads the app when a newer build is deployed, for a dev APK whose
+WebView still shows an older one. Release builds never show it; they change only by installing a
+new APK.
+
 Android `versionCode` = `MAJOR × 1 000 000 + MINOR × 1 000 + PATCH`, so a newer release always
 installs over an older one. Dev builds have their own application id (ADR 0013) and never
 conflict with it.

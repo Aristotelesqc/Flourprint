@@ -191,6 +191,9 @@ test('opens on the recipes; diagnostics sit behind the advanced menu', async ({ 
   await expect(page.getByTestId('app-build-label').first()).toHaveText(/^v\d+\.\d+\.\d+(-|$)/);
   await expect(page.getByText('Vérifications de l’appareil')).toBeHidden();
   await page.getByLabel('Avancé').first().click();
+  // A non-release build offers to load the latest deployment; this one is already it.
+  await page.getByText('Charger la dernière version dev').click();
+  await expect(page.getByText(/est déjà la dernière version/)).toBeVisible();
   await page.getByText('Vérifications de l’appareil').click();
   await expect(page).toHaveURL(/\/device-checks$/);
 });

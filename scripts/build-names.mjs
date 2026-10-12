@@ -151,6 +151,8 @@ export const codeName = (sha) => {
  * GITHUB_RUN_NUMBER, GITHUB_REF_NAME, HEAD_SHA or GITHUB_SHA, PR_NUMBER).
  * - `build`: the full name, with the run and the short hash (Advanced, feedback export).
  * - `label`: the short name shown in the app bar.
+ * - `channel`: `release` (main), `dev`, `preview` (pull requests, other branches) or `local`. Only
+ *   non-release builds offer to load the latest dev build.
  */
 export const buildNames = (version, env) => {
   const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version ?? '');
@@ -166,21 +168,25 @@ export const buildNames = (version, env) => {
 
   let build;
   let label;
+  let channel = 'preview';
   if (!env.GITHUB_ACTIONS) {
     build = `${version}-local`;
     label = `v${version}-local`;
+    channel = 'local';
   } else if (pr) {
     build = `${version}-pr.${pr}.${run}+${sha}`;
     label = `v${version}-${codeName(fullSha)}`;
   } else if (env.GITHUB_REF_NAME === 'main') {
     build = version;
     label = `v${version}`;
+    channel = 'release';
   } else if (env.GITHUB_REF_NAME === 'dev') {
     build = `${version}-dev.${run}+${sha}`;
     label = `v${version}-${codeName(fullSha)}`;
+    channel = 'dev';
   } else {
     build = `${version}-${branch}.${run}+${sha}`;
     label = `v${version}-${branch}-${codeName(fullSha)}`;
   }
-  return { version, build, label, versionCode: major * 1_000_000 + minor * 1_000 + patch };
+  return { version, build, label, channel, versionCode: major * 1_000_000 + minor * 1_000 + patch };
 };

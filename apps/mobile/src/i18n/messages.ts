@@ -501,6 +501,12 @@ export const en = {
   'advanced.notify.exact': 'Allow on-time reminders',
   'advanced.notify.exactHint': 'Without it, Android may deliver reminders several minutes late.',
   'advanced.recipes': 'Recipes',
+  'advanced.devUpdate': 'Load the latest dev build',
+  'advanced.devUpdate.hint': 'Running {label}. Dev builds only.',
+  'advanced.devUpdate.checking': 'Checking the deployed build…',
+  'advanced.devUpdate.current': '{label} is already the latest build.',
+  'advanced.devUpdate.loading': 'Loading {label}…',
+  'advanced.devUpdate.unreachable': 'The site cannot be reached. Check the connection.',
   'advanced.import': 'Import recipes…',
   'advanced.importHint':
     'Adds the recipes of a Flourprint recipes file. Recipes already here are kept as they are.',
@@ -1362,6 +1368,12 @@ export const fr: Catalog = {
   'advanced.notify.exactHint':
     'Sans cela, Android peut livrer les rappels avec plusieurs minutes de retard.',
   'advanced.recipes': 'Recettes',
+  'advanced.devUpdate': 'Charger la dernière version dev',
+  'advanced.devUpdate.hint': 'Version en cours : {label}. Versions dev seulement.',
+  'advanced.devUpdate.checking': 'Vérification de la version déployée…',
+  'advanced.devUpdate.current': '{label} est déjà la dernière version.',
+  'advanced.devUpdate.loading': 'Chargement de {label}…',
+  'advanced.devUpdate.unreachable': 'Site injoignable. Vérifier la connexion.',
   'advanced.import': 'Importer des recettes…',
   'advanced.importHint':
     'Ajouter les recettes d’un fichier de recettes Flourprint. Les recettes déjà présentes restent telles quelles.',
