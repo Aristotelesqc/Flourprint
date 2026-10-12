@@ -64,7 +64,7 @@ checkRecipe(formula, process): RecipeIssue[]
 | `water_outside_45_to_90` | total water below 45 % or above 90 % of the flour, when it is complete        |
 | `no_leavening`           | no ingredient marked as yeast and no preferment                               |
 | `no_mix_step`            | no step with operation `mix`                                                  |
-| `no_bake_step`           | no step with operation `bake`                                                 |
+| `no_bake_step`           | no cooking step (process.md); a dough-only recipe stays valid                 |
 | `step_without_duration`  | an `asap` step without a planned duration (one issue per step, `path` its id) |
 | `folds_exceed_step`      | `folds.count × folds.intervalS` exceeds the step's planned duration           |
 

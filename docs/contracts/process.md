@@ -97,7 +97,13 @@ interface StepTechnique {
 
 - Operation codes stay open. Codes the app names: `autolyse` (flour and water rest), `fermentolyse`
   (flour, water and leavening, salt later), `mix`, `fold`, `bulk`, `rest`, `degas`, `divide`,
-  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `cool`, and the preparation steps.
+  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `boil`, `steam`, `fry`, `panCook`,
+  `grill`, `cool`, and the preparation steps.
+- **Cooking operations**: `bake` (oven, whatever its mode), `boil` (water: bagels, pretzels,
+  poached doughs), `steam`, `fry` (in oil), `panCook` (skillet, griddle, plancha) and `grill`
+  (open grate or flame). They are the cooking stages of a session (bake-session.md) and the heat
+  steps that end the fermentation (fermentation.md). `preheat` is not one: it heats equipment, not
+  the dough.
 - `method` codes the app names: on `mix`, `hand`, `slapAndFold`, `rubaud`, `standMixer`, `spiral`,
   `foodProcessor`, `noKnead`; on `fold` and in `folds.style`, `stretchAndFold`, `coilFold`,
   `lamination`. Any other code is kept and shown as given.
