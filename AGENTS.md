@@ -65,8 +65,22 @@ node apps/cli/dist/main.js --version
 ## Development order
 
 Issue #30 is the high-level backlog: it links the other issues and tracks the development order.
-When a step advances, update its status there, add a short comment on the issue concerned and keep
-the PR body current. No other tracking file.
+GitHub issues are the only tracking system (owner decision of 2026-10-12: no Projects board, no
+tracking file).
+
+- **New issues** follow `.github/ISSUE_TEMPLATE/` (work item or bug), also when opened through the
+  API, and start with `status:backlog`. Pull requests follow `.github/pull_request_template.md`.
+- **Status labels**: every open issue has exactly one. `status:backlog` (accepted, not planned),
+  `status:ready` (acceptance and evidence clear), `status:in-progress` (someone works on it),
+  `status:review` (a pull request awaits review), `status:blocked` (say why in a comment),
+  `status:verified` (acceptance shown, awaiting the owner's close). Closed means done.
+- **Who changes them**: the agent starting work sets `status:in-progress`; opening its pull request
+  sets `status:review`. A merged pull request does not finish an issue: it goes back to
+  `status:in-progress` while acceptance remains open, or to `status:verified` with the evidence in a
+  comment. Only the owner, or an agent with every criterion shown, closes an issue.
+- **Status table**: the body of #30 holds a table of the open issues and their status. Whoever
+  changes a status label updates its row, editing the body rather than adding a comment.
+- Add a short comment on the issue concerned when a step advances, and keep the PR body current.
 
 See ADR 0008. The proof-of-concept baseline (PR #31: steps 1 to 6 of the first development order,
 with the data collection, simulation mode and first fermentation model) is merged into `main`.
