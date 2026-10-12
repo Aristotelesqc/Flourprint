@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flourprint #35 — Maquette de validation d'interface (Material 3)</title>
+  <style>
+    /* === SYSTEM TOKENS & RESET === */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --touch-target: 48px;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
+
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+      /* Palette Claire (Défaut) */
+      --color-bg: #f8f7f4;
+      --color-surface: #ffffff;
+      --color-surface-container: #f2efe9;
+      --color-surface-container-high: #eae5dc;
+      --color-surface-variant: #ebe7df;
+      --color-outline: #dfd9ce;
+      --color-outline-subtle: #eae5dc;
+      --color-ink: #1c1b19;
+      --color-ink-muted: #69645c;
+      --color-ink-subtle: #8a847b;
+      --color-primary: #a9490a;
+      --color-on-primary: #ffffff;
+      --color-primary-container: #fbeee4;
+      --color-on-primary-container: #612502;
+      --color-danger: #b3261e;
+      --color-on-danger: #ffffff;
+      --color-danger-container: #fdf2f2;
+      --color-shadow: rgba(28, 27, 25, 0.08);
+      --color-focus: #a9490a;
+    }
+
+    /* Thème Sombre chaleureux */
+    [data-theme="dark"] {
+      --color-bg: #201d1a;
+      --color-surface: #2a2622;
+      --color-surface-container: #332e29;
+      --color-surface-container-high: #3d3731;
+      --color-surface-variant: #3c3630;
+      --color-outline: #48423a;
+      --color-outline-subtle: #3a342e;
+      --color-ink: #e9e4dc;
+      --color-ink-muted: #b1aa9f;
+      --color-ink-subtle: #8c857b;
+      --color-primary: #cf8a5e;
+      --color-on-primary: #201d1a;
+      --color-primary-container: #542d13;
+      --color-on-primary-container: #fcd9c3;
+      --color-danger: #f28b82;
+      --color-on-danger: #370b09;
+      --color-danger-container: #3a2020;
+      --color-shadow: rgba(0, 0, 0, 0.35);
+      --color-focus: #cf8a5e;
+    }
+
+    /* Thème AMOLED */
+    [data-theme="amoled"] {
+      --color-bg: #000000;
+      --color-surface: #121110;
+      --color-surface-container: #1b1917;
+      --color-surface-container-high: #24211e;
+      --color-surface-variant: #282420;
+      --color-outline: #38322b;
+      --color-outline-subtle: #29241f;
+      --color-ink: #e9e4dc;
+      --color-ink-muted: #b1aa9f;
+      --color-ink-subtle: #8c857b;
+      --color-primary: #cf8a5e;
+      --color-on-primary: #000000;
+      --color-primary-container: #542d13;
+      --color-on-primary-container: #fcd9c3;
+      --color-danger: #f28b82;
+      --color-on-danger: #000000;
+      --color-danger-container: #2b1414;
+      --color-shadow: rgba(0, 0, 0, 0.7);
+      --color-focus: #cf8a5e;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: #eee9e0;
+      color: #1c1b19;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-4);
+      transition: background-color 0.2s ease;
+    }
+
+    [data-theme="dark"] body {
+      background-color: #141210;
+      color: #e9e4dc;
+    }
+
+    [data-theme="amoled"] body {
+      background-color: #000000;
+      color: #e9e4dc;
+    }
+
+    /* Typography roles */
+    .type-headline-small {
+      font-size: 1.5rem;
+      line-height: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .type-title-large {
+      font-size: 1.375rem;
+      line-height: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .type-title-medium {
+      font-size: 1rem;
+      line-height: 1.5rem;
+      font-weight: 600;
+    }
+    .type-body-large {
+      font-size: 1rem;
+      line-height: 1.5rem;
+      font-weight: 400;
+    }
+    .type-body-medium {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      font-weight: 400;
+    }
+    .type-label-large {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      font-weight: 600;
+    }
+    .type-label-medium {
+      font-size: 0.75rem;
+      line-height: 1rem;
+      font-weight: 500;
+    }
+    .tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Gallery outer chrome */
+    .gallery-header {
+      width: 100%;
+      max-width: 1140px;
+      margin-bottom: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      align-items: center;
+      text-align: center;
+    }
+
+    .gallery-banner {
+      display: inline-block;
+      background-color: rgba(169, 73, 10, 0.1);
+      color: var(--color-primary);
+      border: 1px solid rgba(169, 73, 10, 0.25);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .gallery-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      justify-content: center;
+      margin-top: var(--space-1);
+    }
+
+    .ctrl-group {
+      display: inline-flex;
+      background-color: rgba(0, 0, 0, 0.06);
+      padding: 3px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .ctrl-group,
+    [data-theme="amoled"] .ctrl-group {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .ctrl-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      color: inherit;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .ctrl-btn.active {
+      background-color: var(--color-surface);
+      color: var(--color-primary);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Gallery layout */
+    .gallery-viewport {
+      display: flex;
+      gap: var(--space-5);
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 1140px;
+      transition: all 0.25s ease;
+    }
+
+    @media (max-width: 1160px) {
+      .gallery-viewport {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-6);
+      }
+    }
+
+    /* Single screen direct screenshot mode */
+    body.single-screen-mode {
+      padding: 0;
+      margin: 0;
+      background-color: transparent;
+      justify-content: center;
+    }
+    body.single-screen-mode .gallery-header {
+      display: none !important;
+    }
+    body.single-screen-mode .gallery-viewport {
+      width: 360px;
+      height: 800px;
+      padding: 0;
+      margin: 0;
+    }
+    body.single-screen-mode .phone-container {
+      margin: 0;
+    }
+    body.single-screen-mode .phone-caption {
+      display: none !important;
+    }
+
+    .phone-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+      width: 360px;
+      flex-shrink: 0;
+    }
+
+    .phone-caption {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--color-ink-muted);
+      text-align: center;
+    }
+
+    /* === PHONE SURFACE (Exact 360x800) === */
+    .phone-frame {
+      width: 360px;
+      height: 800px;
+      background-color: var(--color-bg);
+      color: var(--color-ink);
+      border-radius: 28px;
+      border: 1px solid var(--color-outline);
+      box-shadow: 0 16px 40px var(--color-shadow);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      contain: strict;
+    }
+
+    body.single-screen-mode .phone-frame {
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+    }
+
+    /* Sticky Top App Bar */
+    .app-bar {
+      height: 56px;
+      background-color: var(--color-surface);
+      border-bottom: 1px solid var(--color-outline-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-4);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      flex-shrink: 0;
+    }
+
+    .app-bar-start {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      min-width: 0;
+    }
+
+    .app-bar-brand {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      line-height: 1.15;
+    }
+
+    .app-bar-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-bar-label {
+      font-size: 0.6875rem;
+      color: var(--color-ink-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* Icon Button (48px touch) */
+    .icon-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      width: var(--touch-target);
+      height: var(--touch-target);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-pill);
+      color: var(--color-ink);
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.15s ease;
+    }
+
+    .icon-btn:hover {
+      background-color: var(--color-surface-container);
+    }
+
+    .icon-btn:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: -2px;
+    }
+
+    /* Internal Scrolling Body */
+    .phone-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: var(--space-4);
+      padding-bottom: 88px; /* Guaranteed clearance for sticky bottom bar */
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-outline) transparent;
+    }
+
+    .phone-content::-webkit-scrollbar {
+      width: 4px;
+    }
+    .phone-content::-webkit-scrollbar-thumb {
+      background: var(--color-outline);
+      border-radius: 4px;
+    }
+
+    /* Sticky Bottom Action Bar */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      background-color: var(--color-surface);
+      border-top: 1px solid var(--color-outline-subtle);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-4);
+      gap: var(--space-2);
+      z-index: 20;
+    }
+
+    /* Primary Button (Pill 48px touch) */
+    .btn-primary {
+      appearance: none;
+      border: none;
+      height: var(--touch-target);
+      width: 100%;
+      border-radius: var(--radius-pill);
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      box-shadow: 0 3px 8px rgba(169, 73, 10, 0.25);
+      transition: transform 0.1s ease, filter 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+      box-shadow: 0 1px 4px rgba(169, 73, 10, 0.2);
+    }
+
+    .btn-primary:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+    }
+
+    .btn-secondary {
+      appearance: none;
+      border: 1px solid var(--color-outline);
+      height: var(--touch-target);
+      padding: 0 var(--space-4);
+      border-radius: var(--radius-pill);
+      background-color: transparent;
+      color: var(--color-ink);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--color-surface-container);
+    }
+
+    /* Card & Section styles */
+    .card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .card-quiet {
+      background-color: var(--color-surface-container);
+      border: 1px solid var(--color-outline-subtle);
+    }
+
+    .card-interactive {
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card-interactive:hover {
+      border-color: var(--color-outline);
+      box-shadow: 0 4px 12px var(--color-shadow);
+    }
+
+    .section-title {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--color-ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: var(--space-1);
+    }
+
+    /* Value Rows & Table */
+    .value-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--color-outline-subtle);
+      font-size: 0.875rem;
+    }
+
+    .value-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .value-label {
+      color: var(--color-ink-muted);
+    }
+
+    .value-data {
+      font-weight: 600;
+      color: var(--color-ink);
+      text-align: right;
+    }
+
+    .value-subordinate {
+      font-size: 0.75rem;
+      color: var(--color-ink-subtle);
+      display: block;
+      font-weight: 400;
+    }
+
+    /* Underline Tabs */
+    .tabs-bar {
+      display: flex;
+      border-bottom: 1px solid var(--color-outline);
+      margin-top: -4px;
+      gap: var(--space-4);
+    }
+
+    .tab-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      padding: 10px 4px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-ink-muted);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s ease;
+    }
+
+    .tab-btn.active {
+      color: var(--color-primary);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: var(--color-primary);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Alerts & Banners */
+    .alert-box {
+      background-color: var(--color-surface-container);
+      border-left: 3px solid var(--color-primary);
+      padding: 10px 14px;
+      border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
+      font-size: 0.8125rem;
+      line-height: 1.35;
+      color: var(--color-ink);
+      display: flex;
+      gap: var(--space-2);
+      align-items: flex-start;
+    }
+
+    .alert-icon {
+      flex-shrink: 0;
+      color: var(--color-primary);
+      margin-top: 2px;
+    }
+
+    /* Dropdown ActionMenu (⋯) */
+    .action-menu {
+      position: absolute;
+      top: 52px;
+      right: 12px;
+      width: 230px;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-md);
+      box-shadow: 0 8px 24px var(--color-shadow);
+      display: none;
+      flex-direction: column;
+      padding: 6px 0;
+      z-index: 30;
+    }
+
+    .action-menu.open {
+      display: flex;
+    }
+
+    .menu-item {
+      appearance: none;
+      border: none;
+      background: transparent;
+      padding: 12px 16px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-ink);
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      width: 100%;
+    }
+
+    .menu-item:hover,
+    .menu-item:focus-visible {
+      background-color: var(--color-surface-container);
+      outline: none;
+    }
+
+    .menu-item.danger {
+      color: var(--color-danger);
+    }
+
+    .menu-divider {
+      height: 1px;
+      background-color: var(--color-outline-subtle);
+      margin: 4px 0;
+    }
+
+    /* Disclosure details */
+    details.disclosure {
+      background-color: var(--color-surface-container);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 0.8125rem;
+    }
+
+    details.disclosure summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--color-ink-muted);
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    details.disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.disclosure[open] summary {
+      margin-bottom: 8px;
+      color: var(--color-ink);
+    }
+
+    details.disclosure .disclosure-body {
+      color: var(--color-ink-muted);
+      line-height: 1.4;
+    }
+
+    /* Demonstration Editing Mode */
+    .edit-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .edit-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-ink-muted);
+    }
+
+    .edit-input {
+      height: 42px;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-sm);
+      padding: 0 12px;
+      font-size: 0.9375rem;
+      color: var(--color-ink);
+      font-family: inherit;
+    }
+
+    .edit-input:focus {
+      outline: 2px solid var(--color-focus);
+      border-color: transparent;
+    }
+
+    /* Toast Feedback */
+    .toast {
+      position: absolute;
+      bottom: 82px;
+      left: 16px;
+      right: 16px;
+      background-color: var(--color-ink);
+      color: var(--color-surface);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      text-align: center;
+      box-shadow: 0 6px 16px var(--color-shadow);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 40;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  
+    .section-title { text-transform: none; letter-spacing: normal; font-size: 1rem; line-height: 1.5rem; }
+    .type-body-medium { overflow-wrap: anywhere; }
+    .card-interactive:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+    .value-label { min-width: 0; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+
+  <!-- === EN-TÊTE DE LA GALERIE DE VALIDATION === -->
+  <header class="gallery-header">
+    <span class="gallery-banner">Maquette — données de démonstration — aucune modification de recettes</span>
+    <div class="gallery-controls">
+      <!-- Sélecteur de Thème -->
+      <div class="ctrl-group" role="radiogroup" aria-label="Sélection du thème">
+        <button type="button" class="ctrl-btn active" data-theme-btn="light" onclick="setTheme('light')">Clair</button>
+        <button type="button" class="ctrl-btn" data-theme-btn="dark" onclick="setTheme('dark')">Sombre chaud</button>
+        <button type="button" class="ctrl-btn" data-theme-btn="amoled" onclick="setTheme('amoled')">AMOLED</button>
+      </div>
+      <!-- Sélecteur d'Écran -->
+      <div class="ctrl-group" role="radiogroup" aria-label="Sélection d'affichage d'écran">
+        <button type="button" class="ctrl-btn active" data-screen-btn="all" onclick="setScreen('all')">Vue 3 écrans</button>
+        <button type="button" class="ctrl-btn" data-screen-btn="recipes" onclick="setScreen('recipes')">1. Recettes</button>
+        <button type="button" class="ctrl-btn" data-screen-btn="recipe" onclick="setScreen('recipe')">2. Recette</button>
+        <button type="button" class="ctrl-btn" data-screen-btn="preparation" onclick="setScreen('preparation')">3. Préparation</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- === CORPS DE LA GALERIE (3 SURFACES 360x800) === -->
+  <main class="gallery-viewport" id="galleryViewport">
+
+    <!-- ========================================================================= -->
+    <!-- ÉCRAN 1 : LISTE DES RECETTES                                               -->
+    <!-- ========================================================================= -->
+    <div class="phone-container" id="container-recipes">
+      <div class="phone-caption">1. Liste des recettes (Navigation &amp; Reprise)</div>
+      <div class="phone-frame" id="frame-recipes">
+        
+        <!-- Top App Bar -->
+        <header class="app-bar">
+          <div class="app-bar-start">
+            <!-- Mark SVG local et intact -->
+            <img src="mark.svg" width="32" height="32" alt="" aria-hidden="true">
+            <div class="app-bar-brand">
+              <span class="app-bar-title">Flourprint</span>
+              
+            </div>
+          </div>
+          <div class="app-bar-actions">
+            <!-- Action secondaire Nouvelle recette (non rivale du CTA principal) -->
+            <button type="button" class="icon-btn" aria-label="Nouvelle recette" onclick="showToast('recipes', 'Création de recette — flux existant conservé')">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <!-- Menu ⋯ -->
+            <button type="button" class="icon-btn" id="btn-menu-recipes" aria-controls="menu-recipes" aria-expanded="false" aria-label="Options et utilitaires" aria-haspopup="true" onclick="toggleMenu('menu-recipes')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Menu Déroulant ⋯ Screen 1 -->
+        <div class="action-menu" id="menu-recipes" role="menu" aria-label="Menu des recettes">
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Accès aux paramètres avancés')">Avancé</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Gestion des sauvegardes &amp; imports')">Sauvegardes &amp; imports</button>
+          <div class="menu-divider"></div>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Utilitaires de développement actifs')">Utilitaires dev</button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="phone-content">
+          <h1 class="type-headline-small">Recettes</h1>
+
+          <!-- Entrée compacte : Préparation en cours (Sans bannière orange agressive) -->
+          <div class="card card-quiet" style="border-left: 4px solid var(--color-primary);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <span class="type-label-medium" style="color: var(--color-primary);">Préparation en cours</span>
+                <div class="type-title-medium">Poolish + tangzhong</div>
+                <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">Pointage · 20 min écoulées</div>
+              </div>
+              <button type="button" class="btn-secondary" style="height: 36px; padding: 0 12px;" onclick="setScreen('preparation')">
+                Reprendre
+              </button>
+            </div>
+          </div>
+
+          <!-- Section Recettes enregistrées -->
+          <div class="section-title">Recettes enregistrées</div>
+
+          <!-- 1. Fiche référence : Poolish + tangzhong -->
+          <div class="card card-interactive" onclick="setScreen('recipe')" role="button" tabindex="0">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <h2 class="type-title-medium">Poolish + tangzhong</h2>
+                <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">9 étapes</div>
+              </div>
+              
+            </div>
+            <div style="display: flex; gap: var(--space-4); margin-top: var(--space-2);" class="type-body-medium tabular">
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Farine</span> 1000 g</div>
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Pâte</span> 1774 g</div>
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Eau tot.</span> ≈ 75,02 %</div>
+            </div>
+          </div>
+
+          <!-- 2. Brouillon synthétique existant -->
+          <div class="card card-interactive" onclick="showToast('recipes', 'Brouillon sélectionné — maquette')" role="button" tabindex="0">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h2 class="type-title-medium">Baguette</h2>
+                  <span style="background-color: var(--color-surface-container-high); color: var(--color-ink-muted); padding: 2px 6px; border-radius: 4px; font-size: 0.6875rem; font-weight: 600;">Brouillon</span>
+                </div>
+                <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">Brouillon local en cours d'édition</div>
+              </div>
+              <span class="type-label-medium" style="color: var(--color-ink-muted); font-weight: 600;">65,0 %</span>
+            </div>
+            <div style="display: flex; gap: var(--space-4); margin-top: var(--space-2);" class="type-body-medium tabular">
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Farine</span> 500 g</div>
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Pâte</span> 825 g</div>
+            </div>
+          </div>
+
+          <!-- Note discrète d'état sans auto-seed -->
+          
+        </div>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast-recipes"></div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ÉCRAN 2 : CONSULTATION DE RECETTE                                         -->
+    <!-- ========================================================================= -->
+    <div class="phone-container" id="container-recipe">
+      <div class="phone-caption">2. Fiche recette (Consultation &amp; Planification)</div>
+      <div class="phone-frame" id="frame-recipe">
+
+        <!-- Top App Bar -->
+        <header class="app-bar">
+          <div class="app-bar-start">
+            <button type="button" class="icon-btn" aria-label="Retour à la liste" onclick="setScreen('recipes')">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span class="app-bar-title" id="recipe-bar-title">Recette</span>
+          </div>
+          <div class="app-bar-actions">
+            <button type="button" class="icon-btn" id="btn-menu-recipe" aria-controls="menu-recipe" aria-expanded="false" aria-label="Actions sur la recette" aria-haspopup="true" onclick="toggleMenu('menu-recipe')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Menu Déroulant ⋯ Screen 2 (Actions secondaires & suppression séparée) -->
+        <div class="action-menu" id="menu-recipe" role="menu" aria-label="Menu recette">
+          <button type="button" class="menu-item danger" role="menuitem" data-editing-action style="display:none" onclick="closeMenu('menu-recipe'); toggleRecipeEditMode(false); showToast('recipe', 'Abandon illustré — aucune recette modifiée.')">Abandonner les modifications</button>
+          <button type="button" class="menu-item" role="menuitem" data-reading-action onclick="closeMenu('menu-recipe'); toggleRecipeEditMode(true)">Modifier la recette</button>
+          <div class="menu-divider"></div>
+          <button type="button" class="menu-item danger" role="menuitem" data-reading-action onclick="closeMenu('menu-recipe'); showToast('recipe', 'Action corbeille illustrée — aucune suppression')">Mettre à la corbeille</button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="phone-content" id="recipe-view-container">
+          
+          <!-- En-tête titre complet (Retour à la ligne naturel, pas de tronquage) -->
+          <div>
+            <h1 class="type-title-large" style="line-height: 1.25;">Poolish + tangzhong</h1>
+            <div class="type-body-medium tabular" style="color: var(--color-ink-muted); margin-top: 4px;">
+              Version 1 · 9 étapes
+            </div>
+          </div>
+
+          <!-- Onglets discrets soulignés (Pas de gros boutons pilules) -->
+          <div class="tabs-bar" role="tablist">
+            <button type="button" class="tab-btn active" id="tab-btn-formula" role="tab" aria-selected="true" onclick="switchRecipeTab('formula')">Recette</button>
+            <button type="button" class="tab-btn" id="tab-btn-planning" role="tab" aria-selected="false" onclick="switchRecipeTab('planning')">Planification</button>
+            <button type="button" class="tab-btn" id="tab-btn-history" role="tab" aria-selected="false" onclick="switchRecipeTab('history')">Historique</button>
+          </div>
+
+          <!-- === ONGLET 1 : RECETTE / FORMULE === -->
+          <div id="tab-content-formula" style="display: flex; flex-direction: column; gap: var(--space-4);">
+            
+            <!-- Synthèse hydratation & masses -->
+            <div class="card card-quiet">
+              <div class="value-row tabular">
+                <span class="value-label">Farine totale</span>
+                <span class="value-data">1000 g</span>
+              </div>
+              <div class="value-row tabular">
+                <span class="value-label">Pâte totale</span>
+                <span class="value-data">1774 g</span>
+              </div>
+              <div class="value-row tabular">
+                <span class="value-label" style="display: inline-flex; align-items: center; gap: 4px;">
+                  Eau totale
+                  <!-- Icône déverrouillée -->
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v1"/></svg>
+                </span>
+                <span class="value-data" style="color: var(--color-primary);">
+                  ≈ 75,02 %
+                  <span class="value-subordinate">Déverrouillée</span>
+                  
+                </span>
+              </div>
+              <div class="value-row tabular">
+                <span class="value-label">Eau versée</span>
+                <span class="value-data">750 g (75,0 %)</span>
+              </div>
+            </div>
+
+            <!-- Mélange de farines (80/20) -->
+            <div>
+              <div class="section-title">Mélange de farines</div>
+              <div class="card" style="margin-top: 6px;">
+                <div class="value-row tabular">
+                  <div>
+                    <div class="type-body-medium" style="font-weight: 500;">Farine à pain</div>
+                    
+                  </div>
+                  <div class="value-data">80 % · 800 g</div>
+                </div>
+                <div class="value-row tabular">
+                  <div>
+                    <div class="type-body-medium" style="font-weight: 500;">Farine de blé entier</div>
+                    
+                  </div>
+                  <div class="value-data">20 % · 200 g</div>
+                </div>
+                
+              </div>
+            </div>
+
+            <!-- Ingrédients de pâte (Données réelles de la formule JSON) -->
+            <div>
+              <div class="section-title">Quantités totales</div>
+              <div class="card" style="margin-top: 6px;">
+                <div class="value-row tabular">
+                  <span class="value-label">Eau</span>
+                  <span class="value-data">750 g · 75,0 %</span>
+                </div>
+                <div class="value-row tabular">
+                  <span class="value-label">Sel</span>
+                  <span class="value-data">20 g · 2,0 %</span>
+                </div>
+                <div class="value-row tabular">
+                  <div>
+                    <span class="value-label">Levure instantanée</span>
+                    <span class="value-subordinate">5 % eau estimée</span>
+                  </div>
+                  <span class="value-data">4 g · 0,4 %</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Composants : Préferment & Échaudage -->
+            <div>
+              <div class="section-title">Composants &amp; Préferments</div>
+              <div class="card" style="margin-top: 6px;">
+                <div style="padding-bottom: 6px; border-bottom: 1px solid var(--color-outline-subtle);">
+                  <div style="display: flex; justify-content: space-between;">
+                    <span class="type-body-medium" style="font-weight: 600;">Poolish</span>
+                    <span class="type-label-medium tabular" style="color: var(--color-primary);">30 % farine (300 g)</span>
+                  </div>
+                  <div class="type-body-medium tabular" style="color: var(--color-ink-muted); margin-top: 2px;">
+                    Hydratation 100 % (300 g eau) · Levure 1 g (0,1 %)
+                  </div>
+                </div>
+                <div style="padding-top: 6px;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <span class="type-body-medium" style="font-weight: 600;">Tangzhong</span>
+                    <span class="type-label-medium tabular" style="color: var(--color-primary);">5 % farine (50 g)</span>
+                  </div>
+                  <div class="type-body-medium tabular" style="color: var(--color-ink-muted); margin-top: 2px;">
+                    Hydratation 500 % (250 g eau) · Perte évaporation 0 %
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Procédé ordonné auteur (Non projeté) -->
+            <div>
+              <div class="section-title">Procédé (9 étapes)</div>
+              <div class="card" style="margin-top: 6px;">
+                <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.875rem;">
+                  <li><strong>Poolish :</strong> 12 h (fermentation préalable)</li>
+                  <li><strong>Tangzhong :</strong> 1 h (échaudage et repos)</li>
+                  <li><strong>Pétrissage :</strong> 15 min (mélange principal)</li>
+                  <li><strong>Pointage :</strong> 3 h (fermentation en masse)</li>
+                  <li><strong>Façonnage :</strong> 15 min (mise en forme)</li>
+                  <li><strong>Apprêt :</strong> 2 h (fermentation finale)</li>
+                  <li><strong>Préchauffage :</strong> 1 h (en parallèle de l'apprêt)</li>
+                  <li><strong>Cuisson :</strong> 40 min</li>
+                  <li><strong>Refroidissement :</strong> 2 h (ressuage sur grille)</li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- Divulgation progressive existante -->
+            <details class="disclosure">
+              <summary>
+                <span>Détails du calcul d'eau</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              </summary>
+              <div class="disclosure-body" style="margin-top: 8px;">
+                L’hydratation conventionnelle est de 75 % : 750 g d’eau versée pour 1000 g de farine.<br>
+                L’eau totale inclut aussi environ 0,2 g d’eau provenant de la levure. Cette contribution est estimée.<br><br>Matières grasses : ≈ 0 %. Sucres : ≈ 0 %. La composition est incomplète pour le sel et la levure instantanée.
+              </div>
+            </details>
+          </div>
+
+          <!-- === ONGLET 2 : PLANIFICATION === -->
+          <div id="tab-content-planning" style="display: none; flex-direction: column; gap: var(--space-4);">
+            <div class="alert-box">
+              <div class="alert-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              </div>
+              <div>Projection temporelle statique pour la session. Aucun calcul moteur n'est déclenché.</div>
+            </div>
+
+            <div class="card tabular">
+              <div class="value-row">
+                <span class="value-label">Poolish (12 h)</span>
+                <span class="value-data">20:00 → 08:00</span>
+              </div>
+              <div class="value-row">
+                <span class="value-label">Tangzhong (1 h)</span>
+                <span class="value-data">07:00 → 08:00</span>
+              </div>
+              <div class="value-row">
+                <span class="value-label">Pétrissage (15 min)</span>
+                <span class="value-data">08:00 → 08:15</span>
+              </div>
+              <div class="value-row">
+                <span class="value-label">Pointage (3 h)</span>
+                <span class="value-data" style="color: var(--color-primary);">08:15 → 11:15</span>
+              </div>
+              <div class="value-row">
+                <span class="value-label">Façonnage (15 min)</span>
+                <span class="value-data">11:15 → 11:30</span>
+              </div>
+              <div class="value-row">
+                <span class="value-label">Apprêt (2 h)</span>
+                <span class="value-data">11:30 → 13:30</span>
+              </div>
+              <div class="value-row">
+                <span class="value-label">Préchauffage (1 h par.)</span>
+                <span class="value-data">12:30 → 13:30</span>
+              </div>
+              <div class="value-row">
+                <span class="value-label">Cuisson (40 min)</span>
+                <span class="value-data">13:30 → 14:10</span>
+              </div>
+              <div class="value-row">
+                <span class="value-label">Refroidissement (2 h)</span>
+                <span class="value-data">14:10 → 16:10</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn-secondary" style="width: 100%;" onclick="showToast('recipe', 'Ajustement de planning — retour à la recette ultérieur')">
+              Modifier cette étape
+            </button>
+          </div>
+
+          <!-- === ONGLET 3 : HISTORIQUE === -->
+          <div id="tab-content-history" style="display: none; flex-direction: column; gap: var(--space-4);">
+            <div class="card">
+              <div class="type-title-medium">Révision 1</div>
+              <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">
+                Version consultée
+              </div>
+              <div style="font-size: 0.8125rem; color: var(--color-ink-subtle); margin-top: 8px;">
+                
+                Aucune modification appliquée sur cet appareil.
+              </div>
+            </div>
+          </div>
+
+          <!-- === VUE D'ÉDITION DE DÉMONSTRATION (Alternante) === -->
+          <div id="recipe-edit-view" style="display: none; flex-direction: column; gap: var(--space-4);">
+            <div class="alert-box">
+              <div class="alert-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              </div>
+              <div>Mode modification : illustration visuelle des champs M3. Aucune écriture n'est exécutée.</div>
+            </div>
+
+            <div class="edit-field">
+              <label class="edit-label" for="edit-name">Nom de la recette</label>
+              <input class="edit-input" id="edit-name" type="text" value="Poolish + tangzhong">
+            </div>
+
+            <div class="edit-field">
+              <label class="edit-label" for="edit-flour">Farine totale (g)</label>
+              <input class="edit-input tabular" id="edit-flour" type="number" value="1000">
+            </div>
+
+            <div class="edit-field">
+              <label class="edit-label" for="edit-water">Eau versée (g)</label>
+              <input class="edit-input tabular" id="edit-water" type="number" value="750">
+            </div>
+
+            <div class="edit-field">
+              <label class="edit-label" for="edit-salt">Sel (g)</label>
+              <input class="edit-input tabular" id="edit-salt" type="number" value="20">
+            </div>
+
+            <div class="edit-field">
+              <label class="edit-label" for="edit-yeast">Levure instantanée (g)</label>
+              <input class="edit-input tabular" id="edit-yeast" type="number" value="4">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Sticky Bottom Action Bar (UNE seule action primaire Démarrer ; aucun bouton Corbeille à côté) -->
+        <footer class="bottom-bar" id="recipe-bottom-bar-consult">
+          <button type="button" class="btn-primary" onclick="setScreen('preparation'); showToast('preparation', 'Session de démonstration affichée')">
+            Démarrer la préparation
+          </button>
+        </footer>
+
+        <!-- Sticky Bottom Bar pour le mode édition -->
+        <footer class="bottom-bar" id="recipe-bottom-bar-edit" style="display: none;">
+          
+          <button type="button" class="btn-primary" style="flex: 1;" onclick="toggleRecipeEditMode(false); showToast('recipe', 'Enregistrement illustré — aucune recette modifiée.')">
+            Enregistrer
+          </button>
+        </footer>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast-recipe"></div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ÉCRAN 3 : PRÉPARATION EN COURS                                            -->
+    <!-- ========================================================================= -->
+    <div class="phone-container" id="container-preparation">
+      <div class="phone-caption">3. Préparation active (Pointage &amp; Validation)</div>
+      <div class="phone-frame" id="frame-preparation">
+
+        <!-- Top App Bar -->
+        <header class="app-bar">
+          <div class="app-bar-start">
+            <button type="button" class="icon-btn" aria-label="Retour à la liste" onclick="setScreen('recipes')">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span class="app-bar-title">Préparation</span>
+          </div>
+          <div class="app-bar-actions">
+            <button type="button" class="icon-btn" id="btn-menu-prep" aria-controls="menu-prep" aria-expanded="false" aria-label="Actions de préparation" aria-haspopup="true" onclick="toggleMenu('menu-prep')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Menu Déroulant ⋯ Screen 3 (Actions secondaires existantes, sans nouveau timer) -->
+        <div class="action-menu" id="menu-prep" role="menu" aria-label="Menu préparation">
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Ajout de note — flux existant')">Ajouter une note</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Ajuster la durée')">Ajuster la durée</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); setScreen('recipe')">Voir la recette</button>
+          <div class="menu-divider"></div>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Fin de préparation illustrée — aucun changement')">Terminer la préparation</button>
+          <button type="button" class="menu-item danger" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Préparation abandonnée — démonstration')">Abandonner la préparation</button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="phone-content">
+          
+          <!-- En-tête de session -->
+          <div>
+            <h1 class="type-title-large" style="line-height: 1.25;">Poolish + tangzhong</h1>
+            <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">
+              Session du 12 oct. 2026 · Recette v1
+            </div>
+          </div>
+
+          <!-- Étape active : Pointage (bulk) -->
+          <div class="card" style="border-color: var(--color-primary); box-shadow: 0 4px 16px var(--color-shadow);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="type-label-medium" style="background-color: var(--color-primary-container); color: var(--color-on-primary-container); padding: 3px 8px; border-radius: 4px; font-weight: 700;">
+                ÉTAPE EN COURS (4/9)
+              </span>
+              <span class="type-label-medium tabular" style="color: var(--color-ink-muted);">Prévu 3 h</span>
+            </div>
+
+            <div>
+              <h2 class="type-title-medium" style="font-size: 1.25rem;">Pointage</h2>
+              <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">
+                Fermentation en masse à température ambiante
+              </div>
+            </div>
+
+            <!-- Décompte explicite et sobre (PAS de rolling values, PAS de % biologique) -->
+            <div style="display: flex; align-items: baseline; gap: var(--space-3); padding: 8px 0; border-top: 1px solid var(--color-outline-subtle); border-bottom: 1px solid var(--color-outline-subtle);">
+              <div class="tabular" style="font-size: 2rem; font-weight: 700; color: var(--color-primary); line-height: 1;">
+                20 min
+              </div>
+              <div class="type-body-medium tabular" style="color: var(--color-ink-muted);">
+                écoulées sur 3 h prévues
+              </div>
+            </div>
+
+            <!-- Règle stricte : la durée prévue ne confirme pas l'état de la pâte -->
+            <div class="alert-box" style="background: transparent; border: none; padding: 0; color: var(--color-ink-muted);">
+              <div class="alert-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg>
+              </div>
+              <div style="font-weight: 600;">
+                La durée prévue ne confirme pas l’état de la pâte.
+              </div>
+            </div>
+
+            <div class="type-body-medium" style="color: var(--color-ink-muted);">
+              Prochaine étape : Façonnage · 15 min prévues
+            </div>
+          </div>
+
+          <!-- Étapes terminées (Lignes compactes et calmes) -->
+          <div>
+            <div class="section-title">Étapes terminées (3)</div>
+            <div class="card card-quiet" style="margin-top: 6px; gap: 6px;">
+              <div class="value-row tabular">
+                <span style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-muted);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary);"><path d="M20 6L9 17l-5-5"/></svg>
+                  1. Poolish (12 h)
+                </span>
+                <span style="font-size: 0.8125rem; color: var(--color-ink-subtle);">Terminé</span>
+              </div>
+              <div class="value-row tabular">
+                <span style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-muted);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary);"><path d="M20 6L9 17l-5-5"/></svg>
+                  2. Tangzhong (1 h)
+                </span>
+                <span style="font-size: 0.8125rem; color: var(--color-ink-subtle);">Terminé</span>
+              </div>
+              <div class="value-row tabular">
+                <span style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-muted);">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary);"><path d="M20 6L9 17l-5-5"/></svg>
+                  3. Pétrissage (15 min)
+                </span>
+                <span style="font-size: 0.8125rem; color: var(--color-ink-subtle);">Terminé</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Étapes à venir -->
+          <div>
+            <div class="section-title">Étapes à venir (5)</div>
+            <div class="card card-quiet" style="margin-top: 6px; gap: 6px;">
+              <div class="value-row tabular">
+                <span class="value-label">5. Façonnage</span>
+                <span class="value-data">15 min</span>
+              </div>
+              <div class="value-row tabular">
+                <span class="value-label">6. Apprêt</span>
+                <span class="value-data">2 h</span>
+              </div>
+              <div class="value-row tabular">
+                <span class="value-label">7. Préchauffage</span>
+                <span class="value-data">1 h (parallèle)</span>
+              </div>
+              <div class="value-row tabular">
+                <span class="value-label">8. Cuisson</span>
+                <span class="value-data">40 min</span>
+              </div>
+              <div class="value-row tabular">
+                <span class="value-label">9. Refroidissement</span>
+                <span class="value-data">2 h</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Précision sur les issues sans forcer la cuisson -->
+          <div style="font-size: 0.75rem; color: var(--color-ink-subtle); line-height: 1.4; padding: 0 4px;">
+            La préparation peut se terminer avant la cuisson, par exemple pour conserver la pâte crue.
+          </div>
+        </div>
+
+        <!-- Sticky Bottom Action Bar : Action unique Terminer le pointage -->
+        <footer class="bottom-bar">
+          <button type="button" class="btn-primary" onclick="showToast('preparation', 'Pointage validé (maquette) — passage illustré au Façonnage')">
+            Terminer le pointage
+          </button>
+        </footer>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast-preparation"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- === JAVASCRIPT AUTONOME (Navigation, Thèmes, Menus, Modale) === -->
+  <script>
+    // Gestion des Thèmes (Clair par défaut, Sombre chaud, AMOLED)
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.querySelectorAll('[data-theme-btn]').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-theme-btn') === theme);
+      });
+      updateUrlParam('theme', theme);
+    }
+
+    // Gestion de la vue d'écran (all, recipes, recipe, preparation)
+    function setScreen(screen) {
+      const isAll = (screen === 'all');
+      const containers = {
+        recipes: document.getElementById('container-recipes'),
+        recipe: document.getElementById('container-recipe'),
+        preparation: document.getElementById('container-preparation')
+      };
+
+      if (isAll) {
+        document.body.classList.remove('single-screen-mode');
+        Object.values(containers).forEach(el => el.style.display = 'flex');
+      } else {
+        document.body.classList.add('single-screen-mode');
+        Object.entries(containers).forEach(([key, el]) => {
+          el.style.display = (key === screen) ? 'flex' : 'none';
+        });
+      }
+
+      document.querySelectorAll('[data-screen-btn]').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-screen-btn') === screen);
+      });
+
+      updateUrlParam('screen', isAll ? null : screen);
+      closeAllMenus();
+    }
+
+    // Synchronisation paramètre d'URL sans rechargement
+    function updateUrlParam(key, value) {
+      const url = new URL(window.location.href);
+      if (value) {
+        url.searchParams.set(key, value);
+      } else {
+        url.searchParams.delete(key);
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    // Gestion des menus ⋯
+    const menuTriggers = new Map();
+    function closeMenu(menuId, restoreFocus = true) {
+      const menu = document.getElementById(menuId);
+      if (!menu || !menu.classList.contains('open')) return;
+      menu.classList.remove('open');
+      const trigger = menuTriggers.get(menuId);
+      trigger?.setAttribute('aria-expanded', 'false');
+      if (restoreFocus) trigger?.focus();
+    }
+    function closeAllMenus(restoreFocus = true) {
+      document.querySelectorAll('.action-menu.open').forEach(menu => closeMenu(menu.id, restoreFocus));
+    }
+    function toggleMenu(menuId) {
+      const menu = document.getElementById(menuId);
+      const wasOpen = menu.classList.contains('open');
+      const trigger = document.querySelector('[aria-controls="' + menuId + '"]');
+      closeAllMenus(false);
+      if (!wasOpen) {
+        menuTriggers.set(menuId, trigger);
+        menu.classList.add('open');
+        trigger?.setAttribute('aria-expanded', 'true');
+        [...menu.querySelectorAll('[role="menuitem"]')].find(el => el.offsetWidth > 0)?.focus();
+      } else trigger?.focus();
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.action-menu') && !e.target.closest('[aria-controls]')) closeAllMenus(false);
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closeAllMenus(); return; }
+      const menu = e.target.closest('.action-menu.open');
+      if (menu && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
+        const items = [...menu.querySelectorAll('[role="menuitem"]')].filter(el => el.offsetWidth > 0);
+        const current = items.indexOf(document.activeElement);
+        const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : (current + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+        e.preventDefault(); items[next]?.focus();
+      }
+      if (e.key === 'Tab' && menu) closeMenu(menu.id, false);
+      if (['Enter', ' '].includes(e.key) && e.target.matches('.card-interactive[role="button"]')) { e.preventDefault(); e.target.click(); }
+    });
+    // Onglets de la fiche recette
+    function switchRecipeTab(tabName) {
+      const tabs = ['formula', 'planning', 'history'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-btn-' + t);
+        const content = document.getElementById('tab-content-' + t);
+        const isActive = (t === tabName);
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        content.style.display = isActive ? 'flex' : 'none';
+      });
+    }
+
+    // Basculement Mode Édition de démonstration (Screen 2)
+    function toggleRecipeEditMode(isEditing) {
+      document.getElementById('tab-content-formula').style.display = isEditing ? 'none' : 'flex';
+      document.getElementById('tab-content-planning').style.display = 'none';
+      document.getElementById('tab-content-history').style.display = 'none';
+      document.querySelector('.tabs-bar').style.display = isEditing ? 'none' : 'flex';
+      
+      document.getElementById('recipe-edit-view').style.display = isEditing ? 'flex' : 'none';
+      document.getElementById('recipe-bottom-bar-consult').style.display = isEditing ? 'none' : 'flex';
+      document.getElementById('recipe-bottom-bar-edit').style.display = isEditing ? 'flex' : 'none';
+      
+      document.getElementById('recipe-bar-title').textContent = isEditing ? 'Modifier la recette' : 'Recette';
+      document.querySelectorAll('[data-reading-action]').forEach(el => el.style.display = isEditing ? 'none' : 'flex');
+      document.querySelectorAll('[data-editing-action]').forEach(el => el.style.display = isEditing ? 'flex' : 'none');
+      
+      if (!isEditing) {
+        switchRecipeTab('formula');
+      }
+    }
+
+    // Affichage des notifications Toast de maquette
+    function showToast(screen, text) {
+      const toast = document.getElementById('toast-' + screen);
+      if (!toast) return;
+      toast.textContent = text;
+      toast.classList.add('visible');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 3000);
+    }
+
+    // Initialisation depuis l'URL au chargement
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const theme = params.get('theme');
+      const screen = params.get('screen');
+
+      if (theme && ['light', 'dark', 'amoled'].includes(theme)) {
+        setTheme(theme);
+      } else {
+        setTheme('light');
+      }
+
+      if (screen && ['recipes', 'recipe', 'preparation'].includes(screen)) {
+        setScreen(screen);
+      } else {
+        setScreen('all');
+      }
+    });
+  </script>
+</body>
+</html>
