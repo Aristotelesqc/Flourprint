@@ -33,6 +33,8 @@ jobs:
       - run: pnpm lint
       - name: AGY launcher protocol checks (offline)
         run: python3 -m unittest discover -s .agents/skills/agy/scripts -p 'test_*.py'
+      - name: Backlog projection and publication checks (offline)
+        run: node --test scripts/backlog-view.test.mjs
       - run: pnpm typecheck
       - run: pnpm vitest run
       - run: node apps/cli/dist/main.js --version

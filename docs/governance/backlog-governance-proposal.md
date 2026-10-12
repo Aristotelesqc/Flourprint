@@ -6,6 +6,11 @@
 > labels. The rest of this proposal (evidence before Done, owner-only priorities, report-only
 > reconciliation) stands.
 
+> **Amendment approved on 2026-10-12 (#60).** The manual operational table is replaced by the
+> [generated backlog view](generated-backlog.md), a bot-owned comment linked from #30. Agents
+> maintain individual issues and labels; automation reports their state and classification
+> anomalies. The historical proposal below is not an instruction to create Projects or a Steward.
+
 **Status:** Proposed, non-normative until owner approval.  
 **Parent:** [#30](https://github.com/Aristotelesqc/Flourprint/issues/30)  
 **Audit:** [2026-10-11 independent review](../audits/2026-10-11-independent-review.md)
