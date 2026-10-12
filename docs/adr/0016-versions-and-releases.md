@@ -54,9 +54,11 @@ conflict with it.
 
 ### CI budget
 
-The repository is private: GitHub Actions minutes are counted (2 000 a month on the free plan,
-Windows minutes count double). The first week used the month: every push to a pull request built
-two APKs, the Windows shell and often the emulator suite, about 25 billed minutes each. From now
+The first week used the month's GitHub Actions minutes while the repository was private (2 000 a
+month on the free plan, Windows minutes counting double): every push to a pull request built two
+APKs, the Windows shell and often the emulator suite, about 25 billed minutes each. The owner then
+made the repository public (2026-10-12), where standard runners are free, and kept this budget:
+faster results on pull requests, and no surprise if the repository is private again. From now
 on:
 
 | Trigger                    | Jobs                                                                      |
