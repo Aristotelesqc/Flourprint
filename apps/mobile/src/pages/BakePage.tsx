@@ -495,9 +495,9 @@ export const BakePage = () => {
             <>
               <p className="m-0 text-lg">{t('bake.allDone')}</p>
               {/* One tap records the recipe's intended outcome; the choice beside it, another. */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <IonButton
-                  className="flex-1"
+                  className="min-w-[60%] flex-1"
                   size="large"
                   disabled={commands.busy}
                   onClick={() => void send({ type: 'FinishBake' })}
@@ -677,6 +677,22 @@ export const BakePage = () => {
             </section>
           )}
 
+          {/* Finishing does not need every planned step done: a dough frozen before its
+              planned bake is a finished Preparation (bake-session.md). No step is completed
+              for the baker; the result is chosen explicitly. */}
+          {state.status === 'active' && !view?.allDone && (
+            <IonButton
+              fill="clear"
+              disabled={commands.busy}
+              onClick={() =>
+                pickOutcome(t('bake.finishNow'), intended, (outcome) => {
+                  void send({ type: 'FinishBake', outcome });
+                })
+              }
+            >
+              {t('bake.finishNow')}
+            </IonButton>
+          )}
           {state.status === 'active' && (
             <IonButton fill="clear" color="medium" onClick={abandon}>
               {t('bake.abandon')}
