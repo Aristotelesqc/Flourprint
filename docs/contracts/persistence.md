@@ -60,7 +60,7 @@ Personal flour entries (`flours.md`) are stored by `(id, version)`; a version is
 Writing an entry whose version is not the next one for its id is refused (`HeadConflict`).
 Built-in entries are code and are not stored.
 
-## SQLite schema (version 4)
+## SQLite schema (version 5)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,

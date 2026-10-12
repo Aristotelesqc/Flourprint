@@ -23,11 +23,15 @@ a UI concern (ADR 0009).
 The baker chooses °C or °F for three contexts, a device preference that is never written into a
 document, a backup or an export:
 
-| Context   | Temperatures shown                                                                                               |
-| --------- | ---------------------------------------------------------------------------------------------------------------- |
-| `oven`    | steps with operation `bake`, `preheat` or `boil`, or location `oven`; every equipment `setpointC` (equipment.md) |
-| `cold`    | steps with location `fridge` or `freezer`, or operation `retard`                                                 |
-| `ambient` | every other temperature: room, proofer, dough, water, flour, friction                                            |
+| Context   | Temperatures shown                                                    |
+| --------- | --------------------------------------------------------------------- |
+| `oven`    | steps with operation `bake`, `preheat` or `boil`, or location `oven`  |
+| `cold`    | steps with location `fridge` or `freezer`, or operation `retard`      |
+| `ambient` | every other temperature: room, proofer, dough, water, flour, friction |
+
+An equipment `setpointC` (equipment.md) follows its appliance, not its step: `ambient` for a
+`proofer`, `oven` for every other appliance or when none is named, an oven in Proof mode included.
+The step's other temperatures (`conditions`) keep the rows above.
 
 A value typed in °F is converted to °C before it is stored (`(F − 32) × 5 / 9`), and shown back
 from °C; a friction is a difference and converts by `× 5 / 9` only.
