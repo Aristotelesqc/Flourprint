@@ -61,6 +61,13 @@ jobs:
       - run: pnpm build:mobile
       - run: pnpm --filter @flourprint/mobile exec playwright install --with-deps chromium
       - run: pnpm --filter @flourprint/mobile e2e
+      - name: Failure context in the log
+        # Playwright's page snapshot of each failed test, readable without downloading the
+        # artifact (agents may not reach the artifact store).
+        if: failure()
+        run: |
+          find apps/mobile/test-results -name error-context.md -print0 |
+            while IFS= read -r -d '' file; do echo "::group::$file"; cat "$file"; echo "::endgroup::"; done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
