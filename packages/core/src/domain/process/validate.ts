@@ -5,6 +5,7 @@ import {
   topologicalSort,
   type GraphError,
 } from '../graph.js';
+import { stepEquipmentProblem } from '../equipment/step.js';
 import { isReservedId } from '../ids.js';
 import { err, ok, type Result } from '../result.js';
 import { outcomeProblem } from './cooking.js';
@@ -107,6 +108,10 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
       step.durationMode !== 'model'
     ) {
       return err(invalid(`${path}.durationMode`, 'must be manual or model'));
+    }
+    if (step.equipment !== undefined) {
+      const bad = stepEquipmentProblem(step.equipment, `${path}.equipment`);
+      if (bad) return err(invalid(bad.path, bad.reason));
     }
   }
   if (process.intendedOutcome !== undefined) {

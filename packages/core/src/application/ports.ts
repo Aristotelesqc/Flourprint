@@ -3,6 +3,7 @@ import type {
   BakeOrigin,
   BakeSummary,
   DomainError,
+  EquipmentEntry,
   FlourEntry,
   Formula,
   Instant,
@@ -159,6 +160,8 @@ export interface RestorePlan {
   readonly drafts?: readonly Draft[];
   /** Every personal flour entry version (flours.md); optional, like drafts. */
   readonly flours?: readonly FlourEntry[];
+  /** Every personal equipment entry version (equipment.md); optional, like flours. */
+  readonly equipment?: readonly EquipmentEntry[];
   readonly bakes: readonly AppendInput[];
 }
 
@@ -188,4 +191,25 @@ export interface FlourRegistry {
   listFlourVersions(): Promise<readonly FlourEntry[]>;
   /** Writes the entry when its version is the next one for its id, else `HeadConflict`. */
   saveFlour(entry: FlourEntry): Promise<Result<FlourEntry, FlourStoreError>>;
+}
+
+export type EquipmentStoreError =
+  | DomainError<'HeadConflict', { equipmentId: string; currentHead: number }>
+  | DomainError<'UnsupportedDocumentVersion', { schemaVersion: number }>;
+
+/**
+ * Personal equipment entries (docs/contracts/equipment.md, persistence.md): stored by
+ * (id, version), a version is never rewritten. Built-in entries are code and are never stored.
+ */
+export interface EquipmentRegistry {
+  /** The latest version of every personal entry, archived ones included, by id. */
+  listEquipment(): Promise<readonly EquipmentEntry[]>;
+  getEquipment(
+    id: string,
+    version: number,
+  ): Promise<Result<EquipmentEntry | undefined, EquipmentStoreError>>;
+  /** Every version of every personal entry, by id then version (backups). */
+  listEquipmentVersions(): Promise<readonly EquipmentEntry[]>;
+  /** Writes the entry when its version is the next one for its id, else `HeadConflict`. */
+  saveEquipment(entry: EquipmentEntry): Promise<Result<EquipmentEntry, EquipmentStoreError>>;
 }

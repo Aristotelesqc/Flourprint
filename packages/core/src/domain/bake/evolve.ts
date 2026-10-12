@@ -1,5 +1,6 @@
+import type { EquipmentEntry, StepEquipment } from '../equipment/types.js';
 import type { Process, ProcessStep } from '../process/types.js';
-import type { BakeEvent, BakeState, StepRecord } from './types.js';
+import type { BakeEvent, BakeState, EquipmentOverride, StepRecord } from './types.js';
 
 export const initialBakeState = (bakeId: string): BakeState => ({
   bakeId,
@@ -24,6 +25,14 @@ const mapSteps = (
   map: (step: ProcessStep) => ProcessStep,
 ): Process => ({ ...process, steps: (process?.steps ?? []).map(map) });
 
+const withCopies = (
+  state: BakeState,
+  copies: readonly EquipmentEntry[] | undefined,
+): BakeState =>
+  copies === undefined || copies.length === 0
+    ? state
+    : { ...state, equipment: [...(state.equipment ?? []), ...copies] };
+
 /**
  * Applies one recorded event. Purely structural: it never calls the calculation engine, so an
  * old bake reads the same after any engine change (docs/contracts/history.md).
@@ -39,6 +48,7 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
         status: 'active',
         startedAt: event.occurredAt,
         snapshot,
+        ...(snapshot.equipment === undefined ? {} : { equipment: snapshot.equipment }),
         formula: snapshot.formula,
         resolvedFormula: snapshot.resolvedFormula,
         process: snapshot.process,
@@ -84,7 +94,20 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
           resolvedFormula: payload.derived.resolvedFormula,
         };
       }
-      const { target, effective } = payload;
+      if (payload.target.field === 'equipment') {
+        const override = payload as EquipmentOverride;
+        const { stepId } = override.target;
+        const settings: StepEquipment = override.effective;
+        return {
+          ...withCopies(next, override.equipment),
+          overrides: recorded,
+          process: mapSteps(next.process, (s) =>
+            s.id === stepId ? { ...s, equipment: settings } : s,
+          ),
+        };
+      }
+      const { target } = payload;
+      const effective = payload.effective as number;
       return {
         ...next,
         overrides: recorded,
@@ -109,7 +132,7 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
       const index = steps.findIndex((s) => s.id === payload.after);
       steps.splice(index + 1, 0, payload.step);
       return {
-        ...next,
+        ...withCopies(next, payload.equipment),
         process: { ...next.process, steps },
         steps: { ...next.steps, [payload.step.id]: { measurements: [] } },
       };

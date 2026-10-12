@@ -7,7 +7,9 @@ import {
   upcastEvent,
   validateRecipe,
   builtInFlour,
+  canonicalJson,
   type BakeEvent,
+  type EquipmentEntry,
   type FlourEntry,
   type DomainError,
   type Instant,
@@ -19,11 +21,13 @@ import { checkBakeLog } from './backup-events.js';
 import { decodeFormula, decodeProcess } from './documents.js';
 import { isCount, isId, isInstant, isObject, Refused, refuse } from './decode.js';
 import { decodeDraft } from './drafts.js';
+import { decodeEquipmentEntry } from './equipment.js';
 import { decodeFlourEntry } from './flours.js';
 import type {
   AppendInput,
   Draft,
   BakeEventStore,
+  EquipmentRegistry,
   FlourRegistry,
   RecipeRepository,
   RecordedRecipe,
@@ -44,12 +48,15 @@ export interface Backup {
   readonly drafts?: readonly Draft[];
   /** Every personal flour entry version (flours.md); optional, so older backups still restore. */
   readonly flours?: readonly FlourEntry[];
+  /** Every personal equipment entry version (equipment.md); optional, so older backups restore. */
+  readonly equipment?: readonly EquipmentEntry[];
 }
 
 export interface BackupStores {
   readonly recipes: RecipeRepository;
   readonly bakes: BakeEventStore;
   readonly flours: FlourRegistry;
+  readonly equipment: EquipmentRegistry;
 }
 
 export type BackupError =
@@ -105,6 +112,7 @@ export const exportBackup = async (
     bakes,
     drafts: await stores.recipes.listDrafts(),
     flours: await stores.flours.listFlourVersions(),
+    equipment: await stores.equipment.listEquipmentVersions(),
   });
 };
 
@@ -233,6 +241,23 @@ const decodeFlours = (input: readonly unknown[]): FlourEntry[] => {
   return flours;
 };
 
+/** Personal equipment entries: each one valid, versions of an id numbered 1..n (equipment.md). */
+const decodeEquipment = (input: readonly unknown[]): EquipmentEntry[] => {
+  const entries = input.map((value, i) => decodeEquipmentEntry(value, `equipment ${i + 1}`));
+  const versions = new Map<string, number[]>();
+  for (const entry of entries) {
+    if (entry.builtIn) return refuse(`equipment ${entry.id} is a built-in entry`);
+    versions.set(entry.id, [...(versions.get(entry.id) ?? []), entry.version]);
+  }
+  for (const [id, list] of versions) {
+    const sorted = [...list].sort((a, b) => a - b);
+    if (sorted.some((version, i) => version !== i + 1)) {
+      return refuse(`versions of equipment ${id} are not numbered 1..n`);
+    }
+  }
+  return entries;
+};
+
 /**
  * Decodes and checks a whole backup before anything is written (persistence.md): versions,
  * identifiers, numbering, formula/process consistency, event envelopes and references.
@@ -265,6 +290,10 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
       return err(invalid('flours must be a list'));
     }
     const flours = decodeFlours((input.flours ?? []) as unknown[]);
+    if (input.equipment !== undefined && !Array.isArray(input.equipment)) {
+      return err(invalid('equipment must be a list'));
+    }
+    const equipment = decodeEquipment((input.equipment ?? []) as unknown[]);
 
     const bakes: AppendInput[] = [];
     const bakeIds = new Set<string>();
@@ -298,6 +327,14 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
           return err(invalid(`bake ${bakeId} refers to a flour entry missing from the backup`));
         }
       }
+      // Copies in a bake are immutable: a personal one is the entry version of the registry.
+      for (const copy of state.equipment ?? []) {
+        if (copy.builtIn) continue;
+        const entry = equipment.find((e) => e.id === copy.id && e.version === copy.version);
+        if (!entry || canonicalJson(entry) !== canonicalJson(copy)) {
+          return err(invalid(`bake ${bakeId} refers to an equipment entry missing from the backup`));
+        }
+      }
       bakes.push({
         command: { commandId: `import:${bakeId}`, bakeId, content: 'import' },
         expectedVersion: 0,
@@ -312,7 +349,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     if (new Set(drafts.map((d) => d.id)).size !== drafts.length) {
       return err(invalid('duplicate draft'));
     }
-    return ok({ recipes, families, bakes, drafts, flours });
+    return ok({ recipes, families, bakes, drafts, flours, equipment });
   } catch (error) {
     if (error instanceof RefusedWith) return err(error.error);
     if (error instanceof Refused) return err(invalid(error.reason));

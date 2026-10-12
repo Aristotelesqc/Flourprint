@@ -1,4 +1,5 @@
 import type { PreparationOutcome } from './cooking.js';
+import type { StepEquipment } from '../equipment/types.js';
 import type { Instant } from '../instant.js';
 import type { AcceptedSuggestion } from '../values.js';
 
@@ -77,6 +78,8 @@ export interface ProcessStep {
    * suggestion (fermentation.md, Model-driven duration). Absent = `manual`.
    */
   readonly durationMode?: 'manual' | 'model';
+  /** How the step is cooked or held (equipment.md); recorded, never read by the scheduler. */
+  readonly equipment?: StepEquipment;
 }
 
 export interface Process {

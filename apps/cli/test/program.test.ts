@@ -8,6 +8,6 @@ describe('flourprint CLI', () => {
       .exitOverride()
       .configureOutput({ writeOut: (text) => (output += text) });
     expect(() => program.parse(['--version'], { from: 'user' })).toThrow();
-    expect(output.trim()).toBe('0.0.0 (contracts 0.11.0)');
+    expect(output.trim()).toBe('0.0.0 (contracts 0.12.0)');
   });
 });
