@@ -13,6 +13,18 @@ const openRecipe = async (page: Page) => {
   await enterEditing(page);
 };
 
+/**
+ * One step back in the app, returning once the navigation and the Ionic page transition are over:
+ * the URL changed and a single page of the outlet is left shown (the leaving one is hidden when
+ * its transition ends). Clicking again earlier would hit the leaving page's back button.
+ */
+const goBack = async (page: Page) => {
+  const before = page.url();
+  await page.locator('ion-back-button:visible').last().click();
+  await expect(page).not.toHaveURL(before);
+  await expect(page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)')).toHaveCount(1);
+};
+
 const unsaved = (page: Page) => page.getByText('Modifications non enregistrées');
 
 /** The header's start button of the open recipe (it reads "En cours" while a bake runs). */
@@ -137,6 +149,81 @@ test('a note attaches to a step; an ended bake takes a rated review note', async
   await page.locator('textarea:visible').fill('Mie serrée');
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
+
+  // An ended bake can be reopened; its earlier end stays in the log (bake-session.md).
+  await page.getByRole('button', { name: 'Rouvrir' }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Rouvrir' }).click();
+  await expect(page.getByRole('button', { name: 'Abandonner' })).toBeVisible();
+  await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
+});
+
+test('finishes in one tap with the intended outcome, then corrects it', async ({ page }) => {
+  await openRecipe(page);
+  await startBake(page);
+  // Run every step through the main action until the bake can be finished.
+  const main = page.locator('ion-button.h-\\[72px\\]:visible');
+  const allDone = page.getByText('Toutes les étapes sont terminées.');
+  for (let i = 0; i < 40 && !(await allDone.isVisible()); i++) {
+    if (await main.count()) await main.first().click();
+    else
+      await page
+        .getByRole('button', { name: /^Commencer / })
+        .first()
+        .click();
+  }
+  await expect(allDone).toBeVisible();
+  // The recipe bakes: one tap records it as cooked; the choice beside offers another result.
+  await expect(page.getByRole('button', { name: 'Autre résultat' })).toBeVisible();
+  await page.getByRole('button', { name: 'Terminer · Cuit' }).click();
+  await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Cuit');
+
+  // Two short lists: the result, then what became of the raw dough.
+  await page.getByRole('button', { name: 'Modifier le résultat' }).click();
+  await page.locator('ion-alert').getByText('Cuit et pâte crue', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('ion-alert')).toContainText('Devenir de la pâte crue');
+  await page.locator('ion-alert').getByText('congelée', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByTestId('bake-outcome')).toHaveText(
+    'Résultat : Cuit et pâte crue, congelée',
+  );
+  // Another result starts from "not said": saving at once records it.
+  await page.getByRole('button', { name: 'Modifier le résultat' }).click();
+  await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('ion-alert')).toContainText('Devenir de la pâte crue');
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Pâte crue');
+});
+
+test('finishes as frozen dough before its planned bake, keeping the steps as recorded', async ({
+  page,
+}) => {
+  await openRecipe(page);
+  await startBake(page);
+  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await page.getByRole('button', { name: 'Préferment terminé' }).click();
+  // The bake is not reached: finishing now asks for the result, completes no step.
+  await page.getByRole('button', { name: 'Terminer maintenant…' }).click();
+  await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await page.locator('ion-alert').getByText('congelée', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Pâte crue, congelée');
+  await expect(page.getByText(/Préferment terminé/).first()).toBeVisible();
+  await expect(page.getByText(/Cuisson terminé/)).toHaveCount(0);
+});
+
+test('a recipe states how it ends', async ({ page }) => {
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  const ends = page.getByLabel('Fin prévue');
+  await expect(ends.locator('option:checked')).toHaveText('Automatique : Cuit');
+  await ends.selectOption({ label: 'Pâte crue, congelée' });
+  await expect(unsaved(page).first()).toBeVisible();
+  // Every accepted combination has its option, including a mixed result given away.
+  await ends.selectOption({ label: 'Cuit et pâte crue, donnée' });
+  await expect(ends.locator('option:checked')).toHaveText('Cuit et pâte crue, donnée');
 });
 
 test('copies all data for review, with the bake digest and its notes', async ({
@@ -155,8 +242,7 @@ test('copies all data for review, with the bake digest and its notes', async ({
   // In-app navigation: the browser build keeps its data in memory only.
   const advanced = page.getByLabel('Avancé').first();
   while (!(await advanced.isVisible())) {
-    await page.locator('ion-back-button:visible').last().click();
-    await page.waitForTimeout(500);
+    await goBack(page);
   }
   await advanced.click();
   await page.getByText('Copier toutes mes données').click();
@@ -192,6 +278,73 @@ test('speaks English on an English device @en', async ({ page }) => {
   await enterEditing(page);
   await expect(page.getByLabel('Water (g)', { exact: true })).toHaveValue('750');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+test('pulling the recipe list down checks for a newer dev build', async ({ page }) => {
+  await page.goto('/recipes');
+  await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  // A non-release build (this one is local): the same check as in Advanced.
+  const box = await page.getByRole('heading', { name: 'Recettes' }).boundingBox();
+  if (!box) throw new Error('no heading');
+  await page.mouse.move(box.x + 20, box.y + 5);
+  await page.mouse.down();
+  for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  await page.mouse.up();
+  await expect(page.getByText(/est déjà la dernière version/)).toBeVisible();
+});
+
+/** Pulls the recipe list down, as a finger would. */
+const pullRecipes = async (page: Page) => {
+  const box = await page
+    .getByRole('heading', { name: 'Recettes' })
+    .locator('visible=true')
+    .boundingBox();
+  if (!box) throw new Error('no heading');
+  await page.mouse.move(box.x + 20, box.y + 5);
+  await page.mouse.down();
+  for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  await page.mouse.up();
+};
+
+test('a newer dev build loads only after the browser data is saved', async ({ page }) => {
+  // A deployment newer than this build; then the same build once reloaded.
+  let newer = true;
+  await page.route('**/build.json*', (route) =>
+    route.fulfill({
+      json: newer
+        ? { build: '0.2.0-dev.999+newer', label: 'v0.2.0-newer-build', channel: 'dev' }
+        : { build: '0.2.0-local', label: 'v0.2.0-local', channel: 'local' },
+    }),
+  );
+  await page.goto('/recipes');
+  await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
+  await page.getByText('Recette vierge').first().click();
+  await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  // At once back to the list, in the app (a navigation would reload the page), and pull: no
+  // wait for the periodic snapshot.
+  await page.locator('ion-back-button:visible').last().click();
+  await expect(page.getByRole('heading', { name: 'Recettes' }).locator('visible=true')).toHaveCount(
+    1,
+  );
+  const reloaded = page.waitForEvent('load');
+  // The gesture itself is covered above; here the refresher of the shown list fires directly.
+  await page.evaluate(() => {
+    const refresher = document.querySelector(
+      'ion-router-outlet > .ion-page:not(.ion-page-hidden) ion-refresher',
+    );
+    refresher?.dispatchEvent(new CustomEvent('ionRefresh', { detail: { complete: () => {} } }));
+  });
+  await reloaded;
+  newer = false;
+  await expect(page.getByText('Recette 1').first()).toBeVisible();
+});
+
+test('an unreachable site reloads nothing', async ({ page }) => {
+  await page.route('**/build.json*', (route) => route.abort());
+  await page.goto('/recipes');
+  await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  await pullRecipes(page);
+  await expect(page.getByText(/Site injoignable/)).toBeVisible();
 });
 
 test('opens on the recipes; diagnostics sit behind the advanced menu', async ({ page }) => {
@@ -463,6 +616,48 @@ test('the boil of bagels ends the dough: it is not a fermentation step', async (
   await expect(page.getByLabel('Ébullition, durée')).toHaveCount(0);
 });
 
+test('starts a bake whose recipe file references a built-in vessel', async ({ page }) => {
+  const base = variant('skillet', 'Pizza poêle', '2026-01-01T12:00:00.000Z');
+  const bake = {
+    id: 'bake',
+    operation: 'bake',
+    dependsOn: ['mix'],
+    schedule: 'asap',
+    plannedDurationS: 600,
+    equipment: {
+      appliance: 'oven',
+      mode: 'still',
+      setpointC: 230,
+      vessel: { item: { id: 'cast-iron-skillet', version: 1 }, cover: 'open' },
+    },
+  };
+  const recipe = {
+    ...base,
+    revisions: base.revisions.map((r) => ({
+      ...r,
+      process: { steps: [...r.process.steps, bake] },
+    })),
+  };
+  await page.goto('/advanced');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'recettes.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        kind: 'flourprint-recipes',
+        schemaVersion: 1,
+        exportedAt: '2026-10-08T18:00:00.000Z',
+        recipes: [recipe],
+        families: [{ id: 'family-test', name: 'Pain test' }],
+      }),
+    ),
+  });
+  await expect(page.getByText('1 recette importée.')).toBeVisible();
+  await page.locator('ion-back-button:visible').click();
+  await page.getByText('Pizza poêle', { exact: true }).locator('visible=true').click();
+  await startBake(page);
+});
+
 test('follows several bakes on one screen, with actions and notes per bake', async ({ page }) => {
   await page.goto('/advanced');
   await page.locator('input[type=file]').setInputFiles({
@@ -481,8 +676,7 @@ test('follows several bakes on one screen, with actions and notes per bake', asy
   await expect(page.getByText('1 recette importée.')).toBeVisible();
   const shown = (text: string) => page.getByText(text, { exact: true }).locator('visible=true');
   const back = async () => {
-    await page.locator('ion-back-button:visible').last().click();
-    await page.waitForTimeout(500);
+    await goBack(page);
   };
   await back();
   for (const name of ['Poolish + tangzhong', 'Pain test 1']) {
@@ -675,8 +869,7 @@ test('a customized flour keeps its properties and is offered by the flour picker
   // The entry, with its source and basis, is in the data copied for review.
   const advanced = page.getByLabel('Avancé').first();
   while (!(await advanced.isVisible())) {
-    await page.locator('ion-back-button:visible').last().click();
-    await page.waitForTimeout(500);
+    await goBack(page);
   }
   await advanced.click();
   await page.getByText('Copier toutes mes données').click();
@@ -762,8 +955,39 @@ test('the browser preview keeps its data across a reload, until it is erased', a
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Recette vierge').first().click();
   await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
-  // The snapshot is saved every few seconds and when the page is hidden.
-  await page.waitForTimeout(3_500);
+  // The snapshot is saved every few seconds and when the page is hidden: wait for the saved
+  // snapshot itself to hold the new recipe, not for a delay.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((resolve) => {
+              const open = indexedDB.open('flourprint-preview', 1);
+              open.onerror = () => resolve(false);
+              open.onsuccess = () => {
+                const db = open.result;
+                // The store may not exist yet: that is a "not yet", never a hang.
+                try {
+                  const read = db.transaction('snapshots').objectStore('snapshots').get('backup');
+                  read.onerror = () => {
+                    db.close();
+                    resolve(false);
+                  };
+                  read.onsuccess = () => {
+                    db.close();
+                    resolve(typeof read.result === 'string' && read.result.includes('Recette 1'));
+                  };
+                } catch {
+                  db.close();
+                  resolve(false);
+                }
+              };
+            }),
+        ),
+      { timeout: 15_000 },
+    )
+    .toBe(true);
   await page.reload();
   await page.goto('/recipes');
   await expect(page.getByText('Recette 1').first()).toBeVisible();
@@ -786,8 +1010,7 @@ test('the browser preview keeps its data across a reload, until it is erased', a
 /** Back to the recipe list in the app (the browser build keeps its data in memory). */
 const backToRecipes = async (page: Page) => {
   while (new URL(page.url()).pathname !== '/recipes') {
-    await page.locator('ion-back-button:visible').last().click();
-    await page.waitForTimeout(500);
+    await goBack(page);
   }
   await expect(page.getByRole('heading', { name: 'Recettes' }).locator('visible=true')).toHaveCount(
     1,
@@ -813,6 +1036,9 @@ const setSimulation = async (page: Page, on: boolean) => {
 test('a simulated bake keeps to its own world, on a clock that can be advanced', async ({
   page,
 }) => {
+  // The longest journey (about 20 s on a fast machine): it crosses eleven page transitions, so
+  // a slow runner needs more than the default budget. Every assertion keeps its own timeout.
+  test.slow();
   await page.goto('/advanced');
   await setSimulation(page, true);
   await expect(page.getByText(/Mode simulation · heure simulée/)).toBeVisible();
@@ -861,7 +1087,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await expect(page.getByRole('region', { name: 'Dernières fournées' })).toContainText(
     'Poolish + tangzhong',
   );
-  await page.locator('ion-back-button:visible').last().click();
+  await goBack(page);
   await expect(page).toHaveURL(/\/advanced$/);
   await page.getByText('Effacer l’historique de simulation').locator('visible=true').click();
   await expect(page.locator('ion-alert')).toContainText('1 fournée sera effacée');

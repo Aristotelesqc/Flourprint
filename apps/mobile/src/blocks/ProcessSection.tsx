@@ -2,6 +2,7 @@ import { IonButton } from '@ionic/react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import {
   insertStepAfter,
+  intendedOutcome,
   projectProcess,
   temperatureContext,
   type Instant,
@@ -19,6 +20,7 @@ import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
 import { newStepId, STEP_OPERATIONS } from '../services/process-edit';
+import { OUTCOME_CHOICES, outcomeFromKey, outcomeKey, useOutcomeText } from './Outcome';
 import { StepSheet, techniqueSummary } from './StepSheet';
 
 interface Props {
@@ -336,6 +338,11 @@ export const ProcessSection = ({
         />
       )}
 
+      {/* How the recipe ends shows in consultation too; only editing changes it. */}
+      <Rows>
+        <IntendedOutcome process={process} disabled={!editable} onChange={onProcessChange} />
+      </Rows>
+
       {!canStart && <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>}
       {canStart && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
@@ -427,6 +434,51 @@ const AddStep = ({
           {t('process.addStep.cancel')}
         </IonButton>
       </span>
+    </div>
+  );
+};
+
+/**
+ * How the recipe ends (bake-session.md, Outcome): recorded when the bake is finished with one
+ * tap. Automatic follows the steps: cooked with a cooking step, else the raw dough.
+ */
+const IntendedOutcome = ({
+  process,
+  disabled,
+  onChange,
+}: {
+  process: Process;
+  disabled: boolean;
+  onChange: (process: Process) => boolean;
+}) => {
+  const { t } = useMessages();
+  const text = useOutcomeText();
+  const id = useId();
+  const { intendedOutcome: chosen, ...rest } = process;
+  const automatic = intendedOutcome(rest);
+  return (
+    <div className="flex flex-col gap-2 px-4 py-3">
+      <label htmlFor={id} className="text-sm font-semibold">
+        {t('process.intendedOutcome')}
+      </label>
+      <select
+        id={id}
+        className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2 text-ink"
+        value={chosen === undefined ? '' : outcomeKey(chosen)}
+        disabled={disabled}
+        onChange={(event) => {
+          const outcome = outcomeFromKey(event.target.value);
+          onChange(outcome === undefined ? rest : { ...rest, intendedOutcome: outcome });
+        }}
+      >
+        <option value="">{t('outcome.auto', { outcome: text(automatic) })}</option>
+        {OUTCOME_CHOICES.map((choice) => (
+          <option key={outcomeKey(choice)} value={outcomeKey(choice)}>
+            {text(choice)}
+          </option>
+        ))}
+      </select>
+      <span className="text-sm text-muted">{t('process.intendedOutcomeHint')}</span>
     </div>
   );
 };

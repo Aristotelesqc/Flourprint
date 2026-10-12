@@ -181,6 +181,57 @@ const technique: Check = (v, w) =>
     },
   );
 
+/** A preparation outcome (bake-session.md); its rules are checked by validateProcess. */
+const outcome: Check = (v, w) =>
+  fields(
+    v,
+    w,
+    { result: oneOf('cooked', 'dough', 'cookedAndDough') },
+    { dough: oneOf('frozen', 'refrigerated', 'given', 'sold', 'other'), pieces: number },
+  );
+
+const equipmentRef: Check = (v, w) => fields(v, w, { id: string, version: number });
+const preheat = oneOf('hot', 'cold', 'unknown');
+
+/** The settings of a step (equipment.md); their rules are checked by validateProcess. */
+export const stepEquipment: Check = (v, w) =>
+  fields(
+    v,
+    w,
+    {},
+    {
+      appliance: oneOf('oven', 'stovetop', 'grill', 'steamer', 'fryer', 'proofer', 'other'),
+      profile: equipmentRef,
+      mode: oneOf(
+        'still',
+        'fan',
+        'convection',
+        'broil',
+        'fanBroil',
+        'steam',
+        'steamHeat',
+        'proof',
+        'custom',
+      ),
+      nativeMode: string,
+      setpointC: number,
+      level: (l, lw) => fields(l, lw, { value: number }, { of: number }),
+      fan: oneOf('on', 'off', 'unknown'),
+      steam: (s, sw) =>
+        fields(s, sw, { source: oneOf('function', 'manual', 'none') }, { detail: string }),
+      support: (s, sw) => fields(s, sw, { item: equipmentRef }),
+      vessel: (s, sw) =>
+        fields(s, sw, {
+          item: equipmentRef,
+          cover: oneOf('open', 'covered', 'closed', 'unknown'),
+        }),
+      preheated: (p, pw) =>
+        fields(p, pw, {}, { appliance: preheat, support: preheat, vessel: preheat }),
+      rack: string,
+      load: (l, lw) => fields(l, lw, {}, { pieces: number, massG: number }),
+    },
+  );
+
 const step: Check = (v, w) =>
   fields(
     v,
@@ -206,6 +257,7 @@ const step: Check = (v, w) =>
       accepted,
       technique,
       durationMode: oneOf('manual', 'model'),
+      equipment: stepEquipment,
     },
   );
 
@@ -229,6 +281,6 @@ export const decodeFormula = (value: unknown, where: string): Formula => {
 
 /** Refuses (throws `Refused`) unless the value has exactly the shape of a process. */
 export const decodeProcess = (value: unknown, where: string): Process => {
-  fields(value, where, { steps: list(step) }, { readiness: modelRef });
+  fields(value, where, { steps: list(step) }, { readiness: modelRef, intendedOutcome: outcome });
   return value as Process;
 };

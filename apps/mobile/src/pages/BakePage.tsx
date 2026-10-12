@@ -14,12 +14,14 @@ import { useParams } from 'react-router-dom';
 import { loadBake } from '@flourprint/core/application';
 import {
   doughReadyStage,
+  intendedOutcome,
   type BakeCommandPayload,
   type BakeState,
   type DomainError,
   type Instant,
 } from '@flourprint/core/domain';
 import { NoteSheet } from '../blocks/NoteSheet';
+import { useOutcomePicker, useOutcomeText } from '../blocks/Outcome';
 import { techniqueSummary } from '../blocks/StepSheet';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
@@ -50,6 +52,8 @@ export const BakePage = () => {
   const services = useServices();
   const { t, error, stepName, locale } = useMessages();
   const [presentAlert] = useIonAlert();
+  const outcomeText = useOutcomeText();
+  const pickOutcome = useOutcomePicker();
   const [state, setState] = useState<BakeState>();
   const [recipeName, setRecipeName] = useState<string>();
   const [failure, setFailure] = useState<DomainError>();
@@ -275,6 +279,17 @@ export const BakePage = () => {
       ? bakeAlerts(state, now).find((alert) => Date.parse(alert.at) > Date.parse(now))
       : undefined;
 
+  const intended = state.process ? intendedOutcome(state.process) : undefined;
+  const reopen = () =>
+    void presentAlert({
+      header: t('bake.reopen'),
+      message: t('bake.reopenConfirm'),
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        { text: t('bake.reopen'), handler: () => void send({ type: 'ReopenBake' }) },
+      ],
+    });
+
   const abandon = () =>
     void presentAlert({
       header: t('bake.abandon'),
@@ -328,6 +343,30 @@ export const BakePage = () => {
             <h1 className="m-0 text-3xl font-bold">
               {t(state.status === 'abandoned' ? 'bake.abandoned' : 'bake.finished')}
             </h1>
+          )}
+          {state.status === 'finished' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-lg" data-testid="bake-outcome">
+                {t('bake.outcome', { outcome: outcomeText(state.outcome ?? 'unknown') })}
+              </span>
+              <IonButton
+                fill="outline"
+                size="small"
+                disabled={commands.busy}
+                onClick={() =>
+                  pickOutcome(t('bake.outcome.change'), state.outcome, (outcome) => {
+                    void send({ type: 'CorrectOutcome', outcome });
+                  })
+                }
+              >
+                {t('bake.outcome.change')}
+              </IonButton>
+            </div>
+          )}
+          {(state.status === 'finished' || state.status === 'abandoned') && (
+            <IonButton fill="clear" color="medium" disabled={commands.busy} onClick={reopen}>
+              {t('bake.reopen')}
+            </IonButton>
           )}
 
           {focus && <Focus focus={focus} now={now} />}
@@ -455,13 +494,30 @@ export const BakePage = () => {
           {view?.allDone && (
             <>
               <p className="m-0 text-lg">{t('bake.allDone')}</p>
-              <IonButton
-                expand="block"
-                size="large"
-                onClick={() => void send({ type: 'FinishBake' })}
-              >
-                {t('bake.finish')}
-              </IonButton>
+              {/* One tap records the recipe's intended outcome; the choice beside it, another. */}
+              <div className="flex flex-wrap items-center gap-2">
+                <IonButton
+                  className="min-w-[60%] flex-1"
+                  size="large"
+                  disabled={commands.busy}
+                  onClick={() => void send({ type: 'FinishBake' })}
+                >
+                  {intended
+                    ? t('bake.finishAs', { outcome: outcomeText(intended) })
+                    : t('bake.finish')}
+                </IonButton>
+                <IonButton
+                  fill="outline"
+                  disabled={commands.busy}
+                  onClick={() =>
+                    pickOutcome(t('bake.finishOther'), intended, (outcome) => {
+                      void send({ type: 'FinishBake', outcome });
+                    })
+                  }
+                >
+                  {t('bake.finishOther')}
+                </IonButton>
+              </div>
             </>
           )}
 
@@ -621,6 +677,22 @@ export const BakePage = () => {
             </section>
           )}
 
+          {/* Finishing does not need every planned step done: a dough frozen before its
+              planned bake is a finished Preparation (bake-session.md). No step is completed
+              for the baker; the result is chosen explicitly. */}
+          {state.status === 'active' && !view?.allDone && (
+            <IonButton
+              fill="clear"
+              disabled={commands.busy}
+              onClick={() =>
+                pickOutcome(t('bake.finishNow'), intended, (outcome) => {
+                  void send({ type: 'FinishBake', outcome });
+                })
+              }
+            >
+              {t('bake.finishNow')}
+            </IonButton>
+          )}
           {state.status === 'active' && (
             <IonButton fill="clear" color="medium" onClick={abandon}>
               {t('bake.abandon')}

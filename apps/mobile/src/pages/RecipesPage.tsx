@@ -21,6 +21,7 @@ import {
 } from '@flourprint/core/domain';
 import { NewRecipe, useTemplateName } from '../blocks/NewRecipe';
 import { AppBar, AppBarButton, FlourIcon, MoreIcon, PlusIcon, TimerIcon } from '../ui/AppBar';
+import { DevRefresher } from '../ui/DevRefresher';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatRelative } from '../i18n/time';
 import { bakeView } from '../services/bake-view';
@@ -160,6 +161,7 @@ export const RecipesPage = () => {
         </AppBarButton>
       </AppBar>
       <IonContent>
+        <DevRefresher />
         <div className="flex flex-col gap-3 px-4 pt-2 pb-8">
           <h1 className="m-0 px-1 text-[26px] font-bold">{t('recipes.title')}</h1>
           <SessionOnlyNotice />

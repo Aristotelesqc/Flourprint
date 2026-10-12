@@ -11,3 +11,12 @@ export {
   isHeatStep,
   modelDrivenStep,
 } from './dough.js';
+export {
+  COOKING_OPERATIONS,
+  DOUGH_DISPOSITIONS,
+  intendedOutcome,
+  isCookingStep,
+  OUTCOME_RESULTS,
+  outcomeProblem,
+  type PreparationOutcome,
+} from './cooking.js';

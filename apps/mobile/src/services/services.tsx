@@ -3,6 +3,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type {
   BakeEventStore,
   Clock,
+  EquipmentRegistry,
   FlourRegistry,
   IdGenerator,
   RecipeRepository,
@@ -11,6 +12,7 @@ import { saveRevision } from '@flourprint/core/application';
 import type { Instant } from '@flourprint/core/domain';
 import {
   MemoryBakeEventStore,
+  MemoryEquipmentRegistry,
   MemoryFlourRegistry,
   MemoryRecipeRepository,
   MemoryRestoreTarget,
@@ -41,6 +43,8 @@ export interface Services {
   readonly allBakes: BakeEventStore;
   /** Personal flour entries (flours.md); built-in entries are code. */
   readonly flours: FlourRegistry;
+  /** Personal equipment entries (equipment.md); built-in entries are code. */
+  readonly equipment: EquipmentRegistry;
   /** The clock of the current world: the real one plus the offset in simulation (ADR 0014). */
   readonly clock: Clock;
   /** The real clock, for what both worlds share: recipes, drafts, flours, exports. */
@@ -59,6 +63,8 @@ export interface Services {
   readonly browserData?: {
     readonly loaded: SnapshotLoad;
     readonly erase: () => Promise<void>;
+    /** Saves the browser snapshot now; false when it could not be saved. */
+    readonly flush: () => Promise<boolean>;
   };
 }
 
@@ -102,8 +108,13 @@ export const createServices = async (options: {
 }): Promise<Services> => {
   const notifier = createNotifier(options.reminderChannel);
   if (Capacitor.isNativePlatform()) {
-    const { openCapacitorSqlite, SqlBakeEventStore, SqlFlourRegistry, SqlRecipeRepository } =
-      await import('@flourprint/adapters/sqlite-capacitor');
+    const {
+      openCapacitorSqlite,
+      SqlBakeEventStore,
+      SqlEquipmentRegistry,
+      SqlFlourRegistry,
+      SqlRecipeRepository,
+    } = await import('@flourprint/adapters/sqlite-capacitor');
     const db = await openCapacitorSqlite('flourprint');
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
     const recipes = new SqlRecipeRepository(db.value.driver);
@@ -112,6 +123,7 @@ export const createServices = async (options: {
       recipes,
       ...worlds(new SqlBakeEventStore(db.value.driver)),
       flours: new SqlFlourRegistry(db.value.driver),
+      equipment: new SqlEquipmentRegistry(db.value.driver),
       ids,
       storage: 'sqlite',
       platform: PLATFORM,
@@ -122,8 +134,13 @@ export const createServices = async (options: {
   }
   const desktop = desktopBridge();
   if (desktop) {
-    const { openBridgeSqlite, SqlBakeEventStore, SqlFlourRegistry, SqlRecipeRepository } =
-      await import('@flourprint/adapters/sqlite-bridge');
+    const {
+      openBridgeSqlite,
+      SqlBakeEventStore,
+      SqlEquipmentRegistry,
+      SqlFlourRegistry,
+      SqlRecipeRepository,
+    } = await import('@flourprint/adapters/sqlite-bridge');
     const db = await openBridgeSqlite(desktop);
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
     const recipes = new SqlRecipeRepository(db.value.driver);
@@ -132,6 +149,7 @@ export const createServices = async (options: {
       recipes,
       ...worlds(new SqlBakeEventStore(db.value.driver)),
       flours: new SqlFlourRegistry(db.value.driver),
+      equipment: new SqlEquipmentRegistry(db.value.driver),
       ids,
       storage: 'sqlite',
       platform: 'desktop',
@@ -143,17 +161,21 @@ export const createServices = async (options: {
   const recipes = new MemoryRecipeRepository();
   const bakes = new MemoryBakeEventStore();
   const flours = new MemoryFlourRegistry();
+  const equipment = new MemoryEquipmentRegistry();
   let browserData: Services['browserData'];
   if (browserSnapshotAvailable()) {
-    const loaded = await restoreBrowserSnapshot(new MemoryRestoreTarget(recipes, bakes, flours));
+    const loaded = await restoreBrowserSnapshot(
+      new MemoryRestoreTarget(recipes, bakes, flours, equipment),
+    );
     await seedIfEmpty(recipes);
-    const stop = keepBrowserSnapshot({ recipes, bakes, flours }, realClock.now);
+    const keeper = keepBrowserSnapshot({ recipes, bakes, flours, equipment }, realClock.now);
     browserData = {
       loaded,
       erase: async () => {
-        stop();
+        keeper.stop();
         await clearBrowserSnapshot();
       },
+      flush: keeper.flush,
     };
   } else {
     await seedIfEmpty(recipes);
@@ -162,6 +184,7 @@ export const createServices = async (options: {
     recipes,
     ...worlds(bakes),
     flours,
+    equipment,
     ids,
     storage: 'memory',
     platform: 'web',

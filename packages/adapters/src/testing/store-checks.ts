@@ -2,6 +2,7 @@ import type {
   AppendInput,
   BakeEventStore,
   Draft,
+  EquipmentRegistry,
   FlourRegistry,
   RecipeRepository,
 } from '@flourprint/core/application';
@@ -9,6 +10,7 @@ import {
   defaultVariant,
   type BakeEvent,
   type BakeSummary,
+  type EquipmentEntry,
   type FlourEntry,
   type Formula,
   type Instant,
@@ -558,6 +560,101 @@ export const flourRegistryChecks: readonly StoreCheck<FlourRegistry>[] = [
         'archived head listed',
       );
       const first = await registry.getFlour('mine', 1);
+      equal(first.ok && first.value?.archived, false, 'v1 not archived');
+    },
+  },
+];
+
+const equipment = (
+  id: string,
+  version: number,
+  changes: Partial<EquipmentEntry> = {},
+): EquipmentEntry => ({
+  id,
+  version,
+  kind: 'vessel',
+  name: `Vessel ${id}`,
+  builtIn: false,
+  shape: 'dutchOven',
+  material: 'castIron',
+  lid: { material: 'castIron' },
+  interior: { diameterMm: 240 + version },
+  volumeMl: { status: 'known', value: 4000, source: { kind: 'personal', detail: 'measured' } },
+  archived: false,
+  createdAt: `2026-10-0${version}T08:00:00.000Z` as Instant,
+  ...changes,
+});
+
+/** Personal equipment entries (persistence.md, equipment.md). */
+export const equipmentRegistryChecks: readonly StoreCheck<EquipmentRegistry>[] = [
+  {
+    name: 'writes equipment versions in order, keeps earlier ones and lists the latest',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      equal(code(await registry.saveEquipment(equipment('mine', 1))), 'ok', 'v1');
+      equal(
+        code(await registry.saveEquipment(equipment('mine', 2, { notes: 'seasoned' }))),
+        'ok',
+        'v2',
+      );
+      equal(
+        code(await registry.saveEquipment(equipment('a-other', 1, { kind: 'support' }))),
+        'ok',
+        'other v1',
+      );
+      const latest = await registry.listEquipment();
+      equal(
+        latest.map((e) => `${e.id}@${e.version}`),
+        ['a-other@1', 'mine@2'],
+        'latest of each id',
+      );
+      equal(latest[1], equipment('mine', 2, { notes: 'seasoned' }), 'stored as written');
+      equal(
+        await registry.getEquipment('mine', 1),
+        { ok: true, value: equipment('mine', 1) },
+        'v1 kept',
+      );
+      equal(await registry.getEquipment('mine', 3), { ok: true }, 'absent version');
+      equal(
+        (await registry.listEquipmentVersions()).map((e) => `${e.id}@${e.version}`),
+        ['a-other@1', 'mine@1', 'mine@2'],
+        'every version',
+      );
+    },
+  },
+  {
+    name: 'refuses an equipment version that is not the next one and writes nothing',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      await registry.saveEquipment(equipment('mine', 1));
+      const again = await registry.saveEquipment(equipment('mine', 1, { notes: 'other' }));
+      equal(code(again), 'HeadConflict', 'rewrite');
+      equal(
+        again.ok ? undefined : again.error.details,
+        { equipmentId: 'mine', currentHead: 1 },
+        'head',
+      );
+      equal(code(await registry.saveEquipment(equipment('mine', 3))), 'HeadConflict', 'skip');
+      equal(code(await registry.saveEquipment(equipment('new', 2))), 'HeadConflict', 'new at 2');
+      equal(
+        (await registry.listEquipmentVersions()).map((e) => `${e.id}@${e.version}`),
+        ['mine@1'],
+        'nothing written',
+      );
+    },
+  },
+  {
+    name: 'archives equipment as a new version; earlier versions still resolve',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      await registry.saveEquipment(equipment('mine', 1));
+      await registry.saveEquipment(equipment('mine', 2, { archived: true }));
+      equal(
+        (await registry.listEquipment()).map((e) => [e.version, e.archived]),
+        [[2, true]],
+        'archived head listed',
+      );
+      const first = await registry.getEquipment('mine', 1);
       equal(first.ok && first.value?.archived, false, 'v1 not archived');
     },
   },

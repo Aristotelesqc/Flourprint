@@ -60,7 +60,7 @@ Personal flour entries (`flours.md`) are stored by `(id, version)`; a version is
 Writing an entry whose version is not the next one for its id is refused (`HeadConflict`).
 Built-in entries are code and are not stored.
 
-## SQLite schema (version 4)
+## SQLite schema (version 5)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
@@ -82,6 +82,10 @@ drafts         (id TEXT PRIMARY KEY, name TEXT NOT NULL, document TEXT NOT NULL,
 flours         (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER NOT NULL,
                 schema_version INTEGER NOT NULL, document TEXT NOT NULL,
                 created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v4
+equipment      (id TEXT NOT NULL, version INTEGER NOT NULL, kind TEXT NOT NULL,
+                archived INTEGER NOT NULL, schema_version INTEGER NOT NULL,
+                document TEXT NOT NULL, created_at TEXT NOT NULL,
+                PRIMARY KEY (id, version))                                         -- v5
 ```
 
 The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node
@@ -129,8 +133,9 @@ on a connection is serialized, so a transaction never interleaves with another o
     its family.
 - The result lists the imported and the skipped recipe ids. Importing the same file again
   imports nothing.
-- A full backup may also carry `families` and `familyId`, and `flours` (every personal flour entry
-  version); all are optional, so older backups still restore.
+- A full backup may also carry `families` and `familyId`, `flours` (every personal flour entry
+  version) and `equipment` (every personal equipment entry version, equipment.md); all are
+  optional, so older backups still restore.
 
 ## Shared contract tests
 
