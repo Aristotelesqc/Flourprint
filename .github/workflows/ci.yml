@@ -6,6 +6,13 @@ on:
     # dev channel follows (ADR 0013).
     branches: [main, dev]
   pull_request:
+  # Everything, APKs and Windows shell included, on any branch (ADR 0016).
+  workflow_dispatch:
+
+# A newer push to a pull request cancels its run in progress; main and dev runs always finish.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   # Only the desktop job needs Electron's binary.
@@ -62,7 +69,8 @@ jobs:
           if-no-files-found: ignore
 
   android:
-    # Debug APK for the device spikes (#23, #24); download it from the run's artifacts.
+    # Normal and dev APKs: on dev and main (dev-channel, release) or on demand (ADR 0016).
+    if: github.event_name != 'pull_request'
     needs: check
     runs-on: ubuntu-latest
     steps:
@@ -76,6 +84,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: gradle
       - run: pnpm install --frozen-lockfile
       - name: Build names (ADR 0016)
         # On a pull request GITHUB_SHA is GitHub's temporary merge commit; label the branch commit.
@@ -153,9 +162,13 @@ jobs:
           elif [ "$GITHUB_REF_NAME" = dev ]; then
             BRANCH=dev
             URL="https://dev.${PAGES_PROJECT}.pages.dev"
-          else
+          elif [ "$GITHUB_REF_NAME" = main ]; then
             BRANCH=main
             URL="https://${PAGES_PROJECT}.pages.dev"
+          else
+            # A run on demand on another branch never takes the main address.
+            BRANCH=$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'a-zA-Z0-9-' '-' | cut -c1-28)
+            URL="https://${BRANCH}.${PAGES_PROJECT}.pages.dev"
           fi
           # Creates the project on the first run; later runs find it already there.
           npx --yes wrangler@4 pages project create "$PAGES_PROJECT" --production-branch main || true
@@ -181,7 +194,9 @@ jobs:
           echo "No Cloudflare secrets: the web preview was not deployed (ADR 0013)." >> "$GITHUB_STEP_SUMMARY"
 
   desktop:
-    # Desktop shell for Windows (ADR 0011): smoke test, then the folder to unzip and run.
+    # Desktop shell for Windows (ADR 0011): smoke test, then the folder to unzip and run. Windows
+    # minutes count double: on main (release) or on demand only (ADR 0016).
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main')
     needs: check
     runs-on: windows-latest
     env:

@@ -1,9 +1,11 @@
 name: Android
 
 # Platform suite on an emulator (installed APK, native SQLite, forced stop, reinstall, back
-# button). It does not run on every web change: only when platform code changes, or on demand.
+# button). It costs about 10 minutes: it runs on pull requests into main (the major pull request)
+# that change platform code, or on demand (ADR 0016).
 on:
   pull_request:
+    branches: [main]
     paths:
       - apps/mobile/android/**
       - apps/mobile/android-e2e/**
@@ -19,6 +21,10 @@ on:
       - pnpm-lock.yaml
       - .github/workflows/android.yml
   workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
@@ -46,6 +52,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: gradle
       - run: pnpm install --frozen-lockfile
       - name: Build names (ADR 0016)
         env:
