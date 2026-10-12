@@ -297,6 +297,8 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
     expect(await code(withVessel, [dutch, dutch])).toBe('InvalidCommand');
     expect(await code(withVessel, [{ ...dutch, version: 7 }])).toBe('InvalidCommand');
     expect(await code(withVessel, [{ ...dutch, name: 'Mine' }])).toBe('InvalidCommand');
+    // A built-in copy claiming a code definition must equal it.
+    expect(await code(withVessel, [{ ...dutch, material: 'glass' }])).toBe('InvalidCommand');
     expect(await code(withVessel, [dutch])).toBe('ok');
     // A support used as a vessel resolves to the wrong kind.
     expect(await code(bake({ vessel: vessel(stone, 'open') }), [stone])).toBe('InvalidCommand');
@@ -334,6 +336,11 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
       error: { code: 'InvalidCommand' },
     });
     expect(await adjust({ appliance: 'oven' }, [stone])).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidCommand' },
+    });
+    // A built-in copy that differs from its code definition is refused.
+    expect(await adjust(used, [{ ...stone, material: 'glass' }])).toMatchObject({
       ok: false,
       error: { code: 'InvalidCommand' },
     });
@@ -412,5 +419,28 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
     expect(
       state.process?.steps.find((x) => x.id === 'bake')?.equipment?.support?.item.version,
     ).toBe(1);
+  });
+
+  it('refuses an inserted step whose built-in copy differs from the code definition', async () => {
+    const s = await session();
+    await s.start(cooking());
+    const insert = (equipment: EquipmentEntry[]) =>
+      s.run({
+        type: 'InsertStepAfter',
+        after: 'proof',
+        step: {
+          id: 'rest',
+          operation: 'cool',
+          schedule: 'asap',
+          plannedDurationS: 600,
+          equipment: { support: { item: ref(stone) } },
+        },
+        equipment,
+      });
+    expect(await insert([{ ...stone, material: 'glass' }])).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidCommand' },
+    });
+    expect((await insert([stone])).ok).toBe(true);
   });
 });

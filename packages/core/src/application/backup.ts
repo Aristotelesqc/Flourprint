@@ -6,6 +6,7 @@ import {
   ok,
   upcastEvent,
   validateRecipe,
+  builtInEquipment,
   builtInFlour,
   canonicalJson,
   type BakeEvent,
@@ -327,13 +328,16 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
           return err(invalid(`bake ${bakeId} refers to a flour entry missing from the backup`));
         }
       }
-      // Copies in a bake are immutable: a personal one is the entry version of the registry.
+      // Copies in a bake are immutable: a built-in one is its code definition, a personal one the entry version of the registry.
       for (const copy of state.equipment ?? []) {
-        if (copy.builtIn) continue;
-        const entry = equipment.find((e) => e.id === copy.id && e.version === copy.version);
+        const entry = copy.builtIn
+          ? builtInEquipment(copy.id, copy.version)
+          : equipment.find((e) => e.id === copy.id && e.version === copy.version);
         if (!entry || canonicalJson(entry) !== canonicalJson(copy)) {
           return err(
-            invalid(`bake ${bakeId} refers to an equipment entry missing from the backup`),
+            invalid(
+              `bake ${bakeId} refers to an equipment entry missing from the backup or differing from it`,
+            ),
           );
         }
       }

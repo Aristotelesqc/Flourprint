@@ -15,6 +15,7 @@ import { useParams } from 'react-router-dom';
 import {
   applyModelDurations,
   flourRefsOf,
+  processEquipmentEntries,
   RECIPE_TEMPLATES,
   saveDraft,
   type Draft,
@@ -424,6 +425,8 @@ const RecipePageContent = () => {
     const { revision } = base;
     const ref = { id: revision.recipeId, version: revision.version };
     if (pendingStart.current) setNotice(t('recipe.retryStart'));
+    // The entry versions the process references, copied into the bake (equipment.md).
+    const equipment = await processEquipmentEntries(services.equipment, revision.process);
     const pending = (pendingStart.current ??= {
       bakeId: services.ids.next(),
       commandId: services.ids.next(),
@@ -440,6 +443,7 @@ const RecipePageContent = () => {
           revision.formula.flours.map((f) => f.id),
           flourCatalog.personal,
         ),
+        ...(equipment.length === 0 ? {} : { equipment }),
       },
     });
     const result = await writes.run(() =>

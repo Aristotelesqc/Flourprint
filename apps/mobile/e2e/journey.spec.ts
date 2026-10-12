@@ -521,6 +521,48 @@ test('the boil of bagels ends the dough: it is not a fermentation step', async (
   await expect(page.getByLabel('Ébullition, durée')).toHaveCount(0);
 });
 
+test('starts a bake whose recipe file references a built-in vessel', async ({ page }) => {
+  const base = variant('skillet', 'Pizza poêle', '2026-01-01T12:00:00.000Z');
+  const bake = {
+    id: 'bake',
+    operation: 'bake',
+    dependsOn: ['mix'],
+    schedule: 'asap',
+    plannedDurationS: 600,
+    equipment: {
+      appliance: 'oven',
+      mode: 'still',
+      setpointC: 230,
+      vessel: { item: { id: 'cast-iron-skillet', version: 1 }, cover: 'open' },
+    },
+  };
+  const recipe = {
+    ...base,
+    revisions: base.revisions.map((r) => ({
+      ...r,
+      process: { steps: [...r.process.steps, bake] },
+    })),
+  };
+  await page.goto('/advanced');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'recettes.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        kind: 'flourprint-recipes',
+        schemaVersion: 1,
+        exportedAt: '2026-10-08T18:00:00.000Z',
+        recipes: [recipe],
+        families: [{ id: 'family-test', name: 'Pain test' }],
+      }),
+    ),
+  });
+  await expect(page.getByText('1 recette importée.')).toBeVisible();
+  await page.locator('ion-back-button:visible').click();
+  await page.getByText('Pizza poêle', { exact: true }).locator('visible=true').click();
+  await startBake(page);
+});
+
 test('follows several bakes on one screen, with actions and notes per bake', async ({ page }) => {
   await page.goto('/advanced');
   await page.locator('input[type=file]').setInputFiles({

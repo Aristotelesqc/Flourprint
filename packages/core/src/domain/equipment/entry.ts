@@ -172,6 +172,7 @@ export const validateEquipmentEntry = (
     }
   }
   if (entry.basedOn !== undefined) {
+    if (!isObject(entry.basedOn)) return err(invalid('basedOn', 'must be an object'));
     if (!isText(entry.basedOn.id) || !isCount(entry.basedOn.version)) {
       return err(invalid('basedOn', 'is not a valid reference'));
     }

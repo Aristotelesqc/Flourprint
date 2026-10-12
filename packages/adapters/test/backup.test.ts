@@ -410,6 +410,17 @@ describe.each([
     expect(state.process?.steps.at(-1)?.equipment?.setpointC).toBe(230);
   });
 
+  it('refuses a built-in equipment copy that differs from its code definition', async () => {
+    const backup = await backupOf();
+    const copies = backup.bakes[0].events[0].payload.snapshot.equipment;
+    copies.find((e: Loose) => e.id === 'baking-stone').material = 'glass';
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidBackup' },
+    });
+  });
+
   it('restores a finish written before outcomes as an unknown result', async () => {
     const backup = await backupOf();
     const finish = backup.bakes[0].events.find((e: Loose) => e.payload.type === 'BakeFinished');

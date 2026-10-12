@@ -1,3 +1,4 @@
+import { canonicalJson } from '../canonical-json.js';
 import { isReservedId } from '../ids.js';
 import type { Process } from '../process/types.js';
 import { builtInEquipment } from './builtin.js';
@@ -239,7 +240,7 @@ export const isBuiltInEquipmentRef = (ref: EquipmentRef): boolean =>
 /**
  * The rules of the entry copies a command or an event carries (equipment.md): every use resolves,
  * among the copies already in the bake (`known`) and the `supplied` ones, to an entry of the
- * matching kind; supplied entries are valid, distinct, built-ins exist in code, and each is used.
+ * matching kind; supplied entries are valid, distinct, built-ins equal their code definition, and each is used.
  * Returns the first problem, if any.
  */
 export const equipmentCopiesProblem = (
@@ -259,8 +260,13 @@ export const equipmentCopiesProblem = (
     }
     if (seen.has(key)) return problem('equipment', `${key} is listed twice`);
     seen.add(key);
-    if (entry.builtIn && builtInEquipment(entry.id, entry.version) === undefined) {
-      return problem('equipment', `${key} is not a built-in entry`);
+    if (entry.builtIn) {
+      const built = builtInEquipment(entry.id, entry.version);
+      if (built === undefined) return problem('equipment', `${key} is not a built-in entry`);
+      // A copy is the code definition, not a claim about it.
+      if (canonicalJson(built) !== canonicalJson(entry)) {
+        return problem('equipment', `${key} differs from the built-in definition`);
+      }
     }
   }
   const pool = [...known, ...supplied];

@@ -419,6 +419,17 @@ describe('equipment entries (equipment.md)', () => {
     );
   });
 
+  it('refuses a null or malformed basedOn as a validation problem', () => {
+    const entry = skillet({});
+    for (const basedOn of [null, 'pot', 3]) {
+      const result = validateEquipmentEntry({ ...entry, basedOn } as never);
+      expect(result).toMatchObject({
+        ok: false,
+        error: { code: 'InvalidEquipmentEntry', details: { field: 'basedOn' } },
+      });
+    }
+  });
+
   it('refuses to store a built-in entry', async () => {
     const registry = {} as never;
     const result = await saveEquipmentEntry(registry, builtInEquipment('pot') as EquipmentEntry);
