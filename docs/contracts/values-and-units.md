@@ -11,6 +11,8 @@ Status: **approved** (issue #30). Related issues: #6, #9, #26, #27, #28, #29.
 | duration    | second       | `number`, fields suffixed `S` (`plannedDurationS`)              |
 | instant     | ISO 8601 UTC | string ending in `Z` (`Instant`), a real calendar date and time |
 | percentage  | **points**   | 70 = 70 %, fields suffixed `Pct`; no 0–1 fraction is persisted  |
+| length      | millimetre   | `number`, fields suffixed `Mm` (equipment.md)                   |
+| volume      | millilitre   | `number`, fields suffixed `Ml` (equipment.md)                   |
 
 0–1 fractions exist only inside calculations. `Quantity { value, unit }` is used only at
 boundaries: input in another unit, product labels, imports. Display units and number formats are
@@ -21,11 +23,11 @@ a UI concern (ADR 0009).
 The baker chooses °C or °F for three contexts, a device preference that is never written into a
 document, a backup or an export:
 
-| Context   | Temperatures shown                                                    |
-| --------- | --------------------------------------------------------------------- |
-| `oven`    | steps with operation `bake`, `preheat` or `boil`, or location `oven`  |
-| `cold`    | steps with location `fridge` or `freezer`, or operation `retard`      |
-| `ambient` | every other temperature: room, proofer, dough, water, flour, friction |
+| Context   | Temperatures shown                                                                                               |
+| --------- | ---------------------------------------------------------------------------------------------------------------- |
+| `oven`    | steps with operation `bake`, `preheat` or `boil`, or location `oven`; every equipment `setpointC` (equipment.md) |
+| `cold`    | steps with location `fridge` or `freezer`, or operation `retard`                                                 |
+| `ambient` | every other temperature: room, proofer, dough, water, flour, friction                                            |
 
 A value typed in °F is converted to °C before it is stored (`(F − 32) × 5 / 9`), and shown back
 from °C; a friction is a difference and converts by `× 5 / 9` only.

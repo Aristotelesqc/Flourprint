@@ -30,6 +30,10 @@ interface Process {
 }
 ```
 
+A step may also say how it is cooked or held: appliance, mode, setting, support, vessel, cover,
+preheating, steam, rack and load (`equipment`, equipment.md). It is recorded data; the scheduler and
+the fermentation model ignore it.
+
 `intendedOutcome` is how the recipe ends: cooked, or a raw dough frozen, refrigerated… It is the
 default outcome when a session finishes (bake-session.md); an invalid one is `InvalidProcess`.
 
