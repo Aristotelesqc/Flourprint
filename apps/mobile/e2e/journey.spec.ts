@@ -128,6 +128,49 @@ test('a note attaches to a step; an ended bake takes a rated review note', async
   await page.locator('textarea:visible').fill('Mie serrée');
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
+
+  // An ended bake can be reopened; its earlier end stays in the log (bake-session.md).
+  await page.getByRole('button', { name: 'Rouvrir' }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Rouvrir' }).click();
+  await expect(page.getByRole('button', { name: 'Abandonner' })).toBeVisible();
+  await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
+});
+
+test('finishes in one tap with the intended outcome, then corrects it', async ({ page }) => {
+  await openRecipe(page);
+  await startBake(page);
+  // Run every step through the main action until the bake can be finished.
+  const main = page.locator('ion-button.h-\\[72px\\]:visible');
+  const allDone = page.getByText('Toutes les étapes sont terminées.');
+  for (let i = 0; i < 40 && !(await allDone.isVisible()); i++) {
+    if (await main.count()) await main.first().click();
+    else
+      await page
+        .getByRole('button', { name: /^Commencer / })
+        .first()
+        .click();
+  }
+  await expect(allDone).toBeVisible();
+  // The recipe bakes: one tap records it as cooked; the choice beside offers another result.
+  await expect(page.getByRole('button', { name: 'Autre résultat' })).toBeVisible();
+  await page.getByRole('button', { name: 'Terminer · Cuit' }).click();
+  await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Cuit');
+
+  await page.getByRole('button', { name: 'Modifier le résultat' }).click();
+  await page.locator('ion-alert').getByText('Cuit et pâte crue, congelée').click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByTestId('bake-outcome')).toHaveText(
+    'Résultat : Cuit et pâte crue, congelée',
+  );
+});
+
+test('a recipe states how it ends', async ({ page }) => {
+  await openRecipe(page);
+  await page.getByRole('button', { name: 'Processus' }).click();
+  const ends = page.getByLabel('Fin prévue');
+  await expect(ends.locator('option:checked')).toHaveText('Automatique : Cuit');
+  await ends.selectOption({ label: 'Pâte crue, congelée' });
+  await expect(unsaved(page).first()).toBeVisible();
 });
 
 test('copies all data for review, with the bake digest and its notes', async ({

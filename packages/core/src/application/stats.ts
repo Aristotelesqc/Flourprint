@@ -11,7 +11,19 @@ export interface BakeStats {
     readonly finished: number;
     readonly abandoned: number;
     readonly active: number;
+    /** Finished sessions by result; the four add up to `finished` (history.md, Statistics). */
+    readonly results: {
+      readonly cooked: number;
+      readonly dough: number;
+      readonly cookedAndDough: number;
+      readonly unknown: number;
+    };
   };
+  /**
+   * Completed cooking steps by operation, over every session whatever its status (most first). A
+   * completed stage never counts a session as cooked.
+   */
+  readonly cookingStages: readonly CookingStageStat[];
   /** Recipes by number of bakes, most baked first (ties: most recent bake first). */
   readonly recipes: readonly RecipeCount[];
   /**
@@ -25,6 +37,11 @@ export interface BakeStats {
   readonly ratings: readonly RatingStat[];
   /** The last bakes, most recently started first. */
   readonly recent: readonly RecentBake[];
+}
+
+export interface CookingStageStat {
+  readonly operation: string;
+  readonly n: number;
 }
 
 export interface RecipeCount {
@@ -139,13 +156,34 @@ export const bakeStats = (bakes: readonly BakeDigest[]): BakeStats => {
     }
   }
 
+  const finished = bakes.filter((b) => b.status === 'finished');
+  const result = (bake: BakeDigest) =>
+    bake.outcome === undefined || bake.outcome === 'unknown' ? 'unknown' : bake.outcome.result;
+  const stages = new Map<string, number>();
+  for (const bake of bakes) {
+    for (const step of bake.steps) {
+      if (step.cooking && step.endedAt !== undefined) {
+        stages.set(step.operation, (stages.get(step.operation) ?? 0) + 1);
+      }
+    }
+  }
+
   return {
     counts: {
       total: bakes.length,
-      finished: bakes.filter((b) => b.status === 'finished').length,
+      finished: finished.length,
       abandoned: bakes.filter((b) => b.status === 'abandoned').length,
       active: bakes.filter((b) => b.status === 'active').length,
+      results: {
+        cooked: finished.filter((b) => result(b) === 'cooked').length,
+        dough: finished.filter((b) => result(b) === 'dough').length,
+        cookedAndDough: finished.filter((b) => result(b) === 'cookedAndDough').length,
+        unknown: finished.filter((b) => result(b) === 'unknown').length,
+      },
     },
+    cookingStages: [...stages.entries()]
+      .map(([operation, n]) => ({ operation, n }))
+      .sort((a, b) => b.n - a.n || a.operation.localeCompare(b.operation)),
     recipes: [...recipes.values()].sort((a, b) => b.count - a.count),
     durations: [...durations.entries()]
       .map(([operation, { planned, recorded: actual }]) => ({

@@ -98,6 +98,30 @@ const Content = ({ stats }: { stats: BakeStats }) => {
         </div>
       </Section>
 
+      {counts.finished > 0 && (
+        <Section title={t('stats.results')}>
+          <div className="grid grid-cols-4 gap-2 text-center">
+            <Figure label={t('outcome.cooked')} value={counts.results.cooked} />
+            <Figure label={t('outcome.dough')} value={counts.results.dough} />
+            <Figure label={t('outcome.cookedAndDough')} value={counts.results.cookedAndDough} />
+            <Figure label={t('outcome.unknown')} value={counts.results.unknown} />
+          </div>
+        </Section>
+      )}
+
+      {stats.cookingStages.length > 0 && (
+        <Section title={t('stats.cookingStages')}>
+          {stats.cookingStages.map((stage) => (
+            <Bar
+              key={stage.operation}
+              label={stepName({ operation: stage.operation })}
+              detail={String(stage.n)}
+              share={stage.n / Math.max(...stats.cookingStages.map((s) => s.n))}
+            />
+          ))}
+        </Section>
+      )}
+
       <Section title={t('stats.recipes')}>
         {stats.recipes.slice(0, 5).map((recipe) => (
           <Bar

@@ -1,4 +1,11 @@
-import { evolve, initialBakeState, type BakeEvent, type BakeState } from '../domain/index.js';
+import {
+  evolve,
+  initialBakeState,
+  outcomeProblem,
+  type BakeEvent,
+  type BakeState,
+  type PreparationOutcome,
+} from '../domain/index.js';
 import {
   expect,
   isAmounts,
@@ -202,6 +209,15 @@ const isFoldSet = (state: BakeState, stepId: unknown, set: unknown): boolean => 
   );
 };
 
+/** A preparation outcome (bake-session.md), checked by the domain's own rule. */
+const isOutcome = (value: unknown): boolean => {
+  if (!isObject(value)) return false;
+  if (Object.keys(value).some((k) => k !== 'result' && k !== 'dough' && k !== 'pieces')) {
+    return false;
+  }
+  return outcomeProblem(value as unknown as PreparationOutcome) === undefined;
+};
+
 /** Checks one payload against the state before it; throws `Refused` with the reason. */
 const checkPayload = (state: BakeState, payload: Json, where: string): void => {
   const stepIds = new Set((state.process?.steps ?? []).map((s) => s.id));
@@ -211,9 +227,11 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
   if (state.status === 'notStarted') {
     expect(payload.type === 'BakeStarted', `${where}: a bake log starts with BakeStarted`);
   } else if (state.status !== 'active') {
-    // After the end only notes of the review (bake-session.md).
+    // After the end: notes of the review, an outcome correction or a reopening (bake-session.md).
     expect(
-      payload.type === 'ObservationAdded' && payload.kind === undefined,
+      (payload.type === 'ObservationAdded' && payload.kind === undefined) ||
+        (payload.type === 'OutcomeCorrected' && state.status === 'finished') ||
+        payload.type === 'BakeReopened',
       `${where}: the bake had already ended`,
     );
   }
@@ -311,6 +329,23 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
       );
       return;
     case 'BakeFinished':
+      // Before 0.11.0 a finish has neither: its result is unknown.
+      expect(
+        payload.outcome === undefined
+          ? payload.outcomeSource === undefined
+          : isOutcome(payload.outcome) &&
+              (payload.outcomeSource === 'recipe' || payload.outcomeSource === 'baker'),
+        `${where}: malformed outcome`,
+      );
+      return;
+    case 'OutcomeCorrected':
+      expect(
+        isOutcome(payload.outcome) && payload.outcomeSource === 'baker',
+        `${where}: malformed outcome`,
+      );
+      return;
+    case 'BakeReopened':
+      expect(state.status !== 'active', `${where}: the bake was not ended`);
       return;
     case 'BakeAbandoned':
       expect(

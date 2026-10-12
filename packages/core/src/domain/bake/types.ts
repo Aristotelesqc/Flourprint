@@ -2,6 +2,7 @@ import type { Formula, ResolvedFormula } from '../formula/types.js';
 import type { FormulaEdit } from '../formula/edit.js';
 import type { FlourRef } from '../flour/types.js';
 import type { Instant } from '../instant.js';
+import type { PreparationOutcome } from '../process/cooking.js';
 import type { Process, ProcessStep, Projection, ProjectionMode, StepId } from '../process/types.js';
 import type { Estimate, ModelRef, Observation } from '../values.js';
 
@@ -39,6 +40,9 @@ export interface BakeSnapshot {
 }
 
 export type BakeOrigin = 'physical' | 'simulation';
+
+/** Where a recorded outcome comes from: the recipe's intended outcome, or the baker's choice. */
+export type OutcomeSource = 'recipe' | 'baker';
 
 export type ObservationCategory =
   'crumb' | 'crust' | 'fermentation' | 'flavor' | 'handling' | 'volume' | 'other';
@@ -108,8 +112,15 @@ export type BakeCommandPayload =
       readonly newOccurredAt: Instant;
     }
   | { readonly type: 'RetractCompletion'; readonly targetEventId: string }
-  | { readonly type: 'FinishBake'; readonly at?: Instant }
-  | { readonly type: 'AbandonBake'; readonly reason?: string };
+  | {
+      readonly type: 'FinishBake';
+      readonly at?: Instant;
+      /** Absent = the intended outcome of the recipe (bake-session.md, Outcome). */
+      readonly outcome?: PreparationOutcome;
+    }
+  | { readonly type: 'AbandonBake'; readonly reason?: string }
+  | { readonly type: 'CorrectOutcome'; readonly outcome: PreparationOutcome }
+  | { readonly type: 'ReopenBake' };
 
 export interface BakeCommand<P extends BakeCommandPayload = BakeCommandPayload> {
   readonly commandId: string;
@@ -178,8 +189,19 @@ export type BakeEventPayload =
       readonly newOccurredAt: Instant;
     }
   | { readonly type: 'StepCompletionRetracted'; readonly targetEventId: string }
-  | { readonly type: 'BakeFinished' }
-  | { readonly type: 'BakeAbandoned'; readonly reason?: string };
+  | {
+      readonly type: 'BakeFinished';
+      /** Absent on events written before 0.11.0: the result is unknown. */
+      readonly outcome?: PreparationOutcome;
+      readonly outcomeSource?: OutcomeSource;
+    }
+  | { readonly type: 'BakeAbandoned'; readonly reason?: string }
+  | {
+      readonly type: 'OutcomeCorrected';
+      readonly outcome: PreparationOutcome;
+      readonly outcomeSource: 'baker';
+    }
+  | { readonly type: 'BakeReopened' };
 
 /** An event decided by the domain, before the store assigns its envelope. */
 export interface EventDraft {
@@ -225,7 +247,11 @@ export interface BakeState {
   readonly version: number;
   readonly status: 'notStarted' | 'active' | 'finished' | 'abandoned';
   readonly startedAt?: Instant;
+  /** The latest end; a reopened session has none until it ends again. */
   readonly endedAt?: Instant;
+  /** Finished sessions only: the outcome in force, absent when unknown (before 0.11.0). */
+  readonly outcome?: PreparationOutcome;
+  readonly outcomeSource?: OutcomeSource;
   readonly snapshot?: BakeSnapshot;
   /** Effective definitions after overrides and insertions (baseline stays in the snapshot). */
   readonly formula?: Formula;

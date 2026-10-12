@@ -3,6 +3,7 @@ import { doughReadyStage } from '../fermentation/estimate.js';
 import { applyFormulaEdit } from '../formula/edit.js';
 import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
+import { intendedOutcome, outcomeProblem } from '../process/cooking.js';
 import { projectProcess } from '../process/project.js';
 import type { Process, Projection, StepFact } from '../process/types.js';
 import type { Formula } from '../formula/types.js';
@@ -19,6 +20,8 @@ export type BakeError =
   | ProcessError
   | DomainError<'BakeAlreadyStarted'>
   | DomainError<'BakeNotActive', { status: BakeState['status'] }>
+  | DomainError<'NotFinished', { status: BakeState['status'] }>
+  | DomainError<'BakeActive', { status: BakeState['status'] }>
   | DomainError<'UnknownStep', { stepId: string }>
   | DomainError<'DuplicateStepId', { stepId: string }>
   | DomainError<'StepAlreadyStarted', { stepId: string }>
@@ -318,6 +321,25 @@ export const decide = (
   ) {
     return observe(state, command, now);
   }
+  if (command.type === 'CorrectOutcome') {
+    if (state.status !== 'finished') {
+      return error('NotFinished', `The bake is ${state.status}`, { status: state.status });
+    }
+    const problem = outcomeProblem(command.outcome);
+    if (problem) return error('InvalidCommand', `Invalid outcome: ${problem.reason}`, problem);
+    return ok([
+      {
+        occurredAt: now,
+        payload: { type: 'OutcomeCorrected', outcome: command.outcome, outcomeSource: 'baker' },
+      },
+    ]);
+  }
+  if (command.type === 'ReopenBake') {
+    if (state.status !== 'finished' && state.status !== 'abandoned') {
+      return error('BakeActive', `The bake is ${state.status}`, { status: state.status });
+    }
+    return ok([{ occurredAt: now, payload: { type: 'BakeReopened' } }]);
+  }
   if (state.status !== 'active' || !state.process || !state.formula) {
     return error('BakeNotActive', `The bake is ${state.status}`, { status: state.status });
   }
@@ -586,8 +608,24 @@ export const decide = (
       ]);
     }
 
-    case 'FinishBake':
-      return ok([{ occurredAt: command.at ?? now, payload: { type: 'BakeFinished' } }]);
+    case 'FinishBake': {
+      if (command.outcome !== undefined) {
+        const problem = outcomeProblem(command.outcome);
+        if (problem) return error('InvalidCommand', `Invalid outcome: ${problem.reason}`, problem);
+      }
+      // Without a choice, the recipe's intended outcome, from the effective process (inserted
+      // steps included): finishing never asks a question (bake-session.md).
+      return ok([
+        {
+          occurredAt: command.at ?? now,
+          payload: {
+            type: 'BakeFinished',
+            outcome: command.outcome ?? intendedOutcome(process),
+            outcomeSource: command.outcome === undefined ? 'recipe' : 'baker',
+          },
+        },
+      ]);
+    }
 
     case 'AbandonBake':
       return ok([

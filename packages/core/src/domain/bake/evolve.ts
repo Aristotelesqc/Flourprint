@@ -110,7 +110,7 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
       steps.splice(index + 1, 0, payload.step);
       return {
         ...next,
-        process: { steps },
+        process: { ...next.process, steps },
         steps: { ...next.steps, [payload.step.id]: { measurements: [] } },
       };
     }
@@ -143,10 +143,27 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
       };
       return { ...next, steps: { ...next.steps, [target.stepId]: record } };
     }
-    case 'BakeFinished':
-      return { ...next, status: 'finished', endedAt: event.occurredAt };
-    case 'BakeAbandoned':
-      return { ...next, status: 'abandoned', endedAt: event.occurredAt };
+    case 'BakeFinished': {
+      const { outcome: _outcome, outcomeSource: _source, ...rest } = next;
+      return {
+        ...rest,
+        status: 'finished',
+        endedAt: event.occurredAt,
+        ...(payload.outcome === undefined ? {} : { outcome: payload.outcome }),
+        ...(payload.outcomeSource === undefined ? {} : { outcomeSource: payload.outcomeSource }),
+      };
+    }
+    case 'BakeAbandoned': {
+      const { outcome: _outcome, outcomeSource: _source, ...rest } = next;
+      return { ...rest, status: 'abandoned', endedAt: event.occurredAt };
+    }
+    case 'OutcomeCorrected':
+      return { ...next, outcome: payload.outcome, outcomeSource: payload.outcomeSource };
+    case 'BakeReopened': {
+      // Only the latest end counts (bake-session.md, Reopening).
+      const { endedAt: _end, outcome: _outcome, outcomeSource: _source, ...rest } = next;
+      return { ...rest, status: 'active' };
+    }
   }
 };
 

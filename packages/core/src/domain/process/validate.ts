@@ -7,6 +7,7 @@ import {
 } from '../graph.js';
 import { isReservedId } from '../ids.js';
 import { err, ok, type Result } from '../result.js';
+import { outcomeProblem } from './cooking.js';
 import { doughSteps } from './dough.js';
 import type { Process, ProcessStep } from './types.js';
 
@@ -107,6 +108,10 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
     ) {
       return err(invalid(`${path}.durationMode`, 'must be manual or model'));
     }
+  }
+  if (process.intendedOutcome !== undefined) {
+    const problem = outcomeProblem(process.intendedOutcome);
+    if (problem) return err(invalid(`intendedOutcome.${problem.field}`, problem.reason));
   }
   // The model solves one unknown: at most one dough step follows it (fermentation.md).
   const driven = (doughSteps(process) ?? []).filter((s) => s.durationMode === 'model');

@@ -1,3 +1,4 @@
+import { isCookingStep } from '../process/cooking.js';
 import type { Formula } from '../formula/types.js';
 import type { Process } from '../process/types.js';
 import { validateRecipe } from './validate.js';
@@ -72,7 +73,7 @@ export const checkRecipe = (formula: Formula, process: Process): RecipeIssue[] =
     if (!process.steps.some((s) => s.operation === 'mix')) {
       issues.push({ severity: 'warning', code: 'no_mix_step', path: 'steps' });
     }
-    if (!process.steps.some((s) => s.operation === 'bake')) {
+    if (!process.steps.some(isCookingStep)) {
       issues.push({ severity: 'warning', code: 'no_bake_step', path: 'steps' });
     }
   }

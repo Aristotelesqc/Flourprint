@@ -279,6 +279,33 @@ describe.each([
     expect(await target.flours.listFlours()).toEqual([]);
   });
 
+  it('restores a finish written before outcomes as an unknown result', async () => {
+    const backup = await backupOf();
+    const finish = backup.bakes[0].events.find((e: Loose) => e.payload.type === 'BakeFinished');
+    expect(finish.payload).toMatchObject({ outcomeSource: 'recipe' });
+    finish.payload = { type: 'BakeFinished' };
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+  });
+
+  it.each<[string, (payload: Loose) => void]>([
+    ['an outcome without its source', (p) => delete p.outcomeSource],
+    [
+      'a raw dough disposition on a cooked result',
+      (p) => (p.outcome = { result: 'cooked', dough: 'frozen' }),
+    ],
+    ['an unknown result', (p) => (p.outcome = { result: 'eaten' })],
+    ['an unknown outcome field', (p) => (p.outcome = { result: 'dough', loaves: 2 })],
+  ])('refuses a finish with %s', async (_label, corrupt) => {
+    const backup = await backupOf();
+    corrupt(backup.bakes[0].events.find((e: Loose) => e.payload.type === 'BakeFinished').payload);
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidBackup' },
+    });
+  });
+
   it('refuses to import into a database that already has data', async () => {
     const target = await makeTarget();
     await seed(target);
@@ -615,8 +642,14 @@ describe('feedback export (history.md)', () => {
       flours: [{ id: 'bread', version: 2 }],
       startedAt: at('08:00'),
       endedAt: at('11:00'),
+      // Finished with one tap: the recipe's intended outcome (no cooking step: the raw dough),
+      // recorded with its source.
+      outcome: { result: 'dough' },
+      outcomeSource: 'recipe',
     });
+    expect(result.value.schemaVersion).toBe(2);
     expect(digest?.steps.find((s) => s.id === 'mix')).toMatchObject({
+      cooking: false,
       startedAt: at('08:00'),
       endedAt: at('08:10'),
       actualDurationS: 600,

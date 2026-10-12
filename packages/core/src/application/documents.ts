@@ -181,6 +181,15 @@ const technique: Check = (v, w) =>
     },
   );
 
+/** A preparation outcome (bake-session.md); its rules are checked by validateProcess. */
+const outcome: Check = (v, w) =>
+  fields(
+    v,
+    w,
+    { result: oneOf('cooked', 'dough', 'cookedAndDough') },
+    { dough: oneOf('frozen', 'refrigerated', 'given', 'sold', 'other'), pieces: number },
+  );
+
 const step: Check = (v, w) =>
   fields(
     v,
@@ -229,6 +238,6 @@ export const decodeFormula = (value: unknown, where: string): Formula => {
 
 /** Refuses (throws `Refused`) unless the value has exactly the shape of a process. */
 export const decodeProcess = (value: unknown, where: string): Process => {
-  fields(value, where, { steps: list(step) }, { readiness: modelRef });
+  fields(value, where, { steps: list(step) }, { readiness: modelRef, intendedOutcome: outcome });
   return value as Process;
 };

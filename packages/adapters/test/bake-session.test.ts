@@ -412,6 +412,132 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     ]);
   });
 
+  it('finishes with the intended outcome in one tap, or the one chosen this time', async () => {
+    // No cooking step: the intended outcome is the raw dough (bake-session.md, Outcome).
+    const plain = new Session();
+    await plain.start();
+    expect((await plain.at(t('16:00')).ok({ type: 'FinishBake' })).state).toMatchObject({
+      status: 'finished',
+      outcome: { result: 'dough' },
+      outcomeSource: 'recipe',
+    });
+
+    // A recipe that is always frozen says so once.
+    const frozen = new Session();
+    await frozen.start({
+      ...process_,
+      intendedOutcome: { result: 'dough', dough: 'frozen', pieces: 6 },
+    });
+    expect((await frozen.ok({ type: 'FinishBake' })).state.outcome).toEqual({
+      result: 'dough',
+      dough: 'frozen',
+      pieces: 6,
+    });
+
+    // With a cooking step the default is cooked; this time part was frozen instead.
+    const baked = new Session();
+    const withBake: Process = {
+      steps: [
+        ...process_.steps,
+        { id: 'bake', operation: 'bake', dependsOn: ['proof'], schedule: 'asap' },
+      ],
+    };
+    await baked.start(withBake);
+    expect(
+      (
+        await baked.ok({
+          type: 'FinishBake',
+          outcome: { result: 'cookedAndDough', dough: 'frozen' },
+        })
+      ).state,
+    ).toMatchObject({
+      outcome: { result: 'cookedAndDough', dough: 'frozen' },
+      outcomeSource: 'baker',
+    });
+
+    const other = new Session();
+    await other.start(withBake);
+    expect(
+      await other.run({ type: 'FinishBake', outcome: { result: 'cooked', dough: 'frozen' } }),
+    ).toMatchObject({ ok: false, error: { code: 'InvalidCommand' } });
+    expect(
+      await other.run({ type: 'FinishBake', outcome: { result: 'dough', pieces: 0 } }),
+    ).toMatchObject({ ok: false, error: { code: 'InvalidCommand' } });
+  });
+
+  it('never ends the session or sets an outcome when a cooking stage completes', async () => {
+    const session = new Session();
+    await session.start({
+      steps: [
+        { id: 'boil', operation: 'boil', dependsOn: [], schedule: 'asap', plannedDurationS: 60 },
+        { id: 'bake', operation: 'bake', dependsOn: ['boil'], schedule: 'asap' },
+      ],
+    });
+    const done = await session.ok({ type: 'CompleteStep', stepId: 'boil' });
+    expect(done.state.status).toBe('active');
+    expect(done.state.outcome).toBeUndefined();
+  });
+
+  it('corrects the outcome of a finished session only, keeping the original finish', async () => {
+    const session = new Session();
+    await session.start();
+    expect(
+      await session.run({ type: 'CorrectOutcome', outcome: { result: 'cooked' } }),
+    ).toMatchObject({ ok: false, error: { code: 'NotFinished' } });
+    await session.at(t('16:00')).ok({ type: 'FinishBake' });
+    const corrected = await session.ok({ type: 'CorrectOutcome', outcome: { result: 'cooked' } });
+    expect(corrected.state).toMatchObject({
+      status: 'finished',
+      endedAt: t('16:00'),
+      outcome: { result: 'cooked' },
+      outcomeSource: 'baker',
+    });
+    const events = await session.store.loadEvents('bake-1');
+    expect(events.map((e) => e.payload.type).slice(-2)).toEqual([
+      'BakeFinished',
+      'OutcomeCorrected',
+    ]);
+  });
+
+  it('reopens an ended session; only its latest end counts', async () => {
+    const session = new Session();
+    await session.start({
+      steps: [
+        { id: 'bake', operation: 'bake', dependsOn: [], schedule: 'asap', plannedDurationS: 2400 },
+      ],
+    });
+    await session.at(t('15:20')).ok({ type: 'CompleteStep', stepId: 'bake' });
+    expect(await session.run({ type: 'ReopenBake' })).toMatchObject({
+      ok: false,
+      error: { code: 'BakeActive' },
+    });
+    await session.at(t('16:00')).ok({ type: 'FinishBake' });
+    const reopened = await session.at(t('16:20')).ok({ type: 'ReopenBake' });
+    expect(reopened.state.status).toBe('active');
+    expect(reopened.state.endedAt).toBeUndefined();
+    expect(reopened.state.outcome).toBeUndefined();
+
+    // Back in the oven: a stage done again is an inserted step.
+    await session.ok({
+      type: 'InsertStepAfter',
+      after: 'bake',
+      step: { id: 'rebake', operation: 'bake', schedule: 'asap', plannedDurationS: 600 },
+    });
+    await session.at(t('16:40')).ok({ type: 'CompleteStep', stepId: 'rebake' });
+    await session.ok({ type: 'FinishBake', outcome: { result: 'cooked' } });
+
+    const loaded = await loadBake(session.store, 'bake-1');
+    if (!loaded.ok) throw new Error('unreadable');
+    expect(loaded.value).toMatchObject({
+      status: 'finished',
+      endedAt: t('16:40'),
+      outcome: { result: 'cooked' },
+    });
+    const types = (await session.store.loadEvents('bake-1')).map((e) => e.payload.type);
+    expect(types.filter((type) => type === 'BakeFinished')).toHaveLength(2);
+    expect(types).toContain('BakeReopened');
+  });
+
   it('records fold sets on a running step with folds, in any order, without changing the plan', async () => {
     const withFolds: Process = {
       steps: process_.steps.map((s) =>

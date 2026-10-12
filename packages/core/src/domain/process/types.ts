@@ -1,3 +1,4 @@
+import type { PreparationOutcome } from './cooking.js';
 import type { Instant } from '../instant.js';
 import type { AcceptedSuggestion } from '../values.js';
 
@@ -82,6 +83,8 @@ export interface Process {
   readonly steps: readonly ProcessStep[];
   /** Readiness profile of the dough (fermentation.md); absent = the default profile. */
   readonly readiness?: { readonly id: string; readonly version: string };
+  /** How the recipe ends (bake-session.md, Outcome); absent = derived from its steps. */
+  readonly intendedOutcome?: PreparationOutcome;
 }
 
 /** Recorded facts of a bake, from the session log (bake-session.md). */
