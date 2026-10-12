@@ -63,6 +63,8 @@ export interface Services {
   readonly browserData?: {
     readonly loaded: SnapshotLoad;
     readonly erase: () => Promise<void>;
+    /** Saves the browser snapshot now; false when it could not be saved. */
+    readonly flush: () => Promise<boolean>;
   };
 }
 
@@ -166,13 +168,14 @@ export const createServices = async (options: {
       new MemoryRestoreTarget(recipes, bakes, flours, equipment),
     );
     await seedIfEmpty(recipes);
-    const stop = keepBrowserSnapshot({ recipes, bakes, flours, equipment }, realClock.now);
+    const keeper = keepBrowserSnapshot({ recipes, bakes, flours, equipment }, realClock.now);
     browserData = {
       loaded,
       erase: async () => {
-        stop();
+        keeper.stop();
         await clearBrowserSnapshot();
       },
+      flush: keeper.flush,
     };
   } else {
     await seedIfEmpty(recipes);
