@@ -62,24 +62,37 @@ setting of a stage (oven mode, burner level…) belongs to #28 and does not chan
 interface PreparationOutcome {
   result: 'cooked' | 'dough' | 'cookedAndDough';
   dough?: 'frozen' | 'refrigerated' | 'given' | 'sold' | 'other'; // what became of the raw dough
+  pieces?: number; // raw dough pieces kept, for a later inventory
 }
 ```
 
 - `cooked`: the intended product was cooked (all of it). `dough`: the result is the raw dough
   itself (pizza balls frozen for later, a dough given away). `cookedAndDough`: part cooked, part
   kept as dough.
-- `dough` is only accepted with `result` `dough` or `cookedAndDough`; elsewhere it is
-  `InvalidCommand`. It is optional: unknown stays unknown.
-- The outcome is what the baker declares. The domain neither derives it from completed cooking
-  steps nor refuses it against them (a process may not model a cooking step done outside it).
-  The interface proposes `cooked` when a cooking step was completed and `dough` otherwise; the
-  baker confirms or changes it.
-- `FinishBake` takes an optional `outcome`. Without one, the event has no outcome and the result
-  is **unknown**, exactly as for events written before `0.11.0`. An unknown result is never read
-  as cooked, whatever steps were completed.
-- `CorrectOutcome { outcome }` changes only the outcome, without reopening: it replaces the outcome of a **finished** session with a typed
-  `OutcomeCorrected` event; the original `BakeFinished` stays in the log. On an active or
-  abandoned session it is refused with `NotFinished`. The latest `OutcomeCorrected` wins.
+- `dough` and `pieces` are only accepted with `result` `dough` or `cookedAndDough`; elsewhere
+  they are `InvalidCommand`. `pieces` is an integer ≥ 1. Both are optional: unknown stays unknown.
+- **Intended outcome.** A recipe states the outcome it ends with (process.md,
+  `intendedOutcome`): a dough that is always frozen says `{ result: 'dough', dough: 'frozen' }`
+  once, in the recipe. Without one, the intended outcome is `cooked` when the session's effective
+  process (inserted steps included) has a cooking step, else `dough` with no disposition.
+- **Finishing.** `FinishBake` takes an optional `outcome`:
+  - without one, the domain records the intended outcome of the session's snapshot in the event,
+    with `outcomeSource: 'recipe'`: finishing never asks a question;
+  - with one, it records that outcome with `outcomeSource: 'baker'`, for a session that ended
+    differently this time.
+
+  The interface shows this as a Finish button with a choice beside it, the intended outcome being
+  the default. The domain neither derives the outcome from completed cooking steps nor refuses it
+  against them (a cooking step may have been done outside the process).
+
+- Events written before `0.11.0` have no outcome: the result is **unknown**, never read as
+  cooked, whatever steps were completed.
+- `CorrectOutcome { outcome }` changes only the outcome, without reopening: a typed
+  `OutcomeCorrected` event (`outcomeSource: 'baker'`) replaces the outcome of a **finished**
+  session; the original `BakeFinished` stays in the log. On an active or abandoned session it is
+  refused with `NotFinished`. The latest `OutcomeCorrected` wins.
+- Dough pieces kept are not yet an inventory: a later feature may track them and start a new
+  session from them (#56). Their count is recorded now so that history can feed it.
 
 ## Commands and events
 

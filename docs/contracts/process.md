@@ -26,8 +26,12 @@ A process may also name the readiness profile of its dough (`fermentation.md`):
 interface Process {
   steps: ProcessStep[];
   readiness?: { id: string; version: string }; // absent = the default profile
+  intendedOutcome?: PreparationOutcome; // absent = derived (bake-session.md, Outcome)
 }
 ```
+
+`intendedOutcome` is how the recipe ends: cooked, or a raw dough frozen, refrigerated… It is the
+default outcome when a session finishes (bake-session.md); an invalid one is `InvalidProcess`.
 
 `AcceptedSuggestion` is defined in `fermentation.md`. For a step, `appliedValue` is
 `plannedDurationS` in seconds. Any other edit of `plannedDurationS` removes `accepted`.
