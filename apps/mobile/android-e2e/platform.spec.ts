@@ -109,6 +109,8 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
   await expect(page.getByText(/Browser preview/)).toHaveCount(0);
   await page.getByText('Poolish + tangzhong').first().click();
   await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  // A saved recipe opens in consultation (#70): editing is explicit.
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
   const salt = page.getByLabel('Salt (g)', { exact: true });
   await salt.fill('25');
   await salt.press('Enter');
