@@ -7,6 +7,13 @@ import { helpEn, helpFr } from './help';
 
 export const en = {
   ...helpEn,
+  'recipe.edit': 'Edit',
+  'recipe.plan': 'Plan',
+  'recipe.consultation': 'Read recipe',
+  'recipe.estimateCaption': 'Estimates from the provisional model; they do not change the recipe.',
+  'recipe.doughEstimate': 'Dough',
+  'recipe.estimatedYeast': '{name}: {pct} estimated for this schedule',
+  'formula.finalMix.temporaryScope': 'Temporary checklist while weighing; not saved to history',
   'app.title': 'Flourprint',
   'recipes.deviceChecks': 'Device checks',
   'advanced.title': 'Advanced',
@@ -896,6 +903,13 @@ export type Catalog = Record<MessageKey, string>;
 
 export const fr: Catalog = {
   ...helpFr,
+  'recipe.edit': 'Modifier',
+  'recipe.plan': 'Planifier',
+  'recipe.consultation': 'Lire la recette',
+  'recipe.estimateCaption': 'Estimations du modèle provisoire ; elles ne modifient pas la recette.',
+  'recipe.doughEstimate': 'Pâte',
+  'recipe.estimatedYeast': '{name} : {pct} estimés pour cet horaire',
+  'formula.finalMix.temporaryScope': "Aide temporaire de pesée, non enregistrée dans l'historique",
   'app.title': 'Flourprint',
   'recipes.deviceChecks': 'Vérifications de l’appareil',
   'advanced.title': 'Avancé',
