@@ -1,4 +1,5 @@
 import { _android as android, expect, test, type AndroidDevice, type Page } from '@playwright/test';
+import { sampleRecipesFile } from '../test/fixtures/sample-recipe';
 
 /** Platform checks on the emulator (English locale); the APK path comes from FLOURPRINT_APK. */
 const PKG = 'app.flourprint';
@@ -7,6 +8,28 @@ const apk = process.env.FLOURPRINT_APK;
 test.describe.configure({ mode: 'serial' });
 
 let device: AndroidDevice;
+
+/**
+ * The app seeds no recipe (persistence.md, Recipe trash): the suite imports the reference recipe
+ * through Advanced, the way a baker would, unless the database already holds it. In-app
+ * navigation only: a WebView reload would reopen the native connection.
+ */
+const loadSample = async (page: Page): Promise<void> => {
+  const goTo = (path: string) =>
+    page.evaluate((to) => {
+      window.history.pushState({}, '', to);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }, path);
+  if (await page.getByText('Poolish + tangzhong').first().isVisible()) return;
+  await goTo('/advanced');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'recipes.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(sampleRecipesFile())),
+  });
+  await expect(page.getByText('1 recipe imported.')).toBeVisible();
+  await goTo('/recipes');
+};
 
 /**
  * Starts the app and attaches to the WebView of this process: after a forced stop, the WebView of
@@ -28,6 +51,8 @@ const open = async (): Promise<Page> => {
   if (!webView) throw new Error('WebView vanished');
   const page = await webView.page();
   try {
+    await expect(page.getByRole('heading', { name: 'Recipes' })).toBeVisible({ timeout: 60_000 });
+    await loadSample(page);
     await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible({ timeout: 60_000 });
   } catch (cause) {
     // Say what the WebView showed instead: a blank page, an error state, another route.
