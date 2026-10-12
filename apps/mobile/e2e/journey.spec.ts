@@ -772,12 +772,21 @@ test('the browser preview keeps its data across a reload, until it is erased', a
               open.onerror = () => resolve(false);
               open.onsuccess = () => {
                 const db = open.result;
-                const read = db.transaction('snapshots').objectStore('snapshots').get('backup');
-                read.onerror = () => resolve(false);
-                read.onsuccess = () => {
+                // The store may not exist yet: that is a "not yet", never a hang.
+                try {
+                  const read = db.transaction('snapshots').objectStore('snapshots').get('backup');
+                  read.onerror = () => {
+                    db.close();
+                    resolve(false);
+                  };
+                  read.onsuccess = () => {
+                    db.close();
+                    resolve(typeof read.result === 'string' && read.result.includes('Recette 1'));
+                  };
+                } catch {
                   db.close();
-                  resolve(typeof read.result === 'string' && read.result.includes('Recette 1'));
-                };
+                  resolve(false);
+                }
               };
             }),
         ),
