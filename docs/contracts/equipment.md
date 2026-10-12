@@ -44,6 +44,16 @@ interface StepEquipment {
 }
 
 type ApplianceKind = 'oven' | 'stovetop' | 'grill' | 'steamer' | 'fryer' | 'proofer' | 'other';
+type OvenMode =
+  | 'still'
+  | 'fan'
+  | 'convection'
+  | 'broil'
+  | 'fanBroil'
+  | 'steam'
+  | 'steamHeat'
+  | 'proof'
+  | 'custom'; // Flourprint oven modes, below
 type Preheat = 'hot' | 'cold' | 'unknown';
 interface EquipmentRef {
   id: string;
@@ -53,10 +63,13 @@ interface EquipmentRef {
 
 - Every field is optional. An absent field is **unknown**, never a default: no temperature is
   invented for a broil set by level, no fan state for a mode that does not say.
-- `mode` needs `appliance: 'oven'`. `setpointC` is finite. `level.value` ≥ 0; with `of`, `of` > 0
-  and `value` ≤ `of`. `load.pieces` is an integer ≥ 1; `load.massG` > 0. `cover` other than
-  `unknown` needs a `vessel`. An item reference must resolve to an entry of the matching kind
-  (`support`, `vessel`, appliance `profile`). Anything else is `InvalidProcess`.
+- `mode` needs `appliance: 'oven'`. A `profile` does not need `appliance`; the profile's own
+  `appliance` is shown beside it, and nothing compares the two. `setpointC` is finite.
+  `level.value` ≥ 0; with `of`, `of` > 0 and `value` ≤ `of`. `load.pieces` is an integer ≥ 1;
+  `load.massG` > 0. An item reference must resolve to an entry of the matching kind (`support`,
+  `vessel`, appliance `profile`). Validating a process (save, import, the process of `StartBake`)
+  refuses anything else with `InvalidProcess`; in a bake command, an equipment value or a reference
+  that the command's copies do not resolve is `InvalidCommand`, with the path in `field`.
 - `equipment` may sit on any step: a cooking step (bake-session.md), a `preheat` step (what is
   heated), a fermentation step held in an appliance (`proof` in an oven's Proof mode, a `retard` in
   a fridge), a `cool` step on a rack. **The operation says what happens to the dough; the
@@ -188,7 +201,10 @@ type Material =
 - A `documented` mapping names its closest Flourprint mode and a `source`; an `approximate` one
   names its mode; an `unknown` one names none.
 - Versions, archiving and customizing a built-in follow flours.md: editing writes a new version;
-  recipes and Preparations keep the version they reference.
+  recipes and Preparations keep the version they reference. An archived version still resolves:
+  archiving hides an entry from pickers, never from a recipe that references it.
+- A built-in entry is referenced as version `1`. Changing a built-in row below ships it as a new
+  version; the earlier one stays resolvable, so older recipes and Preparations keep it.
 
 ### Built-in entries
 
@@ -217,13 +233,17 @@ There is no built-in appliance: the Flourprint modes are the default. The equipm
 
 - `StartBake` snapshots the process with its `equipment`, and `BakeStartedPayload.equipment` copies
   every entry version the process references (history.md), built-in or personal. Snapshots written
-  before `0.12.0` have none.
+  before `0.12.0` have none. The application resolves those versions from the code (built-ins) and
+  the registry (personal) and passes them as `StartBake.equipment`; the domain has no registry and
+  checks only that the copies cover every reference, with the matching kind. A built-in copy must
+  equal its definition. A reference that resolves nowhere refuses the start (`InvalidCommand`).
 - `AdjustStep` (bake-session.md) also takes `equipment`: the whole `StepEquipment` actually used on
   a step not completed (another setpoint, the lid off sooner, another vessel). It is recorded as
   `OverrideApplied { stepId, field: 'equipment', value }`; the snapshot keeps the plan. An entry
-  newly referenced by the override is copied into the event.
-  `InsertStepAfter` likewise copies the entries its new step references that the session does
-  not hold yet. The equipment override carries no `unit`: its value is a whole `StepEquipment`.
+  newly referenced by the override is copied into the event (`OverrideApplied.equipment`, as in
+  `BakeStartedPayload`). `InsertStepAfter` likewise copies the entries its new step references that
+  the session does not hold yet (`StepInserted.equipment`). Each command carries those copies in
+  its own `equipment` field. The equipment override carries no `unit`: its value is a whole `StepEquipment`.
 - A change in the middle of a running stage that the baker wants dated (the lid removed after
   20 min) is a phase: complete the step and insert the next one (`InsertStepAfter`), whose
   `equipment` says what changed.
