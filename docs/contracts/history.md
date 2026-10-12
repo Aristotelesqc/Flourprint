@@ -171,16 +171,17 @@ Statistics (`bakeStats`) read the digests of one world only (ADR 0014), never th
 
 Each line is one session, in a world holding only it. `stages` lists the completed cooking steps.
 
-| Session                                                               | Status    | Result           | Counts                       | `cookingStages`   |
-| --------------------------------------------------------------------- | --------- | ---------------- | ---------------------------- | ----------------- |
-| Pizza dough (mix, bulk, divide), balls frozen                         | finished  | `dough`, frozen  | finished 1, dough 1          | none              |
-| Bagels (mix, bulk, shape, retard, boil, bake), both stages done       | finished  | `cooked`         | finished 1, cooked 1         | boil 1, bake 1    |
-| Flatbread: `panCook` done, then `bake` (broiler) done                 | finished  | `cooked`         | finished 1, cooked 1         | panCook 1, bake 1 |
-| Same flatbread after `panCook` only, `bake` not started               | active    | none             | active 1                     | panCook 1         |
-| Loaf finished before `0.11.0` (no outcome), its `bake` step completed | finished  | `unknown`        | finished 1, unknown 1        | bake 1            |
-| Loaf abandoned after its `bake` step (burnt)                          | abandoned | none             | abandoned 1                  | bake 1            |
-| Two loaves of one dough: one baked, one frozen                        | finished  | `cookedAndDough` | finished 1, cookedAndDough 1 | bake 1            |
-| Finished as `dough`, then corrected to `cooked` (`OutcomeCorrected`)  | finished  | `cooked`         | finished 1, cooked 1         | as recorded       |
+| Session                                                                       | Status    | Result           | Counts                       | `cookingStages`   |
+| ----------------------------------------------------------------------------- | --------- | ---------------- | ---------------------------- | ----------------- |
+| Pizza dough (mix, bulk, divide), balls frozen                                 | finished  | `dough`, frozen  | finished 1, dough 1          | none              |
+| Bagels (mix, bulk, shape, retard, boil, bake), both stages done               | finished  | `cooked`         | finished 1, cooked 1         | boil 1, bake 1    |
+| Flatbread: `panCook` done, then `bake` (broiler) done                         | finished  | `cooked`         | finished 1, cooked 1         | panCook 1, bake 1 |
+| Same flatbread after `panCook` only, `bake` not started                       | active    | none             | active 1                     | panCook 1         |
+| Loaf finished before `0.11.0` (no outcome), its `bake` step completed         | finished  | `unknown`        | finished 1, unknown 1        | bake 1            |
+| Loaf abandoned after its `bake` step (burnt)                                  | abandoned | none             | abandoned 1                  | bake 1            |
+| Loaf proofed in the oven's Proof mode (`proof`), then `bake`; finished cooked | finished  | `cooked`         | finished 1, cooked 1         | bake 1            |
+| Two loaves of one dough: one baked, one frozen                                | finished  | `cookedAndDough` | finished 1, cookedAndDough 1 | bake 1            |
+| Finished as `dough`, then corrected to `cooked` (`OutcomeCorrected`)          | finished  | `cooked`         | finished 1, cooked 1         | as recorded       |
 
 Replaying any of these sessions, after a restore or a restart, gives the same digest: outcomes
 and stages are read from the events, never inferred.

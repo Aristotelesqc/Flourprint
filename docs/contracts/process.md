@@ -97,13 +97,13 @@ interface StepTechnique {
 
 - Operation codes stay open. Codes the app names: `autolyse` (flour and water rest), `fermentolyse`
   (flour, water and leavening, salt later), `mix`, `fold`, `bulk`, `rest`, `degas`, `divide`,
-  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `boil`, `steam`, `fry`, `panCook`,
-  `grill`, `cool`, and the preparation steps.
+  `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `boil`, `steam`, `fry`, `panCook`, `cool`, and the preparation steps.
 - **Cooking operations**: `bake` (oven, whatever its mode), `boil` (water: bagels, pretzels,
-  poached doughs), `steam`, `fry` (in oil), `panCook` (skillet, griddle, plancha) and `grill`
-  (open grate or flame). They are the cooking stages of a session (bake-session.md) and the heat
-  steps that end the fermentation (fermentation.md). `preheat` is not one: it heats equipment, not
-  the dough.
+  poached doughs), `steam`, `fry` (in oil) and `panCook` (skillet, griddle, plancha). They are the cooking stages of a session (bake-session.md) and the heat
+  steps that end the fermentation (fermentation.md). `preheat` is not one (it heats equipment,
+  not the dough), nor is `proof` done in an oven's Proof mode: the operation says what happens to
+  the dough, the place or appliance mode does not (#28). `steam` is cooking in steam (steamed
+  buns); an oven bake with steam stays `bake`, its steam being a setting (#28).
 - `method` codes the app names: on `mix`, `hand`, `slapAndFold`, `rubaud`, `standMixer`, `spiral`,
   `foodProcessor`, `noKnead`; on `fold` and in `folds.style`, `stretchAndFold`, `coilFold`,
   `lamination`. Any other code is kept and shown as given.

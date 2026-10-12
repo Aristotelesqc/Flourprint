@@ -32,7 +32,7 @@ parallel (process.md). A finished or abandoned session is never reopened; its da
 ## Cooking stages
 
 A **cooking step** is a step whose operation is a cooking operation (process.md): `bake`,
-`boil`, `steam`, `fry`, `panCook`, `grill`. A process may hold zero, one or several of them, in
+`boil`, `steam`, `fry`, `panCook`. A process may hold zero, one or several of them, in
 sequence (boil then bake for bagels; panCook then bake under the broiler) or not. The heat
 setting of a stage (oven mode, burner level…) belongs to #28 and does not change what a stage is.
 
