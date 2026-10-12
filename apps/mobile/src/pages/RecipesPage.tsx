@@ -6,7 +6,7 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { blankRecipe, nextDraftName, type Draft } from '@flourprint/core/application';
 import {
   defaultVariant,
@@ -50,6 +50,8 @@ export const RecipesPage = () => {
   const [drafts, setDrafts] = useState<readonly Draft[]>([]);
   const [choosing, setChoosing] = useState(false);
   const [creating, setCreating] = useState(false);
+  const creatingRef = useRef(false);
+  const pendingRouteRef = useRef<string | null>(null);
   const [cards, setCards] = useState<readonly Card[]>();
   const [running, setRunning] = useState<readonly BakeState[]>([]);
   // Every recipe, trashed ones and family variants included: a running bake may use a variant not
@@ -119,6 +121,8 @@ export const RecipesPage = () => {
     start: { formula: Formula; process: Process },
     origin: Draft['origin'],
   ) => {
+    if (creatingRef.current || pendingRouteRef.current) return;
+    creatingRef.current = true;
     setCreating(true);
     try {
       const taken = [
@@ -137,12 +141,14 @@ export const RecipesPage = () => {
         updatedAt: now,
       };
       await services.recipes.saveDraft(draft);
+      pendingRouteRef.current = `/drafts/${draft.id}`;
       setChoosing(false);
-      router.push(`/drafts/${draft.id}`);
     } catch (error) {
       console.error(error);
       setReadFailed(true);
+      pendingRouteRef.current = null;
     } finally {
+      creatingRef.current = false;
       setCreating(false);
     }
   };
@@ -225,6 +231,13 @@ export const RecipesPage = () => {
           onBlank={() => void create(t('draft.blankName'), blankRecipe(), { kind: 'blank' })}
           onTemplate={fromTemplate}
           onClose={() => setChoosing(false)}
+          onDismissed={() => {
+            const route = pendingRouteRef.current;
+            pendingRouteRef.current = null;
+            if (route) {
+              router.push(route);
+            }
+          }}
         />
       </IonContent>
     </IonPage>

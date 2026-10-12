@@ -10,6 +10,11 @@ const rectangle = async (locator: Locator) => {
 const enterEditing = async (page: Page) => {
   const english = (await page.locator('html').getAttribute('lang'))?.startsWith('en');
   const edit = page.getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true });
+  const reading = page.getByRole('button', {
+    name: english ? 'Read recipe' : 'Lire la recette',
+    exact: true,
+  });
+  await expect(edit.or(reading).filter({ visible: true })).toBeVisible();
   if (await edit.isVisible()) await edit.click();
 };
 
@@ -110,7 +115,7 @@ test('panels retain independent positions, incomplete fields and planner control
   await water.blur();
   await scrollTo(page, 650);
   await expect.poll(() => scrollTop(page)).toBe(650);
-  await page.getByRole('button', { name: 'Processus', exact: true }).click();
+  await page.getByRole('button', { name: 'Planification', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(0);
   await page.getByRole('button', { name: 'À une heure', exact: true }).click();
   const time = page.locator('input[type="datetime-local"]:visible');
@@ -119,14 +124,14 @@ test('panels retain independent positions, incomplete fields and planner control
   await expect.poll(() => scrollTop(page)).toBe(400);
   await page.getByRole('button', { name: 'Historique', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(0);
-  await page.getByRole('button', { name: 'Formule', exact: true }).click();
+  await page.getByRole('button', { name: 'Recette', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(650);
   await expect(water).toHaveValue('abc');
   await expect(water).toHaveAttribute('aria-invalid', 'true');
-  await page.getByRole('button', { name: 'Processus', exact: true }).click();
+  await page.getByRole('button', { name: 'Planification', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(400);
   await expect(time).toHaveValue('2026-11-05T14:00');
-  await page.getByRole('button', { name: 'Formule', exact: true }).click();
+  await page.getByRole('button', { name: 'Recette', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(650);
   // Switch again during the restoration frames, including a short history panel.
   await page.evaluate(async () => {
@@ -141,20 +146,19 @@ test('panels retain independent positions, incomplete fields and planner control
       if (!button) throw new Error(`Missing tab: ${label}`);
       button.click();
     };
-    click('Processus');
+    click('Planification');
     await new Promise(requestAnimationFrame);
     click('Historique');
     await new Promise(requestAnimationFrame);
-    click('Formule');
+    click('Recette');
   });
   await expect.poll(() => scrollTop(page)).toBe(650);
-  await page.getByRole('button', { name: 'Processus', exact: true }).click();
+  await page.getByRole('button', { name: 'Planification', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(400);
 });
 
 test('review distinguishes process-only changes from formula changes', async ({ page }) => {
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Processus', exact: true }).click();
   const duration = page.getByLabel('Durée : Pétrissage', { exact: true });
   await duration.fill('12 min');
   await duration.press('Enter');
@@ -204,7 +208,7 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   expect(footerInvalid.height).toBeCloseTo(footerBefore.height, 0);
 
   // 3. Hidden panel persistence: switch tabs while invalid field is present
-  await page.getByRole('button', { name: 'Processus', exact: true }).click();
+  await page.getByRole('button', { name: 'Planification', exact: true }).click();
   await expect(saveButton).toBeDisabled();
   await expect(footer.getByRole('status')).toHaveText('Corriger les champs invalides');
 
@@ -212,8 +216,8 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   await expect(saveButton).toBeDisabled();
   await expect(footer.getByRole('status')).toHaveText('Corriger les champs invalides');
 
-  // 4. Return to Formule: invalid value preserved, no accidental v2
-  await page.getByRole('button', { name: 'Formule', exact: true }).click();
+  // 4. Return to Recipe: invalid value preserved, no accidental v2
+  await page.getByRole('button', { name: 'Recette', exact: true }).click();
   await expect(water).toHaveValue('abc');
   await expect(water).toHaveAttribute('aria-invalid', 'true');
   await expect(saveButton).toBeDisabled();

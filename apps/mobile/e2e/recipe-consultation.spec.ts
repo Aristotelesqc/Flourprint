@@ -147,9 +147,12 @@ test('planning inputs survive entering and leaving editing without creating a re
   await openSaved(page);
   await routed(page).getByRole('button', { name: 'Planifier', exact: true }).click();
   await routed(page).getByRole('button', { name: 'Prêt pour', exact: true }).click();
-  const when = routed(page).locator('input[type="datetime-local"]:visible');
+  const when = routed(page).locator('input[type="datetime-local"]');
   await when.fill('2026-11-05T14:00');
-  const target = routed(page).getByRole('combobox', { name: /^Prêt à la fin de/ });
+  const target = routed(page).getByRole('combobox', {
+    name: /^Prêt à la fin de/,
+    includeHidden: true,
+  });
   await target.selectOption('mix');
   await expect(routed(page).getByLabel('Durée : Pétrissage', { exact: true })).toHaveCount(0);
   await expect(footer(page)).toHaveCount(0);
@@ -158,6 +161,7 @@ test('planning inputs survive entering and leaving editing without creating a re
   await expect(target).toHaveValue('mix');
   await expect(routed(page).getByLabel('Durée : Pétrissage', { exact: true })).toBeVisible();
   await read(page).click();
+  await routed(page).getByRole('button', { name: 'Planification', exact: true }).click();
   await expect(when).toHaveValue('2026-11-05T14:00');
   await expect(target).toHaveValue('mix');
   await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();

@@ -99,13 +99,22 @@ interface Props {
   /** Applies a process change to the draft; false when it was refused. */
   readonly onChange: (process: Process) => boolean;
   readonly onClose: () => void;
+  readonly onDismissed?: () => void;
 }
 
 /**
  * Edits how a step is done (process.md, Techniques) and removes it. Every change goes to the draft
  * at once, like any edit (drafts.md). Recorded data only: nothing is predicted from it.
  */
-export const StepSheet = ({ open, step, process, preparation, onChange, onClose }: Props) => {
+export const StepSheet = ({
+  open,
+  step,
+  process,
+  preparation,
+  onChange,
+  onClose,
+  onDismissed,
+}: Props) => {
   const { t, stepName } = useMessages();
   const [presentAlert] = useIonAlert();
   const id = useId();
@@ -113,12 +122,14 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
   const [newPhase, setNewPhase] = useState<MixPhase['speed']>();
   // Fold count and interval typed one after the other; folds exist once both are known.
   const [folds, setFolds] = useState<{ count?: number; intervalS?: number }>({});
+  const [foldStyle, setFoldStyle] = useState<string | undefined>();
 
   const stepId = step?.id;
   useEffect(() => {
     if (!open) return;
     setNewPhase(undefined);
     setFolds({ ...step?.technique?.folds });
+    setFoldStyle(step?.technique?.folds?.style);
     // Reset only when the sheet opens or moves to another step.
   }, [open, stepId]);
 
@@ -144,7 +155,7 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
   const applyFolds = (next: { count?: number; intervalS?: number }): boolean => {
     setFolds(next);
     if (next.count !== undefined && next.intervalS !== undefined) {
-      const style = technique.folds?.style;
+      const style = foldStyle ?? technique.folds?.style;
       return setTechnique({
         ...technique,
         folds: {
@@ -162,7 +173,9 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
   };
 
   const methods = methodsFor(step.operation);
-  const remove = () =>
+  const remove = () => {
+    let accepted = false;
+    let confirmed = false;
     void presentAlert({
       header: t('technique.removeStep'),
       message: t('technique.removeConfirm', { step: stepName(step) }),
@@ -172,14 +185,27 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
           text: t('technique.removeStep'),
           role: 'destructive',
           handler: () => {
-            if (onChange(removeStep(process, step.id))) onClose();
+            if (!confirmed) {
+              confirmed = true;
+              accepted = onChange(removeStep(process, step.id));
+            }
           },
         },
       ],
+      onDidDismiss: () => {
+        if (accepted) onClose();
+      },
     });
+  };
 
   return (
-    <IonModal isOpen={open} onDidDismiss={onClose}>
+    <IonModal
+      isOpen={open}
+      onDidDismiss={() => {
+        onClose();
+        onDismissed?.();
+      }}
+    >
       <IonHeader>
         <IonToolbar>
           <IonTitle>{stepName(step)}</IonTitle>
@@ -292,6 +318,7 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
                   codes={FOLD_STYLES}
                   prefix="technique.method"
                   onChange={(style) => {
+                    setFoldStyle(style);
                     const { style: _, ...rest } = technique.folds ?? { count: 1, intervalS: 1 };
                     setTechnique({
                       ...technique,
@@ -303,7 +330,10 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
                 <button
                   type="button"
                   className="fp-reset min-h-11 self-start text-sm font-semibold text-alert"
-                  onClick={() => applyFolds({})}
+                  onClick={() => {
+                    setFoldStyle(undefined);
+                    applyFolds({});
+                  }}
                 >
                   {t('technique.folds.remove')}
                 </button>

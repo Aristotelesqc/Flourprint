@@ -18,6 +18,7 @@ interface Props {
   readonly process: Process;
   readonly weighed: ReadonlyMap<string, number>;
   readonly onToggleWeighed: (key: string, grams: number) => void;
+  readonly onEditHydration?: () => void;
 }
 
 /**
@@ -30,6 +31,7 @@ export const FormulaConsultation = ({
   process,
   weighed,
   onToggleWeighed,
+  onEditHydration,
 }: Props) => {
   const { t, grams, pct, name, componentName, stepName } = useMessages();
   const temperature = useTemperature();
@@ -70,8 +72,8 @@ export const FormulaConsultation = ({
           </p>
         ) : (
           <>
-            <div className="flex flex-col gap-1 border-t border-line pt-3">
-              <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-2 border-t border-line pt-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <span className="flex items-center gap-1.5 font-semibold">
                   {t('formula.stat.hydration')}
                   <InfoButton topic="hydration" term={t('formula.stat.hydration')} />
@@ -81,6 +83,27 @@ export const FormulaConsultation = ({
                     pct: pct(resolved.totalWaterPct),
                   })}
                 </span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
+                <span className="inline-flex min-h-12 items-center gap-2 text-sm text-muted">
+                  <LockStatusIcon locked={formula.waterTarget !== undefined} />
+                  <span className="font-medium">
+                    {formula.waterTarget !== undefined
+                      ? t('formula.hydration.locked', {
+                          pct: pct(formula.waterTarget.totalWaterPct),
+                        })
+                      : t('formula.hydration.unlocked')}
+                  </span>
+                </span>
+                {onEditHydration && (
+                  <button
+                    type="button"
+                    className="fp-reset inline-flex min-h-12 items-center justify-center rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold text-accent-text shadow-sm hover:bg-field-bg active:bg-accent-soft"
+                    onClick={onEditHydration}
+                  >
+                    {t('formula.hydration.editAction')}
+                  </button>
+                )}
               </div>
               <button
                 type="button"
@@ -319,3 +342,19 @@ export const FormulaConsultation = ({
     </div>
   );
 };
+
+const LockStatusIcon = ({ locked }: { locked: boolean }) => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
+    <rect x="5" y="11" width="14" height="10" rx="2" />
+    <path d={locked ? 'M8 11V7a4 4 0 0 1 8 0v4' : 'M8 11V7a4 4 0 0 1 7.5-2'} />
+  </svg>
+);
