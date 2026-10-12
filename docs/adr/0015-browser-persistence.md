@@ -33,5 +33,9 @@ end-user APK.
 ## Consequences
 
 - Reloading the preview keeps everything. Clearing the browser's site data erases it.
+- **Durability is that of a preview, not of SQLite** (audit FP-AUD-008, 2026-10-12). The snapshot
+  is saved at most every few seconds and when the page is hidden; a browser or tab killed in
+  between can lose the last few seconds of changes. Android and the desktop shell commit each
+  change to SQLite in a transaction. Real bakes belong in the app, not the preview.
 - A snapshot written by a newer version may not decode in an older preview; it is kept aside, not
   overwritten.
