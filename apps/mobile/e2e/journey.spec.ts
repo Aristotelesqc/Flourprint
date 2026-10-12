@@ -1,9 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const enterEditing = async (page: Page) => {
+  const english = (await page.locator('html').getAttribute('lang'))?.startsWith('en');
+  const edit = page.getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true });
+  if (await edit.isVisible()) await edit.click();
+};
+
 const openRecipe = async (page: Page) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong').first().click();
   await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await enterEditing(page);
 };
 
 const unsaved = (page: Page) => page.getByText('Modifications non enregistrées');
@@ -31,6 +38,8 @@ test('typed decimals commit, and leaving an untouched field changes nothing', as
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
   await expect(unsaved(page)).toBeHidden();
 
+  await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  await enterEditing(page);
   // The percentage shows 2,22 for 2,222222: visiting it must not round the recipe.
   const saltPct = page.getByLabel('Sel, % boulanger (%)');
   await saltPct.focus();
@@ -180,6 +189,7 @@ test('speaks English on an English device @en', async ({ page }) => {
   await page.goto('/recipes');
   await expect(page.getByRole('heading', { name: 'Recipes' })).toBeVisible();
   await page.getByText('Poolish + tangzhong').first().click();
+  await enterEditing(page);
   await expect(page.getByLabel('Water (g)', { exact: true })).toHaveValue('750');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
@@ -720,6 +730,7 @@ test('a customized flour keeps its properties and is offered by the flour picker
   // In a recipe, the picker offers it among the personal flours.
   await page.locator('ion-back-button:visible').click();
   await page.getByText('Poolish + tangzhong').first().click();
+  await enterEditing(page);
   await page.getByRole('button', { name: '+ Ajouter une farine' }).click();
   const picker = page.locator('select:visible').filter({ has: page.locator('optgroup') });
   const personal = picker.locator('optgroup[label="Farines personnelles"] option');

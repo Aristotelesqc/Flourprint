@@ -3,6 +3,7 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import {
   insertStepAfter,
   projectProcess,
+  temperatureContext,
   type Instant,
   type Process,
   type ProjectedStep,
@@ -11,7 +12,8 @@ import {
 } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
 import { useServices } from '../services/services';
-import { formatDay, formatDayTime, formatTime, localDayKey } from '../i18n/time';
+import { formatDay, formatDayTime, formatDuration, formatTime, localDayKey } from '../i18n/time';
+import { useTemperature } from '../i18n/temperature';
 import { DurationField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
@@ -34,6 +36,8 @@ interface Props {
   /** A bake of this recipe in progress: the main action opens it; another start is explicit. */
   readonly activeBakeId?: string;
   readonly onOpenBake: (bakeId: string) => void;
+  /** Whether authored steps are editable or read-only projection/consultation (#67). */
+  readonly editable?: boolean;
 }
 
 /** `datetime-local` value (local time, minutes) ↔ UTC instant. */
@@ -69,11 +73,12 @@ export const ProcessSection = ({
   onStart,
   activeBakeId,
   onOpenBake,
+  editable = true,
 }: Props) => {
   const { t, error, stepName, locale } = useMessages();
+  const temperature = useTemperature();
   const services = useServices();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
-  // "Now" follows the clock, so the planned times are those of a bake started at this moment.
   const [fromNow, setFromNow] = useState(true);
   const [now, setNow] = useState(() => services.clock.now());
   const [when, setWhen] = useState(() => toLocalInput(nextQuarterHour()));
@@ -85,7 +90,6 @@ export const ProcessSection = ({
     return () => clearInterval(timer);
   }, [followsClock, services]);
   const [targetId, setTargetId] = useState(() => defaultTarget(process)?.id);
-  // The step whose technique sheet is open.
   const [editing, setEditing] = useState<string>();
   const target = process.steps.find((s) => s.id === targetId) ?? defaultTarget(process);
 
@@ -232,17 +236,42 @@ export const ProcessSection = ({
                 >
                   <span className="font-bold">{p?.start ? formatTime(p.start, locale) : '—'}</span>
                   <div className="flex min-w-0 flex-col gap-0.5">
-                    <button
-                      type="button"
-                      className="fp-reset min-h-8 text-left font-semibold text-accent-text"
-                      aria-label={t('process.editStep', { step: stepName(step) })}
-                      onClick={() => setEditing(step.id)}
-                    >
-                      {stepName(step)}
-                    </button>
+                    {editable ? (
+                      <button
+                        type="button"
+                        className="fp-reset min-h-8 text-left font-semibold text-accent-text"
+                        aria-label={t('process.editStep', { step: stepName(step) })}
+                        onClick={() => setEditing(step.id)}
+                      >
+                        {stepName(step)}
+                      </button>
+                    ) : (
+                      <span className="min-h-8 py-1 font-semibold text-ink">{stepName(step)}</span>
+                    )}
                     {step.technique && (
                       <span className="text-[13px] text-ink">
                         {techniqueSummary(t, step.technique)}
+                      </span>
+                    )}
+                    {step.conditions && (
+                      <span className="text-[13px] text-muted">
+                        {[
+                          step.conditions.location,
+                          step.conditions.temperatureC !== undefined
+                            ? temperature.format(
+                                step.conditions.temperatureC,
+                                temperatureContext(step),
+                              )
+                            : undefined,
+                          step.conditions.doughTemperatureC !== undefined
+                            ? `${t('fermentation.target')}: ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
+                            : undefined,
+                          step.conditions.frictionC !== undefined
+                            ? `${t('fermentation.friction')}: ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
+                            : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </span>
                     )}
                     {(hints.length > 0 || step.schedule === 'alap') && (
@@ -258,12 +287,20 @@ export const ProcessSection = ({
                       </span>
                     )}
                   </div>
-                  <DurationField
-                    label={t('process.duration', { step: stepName(step) })}
-                    value={step.plannedDurationS}
-                    optional={step.schedule !== 'alap'}
-                    onCommit={(seconds) => onDurationChange(step.id, seconds)}
-                  />
+                  {editable ? (
+                    <DurationField
+                      label={t('process.duration', { step: stepName(step) })}
+                      value={step.plannedDurationS}
+                      optional={step.schedule !== 'alap'}
+                      onCommit={(seconds) => onDurationChange(step.id, seconds)}
+                    />
+                  ) : (
+                    <span className="text-right font-medium text-ink">
+                      {step.plannedDurationS !== undefined
+                        ? formatDuration(step.plannedDurationS)
+                        : '—'}
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -271,34 +308,38 @@ export const ProcessSection = ({
         </section>
       ))}
 
-      <Rows>
-        <AddStep
+      {editable && (
+        <Rows>
+          <AddStep
+            process={process}
+            onAdd={(after, operation) =>
+              onProcessChange(
+                insertStepAfter(process, after, {
+                  id: newStepId(process, operation, preparationIds),
+                  operation,
+                  schedule: 'asap',
+                }),
+              )
+            }
+          />
+        </Rows>
+      )}
+
+      {editable && (
+        <StepSheet
+          open={editing !== undefined}
+          step={process.steps.find((s) => s.id === editing)}
           process={process}
-          onAdd={(after, operation) =>
-            onProcessChange(
-              insertStepAfter(process, after, {
-                id: newStepId(process, operation, preparationIds),
-                operation,
-                schedule: 'asap',
-              }),
-            )
-          }
+          preparation={editing !== undefined && preparationIds.includes(editing)}
+          onChange={onProcessChange}
+          onClose={() => setEditing(undefined)}
         />
-      </Rows>
-      <StepSheet
-        open={editing !== undefined}
-        step={process.steps.find((s) => s.id === editing)}
-        process={process}
-        preparation={editing !== undefined && preparationIds.includes(editing)}
-        onChange={onProcessChange}
-        onClose={() => setEditing(undefined)}
-      />
+      )}
 
       {!canStart && <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>}
       {canStart && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
       )}
-      {/* The header's button starts a bake; a second one at once is started from here. */}
       {activeBakeId && (
         <>
           <IonButton expand="block" size="large" onClick={() => onOpenBake(activeBakeId)}>
@@ -313,7 +354,6 @@ export const ProcessSection = ({
   );
 };
 
-/** Inserts a step after a chosen one (the last by default), with no duration yet. */
 const AddStep = ({
   process,
   onAdd,
