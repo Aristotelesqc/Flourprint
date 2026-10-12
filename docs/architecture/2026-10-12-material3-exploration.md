@@ -5,6 +5,11 @@
 [#43](https://github.com/Aristotelesqc/Flourprint/pull/43),
 [comparison request](material3-stack-evaluation.md).
 
+**Historical baseline:** the measurements and unresolved findings below describe `5bf75ab`.
+Read the [post-#57 delta review](2026-10-12-ui-refresh.md) for current state at `399af6a`:
+validation/save and FR360 overflow are fixed; #53 lifecycle contracts are accepted, with their
+implementation still pending. Root [DESIGN.md](../../DESIGN.md) is the shared presentation brief.
+
 The owner authorized the Ionic replacement comparison. Four actual AGY sessions using
 `gemini-3.8-flash-high` reviewed caller-supplied source at clean `dev`
 `5bf75abdedcd514971523db36160f96ec7343352`. Each returned a separate report, then revised it

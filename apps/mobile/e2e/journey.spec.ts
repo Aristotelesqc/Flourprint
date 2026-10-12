@@ -156,12 +156,34 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
   await page.getByRole('button', { name: 'Terminer · Cuit' }).click();
   await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Cuit');
 
+  // Two short lists: the result, then what became of the raw dough.
   await page.getByRole('button', { name: 'Modifier le résultat' }).click();
-  await page.locator('ion-alert').getByText('Cuit et pâte crue, congelée').click();
+  await page.locator('ion-alert').getByText('Cuit et pâte crue', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.locator('ion-alert')).toContainText('Devenir de la pâte crue');
+  await page.locator('ion-alert').getByText('congelée', { exact: true }).click();
   await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByTestId('bake-outcome')).toHaveText(
     'Résultat : Cuit et pâte crue, congelée',
   );
+});
+
+test('finishes as frozen dough before its planned bake, keeping the steps as recorded', async ({
+  page,
+}) => {
+  await openRecipe(page);
+  await startBake(page);
+  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await page.getByRole('button', { name: 'Préferment terminé' }).click();
+  // The bake is not reached: finishing now asks for the result, completes no step.
+  await page.getByRole('button', { name: 'Terminer maintenant…' }).click();
+  await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await page.locator('ion-alert').getByText('congelée', { exact: true }).click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Pâte crue, congelée');
+  await expect(page.getByText(/Préferment terminé/).first()).toBeVisible();
+  await expect(page.getByText(/Cuisson terminé/)).toHaveCount(0);
 });
 
 test('a recipe states how it ends', async ({ page }) => {
@@ -171,6 +193,9 @@ test('a recipe states how it ends', async ({ page }) => {
   await expect(ends.locator('option:checked')).toHaveText('Automatique : Cuit');
   await ends.selectOption({ label: 'Pâte crue, congelée' });
   await expect(unsaved(page).first()).toBeVisible();
+  // Every accepted combination has its option, including a mixed result given away.
+  await ends.selectOption({ label: 'Cuit et pâte crue, donnée' });
+  await expect(ends.locator('option:checked')).toHaveText('Cuit et pâte crue, donnée');
 });
 
 test('copies all data for review, with the bake digest and its notes', async ({

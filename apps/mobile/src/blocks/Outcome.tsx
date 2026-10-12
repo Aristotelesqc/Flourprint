@@ -1,23 +1,24 @@
 import { useIonAlert } from '@ionic/react';
-import type { PreparationOutcome } from '@flourprint/core/domain';
+import {
+  DOUGH_DISPOSITIONS,
+  OUTCOME_RESULTS,
+  type PreparationOutcome,
+} from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
 
 /**
- * The results offered when a bake ends differently from its recipe (bake-session.md, Outcome).
- * Pieces kept stay unrecorded here: the dough inventory (#56) will ask for them.
+ * Every result the contract accepts (bake-session.md, Outcome), without pieces: cooked, then raw
+ * dough and cooked-and-dough with each disposition or none said. Pieces kept stay unrecorded here:
+ * the dough inventory (#56) will ask for them, and a recorded count is preserved, never dropped.
  */
-export const OUTCOME_CHOICES: readonly PreparationOutcome[] = [
-  { result: 'cooked' },
-  { result: 'dough', dough: 'frozen' },
-  { result: 'dough', dough: 'refrigerated' },
-  { result: 'dough', dough: 'given' },
-  { result: 'dough', dough: 'sold' },
-  { result: 'dough' },
-  { result: 'cookedAndDough', dough: 'frozen' },
-  { result: 'cookedAndDough' },
-];
+export const OUTCOME_CHOICES: readonly PreparationOutcome[] = OUTCOME_RESULTS.flatMap(
+  (result): PreparationOutcome[] =>
+    result === 'cooked'
+      ? [{ result }]
+      : [{ result }, ...DOUGH_DISPOSITIONS.map((dough) => ({ result, dough }))],
+);
 
-/** A stable key of an outcome, for radio values and selects. */
+/** A stable key of an outcome's result and disposition, for radio values and selects. */
 export const outcomeKey = (outcome: PreparationOutcome): string =>
   [outcome.result, outcome.dough ?? ''].join(':');
 
@@ -36,35 +37,66 @@ export const useOutcomeText = () => {
   };
 };
 
-/** Asks for a result among the choices, the current one selected. */
+/**
+ * Asks for a result, then, for a raw dough kept, what became of it: two short lists rather than
+ * one long one. The current outcome is preselected; its pieces count, if any, is kept when the
+ * result still keeps dough.
+ */
 export const useOutcomePicker = () => {
   const { t } = useMessages();
-  const text = useOutcomeText();
   const [presentAlert] = useIonAlert();
+  // A second controller: the dough list opens as the result list closes.
+  const [presentDoughAlert] = useIonAlert();
+  const buttons = (onSave: (value: string | undefined) => boolean) => [
+    { text: t('bake.cancel'), role: 'cancel' },
+    { text: t('bake.save'), handler: onSave },
+  ];
   return (
     header: string,
     current: PreparationOutcome | undefined,
     onPick: (outcome: PreparationOutcome) => void,
-  ) =>
+  ) => {
+    const pickDough = (result: PreparationOutcome['result']) =>
+      void presentDoughAlert({
+        header: t('outcome.pickDough'),
+        inputs: [undefined, ...DOUGH_DISPOSITIONS].map((dough) => ({
+          type: 'radio' as const,
+          label: t(`outcome.dough.${dough ?? 'unknown'}`),
+          value: dough ?? '',
+          checked: current?.result === result && (current.dough ?? '') === (dough ?? ''),
+        })),
+        buttons: buttons((value) => {
+          if (value === undefined) return false;
+          const dough = DOUGH_DISPOSITIONS.find((d) => d === value);
+          const pieces = current?.result !== 'cooked' ? current?.pieces : undefined;
+          onPick({
+            result,
+            ...(dough === undefined ? {} : { dough }),
+            ...(pieces === undefined ? {} : { pieces }),
+          });
+          return true;
+        }),
+      });
+    // The second list opens once the first is gone: one alert at a time.
+    let keeping: PreparationOutcome['result'] | undefined;
     void presentAlert({
       header,
-      inputs: OUTCOME_CHOICES.map((choice) => ({
+      inputs: OUTCOME_RESULTS.map((result) => ({
         type: 'radio' as const,
-        label: text(choice),
-        value: outcomeKey(choice),
-        checked: current !== undefined && outcomeKey(current) === outcomeKey(choice),
+        label: t(`outcome.${result}`),
+        value: result,
+        checked: current?.result === result,
       })),
-      buttons: [
-        { text: t('bake.cancel'), role: 'cancel' },
-        {
-          text: t('bake.save'),
-          handler: (key: string | undefined) => {
-            const outcome = key === undefined ? undefined : outcomeFromKey(key);
-            if (!outcome) return false;
-            onPick(outcome);
-            return true;
-          },
-        },
-      ],
+      buttons: buttons((value) => {
+        const result = OUTCOME_RESULTS.find((r) => r === value);
+        if (result === undefined) return false;
+        if (result === 'cooked') onPick({ result });
+        else keeping = result;
+        return true;
+      }),
+      onDidDismiss: () => {
+        if (keeping !== undefined) pickDough(keeping);
+      },
     });
+  };
 };
