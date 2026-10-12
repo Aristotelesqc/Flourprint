@@ -1,0 +1,10 @@
+<!-- Flourprint mark (placeholder logo, owner decision of 2026-10-12): an ear of wheat on the
+     accent colour. Source of the app bar mark, the launcher icons, the splash and the favicon. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#a9490a"/>
+  <g fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round">
+    <path d="M16 26V9"/>
+    <path d="M16 13c-2.5-.5-4-2.3-4-4.5 2.5.3 4 1.9 4 4.5zM16 13c2.5-.5 4-2.3 4-4.5-2.5.3-4 1.9-4 4.5z"/>
+    <path d="M16 19c-2.5-.5-4-2.3-4-4.5 2.5.3 4 1.9 4 4.5zM16 19c2.5-.5 4-2.3 4-4.5-2.5.3-4 1.9-4 4.5z"/>
+  </g>
+</svg>

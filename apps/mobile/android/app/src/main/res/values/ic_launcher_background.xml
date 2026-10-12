@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- The accent colour of the app (theme/app.css); the dev channel's icon is green. -->
+    <color name="ic_launcher_background">#A9490A</color>
+    <color name="ic_launcher_dev_background">#2E5E4E</color>
 </resources>
