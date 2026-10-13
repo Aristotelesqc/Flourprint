@@ -24,7 +24,10 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   the reference mixing step with a non-mixing step between (`leaven_before_mixing`, process.md); without a heat step, every `asap` step after
   the mix counts.
 - **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5), at progress 1.
-- A preferment is a `preferment`-kind component; its step is the step with the component's id.
+- A preferment is a `preferment`-kind component; its steps are the steps of the component
+  (`process.md`, Subjects and component phases): the step with the component's id, and the steps
+  naming it as `subject`. With more than one fermenting (`preferment`) phase its estimate is
+  `insufficient_data` (`component_phases_unmodelled`).
   Its yeast is its allocations of yeast-marked ingredients; with none, its estimate is
   `insufficient_data`.
 - The model predicts this observable end point directly. It does not separate gas production
