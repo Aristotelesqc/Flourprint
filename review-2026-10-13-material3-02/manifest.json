@@ -1,0 +1,332 @@
+{
+  "before": "7f0f36c",
+  "beforeSameAppTreeAt": "6e5b814",
+  "after": "e97892f",
+  "locale": "fr-CA",
+  "width": 360,
+  "height": 800,
+  "themes": [
+    "light",
+    "dark",
+    "amoled"
+  ],
+  "screens": [
+    "recipes",
+    "recipe",
+    "edit",
+    "preparation",
+    "recipe-steps",
+    "planning",
+    "fermentation-compact",
+    "fermentation-details",
+    "editor-steps",
+    "step-sheet"
+  ],
+  "files": [
+    {
+      "name": "after-edit-amoled.png",
+      "sha256": "c6a8f2522a4bb1cc7917ee69e86d146e2c796b02d11c6323f82ec953f8b7ff87",
+      "bytes": 49718
+    },
+    {
+      "name": "after-edit-dark.png",
+      "sha256": "ce748289d96832930a9eccb40b8e7efb7a69fa9a57b4d5ab3c72dfbb9f2e4977",
+      "bytes": 49945
+    },
+    {
+      "name": "after-edit-light.png",
+      "sha256": "8da4cfc8e5c1911cc2267ee0eeeb730cfc5ed0101bf4308c22a2599dc3602f04",
+      "bytes": 48645
+    },
+    {
+      "name": "after-editor-steps-amoled.png",
+      "sha256": "80a9deca5e9bb35494057c68c1300e1ae776ea32f155355ef4dededd9c8f8655",
+      "bytes": 46124
+    },
+    {
+      "name": "after-editor-steps-dark.png",
+      "sha256": "b3848bf43fc1207dd25f8f68175a032f2dd7d0bb3c7470f891b9b8d9b56ddbda",
+      "bytes": 46309
+    },
+    {
+      "name": "after-editor-steps-light.png",
+      "sha256": "c5a6f69f40a0d190e8861c8c48d7358b65aa760ed9ef360a2a56ca2423471f40",
+      "bytes": 46090
+    },
+    {
+      "name": "after-fermentation-compact-amoled.png",
+      "sha256": "553f168f871795f88eb2bf07dee4992bd3239c057274da098d2c97014485cb75",
+      "bytes": 52911
+    },
+    {
+      "name": "after-fermentation-compact-dark.png",
+      "sha256": "37db04bdde0f50b849094b053ed2f8957bb9df95196200b78ecea7b8d391673a",
+      "bytes": 53012
+    },
+    {
+      "name": "after-fermentation-compact-light.png",
+      "sha256": "a9b1893830322d73d885995f3343e207ffc6d1c2850c349a869d053d114c8d60",
+      "bytes": 52026
+    },
+    {
+      "name": "after-fermentation-details-amoled.png",
+      "sha256": "fda56f82118b17e6bb566ad36ae73ae30cd0ea095423f5b65659a91a65d96fdd",
+      "bytes": 48878
+    },
+    {
+      "name": "after-fermentation-details-dark.png",
+      "sha256": "7b39d690ebacf2c5c7c1de6b5dc77d591fd1c986731c31c1e5491c0900644c3c",
+      "bytes": 48871
+    },
+    {
+      "name": "after-fermentation-details-light.png",
+      "sha256": "830b2e44142c1288206f34f2b2db413cf071fc5af17445b5c134e06050815202",
+      "bytes": 47787
+    },
+    {
+      "name": "after-planning-amoled.png",
+      "sha256": "bdc6971cf07fe7a306e10fc69aba54f511a51966a2a07f431209202418bd9600",
+      "bytes": 53735
+    },
+    {
+      "name": "after-planning-dark.png",
+      "sha256": "7f5bcce29e456f5974f7cdef3b9f7bbdc33fde825a3c8e380320e65804c16e43",
+      "bytes": 53968
+    },
+    {
+      "name": "after-planning-light.png",
+      "sha256": "49f4e83c85fca67a8a8e66122338f486dc7a2fcdd8985e59bf47bef45bd8f14c",
+      "bytes": 53408
+    },
+    {
+      "name": "after-preparation-amoled.png",
+      "sha256": "ac758e64e2bbc642581265cdadfbf26e7f5cff5d55c8e3e13921fe8965499e1f",
+      "bytes": 50821
+    },
+    {
+      "name": "after-preparation-dark.png",
+      "sha256": "95dbc1042cde247544c730c77275b553f8f31f1077923722e8f41cbc5d86d849",
+      "bytes": 51443
+    },
+    {
+      "name": "after-preparation-light.png",
+      "sha256": "e32167864a9d30c40777c0d77b01fd29a5a61b51de00f98fce38d1fe7e750e96",
+      "bytes": 50793
+    },
+    {
+      "name": "after-recipe-amoled.png",
+      "sha256": "0e2ee5af8d76edf68ad3c1f4aa04a54e6da61caba0a0541d4f79f3aeea86bf08",
+      "bytes": 57340
+    },
+    {
+      "name": "after-recipe-dark.png",
+      "sha256": "2965fd8d11f7258f7b3b5659301b88cf8649c01579ca678ebbc2f39fe5cd9f8b",
+      "bytes": 57347
+    },
+    {
+      "name": "after-recipe-light.png",
+      "sha256": "1202f5dcbfcb05b37d9fac4da3c4e3995c58b1ee985e303cd724ad8cac63cfec",
+      "bytes": 57053
+    },
+    {
+      "name": "after-recipe-steps-amoled.png",
+      "sha256": "d0c166db2377121e8ad3f82a5870b4fe2aa29ccecefc06428cff3a39d7e209f1",
+      "bytes": 38585
+    },
+    {
+      "name": "after-recipe-steps-dark.png",
+      "sha256": "c75b188f6b8cf0652770557701b0e5320e3efd4e19623e35f3b3d8ca2cc7cfbe",
+      "bytes": 38615
+    },
+    {
+      "name": "after-recipe-steps-light.png",
+      "sha256": "9cbcff84735d2d9ff85f25fd688b4de8c4c7e5a01f2f48db602546510f403dc6",
+      "bytes": 38036
+    },
+    {
+      "name": "after-recipes-amoled.png",
+      "sha256": "dc9ab81b0b32d55e108a18955deb3fcd0c11cb33fe7104be807120fe6147e63f",
+      "bytes": 43620
+    },
+    {
+      "name": "after-recipes-dark.png",
+      "sha256": "c6cdbd082f65aeca7b00acef6a0302eabc5833b2968a5d7989d37e95cee7c445",
+      "bytes": 43566
+    },
+    {
+      "name": "after-recipes-light.png",
+      "sha256": "d9102c80c00472e7f974e1c47320d82166d72f303dea62afd6751b82362f3af2",
+      "bytes": 43062
+    },
+    {
+      "name": "after-step-sheet-amoled.png",
+      "sha256": "924967f333e337ae771ea939385cc0ac4be9e20ef425a37ddc33d694b91a9edd",
+      "bytes": 38912
+    },
+    {
+      "name": "after-step-sheet-dark.png",
+      "sha256": "da00fc312b54d184c4152ca2e5aeb51e431e28a3c8139d9ea0286c34223cec3a",
+      "bytes": 39511
+    },
+    {
+      "name": "after-step-sheet-light.png",
+      "sha256": "05342b30f75511ac2af7c1b8ca4884fe59131eec7cfdb68d3e2d8e1fba0f9a5b",
+      "bytes": 39024
+    },
+    {
+      "name": "before-edit-amoled.png",
+      "sha256": "4e1b23c9a9b13ddff48a137dc0d1ca6052c51aaedca34a086e89c42ae0154bed",
+      "bytes": 50138
+    },
+    {
+      "name": "before-edit-dark.png",
+      "sha256": "d864aead2a075117768051a1f1109d3890e75ed6ac1d96cc56a8bcfff8e549a0",
+      "bytes": 50215
+    },
+    {
+      "name": "before-edit-light.png",
+      "sha256": "086f5ffd8cb1c6f5d8eec90991ccbdaef22dbe52aac9e4ec9ab10606d8a587f8",
+      "bytes": 48929
+    },
+    {
+      "name": "before-editor-steps-amoled.png",
+      "sha256": "d90d2cf5b565e98622226c6bffbaf1ebb13f45d23ed57cb7d73a982d2fe81cca",
+      "bytes": 42850
+    },
+    {
+      "name": "before-editor-steps-dark.png",
+      "sha256": "af799e3317121a158aa9bded69d203769e35af35ae8355fd5e0a1ed1966fe608",
+      "bytes": 42983
+    },
+    {
+      "name": "before-editor-steps-light.png",
+      "sha256": "c4e56ce021ef38d635504a8c6eecf4a94dfa433afe2acd67f268234c58b3e19c",
+      "bytes": 42745
+    },
+    {
+      "name": "before-fermentation-compact-amoled.png",
+      "sha256": "656d4ac06f0da265be3817dcde85f68c914140bd810f64abfb646868b11547a3",
+      "bytes": 54050
+    },
+    {
+      "name": "before-fermentation-compact-dark.png",
+      "sha256": "5cb3f318cfa3c8a159a646e3c8e57998f84eb663d40c997949ffa00fa025d579",
+      "bytes": 54175
+    },
+    {
+      "name": "before-fermentation-compact-light.png",
+      "sha256": "fb9dc704eaa562e8dd6c7799e1aca91dbef99ce20a6cd7e34062972c9a0612c6",
+      "bytes": 53158
+    },
+    {
+      "name": "before-fermentation-details-amoled.png",
+      "sha256": "f7e0fc5700f32ca12c4c7e8aa63ca160b4d0ff61852ee2bdd5a6e35b28459085",
+      "bytes": 52395
+    },
+    {
+      "name": "before-fermentation-details-dark.png",
+      "sha256": "0f0b2abdbd47d5328ab6d5dbd82ddf949f0688111e8500e82cc57923ee9778b6",
+      "bytes": 52452
+    },
+    {
+      "name": "before-fermentation-details-light.png",
+      "sha256": "717061fb40c217f031c6a759d3c06f3e2f175fe3a5e172d9858ea2a902db041c",
+      "bytes": 50685
+    },
+    {
+      "name": "before-planning-amoled.png",
+      "sha256": "db5bb559f807d4e6e3b7b50363b84c5ff044f5e14432386020074e6bf013d344",
+      "bytes": 55551
+    },
+    {
+      "name": "before-planning-dark.png",
+      "sha256": "bfcf86ef71215625685554683519fa292c352f9470b67381c12dd7c4022eadbb",
+      "bytes": 56008
+    },
+    {
+      "name": "before-planning-light.png",
+      "sha256": "d6fdd5d885064d7721904218512eb013190fc2ea037198e7df61d512f7e0c25b",
+      "bytes": 55860
+    },
+    {
+      "name": "before-preparation-amoled.png",
+      "sha256": "ac758e64e2bbc642581265cdadfbf26e7f5cff5d55c8e3e13921fe8965499e1f",
+      "bytes": 50821
+    },
+    {
+      "name": "before-preparation-dark.png",
+      "sha256": "95dbc1042cde247544c730c77275b553f8f31f1077923722e8f41cbc5d86d849",
+      "bytes": 51443
+    },
+    {
+      "name": "before-preparation-light.png",
+      "sha256": "e32167864a9d30c40777c0d77b01fd29a5a61b51de00f98fce38d1fe7e750e96",
+      "bytes": 50793
+    },
+    {
+      "name": "before-recipe-amoled.png",
+      "sha256": "cbe2c8d1af406c6b02173144beb05b2431964484f0709f843cfaf1f61abc0e15",
+      "bytes": 61576
+    },
+    {
+      "name": "before-recipe-dark.png",
+      "sha256": "a1a035b5e3c86758ad9aa2a033e8bdb2b3cfed4e798fa62c2e2ea3fbfdc6c85b",
+      "bytes": 61392
+    },
+    {
+      "name": "before-recipe-light.png",
+      "sha256": "8b323afe6d192b5ecee209c5afddcb9d2a997fb7ebef597e088074b78847fb51",
+      "bytes": 61096
+    },
+    {
+      "name": "before-recipe-steps-amoled.png",
+      "sha256": "4f20aa1339c05648ac7a206ddec97ac4fccb2c2d6ba172d78324e56fd2741c6d",
+      "bytes": 43925
+    },
+    {
+      "name": "before-recipe-steps-dark.png",
+      "sha256": "672ce86385a7caaf0a38be244315984b9bfb7d9d1085a68cdba34fa0e86d28a8",
+      "bytes": 43742
+    },
+    {
+      "name": "before-recipe-steps-light.png",
+      "sha256": "b828220c516af398ecbdea7559aed3c215885489a7d658242fcd7ddabea7c4f9",
+      "bytes": 42760
+    },
+    {
+      "name": "before-recipes-amoled.png",
+      "sha256": "4eaf2c31ea82c2b483236a304b3b8c90201571cf8a7f993195775bb0b16be89c",
+      "bytes": 43918
+    },
+    {
+      "name": "before-recipes-dark.png",
+      "sha256": "fd4e2fac7f162c39d9d36087593b09ffd1a351f41a65bb9f7373c7b51a11b8d5",
+      "bytes": 43955
+    },
+    {
+      "name": "before-recipes-light.png",
+      "sha256": "da4ab6bce847615344bd974309d219a749857285331d5c861f8f974681b31780",
+      "bytes": 43156
+    },
+    {
+      "name": "before-step-sheet-amoled.png",
+      "sha256": "a199d652277385f81da1e85a5d2435f209cfadcf59ec28969622700a545b9e3d",
+      "bytes": 58784
+    },
+    {
+      "name": "before-step-sheet-dark.png",
+      "sha256": "be506d7c3ab900bbdafca51d61156911b702b1bf0e0fddb19e3a44d3dc56b2bf",
+      "bytes": 61664
+    },
+    {
+      "name": "before-step-sheet-light.png",
+      "sha256": "80ef850fcc68782545524d8838d928aa758a18706ff372c10fd4a3183c7b3d8e",
+      "bytes": 62427
+    },
+    {
+      "name": "index.html",
+      "sha256": "2d8017520bcba75af89c121ec56dc7a0b41545b984df858fd932dddff77d0ee0",
+      "bytes": 18150
+    }
+  ]
+}
