@@ -105,6 +105,20 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE recipes ADD COLUMN trashed_at TEXT;
     `,
   },
+  {
+    version: 7,
+    sql: `
+      CREATE TABLE ingredients (
+        id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        archived INTEGER NOT NULL,
+        schema_version INTEGER NOT NULL,
+        document TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (id, version)
+      );
+    `,
+  },
 ];
 
 export type OpenError =

@@ -12,6 +12,7 @@ export const feedbackJson = async (
     bakes: services.allBakes,
     flours: services.flours,
     equipment: services.equipment,
+    ingredients: services.ingredients,
   };
   const result = await exportFeedback(stores, now, {
     platform: services.platform,

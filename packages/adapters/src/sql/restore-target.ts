@@ -4,6 +4,7 @@ import { writeAppend } from './bake-event-store.js';
 import type { SqlDriver } from './driver.js';
 import { insertEquipment } from './equipment-registry.js';
 import { insertFlour } from './flour-registry.js';
+import { insertIngredient } from './ingredient-registry.js';
 import { insertFamily, insertRecipe, writeDraft } from './recipe-repository.js';
 
 /**
@@ -16,7 +17,7 @@ export class SqlRestoreTarget implements RestoreTarget {
   restore(plan: RestorePlan): Promise<Result<void, RestoreError>> {
     return this.driver.transaction(async (tx) => {
       const [row] = await tx.query<{ n: number }>(
-        'SELECT (SELECT COUNT(*) FROM recipes) + (SELECT COUNT(*) FROM bakes) + (SELECT COUNT(*) FROM flours) + (SELECT COUNT(*) FROM equipment) AS n',
+        'SELECT (SELECT COUNT(*) FROM recipes) + (SELECT COUNT(*) FROM bakes) + (SELECT COUNT(*) FROM flours) + (SELECT COUNT(*) FROM equipment) + (SELECT COUNT(*) FROM ingredients) AS n',
       );
       if (Number(row?.n ?? 0) > 0) {
         return err(
@@ -27,6 +28,7 @@ export class SqlRestoreTarget implements RestoreTarget {
       for (const draft of plan.drafts ?? []) await writeDraft(tx, draft);
       for (const entry of plan.flours ?? []) await insertFlour(tx, entry);
       for (const entry of plan.equipment ?? []) await insertEquipment(tx, entry);
+      for (const entry of plan.ingredients ?? []) await insertIngredient(tx, entry);
       for (const recipe of plan.recipes) await insertRecipe(tx, recipe);
       for (const bake of plan.bakes) await writeAppend(tx, bake);
       return ok(undefined);

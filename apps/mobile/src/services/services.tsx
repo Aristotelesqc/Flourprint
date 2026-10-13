@@ -6,6 +6,7 @@ import type {
   EquipmentRegistry,
   FlourRegistry,
   IdGenerator,
+  IngredientRegistry,
   RecipeRepository,
 } from '@flourprint/core/application';
 import type { Instant } from '@flourprint/core/domain';
@@ -13,6 +14,7 @@ import {
   MemoryBakeEventStore,
   MemoryEquipmentRegistry,
   MemoryFlourRegistry,
+  MemoryIngredientRegistry,
   MemoryRecipeRepository,
   MemoryRestoreTarget,
 } from '@flourprint/adapters/memory';
@@ -43,6 +45,8 @@ export interface Services {
   readonly flours: FlourRegistry;
   /** Personal equipment entries (equipment.md); built-in entries are code. */
   readonly equipment: EquipmentRegistry;
+  /** Personal ingredient entries and customizations (ingredients.md); built-ins are code. */
+  readonly ingredients: IngredientRegistry;
   /** The clock of the current world: the real one plus the offset in simulation (ADR 0014). */
   readonly clock: Clock;
   /** The real clock, for what both worlds share: recipes, drafts, flours, exports. */
@@ -99,6 +103,7 @@ export const createServices = async (options: {
       SqlBakeEventStore,
       SqlEquipmentRegistry,
       SqlFlourRegistry,
+      SqlIngredientRegistry,
       SqlRecipeRepository,
     } = await import('@flourprint/adapters/sqlite-capacitor');
     const db = await openCapacitorSqlite('flourprint');
@@ -109,6 +114,7 @@ export const createServices = async (options: {
       ...worlds(new SqlBakeEventStore(db.value.driver)),
       flours: new SqlFlourRegistry(db.value.driver),
       equipment: new SqlEquipmentRegistry(db.value.driver),
+      ingredients: new SqlIngredientRegistry(db.value.driver),
       ids,
       storage: 'sqlite',
       platform: PLATFORM,
@@ -124,6 +130,7 @@ export const createServices = async (options: {
       SqlBakeEventStore,
       SqlEquipmentRegistry,
       SqlFlourRegistry,
+      SqlIngredientRegistry,
       SqlRecipeRepository,
     } = await import('@flourprint/adapters/sqlite-bridge');
     const db = await openBridgeSqlite(desktop);
@@ -134,6 +141,7 @@ export const createServices = async (options: {
       ...worlds(new SqlBakeEventStore(db.value.driver)),
       flours: new SqlFlourRegistry(db.value.driver),
       equipment: new SqlEquipmentRegistry(db.value.driver),
+      ingredients: new SqlIngredientRegistry(db.value.driver),
       ids,
       storage: 'sqlite',
       platform: 'desktop',
@@ -142,16 +150,20 @@ export const createServices = async (options: {
         (await db.value.driver.query<{ v: string }>('SELECT sqlite_version() AS v'))[0]?.v,
     };
   }
-  const recipes = new MemoryRecipeRepository();
+  const ingredients = new MemoryIngredientRegistry();
+  const recipes = new MemoryRecipeRepository(ingredients);
   const bakes = new MemoryBakeEventStore();
   const flours = new MemoryFlourRegistry();
   const equipment = new MemoryEquipmentRegistry();
   let browserData: Services['browserData'];
   if (browserSnapshotAvailable()) {
     const loaded = await restoreBrowserSnapshot(
-      new MemoryRestoreTarget(recipes, bakes, flours, equipment),
+      new MemoryRestoreTarget(recipes, bakes, flours, equipment, ingredients),
     );
-    const keeper = keepBrowserSnapshot({ recipes, bakes, flours, equipment }, realClock.now);
+    const keeper = keepBrowserSnapshot(
+      { recipes, bakes, flours, equipment, ingredients },
+      realClock.now,
+    );
     browserData = {
       loaded,
       erase: async () => {
@@ -166,6 +178,7 @@ export const createServices = async (options: {
     ...worlds(bakes),
     flours,
     equipment,
+    ingredients,
     ids,
     storage: 'memory',
     platform: 'web',
