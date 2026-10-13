@@ -60,19 +60,19 @@ checkRecipe(formula, process, entryFamilies?: Record<string, IngredientFamily>):
   code), a recipe without a step.
 - **Warning** (never blocks):
 
-| Code                      | When                                                                            |
-| ------------------------- | ------------------------------------------------------------------------------- |
-| `salt_missing`            | no dough ingredient with id `salt` or with an `entry` of family `salt`          |
-| `salt_outside_1_to_3_5`   | salt below 1 % or above 3.5 % of the flour                                      |
-| `water_outside_45_to_90`  | total water below 45 % or above 90 % of the flour, when it is complete          |
-| `no_leavening`            | no ingredient marked as yeast, none with a `leaven` entry, and no preferment    |
-| `no_mix_step`             | no step with operation `mix`                                                    |
-| `no_bake_step`            | no cooking step (process.md); a dough-only recipe stays valid                   |
-| `step_without_duration`   | an `asap` step without a planned duration (one issue per step, `path` its id)   |
-| `folds_exceed_step`       | `folds.count × folds.intervalS` exceeds the step's planned duration             |
-| `preheat_too_short`       | an `alongside` step's `warmup` is `insufficient` (window under the requirement) |
-| `preheat_window_unknown`  | an `alongside` step's `warmup` is `unknown`: its window cannot be computed      |
-| `preheat_target_mismatch` | a preheat and its target name different appliances                              |
+| Code                      | When                                                                              |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| `salt_missing`            | no dough ingredient with id `salt` or with an `entry` of family `salt`            |
+| `salt_outside_1_to_3_5`   | salt below 1 % or above 3.5 % of the flour                                        |
+| `water_outside_45_to_90`  | total water below 45 % or above 90 % of the flour, when it is complete            |
+| `no_leavening`            | no ingredient marked as yeast, none with a `leaven` entry, and no preferment      |
+| `no_mix_step`             | no step with operation `mix`                                                      |
+| `no_bake_step`            | no cooking step (process.md); a dough-only recipe stays valid                     |
+| `step_without_duration`   | an `asap` step without a planned duration (one issue per step, `path` its id)     |
+| `folds_exceed_step`       | `folds.count × folds.intervalS` exceeds the step's planned duration               |
+| `preheat_too_short`       | a `beforeTarget` step's `warmup` is `insufficient` (window under the requirement) |
+| `preheat_window_unknown`  | a `beforeTarget` step's `warmup` is `unknown`: its window cannot be computed      |
+| `preheat_target_mismatch` | a preheat and its target name different appliances                                |
 
 - The ranges are deliberately wide (bagels near 55 %, focaccia near 85 % total water); they flag
   likely typos, not style choices.

@@ -12,14 +12,12 @@ conditions, incorporations) follows #5; this contract fixes the graph and the ti
 interface ProcessStep {
   id: StepId;
   dependsOn: StepId[]; // finish-to-start
-  schedule: 'asap' | 'alap' | 'alongside'; // alongside: Steps alongside, below
+  schedule: 'asap' | 'alap' | 'beforeTarget'; // beforeTarget: Steps before a target, below
   plannedDurationS?: number; // absent = unknown
   endCriterion?: EndCriterion; // observation or user decision
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
   durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one dough step (fermentation.md)
-  // `alongside` only (Steps alongside):
-  target?: StepId; // the cooking step it heats for
-  requiredWarmupS?: number; // minimum warm-up: a requirement, never a duration in the sequence
+  // `beforeTarget` only (Steps before a target): target, requiredWarmupS, startRule
 }
 ```
 
@@ -51,10 +49,10 @@ default outcome when a session finishes (bake-session.md); an invalid one is `In
 - The list order is a **valid topological order**: the mobile list reads top to bottom.
 - A step added to the list gets `dependsOn = [previous step]` by default.
 - `alap` without a successor, or without `plannedDurationS`, is an error.
-- `alongside` is valid only on a `preheat` step, with a `target` that is a cooking step depending
-  on it (directly or through other steps), no `plannedDurationS`, no `durationMode` and no
-  incorporations; `requiredWarmupS` ≥ 0 when present (Steps alongside). `target` and
-  `requiredWarmupS` are refused on any other schedule.
+- `beforeTarget` is valid only on a `preheat` step, with a `target` that is a cooking step not
+  upstream of it, no `plannedDurationS`, no `durationMode`, no incorporations and no step depending
+  on it; `requiredWarmupS` ≥ 0, required unless `startRule` is `afterDependencies` (Steps before a
+  target). `target`, `requiredWarmupS` and `startRule` are refused on any other schedule.
 - `plannedDurationS` ≥ 0 when present.
 - Per-step incorporations add up exactly to the formula's final-mix quantities (see below).
 - `dependsOn` is never accepted and then ignored, nor dropped on import.
@@ -91,96 +89,116 @@ interface StepConditions {
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
 
-## Steps alongside (preheating)
+## Steps before a target (preheating)
 
-**Proposal of 2026-10-13, revised after the audit, pending the owner's approval.** A baker
-preheats the oven while the dough proofs. Four different facts are involved and none is
-confused with another: the **trigger** (switching the heating on), the **heating window** (from
-the trigger until the cooking step that needs the heat starts), the **requirement** (the warm-up
-the baker wants) and the **record** (when heating started and, if observed, when the equipment
-was ready). `schedule: 'alongside'` carries them without a hidden "as late as possible" rule and
-without a duration that is zero in one place and 30 minutes in another.
+**Proposal of 2026-10-13, revision 3: the owner chose option C on #97.** A baker preheats the oven
+while the dough proofs, and switches it on **a set time before the cooking step it is for**, not at
+the boundary of another step: a 2 h proof stays one step, and the oven does not heat for 2 h when
+30 min are wanted. Four facts stay distinct: the **trigger** (switching the heating on), the
+**heating window** (from the trigger until the cooking step that needs the heat starts), the
+**requirement** (the warm-up the baker wants) and the **record** (when heating started and, if
+observed, when the equipment was ready).
 
-- **Scope.** `alongside` exists for the operation `preheat` only, in this version. Any other
-  operation with `alongside` is `InvalidProcess`. A general milestone or trigger primitive would
-  need its own contract.
-- **Sequence.** An `alongside` step starts when its dependencies end, like an `asap` step, and has
-  **no duration in the sequence by construction**: it has no `plannedDurationS`. A step that
-  depends on it is satisfied **once the `alongside` step has started** (in the plan, at its start;
-  in a session, at `StepStarted`), so the default `dependsOn = [previous step]` keeps working for
-  the step added after it.
-- **Target.** `target` names the cooking step the heat is for; it is explicit, never chosen by
-  list position. It must depend on the `alongside` step, directly or through other steps, so it is
-  downstream of the trigger. Removing the target is refused (`TargetInUse`) until the preheat is
-  removed or given another target; a move that leaves the target no longer downstream fails
-  validation and is refused as a whole. When the preheat and its target both name an appliance
-  and they differ, the check `preheat_target_mismatch` (`drafts.md`) says so.
-- **Heating window.** `windowS` is the scheduled difference
-  `start(target) − start(preheat)` read from the projection, not a sum of list positions. It is
-  derived and never stored.
-- **Requirement.** `requiredWarmupS` is a minimum for the window. It never moves another step and
-  is never added to any total.
-- **Status.** The projection gives each `alongside` step a structured `warmup`:
-  `sufficient` or `insufficient` (with `availableS` and `requiredS`), `unknown` (with the
-  scheduler's `unknownAfter` blockers, for example a phase without a duration, or a target whose
-  end rests on an observation) and `notApplicable` (no requirement). An absent warning is never
-  read as sufficient: `insufficient` raises `preheat_too_short` and `unknown` raises
-  `preheat_window_unknown` (`drafts.md`), both nonblocking.
-- **In a Preparation.** `StartStep` on the step records `StepStarted`: the baker switched the
-  heating on. It is the only event needed to let the next steps start. `CompleteStep` on it is
-  optional and means the baker observed the equipment ready (`StepCompleted` at `at`). Nothing
-  completes when the required time elapses, readiness is never inferred, and a started
-  `alongside` step that was never completed is not an open step: finishing the Preparation does
-  not need it. If the target is started with no readiness recorded and less than `requiredWarmupS`
-  elapsed since the trigger, the interface warns and asks for confirmation; no command is
-  refused. History and notifications name the two events "heating started" and "ready", never
-  "preheated" at the trigger.
-- **Legacy `alap` preheats** keep their meaning: as late as possible, with `plannedDurationS` as
-  the heating duration and the cooking step depending on both. Nothing is migrated or
-  reinterpreted: a session keeps the process it started with. Turning an `alap` preheat into an
-  `alongside` one is an explicit edit that shows the before and after; it is never silent. An
-  `alap` step is moved by order only and is not duplicated (Step move and duplicate).
-- **Dough steps** (`fermentation.md`): an `alongside` step is not one, and the dough steps on
-  either side of it count as consecutive.
+```ts
+interface ProcessStep {
+  // …
+  schedule: 'asap' | 'alap' | 'beforeTarget';
+  // `beforeTarget` only:
+  target?: StepId; // the cooking step it heats for
+  requiredWarmupS?: number; // the warm-up wanted before the target starts
+  startRule?: 'fromTarget' | 'afterDependencies'; // absent = 'fromTarget'
+}
+```
+
+- **Scope.** `beforeTarget` exists for the operation `preheat` only, in this version. Any other
+  operation with it is `InvalidProcess`. A general trigger or milestone primitive would need its own
+  contract.
+- **Off the critical path.** A `beforeTarget` step has **no `plannedDurationS`**, no
+  `durationMode` and no incorporations, and **no step may depend on it**: the target and every other
+  step are scheduled exactly as if it did not exist. It never delays, shortens or extends another
+  step. Its `dependsOn` only gives the **earliest allowed start** (for example "after shaping";
+  empty means from the start of the recipe).
+- **Target.** `target` names the cooking step the heat is for; it is explicit, never chosen by list
+  position, and must not be upstream of the step (the target is not one of its dependencies,
+  directly or through others). Removing the target is refused (`TargetInUse`) until the preheat is
+  removed or given another target. When the preheat and its target both name an appliance and they
+  differ, the check `preheat_target_mismatch` (`drafts.md`) says so.
+- **Planned start.** With `earliest` the end of its dependencies and `targetStart` the planned
+  start of the target:
+  - `fromTarget` (default): `max(earliest, targetStart − requiredWarmupS)`: as late as the
+    requirement allows, never before the earliest allowed start;
+  - `afterDependencies`: `earliest`, an explicit choice to heat from the end of the previous
+    step (for example a stone that needs long heating).
+    `requiredWarmupS` (≥ 0) is required with `fromTarget`, optional with `afterDependencies`. When
+    `targetStart` is unknown, a `fromTarget` start is unknown too, never guessed.
+- **Heating window.** The step's planned span is `[plannedStart, targetStart]`: heating continues
+  until the target starts. `windowS = targetStart − plannedStart` is derived, never stored, and is
+  never added to any total; the span counts in its group's window like any step (relative timeline
+  and groups) but never extends the recipe beyond its target.
+- **Status.** The projection gives each `beforeTarget` step a structured `warmup`: `sufficient` or
+  `insufficient` (with `availableS` and `requiredS`), `unknown` (with the scheduler's
+  `unknownAfter` blockers) and `notApplicable` (no requirement). An absent warning is never read as
+  sufficient: `insufficient` raises `preheat_too_short` and `unknown` raises
+  `preheat_window_unknown` (`drafts.md`), both nonblocking. An insufficient window changes no other
+  step: the dough is never held for the oven.
+- **In a Preparation.** `StartStep` records `StepStarted`: the heating was switched on. Before
+  that, the planned trigger follows the target when the plan is reprojected (a proof extended
+  before the oven is on moves the trigger later); once started, the recorded start stays and only
+  the window changes. `CompleteStep` is optional and means the baker observed the equipment ready
+  (`StepCompleted` at `at`). Nothing completes when the required time elapses, readiness is never
+  inferred, and a started step that was never completed is not an open step: finishing the
+  Preparation does not need it. If the target is started with no readiness recorded and less than
+  `requiredWarmupS` elapsed since the trigger, or before the trigger, the interface warns and asks
+  for confirmation; no command is refused. History and notifications name the events "heating
+  started" and "ready", never "preheated" at the trigger.
+- **Legacy `alap` preheats** keep their meaning: a **hard** prerequisite, as late as possible, with
+  `plannedDurationS` as the heating duration and the cooking step depending on both; when the
+  window is too short, the cooking step waits. Nothing is migrated or reinterpreted: a session keeps
+  the process it started with. Turning an `alap` preheat into a `beforeTarget` one is an explicit
+  edit that shows the before and after; it is never silent.
+- **Dough steps** (`fermentation.md`): a `beforeTarget` step is not one and holds no dough.
 - **Compatibility.** An older app refuses a recipe holding the new schedule value or fields as a
   document with an unknown discriminant or field (`persistence.md`), never misreads it.
   `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge, by the
   implementing pull request.
 
-Examples (hand-checked):
+Examples (hand-checked; `+h:mm` from the start of the recipe):
 
-1. **Owner scenario.** `preheat` (`alongside`, `requiredWarmupS` 1800, `target` `bake`), `bulk`
-   (15 min), `bake`. The window is 900 s: `warmup` is `insufficient`, `availableS` 900,
-   `requiredS` 1800; `preheat_too_short` is raised. The bulk is neither shortened nor extended.
-2. **Long overlap.** The same requirement with a 2 h `proof` before the `bake`: `sufficient`,
-   `availableS` 7200. The trigger is projected 2 h before the loading. Nothing claims the oven is
-   ready.
-3. **Actual execution.** The baker switches the oven on at 14:05 and sees it hot at 14:40:
-   `StepStarted` 14:05 (the next steps may start at once), `StepCompleted` 14:40. History never
-   says that the preheating was complete at 14:05.
-4. **Two cooking branches.** An oven `bake` and, in parallel, a skillet `panCook`. The preheat has
-   `target` `bake` and an oven appliance; the skillet stage is never its target. With
-   `equipment` naming a different appliance than its target: `preheat_target_mismatch`.
-5. **No target.** An `alongside` step without `target`, or whose target is not downstream:
-   `InvalidProcess`. The interface proposes the cooking steps downstream and asks when there are
-   several; it never picks by list position.
-6. **Missing duration.** A phase between the trigger and the target has no duration: `warmup`
-   is `unknown` with `unknownAfter` naming it, `preheat_window_unknown` is raised, and nothing
-   shows "0 min" or "sufficient".
-7. **Invalid application.** `alongside` on `bulk` or `shape`: `InvalidProcess`. A
-   `plannedDurationS` on an `alongside` step: `InvalidProcess`.
-8. **Legacy.** An `alap` `preheat` of 30 min beside the proof keeps its projection and its
-   journal. It is converted only by an explicit edit.
-9. **Move.** Moving an `alongside` preheat is a chain move (`process.md`, Step move and
-   duplicate): its heating start changes, `changedEdges` are shown, the window is recomputed and
-   its `target` stays. A move that puts it after its target is refused.
+1. **Just in time, the mockup of #97.** Shaping ends at +27:45, the proof (2 h) runs +27:45 →
+   +29:45, the `bake` starts at +29:45. The preheat (`dependsOn: [shape]`, `requiredWarmupS` 1800,
+   `target` `bake`) starts at max(+27:45, +29:45 − 0:30) = **+29:15**; window 30 min, `sufficient`.
+   The proof stays **one** step; nothing is split.
+2. **Start after the previous step.** The same with `startRule: 'afterDependencies'`: the preheat
+   starts at +27:45; window 2 h, `sufficient`. This is the baker's explicit choice, not the default.
+3. **Too short, nothing moves.** Shaping ends at 0:00, a 15 min `bulk` runs 0:00 → 0:15, the `bake`
+   starts at 0:15; preheat after shaping, 30 min required: start max(0:00, 0:15 − 0:30) = 0:00,
+   window 15 min, `insufficient` (`availableS` 900, `requiredS` 1800), `preheat_too_short`. The bulk
+   and the bake keep their times.
+4. **Actual execution.** The oven is switched on at 14:05, seen hot at 14:40, and the bake starts
+   at 14:50: `StepStarted` 14:05, `StepCompleted` 14:40, and the bake's own `StepStarted` 14:50:
+   three distinct facts. History never says the preheating was complete at 14:05.
+5. **Reprojection.** In example 1, the proof is extended by 20 min before the oven is on: the bake
+   moves to +30:05 and the planned trigger to +29:35. If the oven was already switched on at
+   +29:15 (recorded), its start stays +29:15 and the window becomes 50 min.
+6. **Two cooking branches.** An oven `bake` and, in parallel, a skillet `panCook`: the preheat's
+   `target` is the `bake`, never chosen by position. With `equipment` naming a different appliance
+   than its target: `preheat_target_mismatch`.
+7. **Unknown target start.** A step before the bake has no duration: the preheat's start and
+   window are `unknown`, with `unknownAfter` naming that step, and `preheat_window_unknown` is
+   raised; nothing shows "0 min" or "sufficient".
+8. **Invalid.** `beforeTarget` on `bulk`, a `plannedDurationS` on a `beforeTarget` step, a step
+   that depends on it, a `fromTarget` step without `requiredWarmupS`, a missing target or a target
+   upstream of the preheat: each is `InvalidProcess`.
+9. **Legacy.** An `alap` `preheat` of 30 min after a 15 min bulk keeps its hard meaning: the bake
+   waits 15 min for it. Its projection and journal are unchanged; it is converted only by an
+   explicit edit.
 10. **Target removal.** Removing the `bake` that is a preheat's target: `TargetInUse`.
-11. **Readiness not recorded.** The `bake` is started 10 min after the trigger with 30 min
-    required and no `StepCompleted` on the preheat: the interface warns and asks to confirm;
-    the command is accepted and the preheat stays "ready: not recorded".
-12. **Recipe and Planning.** Both read the same projection: the same start and end for every
-    step, and a distinct "30 min required · 2 h available" annotation for the preheat, which adds
-    nothing to any group's span.
+11. **Readiness not recorded.** The bake is started 10 min after the trigger with 30 min required
+    and no `StepCompleted` on the preheat: the interface warns and asks to confirm; the command is
+    accepted and the preheat stays "ready: not recorded".
+12. **Recipe and Planning.** Both read the same projection: the same start and end for every step,
+    and a distinct "30 min required · 30 min available" annotation for the preheat (example 1), or
+    "30 min required · 2 h available" (example 2).
 
 ## Techniques (#32, first slice)
 
@@ -243,8 +261,8 @@ refused).
 - A step's planned end is known only when its start is known and it has `plannedDurationS`.
   Started and finished steps use their recorded times.
 - During a bake, steps not yet started cannot be planned before `now`.
-- `alongside`: as `asap`, with no duration in the sequence; its dependents start when it starts
-  (Steps alongside).
+- `beforeTarget`: placed after the other steps, from its target's planned start (Steps before a
+  target); it never moves another step.
 - `asap`: as early as its dependencies allow. `alap`: as late as possible while still ending
   before the **earliest** planned start of its successors (preheating, tangzhong).
 - Replanning during a bake: freeze recorded facts (actual starts and ends) → forward pass for

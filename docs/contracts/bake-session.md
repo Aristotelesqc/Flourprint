@@ -148,12 +148,11 @@ interface BakeEvent<P> {
 | `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                           |
 | `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                     |
 
-An `alongside` step (process.md, Steps alongside) is satisfied for its dependents **once started**:
-`StartStep` on it records `StepStarted` (the baker switched the heating on) and the steps that
-depend on it may start at once. `CompleteStep` on it is optional and means the baker observed the
-equipment ready. Nothing completes when the required time elapses, readiness is never inferred,
-and a started `alongside` step that was never completed is not an open step: finishing the
-Preparation does not need it.
+A `beforeTarget` step (process.md, Steps before a target) is never a dependency: no step waits
+for it. `StartStep` on it records `StepStarted` (the baker switched the heating on); `CompleteStep`
+on it is optional and means the baker observed the equipment ready. Nothing completes when the
+required time elapses, readiness is never inferred, and a started `beforeTarget` step that was
+never completed is not an open step: finishing the Preparation does not need it.
 
 `AddObservation` accepts an optional stable `kind`. `kind: 'doughReady'` records that the baker
 judges the dough ready for its next stage:
