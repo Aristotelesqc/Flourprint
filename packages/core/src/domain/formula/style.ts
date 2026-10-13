@@ -30,12 +30,23 @@ export const liquidRatioPct = (formula: Formula, component: Component): number |
   return component.hydrationPct + (100 * allocated) / component.flourPct;
 };
 
+/** Mass of the component's allocated ingredients, in points of total flour. */
+const allocatedMassPct = (component: Component): number =>
+  (component.allocations ?? []).reduce((sum, a) => sum + a.bakerPct, 0);
+
 /**
- * The `hydrationPct` that gives the component a flour:liquid ratio of 1:`parts` (formula.md,
- * Ratio entry): the liquid ratio counts the water of allocated ingredients, so it is subtracted.
+ * The component's flour:liquid ratio by mass, as liquid parts per flour part (formula.md, Ratio
+ * entry): its water plus the mass of its allocated ingredients (milk, not milk water), over its
+ * flour. Undefined without flour.
  */
+export const liquidMassRatio = (component: Component): number | undefined => {
+  if (!(component.flourPct > 0)) return undefined;
+  const liquid = (component.flourPct * component.hydrationPct) / 100 + allocatedMassPct(component);
+  return liquid / component.flourPct;
+};
+
+/** The `hydrationPct` that gives the component a flour:liquid ratio of 1:`parts` by mass. */
 export const hydrationForRatio = (
-  formula: Formula,
   component: Component,
   parts: number,
 ): Result<number, FormulaError> => {
@@ -43,11 +54,9 @@ export const hydrationForRatio = (
     err(domainError('InvalidFormula', `Invalid ratio: ${reason}`, { path: 'ratio', reason }));
   if (!Number.isFinite(parts) || parts <= 0) return refuse('the liquid parts must be > 0');
   if (!(component.flourPct > 0)) return refuse('the component has no flour');
-  const allocated = allocatedWaterPct(formula, component);
-  if (allocated === undefined)
-    return refuse('an allocated ingredient has an unknown water content');
-  const hydrationPct = 100 * parts - (100 * allocated) / component.flourPct;
-  if (hydrationPct < 0) return refuse('the allocated ingredients already bring more water');
+  const hydrationPct =
+    (100 * (parts * component.flourPct - allocatedMassPct(component))) / component.flourPct;
+  if (hydrationPct < 0) return refuse('the allocated ingredients alone exceed the ratio');
   return ok(hydrationPct);
 };
 
