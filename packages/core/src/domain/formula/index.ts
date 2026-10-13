@@ -8,5 +8,11 @@ export {
   type FormulaEdit,
   type IngredientChanges,
 } from './edit.js';
-export { componentStyle, hydrationForRatio, liquidRatioPct, type ComponentStyle } from './style.js';
+export {
+  componentStyle,
+  hydrationForRatio,
+  liquidMassRatio,
+  liquidRatioPct,
+  type ComponentStyle,
+} from './style.js';
 export { INGREDIENT_PRESETS, type IngredientPreset } from './presets.js';
