@@ -56,7 +56,9 @@ the owned session before resuming, and do not assume the remote turn was cancell
 other agents' processes.
 
 If headless tool access is denied, do not disable permission checks or silently change AGY
-settings. Report what failed. When sharing is already authorized, the caller can collect a scoped
+settings. Read [permissions-and-browser.md](references/permissions-and-browser.md) for the
+verified interactive confirmation path and browser capability checks before declaring runtime
+review unavailable. Report what failed. When sharing is already authorized, the caller can collect a scoped
 source snapshot and request a report/patch from that input instead. Distinguish supplied-source
 analysis from direct repository access, and generated code from applied/tested code. If the same
 attempt has no new evidence to succeed, switch to that fallback instead of relaunching a loop.

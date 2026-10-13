@@ -18,7 +18,7 @@ Distinguish shipped behavior, explored proposals and missing visual work. Passin
 not demonstrate that an interface is attractive or understandable.
 
 For the current #35 redesign, the owner's approved review set is **Recipes list, Recipe consultation,
-Recipe editing and an active Preparation, in French at 360 px**, in light and dark. The revised
+Recipe editing and an active Preparation, in French at 360 px**, in light, dark and AMOLED. The revised
 four-screen v2 mockup was approved before implementation. Use the
 screen set, locale, viewport and approval scope requested for subsequent assignments rather
 than imposing this example on every UI change. Preserve any explicit feature freeze and

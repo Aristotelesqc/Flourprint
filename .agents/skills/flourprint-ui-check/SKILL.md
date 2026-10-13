@@ -9,6 +9,9 @@ Read repository `AGENTS.md` and the acceptance of the affected issue/PR first. T
 the requested change; it does not choose a new framework, redesign the logo or reduce feature
 scope. UI implementation is assigned to Gemini under Codex review; use the `agy` skill when that
 delegation is requested or required. The verifier owns the acceptance evidence.
+For Gemini running-app checks, verify real browser capability and normal scoped permissions
+using [AGY's recovery reference](../agy/references/permissions-and-browser.md). A successful
+URL-text read or static capture review does not prove independent app use.
 
 ## Choose the evidence surface
 
