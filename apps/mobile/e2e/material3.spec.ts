@@ -71,7 +71,10 @@ test('milk-only incomplete hydration offers ingredient editing without inventing
   await expect(
     routed(page).getByRole('button', { name: 'Modifier l’hydratation', exact: true }),
   ).toHaveCount(0);
-  await routed(page).getByRole('button', { name: 'Modifier les ingrédients', exact: true }).click();
+  await expect(
+    routed(page).getByRole('button', { name: 'Modifier les ingrédients', exact: true }),
+  ).toHaveCount(0);
+  await enterEditor(page);
   await expect(
     routed(page).getByRole('region', { name: 'Hydratation', exact: true }),
   ).toContainText('53 %');
@@ -270,4 +273,59 @@ test('editor sections preserve one raw field and a page-wide invalid state', asy
   await expect(water).toBeVisible();
   await expect(water).toHaveValue('abc');
   await expect(water).toHaveAttribute('aria-invalid', 'true');
+});
+
+test('linear step dependencies are omitted while exceptional non-linear dependencies display dependency hint', async ({
+  page,
+}) => {
+  await open(page);
+  const method = routed(page).getByTestId('recipe-method');
+  await expect(method).toBeVisible();
+
+  // Linear steps (bulk, shape, proof, cool) depend strictly on their immediate predecessor:
+  // "Après / After" hints must NOT appear on those steps.
+  await expect(method.getByText(/Après Pétrissage/)).toHaveCount(0);
+  await expect(method.getByText(/Après Pointage/)).toHaveCount(0);
+  await expect(method.getByText(/Après Façonnage/)).toHaveCount(0);
+  await expect(method.getByText(/Après Cuisson/)).toHaveCount(0);
+
+  // Non-linear steps (mix depending on poolish and tangzhong, bake depending on proof and preheat):
+  // "Après / After" hints MUST appear.
+  await expect(method.getByText(/Après Préferment, Échaudage/)).toBeVisible();
+  await expect(method.getByText(/Après Apprêt, Préchauffage/)).toBeVisible();
+});
+
+test('StepSheet operation is constrained for preparation-owned steps and delete affordance is unambiguous', async ({
+  page,
+}) => {
+  await open(page);
+  await enterEditor(page);
+  await editorSection(page, 'steps');
+
+  // Open StepSheet for preparation-owned step (Préferment)
+  await routed(page)
+    .getByRole('button', { name: 'Modifier l’étape Préferment', exact: true })
+    .click();
+  const modal = page.locator('ion-modal:not(.overlay-hidden)');
+  await expect(modal).toBeVisible();
+
+  // Header has only Close button; no duplicate Delete in header
+  const header = modal.locator('ion-header');
+  await expect(header.getByRole('button', { name: /^(Fermer|Close)$/ })).toBeVisible();
+  await expect(header.getByRole('button', { name: /Supprimer|Delete/ })).toHaveCount(0);
+
+  // Preparation-owned step: operation select is disabled
+  const opSelect = modal.locator('select').first();
+  await expect(opSelect).toBeDisabled();
+
+  // Preparation refusal copy matches Components section
+  await expect(
+    modal.getByText(
+      'Cette étape appartient à une préparation. Pour la retirer, supprimer le composant dans la section Composants.',
+    ),
+  ).toBeVisible();
+
+  // Close modal via Close button
+  await header.getByRole('button', { name: /^(Fermer|Close)$/ }).click();
+  await expect(modal).toBeHidden();
 });

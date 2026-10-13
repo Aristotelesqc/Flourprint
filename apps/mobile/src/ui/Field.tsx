@@ -44,6 +44,7 @@ interface FieldProps<V> {
   readonly width?: string;
   /** Shown while empty: a value that applies without being stored (e.g. an inherited one). */
   readonly placeholder?: string;
+  readonly disabled?: boolean;
 }
 
 /**
@@ -61,6 +62,7 @@ const Field = <V,>({
   size = 'regular',
   width = '100%',
   placeholder,
+  disabled = false,
 }: FieldProps<V>) => {
   const id = useId();
   const errorId = `${id}-error`;
@@ -133,10 +135,11 @@ const Field = <V,>({
       >
         <input
           id={id}
+          disabled={disabled}
           aria-label={unit ? `${label} (${unit})` : label}
           aria-invalid={invalid}
           aria-describedby={invalid ? errorId : undefined}
-          className="fp-input w-full"
+          className={`fp-input w-full ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
           inputMode="decimal"
           placeholder={placeholder}
           enterKeyHint="done"
@@ -172,6 +175,7 @@ interface NumberFieldProps {
   /** Display rounding only: an untouched formatted field never commits it to the domain. */
   readonly maximumFractionDigits?: number;
   readonly invalidText?: string;
+  readonly disabled?: boolean;
 }
 
 export const NumberField = ({

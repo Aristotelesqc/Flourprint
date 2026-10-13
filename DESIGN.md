@@ -196,8 +196,8 @@ retain understandable scroll/focus and preserve or guard all pending raw input.
 
 The implementation uses `FormulaConsultation`, `FormulaSection` and `RecipeMethod` for the Recipe tab,
 and a read-only projection `ProcessSection` for the Planning tab with shortcuts to the step editor.
-Hydration consultation clearly displays lock state with an explicit edit shortcut. Planner inputs survive mode changes.
-Intended outcome is authored in Recipe and summarized in Planning. Equipment attached to a step
+Hydration lock controls exist exclusively within the formula editor; consultation presents resolved hydration without an edit shortcut or lock glyph. Planner inputs survive mode changes.
+Intended outcome is authored in Recipe and summarized in Planning (with an inference hint for automatic outcomes, and an authored label when explicit). Equipment attached to a step
 uses one compact summary and progressive details in both views. Explicit settings and unknowns
 remain visible; canonical mode help does not promise equivalence with a particular appliance.
 Profiles are optional. This presentation does not supply the equipment catalogue/editor still
@@ -237,29 +237,47 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 
 ## Approved screen composition
 
-- **Recipes:** readable application/build header, quiet creation, compact active-preparation
-  resume entry with remaining time, and recipe cards with version, dough, hydration, total
-  planned duration and last cooking/never-cooked information. Registry, history and settings
-  remain reachable without competing with the recipe list.
-- **Recipe consultation:** summary, clearly named percentage bases, ordinary ingredient rows,
-  components and authored method. Contextual information buttons stay beside hydration, size
-  and other existing explained concepts. Hydration is `totalWaterPct`, shown to the whole
-  percent with uncertainty/incompleteness retained. No extra added/poured-water summary line.
-  Unlock is neutral; lock has an explicit useful state. Milk-only recipes do not acquire water
-  or a lock merely to match a layout.
-  Without a water absorber, the shortcut names ingredient editing rather than promising
-  a direct hydration edit; it leads to the same Composition workspace.
-- **Editing:** Composition, Components, Steps and Result sections share the same draft. Preserve
-  mounted raw fields or commit/guard them through the existing validation mechanism before
-  navigation. Show percent/gram entries, anchor modes, hydration lock, component allocations
-  and ratios, authored steps/equipment and the actual outcome contract.
-  Planning previews retain mounted invalid raw text, explain that displayed values are the last
-  accepted values, block starting and offer a visible return to editing. Switching to a preview
-  never silently discards a pending field.
+- **Recipes:** readable application/build header, quiet creation with explicit top and bottom close actions,
+  compact active-preparation resume entry with remaining time, and recipe cards with version, dough, hydration,
+  total planned duration and wrapping metadata where last cooking / "Jamais cuite" stays legible without squeezed
+  slivers. Registry, history and settings remain reachable without competing with the recipe list.
+- **Recipe consultation:** summary, clearly named percentage bases, shared `ConsultationRow` items with
+  consistent vertical padding when titles wrap, components and authored method ("Étapes de préparation").
+  Contextual information buttons stay beside hydration, size and other explained concepts.
+  Hydration is `totalWaterPct`, shown to the whole percent with uncertainty/incompleteness retained; consultation
+  omits any hydration-edit button or lock/unlock glyph. Method steps are automatically numbered (1-based)
+  with cooling presented as "Ressuage". Known built-in template step instructions map to concise localized display names
+  for row and timeline presentation alongside full localized instructions, leaving core template data read-only and unmutated.
+  Linear step dependencies ("Après X") are omitted when depending strictly on the immediately preceding step in the authored list. Step rows provide a visible edit affordance.
+  Intended outcome is integrated directly as the final row of the step list ("Résultat : {outcome}") with an inference
+  hint for automatic outcomes ("Déduit des étapes de préparation.") and an authored indicator ("Défini pour cette recette.")
+  when explicitly chosen. The fermentation card structures details into labelled groups
+  with a recognizable warning icon (⚠️) and plain localized wording, never rendering out-of-domain or unsupported
+  predictions as 0 min–0 min ranges. Bottom outer scroll content reserves clearance (`pb-32`) to clear the
+  primary floating footer at 360 px viewports and enlarged text.
+- **Planning:** shorter summary wording (`{step} se termine {when}` / `{step} ends {when}`), single discoverable
+  pencil edit affordance per step navigating to Recipe step editing, linear dependency omission matching Recipe,
+  and clear preview explanations when raw fields are invalid.
+- **Editing:** Composition, Components, Steps and Result sections share the same draft. Preserve mounted raw
+  fields or commit/guard them through the existing validation mechanism before navigation.
+  Hydration target rate field is editable only when unlocked; lock/unlock controls exist exclusively within editing.
+  A locked hydration field disables direct rate entry and explains how to unlock.
+  Step sheet exposes operation selection (including custom operations), custom step names/labels, equipment,
+  technique, and a visible delete action with confirmation (or explanation when preparation-owned steps cannot be
+  directly removed). Editing a curated template step presents its localized short display name; closing or blurring
+  without editing never overwrites the stored template instruction, and arbitrary user labels remain literal without
+  translation guessing.
+  Ephemeral Undo, Redo, and Reset controls in `DraftActionBar` accompany one full-width Save action.
+  The temporary history retains up to 50 accepted states of the formula, process and name; it survives
+  reading/planning previews and resets on save, discard or page reload. Reset confirms restoration to
+  the start of this editing session, including a resumed draft, and explains loss of unconfirmed input.
+  Undo/Redo guard invalid raw text and restore exact snapshots without recalculating model durations.
+  Reaching the oldest retained state does not discard a modified draft. Existing draft autosave remains
+  separate from the temporary history. A step-name edit preserves incomplete technique controls;
+  changing an operation refuses unresolved raw input before conditional fields can disappear.
   Ratio entry uses `liquidMassRatio` and `hydrationForRatio` from the current contract: it counts weighed
-  liquid mass (including the whole mass of milk); hydration and component style still count
-  its water content. One Save bar has stable reserved feedback space; check/review/discard are occasional
-  actions. Quantities retain full internal precision.
+  liquid mass (including the whole mass of milk); hydration and component style still count its water content.
+  One Save bar has stable reserved feedback space; check/review/discard are occasional actions.
 - **Preparation:** large remaining time, planned end, actual start and temporal progress; visible
   quick controls and readiness observations. Upcoming steps with clock times precede completed
   steps. Keep the full journal accessible (all existing notes, observations and step completions)
@@ -280,22 +298,25 @@ and require their own checks.
 - **Actions:** visible primary-action labels, distinct filled/outlined/quiet roles, clear busy,
   disabled and destructive states. Primary actions share the full-width pill role (`btn-pill-primary`,
   > = 3rem / 48px touch target) across consultation Start/Resume and editor Save, with accessible
-  > neutral surface and legible muted ink tokens when disabled. Do not substitute icon-only controls
-  > for essential actions.
+  > neutral surface and legible muted ink tokens when disabled. Ephemeral Undo/Redo/Reset actions
+  > in `DraftActionBar` maintain accessible touch targets (>= 48px) and distinct aria-labels.
 - **Precision fields:** input frames identify actual editing; read-only quantities are text.
   Retain local raw input, parsing/refusal feedback and the page validation registry. Untouched
-  formatted numbers never become edits. No global commit of all formatted fields.
-- **Sections and value rows:** shared consultation/editor composition; units and unknowns remain
-  explicit. Do not recalculate baking quantities in presentation components.
+  formatted numbers never become edits. Disabled fields (e.g. locked hydration target) use distinct
+  dimmed styling (`opacity-60 cursor-not-allowed`) and helper guidance.
+- **Sections and value rows:** shared consultation/editor composition via `ConsultationRow` with
+  adequate vertical padding (`py-2.5`, min-height 52px) maintaining consistent hierarchy and visual rhythm across both views
+  for multi-line wrapped text; units and unknowns remain explicit. Do not recalculate baking quantities in presentation components.
 - **Status and draft actions:** stable footprint within editing; save cannot claim invalid or
   refused text was saved. Unmount, Planning and back transitions retain input or guard its loss.
+  Undo and redo restore working-state snapshots while clearing focused input buffer mismatches.
 - **Sheets and help:** concise explanations with optional detail; accessible close action,
   containment, dismissal and focus return. Native keyboard/system-back behavior needs native
   evidence when affected; browser tests alone do not establish it.
   Complete the new-recipe chooser's dismissal before navigating to its saved draft. Pending
   creation prevents duplicate activation and user dismissal; ordinary cancellation stays on the list.
 - **Timeline:** show dependencies, parallel work and uncertainty without making elapsed time
-  a biological readiness score. Editing links return to the corresponding Recipe step.
+  a biological readiness score. Single pencil button affordance returns to the corresponding Recipe step.
 
 This tranche selects the shared Flourprint presentation layer and retains Ionic's shell. A future
 shell/library comparison is separate work, not a prerequisite for the approved visual redesign.

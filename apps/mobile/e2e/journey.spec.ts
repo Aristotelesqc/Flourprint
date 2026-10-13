@@ -980,7 +980,14 @@ test('a draft takes a new step and a step technique, shown under the step', asyn
   await expect(page.getByRole('button', { name: 'Modifier l’étape Dégazage' })).toBeVisible();
   await expect(unsaved(page).first()).toBeVisible();
   // The new step sits between the bulk and the shaping.
-  await expect(page.getByText('Après Dégazage').filter({ visible: true })).toBeVisible();
+  await expect(page.getByText('Après Dégazage').filter({ visible: true })).toHaveCount(0);
+  const authoredOrder = await routed(page)
+    .getByTestId('recipe-method')
+    .getByRole('button', { name: /^Modifier l’étape / })
+    .allTextContents();
+  expect(authoredOrder.findIndex((name) => name.includes('Dégazage'))).toBeLessThan(
+    authoredOrder.findIndex((name) => name.includes('Façonnage')),
+  );
 
   await foldTheBulk(page);
   await expect(
@@ -1156,7 +1163,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await backToRecipes(page);
   await openShownRecipe(page);
   await page.getByRole('button', { name: 'Historique' }).click();
-  await expect(page.getByText(/Aucune fournée pour l’instant/)).toBeVisible();
+  await expect(page.getByText(/Aucune préparation pour l’instant/)).toBeVisible();
 
   // Simulation again: it is back.
   await openAdvanced(page);

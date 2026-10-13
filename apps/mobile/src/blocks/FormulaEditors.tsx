@@ -70,46 +70,58 @@ export const Hydration = forwardRef<
           <InfoButton topic="hydration" term={label} />
         </span>
         {water ? (
-          <span className="flex items-center gap-1.5">
-            {estimate && (
-              <span className="text-lg font-bold" aria-hidden="true">
-                ≈
-              </span>
-            )}
-            <NumberField
-              label={label}
-              unit="%"
-              size="large"
-              width="7.5rem"
-              value={target?.totalWaterPct ?? resolved.totalWaterPct}
-              maximumFractionDigits={0}
-              onCommit={(value) => onEdit({ type: 'LockTotalWater', totalWaterPct: value, water })}
-            />
-            <button
-              type="button"
-              aria-pressed={target !== undefined}
-              aria-label={
-                target ? t('formula.hydration.unlock') : t('formula.hydration.lock', { pct: shown })
-              }
-              title={
-                target ? t('formula.hydration.unlock') : t('formula.hydration.lock', { pct: shown })
-              }
-              className={`fp-reset inline-flex size-12 shrink-0 items-center justify-center rounded-full transition-colors motion-reduce:transition-none ${
-                target
-                  ? 'bg-accent text-on-accent'
-                  : 'border border-line bg-surface text-muted hover:border-field'
-              }`}
-              onClick={() =>
-                void onEdit(
+          <div className="flex flex-col items-end gap-1">
+            <span className="flex items-center gap-1.5">
+              {estimate && (
+                <span className="text-lg font-bold" aria-hidden="true">
+                  ≈
+                </span>
+              )}
+              <NumberField
+                label={label}
+                unit="%"
+                size="large"
+                width="7.5rem"
+                disabled={target !== undefined}
+                value={target?.totalWaterPct ?? resolved.totalWaterPct}
+                maximumFractionDigits={0}
+                onCommit={(value) =>
+                  onEdit({ type: 'LockTotalWater', totalWaterPct: value, water })
+                }
+              />
+              <button
+                type="button"
+                aria-pressed={target !== undefined}
+                aria-label={
                   target
-                    ? { type: 'UnlockTotalWater' }
-                    : { type: 'LockTotalWater', totalWaterPct: resolved.totalWaterPct, water },
-                )
-              }
-            >
-              <LockIcon locked={target !== undefined} />
-            </button>
-          </span>
+                    ? t('formula.hydration.unlock')
+                    : t('formula.hydration.lock', { pct: shown })
+                }
+                title={
+                  target
+                    ? t('formula.hydration.unlock')
+                    : t('formula.hydration.lock', { pct: shown })
+                }
+                className={`fp-reset inline-flex size-12 shrink-0 items-center justify-center rounded-full transition-colors motion-reduce:transition-none ${
+                  target
+                    ? 'bg-accent text-on-accent'
+                    : 'border border-line bg-surface text-muted hover:border-field'
+                }`}
+                onClick={() =>
+                  void onEdit(
+                    target
+                      ? { type: 'UnlockTotalWater' }
+                      : { type: 'LockTotalWater', totalWaterPct: resolved.totalWaterPct, water },
+                  )
+                }
+              >
+                <LockIcon locked={target !== undefined} />
+              </button>
+            </span>
+            {target !== undefined && (
+              <span className="text-xs text-muted">{t('formula.hydration.lockedExplain')}</span>
+            )}
+          </div>
         ) : (
           <span className="text-xl font-bold">{shown}</span>
         )}

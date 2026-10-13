@@ -281,7 +281,7 @@ for (const english of [false, true]) {
     await expect(style).toHaveValue('');
   });
 
-  test(`Consultation exposes hydration lock state and a nonmutating edit shortcut${suffix}`, async ({
+  test(`Hydration lock exists in editing only; consultation shows hydration without edit button or lock glyph${suffix}`, async ({
     page,
   }) => {
     await openSaved(page);
@@ -289,18 +289,13 @@ for (const english of [false, true]) {
       name: english ? 'Edit hydration' : 'Modifier l’hydratation',
       exact: true,
     });
+    await expect(hydrationEdit).toHaveCount(0);
     await expect(
       routed(page).getByRole('img', {
-        name: english ? 'Hydration unlocked' : 'Hydratation déverrouillée',
+        name: english ? /Hydration (locked|unlocked)/ : /Hydratation (verrouillée|déverrouillée)/,
       }),
-    ).toBeVisible();
-    await hydrationEdit.click();
-    await expect(
-      routed(page).getByRole('region', {
-        name: english ? 'Hydration' : 'Hydratation',
-        exact: true,
-      }),
-    ).toBeFocused();
+    ).toHaveCount(0);
+    await enterEditor(page);
     await expect(footer(page).getByRole('status')).toHaveText(english ? 'Up to date' : 'À jour');
     await expect(
       footer(page).getByRole('button', {
@@ -316,12 +311,14 @@ for (const english of [false, true]) {
     await footer(page)
       .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
       .click();
+    await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+    await expect(hydrationEdit).toHaveCount(0);
     await expect(
-      routed(page)
-        .getByRole('img', { name: english ? /^Hydration locked at/ : /^Hydratation verrouillée à/ })
-        .filter({ visible: true }),
-    ).toBeVisible();
-    await hydrationEdit.click();
+      routed(page).getByRole('img', {
+        name: english ? /Hydration (locked|unlocked)/ : /Hydratation (verrouillée|déverrouillée)/,
+      }),
+    ).toHaveCount(0);
+    await enterEditor(page);
     await routed(page)
       .getByRole('button', {
         name: english ? 'Unlock the hydration' : 'Déverrouiller l’hydratation',
@@ -331,11 +328,13 @@ for (const english of [false, true]) {
     await footer(page)
       .getByRole('button', { name: english ? 'Save v3' : 'Enregistrer v3', exact: true })
       .click();
+    await expect(routed(page).getByText('Version 3', { exact: true })).toBeVisible();
+    await expect(hydrationEdit).toHaveCount(0);
     await expect(
       routed(page).getByRole('img', {
-        name: english ? 'Hydration unlocked' : 'Hydratation déverrouillée',
+        name: english ? /Hydration (locked|unlocked)/ : /Hydratation (verrouillée|déverrouillée)/,
       }),
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 }
 
@@ -351,12 +350,12 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
     .getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true })
     .click();
   await expect(modal(page)).toBeVisible();
-  await modal(page).getByRole('button', { name: 'Retirer cette étape', exact: true }).click();
+  await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
   await page.locator('ion-alert').getByRole('button', { name: 'Annuler', exact: true }).click();
   await expect(page.locator('ion-alert')).toHaveCount(0);
   await expect(modal(page)).toBeVisible();
   await expect(modal(page).locator('ion-title')).toHaveText('Façonnage');
-  await modal(page).getByRole('button', { name: 'Retirer cette étape', exact: true }).click();
+  await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
   await page
     .locator('ion-alert')
     .getByRole('button', { name: 'Retirer cette étape', exact: true })

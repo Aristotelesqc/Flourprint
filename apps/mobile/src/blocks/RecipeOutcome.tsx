@@ -22,18 +22,25 @@ export const RecipeOutcome = ({ process, editable, onChange }: Props) => {
   const { intendedOutcome: _, ...baseProcess } = process;
   const auto = intendedOutcome(baseProcess);
   const current = process.intendedOutcome;
-  const isAuto = current === undefined;
   const currentKey = current ? outcomeKey(current) : '';
-  const label = isAuto ? t('outcome.auto', { outcome: outcomeText(auto) }) : outcomeText(current);
 
   if (!editable || !onChange) {
     return (
       <div
         data-testid="recipe-outcome"
-        className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-3 text-sm"
+        className="flex flex-col gap-1 rounded-lg border border-line bg-surface-container px-3 py-3 text-sm"
       >
-        <span className="font-semibold text-muted">{t('process.intendedOutcome')}</span>
-        <span className="font-medium text-ink">{label}</span>
+        <span className="font-semibold text-ink">
+          {t('process.outcomeResult', { outcome: outcomeText(current ?? auto) })}
+        </span>
+        <span className="text-xs text-muted">
+          {current ? t('process.outcomeAuthoredHint') : t('process.outcomeInferredHint')}
+        </span>
+        {current && current.result !== 'cooked' && current.pieces !== undefined && (
+          <span className="text-xs text-muted">
+            {t('outcome.pieces')}: {current.pieces}
+          </span>
+        )}
       </div>
     );
   }

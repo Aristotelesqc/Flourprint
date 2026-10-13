@@ -361,9 +361,9 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
           <Figure label={t('recipes.card.hydration')} value={hydrationDisplay} />
           <Figure label={t('recipes.card.duration')} value={duration ?? '—'} />
         </div>
-        <div className="flex items-center justify-between gap-2 text-sm text-muted">
-          <span>{parts}</span>
-          <span>
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-muted">
+          {parts && <span className="min-w-0 max-w-full truncate">{parts}</span>}
+          <span className="shrink-0 whitespace-nowrap">
             {card.lastBaked
               ? t('recipes.card.lastBaked', { when: formatRelative(card.lastBaked, now, locale) })
               : t(card.cookingUnknown ? 'recipes.card.cookingUnknown' : 'recipes.card.neverBaked')}

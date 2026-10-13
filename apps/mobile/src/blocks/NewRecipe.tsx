@@ -1,5 +1,6 @@
 import {
   IonButton,
+  IonButtons,
   IonContent,
   IonHeader,
   IonItem,
@@ -67,6 +68,11 @@ export const NewRecipe = ({
       <IonHeader>
         <IonToolbar>
           <IonTitle>{t('new.title')}</IonTitle>
+          <IonButtons slot="end">
+            <IonButton disabled={busy} onClick={onClose} aria-label={t('help.close')}>
+              {t('help.close')}
+            </IonButton>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
       <IonContent>

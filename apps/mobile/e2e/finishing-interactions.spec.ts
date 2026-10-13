@@ -1,0 +1,210 @@
+import { expect, test } from './fixtures';
+import { editorSection, enterEditor, routed } from './ui-actions';
+import type { Page } from '@playwright/test';
+import type { Process } from '@flourprint/core/domain';
+import milkFixture from '../../../docs/contracts/fixtures/enriched-milk-butter.json' with { type: 'json' };
+
+const sheet = (page: Page) => page.locator('ion-modal:not(.overlay-hidden)');
+const importRecipe = async (page: Page, process: Process) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/advanced');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'qa-step.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        kind: 'flourprint-recipes',
+        schemaVersion: 1,
+        exportedAt: '2026-10-13T00:00:00.000Z',
+        families: [],
+        recipes: [
+          {
+            id: 'qa-step',
+            name: 'QA — étapes',
+            revisions: [
+              {
+                recipeId: 'qa-step',
+                version: 1,
+                createdAt: '2026-10-13T00:00:00.000Z',
+                formula: milkFixture.input,
+                process,
+              },
+            ],
+          },
+        ],
+      }),
+    ),
+  });
+  await expect(page.getByText(/1 (recette importée|recipe imported)/)).toBeVisible();
+  await routed(page).locator('ion-back-button').click();
+  await routed(page).getByText('QA — étapes', { exact: true }).click();
+  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+};
+
+for (const english of [false, true]) {
+  test(`step name survives typing and closure; undo and redo restore the authored process${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await importRecipe(page, {
+      steps: [
+        { id: 'mix', operation: 'mix', dependsOn: [], schedule: 'asap', plannedDurationS: 300 },
+      ],
+    });
+    await enterEditor(page);
+    await editorSection(page, 'steps');
+    await routed(page)
+      .getByRole('button', {
+        name: english ? 'Edit step Mix' : 'Modifier l’étape Pétrissage',
+        exact: true,
+      })
+      .click();
+    const field = sheet(page).getByLabel(
+      english ? 'Step name (optional)' : 'Nom de l’étape (facultatif)',
+      { exact: true },
+    );
+    await field.fill('QA — mélange manuel');
+    await expect(field).toHaveValue('QA — mélange manuel');
+    await sheet(page)
+      .getByRole('button', { name: english ? 'Close' : 'Fermer', exact: true })
+      .evaluate((button) => (button as HTMLElement).click());
+    await expect(sheet(page)).toBeHidden();
+    const changed = routed(page).getByRole('button', {
+      name: english ? 'Edit step QA — mélange manuel' : 'Modifier l’étape QA — mélange manuel',
+      exact: true,
+    });
+    await expect(changed).toBeVisible();
+    await routed(page)
+      .locator('ion-footer')
+      .getByRole('button', { name: english ? 'Undo' : 'Annuler', exact: true })
+      .click();
+    await expect(
+      routed(page).getByRole('button', {
+        name: english ? 'Edit step Mix' : 'Modifier l’étape Pétrissage',
+        exact: true,
+      }),
+    ).toBeVisible();
+    await routed(page)
+      .locator('ion-footer')
+      .getByRole('button', { name: english ? 'Redo' : 'Rétablir', exact: true })
+      .click();
+    await expect(changed).toBeVisible();
+  });
+}
+
+test('operation refusal preserves mix-only conditions and existing phases without creating an accepted draft', async ({
+  page,
+}) => {
+  await importRecipe(page, {
+    steps: [
+      {
+        id: 'mix',
+        operation: 'mix',
+        dependsOn: [],
+        schedule: 'asap',
+        plannedDurationS: 300,
+        conditions: { doughTemperatureC: 24, frictionC: 3 },
+        technique: { phases: [{ durationS: 300, speed: 'low' }] },
+      },
+    ],
+  });
+  await enterEditor(page);
+  await editorSection(page, 'steps');
+  await routed(page)
+    .getByRole('button', { name: 'Modifier l’étape Pétrissage', exact: true })
+    .click();
+  const operation = sheet(page).getByLabel('Opération', { exact: true });
+  await operation.selectOption('fold');
+  await expect(operation).toHaveValue('mix');
+  await expect(sheet(page).getByRole('alert')).toBeVisible();
+  await sheet(page).getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(sheet(page)).toBeHidden();
+  await expect(routed(page).getByTestId('recipe-method')).toContainText('5 min');
+  await expect(
+    routed(page).locator('ion-footer').getByRole('button', { name: 'Annuler', exact: true }),
+  ).toBeDisabled();
+});
+
+test('legacy template instructions localize with a short name without becoming an untouched label edit', async ({
+  page,
+}) => {
+  await importRecipe(page, {
+    steps: [
+      {
+        id: 'bake',
+        operation: 'bake',
+        dependsOn: [],
+        schedule: 'asap',
+        plannedDurationS: 3150,
+        label:
+          'Bake in preheated 6–8 qt Dutch oven at 450 °F (232 °C): 30 min covered, then 22.5 min uncovered',
+      },
+    ],
+  });
+  const method = routed(page).getByTestId('recipe-method');
+  await expect(method.getByText('Cuisson en cocotte', { exact: true })).toBeVisible();
+  await expect(method).toContainText('30 min avec couvercle, puis 22,5 min sans couvercle');
+  await enterEditor(page);
+  await editorSection(page, 'steps');
+  await routed(page)
+    .getByRole('button', { name: 'Modifier l’étape Cuisson en cocotte', exact: true })
+    .click();
+  const label = sheet(page).getByLabel('Nom de l’étape (facultatif)', { exact: true });
+  await expect(label).toHaveValue('Cuisson en cocotte');
+  await label.focus();
+  await label.blur();
+  await sheet(page).getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(sheet(page)).toBeHidden();
+  await expect(routed(page).locator('ion-footer').getByRole('status')).toHaveText('À jour');
+  await expect(
+    routed(page).locator('ion-footer').getByRole('button', { name: 'Annuler', exact: true }),
+  ).toBeDisabled();
+});
+
+test('operation changes cannot silently discard an invalid uncommitted phase field', async ({
+  page,
+}) => {
+  await importRecipe(page, {
+    steps: [
+      { id: 'mix', operation: 'mix', dependsOn: [], schedule: 'asap', plannedDurationS: 300 },
+    ],
+  });
+  await enterEditor(page);
+  await editorSection(page, 'steps');
+  await routed(page)
+    .getByRole('button', { name: 'Modifier l’étape Pétrissage', exact: true })
+    .click();
+  await sheet(page).getByRole('button', { name: '+ Ajouter une phase', exact: true }).click();
+  const duration = sheet(page).getByLabel('Durée de la phase 1', { exact: true });
+  await duration.fill('abc');
+  await sheet(page).getByLabel('Opération', { exact: true }).selectOption('fold');
+  await expect(sheet(page).getByLabel('Opération', { exact: true })).toHaveValue('mix');
+  await expect(duration).toHaveValue('abc');
+});
+
+test('naming a step preserves its incomplete fold setup until the interval is supplied', async ({
+  page,
+}) => {
+  await importRecipe(page, {
+    steps: [
+      { id: 'mix', operation: 'mix', dependsOn: [], schedule: 'asap', plannedDurationS: 300 },
+    ],
+  });
+  await enterEditor(page);
+  await editorSection(page, 'steps');
+  await routed(page)
+    .getByRole('button', { name: 'Modifier l’étape Pétrissage', exact: true })
+    .click();
+  const count = sheet(page).getByLabel('Nombre de séries', { exact: true });
+  await count.fill('4');
+  await count.press('Enter');
+  const name = sheet(page).getByLabel('Nom de l’étape (facultatif)', { exact: true });
+  await name.fill('QA — rabats');
+  await name.blur();
+  await expect(count).toHaveValue('4');
+  const interval = sheet(page).getByLabel('Intervalle entre les séries', { exact: true });
+  await interval.fill('1 min');
+  await interval.press('Enter');
+  await sheet(page).getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(sheet(page)).toBeHidden();
+  await expect(routed(page).getByTestId('recipe-method')).toContainText('4 séries');
+});

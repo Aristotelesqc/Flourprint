@@ -16,6 +16,21 @@ An `ask_question` answer relays human authorization but does **not** update tech
 permissions. Require an actual Read URL/MCP confirmation and successful tool result. An agent's
 statement that access is granted is insufficient evidence.
 
+An implementation conversation also returned a plan instead of edits because the agent expected
+`[READ-TOKEN]` / `[WRITE-TOKEN]` in its assignment. These were that agent's prompt conventions,
+not CLI permission settings. The caller relayed the owner's existing scoped implementation
+authorization with those markers, explicitly retaining normal tool checks; subsequent source
+edits succeeded. Do not invent authorization, require these markers universally, or mistake them
+for technical grants. Verify actual tool results and the diff rather than a self-approved plan.
+
+Also distinguish tool denial from a package-manager failure. In this implementation,
+`run_command` ran `pnpm exec tsc -b` through the host's bundled runtime and attempted an automatic
+install, which failed with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`. That is not a repository
+read/write permission rejection. Confirm the repository's pinned pnpm and actual command path;
+do not blindly disable purge confirmation or count the compiler as having run. The caller
+restored missing dependency links with the existing lockfile and offline cache, without a version
+change. Delegate validation and independent caller validation must each record their real result.
+
 ## Recover through the normal interactive confirmation
 
 Reuse existing human authorization for the same repository, preview and reviewer scope.
@@ -98,6 +113,13 @@ An explicit `filename` is resolved against the workspace root, even when output-
 Omit it or specify an approved scratch path. Inspect new/untracked files and correct any misplaced
 owned captures; screenshots are not app source changes. `--save-session` supplies a useful
 browser interaction record alongside the owned AGY transcript.
+
+Keep browser setup scripts/dependencies and frozen compiled builds in private task tooling
+outside the product checkout when possible. Git-ignored `.agy-runs/` is not automatically ignored
+by every checker: the unchanged `eslint .` scanned this run's helper and minified frozen assets.
+Relocating those owned artifacts and updating the launcher through normal `agy mcp add` preserved
+the same checkout guard, isolated browser and preview origin without weakening lint rules.
+Prompts, reports and screenshots can remain in the documented scratch directory.
 
 Long `send_message` bodies and transcript fields can be truncated. Keep complete reports
 through structured stdout or an explicitly authorized artifact-writing tool; a completion
