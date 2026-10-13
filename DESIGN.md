@@ -1,18 +1,17 @@
 ---
 version: alpha
 name: Flourprint — Warm baking workspace
-description: Audited light and warm-dark baseline, with guidance for the Material 3 exploration.
-omitted:
-  - section: typography
-    reason: Ionic platform fonts and local text sizes remain; a unified role scale awaits the prototype.
+description: Owner-approved warm Material 3 presentation through shared Flourprint components, retaining the Ionic shell.
 colors:
   primary: '#a9490a'
   on-primary: '#ffffff'
   background: '#f8f7f4'
   surface: '#ffffff'
+  surface-container: '#f2efe9'
   on-surface: '#1c1b19'
   muted: '#69645c'
   outline: '#e4e0d8'
+  outline-subtle: '#eae5dc'
   track: '#ebe8e2'
   field-outline: '#b9b3a8'
   field-background: '#fbfaf8'
@@ -23,9 +22,11 @@ colors:
   dark-on-primary: '#201d1a'
   dark-background: '#201d1a'
   dark-surface: '#2a2622'
+  dark-surface-container: '#332e29'
   dark-on-surface: '#e9e4dc'
   dark-muted: '#b1aa9f'
   dark-outline: '#3b3631'
+  dark-outline-subtle: '#3a342e'
   dark-track: '#322e29'
   dark-field-outline: '#625b52'
   dark-field-background: '#2e2a26'
@@ -36,8 +37,17 @@ rounded:
   card: 1rem
   segmented-option: 0.75rem
 spacing:
+  scale: [0.25rem, 0.5rem, 0.75rem, 1rem, 1.5rem, 2rem]
+  page-gutter: 1rem
   touch: 3rem
   card-padding: 1rem
+typography:
+  page: { size: 1.5rem, line: 2rem, weight: 700 }
+  title: { size: 1.375rem, line: 1.75rem, weight: 700 }
+  body: { size: 1rem, line: 1.5rem }
+  supporting: { size: 0.875rem, line: 1.25rem }
+  metadata: { size: 0.75rem, line: 1rem }
+  timer: { size: 3.25rem, line: 1.1, weight: 800 }
 components:
   section-surface:
     backgroundColor: '{colors.surface}'
@@ -69,55 +79,66 @@ and approachable while keeping quantities and advanced baking choices readily av
 This is the shared visual and interaction brief for all UI agents, following the
 [Google Labs DESIGN.md format](https://github.com/google-labs-code/design.md). Contracts define
 domain meaning; ADRs define architecture. This file defines presentation. Read
-[ADR 0017](docs/adr/0017-design-brief.md) and the
-[current Gemini/Codex synthesis](docs/architecture/2026-10-12-ui-refresh.md).
+[ADR 0017](docs/adr/0017-design-brief.md) and
+[ADR 0018](docs/adr/0018-material3-presentation.md). Earlier exploration reports are historical
+evidence, not a pending decision for the approved screens.
 
-**Status:** frontmatter records the current implementation at `dev` `399af6a`, not a generated
-Material 3 palette or a claim of accessibility compliance. The prose below identifies retained
-requirements and proposed component work. Material 3 is the exploration direction; replacement
-of Ionic and a component library have not been selected. No runtime token generation exists.
+**Decision:** the owner approved the [revised four-screen mockup](https://aristotelesqc.github.io/Flourprint/?review=v2)
+(Pages revision `0aea128`) and authorized implementation. Material 3 presentation uses reusable
+Flourprint React components, shared semantic tokens and the existing Ionic navigation/overlay
+shell. No external Material library or router replacement is selected. The mockup is a visual
+reference, not production state or command logic. Later changes remain possible.
+
+The frontmatter retains the executable warm palette and records the accepted spacing scale;
+keep it synchronized with `apps/mobile/src/theme/app.css` in the implementation slice. Evidence
+of actual screen and platform coverage belongs in the PR and #35, not an implied compliance claim.
+No runtime token generator exists.
 
 ## Colors
 
 The current mappings in `apps/mobile/src/theme/app.css` are:
 
-| Design role       | Runtime token | Light / dark frontmatter tokens                |
-| ----------------- | ------------- | ---------------------------------------------- |
-| Primary action    | `accent`      | `primary` / `dark-primary`                     |
-| Action foreground | `on-accent`   | `on-primary` / `dark-on-primary`               |
-| Page              | `bg`          | `background` / `dark-background`               |
-| Content surface   | `surface`     | `surface` / `dark-surface`                     |
-| Main text         | `ink`         | `on-surface` / `dark-on-surface`               |
-| Secondary text    | `muted`       | `muted` / `dark-muted`                         |
-| Divider           | `line`        | `outline` / `dark-outline`                     |
-| Selector track    | `track`       | `track` / `dark-track`                         |
-| Input outline     | `field`       | `field-outline` / `dark-field-outline`         |
-| Input fill        | `field-bg`    | `field-background` / `dark-field-background`   |
-| Text action       | `accent-text` | `action-text` / `dark-action-text`             |
-| Soft accent       | `accent-soft` | `primary-container` / `dark-primary-container` |
-| Error             | `alert`       | `error` / `dark-error`                         |
+| Design role           | Runtime token       | Light / dark frontmatter tokens                |
+| --------------------- | ------------------- | ---------------------------------------------- |
+| Primary action        | `accent`            | `primary` / `dark-primary`                     |
+| Action foreground     | `on-accent`         | `on-primary` / `dark-on-primary`               |
+| Page                  | `bg`                | `background` / `dark-background`               |
+| Content surface       | `surface`           | `surface` / `dark-surface`                     |
+| Quiet grouped surface | `surface-container` | `surface-container` / `dark-surface-container` |
+| Main text             | `ink`               | `on-surface` / `dark-on-surface`               |
+| Secondary text        | `muted`             | `muted` / `dark-muted`                         |
+| Divider               | `line`              | `outline` / `dark-outline`                     |
+| Subtle divider        | `line-subtle`       | `outline-subtle` / `dark-outline-subtle`       |
+| Selector track        | `track`             | `track` / `dark-track`                         |
+| Input outline         | `field`             | `field-outline` / `dark-field-outline`         |
+| Input fill            | `field-bg`          | `field-background` / `dark-field-background`   |
+| Text action           | `accent-text`       | `action-text` / `dark-action-text`             |
+| Soft accent           | `accent-soft`       | `primary-container` / `dark-primary-container` |
+| Error                 | `alert`             | `error` / `dark-error`                         |
 
 The `primary-container` names describe the existing translucent soft accents, not validated M3
 tonal-container roles. Dark mode currently follows the system preference. Selectable AMOLED
 is required work: use a black page foundation with warm accents and distinguishable surfaces;
 exact values, selection/persistence and accessibility checks remain to be implemented.
 
-For the M3 prototype, introduce semantic roles for selected state, container levels and status
+In the shared M3 layer, introduce semantic roles for selected state, container levels and status
 only when they have concrete consumers. Evaluate actual foreground/background pairs, including
 focus, outlines, disabled states and translucent blends. Do not silently replace warm accents
 with a generic purple or blue palette. A palette snapshot alone does not prove contrast.
 
 ## Typography
 
-The app currently inherits Ionic's platform font; text sizes vary by component. It uses tabular
-numerals globally. A unified typography scale is intentionally absent from frontmatter rather
-than pretending an unimplemented font or M3 type ramp is current.
+Keep the system/platform sans-serif font and tabular numerals. Shared named roles cover page
+titles, section titles, body, prominent values, labels and supporting text. Use rem-based sizes
+and explicit line heights so larger text can reflow. The approved reference uses a 24/32 px page
+headline, 22/28 px title, 16/24 px section/body and 14/20 px labels/supporting body; compact
+metadata may use 12/16 px. Large remaining-time values have their own role rather than enlarging
+every heading. Runtime classes and any exceptions must be documented with the implementation.
 
-The next component pass should name roles for page title, section title, body, value, label and
-supporting text. Prioritize readable ingredient quantities, units and times. Use sentence case
-for actions. Explanations can expand progressively; primary actions and essential labels must
-remain visible. Keep FR/EN and larger text in the same layout evaluation. French instructions
-use infinitives, as required by ADR 0009 and AGENTS.md.
+Prioritize readable ingredient quantities, units and times. Use sentence case for actions.
+Explanations can expand progressively; primary actions and essential labels remain visible.
+Verify FR/EN and larger text in the same layout. French instructions use infinitives, as required
+by ADR 0009 and AGENTS.md.
 
 ## Layout
 
@@ -127,12 +148,18 @@ and rounded corners; `--spacing-touch` is 3rem. These are current tokens, not pr
 existing control meets the target. Prototype touch actions with a 48px target wherever feasible;
 compact glyphs may sit inside larger non-overlapping hit areas.
 
+Use the shared 4/8/12/16/24/32 px spacing scale, 16 px page gutters and 48 px action targets.
+Keep one visually dominant action per screen. Occasional actions belong in an overflow menu;
+destructive actions are separated there and never placed beside Start/Resume. Frequent
+Preparation shortcuts (+15 min, Duration, Note and readiness observations) remain visible.
+
 Recipe presents composition and authored method. Planning presents generated projections with
 time controls and a shortcut to the single Recipe step editor. Preparation presents actual work.
 Follow the contracts for semantics; do not build a second editable recipe inside Planning.
 
 **Consultation/editing composition (#67):** saved recipes open for reading with explicit
-Edit, Plan and Start actions. New or resumed drafts open for editing after hydration. Consultation
+Edit in overflow and a contextual Start/Resume action. Planning is the generated tab, without a
+duplicate Plan header button. New or resumed drafts open for editing after hydration. Consultation
 does not reserve an empty 88px draft footer. Once editing starts, first modification and validity
 feedback keep the primary controls stable. A deliberate mode change may rearrange the screen;
 retain understandable scroll/focus and preserve or guard all pending raw input.
@@ -169,8 +196,9 @@ these principles do not ship animations or establish native/performance conforma
 
 Use warm tonal surfaces, separators and restrained elevation for hierarchy. Sheets sit above
 the current workspace; selection and interactive state must remain clear without relying only
-on color. Avoid decorating every value with a raised container. The eventual M3 elevation and
-surface scale needs side-by-side evaluation in light, warm dark and AMOLED.
+on color. Avoid decorating every value with a raised container. Evaluate new elevation and
+surface consumers side by side in light and warm dark; an AMOLED prototype does not establish
+a selectable production theme.
 
 ## Shapes
 
@@ -178,10 +206,41 @@ Current shared cards have a 1rem radius; segmented options use 0.75rem. Preserve
 within each role. A proposed M3 shape scale should be introduced through shared components,
 not independent radius choices on each page. Shapes alone do not establish an M3 implementation.
 
+## Approved screen composition
+
+- **Recipes:** readable application/build header, quiet creation, compact active-preparation
+  resume entry with remaining time, and recipe cards with version, dough, hydration, total
+  planned duration and last cooking/never-cooked information. Registry, history and settings
+  remain reachable without competing with the recipe list.
+- **Recipe consultation:** summary, clearly named percentage bases, ordinary ingredient rows,
+  components and authored method. Contextual information buttons stay beside hydration, size
+  and other existing explained concepts. Hydration is `totalWaterPct`, shown to the whole
+  percent with uncertainty/incompleteness retained. No extra added/poured-water summary line.
+  Unlock is neutral; lock has an explicit useful state. Milk-only recipes do not acquire water
+  or a lock merely to match a layout.
+- **Editing:** Composition, Components, Steps and Result sections share the same draft. Preserve
+  mounted raw fields or commit/guard them through the existing validation mechanism before
+  navigation. Show percent/gram entries, anchor modes, hydration lock, component allocations
+  and ratios, authored steps/equipment and the actual outcome contract. Ratio entry uses
+  `liquidMassRatio` and `hydrationForRatio` from the current contract: ratio entry counts weighed
+  liquid mass (including the whole mass of milk); hydration and component style still count
+  its water content. One Save bar has stable reserved feedback space; check/review/discard are occasional
+  actions. Quantities retain full internal precision.
+- **Preparation:** large remaining time, planned end, actual start and temporal progress; visible
+  quick controls and readiness observations. Upcoming steps with clock times precede completed
+  steps. Keep the journal and actual lifecycle/outcome actions. A readiness observation neither
+  completes the stage nor establishes a cooked result. Unknown times remain unknown.
+
 ## Components
 
 Extend the current `Field`, `Segmented`, `Card`, `Rows`, `InfoSheet` and `DraftActionBar` foundation.
 The target is a reusable Flourprint component layer with consistent behavior and theme roles.
+The implementation shares `OverflowMenu`, the `Segmented` variants (reading tabs, editor
+sections and quantity modes), tonal `Card` surfaces and semantic text roles from `app.css`.
+Editor sections keep one mounted formula editor: changing sections does not duplicate the
+validation registry or throw away raw input. Large-text layouts may wrap editor sections into
+two rows; labels and touch targets stay intact. Native Ionic overlays remain platform-specific
+and require their own checks.
 
 - **Actions:** visible primary-action labels, distinct filled/outlined/quiet roles, clear busy,
   disabled and destructive states. Do not substitute icon-only controls for essential actions.
@@ -200,9 +259,9 @@ The target is a reusable Flourprint component layer with consistent behavior and
 - **Timeline:** show dependencies, parallel work and uncertainty without making elapsed time
   a biological readiness score. Editing links return to the corresponding Recipe step.
 
-Keep library and routing choices separate. The Ionic versus React/primitives prototype shares
-the same composition, data, tokens and interaction cases; independently build the replacement
-candidate when measuring shell cost. DESIGN.md does not select a dependency or migrate routes.
+This tranche selects the shared Flourprint presentation layer and retains Ionic's shell. A future
+shell/library comparison is separate work, not a prerequisite for the approved visual redesign.
+DESIGN.md does not select a new dependency or migrate routes.
 
 ## Do's and Don'ts
 

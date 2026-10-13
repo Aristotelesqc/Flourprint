@@ -44,6 +44,15 @@ format (actual changes or a patch for caller integration). State the single-writ
 The delegate reports touched paths, tests actually run, blockers and remaining limitations; the
 caller reviews the actual artifacts and runs acceptance independently.
 
+When the owner requests Gemini's own subagents for UI/UX acceptance, include that requirement
+in the implementation assignment. Confirm actual delegation tool calls and retain distinct
+reviewer reports. The writer fixes findings; the affected reviewer retests the revised build.
+Reviewers use disposable browser contexts and the running implementation, identifying build,
+locale, viewport, theme, observed actions and captures. A code-only review, the writer's own
+"sentinel" plan, or mockup approval does not establish independent running-app use. If tool
+access is missing, record the gap rather than relabelling a supplied-source report as browser
+verification. Codex still performs its own integration and acceptance checks.
+
 For generated patches, request a unified diff against the supplied source, without fabricated
 adjacent context or placeholder code. Tool-free source-snapshot generation must say no filesystem
 changes/tests were performed. Direct implementation must not commit/push or publish unless those
