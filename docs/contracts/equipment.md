@@ -31,6 +31,7 @@ interface StepEquipment {
   appliance?: ApplianceKind;
   profile?: EquipmentRef; // an appliance profile (below), optional
   mode?: OvenMode; // oven only: a Flourprint mode (below)
+  heat?: HeatSource[]; // custom mode only: the heat sources it uses
   nativeMode?: string; // the appliance's own label for this step, as read on it
   setpointC?: number; // temperature setpoint: oven, fryer oil, proofer
   level?: { value: number; of?: number }; // power level where there is no setpoint: broil 3 of 5, burner 7 of 10
@@ -45,15 +46,17 @@ interface StepEquipment {
 
 type ApplianceKind = 'oven' | 'stovetop' | 'grill' | 'steamer' | 'fryer' | 'proofer' | 'other';
 type OvenMode =
-  | 'still'
-  | 'fan'
+  | 'bottom'
+  | 'topBottom'
   | 'convection'
+  | 'trueConvection'
+  | 'convectionRoast'
   | 'broil'
-  | 'fanBroil'
+  | 'convectionBroil'
   | 'steam'
-  | 'steamHeat'
   | 'proof'
   | 'custom'; // Flourprint oven modes, below
+type HeatSource = 'top' | 'bottom' | 'rear' | 'fan';
 type Preheat = 'hot' | 'cold' | 'unknown';
 interface EquipmentRef {
   id: string;
@@ -98,30 +101,41 @@ interface EquipmentRef {
 
 ## Flourprint oven modes
 
-A recipe names one of these modes. Each is documented in the app at the point of choice (message
-keys `mode.<code>.name`, `mode.<code>.help`): what it does, which elements and fan it usually
-involves and which may vary, how to find the closest setting on a home oven, and how it differs
-from its neighbours. Commercial names (Bake, Convection Bake, True or European Convection,
-Convection Roast…) appear in that help as examples, never as definitions.
+Owner decision of 2026-10-13: a mode is defined by the oven's **heat sources**, not by a
+manufacturer's name, because names differ between brands and regions (Québec "Convection" is
+the bottom element with the fan; the same word elsewhere means a rear element). Each mode has a
+canonical set of heat sources; the app draws it as a small oven pictogram beside the name, so the
+method reads the same whatever the label (a presentation concern, ADR 0009). Names are message
+texts (`mode.<code>.name`, `mode.<code>.help`) and change without a contract change.
 
-| Code         | Meaning                                                                     |
-| ------------ | --------------------------------------------------------------------------- |
-| `still`      | heat without forced circulation (no cooking-air fan); elements may vary     |
-| `fan`        | a fan circulates heat from the oven's other elements                        |
-| `convection` | a fan with its own rear or ring element; other elements may also run        |
-| `broil`      | direct heat from the top element, set by level or temperature               |
-| `fanBroil`   | broil with the fan circulating air                                          |
-| `steam`      | the oven's steam function alone                                             |
-| `steamHeat`  | a dry-heat mode with the steam function (`fan` says whether air is fanned)  |
-| `proof`      | a low-temperature proofing program: a fermentation environment, not cooking |
-| `custom`     | a mode with no Flourprint match; `nativeMode` names it                      |
+| Code              | Heat sources       | French name (Québec usage) |
+| ----------------- | ------------------ | -------------------------- |
+| `bottom`          | bottom             | Cuisson traditionnelle     |
+| `topBottom`       | top, bottom        | Éléments du haut et du bas |
+| `convection`      | bottom, fan        | Convection                 |
+| `trueConvection`  | rear, fan          | Convection européenne      |
+| `convectionRoast` | top, bottom, fan   | Rôtissage par convection   |
+| `broil`           | top                | Griller                    |
+| `convectionBroil` | top, fan           | Griller par convection     |
+| `steam`           | the steam function | Vapeur                     |
+| `proof`           | low heat (program) | Levée du pain              |
+| `custom`          | as the step states | Autre (with `nativeMode`)  |
 
+- Steam added to a dry mode is the step's `steam` (`source: 'function'` for the oven's steam,
+  `manual` for a tray or ice cubes), never a separate mode: a combination steam program is its
+  dry mode plus `steam`.
+- `custom` may state its heat sources (`heat?: HeatSource[]` on `StepEquipment`); for every other
+  mode `heat` is absent and the table above applies.
+- An appliance profile maps each of the baker's oven labels to a mode, or to its own heat sources
+  (`heaters`, `fan`), set from the same pictogram: the baker shows which elements and fan the
+  label turns on (Settings, later UI).
 - No conversion between modes is applied or suggested: a recipe in `convection` is never rewritten
-  as `still` with another temperature.
-- `broil` is the oven's grill (Gril in French) and differs from the `grill` operation (a barbecue
+  as `bottom` with another temperature.
+- `broil` (Griller) is the oven's top element and differs from the `grill` operation (a barbecue
   or open grate, process.md); the interface names them so they cannot be confused.
-- The French names (Chaleur sans ventilation, Chaleur brassée, Chaleur pulsée, Gril, Gril ventilé,
-  Vapeur, Chaleur avec vapeur, Étuve, Autre) are message texts, changed without a contract change.
+- Codes of 0.12.0 (`still`, `fan`, `fanBroil`, `steamHeat`) were never released (dev builds only)
+  and are refused when read; `CONTRACT_VERSION` 0.14.0 carries this set. The built-in rows changed
+  on 2026-10-13 (the Dutch oven's material, the baguette tray) keep version 1 for the same reason.
 
 ## Equipment entries
 
@@ -147,6 +161,7 @@ interface EquipmentEntry {
     | 'stone'
     | 'steel'
     | 'rack'
+    | 'baguetteTray'
     | 'other';
   material?: Material; // the body
   coating?: 'none' | 'nonStick' | 'silicone' | 'enamel' | 'seasoning' | 'other' | 'unknown';
@@ -208,23 +223,26 @@ type Material =
 
 ### Built-in entries
 
-Generic items, no brand, every property `unknown` except shape and material:
+Generic items, no brand, every property `unknown` except shape and material (owner decisions of
+2026-10-13: "Plaque d'acier" for the baking steel, a cast-iron Dutch oven whatever its enamel, a
+perforated baguette tray):
 
-| id                     | kind    | shape     | material          | lid               |
-| ---------------------- | ------- | --------- | ----------------- | ----------------- |
-| `baking-stone`         | support | stone     | cordierite        |                   |
-| `baking-steel`         | support | steel     | carbonSteel       |                   |
-| `aluminium-sheet`      | support | sheet     | aluminium         |                   |
-| `oven-rack`            | support | rack      | stainlessSteel    |                   |
-| `dutch-oven-cast-iron` | vessel  | dutchOven | enamelledCastIron | enamelledCastIron |
-| `pullman-steel`        | vessel  | pullman   | aluminizedSteel   | aluminizedSteel   |
-| `pullman-aluminium`    | vessel  | pullman   | aluminium         | aluminium         |
-| `loaf-pan-steel`       | vessel  | loafPan   | carbonSteel       |                   |
-| `loaf-pan-silicone`    | vessel  | loafPan   | silicone          |                   |
-| `loaf-pan-ceramic`     | vessel  | loafPan   | ceramic           |                   |
-| `loaf-pan-glass`       | vessel  | loafPan   | glass             |                   |
-| `cast-iron-skillet`    | vessel  | skillet   | castIron          |                   |
-| `pot`                  | vessel  | pot       | stainlessSteel    | stainlessSteel    |
+| id                     | kind    | shape        | material        | lid             |
+| ---------------------- | ------- | ------------ | --------------- | --------------- |
+| `baking-stone`         | support | stone        | cordierite      |                 |
+| `baking-steel`         | support | steel        | carbonSteel     |                 |
+| `aluminium-sheet`      | support | sheet        | aluminium       |                 |
+| `oven-rack`            | support | rack         | stainlessSteel  |                 |
+| `dutch-oven-cast-iron` | vessel  | dutchOven    | castIron        | castIron        |
+| `pullman-steel`        | vessel  | pullman      | aluminizedSteel | aluminizedSteel |
+| `pullman-aluminium`    | vessel  | pullman      | aluminium       | aluminium       |
+| `loaf-pan-steel`       | vessel  | loafPan      | carbonSteel     |                 |
+| `loaf-pan-silicone`    | vessel  | loafPan      | silicone        |                 |
+| `loaf-pan-ceramic`     | vessel  | loafPan      | ceramic         |                 |
+| `loaf-pan-glass`       | vessel  | loafPan      | glass           |                 |
+| `cast-iron-skillet`    | vessel  | skillet      | castIron        |                 |
+| `baguette-tray`        | support | baguetteTray | aluminium       |                 |
+| `pot`                  | vessel  | pot          | stainlessSteel  | stainlessSteel  |
 
 There is no built-in appliance: the Flourprint modes are the default. The equipment registry
 (`equipment` table, below) holds personal entries only, like flours.
@@ -269,15 +287,16 @@ Each runs with **no appliance profile** unless it says otherwise, then survives 
    step; its duration includes the warm-up.
 3. Owner's pizza: `panCook` on `stovetop`, `level 7 of 10`, `cast-iron-skillet`; then `bake` `broil`
    `level` only (no setpoint), same skillet ref. Two cooking stages, one result.
-4. Bagels: `boil` on `stovetop` in `pot`, then `bake` `fan` 220 °C on `aluminium-sheet`.
+4. Bagels: `boil` on `stovetop` in `pot`, then `bake` `convection` 220 °C on `aluminium-sheet`.
 5. Oven Proof: `proof` with `appliance: 'oven'`, `mode: 'proof'`, `setpointC` 35, then `bake`.
    The proof is not a cooking stage (bake-session.md).
 6. Pullman: `pullman-steel` `closed`, then a second recipe with `pullman-aluminium` `open`; the
    recipe kind does not change, only the vessel and cover.
-7. With a profile: an oven mapping "Convection Bake" to `fan` (`documented`, manual as source)
-   and "Steam Bake" to `steamHeat`; a second oven mapping its own "Convection" to `convection`. The
-   same recipe shows each oven's label; a third oven without steam keeps the recipe's `steamHeat`
-   as an unmet requirement, never a silent `fan`.
+7. With a profile: a Québec oven mapping its "Convection" to `convection` (`documented`, manual
+   as source) and its "Steam Bake" to `convection` with `steam`; a European oven mapping its own
+   "Convection" to `trueConvection`. The same recipe shows each oven's label and the same
+   pictogram; a third oven without a steam function keeps the recipe's steam as an unmet
+   requirement, never silently dropped.
 8. Deviation: during the uncovered stage, `AdjustStep` sets 220 °C instead of 230 °C; replay shows
    the plan (230) and what was used (220).
 9. A support edited after a Preparation: the Preparation still shows the version it used.
