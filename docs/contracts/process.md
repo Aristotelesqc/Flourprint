@@ -1,7 +1,7 @@
 # Contract: process (D3)
 
 Status: **approved** (issue #30); step move and duplicate are a **proposal** of 2026-10-13,
-pending the owner's approval. Related issues: #5, #9, #21, #28, #35.
+revised after the audit, pending the owner's approval. Related issues: #5, #9, #21, #28, #35.
 
 ## Model
 
@@ -141,58 +141,121 @@ refused).
 
 The Recipe editor reorders and duplicates steps. Both are edits of a recipe's process, which
 becomes a new revision when saved; neither exists during a Preparation (only `InsertStepAfter`
-does, bake-session.md). Like removal and insertion, they are pure edits that the caller validates
-like any process; a result that fails validation is refused as a whole (`InvalidProcess`).
+does, bake-session.md). The list order is a **topological presentation**: `dependsOn` alone
+defines timing. A drag therefore never changes a dependency the baker did not see, and a result
+that cannot be shown to be right is refused, not repaired.
 
-**Move** takes a step and the step it must follow, or the first position. It is a removal followed
-by an insertion, with the dependency rewiring each already defines:
+Both edits return a result or a **typed refusal**; a refusal changes nothing (atomic). The caller
+validates the result like any process, and a validation failure is also a refusal as a whole
+(`InvalidProcess`).
 
-- Removal: the steps that depended on the moved step inherit its dependencies (Step removal).
-- Insertion after `after`: the moved step depends on `after`, and the steps that depended on
-  `after` now depend on the moved step (`InsertStepAfter`).
-- Insertion in first position: the moved step has no dependency and the step that was first now
-  depends on it. Other steps without a dependency (a parallel `preheat`) keep none.
-- Ids, fields, incorporations and `schedule` are unchanged. Moving a step to its own position, or
-  naming an unknown step, changes nothing.
-- A parallel step (a `preheat` beside a proof) that is moved joins the chain at its new place:
-  its dependencies become `after`. Keeping it parallel is an edit of its dependencies, not of this
-  move.
+### Move
 
-**Duplicate** inserts a copy of a step right after the original, as `InsertStepAfter` does (the
-copy depends on the original, whose successors now depend on the copy):
+`moveStep(process, stepId, after)` places the step right after `after`, or first when `after` is
+`null`. Outcomes, checked in this order:
 
-- The copy keeps the operation, label, `plannedDurationS`, `endCriterion`, `conditions`,
-  `technique` and `equipment`.
-- It does not keep `incorporations` (the shares would exceed 100), `accepted`, or
-  `durationMode: 'model'` (a model-driven duration belongs to one dough step, fermentation.md):
-  its duration is the baker's number. Its `schedule` is `asap`.
-- Its id is new, unique and never reused (derived from the operation, as for an added step).
+1. `UnknownReference` when `stepId` or `after` is not in the process, or `after` is the step
+   itself. This is a bad request or a stale editor, never a no-op.
+2. `unchanged` when the step is already in that position (`after` is already the step before it,
+   or `null` and it is first). Nothing is transformed: steps and edges are identical, whatever
+   the dependencies around it.
+3. **Order only.** The step moves in the list and **no dependency changes** when the new list is
+   still a valid topological order. This is the move of an independent step (a tangzhong branch,
+   a preheat's display position).
+4. **Chain move.** When order only is invalid because the step, or a step that depends on it,
+   would come before one of its dependencies, the step is moved **along the chain** under the
+   conditions below. The result lists `changedEdges` (`{ step, before, after }` for each
+   rewritten `dependsOn`) so that the interface shows them.
+5. Otherwise a refusal: `MoveBreaksDependencies` (with the `path` of the first violated
+   dependency) or `AmbiguousMove` (with a `reason`). The baker then edits the dependencies
+   explicitly; no guess is made.
 
-Interface-only conveniences, not persisted and never events: undo and redo of the edits made to a
-draft since it was opened, and "reset" back to the draft's starting revision (a discard,
-`drafts.md`).
+The chain move applies only when all of these hold; any other case is `AmbiguousMove`:
 
-Examples (the rewiring is worked by hand from the rules above):
+- The step has at most one dependency `P` and at most one dependent `T`.
+- The target `after` has at most one dependent `B`, counted after the step is taken out. The
+  target is not a descendant of the step.
+- The step is not an `alap` step (it can only be moved by order only; its dependencies and its
+  "as late as possible" meaning are never rewritten by a drag), is not the step of a component
+  (its `id` is a component id) and carries no `incorporations`: those wait for the contract of
+  component phases (`reason: 'workpieceStep'`). An `alongside` step (the preheat of Steps
+  alongside) is moved by chain move, since its position is its start.
 
-1. **Reorder a chain.** `mix`, `bulk`, `shape`, `proof`, `bake`, each depending on the previous
-   one. Move `shape` after `mix`. Removal: `proof` inherits `[bulk]`. Insertion: `shape` →
-   `[mix]`, and `bulk`, which depended on `mix`, → `[shape]`. Result: `mix` `[]`, `shape`
-   `[mix]`, `bulk` `[shape]`, `proof` `[bulk]`, `bake` `[proof]`.
-2. **Swap beside a parallel step.** `mix`, `bulk` `[mix]`, `proof` `[bulk]`, `shape` `[proof]`,
-   `preheat` (`alap`, `[]`), `bake` `[shape, preheat]`. Move `shape` after `bulk`. Removal: `bake`
-   lists `shape`'s dependency instead: `[proof, preheat]`. Insertion after `bulk`: `shape` `[bulk]`, and `proof`, which depended on `bulk`, →
-   `[shape]`. `preheat` is untouched and `bake` still waits for both. Valid.
-3. **Move to the first position.** `mix` `[]`, `bulk` `[mix]`, `shape` `[bulk]`. Move `shape`
-   first. Removal: nothing depended on it. Insertion: `shape` `[]`, `mix` → `[shape]`. Result
-   order `shape`, `mix`, `bulk`: valid.
-4. **A refused move.** On the process of example 2 before its move, move `preheat` after
-   `bake`. Removal: `bake` → `[shape]`. Insertion: `preheat` → `[bake]`, an `alap` step with no successor: `InvalidProcess`, nothing
-   changes.
-5. **Duplicate.** `mix`, `bulk` (`durationMode: 'model'`, 6 h), `shape` `[bulk]`. Duplicate
-   `bulk`: `bulk-2` `[bulk]`, 6 h, manual, no `accepted`; `shape` → `[bulk-2]`.
-6. **Duplicate an `alap` step.** `preheat` (`alap`, 30 min) with `bake` `[proof, preheat]`.
-   Duplicate `preheat`: `preheat-2` (`asap`, 30 min) `[preheat]`, `bake` → `[proof, preheat-2]`;
-   `preheat` now has a successor, so it stays valid.
+The chain move then does exactly this, and nothing else:
+
+- Out of the old place: `T`, if any, takes the step's dependency instead of the step
+  (`T.dependsOn` with the step replaced by `P`, or without it when the step was first).
+- Into the new place: the step depends on `after` (no dependency when first), and `B`, if any,
+  takes the step instead of `after`. In first position, `B` is the step that was first in the
+  list; other steps without a dependency keep none.
+- Every other step keeps its dependencies, its fields, its `schedule`, its incorporations and its
+  id. A branch that does not run through the step or the target is untouched.
+
+### Duplicate
+
+`duplicateStep(process, stepId, newId)` proposes a **new step** right after the original. It is
+not an exact clone and the interface does not present it as one: it opens the copy for review and
+lists what was not carried.
+
+- Carried: `operation`, `label`, `endCriterion`, `conditions`, `technique` and `equipment` (the
+  same item references, no new copy).
+- `plannedDurationS` is carried only when the original's duration is the baker's (manual). A
+  `durationMode: 'model'` original gives a copy **without a duration** (unknown): a model-driven
+  duration belongs to one dough step (`fermentation.md`) and a literal copy of a prediction is
+  not a repeat.
+- Not carried: `incorporations` (the shares would exceed 100), `accepted`, `durationMode`.
+- The copy is `asap` and depends on the original, whose dependents now depend on the copy, as
+  `InsertStepAfter` does. `NotDuplicable` is returned, with a `reason`, for an `alap` or
+  `alongside` step (a copy would be a new serial duration or a second heating target) and for the
+  step of a component (`workpieceStep`).
+- The id is new, unique and never reused (derived from the operation, as for an added step).
+
+### Undo, redo and reset
+
+These are interface features over the draft (`drafts.md`); they add no persisted data, event or
+history.
+
+- Undo and redo apply to **complete draft edits**, formula and process together. Each result is
+  saved by the normal draft persistence, so the saved draft is always the one on screen.
+- A new edit after an undo clears the redo. Moving between Recipe and Planning keeps the editing
+  session and its undo stack while the draft stays open.
+- The undo stack lives in memory: after the app restarts it is empty, and the saved draft is
+  exact. A draft "has no history" (`drafts.md`) means exactly this.
+- **Reset** names its baseline from the draft's `origin`: "back to revision N" (`revision`,
+  `baseVersion`), "back to the template copy" (`template`), "back to the blank recipe" (`blank`).
+  For a draft resumed after a restart the baseline is that same source, not the state at resume.
+  It asks for confirmation when the draft has edits, and it never changes a saved revision.
+
+Examples (the edges are worked by hand from the rules above):
+
+1. **Identity.** `mix`, `proof` `[mix]`, `preheat` `[mix]` (parallel), `bake` `[proof, preheat]`.
+   Move `proof` after `mix`: `unchanged`; every edge as before. (Removing then inserting would
+   have rewired `preheat` to `[proof]`: a valid but wrong graph.)
+2. **Order only.** In example 1, move `preheat` right after `mix`. The list is still
+   topological, so no edge changes: `preheat` keeps `[mix]` and `bake` keeps `[proof, preheat]`.
+3. **Chain move.** `mix`, `bulk` `[mix]`, `shape` `[bulk]`, `proof` `[shape]`, `bake` `[proof]`.
+   Move `shape` after `mix`. Order only is invalid. The step has one dependency and one
+   dependent; the target `mix` has one dependent `bulk`. Out of the old place: `proof` →
+   `[bulk]`. Into the new one: `shape` `[mix]`, `bulk` `[shape]`. `changedEdges`: `proof`, `shape`,
+   `bulk`. Result: `mix` `[]`, `shape` `[mix]`, `bulk` `[shape]`, `proof` `[bulk]`, `bake` `[proof]`.
+4. **Join kept.** `mix`, `bulk` `[mix]`, `proof` `[bulk]`, `shape` `[proof]`, a legacy `alap`
+   `preheat` `[]`, `bake` `[shape, preheat]`. Move `shape` after `bulk`. Out: `bake` → `[proof,
+preheat]`. In: `shape` `[bulk]`, `proof` → `[shape]`. `preheat` untouched.
+5. **Ambiguous.** `mix` with two dependents (`bulk` and a branch `tangzhong` `[mix]`): moving a
+   chained step after `mix` is `AmbiguousMove`: the target has two dependents. Nothing changes.
+6. **Refused by validation.** Moving a legacy `alap` `preheat` after `bake` is not a chain move
+   (it is `alap`); order only is invalid because `bake` depends on it: `MoveBreaksDependencies`.
+7. **Unknown.** `stepId: 'missing'`: `UnknownReference`, not `unchanged`.
+8. **Duplicate, manual.** `bulk` (manual, 3 h) `[mix]`, `shape` `[bulk]`: `bulk-2` (3 h, same
+   technique) `[bulk]`, `shape` → `[bulk-2]`; the copy carries no incorporation.
+9. **Duplicate, model-driven.** The same with `durationMode: 'model'`, 6 h: `bulk-2` has no
+   duration and is manual; the interface asks for one.
+10. **Not duplicable.** An `alap` `preheat`, an `alongside` preheat, or the step whose id is a
+    component's: `NotDuplicable`.
+11. **Undo.** A formula edit then a step move, then undo twice: the draft shows the starting
+    formula and process, each undo saved; a new edit then clears the redo.
+12. **Reset.** A `revision` draft at revision 3 with edits: reset offers "back to revision 3" with
+    a confirmation, and revision 3 itself is untouched.
 
 ## Projection
 
