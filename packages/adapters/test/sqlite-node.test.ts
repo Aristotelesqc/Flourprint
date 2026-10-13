@@ -9,6 +9,7 @@ import {
   openNodeSqlite,
   SqlEquipmentRegistry,
   SqlFlourRegistry,
+  SqlIngredientRegistry,
   SqlRecipeRepository,
 } from '../src/sqlite-node/index.js';
 
@@ -143,7 +144,7 @@ describe('sqlite-node durability', () => {
     expect(await registry.listFlours()).toEqual([]);
     expect(
       v4.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 6 });
+    ).toEqual({ value: 7 });
     v4.close();
   });
 
@@ -160,7 +161,7 @@ describe('sqlite-node durability', () => {
     expect(await new SqlEquipmentRegistry(v5.driver).listEquipment()).toEqual([]);
     expect(
       v5.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 6 });
+    ).toEqual({ value: 7 });
     v5.close();
   });
 
@@ -191,8 +192,40 @@ describe('sqlite-node durability', () => {
     expect((await repository.listTrash()).map((r) => r.id)).toEqual(['r']);
     expect(
       v6.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 6 });
+    ).toEqual({ value: 7 });
     v6.close();
+  });
+
+  it('upgrades a version 6 database to the ingredient registry, keeping its recipes', async () => {
+    const file = path('upgrade-ingredients.sqlite');
+    const v6 = await open(file, MIGRATIONS.slice(0, 6));
+    v6.database
+      .prepare(
+        "INSERT INTO recipes (id, name, head_version, updated_at) VALUES ('r', 'R', 1, '2026-10-07T08:00:00.000Z')",
+      )
+      .run();
+    v6.close();
+
+    const v7 = await open(file);
+    expect((await new SqlRecipeRepository(v7.driver).listRecipes()).map((r) => r.id)).toEqual([
+      'r',
+    ]);
+    expect(await new SqlIngredientRegistry(v7.driver).listIngredients()).toEqual([]);
+    expect(
+      v7.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
+    ).toEqual({ value: 7 });
+    v7.close();
+  });
+
+  it('refuses ingredient entries written with a newer document schema', async () => {
+    const db = await open(':memory:');
+    db.database
+      .prepare("INSERT INTO ingredients VALUES ('i', 1, 0, 99, '{}', '2026-10-07T08:00:00.000Z')")
+      .run();
+    expect(await new SqlIngredientRegistry(db.driver).getIngredient('i', 1)).toMatchObject({
+      ok: false,
+      error: { code: 'UnsupportedDocumentVersion' },
+    });
   });
 
   it('refuses equipment entries written with a newer document schema', async () => {

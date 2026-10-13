@@ -20,6 +20,7 @@ import type { ProcessError } from '../process/validate.js';
 import { approxEqual } from '../numeric.js';
 import { err, ok, type Result } from '../result.js';
 import { validateRecipe } from '../recipe/validate.js';
+import { ingredientUsedProperties } from '../ingredient/mapping.js';
 import { CONTRACT_VERSION, ENGINE_VERSION } from '../version.js';
 import type { AcceptedSuggestion, Estimate, ModelRef } from '../values.js';
 import type { BakeCommandPayload, BakeState, EventDraft } from './types.js';
@@ -334,7 +335,7 @@ export const decide = (
             revisions: command.revisions,
             formula: command.formula,
             resolvedFormula: resolved.value,
-            usedProperties: command.usedProperties ?? [],
+            usedProperties: command.usedProperties ?? ingredientUsedProperties(command.formula),
             process: command.process,
             initialProjection: projection.value,
             estimates: accepted.estimates,

@@ -20,10 +20,18 @@ import {
   type Revision,
 } from '@flourprint/core/domain';
 
+import type { MemoryIngredientRegistry } from './ingredient-registry.js';
+
 const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-/** In-memory recipe repository; same contract as the SQLite implementations. */
+/**
+ * In-memory recipe repository; same contract as the SQLite implementations. The ingredient
+ * registry receives the entry versions a recipes file carries; without it, an import that
+ * carries some is refused before anything is written.
+ */
 export class MemoryRecipeRepository implements RecipeRepository {
+  constructor(private readonly ingredients?: MemoryIngredientRegistry) {}
+
   readonly #recipes = new Map<string, Recipe>();
   readonly #revisions = new Map<string, Revision>();
   readonly #families = new Map<string, RecipeFamily>();
@@ -214,6 +222,11 @@ export class MemoryRecipeRepository implements RecipeRepository {
   }
 
   async importRecipes(plan: RecipeImportPlan): Promise<RecipeImportOutcome> {
+    const entries = plan.ingredients ?? [];
+    const registry = this.ingredients;
+    if (entries.length > 0 && !registry) {
+      throw new Error('This repository has no ingredient registry to import entries into');
+    }
     const imported: string[] = [];
     const skipped: string[] = [];
     const created = plan.families.filter((family) => !this.#families.has(family.id));
@@ -236,6 +249,10 @@ export class MemoryRecipeRepository implements RecipeRepository {
       ) {
         await this.pinVariant(id, undefined);
       }
+    }
+    // Pinned entry versions: absent ones are written, present ones skipped (ingredients.md).
+    for (const entry of entries) {
+      if (registry && !registry.has(entry.id, entry.version)) registry.write(entry);
     }
     return { imported, skipped };
   }

@@ -6,6 +6,7 @@ import type {
   EquipmentEntry,
   FlourEntry,
   Formula,
+  IngredientEntry,
   Instant,
   Process,
   Recipe,
@@ -125,6 +126,11 @@ export interface RecordedRecipe {
 export interface RecipeImportPlan {
   readonly recipes: readonly RecordedRecipe[];
   readonly families: readonly RecipeFamily[];
+  /**
+   * Personal ingredient entry versions the recipes pin (ingredients.md): each one is written when
+   * absent and skipped when present, never compared or overwritten.
+   */
+  readonly ingredients?: readonly IngredientEntry[];
 }
 
 export interface RecipeImportOutcome {
@@ -172,7 +178,8 @@ export interface RecipeRepository {
   pinVariant(familyId: string, recipeId: string | undefined): Promise<Result<void, FamilyError>>;
   /**
    * Additive import in one transaction: absent recipe ids are written as recorded, present ones
-   * are skipped; absent families are created, present ones are left unchanged.
+   * are skipped; absent families are created, present ones are left unchanged; absent ingredient
+   * entry versions are written, present ones are skipped.
    */
   importRecipes(plan: RecipeImportPlan): Promise<RecipeImportOutcome>;
   /** Drafts, most recently updated first (drafts.md). */
@@ -193,6 +200,8 @@ export interface RestorePlan {
   readonly flours?: readonly FlourEntry[];
   /** Every personal equipment entry version (equipment.md); optional, like flours. */
   readonly equipment?: readonly EquipmentEntry[];
+  /** Every personal ingredient entry version (ingredients.md); optional, like flours. */
+  readonly ingredients?: readonly IngredientEntry[];
   readonly bakes: readonly AppendInput[];
 }
 
@@ -243,4 +252,26 @@ export interface EquipmentRegistry {
   listEquipmentVersions(): Promise<readonly EquipmentEntry[]>;
   /** Writes the entry when its version is the next one for its id, else `HeadConflict`. */
   saveEquipment(entry: EquipmentEntry): Promise<Result<EquipmentEntry, EquipmentStoreError>>;
+}
+
+export type IngredientStoreError =
+  | DomainError<'HeadConflict', { ingredientId: string; currentHead: number }>
+  | DomainError<'UnsupportedDocumentVersion', { schemaVersion: number }>;
+
+/**
+ * Personal ingredient entries, customizations of built-ins included (docs/contracts/ingredients.md,
+ * persistence.md): stored by (id, version), a version is never rewritten. Built-in entries are
+ * code and are never stored.
+ */
+export interface IngredientRegistry {
+  /** The latest version of every personal entry, archived ones included, by id. */
+  listIngredients(): Promise<readonly IngredientEntry[]>;
+  getIngredient(
+    id: string,
+    version: number,
+  ): Promise<Result<IngredientEntry | undefined, IngredientStoreError>>;
+  /** Every version of every personal entry, by id then version (backups). */
+  listIngredientVersions(): Promise<readonly IngredientEntry[]>;
+  /** Writes the entry when its version is the next one for its id, else `HeadConflict`. */
+  saveIngredient(entry: IngredientEntry): Promise<Result<IngredientEntry, IngredientStoreError>>;
 }

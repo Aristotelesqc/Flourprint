@@ -3,18 +3,21 @@ import type {
   BakeEventStore,
   EquipmentRegistry,
   FlourRegistry,
+  IngredientRegistry,
   RecipeRepository,
 } from '@flourprint/core/application';
 import {
   MemoryBakeEventStore,
   MemoryEquipmentRegistry,
   MemoryFlourRegistry,
+  MemoryIngredientRegistry,
   MemoryRecipeRepository,
 } from '@flourprint/adapters/memory';
 import {
   bakeEventStoreChecks,
   equipmentRegistryChecks,
   flourRegistryChecks,
+  ingredientRegistryChecks,
   recipeRepositoryChecks,
   runChecks,
   type CheckResult,
@@ -35,6 +38,11 @@ export const runStoreChecks = async (): Promise<CheckResult[]> => {
       ...(await runChecks(recipeRepositoryChecks, async () => new MemoryRecipeRepository(), now)),
       ...(await runChecks(flourRegistryChecks, async () => new MemoryFlourRegistry(), now)),
       ...(await runChecks(equipmentRegistryChecks, async () => new MemoryEquipmentRegistry(), now)),
+      ...(await runChecks(
+        ingredientRegistryChecks,
+        async () => new MemoryIngredientRegistry(),
+        now,
+      )),
     ];
   }
   const sqlite = await import('@flourprint/adapters/sqlite-capacitor');
@@ -81,6 +89,11 @@ export const runStoreChecks = async (): Promise<CheckResult[]> => {
         async () => new sqlite.SqlEquipmentRegistry(await freshDriver()),
         now,
       )),
+      ...(await runChecks<IngredientRegistry>(
+        ingredientRegistryChecks,
+        async () => new sqlite.SqlIngredientRegistry(await freshDriver()),
+        now,
+      )),
     ];
   } finally {
     await cleanup();
@@ -99,6 +112,7 @@ const assertEmpty = async (
     'bakes',
     'flours',
     'equipment',
+    'ingredients',
   ]) {
     const [row] = await driver.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`);
     if (row?.n !== 0) throw new Error(`Scratch database ${name} is not empty (${table})`);

@@ -1,0 +1,139 @@
+{
+  "format": "flourprint-fixture/0",
+  "id": "ingredient-preparation",
+  "contracts": ["ingredients.md", "formula.md", "values-and-units.md"],
+  "description": "Acceptance example 11 of ingredients.md: the butter of example 1 split into two formula ingredients pinning the same entry version, one softened and one cold. Preparation is recorded, never consumed: together they are exactly the single 10 % butter. A preparation `other` without a note is refused.",
+  "input": {
+    "flours": [
+      {
+        "id": "bread-flour",
+        "sharePct": 100
+      }
+    ],
+    "ingredients": [
+      {
+        "id": "water",
+        "kind": "water",
+        "bakerPct": 50,
+        "role": "dough"
+      },
+      {
+        "id": "salt",
+        "kind": "other",
+        "bakerPct": 2,
+        "role": "dough",
+        "water": {
+          "status": "known",
+          "valuePct": 0
+        }
+      },
+      {
+        "id": "butter-a",
+        "kind": "other",
+        "bakerPct": 5,
+        "role": "dough",
+        "fat": {
+          "status": "known",
+          "valuePct": 82,
+          "source": "package: label, 82 % fat"
+        },
+        "entry": {
+          "id": "beurre-82",
+          "version": 1
+        },
+        "preparation": {
+          "state": "softened"
+        }
+      },
+      {
+        "id": "butter-b",
+        "kind": "other",
+        "bakerPct": 5,
+        "role": "dough",
+        "fat": {
+          "status": "known",
+          "valuePct": 82,
+          "source": "package: label, 82 % fat"
+        },
+        "entry": {
+          "id": "beurre-82",
+          "version": 1
+        },
+        "preparation": {
+          "state": "cold"
+        }
+      }
+    ],
+    "components": [],
+    "anchor": {
+      "kind": "flourTotal",
+      "grams": 500
+    }
+  },
+  "expected": {
+    "flourTotal": 500,
+    "grams": {
+      "water": 250,
+      "salt": 10,
+      "butter-a": 25,
+      "butter-b": 25
+    },
+    "doughWeight": 810,
+    "pureWaterTotal": 250,
+    "pureWaterPct": 50,
+    "totalWater": {
+      "value": 250,
+      "completeness": "incomplete",
+      "unknownContributors": ["butter-a", "butter-b"]
+    },
+    "totalWaterPct": 50,
+    "totalFat": {
+      "value": 41,
+      "completeness": "incomplete",
+      "unknownContributors": ["salt"]
+    },
+    "totalFatPct": 8.2
+  },
+  "edits": [
+    {
+      "id": "remove-a-preparation",
+      "command": {
+        "type": "UpdateIngredient",
+        "ingredient": "butter-a",
+        "changes": {
+          "preparation": null
+        }
+      },
+      "expected": {
+        "grams": {
+          "butter-a": 25,
+          "butter-b": 25
+        },
+        "doughWeight": 810,
+        "totalFat": {
+          "value": 41
+        },
+        "totalFatPct": 8.2
+      }
+    }
+  ],
+  "variants": [
+    {
+      "id": "other-without-note",
+      "change": {
+        "ingredients.butter-b.preparation": {
+          "state": "other"
+        }
+      },
+      "expectedError": {
+        "code": "InvalidFormula",
+        "details": {
+          "path": "ingredients[3].preparation.note"
+        }
+      }
+    }
+  ],
+  "tolerance": {
+    "relative": 1e-9
+  }
+}

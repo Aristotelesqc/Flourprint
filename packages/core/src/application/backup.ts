@@ -12,6 +12,7 @@ import {
   type BakeEvent,
   type EquipmentEntry,
   type FlourEntry,
+  type IngredientEntry,
   type DomainError,
   type Instant,
   type RecipeFamily,
@@ -24,12 +25,14 @@ import { isCount, isId, isInstant, isObject, Refused, refuse } from './decode.js
 import { decodeDraft } from './drafts.js';
 import { decodeEquipmentEntry } from './equipment.js';
 import { decodeFlourEntry } from './flours.js';
+import { decodeIngredientEntry } from './ingredients.js';
 import type {
   AppendInput,
   Draft,
   BakeEventStore,
   EquipmentRegistry,
   FlourRegistry,
+  IngredientRegistry,
   RecipeRepository,
   RecordedRecipe,
   RestorePlan,
@@ -51,6 +54,11 @@ export interface Backup {
   readonly flours?: readonly FlourEntry[];
   /** Every personal equipment entry version (equipment.md); optional, so older backups restore. */
   readonly equipment?: readonly EquipmentEntry[];
+  /**
+   * Every personal ingredient entry version, customizations included (ingredients.md); optional,
+   * so older backups restore.
+   */
+  readonly ingredients?: readonly IngredientEntry[];
 }
 
 export interface BackupStores {
@@ -58,6 +66,7 @@ export interface BackupStores {
   readonly bakes: BakeEventStore;
   readonly flours: FlourRegistry;
   readonly equipment: EquipmentRegistry;
+  readonly ingredients: IngredientRegistry;
 }
 
 export type BackupError =
@@ -123,6 +132,7 @@ export const exportBackup = async (
     drafts: await stores.recipes.listDrafts(),
     flours: await stores.flours.listFlourVersions(),
     equipment: await stores.equipment.listEquipmentVersions(),
+    ingredients: await stores.ingredients.listIngredientVersions(),
   });
 };
 
@@ -273,6 +283,27 @@ const decodeEquipment = (input: readonly unknown[]): EquipmentEntry[] => {
 };
 
 /**
+ * Personal ingredient entries (ingredients.md): each one valid, personal, and written once. A
+ * missing version is not an error: a pin that does not resolve never blocks a restore, and a
+ * device may hold only the versions a recipes file carried.
+ */
+export const decodeIngredients = (input: unknown, where: string): IngredientEntry[] => {
+  if (input === undefined) return [];
+  if (!Array.isArray(input)) return refuse(`${where} must be a list`);
+  const entries = (input as unknown[]).map((value, i) =>
+    decodeIngredientEntry(value, `ingredient ${i + 1}`),
+  );
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (entry.builtIn) return refuse(`ingredient ${entry.id} is a built-in entry`);
+    const key = `${entry.id}@${entry.version}`;
+    if (seen.has(key)) return refuse(`duplicate ingredient ${key}`);
+    seen.add(key);
+  }
+  return entries;
+};
+
+/**
  * Decodes and checks a whole backup before anything is written (persistence.md): versions,
  * identifiers, numbering, formula/process consistency, event envelopes and references.
  */
@@ -308,6 +339,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
       return err(invalid('equipment must be a list'));
     }
     const equipment = decodeEquipment((input.equipment ?? []) as unknown[]);
+    const ingredients = decodeIngredients(input.ingredients, 'ingredients');
 
     const bakes: AppendInput[] = [];
     const bakeIds = new Set<string>();
@@ -370,7 +402,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     if (new Set(drafts.map((d) => d.id)).size !== drafts.length) {
       return err(invalid('duplicate draft'));
     }
-    return ok({ recipes, families, bakes, drafts, flours, equipment });
+    return ok({ recipes, families, bakes, drafts, flours, equipment, ingredients });
   } catch (error) {
     if (error instanceof RefusedWith) return err(error.error);
     if (error instanceof Refused) return err(invalid(error.reason));

@@ -71,6 +71,32 @@ F = 500: milk 300, butter 50, salt 10, yeast 5, W = 865. No pure water: `pureWat
 estimated at 87.5 % [86; 89] → 262.5 g [258; 267]. Butter and yeast unknown → `incomplete`.
 `totalWaterPct` = 52.5.
 
+### Ingredient entries (`ingredient-*.json`)
+
+Acceptance examples 1, 4, 5 and 11 of `ingredients.md`. Each formula has F = 500 (one flour),
+pure water 50 % (250 g) and salt 2 % (10 g, water known 0, fat unknown), so `pureWaterPct` = 50,
+and a butter worth 10 % of the flour: 50 g, W = 500 + 250 + 10 + 50 = 810. Edits carry the entry
+document they copy (`ApplyIngredientEntry`, `RefreshIngredientEntry`); an entry property
+`estimated` v ± u becomes the range [v − u, v + u]. The salt's unknown fat keeps `totalFat`
+`incomplete`.
+
+- `ingredient-entry-apply.json` (example 1): before the entry, the butter has no contents:
+  `totalWater` 250 with the butter unknown, `totalFat` 0 with salt and butter unknown. Applying
+  `Beurre 82 %` version 1 (fat known 82): fat 50 × 82 / 100 = 41 g, `totalFatPct` =
+  41 / 500 × 100 = 8.2; the water stays unknown (250 g, `incomplete`, butter listed).
+- `ingredient-entry-refresh.json` (example 4): the butter pins version 1 (fat 41 g, water
+  unknown). Updating from version 2 (water 16 ± 2) with `keep`: water 50 × 16 / 100 = 8 g, range
+  50 × 14 / 100 = 7 to 50 × 18 / 100 = 9; `totalWater` 258 [257; 259], complete, 51.6 %.
+- `ingredient-entry-overrides.json` (example 5): the butter pins version 2 with its fat
+  overridden to 80: fat 50 × 80 / 100 = 40 g (8.0 points), water 8 g [7; 9], `totalWater` 258.
+  From version 3 (fat 83, water 15 ± 2): water 50 × 15 / 100 = 7.5 g, range 6.5 to 8.5,
+  `totalWater` 257.5 [256.5; 258.5], 51.5 %; with `keep` the fat stays 40 g, with `clear` it is
+  50 × 83 / 100 = 41.5 g (8.3 points). Detaching changes no number.
+- `ingredient-preparation.json` (example 11): two butters of 5 %, 500 × 5 / 100 = 25 g each,
+  fat 25 × 82 / 100 = 20.5 g each: 41 g together (8.2 points), W = 810, both unknown in
+  `totalWater`. Removing a preparation changes no number; `{ state: 'other' }` without a note is
+  `InvalidFormula`.
+
 ## Fermentation (`fermentation/`)
 
 `fermentation/cases.json` holds reference cases of the provisional fermentation model

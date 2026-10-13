@@ -21,6 +21,7 @@ import {
   type Revision,
 } from '@flourprint/core/domain';
 import type { SqlDriver, SqlExecutor } from './driver.js';
+import { insertIngredientIfAbsent } from './ingredient-registry.js';
 
 interface RecipeRow {
   id: string;
@@ -385,6 +386,8 @@ export class SqlRecipeRepository implements RecipeRepository {
           [family.id, family.id],
         );
       }
+      // Pinned entry versions: absent ones are written, present ones skipped (ingredients.md).
+      for (const entry of plan.ingredients ?? []) await insertIngredientIfAbsent(tx, entry);
       return { imported, skipped };
     });
   }

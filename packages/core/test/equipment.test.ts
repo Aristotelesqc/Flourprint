@@ -3,7 +3,6 @@ import { decodeProcess } from '../src/application/documents.js';
 import { decodeEquipmentEntry, saveEquipmentEntry } from '../src/application/index.js';
 import {
   BUILT_IN_EQUIPMENT,
-  CONTRACT_VERSION,
   OVEN_MODES,
   OVEN_MODE_HEAT,
   builtInEquipment,
@@ -41,12 +40,6 @@ const problemOf = (equipment: StepEquipment) => {
   expect(result.error.code).toBe('InvalidProcess');
   return result.error.details as { path: string; reason: string };
 };
-
-describe('contract version', () => {
-  it('is 0.14.0 with equipment', () => {
-    expect(CONTRACT_VERSION).toBe('0.14.0');
-  });
-});
 
 describe('step equipment (equipment.md)', () => {
   it('accepts every field absent, which stays unknown', () => {
