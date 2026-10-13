@@ -12,15 +12,15 @@ not enough. Recorded bakes calibrate the readiness profile (below, #14), not the
 The time a dough or a commercial-yeast preferment takes to reach its end point, and the yeast
 needed for a given schedule. One forward `simulate()` serves both directions (#29).
 
-- **Dough end point**: from the end of the mix to the start of the bake, the dough is "ready to
+- **Dough end point**: from the end of the mix (the reference mixing step, process.md) to the start of the bake, the dough is "ready to
   bake" (the baker's readiness decision, see Readiness profiles below). Bulk, cold retard,
   shaping and proof are counted together: the state is never reset between steps (#9).
-- **Dough steps**: the `asap` steps that come after the `mix` step and before the first **heat
+- **Dough steps**: the `asap` steps that come after the reference mixing step (`frasage` or `mix`, the last one) and before the first **heat
   step** (a cooking operation, process.md: boiling bagels, grilling or frying a dough ends the fermentation
   as baking does) in the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
   one sequence, each after the previous one; dough steps in parallel (two rests side by side)
   are `insufficient_data` (`non_linear_dough_path`) until split masses are modelled. Without a
-  `mix` step, the estimate is `insufficient_data`; without a heat step, every `asap` step after
+  mixing step, the estimate is `insufficient_data`; without a heat step, every `asap` step after
   the mix counts.
 - **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5), at progress 1.
 - A preferment is a `preferment`-kind component; its step is the step with the component's id.
@@ -119,8 +119,8 @@ type ReadinessRef = { id: string; version: string };
 ## Dough temperature
 
 - **Basic mode** (default, nothing measured): the dough starts at the ambient temperature of the
-  mix step (its condition temperature, else the first fermentation step's).
-- **Advanced mode**: the mix step declares a target dough temperature
+  reference mixing step (its condition temperature, else the first fermentation step's).
+- **Advanced mode**: the reference mixing step declares a target dough temperature
   (`conditions.doughTemperatureC`); the dough starts at it.
 - Between steps, the dough follows each step's condition temperature with a first-order lag
   `dT/dt = (T_condition − T) / τ`, τ within its range (0 = it follows at once). A step without a
@@ -143,9 +143,9 @@ lowers the water temperature (King Arthur Baking, _Dough Temperature_, professio
 Version 0.1.0 of this contract added it instead; that was an error, corrected on 2026-10-09
 (#33).
 
-- `T_room` is the mix step's condition temperature; `T_flour` defaults to `T_room`;
+- `T_room` is the reference mixing step's condition temperature; `T_flour` defaults to `T_room`;
   `T_preferment` defaults to the preferment step's condition temperature.
-- `friction` defaults to 0 °C and is the user's to set (`conditions.frictionC` on the mix step):
+- `friction` defaults to 0 °C and is the user's to set (`conditions.frictionC` on the reference mixing step):
   mixers differ, and a few measured doughs calibrate it (#32). With the default, the result says
   that friction is not counted.
 - A result below 0 °C or above 60 °C is returned with that flag, never clipped.

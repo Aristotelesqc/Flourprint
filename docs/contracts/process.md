@@ -1,6 +1,7 @@
 # Contract: process (D3)
 
-Status: **approved** (issue #30). Related issues: #5, #9, #21, #28.
+Status: **approved** (issue #30); the mixing steps (`frasage`, below) are a **proposal** of
+2026-10-13, pending the owner's approval. Related issues: #5, #9, #21, #28, #35.
 
 ## Model
 
@@ -74,13 +75,14 @@ type Incorporation =
 interface StepConditions {
   location?: string; // open code: counter, fridge, proofer, oven…
   temperatureC?: number; // ambient temperature of the step
-  doughTemperatureC?: number; // mix step only: target dough temperature (advanced mode)
-  frictionC?: number; // mix step only: mixer friction for the water temperature
+  doughTemperatureC?: number; // mixing step only: target dough temperature (advanced mode)
+  frictionC?: number; // mixing step only: mixer friction for the water temperature
 }
 ```
 
 - `temperatureC` is the ambient the dough sits in. `doughTemperatureC` and `frictionC` are only
-  read on a `mix` step; elsewhere they are refused (`InvalidProcess`). Their use is defined in
+  read on a mixing step (`frasage` or `mix`, Mixing steps below); elsewhere they are refused
+  (`InvalidProcess`). Their use is defined in
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
 
@@ -104,7 +106,8 @@ interface StepTechnique {
 ```
 
 - Operation codes stay open. Codes the app names: `autolyse` (flour and water rest), `fermentolyse`
-  (flour, water and leavening, salt later), `mix`, `fold`, `bulk`, `rest`, `degas`, `divide`,
+  (flour, water and leavening, salt later), `frasage` (combining the ingredients), `mix`
+  (kneading), `fold`, `bulk`, `rest`, `degas`, `divide`,
   `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `boil`, `steam`, `fry`, `panCook`, `grill`, `cool`, and the preparation steps.
 - **Cooking operations**: `bake` (oven, whatever its mode), `boil` (water: bagels, pretzels,
   poached doughs), `steam`, `fry` (in oil), `panCook` (skillet, griddle, plancha) and `grill` (on a
@@ -128,6 +131,56 @@ interface StepTechnique {
 - `endCheck` names what ends the step for the baker; with `endCriterion` it is shown, never acted
   on.
 - An invalid technique (a phase or interval ≤ 0, a non-integer count) is `InvalidProcess`.
+
+## Mixing steps (frasage and kneading)
+
+Two operations describe mixing, and a recipe holds the ones it needs:
+
+- `frasage`: combining the ingredients until no dry flour remains, by hand, with a spoon or in a
+  first low-speed phase. No gluten development is intended. It is how every dough starts.
+- `mix`: kneading, which develops the gluten (by hand, slap and fold, stand mixer, spiral…). A
+  no-knead or Dutch-oven recipe has none. The `noKnead` method stays accepted on a `mix` step
+  written before this rule; the interface does not offer it for a new step, since such a recipe
+  has a `frasage` and no `mix`.
+
+Rules:
+
+- The **mixing steps** are the steps whose operation is `frasage` or `mix`.
+- A recipe the app creates (blank draft, template) starts with a `frasage` step. Weighing the
+  ingredients is not a step. Autolyse, kneading and the dough steps follow as the recipe needs.
+- A recipe whose first step is `mix` stays valid and is never rewritten: there is no migration,
+  and its behaviour does not change.
+- The **reference mixing step** of a process is its **last** mixing step in list order. Wherever
+  `fermentation.md` and `drafts.md` say "the mix step", they mean this step: its end is the end of
+  the mix, and its conditions give the ambient temperature, the target dough temperature and the
+  friction.
+- A process without a mixing step has no reference mixing step (`no_mix_step`, `drafts.md`;
+  `insufficient_data`, `fermentation.md`).
+- `doughTemperatureC` and `frictionC` are accepted on either mixing step and read only on the
+  reference one. On the other, they are kept and ignored.
+- The labels are interface messages (ADR 0009): in French, **Frasage** and **Pétrissage**. A
+  persisted `frasage` or `mix` keeps its meaning whatever the label.
+
+Compatibility: operation codes are open, so no schema changes and no existing document needs an
+upcaster. `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge, by
+the implementing pull request. An older app reads a `frasage` step as an unknown operation: it
+shows the code and keeps the step, but its fermentation estimate and its recipe checks do not
+treat it as a mixing step.
+
+Examples (hand-checked against the rules above):
+
+1. **No-knead Dutch-oven loaf**: `frasage` (2 min, 21 °C), `bulk`, `shape`, `proof`, an `alap`
+   `preheat`, `bake`, `cool`. Valid, no `no_mix_step`. The reference mixing step is the
+   `frasage`: the dough steps are `bulk`, `shape` and `proof`, and the ambient temperature at the
+   start is 21 °C.
+2. **Stand-mixer loaf**: `frasage` (hand, 3 min), `autolyse` (30 min), `mix` (`standMixer`,
+   phases low 4 min then medium 6 min, `frictionC` 8), `bulk`… The reference mixing step is the
+   `mix`: the dough steps are those after it, and the friction 8 °C is read.
+3. **Friction on the `frasage` of example 2** in place of the `mix`: kept, ignored, and the
+   result says that friction is not counted.
+4. **Existing recipe**: `mix`, `bulk`, `shape`, `proof`, `bake`. Unchanged: the `mix` is the
+   reference mixing step.
+5. **`frictionC` on a `fold` step**: `InvalidProcess`, as before.
 
 ## Step removal
 
