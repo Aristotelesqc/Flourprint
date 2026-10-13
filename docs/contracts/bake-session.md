@@ -195,59 +195,108 @@ A recipe has a quantity of its own and a Preparation may have another one:
   editing the recipe, which makes a new revision.
 - **The Preparation's quantity** is chosen without entering the editor, without a draft and
   without saving anything into the recipe: the baker wants 600 g of flour today from a recipe
-  written for 1000 g, or 24 buns from a recipe of 12. Until the Preparation starts, the chosen
-  quantity is interface state, like the planned start time: it is not persisted with the recipe.
+  written for 1000 g, or 24 buns from a recipe of 12.
 
-The interface offers two inputs that end in the same anchor:
+The interface offers two inputs that end in the same anchor: a **multiplier** `m` (finite, > 0:
+2 doubles, 0.5 halves, 1.5…) applied to the recipe's anchor, or a **new value for the anchor**
+(24 in the quantity of pieces, 600 in the flour). `grams` × `m` for `flourTotal` and
+`doughWeight`; `count` × `m` for `pieces`, with `gramsEach` unchanged. A multiplier that does not
+give a whole `count` is never rounded: the interface asks for a whole count first. The anchor
+**kind** is the recipe's: a one-off Preparation never switches from flour to pieces, which has
+no defined meaning.
 
-- a **multiplier** `m` > 0 applied to the recipe's anchor (2 doubles, 0.5 halves, 1.5…): `grams`
-  × `m` for `flourTotal` and `doughWeight`, `count` × `m` for `pieces` (`gramsEach` unchanged);
-- a **new value for the anchor** (24 in the quantity of pieces, 600 in the flour).
+### Provenance
 
-For `pieces`, a multiplier that does not give a whole `count` is not offered: the interface asks
-for a whole count instead. The domain sees neither input, only the resulting anchor and
-`scaledFrom`.
+`StartBake` accepts an optional `scaledFrom: { anchor: Anchor; sourceFormula: Formula }`.
+`sourceFormula` is a command-only copy of the revision's formula and is **not stored**; `anchor`
+is stored in `BakeStarted`.
 
-`StartBake` accepts an optional `scaledFrom: { anchor: Anchor }`, the anchor of the revision the
-snapshot was scaled from (`formula.md`, Anchor).
+The domain verifies what it can see, and refuses with `InvalidCommand`, `field: 'scaledFrom'`
+and a `reason`:
 
-- The command's `formula` is the revision's formula **rescaled** (`SetAnchor(anchor, 'rescale')`,
-  `formula.md`): the same percentages, flour blend, components and shares, with a new anchor. The
-  application computes it; the domain validates the formula as it validates any other.
-- The snapshot's `formula` and `resolvedFormula` are the scaled ones. `revisions.formula` still
-  names the revision, which is neither modified nor given a new version.
-- `scaledFrom.anchor` is a valid anchor: `grams` greater than 0, or `count` an integer of at least
-  1 and `gramsEach` greater than 0. Otherwise `StartBake` is refused with `InvalidCommand`,
-  `field: 'scaledFrom'`. The domain does not compare it with the revision, which it does not
-  hold. An anchor equal to the formula's means no scaling; the interface then omits `scaledFrom`.
-- What scales: every quantity derived from the formula (grams of each ingredient, flour per
-  flour, components, water). What does not: step order, durations, temperatures, incorporation
-  shares, equipment settings and readiness. The first fermentation model reads percentages and
-  temperatures, never the quantity (`fermentation.md`), so its estimates and accepted
-  suggestions stay valid; a model that reads the quantity must say so and estimate at the scaled
-  quantity.
-- Later formula overrides during the bake (`AdjustFormula`) apply to the scaled formula, as they
-  do to any snapshot.
+- `ScaleSourceMismatch`: `formula` differs from `sourceFormula` in anything but the anchor (a
+  flour, an ingredient, a percentage, a component, an allocation, a pin or an override).
+- `ScaleAnchorMismatch`: `scaledFrom.anchor` is not `sourceFormula.anchor`.
+- `ScaleKindChanged`: `formula.anchor` and `sourceFormula.anchor` have different kinds.
+- `ScaleIdentical`: both anchors have the same value (compared exactly, not within a rounding
+  tolerance of the interface). The interface omits `scaledFrom` then.
+- `ScaleOutOfRange`: a value that is not finite or not > 0, or a `count` that is not a safe
+  integer ≥ 1.
+
+The domain cannot know that `sourceFormula` is the revision named by `revisions.formula`. The
+**application** loads that **saved** revision, checks that `sourceFormula` is its content and
+refuses otherwise (`RevisionMismatch`), and preferably derives `formula` from the loaded revision
+by `SetAnchor(anchor, 'rescale')` instead of accepting both. A draft with unsaved edits is never
+the source: the interface saves or discards them first. The revision is neither modified nor
+given a new version.
+
+A start without `scaledFrom` claims no scale: it records no provenance either way (a bake started
+before this contract, or one whose formula was edited, cannot be told apart).
+
+### What changes with the quantity
+
+1. **Derived and scaled by the formula**: the grams of every ingredient, the flour of each flour,
+   the water, the components and the grams per incorporation. A component is a percentage of the
+   total flour and scales **once**, however many steps prepare it.
+2. **Settings left as the recipe says**: temperatures, appliance, mode, setpoint, level, cover,
+   vessel and support references, step order, planned durations, end criteria, folds and the
+   readiness profile. Durations do not scale by this contract's policy; that says nothing about
+   the physical behaviour of a larger or smaller dough (friction, temperature evolution, thermal
+   lag, loading).
+3. **Review needed**: `equipment.load` (`pieces`, `massG`) and the machine-mixing `phases` of a
+   technique. A larger quantity may mean two cooking batches, a partial load or another mixer
+   setting; none is inferred, nothing is rescaled and no batch planning is implied. The snapshot
+   lists them as `scaleReview: Array<{ stepId; field: 'equipment.load.pieces' |
+'equipment.load.massG' | 'technique.phases' }>`, and the interface shows "Preparation: 24
+   buns · recipe: 12" with the optional review.
+
+The first fermentation model's inputs do not include the total mass, so its result stays
+numerically unchanged, subject to the model's applicability and limits. This is not evidence that
+doughs of every size behave alike: a model that reads the mass must recompute or report
+unsupported. The accepted suggestions copied into the snapshot keep their `ModelRef` and their
+original assumptions, and the history shows `scaledFrom` beside them.
+
+### Before the start
+
+Until the Preparation starts, the chosen quantity is interface state, like the planned start
+time: it survives Recipe → Planning → Start for the open recipe and its saved revision, does not
+leak into another recipe, and is lost when the recipe is left or the app restarts. It is never
+saved into the recipe.
 
 Examples (hand-computed; the revision has a flour total of 1000 g, water 72 %, salt 2 %, instant
 yeast 0.3 %, so 1000 + 720 + 20 + 3 = 1743 g of dough):
 
 1. **Scale by flour.** New anchor `flourTotal` 600 g: water 432 g, salt 12 g, yeast 1.8 g, dough
-   1045.8 g. `scaledFrom.anchor` is `{ kind: 'flourTotal', grams: 1000 }`. The percentages are unchanged.
+   1045.8 g. `scaledFrom.anchor` is `{ kind: 'flourTotal', grams: 1000 }`. The percentages are
+   unchanged.
 2. **Scale by dough weight.** New anchor `doughWeight` 1000 g: flour 1000 / 1.743 ≈ 573.7 g,
    water ≈ 413.1 g, salt ≈ 11.5 g, yeast ≈ 1.7 g.
-3. **Same anchor.** 1000 g of flour again: no `scaledFrom`, the same as any other start.
+3. **Same anchor.** 1000 g of flour again: the interface sends no `scaledFrom`. If it did:
+   `ScaleIdentical`.
 4. **The recipe is untouched.** Version 3 stays the head of the recipe after a scaled start; the
-   history of the Preparation shows 600 g beside the recipe's 1000 g.
+   history shows 600 g beside the recipe's 1000 g. No draft was opened.
 5. **Durations do not scale.** A 6 h bulk stays 6 h at 600 g.
-6. **Refused.** `scaledFrom: { anchor: { kind: 'flourTotal', grams: 0 } }`: `InvalidCommand`.
+6. **Refused.** `scaledFrom.anchor` `{ kind: 'flourTotal', grams: 0 }`: `ScaleOutOfRange`.
 7. **Twelve buns, doubled.** The recipe's anchor is `pieces` `{ count: 12, gramsEach: 90 }` (dough
    1080 g). A multiplier of 2, or 24 typed in the quantity of pieces, gives `pieces`
-   `{ count: 24, gramsEach: 90 }` (2160 g) and `scaledFrom.anchor` is the recipe's
-   `{ count: 12, gramsEach: 90 }`. Every ingredient doubles, the percentages are unchanged, and
-   the recipe still says 12 buns at the same version.
+   `{ count: 24, gramsEach: 90 }` (2160 g) and `scaledFrom.anchor` is `{ count: 12, gramsEach:
+90 }`. Every ingredient doubles, the percentages are unchanged, and the recipe still says 12
+   buns at the same version.
 8. **A multiplier that is not offered.** 5 pieces × 1.5 = 7.5: there is no whole count, so the
    interface asks for a whole count (7 or 8).
+9. **Falsely attributed scale.** Same anchor, 4 % sugar instead of 3 %, and `scaledFrom` naming
+   the unchanged revision: `ScaleSourceMismatch`. It is not recorded as a quantity-only scale.
+10. **Anchor kind.** A recipe anchored on `pieces` started with a `flourTotal` anchor:
+    `ScaleKindChanged`.
+11. **Load to review.** A `bake` step with `equipment.load.pieces` 12 in the recipe of 12 buns,
+    started at 24: `scaleReview` lists `{ stepId: 'bake', field: 'equipment.load.pieces' }`. The
+    load is not changed, and nothing says that the oven takes 24 in one stage.
+12. **Unsafe count.** A `count` of 2^53 after the multiplier: `ScaleOutOfRange`.
+13. **A poolish once.** A poolish of 30 % of the flour, prepared by three steps, at 600 g of
+    flour: 180 g of flour in the poolish in total, not 180 g per step.
+14. **Restart.** The scaled Preparation is exported, restored and replayed: its snapshot keeps the
+    scaled anchor, `scaledFrom` and `scaleReview`; the recipe's revision is unchanged; the digest
+    is the same.
 
 ## Repository (SQLite adapter)
 
