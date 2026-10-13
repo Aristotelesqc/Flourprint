@@ -77,8 +77,13 @@ interface Balance {
 }
 
 interface Missing {
-  path: string; // e.g. 'ingredients.vinegar.entry.properties.ph'
-  reason: 'unknown_value' | 'entry_not_found' | 'not_linked' | 'not_in_registry';
+  path: string; // e.g. 'ingredients.vinegar.entry.properties.ph', or 'rules.acid_present' for evidence
+  reason:
+    | 'unknown_value' // a value the formula or a resolved entry does not give
+    | 'entry_not_found' // the pinned registry version is absent
+    | 'not_linked' // the formula ingredient has no entry
+    | 'evidence_not_validated'; // the rule's scientific evidence is not reviewed yet (Sources)
+  source?: string; // the source record concerned, for 'evidence_not_validated' when one is named
 }
 
 interface SourceCitation {
@@ -223,8 +228,11 @@ The applicability bounds are the reference conditions of the fermentation model
 - `incorporated_air`: whipping or beating incorporates air. It is aeration, **not gas produced by
   fermentation**; the fermentation estimate does not count it. It is not "no effect".
 - Mechanism rules ship only with their evidence (Sources). Until a rule's sources are reviewed,
-  its coverage is `unevaluable` with reason `not_in_registry`; the composition and applicability
-  rules need no external source beyond `formula.md` and `fermentation.md`.
+  its coverage is `unevaluable` with reason `evidence_not_validated` (path `rules.<code>`), which
+  is never confused with a registry gap: a resolved acid entry under an unreviewed rule is
+  "evidence not validated", not "entry not found", and its silence is not an assessed absence of
+  the mechanism. The composition and applicability rules need no external source beyond
+  `formula.md` and `fermentation.md`.
 
 ## Sources
 
