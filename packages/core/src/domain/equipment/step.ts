@@ -6,6 +6,7 @@ import { validateEquipmentEntry } from './entry.js';
 import {
   APPLIANCE_KINDS,
   COVERS,
+  HEAT_SOURCES,
   OVEN_MODES,
   PREHEATS,
   STEAM_SOURCES,
@@ -34,6 +35,7 @@ const STEP_FIELDS = new Set([
   'appliance',
   'profile',
   'mode',
+  'heat',
   'nativeMode',
   'setpointC',
   'level',
@@ -90,6 +92,17 @@ export const stepEquipmentProblem = (
     if (!OVEN_MODES.includes(e.mode as never))
       return problem(`${path}.mode`, 'is not a known mode');
     if (e.appliance !== 'oven') return problem(`${path}.mode`, 'needs the appliance oven');
+  }
+  if (e.heat !== undefined) {
+    if (e.mode !== 'custom') return problem(`${path}.heat`, 'is only valid with the mode custom');
+    const heat = e.heat;
+    if (!Array.isArray(heat)) return problem(`${path}.heat`, 'must be a list');
+    for (const [i, source] of heat.entries()) {
+      if (!HEAT_SOURCES.includes(source as never)) {
+        return problem(`${path}.heat[${i}]`, 'is not a known heat source');
+      }
+      if (heat.indexOf(source) !== i) return problem(`${path}.heat[${i}]`, 'is a duplicate');
+    }
   }
   if (e.nativeMode !== undefined && !isText(e.nativeMode)) {
     return problem(`${path}.nativeMode`, 'must be text');

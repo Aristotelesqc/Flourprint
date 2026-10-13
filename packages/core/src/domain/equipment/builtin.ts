@@ -25,8 +25,8 @@ const DEFINITIONS: readonly Definition[] = [
     id: 'dutch-oven-cast-iron',
     kind: 'vessel',
     shape: 'dutchOven',
-    material: 'enamelledCastIron',
-    lid: 'enamelledCastIron',
+    material: 'castIron',
+    lid: 'castIron',
   },
   {
     id: 'pullman-steel',
@@ -47,6 +47,7 @@ const DEFINITIONS: readonly Definition[] = [
   { id: 'loaf-pan-ceramic', kind: 'vessel', shape: 'loafPan', material: 'ceramic' },
   { id: 'loaf-pan-glass', kind: 'vessel', shape: 'loafPan', material: 'glass' },
   { id: 'cast-iron-skillet', kind: 'vessel', shape: 'skillet', material: 'castIron' },
+  { id: 'baguette-tray', kind: 'support', shape: 'baguetteTray', material: 'aluminium' },
   { id: 'pot', kind: 'vessel', shape: 'pot', material: 'stainlessSteel', lid: 'stainlessSteel' },
 ];
 

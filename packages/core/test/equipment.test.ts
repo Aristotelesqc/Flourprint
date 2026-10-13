@@ -4,6 +4,8 @@ import { decodeEquipmentEntry, saveEquipmentEntry } from '../src/application/ind
 import {
   BUILT_IN_EQUIPMENT,
   CONTRACT_VERSION,
+  OVEN_MODES,
+  OVEN_MODE_HEAT,
   builtInEquipment,
   customizeEquipment,
   equipmentCopiesProblem,
@@ -41,8 +43,8 @@ const problemOf = (equipment: StepEquipment) => {
 };
 
 describe('contract version', () => {
-  it('is 0.13.0 with equipment', () => {
-    expect(CONTRACT_VERSION).toBe('0.13.0');
+  it('is 0.14.0 with equipment', () => {
+    expect(CONTRACT_VERSION).toBe('0.14.0');
   });
 });
 
@@ -56,7 +58,7 @@ describe('step equipment (equipment.md)', () => {
     const full: StepEquipment = {
       appliance: 'oven',
       profile: { id: 'my-oven', version: 1 },
-      mode: 'steamHeat',
+      mode: 'steam',
       nativeMode: 'Steam Bake',
       setpointC: 250,
       fan: 'unknown',
@@ -76,12 +78,68 @@ describe('step equipment (equipment.md)', () => {
     expect(broil.setpointC).toBeUndefined();
   });
 
+  it('gives each mode its canonical heat sources (equipment.md)', () => {
+    expect(OVEN_MODES).toEqual([
+      'bottom',
+      'topBottom',
+      'convection',
+      'trueConvection',
+      'convectionRoast',
+      'broil',
+      'convectionBroil',
+      'steam',
+      'proof',
+      'custom',
+    ]);
+    expect(OVEN_MODE_HEAT).toEqual({
+      bottom: ['bottom'],
+      topBottom: ['top', 'bottom'],
+      convection: ['bottom', 'fan'],
+      trueConvection: ['rear', 'fan'],
+      convectionRoast: ['top', 'bottom', 'fan'],
+      broil: ['top'],
+      convectionBroil: ['top', 'fan'],
+      steam: [],
+      proof: [],
+    });
+    expect(Object.keys(OVEN_MODE_HEAT)).toEqual(OVEN_MODES.filter((m) => m !== 'custom'));
+  });
+
+  it('accepts stated heat sources with the mode custom only', () => {
+    const oven = { appliance: 'oven', setpointC: 200 } as const;
+    expect(problemOf({ ...oven, mode: 'custom', heat: ['rear', 'fan'] })).toBeUndefined();
+    expect(problemOf({ ...oven, mode: 'custom', heat: [] })).toBeUndefined();
+    for (const mode of OVEN_MODES.filter((m) => m !== 'custom')) {
+      expect(problemOf({ ...oven, mode, heat: ['top'] })).toEqual({
+        path: 'steps[0].equipment.heat',
+        reason: 'is only valid with the mode custom',
+      });
+    }
+    expect(problemOf({ ...oven, heat: ['top'] })?.path).toBe('steps[0].equipment.heat');
+    expect(problemOf({ ...oven, mode: 'custom', heat: ['side' as never] })?.path).toBe(
+      'steps[0].equipment.heat[0]',
+    );
+    expect(problemOf({ ...oven, mode: 'custom', heat: ['top', 'fan', 'top'] })).toEqual({
+      path: 'steps[0].equipment.heat[2]',
+      reason: 'is a duplicate',
+    });
+  });
+
+  it('refuses the codes of 0.12.0, never released', () => {
+    for (const mode of ['still', 'fan', 'fanBroil', 'steamHeat']) {
+      expect(problemOf({ appliance: 'oven', mode: mode as never })).toEqual({
+        path: 'steps[0].equipment.mode',
+        reason: 'is not a known mode',
+      });
+    }
+  });
+
   it('refuses a mode without the appliance oven', () => {
-    expect(problemOf({ mode: 'fan' })).toEqual({
+    expect(problemOf({ mode: 'convection' })).toEqual({
       path: 'steps[0].equipment.mode',
       reason: 'needs the appliance oven',
     });
-    expect(problemOf({ appliance: 'stovetop', mode: 'still' })?.path).toBe(
+    expect(problemOf({ appliance: 'stovetop', mode: 'bottom' })?.path).toBe(
       'steps[0].equipment.mode',
     );
     expect(problemOf({ appliance: 'oven', mode: 'turbo' as never })?.reason).toBe(
@@ -146,7 +204,7 @@ describe('step equipment (equipment.md)', () => {
 
   it('may sit on any step, and the operation alone says what is cooked', () => {
     const proof = stepOf({ appliance: 'oven', mode: 'proof', setpointC: 35 }, 'proof');
-    const bake = { ...stepOf({ appliance: 'oven', mode: 'still', setpointC: 250 }), id: 'b' };
+    const bake = { ...stepOf({ appliance: 'oven', mode: 'bottom', setpointC: 250 }), id: 'b' };
     expect(validateProcess({ steps: [proof, { ...bake, dependsOn: ['bake'] }] }).ok).toBe(true);
     expect(isCookingStep(proof)).toBe(false);
     expect(isCookingStep(bake)).toBe(true);
@@ -194,11 +252,28 @@ describe('step equipment (equipment.md)', () => {
   });
 
   it('is decoded structurally from a document', () => {
-    const doc = { steps: [stepOf({ appliance: 'oven', mode: 'fan', setpointC: 220 })] };
+    const doc = { steps: [stepOf({ appliance: 'oven', mode: 'convection', setpointC: 220 })] };
     expect(() => decodeProcess(doc, 'process')).not.toThrow();
     expect(() =>
       decodeProcess({ steps: [stepOf({ appliance: 'oven', extra: 1 } as never)] }, 'process'),
     ).toThrow(/unknown field extra/);
+    for (const mode of ['still', 'fan', 'fanBroil', 'steamHeat']) {
+      expect(() =>
+        decodeProcess({ steps: [stepOf({ appliance: 'oven', mode } as never)] }, 'process'),
+      ).toThrow(/mode must be one of/);
+    }
+    expect(() =>
+      decodeProcess(
+        { steps: [stepOf({ appliance: 'oven', mode: 'custom', heat: ['rear', 'fan'] })] },
+        'process',
+      ),
+    ).not.toThrow();
+    expect(() =>
+      decodeProcess(
+        { steps: [stepOf({ appliance: 'oven', mode: 'custom', heat: ['side'] } as never)] },
+        'process',
+      ),
+    ).toThrow(/heat/);
     expect(() =>
       decodeProcess({ steps: [stepOf({ setpointC: '250' } as never)] }, 'process'),
     ).toThrow(/not a number/);
@@ -212,7 +287,7 @@ describe('step equipment (equipment.md)', () => {
 });
 
 describe('built-in equipment (equipment.md)', () => {
-  it('has the thirteen generic entries of the contract, version 1, no appliance', () => {
+  it('has the fourteen generic entries of the contract, version 1, no appliance', () => {
     expect(
       BUILT_IN_EQUIPMENT.map((e) => [e.id, e.kind, e.shape, e.material, e.lid?.material]),
     ).toEqual([
@@ -220,7 +295,7 @@ describe('built-in equipment (equipment.md)', () => {
       ['baking-steel', 'support', 'steel', 'carbonSteel', undefined],
       ['aluminium-sheet', 'support', 'sheet', 'aluminium', undefined],
       ['oven-rack', 'support', 'rack', 'stainlessSteel', undefined],
-      ['dutch-oven-cast-iron', 'vessel', 'dutchOven', 'enamelledCastIron', 'enamelledCastIron'],
+      ['dutch-oven-cast-iron', 'vessel', 'dutchOven', 'castIron', 'castIron'],
       ['pullman-steel', 'vessel', 'pullman', 'aluminizedSteel', 'aluminizedSteel'],
       ['pullman-aluminium', 'vessel', 'pullman', 'aluminium', 'aluminium'],
       ['loaf-pan-steel', 'vessel', 'loafPan', 'carbonSteel', undefined],
@@ -228,6 +303,7 @@ describe('built-in equipment (equipment.md)', () => {
       ['loaf-pan-ceramic', 'vessel', 'loafPan', 'ceramic', undefined],
       ['loaf-pan-glass', 'vessel', 'loafPan', 'glass', undefined],
       ['cast-iron-skillet', 'vessel', 'skillet', 'castIron', undefined],
+      ['baguette-tray', 'support', 'baguetteTray', 'aluminium', undefined],
       ['pot', 'vessel', 'pot', 'stainlessSteel', 'stainlessSteel'],
     ]);
     for (const entry of BUILT_IN_EQUIPMENT) {
@@ -343,7 +419,7 @@ describe('equipment entries (equipment.md)', () => {
         oven([
           {
             native: 'Convection Bake',
-            flourprint: 'fan',
+            flourprint: 'convection',
             mapping: 'documented',
             source: manual,
             heaters: ['top', 'bottom', 'rear'],
@@ -351,17 +427,21 @@ describe('equipment entries (equipment.md)', () => {
             steam: false,
             control: 'setpoint',
           },
-          { native: 'Steam Bake', flourprint: 'steamHeat', mapping: 'approximate' },
+          { native: 'Steam Bake', flourprint: 'steam', mapping: 'approximate' },
           { native: 'Pizza', mapping: 'unknown' },
         ]),
       ).ok,
     ).toBe(true);
     const bad = (mode: NonNullable<EquipmentEntry['modes']>[number]) => invalidField(oven([mode]));
     expect(bad({ native: ' ', mapping: 'unknown' })).toBe('modes[0].native');
-    expect(bad({ native: 'A', mapping: 'documented', flourprint: 'fan' })).toBe('modes[0].source');
+    expect(bad({ native: 'A', mapping: 'documented', flourprint: 'convection' })).toBe(
+      'modes[0].source',
+    );
     expect(bad({ native: 'A', mapping: 'documented', source: manual })).toBe('modes[0].flourprint');
     expect(bad({ native: 'A', mapping: 'approximate' })).toBe('modes[0].flourprint');
-    expect(bad({ native: 'A', mapping: 'unknown', flourprint: 'fan' })).toBe('modes[0].flourprint');
+    expect(bad({ native: 'A', mapping: 'unknown', flourprint: 'convection' })).toBe(
+      'modes[0].flourprint',
+    );
     expect(bad({ native: 'A', mapping: 'guessed' as never })).toBe('modes[0].mapping');
     expect(bad({ native: 'A', mapping: 'unknown', fan: 'high' as never })).toBe('modes[0].fan');
     expect(bad({ native: 'A', mapping: 'unknown', heaters: ['side' as never] })).toBe(

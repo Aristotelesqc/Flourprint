@@ -98,7 +98,7 @@ const cooked: Process = {
       plannedDurationS: 2400,
       equipment: {
         appliance: 'oven',
-        mode: 'still',
+        mode: 'bottom',
         setpointC: 250,
         vessel: { item: { id: 'my-dutch', version: 1 }, cover: 'covered' },
         support: { item: { id: 'baking-stone', version: 1 } },
@@ -305,7 +305,7 @@ const seed = async (stores: BackupStores) => {
         field: 'equipment',
         value: {
           appliance: 'oven',
-          mode: 'still',
+          mode: 'bottom',
           setpointC: 230,
           vessel: { item: { id: 'my-dutch', version: 1 }, cover: 'open' },
           support: { item: { id: 'my-stone', version: 1 } },
@@ -1001,7 +1001,7 @@ describe('feedback export (history.md)', () => {
         field: 'equipment',
         value: {
           appliance: 'oven',
-          mode: 'still',
+          mode: 'bottom',
           setpointC: 230,
           vessel: { item: { id: 'my-dutch', version: 1 }, cover: 'open' },
           support: { item: { id: 'my-stone', version: 1 } },
