@@ -1,6 +1,6 @@
 {
   "before": "24835c5",
-  "after": "af91186",
+  "after": "d4c4f70",
   "build": "v0.2.0-local",
   "browser": "Chrome 155.0.8059.40",
   "locale": "fr-CA",
@@ -9,8 +9,8 @@
   "files": [
     {
       "name": "index.html",
-      "sha256": "b40515ee220385f2ec43b26f434dce818cb7d7c1b962ed39685d158624d3e9fb",
-      "bytes": 4085
+      "sha256": "7d2734e72cd2ee4d9cd3d79a8dc825571b299ae4cb30c70fc627ee0d64e5890e",
+      "bytes": 4136
     },
     {
       "name": "before-recipes-light.png",
@@ -54,33 +54,33 @@
     },
     {
       "name": "after-recipes-light.png",
-      "sha256": "61265cb2b5ca8a293b77baeda7b1571c0609161148f92a660783c604cbd13fd5",
-      "bytes": 44347
+      "sha256": "da4ab6bce847615344bd974309d219a749857285331d5c861f8f974681b31780",
+      "bytes": 43156
     },
     {
       "name": "after-recipes-dark.png",
-      "sha256": "30ee2af833167a3003a038acd15f97915e98f5904cecab6f6f024c961c11067d",
-      "bytes": 44950
+      "sha256": "fd4e2fac7f162c39d9d36087593b09ffd1a351f41a65bb9f7373c7b51a11b8d5",
+      "bytes": 43955
     },
     {
       "name": "after-recipe-light.png",
-      "sha256": "8df9bf58e18f4be8a56d630995eee78aec9759f6242d9a6de003945d59f73a34",
-      "bytes": 61520
+      "sha256": "8b323afe6d192b5ecee209c5afddcb9d2a997fb7ebef597e088074b78847fb51",
+      "bytes": 61096
     },
     {
       "name": "after-recipe-dark.png",
-      "sha256": "7beb609d87a5d391f7f2f7fd15c4261558dabc44cfc247452430dffe0ab64f3c",
-      "bytes": 61373
+      "sha256": "a1a035b5e3c86758ad9aa2a033e8bdb2b3cfed4e798fa62c2e2ea3fbfdc6c85b",
+      "bytes": 61392
     },
     {
       "name": "after-edit-light.png",
-      "sha256": "39fbeda979804e33abdc4509a4d9e2d03ff9918362f39342581df7e1f80ee312",
-      "bytes": 49101
+      "sha256": "086f5ffd8cb1c6f5d8eec90991ccbdaef22dbe52aac9e4ec9ab10606d8a587f8",
+      "bytes": 48929
     },
     {
       "name": "after-edit-dark.png",
-      "sha256": "d7b120edf125f978510fdb273de794054ca3c3e24359a6f414902a31d1ed64cf",
-      "bytes": 50028
+      "sha256": "d864aead2a075117768051a1f1109d3890e75ed6ac1d96cc56a8bcfff8e549a0",
+      "bytes": 50215
     },
     {
       "name": "after-preparation-light.png",
