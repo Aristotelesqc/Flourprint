@@ -632,7 +632,7 @@ test('starts a bake whose recipe file references a built-in vessel', async ({ pa
     plannedDurationS: 600,
     equipment: {
       appliance: 'oven',
-      mode: 'still',
+      mode: 'bottom',
       setpointC: 230,
       vessel: { item: { id: 'cast-iron-skillet', version: 1 }, cover: 'open' },
     },

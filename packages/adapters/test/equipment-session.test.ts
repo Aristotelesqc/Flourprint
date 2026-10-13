@@ -127,7 +127,7 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
     dependsOn,
     schedule: 'asap',
     plannedDurationS: 1200,
-    equipment: { appliance: 'oven', mode: 'still', setpointC, vessel: vessel(dutch, cover) },
+    equipment: { appliance: 'oven', mode: 'bottom', setpointC, vessel: vessel(dutch, cover) },
   });
 
   it('runs a Dutch oven loaf: preheat beside the proof, two stages, one vessel reference', async () => {
@@ -140,7 +140,7 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
         plannedDurationS: 45 * 60,
         equipment: {
           appliance: 'oven',
-          mode: 'still',
+          mode: 'bottom',
           setpointC: 250,
           vessel: vessel(dutch, 'open'),
           preheated: { vessel: 'cold' },
@@ -167,7 +167,7 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
       plannedDurationS: 50 * 60,
       equipment: {
         appliance: 'oven',
-        mode: 'still',
+        mode: 'bottom',
         setpointC: 240,
         vessel: vessel(dutch, 'covered'),
         preheated: { appliance: 'cold', vessel: 'cold' },
@@ -255,7 +255,7 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
         plannedDurationS: 1200,
         equipment: {
           appliance: 'oven',
-          mode: 'fan',
+          mode: 'convection',
           setpointC: 220,
           support: { item: ref(sheet) },
         },
@@ -303,7 +303,7 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
     // A support used as a vessel resolves to the wrong kind.
     expect(await code(bake({ vessel: vessel(stone, 'open') }), [stone])).toBe('InvalidCommand');
     // Settings that break the rules are refused with a path.
-    expect(await code(bake({ mode: 'fan' }))).toBe('InvalidProcess');
+    expect(await code(bake({ mode: 'convection' }))).toBe('InvalidProcess');
   });
 
   it('records a deviation: the plan stays in the snapshot, the effective process shows 220', async () => {
@@ -315,7 +315,7 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
     await s.start(process, [dutch]);
     const used: StepEquipment = {
       appliance: 'oven',
-      mode: 'still',
+      mode: 'bottom',
       setpointC: 220,
       vessel: vessel(dutch, 'open'),
       support: { item: ref(stone) },
@@ -331,7 +331,7 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
     // The new support is referenced without its copy: refused, nothing recorded.
     expect(await adjust(used)).toMatchObject({ ok: false, error: { code: 'InvalidCommand' } });
     // Invalid settings and an unused copy are refused too.
-    expect(await adjust({ mode: 'fan' }, [])).toMatchObject({
+    expect(await adjust({ mode: 'convection' }, [])).toMatchObject({
       ok: false,
       error: { code: 'InvalidCommand' },
     });
@@ -392,7 +392,7 @@ describe.each(makers)('equipment in a bake session on %s', (_name, makeStore) =>
       plannedDurationS: 600,
       equipment: {
         appliance: 'oven',
-        mode: 'still',
+        mode: 'bottom',
         setpointC: 240,
         support: { item: { id: 'my-sheet', version: 1 } },
       },
