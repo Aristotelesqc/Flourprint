@@ -93,9 +93,10 @@ interface EquipmentRef {
   `endCriterion` (process.md).
 - A **cold start** is a cooking step whose `preheated.appliance` (or `vessel`) is `cold`: the
   warm-up is part of that step's time, and no preheating is assumed at loading.
-- Preheating while the dough proofs is an `alap` `preheat` step beside the proof; the first
-  cooking stage depends on both. The scheduler already plans them in parallel, without adding their
-  durations (process.md).
+- Preheating while the dough proofs is a `preheat` step with `schedule: 'alongside'`, placed where
+  heating starts (process.md, Steps alongside): it takes no time in the sequence, and `equipment`
+  on it says what is heated. Recipes written before it use an `alap` `preheat` step beside the
+  proof, with the first cooking stage depending on both; it keeps its meaning.
 - The same vessel or support across stages (a skillet from the stovetop into the oven) is the same
   `EquipmentRef` on both steps.
 
@@ -281,7 +282,7 @@ entry version (`equipment`, optional so older backups restore); restoring valida
 
 Each runs with **no appliance profile** unless it says otherwise, then survives a restart.
 
-1. Loaf in a Dutch oven: preheat oven and pot (`preheat`, `alap`, beside the proof), `bake`
+1. Loaf in a Dutch oven: preheat oven and pot (`preheat`, `alongside`, placed before the proof), `bake`
    `still` 250 °C pot `covered`, then `bake` `still` 230 °C pot `open`. Two stages, one vessel ref.
 2. Cold start: one `bake` step, `preheated: { appliance: 'cold', vessel: 'cold' }`, no `preheat`
    step; its duration includes the warm-up.

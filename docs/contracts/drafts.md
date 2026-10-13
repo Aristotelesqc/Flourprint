@@ -70,6 +70,7 @@ checkRecipe(formula, process, entryFamilies?: Record<string, IngredientFamily>):
 | `no_bake_step`           | no cooking step (process.md); a dough-only recipe stays valid                 |
 | `step_without_duration`  | an `asap` step without a planned duration (one issue per step, `path` its id) |
 | `folds_exceed_step`      | `folds.count × folds.intervalS` exceeds the step's planned duration           |
+| `preheat_too_short`      | an `alongside` step's heating window is shorter than its required time        |
 
 - The ranges are deliberately wide (bagels near 55 %, focaccia near 85 % total water); they flag
   likely typos, not style choices.

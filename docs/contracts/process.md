@@ -12,7 +12,7 @@ conditions, incorporations) follows #5; this contract fixes the graph and the ti
 interface ProcessStep {
   id: StepId;
   dependsOn: StepId[]; // finish-to-start
-  schedule: 'asap' | 'alap';
+  schedule: 'asap' | 'alap' | 'alongside'; // alongside: Steps alongside, below
   plannedDurationS?: number; // absent = unknown
   endCriterion?: EndCriterion; // observation or user decision
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
@@ -48,6 +48,8 @@ default outcome when a session finishes (bake-session.md); an invalid one is `In
 - The list order is a **valid topological order**: the mobile list reads top to bottom.
 - A step added to the list gets `dependsOn = [previous step]` by default.
 - `alap` without a successor, or without `plannedDurationS`, is an error.
+- `alongside` without a cooking step after it in list order is an error; it carries no
+  `durationMode: 'model'` and no incorporations (Steps alongside).
 - `plannedDurationS` ≥ 0 when present.
 - Per-step incorporations add up exactly to the formula's final-mix quantities (see below).
 - `dependsOn` is never accepted and then ignored, nor dropped on import.
@@ -83,6 +85,56 @@ interface StepConditions {
   read on a `mix` step; elsewhere they are refused (`InvalidProcess`). Their use is defined in
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
+
+## Steps alongside (preheating)
+
+**Proposal of 2026-10-13, pending the owner's approval.** A baker preheats the oven while the
+dough proofs, but the heating is not time spent waiting. `schedule: 'alongside'` models it
+without a hidden "as late as possible" rule: **the baker puts the step where heating starts, and
+the plan runs on without it.**
+
+- An `alongside` step starts when its dependencies end, like an `asap` step, and **takes no time
+  in the sequence**: a step that depends on it starts at that same instant, so the default
+  `dependsOn = [previous step]` keeps working for the step added after it.
+- Its **heating window** runs from its start to the planned start of the first cooking step after
+  it in list order (cooking operations, Techniques below). The window is derived, never stored:
+  it is what the remaining steps leave.
+- `plannedDurationS` is the **required time** (30 min for an oven), a minimum for the window. It is
+  never added to the sequence and never moves another step. Absent means no requirement.
+- Validation: a cooking step must follow it in list order (`InvalidProcess` otherwise). That
+  cooking step need not depend on it. An `alongside` step has no `durationMode: 'model'` and no
+  incorporations.
+- Check `preheat_too_short` (`drafts.md`, a warning): the window is known and shorter than the
+  required time, with `availableS` and `requiredS`. The window is known when the planned
+  durations between the step and the cooking step are known; otherwise there is no warning, and an
+  unknown duration is never taken as zero.
+- **Dough steps** (`fermentation.md`): an `alongside` step is not one, and the dough steps on
+  either side of it count as consecutive.
+- **In a Preparation**: `StartStep` on an `alongside` step writes `StepStarted` and
+  `StepCompleted` at the same instant (`at`), so it never blocks its successors; the start is
+  when the baker began heating. "The oven is ready" is an optional `ObservationAdded`. Nothing
+  completes when the required time elapses (bake-session.md).
+- **Compatibility**: an `alap` `preheat` step written before this rule keeps its meaning and its
+  projection (Projection below); new recipes and the templates use `alongside`. An older app
+  refuses a recipe holding the new schedule value as a document with an unknown discriminant
+  (`persistence.md`), never misreads it. `CONTRACT_VERSION` is bumped by one minor step, from the
+  version current at merge, by the implementing pull request.
+
+Examples (hand-checked):
+
+1. **Dutch-oven loaf.** `frasage`, `bulk` (3 h), `shape` (10 min), `preheat` (`alongside`, 30
+   min), `proof` (2 h), `bake`. The window is the proof: 2 h, above the 30 min required. No
+   warning. The plan lasts exactly as it would without the `preheat`.
+2. **Too short.** `preheat` (`alongside`, 30 min), `bulk` (15 min), `bake`. The window is 15
+   min: `preheat_too_short` with `availableS` 900 and `requiredS` 1800. The plan is unchanged.
+3. **No time in the sequence.** Removing the `preheat` of example 1 changes no start or end time
+   of any other step.
+4. **Nothing to heat for.** An `alongside` `preheat` after the last cooking step, or a process with
+   none: `InvalidProcess`.
+5. **Older recipe.** An `alap` `preheat` beside the proof, with the `bake` depending on both,
+   projects as before (Projection).
+6. **In a Preparation.** The baker starts the preheat at 14:05: `StepStarted` and `StepCompleted`
+   at 14:05, the next step can start at once, and an observation at 14:40 says the oven is ready.
 
 ## Techniques (#32, first slice)
 
@@ -145,6 +197,7 @@ refused).
 - A step's planned end is known only when its start is known and it has `plannedDurationS`.
   Started and finished steps use their recorded times.
 - During a bake, steps not yet started cannot be planned before `now`.
+- `alongside`: as `asap`, with no duration in the sequence (Steps alongside).
 - `asap`: as early as its dependencies allow. `alap`: as late as possible while still ending
   before the **earliest** planned start of its successors (preheating, tangzhong).
 - Replanning during a bake: freeze recorded facts (actual starts and ends) → forward pass for

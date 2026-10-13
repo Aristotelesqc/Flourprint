@@ -148,6 +148,11 @@ interface BakeEvent<P> {
 | `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                           |
 | `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                     |
 
+An `alongside` step (process.md, Steps alongside) is **instant** in a session: `StartStep` on it
+writes `StepStarted` and `StepCompleted` at the same `at`, so it never blocks the steps that
+depend on it. "The oven is ready" is an optional observation, and nothing completes when the
+required time elapses.
+
 `AddObservation` accepts an optional stable `kind`. `kind: 'doughReady'` records that the baker
 judges the dough ready for its next stage:
 
