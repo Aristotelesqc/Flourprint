@@ -155,8 +155,11 @@ Rules:
   and its behaviour does not change.
 - The **main-dough mixing steps** are the mixing steps from the **assembly** on. The assembly is
   the first mixing step that has incorporations of final-mix items (Incorporations above); a mixing
-  step ahead of it, with none (the frasage of a poolish), belongs to its component. A process that
-  declares no incorporations has every mixing step as a main-dough one, as before.
+  step ahead of it, with none (the frasage of a poolish), is treated as belonging to its
+  component. This is a **compatibility heuristic**, not an invariant: when a step states its
+  subject explicitly (the component phases proposal, #96), the stated subject wins, and a main-dough
+  frasage with incomplete incorporation declarations is never reclassified as a component by it. A
+  process that declares no incorporations has every mixing step as a main-dough one, as before.
 - The **reference mixing step** is the **last** main-dough mixing step in list order. Wherever
   `fermentation.md` and `drafts.md` say "the mix step", they mean this step: its end is the end of
   the mix, and its conditions give the ambient temperature, the target dough temperature and the
@@ -173,7 +176,8 @@ Rules:
 - A process without a mixing step has no reference mixing step (`no_mix_step`, `drafts.md`;
   `insufficient_data`, `fermentation.md`).
 - `doughTemperatureC` and `frictionC` are accepted on either mixing step and read only on the
-  reference one. On the other, they are kept and ignored.
+  reference one. On the other, they are kept and ignored, and the interface says that they do not
+  drive the dough's estimate; the recipe stays valid.
 - **Kneading is only what the list says.** A process without a `mix` step has no kneading, and
   the engine adds none. Time, autolyse, gentle handling, flour and hydration also build a dough,
   so a missing kneading is not a defect. The check `no_kneading_or_folds` (`drafts.md`, a note,
