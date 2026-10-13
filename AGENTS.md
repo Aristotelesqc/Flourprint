@@ -122,6 +122,12 @@ the decision history remains editorial. See [docs/governance/generated-backlog.m
   or conflicting classifications, without correcting labels, setting priorities or closing issues.
   Keep blockers, acceptance evidence, dependencies and PR links in the issue concerned. Human
   decisions may still be recorded in #30's editorial body; the automation never writes that body.
+- **Sub-issues** (owner decision of 2026-10-13): a workstream issue (#35, #28, #26…) is the
+  parent; a slice that one pull request can deliver is a GitHub sub-issue of it. One level deep
+  only. Each sub-issue keeps its own status, area and milestone labels and its own acceptance; a
+  parent is verified only when its own acceptance is shown, not because its sub-issues closed.
+  Attach a sub-issue when its body names the parent ("Parent #35"); never move or detach one
+  attached by someone else without saying why on both issues.
 - Add a short comment on the issue concerned when a step advances, and keep the PR body current.
 
 See ADR 0008. The proof-of-concept baseline (PR #31: steps 1 to 6 of the first development order,
