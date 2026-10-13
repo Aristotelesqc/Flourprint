@@ -64,6 +64,15 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
   Use for semantic/persisted changes, independent fixtures and consumer/compatibility impact.
 - **Scientific evidence**: [.agents/skills/flourprint-science/SKILL.md](.agents/skills/flourprint-science/SKILL.md).
   Use for source/data/fit audits and prediction limits; research does not approve a model change.
+- **Pull request flow**: [.agents/skills/flourprint-pr-flow/SKILL.md](.agents/skills/flourprint-pr-flow/SKILL.md).
+  Use for any PR: rebuilt checks on a private e2e port, native suites when they apply,
+  up-to-date merges into `dev`, combined merges and issue labels afterwards.
+- **Device checks**: [.agents/skills/flourprint-device-check/SKILL.md](.agents/skills/flourprint-device-check/SKILL.md).
+  Use when a change needs phone or desktop evidence, a migration must be checked on real data,
+  or the owner asks which APK or build to use.
+- **Agent handoff**: [.agents/skills/flourprint-agent-handoff/SKILL.md](.agents/skills/flourprint-agent-handoff/SKILL.md).
+  Use to write a message the owner relays to another agent, or when work crosses an ownership
+  boundary.
 
 These skills also have thin Claude Code routing entrypoints. They reuse current contracts,
 ADRs and tools rather than introducing another source of product decisions or a tracking system.
@@ -76,6 +85,7 @@ pnpm check        # format, lint, typecheck (sources and tests), tests
 pnpm build        # tsc -b
 pnpm build:mobile
 pnpm --filter @flourprint/mobile e2e  # full browser Playwright suite, FR and EN
+                                      # (FLOURPRINT_E2E_PORT=<port> for a private server)
 pnpm vitest run   # tests only (after a build)
 node apps/cli/dist/main.js --version
 ```
