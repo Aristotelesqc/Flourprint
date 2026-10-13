@@ -18,28 +18,51 @@ export const APPLIANCE_KINDS: readonly ApplianceKind[] = [
 export type Preheat = 'hot' | 'cold' | 'unknown';
 export const PREHEATS: readonly Preheat[] = ['hot', 'cold', 'unknown'];
 
-/** The Flourprint oven modes (equipment.md); documented in the app by message keys. */
+/** The Flourprint oven modes (equipment.md): defined by heat sources, named by message keys. */
 export type OvenMode =
-  | 'still'
-  | 'fan'
+  | 'bottom'
+  | 'topBottom'
   | 'convection'
+  | 'trueConvection'
+  | 'convectionRoast'
   | 'broil'
-  | 'fanBroil'
+  | 'convectionBroil'
   | 'steam'
-  | 'steamHeat'
   | 'proof'
   | 'custom';
 export const OVEN_MODES: readonly OvenMode[] = [
-  'still',
-  'fan',
+  'bottom',
+  'topBottom',
   'convection',
+  'trueConvection',
+  'convectionRoast',
   'broil',
-  'fanBroil',
+  'convectionBroil',
   'steam',
-  'steamHeat',
   'proof',
   'custom',
 ];
+
+/** An oven heat source: an element or the fan (equipment.md). */
+export type HeatSource = 'top' | 'bottom' | 'rear' | 'fan';
+export const HEAT_SOURCES: readonly HeatSource[] = ['top', 'bottom', 'rear', 'fan'];
+
+/**
+ * The canonical heat sources of each mode (equipment.md). `steam` and `proof` run a function or
+ * a program, not elements: they have none. `custom` has none either; a step may state its own.
+ */
+export const OVEN_MODE_HEAT: Readonly<Record<Exclude<OvenMode, 'custom'>, readonly HeatSource[]>> =
+  {
+    bottom: ['bottom'],
+    topBottom: ['top', 'bottom'],
+    convection: ['bottom', 'fan'],
+    trueConvection: ['rear', 'fan'],
+    convectionRoast: ['top', 'bottom', 'fan'],
+    broil: ['top'],
+    convectionBroil: ['top', 'fan'],
+    steam: [],
+    proof: [],
+  };
 
 export type Cover = 'open' | 'covered' | 'closed' | 'unknown';
 export const COVERS: readonly Cover[] = ['open', 'covered', 'closed', 'unknown'];
@@ -60,6 +83,8 @@ export interface StepEquipment {
   readonly profile?: EquipmentRef;
   /** Oven only: a Flourprint mode. */
   readonly mode?: OvenMode;
+  /** Mode `custom` only: the heat sources the step states. Absent = unknown. */
+  readonly heat?: readonly HeatSource[];
   /** The appliance's own label for this step, as read on it. */
   readonly nativeMode?: string;
   /** Temperature setpoint: oven, fryer oil, proofer. */
@@ -95,6 +120,7 @@ export type EquipmentShape =
   | 'sheet'
   | 'stone'
   | 'steel'
+  | 'baguetteTray'
   | 'rack'
   | 'other';
 export const EQUIPMENT_SHAPES: readonly EquipmentShape[] = [
@@ -108,6 +134,7 @@ export const EQUIPMENT_SHAPES: readonly EquipmentShape[] = [
   'sheet',
   'stone',
   'steel',
+  'baguetteTray',
   'rack',
   'other',
 ];

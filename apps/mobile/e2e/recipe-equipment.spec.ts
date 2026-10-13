@@ -143,7 +143,7 @@ for (const english of [false, true]) {
       page,
       {
         appliance: 'oven',
-        mode: 'still',
+        mode: 'bottom',
         profile: { id: 'missing-profile', version: 1 },
         preheated: { appliance: 'unknown' },
       },
