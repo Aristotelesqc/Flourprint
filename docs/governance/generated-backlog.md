@@ -14,6 +14,8 @@ file, LLM summary or app dependency is introduced. Contracts and ADRs retain the
   to the owner. Missing, duplicate or unknown classifications remain visible as anomalies.
 - A merged PR does not finish an issue. Apply the status policy in AGENTS.md based on remaining
   acceptance; the generator reads the labels and never infers completion.
+- Use GitHub sub-issues for a workstream's slices (AGENTS.md, one level deep). The generator does
+  not read the hierarchy yet; each sub-issue still appears under its own labels.
 - Do not edit the generated comment or maintain a second status table in #30. New human decisions
   can still be added to its editorial body; the workflow has no issue-body write path.
 
