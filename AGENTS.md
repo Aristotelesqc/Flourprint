@@ -79,6 +79,10 @@ ADRs and tools rather than introducing another source of product decisions or a 
 
 ## Commands
 
+Optional checkout-local CodeGraph setup and verified client limitations are documented in
+[docs/tooling/codegraph.md](docs/tooling/codegraph.md). It supplements source searches; never
+register it globally or treat graph output as a substitute for contracts or tests.
+
 ```bash
 pnpm install
 pnpm check        # format, lint, typecheck (sources and tests), tests
