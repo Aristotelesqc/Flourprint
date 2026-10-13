@@ -1023,6 +1023,13 @@ export const en = {
   'advanced.erased':
     '{count, plural, =0 {No bake erased.} one {# bake erased.} other {# bakes erased.}}',
   'advanced.eraseFailed': 'The history could not be erased.',
+  // Appearance / theme
+  'advanced.theme': 'Appearance',
+  'advanced.theme.system': 'System',
+  'advanced.theme.light': 'Light',
+  'advanced.theme.dark': 'Dark',
+  'advanced.theme.amoled': 'AMOLED',
+  'advanced.theme.hint': 'System follows the device setting. Light, Dark and AMOLED remain fixed.',
   // Temperature display units (values-and-units.md)
   'advanced.units': 'Temperature units',
   'advanced.units.oven': 'Oven',
@@ -2111,6 +2118,14 @@ export const fr: Catalog = {
   'advanced.erased':
     '{count, plural, =0 {Aucune fournée effacée.} one {# fournée effacée.} other {# fournées effacées.}}',
   'advanced.eraseFailed': 'L’historique n’a pas pu être effacé.',
+  // Appearance / theme
+  'advanced.theme': 'Apparence',
+  'advanced.theme.system': 'Système',
+  'advanced.theme.light': 'Clair',
+  'advanced.theme.dark': 'Sombre',
+  'advanced.theme.amoled': 'AMOLED',
+  'advanced.theme.hint':
+    'Système suit le réglage de l’appareil. Clair, Sombre et AMOLED restent fixes.',
   // Unités de température (values-and-units.md)
   'advanced.units': 'Unités de température',
   'advanced.units.oven': 'Four',

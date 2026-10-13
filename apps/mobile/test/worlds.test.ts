@@ -67,6 +67,7 @@ describe('two worlds of bakes (ADR 0014)', () => {
 describe('device preferences', () => {
   it('reads what was stored and keeps defaults for anything else', () => {
     expect(decodePreferences(null)).toEqual({
+      theme: 'system',
       simulation: false,
       offsetMs: 0,
       units: { oven: 'C', cold: 'C', ambient: 'C' },
@@ -76,6 +77,7 @@ describe('device preferences', () => {
         JSON.stringify({ simulation: true, offsetMs: 900_000, units: { ambient: 'F', oven: 'K' } }),
       ),
     ).toEqual({
+      theme: 'system',
       simulation: true,
       offsetMs: 900_000,
       units: { oven: 'C', cold: 'C', ambient: 'F' },

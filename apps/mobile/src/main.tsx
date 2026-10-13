@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { catalogs, pickLocale } from './i18n/messages';
 import { createServices } from './services/services';
+import { initializeDocumentTheme } from './theme/device-theme';
+
+initializeDocumentTheme();
 
 const locale = pickLocale(navigator.languages);
 document.documentElement.lang = locale;

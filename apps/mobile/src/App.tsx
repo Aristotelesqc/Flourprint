@@ -1,5 +1,6 @@
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
+import { useEffect } from 'react';
 import { IntlProvider } from 'react-intl';
 import { Navigate, Route } from 'react-router-dom';
 import { catalogs, type Locale } from './i18n/messages';
@@ -15,32 +16,37 @@ import { TrashPage } from './pages/TrashPage';
 import { FlourCatalogProvider } from './services/flours';
 import { NotificationSync } from './services/NotificationSync';
 import { ServicesProvider, type Services } from './services/services';
+import { attachThemeSync } from './theme/device-theme';
 
 setupIonicReact();
 
-export const App = ({ services, locale }: { services: Services; locale: Locale }) => (
-  <IntlProvider locale={locale} defaultLocale="en" messages={catalogs[locale]}>
-    <ServicesProvider services={services}>
-      <FlourCatalogProvider>
-        <IonApp>
-          <IonReactRouter>
-            <NotificationSync />
-            <IonRouterOutlet>
-              <Route path="/recipes" element={<RecipesPage />} />
-              <Route path="/recipes/:recipeId" element={<RecipePage />} />
-              <Route path="/drafts/:draftId" element={<RecipePage />} />
-              <Route path="/bakes" element={<BakesPage />} />
-              <Route path="/bakes/:bakeId" element={<BakePage />} />
-              <Route path="/flours" element={<FloursPage />} />
-              <Route path="/advanced" element={<AdvancedPage />} />
-              <Route path="/trash" element={<TrashPage />} />
-              <Route path="/stats" element={<StatsPage />} />
-              <Route path="/device-checks" element={<DeviceChecksPage />} />
-              <Route path="/" element={<Navigate to="/recipes" replace />} />
-            </IonRouterOutlet>
-          </IonReactRouter>
-        </IonApp>
-      </FlourCatalogProvider>
-    </ServicesProvider>
-  </IntlProvider>
-);
+export const App = ({ services, locale }: { services: Services; locale: Locale }) => {
+  useEffect(() => attachThemeSync(services.preferences), [services.preferences]);
+
+  return (
+    <IntlProvider locale={locale} defaultLocale="en" messages={catalogs[locale]}>
+      <ServicesProvider services={services}>
+        <FlourCatalogProvider>
+          <IonApp>
+            <IonReactRouter>
+              <NotificationSync />
+              <IonRouterOutlet>
+                <Route path="/recipes" element={<RecipesPage />} />
+                <Route path="/recipes/:recipeId" element={<RecipePage />} />
+                <Route path="/drafts/:draftId" element={<RecipePage />} />
+                <Route path="/bakes" element={<BakesPage />} />
+                <Route path="/bakes/:bakeId" element={<BakePage />} />
+                <Route path="/flours" element={<FloursPage />} />
+                <Route path="/advanced" element={<AdvancedPage />} />
+                <Route path="/trash" element={<TrashPage />} />
+                <Route path="/stats" element={<StatsPage />} />
+                <Route path="/device-checks" element={<DeviceChecksPage />} />
+                <Route path="/" element={<Navigate to="/recipes" replace />} />
+              </IonRouterOutlet>
+            </IonReactRouter>
+          </IonApp>
+        </FlourCatalogProvider>
+      </ServicesProvider>
+    </IntlProvider>
+  );
+};

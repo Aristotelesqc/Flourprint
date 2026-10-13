@@ -32,7 +32,13 @@ Preparation records actual work and supports the existing cooked/raw/mixed outco
 Keep contextual information, explicit percentage bases, precise draft entry, water-composition
 uncertainty, advanced details and the temporary weighing aid. Hydration and component ratios
 use the accepted domain APIs; presentation never supplies baking calculations. Preserve the
-owner-approved mark and warm orange/brown identity, including any implemented AMOLED variant.
+owner-approved mark and warm orange/brown identity across Light, Dark and AMOLED. AMOLED is a
+required concrete palette from the approved mockup, with a black page foundation and distinct
+warm surfaces. Offer these three palettes alongside automatic System selection in Advanced;
+persist the preference only on the device, never in a recipe or preparation snapshot. Apply the
+stored choice before asynchronous service initialization, and keep Ionic's palette, document
+color scheme and shared tokens synchronized with explicit choices and OS changes. Legacy or
+invalid stored choices retain the existing System default.
 
 The standalone mockup supplies visual reference only. Production controls use existing domain
 commands, validation, persistence and lifecycle behavior. Fixed mock quantities, fake save or
@@ -51,7 +57,7 @@ exploration direction for the approved screens.
 - Gemini writes the UI and delegates independent running-app use checks to its own subagents;
   Codex reviews their evidence and performs separate verification before integration.
 - Passing automated journeys does not establish visual quality. Inspect narrow French renders,
-  light/dark variants, larger text, accessible controls and real workflow, preserving unknowns.
+  light/dark/AMOLED variants, larger text, accessible controls and real workflow, preserving unknowns.
 - Browser evidence does not establish Android keyboard/back behavior or native plugin behavior.
   Select native/emulator checks for affected interactions under the repository's device workflow.
 - This decision does not mark #35 complete or claim all screens/platforms have shipped. Record

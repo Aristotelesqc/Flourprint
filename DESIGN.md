@@ -33,6 +33,22 @@ colors:
   dark-action-text: '#dba27c'
   dark-primary-container: 'rgb(207 138 94 / 0.16)'
   dark-error: '#f2b8b5'
+  amoled-primary: '#cf8a5e'
+  amoled-on-primary: '#000000'
+  amoled-background: '#000000'
+  amoled-surface: '#121110'
+  amoled-surface-container: '#1b1917'
+  amoled-surface-container-high: '#24211e'
+  amoled-on-surface: '#e9e4dc'
+  amoled-muted: '#b1aa9f'
+  amoled-outline: '#38322b'
+  amoled-outline-subtle: '#29241f'
+  amoled-track: '#1b1917'
+  amoled-field-outline: '#38322b'
+  amoled-field-background: '#121110'
+  amoled-action-text: '#dba27c'
+  amoled-primary-container: 'rgb(207 138 94 / 0.16)'
+  amoled-error: '#f28b82'
 rounded:
   card: 1rem
   segmented-option: 0.75rem
@@ -59,12 +75,20 @@ components:
     textColor: '{colors.dark-on-surface}'
     rounded: '{rounded.card}'
     padding: '{spacing.card-padding}'
+  section-surface-amoled:
+    backgroundColor: '{colors.amoled-surface}'
+    textColor: '{colors.amoled-on-surface}'
+    rounded: '{rounded.card}'
+    padding: '{spacing.card-padding}'
   precision-field:
     backgroundColor: '{colors.field-background}'
     textColor: '{colors.on-surface}'
   precision-field-dark:
     backgroundColor: '{colors.dark-field-background}'
     textColor: '{colors.dark-on-surface}'
+  precision-field-amoled:
+    backgroundColor: '{colors.amoled-field-background}'
+    textColor: '{colors.amoled-on-surface}'
 ---
 
 # Flourprint design brief
@@ -98,28 +122,34 @@ No runtime token generator exists.
 
 The current mappings in `apps/mobile/src/theme/app.css` are:
 
-| Design role           | Runtime token       | Light / dark frontmatter tokens                |
-| --------------------- | ------------------- | ---------------------------------------------- |
-| Primary action        | `accent`            | `primary` / `dark-primary`                     |
-| Action foreground     | `on-accent`         | `on-primary` / `dark-on-primary`               |
-| Page                  | `bg`                | `background` / `dark-background`               |
-| Content surface       | `surface`           | `surface` / `dark-surface`                     |
-| Quiet grouped surface | `surface-container` | `surface-container` / `dark-surface-container` |
-| Main text             | `ink`               | `on-surface` / `dark-on-surface`               |
-| Secondary text        | `muted`             | `muted` / `dark-muted`                         |
-| Divider               | `line`              | `outline` / `dark-outline`                     |
-| Subtle divider        | `line-subtle`       | `outline-subtle` / `dark-outline-subtle`       |
-| Selector track        | `track`             | `track` / `dark-track`                         |
-| Input outline         | `field`             | `field-outline` / `dark-field-outline`         |
-| Input fill            | `field-bg`          | `field-background` / `dark-field-background`   |
-| Text action           | `accent-text`       | `action-text` / `dark-action-text`             |
-| Soft accent           | `accent-soft`       | `primary-container` / `dark-primary-container` |
-| Error                 | `alert`             | `error` / `dark-error`                         |
+| Design role           | Runtime token       | Light / dark / AMOLED frontmatter tokens                                    |
+| --------------------- | ------------------- | --------------------------------------------------------------------------- |
+| Primary action        | `accent`            | `primary` / `dark-primary` / `amoled-primary`                               |
+| Action foreground     | `on-accent`         | `on-primary` / `dark-on-primary` / `amoled-on-primary`                      |
+| Page                  | `bg`                | `background` / `dark-background` / `amoled-background`                      |
+| Content surface       | `surface`           | `surface` / `dark-surface` / `amoled-surface`                               |
+| Quiet grouped surface | `surface-container` | `surface-container` / `dark-surface-container` / `amoled-surface-container` |
+| Main text             | `ink`               | `on-surface` / `dark-on-surface` / `amoled-on-surface`                      |
+| Secondary text        | `muted`             | `muted` / `dark-muted` / `amoled-muted`                                     |
+| Divider               | `line`              | `outline` / `dark-outline` / `amoled-outline`                               |
+| Subtle divider        | `line-subtle`       | `outline-subtle` / `dark-outline-subtle` / `amoled-outline-subtle`          |
+| Selector track        | `track`             | `track` / `dark-track` / `amoled-track`                                     |
+| Input outline         | `field`             | `field-outline` / `dark-field-outline` / `amoled-field-outline`             |
+| Input fill            | `field-bg`          | `field-background` / `dark-field-background` / `amoled-field-background`    |
+| Text action           | `accent-text`       | `action-text` / `dark-action-text` / `amoled-action-text`                   |
+| Soft accent           | `accent-soft`       | `primary-container` / `dark-primary-container` / `amoled-primary-container` |
+| Error                 | `alert`             | `error` / `dark-error` / `amoled-error`                                     |
 
 The `primary-container` names describe the existing translucent soft accents, not validated M3
-tonal-container roles. Dark mode currently follows the system preference. Selectable AMOLED
-is required work: use a black page foundation with warm accents and distinguishable surfaces;
-exact values, selection/persistence and accessibility checks remain to be implemented.
+tonal-container roles. Three concrete palettes (Light, Warm Dark, and AMOLED) are selectable in
+Advanced settings alongside automatic System choice, persisted in device preferences. Initial load
+synchronously applies the stored preference before async services initialize to avoid a light flash,
+then subscribes to device preferences and OS changes. AMOLED uses a pure black page foundation
+(`#000000`) with warm accents (`#cf8a5e` on black `#000000`), surface (`#121110`), container
+(`#1b1917`), high container (`#24211e`), lines (`#38322b`/`#29241f`), ink (`#e9e4dc`), and muted
+text (`#b1aa9f`). Explicit light and dark choices win over opposite OS preferences via Ionic's class
+palette. Runtime contrast and device checks remain verified under the repository's test and device
+workflows.
 
 In the shared M3 layer, introduce semantic roles for selected state, container levels and status
 only when they have concrete consumers. Evaluate actual foreground/background pairs, including
@@ -197,8 +227,7 @@ these principles do not ship animations or establish native/performance conforma
 Use warm tonal surfaces, separators and restrained elevation for hierarchy. Sheets sit above
 the current workspace; selection and interactive state must remain clear without relying only
 on color. Avoid decorating every value with a raised container. Evaluate new elevation and
-surface consumers side by side in light and warm dark; an AMOLED prototype does not establish
-a selectable production theme.
+surface consumers side by side across light, warm dark, and AMOLED.
 
 ## Shapes
 
@@ -281,5 +310,5 @@ DESIGN.md does not select a new dependency or migrate routes.
 - Keep every visual change reflected here and in the runtime tokens in the same reviewed slice;
   document exceptions explicitly. Do not auto-export this snapshot over the live theme.
 - Do not treat accepted lifecycle contracts as already implemented APIs, or invent outcomes in UI.
-- Do not declare native behavior, AMOLED support or accessibility verified from source alone.
+- Do not declare native behavior or accessibility verified from source alone.
 - Track work on individual GitHub issues and labels; this brief is not a second backlog.
