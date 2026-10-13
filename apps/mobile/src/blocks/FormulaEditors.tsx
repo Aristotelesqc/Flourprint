@@ -31,7 +31,7 @@ import { totalWaterKey } from './water-label';
 export type StructureEdit = (edit: FormulaEdit, process?: Process) => boolean;
 
 /** The water absorbing a lock: the first water ingredient of the dough. */
-const absorbingWater = (formula: Formula) =>
+export const absorbingWater = (formula: Formula) =>
   formula.ingredients.find((i) => i.kind === 'water' && i.role === 'dough')?.id;
 
 /**

@@ -11,6 +11,7 @@ import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { WeighingChecklist } from './WeighingChecklist';
 import { Enrichment, FlourSummary, GroupHeader, ROW } from './FormulaSection';
+import { absorbingWater } from './FormulaEditors';
 
 interface Props {
   readonly formula: Formula;
@@ -124,7 +125,11 @@ export const FormulaConsultation = ({
                   className="fp-reset inline-flex min-h-touch items-center justify-center rounded-full border border-line bg-surface px-3 text-sm font-semibold text-accent-text hover:bg-field-bg"
                   onClick={onEditHydration}
                 >
-                  {t('formula.hydration.editAction')}
+                  {t(
+                    formula.waterTarget || absorbingWater(formula)
+                      ? 'formula.hydration.editAction'
+                      : 'formula.hydration.editIngredients',
+                  )}
                 </button>
               )}
             </div>

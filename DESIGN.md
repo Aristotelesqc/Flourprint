@@ -218,6 +218,8 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   percent with uncertainty/incompleteness retained. No extra added/poured-water summary line.
   Unlock is neutral; lock has an explicit useful state. Milk-only recipes do not acquire water
   or a lock merely to match a layout.
+  Without a water absorber, the shortcut names ingredient editing rather than promising
+  a direct hydration edit; it leads to the same Composition workspace.
 - **Editing:** Composition, Components, Steps and Result sections share the same draft. Preserve
   mounted raw fields or commit/guard them through the existing validation mechanism before
   navigation. Show percent/gram entries, anchor modes, hydration lock, component allocations

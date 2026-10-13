@@ -92,6 +92,7 @@ export const en = {
   'formula.hydration.locked': 'Hydration locked at {pct}',
   'formula.hydration.unlocked': 'Hydration unlocked',
   'formula.hydration.editAction': 'Edit hydration',
+  'formula.hydration.editIngredients': 'Edit ingredients',
 
   ...helpEn,
   'recipe.trash': 'Move to trash',
@@ -1154,6 +1155,7 @@ export const fr: Catalog = {
   'formula.hydration.locked': 'Hydratation verrouillée à {pct}',
   'formula.hydration.unlocked': 'Hydratation déverrouillée',
   'formula.hydration.editAction': 'Modifier l’hydratation',
+  'formula.hydration.editIngredients': 'Modifier les ingrédients',
 
   ...helpFr,
   'recipe.trash': 'Mettre à la corbeille',

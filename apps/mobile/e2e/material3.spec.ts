@@ -1,6 +1,7 @@
 import { expect, test } from './fixtures';
 import { editorSection, enterEditor, menuAction, routed } from './ui-actions';
 import type { Page } from '@playwright/test';
+import milkFixture from '../../../docs/contracts/fixtures/enriched-milk-butter.json' with { type: 'json' };
 
 const open = async (page: Page) => {
   await page.setViewportSize({ width: 360, height: 851 });
@@ -10,6 +11,78 @@ const open = async (page: Page) => {
   await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
   await expect(routed(page)).toHaveCount(1);
 };
+
+test('milk-only incomplete hydration offers ingredient editing without inventing water or a lock', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 851 });
+  await page.goto('/advanced');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'milk-only.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        kind: 'flourprint-recipes',
+        schemaVersion: 1,
+        exportedAt: '2026-10-13T00:00:00.000Z',
+        families: [],
+        recipes: [
+          {
+            id: 'qa-milk-only',
+            name: 'QA — pâte au lait',
+            revisions: [
+              {
+                recipeId: 'qa-milk-only',
+                version: 1,
+                createdAt: '2026-10-13T00:00:00.000Z',
+                formula: milkFixture.input,
+                process: {
+                  steps: [
+                    {
+                      id: 'mix',
+                      operation: 'mix',
+                      dependsOn: [],
+                      schedule: 'asap',
+                      plannedDurationS: 600,
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    ),
+  });
+  await expect(page.getByText('1 recette importée.', { exact: true })).toBeVisible();
+  await routed(page).locator('ion-back-button').click();
+  await expect(page).toHaveURL(/\/recipes$/);
+  await expect(routed(page)).toHaveCount(1);
+  await routed(page).getByText('QA — pâte au lait', { exact: true }).click();
+  await expect(page).toHaveURL(/\/recipes\/qa-milk-only$/);
+  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expect(routed(page)).toHaveCount(1);
+  await expect(routed(page).getByText('≈ 53 %', { exact: true })).toBeVisible();
+  await expect(
+    routed(page)
+      .getByText(/Inconnu pour :/)
+      .first(),
+  ).toBeVisible();
+  await expect(
+    routed(page).getByRole('button', { name: 'Modifier l’hydratation', exact: true }),
+  ).toHaveCount(0);
+  await routed(page).getByRole('button', { name: 'Modifier les ingrédients', exact: true }).click();
+  await expect(
+    routed(page).getByRole('region', { name: 'Hydratation', exact: true }),
+  ).toContainText('53 %');
+  await expect(routed(page).getByLabel('Eau (g)', { exact: true })).toHaveCount(0);
+  await expect(
+    routed(page).getByRole('button', { name: /Verrouiller l’hydratation à/ }),
+  ).toHaveCount(0);
+  await expect(routed(page).getByText('Eau ajoutée', { exact: true })).toHaveCount(0);
+  await expect(routed(page).getByText('Eau versée', { exact: true })).toHaveCount(0);
+  await expect(routed(page).locator('ion-footer').getByRole('status')).toHaveText('À jour');
+});
 
 test('whole-percent hydration presentation never becomes a rounded recipe edit', async ({
   page,
