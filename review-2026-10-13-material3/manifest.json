@@ -1,6 +1,6 @@
 {
   "before": "24835c5",
-  "after": "01d0a83585c5dc9f7135c0437f1c934fef2f883c",
+  "after": "af91186",
   "build": "v0.2.0-local",
   "browser": "Chrome 155.0.8059.40",
   "locale": "fr-CA",
@@ -9,7 +9,7 @@
   "files": [
     {
       "name": "index.html",
-      "sha256": "c2f55f32421c55cd942f03f46d96ffdd9c54cef817f18f6c20a7717abb80fac0",
+      "sha256": "b40515ee220385f2ec43b26f434dce818cb7d7c1b962ed39685d158624d3e9fb",
       "bytes": 4085
     },
     {
