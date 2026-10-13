@@ -1,0 +1,96 @@
+{
+  "before": "24835c5",
+  "after": "01d0a83585c5dc9f7135c0437f1c934fef2f883c",
+  "build": "v0.2.0-local",
+  "browser": "Chrome 155.0.8059.40",
+  "locale": "fr-CA",
+  "width": 360,
+  "height": 800,
+  "files": [
+    {
+      "name": "index.html",
+      "sha256": "c2f55f32421c55cd942f03f46d96ffdd9c54cef817f18f6c20a7717abb80fac0",
+      "bytes": 4085
+    },
+    {
+      "name": "before-recipes-light.png",
+      "sha256": "f18b561e38485fa72aa92df183dea9cd1455dab9ffbbe1510c7ad3cb8ccbe0dd",
+      "bytes": 39086
+    },
+    {
+      "name": "before-recipes-dark.png",
+      "sha256": "8c8503d6d73f3d80ef70ed2e9a81729b8bbc85b1cb2b2c3a614bf55409cbccd1",
+      "bytes": 40236
+    },
+    {
+      "name": "before-recipe-light.png",
+      "sha256": "5f88f4397132dce73b40aca61908ab35d1ef28d072677462e98262ff27b22a5f",
+      "bytes": 57211
+    },
+    {
+      "name": "before-recipe-dark.png",
+      "sha256": "55f86cbb36bcad81537a860a88d03dcb702a1edd41c18c8afaf586b98096ebfe",
+      "bytes": 58145
+    },
+    {
+      "name": "before-edit-light.png",
+      "sha256": "27a1c39727f8181eaa730a53041b8b8f760a058100cd3ed8fee357bcf8eb84b1",
+      "bytes": 58703
+    },
+    {
+      "name": "before-edit-dark.png",
+      "sha256": "94ff2b9e79431bba8b6271ce4a769446b68a186c6c5cd1630cf5f7f2c522a01d",
+      "bytes": 58997
+    },
+    {
+      "name": "before-preparation-light.png",
+      "sha256": "55e3b455c0bf515799f1119f583b3575ad756742093b6225e9bdf5df36fb270a",
+      "bytes": 46267
+    },
+    {
+      "name": "before-preparation-dark.png",
+      "sha256": "5c2bc037ddee5c4ebaace9cc57ceda799816c8e6df84d5b7346a8c384507e953",
+      "bytes": 46401
+    },
+    {
+      "name": "after-recipes-light.png",
+      "sha256": "61265cb2b5ca8a293b77baeda7b1571c0609161148f92a660783c604cbd13fd5",
+      "bytes": 44347
+    },
+    {
+      "name": "after-recipes-dark.png",
+      "sha256": "30ee2af833167a3003a038acd15f97915e98f5904cecab6f6f024c961c11067d",
+      "bytes": 44950
+    },
+    {
+      "name": "after-recipe-light.png",
+      "sha256": "8df9bf58e18f4be8a56d630995eee78aec9759f6242d9a6de003945d59f73a34",
+      "bytes": 61520
+    },
+    {
+      "name": "after-recipe-dark.png",
+      "sha256": "7beb609d87a5d391f7f2f7fd15c4261558dabc44cfc247452430dffe0ab64f3c",
+      "bytes": 61373
+    },
+    {
+      "name": "after-edit-light.png",
+      "sha256": "39fbeda979804e33abdc4509a4d9e2d03ff9918362f39342581df7e1f80ee312",
+      "bytes": 49101
+    },
+    {
+      "name": "after-edit-dark.png",
+      "sha256": "d7b120edf125f978510fdb273de794054ca3c3e24359a6f414902a31d1ed64cf",
+      "bytes": 50028
+    },
+    {
+      "name": "after-preparation-light.png",
+      "sha256": "e32167864a9d30c40777c0d77b01fd29a5a61b51de00f98fce38d1fe7e750e96",
+      "bytes": 50793
+    },
+    {
+      "name": "after-preparation-dark.png",
+      "sha256": "95dbc1042cde247544c730c77275b553f8f31f1077923722e8f41cbc5d86d849",
+      "bytes": 51443
+    }
+  ]
+}
