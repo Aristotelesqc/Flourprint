@@ -189,9 +189,24 @@ wrong); `kind: 'doughReady'` still needs an active bake. It never reopens the ba
 
 ## Scaled preparation
 
-A Preparation may start at a different quantity than its recipe revision, without creating a
-revision: the baker wants 600 g of flour today from a recipe written for 1000 g. The recipe is not
-edited, and nothing about the quantity is saved as a new version.
+A recipe has a quantity of its own and a Preparation may have another one:
+
+- **The recipe's quantity** is the anchor of its revision (12 hamburger buns). It changes only by
+  editing the recipe, which makes a new revision.
+- **The Preparation's quantity** is chosen without entering the editor, without a draft and
+  without saving anything into the recipe: the baker wants 600 g of flour today from a recipe
+  written for 1000 g, or 24 buns from a recipe of 12. Until the Preparation starts, the chosen
+  quantity is interface state, like the planned start time: it is not persisted with the recipe.
+
+The interface offers two inputs that end in the same anchor:
+
+- a **multiplier** `m` > 0 applied to the recipe's anchor (2 doubles, 0.5 halves, 1.5…): `grams`
+  × `m` for `flourTotal` and `doughWeight`, `count` × `m` for `pieces` (`gramsEach` unchanged);
+- a **new value for the anchor** (24 in the quantity of pieces, 600 in the flour).
+
+For `pieces`, a multiplier that does not give a whole `count` is not offered: the interface asks
+for a whole count instead. The domain sees neither input, only the resulting anchor and
+`scaledFrom`.
 
 `StartBake` accepts an optional `scaledFrom: { anchor: Anchor }`, the anchor of the revision the
 snapshot was scaled from (`formula.md`, Anchor).
@@ -226,6 +241,13 @@ yeast 0.3 %, so 1000 + 720 + 20 + 3 = 1743 g of dough):
    history of the Preparation shows 600 g beside the recipe's 1000 g.
 5. **Durations do not scale.** A 6 h bulk stays 6 h at 600 g.
 6. **Refused.** `scaledFrom: { anchor: { kind: 'flourTotal', grams: 0 } }`: `InvalidCommand`.
+7. **Twelve buns, doubled.** The recipe's anchor is `pieces` `{ count: 12, gramsEach: 90 }` (dough
+   1080 g). A multiplier of 2, or 24 typed in the quantity of pieces, gives `pieces`
+   `{ count: 24, gramsEach: 90 }` (2160 g) and `scaledFrom.anchor` is the recipe's
+   `{ count: 12, gramsEach: 90 }`. Every ingredient doubles, the percentages are unchanged, and
+   the recipe still says 12 buns at the same version.
+8. **A multiplier that is not offered.** 5 pieces × 1.5 = 7.5: there is no whole count, so the
+   interface asks for a whole count (7 or 8).
 
 ## Repository (SQLite adapter)
 
