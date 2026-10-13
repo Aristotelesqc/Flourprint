@@ -29,6 +29,7 @@ import {
   MemoryBakeEventStore,
   MemoryEquipmentRegistry,
   MemoryFlourRegistry,
+  MemoryIngredientRegistry,
   MemoryRecipeRepository,
   MemoryRestoreTarget,
 } from '../src/memory/index.js';
@@ -38,6 +39,7 @@ import {
   SqlBakeEventStore,
   SqlEquipmentRegistry,
   SqlFlourRegistry,
+  SqlIngredientRegistry,
   SqlRecipeRepository,
   SqlRestoreTarget,
 } from '../src/sqlite-node/index.js';
@@ -159,13 +161,15 @@ const sqliteStores = async (failOnWrite?: number): Promise<Target> => {
     bakes: new SqlBakeEventStore(driver),
     flours: new SqlFlourRegistry(driver),
     equipment: new SqlEquipmentRegistry(driver),
+    ingredients: new SqlIngredientRegistry(driver),
     restore: new SqlRestoreTarget(failOnWrite === undefined ? driver : failing),
     driver,
   };
 };
 
 const memoryStores = (): Target => {
-  const recipes = new MemoryRecipeRepository();
+  const ingredients = new MemoryIngredientRegistry();
+  const recipes = new MemoryRecipeRepository(ingredients);
   const bakes = new MemoryBakeEventStore();
   const flours = new MemoryFlourRegistry();
   const equipment = new MemoryEquipmentRegistry();
@@ -174,7 +178,8 @@ const memoryStores = (): Target => {
     bakes,
     flours,
     equipment,
-    restore: new MemoryRestoreTarget(recipes, bakes, flours, equipment),
+    ingredients,
+    restore: new MemoryRestoreTarget(recipes, bakes, flours, equipment, ingredients),
   };
 };
 
@@ -962,7 +967,7 @@ describe('feedback export (history.md)', () => {
       outcome: { result: 'cooked' },
       outcomeSource: 'recipe',
     });
-    expect(result.value.schemaVersion).toBe(2);
+    expect(result.value.schemaVersion).toBe(3);
     expect(digest?.steps.find((s) => s.id === 'mix')).toMatchObject({
       cooking: false,
       startedAt: at('08:00'),

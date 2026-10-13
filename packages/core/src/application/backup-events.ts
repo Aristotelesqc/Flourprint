@@ -50,6 +50,9 @@ const FORMULA_EDITS = new Set([
   'SetAnchor',
   'AddIngredient',
   'UpdateIngredient',
+  'ApplyIngredientEntry',
+  'RefreshIngredientEntry',
+  'DetachIngredientEntry',
   'RemoveIngredient',
   'AddComponent',
   'UpdateComponent',
@@ -205,7 +208,10 @@ const isSnapshot = (value: unknown): boolean =>
       isId(p.ingredient) &&
       isCount(p.version) &&
       typeof p.key === 'string' &&
-      'value' in p,
+      'value' in p &&
+      (p.customized === undefined || p.customized === true) &&
+      (p.overridden === undefined || p.overridden === true) &&
+      isOptional(p.formulaIngredient, isId),
   ) &&
   isProcessShape(value.process) &&
   isProjection(value.initialProjection) &&

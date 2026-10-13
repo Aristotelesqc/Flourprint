@@ -1,4 +1,4 @@
-import type { Formula, Process } from '../domain/index.js';
+import { PREPARATION_STATES, type Formula, type Process } from '../domain/index.js';
 import { isNumber, isObject, refuse, type Json } from './decode.js';
 
 /**
@@ -67,6 +67,10 @@ const union =
     variant(value, where);
   };
 
+const trueOnly: Check = (value, where) => {
+  if (value !== true) refuse(`${where} is true or absent`);
+};
+
 const range: Check = (value, where) => {
   if (!Array.isArray(value) || value.length !== 2 || !value.every(isNumber)) {
     refuse(`${where} must be two numbers`);
@@ -124,6 +128,10 @@ const ingredient: Check = (v, w) =>
       sugar: content,
       yeast: (y, yw) => fields(y, yw, { form: oneOf('fresh', 'active-dry', 'instant') }),
       accepted,
+      entry: (e, ew) => fields(e, ew, { id: string, version: number }, { customized: trueOnly }),
+      overrides: list(oneOf('kind', 'water', 'fat', 'sugar', 'yeast')),
+      preparation: (p, pw) =>
+        fields(p, pw, { state: oneOf(...PREPARATION_STATES) }, { note: string }),
     },
   );
 

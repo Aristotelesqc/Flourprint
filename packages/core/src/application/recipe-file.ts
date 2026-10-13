@@ -4,13 +4,16 @@ import {
   err,
   ok,
   type DomainError,
+  type IngredientEntry,
   type Instant,
   type RecipeFamily,
   type Result,
 } from '../domain/index.js';
-import { decodeRecipes, recordedRecipes, type BackupError } from './backup.js';
+import { decodeIngredients, decodeRecipes, recordedRecipes, type BackupError } from './backup.js';
 import { isCount, isInstant, isObject, Refused } from './decode.js';
+import { pinnedIngredientEntries } from './ingredients.js';
 import type {
+  IngredientRegistry,
   RecipeImportOutcome,
   RecipeImportPlan,
   RecipeRepository,
@@ -24,6 +27,8 @@ export interface RecipeFile {
   readonly exportedAt: Instant;
   readonly recipes: readonly RecordedRecipe[];
   readonly families: readonly RecipeFamily[];
+  /** The personal ingredient entry versions its revisions pin (ingredients.md); optional. */
+  readonly ingredients?: readonly IngredientEntry[];
 }
 
 export type RecipeFileError =
@@ -33,13 +38,26 @@ export type RecipeFileError =
 const invalid = (reason: string): RecipeFileError =>
   domainError('InvalidRecipeFile', `Invalid recipe file: ${reason}`, { reason });
 
-/** Exports every recipe outside the trash with all its revisions, and every family. */
+/**
+ * Exports every recipe outside the trash with all its revisions, and every family. With the
+ * ingredient registry, it also carries the personal entry versions the revisions pin
+ * (ingredients.md); a pin that does not resolve is left out and blocks nothing.
+ */
 export const exportRecipes = async (
   repository: RecipeRepository,
   exportedAt: Instant,
+  ingredientRegistry?: IngredientRegistry,
 ): Promise<Result<RecipeFile, BackupError>> => {
   const recipes = await recordedRecipes(repository);
   if (!recipes.ok) return recipes;
+  const pinned = ingredientRegistry
+    ? (
+        await pinnedIngredientEntries(
+          ingredientRegistry,
+          recipes.value.flatMap((recipe) => recipe.revisions.map((revision) => revision.formula)),
+        )
+      ).filter((entry) => !entry.builtIn)
+    : [];
   return ok({
     kind: 'flourprint-recipes',
     schemaVersion: DOCUMENT_SCHEMA_VERSION,
@@ -51,6 +69,7 @@ export const exportRecipes = async (
         ? { ...family, pinnedRecipeId }
         : family,
     ),
+    ...(pinned.length === 0 ? {} : { ingredients: pinned }),
   });
 };
 
@@ -76,7 +95,8 @@ export const decodeRecipeFile = (input: unknown): Result<RecipeImportPlan, Recip
     if (plan.recipes.some((recipe) => recipe.trashedAt !== undefined)) {
       return err(invalid('a recipes file carries no recipe from the trash'));
     }
-    return ok(plan);
+    const ingredients = decodeIngredients(input.ingredients, 'ingredients');
+    return ok(ingredients.length === 0 ? plan : { ...plan, ingredients });
   } catch (error) {
     if (error instanceof Refused) return err(invalid(error.reason));
     return err(invalid('malformed content'));
@@ -85,7 +105,8 @@ export const decodeRecipeFile = (input: unknown): Result<RecipeImportPlan, Recip
 
 /**
  * Adds the recipes of a file (persistence.md): absent ids are written as recorded, present ids
- * are skipped and never overwritten. Importing the same file twice imports nothing.
+ * are skipped and never overwritten; so are the ingredient entry versions it carries
+ * (ingredients.md). Importing the same file twice imports nothing.
  */
 export const importRecipes = async (
   repository: RecipeRepository,

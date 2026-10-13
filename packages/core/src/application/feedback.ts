@@ -5,6 +5,7 @@ import {
   type BakeEvent,
   type Estimate,
   type FlourRef,
+  type IngredientRef,
   type Instant,
   type ModelRef,
   type Observation,
@@ -86,6 +87,11 @@ export interface BakeDigest {
   };
   /** Registry flour entries the bake used (flours.md); absent for bakes before 0.8.0. */
   readonly flours?: readonly FlourRef[];
+  /** Ingredient entry pins of the snapshot formula (ingredients.md); absent when there are none. */
+  readonly ingredients?: readonly {
+    readonly ingredient: string;
+    readonly entry: IngredientRef;
+  }[];
   readonly steps: readonly StepDigest[];
   readonly observations: readonly ObservationDigest[];
   readonly adjustments: readonly AdjustmentDigest[];
@@ -101,8 +107,11 @@ export interface FeedbackExport {
   readonly bakes: readonly BakeDigest[];
 }
 
-/** 2: `outcome`, `outcomeSource` and step `cooking` (contract 0.11.0). */
-export const FEEDBACK_SCHEMA_VERSION = 2;
+/**
+ * 2: `outcome`, `outcomeSource` and step `cooking` (contract 0.11.0). 3: `ingredients`, the
+ * ingredient entry pins (contract 0.15.0).
+ */
+export const FEEDBACK_SCHEMA_VERSION = 3;
 
 /** Read by whoever receives the export; data, not user interface text. */
 export const FEEDBACK_ABOUT =
@@ -126,11 +135,16 @@ export const FEEDBACK_ABOUT =
   '(unknown). Built-in entries are code and carry no composition; personal entries, with every ' +
   'version, are in `backup.flours`. Their properties (protein, ash, falling number, alveograph, ' +
   'malted) are recorded for later calibration and used by no calculation; unknown is never zero. ' +
+  '`ingredients` lists the ingredient registry entries the snapshot formula pins ({ingredient: ' +
+  'the formula ingredient id, entry: {id, version, customized?}}); absent when none. The formula ' +
+  'holds a copy of the contents it consumed, possibly overridden by the baker (`overrides`), and ' +
+  'a recorded `preparation`; personal entry versions are in `backup.ingredients`, built-in ones ' +
+  'are code. A pin that does not resolve is "entry not found" and changes no number. ' +
   '`backup` is the authoritative record (recipes with ' +
   'every revision, raw bake events). Units: grams, degrees Celsius, seconds, baker percentages ' +
   'in points. `device` describes the exporting device only. Contracts: ' +
   'docs/contracts/history.md (feedback export), bake-session.md, process.md, fermentation.md, ' +
-  'flours.md.';
+  'flours.md, ingredients.md.';
 
 const seconds = (from: Instant | undefined, to: Instant | undefined): number | undefined =>
   from === undefined || to === undefined
@@ -209,6 +223,9 @@ export const bakeDigest = (
   }
   const recipeId = snapshot.revisions.formula.id;
   const name = recipeName(recipeId);
+  const pins = snapshot.formula.ingredients.flatMap((i) =>
+    i.entry === undefined ? [] : [{ ingredient: i.id, entry: i.entry }],
+  );
   return {
     bakeId,
     status: state.status,
@@ -230,6 +247,7 @@ export const bakeDigest = (
     ...(state.endedAt === undefined ? {} : { endedAt: state.endedAt }),
     manifest: snapshot.manifest,
     ...(snapshot.flours === undefined ? {} : { flours: snapshot.flours }),
+    ...(pins.length === 0 ? {} : { ingredients: pins }),
     steps,
     observations,
     adjustments,
