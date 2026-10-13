@@ -476,7 +476,7 @@ restore); a restore validates them like any document (`persistence.md`).
   readable without change; there is no downgrade (a newer database or formula document is
   refused).
 - The registry is available offline: it lives in the same database as everything else.
-- `CONTRACT_VERSION` is bumped by one minor step, from `0.13.0` to `0.14.0` (the implementing pull
+- `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge (`0.14.0`, after the oven modes) to `0.15.0` (the implementing pull
   request sets it). `Ingredient.entry`, `overrides` and `preparation` are optional: documents
   written before them need no upcaster. A formula carrying one of them read by an older app is
   refused as a document with an unknown field (`persistence.md`), not misread.
