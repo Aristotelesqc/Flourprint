@@ -49,7 +49,7 @@ export const DraftActionBar = ({
           <IonButton
             expand="block"
             shape="round"
-            className="m-0 h-11 w-full font-semibold"
+            className="btn-pill-primary m-0 h-12 w-full font-semibold"
             aria-label={
               newRecipe
                 ? t('draft.saveRecipe')

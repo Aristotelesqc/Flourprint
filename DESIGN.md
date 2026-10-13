@@ -223,15 +223,19 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 - **Editing:** Composition, Components, Steps and Result sections share the same draft. Preserve
   mounted raw fields or commit/guard them through the existing validation mechanism before
   navigation. Show percent/gram entries, anchor modes, hydration lock, component allocations
-  and ratios, authored steps/equipment and the actual outcome contract. Ratio entry uses
-  `liquidMassRatio` and `hydrationForRatio` from the current contract: ratio entry counts weighed
+  and ratios, authored steps/equipment and the actual outcome contract.
+  Planning previews retain mounted invalid raw text, explain that displayed values are the last
+  accepted values, block starting and offer a visible return to editing. Switching to a preview
+  never silently discards a pending field.
+  Ratio entry uses `liquidMassRatio` and `hydrationForRatio` from the current contract: it counts weighed
   liquid mass (including the whole mass of milk); hydration and component style still count
   its water content. One Save bar has stable reserved feedback space; check/review/discard are occasional
   actions. Quantities retain full internal precision.
 - **Preparation:** large remaining time, planned end, actual start and temporal progress; visible
   quick controls and readiness observations. Upcoming steps with clock times precede completed
-  steps. Keep the journal and actual lifecycle/outcome actions. A readiness observation neither
-  completes the stage nor establishes a cooked result. Unknown times remain unknown.
+  steps. Keep the full journal accessible (all existing notes, observations and step completions)
+  and actual lifecycle/outcome actions. A readiness observation neither completes the stage nor
+  establishes a cooked result. Unknown times remain unknown.
 
 ## Components
 
@@ -245,7 +249,10 @@ two rows; labels and touch targets stay intact. Native Ionic overlays remain pla
 and require their own checks.
 
 - **Actions:** visible primary-action labels, distinct filled/outlined/quiet roles, clear busy,
-  disabled and destructive states. Do not substitute icon-only controls for essential actions.
+  disabled and destructive states. Primary actions share the full-width pill role (`btn-pill-primary`,
+  > = 3rem / 48px touch target) across consultation Start/Resume and editor Save, with accessible
+  > neutral surface and legible muted ink tokens when disabled. Do not substitute icon-only controls
+  > for essential actions.
 - **Precision fields:** input frames identify actual editing; read-only quantities are text.
   Retain local raw input, parsing/refusal feedback and the page validation registry. Untouched
   formatted numbers never become edits. No global commit of all formatted fields.

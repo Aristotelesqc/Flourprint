@@ -244,6 +244,8 @@ export const en = {
   'recipe.baking': 'In progress',
   'draft.unsaved': 'Unsaved changes',
   'draft.invalid': 'Correct invalid fields',
+  'draft.invalidPreview':
+    'Displayed values are the last accepted values. Correct invalid fields before starting.',
   'draft.save': 'Save v{version}',
   'draft.saved': 'Saved as version {version}.',
   'draft.discard': 'Discard changes',
@@ -1315,6 +1317,8 @@ export const fr: Catalog = {
   'recipe.baking': 'En cours',
   'draft.unsaved': 'Modifications non enregistrées',
   'draft.invalid': 'Corriger les champs invalides',
+  'draft.invalidPreview':
+    'Les valeurs affichées sont celles déjà acceptées. Corriger les champs invalides avant de démarrer.',
   'draft.save': 'Enregistrer v{version}',
   'draft.saved': 'Version {version} enregistrée.',
   'draft.discard': 'Abandonner les modifications',

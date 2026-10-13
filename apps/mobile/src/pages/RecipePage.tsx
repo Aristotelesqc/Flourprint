@@ -50,6 +50,7 @@ import { RecipeOutcome } from '../blocks/RecipeOutcome';
 import { ChangeReviewSheet } from '../blocks/ChangeReviewSheet';
 import { DraftActionBar } from '../blocks/DraftActionBar';
 import { OverflowMenu } from '../ui/OverflowMenu';
+import { InfoButton } from '../ui/InfoButton';
 import { usePanelScroll } from '../ui/PanelContext';
 import { useMessages } from '../i18n/use-messages';
 import { sendBakeCommand } from '../services/bakes';
@@ -90,6 +91,7 @@ const RecipePageContent = () => {
   const params = useParams<{ recipeId?: string; draftId?: string }>();
   const draftId = params.draftId;
   const recipeId = params.recipeId ?? '';
+  const newRecipe = draftId !== undefined;
   const services = useServices();
   const flourCatalog = useFlourCatalog();
   const router = useIonRouter();
@@ -290,12 +292,61 @@ const RecipePageContent = () => {
     [trashedAt, selectEditor],
   );
 
+  // Commit only the focused field through its normal blur path, including keyboard/AT activation.
+  const blurActiveEditor = useCallback(() => {
+    const focused = document.activeElement;
+    if (focused instanceof HTMLInputElement && contentRef.current?.contains(focused)) {
+      focused.blur();
+    }
+  }, []);
+
+  const leaveEditing = useCallback(
+    async (destination: Tab = 'formula') => {
+      blurActiveEditor();
+      await saving.current;
+      // Planning is a preview of accepted values: keep mounted raw fields for the return journey.
+      if (destination === 'process') {
+        setReturnToPlanning(false);
+        setTargetedStepId(undefined);
+        switchTab(destination);
+        return;
+      }
+      const invalid = validationActions?.isBlocked() ?? false;
+      const leave = () => {
+        if (invalid) setEditorGeneration((generation) => generation + 1);
+        setReturnToPlanning(false);
+        setTargetedStepId(undefined);
+        if (newRecipe && destination === 'formula') {
+          router.push('/recipes', 'back');
+          return;
+        }
+        setIsEditing(false);
+        setEditorSection('comp');
+        switchTab(destination);
+        requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
+      };
+      if (invalid) {
+        if (confirming.current) return;
+        confirming.current = true;
+        void presentAlert({
+          header: t('editor.leaveTitle'),
+          message: t('editor.leaveInvalid'),
+          onDidDismiss: () => {
+            confirming.current = false;
+          },
+          buttons: [
+            { text: t('bake.cancel'), role: 'cancel' },
+            { text: t('editor.keepDraft'), handler: leave },
+          ],
+        });
+      } else leave();
+    },
+    [blurActiveEditor, validationActions, newRecipe, router, switchTab, presentAlert, t],
+  );
+
   const handleReturnToPlanning = useCallback(() => {
-    setReturnToPlanning(false);
-    setTargetedStepId(undefined);
-    setIsEditing(false);
-    switchTab('process');
-  }, [switchTab]);
+    void leaveEditing('process');
+  }, [leaveEditing]);
 
   const hydrationRef = useRef<HTMLDivElement>(null);
   const hydrationFrameRef = useRef<number | undefined>(undefined);
@@ -369,7 +420,6 @@ const RecipePageContent = () => {
       return next.size === previous.size ? previous : next;
     });
   }, [draft, resolved, ingredientName, componentName]);
-  const newRecipe = draftId !== undefined;
 
   if ((!base && !newRecipe) || !draft || !resolved) {
     return (
@@ -496,14 +546,6 @@ const RecipePageContent = () => {
         },
       ],
     });
-
-  // Commit only the focused field through its normal blur path, including keyboard/AT activation.
-  const blurActiveEditor = () => {
-    const focused = document.activeElement;
-    if (focused instanceof HTMLInputElement && contentRef.current?.contains(focused)) {
-      focused.blur();
-    }
-  };
 
   const save = async () => {
     blurActiveEditor();
@@ -696,38 +738,6 @@ const RecipePageContent = () => {
     requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
   };
 
-  const leaveEditing = async () => {
-    blurActiveEditor();
-    await saving.current;
-    const invalid = validationActions?.isBlocked() ?? false;
-    const leave = () => {
-      if (invalid) setEditorGeneration((generation) => generation + 1);
-      if (newRecipe) {
-        router.push('/recipes', 'back');
-        return;
-      }
-      setIsEditing(false);
-      setEditorSection('comp');
-      switchTab('formula');
-      requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
-    };
-    if (invalid) {
-      if (confirming.current) return;
-      confirming.current = true;
-      void presentAlert({
-        header: t('editor.leaveTitle'),
-        message: t('editor.leaveInvalid'),
-        onDidDismiss: () => {
-          confirming.current = false;
-        },
-        buttons: [
-          { text: t('bake.cancel'), role: 'cancel' },
-          { text: t('editor.keepDraft'), handler: leave },
-        ],
-      });
-    } else leave();
-  };
-
   const origin = stored?.origin;
   const template =
     origin?.kind === 'template'
@@ -822,11 +832,7 @@ const RecipePageContent = () => {
                   },
                   {
                     label: t('recipe.tab.process'),
-                    handler: () => {
-                      blurActiveEditor();
-                      setIsEditing(false);
-                      switchTab('process');
-                    },
+                    handler: () => void leaveEditing('process'),
                   },
                   {
                     label: t('editor.review'),
@@ -947,6 +953,22 @@ const RecipePageContent = () => {
           </div>
         )}
 
+        {!isEditing && hasInvalid && (
+          <div className="m3-card-quiet mb-4 flex-row flex-wrap items-center justify-between">
+            <span className="flex items-center gap-2 text-sm" role="status">
+              {t('draft.invalidPreview')}
+              <InfoButton topic="draft" term={t('draft.invalid')} />
+            </span>
+            <button
+              type="button"
+              className="fp-reset min-h-touch px-2 text-sm font-semibold text-accent underline focus-visible:ring-2 focus-visible:ring-accent"
+              onClick={() => selectEditor(editorSection)}
+            >
+              {t('recipe.edit')}
+            </button>
+          </div>
+        )}
+
         {!isEditing && (
           <div hidden={tab !== 'formula'}>
             <FormulaConsultation
@@ -1056,7 +1078,7 @@ const RecipePageContent = () => {
               <IonButton
                 expand="block"
                 shape="round"
-                className="h-12 font-semibold"
+                className="btn-pill-primary h-12 font-semibold"
                 disabled={!active && (writes.busy || dirty || hasInvalid)}
                 onClick={() => (active ? openBake(active.bakeId) : confirmStart())}
               >

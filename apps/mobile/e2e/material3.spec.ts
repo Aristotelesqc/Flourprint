@@ -123,6 +123,111 @@ test('component ratio commits through the domain; refusal retains text and block
   await expect(ratio).toHaveAttribute('aria-invalid', 'true');
   await expect(routed(page).getByLabel('tangzhong, Hydratation (%)')).toHaveValue('600');
   await expect(routed(page).getByRole('button', { name: 'Enregistrer v2' })).toBeDisabled();
+  await expect(routed(page).getByText(/^Ce ratio ne peut pas être appliqué/)).toBeVisible();
+  await ratio.fill('6');
+  await ratio.press('Enter');
+  await expect(ratio).toHaveAttribute('aria-invalid', 'false');
+  await expect(routed(page).getByText(/^Ce ratio ne peut pas être appliqué/)).toHaveCount(0);
+  await expect(routed(page).getByRole('button', { name: 'Enregistrer v2' })).toBeEnabled();
+});
+
+for (const english of [false, true]) {
+  test(`planning retains invalid text and explains the blocked start; accepted edits remain drafts${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await open(page);
+    await enterEditor(page);
+    const water = routed(page).getByLabel(english ? 'Water (g)' : 'Eau (g)', { exact: true });
+    const save = () =>
+      routed(page)
+        .locator('ion-footer')
+        .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true });
+    await water.fill('abc');
+    await menuAction(page, /^(Planification|Planning)$/);
+    const alert = page.locator('ion-alert');
+    await expect(alert).toHaveCount(0);
+    await expect(
+      routed(page).getByRole('button', { name: english ? 'Start at' : 'Commencer à', exact: true }),
+    ).toBeVisible();
+    await expect(
+      routed(page)
+        .locator('ion-footer')
+        .getByRole('button', {
+          name: english ? 'Start preparation' : 'Démarrer la préparation',
+          exact: true,
+        }),
+    ).toBeDisabled();
+    await expect(
+      routed(page).getByText(
+        english
+          ? 'Displayed values are the last accepted values. Correct invalid fields before starting.'
+          : 'Les valeurs affichées sont celles déjà acceptées. Corriger les champs invalides avant de démarrer.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await routed(page)
+      .getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true })
+      .click();
+    await expect(water).toHaveValue('abc');
+    await expect(save()).toBeDisabled();
+    await water.fill('720');
+    await menuAction(page, /^(Planification|Planning)$/);
+    await expect(alert).toHaveCount(0);
+    await expect(
+      routed(page).getByText(english ? 'Unsaved changes' : 'Modifications non enregistrées', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await enterEditor(page);
+    await expect(water).toHaveValue('720');
+    await save().click();
+    await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+  });
+
+  test(`recipe cards name flour percentages once and disabled Save remains a full-size action${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 851 });
+    await page.goto('/recipes');
+    await expect(
+      routed(page).getByText(
+        english
+          ? 'poolish 30 % of the flour · tangzhong 5 % of the flour'
+          : 'poolish 30 % de la farine · tangzhong 5 % de la farine',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await page.getByText('Poolish + tangzhong', { exact: true }).click();
+    await enterEditor(page);
+    const save = routed(page)
+      .locator('ion-footer')
+      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true });
+    await expect(save).toBeDisabled();
+    const bounds = await save.boundingBox();
+    expect(bounds?.height).toBeGreaterThanOrEqual(48);
+  });
+}
+
+test('active preparation journal keeps more than three notes accessible', async ({ page }) => {
+  await open(page);
+  await routed(page)
+    .locator('ion-footer')
+    .getByRole('button', { name: 'Démarrer la préparation', exact: true })
+    .click();
+  await page.locator('ion-alert').getByRole('button', { name: 'Démarrer', exact: true }).click();
+  await expect(page).toHaveURL(/\/bakes\//);
+  await expect(routed(page)).toHaveCount(1);
+  await routed(page).getByRole('button', { name: 'Commencer : Préferment', exact: true }).click();
+  for (const text of ['QA note one', 'QA note two', 'QA note three', 'QA note four']) {
+    await routed(page).getByRole('button', { name: 'Note', exact: true }).click();
+    const modal = page.locator('ion-modal:not(.overlay-hidden)');
+    await modal.locator('textarea').fill(text);
+    await modal.getByRole('button', { name: 'Enregistrer', exact: true }).click();
+    await expect(modal).toBeHidden();
+  }
+  const journal = routed(page).getByTestId('preparation-journal');
+  await expect(journal).toContainText('QA note one');
+  await expect(journal).toContainText('QA note four');
 });
 
 test('editor sections preserve one raw field and a page-wide invalid state', async ({ page }) => {

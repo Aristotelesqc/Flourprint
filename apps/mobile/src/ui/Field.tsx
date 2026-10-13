@@ -171,9 +171,15 @@ interface NumberFieldProps {
   readonly width?: string;
   /** Display rounding only: an untouched formatted field never commits it to the domain. */
   readonly maximumFractionDigits?: number;
+  readonly invalidText?: string;
 }
 
-export const NumberField = ({ value, maximumFractionDigits = 2, ...props }: NumberFieldProps) => {
+export const NumberField = ({
+  value,
+  maximumFractionDigits = 2,
+  invalidText,
+  ...props
+}: NumberFieldProps) => {
   const { t, locale } = useMessages();
   return (
     <Field<number>
@@ -185,7 +191,7 @@ export const NumberField = ({ value, maximumFractionDigits = 2, ...props }: Numb
         const parsed = parseDecimal(text);
         return parsed === undefined ? { ok: false } : { ok: true, value: parsed };
       }}
-      invalidText={t('field.invalidNumber')}
+      invalidText={invalidText ?? t('field.invalidNumber')}
     />
   );
 };

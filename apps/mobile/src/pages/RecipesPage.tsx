@@ -75,7 +75,7 @@ export const RecipesPage = () => {
     const summaries = await services.bakes.listBakes();
     const finished = await Promise.all(
       summaries
-        .filter((s) => s.status === 'finished' && s.endedAt)
+        .filter((s) => s.status === 'finished')
         .map(async (summary) => ({
           summary,
           state: await loadBake(services.bakes, summary.bakeId),
@@ -97,23 +97,34 @@ export const RecipesPage = () => {
           const count = variants(recipe);
           const revision = await services.recipes.getRevision(recipe.id, recipe.headVersion);
           const history = finished.filter(({ summary }) => summary.recipeId === recipe.id);
-          const lastBaked = history
+          const cookedHistory = history
             .filter(
               ({ state }) =>
                 state.ok &&
                 (state.value.outcome?.result === 'cooked' ||
                   state.value.outcome?.result === 'cookedAndDough'),
             )
-            .map(({ summary }) => summary.endedAt as Instant)
-            .sort()
-            .at(-1);
+            .map(
+              ({ summary, state }) =>
+                (state.ok ? state.value.endedAt : undefined) ??
+                (summary.endedAt as Instant | undefined),
+            )
+            .filter((endedAt): endedAt is Instant => endedAt !== undefined)
+            .sort((a, b) => Date.parse(a) - Date.parse(b));
+          const lastBaked = cookedHistory.at(-1);
+          const hasCookingUnknown = history.some(({ summary, state }) => {
+            if (!state.ok || state.value.outcome === undefined) return true;
+            const isCooked =
+              state.value.outcome.result === 'cooked' ||
+              state.value.outcome.result === 'cookedAndDough';
+            const endInstant = state.value.endedAt ?? summary.endedAt;
+            return isCooked && endInstant === undefined;
+          });
           return {
             recipe,
             ...(revision.ok && revision.value ? { revision: revision.value } : {}),
             ...(lastBaked ? { lastBaked } : {}),
-            ...(history.some(({ state }) => !state.ok || state.value.outcome === undefined)
-              ? { cookingUnknown: true }
-              : {}),
+            ...(hasCookingUnknown ? { cookingUnknown: true } : {}),
             ...(count === undefined ? {} : { variants: count }),
           };
         }),
@@ -293,7 +304,7 @@ const RunningBake = ({
         <div className="text-xs font-bold tracking-wider text-accent uppercase">
           {t('recipes.activeBakeCard')}
         </div>
-        <div className="m3-type-title">{recipe?.name ?? t('recipe.deleted')}</div>
+        <h2 className="m3-type-title m-0">{recipe?.name ?? t('recipe.deleted')}</h2>
         <div className="text-sm text-muted">{detail}</div>
         <div className="mt-0.5">
           <span className="text-sm font-semibold text-accent underline">
@@ -319,7 +330,7 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
   const parts = revision?.formula.components
     .map(
       (c) =>
-        `${componentName(revision.formula, c)} ${pct(c.flourPct)} ${t('formula.column.basisFlour')}`,
+        `${componentName(revision.formula, c)} ${t('formula.prep.flourPct', { pct: pct(c.flourPct) })}`,
     )
     .join(' · ');
   const isEstimate =
@@ -335,7 +346,7 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
     <IonRouterLink routerLink={`/recipes/${recipe.id}`} className="text-ink">
       <div className="m3-card m3-card-interactive">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="m3-type-title">{recipe.name}</span>
+          <h2 className="m3-type-title m-0">{recipe.name}</h2>
           <span className="shrink-0 text-[13px] text-muted">
             {card.variants === undefined
               ? `v${recipe.headVersion}`

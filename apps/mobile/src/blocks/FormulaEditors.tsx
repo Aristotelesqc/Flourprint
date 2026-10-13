@@ -373,7 +373,6 @@ export const PreparationFields = ({
   onStructure: StructureEdit;
 }) => {
   const { t, componentName } = useMessages();
-  const [ratioRefused, setRatioRefused] = useState(false);
   const component = formula.components.find((c) => c.id === componentId);
   if (!component) return null;
   const label = componentName(formula, component);
@@ -417,29 +416,22 @@ export const PreparationFields = ({
                   label={`${label}, ${t('component.ratioLabel')}`}
                   width="7rem"
                   value={ratioParts}
+                  invalidText={t('component.ratioRejected')}
                   onCommit={(parts) => {
                     const res = hydrationForRatio(component, parts);
                     if (res.ok) {
-                      const accepted = onEdit({
+                      return onEdit({
                         type: 'UpdateComponent',
                         component: component.id,
                         changes: { hydrationPct: res.value },
                       });
-                      setRatioRefused(!accepted);
-                      return accepted;
                     }
-                    setRatioRefused(true);
                     return false;
                   }}
                 />
               </span>
             </span>
             <span className="text-[11px] text-muted">{t('component.ratioBasisDesc')}</span>
-            {ratioRefused && (
-              <p className="m-0 text-sm text-alert" role="alert">
-                {t('component.ratioRejected')}
-              </p>
-            )}
           </div>
         ) : (
           <div className="flex flex-col gap-0.5">

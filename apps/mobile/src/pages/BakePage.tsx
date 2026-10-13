@@ -450,7 +450,11 @@ export const BakePage = () => {
                   fill="outline"
                   shape="round"
                   className="min-h-12 font-semibold btn-pill-secondary"
-                  disabled={focus.step.plannedDurationS === undefined}
+                  disabled={
+                    focus.step.plannedDurationS === undefined ||
+                    commands.busy ||
+                    pending !== undefined
+                  }
                   onClick={() =>
                     void send({
                       type: 'AdjustStep',
@@ -667,7 +671,7 @@ export const BakePage = () => {
 
           {log.length > 0 && (
             <StepList title={t('bake.log')} testId="preparation-journal">
-              {log.slice(0, state.status === 'active' ? 3 : undefined).map((entry) => (
+              {log.map((entry) => (
                 <p
                   key={`${entry.kind}-${entry.at}-${entry.stepId ?? ''}-${entry.set ?? ''}`}
                   className="m-0 py-2 text-sm text-muted"
@@ -809,12 +813,10 @@ export const BakePage = () => {
 const noteText = (entry: LogEntry): string =>
   [ratingText(entry.rating), entry.text ?? ''].filter((part) => part !== '').join(' ');
 
-/** Stars for a whole rating in [0, 5]; any other recorded value as a number, never a crash. */
+/** Stars for positive whole ratings up to 5; zero and other recorded values remain readable. */
 const ratingText = (rating: number | undefined): string => {
   if (rating === undefined || !Number.isFinite(rating)) return '';
-  return Number.isInteger(rating) && rating >= 0 && rating <= 5
-    ? '★'.repeat(rating)
-    : `${rating}/5`;
+  return Number.isInteger(rating) && rating > 0 && rating <= 5 ? '★'.repeat(rating) : `${rating}/5`;
 };
 
 type Translate = ReturnType<typeof useMessages>['t'];

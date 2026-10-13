@@ -114,6 +114,7 @@ export const FormulaConsultation = ({
             <div className="flex items-center justify-between pt-1">
               <button
                 type="button"
+                aria-haspopup="dialog"
                 className="fp-reset self-start text-sm text-accent underline decoration-dotted underline-offset-4"
                 onClick={() => setExplaining(true)}
               >
