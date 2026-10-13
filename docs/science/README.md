@@ -21,6 +21,9 @@ pull request.
 
 - [fermentation-model.md](fermentation-model.md): the fermentation model, its evidence, its limits
   and its changelog by model version.
+- [ingredient-values.md](ingredient-values.md): proposed typical composition values and citations
+  for the built-in ingredient entries (`docs/contracts/ingredients.md`), with read status and
+  unknowns.
 - `data/`: transcribed source tables (CSV) with a metadata file each (source, DOI, formula,
   endpoint, what the temperature means, who transcribed it, read status, `source_verified`).
 - `data/style-guides.md` and `.json`: consensus ranges and starting points per template style,
