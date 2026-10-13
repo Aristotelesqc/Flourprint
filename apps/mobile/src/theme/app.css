@@ -264,7 +264,6 @@ ion-button > svg {
   ion-button.btn-pill-primary.button-disabled {
     --background: var(--color-surface-container);
     --color: var(--color-muted);
-    --opacity: 1;
   }
 
   /* Style Ionic's native button through its properties: a host border creates two outlines. */
@@ -297,6 +296,15 @@ ion-button > svg {
 /* Unlayered: the focus frame wins over the field's border utility. */
 .fp-field:focus-within {
   border-color: var(--color-accent);
+}
+
+/* Ionic dims the host and can inherit toolbar ink inside its shadow button. */
+ion-button.btn-pill-primary.button-disabled {
+  opacity: 1;
+}
+
+ion-button.btn-pill-primary.button-disabled::part(native) {
+  color: var(--color-muted);
 }
 
 ion-action-sheet.fp-overflow-sheet {

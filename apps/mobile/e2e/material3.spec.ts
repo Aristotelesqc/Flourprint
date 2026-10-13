@@ -188,6 +188,7 @@ for (const english of [false, true]) {
     page,
   }) => {
     await page.setViewportSize({ width: 360, height: 851 });
+    await page.emulateMedia({ colorScheme: english ? 'dark' : 'light' });
     await page.goto('/recipes');
     await expect(
       routed(page).getByText(
@@ -205,6 +206,31 @@ for (const english of [false, true]) {
     await expect(save).toBeDisabled();
     const bounds = await save.boundingBox();
     expect(bounds?.height).toBeGreaterThanOrEqual(48);
+    const rendering = await save.evaluate((button) => {
+      const style = getComputedStyle(button);
+      const root = button.getRootNode();
+      const host = root instanceof ShadowRoot ? root.host : button;
+      const luminance = (color: string) => {
+        const channels = color
+          .match(/[\d.]+/g)
+          ?.slice(0, 3)
+          .map(Number);
+        if (!channels || channels.length !== 3) throw new Error(`Unresolved color: ${color}`);
+        const linear = channels.map((channel) => {
+          const value = channel / 255;
+          return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+        return (linear[0] ?? 0) * 0.2126 + (linear[1] ?? 0) * 0.7152 + (linear[2] ?? 0) * 0.0722;
+      };
+      const ink = luminance(style.color);
+      const background = luminance(style.backgroundColor);
+      return {
+        contrast: (Math.max(ink, background) + 0.05) / (Math.min(ink, background) + 0.05),
+        opacity: Number(getComputedStyle(host).opacity),
+      };
+    });
+    expect(rendering.opacity).toBe(1);
+    expect(rendering.contrast).toBeGreaterThanOrEqual(4.5);
   });
 }
 
