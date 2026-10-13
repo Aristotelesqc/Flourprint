@@ -152,6 +152,9 @@
     [hidden] { display: none !important; }
     .editable-step > summary::after { content: '⌄'; margin-left: 8px; font-size: 18px; }
     .editable-step[open] > summary::after { content: '⌃'; }
+  
+    .card-interactive .type-body-medium[style*="display: flex"] { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px !important; }
+    .card-interactive .type-body-medium > div > .type-label-medium { display: block; margin-bottom: 4px; }
   </style>
 </head>
 <body>

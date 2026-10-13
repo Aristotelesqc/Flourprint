@@ -77,3 +77,5 @@ document.addEventListener('DOMContentLoaded',()=>{const bar=document.querySelect
 document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('#edit-section-parts select').forEach(select=>{const option=select.options[select.selectedIndex];if(option&&option.textContent.includes('du composant')){const full=option.textContent;option.textContent='Farine à pain';const hint=document.createElement('span');hint.className='value-subordinate';hint.textContent=full.replace('Farine à pain (','').replace(/\)$/,'');select.after(hint);}});});
 
 document.addEventListener('DOMContentLoaded',()=>{const q=new URLSearchParams(location.search);if(q.get('screen')==='edit'&&['comp','parts','steps','res'].includes(q.get('section')))switchEditSection(q.get('section'));});
+
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('#container-recipes span').forEach(e=>{if(e.textContent.trim()==='brouillon')e.remove();});});
