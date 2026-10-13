@@ -1,6 +1,6 @@
 {
   "before": "24835c5",
-  "after": "d4c4f70",
+  "after": "7f0f36c",
   "build": "v0.2.0-local",
   "browser": "Chrome 155.0.8059.40",
   "locale": "fr-CA",
@@ -9,8 +9,8 @@
   "files": [
     {
       "name": "index.html",
-      "sha256": "7d2734e72cd2ee4d9cd3d79a8dc825571b299ae4cb30c70fc627ee0d64e5890e",
-      "bytes": 4136
+      "sha256": "a86d72f5dac178e71f3688c306a34f0aae052f10f7f1aa2fc53bf793962e2ac6",
+      "bytes": 4746
     },
     {
       "name": "before-recipes-light.png",
@@ -91,6 +91,35 @@
       "name": "after-preparation-dark.png",
       "sha256": "95dbc1042cde247544c730c77275b553f8f31f1077923722e8f41cbc5d86d849",
       "bytes": 51443
+    },
+    {
+      "name": "after-recipes-amoled.png",
+      "sha256": "4eaf2c31ea82c2b483236a304b3b8c90201571cf8a7f993195775bb0b16be89c",
+      "bytes": 43918
+    },
+    {
+      "name": "after-recipe-amoled.png",
+      "sha256": "cbe2c8d1af406c6b02173144beb05b2431964484f0709f843cfaf1f61abc0e15",
+      "bytes": 61576
+    },
+    {
+      "name": "after-edit-amoled.png",
+      "sha256": "4e1b23c9a9b13ddff48a137dc0d1ca6052c51aaedca34a086e89c42ae0154bed",
+      "bytes": 50138
+    },
+    {
+      "name": "after-preparation-amoled.png",
+      "sha256": "ac758e64e2bbc642581265cdadfbf26e7f5cff5d55c8e3e13921fe8965499e1f",
+      "bytes": 50821
     }
+  ],
+  "beforeThemes": [
+    "light",
+    "dark"
+  ],
+  "afterThemes": [
+    "light",
+    "dark",
+    "amoled"
   ]
 }
