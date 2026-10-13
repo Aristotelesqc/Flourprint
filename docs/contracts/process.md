@@ -158,6 +158,16 @@ Rules:
   `insufficient_data`, `fermentation.md`).
 - `doughTemperatureC` and `frictionC` are accepted on either mixing step and read only on the
   reference one. On the other, they are kept and ignored.
+- **Kneading is only what the list says.** A process without a `mix` step has no kneading, and
+  the engine adds none. The check `no_gluten_work` (`drafts.md`, a warning, never blocking) then
+  suggests folds when nothing else builds gluten: no `mix`, no `fold` step and no `folds`
+  technique anywhere. The baker may ignore it.
+- Folds are added in one of two ways, both already in this contract: **one `fold` step each**
+  (manual), or **a repeating series on a step** (`technique.folds`: every `intervalS`, `count`
+  times, during that step). The interface may compute `count` from the step's duration and the
+  interval (for example every 45 min through a bulk of 3 h gives 3 folds, at 45, 90 and 135 min, none
+  at the very end). A series that spans several
+  steps is not expressible: use `fold` steps there.
 - The labels are interface messages (ADR 0009): in French, **Frasage** and **Pétrissage**. A
   persisted `frasage` or `mix` keeps its meaning whatever the label.
 
@@ -181,6 +191,9 @@ Examples (hand-checked against the rules above):
 4. **Existing recipe**: `mix`, `bulk`, `shape`, `proof`, `bake`. Unchanged: the `mix` is the
    reference mixing step.
 5. **`frictionC` on a `fold` step**: `InvalidProcess`, as before.
+6. **No-knead loaf without folds**: `frasage`, `bulk`, `shape`, `proof`, `bake`. `no_gluten_work`
+   is raised; adding `technique.folds` `{ count: 3, intervalS: 2700 }` on the 3 h `bulk` (folds at 45, 90
+   and 135 min, within the step) clears it, as would a `fold` step or a `mix`.
 
 ## Step removal
 
