@@ -182,14 +182,17 @@ The engine names a component from its liquid ratio
 | others       | the kind itself                                               |
 
 - The style is derived, never stored: changing the ratio renames the component.
-- **Ratio entry** (owner decision of 2026-10-12). A component's liquid ratio may be read and typed
-  as flour:liquid parts, `1:r/100` (a tangzhong at r = 600 reads 1:6). Typing `1:n` sets the
-  component's `hydrationPct` so that its liquid ratio becomes `100 × n`, the water of its
-  allocated ingredients included: `hydrationPct = 100 × n − 100 × (allocated water) / flourPct`.
-  It is refused when `n` is not finite and > 0, when the component has no flour, when an
-  allocated ingredient's water is unknown, or when the allocated water alone already exceeds
-  the ratio (`InvalidFormula`). The ratio counts water, as the style does: 1:5 with milk means
-  5 parts of milk water, not of milk.
+- **Ratio entry** (owner decisions of 2026-10-12). A component's ratio is read and typed as
+  flour:liquid parts by **mass**, the way a baker weighs it: a milk tangzhong of 50 g flour and
+  250 g milk is 1:5. The liquid is the component's water plus the mass of its allocated
+  ingredients: `L = flourPct × hydrationPct / 100 + Σ allocated bakerPct`, and the ratio reads
+  `1:(L / flourPct)`. Typing `1:n` sets
+  `hydrationPct = 100 × (n × flourPct − Σ allocated bakerPct) / flourPct`. It is refused when
+  `n` is not finite and > 0, when the component has no flour, or when the allocated ingredients
+  alone already exceed the ratio (`InvalidFormula`). The
+  ratio is an input and a reading only: hydration and the component style keep counting water
+  (the milk's water content), as defined above. A non-liquid allocation (sugar, salt) counts in
+  the ratio; it is rare in a scald.
 - An allocated ingredient whose water content is unknown leaves the style undefined; the kind
   is shown instead.
 - The thresholds are naming conventions, not physics. Sourdough cultures are not modelled yet
