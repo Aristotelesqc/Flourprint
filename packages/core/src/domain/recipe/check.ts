@@ -1,5 +1,6 @@
 import { isCookingStep } from '../process/cooking.js';
 import type { Formula } from '../formula/types.js';
+import type { IngredientFamily } from '../ingredient/types.js';
 import type { Process } from '../process/types.js';
 import { validateRecipe } from './validate.js';
 
@@ -18,9 +19,17 @@ const WATER_PCT = [45, 90] as const;
 
 /**
  * Everything wrong with a recipe, blocking or not (drafts.md). Blocking issues are the errors of
- * `validateRecipe`; warnings are wide plausibility checks that never block.
+ * `validateRecipe`; warnings are wide plausibility checks that never block. `entryFamilies` maps
+ * a formula ingredient id to the family of the registry entry it pins, resolved by the
+ * application (ingredients.md); without it only ingredient ids and yeast marks count.
  */
-export const checkRecipe = (formula: Formula, process: Process): RecipeIssue[] => {
+export const checkRecipe = (
+  formula: Formula,
+  process: Process,
+  entryFamilies: Readonly<Record<string, IngredientFamily>> = {},
+): RecipeIssue[] => {
+  const familyOf = (id: string): IngredientFamily | undefined =>
+    Object.hasOwn(entryFamilies, id) ? entryFamilies[id] : undefined;
   const issues: RecipeIssue[] = [];
   if (process.steps.length === 0) {
     issues.push({ severity: 'blocking', code: 'no_steps', path: 'steps' });
@@ -44,13 +53,14 @@ export const checkRecipe = (formula: Formula, process: Process): RecipeIssue[] =
     });
   }
 
-  const salt = formula.ingredients.find((i) => i.id === 'salt' && i.role === 'dough');
+  const dough = formula.ingredients.filter((i) => i.role === 'dough');
+  const salt = dough.find((i) => i.id === 'salt') ?? dough.find((i) => familyOf(i.id) === 'salt');
   if (!salt) issues.push({ severity: 'warning', code: 'salt_missing', path: 'ingredients' });
   else if (salt.bakerPct < SALT_PCT[0] || salt.bakerPct > SALT_PCT[1]) {
     issues.push({
       severity: 'warning',
       code: 'salt_outside_1_to_3_5',
-      path: 'ingredients.salt.bakerPct',
+      path: `ingredients.${salt.id}.bakerPct`,
       details: { pct: salt.bakerPct },
     });
   }
@@ -66,7 +76,7 @@ export const checkRecipe = (formula: Formula, process: Process): RecipeIssue[] =
     }
   }
   const leavened =
-    formula.ingredients.some((i) => i.yeast !== undefined) ||
+    formula.ingredients.some((i) => i.yeast !== undefined || familyOf(i.id) === 'leaven') ||
     formula.components.some((c) => c.kind === 'preferment');
   if (!leavened) issues.push({ severity: 'warning', code: 'no_leavening', path: 'ingredients' });
   if (process.steps.length > 0) {

@@ -14,11 +14,21 @@ export interface RevisionRef {
   readonly version: number;
 }
 
+/** A registry property actually consumed by the calculation (history.md). */
 export interface UsedProperty {
+  /** The registry entry id. */
   readonly ingredient: string;
+  /** The registry entry version. */
   readonly version: number;
+  /** The version is a personal customization of a built-in (ingredients.md). */
+  readonly customized?: true;
+  /** The formula ingredient the property was consumed for; set for pinned entries. */
+  readonly formulaIngredient?: string;
   readonly key: string;
+  /** The value actually consumed, the baker's when overridden. */
   readonly value: unknown;
+  /** The formula ingredient overrides this property of its entry. */
+  readonly overridden?: true;
 }
 
 export interface BakeSnapshot {
@@ -77,6 +87,10 @@ export type BakeCommandPayload =
       readonly formula: Formula;
       readonly process: Process;
       readonly mode: ProjectionMode;
+      /**
+       * Properties consumed, resolved by the caller (history.md); absent, the pinned ingredient
+       * entries give their rows from the formula's copied contents (ingredients.md, Bakes).
+       */
       readonly usedProperties?: readonly UsedProperty[];
       /** A real bake or a simulation (history.md); absent = unknown. */
       readonly origin?: BakeOrigin;
