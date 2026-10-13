@@ -151,8 +151,8 @@ export const codeName = (sha) => {
  * GITHUB_RUN_NUMBER, GITHUB_REF_NAME, HEAD_SHA or GITHUB_SHA, PR_NUMBER).
  * - `build`: the full name, with the run and the short hash (Advanced, feedback export).
  * - `label`: the short name shown in the app bar.
- * - `channel`: `release` (main), `dev`, `preview` (pull requests, other branches) or `local`. Only
- *   non-release builds offer to load the latest dev build.
+ * - `channel`: `release` (main), `dev`, `canary` (ADR 0018), `preview` (pull requests, other
+ *   branches) or `local`. Only non-release builds offer to load the latest dev build.
  */
 export const buildNames = (version, env) => {
   const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version ?? '');
@@ -184,6 +184,10 @@ export const buildNames = (version, env) => {
     build = `${version}-dev.${run}+${sha}`;
     label = `v${version}-${codeName(fullSha)}`;
     channel = 'dev';
+  } else if (env.GITHUB_REF_NAME === 'canary') {
+    build = `${version}-canary.${run}+${sha}`;
+    label = `v${version}-canary-${codeName(fullSha)}`;
+    channel = 'canary';
   } else {
     build = `${version}-${branch}.${run}+${sha}`;
     label = `v${version}-${branch}-${codeName(fullSha)}`;
