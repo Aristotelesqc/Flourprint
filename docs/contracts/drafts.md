@@ -67,7 +67,7 @@ checkRecipe(formula, process, entryFamilies?: Record<string, IngredientFamily>):
 | `water_outside_45_to_90` | total water below 45 % or above 90 % of the flour, when it is complete        |
 | `no_leavening`           | no ingredient marked as yeast, none with a `leaven` entry, and no preferment  |
 | `no_mix_step`            | no mixing step: no step with operation `frasage` or `mix` (process.md)        |
-| `no_gluten_work`         | no `mix` step, no `fold` step and no `folds` technique on any step            |
+| `no_kneading_or_folds`   | a note to confirm the technique: no `mix`, no `fold`, no `folds` on any step  |
 | `no_bake_step`           | no cooking step (process.md); a dough-only recipe stays valid                 |
 | `step_without_duration`  | an `asap` step without a planned duration (one issue per step, `path` its id) |
 | `folds_exceed_step`      | `folds.count × folds.intervalS` exceeds the step's planned duration           |
