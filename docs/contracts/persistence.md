@@ -81,7 +81,7 @@ createdAt, updatedAt }` as one JSON document. `saveDraft` writes or replaces it;
 
 `deleteBakes(origin)` deletes every bake of that origin (`physical` also takes bakes without
 `origin`): their events, command records and summaries, in one transaction. It is the only way a
-bake log is ever deleted, triggered by the baker (ADR 0014). Recipes, drafts and flours are
+bake log is ever deleted, triggered by the baker (ADR 0014). Recipes, drafts, flours and ingredients are
 untouched.
 
 ## Flour registry
@@ -90,7 +90,14 @@ Personal flour entries (`flours.md`) are stored by `(id, version)`; a version is
 Writing an entry whose version is not the next one for its id is refused (`HeadConflict`).
 Built-in entries are code and are not stored.
 
-## SQLite schema (version 6)
+## Ingredient registry
+
+Personal ingredient entries (`ingredients.md`) are stored by `(id, version)` like flours; a version
+is never rewritten, and a version that is not the next one for its id is refused (`HeadConflict`).
+Built-in entries are code and are not stored; a customization of a built-in is a personal entry
+stored under the built-in's id (`ingredients.md`).
+
+## SQLite schema (version 7)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
@@ -117,6 +124,9 @@ equipment      (id TEXT NOT NULL, version INTEGER NOT NULL, kind TEXT NOT NULL,
                 archived INTEGER NOT NULL, schema_version INTEGER NOT NULL,
                 document TEXT NOT NULL, created_at TEXT NOT NULL,
                 PRIMARY KEY (id, version))                                         -- v5
+ingredients    (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER NOT NULL,
+                schema_version INTEGER NOT NULL, document TEXT NOT NULL,
+                created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v7
 ```
 
 The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node
@@ -148,6 +158,7 @@ on a connection is serialized, so a transaction never interleaves with another o
   kind: 'flourprint-recipes', schemaVersion, exportedAt,
   recipes: [{ id, name, familyId?, revisions }],
   families: [{ id, name, pinnedRecipeId? }],
+  ingredients?: IngredientEntry[], // personal entry versions the revisions pin (ingredients.md)
 }
 ```
 
@@ -164,9 +175,13 @@ on a connection is serialized, so a transaction never interleaves with another o
     its family.
 - The result lists the imported and the skipped recipe ids. Importing the same file again
   imports nothing.
+- Entries of `ingredients` are written when absent and skipped when present, like recipes: never
+  compared, merged or overwritten.
 - A full backup may also carry `families` and `familyId`, `flours` (every personal flour entry
-  version) and `equipment` (every personal equipment entry version, equipment.md); all are
-  optional, so older backups still restore.
+  version), `equipment` (every personal equipment entry version, equipment.md) and `ingredients`
+  (every personal ingredient entry version, ingredients.md); all are optional, so older backups
+  still restore. A pin to an entry version absent from the backup is kept: the formula holds its
+  copied contents (ingredients.md).
 
 ## Shared contract tests
 
@@ -174,7 +189,7 @@ Every implementation (memory, SQLite Node, SQLite Capacitor, SQLite bridge) runs
 idempotent retry, reused command id, version conflict, atomic rejection of an invalid batch,
 head conflicts, immutability of revisions, families (grouping, pinning, default variant) and
 additive import (skips present ids, idempotent, atomic) and drafts (save, replace, delete, and
-the atomic promotion of a draft to a recipe or a version) and personal flours (versions, archive,
-next-version check) and the trash (trash, restore, refused revision, family default, delete
-and empty in one transaction, bakes untouched). SQLite implementations add durability tests (reopen,
+the atomic promotion of a draft to a recipe or a version) and personal flours and ingredients
+(versions, archive, next-version check) and the trash (trash, restore, refused revision, family
+default, delete and empty in one transaction, bakes untouched). SQLite implementations add durability tests (reopen,
 failed migration, newer database refused).

@@ -76,7 +76,7 @@ type RangeBound<T = number> =
 type PropertyValue =
   | {
       status: 'known' | 'estimated';
-      value: number | boolean | string; // composition, pH, density, enzyme activity, organic…
+      value: number | boolean | string; // composition, pH, enzyme activity, organic…
       unit?: Unit;
       basis?: 'per100g' | 'perServing' | 'dryMatter' | 'asIs' | 'moisture14'; // flours.md
       source: SourceRef;
@@ -90,6 +90,10 @@ interface ModelRef {
 }
 ```
 
+- Units of a `PropertyValue` are the canonical ones, `%` (points) and the property units named by
+  their contract: `'1e-4 J'` (alveograph W, `flours.md`) and `'°L'` (Lintner, diastatic
+  power) in `ingredients.md`. There is no density unit and no volume of an ingredient: ingredients are in grams only (the volume row above is an equipment capacity). A composition of an ingredient is always in
+  points of product mass with `basis: 'per100g'`.
 - Uncertainty appears only where it is meaningful: `Observation`, `Estimate`, `PropertyValue`.
 - Model parameters are versioned, immutable data, shipped with the app and exported with any bake
   that references them. A hash, if any, only checks integrity.
