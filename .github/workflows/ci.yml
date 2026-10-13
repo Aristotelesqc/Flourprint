@@ -3,13 +3,13 @@ name: CI
 on:
   push:
     # main: released work. dev: the open integration branch (the major pull request), which the
-    # dev channel follows (ADR 0013).
-    branches: [main, dev]
+    # dev channel follows (ADR 0013). canary: the release after next, web only (ADR 0018).
+    branches: [main, dev, canary]
   pull_request:
   # Everything, APKs and Windows shell included, on any branch (ADR 0016).
   workflow_dispatch:
 
-# A newer push to a pull request cancels its run in progress; main and dev runs always finish.
+# A newer push to a pull request cancels its run in progress; branch runs always finish.
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -80,8 +80,11 @@ jobs:
           if-no-files-found: ignore
 
   android:
-    # Normal and dev APKs: on dev and main (dev-channel, release) or on demand (ADR 0016).
-    if: github.event_name != 'pull_request'
+    # Normal and dev APKs: on dev and main (dev-channel, release) or on demand (ADR 0016). No APK
+    # for a push to canary: its channel is the web address only (ADR 0018).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref_name != 'canary')
     needs: check
     runs-on: ubuntu-latest
     steps:
@@ -134,7 +137,7 @@ jobs:
     # Web preview (ADR 0013), deployed to Cloudflare Pages when its secrets are set.
     needs: check
     runs-on: ubuntu-latest
-    # main and dev deploy their own address; each pull request its own pr-<number> address.
+    # main, dev and canary deploy their own address; each pull request its own pr-<number> address.
     concurrency: web-preview-${{ github.event.pull_request.number || github.ref_name }}
     permissions:
       contents: read
@@ -173,12 +176,17 @@ jobs:
           elif [ "$GITHUB_REF_NAME" = dev ]; then
             BRANCH=dev
             URL="https://dev.${PAGES_PROJECT}.pages.dev"
+          elif [ "$GITHUB_REF_NAME" = canary ]; then
+            # The release after next (ADR 0018); only a canary run deploys this address.
+            BRANCH=canary
+            URL="https://canary.${PAGES_PROJECT}.pages.dev"
           elif [ "$GITHUB_REF_NAME" = main ]; then
             BRANCH=main
             URL="https://${PAGES_PROJECT}.pages.dev"
           else
-            # A run on demand on another branch never takes the main address.
+            # A run on demand on another branch never takes the main, dev or canary address.
             BRANCH=$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'a-zA-Z0-9-' '-' | cut -c1-28)
+            case "$BRANCH" in main | dev | canary) BRANCH="branch-${BRANCH}" ;; esac
             URL="https://${BRANCH}.${PAGES_PROJECT}.pages.dev"
           fi
           # Creates the project on the first run; later runs find it already there.
@@ -220,7 +228,7 @@ jobs:
         run: |
           # One comment per pull request, edited on every push: the address never changes,
           # the line under it says which commit it serves.
-          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_LABEL}\` (\`${FLOURPRINT_BUILD}\`, commit ${HEAD_SHA}). Updated on every push. The dev channel (dev APK) follows https://dev.${PAGES_PROJECT}.pages.dev; main is https://${PAGES_PROJECT}.pages.dev."
+          BODY="**Web preview of this pull request:** ${PREVIEW_URL}"$'\n\n'"Build \`${FLOURPRINT_LABEL}\` (\`${FLOURPRINT_BUILD}\`, commit ${HEAD_SHA}). Updated on every push. The dev channel (dev APK) follows https://dev.${PAGES_PROJECT}.pages.dev; canary (the release after next) is https://canary.${PAGES_PROJECT}.pages.dev; main is https://${PAGES_PROJECT}.pages.dev."
           gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --edit-last --body "$BODY" \
             || gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$BODY"
       - name: Preview not deployed
