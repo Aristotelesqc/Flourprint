@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parseFormula } from '../src/contracts/index.js';
 import {
   componentStyle,
+  hydrationForRatio,
   liquidRatioPct,
   resolveFormula,
   type Component,
@@ -214,5 +215,57 @@ describe('component style', () => {
       [{ id: 'milk', kind: 'other', bakerPct: 25, role: 'dough' }],
     );
     expect(componentStyle(formula, only(formula))).toBeUndefined();
+  });
+});
+
+describe('ratio entry (formula.md, Ratio entry)', () => {
+  const milk = {
+    id: 'milk',
+    kind: 'other' as const,
+    bakerPct: 25,
+    role: 'dough' as const,
+    water: { status: 'known' as const, valuePct: 88 },
+  };
+
+  it('a 1:6 tangzhong of water is 600 % hydration, and reads back as 1:6', () => {
+    const formula = withComponent(scald(500));
+    const result = hydrationForRatio(formula, only(formula), 6);
+    expect(result).toEqual({ ok: true, value: 600 });
+    const updated = withComponent(scald(600));
+    expect(liquidRatioPct(updated, only(updated))).toBeCloseTo(600, 9);
+  });
+
+  it('subtracts the water of allocated milk', () => {
+    // 5 % flour, 25 % milk at 88 % water = 22 points; 1:6 needs 30 points: 8 points of water,
+    // 160 % of the component's flour.
+    const formula = withComponent(
+      { ...scald(0), allocations: [{ ingredient: 'milk', bakerPct: 25 }] },
+      [milk],
+    );
+    const result = hydrationForRatio(formula, only(formula), 6);
+    expect(result.ok && result.value).toBeCloseTo(160, 9);
+  });
+
+  it.each([
+    ['zero parts', 0],
+    ['negative parts', -1],
+    ['not a number', Number.NaN],
+  ])('refuses %s', (_, parts) => {
+    const formula = withComponent(scald(500));
+    expect(hydrationForRatio(formula, only(formula), parts).ok).toBe(false);
+  });
+
+  it('refuses when the milk alone exceeds the ratio, or its water is unknown', () => {
+    const withMilk = withComponent(
+      { ...scald(0), allocations: [{ ingredient: 'milk', bakerPct: 25 }] },
+      [milk],
+    );
+    // 22 points of milk water over 5 % flour is already 1:4.4.
+    expect(hydrationForRatio(withMilk, only(withMilk), 4).ok).toBe(false);
+    const unknown = withComponent(
+      { ...scald(0), allocations: [{ ingredient: 'milk', bakerPct: 25 }] },
+      [{ id: 'milk', kind: 'other', bakerPct: 25, role: 'dough' }],
+    );
+    expect(hydrationForRatio(unknown, only(unknown), 6).ok).toBe(false);
   });
 });
