@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
+import { enterEditor, editorSection, showPlanning } from './ui-actions';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
 const openSaved = async (page: Page) => {
@@ -7,13 +8,25 @@ const openSaved = async (page: Page) => {
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
   await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
 };
-const edit = (page: Page, english = false) =>
-  routed(page).getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true });
-const read = (page: Page, english = false) =>
-  routed(page).getByRole('button', {
+const edit = (page: Page) => ({ click: () => enterEditor(page) });
+
+const read = (page: Page, english = false) => {
+  const direct = routed(page).getByRole('button', {
     name: english ? 'Read recipe' : 'Lire la recette',
     exact: true,
   });
+  return {
+    click: async () => {
+      if (await direct.isVisible()) {
+        await direct.click();
+        return;
+      }
+      await routed(page)
+        .getByRole('button', { name: english ? 'Read recipe' : 'Lire la recette', exact: true })
+        .click();
+    },
+  };
+};
 const footer = (page: Page) => routed(page).locator('ion-footer:visible');
 
 for (const english of [false, true]) {
@@ -23,17 +36,25 @@ for (const english of [false, true]) {
     await page.setViewportSize({ width: english ? 393 : 360, height: 851 });
     await page.emulateMedia({ colorScheme: english ? 'light' : 'dark' });
     await openSaved(page);
-    await expect(footer(page)).toHaveCount(0);
+    await expect(
+      footer(page).getByRole('button', {
+        name: english ? 'Start preparation' : 'Démarrer la préparation',
+        exact: true,
+      }),
+    ).toBeVisible();
     await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(routed(page).locator('select:visible')).toHaveCount(0);
     await expect(
-      routed(page).getByRole('button', { name: english ? 'Plan' : 'Planifier', exact: true }),
+      routed(page).getByRole('button', {
+        name: english ? 'Planning' : 'Planification',
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(
       routed(page).getByRole('button', { name: english ? 'Rename' : 'Renommer' }),
     ).toHaveCount(0);
     expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('INPUT');
-    await edit(page, english).click();
+    await edit(page).click();
     await expect(
       routed(page).getByRole('heading', { name: 'Poolish + tangzhong', exact: true }),
     ).toBeVisible();
@@ -49,7 +70,12 @@ for (const english of [false, true]) {
     await water.focus();
     await water.blur();
     await read(page, english).click();
-    await expect(footer(page)).toHaveCount(0);
+    await expect(
+      footer(page).getByRole('button', {
+        name: english ? 'Start preparation' : 'Démarrer la préparation',
+        exact: true,
+      }),
+    ).toBeVisible();
     await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
   });
 }
@@ -61,17 +87,34 @@ test('consultation and editing share weighing state without inventing a saved ob
   const firstItem = routed(page).getByRole('checkbox').filter({ visible: true }).first();
   await firstItem.check();
   await edit(page).click();
+  await editorSection(page, 'result');
   await expect(firstItem).toBeChecked();
+  await editorSection(page, 'composition');
   await expect(footer(page).getByRole('status')).toHaveText('À jour');
   const water = routed(page).getByLabel('Eau (g)', { exact: true });
   await water.fill('abc');
-  await water.blur();
-  await footer(page).getByRole('button', { name: 'Abandonner les modifications' }).click();
+  const footerDiscard = footer(page).getByRole('button', { name: 'Abandonner les modifications' });
+  if (await footerDiscard.isVisible()) {
+    await footerDiscard.click();
+  } else {
+    const overflow = routed(page)
+      .locator('ion-header:visible')
+      .getByRole('button', { name: 'Menu édition' });
+    if (await overflow.isVisible()) {
+      await overflow.click();
+      await page
+        .locator('ion-action-sheet')
+        .getByRole('button', { name: 'Abandonner les modifications', exact: true })
+        .click();
+    } else {
+      await routed(page).locator('ion-header:visible ion-button[aria-label="Abandonner"]').click();
+    }
+  }
   await page
     .locator('ion-alert')
     .getByRole('button', { name: 'Abandonner les modifications' })
     .click();
-  await expect(footer(page)).toHaveCount(0);
+  await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toBeVisible();
   await expect(firstItem).toBeChecked();
   await expect(
     routed(page)
@@ -90,14 +133,19 @@ test('valid raw text is committed only from the focused field before a mode comm
   // An assistive/programmatic activation may not move browser focus first.
   await routed(page)
     .locator('ion-button')
-    .filter({ hasText: 'Lire la recette' })
+    .filter({ has: page.getByRole('button', { name: 'Lire la recette', exact: true }) })
     .evaluate((host) => {
       (host as HTMLElement).click();
     });
   await expect(water).toHaveValue('720');
+  await expect(routed(page).getByText('Modifications non enregistrées')).toBeVisible();
+  await expect(
+    footer(page).getByRole('button', { name: 'Démarrer la préparation' }),
+  ).toBeDisabled();
+  await enterEditor(page);
   await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');
   await footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }).click();
-  await expect(footer(page)).toHaveCount(0);
+  await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toBeVisible();
   await edit(page).click();
   await expect(water).toHaveValue('720');
 });
@@ -112,9 +160,12 @@ test('a changed weighing quantity stays unchecked when the previous quantity is 
   const water = routed(page).getByLabel('Eau (g)', { exact: true });
   await water.fill('720');
   await water.press('Enter');
+  await editorSection(page, 'result');
   await expect(waterItem).not.toBeChecked();
+  await editorSection(page, 'composition');
   await water.fill('750');
   await water.press('Enter');
+  await editorSection(page, 'result');
   await expect(waterItem).not.toBeChecked();
 });
 
@@ -145,7 +196,7 @@ test('planning inputs survive entering and leaving editing without creating a re
   page,
 }) => {
   await openSaved(page);
-  await routed(page).getByRole('button', { name: 'Planifier', exact: true }).click();
+  await showPlanning(page);
   await routed(page).getByRole('button', { name: 'Prêt pour', exact: true }).click();
   const when = routed(page).locator('input[type="datetime-local"]');
   await when.fill('2026-11-05T14:00');
@@ -155,8 +206,9 @@ test('planning inputs survive entering and leaving editing without creating a re
   });
   await target.selectOption('mix');
   await expect(routed(page).getByLabel('Durée : Pétrissage', { exact: true })).toHaveCount(0);
-  await expect(footer(page)).toHaveCount(0);
+  await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toBeVisible();
   await edit(page).click();
+  await editorSection(page, 'steps');
   await expect(when).toHaveValue('2026-11-05T14:00');
   await expect(target).toHaveValue('mix');
   await expect(routed(page).getByLabel('Durée : Pétrissage', { exact: true })).toBeVisible();
@@ -175,16 +227,19 @@ test('raw-only invalid input cannot disappear into consultation or start an old 
   const water = routed(page).getByLabel('Eau (g)', { exact: true });
   await water.fill('abc');
   await read(page).click();
+  const alert = page.locator('ion-alert:not(.overlay-hidden)');
+  await expect(alert).toContainText('Le texte non accepté ne peut pas être enregistré');
+  await alert.getByRole('button', { name: 'Annuler', exact: true }).click();
+  await expect(alert).toHaveCount(0);
   await expect(water).toHaveValue('abc');
   await expect(footer(page).getByRole('status')).toHaveText('Corriger les champs invalides');
-  await routed(page)
-    .locator('ion-header')
-    .getByRole('button', { name: 'Démarrer', exact: true })
-    .click();
-  const alert = page.locator('ion-alert:not(.overlay-hidden)');
-  await expect(alert).toContainText('Enregistrer les modifications');
-  await expect(alert.getByRole('button', { name: 'Démarrer', exact: true })).toHaveCount(0);
-  await alert.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(footer(page).getByRole('button', { name: 'Enregistrer v2' })).toBeDisabled();
+  await showPlanning(page);
+  await expect(
+    footer(page).getByRole('button', { name: 'Démarrer la préparation' }),
+  ).toBeDisabled();
+  await enterEditor(page);
+  await expect(water).toHaveValue('abc');
   await expect(page).toHaveURL(/\/recipes\//);
 });
 
@@ -226,5 +281,7 @@ test('a persisted revision draft resumes in editing after a document reload', as
   await page.reload();
   await expect(salt).toHaveValue('22');
   await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');
-  await expect(edit(page)).toHaveCount(0);
+  await expect(
+    routed(page).getByRole('button', { name: 'Actions sur la recette', exact: true }),
+  ).toHaveCount(0);
 });

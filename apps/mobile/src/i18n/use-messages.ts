@@ -8,7 +8,7 @@ import {
 } from '@flourprint/core/domain';
 import { useFlourCatalog } from '../services/flours';
 import { en, type MessageKey } from './messages';
-import { formatGrams, formatPct } from './numbers';
+import { formatGrams, formatPct, formatWholePct } from './numbers';
 
 type Values = Record<string, string | number>;
 
@@ -18,6 +18,7 @@ export const useMessages = () => {
   const t = (key: MessageKey, values?: Values): string => intl.formatMessage({ id: key }, values);
   const grams = (value: number) => formatGrams(value, intl.locale);
   const pct = (value: number) => formatPct(value, intl.locale);
+  const wholePct = (value: number) => formatWholePct(value, intl.locale);
   const flours = useFlourCatalog();
 
   /** Display name of a flour entry: a personal one by its name, a built-in one by message key. */
@@ -68,5 +69,16 @@ export const useMessages = () => {
     return t(key as MessageKey, values);
   };
 
-  return { t, grams, pct, name, flourName, componentName, stepName, error, locale: intl.locale };
+  return {
+    t,
+    grams,
+    pct,
+    wholePct,
+    name,
+    flourName,
+    componentName,
+    stepName,
+    error,
+    locale: intl.locale,
+  };
 };

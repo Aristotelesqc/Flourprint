@@ -6,8 +6,8 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { useRef, useState } from 'react';
-import { blankRecipe, nextDraftName, type Draft } from '@flourprint/core/application';
+import { useEffect, useRef, useState } from 'react';
+import { blankRecipe, loadBake, nextDraftName, type Draft } from '@flourprint/core/application';
 import {
   defaultVariant,
   resolveFormula,
@@ -28,12 +28,14 @@ import { bakeView } from '../services/bake-view';
 import { recipeDuration } from '../services/recipe-duration';
 import { activeBakes } from '../services/bakes';
 import { useServices } from '../services/services';
+import { totalWaterKey } from '../blocks/water-label';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
 
 interface Card {
   readonly recipe: Recipe;
   readonly revision?: Revision;
   readonly lastBaked?: Instant;
+  readonly cookingUnknown?: boolean;
   /** Number of variants when the recipe is the shown variant of a family. */
   readonly variants?: number;
 }
@@ -71,6 +73,14 @@ export const RecipesPage = () => {
   const load = async () => {
     setNow(services.clock.now());
     const summaries = await services.bakes.listBakes();
+    const finished = await Promise.all(
+      summaries
+        .filter((s) => s.status === 'finished' && s.endedAt)
+        .map(async (summary) => ({
+          summary,
+          state: await loadBake(services.bakes, summary.bakeId),
+        })),
+    );
     const all = await services.recipes.listRecipes();
     const families = await services.recipes.listFamilies();
     // The trash too: a running bake may use a recipe put there since.
@@ -86,15 +96,24 @@ export const RecipesPage = () => {
         recipes.map(async (recipe) => {
           const count = variants(recipe);
           const revision = await services.recipes.getRevision(recipe.id, recipe.headVersion);
-          const lastBaked = summaries
-            .filter((s) => s.recipeId === recipe.id && s.status === 'finished' && s.endedAt)
-            .map((s) => s.endedAt as Instant)
+          const history = finished.filter(({ summary }) => summary.recipeId === recipe.id);
+          const lastBaked = history
+            .filter(
+              ({ state }) =>
+                state.ok &&
+                (state.value.outcome?.result === 'cooked' ||
+                  state.value.outcome?.result === 'cookedAndDough'),
+            )
+            .map(({ summary }) => summary.endedAt as Instant)
             .sort()
             .at(-1);
           return {
             recipe,
             ...(revision.ok && revision.value ? { revision: revision.value } : {}),
             ...(lastBaked ? { lastBaked } : {}),
+            ...(history.some(({ state }) => !state.ok || state.value.outcome === undefined)
+              ? { cookingUnknown: true }
+              : {}),
             ...(count === undefined ? {} : { variants: count }),
           };
         }),
@@ -114,6 +133,10 @@ export const RecipesPage = () => {
       setReadFailed(true);
     });
   });
+  useEffect(() => {
+    const timer = setInterval(() => setNow(services.clock.now()), 15_000);
+    return () => clearInterval(timer);
+  }, [services]);
 
   /** A new draft named "<base> <n>", stored at once, then opened (drafts.md). */
   const create = async (
@@ -177,7 +200,7 @@ export const RecipesPage = () => {
       <IonContent>
         <DevRefresher />
         <div className="flex flex-col gap-3 px-4 pt-2 pb-8">
-          <h1 className="m-0 px-1 text-[26px] font-bold">{t('recipes.title')}</h1>
+          <h1 className="m3-type-page m-0 px-1">{t('recipes.title')}</h1>
           <SessionOnlyNotice />
           {readFailed && <p role="alert">{t('state.storageRead')}</p>}
           {unreadable > 0 && (
@@ -265,33 +288,25 @@ const RunningBake = ({
     } else detail = t('bake.start', { step: stepName(focus.step) });
   }
   return (
-    <IonRouterLink routerLink={`/bakes/${bake.bakeId}`}>
-      <div className="flex items-center gap-3.5 rounded-2xl bg-accent px-4 py-3.5 text-on-accent">
-        <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-semibold opacity-85">
-            {t('recipes.activeBake', { recipe: recipe?.name ?? t('recipe.deleted') })}
-          </div>
-          <div className="text-[19px] font-bold">{detail}</div>
+    <IonRouterLink routerLink={`/bakes/${bake.bakeId}`} className="text-ink">
+      <div className="m3-card-quiet m3-card-interactive">
+        <div className="text-xs font-bold tracking-wider text-accent uppercase">
+          {t('recipes.activeBakeCard')}
         </div>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          aria-hidden="true"
-        >
-          <path d="M9 6l6 6-6 6" />
-        </svg>
+        <div className="m3-type-title">{recipe?.name ?? t('recipe.deleted')}</div>
+        <div className="text-sm text-muted">{detail}</div>
+        <div className="mt-0.5">
+          <span className="text-sm font-semibold text-accent underline">
+            {t('recipes.resumeBake')}
+          </span>
+        </div>
       </div>
     </IonRouterLink>
   );
 };
 
 const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
-  const { t, grams, pct, componentName, locale } = useMessages();
+  const { t, grams, pct, wholePct, componentName, locale } = useMessages();
   const { recipe, revision } = card;
   const resolved = revision ? resolveFormula(revision.formula) : undefined;
   const length = revision ? recipeDuration(revision.process, now) : undefined;
@@ -302,28 +317,37 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
         ? t('recipes.card.durationAtLeast', { duration: formatDuration(length.seconds) })
         : undefined;
   const parts = revision?.formula.components
-    .map((c) => `${componentName(revision.formula, c)} ${pct(c.flourPct)}`)
+    .map(
+      (c) =>
+        `${componentName(revision.formula, c)} ${pct(c.flourPct)} ${t('formula.column.basisFlour')}`,
+    )
     .join(' · ');
+  const isEstimate =
+    resolved?.ok &&
+    (resolved.value.totalWater.completeness === 'incomplete' ||
+      totalWaterKey(resolved.value.totalWater) === 'formula.stat.totalWaterEstimate');
+  const hydrationDisplay = resolved?.ok
+    ? isEstimate
+      ? `≈ ${wholePct(resolved.value.totalWaterPct)}`
+      : wholePct(resolved.value.totalWaterPct)
+    : '—';
   return (
     <IonRouterLink routerLink={`/recipes/${recipe.id}`} className="text-ink">
-      <div className="flex flex-col gap-2.5 rounded-2xl border border-line bg-surface p-4">
+      <div className="m3-card m3-card-interactive">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-xl font-semibold">{recipe.name}</span>
+          <span className="m3-type-title">{recipe.name}</span>
           <span className="shrink-0 text-[13px] text-muted">
             {card.variants === undefined
               ? `v${recipe.headVersion}`
               : t('family.variants', { count: card.variants })}
           </span>
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="card-stats">
           <Figure
             label={t('recipes.card.dough')}
             value={resolved?.ok ? grams(resolved.value.doughWeight) : '—'}
           />
-          <Figure
-            label={t('recipes.card.hydration')}
-            value={resolved?.ok ? pct(resolved.value.pureWaterPct) : '—'}
-          />
+          <Figure label={t('recipes.card.hydration')} value={hydrationDisplay} />
           <Figure label={t('recipes.card.duration')} value={duration ?? '—'} />
         </div>
         <div className="flex items-center justify-between gap-2 text-sm text-muted">
@@ -331,7 +355,7 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
           <span>
             {card.lastBaked
               ? t('recipes.card.lastBaked', { when: formatRelative(card.lastBaked, now, locale) })
-              : t('recipes.card.neverBaked')}
+              : t(card.cookingUnknown ? 'recipes.card.cookingUnknown' : 'recipes.card.neverBaked')}
           </span>
         </div>
       </div>

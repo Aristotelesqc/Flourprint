@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import type { Locator, Page } from '@playwright/test';
+import { enterEditor, editorSection, menuAction, routed, showPlanning } from './ui-actions';
 
 const rectangle = async (locator: Locator) => {
   const box = await locator.boundingBox();
@@ -7,16 +8,7 @@ const rectangle = async (locator: Locator) => {
   return box;
 };
 
-const enterEditing = async (page: Page) => {
-  const english = (await page.locator('html').getAttribute('lang'))?.startsWith('en');
-  const edit = page.getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true });
-  const reading = page.getByRole('button', {
-    name: english ? 'Read recipe' : 'Lire la recette',
-    exact: true,
-  });
-  await expect(edit.or(reading).filter({ visible: true })).toBeVisible();
-  if (await edit.isVisible()) await edit.click();
-};
+const enterEditing = enterEditor;
 
 const openRecipe = async (page: Page) => {
   await page.goto('/recipes');
@@ -86,10 +78,11 @@ for (const english of [false, true]) {
       expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(360);
     }
-    const review = footer.getByRole('button', {
-      name: english ? 'Review changes' : 'Examiner les modifications',
+    const review = routed(page).getByRole('button', {
+      name: english ? 'Edit actions' : 'Menu édition',
+      exact: true,
     });
-    await review.click();
+    await menuAction(page, /^(Examiner les modifications|Review changes)$/);
     const sheet = page.locator('ion-modal:not(.overlay-hidden)');
     await expect(
       sheet.getByRole('heading', {
@@ -113,9 +106,9 @@ test('panels retain independent positions, incomplete fields and planner control
   const water = page.getByLabel('Eau (g)', { exact: true });
   await water.fill('abc');
   await water.blur();
-  await scrollTo(page, 650);
-  await expect.poll(() => scrollTop(page)).toBe(650);
-  await page.getByRole('button', { name: 'Planification', exact: true }).click();
+  await scrollTo(page, 450);
+  await expect.poll(() => scrollTop(page)).toBe(450);
+  await showPlanning(page);
   await expect.poll(() => scrollTop(page)).toBe(0);
   await page.getByRole('button', { name: 'À une heure', exact: true }).click();
   const time = page.locator('input[type="datetime-local"]:visible');
@@ -124,16 +117,19 @@ test('panels retain independent positions, incomplete fields and planner control
   await expect.poll(() => scrollTop(page)).toBe(400);
   await page.getByRole('button', { name: 'Historique', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(0);
-  await page.getByRole('button', { name: 'Recette', exact: true }).click();
-  await expect.poll(() => scrollTop(page)).toBe(650);
+  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await enterEditor(page);
+  await expect.poll(() => scrollTop(page)).toBe(450);
   await expect(water).toHaveValue('abc');
   await expect(water).toHaveAttribute('aria-invalid', 'true');
-  await page.getByRole('button', { name: 'Planification', exact: true }).click();
+  await showPlanning(page);
   await expect.poll(() => scrollTop(page)).toBe(400);
   await expect(time).toHaveValue('2026-11-05T14:00');
-  await page.getByRole('button', { name: 'Recette', exact: true }).click();
-  await expect.poll(() => scrollTop(page)).toBe(650);
-  // Switch again during the restoration frames, including a short history panel.
+  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await enterEditor(page);
+  await expect.poll(() => scrollTop(page)).toBe(450);
+  // Switch again during restoration frames on the generated/read panels.
+  await showPlanning(page);
   await page.evaluate(async () => {
     const header = document.querySelector(
       'ion-router-outlet > .ion-page:not(.ion-page-hidden) ion-header',
@@ -152,17 +148,19 @@ test('panels retain independent positions, incomplete fields and planner control
     await new Promise(requestAnimationFrame);
     click('Recette');
   });
-  await expect.poll(() => scrollTop(page)).toBe(650);
-  await page.getByRole('button', { name: 'Planification', exact: true }).click();
+  await enterEditor(page);
+  await expect.poll(() => scrollTop(page)).toBe(450);
+  await showPlanning(page);
   await expect.poll(() => scrollTop(page)).toBe(400);
 });
 
 test('review distinguishes process-only changes from formula changes', async ({ page }) => {
   await openRecipe(page);
+  await editorSection(page, 'steps');
   const duration = page.getByLabel('Durée : Pétrissage', { exact: true });
   await duration.fill('12 min');
   await duration.press('Enter');
-  await page.getByRole('button', { name: 'Examiner les modifications' }).click();
+  await menuAction(page, /^Examiner les modifications$/);
   const sheet = page.locator('ion-modal:not(.overlay-hidden)');
   await expect(sheet).toContainText('Aucune modification de la formule.');
   await expect(sheet).toContainText('Paramètres du processus modifiés.');
@@ -173,7 +171,7 @@ test('review of a new recipe does not claim it matches a saved revision', async 
   await page.goto('/recipes');
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Recette vierge').first().click();
-  await page.getByRole('button', { name: 'Examiner les modifications' }).click();
+  await menuAction(page, /^Examiner les modifications$/);
   const sheet = page.locator('ion-modal:not(.overlay-hidden)');
   await expect(sheet).toContainText('Nouvelle recette : aucune version enregistrée à comparer.');
   await expect(sheet).not.toContainText('Aucune modification du processus.');
@@ -208,16 +206,17 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   expect(footerInvalid.height).toBeCloseTo(footerBefore.height, 0);
 
   // 3. Hidden panel persistence: switch tabs while invalid field is present
-  await page.getByRole('button', { name: 'Planification', exact: true }).click();
-  await expect(saveButton).toBeDisabled();
-  await expect(footer.getByRole('status')).toHaveText('Corriger les champs invalides');
+  await showPlanning(page);
+  await expect(footer.getByRole('button', { name: 'Démarrer la préparation' })).toBeDisabled();
+  await expect(water).toHaveValue('abc');
 
   await page.getByRole('button', { name: 'Historique', exact: true }).click();
-  await expect(saveButton).toBeDisabled();
-  await expect(footer.getByRole('status')).toHaveText('Corriger les champs invalides');
+  await expect(footer.getByRole('button', { name: 'Démarrer la préparation' })).toBeDisabled();
+  await expect(water).toHaveValue('abc');
 
   // 4. Return to Recipe: invalid value preserved, no accidental v2
-  await page.getByRole('button', { name: 'Recette', exact: true }).click();
+  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await enterEditor(page);
   await expect(water).toHaveValue('abc');
   await expect(water).toHaveAttribute('aria-invalid', 'true');
   await expect(saveButton).toBeDisabled();
@@ -232,7 +231,7 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   // 6. Save succeeds and creates Version 2
   await saveButton.click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
-  await expect(footer).toHaveCount(0);
+  await expect(footer.getByRole('status')).toHaveCount(0);
 
   // 7. Route return retains valid saved quantities
   // The preview snapshots asynchronously (ADR 0015). Wait for the saved revision,
@@ -279,6 +278,7 @@ test('FR fermentation card header does not cause horizontal scroll at 360px and 
   for (const width of [360, 393]) {
     await page.setViewportSize({ width, height: 800 });
     await openRecipe(page);
+    await editorSection(page, 'result');
     await settled(page);
 
     const hasHorizontalOverflow = await content(page).evaluate(async (host) => {
@@ -311,16 +311,28 @@ test('discard abandons raw invalid text and a later edit can be saved', async ({
   await water.blur();
   await expect(footer.getByRole('status')).toHaveText('Corriger les champs invalides');
   // No domain draft exists yet: discarding raw text must still be available.
-  const discard = footer.getByRole('button', { name: 'Abandonner les modifications' });
-  await expect(
-    footer.locator('ion-button[aria-label="Abandonner les modifications"]'),
-  ).toContainText('Abandonner');
-  await discard.click();
+  const footerDiscard = footer.getByRole('button', { name: 'Abandonner les modifications' });
+  if (await footerDiscard.isVisible()) {
+    await footerDiscard.click();
+  } else {
+    const overflow = page
+      .locator('ion-header:visible')
+      .getByRole('button', { name: 'Menu édition' });
+    if (await overflow.isVisible()) {
+      await overflow.click();
+      await page
+        .locator('ion-action-sheet')
+        .getByRole('button', { name: 'Abandonner les modifications', exact: true })
+        .click();
+    } else {
+      await page.locator('ion-header:visible ion-button[aria-label="Abandonner"]').click();
+    }
+  }
   await page
     .locator('ion-alert')
     .getByRole('button', { name: 'Abandonner les modifications' })
     .click();
-  await expect(footer).toHaveCount(0);
+  await expect(footer.getByRole('status')).toHaveCount(0);
   await enterEditing(page);
   await expect(water).toHaveValue('750');
   await expect(water).not.toHaveAttribute('aria-invalid', 'true');

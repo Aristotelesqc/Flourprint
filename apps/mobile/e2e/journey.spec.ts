@@ -1,16 +1,8 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
+import { enterEditor, editorSection, menuAction, routed, showPlanning } from './ui-actions';
 
-const enterEditing = async (page: Page) => {
-  const english = (await page.locator('html').getAttribute('lang'))?.startsWith('en');
-  const edit = page.getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true });
-  const reading = page.getByRole('button', {
-    name: english ? 'Read recipe' : 'Lire la recette',
-    exact: true,
-  });
-  await expect(edit.or(reading).filter({ visible: true })).toBeVisible();
-  if (await edit.isVisible()) await edit.click();
-};
+const enterEditing = enterEditor;
 
 const openRecipe = async (page: Page) => {
   await page.goto('/recipes');
@@ -25,25 +17,52 @@ const openRecipe = async (page: Page) => {
  * its transition ends). Clicking again earlier would hit the leaving page's back button.
  */
 const goBack = async (page: Page) => {
+  await expect(routed(page)).toHaveCount(1);
   const before = page.url();
-  await page.locator('ion-back-button:visible').last().click();
+  const read = routed(page).getByRole('button', { name: /^(Lire la recette|Read recipe)$/ });
+  if (await read.isVisible()) {
+    await read.click();
+    const keep = page
+      .locator('ion-alert')
+      .getByRole('button', { name: /^(Conserver le brouillon et quitter|Keep draft and leave)$/ });
+    await expect
+      .poll(
+        async () => (await keep.isVisible()) || !(await read.isVisible()) || page.url() !== before,
+      )
+      .toBe(true);
+    if (await keep.isVisible()) await keep.click();
+    await expect(read).toBeHidden();
+    if (page.url() !== before) return;
+    await expect(
+      routed(page).getByRole('button', { name: /^(Recette|Recipe)$/, exact: true }),
+    ).toBeVisible();
+  }
+  await routed(page).locator('ion-back-button').click();
   await expect(page).not.toHaveURL(before);
   await expect(page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)')).toHaveCount(1);
 };
 
 const unsaved = (page: Page) => page.getByText('Modifications non enregistrées');
 
-/** The header's start button of the open recipe (it reads "En cours" while a bake runs). */
+/** The start button of the open recipe (in footer or header). */
 const headerStart = (page: Page) =>
-  page.locator('ion-header:visible').getByRole('button', { name: 'Démarrer', exact: true });
+  page
+    .locator('ion-footer:visible, ion-header:visible')
+    .getByRole('button', {
+      name: /Démarrer/,
+    })
+    .first();
 
-/** Starts a bake now from the recipe header, through its confirmation, and opens it. */
+/** Starts a bake now from the recipe header or footer, through its confirmation, and opens it. */
 const startBake = async (page: Page) => {
+  const read = routed(page).getByRole('button', { name: 'Lire la recette', exact: true });
+  if (await read.isVisible()) await read.click();
   await headerStart(page).click();
   const alert = page.locator('ion-alert');
   await expect(alert).toContainText('Démarrer la préparation maintenant ?');
   await alert.getByRole('button', { name: 'Démarrer' }).click();
   await expect(page).toHaveURL(/\/bakes\//);
+  await expect(routed(page)).toHaveCount(1);
 };
 
 test('typed decimals commit, and leaving an untouched field changes nothing', async ({ page }) => {
@@ -56,7 +75,9 @@ test('typed decimals commit, and leaving an untouched field changes nothing', as
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
   await expect(unsaved(page)).toBeHidden();
 
-  await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  await expect(
+    page.locator('ion-footer:visible').getByRole('button', { name: 'Démarrer la préparation' }),
+  ).toBeVisible();
   await enterEditing(page);
   // The percentage shows 2,22 for 2,222222: visiting it must not round the recipe.
   const saltPct = page.getByLabel('Sel, % boulanger (%)');
@@ -81,10 +102,12 @@ test('an invalid entry stays visible and marked', async ({ page }) => {
 test('a double tap starts one bake; parallel steps run with real overlap', async ({ page }) => {
   await openRecipe(page);
   // A double tap opens one confirmation; a double tap on it starts one bake.
+  await routed(page).getByRole('button', { name: 'Lire la recette', exact: true }).click();
   await headerStart(page).dblclick();
   await expect(page.locator('ion-alert')).toHaveCount(1);
   await page.locator('ion-alert').getByRole('button', { name: 'Démarrer' }).dblclick();
   await expect(page).toHaveURL(/\/bakes\//);
+  await expect(routed(page)).toHaveCount(1);
 
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await expect(page.getByRole('button', { name: 'Préferment terminé' })).toBeVisible();
@@ -95,7 +118,7 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await page.getByRole('button', { name: 'Préferment terminé' }).click();
   await expect(page.getByRole('button', { name: 'Commencer : Pétrissage' })).toBeVisible();
   // Latest log entries first: the scald started and ended while the preferment ran.
-  const log = page.locator('p:visible', { hasText: / · / });
+  const log = page.getByTestId('preparation-journal').locator('p', { hasText: / · / });
   await expect(log.nth(0)).toContainText('Préferment terminé');
   await expect(log.nth(1)).toContainText('Échaudage terminé');
   await expect(log.nth(2)).toContainText('Échaudage commencé');
@@ -105,8 +128,10 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   // One bake despite the double tap (the header's "En cours" button is not a history item).
   await expect(page.locator('ion-item:visible')).toHaveCount(1);
   await expect(page.locator('ion-item:visible')).toContainText('En cours');
-  await page.getByRole('button', { name: 'Planification' }).click();
-  await expect(page.getByRole('button', { name: 'Voir la préparation en cours' })).toBeVisible();
+  await showPlanning(page);
+  await expect(
+    routed(page).getByRole('button', { name: 'Reprendre la préparation' }),
+  ).toBeVisible();
 });
 
 test('dough ready is recorded on a running fermentation step without ending it', async ({
@@ -147,7 +172,7 @@ test('a note attaches to a step; an ended bake takes a rated review note', async
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Préferment : Bulles fines')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Abandonner' }).click();
+  await menuAction(page, /^Abandonner/);
   await page.locator('ion-alert').getByRole('button', { name: 'Abandonner' }).click();
   await page.getByRole('button', { name: 'Ajouter une note' }).click();
   await expect(page.getByRole('button', { name: 'Mie', pressed: true })).toBeVisible();
@@ -157,9 +182,19 @@ test('a note attaches to a step; an ended bake takes a rated review note', async
   await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
 
   // An ended bake can be reopened; its earlier end stays in the log (bake-session.md).
-  await page.getByRole('button', { name: 'Rouvrir' }).click();
+  await menuAction(page, /^Rouvrir$/);
   await page.locator('ion-alert').getByRole('button', { name: 'Rouvrir' }).click();
-  await expect(page.getByRole('button', { name: 'Abandonner' })).toBeVisible();
+  await routed(page)
+    .locator('ion-header')
+    .getByRole('button', { name: 'Actions de préparation' })
+    .click();
+  await expect(
+    page.locator('ion-action-sheet').getByRole('button', { name: /^Abandonner/ }),
+  ).toBeVisible();
+  await page
+    .locator('ion-action-sheet')
+    .getByRole('button', { name: 'Annuler', exact: true })
+    .click();
   await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
 });
 
@@ -167,11 +202,16 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
   await openRecipe(page);
   await startBake(page);
   // Run every step through the main action until the bake can be finished.
-  const main = page.locator('ion-button.h-\\[72px\\]:visible');
+  const main = routed(page).locator('ion-footer ion-button');
   const allDone = page.getByText('Toutes les étapes sont terminées.');
   for (let i = 0; i < 40 && !(await allDone.isVisible()); i++) {
-    if (await main.count()) await main.first().click();
-    else
+    if (await main.count()) {
+      const before = await main.first().textContent();
+      await main.first().click();
+      await expect
+        .poll(async () => !(await main.count()) || (await main.first().textContent()) !== before)
+        .toBe(true);
+    } else
       await page
         .getByRole('button', { name: /^Commencer / })
         .first()
@@ -184,7 +224,7 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
   await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Cuit');
 
   // Two short lists: the result, then what became of the raw dough.
-  await page.getByRole('button', { name: 'Modifier le résultat' }).click();
+  await menuAction(page, /^Modifier le résultat$/);
   await page.locator('ion-alert').getByText('Cuit et pâte crue', { exact: true }).click();
   await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.locator('ion-alert')).toContainText('Devenir de la pâte crue');
@@ -194,7 +234,7 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
     'Résultat : Cuit et pâte crue, congelée',
   );
   // Another result starts from "not said": saving at once records it.
-  await page.getByRole('button', { name: 'Modifier le résultat' }).click();
+  await menuAction(page, /^Modifier le résultat$/);
   await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
   await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.locator('ion-alert')).toContainText('Devenir de la pâte crue');
@@ -210,7 +250,7 @@ test('finishes as frozen dough before its planned bake, keeping the steps as rec
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Préferment terminé' }).click();
   // The bake is not reached: finishing now asks for the result, completes no step.
-  await page.getByRole('button', { name: 'Terminer maintenant…' }).click();
+  await menuAction(page, /^Terminer maintenant/);
   await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
   await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
   await page.locator('ion-alert').getByText('congelée', { exact: true }).click();
@@ -222,6 +262,7 @@ test('finishes as frozen dough before its planned bake, keeping the steps as rec
 
 test('a recipe states how it ends', async ({ page }) => {
   await openRecipe(page);
+  await editorSection(page, 'result');
   const ends = page.getByLabel('Fin prévue');
   await expect(ends.locator('option:checked')).toHaveText('Automatique : Cuit');
   await ends.selectOption({ label: 'Pâte crue, congelée' });
@@ -328,7 +369,7 @@ test('a newer dev build loads only after the browser data is saved', async ({ pa
   await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
   // At once back to the list, in the app (a navigation would reload the page), and pull: no
   // wait for the periodic snapshot.
-  await page.locator('ion-back-button:visible').last().click();
+  await goBack(page);
   await expect(page.getByRole('heading', { name: 'Recettes' }).locator('visible=true')).toHaveCount(
     1,
   );
@@ -444,7 +485,9 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await expect(page).toHaveURL(/\/recipes\/newer$/);
   await expect(back).toHaveCount(1);
   await back.click();
-  await expect(shown('Fournée en cours · Pain test 2')).toHaveCount(1);
+  await expect(
+    routed(page).getByRole('link', { name: /Préparation en cours.*Pain test 2.*Reprendre/ }),
+  ).toHaveCount(1);
 });
 
 test('a locked hydration holds while eggs are added; preparations are editable', async ({
@@ -466,7 +509,7 @@ test('a locked hydration holds while eggs are added; preparations are editable',
   await egg.fill('100');
   await egg.press('Enter');
   // 100 g of egg at 76 % water: the added water drops by 76 g, total water stays.
-  await page.getByRole('button', { name: 'Examiner les modifications' }).click();
+  await menuAction(page, /^Examiner les modifications$/);
   await expect(page.getByText('Œuf ajouté')).toBeVisible();
   await expect(page.getByText(/Eau, % boulanger : 75 % → 67,4 %/)).toBeVisible();
   const review = page.locator('ion-modal:not(.overlay-hidden)');
@@ -474,6 +517,7 @@ test('a locked hydration holds while eggs are added; preparations are editable',
   await expect(review).toBeHidden();
 
   // The tangzhong's hydration is editable; 1:1 makes it a yudane.
+  await editorSection(page, 'components');
   await page.getByLabel('tangzhong, Hydratation (%)').fill('100');
   await page.getByLabel('tangzhong, Hydratation (%)').press('Enter');
   await expect(page.getByText('yudane').first()).toBeVisible();
@@ -496,19 +540,13 @@ test('typing a hydration locks it there; an egg then lowers the added water', as
     page.getByRole('button', { name: 'Déverrouiller l’hydratation', pressed: true }),
   ).toBeVisible();
   await expect(hydration).toHaveValue('70');
-  await page.getByRole('button', { name: 'Examiner les modifications' }).click();
+  await menuAction(page, /^Examiner les modifications$/);
   await expect(page.getByText('Hydratation verrouillée à 70 %')).toBeVisible();
   const review = page.locator('ion-modal:not(.overlay-hidden)');
   await review.getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(review).toBeHidden();
   // Only the shown page: during a transition Ionic keeps the previous one in the DOM.
-  const added = page
-    .locator('.ion-page:not(.ion-page-hidden)')
-    .getByText('Eau ajoutée', { exact: true })
-    .filter({ visible: true })
-    .first()
-    .locator('..');
-  // Ionic briefly keeps both transition views visible; wait for the active summary.
+  const added = routed(page).locator('[data-ingredient-id="water"]');
   await expect(added).toHaveCount(1);
   const before = await added.textContent();
 
@@ -518,7 +556,7 @@ test('typing a hydration locks it there; an egg then lowers the added water', as
   const egg = page.getByLabel('Œuf (g)', { exact: true });
   await egg.fill('100');
   await egg.press('Enter');
-  await page.getByRole('button', { name: 'Examiner les modifications' }).click();
+  await menuAction(page, /^Examiner les modifications$/);
   await expect(review.getByText('Œuf ajouté')).toBeVisible();
   await review.getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(review).toBeHidden();
@@ -536,6 +574,7 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   page,
 }) => {
   await openRecipe(page);
+  await editorSection(page, 'result');
   await expect(
     page.getByText('Entrer la température ambiante pour avoir les temps.').first(),
   ).toBeVisible();
@@ -590,6 +629,7 @@ test('a fermentation schedule replaces the dough steps; Auto fills a step from t
   page,
 }) => {
   await startTemplate(page, 'Pain boule en cocotte');
+  await editorSection(page, 'result');
   await page
     .getByLabel('Horaire', { exact: true })
     .selectOption({ label: 'Pointage lent au froid' });
@@ -617,6 +657,7 @@ test('a fermentation schedule replaces the dough steps; Auto fills a step from t
 
 test('the boil of bagels ends the dough: it is not a fermentation step', async ({ page }) => {
   await startTemplate(page, 'Bagels');
+  await editorSection(page, 'result');
   await expect(page.getByRole('button', { name: 'Retirer Façonnage' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Retirer Ébullition' })).toHaveCount(0);
   await expect(page.getByLabel('Ébullition, durée')).toHaveCount(0);
@@ -717,6 +758,8 @@ test('the advanced menu tells the state of reminders', async ({ page }) => {
 
 test('a proof running beside the preheat still takes its ready-to-bake mark', async ({ page }) => {
   await openRecipe(page);
+  await editorSection(page, 'result');
+  await editorSection(page, 'result');
   await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
@@ -765,7 +808,7 @@ test('a template starts a named draft that becomes a recipe once saved', async (
   await expect(page.getByText('Pizza néo-napolitaine 1', { exact: true })).toBeVisible();
   await expect(page.getByText('Brouillon, pas encore enregistré').first()).toBeVisible();
   // A template passes the check as is.
-  await page.getByRole('button', { name: 'Vérifier', exact: true }).click();
+  await menuAction(page, /^Vérifier la recette(?: \(\d+\))?$/);
   await expect(page.getByText('Rien à signaler')).toBeVisible();
   await page.getByRole('button', { name: 'Fermer' }).click();
   await page.getByRole('button', { name: 'Enregistrer comme recette' }).click();
@@ -793,8 +836,16 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await expect(page.getByRole('button', { name: 'Enregistrer comme recette' })).toBeFocused();
   await share.fill('100');
   await share.press('Enter');
-  await expect(page.getByRole('button', { name: 'Vérifier', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Supprimer le brouillon' }).click();
+  await routed(page).getByRole('button', { name: 'Menu édition', exact: true }).click();
+  await expect(
+    page.locator('ion-action-sheet').getByRole('button', { name: /^Vérifier la recette/ }),
+  ).toBeVisible();
+  await page
+    .locator('ion-action-sheet')
+    .getByRole('button', { name: 'Annuler', exact: true })
+    .click();
+  await expect(page.locator('ion-action-sheet')).toHaveCount(0);
+  await menuAction(page, /^Abandonner les modifications$/);
   await page.locator('ion-alert').getByRole('button', { name: 'Supprimer le brouillon' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
   await expect(page.getByText('Recette 1', { exact: true })).toBeHidden();
@@ -818,7 +869,7 @@ test('an info button opens a bottom sheet that explains the term and closes', as
 test('the planner can follow now; starting always starts now', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-03-02T08:00:00-05:00') });
   await openRecipe(page);
-  await page.getByRole('button', { name: 'Planification' }).click();
+  await showPlanning(page);
   // "Now" is the default: no time to pick, the plan starts at the current time.
   await expect(page.getByRole('button', { name: 'Maintenant' })).toBeVisible();
   await expect(page.locator('input[type="datetime-local"]')).toBeHidden();
@@ -904,6 +955,7 @@ test('a customized flour keeps its properties and is offered by the flour picker
 
 /** Sets 3 folds 20 min apart on the bulk, from the authored Method in the Recipe tab. */
 const foldTheBulk = async (page: Page) => {
+  await editorSection(page, 'steps');
   await page.getByRole('button', { name: 'Modifier l’étape Pointage' }).click();
   const sheet = page.locator('ion-modal:visible');
   await sheet.getByLabel('Nombre de séries').fill('3');
@@ -916,6 +968,7 @@ const foldTheBulk = async (page: Page) => {
 
 test('a draft takes a new step and a step technique, shown under the step', async ({ page }) => {
   await openRecipe(page);
+  await editorSection(page, 'steps');
   await page
     .getByTestId('recipe-method')
     .filter({ visible: true })
@@ -1041,8 +1094,14 @@ const backToRecipes = async (page: Page) => {
 };
 
 /** Opens the sample recipe from the recipe list shown. */
-const openShownRecipe = (page: Page) =>
-  page.getByText('Poolish + tangzhong').locator('visible=true').first().click();
+const openShownRecipe = async (page: Page) => {
+  await routed(page)
+    .locator('ion-router-link[router-link^="/recipes/"]')
+    .filter({ has: page.locator('.m3-card') })
+    .filter({ hasText: 'Poolish + tangzhong' })
+    .click();
+  await expect(routed(page)).toHaveCount(1);
+};
 
 const openAdvanced = async (page: Page) => {
   await backToRecipes(page);
@@ -1067,10 +1126,13 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await expect(page.getByText(/Mode simulation · heure simulée/)).toBeVisible();
   await backToRecipes(page);
   await openShownRecipe(page);
+  const read = routed(page).getByRole('button', { name: 'Lire la recette', exact: true });
+  if (await read.isVisible()) await read.click();
   await headerStart(page).click();
   await expect(page.locator('ion-alert')).toContainText('historique de simulation');
   await page.locator('ion-alert').getByRole('button', { name: 'Démarrer' }).click();
   await expect(page).toHaveURL(/\/bakes\//);
+  await expect(routed(page)).toHaveCount(1);
 
   // The preferment runs 12 h; the scald starts as late as it can, 11 h from now.
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
@@ -1089,8 +1151,8 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await setSimulation(page, false);
   await expect(page.getByText(/Mode simulation · heure simulée/)).toHaveCount(0);
   await backToRecipes(page);
-  await page.getByLabel('Fournées en cours').locator('visible=true').first().click();
-  await expect(page.getByText(/Aucune fournée en cours/)).toBeVisible();
+  await page.getByLabel('Préparations en cours').locator('visible=true').first().click();
+  await expect(page.getByText(/Aucune préparation en cours/)).toBeVisible();
   await backToRecipes(page);
   await openShownRecipe(page);
   await page.getByRole('button', { name: 'Historique' }).click();
@@ -1100,7 +1162,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await openAdvanced(page);
   await setSimulation(page, true);
   await backToRecipes(page);
-  await page.getByLabel('Fournées en cours').locator('visible=true').first().click();
+  await page.getByLabel('Préparations en cours').locator('visible=true').first().click();
   await expect(page.getByRole('region', { name: 'Poolish + tangzhong' })).toBeVisible();
 
   // Its statistics, then erasing the simulation history.
@@ -1117,12 +1179,13 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await page.locator('ion-alert').getByRole('button', { name: 'Effacer' }).click();
   await expect(page.getByText('1 fournée effacée.')).toBeVisible();
   await backToRecipes(page);
-  await page.getByLabel('Fournées en cours').locator('visible=true').first().click();
-  await expect(page.getByText(/Aucune fournée en cours/)).toBeVisible();
+  await page.getByLabel('Préparations en cours').locator('visible=true').first().click();
+  await expect(page.getByText(/Aucune préparation en cours/)).toBeVisible();
 });
 
 test('temperatures follow the unit chosen for their context', async ({ page }) => {
   await openRecipe(page);
+  await editorSection(page, 'result');
   const room = page.getByLabel('Température ambiante (°C)');
   await room.fill('21');
   await room.press('Enter');
@@ -1132,6 +1195,8 @@ test('temperatures follow the unit chosen for their context', async ({ page }) =
   await page.getByRole('group', { name: 'Ambiante' }).getByRole('button', { name: '°F' }).click();
   await backToRecipes(page);
   await openShownRecipe(page);
+  await enterEditor(page);
+  await editorSection(page, 'result');
   const fahrenheit = page.getByLabel('Température ambiante (°F)');
   await expect(fahrenheit).toHaveValue('70');
   await fahrenheit.fill('75');
@@ -1142,5 +1207,7 @@ test('temperatures follow the unit chosen for their context', async ({ page }) =
   await page.getByRole('group', { name: 'Ambiante' }).getByRole('button', { name: '°C' }).click();
   await backToRecipes(page);
   await openShownRecipe(page);
+  await enterEditor(page);
+  await editorSection(page, 'result');
   await expect(page.getByLabel('Température ambiante (°C)')).toHaveValue('23,9');
 });

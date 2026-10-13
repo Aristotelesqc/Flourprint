@@ -37,6 +37,8 @@ interface Props {
   readonly fermentationStepIds?: ReadonlySet<string>;
   /** Callback to navigate to FermentationCard for a step. */
   readonly onEditFermentation?: (stepId: string) => void;
+  /** Whether to show RecipeOutcome (defaults to true; false when authored in Result section). */
+  readonly showOutcome?: boolean;
 }
 
 /**
@@ -55,6 +57,7 @@ export const RecipeMethod = ({
   onReturnToPlanning,
   fermentationStepIds,
   onEditFermentation,
+  showOutcome = true,
 }: Props) => {
   const { t, stepName } = useMessages();
   const temperature = useTemperature();
@@ -294,13 +297,15 @@ export const RecipeMethod = ({
         </Rows>
       )}
 
-      <div className="pt-2">
-        <RecipeOutcome
-          process={process}
-          editable={editable}
-          {...(onProcessChange ? { onChange: onProcessChange } : {})}
-        />
-      </div>
+      {showOutcome && (
+        <div className="pt-2">
+          <RecipeOutcome
+            process={process}
+            editable={editable}
+            {...(onProcessChange ? { onChange: onProcessChange } : {})}
+          />
+        </div>
+      )}
 
       {editable && onProcessChange && (
         <StepSheet

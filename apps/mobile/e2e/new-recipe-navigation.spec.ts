@@ -27,7 +27,9 @@ for (const english of [false, true]) {
     await expect(
       routed.getByText(english ? 'Recipe 1' : 'Recette 1', { exact: true }),
     ).toBeVisible();
-    await routed.locator('ion-back-button').click();
+    await routed
+      .getByRole('button', { name: english ? 'Read recipe' : 'Lire la recette', exact: true })
+      .click();
     await expect(page).toHaveURL(/\/recipes$/);
     await expect(
       page.getByText(english ? 'Recipe 1' : 'Recette 1', { exact: true }).filter({ visible: true }),

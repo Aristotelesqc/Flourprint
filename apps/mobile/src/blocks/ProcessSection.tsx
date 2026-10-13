@@ -29,6 +29,8 @@ interface Props {
   /** A bake of this recipe in progress: the main action opens it; another start is explicit. */
   readonly activeBakeId?: string;
   readonly onOpenBake: (bakeId: string) => void;
+  /** The Recipe page supplies the single primary action and its overflow alternatives. */
+  readonly showActions?: boolean;
   /** Shortcut to edit a specific step in the authored method in Recipe tab (#71). */
   readonly onEditStepInRecipe?: (stepId: string) => void;
 }
@@ -63,6 +65,7 @@ export const ProcessSection = ({
   onStart,
   activeBakeId,
   onOpenBake,
+  showActions = true,
   onEditStepInRecipe,
 }: Props) => {
   const { t, error, stepName, locale } = useMessages();
@@ -308,7 +311,7 @@ export const ProcessSection = ({
       {canStart && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
       )}
-      {activeBakeId && (
+      {showActions && activeBakeId && (
         <>
           <IonButton expand="block" size="large" onClick={() => onOpenBake(activeBakeId)}>
             {t('process.openBake')}

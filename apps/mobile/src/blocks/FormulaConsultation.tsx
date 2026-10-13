@@ -10,7 +10,7 @@ import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { WeighingChecklist } from './WeighingChecklist';
-import { Enrichment, FlourSummary, GroupHeader, ROW, Stat } from './FormulaSection';
+import { Enrichment, FlourSummary, GroupHeader, ROW } from './FormulaSection';
 
 interface Props {
   readonly formula: Formula;
@@ -33,9 +33,9 @@ export const FormulaConsultation = ({
   onToggleWeighed,
   onEditHydration,
 }: Props) => {
-  const { t, grams, pct, name, componentName, stepName } = useMessages();
+  const { t, grams, pct, wholePct, name, componentName, stepName } = useMessages();
   const temperature = useTemperature();
-  const { reason, extrapolations, ends, wholePct } = useEstimateText();
+  const { reason, extrapolations, ends } = useEstimateText();
   const [explaining, setExplaining] = useState(false);
   const anchor = formula.anchor;
   const lockedWater = formula.waterTarget?.absorbInto;
@@ -52,89 +52,100 @@ export const FormulaConsultation = ({
 
   return (
     <div className="flex flex-col gap-5 pb-6">
-      <Card>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="flex items-center gap-1.5 font-bold">
-            {t('formula.quantity')}
+      <Card className="m3-card-quiet">
+        <div className="flex items-baseline justify-between gap-3 tabular">
+          <span className="flex items-center gap-1.5 font-medium text-muted">
+            {t('formula.anchorField.flourTotal')}
             <InfoButton topic="anchor" term={t('formula.quantity')} />
           </span>
-          <span className="text-lg font-bold">
-            {anchor.kind === 'pieces'
-              ? `${anchor.count} × ${grams(anchor.gramsEach)}`
-              : grams(anchor.grams)}
-          </span>
+          <span className="text-lg font-bold">{resolved ? grams(resolved.flourTotal) : '—'}</span>
         </div>
-        <div className="text-xs text-muted">{t(`formula.anchor.${anchor.kind}`)}</div>
-
-        {!resolved ? (
-          <p className="m-0 border-t border-line pt-3 text-sm text-muted">
-            {t('formula.unresolved')}
-          </p>
-        ) : (
-          <>
-            <div className="flex flex-col gap-2 border-t border-line pt-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="flex items-center gap-1.5 font-semibold">
-                  {t('formula.stat.hydration')}
-                  <InfoButton topic="hydration" term={t('formula.stat.hydration')} />
-                </span>
+        {resolved && (
+          <div className="flex items-baseline justify-between gap-3 tabular">
+            <span className="font-medium text-muted">{t('formula.stat.dough')}</span>
+            <span className="text-lg font-bold">{grams(resolved.doughWeight)}</span>
+          </div>
+        )}
+        {anchor.kind === 'pieces' && (
+          <div className="flex items-baseline justify-between gap-3 text-sm text-muted">
+            <span>{t('formula.anchor.pieces')}</span>
+            <span>
+              {anchor.count} × {grams(anchor.gramsEach)}
+            </span>
+          </div>
+        )}
+        {resolved && (
+          <div className="flex flex-col gap-1 border-t border-line-subtle pt-2">
+            <div className="flex items-baseline justify-between gap-3 tabular">
+              <span className="flex items-center gap-1.5 font-medium text-muted">
+                {t('formula.stat.hydration')}
+                <InfoButton topic="hydration" term={t('formula.stat.hydration')} />
+              </span>
+              <span className="flex flex-wrap items-center justify-end gap-2">
                 <span className="text-xl font-bold">
-                  {t(totalWaterKey(resolved.totalWater), {
-                    pct: pct(resolved.totalWaterPct),
-                  })}
+                  {totalWaterKey(resolved.totalWater) === 'formula.stat.totalWaterEstimate' ||
+                  resolved.totalWater.completeness === 'incomplete'
+                    ? `≈ ${wholePct(resolved.totalWaterPct)}`
+                    : wholePct(resolved.totalWaterPct)}
                 </span>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
-                <span className="inline-flex min-h-12 items-center gap-2 text-sm text-muted">
-                  <LockStatusIcon locked={formula.waterTarget !== undefined} />
-                  <span className="font-medium">
-                    {formula.waterTarget !== undefined
+                <span
+                  className={`inline-flex items-center gap-1 ${formula.waterTarget ? 'text-accent' : 'text-muted'}`}
+                  role="img"
+                  aria-label={
+                    formula.waterTarget
                       ? t('formula.hydration.locked', {
-                          pct: pct(formula.waterTarget.totalWaterPct),
+                          pct: wholePct(formula.waterTarget.totalWaterPct),
                         })
-                      : t('formula.hydration.unlocked')}
-                  </span>
+                      : t('formula.hydration.unlocked')
+                  }
+                  title={
+                    formula.waterTarget
+                      ? t('formula.hydration.locked', {
+                          pct: wholePct(formula.waterTarget.totalWaterPct),
+                        })
+                      : t('formula.hydration.unlocked')
+                  }
+                >
+                  <LockStatusIcon locked={formula.waterTarget !== undefined} />
                 </span>
-                {onEditHydration && (
-                  <button
-                    type="button"
-                    className="fp-reset inline-flex min-h-12 items-center justify-center rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold text-accent-text shadow-sm hover:bg-field-bg active:bg-accent-soft"
-                    onClick={onEditHydration}
-                  >
-                    {t('formula.hydration.editAction')}
-                  </button>
-                )}
-              </div>
+              </span>
+            </div>
+            <div className="flex items-center justify-between pt-1">
               <button
                 type="button"
-                className="fp-reset self-start text-sm text-accent-text underline decoration-dotted underline-offset-4"
+                className="fp-reset self-start text-sm text-accent underline decoration-dotted underline-offset-4"
                 onClick={() => setExplaining(true)}
               >
                 {t('formula.hydration.breakdown')}
               </button>
-              {resolved.totalWater.completeness === 'incomplete' && (
-                <p className="m-0 text-sm text-muted">
-                  {t('formula.water.incomplete', {
-                    ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
-                  })}
-                </p>
+              {onEditHydration && (
+                <button
+                  type="button"
+                  className="fp-reset inline-flex min-h-touch items-center justify-center rounded-full border border-line bg-surface px-3 text-sm font-semibold text-accent-text hover:bg-field-bg"
+                  onClick={onEditHydration}
+                >
+                  {t('formula.hydration.editAction')}
+                </button>
               )}
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
-              <Stat label={t('formula.stat.pureWater')} value={pct(resolved.pureWaterPct)} />
-            </div>
-            <Enrichment resolved={resolved} />
-          </>
+            {resolved.totalWater.completeness === 'incomplete' && (
+              <p className="m-0 text-xs text-muted">
+                {t('formula.water.incomplete', {
+                  ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
+                })}
+              </p>
+            )}
+          </div>
         )}
+        {resolved && <Enrichment resolved={resolved} />}
+        {!resolved && <p className="m-0 text-sm text-muted">{t('formula.unresolved')}</p>}
       </Card>
 
       <section>
         <GroupHeader
           title={t('formula.group.flours')}
-          pctLabel={t('formula.column.flourPct')}
-          gramsLabel={t('formula.column.grams')}
+          pctLabel={t('formula.column.basisFlour')}
+          gramsLabel={t('formula.column.basisGrams')}
         />
         <Rows>
           {formula.flours.map((flour) => (
@@ -155,9 +166,9 @@ export const FormulaConsultation = ({
       <section>
         <GroupHeader
           title={t('formula.group.ingredients')}
-          pctLabel={t('formula.column.bakerPct')}
-          gramsLabel={t('formula.column.grams')}
-          help={<InfoButton topic="bakerPct" term={t('formula.column.bakerPct')} />}
+          pctLabel={t('formula.column.basisBaker')}
+          gramsLabel={t('formula.column.basisGrams')}
+          help={<InfoButton topic="bakerPct" term={t('formula.column.basisBaker')} />}
         />
         <Rows>
           {formula.ingredients.map((ingredient) => (

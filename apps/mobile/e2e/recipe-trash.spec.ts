@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
+import { menuAction, routed } from './ui-actions';
 
 /** One step back in the app, once the navigation and the Ionic page transition are over. */
 const goBack = async (page: Page) => {
@@ -16,7 +17,7 @@ const backToRecipes = async (page: Page, title: string) => {
 };
 
 const recipeCard = (page: Page, name: string) =>
-  page.getByText(name, { exact: true }).locator('visible=true').first();
+  routed(page).locator('ion-router-link[router-link^="/recipes/"]').filter({ hasText: name });
 
 const second = (name: string) => ({
   kind: 'flourprint-recipes',
@@ -56,8 +57,9 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
   // A bake of the sample recipe, started before anything goes to the trash.
   await recipeCard(page, 'Poolish + tangzhong').click();
   await page
-    .locator('ion-header:visible')
-    .getByRole('button', { name: 'Démarrer', exact: true })
+    .locator('ion-footer:visible, ion-header:visible')
+    .getByRole('button', { name: /Démarrer/ })
+    .first()
     .click();
   await page.locator('ion-alert').getByRole('button', { name: 'Démarrer' }).click();
   await expect(page).toHaveURL(/\/bakes\//);
@@ -65,22 +67,26 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
 
   // Trash it from the recipe page, after a confirmation that can be cancelled.
   await recipeCard(page, 'Poolish + tangzhong').click();
-  const trashButton = page
-    .locator('ion-header:visible')
-    .getByRole('button', { name: 'Mettre à la corbeille' });
-  await trashButton.click();
+  const clickTrash = async () => {
+    await menuAction(page, /^Mettre à la corbeille$/);
+  };
+  await clickTrash();
   const alert = page.locator('ion-alert');
   await expect(alert).toContainText('Ses versions et ses fournées sont conservées');
   await alert.getByRole('button', { name: 'Annuler' }).click();
   await expect(alert).toHaveCount(0);
   await expect(page).toHaveURL(/\/recipes\/.+/);
-  await trashButton.click();
+  await clickTrash();
   await alert.getByRole('button', { name: 'Mettre à la corbeille' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
   await expect(page.getByText(/Aucune recette pour l’instant/)).toBeVisible();
+  await expect(recipeCard(page, 'Poolish + tangzhong')).toHaveCount(0);
+  // Trashing the recipe leaves its current preparation visible and usable.
   await expect(
-    page.getByText('Poolish + tangzhong', { exact: true }).locator('visible=true'),
-  ).toHaveCount(0);
+    routed(page)
+      .locator('ion-router-link[router-link^="/bakes/"]')
+      .filter({ hasText: 'Poolish + tangzhong' }),
+  ).toHaveCount(1);
 
   // It sits in the trash (Advanced), with the time it went there.
   await page.getByLabel('Avancé').locator('visible=true').first().click();
@@ -97,7 +103,7 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
 
   // Trash it again, then delete it for good, after a confirmation.
   await recipeCard(page, 'Poolish + tangzhong').click();
-  await trashButton.click();
+  await clickTrash();
   await alert.getByRole('button', { name: 'Mettre à la corbeille' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
   await page.getByLabel('Avancé').locator('visible=true').first().click();
@@ -120,12 +126,14 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
 
   // The bake of the deleted recipe is still there, under a "deleted recipe" label.
   await backToRecipes(page, 'Recettes');
-  await page.getByLabel('Fournées en cours').locator('visible=true').first().click();
+  await page.getByLabel('Préparations en cours').locator('visible=true').first().click();
   const bake = page.getByRole('region', { name: 'Recette supprimée' });
   await expect(bake).toBeVisible();
   await bake.getByText('Ouvrir', { exact: true }).click();
   await expect(page).toHaveURL(/\/bakes\/.+/);
-  await expect(page.locator('ion-header:visible').last()).toContainText('Recette supprimée');
+  await expect(
+    routed(page).getByRole('heading', { name: 'Recette supprimée', exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Commencer : Préferment' }).locator('visible=true'),
   ).toHaveCount(1);
@@ -141,7 +149,7 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
   await expect(page.getByText('1 recette importée.')).toBeVisible();
   await backToRecipes(page, 'Recettes');
   await recipeCard(page, 'Pain du jour').click();
-  await trashButton.click();
+  await clickTrash();
   await alert.getByRole('button', { name: 'Mettre à la corbeille' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
   await page.getByLabel('Avancé').locator('visible=true').first().click();
@@ -162,7 +170,7 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
 test('the trash, in English @en', async ({ page }) => {
   await page.goto('/recipes');
   await recipeCard(page, 'Poolish + tangzhong').click();
-  await page.locator('ion-header:visible').getByRole('button', { name: 'Move to trash' }).click();
+  await menuAction(page, /^Move to trash$/);
   await page.locator('ion-alert').getByRole('button', { name: 'Move to trash' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
   await expect(page.getByText(/No recipe yet/)).toBeVisible();

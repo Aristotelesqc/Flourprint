@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { intendedOutcome, type Process } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
+import { OptionalNumberField } from '../ui/Field';
 import { OUTCOME_CHOICES, outcomeFromKey, outcomeKey, useOutcomeText } from './Outcome';
 
 interface Props {
@@ -82,6 +83,23 @@ export const RecipeOutcome = ({ process, editable, onChange }: Props) => {
         })}
       </select>
       <span className="text-sm text-muted">{t('process.intendedOutcomeHint')}</span>
+      {current && current.result !== 'cooked' && (
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <span className="text-sm">{t('outcome.pieces')}</span>
+          <OptionalNumberField
+            label={t('outcome.pieces')}
+            value={current.pieces}
+            width="7rem"
+            onCommit={(pieces) => {
+              const { pieces: _pieces, ...outcome } = current;
+              return onChange({
+                ...process,
+                intendedOutcome: { ...outcome, ...(pieces === undefined ? {} : { pieces }) },
+              });
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

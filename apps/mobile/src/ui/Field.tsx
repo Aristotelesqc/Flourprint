@@ -169,14 +169,18 @@ interface NumberFieldProps {
   readonly onCommit: Commit<number>;
   readonly size?: 'regular' | 'large';
   readonly width?: string;
+  /** Display rounding only: an untouched formatted field never commits it to the domain. */
+  readonly maximumFractionDigits?: number;
 }
 
-export const NumberField = ({ value, ...props }: NumberFieldProps) => {
+export const NumberField = ({ value, maximumFractionDigits = 2, ...props }: NumberFieldProps) => {
   const { t, locale } = useMessages();
   return (
     <Field<number>
       {...props}
-      text={editableNumber(value, locale)}
+      text={new Intl.NumberFormat(locale, { maximumFractionDigits, useGrouping: false }).format(
+        value,
+      )}
       parse={(text) => {
         const parsed = parseDecimal(text);
         return parsed === undefined ? { ok: false } : { ok: true, value: parsed };

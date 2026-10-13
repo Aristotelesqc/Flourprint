@@ -3,6 +3,8 @@ import { forwardRef, useId, useState } from 'react';
 import {
   OFFERED_BUILT_IN_FLOURS,
   INGREDIENT_PRESETS,
+  hydrationForRatio,
+  liquidMassRatio,
   removeStep,
   type FlourEntry,
   type Formula,
@@ -48,12 +50,12 @@ export const Hydration = forwardRef<
     onExplain: () => void;
   }
 >(({ formula, resolved, onEdit, onExplain }, ref) => {
-  const { t, pct } = useMessages();
+  const { t, wholePct } = useMessages();
   const target = formula.waterTarget;
   const water = target?.absorbInto ?? absorbingWater(formula);
   const label = t('formula.stat.hydration');
   const estimate = totalWaterKey(resolved.totalWater) === 'formula.stat.totalWaterEstimate';
-  const shown = t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) });
+  const shown = t(totalWaterKey(resolved.totalWater), { pct: wholePct(resolved.totalWaterPct) });
   return (
     <div
       ref={ref}
@@ -80,6 +82,7 @@ export const Hydration = forwardRef<
               size="large"
               width="7.5rem"
               value={target?.totalWaterPct ?? resolved.totalWaterPct}
+              maximumFractionDigits={0}
               onCommit={(value) => onEdit({ type: 'LockTotalWater', totalWaterPct: value, water })}
             />
             <button
@@ -91,8 +94,10 @@ export const Hydration = forwardRef<
               title={
                 target ? t('formula.hydration.unlock') : t('formula.hydration.lock', { pct: shown })
               }
-              className={`fp-reset inline-flex size-11 shrink-0 items-center justify-center rounded-full ${
-                target ? 'bg-accent text-on-accent' : 'border-[1.5px] border-field text-ink'
+              className={`fp-reset inline-flex size-12 shrink-0 items-center justify-center rounded-full transition-colors motion-reduce:transition-none ${
+                target
+                  ? 'bg-accent text-on-accent'
+                  : 'border border-line bg-surface text-muted hover:border-field'
               }`}
               onClick={() =>
                 void onEdit(
@@ -368,6 +373,7 @@ export const PreparationFields = ({
   onStructure: StructureEdit;
 }) => {
   const { t, componentName } = useMessages();
+  const [ratioRefused, setRatioRefused] = useState(false);
   const component = formula.components.find((c) => c.id === componentId);
   if (!component) return null;
   const label = componentName(formula, component);
@@ -397,6 +403,51 @@ export const PreparationFields = ({
           }
         />
       </span>
+      {(() => {
+        const ratioParts = liquidMassRatio(component);
+        return ratioParts !== undefined ? (
+          <div className="flex flex-col gap-1">
+            <span className="flex items-center justify-between gap-3">
+              <span className="flex flex-col">
+                <span>{t('component.ratioLabel')}</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span aria-hidden="true">1:</span>
+                <NumberField
+                  label={`${label}, ${t('component.ratioLabel')}`}
+                  width="7rem"
+                  value={ratioParts}
+                  onCommit={(parts) => {
+                    const res = hydrationForRatio(component, parts);
+                    if (res.ok) {
+                      const accepted = onEdit({
+                        type: 'UpdateComponent',
+                        component: component.id,
+                        changes: { hydrationPct: res.value },
+                      });
+                      setRatioRefused(!accepted);
+                      return accepted;
+                    }
+                    setRatioRefused(true);
+                    return false;
+                  }}
+                />
+              </span>
+            </span>
+            <span className="text-[11px] text-muted">{t('component.ratioBasisDesc')}</span>
+            {ratioRefused && (
+              <p className="m-0 text-sm text-alert" role="alert">
+                {t('component.ratioRejected')}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium text-muted">{t('component.ratioLabel')}</span>
+            <span className="text-xs text-muted">{t('component.ratioUnknown')}</span>
+          </div>
+        );
+      })()}
       <button
         type="button"
         aria-label={t('formula.removeNamed', { name: label })}
