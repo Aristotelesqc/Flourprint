@@ -51,6 +51,81 @@ export interface Ingredient {
   readonly yeast?: YeastMarker;
   /** Set when `bakerPct` was taken from a model suggestion (fermentation.md). */
   readonly accepted?: AcceptedSuggestion;
+  /**
+   * The registry entry version the contents above were copied from (ingredients.md). Provenance
+   * and display only: no calculation reads it.
+   */
+  readonly entry?: IngredientRef;
+  /**
+   * Contents set by hand on an ingredient with an `entry`: each field at most once, in the order
+   * of `OVERRIDABLE_FIELDS`, absent when empty. No calculation reads it.
+   */
+  readonly overrides?: readonly OverridableField[];
+  /** How the ingredient is when it is added; recorded and shown, never consumed. */
+  readonly preparation?: IngredientPreparation;
+}
+
+/** A pinned ingredient registry entry version (ingredients.md). */
+export interface IngredientRef {
+  readonly id: string;
+  readonly version: number;
+  /** The version is a personal customization of the built-in with this id. */
+  readonly customized?: true;
+}
+
+/** Contents of an ingredient that an entry gives and the baker may override (ingredients.md). */
+export type OverridableField = 'kind' | 'water' | 'fat' | 'sugar' | 'yeast';
+
+/** In the order `overrides` lists them. */
+export const OVERRIDABLE_FIELDS: readonly OverridableField[] = [
+  'kind',
+  'water',
+  'fat',
+  'sugar',
+  'yeast',
+];
+
+export type PreparationState =
+  | 'cold'
+  | 'roomTemperature'
+  | 'softened'
+  | 'melted'
+  | 'meltedCooled'
+  | 'cubed'
+  | 'chopped'
+  | 'grated'
+  | 'ground'
+  | 'toasted'
+  | 'soaked'
+  | 'whipped'
+  | 'beaten'
+  | 'pureed'
+  | 'cooked'
+  | 'other';
+
+export const PREPARATION_STATES: readonly PreparationState[] = [
+  'cold',
+  'roomTemperature',
+  'softened',
+  'melted',
+  'meltedCooled',
+  'cubed',
+  'chopped',
+  'grated',
+  'ground',
+  'toasted',
+  'soaked',
+  'whipped',
+  'beaten',
+  'pureed',
+  'cooked',
+  'other',
+];
+
+/** How an ingredient is prepared (ingredients.md, Preparation): `other` requires a note. */
+export interface IngredientPreparation {
+  readonly state: PreparationState;
+  readonly note?: string;
 }
 
 export type YeastForm = 'fresh' | 'active-dry' | 'instant';

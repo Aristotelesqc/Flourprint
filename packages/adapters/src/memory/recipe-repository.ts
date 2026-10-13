@@ -7,21 +7,31 @@ import type {
   RecordedRecipe,
   SaveRevisionInput,
   Draft,
+  TrashError,
 } from '@flourprint/core/application';
 import {
   domainError,
   err,
   ok,
+  type Instant,
   type Recipe,
   type RecipeFamily,
   type Result,
   type Revision,
 } from '@flourprint/core/domain';
 
+import type { MemoryIngredientRegistry } from './ingredient-registry.js';
+
 const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-/** In-memory recipe repository; same contract as the SQLite implementations. */
+/**
+ * In-memory recipe repository; same contract as the SQLite implementations. The ingredient
+ * registry receives the entry versions a recipes file carries; without it, an import that
+ * carries some is refused before anything is written.
+ */
 export class MemoryRecipeRepository implements RecipeRepository {
+  constructor(private readonly ingredients?: MemoryIngredientRegistry) {}
+
   readonly #recipes = new Map<string, Recipe>();
   readonly #revisions = new Map<string, Revision>();
   readonly #families = new Map<string, RecipeFamily>();
@@ -29,6 +39,20 @@ export class MemoryRecipeRepository implements RecipeRepository {
 
   async saveRevision(input: SaveRevisionInput): Promise<Result<Revision, RecipeStoreError>> {
     const current = this.#recipes.get(input.recipeId);
+    if (current?.trashedAt !== undefined) {
+      return err(
+        domainError('RecipeTrashed', `Recipe ${input.recipeId} is in the trash`, {
+          recipeId: input.recipeId,
+        }),
+      );
+    }
+    if (current === undefined && input.expectedHead > 0) {
+      return err(
+        domainError('NotFound', `Recipe ${input.recipeId} does not exist`, {
+          recipeId: input.recipeId,
+        }),
+      );
+    }
     const currentHead = current?.headVersion ?? 0;
     if (currentHead !== input.expectedHead) {
       return err(
@@ -53,13 +77,14 @@ export class MemoryRecipeRepository implements RecipeRepository {
 
   #writeRevision(name: string, revision: Revision): void {
     this.#revisions.set(`${revision.recipeId}@${revision.version}`, copy(revision));
-    const familyId = this.#recipes.get(revision.recipeId)?.familyId;
+    const { familyId, trashedAt } = this.#recipes.get(revision.recipeId) ?? {};
     this.#recipes.set(revision.recipeId, {
       id: revision.recipeId,
       name,
       headVersion: revision.version,
       updatedAt: revision.createdAt,
       ...(familyId === undefined ? {} : { familyId }),
+      ...(trashedAt === undefined ? {} : { trashedAt }),
     });
   }
 
@@ -71,12 +96,76 @@ export class MemoryRecipeRepository implements RecipeRepository {
   async listRecipes(): Promise<readonly Recipe[]> {
     // Same order as the SQLite stores: most recently updated first.
     return [...this.#recipes.values()]
+      .filter((recipe) => recipe.trashedAt === undefined)
       .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
       .map((recipe) => ({ ...recipe }));
   }
 
-  async listFamilies(): Promise<readonly RecipeFamily[]> {
-    return [...this.#families.values()].map((family) => ({ ...family }));
+  async listTrash(): Promise<readonly Recipe[]> {
+    return [...this.#recipes.values()]
+      .filter((recipe) => recipe.trashedAt !== undefined)
+      .sort(
+        (a, b) =>
+          Date.parse(b.trashedAt as string) - Date.parse(a.trashedAt as string) ||
+          (a.id < b.id ? -1 : 1),
+      )
+      .map((recipe) => ({ ...recipe }));
+  }
+
+  async trashRecipe(recipeId: string, at: Instant): Promise<Result<void, TrashError>> {
+    const recipe = this.#recipes.get(recipeId);
+    if (!recipe) return err(trashNotFound(recipeId));
+    if (recipe.trashedAt !== undefined) {
+      return err(domainError('AlreadyTrashed', `Recipe ${recipeId} is in the trash`, { recipeId }));
+    }
+    this.#recipes.set(recipeId, { ...recipe, trashedAt: at });
+    return ok(undefined);
+  }
+
+  async restoreRecipe(recipeId: string): Promise<Result<void, TrashError>> {
+    const recipe = this.#recipes.get(recipeId);
+    if (!recipe) return err(trashNotFound(recipeId));
+    if (recipe.trashedAt === undefined) return err(notTrashed(recipeId));
+    const { trashedAt: _, ...rest } = recipe;
+    this.#recipes.set(recipeId, rest);
+    return ok(undefined);
+  }
+
+  async deleteRecipe(recipeId: string): Promise<Result<void, TrashError>> {
+    const recipe = this.#recipes.get(recipeId);
+    if (!recipe) return err(trashNotFound(recipeId));
+    if (recipe.trashedAt === undefined) return err(notTrashed(recipeId));
+    this.#remove(recipeId);
+    return ok(undefined);
+  }
+
+  async emptyTrash(): Promise<readonly string[]> {
+    const ids = (await this.listTrash()).map((recipe) => recipe.id);
+    for (const id of ids) this.#remove(id);
+    return ids;
+  }
+
+  /** Deletes a recipe and its revisions; it leaves its family first (pin, empty family). */
+  #remove(recipeId: string): void {
+    const recipe = this.#recipes.get(recipeId);
+    if (!recipe) return;
+    this.#setFamily(recipeId, undefined);
+    for (let version = 1; version <= recipe.headVersion; version++) {
+      this.#revisions.delete(`${recipeId}@${version}`);
+    }
+    this.#recipes.delete(recipeId);
+  }
+
+  async listFamilies(options?: { readonly all?: boolean }): Promise<readonly RecipeFamily[]> {
+    return [...this.#families.values()]
+      .filter(
+        (family) =>
+          options?.all === true ||
+          [...this.#recipes.values()].some(
+            (r) => r.familyId === family.id && r.trashedAt === undefined,
+          ),
+      )
+      .map((family) => ({ ...family }));
   }
 
   async groupRecipes(
@@ -133,6 +222,11 @@ export class MemoryRecipeRepository implements RecipeRepository {
   }
 
   async importRecipes(plan: RecipeImportPlan): Promise<RecipeImportOutcome> {
+    const entries = plan.ingredients ?? [];
+    const registry = this.ingredients;
+    if (entries.length > 0 && !registry) {
+      throw new Error('This repository has no ingredient registry to import entries into');
+    }
     const imported: string[] = [];
     const skipped: string[] = [];
     const created = plan.families.filter((family) => !this.#families.has(family.id));
@@ -156,6 +250,10 @@ export class MemoryRecipeRepository implements RecipeRepository {
         await this.pinVariant(id, undefined);
       }
     }
+    // Pinned entry versions: absent ones are written, present ones skipped (ingredients.md).
+    for (const entry of entries) {
+      if (registry && !registry.has(entry.id, entry.version)) registry.write(entry);
+    }
     return { imported, skipped };
   }
 
@@ -163,6 +261,10 @@ export class MemoryRecipeRepository implements RecipeRepository {
   write(recipe: RecordedRecipe): void {
     for (const revision of recipe.revisions) this.#writeRevision(recipe.name, revision);
     if (recipe.familyId !== undefined) this.#setFamily(recipe.id, recipe.familyId);
+    if (recipe.trashedAt !== undefined) {
+      const written = this.#recipes.get(recipe.id);
+      if (written) this.#recipes.set(recipe.id, { ...written, trashedAt: recipe.trashedAt });
+    }
   }
 
   /** Writes a family as recorded (restores). */
@@ -209,6 +311,10 @@ export class MemoryRecipeRepository implements RecipeRepository {
 
 const recipeNotFound = (recipeId: string): FamilyError =>
   domainError('RecipeNotFound', `Recipe ${recipeId} does not exist`, { recipeId });
+const trashNotFound = (recipeId: string): TrashError =>
+  domainError('NotFound', `Recipe ${recipeId} does not exist`, { recipeId });
+const notTrashed = (recipeId: string): TrashError =>
+  domainError('NotTrashed', `Recipe ${recipeId} is not in the trash`, { recipeId });
 const familyNotFound = (familyId: string): FamilyError =>
   domainError('FamilyNotFound', `Family ${familyId} does not exist`, { familyId });
 const notInFamily = (recipeId: string, familyId: string): FamilyError =>

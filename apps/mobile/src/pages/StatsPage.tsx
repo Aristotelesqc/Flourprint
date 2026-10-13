@@ -37,7 +37,11 @@ export const StatsPage = () => {
 
   const load = useCallback(async () => {
     try {
-      const names = new Map((await services.recipes.listRecipes()).map((r) => [r.id, r.name]));
+      const known = [
+        ...(await services.recipes.listRecipes()),
+        ...(await services.recipes.listTrash()),
+      ];
+      const names = new Map(known.map((r) => [r.id, r.name]));
       const summaries = await services.bakes.listBakes();
       const digests = await Promise.all(
         summaries.map(async (s) =>
@@ -97,6 +101,30 @@ const Content = ({ stats }: { stats: BakeStats }) => {
           <Figure label={t('stats.active')} value={counts.active} />
         </div>
       </Section>
+
+      {counts.finished > 0 && (
+        <Section title={t('stats.results')}>
+          <div className="grid grid-cols-4 gap-2 text-center">
+            <Figure label={t('outcome.cooked')} value={counts.results.cooked} />
+            <Figure label={t('outcome.dough')} value={counts.results.dough} />
+            <Figure label={t('outcome.cookedAndDough')} value={counts.results.cookedAndDough} />
+            <Figure label={t('outcome.unknown')} value={counts.results.unknown} />
+          </div>
+        </Section>
+      )}
+
+      {stats.cookingStages.length > 0 && (
+        <Section title={t('stats.cookingStages')}>
+          {stats.cookingStages.map((stage) => (
+            <Bar
+              key={stage.operation}
+              label={stepName({ operation: stage.operation })}
+              detail={String(stage.n)}
+              share={stage.n / Math.max(...stats.cookingStages.map((s) => s.n))}
+            />
+          ))}
+        </Section>
+      )}
 
       <Section title={t('stats.recipes')}>
         {stats.recipes.slice(0, 5).map((recipe) => (

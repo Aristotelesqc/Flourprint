@@ -1,5 +1,5 @@
 import { IonButton } from '@ionic/react';
-import { useId, useState } from 'react';
+import { forwardRef, useId, useState } from 'react';
 import {
   OFFERED_BUILT_IN_FLOURS,
   INGREDIENT_PRESETS,
@@ -38,18 +38,16 @@ const absorbingWater = (formula: Formula) =>
  * the lock icon locks at the current value or unlocks. A formula without a dough water ingredient
  * has nothing to absorb a target, so its hydration is shown, not edited.
  */
-export const Hydration = ({
-  formula,
-  resolved,
-  onEdit,
-  onExplain,
-}: {
-  formula: Formula;
-  resolved: ResolvedFormula;
-  onEdit: (edit: FormulaEdit) => boolean;
-  /** Opens the breakdown of where the water comes from. */
-  onExplain: () => void;
-}) => {
+export const Hydration = forwardRef<
+  HTMLDivElement,
+  {
+    formula: Formula;
+    resolved: ResolvedFormula;
+    onEdit: (edit: FormulaEdit) => boolean;
+    /** Opens the breakdown of where the water comes from. */
+    onExplain: () => void;
+  }
+>(({ formula, resolved, onEdit, onExplain }, ref) => {
   const { t, pct } = useMessages();
   const target = formula.waterTarget;
   const water = target?.absorbInto ?? absorbingWater(formula);
@@ -57,8 +55,14 @@ export const Hydration = ({
   const estimate = totalWaterKey(resolved.totalWater) === 'formula.stat.totalWaterEstimate';
   const shown = t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) });
   return (
-    <div className="flex flex-col gap-1 border-t border-line pt-3">
-      <div className="flex items-center justify-between gap-3">
+    <div
+      ref={ref}
+      tabIndex={-1}
+      role="region"
+      aria-label={label}
+      className="flex flex-col gap-1 rounded-lg border-t border-line pt-3 outline-none focus:ring-2 focus:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="flex items-center gap-1.5 font-semibold">
           {label}
           <InfoButton topic="hydration" term={label} />
@@ -114,7 +118,7 @@ export const Hydration = ({
       </button>
     </div>
   );
-};
+});
 
 /** Adds an ingredient: a common one with its composition, or any name with its water content. */
 export const AddIngredient = ({

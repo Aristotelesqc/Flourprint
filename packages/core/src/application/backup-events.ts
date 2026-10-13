@@ -1,4 +1,18 @@
-import { evolve, initialBakeState, type BakeEvent, type BakeState } from '../domain/index.js';
+import {
+  equipmentCopiesProblem,
+  equipmentUses,
+  evolve,
+  initialBakeState,
+  outcomeProblem,
+  stepEquipmentProblem,
+  type BakeEvent,
+  type BakeState,
+  type EquipmentEntry,
+  type EquipmentUse,
+  type PreparationOutcome,
+  type ProcessStep,
+  type StepEquipment,
+} from '../domain/index.js';
 import {
   expect,
   isAmounts,
@@ -11,7 +25,8 @@ import {
   refuse,
   type Json,
 } from './decode.js';
-import { decodeFormula, decodeProcess, estimateRange } from './documents.js';
+import { decodeFormula, decodeProcess, estimateRange, stepEquipment } from './documents.js';
+import { decodeEquipmentEntry } from './equipment.js';
 
 /**
  * Decodes one bake log from a backup (persistence.md): every payload is checked for its type's
@@ -35,6 +50,9 @@ const FORMULA_EDITS = new Set([
   'SetAnchor',
   'AddIngredient',
   'UpdateIngredient',
+  'ApplyIngredientEntry',
+  'RefreshIngredientEntry',
+  'DetachIngredientEntry',
   'RemoveIngredient',
   'AddComponent',
   'UpdateComponent',
@@ -153,6 +171,29 @@ const isMeasurement = (value: unknown): boolean =>
   typeof value.unit === 'string' &&
   isInstant(value.observedAt);
 
+const isEquipmentShape = accepts(stepEquipment);
+
+/** Settings of a step: the structure, then the domain's rules (equipment.md). */
+const isStepEquipment = (value: unknown): value is StepEquipment =>
+  isEquipmentShape(value) && stepEquipmentProblem(value as StepEquipment) === undefined;
+
+/** A list of entry copies, each structurally and semantically valid. */
+const isEntryList = (value: unknown): value is EquipmentEntry[] =>
+  Array.isArray(value) && value.every(accepts(decodeEquipmentEntry));
+
+const stepUses = (steps: readonly Pick<ProcessStep, 'equipment'>[]): EquipmentUse[] =>
+  steps.flatMap((step, i) =>
+    step.equipment === undefined ? [] : equipmentUses(step.equipment, `steps[${i}].equipment`),
+  );
+
+/** Snapshot copies: valid, and every reference of the process resolves to the right kind. */
+const snapshotEquipmentOk = (snapshot: Json): boolean => {
+  const copies = snapshot.equipment === undefined ? [] : (snapshot.equipment as EquipmentEntry[]);
+  const steps = (snapshot.process as { steps: ProcessStep[] }).steps;
+  if (!steps.every((s) => s.equipment === undefined || isStepEquipment(s.equipment))) return false;
+  return equipmentCopiesProblem(stepUses(steps), [], copies) === undefined;
+};
+
 const isSnapshot = (value: unknown): boolean =>
   isObject(value) &&
   isObject(value.revisions) &&
@@ -167,7 +208,10 @@ const isSnapshot = (value: unknown): boolean =>
       isId(p.ingredient) &&
       isCount(p.version) &&
       typeof p.key === 'string' &&
-      'value' in p,
+      'value' in p &&
+      (p.customized === undefined || p.customized === true) &&
+      (p.overridden === undefined || p.overridden === true) &&
+      isOptional(p.formulaIngredient, isId),
   ) &&
   isProcessShape(value.process) &&
   isProjection(value.initialProjection) &&
@@ -184,6 +228,8 @@ const isSnapshot = (value: unknown): boolean =>
   ) &&
   isOptional(value.origin, (v): v is string => v === 'physical' || v === 'simulation') &&
   isOptional(value.flours, (v): v is unknown[] => Array.isArray(v) && v.every(isRevisionRef)) &&
+  isOptional(value.equipment, isEntryList) &&
+  snapshotEquipmentOk(value) &&
   isObject(value.manifest) &&
   typeof value.manifest.engineVersion === 'string' &&
   typeof value.manifest.contractVersion === 'string' &&
@@ -202,6 +248,15 @@ const isFoldSet = (state: BakeState, stepId: unknown, set: unknown): boolean => 
   );
 };
 
+/** A preparation outcome (bake-session.md), checked by the domain's own rule. */
+const isOutcome = (value: unknown): boolean => {
+  if (!isObject(value)) return false;
+  if (Object.keys(value).some((k) => k !== 'result' && k !== 'dough' && k !== 'pieces')) {
+    return false;
+  }
+  return outcomeProblem(value as unknown as PreparationOutcome) === undefined;
+};
+
 /** Checks one payload against the state before it; throws `Refused` with the reason. */
 const checkPayload = (state: BakeState, payload: Json, where: string): void => {
   const stepIds = new Set((state.process?.steps ?? []).map((s) => s.id));
@@ -211,9 +266,11 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
   if (state.status === 'notStarted') {
     expect(payload.type === 'BakeStarted', `${where}: a bake log starts with BakeStarted`);
   } else if (state.status !== 'active') {
-    // After the end only notes of the review (bake-session.md).
+    // After the end: notes of the review, an outcome correction or a reopening (bake-session.md).
     expect(
-      payload.type === 'ObservationAdded' && payload.kind === undefined,
+      (payload.type === 'ObservationAdded' && payload.kind === undefined) ||
+        (payload.type === 'OutcomeCorrected' && state.status === 'finished') ||
+        payload.type === 'BakeReopened',
       `${where}: the bake had already ended`,
     );
   }
@@ -237,6 +294,24 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
     case 'OverrideApplied': {
       const target = payload.target;
       expect(isObject(target), `${where}: malformed override`);
+      if (isObject(target) && target.kind === 'step' && target.field === 'equipment') {
+        expect(knownStep(target.stepId), `${where}: unknown step`);
+        const copies = payload.equipment === undefined ? [] : payload.equipment;
+        expect(
+          isStepEquipment(payload.effective) &&
+            (payload.baseline === null || isStepEquipment(payload.baseline)) &&
+            payload.unit === undefined &&
+            isOptional(payload.reason, (v): v is string => typeof v === 'string') &&
+            isOptional(payload.equipment, isEntryList) &&
+            equipmentCopiesProblem(
+              equipmentUses(payload.effective as StepEquipment),
+              state.equipment ?? [],
+              copies as EquipmentEntry[],
+            ) === undefined,
+          `${where}: malformed equipment override`,
+        );
+        return;
+      }
       if (isObject(target) && target.kind === 'step') {
         expect(knownStep(target.stepId), `${where}: unknown step`);
         const unit =
@@ -272,7 +347,15 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
           isStepShape(payload.step) &&
           !stepIds.has(payload.step.id as string) &&
           Array.isArray(payload.rewired) &&
-          payload.rewired.every(knownStep),
+          payload.rewired.every(knownStep) &&
+          isOptional(payload.equipment, isEntryList) &&
+          ((payload.step as unknown as ProcessStep).equipment === undefined ||
+            isStepEquipment((payload.step as unknown as ProcessStep).equipment)) &&
+          equipmentCopiesProblem(
+            stepUses([payload.step as unknown as ProcessStep]),
+            state.equipment ?? [],
+            (payload.equipment ?? []) as EquipmentEntry[],
+          ) === undefined,
         `${where}: malformed step insertion`,
       );
       return;
@@ -311,6 +394,23 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
       );
       return;
     case 'BakeFinished':
+      // Before 0.11.0 a finish has neither: its result is unknown.
+      expect(
+        payload.outcome === undefined
+          ? payload.outcomeSource === undefined
+          : isOutcome(payload.outcome) &&
+              (payload.outcomeSource === 'recipe' || payload.outcomeSource === 'baker'),
+        `${where}: malformed outcome`,
+      );
+      return;
+    case 'OutcomeCorrected':
+      expect(
+        isOutcome(payload.outcome) && payload.outcomeSource === 'baker',
+        `${where}: malformed outcome`,
+      );
+      return;
+    case 'BakeReopened':
+      expect(state.status !== 'active', `${where}: the bake was not ended`);
       return;
     case 'BakeAbandoned':
       expect(

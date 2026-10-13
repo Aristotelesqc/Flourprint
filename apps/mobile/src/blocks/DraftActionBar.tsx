@@ -9,6 +9,7 @@ interface Props {
   readonly issuesCount: number;
   readonly blockingCount: number;
   readonly busy: boolean;
+  readonly hasInvalid?: boolean;
   readonly onSave: () => void;
   readonly onDiscard: () => void;
   readonly onCheck: () => void;
@@ -26,6 +27,7 @@ export const DraftActionBar = ({
   issuesCount,
   blockingCount,
   busy,
+  hasInvalid = false,
   onSave,
   onDiscard,
   onCheck,
@@ -38,18 +40,30 @@ export const DraftActionBar = ({
       <IonToolbar>
         <div className="flex flex-col gap-2.5 px-4 py-1.5">
           <div className="flex h-[22px] min-w-0 items-center gap-1.5 text-sm text-muted">
-            <span className="truncate" role="status">
-              {dirty ? t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved') : t('draft.clean')}
+            <span className={`truncate ${hasInvalid ? 'text-alert' : ''}`} role="status">
+              {hasInvalid
+                ? t('draft.invalid')
+                : dirty
+                  ? t(newRecipe ? 'draft.newRecipe' : 'draft.unsaved')
+                  : t('draft.clean')}
             </span>
             <InfoButton
               topic="draft"
-              term={t(dirty ? (newRecipe ? 'draft.newRecipe' : 'draft.unsaved') : 'draft.clean')}
+              term={t(
+                hasInvalid
+                  ? 'draft.invalid'
+                  : dirty
+                    ? newRecipe
+                      ? 'draft.newRecipe'
+                      : 'draft.unsaved'
+                    : 'draft.clean',
+              )}
             />
           </div>
           <div className="flex h-11 items-stretch gap-2">
             <IonButton
               fill="outline"
-              className="m-0 h-11 w-16 shrink-0 [--padding-end:0px] [--padding-start:0px]"
+              className="m-0 h-11 min-w-0 flex-1 [--padding-end:0px] [--padding-start:0px]"
               aria-label={t('draft.review')}
               title={t('draft.review')}
               disabled={!dirty}
@@ -62,7 +76,7 @@ export const DraftActionBar = ({
             </IonButton>
             <IonButton
               fill="outline"
-              className="m-0 h-11 w-16 shrink-0 [--padding-end:0px] [--padding-start:0px]"
+              className="m-0 h-11 min-w-0 flex-1 [--padding-end:0px] [--padding-start:0px]"
               color={blockingCount > 0 ? 'danger' : 'medium'}
               aria-label={
                 issuesCount === 0
@@ -91,10 +105,10 @@ export const DraftActionBar = ({
             </IonButton>
             <IonButton
               fill="outline"
-              className="m-0 h-11 w-16 shrink-0 [--padding-end:0px] [--padding-start:0px]"
+              className="m-0 h-11 min-w-0 flex-1 [--padding-end:0px] [--padding-start:0px]"
               aria-label={t(newRecipe ? 'draft.delete' : 'draft.discard')}
               title={t(newRecipe ? 'draft.delete' : 'draft.discard')}
-              disabled={!dirty || busy}
+              disabled={(!dirty && !hasInvalid) || busy}
               onClick={onDiscard}
             >
               <span className="pointer-events-none flex flex-col items-center gap-0.5 text-[10px] leading-none">
@@ -103,16 +117,18 @@ export const DraftActionBar = ({
               </span>
             </IonButton>
             <IonButton
-              className="m-0 h-11 min-w-0 flex-1"
+              className="m-0 h-11 min-w-0 flex-[1.6]"
               aria-label={
                 newRecipe
                   ? t('draft.saveRecipe')
                   : t('draft.save', { version: (baseVersion ?? 0) + 1 })
               }
-              disabled={!dirty || busy}
+              disabled={!dirty || busy || hasInvalid}
               onClick={onSave}
             >
-              <span className="pointer-events-none truncate">{t('draft.saveShort')}</span>
+              <span className="pointer-events-none text-xs leading-tight">
+                {t('draft.saveShort')}
+              </span>
             </IonButton>
           </div>
         </div>

@@ -20,7 +20,8 @@ a run artifact, not a release.
 ## Run the checks
 
 1. With the normal app, turn on **airplane mode** (and keep the PC off): the app must open and
-   show the sample recipe. The dev app needs the network to load the preview.
+   show its recipes (a new installation has none; dev builds can load the sample recipes from
+   Advanced). The dev app needs the network to load the preview.
 2. Open **Advanced** (the ⋯ menu) → **Device checks**.
 3. **Run the storage checks**: every check must pass (9 of 9). They use a scratch database, never
    your recipes.

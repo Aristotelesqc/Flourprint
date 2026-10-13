@@ -16,6 +16,7 @@ import { useFlourCatalog } from '../services/flours';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { FermentationCard } from './Fermentation';
+import { WeighingChecklist } from './WeighingChecklist';
 import {
   AddFlour,
   AddIngredient,
@@ -37,9 +38,14 @@ interface Props {
   readonly onStructure: StructureEdit;
   /** A process change (temperatures, an applied duration); false when refused. */
   readonly onProcess: (process: Process) => boolean;
+  /** Shared weighing checklist state lifted to page (#67). */
+  readonly weighed: ReadonlyMap<string, number>;
+  readonly onToggleWeighed: (key: string, grams: number) => void;
+  readonly fermentationRef?: React.RefObject<HTMLDivElement | null>;
+  readonly hydrationRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
+export const ROW = 'grid grid-cols-[minmax(0,1fr)_88px_104px] items-center gap-2';
 
 /**
  * Formula tab of the #8 mockups: quantity and key figures first, then flours, ingredients,
@@ -53,40 +59,16 @@ export const FormulaSection = ({
   onEdit,
   onStructure,
   onProcess,
+  weighed,
+  onToggleWeighed,
+  fermentationRef,
+  hydrationRef,
 }: Props) => {
   const { t, grams, pct, name, componentName } = useMessages();
-  const componentLabel = (id: string) => {
-    const component = formula.components.find((c) => c.id === id);
-    return component ? componentName(formula, component) : name(id);
-  };
   const [explaining, setExplaining] = useState(false);
-  // Weighed items remember the grams they were weighed at: a quantity change unchecks them.
-  const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
   const anchor = formula.anchor;
 
   const rescale = (next: Anchor) => onEdit({ type: 'SetAnchor', mode: 'rescale', anchor: next });
-
-  const finalMix: { key: string; label: string; grams: number }[] = !resolved
-    ? []
-    : [
-        ...Object.entries(resolved.finalMix.componentMasses).map(([id, g]) => ({
-          key: `component:${id}`,
-          label: componentLabel(id),
-          grams: g,
-        })),
-        ...Object.entries(resolved.finalMix.flourByFlour).map(([id, g]) => ({
-          key: `flour:${id}`,
-          label: name(id),
-          grams: g,
-        })),
-        { key: 'water', label: name('water'), grams: resolved.finalMix.water },
-        ...Object.entries(resolved.finalMix.grams).map(([id, g]) => ({
-          key: `ingredient:${id}`,
-          label: name(id),
-          grams: g,
-        })),
-      ];
-  const isWeighed = (item: { key: string; grams: number }) => weighed.get(item.key) === item.grams;
 
   const lockedWater = formula.waterTarget?.absorbInto;
 
@@ -158,6 +140,7 @@ export const FormulaSection = ({
         ) : (
           <>
             <Hydration
+              ref={hydrationRef}
               formula={formula}
               resolved={resolved}
               onEdit={onEdit}
@@ -305,110 +288,83 @@ export const FormulaSection = ({
         </Rows>
       </section>
 
-      {
-        <section className="flex flex-col gap-2">
-          <span className="flex items-center gap-1.5">
-            <SectionTitle>{t('formula.preparations')}</SectionTitle>
-            <InfoButton topic="preparations" term={t('formula.preparations')} />
-          </span>
-          {formula.components.length === 0 && (
-            <p className="m-0 px-1 text-sm text-muted">{t('formula.prep.empty')}</p>
-          )}
-          {formula.components.map((component) => {
-            const c = resolved?.components[component.id];
-            const breakdown = !c
-              ? []
-              : [
-                  t('formula.component.flour', { grams: grams(c.flour) }),
-                  t('formula.component.water', { grams: grams(c.water) }),
-                  ...Object.entries(c.allocations).map(([id, g]) =>
-                    t('formula.component.allocation', { grams: grams(g), name: name(id) }),
-                  ),
-                  ...(c.waterLoss > 0
-                    ? [t('formula.component.loss', { grams: grams(c.waterLoss) })]
-                    : []),
-                ];
-            const params = [
-              t('formula.prep.flourPct', { pct: pct(component.flourPct) }),
-              t('formula.prep.hydration', { pct: pct(component.hydrationPct) }),
-              ...(component.allocations ?? []).map((a) =>
-                t('formula.prep.allocation', { name: name(a.ingredient), pct: pct(a.bakerPct) }),
-              ),
-            ];
-            return (
-              <Card key={component.id} gap="gap-1.5">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[19px] font-semibold">
-                    {componentName(formula, component)}
-                  </span>
-                  <span className="text-lg font-bold">{c ? grams(c.mass) : '—'}</span>
-                </div>
-                <span className="text-[15px]">{params.join(' · ')}</span>
-                {breakdown.length > 0 && (
-                  <span className="text-sm text-muted">{breakdown.join(' · ')}</span>
-                )}
-                <PreparationFields
-                  formula={formula}
-                  process={process}
-                  componentId={component.id}
-                  onEdit={onEdit}
-                  onStructure={onStructure}
-                />
-              </Card>
-            );
-          })}
-          <AddPreparation formula={formula} process={process} onStructure={onStructure} />
-        </section>
-      }
+      <section className="flex flex-col gap-2">
+        <span className="flex items-center gap-1.5">
+          <SectionTitle>{t('formula.preparations')}</SectionTitle>
+          <InfoButton topic="preparations" term={t('formula.preparations')} />
+        </span>
+        {formula.components.length === 0 && (
+          <p className="m-0 px-1 text-sm text-muted">{t('formula.prep.empty')}</p>
+        )}
+        {formula.components.map((component) => {
+          const c = resolved?.components[component.id];
+          const breakdown = !c
+            ? []
+            : [
+                t('formula.component.flour', { grams: grams(c.flour) }),
+                t('formula.component.water', { grams: grams(c.water) }),
+                ...Object.entries(c.allocations).map(([id, g]) =>
+                  t('formula.component.allocation', { grams: grams(g), name: name(id) }),
+                ),
+                ...(c.waterLoss > 0
+                  ? [t('formula.component.loss', { grams: grams(c.waterLoss) })]
+                  : []),
+              ];
+          const params = [
+            t('formula.prep.flourPct', { pct: pct(component.flourPct) }),
+            t('formula.prep.hydration', { pct: pct(component.hydrationPct) }),
+            ...(component.allocations ?? []).map((a) =>
+              t('formula.prep.allocation', { name: name(a.ingredient), pct: pct(a.bakerPct) }),
+            ),
+          ];
+          return (
+            <Card key={component.id} gap="gap-1.5">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[19px] font-semibold">
+                  {componentName(formula, component)}
+                </span>
+                <span className="text-lg font-bold">{c ? grams(c.mass) : '—'}</span>
+              </div>
+              <span className="text-[15px]">{params.join(' · ')}</span>
+              {breakdown.length > 0 && (
+                <span className="text-sm text-muted">{breakdown.join(' · ')}</span>
+              )}
+              <PreparationFields
+                formula={formula}
+                process={process}
+                componentId={component.id}
+                onEdit={onEdit}
+                onStructure={onStructure}
+              />
+            </Card>
+          );
+        })}
+        <AddPreparation formula={formula} process={process} onStructure={onStructure} />
+      </section>
 
-      <FermentationCard
-        formula={formula}
-        process={process}
-        now={now}
-        onEdit={onEdit}
-        onProcess={onProcess}
-      />
+      <div
+        ref={fermentationRef}
+        id="fermentation-settings"
+        data-testid="fermentation-card"
+        tabIndex={-1}
+        className="outline-none"
+      >
+        <FermentationCard
+          formula={formula}
+          process={process}
+          now={now}
+          onEdit={onEdit}
+          onProcess={onProcess}
+        />
+      </div>
 
       {resolved && (
-        <section className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between">
-            <span className="flex items-center gap-1.5">
-              <SectionTitle>{t('formula.finalMix')}</SectionTitle>
-              <InfoButton topic="finalMix" term={t('formula.finalMix')} />
-            </span>
-            <span className="px-1 text-[13px] text-muted">
-              {t('formula.finalMix.progress', {
-                done: finalMix.filter(isWeighed).length,
-                total: finalMix.length,
-              })}
-            </span>
-          </div>
-          <Rows>
-            {finalMix.map((item) => {
-              const done = isWeighed(item);
-              return (
-                <label
-                  key={item.key}
-                  className={`flex min-h-[52px] items-center gap-3 px-4 ${done ? 'text-muted line-through' : ''}`}
-                >
-                  <input
-                    type="checkbox"
-                    className="size-[22px] accent-[var(--color-accent)]"
-                    checked={done}
-                    onChange={() => {
-                      const next = new Map(weighed);
-                      if (done) next.delete(item.key);
-                      else next.set(item.key, item.grams);
-                      setWeighed(next);
-                    }}
-                  />
-                  <span className="flex-1">{item.label}</span>
-                  <span className="font-bold">{grams(item.grams)}</span>
-                </label>
-              );
-            })}
-          </Rows>
-        </section>
+        <WeighingChecklist
+          formula={formula}
+          resolved={resolved}
+          weighed={weighed}
+          onToggle={onToggleWeighed}
+        />
       )}
 
       {resolved && (
@@ -428,7 +384,7 @@ const ENRICHED_PCT = 0.5;
  * Added fat and sugar next to the water (formula.md, Fat and sugar), for enriched doughs; an
  * unknown content keeps the total marked as an estimate.
  */
-const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
+export const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
   const { t, pct, name } = useMessages();
   const { totalFat, totalSugar, totalFatPct, totalSugarPct } = resolved;
   if (!totalFat || !totalSugar || totalFatPct === undefined || totalSugarPct === undefined) {
@@ -437,8 +393,6 @@ const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
   const unknown = [
     ...new Set([...totalFat.unknownContributors, ...totalSugar.unknownContributors]),
   ];
-  // Yeast alone brings traces of fat: below half a point the dough is not enriched, unless an
-  // ingredient's content is unknown, which may hide any amount.
   if (Math.max(totalFatPct, totalSugarPct) < ENRICHED_PCT && unknown.length === 0) return null;
   return (
     <>
@@ -461,7 +415,7 @@ const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
   );
 };
 
-const GroupHeader = ({
+export const GroupHeader = ({
   title,
   pctLabel,
   gramsLabel,
@@ -473,9 +427,9 @@ const GroupHeader = ({
   help?: ReactNode;
 }) => (
   <div className={`${ROW} px-4 pb-1.5 text-[13px] font-semibold text-muted`}>
-    <span className="flex items-center gap-1.5">
-      <span className="tracking-wide uppercase">{title}</span>
-      {help}
+    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <span className="min-w-0 tracking-wide uppercase break-words">{title}</span>
+      {help && <span className="shrink-0">{help}</span>}
     </span>
     <span className="text-right">{pctLabel}</span>
     <span className="text-right">{gramsLabel}</span>
@@ -489,7 +443,7 @@ const LabeledField = ({ label, children }: { label: string; children: ReactNode 
   </div>
 );
 
-const Stat = ({ label, value }: { label: string; value: string }) => (
+export const Stat = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col">
     <span className="text-xs text-muted">{label}</span>
     <span className="text-lg font-bold">{value}</span>
@@ -497,7 +451,7 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
 );
 
 /** What the registry knows about a flour, in one line; nothing without an entry (flours.md). */
-const FlourSummary = ({ id }: { id: string }) => {
+export const FlourSummary = ({ id }: { id: string }) => {
   const { t, locale } = useMessages();
   const entry = useFlourCatalog().entry(id);
   const summary = entry ? flourSummary(entry, t, locale) : '';

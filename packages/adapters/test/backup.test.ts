@@ -6,14 +6,19 @@ import {
   exportRecipes,
   importBackup,
   importRecipes,
+  saveEquipmentEntry,
   saveFlourEntry,
   saveRevision,
   type BackupStores,
 } from '@flourprint/core/application';
 import {
+  builtInEquipment,
   builtInFlour,
   customizeFlour,
+  nextEquipmentVersion,
   nextFlourVersion,
+  replayBake,
+  type EquipmentEntry,
   type FlourEntry,
   type Formula,
   type Instant,
@@ -22,7 +27,9 @@ import {
 import type { RestoreTarget } from '@flourprint/core/application';
 import {
   MemoryBakeEventStore,
+  MemoryEquipmentRegistry,
   MemoryFlourRegistry,
+  MemoryIngredientRegistry,
   MemoryRecipeRepository,
   MemoryRestoreTarget,
 } from '../src/memory/index.js';
@@ -30,7 +37,9 @@ import type { SqlDriver } from '../src/sql/index.js';
 import {
   openNodeSqlite,
   SqlBakeEventStore,
+  SqlEquipmentRegistry,
   SqlFlourRegistry,
+  SqlIngredientRegistry,
   SqlRecipeRepository,
   SqlRestoreTarget,
 } from '../src/sqlite-node/index.js';
@@ -79,6 +88,53 @@ const process: Process = {
   ],
 };
 
+/** The recipe as cooked: a Dutch oven stage on a stone, with a personal vessel (equipment.md). */
+const cooked: Process = {
+  steps: [
+    ...process.steps,
+    {
+      id: 'bake',
+      operation: 'bake',
+      dependsOn: ['bulk'],
+      schedule: 'asap',
+      plannedDurationS: 2400,
+      equipment: {
+        appliance: 'oven',
+        mode: 'bottom',
+        setpointC: 250,
+        vessel: { item: { id: 'my-dutch', version: 1 }, cover: 'covered' },
+        support: { item: { id: 'baking-stone', version: 1 } },
+        preheated: { appliance: 'hot', vessel: 'hot' },
+      },
+    },
+  ],
+};
+
+const myDutch: EquipmentEntry = {
+  id: 'my-dutch',
+  version: 1,
+  kind: 'vessel',
+  name: 'My Dutch oven',
+  builtIn: false,
+  shape: 'dutchOven',
+  material: 'castIron',
+  lid: { material: 'castIron' },
+  volumeMl: { status: 'known', value: 4000, source: { kind: 'personal', detail: 'measured' } },
+  archived: false,
+  createdAt: at('05:00'),
+};
+const myStone: EquipmentEntry = {
+  id: 'my-stone',
+  version: 1,
+  kind: 'support',
+  name: 'My pizza stone',
+  builtIn: false,
+  shape: 'stone',
+  material: 'cordierite',
+  archived: false,
+  createdAt: at('05:10'),
+};
+
 type Target = BackupStores & { readonly restore: RestoreTarget; readonly driver?: SqlDriver };
 
 /** SQLite stores; `failOnWrite` makes the n-th write of a restore throw, like a full disk. */
@@ -104,16 +160,27 @@ const sqliteStores = async (failOnWrite?: number): Promise<Target> => {
     recipes: new SqlRecipeRepository(driver),
     bakes: new SqlBakeEventStore(driver),
     flours: new SqlFlourRegistry(driver),
+    equipment: new SqlEquipmentRegistry(driver),
+    ingredients: new SqlIngredientRegistry(driver),
     restore: new SqlRestoreTarget(failOnWrite === undefined ? driver : failing),
     driver,
   };
 };
 
 const memoryStores = (): Target => {
-  const recipes = new MemoryRecipeRepository();
+  const ingredients = new MemoryIngredientRegistry();
+  const recipes = new MemoryRecipeRepository(ingredients);
   const bakes = new MemoryBakeEventStore();
   const flours = new MemoryFlourRegistry();
-  return { recipes, bakes, flours, restore: new MemoryRestoreTarget(recipes, bakes, flours) };
+  const equipment = new MemoryEquipmentRegistry();
+  return {
+    recipes,
+    bakes,
+    flours,
+    equipment,
+    ingredients,
+    restore: new MemoryRestoreTarget(recipes, bakes, flours, equipment, ingredients),
+  };
 };
 
 /** Two revisions and a finished bake with an override, written through the use cases. */
@@ -184,6 +251,12 @@ const seed = async (stores: BackupStores) => {
   );
   if (!edited.ok) throw new Error('edit failed');
   await saveFlourEntry(stores.flours, edited.value);
+  // A personal Dutch oven, edited after the bake started; a personal stone for the deviation.
+  await saveEquipmentEntry(stores.equipment, myDutch);
+  const dutch2 = nextEquipmentVersion(myDutch, { notes: 'seasoned again' }, at('09:00'));
+  if (!dutch2.ok) throw new Error('edit failed');
+  await saveEquipmentEntry(stores.equipment, dutch2.value);
+  await saveEquipmentEntry(stores.equipment, myStone);
   let n = 0;
   let version = 0;
   const run = async (
@@ -208,9 +281,10 @@ const seed = async (stores: BackupStores) => {
       type: 'StartBake',
       revisions: { formula: { id: 'lean', version: 2 }, process: { id: 'lean', version: 2 } },
       formula: tweaked,
-      process,
+      process: cooked,
       mode: { kind: 'startAt', at: at('08:00') },
       flours: [{ id: 'bread', version: 2 }],
+      equipment: [myDutch, builtInEquipment('baking-stone') as EquipmentEntry],
     },
     at('08:00'),
   );
@@ -227,6 +301,24 @@ const seed = async (stores: BackupStores) => {
   await run(
     { type: 'AddObservation', stepId: 'bulk', category: 'handling', kind: 'fold', set: 1 },
     at('08:42'),
+  );
+  await run(
+    {
+      type: 'AdjustStep',
+      stepId: 'bake',
+      adjustment: {
+        field: 'equipment',
+        value: {
+          appliance: 'oven',
+          mode: 'bottom',
+          setpointC: 230,
+          vessel: { item: { id: 'my-dutch', version: 1 }, cover: 'open' },
+          support: { item: { id: 'my-stone', version: 1 } },
+        },
+      },
+      equipment: [myStone],
+    },
+    at('10:00'),
   );
   await run({ type: 'FinishBake' }, at('11:00'));
   await run({ type: 'AddObservation', category: 'crumb', text: 'tight' }, at('11:30'));
@@ -246,8 +338,10 @@ const backupOf = async () => {
 
 const isEmpty = async (stores: BackupStores) =>
   (await stores.recipes.listRecipes()).length === 0 &&
+  (await stores.recipes.listTrash()).length === 0 &&
   (await stores.bakes.listBakes()).length === 0 &&
-  (await stores.flours.listFlourVersions()).length === 0;
+  (await stores.flours.listFlourVersions()).length === 0 &&
+  (await stores.equipment.listEquipmentVersions()).length === 0;
 
 describe.each([
   ['memory', async () => memoryStores()],
@@ -259,6 +353,54 @@ describe.each([
     expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
     const again = await exportBackup(target, at('12:00'));
     expect(JSON.parse(JSON.stringify(again))).toEqual({ ok: true, value: backup });
+  });
+
+  it('carries the trash: trashedAt is recorded and a restore keeps it', async () => {
+    const source = memoryStores();
+    await seed(source);
+    await source.recipes.trashRecipe('lean-cold', at('09:30'));
+    const exported = await exportBackup(source, at('12:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    expect(backup.recipes.find((r: Loose) => r.id === 'lean-cold').trashedAt).toBe(at('09:30'));
+    expect(backup.recipes.find((r: Loose) => r.id === 'lean').trashedAt).toBeUndefined();
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect((await target.recipes.listTrash()).map((r) => r.id)).toEqual(['lean-cold']);
+    expect((await target.recipes.listRecipes()).map((r) => r.id)).toEqual(['lean']);
+    const again = await exportBackup(target, at('12:00'));
+    expect(JSON.parse(JSON.stringify(again))).toEqual({ ok: true, value: backup });
+  });
+
+  it('keeps a family whose members are all in the trash in the backup', async () => {
+    const source = memoryStores();
+    await seed(source);
+    await source.recipes.trashRecipe('lean', at('09:30'));
+    await source.recipes.trashRecipe('lean-cold', at('09:31'));
+    expect(await source.recipes.listFamilies()).toEqual([]);
+    const exported = await exportBackup(source, at('12:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    expect(backup.families).toHaveLength(1);
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect((await target.recipes.getRecipe('lean-cold'))?.familyId).toBe('lean-family');
+  });
+
+  it('restores a backup written after its recipe was deleted, bakes untouched', async () => {
+    const source = memoryStores();
+    await seed(source);
+    const before = await source.bakes.loadEvents('bake-1');
+    await source.recipes.trashRecipe('lean', at('09:30'));
+    await source.recipes.deleteRecipe('lean');
+    expect(await source.bakes.loadEvents('bake-1')).toEqual(before);
+    const exported = await exportBackup(source, at('12:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect(await target.recipes.getRecipe('lean')).toBeUndefined();
+    expect(await target.bakes.loadEvents('bake-1')).toEqual(before);
   });
 
   it('restores a backup written before families', async () => {
@@ -277,6 +419,87 @@ describe.each([
     const target = await makeTarget();
     expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
     expect(await target.flours.listFlours()).toEqual([]);
+  });
+
+  it('restores a backup written before equipment', async () => {
+    const backup = await backupOf();
+    delete backup.equipment;
+    // Before 0.12.0 a bake has no equipment: its copies, steps and override are gone.
+    const events = backup.bakes[0].events;
+    delete events[0].payload.snapshot.equipment;
+    for (const step of events[0].payload.snapshot.process.steps) delete step.equipment;
+    backup.bakes[0].events = events
+      .filter(
+        (e: Loose) =>
+          !(e.payload.type === 'OverrideApplied' && e.payload.target.field === 'equipment'),
+      )
+      .map((e: Loose, i: number) => ({ ...e, seq: i + 1 }));
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect(await target.equipment.listEquipment()).toEqual([]);
+  });
+
+  it('keeps the equipment versions a bake used, whatever was edited after', async () => {
+    const backup = await backupOf();
+    expect(backup.equipment.map((e: Loose) => `${e.id}@${e.version}`)).toEqual([
+      'my-dutch@1',
+      'my-dutch@2',
+      'my-stone@1',
+    ]);
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    const events = await target.bakes.loadEvents('bake-1');
+    const started = events[0]?.payload;
+    expect(started?.type === 'BakeStarted' && started.snapshot.equipment?.map((e) => e.id)).toEqual(
+      ['my-dutch', 'baking-stone'],
+    );
+    const state = replayBake('bake-1', events);
+    expect(state.equipment?.map((e) => `${e.id}@${e.version}`)).toEqual([
+      'my-dutch@1',
+      'baking-stone@1',
+      'my-stone@1',
+    ]);
+    // The plan stays in the snapshot; the effective process shows what was used.
+    expect(state.snapshot?.process.steps.at(-1)?.equipment?.setpointC).toBe(250);
+    expect(state.process?.steps.at(-1)?.equipment?.setpointC).toBe(230);
+  });
+
+  it('refuses a built-in equipment copy that differs from its code definition', async () => {
+    const backup = await backupOf();
+    const copies = backup.bakes[0].events[0].payload.snapshot.equipment;
+    copies.find((e: Loose) => e.id === 'baking-stone').material = 'glass';
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidBackup' },
+    });
+  });
+
+  it('restores a finish written before outcomes as an unknown result', async () => {
+    const backup = await backupOf();
+    const finish = backup.bakes[0].events.find((e: Loose) => e.payload.type === 'BakeFinished');
+    expect(finish.payload).toMatchObject({ outcomeSource: 'recipe' });
+    finish.payload = { type: 'BakeFinished' };
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+  });
+
+  it.each<[string, (payload: Loose) => void]>([
+    ['an outcome without its source', (p) => delete p.outcomeSource],
+    [
+      'a raw dough disposition on a cooked result',
+      (p) => (p.outcome = { result: 'cooked', dough: 'frozen' }),
+    ],
+    ['an unknown result', (p) => (p.outcome = { result: 'eaten' })],
+    ['an unknown outcome field', (p) => (p.outcome = { result: 'dough', loaves: 2 })],
+  ])('refuses a finish with %s', async (_label, corrupt) => {
+    const backup = await backupOf();
+    corrupt(backup.bakes[0].events.find((e: Loose) => e.payload.type === 'BakeFinished').payload);
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidBackup' },
+    });
   });
 
   it('refuses to import into a database that already has data', async () => {
@@ -471,6 +694,102 @@ describe.each([
     ],
     ['a flour with an unknown field', (b) => (b.flours[0].extra = true), 'InvalidBackup'],
     ['a built-in flour entry', (b) => (b.flours[0].builtIn = true), 'InvalidBackup'],
+    ['a gap in equipment versions', (b) => b.equipment.shift(), 'InvalidBackup'],
+    ['equipment that is not a list', (b) => (b.equipment = {}), 'InvalidBackup'],
+    [
+      'an equipment entry with an unknown field',
+      (b) => (b.equipment[0].extra = 1),
+      'InvalidBackup',
+    ],
+    ['a built-in equipment entry', (b) => (b.equipment[0].builtIn = true), 'InvalidBackup'],
+    ['an equipment entry without a name', (b) => delete b.equipment[0].name, 'InvalidBackup'],
+    [
+      'an equipment entry of an unknown kind',
+      (b) => (b.equipment[0].kind = 'gadget'),
+      'InvalidBackup',
+    ],
+    [
+      'an equipment dimension that is not positive',
+      (b) => (b.equipment[0].interior = { diameterMm: -3 }),
+      'InvalidBackup',
+    ],
+    [
+      'an equipment volume with a unit',
+      (b) => (b.equipment[0].volumeMl.unit = 'ml'),
+      'InvalidBackup',
+    ],
+    [
+      'an appliance mode documented without a source',
+      (b) =>
+        (b.equipment[0].modes = [
+          { native: 'Convection Bake', flourprint: 'fan', mapping: 'documented' },
+        ]),
+      'InvalidBackup',
+    ],
+    [
+      'a bake whose copy differs from the registry entry',
+      (b) => (b.bakes[0].events[0].payload.snapshot.equipment[0].notes = 'changed'),
+      'InvalidBackup',
+    ],
+    [
+      'a bake with a copy missing from the backup',
+      (b) => b.equipment.splice(0, 2),
+      'InvalidBackup',
+    ],
+    [
+      'a snapshot whose reference does not resolve',
+      (b) => b.bakes[0].events[0].payload.snapshot.equipment.shift(),
+      'InvalidBackup',
+    ],
+    [
+      'a snapshot step with a mode but no oven',
+      (b) => delete b.bakes[0].events[0].payload.snapshot.process.steps[2].equipment.appliance,
+      'InvalidBackup',
+    ],
+    [
+      'a snapshot step with an unknown equipment field',
+      (b) => (b.bakes[0].events[0].payload.snapshot.process.steps[2].equipment.cover = 'open'),
+      'InvalidBackup',
+    ],
+    [
+      'a vessel reference that resolves to a support',
+      (b) =>
+        (b.bakes[0].events[0].payload.snapshot.process.steps[2].equipment.vessel.item.id =
+          'baking-stone'),
+      'InvalidBackup',
+    ],
+    [
+      'an equipment override of an unknown step',
+      (b) =>
+        (b.bakes[0].events.find(
+          (e: Loose) => e.payload.target?.field === 'equipment',
+        ).payload.target.stepId = 'nope'),
+      'InvalidBackup',
+    ],
+    [
+      'an equipment override with a setpoint that is not a number',
+      (b) =>
+        (b.bakes[0].events.find(
+          (e: Loose) => e.payload.target?.field === 'equipment',
+        ).payload.effective.setpointC = 'hot'),
+      'InvalidBackup',
+    ],
+    [
+      'an equipment override with a unit',
+      (b) =>
+        (b.bakes[0].events.find(
+          (e: Loose) => e.payload.target?.field === 'equipment',
+        ).payload.unit = 'degC'),
+      'InvalidBackup',
+    ],
+    [
+      'an equipment override whose copy is not referenced',
+      (b) =>
+        b.bakes[0].events
+          .find((e: Loose) => e.payload.target?.field === 'equipment')
+          .payload.equipment.push(b.equipment[1]),
+      'InvalidBackup',
+    ],
     ['malformed content', (b) => (b.recipes[0].revisions[0].process = 'nope'), 'InvalidBackup'],
   ])('refuses %s, writes nothing and allows a clean retry', async (_case, corrupt, code) => {
     const backup = await backupOf();
@@ -541,6 +860,34 @@ describe.each([
     expect(file.families).toEqual([
       { id: 'lean-family', name: 'Lean', pinnedRecipeId: 'lean-cold' },
     ]);
+  });
+
+  it('never carries a recipe from the trash, nor a pin on one', async () => {
+    const source = memoryStores();
+    await seed(source);
+    await source.recipes.trashRecipe('lean-cold', at('09:30'));
+    const exported = await exportRecipes(source.recipes, at('12:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const file = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    expect(file.recipes.map((r: Loose) => r.id)).toEqual(['lean']);
+    expect(file.recipes[0].trashedAt).toBeUndefined();
+    expect(file.families).toEqual([{ id: 'lean-family', name: 'Lean' }]);
+    const target = await makeTarget();
+    expect(await importRecipes(target.recipes, file)).toEqual({
+      ok: true,
+      value: { imported: ['lean'], skipped: [] },
+    });
+  });
+
+  it('refuses a recipes file that carries a trashed recipe', async () => {
+    const file = await recipeFile();
+    file.recipes[0].trashedAt = at('09:30');
+    const target = await makeTarget();
+    expect(await importRecipes(target.recipes, file)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidRecipeFile' },
+    });
+    expect(await target.recipes.listTrash()).toEqual([]);
   });
 
   it('adds absent recipes next to existing data, never overwrites, and is idempotent', async () => {
@@ -615,8 +962,14 @@ describe('feedback export (history.md)', () => {
       flours: [{ id: 'bread', version: 2 }],
       startedAt: at('08:00'),
       endedAt: at('11:00'),
+      // Finished with one tap: the recipe's intended outcome (no cooking step: the raw dough),
+      // recorded with its source.
+      outcome: { result: 'cooked' },
+      outcomeSource: 'recipe',
     });
+    expect(result.value.schemaVersion).toBe(3);
     expect(digest?.steps.find((s) => s.id === 'mix')).toMatchObject({
+      cooking: false,
       startedAt: at('08:00'),
       endedAt: at('08:10'),
       actualDurationS: 600,
@@ -646,6 +999,18 @@ describe('feedback export (history.md)', () => {
         at: at('08:01'),
         field: 'formula',
         value: { type: 'SetBakerPct', ingredient: 'salt', pct: 2.2 },
+      },
+      {
+        at: at('10:00'),
+        stepId: 'bake',
+        field: 'equipment',
+        value: {
+          appliance: 'oven',
+          mode: 'bottom',
+          setpointC: 230,
+          vessel: { item: { id: 'my-dutch', version: 1 }, cover: 'open' },
+          support: { item: { id: 'my-stone', version: 1 } },
+        },
       },
     ]);
   });

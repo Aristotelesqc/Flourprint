@@ -1,15 +1,18 @@
 import {
-  DOCUMENT_SCHEMA_VERSION,
+  isCookingStep,
   ok,
   replayBake,
   type BakeEvent,
   type Estimate,
   type FlourRef,
+  type IngredientRef,
   type Instant,
   type ModelRef,
   type Observation,
   type ObservationCategory,
   type ObservationKind,
+  type OutcomeSource,
+  type PreparationOutcome,
   type Result,
   type StepId,
   upcastEvent,
@@ -29,6 +32,8 @@ export interface FeedbackDevice {
 export interface StepDigest {
   readonly id: StepId;
   readonly operation: string;
+  /** A cooking operation (process.md), read from the recorded code. */
+  readonly cooking: boolean;
   readonly label?: string;
   readonly plannedStartAt?: Instant;
   readonly plannedEndAt?: Instant;
@@ -67,6 +72,9 @@ export interface AdjustmentDigest {
 export interface BakeDigest {
   readonly bakeId: string;
   readonly status: 'active' | 'finished' | 'abandoned';
+  /** Finished only: the outcome in force after the latest end, or unknown (before 0.11.0). */
+  readonly outcome?: PreparationOutcome | 'unknown';
+  readonly outcomeSource?: OutcomeSource;
   /** Set at the start of the bake, never inferred from the exporting device (history.md). */
   readonly origin: 'physical' | 'simulation' | 'unknown';
   readonly recipe: { readonly id: string; readonly name?: string; readonly version: number };
@@ -79,6 +87,11 @@ export interface BakeDigest {
   };
   /** Registry flour entries the bake used (flours.md); absent for bakes before 0.8.0. */
   readonly flours?: readonly FlourRef[];
+  /** Ingredient entry pins of the snapshot formula (ingredients.md); absent when there are none. */
+  readonly ingredients?: readonly {
+    readonly ingredient: string;
+    readonly entry: IngredientRef;
+  }[];
   readonly steps: readonly StepDigest[];
   readonly observations: readonly ObservationDigest[];
   readonly adjustments: readonly AdjustmentDigest[];
@@ -94,6 +107,12 @@ export interface FeedbackExport {
   readonly bakes: readonly BakeDigest[];
 }
 
+/**
+ * 2: `outcome`, `outcomeSource` and step `cooking` (contract 0.11.0). 3: `ingredients`, the
+ * ingredient entry pins (contract 0.15.0).
+ */
+export const FEEDBACK_SCHEMA_VERSION = 3;
+
 /** Read by whoever receives the export; data, not user interface text. */
 export const FEEDBACK_ABOUT =
   'Flourprint feedback export. `bakes` is a digest of each bake read from its event log: ' +
@@ -105,16 +124,27 @@ export const FEEDBACK_ABOUT =
   "which set of folds was done (`set`, 1 … the count of the step technique's folds; a set may " +
   'be early, late, repeated or missing). Step techniques (method, mixing phases, folds, end ' +
   'check) are in the recipe revisions and bake snapshots of `backup`: recorded only, nothing ' +
-  'is predicted from them. `flours` lists the flour ' +
+  'is predicted from them. A finished bake (a Preparation) has an `outcome`: `result` cooked, ' +
+  'dough (the raw dough is the result: frozen, refrigerated, given, sold) or cookedAndDough, ' +
+  'with `outcomeSource` recipe (the default the recipe states, accepted at finish) or baker ' +
+  '(chosen or corrected); "unknown" for bakes finished before outcomes were recorded, never ' +
+  'read as cooked. Steps say whether they are a cooking stage (`cooking`); a completed cooking ' +
+  'step never means the product is done. A session may be reopened and ended again; only its ' +
+  'latest end counts. `flours` lists the flour ' +
   'registry entries ({id, version}) the bake used; absent for bakes recorded before the registry ' +
   '(unknown). Built-in entries are code and carry no composition; personal entries, with every ' +
   'version, are in `backup.flours`. Their properties (protein, ash, falling number, alveograph, ' +
   'malted) are recorded for later calibration and used by no calculation; unknown is never zero. ' +
+  '`ingredients` lists the ingredient registry entries the snapshot formula pins ({ingredient: ' +
+  'the formula ingredient id, entry: {id, version, customized?}}); absent when none. The formula ' +
+  'holds a copy of the contents it consumed, possibly overridden by the baker (`overrides`), and ' +
+  'a recorded `preparation`; personal entry versions are in `backup.ingredients`, built-in ones ' +
+  'are code. A pin that does not resolve is "entry not found" and changes no number. ' +
   '`backup` is the authoritative record (recipes with ' +
   'every revision, raw bake events). Units: grams, degrees Celsius, seconds, baker percentages ' +
   'in points. `device` describes the exporting device only. Contracts: ' +
   'docs/contracts/history.md (feedback export), bake-session.md, process.md, fermentation.md, ' +
-  'flours.md.';
+  'flours.md, ingredients.md.';
 
 const seconds = (from: Instant | undefined, to: Instant | undefined): number | undefined =>
   from === undefined || to === undefined
@@ -149,6 +179,7 @@ export const bakeDigest = (
     return {
       id: step.id,
       operation: step.operation,
+      cooking: isCookingStep(step),
       ...(step.label === undefined ? {} : { label: step.label }),
       ...(planned?.start === undefined ? {} : { plannedStartAt: planned.start }),
       ...(planned?.end === undefined ? {} : { plannedEndAt: planned.end }),
@@ -192,9 +223,20 @@ export const bakeDigest = (
   }
   const recipeId = snapshot.revisions.formula.id;
   const name = recipeName(recipeId);
+  const pins = snapshot.formula.ingredients.flatMap((i) =>
+    i.entry === undefined ? [] : [{ ingredient: i.id, entry: i.entry }],
+  );
   return {
     bakeId,
     status: state.status,
+    ...(state.status !== 'finished'
+      ? {}
+      : state.outcome === undefined
+        ? { outcome: 'unknown' as const }
+        : {
+            outcome: state.outcome,
+            ...(state.outcomeSource === undefined ? {} : { outcomeSource: state.outcomeSource }),
+          }),
     origin: snapshot.origin ?? 'unknown',
     recipe: {
       id: recipeId,
@@ -205,6 +247,7 @@ export const bakeDigest = (
     ...(state.endedAt === undefined ? {} : { endedAt: state.endedAt }),
     manifest: snapshot.manifest,
     ...(snapshot.flours === undefined ? {} : { flours: snapshot.flours }),
+    ...(pins.length === 0 ? {} : { ingredients: pins }),
     steps,
     observations,
     adjustments,
@@ -222,7 +265,7 @@ export const exportFeedback = async (
   const names = new Map(backup.value.recipes.map((r) => [r.id, r.name]));
   return ok({
     kind: 'flourprint-feedback',
-    schemaVersion: DOCUMENT_SCHEMA_VERSION,
+    schemaVersion: FEEDBACK_SCHEMA_VERSION,
     exportedAt,
     about: FEEDBACK_ABOUT,
     device,

@@ -1,4 +1,4 @@
-import type { Formula, Process } from '../domain/index.js';
+import { PREPARATION_STATES, type Formula, type Process } from '../domain/index.js';
 import { isNumber, isObject, refuse, type Json } from './decode.js';
 
 /**
@@ -67,6 +67,10 @@ const union =
     variant(value, where);
   };
 
+const trueOnly: Check = (value, where) => {
+  if (value !== true) refuse(`${where} is true or absent`);
+};
+
 const range: Check = (value, where) => {
   if (!Array.isArray(value) || value.length !== 2 || !value.every(isNumber)) {
     refuse(`${where} must be two numbers`);
@@ -124,6 +128,10 @@ const ingredient: Check = (v, w) =>
       sugar: content,
       yeast: (y, yw) => fields(y, yw, { form: oneOf('fresh', 'active-dry', 'instant') }),
       accepted,
+      entry: (e, ew) => fields(e, ew, { id: string, version: number }, { customized: trueOnly }),
+      overrides: list(oneOf('kind', 'water', 'fat', 'sugar', 'yeast')),
+      preparation: (p, pw) =>
+        fields(p, pw, { state: oneOf(...PREPARATION_STATES) }, { note: string }),
     },
   );
 
@@ -181,6 +189,59 @@ const technique: Check = (v, w) =>
     },
   );
 
+/** A preparation outcome (bake-session.md); its rules are checked by validateProcess. */
+const outcome: Check = (v, w) =>
+  fields(
+    v,
+    w,
+    { result: oneOf('cooked', 'dough', 'cookedAndDough') },
+    { dough: oneOf('frozen', 'refrigerated', 'given', 'sold', 'other'), pieces: number },
+  );
+
+const equipmentRef: Check = (v, w) => fields(v, w, { id: string, version: number });
+const preheat = oneOf('hot', 'cold', 'unknown');
+
+/** The settings of a step (equipment.md); their rules are checked by validateProcess. */
+export const stepEquipment: Check = (v, w) =>
+  fields(
+    v,
+    w,
+    {},
+    {
+      appliance: oneOf('oven', 'stovetop', 'grill', 'steamer', 'fryer', 'proofer', 'other'),
+      profile: equipmentRef,
+      mode: oneOf(
+        'bottom',
+        'topBottom',
+        'convection',
+        'trueConvection',
+        'convectionRoast',
+        'broil',
+        'convectionBroil',
+        'steam',
+        'proof',
+        'custom',
+      ),
+      heat: list(oneOf('top', 'bottom', 'rear', 'fan')),
+      nativeMode: string,
+      setpointC: number,
+      level: (l, lw) => fields(l, lw, { value: number }, { of: number }),
+      fan: oneOf('on', 'off', 'unknown'),
+      steam: (s, sw) =>
+        fields(s, sw, { source: oneOf('function', 'manual', 'none') }, { detail: string }),
+      support: (s, sw) => fields(s, sw, { item: equipmentRef }),
+      vessel: (s, sw) =>
+        fields(s, sw, {
+          item: equipmentRef,
+          cover: oneOf('open', 'covered', 'closed', 'unknown'),
+        }),
+      preheated: (p, pw) =>
+        fields(p, pw, {}, { appliance: preheat, support: preheat, vessel: preheat }),
+      rack: string,
+      load: (l, lw) => fields(l, lw, {}, { pieces: number, massG: number }),
+    },
+  );
+
 const step: Check = (v, w) =>
   fields(
     v,
@@ -206,6 +267,7 @@ const step: Check = (v, w) =>
       accepted,
       technique,
       durationMode: oneOf('manual', 'model'),
+      equipment: stepEquipment,
     },
   );
 
@@ -229,6 +291,6 @@ export const decodeFormula = (value: unknown, where: string): Formula => {
 
 /** Refuses (throws `Refused`) unless the value has exactly the shape of a process. */
 export const decodeProcess = (value: unknown, where: string): Process => {
-  fields(value, where, { steps: list(step) }, { readiness: modelRef });
+  fields(value, where, { steps: list(step) }, { readiness: modelRef, intendedOutcome: outcome });
   return value as Process;
 };

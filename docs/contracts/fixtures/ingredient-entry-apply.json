@@ -1,0 +1,149 @@
+{
+  "format": "flourprint-fixture/0",
+  "id": "ingredient-entry-apply",
+  "contracts": ["ingredients.md", "formula.md", "values-and-units.md"],
+  "description": "Acceptance example 1 of ingredients.md: a personal butter entry with a known fat of 82 % from the package is applied to a 10 % butter typed without contents. The entry's unknown water stays missing: the butter is an unknown contributor of totalWater, never 0.",
+  "input": {
+    "flours": [
+      {
+        "id": "bread-flour",
+        "sharePct": 100
+      }
+    ],
+    "ingredients": [
+      {
+        "id": "water",
+        "kind": "water",
+        "bakerPct": 50,
+        "role": "dough"
+      },
+      {
+        "id": "salt",
+        "kind": "other",
+        "bakerPct": 2,
+        "role": "dough",
+        "water": {
+          "status": "known",
+          "valuePct": 0
+        }
+      },
+      {
+        "id": "butter",
+        "kind": "other",
+        "bakerPct": 10,
+        "role": "dough"
+      }
+    ],
+    "components": [],
+    "anchor": {
+      "kind": "flourTotal",
+      "grams": 500
+    }
+  },
+  "expected": {
+    "flourTotal": 500,
+    "grams": {
+      "water": 250,
+      "salt": 10,
+      "butter": 50
+    },
+    "doughWeight": 810,
+    "pureWaterTotal": 250,
+    "pureWaterPct": 50,
+    "totalWater": {
+      "value": 250,
+      "completeness": "incomplete",
+      "unknownContributors": ["butter"]
+    },
+    "totalWaterPct": 50,
+    "totalFat": {
+      "value": 0,
+      "completeness": "incomplete",
+      "unknownContributors": ["salt", "butter"]
+    },
+    "totalFatPct": 0
+  },
+  "edits": [
+    {
+      "id": "apply-beurre-82-v1",
+      "command": {
+        "type": "ApplyIngredientEntry",
+        "ingredient": "butter",
+        "entry": {
+          "id": "beurre-82",
+          "version": 1,
+          "name": "Beurre 82 %",
+          "builtIn": false,
+          "family": "fat",
+          "kind": "other",
+          "organic": {
+            "status": "unknown"
+          },
+          "composition": {
+            "waterPct": {
+              "status": "unknown"
+            },
+            "fatPct": {
+              "status": "known",
+              "value": 82,
+              "unit": "pct",
+              "basis": "per100g",
+              "source": {
+                "kind": "package",
+                "detail": "label, 82 % fat"
+              }
+            },
+            "sugarPct": {
+              "status": "unknown"
+            },
+            "carbohydratePct": {
+              "status": "unknown"
+            },
+            "proteinPct": {
+              "status": "unknown"
+            },
+            "fibrePct": {
+              "status": "unknown"
+            },
+            "saltPct": {
+              "status": "unknown"
+            }
+          },
+          "properties": {
+            "ph": {
+              "status": "unknown"
+            },
+            "diastaticPower": {
+              "status": "unknown"
+            }
+          },
+          "archived": false,
+          "createdAt": "2026-10-13T08:00:00.000Z"
+        }
+      },
+      "expected": {
+        "grams": {
+          "water": 250,
+          "salt": 10,
+          "butter": 50
+        },
+        "doughWeight": 810,
+        "totalWater": {
+          "value": 250,
+          "completeness": "incomplete",
+          "unknownContributors": ["butter"]
+        },
+        "totalWaterPct": 50,
+        "totalFat": {
+          "value": 41,
+          "completeness": "incomplete",
+          "unknownContributors": ["salt"]
+        },
+        "totalFatPct": 8.2
+      }
+    }
+  ],
+  "tolerance": {
+    "relative": 1e-9
+  }
+}

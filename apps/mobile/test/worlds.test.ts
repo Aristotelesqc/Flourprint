@@ -5,7 +5,7 @@ import type { BakeOrigin, Instant } from '@flourprint/core/domain';
 import { editableTemperature, formatTemperature } from '../src/i18n/temperature';
 import { onRealClock, type Reminder } from '../src/services/notifications';
 import { decodePreferences, worldClock, type PreferenceStore } from '../src/services/preferences';
-import { sampleRecipe } from '../src/services/seed';
+import { sampleRecipe } from './fixtures/sample-recipe';
 import { worldBakes } from '../src/services/world-bakes';
 
 const at = '2026-10-07T19:00:00.000Z' as Instant;

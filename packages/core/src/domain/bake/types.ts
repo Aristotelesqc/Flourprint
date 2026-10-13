@@ -1,7 +1,9 @@
+import type { EquipmentEntry, StepEquipment } from '../equipment/types.js';
 import type { Formula, ResolvedFormula } from '../formula/types.js';
 import type { FormulaEdit } from '../formula/edit.js';
 import type { FlourRef } from '../flour/types.js';
 import type { Instant } from '../instant.js';
+import type { PreparationOutcome } from '../process/cooking.js';
 import type { Process, ProcessStep, Projection, ProjectionMode, StepId } from '../process/types.js';
 import type { Estimate, ModelRef, Observation } from '../values.js';
 
@@ -12,11 +14,21 @@ export interface RevisionRef {
   readonly version: number;
 }
 
+/** A registry property actually consumed by the calculation (history.md). */
 export interface UsedProperty {
+  /** The registry entry id. */
   readonly ingredient: string;
+  /** The registry entry version. */
   readonly version: number;
+  /** The version is a personal customization of a built-in (ingredients.md). */
+  readonly customized?: true;
+  /** The formula ingredient the property was consumed for; set for pinned entries. */
+  readonly formulaIngredient?: string;
   readonly key: string;
+  /** The value actually consumed, the baker's when overridden. */
   readonly value: unknown;
+  /** The formula ingredient overrides this property of its entry. */
+  readonly overridden?: true;
 }
 
 export interface BakeSnapshot {
@@ -36,9 +48,17 @@ export interface BakeSnapshot {
   readonly origin?: BakeOrigin;
   /** Registry entries of the formula's flours (flours.md); absent before 0.8.0 = unknown. */
   readonly flours?: readonly FlourRef[];
+  /**
+   * Copies of the equipment entry versions the process references, built-in or personal
+   * (equipment.md); absent before 0.12.0.
+   */
+  readonly equipment?: readonly EquipmentEntry[];
 }
 
 export type BakeOrigin = 'physical' | 'simulation';
+
+/** Where a recorded outcome comes from: the recipe's intended outcome, or the baker's choice. */
+export type OutcomeSource = 'recipe' | 'baker';
 
 export type ObservationCategory =
   'crumb' | 'crust' | 'fermentation' | 'flavor' | 'handling' | 'volume' | 'other';
@@ -50,9 +70,13 @@ export type ObservationCategory =
  */
 export type ObservationKind = 'doughReady' | 'fold';
 
-export type StepAdjustment =
+export type NumericStepAdjustment =
   | { readonly field: 'plannedDurationS'; readonly value: number }
   | { readonly field: 'temperatureC'; readonly value: number };
+
+/** What AdjustStep may change: a duration, a temperature, or the equipment used (equipment.md). */
+export type StepAdjustment =
+  NumericStepAdjustment | { readonly field: 'equipment'; readonly value: StepEquipment };
 
 // Commands
 
@@ -63,11 +87,17 @@ export type BakeCommandPayload =
       readonly formula: Formula;
       readonly process: Process;
       readonly mode: ProjectionMode;
+      /**
+       * Properties consumed, resolved by the caller (history.md); absent, the pinned ingredient
+       * entries give their rows from the formula's copied contents (ingredients.md, Bakes).
+       */
       readonly usedProperties?: readonly UsedProperty[];
       /** A real bake or a simulation (history.md); absent = unknown. */
       readonly origin?: BakeOrigin;
       /** Current registry version of each formula flour that has an entry (flours.md). */
       readonly flours?: readonly FlourRef[];
+      /** Every entry version the process references, resolved by the caller (equipment.md). */
+      readonly equipment?: readonly EquipmentEntry[];
     }
   | { readonly type: 'StartStep'; readonly stepId: StepId; readonly at?: Instant }
   | {
@@ -81,12 +111,16 @@ export type BakeCommandPayload =
       readonly stepId: StepId;
       readonly adjustment: StepAdjustment;
       readonly reason?: string;
+      /** `equipment` adjustments only: the entry versions the value newly references. */
+      readonly equipment?: readonly EquipmentEntry[];
     }
   | { readonly type: 'AdjustFormula'; readonly edit: FormulaEdit; readonly reason?: string }
   | {
       readonly type: 'InsertStepAfter';
       readonly after: StepId;
       readonly step: Omit<ProcessStep, 'dependsOn'>;
+      /** The entry versions the new step newly references (equipment.md). */
+      readonly equipment?: readonly EquipmentEntry[];
     }
   | { readonly type: 'AcceptProjection' }
   | {
@@ -108,8 +142,15 @@ export type BakeCommandPayload =
       readonly newOccurredAt: Instant;
     }
   | { readonly type: 'RetractCompletion'; readonly targetEventId: string }
-  | { readonly type: 'FinishBake'; readonly at?: Instant }
-  | { readonly type: 'AbandonBake'; readonly reason?: string };
+  | {
+      readonly type: 'FinishBake';
+      readonly at?: Instant;
+      /** Absent = the intended outcome of the recipe (bake-session.md, Outcome). */
+      readonly outcome?: PreparationOutcome;
+    }
+  | { readonly type: 'AbandonBake'; readonly reason?: string }
+  | { readonly type: 'CorrectOutcome'; readonly outcome: PreparationOutcome }
+  | { readonly type: 'ReopenBake' };
 
 export interface BakeCommand<P extends BakeCommandPayload = BakeCommandPayload> {
   readonly commandId: string;
@@ -135,12 +176,27 @@ export type BakeEventPayload =
       readonly target: {
         readonly kind: 'step';
         readonly stepId: StepId;
-        readonly field: StepAdjustment['field'];
+        readonly field: NumericStepAdjustment['field'];
       };
       readonly baseline: number | null;
       readonly effective: number;
       readonly unit: 'degC' | 's';
       readonly reason?: string;
+    }
+  | {
+      /** The settings actually used on a step; the snapshot keeps the plan (equipment.md). */
+      readonly type: 'OverrideApplied';
+      readonly target: {
+        readonly kind: 'step';
+        readonly stepId: StepId;
+        readonly field: 'equipment';
+      };
+      /** The planned settings; null when the step had none. */
+      readonly baseline: StepEquipment | null;
+      readonly effective: StepEquipment;
+      readonly reason?: string;
+      /** Copies of the entry versions the override newly references. */
+      readonly equipment?: readonly EquipmentEntry[];
     }
   | {
       readonly type: 'OverrideApplied';
@@ -156,6 +212,8 @@ export type BakeEventPayload =
       readonly step: ProcessStep;
       /** Steps whose dependency on `after` was replaced by the new step. */
       readonly rewired: readonly StepId[];
+      /** Copies of the entry versions the new step newly references (equipment.md). */
+      readonly equipment?: readonly EquipmentEntry[];
     }
   | { readonly type: 'ProjectionAccepted'; readonly projection: Projection }
   | {
@@ -178,8 +236,25 @@ export type BakeEventPayload =
       readonly newOccurredAt: Instant;
     }
   | { readonly type: 'StepCompletionRetracted'; readonly targetEventId: string }
-  | { readonly type: 'BakeFinished' }
-  | { readonly type: 'BakeAbandoned'; readonly reason?: string };
+  | {
+      readonly type: 'BakeFinished';
+      /** Absent on events written before 0.11.0: the result is unknown. */
+      readonly outcome?: PreparationOutcome;
+      readonly outcomeSource?: OutcomeSource;
+    }
+  | { readonly type: 'BakeAbandoned'; readonly reason?: string }
+  | {
+      readonly type: 'OutcomeCorrected';
+      readonly outcome: PreparationOutcome;
+      readonly outcomeSource: 'baker';
+    }
+  | { readonly type: 'BakeReopened' };
+
+/** An override of the equipment used on a step (equipment.md). */
+export type EquipmentOverride = Extract<
+  BakeEventPayload,
+  { readonly type: 'OverrideApplied'; readonly target: { readonly field: 'equipment' } }
+>;
 
 /** An event decided by the domain, before the store assigns its envelope. */
 export interface EventDraft {
@@ -225,13 +300,22 @@ export interface BakeState {
   readonly version: number;
   readonly status: 'notStarted' | 'active' | 'finished' | 'abandoned';
   readonly startedAt?: Instant;
+  /** The latest end; a reopened session has none until it ends again. */
   readonly endedAt?: Instant;
+  /** Finished sessions only: the outcome in force, absent when unknown (before 0.11.0). */
+  readonly outcome?: PreparationOutcome;
+  readonly outcomeSource?: OutcomeSource;
   readonly snapshot?: BakeSnapshot;
   /** Effective definitions after overrides and insertions (baseline stays in the snapshot). */
   readonly formula?: Formula;
   readonly resolvedFormula?: ResolvedFormula;
   readonly process?: Process;
   readonly steps: Readonly<Record<StepId, StepRecord>>;
+  /**
+   * Every equipment entry version copied into the log so far: the snapshot's, then those newly
+   * referenced by overrides and inserted steps (equipment.md). Absent before any copy.
+   */
+  readonly equipment?: readonly EquipmentEntry[];
   readonly overrides: readonly RecordedOverride[];
   readonly observations: readonly RecordedObservation[];
   readonly acceptedProjection?: Projection;

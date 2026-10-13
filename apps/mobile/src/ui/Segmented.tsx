@@ -30,9 +30,9 @@ export const Segmented = <T extends string>({
           type="button"
           aria-pressed={selected}
           onClick={() => onChange(option.value)}
-          className={`fp-reset rounded-xl text-center ${size === 'small' ? 'h-9 text-[15px]' : 'h-10'} ${
-            selected ? 'bg-surface font-bold shadow-sm' : 'font-semibold text-muted'
-          }`}
+          className={`fp-reset flex min-w-0 items-center justify-center rounded-xl text-center leading-tight [overflow-wrap:anywhere] hyphens-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            size === 'small' ? 'min-h-9 px-1 py-0.5 text-[15px]' : 'min-h-10 px-2 py-1'
+          } ${selected ? 'bg-surface font-bold shadow-sm text-ink' : 'font-semibold text-muted'}`}
         >
           {option.label}
         </button>

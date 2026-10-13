@@ -2,6 +2,9 @@ import { domainError } from '../errors.js';
 import { RELATIVE_TOLERANCE, approxEqual, sum } from '../numeric.js';
 import { err, ok, type Result } from '../result.js';
 import type { AcceptedSuggestion } from '../values.js';
+import { validateIngredientEntry } from '../ingredient/entry.js';
+import { entryContents, ingredientRefOf } from '../ingredient/mapping.js';
+import type { IngredientEntry } from '../ingredient/types.js';
 import type { FormulaError } from './errors.js';
 import {
   anchorDoughWeight,
@@ -11,19 +14,26 @@ import {
   resolveFormula,
   validateAnchor,
 } from './resolve.js';
-import type {
-  Anchor,
-  AnchorKind,
-  Component,
-  ContentPct,
-  YeastMarker,
-  FlourShare,
-  Formula,
-  Ingredient,
-  ResolvedFormula,
+import {
+  OVERRIDABLE_FIELDS,
+  type Anchor,
+  type AnchorKind,
+  type Component,
+  type ContentPct,
+  type YeastMarker,
+  type FlourShare,
+  type Formula,
+  type Ingredient,
+  type IngredientPreparation,
+  type OverridableField,
+  type ResolvedFormula,
 } from './types.js';
 
-/** Changes to an ingredient that keep its percentage (formula.md, Structure edits). */
+/**
+ * Changes to an ingredient that keep its percentage (formula.md, Structure edits). On an
+ * ingredient with an `entry`, a change to kind, water, fat, sugar or yeast lists the field in
+ * `overrides` (ingredients.md, Overrides). `preparation: null` clears the preparation.
+ */
 export interface IngredientChanges {
   readonly kind?: Ingredient['kind'];
   readonly role?: Ingredient['role'];
@@ -31,6 +41,7 @@ export interface IngredientChanges {
   readonly fat?: ContentPct;
   readonly sugar?: ContentPct;
   readonly yeast?: YeastMarker;
+  readonly preparation?: IngredientPreparation | null;
 }
 
 /** Changes to a preparation; omitted fields are kept. */
@@ -62,11 +73,34 @@ export type FormulaEdit =
       /** Required when reinterpreting as `pieces`. */
       readonly count?: number;
     }
-  | { readonly type: 'AddIngredient'; readonly ingredient: Ingredient }
+  | {
+      readonly type: 'AddIngredient';
+      readonly ingredient: Ingredient;
+      /** The entry version whose contents the new ingredient takes (ingredients.md). */
+      readonly entry?: IngredientEntry;
+    }
   | {
       readonly type: 'UpdateIngredient';
       readonly ingredient: string;
       readonly changes: IngredientChanges;
+    }
+  | {
+      /** Pins the entry version and copies its five contents; clears `overrides`. */
+      readonly type: 'ApplyIngredientEntry';
+      readonly ingredient: string;
+      readonly entry: IngredientEntry;
+    }
+  | {
+      /** "Update from entry": another version of the pinned entry id, overrides kept or cleared. */
+      readonly type: 'RefreshIngredientEntry';
+      readonly ingredient: string;
+      readonly entry: IngredientEntry;
+      readonly overrides: 'keep' | 'clear';
+    }
+  | {
+      /** Removes `entry` and `overrides`; every content stays as it is. */
+      readonly type: 'DetachIngredientEntry';
+      readonly ingredient: string;
     }
   | { readonly type: 'RemoveIngredient'; readonly ingredient: string }
   | { readonly type: 'AddComponent'; readonly component: Component }
@@ -204,9 +238,18 @@ const computeEdit = (formula: Formula, edit: FormulaEdit): Result<Formula, Formu
       }
       return reinterpretAnchor(formula, edit.kind, edit.count);
     case 'AddIngredient':
-      return ok({ ...formula, ingredients: [...formula.ingredients, edit.ingredient] });
+      return addIngredient(formula, edit.ingredient, edit.entry);
     case 'UpdateIngredient':
       return updateIngredient(formula, edit.ingredient, edit.changes);
+    case 'ApplyIngredientEntry':
+      return applyIngredientEntry(formula, edit.ingredient, edit.entry);
+    case 'RefreshIngredientEntry':
+      return refreshIngredientEntry(formula, edit.ingredient, edit.entry, edit.overrides);
+    case 'DetachIngredientEntry':
+      return mapIngredient(formula, edit.ingredient, (i) => {
+        const { entry: _entry, overrides: _overrides, ...rest } = i;
+        return ok(rest);
+      });
     case 'RemoveIngredient':
       return removeIngredient(formula, edit.ingredient);
     case 'AddComponent':
@@ -242,17 +285,158 @@ const computeEdit = (formula: Formula, edit: FormulaEdit): Result<Formula, Formu
   }
 };
 
+/** Replaces one ingredient through `change`; an unknown id is refused. */
+const mapIngredient = (
+  formula: Formula,
+  id: string,
+  change: (ingredient: Ingredient) => Result<Ingredient, FormulaError>,
+): Result<Formula, FormulaError> => {
+  const current = formula.ingredients.find((i) => i.id === id);
+  if (!current) return err(unknownRef('ingredient', id));
+  const next = change(current);
+  if (!next.ok) return next;
+  return ok({
+    ...formula,
+    ingredients: formula.ingredients.map((i) => (i.id === id ? next.value : i)),
+  });
+};
+
+const CONTENT_FIELDS = ['water', 'fat', 'sugar', 'yeast'] as const;
+
+/** An entry document carried by a command, checked like any entry (ingredients.md). */
+const entryProblem = (entry: IngredientEntry): FormulaError | undefined => {
+  const valid = validateIngredientEntry(entry);
+  if (valid.ok) return undefined;
+  const { field, reason } = valid.error.details ?? { field: '', reason: '' };
+  return domainError('InvalidFormula', `entry: ${field} ${reason}`, {
+    path: 'entry',
+    reason: `${field} ${reason}`,
+  });
+};
+
+/**
+ * The ingredient pinned to `entry` with the entry's contents, except the `kept` fields, which
+ * keep the ingredient's own values and stay in `overrides`. bakerPct, role, accepted and the
+ * preparation are never touched.
+ */
+const withEntry = (
+  ingredient: Ingredient,
+  entry: IngredientEntry,
+  kept: ReadonlySet<OverridableField>,
+): Ingredient => {
+  const contents = entryContents(entry);
+  const {
+    kind,
+    water: _water,
+    fat: _fat,
+    sugar: _sugar,
+    yeast: _yeast,
+    entry: _entry,
+    overrides: _overrides,
+    ...rest
+  } = ingredient;
+  const next: Record<string, unknown> = {
+    ...rest,
+    kind: kept.has('kind') ? kind : contents.kind,
+    entry: ingredientRefOf(entry),
+  };
+  for (const field of CONTENT_FIELDS) {
+    const value = kept.has(field) ? ingredient[field] : contents[field];
+    if (value !== undefined) next[field] = value;
+  }
+  const overrides = OVERRIDABLE_FIELDS.filter((field) => kept.has(field));
+  if (overrides.length > 0) next.overrides = overrides;
+  return next as unknown as Ingredient;
+};
+
+const addIngredient = (
+  formula: Formula,
+  ingredient: Ingredient,
+  entry: IngredientEntry | undefined,
+): Result<Formula, FormulaError> => {
+  if (entry === undefined)
+    return ok({ ...formula, ingredients: [...formula.ingredients, ingredient] });
+  const bad = entryProblem(entry);
+  if (bad) return err(bad);
+  if (
+    CONTENT_FIELDS.some((field) => ingredient[field] !== undefined) ||
+    ingredient.overrides !== undefined
+  ) {
+    return err(
+      incompatible('An ingredient added with an entry takes its contents from it', 'entry'),
+    );
+  }
+  return ok({
+    ...formula,
+    ingredients: [...formula.ingredients, withEntry(ingredient, entry, new Set())],
+  });
+};
+
+const applyIngredientEntry = (
+  formula: Formula,
+  id: string,
+  entry: IngredientEntry,
+): Result<Formula, FormulaError> => {
+  const bad = entryProblem(entry);
+  if (bad) return err(bad);
+  return mapIngredient(formula, id, (i) => ok(withEntry(i, entry, new Set())));
+};
+
+const refreshIngredientEntry = (
+  formula: Formula,
+  id: string,
+  entry: IngredientEntry,
+  overrides: 'keep' | 'clear',
+): Result<Formula, FormulaError> => {
+  const bad = entryProblem(entry);
+  if (bad) return err(bad);
+  if (overrides !== 'keep' && overrides !== 'clear') {
+    return err(incompatible('Updating from an entry keeps or clears the overrides', 'overrides'));
+  }
+  return mapIngredient(formula, id, (i) => {
+    if (i.entry === undefined) {
+      return err(incompatible(`${id} has no entry to update from`, 'entry'));
+    }
+    if (i.entry.id !== entry.id) {
+      return err(incompatible(`${id} pins another entry than ${entry.id}`, 'entry'));
+    }
+    const kept = new Set<OverridableField>(overrides === 'keep' ? (i.overrides ?? []) : []);
+    return ok(withEntry(i, entry, kept));
+  });
+};
+
 const updateIngredient = (
   formula: Formula,
   id: string,
   changes: IngredientChanges,
-): Result<Formula, FormulaError> => {
-  if (!formula.ingredients.some((i) => i.id === id)) return err(unknownRef('ingredient', id));
-  return ok({
-    ...formula,
-    ingredients: formula.ingredients.map((i) => (i.id === id ? { ...i, ...changes, id } : i)),
+): Result<Formula, FormulaError> =>
+  mapIngredient(formula, id, (i) => {
+    const { preparation, ...contents } = changes;
+    const prepared =
+      preparation === undefined
+        ? {}
+        : {
+            preparation:
+              preparation === null
+                ? undefined
+                : {
+                    state: preparation.state,
+                    ...(preparation.note === undefined ? {} : { note: preparation.note.trim() }),
+                  },
+          };
+    // A field set to undefined (or a preparation set to null) is removed.
+    const next: Record<string, unknown> = Object.fromEntries(
+      Object.entries({ ...i, ...contents, ...prepared, id }).filter(([, v]) => v !== undefined),
+    );
+    // A content typed on a linked ingredient overrides the entry's (ingredients.md, Overrides).
+    if (i.entry !== undefined) {
+      const overrides = OVERRIDABLE_FIELDS.filter(
+        (field) => (i.overrides ?? []).includes(field) || Object.hasOwn(changes, field),
+      );
+      if (overrides.length > 0) next.overrides = overrides;
+    }
+    return ok(next as unknown as Ingredient);
   });
-};
 
 const removeIngredient = (formula: Formula, id: string): Result<Formula, FormulaError> => {
   if (!formula.ingredients.some((i) => i.id === id)) return err(unknownRef('ingredient', id));

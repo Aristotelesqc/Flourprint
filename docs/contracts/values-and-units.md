@@ -11,6 +11,8 @@ Status: **approved** (issue #30). Related issues: #6, #9, #26, #27, #28, #29.
 | duration    | second       | `number`, fields suffixed `S` (`plannedDurationS`)              |
 | instant     | ISO 8601 UTC | string ending in `Z` (`Instant`), a real calendar date and time |
 | percentage  | **points**   | 70 = 70 %, fields suffixed `Pct`; no 0–1 fraction is persisted  |
+| length      | millimetre   | `number`, fields suffixed `Mm` (equipment.md)                   |
+| volume      | millilitre   | `number`, fields suffixed `Ml` (equipment.md)                   |
 
 0–1 fractions exist only inside calculations. `Quantity { value, unit }` is used only at
 boundaries: input in another unit, product labels, imports. Display units and number formats are
@@ -26,6 +28,10 @@ document, a backup or an export:
 | `oven`    | steps with operation `bake`, `preheat` or `boil`, or location `oven`  |
 | `cold`    | steps with location `fridge` or `freezer`, or operation `retard`      |
 | `ambient` | every other temperature: room, proofer, dough, water, flour, friction |
+
+An equipment `setpointC` (equipment.md) follows its appliance, not its step: `ambient` for a
+`proofer`, `oven` for every other appliance or when none is named, an oven in Proof mode included.
+The step's other temperatures (`conditions`) keep the rows above.
 
 A value typed in °F is converted to °C before it is stored (`(F − 32) × 5 / 9`), and shown back
 from °C; a friction is a difference and converts by `× 5 / 9` only.
@@ -70,7 +76,7 @@ type RangeBound<T = number> =
 type PropertyValue =
   | {
       status: 'known' | 'estimated';
-      value: number | boolean | string; // composition, pH, density, enzyme activity, organic…
+      value: number | boolean | string; // composition, pH, enzyme activity, organic…
       unit?: Unit;
       basis?: 'per100g' | 'perServing' | 'dryMatter' | 'asIs' | 'moisture14'; // flours.md
       source: SourceRef;
@@ -84,6 +90,10 @@ interface ModelRef {
 }
 ```
 
+- Units of a `PropertyValue` are the canonical ones, `%` (points) and the property units named by
+  their contract: `'1e-4 J'` (alveograph W, `flours.md`) and `'°L'` (Lintner, diastatic
+  power) in `ingredients.md`. There is no density unit and no volume of an ingredient: ingredients are in grams only (the volume row above is an equipment capacity). A composition of an ingredient is always in
+  points of product mass with `basis: 'per100g'`.
 - Uncertainty appears only where it is meaningful: `Observation`, `Estimate`, `PropertyValue`.
 - Model parameters are versioned, immutable data, shipped with the app and exported with any bake
   that references them. A hash, if any, only checks integrity.

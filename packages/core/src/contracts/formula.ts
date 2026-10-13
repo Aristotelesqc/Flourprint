@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Formula } from '../domain/index.js';
+import { PREPARATION_STATES, type Formula, type PreparationState } from '../domain/index.js';
 
 /**
  * Boundary schema for formulas (docs/contracts/formula.md). It checks shape and units only;
@@ -66,6 +66,20 @@ export const formulaSchema = z.strictObject({
       sugar: contentSchema.optional(),
       yeast: z.strictObject({ form: z.enum(['fresh', 'active-dry', 'instant']) }).optional(),
       accepted: acceptedSuggestionSchema.optional(),
+      entry: z
+        .strictObject({
+          id: z.string().min(1),
+          version: z.number().int().min(1),
+          customized: z.literal(true).optional(),
+        })
+        .optional(),
+      overrides: z.array(z.enum(['kind', 'water', 'fat', 'sugar', 'yeast'])).optional(),
+      preparation: z
+        .strictObject({
+          state: z.enum(PREPARATION_STATES as [PreparationState, ...PreparationState[]]),
+          note: z.string().optional(),
+        })
+        .optional(),
     }),
   ),
   components: z.array(

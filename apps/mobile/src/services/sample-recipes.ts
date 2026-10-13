@@ -1,9 +1,12 @@
 import type { Formula, Process } from '@flourprint/core/domain';
-import poolishTangzhong from '../../../../examples/poolish-tangzhong.formula.json';
+import poolishTangzhong from '../../../../examples/poolish-tangzhong.formula.json' with { type: 'json' };
 
 const H = 3600;
 
-/** Reference journey of #17, used to explore the UI before persistence lands on the device. */
+/**
+ * Reference journey of #17. The app seeds no recipe (persistence.md, Recipe trash): non-release
+ * builds offer to load it from Advanced (ADR 0016), and the test suites load it as a fixture.
+ */
 export const sampleRecipe: { id: string; name: string; formula: Formula; process: Process } = {
   id: 'poolish-tangzhong',
   name: 'Poolish + tangzhong',
@@ -75,4 +78,40 @@ export const sampleRecipe: { id: string; name: string; formula: Formula; process
       },
     ],
   },
+};
+
+/** The sample as a full backup document, which the browser build restores at start-up. */
+export const sampleBackup = (createdAt = '2026-10-01T12:00:00.000Z') => ({
+  kind: 'flourprint-backup',
+  schemaVersion: 1,
+  exportedAt: createdAt,
+  recipes: [
+    {
+      id: sampleRecipe.id,
+      name: sampleRecipe.name,
+      revisions: [
+        {
+          recipeId: sampleRecipe.id,
+          version: 1,
+          formula: sampleRecipe.formula,
+          process: sampleRecipe.process,
+          createdAt,
+        },
+      ],
+    },
+  ],
+  families: [],
+  bakes: [],
+});
+
+/** The sample as a recipes file, for the native suites that import it through Advanced. */
+export const sampleRecipesFile = (createdAt = '2026-10-01T12:00:00.000Z') => {
+  const { recipes } = sampleBackup(createdAt);
+  return {
+    kind: 'flourprint-recipes',
+    schemaVersion: 1,
+    exportedAt: createdAt,
+    recipes,
+    families: [],
+  };
 };

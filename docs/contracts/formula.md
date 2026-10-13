@@ -27,6 +27,44 @@ type Anchor =
   an id. A sourdough culture is not commercial yeast and stays unmarked.
 - Ingredients with role `topping` or `glaze` get grams from total flour but are excluded from the
   dough weight, the final mix and the water balance.
+- An ingredient may point to an entry of the ingredient registry (`ingredients.md`) and record how
+  it is prepared:
+
+```ts
+interface Ingredient {
+  // …contents above
+  entry?: { id: string; version: number; customized?: true };
+  overrides?: Array<'kind' | 'water' | 'fat' | 'sugar' | 'yeast'>; // only with entry
+  preparation?: { state: PreparationState; note?: string };
+}
+type PreparationState =
+  | 'cold'
+  | 'roomTemperature'
+  | 'softened'
+  | 'melted'
+  | 'meltedCooled'
+  | 'cubed'
+  | 'chopped'
+  | 'grated'
+  | 'ground'
+  | 'toasted'
+  | 'soaked'
+  | 'whipped'
+  | 'beaten'
+  | 'pureed'
+  | 'cooked'
+  | 'other';
+```
+
+- The contents above (`kind`, `water`, `fat`, `sugar`, `yeast`) stay on the ingredient as a copy
+  of that entry version, possibly overridden by the baker field by field (`overrides`: each field
+  at most once, in that order, absent when empty). The engine reads the contents and never reads
+  `entry`, `overrides` or `preparation`. An ingredient without `entry` is valid and unchanged. The
+  registry's own ids are unrelated to the ingredient ids below.
+- `preparation` is recorded and shown, never consumed: contents, mass and composition do not change
+  with it. `state: 'other'` requires a non-empty `note`; a `note` is never empty. A document that
+  breaks this, or the rule on `overrides`, is refused with `InvalidFormula` (`ingredients.md`,
+  Overrides and Preparation).
 - Identifiers (flours, ingredients, components) are non-empty strings, unique across the formula.
   Names of built-in object members (`__proto__`, `constructor`, `toString`, …) are refused with
   `InvalidFormula`, so that every identifier is safe as a key in JSON and in code.
@@ -76,19 +114,25 @@ type Anchor =
 
 ### Structure edits
 
-| Command                                | Effect                                                                            | Refused when…                                                  |
-| -------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `SetFlourBlend(parts)`                 | may also add or remove flours                                                     | a component still draws from a removed flour                   |
-| `AddIngredient(ingredient)`            | adds an ingredient with its %, kind, role and composition                         | the id is taken or reserved                                    |
-| `UpdateIngredient(id, changes)`        | changes kind, role, water/fat/sugar contents or yeast form; the % is kept         | the change breaks an allocation (e.g. a role other than dough) |
-| `RemoveIngredient(id)`                 | removes the ingredient                                                            | a component allocates it, or it absorbs the locked total water |
-| `AddComponent(component)`              | adds a preparation drawing from the formula totals                                | its draws exceed what the formula has                          |
-| `UpdateComponent(id, changes)`         | changes flour share, flour blend, hydration, loss, allocations or kind            | the draws exceed what the formula has                          |
-| `RemoveComponent(id)`                  | removes the preparation; its flour, water and ingredients return to the final mix | —                                                              |
-| `LockTotalWater(totalWaterPct, water)` | locks total water (see below)                                                     | see below                                                      |
-| `UnlockTotalWater`                     | removes the lock; every quantity keeps its current value                          | —                                                              |
+| Command                                | Effect                                                                                  | Refused when…                                                                               |
+| -------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `SetFlourBlend(parts)`                 | may also add or remove flours                                                           | a component still draws from a removed flour                                                |
+| `AddIngredient(ingredient)`            | adds an ingredient with its %, kind, role and composition                               | the id is taken or reserved                                                                 |
+| `UpdateIngredient(id, changes)`        | changes kind, role, water/fat/sugar contents or yeast form; the % is kept               | the change breaks an allocation (e.g. a role other than dough)                              |
+| `ApplyIngredientEntry(id, entry)`      | sets `entry`, replaces kind, contents and yeast form by the entry's, clears `overrides` | the change of kind breaks an allocation or the absorbing water                              |
+| `RefreshIngredientEntry(id, entry, o)` | "update from entry": re-copies the pinned entry's contents; `o` is `keep` or `clear`    | no `entry`, another entry id, or the change of kind breaks an allocation or absorbing water |
+| `DetachIngredientEntry(id)`            | removes `entry` and `overrides`; contents stay                                          | —                                                                                           |
+| `RemoveIngredient(id)`                 | removes the ingredient                                                                  | a component allocates it, or it absorbs the locked total water                              |
+| `AddComponent(component)`              | adds a preparation drawing from the formula totals                                      | its draws exceed what the formula has                                                       |
+| `UpdateComponent(id, changes)`         | changes flour share, flour blend, hydration, loss, allocations or kind                  | the draws exceed what the formula has                                                       |
+| `RemoveComponent(id)`                  | removes the preparation; its flour, water and ingredients return to the final mix       | —                                                                                           |
+| `LockTotalWater(totalWaterPct, water)` | locks total water (see below)                                                           | see below                                                                                   |
+| `UnlockTotalWater`                     | removes the lock; every quantity keeps its current value                                | —                                                                                           |
 
-Every edit is validated by a full resolution; a refused edit changes nothing. Removing a
+`AddIngredient` may carry `entry` instead of contents. `UpdateIngredient` also sets or clears
+`preparation`. An `UpdateIngredient` that changes kind, contents or yeast form of an ingredient
+with an `entry` keeps the `entry` and lists the field in `overrides` (`ingredients.md`, Edit
+commands). Every edit is validated by a full resolution; a refused edit changes nothing. Removing a
 component does not edit the process: the application removes or keeps the matching step
 explicitly (`process.md`, Step removal).
 
@@ -146,8 +190,13 @@ interface WaterBalance {
   N3) and is never called hydration.
 - The app labels `totalWaterPct` **Hydration** (owner decision of 2026-10-11): it is total water
   as defined above, every water-bearing ingredient included, not the conventional water-to-flour
-  ratio. Typing a hydration locks total water at that value (`LockTotalWater`); `pureWaterPct` is
-  shown as "added water".
+  ratio. Typing a hydration locks total water at that value (`LockTotalWater`).
+- Presentation (owner decision of 2026-10-12): hydration is shown to the whole percent; the
+  engine keeps full precision. Free water is shown as one ingredient among the others, its
+  quantity following the locked hydration and the water of the other ingredients; there is no
+  separate "added water" or "poured water" line, and a recipe may have no free water at all (a
+  milk shokupan). Every percentage says what it is a percentage of (of the flour, baker's
+  percentage).
 
 ## Fat and sugar
 
@@ -177,6 +226,17 @@ The engine names a component from its liquid ratio
 | others       | the kind itself                                               |
 
 - The style is derived, never stored: changing the ratio renames the component.
+- **Ratio entry** (owner decisions of 2026-10-12). A component's ratio is read and typed as
+  flour:liquid parts by **mass**, the way a baker weighs it: a milk tangzhong of 50 g flour and
+  250 g milk is 1:5. The liquid is the component's water plus the mass of its allocated
+  ingredients: `L = flourPct × hydrationPct / 100 + Σ allocated bakerPct`, and the ratio reads
+  `1:(L / flourPct)`. Typing `1:n` sets
+  `hydrationPct = 100 × (n × flourPct − Σ allocated bakerPct) / flourPct`. It is refused when
+  `n` is not finite and > 0, when the component has no flour, or when the allocated ingredients
+  alone already exceed the ratio (`InvalidFormula`). The
+  ratio is an input and a reading only: hydration and the component style keep counting water
+  (the milk's water content), as defined above. A non-liquid allocation (sugar, salt) counts in
+  the ratio; it is rare in a scald.
 - An allocated ingredient whose water content is unknown leaves the style undefined; the kind
   is shown instead.
 - The thresholds are naming conventions, not physics. Sourdough cultures are not modelled yet

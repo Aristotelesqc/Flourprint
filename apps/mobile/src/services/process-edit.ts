@@ -19,6 +19,11 @@ export const STEP_OPERATIONS = [
   'retard',
   'preheat',
   'bake',
+  'boil',
+  'steam',
+  'fry',
+  'panCook',
+  'grill',
   'cool',
 ] as const;
 

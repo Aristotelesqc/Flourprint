@@ -6,6 +6,10 @@
 2. `docs/adr/`: architecture decisions.
 3. Issue #30: record of the arbitration and high-level backlog. Issues describe needs, not contracts.
 
+For interface work, also read root [DESIGN.md](DESIGN.md): visual identity, current tokens and
+component/interaction guidance (ADR 0017). Update it with reviewed presentation changes. It does
+not override contracts or select a component/router dependency; prototypes remain identified.
+
 An implementation that contradicts a contract is wrong. A contract that must change is changed in
 a dedicated pull request, before the code that depends on it.
 
@@ -53,12 +57,24 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
   publishing, permission changes or overlapping writers.
 - **UI verification**: [.agents/skills/flourprint-ui-check/SKILL.md](.agents/skills/flourprint-ui-check/SKILL.md).
   Use for browser/visual acceptance and selecting the native evidence needed for a UI change.
+- **UI mockups**: [.agents/skills/flourprint-ui-mockups/SKILL.md](.agents/skills/flourprint-ui-mockups/SKILL.md).
+  Use for Gemini-generated visual proposals, Codex verification, hosted galleries and the
+  owner's requested approval before redesign implementation; not as a gate for routine fixes.
 - **Contract changes**: [.agents/skills/flourprint-contract-change/SKILL.md](.agents/skills/flourprint-contract-change/SKILL.md).
   Use for semantic/persisted changes, independent fixtures and consumer/compatibility impact.
 - **Scientific evidence**: [.agents/skills/flourprint-science/SKILL.md](.agents/skills/flourprint-science/SKILL.md).
   Use for source/data/fit audits and prediction limits; research does not approve a model change.
+- **Pull request flow**: [.agents/skills/flourprint-pr-flow/SKILL.md](.agents/skills/flourprint-pr-flow/SKILL.md).
+  Use for any PR: rebuilt checks on a private e2e port, native suites when they apply,
+  up-to-date merges into `dev`, combined merges and issue labels afterwards.
+- **Device checks**: [.agents/skills/flourprint-device-check/SKILL.md](.agents/skills/flourprint-device-check/SKILL.md).
+  Use when a change needs phone or desktop evidence, a migration must be checked on real data,
+  or the owner asks which APK or build to use.
+- **Agent handoff**: [.agents/skills/flourprint-agent-handoff/SKILL.md](.agents/skills/flourprint-agent-handoff/SKILL.md).
+  Use to write a message the owner relays to another agent, or when work crosses an ownership
+  boundary.
 
-These three skills also have thin Claude Code routing entrypoints. They reuse current contracts,
+These skills also have thin Claude Code routing entrypoints. They reuse current contracts,
 ADRs and tools rather than introducing another source of product decisions or a tracking system.
 
 ## Commands
@@ -73,6 +89,7 @@ pnpm check        # format, lint, typecheck (sources and tests), tests
 pnpm build        # tsc -b
 pnpm build:mobile
 pnpm --filter @flourprint/mobile e2e  # full browser Playwright suite, FR and EN
+                                      # (FLOURPRINT_E2E_PORT=<port> for a private server)
 pnpm vitest run   # tests only (after a build)
 node apps/cli/dist/main.js --version
 ```
@@ -84,7 +101,8 @@ for affected behavior under ADR 0016 and `docs/device-testing.md`, not run on ev
 
 Issue #30 is the high-level backlog: it links the other issues and tracks the development order.
 GitHub issues are the only tracking system (owner decision of 2026-10-12: no Projects board, no
-tracking file).
+tracking file). Its operational view is generated from individual issues and their labels;
+the decision history remains editorial. See [docs/governance/generated-backlog.md](docs/governance/generated-backlog.md).
 
 - **New issues** follow `.github/ISSUE_TEMPLATE/` (work item or bug), also when opened through the
   API, and start with `status:backlog`. Pull requests follow `.github/pull_request_template.md`.
@@ -103,8 +121,17 @@ tracking file).
   sets `status:review`. A merged pull request does not finish an issue: it goes back to
   `status:in-progress` while acceptance remains open, or to `status:verified` with the evidence in a
   comment. Only the owner, or an agent with every criterion shown, closes an issue.
-- **Status table**: the body of #30 holds a table of the open issues and their status. Whoever
-  changes a status label updates its row, editing the body rather than adding a comment.
+- **Generated view**: update the individual issue and its labels, never #30's generated tables.
+  The Backlog view workflow maintains one bot-owned comment linked from #30. It reports missing
+  or conflicting classifications, without correcting labels, setting priorities or closing issues.
+  Keep blockers, acceptance evidence, dependencies and PR links in the issue concerned. Human
+  decisions may still be recorded in #30's editorial body; the automation never writes that body.
+- **Sub-issues** (owner decision of 2026-10-13): a workstream issue (#35, #28, #26…) is the
+  parent; a slice that one pull request can deliver is a GitHub sub-issue of it. One level deep
+  only. Each sub-issue keeps its own status, area and milestone labels and its own acceptance; a
+  parent is verified only when its own acceptance is shown, not because its sub-issues closed.
+  Attach a sub-issue when its body names the parent ("Parent #35"); never move or detach one
+  attached by someone else without saying why on both issues.
 - Add a short comment on the issue concerned when a step advances, and keep the PR body current.
 
 See ADR 0008. The proof-of-concept baseline (PR #31: steps 1 to 6 of the first development order,

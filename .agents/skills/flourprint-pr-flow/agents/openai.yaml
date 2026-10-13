@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint PR flow'
+  short_description: 'Branch, check, merge and label a Flourprint change'
+  default_prompt: 'Use $flourprint-pr-flow for this change and report the checks run and what remains.'
