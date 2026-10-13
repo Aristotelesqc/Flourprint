@@ -26,9 +26,11 @@ interface BakeStartedPayload {
   usedProperties: Array<{
     ingredient: string; // the registry entry id
     version: number; // the registry entry version
+    customized?: true; // the version is a personal customization of a built-in
     formulaIngredient?: string; // the formula ingredient consumed; set for pinned entries
     key: string;
-    value: PropertyValue;
+    value: PropertyValue; // the value actually consumed, the baker's when overridden
+    overridden?: true; // the formula ingredient overrides this property of its entry
   }>;
   process: Process; // the definition used, equipment parameters copied
   initialProjection: Projection;
@@ -50,8 +52,10 @@ the current mode only; a bake without `origin` counts as real.
 ingredient with an `entry`, `ingredient` and `version` name the entry, `formulaIngredient` the
 formula's ingredient, and the keys are `waterPct`, `fatPct`,
 `sugarPct` and `leavening` as far as they were consumed (`ingredients.md`, Bakes). The pinned
-entries are read from `formula`; `BakeStartedPayload` gains no field for them, and a snapshot
-written before the ingredient registry has no pin (unknown, not "no registry ingredient").
+entries, their `overrides` and the `preparation` are read from `formula`; `BakeStartedPayload`
+gains no field for them. A pin that does not resolve in the registry blocks nothing: the copied
+contents are used. A snapshot written before the ingredient registry has no pin (unknown, not "no
+registry ingredient").
 
 Accepted suggestions (`fermentation.md`):
 
@@ -85,7 +89,8 @@ Accepted suggestions (`fermentation.md`):
 ## Export
 
 - Full backup: recipes, revisions, bakes, events and every registry (flour and ingredient),
-  profile and model-parameter version they reference.
+  profile and model-parameter version they reference that exists. A pinned ingredient entry
+  version that does not exist is not an error: the formula keeps its copied contents.
 - Recipe export: the revisions and the versions they depend on.
 
 ## Feedback export
@@ -122,7 +127,10 @@ interface BakeDigest {
   startedAt?: Instant;
   endedAt?: Instant;
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
-  ingredients?: Array<{ ingredient: string; entry: { id: string; version: number } }>; // pins of the snapshot formula
+  ingredients?: Array<{
+    ingredient: string;
+    entry: { id: string; version: number; customized?: true };
+  }>; // pins of the snapshot formula
   steps: Array<{
     id: StepId;
     operation: string;

@@ -94,7 +94,8 @@ Built-in entries are code and are not stored.
 
 Personal ingredient entries (`ingredients.md`) are stored by `(id, version)` like flours; a version
 is never rewritten, and a version that is not the next one for its id is refused (`HeadConflict`).
-Built-in entries are code and are not stored.
+Built-in entries are code and are not stored; a customization of a built-in is a personal entry
+stored under the built-in's id (`ingredients.md`).
 
 ## SQLite schema (version 7)
 
