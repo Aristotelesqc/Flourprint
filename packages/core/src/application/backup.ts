@@ -6,8 +6,11 @@ import {
   ok,
   upcastEvent,
   validateRecipe,
+  builtInEquipment,
   builtInFlour,
+  canonicalJson,
   type BakeEvent,
+  type EquipmentEntry,
   type FlourEntry,
   type DomainError,
   type Instant,
@@ -19,11 +22,13 @@ import { checkBakeLog } from './backup-events.js';
 import { decodeFormula, decodeProcess } from './documents.js';
 import { isCount, isId, isInstant, isObject, Refused, refuse } from './decode.js';
 import { decodeDraft } from './drafts.js';
+import { decodeEquipmentEntry } from './equipment.js';
 import { decodeFlourEntry } from './flours.js';
 import type {
   AppendInput,
   Draft,
   BakeEventStore,
+  EquipmentRegistry,
   FlourRegistry,
   RecipeRepository,
   RecordedRecipe,
@@ -44,12 +49,15 @@ export interface Backup {
   readonly drafts?: readonly Draft[];
   /** Every personal flour entry version (flours.md); optional, so older backups still restore. */
   readonly flours?: readonly FlourEntry[];
+  /** Every personal equipment entry version (equipment.md); optional, so older backups restore. */
+  readonly equipment?: readonly EquipmentEntry[];
 }
 
 export interface BackupStores {
   readonly recipes: RecipeRepository;
   readonly bakes: BakeEventStore;
   readonly flours: FlourRegistry;
+  readonly equipment: EquipmentRegistry;
 }
 
 export type BackupError =
@@ -61,12 +69,20 @@ export type BackupError =
 const invalid = (reason: string): BackupError =>
   domainError('InvalidBackup', `Invalid backup: ${reason}`, { reason });
 
-/** Every recipe with all its revisions, as recorded. */
+/**
+ * Every recipe with all its revisions, as recorded. Recipes in the trash are included only when
+ * `withTrash` is set (full backups); a recipes file never carries them (persistence.md).
+ */
 export const recordedRecipes = async (
   repository: RecipeRepository,
+  options: { readonly withTrash?: boolean } = {},
 ): Promise<Result<RecordedRecipe[], BackupError>> => {
   const recipes: RecordedRecipe[] = [];
-  for (const recipe of await repository.listRecipes()) {
+  const listed = [
+    ...(await repository.listRecipes()),
+    ...(options.withTrash ? await repository.listTrash() : []),
+  ];
+  for (const recipe of listed) {
     const revisions: Revision[] = [];
     for (let version = 1; version <= recipe.headVersion; version++) {
       const revision = await repository.getRevision(recipe.id, version);
@@ -78,6 +94,7 @@ export const recordedRecipes = async (
       id: recipe.id,
       name: recipe.name,
       ...(recipe.familyId === undefined ? {} : { familyId: recipe.familyId }),
+      ...(recipe.trashedAt === undefined ? {} : { trashedAt: recipe.trashedAt }),
       revisions,
     });
   }
@@ -89,9 +106,9 @@ export const exportBackup = async (
   stores: BackupStores,
   exportedAt: Instant,
 ): Promise<Result<Backup, BackupError>> => {
-  const recipes = await recordedRecipes(stores.recipes);
+  const recipes = await recordedRecipes(stores.recipes, { withTrash: true });
   if (!recipes.ok) return recipes;
-  const families = await stores.recipes.listFamilies();
+  const families = await stores.recipes.listFamilies({ all: true });
   const bakes: Backup['bakes'][number][] = [];
   for (const summary of await stores.bakes.listBakes()) {
     bakes.push({ bakeId: summary.bakeId, events: await stores.bakes.loadEvents(summary.bakeId) });
@@ -105,6 +122,7 @@ export const exportBackup = async (
     bakes,
     drafts: await stores.recipes.listDrafts(),
     flours: await stores.flours.listFlourVersions(),
+    equipment: await stores.equipment.listEquipmentVersions(),
   });
 };
 
@@ -196,7 +214,10 @@ export const decodeRecipes = (
     if (!Array.isArray(recipe.revisions) || recipe.revisions.length === 0) {
       return refuse(`recipe ${id} has no revision`);
     }
-    const { familyId } = recipe;
+    const { familyId, trashedAt } = recipe;
+    if (trashedAt !== undefined && !isInstant(trashedAt)) {
+      return refuse(`recipe ${id} has an invalid trashedAt`);
+    }
     if (familyId !== undefined && !families.some((f) => f.id === familyId)) {
       return refuse(`recipe ${id} refers to a missing family`);
     }
@@ -204,6 +225,7 @@ export const decodeRecipes = (
       id,
       name: recipe.name,
       ...(typeof familyId === 'string' ? { familyId } : {}),
+      ...(trashedAt === undefined ? {} : { trashedAt }),
       revisions: (recipe.revisions as unknown[]).map((r, i) => decodeRevision(id, i, r)),
     });
   }
@@ -231,6 +253,23 @@ const decodeFlours = (input: readonly unknown[]): FlourEntry[] => {
     }
   }
   return flours;
+};
+
+/** Personal equipment entries: each one valid, versions of an id numbered 1..n (equipment.md). */
+const decodeEquipment = (input: readonly unknown[]): EquipmentEntry[] => {
+  const entries = input.map((value, i) => decodeEquipmentEntry(value, `equipment ${i + 1}`));
+  const versions = new Map<string, number[]>();
+  for (const entry of entries) {
+    if (entry.builtIn) return refuse(`equipment ${entry.id} is a built-in entry`);
+    versions.set(entry.id, [...(versions.get(entry.id) ?? []), entry.version]);
+  }
+  for (const [id, list] of versions) {
+    const sorted = [...list].sort((a, b) => a - b);
+    if (sorted.some((version, i) => version !== i + 1)) {
+      return refuse(`versions of equipment ${id} are not numbered 1..n`);
+    }
+  }
+  return entries;
 };
 
 /**
@@ -265,6 +304,10 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
       return err(invalid('flours must be a list'));
     }
     const flours = decodeFlours((input.flours ?? []) as unknown[]);
+    if (input.equipment !== undefined && !Array.isArray(input.equipment)) {
+      return err(invalid('equipment must be a list'));
+    }
+    const equipment = decodeEquipment((input.equipment ?? []) as unknown[]);
 
     const bakes: AppendInput[] = [];
     const bakeIds = new Set<string>();
@@ -284,9 +327,11 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
       const last = events.at(-1);
       if (!last) continue;
       const state = checkBakeLog(bakeId, events);
+      // A bake carries its own snapshot, so a recipe deleted from the trash may be absent from the
+      // backup (persistence.md, Recipe trash); a recipe that is present must hold the revision.
       for (const ref of Object.values(state.snapshot?.revisions ?? {})) {
         const recipe = recipes.find((r) => r.id === ref.id);
-        if (!recipe?.revisions.some((r) => r.version === ref.version)) {
+        if (recipe && !recipe.revisions.some((r) => r.version === ref.version)) {
           return err(invalid(`bake ${bakeId} refers to a revision missing from the backup`));
         }
       }
@@ -296,6 +341,19 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
           builtInFlour(ref.id, ref.version) !== undefined;
         if (!known) {
           return err(invalid(`bake ${bakeId} refers to a flour entry missing from the backup`));
+        }
+      }
+      // Copies in a bake are immutable: a built-in one is its code definition, a personal one the entry version of the registry.
+      for (const copy of state.equipment ?? []) {
+        const entry = copy.builtIn
+          ? builtInEquipment(copy.id, copy.version)
+          : equipment.find((e) => e.id === copy.id && e.version === copy.version);
+        if (!entry || canonicalJson(entry) !== canonicalJson(copy)) {
+          return err(
+            invalid(
+              `bake ${bakeId} refers to an equipment entry missing from the backup or differing from it`,
+            ),
+          );
         }
       }
       bakes.push({
@@ -312,7 +370,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     if (new Set(drafts.map((d) => d.id)).size !== drafts.length) {
       return err(invalid('duplicate draft'));
     }
-    return ok({ recipes, families, bakes, drafts, flours });
+    return ok({ recipes, families, bakes, drafts, flours, equipment });
   } catch (error) {
     if (error instanceof RefusedWith) return err(error.error);
     if (error instanceof Refused) return err(invalid(error.reason));

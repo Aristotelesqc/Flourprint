@@ -84,6 +84,27 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 5,
+    sql: `
+      CREATE TABLE equipment (
+        id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        kind TEXT NOT NULL,
+        archived INTEGER NOT NULL,
+        schema_version INTEGER NOT NULL,
+        document TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (id, version)
+      );
+    `,
+  },
+  {
+    version: 6,
+    sql: `
+      ALTER TABLE recipes ADD COLUMN trashed_at TEXT;
+    `,
+  },
 ];
 
 export type OpenError =

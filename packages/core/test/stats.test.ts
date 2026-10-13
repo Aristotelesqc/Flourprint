@@ -42,7 +42,14 @@ const digest = (
 describe('bake statistics', () => {
   it('is empty for no bake', () => {
     const stats = bakeStats([]);
-    expect(stats.counts).toEqual({ total: 0, finished: 0, abandoned: 0, active: 0 });
+    expect(stats.counts).toEqual({
+      total: 0,
+      finished: 0,
+      abandoned: 0,
+      active: 0,
+      results: { cooked: 0, dough: 0, cookedAndDough: 0, unknown: 0 },
+    });
+    expect(stats.cookingStages).toEqual([]);
     expect(stats.recipes).toEqual([]);
     expect(stats.durations).toEqual([]);
     expect(stats.readiness).toEqual({ marks: 0, compared: 0 });
@@ -57,7 +64,7 @@ describe('bake statistics', () => {
       digest('c', 'pain', 'finished', 3),
       digest('d', 'pain', 'active', 4),
     ]);
-    expect(stats.counts).toEqual({ total: 4, finished: 2, abandoned: 1, active: 1 });
+    expect(stats.counts).toMatchObject({ total: 4, finished: 2, abandoned: 1, active: 1 });
     expect(stats.recipes).toEqual([
       { recipeId: 'pain', name: 'PAIN', count: 3 },
       { recipeId: 'pizza', name: 'PIZZA', count: 1 },
@@ -79,6 +86,7 @@ describe('bake statistics', () => {
     const step = (id: string, operation: string, planned: number, actual?: number): StepDigest => ({
       id,
       operation,
+      cooking: false,
       baselineDurationS: planned,
       plannedDurationS: planned + 900, // adjusted during the bake: not the plan at start
       ...(actual === undefined ? {} : { actualDurationS: actual }),
@@ -109,7 +117,7 @@ describe('bake statistics', () => {
   it('compares dough ready marks with the model estimate when there is one', () => {
     const stats = bakeStats([
       digest('a', 'pain', 'finished', 1, {
-        steps: [{ id: 'bulk', operation: 'bulkFerment', estimate: estimate(3600) }],
+        steps: [{ id: 'bulk', operation: 'bulkFerment', cooking: false, estimate: estimate(3600) }],
         observations: [
           {
             at: at(10),
@@ -122,7 +130,7 @@ describe('bake statistics', () => {
         ],
       }),
       digest('b', 'pain', 'finished', 2, {
-        steps: [{ id: 'bulk', operation: 'bulkFerment' }],
+        steps: [{ id: 'bulk', operation: 'bulkFerment', cooking: false }],
         observations: [
           {
             at: at(10, 2),
@@ -186,5 +194,98 @@ describe('bake world', () => {
     expect(bakeWorld([started('physical')])).toBe('physical');
     expect(bakeWorld([started()])).toBe('physical');
     expect(bakeWorld([])).toBe('physical');
+  });
+});
+
+describe('results and cooking stages (history.md, Statistics, acceptance examples)', () => {
+  const cook = (id: string, operation: string, done = true): StepDigest => ({
+    id,
+    operation,
+    cooking: true,
+    ...(done ? { startedAt: at(12), endedAt: at(13) } : {}),
+  });
+  const counts = (bake: BakeDigest) => {
+    const stats = bakeStats([bake]);
+    return { counts: stats.counts, stages: stats.cookingStages };
+  };
+  const results = (
+    r: Partial<Record<'cooked' | 'dough' | 'cookedAndDough' | 'unknown', number>>,
+  ) => ({
+    cooked: 0,
+    dough: 0,
+    cookedAndDough: 0,
+    unknown: 0,
+    ...r,
+  });
+
+  it('frozen pizza dough: one finished dough, no stage', () => {
+    const bake = digest('a', 'pizza', 'finished', 1, {
+      outcome: { result: 'dough', dough: 'frozen' },
+      outcomeSource: 'recipe',
+    });
+    expect(counts(bake)).toEqual({
+      counts: { total: 1, finished: 1, abandoned: 0, active: 0, results: results({ dough: 1 }) },
+      stages: [],
+    });
+  });
+
+  it('bagels boiled twice then baked: one cooked result, three stages', () => {
+    const bake = digest('a', 'bagel', 'finished', 1, {
+      outcome: { result: 'cooked' },
+      steps: [cook('boil', 'boil'), cook('boil-2', 'boil'), cook('bake', 'bake')],
+    });
+    expect(counts(bake).counts.results).toEqual(results({ cooked: 1 }));
+    expect(counts(bake).stages).toEqual([
+      { operation: 'boil', n: 2 },
+      { operation: 'bake', n: 1 },
+    ]);
+  });
+
+  it('a flatbread still active after its pan stage counts no result', () => {
+    const bake = digest('a', 'flatbread', 'active', 1, {
+      steps: [cook('pan', 'panCook'), cook('broil', 'bake', false)],
+    });
+    expect(counts(bake)).toEqual({
+      counts: { total: 1, finished: 0, abandoned: 0, active: 1, results: results({}) },
+      stages: [{ operation: 'panCook', n: 1 }],
+    });
+  });
+
+  it('a finish without outcome is unknown, never cooked, whatever was baked', () => {
+    const bake = digest('a', 'pain', 'finished', 1, {
+      outcome: 'unknown',
+      steps: [cook('bake', 'bake')],
+    });
+    expect(counts(bake).counts.results).toEqual(results({ unknown: 1 }));
+    // A digest without the field (an older reader) reads the same.
+    expect(counts(digest('b', 'pain', 'finished', 1)).counts.results).toEqual(
+      results({ unknown: 1 }),
+    );
+  });
+
+  it('an abandoned loaf keeps its stage but no result', () => {
+    const bake = digest('a', 'pain', 'abandoned', 1, { steps: [cook('bake', 'bake')] });
+    expect(counts(bake)).toEqual({
+      counts: { total: 1, finished: 0, abandoned: 1, active: 0, results: results({}) },
+      stages: [{ operation: 'bake', n: 1 }],
+    });
+  });
+
+  it('a barbecue focaccia and a mixed result', () => {
+    const stats = bakeStats([
+      digest('a', 'focaccia', 'finished', 1, {
+        outcome: { result: 'cooked' },
+        steps: [cook('bbq', 'grill')],
+      }),
+      digest('b', 'pain', 'finished', 2, {
+        outcome: { result: 'cookedAndDough', dough: 'frozen' },
+        steps: [cook('bake', 'bake'), { id: 'proof', operation: 'proof', cooking: false }],
+      }),
+    ]);
+    expect(stats.counts.results).toEqual(results({ cooked: 1, cookedAndDough: 1 }));
+    expect(stats.cookingStages).toEqual([
+      { operation: 'bake', n: 1 },
+      { operation: 'grill', n: 1 },
+    ]);
   });
 });

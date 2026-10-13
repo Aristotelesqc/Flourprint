@@ -69,6 +69,79 @@ const tap = async (page: Page, target: Locator) => {
     .catch(() => undefined);
 };
 
+/**
+ * The app seeds no recipe (persistence.md, Recipe trash): the test imports the reference recipe
+ * through Advanced unless the database already holds it (second launch).
+ */
+const recipesFile = {
+  kind: 'flourprint-recipes',
+  schemaVersion: 1,
+  exportedAt: '2026-10-01T12:00:00.000Z',
+  families: [],
+  recipes: [
+    {
+      id: 'pain-simple',
+      name: 'Pain simple',
+      revisions: [
+        {
+          recipeId: 'pain-simple',
+          version: 1,
+          createdAt: '2026-10-01T12:00:00.000Z',
+          formula: {
+            flours: [{ id: 'bread', sharePct: 100 }],
+            ingredients: [
+              { id: 'water', kind: 'water', bakerPct: 70, role: 'dough' },
+              { id: 'salt', kind: 'other', bakerPct: 2, role: 'dough' },
+            ],
+            components: [],
+            anchor: { kind: 'flourTotal', grams: 1000 },
+          },
+          process: {
+            steps: [
+              {
+                id: 'mix',
+                operation: 'mix',
+                dependsOn: [],
+                schedule: 'asap',
+                plannedDurationS: 600,
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ],
+};
+
+const loadSample = async (page: Page): Promise<void> => {
+  await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  // The list loads after the heading: wait a moment for the recipe before deciding to import it.
+  const present = await page
+    .getByText('Pain simple')
+    .first()
+    .waitFor({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (present) return;
+  await page.evaluate(() => {
+    window.history.pushState({}, '', '/advanced');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'recettes.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(recipesFile)),
+  });
+  // Imported now, or already there if the list was only slow to show it.
+  await expect(
+    page.getByText(/^(1 recette importée|Aucune nouvelle recette, 1 déjà présente)\.$/),
+  ).toBeVisible();
+  await page.evaluate(() => {
+    window.history.pushState({}, '', '/recipes');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+};
+
 const quit = async ({ process: child, browser }: Running) => {
   await browser.close();
   const exited = new Promise((done) => child.once('exit', done));
@@ -79,7 +152,8 @@ const quit = async ({ process: child, browser }: Running) => {
 test('a phone-sized window, touch from the mouse, and data that survives a restart', async () => {
   const userData = mkdtempSync(join(tmpdir(), 'flourprint-desktop-'));
   let app = await launch(userData);
-  await tap(app.page, app.page.getByText('Poolish + tangzhong').first());
+  await loadSample(app.page);
+  await tap(app.page, app.page.getByText('Pain simple').first());
   await expect(app.page.getByText('Version 1', { exact: true })).toBeVisible();
   // SQLite, not the browser's memory stores.
   await expect(app.page.getByText(/Aperçu navigateur/)).toHaveCount(0);
@@ -91,7 +165,12 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
     })),
   ).toEqual({ width: 448, touch: true, mobile: true });
 
+  // A saved recipe opens in consultation (#70): editing is explicit.
   const salt = app.page.getByLabel('Sel (g)', { exact: true });
+  await expect(async () => {
+    await tap(app.page, app.page.getByRole('button', { name: 'Modifier', exact: true }));
+    await expect(salt).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
   await salt.fill('25');
   await salt.press('Enter');
   await tap(app.page, app.page.getByRole('button', { name: 'Enregistrer v2' }));
@@ -99,7 +178,8 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
   await quit(app);
 
   app = await launch(userData);
-  await tap(app.page, app.page.getByText('Poolish + tangzhong').first());
+  await loadSample(app.page);
+  await tap(app.page, app.page.getByText('Pain simple').first());
   await expect(app.page.getByText('Version 2', { exact: true })).toBeVisible();
   await quit(app);
 });

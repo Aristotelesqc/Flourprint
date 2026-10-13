@@ -1,13 +1,14 @@
+import { COOKING_OPERATIONS, isCookingStep } from './cooking.js';
 import type { Process, ProcessStep, StepId } from './types.js';
 
 /**
  * Dough steps (fermentation.md): the `asap` steps after the `mix` step and before the first heat
- * step, in process order. A heat step ends the fermentation: baking, or boiling bagels and
- * pretzels before they are baked.
+ * step, in process order. A heat step is a cooking operation (process.md): baking, boiling bagels
+ * or pretzels, frying, pan-cooking or grilling a dough ends the fermentation.
  */
-export const HEAT_OPERATIONS: readonly string[] = ['bake', 'boil'];
+export const HEAT_OPERATIONS: readonly string[] = COOKING_OPERATIONS;
 
-export const isHeatStep = (step: ProcessStep): boolean => HEAT_OPERATIONS.includes(step.operation);
+export const isHeatStep = (step: ProcessStep): boolean => isCookingStep(step);
 
 /** Steps that depend on `from`, directly or not (the list is in topological order). */
 export const descendants = (process: Process, from: StepId): Set<StepId> => {

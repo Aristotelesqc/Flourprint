@@ -137,8 +137,14 @@ does not reserve an empty 88px draft footer. Once editing starts, first modifica
 feedback keep the primary controls stable. A deliberate mode change may rearrange the screen;
 retain understandable scroll/focus and preserve or guard all pending raw input.
 
-The implementation uses `FormulaConsultation` and the precise formula editor, with one mounted
-`ProcessSection` whose authoring controls depend on edit mode. Planner inputs survive mode changes.
+The implementation uses `FormulaConsultation`, `FormulaSection` and `RecipeMethod` for the Recipe tab,
+and a read-only projection `ProcessSection` for the Planning tab with shortcuts to the step editor.
+Hydration consultation clearly displays lock state with an explicit edit shortcut. Planner inputs survive mode changes.
+Intended outcome is authored in Recipe and summarized in Planning. Equipment attached to a step
+uses one compact summary and progressive details in both views. Explicit settings and unknowns
+remain visible; canonical mode help does not promise equivalence with a particular appliance.
+Profiles are optional. This presentation does not supply the equipment catalogue/editor still
+tracked by #28. Trashed recipes remain read-only until restored, including contextual shortcuts.
 `WeighingChecklist` shares temporary page state between views; changed quantities clear the affected
 checks. The checklist survives panel/mode switches and raw-only discard, but is not saved to history
 and resets when the page is recreated or the app reloads. Domain drafts persist accepted edits;
@@ -149,6 +155,15 @@ Keep quantities and the temporary weighing checklist accessible. Clarify that ch
 do not imply a recorded preparation or remove the aid while session persistence is unavailable.
 No forced wizard is needed to start an existing recipe now. Planned time and actual start remain
 distinct. Essential advanced features stay discoverable; complexity changes implementation slices.
+
+**Motion direction (#73, exploration):** prefer short surface/color feedback before introducing
+spatial movement. Static labels and states remain understandable with motion disabled. Never roll
+numeric values, simulate progress, delay actions behind decoration, or animate restored panel scroll.
+Keep input anchors stable within editing and preserve pending/invalid text. Reduced-motion policy
+must examine scoped CSS and the installed overlay/navigation runtime separately, including preference
+changes during use and interrupted transitions. Exact tokens, timings, library and runtime choices
+remain pending the [reviewed prototype comparison](docs/architecture/2026-10-12-motion-exploration.md);
+these principles do not ship animations or establish native/performance conformance.
 
 ## Elevation & Depth
 
@@ -180,6 +195,8 @@ The target is a reusable Flourprint component layer with consistent behavior and
 - **Sheets and help:** concise explanations with optional detail; accessible close action,
   containment, dismissal and focus return. Native keyboard/system-back behavior needs native
   evidence when affected; browser tests alone do not establish it.
+  Complete the new-recipe chooser's dismissal before navigating to its saved draft. Pending
+  creation prevents duplicate activation and user dismissal; ordinary cancellation stays on the list.
 - **Timeline:** show dependencies, parallel work and uncertainty without making elapsed time
   a biological readiness score. Editing links return to the corresponding Recipe step.
 

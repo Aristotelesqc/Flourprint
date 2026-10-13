@@ -42,19 +42,28 @@ export const NewRecipe = ({
   onBlank,
   onTemplate,
   onClose,
+  onDismissed,
 }: {
   open: boolean;
   busy: boolean;
   onBlank: () => void;
   onTemplate: (template: RecipeTemplate) => void;
   onClose: () => void;
+  onDismissed?: () => void;
 }) => {
   const { t } = useMessages();
   const templateName = useTemplateName();
   // A template opens its style guide first; starting from it is a second, explicit tap.
   const [selected, setSelected] = useState<string>();
   return (
-    <IonModal isOpen={open} onDidDismiss={onClose}>
+    <IonModal
+      isOpen={open}
+      canDismiss={!busy}
+      onDidDismiss={() => {
+        onClose();
+        onDismissed?.();
+      }}
+    >
       <IonHeader>
         <IonToolbar>
           <IonTitle>{t('new.title')}</IonTitle>
@@ -110,7 +119,7 @@ export const NewRecipe = ({
           })}
         </IonList>
         <div className="ion-padding">
-          <IonButton expand="block" fill="outline" onClick={onClose}>
+          <IonButton expand="block" fill="outline" disabled={busy} onClick={onClose}>
             {t('bake.cancel')}
           </IonButton>
         </div>

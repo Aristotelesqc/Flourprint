@@ -15,6 +15,7 @@ import { useParams } from 'react-router-dom';
 import {
   applyModelDurations,
   flourRefsOf,
+  processEquipmentEntries,
   RECIPE_TEMPLATES,
   saveDraft,
   type Draft,
@@ -23,6 +24,7 @@ import {
   applyDraftFormulaEdit,
   checkRecipe,
   defaultVariant,
+  doughSteps,
   resolveFormula,
   type BakeCommandPayload,
   type BakeSummary,
@@ -31,8 +33,10 @@ import {
   type DomainError,
   type Formula,
   type FormulaEdit,
+  type Instant,
   type Process,
   type ProjectionMode,
+  type Result,
   type Revision,
 } from '@flourprint/core/domain';
 import { FormulaConsultation } from '../blocks/FormulaConsultation';
@@ -40,6 +44,7 @@ import { buildFinalMixItems } from '../blocks/WeighingChecklist';
 import { FormulaSection } from '../blocks/FormulaSection';
 import { HistorySection } from '../blocks/HistorySection';
 import { ProcessSection } from '../blocks/ProcessSection';
+import { RecipeMethod } from '../blocks/RecipeMethod';
 import { ChangeReviewSheet } from '../blocks/ChangeReviewSheet';
 import { DraftActionBar } from '../blocks/DraftActionBar';
 import { usePanelScroll } from '../ui/PanelContext';
@@ -96,6 +101,8 @@ const RecipePageContent = () => {
   const [failure, setFailure] = useState<DomainError>();
   const [storageFailed, setStorageFailed] = useState(false);
   const [notice, setNotice] = useState<string>();
+  // Set while the recipe is in the trash: it is then read-only until restored.
+  const [trashedAt, setTrashedAt] = useState<Instant>();
   const [loading, setLoading] = useState<'loading' | 'missing' | 'failed' | 'ready'>('loading');
   const [family, setFamily] = useState<{ family: RecipeFamily; members: readonly Recipe[] }>();
   const writes = useGuardedWrite();
@@ -117,6 +124,8 @@ const RecipePageContent = () => {
   // Explicit consultation vs editing state initialized once after hydration (#67)
   const [isEditing, setIsEditing] = useState(false);
   const [hasEnteredEdit, setHasEnteredEdit] = useState(false);
+  const [targetedStepId, setTargetedStepId] = useState<string>();
+  const [returnToPlanning, setReturnToPlanning] = useState(false);
 
   // Shared temporary weighing checklist lifted to page level (#67)
   const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
@@ -141,7 +150,11 @@ const RecipePageContent = () => {
             setLoading('missing');
             return;
           }
-          if (found.origin.kind === 'revision') {
+          // The edits of a deleted recipe stand alone and can be saved as a new recipe.
+          if (
+            found.origin.kind === 'revision' &&
+            (await services.recipes.getRecipe(found.origin.recipeId))
+          ) {
             router.push(`/recipes/${found.origin.recipeId}`, 'none', 'replace');
             return;
           }
@@ -161,12 +174,13 @@ const RecipePageContent = () => {
           return;
         }
         setBase({ name: recipe.name, revision: revision.value });
+        setTrashedAt(recipe.trashedAt);
         const resumed = (await services.recipes.listDrafts()).find(
           (d) => d.origin.kind === 'revision' && d.origin.recipeId === recipeId,
         );
         setStored(resumed);
         latestDraft.current = resumed;
-        const shouldEdit = resumed !== undefined;
+        const shouldEdit = resumed !== undefined && recipe.trashedAt === undefined;
         setIsEditing(shouldEdit);
         setHasEnteredEdit(shouldEdit);
         setLoading('ready');
@@ -179,7 +193,7 @@ const RecipePageContent = () => {
   }, [recipeId, draftId, services]);
 
   const loadFamily = async (recipe: Recipe) => {
-    if (recipe.familyId === undefined) {
+    if (recipe.familyId === undefined || recipe.trashedAt !== undefined) {
       setFamily(undefined);
       return;
     }
@@ -238,6 +252,88 @@ const RecipePageContent = () => {
     draftId ?? recipeId,
     loading === 'ready',
   );
+
+  const handleClearTargetedStep = useCallback(() => {
+    setTargetedStepId(undefined);
+  }, []);
+
+  const editStepInRecipe = useCallback(
+    (stepId: string) => {
+      if (trashedAt !== undefined) return;
+      setIsEditing(true);
+      setHasEnteredEdit(true);
+      setReturnToPlanning(true);
+      setTargetedStepId(stepId);
+      switchTab('formula');
+    },
+    [switchTab, trashedAt],
+  );
+
+  const handleReturnToPlanning = useCallback(() => {
+    setReturnToPlanning(false);
+    setTargetedStepId(undefined);
+    switchTab('process');
+  }, [switchTab]);
+
+  const hydrationRef = useRef<HTMLDivElement>(null);
+  const hydrationFrameRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (hydrationFrameRef.current !== undefined) {
+        cancelAnimationFrame(hydrationFrameRef.current);
+      }
+    };
+  }, []);
+
+  const editHydration = useCallback(() => {
+    if (trashedAt !== undefined) return;
+    setIsEditing(true);
+    setHasEnteredEdit(true);
+    switchTab('formula');
+    void contentRef.current?.getScrollElement().then((el) => {
+      el.scrollTop = 0;
+    });
+    if (hydrationFrameRef.current !== undefined) {
+      cancelAnimationFrame(hydrationFrameRef.current);
+    }
+    hydrationFrameRef.current = requestAnimationFrame(() => {
+      hydrationFrameRef.current = requestAnimationFrame(() => {
+        const el = hydrationRef.current;
+        if (el && document.contains(el) && !el.closest('[hidden], .ion-page-hidden')) {
+          el.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+          el.focus({ preventScroll: true });
+        } else if (!el) {
+          titleRef.current?.focus({ preventScroll: true });
+        }
+      });
+    });
+  }, [switchTab, trashedAt]);
+
+  const fermentationRef = useRef<HTMLDivElement>(null);
+
+  const handleEditFermentation = useCallback(() => {
+    setIsEditing(true);
+    setHasEnteredEdit(true);
+    switchTab('formula');
+    requestAnimationFrame(() => {
+      if (fermentationRef.current) {
+        fermentationRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+        fermentationRef.current.focus({ preventScroll: true });
+      }
+    });
+  }, [switchTab]);
+
+  const fermentationStepIds = useMemo(() => {
+    if (!draft) return new Set<string>();
+    const ids = new Set<string>();
+    for (const s of doughSteps(draft.process) ?? []) ids.add(s.id);
+    for (const c of draft.formula.components) {
+      if (c.kind === 'preferment' && c.flourPct > 0) ids.add(c.id);
+    }
+    return ids;
+  }, [draft]);
+
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
   const issues = useMemo(() => (draft ? checkRecipe(draft.formula, draft.process) : []), [draft]);
   useEffect(() => {
@@ -403,6 +499,8 @@ const RecipePageContent = () => {
       saveDraft(services.recipes, target, {
         newRecipeId: services.ids.next(),
         createdAt: services.realClock.now(),
+        // A draft of a version whose recipe was deleted becomes a new recipe.
+        asNewRecipe: newRecipe,
       }),
     );
     if (!result.ok) {
@@ -469,6 +567,8 @@ const RecipePageContent = () => {
     const { revision } = base;
     const ref = { id: revision.recipeId, version: revision.version };
     if (pendingStart.current) setNotice(t('recipe.retryStart'));
+    // The entry versions the process references, copied into the bake (equipment.md).
+    const equipment = await processEquipmentEntries(services.equipment, revision.process);
     const pending = (pendingStart.current ??= {
       bakeId: services.ids.next(),
       commandId: services.ids.next(),
@@ -483,6 +583,7 @@ const RecipePageContent = () => {
           revision.formula.flours.map((f) => f.id),
           flourCatalog.personal,
         ),
+        ...(equipment.length === 0 ? {} : { equipment }),
       },
     });
     const result = await writes.run(() =>
@@ -528,9 +629,55 @@ const RecipePageContent = () => {
     });
   };
 
+  /** Runs a trash operation; resolves to whether it was applied, saying why when not. */
+  const changeTrash = async (work: () => Promise<Result<void, DomainError>>): Promise<boolean> => {
+    const result = await writes.run(work);
+    if (!result.ok) {
+      setStorageFailed(result.reason === 'storage');
+      return false;
+    }
+    setStorageFailed(false);
+    if (!result.value.ok) {
+      setFailure(result.value.error);
+      return false;
+    }
+    setFailure(undefined);
+    return true;
+  };
+
+  const confirmTrash = () =>
+    void presentAlert({
+      header: t('recipe.trash.title'),
+      message: t('recipe.trash.confirm', { name }),
+      buttons: [
+        { text: t('bake.cancel'), role: 'cancel' },
+        {
+          text: t('recipe.trash'),
+          role: 'destructive',
+          handler: () => {
+            void (async () => {
+              const at = services.realClock.now();
+              if (await changeTrash(() => services.recipes.trashRecipe(recipeId, at))) {
+                router.push('/recipes', 'back', 'replace');
+              }
+            })();
+          },
+        },
+      ],
+    });
+
+  const restore = async () => {
+    if (await changeTrash(() => services.recipes.restoreRecipe(recipeId))) {
+      setTrashedAt(undefined);
+      const recipe = await services.recipes.getRecipe(recipeId);
+      if (recipe) await loadFamily(recipe);
+    }
+  };
+
   const enterEditing = () => {
     setIsEditing(true);
     setHasEnteredEdit(true);
+    switchTab('formula');
     requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
   };
 
@@ -546,6 +693,7 @@ const RecipePageContent = () => {
       return;
     }
     setIsEditing(false);
+    switchTab('formula');
     requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
   };
 
@@ -597,7 +745,7 @@ const RecipePageContent = () => {
             )}
           </div>
           <IonButtons slot="end">
-            {base && (
+            {base && trashedAt === undefined && (
               <IonButton
                 fill="solid"
                 shape="round"
@@ -614,7 +762,16 @@ const RecipePageContent = () => {
         {!newRecipe && (
           <IonToolbar>
             <div className="flex min-h-12 flex-wrap items-center gap-2 px-4 py-1">
-              {!isEditing ? (
+              {trashedAt !== undefined ? (
+                <IonButton
+                  fill="outline"
+                  className="m-0 min-h-11"
+                  disabled={writes.busy}
+                  onClick={() => void restore()}
+                >
+                  {t('trash.restore')}
+                </IonButton>
+              ) : !isEditing ? (
                 <>
                   <IonButton fill="outline" className="m-0 min-h-11" onClick={enterEditing}>
                     {t('recipe.edit')}
@@ -625,6 +782,15 @@ const RecipePageContent = () => {
                     onClick={() => switchTab('process')}
                   >
                     {t('recipe.plan')}
+                  </IonButton>
+                  <IonButton
+                    fill="outline"
+                    color="danger"
+                    className="m-0 min-h-11"
+                    disabled={writes.busy}
+                    onClick={confirmTrash}
+                  >
+                    {t('recipe.trash')}
                   </IonButton>
                 </>
               ) : !newRecipe ? (
@@ -681,6 +847,11 @@ const RecipePageContent = () => {
             {t('state.storageWrite')}
           </p>
         )}
+        {trashedAt !== undefined && (
+          <p role="status" className="mt-0 mb-3">
+            {t('recipe.trashed')}
+          </p>
+        )}
         {notice && <p className="mt-0 mb-3">{notice}</p>}
         {readFailed && (
           <p role="alert" className="mt-0 mb-3 text-alert">
@@ -697,7 +868,16 @@ const RecipePageContent = () => {
               process={draft.process}
               weighed={weighed}
               onToggleWeighed={toggleWeighed}
+              {...(trashedAt === undefined ? { onEditHydration: editHydration } : {})}
             />
+            <div className="mt-5">
+              <RecipeMethod
+                process={draft.process}
+                preparationIds={draft.formula.components.map((c) => c.id)}
+                editable={false}
+                fermentationStepIds={fermentationStepIds}
+              />
+            </div>
           </div>
         )}
         {hasEnteredEdit && (
@@ -717,20 +897,35 @@ const RecipePageContent = () => {
               onProcess={changeProcess}
               weighed={weighed}
               onToggleWeighed={toggleWeighed}
+              fermentationRef={fermentationRef}
+              hydrationRef={hydrationRef}
             />
+            <div className="mt-5">
+              <RecipeMethod
+                process={draft.process}
+                onDurationChange={changeDuration}
+                onProcessChange={changeProcess}
+                preparationIds={draft.formula.components.map((c) => c.id)}
+                editable={true}
+                {...(targetedStepId !== undefined ? { targetedStepId } : {})}
+                onClearTargetedStep={handleClearTargetedStep}
+                {...(returnToPlanning ? { onReturnToPlanning: handleReturnToPlanning } : {})}
+                fermentationStepIds={fermentationStepIds}
+                onEditFermentation={handleEditFermentation}
+              />
+            </div>
           </div>
         )}
         <div hidden={tab !== 'process'}>
           <ProcessSection
             process={draft.process}
-            onDurationChange={changeDuration}
-            onProcessChange={changeProcess}
-            preparationIds={draft.formula.components.map((c) => c.id)}
-            canStart={base !== undefined && !dirty && !hasInvalid && !writes.busy}
+            canStart={
+              base !== undefined && trashedAt === undefined && !dirty && !hasInvalid && !writes.busy
+            }
             onStart={confirmStart}
             {...(active ? { activeBakeId: active.bakeId } : {})}
             onOpenBake={openBake}
-            editable={isEditing}
+            {...(trashedAt === undefined ? { onEditStepInRecipe: editStepInRecipe } : {})}
           />
         </div>
 

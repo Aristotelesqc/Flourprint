@@ -17,7 +17,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { importRecipes } from '@flourprint/core/application';
 import type { BakeOrigin, TemperatureContext } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
-import { fetchDeployedBuild, offersDevUpdate } from '../services/dev-update';
+import { offersDevUpdate } from '../services/dev-update';
+import { sampleRecipesFile } from '../services/sample-recipes';
+import { useDevUpdate } from '../services/use-dev-update';
 import { feedbackFileName, feedbackJson } from '../services/feedback';
 import { BAKES_CHANGED, type Permission } from '../services/notifications';
 import { useServices } from '../services/services';
@@ -146,13 +148,14 @@ export const AdvancedPage = () => {
   };
 
   /** Additive import (persistence.md): recipes already here are skipped, never overwritten. */
-  const importFile = async (file: File) => {
+  /** Additive import of a recipes file (persistence.md): from a file, or the sample on dev builds. */
+  const importData = async (read: () => Promise<unknown>) => {
     setBusy(true);
     setOutcome(undefined);
     try {
       let data: unknown;
       try {
-        data = JSON.parse(await file.text());
+        data = await read();
       } catch {
         setOutcome({ text: t('advanced.importUnreadable'), alert: true });
         return;
@@ -336,6 +339,12 @@ export const AdvancedPage = () => {
               <p>{t('advanced.floursHint')}</p>
             </IonLabel>
           </IonItem>
+          <IonItem routerLink="/trash" detail>
+            <IonLabel>
+              {t('advanced.trash')}
+              <p>{t('advanced.trashHint')}</p>
+            </IonLabel>
+          </IonItem>
           <IonItem button detail disabled={busy} onClick={() => input.current?.click()}>
             <IonLabel>
               {busy ? t('advanced.importing') : t('advanced.import')}
@@ -361,9 +370,24 @@ export const AdvancedPage = () => {
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = '';
-              if (file) void importFile(file);
+              if (file) void importData(async () => JSON.parse(await file.text()));
             }}
           />
+          {offersDevUpdate(__APP_CHANNEL__) && (
+            <IonItem
+              button
+              detail
+              disabled={busy}
+              onClick={() =>
+                void importData(async () => sampleRecipesFile(new Date().toISOString()))
+              }
+            >
+              <IonLabel>
+                {t('advanced.sample')}
+                <p>{t('advanced.sampleHint')}</p>
+              </IonLabel>
+            </IonItem>
+          )}
           <IonItem routerLink="/device-checks" detail>
             <IonLabel>{t('recipes.deviceChecks')}</IonLabel>
           </IonItem>
@@ -388,17 +412,14 @@ export const AdvancedPage = () => {
 const DevUpdateItem = () => {
   const { t } = useMessages();
   const [status, setStatus] = useState<string>();
+  const check = useDevUpdate(async (message) => {
+    setStatus(message);
+    // Let the message paint before a reload replaces the page.
+    await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+  });
   const update = async () => {
     setStatus(t('advanced.devUpdate.checking'));
-    const deployed = await fetchDeployedBuild();
-    if (deployed === undefined) {
-      setStatus(t('advanced.devUpdate.unreachable'));
-    } else if (deployed.build === __APP_BUILD__) {
-      setStatus(t('advanced.devUpdate.current', { label: __APP_LABEL__ }));
-    } else {
-      setStatus(t('advanced.devUpdate.loading', { label: deployed.label }));
-      window.location.reload();
-    }
+    await check();
   };
   return (
     <>

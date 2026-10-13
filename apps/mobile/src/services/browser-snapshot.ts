@@ -65,27 +65,36 @@ export const restoreBrowserSnapshot = async (target: RestoreTarget): Promise<Sna
   return 'unreadable';
 };
 
-/** Saves the stores whenever their content changed; returns a function that stops it. */
-export const keepBrowserSnapshot = (stores: BackupStores, now: () => Instant): (() => void) => {
+export interface SnapshotKeeper {
+  readonly stop: () => void;
+  /**
+   * Saves now and resolves once the stores' current content is durably in IndexedDB (true), or
+   * the save failed (false). Used before an app-initiated reload (ADR 0016).
+   */
+  readonly flush: () => Promise<boolean>;
+}
+
+/** Saves the stores whenever their content changed, until stopped. */
+export const keepBrowserSnapshot = (stores: BackupStores, now: () => Instant): SnapshotKeeper => {
   let last: string | undefined;
-  let busy = false;
-  const save = async () => {
-    if (busy) return;
-    busy = true;
+  // Saves run one after the other: a flush waits for the save in flight, then saves again.
+  let queue: Promise<boolean> = Promise.resolve(true);
+  const saveNow = async (): Promise<boolean> => {
     try {
       const backup = await exportBackup(stores, now());
-      if (!backup.ok) return;
+      if (!backup.ok) return false;
       // Compare without the export time, which changes on every save.
       const content = JSON.stringify({ ...backup.value, exportedAt: undefined });
-      if (content === last) return;
+      if (content === last) return true;
       await write(CURRENT, JSON.stringify(backup.value));
       last = content;
+      return true;
     } catch (cause) {
       console.error('Browser snapshot not saved', cause);
-    } finally {
-      busy = false;
+      return false;
     }
   };
+  const save = (): Promise<boolean> => (queue = queue.then(saveNow, saveNow));
   const timer = setInterval(() => void save(), SAVE_EVERY_MS);
   const onHide = () => {
     if (document.visibilityState === 'hidden') void save();
@@ -93,10 +102,13 @@ export const keepBrowserSnapshot = (stores: BackupStores, now: () => Instant): (
   document.addEventListener('visibilitychange', onHide);
   window.addEventListener('pagehide', onHide);
   void save();
-  return () => {
-    clearInterval(timer);
-    document.removeEventListener('visibilitychange', onHide);
-    window.removeEventListener('pagehide', onHide);
+  return {
+    stop: () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+    },
+    flush: save,
   };
 };
 

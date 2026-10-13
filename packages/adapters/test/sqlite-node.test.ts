@@ -7,6 +7,7 @@ import type { Instant } from '@flourprint/core/domain';
 import {
   MIGRATIONS,
   openNodeSqlite,
+  SqlEquipmentRegistry,
   SqlFlourRegistry,
   SqlRecipeRepository,
 } from '../src/sqlite-node/index.js';
@@ -142,8 +143,69 @@ describe('sqlite-node durability', () => {
     expect(await registry.listFlours()).toEqual([]);
     expect(
       v4.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 4 });
+    ).toEqual({ value: 6 });
     v4.close();
+  });
+
+  it('upgrades a version 4 database to the equipment registry, keeping its flours', async () => {
+    const file = path('upgrade-equipment.sqlite');
+    const v4 = await open(file, MIGRATIONS.slice(0, 4));
+    v4.database
+      .prepare("INSERT INTO flours VALUES ('f', 1, 0, 1, '{}', '2026-10-07T08:00:00.000Z')")
+      .run();
+    v4.close();
+
+    const v5 = await open(file);
+    expect(v5.database.prepare('SELECT COUNT(*) AS n FROM flours').get()).toEqual({ n: 1 });
+    expect(await new SqlEquipmentRegistry(v5.driver).listEquipment()).toEqual([]);
+    expect(
+      v5.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
+    ).toEqual({ value: 6 });
+    v5.close();
+  });
+
+  it('upgrades a version 5 database to the recipe trash, keeping its recipes out of it', async () => {
+    const file = path('upgrade-trash.sqlite');
+    const v5 = await open(file, MIGRATIONS.slice(0, 5));
+    v5.database
+      .prepare(
+        "INSERT INTO recipes (id, name, head_version, updated_at) VALUES ('r', 'R', 1, '2026-10-07T08:00:00.000Z')",
+      )
+      .run();
+    v5.close();
+
+    const v6 = await open(file);
+    const repository = new SqlRecipeRepository(v6.driver);
+    expect(await repository.getRecipe('r')).toEqual({
+      id: 'r',
+      name: 'R',
+      headVersion: 1,
+      updatedAt: '2026-10-07T08:00:00.000Z',
+    });
+    expect((await repository.listRecipes()).map((r) => r.id)).toEqual(['r']);
+    expect(await repository.listTrash()).toEqual([]);
+    expect(await repository.trashRecipe('r', '2026-10-08T08:00:00.000Z' as Instant)).toEqual({
+      ok: true,
+      value: undefined,
+    });
+    expect((await repository.listTrash()).map((r) => r.id)).toEqual(['r']);
+    expect(
+      v6.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
+    ).toEqual({ value: 6 });
+    v6.close();
+  });
+
+  it('refuses equipment entries written with a newer document schema', async () => {
+    const db = await open(':memory:');
+    db.database
+      .prepare(
+        "INSERT INTO equipment VALUES ('e', 1, 'vessel', 0, 99, '{}', '2026-10-07T08:00:00.000Z')",
+      )
+      .run();
+    expect(await new SqlEquipmentRegistry(db.driver).getEquipment('e', 1)).toMatchObject({
+      ok: false,
+      error: { code: 'UnsupportedDocumentVersion' },
+    });
   });
 
   it('refuses flour entries written with a newer document schema', async () => {

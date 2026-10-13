@@ -3,6 +3,7 @@ import type {
   BakeOrigin,
   BakeSummary,
   DomainError,
+  EquipmentEntry,
   FlourEntry,
   Formula,
   Instant,
@@ -93,7 +94,17 @@ export interface Draft {
 
 export type RecipeStoreError =
   | DomainError<'HeadConflict', { recipeId: string; currentHead: number }>
+  /** The recipe is in the trash: restore it first (persistence.md, Recipe trash). */
+  | DomainError<'RecipeTrashed', { recipeId: string }>
+  /** A new version of a recipe that does not exist (for example a deleted one). */
+  | DomainError<'NotFound', { recipeId: string }>
   | DomainError<'UnsupportedDocumentVersion', { schemaVersion: number }>;
+
+/** Failures of the trash operations (persistence.md, Recipe trash). */
+export type TrashError =
+  | DomainError<'NotFound', { recipeId: string }>
+  | DomainError<'AlreadyTrashed', { recipeId: string }>
+  | DomainError<'NotTrashed', { recipeId: string }>;
 
 export type FamilyError =
   | DomainError<'RecipeNotFound', { recipeId: string }>
@@ -105,6 +116,8 @@ export interface RecordedRecipe {
   readonly id: string;
   readonly name: string;
   readonly familyId?: string;
+  /** Present when the recipe is in the trash; absent means not trashed. */
+  readonly trashedAt?: Instant;
   readonly revisions: readonly Revision[];
 }
 
@@ -122,13 +135,32 @@ export interface RecipeImportOutcome {
 /** Recipes, immutable revisions and families (docs/contracts/persistence.md). */
 export interface RecipeRepository {
   saveRevision(input: SaveRevisionInput): Promise<Result<Revision, RecipeStoreError>>;
+  /** A recipe by id, in the trash or not (`trashedAt` tells). */
   getRecipe(recipeId: string): Promise<Recipe | undefined>;
+  /** Recipes not in the trash, most recently updated first. */
   listRecipes(): Promise<readonly Recipe[]>;
+  /** Recipes in the trash, most recently trashed first (ties: smallest id). */
+  listTrash(): Promise<readonly Recipe[]>;
+  /** Puts a recipe in the trash; creates no revision (persistence.md, Recipe trash). */
+  trashRecipe(recipeId: string, at: Instant): Promise<Result<void, TrashError>>;
+  /** Takes a recipe out of the trash; creates no revision. */
+  restoreRecipe(recipeId: string): Promise<Result<void, TrashError>>;
+  /**
+   * Deletes a trashed recipe with all its revisions, in one transaction; it leaves its family.
+   * Bakes are untouched.
+   */
+  deleteRecipe(recipeId: string): Promise<Result<void, TrashError>>;
+  /** Deletes every trashed recipe in one transaction and returns their ids. */
+  emptyTrash(): Promise<readonly string[]>;
   getRevision(
     recipeId: string,
     version: number,
   ): Promise<Result<Revision | undefined, RecipeStoreError>>;
-  listFamilies(): Promise<readonly RecipeFamily[]>;
+  /**
+   * Families with at least one member outside the trash; `all` lists the others too (backups,
+   * which carry trashed recipes with their family).
+   */
+  listFamilies(options?: { readonly all?: boolean }): Promise<readonly RecipeFamily[]>;
   /** Creates or renames the family and adds the recipes to it, in one transaction. */
   groupRecipes(
     family: { readonly id: string; readonly name: string },
@@ -159,6 +191,8 @@ export interface RestorePlan {
   readonly drafts?: readonly Draft[];
   /** Every personal flour entry version (flours.md); optional, like drafts. */
   readonly flours?: readonly FlourEntry[];
+  /** Every personal equipment entry version (equipment.md); optional, like flours. */
+  readonly equipment?: readonly EquipmentEntry[];
   readonly bakes: readonly AppendInput[];
 }
 
@@ -188,4 +222,25 @@ export interface FlourRegistry {
   listFlourVersions(): Promise<readonly FlourEntry[]>;
   /** Writes the entry when its version is the next one for its id, else `HeadConflict`. */
   saveFlour(entry: FlourEntry): Promise<Result<FlourEntry, FlourStoreError>>;
+}
+
+export type EquipmentStoreError =
+  | DomainError<'HeadConflict', { equipmentId: string; currentHead: number }>
+  | DomainError<'UnsupportedDocumentVersion', { schemaVersion: number }>;
+
+/**
+ * Personal equipment entries (docs/contracts/equipment.md, persistence.md): stored by
+ * (id, version), a version is never rewritten. Built-in entries are code and are never stored.
+ */
+export interface EquipmentRegistry {
+  /** The latest version of every personal entry, archived ones included, by id. */
+  listEquipment(): Promise<readonly EquipmentEntry[]>;
+  getEquipment(
+    id: string,
+    version: number,
+  ): Promise<Result<EquipmentEntry | undefined, EquipmentStoreError>>;
+  /** Every version of every personal entry, by id then version (backups). */
+  listEquipmentVersions(): Promise<readonly EquipmentEntry[]>;
+  /** Writes the entry when its version is the next one for its id, else `HeadConflict`. */
+  saveEquipment(entry: EquipmentEntry): Promise<Result<EquipmentEntry, EquipmentStoreError>>;
 }

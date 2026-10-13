@@ -155,8 +155,13 @@ interface WaterBalance {
   N3) and is never called hydration.
 - The app labels `totalWaterPct` **Hydration** (owner decision of 2026-10-11): it is total water
   as defined above, every water-bearing ingredient included, not the conventional water-to-flour
-  ratio. Typing a hydration locks total water at that value (`LockTotalWater`); `pureWaterPct` is
-  shown as "added water".
+  ratio. Typing a hydration locks total water at that value (`LockTotalWater`).
+- Presentation (owner decision of 2026-10-12): hydration is shown to the whole percent; the
+  engine keeps full precision. Free water is shown as one ingredient among the others, its
+  quantity following the locked hydration and the water of the other ingredients; there is no
+  separate "added water" or "poured water" line, and a recipe may have no free water at all (a
+  milk shokupan). Every percentage says what it is a percentage of (of the flour, baker's
+  percentage).
 
 ## Fat and sugar
 
@@ -186,6 +191,14 @@ The engine names a component from its liquid ratio
 | others       | the kind itself                                               |
 
 - The style is derived, never stored: changing the ratio renames the component.
+- **Ratio entry** (owner decision of 2026-10-12). A component's liquid ratio may be read and typed
+  as flour:liquid parts, `1:r/100` (a tangzhong at r = 600 reads 1:6). Typing `1:n` sets the
+  component's `hydrationPct` so that its liquid ratio becomes `100 × n`, the water of its
+  allocated ingredients included: `hydrationPct = 100 × n − 100 × (allocated water) / flourPct`.
+  It is refused when `n` is not finite and > 0, when the component has no flour, when an
+  allocated ingredient's water is unknown, or when the allocated water alone already exceeds
+  the ratio (`InvalidFormula`). The ratio counts water, as the style does: 1:5 with milk means
+  5 parts of milk water, not of milk.
 - An allocated ingredient whose water content is unknown leaves the style undefined; the kind
   is shown instead.
 - The thresholds are naming conventions, not physics. Sourdough cultures are not modelled yet
