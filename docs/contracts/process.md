@@ -1,6 +1,7 @@
 # Contract: process (D3)
 
-Status: **approved** (issue #30). Related issues: #5, #9, #21, #28.
+Status: **approved** (issue #30); step move and duplicate are a **proposal** of 2026-10-13,
+pending the owner's approval. Related issues: #5, #9, #21, #28, #35.
 
 ## Model
 
@@ -135,6 +136,63 @@ Removing a step rewires each of its successors to the removed step's own depende
 order around it is kept; incorporations it declared are removed with it and the result is
 validated like any process (a recipe whose incorporations no longer match its formula is
 refused).
+
+## Step move and duplicate
+
+The Recipe editor reorders and duplicates steps. Both are edits of a recipe's process, which
+becomes a new revision when saved; neither exists during a Preparation (only `InsertStepAfter`
+does, bake-session.md). Like removal and insertion, they are pure edits that the caller validates
+like any process; a result that fails validation is refused as a whole (`InvalidProcess`).
+
+**Move** takes a step and the step it must follow, or the first position. It is a removal followed
+by an insertion, with the dependency rewiring each already defines:
+
+- Removal: the steps that depended on the moved step inherit its dependencies (Step removal).
+- Insertion after `after`: the moved step depends on `after`, and the steps that depended on
+  `after` now depend on the moved step (`InsertStepAfter`).
+- Insertion in first position: the moved step has no dependency and the step that was first now
+  depends on it. Other steps without a dependency (a parallel `preheat`) keep none.
+- Ids, fields, incorporations and `schedule` are unchanged. Moving a step to its own position, or
+  naming an unknown step, changes nothing.
+- A parallel step (a `preheat` beside a proof) that is moved joins the chain at its new place:
+  its dependencies become `after`. Keeping it parallel is an edit of its dependencies, not of this
+  move.
+
+**Duplicate** inserts a copy of a step right after the original, as `InsertStepAfter` does (the
+copy depends on the original, whose successors now depend on the copy):
+
+- The copy keeps the operation, label, `plannedDurationS`, `endCriterion`, `conditions`,
+  `technique` and `equipment`.
+- It does not keep `incorporations` (the shares would exceed 100), `accepted`, or
+  `durationMode: 'model'` (a model-driven duration belongs to one dough step, fermentation.md):
+  its duration is the baker's number. Its `schedule` is `asap`.
+- Its id is new, unique and never reused (derived from the operation, as for an added step).
+
+Interface-only conveniences, not persisted and never events: undo and redo of the edits made to a
+draft since it was opened, and "reset" back to the draft's starting revision (a discard,
+`drafts.md`).
+
+Examples (the rewiring is worked by hand from the rules above):
+
+1. **Reorder a chain.** `mix`, `bulk`, `shape`, `proof`, `bake`, each depending on the previous
+   one. Move `shape` after `mix`. Removal: `proof` inherits `[bulk]`. Insertion: `shape` →
+   `[mix]`, and `bulk`, which depended on `mix`, → `[shape]`. Result: `mix` `[]`, `shape`
+   `[mix]`, `bulk` `[shape]`, `proof` `[bulk]`, `bake` `[proof]`.
+2. **Swap beside a parallel step.** `mix`, `bulk` `[mix]`, `proof` `[bulk]`, `shape` `[proof]`,
+   `preheat` (`alap`, `[]`), `bake` `[shape, preheat]`. Move `shape` after `bulk`. Removal: `bake`
+   lists `shape`'s dependency instead: `[proof, preheat]`. Insertion after `bulk`: `shape` `[bulk]`, and `proof`, which depended on `bulk`, →
+   `[shape]`. `preheat` is untouched and `bake` still waits for both. Valid.
+3. **Move to the first position.** `mix` `[]`, `bulk` `[mix]`, `shape` `[bulk]`. Move `shape`
+   first. Removal: nothing depended on it. Insertion: `shape` `[]`, `mix` → `[shape]`. Result
+   order `shape`, `mix`, `bulk`: valid.
+4. **A refused move.** On the process of example 2 before its move, move `preheat` after
+   `bake`. Removal: `bake` → `[shape]`. Insertion: `preheat` → `[bake]`, an `alap` step with no successor: `InvalidProcess`, nothing
+   changes.
+5. **Duplicate.** `mix`, `bulk` (`durationMode: 'model'`, 6 h), `shape` `[bulk]`. Duplicate
+   `bulk`: `bulk-2` `[bulk]`, 6 h, manual, no `accepted`; `shape` → `[bulk-2]`.
+6. **Duplicate an `alap` step.** `preheat` (`alap`, 30 min) with `bake` `[proof, preheat]`.
+   Duplicate `preheat`: `preheat-2` (`asap`, 30 min) `[preheat]`, `bake` → `[proof, preheat-2]`;
+   `preheat` now has a successor, so it stays valid.
 
 ## Projection
 
