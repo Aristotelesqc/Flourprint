@@ -2,822 +2,231 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flourprint #35 — Maquette de validation d'interface (Material 3)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flourprint #35 — Maquette v2 (Material 3 &amp; Écran d'édition)</title>
   <style>
-    /* === SYSTEM TOKENS & RESET === */
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
-      --space-1: 4px;
-      --space-2: 8px;
-      --space-3: 12px;
-      --space-4: 16px;
-      --space-5: 24px;
-      --space-6: 32px;
-      --touch-target: 48px;
-
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-pill: 9999px;
-
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+      --touch-target: 48px; --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-pill: 9999px;
       --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-
-      /* Palette Claire (Défaut) */
-      --color-bg: #f8f7f4;
-      --color-surface: #ffffff;
-      --color-surface-container: #f2efe9;
-      --color-surface-container-high: #eae5dc;
-      --color-surface-variant: #ebe7df;
-      --color-outline: #dfd9ce;
-      --color-outline-subtle: #eae5dc;
-      --color-ink: #1c1b19;
-      --color-ink-muted: #69645c;
-      --color-ink-subtle: #8a847b;
-      --color-primary: #a9490a;
-      --color-on-primary: #ffffff;
-      --color-primary-container: #fbeee4;
-      --color-on-primary-container: #612502;
-      --color-danger: #b3261e;
-      --color-on-danger: #ffffff;
-      --color-danger-container: #fdf2f2;
-      --color-shadow: rgba(28, 27, 25, 0.08);
-      --color-focus: #a9490a;
+      --color-bg: #f8f7f4; --color-surface: #ffffff; --color-surface-container: #f2efe9; --color-surface-container-high: #eae5dc;
+      --color-outline: #dfd9ce; --color-outline-subtle: #eae5dc; --color-ink: #1c1b19; --color-ink-muted: #69645c; --color-ink-subtle: #8a847b;
+      --color-primary: #a9490a; --color-on-primary: #ffffff; --color-primary-container: #fbeee4; --color-on-primary-container: #612502;
+      --color-danger: #b3261e; --color-shadow: rgba(28, 27, 25, 0.08); --color-focus: #a9490a;
     }
-
-    /* Thème Sombre chaleureux */
     [data-theme="dark"] {
-      --color-bg: #201d1a;
-      --color-surface: #2a2622;
-      --color-surface-container: #332e29;
-      --color-surface-container-high: #3d3731;
-      --color-surface-variant: #3c3630;
-      --color-outline: #48423a;
-      --color-outline-subtle: #3a342e;
-      --color-ink: #e9e4dc;
-      --color-ink-muted: #b1aa9f;
-      --color-ink-subtle: #8c857b;
-      --color-primary: #cf8a5e;
-      --color-on-primary: #201d1a;
-      --color-primary-container: #542d13;
-      --color-on-primary-container: #fcd9c3;
-      --color-danger: #f28b82;
-      --color-on-danger: #370b09;
-      --color-danger-container: #3a2020;
-      --color-shadow: rgba(0, 0, 0, 0.35);
-      --color-focus: #cf8a5e;
+      --color-bg: #201d1a; --color-surface: #2a2622; --color-surface-container: #332e29; --color-surface-container-high: #3d3731;
+      --color-outline: #48423a; --color-outline-subtle: #3a342e; --color-ink: #e9e4dc; --color-ink-muted: #b1aa9f; --color-ink-subtle: #8c857b;
+      --color-primary: #cf8a5e; --color-on-primary: #201d1a; --color-primary-container: #542d13; --color-on-primary-container: #fcd9c3;
+      --color-danger: #f28b82; --color-shadow: rgba(0, 0, 0, 0.35); --color-focus: #cf8a5e;
     }
-
-    /* Thème AMOLED */
     [data-theme="amoled"] {
-      --color-bg: #000000;
-      --color-surface: #121110;
-      --color-surface-container: #1b1917;
-      --color-surface-container-high: #24211e;
-      --color-surface-variant: #282420;
-      --color-outline: #38322b;
-      --color-outline-subtle: #29241f;
-      --color-ink: #e9e4dc;
-      --color-ink-muted: #b1aa9f;
-      --color-ink-subtle: #8c857b;
-      --color-primary: #cf8a5e;
-      --color-on-primary: #000000;
-      --color-primary-container: #542d13;
-      --color-on-primary-container: #fcd9c3;
-      --color-danger: #f28b82;
-      --color-on-danger: #000000;
-      --color-danger-container: #2b1414;
-      --color-shadow: rgba(0, 0, 0, 0.7);
-      --color-focus: #cf8a5e;
+      --color-bg: #000000; --color-surface: #121110; --color-surface-container: #1b1917; --color-surface-container-high: #24211e;
+      --color-outline: #38322b; --color-outline-subtle: #29241f; --color-ink: #e9e4dc; --color-ink-muted: #b1aa9f; --color-ink-subtle: #8c857b;
+      --color-primary: #cf8a5e; --color-on-primary: #000000; --color-primary-container: #542d13; --color-on-primary-container: #fcd9c3;
+      --color-danger: #f28b82; --color-shadow: rgba(0, 0, 0, 0.7); --color-focus: #cf8a5e;
     }
-
     body {
-      font-family: var(--font-sans);
-      background-color: #eee9e0;
-      color: #1c1b19;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: var(--space-4);
-      transition: background-color 0.2s ease;
-    }
-
-    [data-theme="dark"] body {
-      background-color: #141210;
-      color: #e9e4dc;
-    }
-
-    [data-theme="amoled"] body {
-      background-color: #000000;
-      color: #e9e4dc;
-    }
-
-    /* Typography roles */
-    .type-headline-small {
-      font-size: 1.5rem;
-      line-height: 2rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
-    .type-title-large {
-      font-size: 1.375rem;
-      line-height: 1.75rem;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
-    .type-title-medium {
-      font-size: 1rem;
-      line-height: 1.5rem;
-      font-weight: 600;
-    }
-    .type-body-large {
-      font-size: 1rem;
-      line-height: 1.5rem;
-      font-weight: 400;
-    }
-    .type-body-medium {
-      font-size: 0.875rem;
-      line-height: 1.25rem;
-      font-weight: 400;
-    }
-    .type-label-large {
-      font-size: 0.875rem;
-      line-height: 1.25rem;
-      font-weight: 600;
-    }
-    .type-label-medium {
-      font-size: 0.75rem;
-      line-height: 1rem;
-      font-weight: 500;
-    }
-    .tabular {
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* Gallery outer chrome */
-    .gallery-header {
-      width: 100%;
-      max-width: 1140px;
-      margin-bottom: var(--space-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-      align-items: center;
-      text-align: center;
-    }
-
-    .gallery-banner {
-      display: inline-block;
-      background-color: rgba(169, 73, 10, 0.1);
-      color: var(--color-primary);
-      border: 1px solid rgba(169, 73, 10, 0.25);
-      padding: 6px 14px;
-      border-radius: var(--radius-pill);
-      font-size: 0.8125rem;
-      font-weight: 600;
-    }
-
-    .gallery-controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-2);
-      justify-content: center;
-      margin-top: var(--space-1);
-    }
-
-    .ctrl-group {
-      display: inline-flex;
-      background-color: rgba(0, 0, 0, 0.06);
-      padding: 3px;
-      border-radius: var(--radius-pill);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    [data-theme="dark"] .ctrl-group,
-    [data-theme="amoled"] .ctrl-group {
-      background-color: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.12);
-    }
-
-    .ctrl-btn {
-      appearance: none;
-      border: none;
-      background: transparent;
-      padding: 6px 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border-radius: var(--radius-pill);
-      cursor: pointer;
-      color: inherit;
-      transition: background-color 0.15s ease, color 0.15s ease;
-    }
-
-    .ctrl-btn.active {
-      background-color: var(--color-surface);
-      color: var(--color-primary);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Gallery layout */
-    .gallery-viewport {
-      display: flex;
-      gap: var(--space-5);
-      justify-content: center;
-      align-items: flex-start;
-      width: 100%;
-      max-width: 1140px;
-      transition: all 0.25s ease;
-    }
-
-    @media (max-width: 1160px) {
-      .gallery-viewport {
-        flex-direction: column;
-        align-items: center;
-        gap: var(--space-6);
-      }
-    }
-
-    /* Single screen direct screenshot mode */
-    body.single-screen-mode {
-      padding: 0;
-      margin: 0;
-      background-color: transparent;
-      justify-content: center;
-    }
-    body.single-screen-mode .gallery-header {
-      display: none !important;
-    }
-    body.single-screen-mode .gallery-viewport {
-      width: 360px;
-      height: 800px;
-      padding: 0;
-      margin: 0;
-    }
-    body.single-screen-mode .phone-container {
-      margin: 0;
-    }
-    body.single-screen-mode .phone-caption {
-      display: none !important;
-    }
-
-    .phone-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--space-2);
-      width: 360px;
-      flex-shrink: 0;
-    }
-
-    .phone-caption {
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: var(--color-ink-muted);
-      text-align: center;
-    }
-
-    /* === PHONE SURFACE (Exact 360x800) === */
-    .phone-frame {
-      width: 360px;
-      height: 800px;
-      background-color: var(--color-bg);
-      color: var(--color-ink);
-      border-radius: 28px;
-      border: 1px solid var(--color-outline);
-      box-shadow: 0 16px 40px var(--color-shadow);
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      contain: strict;
-    }
-
-    body.single-screen-mode .phone-frame {
-      border-radius: 0;
-      border: none;
-      box-shadow: none;
-    }
-
-    /* Sticky Top App Bar */
-    .app-bar {
-      height: 56px;
-      background-color: var(--color-surface);
-      border-bottom: 1px solid var(--color-outline-subtle);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 var(--space-4);
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      flex-shrink: 0;
-    }
-
-    .app-bar-start {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      min-width: 0;
-    }
-
-    .app-bar-brand {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      line-height: 1.15;
-    }
-
-    .app-bar-title {
-      font-size: 1.125rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .app-bar-label {
-      font-size: 0.6875rem;
-      color: var(--color-ink-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .app-bar-actions {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
-
-    /* Icon Button (48px touch) */
-    .icon-btn {
-      appearance: none;
-      border: none;
-      background: transparent;
-      width: var(--touch-target);
-      height: var(--touch-target);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--radius-pill);
-      color: var(--color-ink);
-      cursor: pointer;
-      position: relative;
-      transition: background-color 0.15s ease;
-    }
-
-    .icon-btn:hover {
-      background-color: var(--color-surface-container);
-    }
-
-    .icon-btn:focus-visible {
-      outline: 2px solid var(--color-focus);
-      outline-offset: -2px;
-    }
-
-    /* Internal Scrolling Body */
-    .phone-content {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: var(--space-4);
-      padding-bottom: 88px; /* Guaranteed clearance for sticky bottom bar */
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-4);
-      scrollbar-width: thin;
-      scrollbar-color: var(--color-outline) transparent;
-    }
-
-    .phone-content::-webkit-scrollbar {
-      width: 4px;
-    }
-    .phone-content::-webkit-scrollbar-thumb {
-      background: var(--color-outline);
-      border-radius: 4px;
-    }
-
-    /* Sticky Bottom Action Bar */
-    .bottom-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 72px;
-      background-color: var(--color-surface);
-      border-top: 1px solid var(--color-outline-subtle);
-      display: flex;
-      align-items: center;
-      padding: 0 var(--space-4);
-      gap: var(--space-2);
-      z-index: 20;
-    }
-
-    /* Primary Button (Pill 48px touch) */
-    .btn-primary {
-      appearance: none;
-      border: none;
-      height: var(--touch-target);
-      width: 100%;
-      border-radius: var(--radius-pill);
-      background-color: var(--color-primary);
-      color: var(--color-on-primary);
-      font-size: 0.9375rem;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-2);
-      box-shadow: 0 3px 8px rgba(169, 73, 10, 0.25);
-      transition: transform 0.1s ease, filter 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .btn-primary:active {
-      transform: scale(0.98);
-      box-shadow: 0 1px 4px rgba(169, 73, 10, 0.2);
-    }
-
-    .btn-primary:focus-visible {
-      outline: 2px solid var(--color-focus);
-      outline-offset: 2px;
-    }
-
-    .btn-secondary {
-      appearance: none;
-      border: 1px solid var(--color-outline);
-      height: var(--touch-target);
-      padding: 0 var(--space-4);
-      border-radius: var(--radius-pill);
-      background-color: transparent;
-      color: var(--color-ink);
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.15s ease;
-    }
-
-    .btn-secondary:hover {
-      background-color: var(--color-surface-container);
-    }
-
-    /* Card & Section styles */
-    .card {
-      background-color: var(--color-surface);
-      border: 1px solid var(--color-outline-subtle);
-      border-radius: var(--radius-lg);
-      padding: var(--space-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-
-    .card-quiet {
-      background-color: var(--color-surface-container);
-      border: 1px solid var(--color-outline-subtle);
-    }
-
-    .card-interactive {
-      cursor: pointer;
-      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .card-interactive:hover {
-      border-color: var(--color-outline);
-      box-shadow: 0 4px 12px var(--color-shadow);
-    }
-
-    .section-title {
-      font-size: 0.8125rem;
-      font-weight: 700;
-      color: var(--color-ink-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-top: var(--space-1);
-    }
-
-    /* Value Rows & Table */
-    .value-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--color-outline-subtle);
-      font-size: 0.875rem;
-    }
-
-    .value-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .value-label {
-      color: var(--color-ink-muted);
-    }
-
-    .value-data {
-      font-weight: 600;
-      color: var(--color-ink);
-      text-align: right;
-    }
-
-    .value-subordinate {
-      font-size: 0.75rem;
-      color: var(--color-ink-subtle);
-      display: block;
-      font-weight: 400;
-    }
-
-    /* Underline Tabs */
-    .tabs-bar {
-      display: flex;
-      border-bottom: 1px solid var(--color-outline);
-      margin-top: -4px;
-      gap: var(--space-4);
-    }
-
-    .tab-btn {
-      appearance: none;
-      border: none;
-      background: transparent;
-      padding: 10px 4px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--color-ink-muted);
-      cursor: pointer;
-      position: relative;
-      transition: color 0.15s ease;
-    }
-
-    .tab-btn.active {
-      color: var(--color-primary);
-    }
-
-    .tab-btn.active::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background-color: var(--color-primary);
-      border-radius: 3px 3px 0 0;
-    }
-
-    /* Alerts & Banners */
-    .alert-box {
-      background-color: var(--color-surface-container);
-      border-left: 3px solid var(--color-primary);
-      padding: 10px 14px;
-      border-radius: 4px var(--radius-sm) var(--radius-sm) 4px;
-      font-size: 0.8125rem;
-      line-height: 1.35;
-      color: var(--color-ink);
-      display: flex;
-      gap: var(--space-2);
-      align-items: flex-start;
-    }
-
-    .alert-icon {
-      flex-shrink: 0;
-      color: var(--color-primary);
-      margin-top: 2px;
-    }
-
-    /* Dropdown ActionMenu (⋯) */
-    .action-menu {
-      position: absolute;
-      top: 52px;
-      right: 12px;
-      width: 230px;
-      background-color: var(--color-surface);
-      border: 1px solid var(--color-outline);
-      border-radius: var(--radius-md);
-      box-shadow: 0 8px 24px var(--color-shadow);
-      display: none;
-      flex-direction: column;
-      padding: 6px 0;
-      z-index: 30;
-    }
-
-    .action-menu.open {
-      display: flex;
-    }
-
-    .menu-item {
-      appearance: none;
-      border: none;
-      background: transparent;
-      padding: 12px 16px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--color-ink);
-      text-align: left;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      width: 100%;
-    }
-
-    .menu-item:hover,
-    .menu-item:focus-visible {
-      background-color: var(--color-surface-container);
-      outline: none;
-    }
-
-    .menu-item.danger {
-      color: var(--color-danger);
-    }
-
-    .menu-divider {
-      height: 1px;
-      background-color: var(--color-outline-subtle);
-      margin: 4px 0;
-    }
-
-    /* Disclosure details */
-    details.disclosure {
-      background-color: var(--color-surface-container);
-      border: 1px solid var(--color-outline-subtle);
-      border-radius: var(--radius-md);
-      padding: 10px 14px;
-      font-size: 0.8125rem;
-    }
-
-    details.disclosure summary {
-      cursor: pointer;
-      font-weight: 600;
-      color: var(--color-ink-muted);
-      list-style: none;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    details.disclosure summary::-webkit-details-marker {
-      display: none;
-    }
-
-    details.disclosure[open] summary {
-      margin-bottom: 8px;
-      color: var(--color-ink);
-    }
-
-    details.disclosure .disclosure-body {
-      color: var(--color-ink-muted);
-      line-height: 1.4;
-    }
-
-    /* Demonstration Editing Mode */
-    .edit-field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .edit-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--color-ink-muted);
-    }
-
-    .edit-input {
-      height: 42px;
-      background-color: var(--color-surface);
-      border: 1px solid var(--color-outline);
-      border-radius: var(--radius-sm);
-      padding: 0 12px;
-      font-size: 0.9375rem;
-      color: var(--color-ink);
-      font-family: inherit;
-    }
-
-    .edit-input:focus {
-      outline: 2px solid var(--color-focus);
-      border-color: transparent;
-    }
-
-    /* Toast Feedback */
-    .toast {
-      position: absolute;
-      bottom: 82px;
-      left: 16px;
-      right: 16px;
-      background-color: var(--color-ink);
-      color: var(--color-surface);
-      padding: 10px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      text-align: center;
-      box-shadow: 0 6px 16px var(--color-shadow);
-      pointer-events: none;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      z-index: 40;
-    }
-
-    .toast.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+      font-family: var(--font-sans); background-color: #eee9e0; color: #1c1b19;
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--space-4);
+    }
+    [data-theme="dark"] body { background-color: #141210; color: #e9e4dc; }
+    [data-theme="amoled"] body { background-color: #000000; color: #e9e4dc; }
+    .type-headline-small { font-size: 1.5rem; line-height: 2rem; font-weight: 700; }
+    .type-title-large { font-size: 1.375rem; line-height: 1.75rem; font-weight: 700; }
+    .type-title-medium { font-size: 1rem; line-height: 1.5rem; font-weight: 600; }
+    .type-body-large { font-size: 1rem; line-height: 1.5rem; }
+    .type-body-medium { font-size: 0.875rem; line-height: 1.25rem; overflow-wrap: anywhere; }
+    .type-label-large { font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; }
+    .type-label-medium { font-size: 0.75rem; line-height: 1rem; font-weight: 500; }
+    .tabular { font-variant-numeric: tabular-nums; }
+
+    /* Galerie extérieure */
+    .gallery-header { width: 100%; max-width: 1540px; margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); align-items: center; text-align: center; }
+    .gallery-banner { display: inline-block; background-color: rgba(169, 73, 10, 0.1); color: var(--color-primary); border: 1px solid rgba(169, 73, 10, 0.25); padding: 6px 14px; border-radius: var(--radius-pill); font-size: 0.8125rem; font-weight: 600; }
+    .gallery-controls { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: center; margin-top: var(--space-1); }
+    .ctrl-group { display: inline-flex; background-color: rgba(0, 0, 0, 0.06); padding: 3px; border-radius: var(--radius-pill); border: 1px solid rgba(0, 0, 0, 0.08); }
+    [data-theme="dark"] .ctrl-group, [data-theme="amoled"] .ctrl-group { background-color: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.12); }
+    .ctrl-btn { appearance: none; border: none; background: transparent; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; border-radius: var(--radius-pill); cursor: pointer; color: inherit; }
+    .ctrl-btn.active { background-color: var(--color-surface); color: var(--color-primary); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); }
+    .gallery-viewport { display: flex; gap: var(--space-4); justify-content: center; align-items: flex-start; width: 100%; max-width: 1540px; }
+    @media (max-width: 1520px) { .gallery-viewport { flex-wrap: wrap; } }
+    @media (max-width: 768px) { .gallery-viewport { flex-direction: column; align-items: center; } }
+    body.single-screen-mode { padding: 0; background: transparent; justify-content: center; }
+    body.single-screen-mode .gallery-header { display: none !important; }
+    body.single-screen-mode .phone-container { margin: 0; }
+    body.single-screen-mode .phone-caption { display: none !important; }
+    .phone-container { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); width: 360px; flex-shrink: 0; }
+    .phone-caption { font-size: 0.8125rem; font-weight: 600; color: var(--color-ink-muted); text-align: center; }
+
+    /* Surface smartphone 360x800 */
+    .phone-frame { width: 360px; height: 800px; background-color: var(--color-bg); color: var(--color-ink); border-radius: 28px; border: 1px solid var(--color-outline); box-shadow: 0 16px 40px var(--color-shadow); position: relative; display: flex; flex-direction: column; overflow: hidden; contain: strict; }
+    body.single-screen-mode .phone-frame { border-radius: 0; border: none; box-shadow: none; }
+    .app-bar { height: 56px; background-color: var(--color-surface); border-bottom: 1px solid var(--color-outline-subtle); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-4); position: sticky; top: 0; z-index: 20; flex-shrink: 0; }
+    .app-bar-start { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+    .app-bar-brand { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+    .app-bar-title { font-size: 1.125rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .app-bar-label { font-size: 0.6875rem; color: var(--color-ink-muted); }
+    .icon-btn { appearance: none; border: none; background: transparent; width: var(--touch-target); height: var(--touch-target); display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-pill); color: var(--color-ink); cursor: pointer; position: relative; }
+    .icon-btn:hover { background-color: var(--color-surface-container); }
+    .icon-btn:focus-visible, .card-interactive:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+    .info-btn { appearance: none; border: none; background: transparent; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--radius-pill); color: var(--color-ink-muted); cursor: pointer; padding: 0; margin-left: 4px; vertical-align: middle; }
+    .info-btn:hover { color: var(--color-primary); background-color: var(--color-surface-container); }
+    .phone-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: var(--space-4); padding-bottom: 88px; display: flex; flex-direction: column; gap: var(--space-4); scrollbar-width: thin; }
+    .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 72px; background-color: var(--color-surface); border-top: 1px solid var(--color-outline-subtle); display: flex; align-items: center; padding: 0 var(--space-4); gap: var(--space-2); z-index: 20; }
+    .btn-primary { appearance: none; border: none; height: var(--touch-target); width: 100%; border-radius: var(--radius-pill); background-color: var(--color-primary); color: var(--color-on-primary); font-size: 0.9375rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); box-shadow: 0 3px 8px rgba(169, 73, 10, 0.25); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-secondary { appearance: none; border: 1px solid var(--color-outline); height: var(--touch-target); padding: 0 var(--space-4); border-radius: var(--radius-pill); background-color: transparent; color: var(--color-ink); font-size: 0.875rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .card { background-color: var(--color-surface); border: 1px solid var(--color-outline-subtle); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+    .card-quiet { background-color: var(--color-surface-container); border: 1px solid var(--color-outline-subtle); }
+    .card-interactive { cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+    .card-interactive:hover { border-color: var(--color-outline); box-shadow: 0 4px 12px var(--color-shadow); }
+    .section-title { font-size: 0.9375rem; font-weight: 700; color: var(--color-ink-muted); margin-top: var(--space-1); display: flex; align-items: center; justify-content: space-between; }
+    .value-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--color-outline-subtle); font-size: 0.875rem; }
+    .value-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .value-label { color: var(--color-ink-muted); min-width: 0; display: inline-flex; align-items: center; }
+    .value-data { font-weight: 600; color: var(--color-ink); text-align: right; }
+    .value-subordinate { font-size: 0.75rem; color: var(--color-ink-subtle); display: block; font-weight: 400; }
+    .tabs-bar { display: flex; border-bottom: 1px solid var(--color-outline); margin-top: -4px; gap: var(--space-3); overflow-x: auto; }
+    .tab-btn { appearance: none; border: none; background: transparent; padding: 10px 4px; font-size: 0.875rem; font-weight: 600; color: var(--color-ink-muted); cursor: pointer; position: relative; white-space: nowrap; }
+    .tab-btn.active { color: var(--color-primary); }
+    .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background-color: var(--color-primary); border-radius: 3px 3px 0 0; }
+    .alert-box { background-color: var(--color-surface-container); border-left: 3px solid var(--color-primary); padding: 10px 14px; border-radius: 4px var(--radius-sm) var(--radius-sm) 4px; font-size: 0.8125rem; line-height: 1.35; color: var(--color-ink); display: flex; gap: var(--space-2); align-items: flex-start; }
+    .action-menu { position: absolute; top: 52px; right: 12px; width: 240px; background-color: var(--color-surface); border: 1px solid var(--color-outline); border-radius: var(--radius-md); box-shadow: 0 8px 24px var(--color-shadow); display: none; flex-direction: column; padding: 6px 0; z-index: 30; }
+    .action-menu.open { display: flex; }
+    .menu-item { appearance: none; border: none; background: transparent; padding: 12px 16px; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); text-align: left; cursor: pointer; display: flex; align-items: center; gap: var(--space-3); width: 100%; }
+    .menu-item:hover, .menu-item:focus-visible { background-color: var(--color-surface-container); outline: none; }
+    .menu-item.danger { color: var(--color-danger); }
+    .menu-divider { height: 1px; background-color: var(--color-outline-subtle); margin: 4px 0; }
+    details.disclosure { background-color: var(--color-surface-container); border: 1px solid var(--color-outline-subtle); border-radius: var(--radius-md); padding: 10px 14px; font-size: 0.8125rem; }
+    details.disclosure summary { cursor: pointer; font-weight: 600; color: var(--color-ink-muted); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    details.disclosure summary::-webkit-details-marker { display: none; }
+    details.disclosure[open] summary { margin-bottom: 8px; color: var(--color-ink); }
+    details.disclosure .disclosure-body { color: var(--color-ink-muted); line-height: 1.4; }
+    .edit-field { display: flex; flex-direction: column; gap: 4px; }
+    .edit-label { font-size: 0.75rem; font-weight: 600; color: var(--color-ink-muted); display: flex; align-items: center; }
+    .edit-input { height: 42px; background-color: var(--color-surface); border: 1px solid var(--color-outline); border-radius: var(--radius-sm); padding: 0 12px; font-size: 0.9375rem; color: var(--color-ink); font-family: inherit; }
+    .toast { position: absolute; bottom: 82px; left: 16px; right: 16px; background-color: var(--color-ink); color: var(--color-surface); padding: 10px 16px; border-radius: var(--radius-sm); font-size: 0.8125rem; font-weight: 500; text-align: center; box-shadow: 0 6px 16px var(--color-shadow); pointer-events: none; opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; z-index: 40; }
+    .toast.visible { opacity: 1; transform: translateY(0); }
+
+    /* Modale explicative (BottomSheet accessible) */
+    .sheet-overlay { position: absolute; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 50; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(2px); }
+    .sheet-overlay.open { display: flex; }
+    .sheet-card { width: 100%; max-height: 80%; background-color: var(--color-surface); border-radius: 20px 20px 0 0; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); overflow-y: auto; box-shadow: 0 -8px 32px rgba(0,0,0,0.25); }
+    .sheet-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--color-outline-subtle); padding-bottom: 8px; }
+    .sheet-title { font-size: 1.125rem; font-weight: 700; }
+    .sheet-body { font-size: 0.875rem; line-height: 1.45; color: var(--color-ink-muted); }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
   
-    .section-title { text-transform: none; letter-spacing: normal; font-size: 1rem; line-height: 1.5rem; }
-    .type-body-medium { overflow-wrap: anywhere; }
-    .card-interactive:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
-    .value-label { min-width: 0; }
-    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+    .info-btn { width: 44px; height: 44px; min-width: 44px; padding: 8px; border: none; background: transparent; color: var(--color-primary); border-radius: 50%; cursor: pointer; font-size: 18px; }
+    .read-table { display: grid; grid-template-columns: minmax(0,1fr) 72px 68px; gap: 8px; align-items: center; }
+    .read-table > :nth-child(3n+2), .read-table > :nth-child(3n+3) { text-align: right; font-variant-numeric: tabular-nums; }
+    .read-table > .table-label { font-size: 12px; font-weight: 500; color: var(--color-ink-muted); }
+    .read-table > .read-cell { padding: 8px 0; min-width: 0; font-size: 14px; }
+    .card-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+    .card-stats .stat-label { color: var(--color-ink-muted); font-size: 12px; display: block; margin-bottom: 4px; }
+    .card-stats .stat-value { font-size: 14px; font-weight: 600; }
+    .timeline-row { display: grid; grid-template-columns: 64px minmax(0,1fr) auto; gap: 8px; align-items: center; min-height: 48px; border-bottom: 1px solid var(--color-outline-subtle); font-size: 14px; }
+    .timeline-row:last-child { border: none; }
+    .timeline-row time { font-weight: 600; }
+    .timeline-row small { color: var(--color-ink-muted); font-size: 12px; }
+    dialog.sheet-overlay { position: fixed; inset: auto 0 0; width: min(100%,480px); max-width: 100%; max-height: 85vh; margin: auto auto 0; border: none; padding: 0; background: transparent; color: var(--color-ink); }
+    dialog.sheet-overlay[open] { display: flex; }
+    dialog::backdrop { background: #0008; }
+    dialog .sheet-card { max-height: 85vh; height: auto; width: 100%; }
+    dialog .sheet-body { max-height: 60vh; overflow: auto; }
+    .btn-secondary, .ctrl-btn, .menu-item, .tab-btn { min-height: 44px; }
+    .edit-input { min-width: 0; min-height: 44px; width: 100%; }
+    .phone-content .tabs-bar { flex-shrink: 0; }
+    .tab-btn { white-space: normal; overflow-wrap: anywhere; }
+    .value-data { min-width: 0; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  
+    #frame-edit .tabs-bar { display: grid; grid-template-columns: 1.2fr 1.2fr .75fr .85fr; gap: 4px; overflow: visible; }
+    #frame-edit .tab-btn { font-size: .8125rem; white-space: nowrap; overflow-wrap: normal; padding: 10px 1px; min-width: 0; }
+    .app-bar { flex-shrink: 0; }
+    .icon-btn svg { flex-shrink: 0; }
+  #frame-edit .tabs-bar.editor-two-row { grid-template-columns: repeat(2,minmax(0,1fr)); }
+
+    [hidden] { display: none !important; }
+    .editable-step > summary::after { content: '⌄'; margin-left: 8px; font-size: 18px; }
+    .editable-step[open] > summary::after { content: '⌃'; }
   </style>
 </head>
 <body>
 
-  <!-- === EN-TÊTE DE LA GALERIE DE VALIDATION === -->
+  <!-- === CONTRÔLES DE LA GALERIE EXTÉRIEURE === -->
   <header class="gallery-header">
-    <span class="gallery-banner">Maquette — données de démonstration — aucune modification de recettes</span>
+    <span class="gallery-banner">Maquette v2 · 09 h 00 fixe · Référence c36f6bc · Aucune écriture durable</span>
     <div class="gallery-controls">
-      <!-- Sélecteur de Thème -->
       <div class="ctrl-group" role="radiogroup" aria-label="Sélection du thème">
         <button type="button" class="ctrl-btn active" data-theme-btn="light" onclick="setTheme('light')">Clair</button>
         <button type="button" class="ctrl-btn" data-theme-btn="dark" onclick="setTheme('dark')">Sombre chaud</button>
         <button type="button" class="ctrl-btn" data-theme-btn="amoled" onclick="setTheme('amoled')">AMOLED</button>
       </div>
-      <!-- Sélecteur d'Écran -->
-      <div class="ctrl-group" role="radiogroup" aria-label="Sélection d'affichage d'écran">
-        <button type="button" class="ctrl-btn active" data-screen-btn="all" onclick="setScreen('all')">Vue 3 écrans</button>
+      <div class="ctrl-group" role="radiogroup" aria-label="Sélection de l'écran">
+        <button type="button" class="ctrl-btn active" data-screen-btn="all" onclick="setScreen('all')">Galerie 4 écrans</button>
         <button type="button" class="ctrl-btn" data-screen-btn="recipes" onclick="setScreen('recipes')">1. Recettes</button>
         <button type="button" class="ctrl-btn" data-screen-btn="recipe" onclick="setScreen('recipe')">2. Recette</button>
-        <button type="button" class="ctrl-btn" data-screen-btn="preparation" onclick="setScreen('preparation')">3. Préparation</button>
+        <button type="button" class="ctrl-btn" data-screen-btn="edit" onclick="setScreen('edit')">3. Édition</button>
+        <button type="button" class="ctrl-btn" data-screen-btn="preparation" onclick="setScreen('preparation')">4. Préparation</button>
+      </div>
+      <div class="ctrl-group" role="radiogroup" aria-label="Sélection du jeu de données">
+        <button type="button" class="ctrl-btn active" data-fixture-btn="poolish" onclick="setFixture('poolish')">Réf. Poolish + tangzhong (1000 g)</button>
+        <button type="button" class="ctrl-btn" data-fixture-btn="milk" onclick="setFixture('milk')">Contrat Pain au lait (Sans eau pure 500 g)</button>
+      </div>
+      <div class="ctrl-group" role="radiogroup" aria-label="Démonstration verrouillage hydratation">
+        <button type="button" class="ctrl-btn active" data-lock-btn="unlocked" onclick="toggleLockDemo(false)">Déverrouillée (≈ 75 %)</button>
+        <button type="button" class="ctrl-btn" data-lock-btn="locked" onclick="toggleLockDemo(true)">Verrouillée (75 % fixe)</button>
       </div>
     </div>
   </header>
 
-  <!-- === CORPS DE LA GALERIE (3 SURFACES 360x800) === -->
+  <!-- === SURFACES 360x800 === -->
   <main class="gallery-viewport" id="galleryViewport">
 
     <!-- ========================================================================= -->
     <!-- ÉCRAN 1 : LISTE DES RECETTES                                               -->
     <!-- ========================================================================= -->
     <div class="phone-container" id="container-recipes">
-      <div class="phone-caption">1. Liste des recettes (Navigation &amp; Reprise)</div>
+      <div class="phone-caption">1. Liste des recettes (v0.2.0)</div>
       <div class="phone-frame" id="frame-recipes">
-        
-        <!-- Top App Bar -->
         <header class="app-bar">
           <div class="app-bar-start">
-            <!-- Mark SVG local et intact -->
-            <img src="mark.svg" width="32" height="32" alt="" aria-hidden="true">
+            <img src="mark.svg" width="32" height="32" alt="Logo Flourprint" aria-hidden="true">
             <div class="app-bar-brand">
               <span class="app-bar-title">Flourprint</span>
-              
+              <span class="app-bar-label">v0.2.0</span>
             </div>
           </div>
           <div class="app-bar-actions">
-            <!-- Action secondaire Nouvelle recette (non rivale du CTA principal) -->
-            <button type="button" class="icon-btn" aria-label="Nouvelle recette" onclick="showToast('recipes', 'Création de recette — flux existant conservé')">
+            <button type="button" class="icon-btn" aria-label="Créer une recette" onclick="showToast('recipes', 'Création d’une recette — flux existant')">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
-            <!-- Menu ⋯ -->
             <button type="button" class="icon-btn" id="btn-menu-recipes" aria-controls="menu-recipes" aria-expanded="false" aria-label="Options et utilitaires" aria-haspopup="true" onclick="toggleMenu('menu-recipes')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
             </button>
           </div>
         </header>
 
-        <!-- Menu Déroulant ⋯ Screen 1 -->
         <div class="action-menu" id="menu-recipes" role="menu" aria-label="Menu des recettes">
-          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Accès aux paramètres avancés')">Avancé</button>
-          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Gestion des sauvegardes &amp; imports')">Sauvegardes &amp; imports</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Paramètres avancés')">Avancé</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Sauvegardes et données')">Sauvegardes</button>
           <div class="menu-divider"></div>
-          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Utilitaires de développement actifs')">Utilitaires dev</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipes'); showToast('recipes', 'Utilitaires dev actifs')">Utilitaires dev</button>
         </div>
 
-        <!-- Scrollable Content -->
         <div class="phone-content">
           <h1 class="type-headline-small">Recettes</h1>
 
-          <!-- Entrée compacte : Préparation en cours (Sans bannière orange agressive) -->
+          <!-- Entrée active avec temps restant explicite -->
           <div class="card card-quiet" style="border-left: 4px solid var(--color-primary);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
-                <span class="type-label-medium" style="color: var(--color-primary);">Préparation en cours</span>
+                <span class="type-label-medium" style="color: var(--color-primary); font-weight: 700;">PRÉPARATION EN COURS</span>
                 <div class="type-title-medium">Poolish + tangzhong</div>
-                <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">Pointage · 20 min écoulées</div>
+                <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">Pointage · 2 h 40 min restantes</div>
               </div>
               <button type="button" class="btn-secondary" style="height: 36px; padding: 0 12px;" onclick="setScreen('preparation')">
                 Reprendre
@@ -825,66 +234,58 @@
             </div>
           </div>
 
-          <!-- Section Recettes enregistrées -->
-          <div class="section-title">Recettes enregistrées</div>
+          <div class="section-title">Mes recettes</div>
 
-          <!-- 1. Fiche référence : Poolish + tangzhong -->
+          <!-- Fiche référence avec durée totale 20 h 10 min et Jamais cuite -->
           <div class="card card-interactive" onclick="setScreen('recipe')" role="button" tabindex="0">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <h2 class="type-title-medium">Poolish + tangzhong</h2>
-                <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">9 étapes</div>
-              </div>
-              
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <h2 class="type-title-medium" id="card-ref-title">Poolish + tangzhong</h2>
+              <span class="type-label-medium" style="color: var(--color-ink-muted);">v1</span>
             </div>
-            <div style="display: flex; gap: var(--space-4); margin-top: var(--space-2);" class="type-body-medium tabular">
-              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Farine</span> 1000 g</div>
-              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Pâte</span> 1774 g</div>
-              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Eau tot.</span> ≈ 75,02 %</div>
+            <div style="display: flex; gap: var(--space-4);" class="type-body-medium tabular">
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Pâte</span> <span id="card-ref-dough">1774 g</span></div>
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Hydratation</span> <span id="card-ref-hydr">≈ 75 %</span></div>
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Durée totale</span> <span id="card-ref-dur">20 h 10 min</span></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--color-ink-subtle); margin-top: 2px;">
+              <span id="card-ref-parts">Poolish 30 % · Tangzhong 5 %</span>
+              <span style="font-weight: 600;">Jamais cuite</span>
             </div>
           </div>
 
-          <!-- 2. Brouillon synthétique existant -->
+          <!-- Brouillon synthétique -->
           <div class="card card-interactive" onclick="showToast('recipes', 'Brouillon sélectionné — maquette')" role="button" tabindex="0">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <h2 class="type-title-medium">Baguette</h2>
-                  <span style="background-color: var(--color-surface-container-high); color: var(--color-ink-muted); padding: 2px 6px; border-radius: 4px; font-size: 0.6875rem; font-weight: 600;">Brouillon</span>
-                </div>
-                <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">Brouillon local en cours d'édition</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h2 class="type-title-medium">Baguette</h2>
+                <span style="background-color: var(--color-surface-container-high); color: var(--color-ink-muted); padding: 2px 6px; border-radius: 4px; font-size: 0.6875rem; font-weight: 600;">Brouillon</span>
               </div>
-              <span class="type-label-medium" style="color: var(--color-ink-muted); font-weight: 600;">65,0 %</span>
+              <span class="type-label-medium" style="color: var(--color-ink-muted);">brouillon</span>
             </div>
-            <div style="display: flex; gap: var(--space-4); margin-top: var(--space-2);" class="type-body-medium tabular">
-              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Farine</span> 500 g</div>
+            <div style="display: flex; gap: var(--space-4);" class="type-body-medium tabular">
               <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Pâte</span> 825 g</div>
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Hydratation</span> 65 %</div>
+              <div><span class="type-label-medium" style="color: var(--color-ink-muted);">Durée</span> 6 h 30 min</div>
             </div>
+            <div style="font-size: 0.75rem; color: var(--color-ink-subtle); margin-top: 2px;">Jamais cuite</div>
           </div>
-
-          <!-- Note discrète d'état sans auto-seed -->
-          
         </div>
-
-        <!-- Toast Notification -->
         <div class="toast" id="toast-recipes"></div>
       </div>
     </div>
 
     <!-- ========================================================================= -->
-    <!-- ÉCRAN 2 : CONSULTATION DE RECETTE                                         -->
+    <!-- ÉCRAN 2 : FICHE RECETTE (CONSULTATION)                                    -->
     <!-- ========================================================================= -->
     <div class="phone-container" id="container-recipe">
-      <div class="phone-caption">2. Fiche recette (Consultation &amp; Planification)</div>
+      <div class="phone-caption">2. Fiche recette (Consultation)</div>
       <div class="phone-frame" id="frame-recipe">
-
-        <!-- Top App Bar -->
         <header class="app-bar">
           <div class="app-bar-start">
-            <button type="button" class="icon-btn" aria-label="Retour à la liste" onclick="setScreen('recipes')">
+            <button type="button" class="icon-btn" aria-label="Retour aux recettes" onclick="setScreen('recipes')">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </button>
-            <span class="app-bar-title" id="recipe-bar-title">Recette</span>
+            <span class="app-bar-title">Recette</span>
           </div>
           <div class="app-bar-actions">
             <button type="button" class="icon-btn" id="btn-menu-recipe" aria-controls="menu-recipe" aria-expanded="false" aria-label="Actions sur la recette" aria-haspopup="true" onclick="toggleMenu('menu-recipe')">
@@ -893,295 +294,230 @@
           </div>
         </header>
 
-        <!-- Menu Déroulant ⋯ Screen 2 (Actions secondaires & suppression séparée) -->
         <div class="action-menu" id="menu-recipe" role="menu" aria-label="Menu recette">
-          <button type="button" class="menu-item danger" role="menuitem" data-editing-action style="display:none" onclick="closeMenu('menu-recipe'); toggleRecipeEditMode(false); showToast('recipe', 'Abandon illustré — aucune recette modifiée.')">Abandonner les modifications</button>
-          <button type="button" class="menu-item" role="menuitem" data-reading-action onclick="closeMenu('menu-recipe'); toggleRecipeEditMode(true)">Modifier la recette</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipe'); setScreen('edit');">Modifier la recette</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-recipe'); openHelp('hydration');">Explication hydratation</button>
           <div class="menu-divider"></div>
-          <button type="button" class="menu-item danger" role="menuitem" data-reading-action onclick="closeMenu('menu-recipe'); showToast('recipe', 'Action corbeille illustrée — aucune suppression')">Mettre à la corbeille</button>
+          <button type="button" class="menu-item danger" role="menuitem" onclick="closeMenu('menu-recipe'); showToast('recipe', 'Action corbeille illustrée — aucune suppression');">Mettre à la corbeille</button>
         </div>
 
-        <!-- Scrollable Content -->
-        <div class="phone-content" id="recipe-view-container">
-          
-          <!-- En-tête titre complet (Retour à la ligne naturel, pas de tronquage) -->
+        <div class="phone-content">
           <div>
-            <h1 class="type-title-large" style="line-height: 1.25;">Poolish + tangzhong</h1>
-            <div class="type-body-medium tabular" style="color: var(--color-ink-muted); margin-top: 4px;">
-              Version 1 · 9 étapes
-            </div>
+            <h1 class="type-title-large" id="read-recipe-name">Poolish + tangzhong</h1>
+            <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">Version 1 · 9 étapes · Durée planifiée 20 h 10 min</div>
           </div>
 
-          <!-- Onglets discrets soulignés (Pas de gros boutons pilules) -->
+          <!-- Onglets de consultation -->
           <div class="tabs-bar" role="tablist">
             <button type="button" class="tab-btn active" id="tab-btn-formula" role="tab" aria-selected="true" onclick="switchRecipeTab('formula')">Recette</button>
             <button type="button" class="tab-btn" id="tab-btn-planning" role="tab" aria-selected="false" onclick="switchRecipeTab('planning')">Planification</button>
             <button type="button" class="tab-btn" id="tab-btn-history" role="tab" aria-selected="false" onclick="switchRecipeTab('history')">Historique</button>
           </div>
 
-          <!-- === ONGLET 1 : RECETTE / FORMULE === -->
+          <!-- ONGLET 1 : FORMULE -->
           <div id="tab-content-formula" style="display: flex; flex-direction: column; gap: var(--space-4);">
             
-            <!-- Synthèse hydratation & masses -->
+            <!-- Synthèse : SEULEMENT Farine, Pâte, Hydratation (PAS de fausse Eau ajoutée/Eau versée) -->
             <div class="card card-quiet">
               <div class="value-row tabular">
-                <span class="value-label">Farine totale</span>
-                <span class="value-data">1000 g</span>
+                <span class="value-label">
+                  Farine totale
+                  <button type="button" class="info-btn" data-help="anchor" aria-label="Aide sur l'ancre et quantité totale" onclick="openHelp('anchor')">ⓘ</button>
+                </span>
+                <span class="value-data" id="read-anchor-val">1000 g</span>
               </div>
               <div class="value-row tabular">
                 <span class="value-label">Pâte totale</span>
-                <span class="value-data">1774 g</span>
+                <span class="value-data" id="read-dough-val">1774 g</span>
               </div>
               <div class="value-row tabular">
-                <span class="value-label" style="display: inline-flex; align-items: center; gap: 4px;">
-                  Eau totale
-                  <!-- Icône déverrouillée -->
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v1"/></svg>
+                <span class="value-label">
+                  Hydratation
+                  <button type="button" class="info-btn" data-help="hydration" aria-label="Aide sur l'hydratation et le calcul d'eau" onclick="openHelp('hydration')">ⓘ</button>
                 </span>
-                <span class="value-data" style="color: var(--color-primary);">
-                  ≈ 75,02 %
-                  <span class="value-subordinate">Déverrouillée</span>
-                  
+                <span class="value-data">
+                  <span id="read-hydr-val" style="font-size: 1.125rem; font-weight: 700;">≈ 75 %</span>
+                  <!-- Verrouillage discret : gris normal si déverrouillé, orange si verrouillé -->
+                  <span id="read-lock-badge" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--color-ink-muted); margin-top: 2px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>
+                    Déverrouillée
+                  </span>
                 </span>
               </div>
-              <div class="value-row tabular">
-                <span class="value-label">Eau versée</span>
-                <span class="value-data">750 g (75,0 %)</span>
+              <div id="read-incomplete-note" style="display: none; font-size: 0.75rem; color: var(--color-ink-muted); border-top: 1px solid var(--color-outline-subtle); padding-top: 6px;">
+                Composition incomplète : teneur en eau inconnue pour beurre et levure.
               </div>
             </div>
 
-            <!-- Mélange de farines (80/20) -->
+            <!-- Mélange de farines avec bases explicites -->
             <div>
-              <div class="section-title">Mélange de farines</div>
-              <div class="card" style="margin-top: 6px;">
-                <div class="value-row tabular">
-                  <div>
-                    <div class="type-body-medium" style="font-weight: 500;">Farine à pain</div>
-                    
-                  </div>
-                  <div class="value-data">80 % · 800 g</div>
-                </div>
-                <div class="value-row tabular">
-                  <div>
-                    <div class="type-body-medium" style="font-weight: 500;">Farine de blé entier</div>
-                    
-                  </div>
-                  <div class="value-data">20 % · 200 g</div>
-                </div>
-                
+              <div class="section-title">
+                <span>Mélange de farines</span>
+                <span style="font-size: 0.75rem; font-weight: normal; color: var(--color-ink-muted);">% de la farine</span>
               </div>
+              <div class="card read-table" id="read-flours-card"><span class="table-label">Ingrédient</span><span class="table-label">% de la farine</span><span class="table-label">Poids</span><span class="read-cell">Farine à pain</span><span class="read-cell">80 %</span><strong class="read-cell">800 g</strong><span class="read-cell">Farine de blé entier</span><span class="read-cell">20 %</span><strong class="read-cell">200 g</strong></div>
             </div>
 
-            <!-- Ingrédients de pâte (Données réelles de la formule JSON) -->
+            <!-- Ingrédients avec % du boulanger explicite -->
             <div>
-              <div class="section-title">Quantités totales</div>
-              <div class="card" style="margin-top: 6px;">
-                <div class="value-row tabular">
-                  <span class="value-label">Eau</span>
-                  <span class="value-data">750 g · 75,0 %</span>
-                </div>
-                <div class="value-row tabular">
-                  <span class="value-label">Sel</span>
-                  <span class="value-data">20 g · 2,0 %</span>
-                </div>
-                <div class="value-row tabular">
-                  <div>
-                    <span class="value-label">Levure instantanée</span>
-                    <span class="value-subordinate">5 % eau estimée</span>
-                  </div>
-                  <span class="value-data">4 g · 0,4 %</span>
-                </div>
+              <div class="section-title">
+                <span>
+                  Ingrédients de pâte
+                  <button type="button" class="info-btn" data-help="bakerPct" aria-label="Aide sur les pourcentages du boulanger" onclick="openHelp('bakerPct')">ⓘ</button>
+                </span>
+                <span style="font-size: 0.75rem; font-weight: normal; color: var(--color-ink-muted);">% du boulanger</span>
               </div>
+              <div class="card read-table" id="read-ingredients-card"><span class="table-label">Ingrédient</span><span class="table-label">% du boulanger</span><span class="table-label">Poids</span><span class="read-cell">Eau</span><span class="read-cell" id="read-water-pct">75 %</span><strong class="read-cell" id="read-water-grams">750 g</strong><span class="read-cell">Sel</span><span class="read-cell">2 %</span><strong class="read-cell">20 g</strong><span class="read-cell">Levure instantanée</span><span class="read-cell">0,4 %</span><strong class="read-cell">4 g</strong></div>
             </div>
 
-            <!-- Composants : Préferment & Échaudage -->
-            <div>
-              <div class="section-title">Composants &amp; Préferments</div>
-              <div class="card" style="margin-top: 6px;">
+            <!-- Composants / Préferments : part de farine totale vs ratio liquide -->
+            <div id="read-components-section">
+              <div class="section-title">
+                <span>
+                  Composants &amp; Préferments
+                  <button type="button" class="info-btn" data-help="preparations" aria-label="Aide sur les composants et préferments" onclick="openHelp('preparations')">ⓘ</button>
+                </span>
+              </div>
+              <div class="card" id="read-components-card" style="margin-top: 6px;">
                 <div style="padding-bottom: 6px; border-bottom: 1px solid var(--color-outline-subtle);">
-                  <div style="display: flex; justify-content: space-between;">
-                    <span class="type-body-medium" style="font-weight: 600;">Poolish</span>
-                    <span class="type-label-medium tabular" style="color: var(--color-primary);">30 % farine (300 g)</span>
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span class="type-body-medium" style="font-weight: 700;">Poolish</span>
+                    <span class="type-label-medium tabular" style="color: var(--color-primary);">601 g</span>
                   </div>
                   <div class="type-body-medium tabular" style="color: var(--color-ink-muted); margin-top: 2px;">
-                    Hydratation 100 % (300 g eau) · Levure 1 g (0,1 %)
+                    30 % de la farine totale (300 g) · hydratation 100 % (300 g eau) · levure 1 g (0,1 % du boulanger)
                   </div>
                 </div>
                 <div style="padding-top: 6px;">
-                  <div style="display: flex; justify-content: space-between;">
-                    <span class="type-body-medium" style="font-weight: 600;">Tangzhong</span>
-                    <span class="type-label-medium tabular" style="color: var(--color-primary);">5 % farine (50 g)</span>
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span class="type-body-medium" style="font-weight: 700;">Tangzhong</span>
+                    <span class="type-label-medium tabular" style="color: var(--color-primary);">300 g</span>
                   </div>
                   <div class="type-body-medium tabular" style="color: var(--color-ink-muted); margin-top: 2px;">
-                    Hydratation 500 % (250 g eau) · Perte évaporation 0 %
+                    5 % de la farine totale (50 g) · hydratation 500 % · ratio farine:eau 1 : 5 (250 g eau) · perte 0 %
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Procédé ordonné auteur (Non projeté) -->
+            <!-- Déroulé des étapes ordonnées -->
             <div>
-              <div class="section-title">Procédé (9 étapes)</div>
+              <div class="section-title">
+                <span>Méthode (9 étapes)</span>
+              </div>
               <div class="card" style="margin-top: 6px;">
                 <ol style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.875rem;">
                   <li><strong>Poolish :</strong> 12 h (fermentation préalable)</li>
                   <li><strong>Tangzhong :</strong> 1 h (échaudage et repos)</li>
                   <li><strong>Pétrissage :</strong> 15 min (mélange principal)</li>
                   <li><strong>Pointage :</strong> 3 h (fermentation en masse)</li>
-                  <li><strong>Façonnage :</strong> 15 min (mise en forme)</li>
+                  <li><strong>Façonnage :</strong> 15 min (division et mise en forme)</li>
                   <li><strong>Apprêt :</strong> 2 h (fermentation finale)</li>
                   <li><strong>Préchauffage :</strong> 1 h (en parallèle de l'apprêt)</li>
                   <li><strong>Cuisson :</strong> 40 min</li>
-                  <li><strong>Refroidissement :</strong> 2 h (ressuage sur grille)</li>
+                  <li><strong>Refroidissement :</strong> 2 h (sur grille)</li>
                 </ol>
               </div>
             </div>
 
-            <!-- Divulgation progressive existante -->
             <details class="disclosure">
               <summary>
-                <span>Détails du calcul d'eau</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                <span>Détails de l'eau et enrichissement</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
               </summary>
-              <div class="disclosure-body" style="margin-top: 8px;">
-                L’hydratation conventionnelle est de 75 % : 750 g d’eau versée pour 1000 g de farine.<br>
-                L’eau totale inclut aussi environ 0,2 g d’eau provenant de la levure. Cette contribution est estimée.<br><br>Matières grasses : ≈ 0 %. Sucres : ≈ 0 %. La composition est incomplète pour le sel et la levure instantanée.
+              <div class="disclosure-body" style="margin-top: 8px;" id="read-disclosure-text">
+                L'hydratation (≈ 75 %) regroupe l'eau liquide (750 g) et 0,2 g d'eau apportés par la levure instantanée (5 % d'humidité estimée sur 4 g).<br>
+Matières grasses : ≈ 0 %. Sucres : ≈ 0 %. Composition incomplète pour le sel et la levure : ces apports inconnus ne valent pas zéro.
               </div>
             </details>
           </div>
 
-          <!-- === ONGLET 2 : PLANIFICATION === -->
+          <!-- ONGLET 2 : PLANIFICATION -->
           <div id="tab-content-planning" style="display: none; flex-direction: column; gap: var(--space-4);">
             <div class="alert-box">
-              <div class="alert-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+              <div>
+                <strong>Projection horaire statique (Session modèle 08:40).</strong><br>
+                Durée totale calculée : 20 h 10 min (préferment 12 h superposé à l'échaudage, apprêt 2 h superposé au préchauffage 1 h).
               </div>
-              <div>Projection temporelle statique pour la session. Aucun calcul moteur n'est déclenché.</div>
             </div>
-
             <div class="card tabular">
-              <div class="value-row">
-                <span class="value-label">Poolish (12 h)</span>
-                <span class="value-data">20:00 → 08:00</span>
-              </div>
-              <div class="value-row">
-                <span class="value-label">Tangzhong (1 h)</span>
-                <span class="value-data">07:00 → 08:00</span>
-              </div>
-              <div class="value-row">
-                <span class="value-label">Pétrissage (15 min)</span>
-                <span class="value-data">08:00 → 08:15</span>
-              </div>
-              <div class="value-row">
-                <span class="value-label">Pointage (3 h)</span>
-                <span class="value-data" style="color: var(--color-primary);">08:15 → 11:15</span>
-              </div>
-              <div class="value-row">
-                <span class="value-label">Façonnage (15 min)</span>
-                <span class="value-data">11:15 → 11:30</span>
-              </div>
-              <div class="value-row">
-                <span class="value-label">Apprêt (2 h)</span>
-                <span class="value-data">11:30 → 13:30</span>
-              </div>
-              <div class="value-row">
-                <span class="value-label">Préchauffage (1 h par.)</span>
-                <span class="value-data">12:30 → 13:30</span>
-              </div>
-              <div class="value-row">
-                <span class="value-label">Cuisson (40 min)</span>
-                <span class="value-data">13:30 → 14:10</span>
-              </div>
-              <div class="value-row">
-                <span class="value-label">Refroidissement (2 h)</span>
-                <span class="value-data">14:10 → 16:10</span>
-              </div>
+              <div class="value-row"><span class="value-label">Poolish (12 h)</span><span class="value-data">J-1 20:25 → 08:25</span></div>
+              <div class="value-row"><span class="value-label">Tangzhong (1 h)</span><span class="value-data">07:25 → 08:25</span></div>
+              <div class="value-row"><span class="value-label">Pétrissage (15 min)</span><span class="value-data">08:25 → 08:40</span></div>
+              <div class="value-row"><span class="value-label">Pointage (3 h)</span><span class="value-data" style="color: var(--color-primary);">08:40 → 11:40</span></div>
+              <div class="value-row"><span class="value-label">Façonnage (15 min)</span><span class="value-data">11:40 → 11:55</span></div>
+              <div class="value-row"><span class="value-label">Apprêt (2 h)</span><span class="value-data">11:55 → 13:55</span></div>
+              <div class="value-row"><span class="value-label">Préchauffage (1 h par.)</span><span class="value-data">12:55 → 13:55</span></div>
+              <div class="value-row"><span class="value-label">Cuisson (40 min)</span><span class="value-data">13:55 → 14:35</span></div>
+              <div class="value-row"><span class="value-label">Refroidissement (2 h)</span><span class="value-data">14:35 → 16:35</span></div>
             </div>
-
-            <button type="button" class="btn-secondary" style="width: 100%;" onclick="showToast('recipe', 'Ajustement de planning — retour à la recette ultérieur')">
-              Modifier cette étape
-            </button>
           </div>
 
-          <!-- === ONGLET 3 : HISTORIQUE === -->
+          <!-- ONGLET 3 : HISTORIQUE -->
           <div id="tab-content-history" style="display: none; flex-direction: column; gap: var(--space-4);">
             <div class="card">
               <div class="type-title-medium">Révision 1</div>
-              <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">
-                Version consultée
-              </div>
+              <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">Recette de référence</div>
               <div style="font-size: 0.8125rem; color: var(--color-ink-subtle); margin-top: 8px;">
-                
-                Aucune modification appliquée sur cet appareil.
+                Créée le 1 oct. 2026 à 12:00 UTC. Aucune modification persistée sur cet appareil.
               </div>
             </div>
           </div>
-
-          <!-- === VUE D'ÉDITION DE DÉMONSTRATION (Alternante) === -->
-          <div id="recipe-edit-view" style="display: none; flex-direction: column; gap: var(--space-4);">
-            <div class="alert-box">
-              <div class="alert-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-              </div>
-              <div>Mode modification : illustration visuelle des champs M3. Aucune écriture n'est exécutée.</div>
-            </div>
-
-            <div class="edit-field">
-              <label class="edit-label" for="edit-name">Nom de la recette</label>
-              <input class="edit-input" id="edit-name" type="text" value="Poolish + tangzhong">
-            </div>
-
-            <div class="edit-field">
-              <label class="edit-label" for="edit-flour">Farine totale (g)</label>
-              <input class="edit-input tabular" id="edit-flour" type="number" value="1000">
-            </div>
-
-            <div class="edit-field">
-              <label class="edit-label" for="edit-water">Eau versée (g)</label>
-              <input class="edit-input tabular" id="edit-water" type="number" value="750">
-            </div>
-
-            <div class="edit-field">
-              <label class="edit-label" for="edit-salt">Sel (g)</label>
-              <input class="edit-input tabular" id="edit-salt" type="number" value="20">
-            </div>
-
-            <div class="edit-field">
-              <label class="edit-label" for="edit-yeast">Levure instantanée (g)</label>
-              <input class="edit-input tabular" id="edit-yeast" type="number" value="4">
-            </div>
-          </div>
-
         </div>
 
-        <!-- Sticky Bottom Action Bar (UNE seule action primaire Démarrer ; aucun bouton Corbeille à côté) -->
-        <footer class="bottom-bar" id="recipe-bottom-bar-consult">
-          <button type="button" class="btn-primary" onclick="setScreen('preparation'); showToast('preparation', 'Session de démonstration affichée')">
-            Démarrer la préparation
+        <!-- Footer consultation : Reprendre la préparation si active, sinon Démarrer -->
+        <footer class="bottom-bar">
+          <button type="button" class="btn-primary" onclick="setScreen('preparation'); showToast('preparation', 'Reprise de la préparation active');">
+            Reprendre la préparation
           </button>
         </footer>
-
-        <!-- Sticky Bottom Bar pour le mode édition -->
-        <footer class="bottom-bar" id="recipe-bottom-bar-edit" style="display: none;">
-          
-          <button type="button" class="btn-primary" style="flex: 1;" onclick="toggleRecipeEditMode(false); showToast('recipe', 'Enregistrement illustré — aucune recette modifiée.')">
-            Enregistrer
-          </button>
-        </footer>
-
-        <!-- Toast Notification -->
         <div class="toast" id="toast-recipe"></div>
       </div>
     </div>
 
     <!-- ========================================================================= -->
-    <!-- ÉCRAN 3 : PRÉPARATION EN COURS                                            -->
+    <!-- ÉCRAN 3 : MODIFIER LA RECETTE (VRAI QUATRIÈME ÉCRAN COMPLET)               -->
+    <!-- ========================================================================= -->
+    <div class="phone-container" id="container-edit">
+      <div class="phone-caption">3. Éditeur de recette (4 sections)</div>
+      <div class="phone-frame" id="frame-edit">
+        <header class="app-bar">
+          <div class="app-bar-start">
+            <button type="button" class="icon-btn" aria-label="Abandonner et retourner à la recette" onclick="setScreen('recipe'); showToast('recipe', 'Modifications abandonnées');">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <span class="app-bar-title">Modifier la recette</span>
+          </div>
+          <div class="app-bar-actions">
+            <button type="button" class="icon-btn" id="btn-menu-edit" aria-controls="menu-edit" aria-expanded="false" aria-label="Menu édition" aria-haspopup="true" onclick="toggleMenu('menu-edit')">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="action-menu" id="menu-edit" role="menu" aria-label="Menu édition">
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-edit'); setScreen('recipe');">Abandonner les modifications</button>
+          <div class="menu-divider"></div>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-edit'); openHelp('anchor');">Aide sur les ancres</button>
+        </div>
+
+        <div class="phone-content"><div class="tabs-bar" role="tablist"><button type="button" class="tab-btn active" id="tab-btn-edit-comp" role="tab" aria-selected="true" onclick="switchEditSection('comp')">Composition</button><button type="button" class="tab-btn" id="tab-btn-edit-parts" role="tab" aria-selected="false" onclick="switchEditSection('parts')">Composants</button><button type="button" class="tab-btn" id="tab-btn-edit-steps" role="tab" aria-selected="false" onclick="switchEditSection('steps')">Étapes</button><button type="button" class="tab-btn" id="tab-btn-edit-res" role="tab" aria-selected="false" onclick="switchEditSection('res')">Résultat</button></div><div id="edit-section-comp" style="display:flex;flex-direction:column;gap:var(--space-4);"><div class="edit-field"><label class="edit-label" for="edit-recipe-name-input">Nom de la recette</label><input class="edit-input" id="edit-recipe-name-input" type="text" value="Poolish + tangzhong" oninput="markEditDirty()"></div><div class="card"><span class="edit-label">Taille de la recette<button type="button" class="info-btn" data-help="anchor" aria-label="Aide sur la taille de la recette" onclick="openHelp('anchor')">ⓘ</button></span><div style="display:flex;gap:6px;margin-top:4px;"><button type="button" class="ctrl-btn active" style="flex:1;border:1px solid var(--color-outline);" id="btn-anchor-flour" onclick="setAnchorType('flour')">Farine</button><button type="button" class="ctrl-btn" style="flex:1;border:1px solid var(--color-outline);" id="btn-anchor-dough" onclick="setAnchorType('dough')">Pâte</button><button type="button" class="ctrl-btn" style="flex:1;border:1px solid var(--color-outline);" id="btn-anchor-pieces" onclick="setAnchorType('pieces')">Pâtons</button></div><div id="anchor-grams-row" style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input class="edit-input tabular" id="input-anchor-grams" type="number" value="1000" style="flex:1;" oninput="markEditDirty()"><span class="type-body-medium" id="label-anchor-unit">g farine</span></div><div id="anchor-pieces-row" style="display:none;gap:8px;margin-top:6px;"><div style="flex:1;"><label class="edit-label" for="piece-count">Nombre</label><input class="edit-input tabular" id="piece-count" type="number" value="2" oninput="markEditDirty()"></div><div style="flex:1;"><label class="edit-label" for="piece-weight">Poids par pâton (g)</label><input class="edit-input tabular" id="piece-weight" type="number" value="887" oninput="markEditDirty()"></div></div></div><div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;"><span class="edit-label">Hydratation cible<button type="button" class="info-btn" data-help="hydration" aria-label="Aide sur l'hydratation" onclick="openHelp('hydration')">ⓘ</button></span><button type="button" class="ctrl-btn" id="btn-toggle-lock" style="border:1px solid var(--color-outline);color:inherit;" onclick="toggleLockEditor()">Verrouiller</button></div><div style="display:flex;gap:8px;align-items:center;margin-top:6px;"><input class="edit-input tabular" id="input-target-hydration" type="number" step="0.1" value="75" style="flex:1;" oninput="markEditDirty()"><span class="type-body-medium">%</span></div><div id="edit-absorb-note" style="font-size:0.75rem;color:var(--color-ink-muted);margin-top:4px;">Hydratation déverrouillée : les ingrédients varient librement.</div></div><div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;"><span class="edit-label">Mélange de farines</span><span style="font-size:0.75rem;color:var(--color-ink-muted);">% de la farine · g</span></div><div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"><div style="display:grid;grid-template-columns:1fr 72px 84px;gap:6px;align-items:center;"><span class="type-body-medium" style="font-weight:600;">Farine à pain</span><input class="edit-input tabular" aria-label="Farine à pain % de la farine" type="number" value="80" oninput="markEditDirty()"><input class="edit-input tabular" aria-label="Farine à pain g" type="number" value="800" oninput="markEditDirty()"></div><div style="display:grid;grid-template-columns:1fr 72px 84px;gap:6px;align-items:center;"><span class="type-body-medium" style="font-weight:600;">Farine de blé entier</span><input class="edit-input tabular" aria-label="Farine de blé entier % de la farine" type="number" value="20" oninput="markEditDirty()"><input class="edit-input tabular" aria-label="Farine de blé entier g" type="number" value="200" oninput="markEditDirty()"></div></div><button type="button" class="btn-secondary" style="height:36px;margin-top:4px;" onclick="showToast('edit', 'Ajout de farine (maquette)')">+ Ajouter une farine</button></div><div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline;"><span class="edit-label">Ingrédients de pâte<button type="button" class="info-btn" data-help="bakerPct" aria-label="Aide sur les pourcentages du boulanger" onclick="openHelp('bakerPct')">ⓘ</button></span><span style="font-size:0.75rem;color:var(--color-ink-muted);">% du boulanger · g</span></div><div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"><div style="display:grid;grid-template-columns:1fr 72px 84px;gap:6px;align-items:center;"><div><span class="type-body-medium" id="label-water-row" style="font-weight:600;">Eau</span><span id="label-water-locked-hint" style="display:none;font-size:0.6875rem;color:var(--color-primary);display:none;">Suit l’hydratation verrouillée</span></div><input class="edit-input tabular" id="water-baker" aria-label="Eau % du boulanger" type="number" value="75" oninput="markEditDirty()"><input class="edit-input tabular" id="water-grams" aria-label="Eau g" type="number" value="750" oninput="markEditDirty()"></div><div style="display:grid;grid-template-columns:1fr 72px 84px;gap:6px;align-items:center;"><span class="type-body-medium" style="font-weight:600;">Sel</span><input class="edit-input tabular" id="salt-baker" aria-label="Sel % du boulanger" type="number" value="2" oninput="markEditDirty()"><input class="edit-input tabular" id="salt-grams" aria-label="Sel g" type="number" value="20" oninput="markEditDirty()"></div><div style="display:grid;grid-template-columns:1fr 72px 84px;gap:6px;align-items:center;"><span class="type-body-medium" style="font-weight:600;">Levure instantanée</span><input class="edit-input tabular" id="yeast-baker" aria-label="Levure instantanée % du boulanger" type="number" value="0.4" step="0.1" oninput="markEditDirty()"><input class="edit-input tabular" id="yeast-grams" aria-label="Levure instantanée g" type="number" value="4" oninput="markEditDirty()"></div></div><button type="button" class="btn-secondary" style="height:36px;margin-top:4px;" onclick="showToast('edit', 'Ajout d’ingrédient (maquette)')">+ Ajouter un ingrédient</button></div></div><div id="edit-section-parts" style="display:none;flex-direction:column;gap:var(--space-4);"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;"><div class="type-title-medium">Poolish (Préferment)</div><span class="type-label-medium" style="color:var(--color-primary);">601 g</span></div><div class="edit-field"><label class="edit-label" for="poolish-share">Part de la farine totale (%)</label><input class="edit-input tabular" id="poolish-share" type="number" value="30" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label" for="poolish-flour-alloc">Farine allouée</label><input class="edit-input" id="poolish-flour-alloc" type="text" value="Farine à pain (100 % du composant · 300 g)" readonly style="background-color:var(--color-surface-container);"></div><div class="edit-field"><label class="edit-label" for="poolish-ratio">Ratio farine : eau propre</label><input class="edit-input tabular" id="poolish-ratio" type="text" value="1 : 1" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label" for="poolish-yeast-alloc">Levure allouée (% du boulanger de la recette)</label><input class="edit-input tabular" id="poolish-yeast-alloc" type="number" value="0.1" step="0.05" oninput="markEditDirty()"><span style="font-size:0.75rem;color:var(--color-ink-muted);">Correspond à 1 g prélevé sur les 4 g totaux de la recette</span></div></div><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;"><div class="type-title-medium">Tangzhong (Échaudage)</div><span class="type-label-medium" style="color:var(--color-primary);">300 g</span></div><div class="edit-field"><label class="edit-label" for="tangzhong-share">Part de la farine totale (%)</label><input class="edit-input tabular" id="tangzhong-share" type="number" value="5" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label" for="tangzhong-flour-alloc">Farine allouée</label><input class="edit-input" id="tangzhong-flour-alloc" type="text" value="Farine à pain (100 % du composant · 50 g)" readonly style="background-color:var(--color-surface-container);"></div><div class="edit-field"><label class="edit-label" for="input-tangzhong-ratio">Ratio farine : liquide (Eau)<button type="button" class="info-btn" data-help="preparations" aria-label="Aide sur le ratio liquide" onclick="openHelp('preparations')">ⓘ</button></label><div style="display:flex;gap:8px;align-items:center;"><input class="edit-input tabular" id="input-tangzhong-ratio" type="text" value="1 : 5" style="flex:1;" oninput="markEditDirty()"><button type="button" class="ctrl-btn" style="border:1px solid var(--color-outline);" onclick="document.getElementById('input-tangzhong-ratio').value='1 : 6';markEditDirty();showToast('edit', 'Ratio 1 : 6 appliqué au champ (stade proposition)');">1 : 6</button></div><span style="font-size:0.75rem;color:var(--color-ink-subtle);">Valeur de référence : 1 : 5 (250 g eau liquide pour 50 g farine)</span></div><div class="edit-field"><label class="edit-label" for="tangzhong-loss">Perte d'eau par évaporation (%)</label><input class="edit-input tabular" id="tangzhong-loss" type="number" value="0" oninput="markEditDirty()"></div></div><div class="card"><span class="edit-label">Ajouter un composant</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;"><button type="button" class="ctrl-btn" style="border:1px solid var(--color-outline);" onclick="showToast('edit', 'Ajout Préferment (poolish/biga)')">+ Préferment</button><button type="button" class="ctrl-btn" style="border:1px solid var(--color-outline);" onclick="showToast('edit', 'Ajout Échaudage (yudane/tangzhong)')">+ Échaudage</button><button type="button" class="ctrl-btn" style="border:1px solid var(--color-outline);" onclick="showToast('edit', 'Ajout Trempage (soaker)')">+ Trempage</button><button type="button" class="ctrl-btn" style="border:1px solid var(--color-outline);" onclick="showToast('edit', 'Ajout Composant personnalisé')">+ Personnalisé</button></div></div></div><div id="edit-section-steps" style="display:none;flex-direction:column;gap:var(--space-4);"><div class="alert-box"><div>9 étapes du procédé de fabrication. Durée, dépendances et paramètres thermiques éditables.</div></div><div style="display:flex;flex-direction:column;gap:8px;" id="edit-steps-accordion-list"><div class="card"><div class="type-title-medium">1. Poolish (Préferment)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="12 h" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Ordonnancement</label><select class="edit-input"><option>Au plus tôt</option><option>Au plus tard</option></select></div></div></div><div class="card"><div class="type-title-medium">2. Tangzhong (Échaudage)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="1 h" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Ordonnancement</label><select class="edit-input"><option>Au plus tard</option><option>Au plus tôt</option></select></div></div></div><div class="card"><div class="type-title-medium">3. Pétrissage (Mélange)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="15 min" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Dépendances</label><input class="edit-input" type="text" value="Poolish, Tangzhong" readonly style="background-color:var(--color-surface-container);"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px;"><div class="edit-field"><label class="edit-label">Ambiance (°C)</label><input class="edit-input tabular" type="number" placeholder="—" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Cible pâte (°C)</label><input class="edit-input tabular" type="number" placeholder="—" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Friction (Δ°C)</label><input class="edit-input tabular" type="number" placeholder="—" oninput="markEditDirty()"></div></div></div><div class="card"><div class="type-title-medium">4. Pointage (Fermentation en masse)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="3 h" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Mode</label><select class="edit-input"><option>Manuel</option><option>Modèle théorique</option></select></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;"><div class="edit-field"><label class="edit-label">Séries de rabats</label><input class="edit-input tabular" type="number" placeholder="Aucun" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Intervalle (min)</label><input class="edit-input tabular" type="number" placeholder="—" oninput="markEditDirty()"></div></div></div><div class="card"><div class="type-title-medium">5. Façonnage (Division &amp; Forme)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="15 min" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Dépendance</label><input class="edit-input" type="text" value="Pointage" readonly style="background-color:var(--color-surface-container);"></div></div></div><div class="card"><div class="type-title-medium">6. Apprêt (Fermentation finale)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="2 h" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Mode</label><select class="edit-input"><option>Manuel</option><option>Modèle théorique</option></select></div></div></div><div class="card"><div class="type-title-medium">7. Préchauffage du four (Parallèle)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="1 h" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Ordonnancement</label><select class="edit-input"><option>Au plus tard (synchro cuisson)</option><option>Au plus tôt</option></select></div></div></div><div class="card"><div class="type-title-medium">8. Cuisson (Four)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="40 min" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Température (°C)</label><input class="edit-input tabular" type="number" placeholder="Renseigner" oninput="markEditDirty()"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;"><div class="edit-field"><label class="edit-label">Mode de cuisson</label><select class="edit-input"><option>Sole / Pierre</option><option>Chaleur tournante</option><option>Cocotte fermée</option><option>Manuel sans profil</option></select></div><div class="edit-field"><label class="edit-label">Injection de buée</label><select class="edit-input"><option>Oui (début cuisson)</option><option>Non</option></select></div></div></div><div class="card"><div class="type-title-medium">9. Refroidissement (Ressuage)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><div class="edit-field"><label class="edit-label">Durée</label><input class="edit-input tabular" type="text" value="2 h" oninput="markEditDirty()"></div><div class="edit-field"><label class="edit-label">Support</label><input class="edit-input" type="text" placeholder="Renseigner" oninput="markEditDirty()"></div></div></div></div><div style="display:flex;gap:6px;margin-top:4px;"><button type="button" class="btn-secondary" style="flex:1;" onclick="showToast('edit', 'Ajout d’étape (maquette)')">+ Ajouter une étape</button><button type="button" class="btn-secondary" style="flex:1;" onclick="showToast('edit', 'Réorganisation des étapes (maquette)')">Réorganiser</button></div></div><div id="edit-section-res" style="display:none;flex-direction:column;gap:var(--space-4);"><div class="card"><span class="edit-label">Arrêt de la fermentation (Repère)<button type="button" class="info-btn" data-help="readiness" aria-label="Aide sur l'arrêt de fermentation" onclick="openHelp('readiness')">ⓘ</button></span><select class="edit-input" style="margin-top:4px;"><option>Modèle de référence</option><option>Repère expérimental de pâte prête</option></select></div><div class="card"><span class="edit-label">Issue visée de la préparation<button type="button" class="info-btn" data-help="startMode" aria-label="Aide sur l'issue de préparation" onclick="openHelp('startMode')">ⓘ</button></span><div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"><div class="edit-field"><label class="edit-label" for="outcome-cooking">Cuisson</label><select class="edit-input" id="outcome-cooking"><option value="cooked">Produit cuit</option><option value="dough">Pâte crue</option><option value="cookedAndDough">Une part cuite, une part crue</option></select></div><div class="edit-field"><label class="edit-label" for="outcome-storage">Conservation de la pâte</label><select class="edit-input" id="outcome-storage"><option value="none">Aucune (consommation directe)</option><option value="refrigerated">Pâtons façonnés réfrigérés</option><option value="frozen">Pâtons congelés pour stockage</option></select></div><div class="edit-field"><label class="edit-label" for="outcome-disposition">Destination</label><select class="edit-input" id="outcome-disposition"><option value="keep">Consommation personnelle</option><option value="given">Donné</option><option value="sold">Vendu</option><option value="other">Autre</option></select></div></div></div><div class="card"><span class="edit-label">Contrôle des pesées (Mélange final 1774 g)</span><div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:0.875rem;"><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="width:18px;height:18px;"> Farine à pain : 450 g</label><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="width:18px;height:18px;"> Farine de blé entier : 200 g</label><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="width:18px;height:18px;"> Eau liquide : 200 g</label><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="width:18px;height:18px;"> Sel : 20 g</label><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="width:18px;height:18px;"> Levure instantanée : 3 g</label><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="width:18px;height:18px;"> Poolish : 601 g</label><label style="display:flex;align-items:center;gap:8px;"><input type="checkbox" style="width:18px;height:18px;"> Tangzhong : 300 g</label></div><div style="font-size:0.75rem;color:var(--color-ink-muted);margin-top:4px;">Cocher les quantités pesées.</div></div></div><div class="sheet-overlay" id="dlgConfirmDiscard" role="dialog" aria-modal="true" aria-labelledby="dlgDiscardTitle" onclick="if(event.target === this) closeDiscardDialog();"><div class="sheet-card"><div class="sheet-header"><h2 class="sheet-title" id="dlgDiscardTitle">Abandonner les modifications ?</h2><button type="button" class="icon-btn" aria-label="Fermer" onclick="closeDiscardDialog()">✕</button></div><div class="sheet-body"><p>Des modifications ont été saisies dans l'éditeur. Quitter maintenant abandonne ces modifications.</p><div style="display:flex;gap:8px;margin-top:16px;"><button type="button" class="btn-secondary" style="flex:1;" onclick="closeDiscardDialog()">Continuer l'édition</button><button type="button" class="btn-primary" style="flex:1;background-color:var(--color-danger);" onclick="confirmDiscardAndLeave()">Abandonner</button></div></div></div></div></div>
+        <!-- Footer unique Enregistrer (Abandon accessible dans barre d'app ou menu) -->
+        <footer class="bottom-bar">
+          <button type="button" class="btn-primary" onclick="setScreen('recipe'); showToast('recipe', 'Recette enregistrée — retour à la consultation');">
+            Enregistrer
+          </button>
+        </footer>
+        <div class="toast" id="toast-edit"></div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ÉCRAN 4 : PRÉPARATION ACTIVE (AVEC FONCTIONNALITÉS COMPLÈTES RESTAURÉES)   -->
     <!-- ========================================================================= -->
     <div class="phone-container" id="container-preparation">
-      <div class="phone-caption">3. Préparation active (Pointage &amp; Validation)</div>
+      <div class="phone-caption">4. Préparation active (09 h 00 fixe)</div>
       <div class="phone-frame" id="frame-preparation">
-
-        <!-- Top App Bar -->
         <header class="app-bar">
           <div class="app-bar-start">
             <button type="button" class="icon-btn" aria-label="Retour à la liste" onclick="setScreen('recipes')">
@@ -1191,300 +527,444 @@
           </div>
           <div class="app-bar-actions">
             <button type="button" class="icon-btn" id="btn-menu-prep" aria-controls="menu-prep" aria-expanded="false" aria-label="Actions de préparation" aria-haspopup="true" onclick="toggleMenu('menu-prep')">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
             </button>
           </div>
         </header>
 
-        <!-- Menu Déroulant ⋯ Screen 3 (Actions secondaires existantes, sans nouveau timer) -->
         <div class="action-menu" id="menu-prep" role="menu" aria-label="Menu préparation">
-          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Ajout de note — flux existant')">Ajouter une note</button>
-          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Ajuster la durée')">Ajuster la durée</button>
-          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); setScreen('recipe')">Voir la recette</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); openNoteDialog();">Ajouter une note</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); openDurationDialog();">Ajuster la durée</button>
+          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); setScreen('recipe');">Voir la recette</button>
           <div class="menu-divider"></div>
-          <button type="button" class="menu-item" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Fin de préparation illustrée — aucun changement')">Terminer la préparation</button>
-          <button type="button" class="menu-item danger" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Préparation abandonnée — démonstration')">Abandonner la préparation</button>
+          <button type="button" class="menu-item danger" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Fin de session — issue pâte crue enregistrée');">Terminer la préparation (pâte crue)</button>
+          <button type="button" class="menu-item danger" role="menuitem" onclick="closeMenu('menu-prep'); showToast('preparation', 'Préparation abandonnée — démonstration');">Abandonner la préparation</button>
         </div>
 
-        <!-- Scrollable Content -->
         <div class="phone-content">
-          
-          <!-- En-tête de session -->
           <div>
-            <h1 class="type-title-large" style="line-height: 1.25;">Poolish + tangzhong</h1>
-            <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">
-              Session du 12 oct. 2026 · Recette v1
-            </div>
+            <h1 class="type-title-large">Poolish + tangzhong</h1>
+            <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">Session du 12 oct. 2026 · 09 h 00</div>
           </div>
 
-          <!-- Étape active : Pointage (bulk) -->
+          <!-- Focus Étape active : GRAND TEMPS RESTANT + Fin prévue + Barre horaire (11%) -->
           <div class="card" style="border-color: var(--color-primary); box-shadow: 0 4px 16px var(--color-shadow);">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
               <span class="type-label-medium" style="background-color: var(--color-primary-container); color: var(--color-on-primary-container); padding: 3px 8px; border-radius: 4px; font-weight: 700;">
-                ÉTAPE EN COURS (4/9)
+                EN COURS (4/9)
+                <button type="button" class="info-btn" data-help="bakeFocus" aria-label="Aide sur l'étape active" onclick="openHelp('bakeFocus')">ⓘ</button>
               </span>
-              <span class="type-label-medium tabular" style="color: var(--color-ink-muted);">Prévu 3 h</span>
+              <span class="type-label-medium tabular" id="prep-planned-end" style="color: var(--color-ink-muted);">Fin prévue 11:40</span>
             </div>
 
             <div>
               <h2 class="type-title-medium" style="font-size: 1.25rem;">Pointage</h2>
-              <div class="type-body-medium" style="color: var(--color-ink-muted); margin-top: 2px;">
-                Fermentation en masse à température ambiante
+              <div class="type-body-medium" style="color: var(--color-ink-muted);">Fermentation en masse</div>
+            </div>
+
+            <!-- Grand affichage TEMPS RESTANT -->
+            <div style="display: flex; align-items: baseline; gap: 8px; padding: 4px 0;">
+              <span class="tabular" id="prep-remaining-time" style="font-size: 2.5rem; font-weight: 800; color: var(--color-primary); line-height: 1;">2 h 40 min</span>
+              <span class="type-body-medium" style="color: var(--color-ink-muted);">restantes</span>
+            </div>
+
+            <!-- Barre d'avancement horaire (horaire écoulé = 11 %, NON biologique) -->
+            <div>
+              <div style="height: 8px; background-color: var(--color-surface-container-high); border-radius: var(--radius-pill); overflow: hidden;">
+                <div id="prep-progress-bar" style="height: 100%; width: 11%; background-color: var(--color-primary); border-radius: var(--radius-pill);"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--color-ink-subtle); margin-top: 4px;">
+                <span id="prep-start-lbl">Démarré à 08:40</span>
+                <span id="prep-progress-pct">11 % du temps écoulé</span>
               </div>
             </div>
 
-            <!-- Décompte explicite et sobre (PAS de rolling values, PAS de % biologique) -->
-            <div style="display: flex; align-items: baseline; gap: var(--space-3); padding: 8px 0; border-top: 1px solid var(--color-outline-subtle); border-bottom: 1px solid var(--color-outline-subtle);">
-              <div class="tabular" style="font-size: 2rem; font-weight: 700; color: var(--color-primary); line-height: 1;">
-                20 min
-              </div>
-              <div class="type-body-medium tabular" style="color: var(--color-ink-muted);">
-                écoulées sur 3 h prévues
-              </div>
+            <!-- Contrôles rapides VISIBLES (+15 min / Durée / Note) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 4px;">
+              <button type="button" class="btn-secondary" style="height: 40px; padding: 0 6px; font-size: 0.8125rem;" onclick="triggerPlus15()">+15 min</button>
+              <button type="button" class="btn-secondary" style="height: 40px; padding: 0 6px; font-size: 0.8125rem;" onclick="openDurationDialog()">Durée</button>
+              <button type="button" class="btn-secondary" style="height: 40px; padding: 0 6px; font-size: 0.8125rem;" onclick="openNoteDialog()">Note</button>
             </div>
 
-            <!-- Règle stricte : la durée prévue ne confirme pas l'état de la pâte -->
+            <!-- Observation Prête à façonner VISIBLE + ⓘ -->
+            <div style="display: flex; gap: 6px; align-items: center; margin-top: 4px;">
+              <button type="button" class="btn-secondary" style="flex: 1; height: 40px; border-color: var(--color-primary); color: var(--color-primary); font-weight: 700;" onclick="recordDoughReady()">
+                Prête à façonner
+              </button>
+              <button type="button" class="info-btn" data-help="readyMark" aria-label="Aide sur le repère de pâte prête" onclick="openHelp('readyMark')">ⓘ</button>
+            </div>
+
             <div class="alert-box" style="background: transparent; border: none; padding: 0; color: var(--color-ink-muted);">
-              <div class="alert-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg>
-              </div>
-              <div style="font-weight: 600;">
-                La durée prévue ne confirme pas l’état de la pâte.
-              </div>
-            </div>
-
-            <div class="type-body-medium" style="color: var(--color-ink-muted);">
-              Prochaine étape : Façonnage · 15 min prévues
+              <div style="font-size: 0.75rem; font-weight: 600;">La durée prévue ne confirme pas l’état de la pâte.</div>
             </div>
           </div>
 
-          <!-- Étapes terminées (Lignes compactes et calmes) -->
+          <!-- ÉTAPES À VENIR (AVANT LES TERMINÉES, AVEC HORAIRES D'HORLOGE) -->
+          <div>
+            <div class="section-title">
+              <span>Étapes à venir (5)</span>
+              <span style="font-size: 0.75rem; font-weight: normal; color: var(--color-ink-muted);">Heure projetée</span>
+            </div>
+            <div class="card card-quiet" id="prep-upcoming-card" style="margin-top: 6px; gap: 6px;">
+              <div class="timeline-row"><time id="up-step-1-time">11 h 40</time><span id="up-step-1-name">Façonnage</span><small>15 min</small></div>
+              <div class="timeline-row"><time id="up-step-2-time">11 h 55</time><span id="up-step-2-name">Apprêt</span><small>2 h</small></div>
+              <div class="timeline-row"><time id="up-step-3-time">12 h 55</time><span id="up-step-3-name">Préchauffage<small style="display:block">En parallèle de l’apprêt</small></span><small>1 h</small></div>
+              <div class="timeline-row"><time id="up-step-4-time">13 h 55</time><span id="up-step-4-name">Cuisson</span><small>40 min</small></div>
+              <div class="timeline-row"><time id="up-step-5-time">14 h 35</time><span id="up-step-5-name">Refroidissement</span><small>2 h</small></div>
+            </div>
+          </div>
+
+          <!-- ÉTAPES TERMINÉES -->
           <div>
             <div class="section-title">Étapes terminées (3)</div>
             <div class="card card-quiet" style="margin-top: 6px; gap: 6px;">
-              <div class="value-row tabular">
-                <span style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-muted);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary);"><path d="M20 6L9 17l-5-5"/></svg>
-                  1. Poolish (12 h)
-                </span>
-                <span style="font-size: 0.8125rem; color: var(--color-ink-subtle);">Terminé</span>
-              </div>
-              <div class="value-row tabular">
-                <span style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-muted);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary);"><path d="M20 6L9 17l-5-5"/></svg>
-                  2. Tangzhong (1 h)
-                </span>
-                <span style="font-size: 0.8125rem; color: var(--color-ink-subtle);">Terminé</span>
-              </div>
-              <div class="value-row tabular">
-                <span style="display: inline-flex; align-items: center; gap: 8px; color: var(--color-ink-muted);">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-primary);"><path d="M20 6L9 17l-5-5"/></svg>
-                  3. Pétrissage (15 min)
-                </span>
-                <span style="font-size: 0.8125rem; color: var(--color-ink-subtle);">Terminé</span>
-              </div>
+              <div class="value-row tabular"><span class="value-label" style="color: var(--color-ink-muted);">✓ 1. Poolish (12 h)</span><span style="color: var(--color-ink-subtle);">08:40</span></div>
+              <div class="value-row tabular"><span class="value-label" style="color: var(--color-ink-muted);">✓ 2. Tangzhong (1 h)</span><span style="color: var(--color-ink-subtle);">08:40</span></div>
+              <div class="value-row tabular"><span class="value-label" style="color: var(--color-ink-muted);">✓ 3. Pétrissage (15 min)</span><span style="color: var(--color-ink-subtle);">08:40</span></div>
             </div>
           </div>
 
-          <!-- Étapes à venir -->
+          <!-- JOURNAL ACCESSIBLE DES ÉVÉNEMENTS -->
           <div>
-            <div class="section-title">Étapes à venir (5)</div>
-            <div class="card card-quiet" style="margin-top: 6px; gap: 6px;">
-              <div class="value-row tabular">
-                <span class="value-label">5. Façonnage</span>
-                <span class="value-data">15 min</span>
-              </div>
-              <div class="value-row tabular">
-                <span class="value-label">6. Apprêt</span>
-                <span class="value-data">2 h</span>
-              </div>
-              <div class="value-row tabular">
-                <span class="value-label">7. Préchauffage</span>
-                <span class="value-data">1 h (parallèle)</span>
-              </div>
-              <div class="value-row tabular">
-                <span class="value-label">8. Cuisson</span>
-                <span class="value-data">40 min</span>
-              </div>
-              <div class="value-row tabular">
-                <span class="value-label">9. Refroidissement</span>
-                <span class="value-data">2 h</span>
-              </div>
+            <div class="section-title">Journal de la session</div>
+            <div class="card" id="prep-journal-card" style="margin-top: 6px; font-size: 0.8125rem; gap: 6px;">
+              <div class="tabular" style="color: var(--color-ink-muted);">08:40 — Poolish et tangzhong terminés</div>
+              <div class="tabular" style="color: var(--color-ink-muted);">08:40 — Pétrissage terminé</div>
+              <div class="tabular" style="color: var(--color-ink-muted);">08:40 — Pointage démarré</div>
             </div>
-          </div>
-
-          <!-- Précision sur les issues sans forcer la cuisson -->
-          <div style="font-size: 0.75rem; color: var(--color-ink-subtle); line-height: 1.4; padding: 0 4px;">
-            La préparation peut se terminer avant la cuisson, par exemple pour conserver la pâte crue.
           </div>
         </div>
 
-        <!-- Sticky Bottom Action Bar : Action unique Terminer le pointage -->
+        <!-- Action dominante unique en bas : Terminer le pointage -->
         <footer class="bottom-bar">
-          <button type="button" class="btn-primary" onclick="showToast('preparation', 'Pointage validé (maquette) — passage illustré au Façonnage')">
+          <button type="button" class="btn-primary" onclick="finishCurrentStep()">
             Terminer le pointage
           </button>
         </footer>
-
-        <!-- Toast Notification -->
         <div class="toast" id="toast-preparation"></div>
       </div>
     </div>
 
   </main>
 
-  <!-- === JAVASCRIPT AUTONOME (Navigation, Thèmes, Menus, Modale) === -->
+  <!-- === MODALE D'INFORMATION ACCESSIBLE (SHEET) === -->
+  <dialog class="sheet-overlay" id="sheetOverlay" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" onclick="if(event.target === this) closeHelp();">
+    <div class="sheet-card">
+      <div class="sheet-header">
+        <h2 class="sheet-title" id="sheetTitle">Information</h2>
+        <button type="button" class="icon-btn" aria-label="Fermer l'aide" onclick="closeHelp()">✕</button>
+      </div>
+      <div class="sheet-body" id="sheetBody"></div>
+    </div>
+  </dialog>
+
+<dialog class="sheet-overlay" id="mockActionDialog" aria-labelledby="mockActionTitle"><div class="sheet-card"><div class="sheet-header"><h2 id="mockActionTitle" class="sheet-title"></h2><button class="icon-btn" type="button" aria-label="Fermer" onclick="closeActionDialog()">✕</button></div><div id="mockActionBody" class="sheet-body"></div><div style="display:flex;gap:8px"><button class="btn-secondary" type="button" onclick="closeActionDialog()">Annuler</button><button class="btn-primary" id="mockActionSubmit" type="button">Appliquer</button></div></div></dialog>
+  <!-- === SCRIPTS AUTONOMES === -->
   <script>
-    // Gestion des Thèmes (Clair par défaut, Sombre chaud, AMOLED)
+    // Base documentaire d'aide contextuelle (9 entrées obligatoires)
+    const HELP_TOPICS = {
+      anchor: {
+        title: "Quantité et ancre de formule",
+        content: "Une formule Flourprint possède exactement une ancre active : Farine totale, Masse de pâte finale (après pertes déclarées) ou Nombre de pâtons. Les grammes de chaque ingrédient découlent toujours de cette ancre et des pourcentages du boulanger."
+      },
+      hydration: {
+        title: "Hydratation et balance d'eau",
+        content: "L'hydratation est le total de toute l'eau apportée par les ingrédients (eau liquide, lait, eau liée de la levure) rapportée à la farine totale. Le produit utilise exclusivement le terme 'Hydratation'. En mode verrouillé, l'eau liquide absorbe les variations des autres ingrédients. Sur une pâte enrichie sans eau pure (comme le Pain au lait), le verrouillage est non supporté car aucun ingrédient ne peut absorber le verrou."
+      },
+      bakerPct: {
+        title: "Pourcentages du boulanger (% du boulanger)",
+        content: "Chaque ingrédient de pâte est exprimé en points de pourcentage par rapport à la farine totale (100 %). Les farines du mélange sont quantifiées en '% de la farine'. Les composants distinguent la part de farine totale allouée et leur hydratation propre."
+      },
+      preparations: {
+        title: "Composants, préferments & ratios",
+        content: "Les préferments (poolish, biga) et échaudages (tangzhong, yudane) prélèvent leur farine et leur eau sur les totaux de la recette. Pour le tangzhong, le ratio farine : eau (ex. 1 : 5 ou 1 : 6) détermine l'eau absorbée par l'empois d'amidon avant incorporation au pétrissage."
+      },
+      fermentation: {
+        title: "Modèle de fermentation et températures",
+        content: "Les durées de pointage et d'apprêt dépendent de la température ambiante, de la température cible de fin de pétrissage et de la friction mécanique. L'estimation couvre le développement théorique sans remplacer le contrôle manuel."
+      },
+      planning: {
+        title: "Planification et projections temporelles",
+        content: "La projection horaire est calculée d'après l'enchaînement des étapes au plus tôt (asap) et au plus tard (alap). Le préchauffage tourne en parallèle de l'apprêt ; le préferment se superpose à l'échaudage. La durée totale tient compte de ces parallélismes."
+      },
+      technique: {
+        title: "Technique et rabats (folds)",
+        content: "Les rabats renforcent le réseau glutineux sans modifier la durée planifiée globale. Chaque série est enregistrée dans le journal de session."
+      },
+      bakeFocus: {
+        title: "Étape active et déroulement",
+        content: "L'étape en cours affiche le temps restant prévu et l'heure de fin projetée. L'échéance du temps ne termine jamais automatiquement l'étape : c'est toujours le boulanger qui valide l'état réel de la pâte."
+      },
+      readyMark: {
+        title: "Repère de pâte prête à façonner",
+        content: "Enregistrer l'observation 'Prête à façonner' consigne le repère tactile et visuel dans le journal de la session, sans clore immédiatement le pointage. Cela permet de calibrer les futures sessions."
+      }
+    };
+
+    let lastFocusedElement = null;
+    function openHelp(topicKey) {
+      const topic = HELP_TOPICS[topicKey];
+      if (!topic) return;
+      lastFocusedElement = document.activeElement;
+      document.getElementById('sheetTitle').textContent = topic.title;
+      document.getElementById('sheetBody').innerHTML = topic.content;
+      document.getElementById('sheetOverlay').classList.add('open');
+      document.querySelector('.sheet-card button').focus();
+    }
+    function closeHelp() {
+      document.getElementById('sheetOverlay').classList.remove('open');
+      if (lastFocusedElement) lastFocusedElement.focus();
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('sheetOverlay').classList.contains('open')) closeHelp();
+        closeAllMenus();
+      }
+    });
+
+    // Gestion Thème
     function setTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
-      document.querySelectorAll('[data-theme-btn]').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-theme-btn') === theme);
-      });
+      document.querySelectorAll('[data-theme-btn]').forEach(b => b.classList.toggle('active', b.dataset.themeBtn === theme));
       updateUrlParam('theme', theme);
     }
 
-    // Gestion de la vue d'écran (all, recipes, recipe, preparation)
+    // Gestion Écrans
     function setScreen(screen) {
       const isAll = (screen === 'all');
       const containers = {
         recipes: document.getElementById('container-recipes'),
         recipe: document.getElementById('container-recipe'),
+        edit: document.getElementById('container-edit'),
         preparation: document.getElementById('container-preparation')
       };
-
       if (isAll) {
         document.body.classList.remove('single-screen-mode');
         Object.values(containers).forEach(el => el.style.display = 'flex');
       } else {
         document.body.classList.add('single-screen-mode');
-        Object.entries(containers).forEach(([key, el]) => {
-          el.style.display = (key === screen) ? 'flex' : 'none';
-        });
+        Object.entries(containers).forEach(([k, el]) => el.style.display = (k === screen ? 'flex' : 'none'));
       }
-
-      document.querySelectorAll('[data-screen-btn]').forEach(btn => {
-        btn.classList.toggle('active', btn.getAttribute('data-screen-btn') === screen);
-      });
-
+      document.querySelectorAll('[data-screen-btn]').forEach(b => b.classList.toggle('active', b.dataset.screenBtn === screen));
       updateUrlParam('screen', isAll ? null : screen);
       closeAllMenus();
     }
 
-    // Synchronisation paramètre d'URL sans rechargement
     function updateUrlParam(key, value) {
       const url = new URL(window.location.href);
-      if (value) {
-        url.searchParams.set(key, value);
-      } else {
-        url.searchParams.delete(key);
-      }
+      if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
       window.history.replaceState({}, '', url.toString());
     }
 
-    // Gestion des menus ⋯
+    // Menus ⋯
     const menuTriggers = new Map();
-    function closeMenu(menuId, restoreFocus = true) {
+    function closeMenu(menuId) {
       const menu = document.getElementById(menuId);
       if (!menu || !menu.classList.contains('open')) return;
       menu.classList.remove('open');
       const trigger = menuTriggers.get(menuId);
       trigger?.setAttribute('aria-expanded', 'false');
-      if (restoreFocus) trigger?.focus();
+      trigger?.focus();
     }
-    function closeAllMenus(restoreFocus = true) {
-      document.querySelectorAll('.action-menu.open').forEach(menu => closeMenu(menu.id, restoreFocus));
+    function closeAllMenus() {
+      document.querySelectorAll('.action-menu.open').forEach(m => closeMenu(m.id));
     }
     function toggleMenu(menuId) {
       const menu = document.getElementById(menuId);
       const wasOpen = menu.classList.contains('open');
       const trigger = document.querySelector('[aria-controls="' + menuId + '"]');
-      closeAllMenus(false);
+      closeAllMenus();
       if (!wasOpen) {
         menuTriggers.set(menuId, trigger);
         menu.classList.add('open');
         trigger?.setAttribute('aria-expanded', 'true');
-        [...menu.querySelectorAll('[role="menuitem"]')].find(el => el.offsetWidth > 0)?.focus();
-      } else trigger?.focus();
+        menu.querySelector('[role="menuitem"]')?.focus();
+      }
     }
     document.addEventListener('click', e => {
-      if (!e.target.closest('.action-menu') && !e.target.closest('[aria-controls]')) closeAllMenus(false);
+      if (!e.target.closest('.action-menu') && !e.target.closest('[aria-controls]')) closeAllMenus();
     });
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { closeAllMenus(); return; }
-      const menu = e.target.closest('.action-menu.open');
-      if (menu && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
-        const items = [...menu.querySelectorAll('[role="menuitem"]')].filter(el => el.offsetWidth > 0);
-        const current = items.indexOf(document.activeElement);
-        const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : (current + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
-        e.preventDefault(); items[next]?.focus();
-      }
-      if (e.key === 'Tab' && menu) closeMenu(menu.id, false);
-      if (['Enter', ' '].includes(e.key) && e.target.matches('.card-interactive[role="button"]')) { e.preventDefault(); e.target.click(); }
-    });
-    // Onglets de la fiche recette
+
+    // Onglets consultation recette
     function switchRecipeTab(tabName) {
-      const tabs = ['formula', 'planning', 'history'];
-      tabs.forEach(t => {
-        const btn = document.getElementById('tab-btn-' + t);
-        const content = document.getElementById('tab-content-' + t);
-        const isActive = (t === tabName);
-        btn.classList.toggle('active', isActive);
-        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-        content.style.display = isActive ? 'flex' : 'none';
+      ['formula', 'planning', 'history'].forEach(t => {
+        document.getElementById('tab-btn-' + t).classList.toggle('active', t === tabName);
+        document.getElementById('tab-btn-' + t).setAttribute('aria-selected', t === tabName ? 'true' : 'false');
+        document.getElementById('tab-content-' + t).style.display = (t === tabName ? 'flex' : 'none');
       });
     }
 
-    // Basculement Mode Édition de démonstration (Screen 2)
-    function toggleRecipeEditMode(isEditing) {
-      document.getElementById('tab-content-formula').style.display = isEditing ? 'none' : 'flex';
-      document.getElementById('tab-content-planning').style.display = 'none';
-      document.getElementById('tab-content-history').style.display = 'none';
-      document.querySelector('.tabs-bar').style.display = isEditing ? 'none' : 'flex';
-      
-      document.getElementById('recipe-edit-view').style.display = isEditing ? 'flex' : 'none';
-      document.getElementById('recipe-bottom-bar-consult').style.display = isEditing ? 'none' : 'flex';
-      document.getElementById('recipe-bottom-bar-edit').style.display = isEditing ? 'flex' : 'none';
-      
-      document.getElementById('recipe-bar-title').textContent = isEditing ? 'Modifier la recette' : 'Recette';
-      document.querySelectorAll('[data-reading-action]').forEach(el => el.style.display = isEditing ? 'none' : 'flex');
-      document.querySelectorAll('[data-editing-action]').forEach(el => el.style.display = isEditing ? 'flex' : 'none');
-      
-      if (!isEditing) {
-        switchRecipeTab('formula');
+    // Onglets édition recette (4 sections)
+    function switchEditSection(sectionKey) {
+      ['comp', 'parts', 'steps', 'res'].forEach(k => {
+        document.getElementById('tab-btn-edit-' + k).classList.toggle('active', k === sectionKey);
+        document.getElementById('tab-btn-edit-' + k).setAttribute('aria-selected', k === sectionKey ? 'true' : 'false');
+        document.getElementById('edit-section-' + k).style.display = (k === sectionKey ? 'flex' : 'none');
+      });
+    }
+
+    // Fixtures : Référence (Poolish) vs Pain au lait (Sans eau)
+    let currentFixture = 'poolish';
+    function setFixture(fix) {
+      currentFixture = fix;
+      document.querySelectorAll('[data-fixture-btn]').forEach(b => b.classList.toggle('active', b.dataset.fixtureBtn === fix));
+      if (fix === 'milk') {
+        // Pain au lait
+        document.getElementById('card-ref-title').textContent = 'Pain au lait';
+        document.getElementById('card-ref-dough').textContent = '865 g';
+        document.getElementById('card-ref-hydr').textContent = '≈ 53 %';
+        document.getElementById('card-ref-dur').textContent = '4 h 15 min';
+        document.getElementById('card-ref-parts').textContent = 'Enrichi · Sans eau pure';
+        
+        document.getElementById('read-recipe-name').textContent = 'Pain au lait';
+        document.getElementById('read-anchor-val').textContent = '500 g';
+        document.getElementById('read-dough-val').textContent = '865 g';
+        document.getElementById('read-hydr-val').textContent = '≈ 53 %';
+        document.getElementById('read-lock-badge').innerHTML = '<span style="color: var(--color-ink-muted);">Verrouillage non supporté (sans eau pure)</span>';
+        document.getElementById('read-incomplete-note').style.display = 'block';
+        
+        document.getElementById('read-flours-card').innerHTML = '<div class="value-row tabular"><div><div class="type-body-medium" style="font-weight: 600;">Farine de blé</div><span class="value-subordinate"></span></div><div class="value-data">100 % de la farine · 500 g</div></div>';
+        document.getElementById('read-ingredients-card').innerHTML = '<div class="value-row tabular"><span class="value-label">Lait (eau 87,5 % estimée)</span><span class="value-data">60 % du boulanger · 300 g</span></div><div class="value-row tabular"><span class="value-label">Beurre (eau inconnue)</span><span class="value-data">10 % du boulanger · 50 g</span></div><div class="value-row tabular"><span class="value-label">Sel</span><span class="value-data">2 % du boulanger · 10 g</span></div><div class="value-row tabular"><span class="value-label">Levure instantanée</span><span class="value-data">1 % du boulanger · 5 g</span></div>';
+        document.getElementById('read-components-section').style.display = 'none';
+        document.getElementById('read-disclosure-text').innerHTML = "Pâte enrichie sans eau pure : 262,5 g d'eau apportée par le lait (60 % du boulanger à 87,5 % d'eau). L'hydratation totale est de 52,5 %, affichée à l'entier le plus proche (≈ 53 %). La teneur en eau du beurre et de la levure est inconnue (composition incomplète, pas de borne arbitraire).";
+      } else {
+        // Poolish + tangzhong
+        document.getElementById('card-ref-title').textContent = 'Poolish + tangzhong';
+        document.getElementById('card-ref-dough').textContent = '1774 g';
+        document.getElementById('card-ref-hydr').textContent = '≈ 75 %';
+        document.getElementById('card-ref-dur').textContent = '20 h 10 min';
+        document.getElementById('card-ref-parts').textContent = 'Poolish 30 % · Tangzhong 5 %';
+
+        document.getElementById('read-recipe-name').textContent = 'Poolish + tangzhong';
+        document.getElementById('read-anchor-val').textContent = '1000 g';
+        document.getElementById('read-dough-val').textContent = '1774 g';
+        document.getElementById('read-hydr-val').textContent = '≈ 75 %';
+        document.getElementById('read-lock-badge').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg> Déverrouillée';
+        document.getElementById('read-incomplete-note').style.display = 'none';
+        document.getElementById('read-components-section').style.display = 'block';
+        toggleLockDemo(isLockedState);
+      }
+      showToast('recipes', 'Jeu de données chargé : ' + (fix === 'milk' ? 'Pain au lait' : 'Poolish + tangzhong'));
+    }
+
+    // Démonstration Verrouillage Hydratation (Réf Poolish)
+    let isLockedState = false;
+    function toggleLockDemo(locked) {
+      if (currentFixture === 'milk') {
+        showToast('recipe', 'Verrouillage impossible : aucune eau pure absorbante.');
+        return;
+      }
+      isLockedState = locked;
+      document.querySelectorAll('[data-lock-btn]').forEach(b => b.classList.toggle('active', (b.dataset.lockBtn === 'locked') === locked));
+      const badge = document.getElementById('read-lock-badge');
+      if (locked) {
+        badge.innerHTML = '<span style="color: var(--color-primary); font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Verrouillée à 75 %</span>';
+        document.getElementById('read-dough-val').textContent = '1773,8 g';
+      } else {
+        badge.innerHTML = '<span style="color: var(--color-ink-muted); display: inline-flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg> Déverrouillée</span>';
+        document.getElementById('read-dough-val').textContent = '1774 g';
       }
     }
 
-    // Affichage des notifications Toast de maquette
-    function showToast(screen, text) {
+    function toggleLockEditor() {
+      const btn = document.getElementById('btn-toggle-lock');
+      const isCurrentlyLocked = btn.classList.contains('active');
+      btn.classList.toggle('active', !isCurrentlyLocked);
+      btn.textContent = !isCurrentlyLocked ? "Hydratation verrouillée" : "Verrouiller l'hydratation";
+      btn.style.color = !isCurrentlyLocked ? "var(--color-primary)" : "inherit";
+      showToast('edit', !isCurrentlyLocked ? 'Hydratation verrouillée à 75 %' : 'Hydratation déverrouillée');
+    }
+
+    function setAnchorType(type) {
+      ['flour', 'dough', 'pieces'].forEach(t => document.getElementById('btn-anchor-' + t).classList.toggle('active', t === type));
+      const unitLbl = document.getElementById('label-anchor-unit');
+      const inputVal = document.getElementById('input-anchor-grams');
+      if (type === 'flour') { unitLbl.textContent = 'g farine'; inputVal.value = '1000'; }
+      else if (type === 'dough') { unitLbl.textContent = 'g pâte totale'; inputVal.value = '1774'; }
+      else { unitLbl.textContent = 'pâtons (ex. 2 × 887 g)'; inputVal.value = '2'; }
+    }
+
+    // Actions Préparation : +15 min precomputed snapshot
+    let isPlus15Active = false;
+    function triggerPlus15() {
+      isPlus15Active = !isPlus15Active;
+      if (isPlus15Active) {
+        document.getElementById('prep-remaining-time').textContent = '2 h 55 min';
+        document.getElementById('prep-planned-end').textContent = 'Fin prévue 11:55';
+        document.getElementById('prep-progress-bar').style.width = '10%';
+        document.getElementById('prep-progress-pct').textContent = '10 % du temps écoulé';
+        document.getElementById('up-step-1-time').textContent = '11:55';
+        document.getElementById('up-step-2-time').textContent = '12:10';
+        document.getElementById('up-step-3-time').textContent = '13:10';
+        document.getElementById('up-step-4-time').textContent = '14:10';
+        document.getElementById('up-step-5-time').textContent = '14:50';
+        addJournalEntry('09:00 — Durée du pointage allongée de 15 min (+15 min)');
+        showToast('preparation', '+15 min appliqué : fin décalée à 11:55');
+      } else {
+        document.getElementById('prep-remaining-time').textContent = '2 h 40 min';
+        document.getElementById('prep-planned-end').textContent = 'Fin prévue 11:40';
+        document.getElementById('prep-progress-bar').style.width = '11%';
+        document.getElementById('prep-progress-pct').textContent = '11 % du temps écoulé';
+        document.getElementById('up-step-1-time').textContent = '11:40';
+        document.getElementById('up-step-2-time').textContent = '11:55';
+        document.getElementById('up-step-3-time').textContent = '12:55';
+        document.getElementById('up-step-4-time').textContent = '13:55';
+        document.getElementById('up-step-5-time').textContent = '14:35';
+        showToast('preparation', 'Restauration de la durée initiale (3 h)');
+      }
+    }
+
+    function recordDoughReady() {
+      addJournalEntry('09:00 — Pâte jugée prête à façonner (repère fermentation)');
+      showToast('preparation', 'Observation enregistrée dans le journal (le pointage continue)');
+    }
+
+    function openDurationDialog() {
+      const val = prompt('Ajuster la durée planifiée du pointage (ex. 3h15 ou 195 min) :', '3 h 00 min');
+      if (val) {
+        addJournalEntry('09:00 — Durée ajustée à : ' + val);
+        showToast('preparation', 'Durée ajustée à ' + val);
+      }
+    }
+
+    function openNoteDialog() {
+      const note = prompt('Ajouter une note d’observation pour le pointage :', 'Pâte souple, bonne prise de volume.');
+      if (note) {
+        addJournalEntry('09:00 — Note : ' + note);
+        showToast('preparation', 'Note consignée dans le journal');
+      }
+    }
+
+    function finishCurrentStep() {
+      addJournalEntry('09:00 — Pointage validé et terminé. Passage au Façonnage.');
+      showToast('preparation', 'Étape terminée. Transition illustrée vers le Façonnage.');
+    }
+
+    function addJournalEntry(text) {
+      const card = document.getElementById('prep-journal-card');
+      const entry = document.createElement('div');
+      entry.className = 'tabular';
+      entry.style.color = 'var(--color-primary)';
+      entry.style.fontWeight = '600';
+      entry.textContent = text;
+      card.appendChild(entry);
+    }
+
+    function showToast(screen, msg) {
       const toast = document.getElementById('toast-' + screen);
       if (!toast) return;
-      toast.textContent = text;
+      toast.textContent = msg;
       toast.classList.add('visible');
       clearTimeout(toast._timer);
-      toast._timer = setTimeout(() => {
-        toast.classList.remove('visible');
-      }, 3000);
+      toast._timer = setTimeout(() => toast.classList.remove('visible'), 2800);
     }
 
-    // Initialisation depuis l'URL au chargement
+    // Initialisation synchrone URL
     window.addEventListener('DOMContentLoaded', () => {
-      const params = new URLSearchParams(window.location.search);
-      const theme = params.get('theme');
-      const screen = params.get('screen');
-
-      if (theme && ['light', 'dark', 'amoled'].includes(theme)) {
-        setTheme(theme);
-      } else {
-        setTheme('light');
-      }
-
-      if (screen && ['recipes', 'recipe', 'preparation'].includes(screen)) {
-        setScreen(screen);
-      } else {
-        setScreen('all');
-      }
+      const p = new URLSearchParams(window.location.search);
+      if (['light', 'dark', 'amoled'].includes(p.get('theme'))) setTheme(p.get('theme'));
+      if (['recipes', 'recipe', 'edit', 'preparation'].includes(p.get('screen'))) setScreen(p.get('screen'));
     });
   </script>
-</body>
+<script src="editor-help.js"></script><script src="editor-support.js"></script><script src="review-support.js"></script></body>
 </html>
