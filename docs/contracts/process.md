@@ -386,8 +386,10 @@ interface RelativeTimeline {
   With none known it is `unknown`. The `total` follows the same rule over all steps.
 - **Overlap is normal.** Group windows overlap and the total is not their sum; a branch that runs
   concurrently never lengthens the total as though it were sequential.
-- **Preheating.** With `alongside` steps (proposal #94) a preheat shows its required time and
-  its available window next to its timing; it adds to no span.
+- **Preheating.** A `beforeTarget` preheat (#94, option C chosen by the owner) is an overlapping
+  branch placed from its target: it shows its required time and its available window as two
+  separate readings next to its timing, its span ends when its target starts, and it never
+  lengthens the total or any other step.
 - **Nothing is stored twice.** The relative start and end are never persisted; they are derived
   from the durations and the dependencies, so a change of one duration changes every reading in
   Recipe and Planning together.
@@ -404,6 +406,12 @@ Information architecture for the Recipe tab (the interface, #35):
   open recipe, and never change the recipe. The disclosure is accessible (a button with
   `aria-expanded`, focus and touch targets) and usable in French and English on a narrow phone.
 - This asks for no accordion in the core and no replacement of Ionic.
+- An optional **Steps | Timeline** switch (owner decision of 2026-10-13, review on #97): Steps is
+  the default grouped list above; Timeline is a read-only lane view of the same projection, where
+  overlapping branches (the tangzhong during the cold poolish, the preheat during the proof) sit on
+  separate lanes. On a narrow phone it scrolls horizontally or zooms to a selected window rather
+  than squeezing the whole recipe. It is a view, not an editor and not a calendar: Planning anchors
+  the same projection to clock times.
 
 Examples (hand-computed; times are `+hh:mm` from the start of the first step, and the values are
 scheduled, not predictions of the biology). A poolish bread with a tangzhong:
@@ -427,9 +435,11 @@ scheduled, not predictions of the biology). A poolish bread with a tangzhong:
    nothing shows a "complete" envelope or a zero.
 4. **Concurrent branch.** Removing the tangzhong from the process does not change the total, and
    adding it back does not lengthen it.
-5. **Preheat.** With a legacy `alap` preheat of 30 min, or an `alongside` one placed so that
-   heating starts at `+29:15`, the cooking group's window starts at `+29:15` and overlaps the
-   last 30 min of the main dough's proof; no group's span grows by the 30 min.
+5. **Preheat.** A `beforeTarget` preheat after shaping with 30 min required starts at `+29:15`
+   (30 min before the bake at `+29:45`); the proof stays one 2 h step. The cooking group's window
+   starts at `+29:15` and overlaps the last 30 min of the proof; no span grows by the 30 min. A
+   legacy `alap` preheat of 30 min gives the same times here (its hard dependency only shows when
+   the window is too short).
 6. **Planning anchoring.** Planning starts the same process on Saturday 06:00: each step's clock
    time is 06:00 plus its relative start, and the relative readings are unchanged.
 7. **Not persisted.** Saving the recipe stores no group, no relative time and no open or closed

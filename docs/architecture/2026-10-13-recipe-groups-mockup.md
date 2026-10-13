@@ -79,17 +79,28 @@ The two prepared components have joined the main dough without double counting.
 | Bake         |                     40 min |      +29:45 → +30:25 |
 
 The cooking group window is 70 min, but the preheat overlaps the main-dough group's proof. Its
-own 30 min requirement is not added to the critical path (#94).
+own 30 min requirement is not added to the critical path, and no step waits for it (#94).
 
 </details>
 
 ## Notes recorded with the mockup
 
 - The preheat trigger at `+29:15` is 30 min before the loading at `+29:45`, in the middle of the
-  proof. A legacy `alap` preheat gives these times. With an `alongside` preheat (proposal #94),
-  heating starts at a step boundary, so the proof would be two steps (1 h 30 min, then 30 min)
-  with the preheat between them. **Open question for the owner:** is that acceptable, or should an
-  `alongside` step be able to start a given time before its target?
+  proof, and the proof stays **one** step. The owner chose this (option C, 2026-10-13, review on
+  #97): a preheat is an overlapping branch scheduled from its target, `requiredWarmupS` before it
+  (`beforeTarget`, #94). Starting at the end of shaping (2 h of heating) remains an explicit
+  choice, never the default, and the proof is never split to place a trigger.
+- **Steps | Timeline.** Recipe keeps the grouped list as its default view and may offer a
+  read-only lane view of the same projection, in which overlap is visible:
+
+```text
+Relative time:      +27:45            +29:15  +29:45     +30:25
+                    |------------------|-------|----------|
+Main dough / Proof  [===========================]
+Oven / Preheat                         [=======]
+Cooking / Bake                                 [==========]
+```
+
 - Groups are derived (by subject and operation), not stored. A group with an unknown step is
   shown as provisional, with its reasons, and claims no definitive envelope.
 - The derived view model below is illustrative and not persisted recipe data.
@@ -115,5 +126,5 @@ type GroupDisplay = {
 
 ## Status
 
-The contract of the timeline is a proposal after 0.2.0 (#91 to #94). The interface slice
-follows an accepted contract, in 0.3.0 or later.
+The contract of the timeline is a proposal for 0.3.0, on `canary` (#91 to #94, #96, #97). The
+interface slice follows an accepted contract.
