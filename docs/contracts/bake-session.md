@@ -1,7 +1,8 @@
 # Contract: bake session (D7)
 
-Status: **approved** (issue #30); lifecycle and outcome amended for contract `0.11.0` (#21).
-Related issues: #6, #21, #24, #28.
+Status: **approved** (issue #30); lifecycle and outcome amended for contract `0.11.0` (#21). The
+scaled preparation (below) is a **proposal** of 2026-10-13, pending the owner's approval.
+Related issues: #6, #21, #24, #28, #35.
 
 ## Preparation and persisted names
 
@@ -185,6 +186,46 @@ active bake. `AddObservation`
 also applies to a finished or abandoned bake (the review after the bake: crumb, flavor, what went
 wrong); `kind: 'doughReady'` still needs an active bake. It never reopens the bake. Business errors are typed codes
 (`StepAlreadyCompleted`, `DependenciesNotCompleted`, `BakeNotActive`, …).
+
+## Scaled preparation
+
+A Preparation may start at a different quantity than its recipe revision, without creating a
+revision: the baker wants 600 g of flour today from a recipe written for 1000 g. The recipe is not
+edited, and nothing about the quantity is saved as a new version.
+
+`StartBake` accepts an optional `scaledFrom: { anchor: Anchor }`, the anchor of the revision the
+snapshot was scaled from (`formula.md`, Anchor).
+
+- The command's `formula` is the revision's formula **rescaled** (`SetAnchor(anchor, 'rescale')`,
+  `formula.md`): the same percentages, flour blend, components and shares, with a new anchor. The
+  application computes it; the domain validates the formula as it validates any other.
+- The snapshot's `formula` and `resolvedFormula` are the scaled ones. `revisions.formula` still
+  names the revision, which is neither modified nor given a new version.
+- `scaledFrom.anchor` is a valid anchor: `grams` greater than 0, or `count` an integer of at least
+  1 and `gramsEach` greater than 0. Otherwise `StartBake` is refused with `InvalidCommand`,
+  `field: 'scaledFrom'`. The domain does not compare it with the revision, which it does not
+  hold. An anchor equal to the formula's means no scaling; the interface then omits `scaledFrom`.
+- What scales: every quantity derived from the formula (grams of each ingredient, flour per
+  flour, components, water). What does not: step order, durations, temperatures, incorporation
+  shares, equipment settings and readiness. The first fermentation model reads percentages and
+  temperatures, never the quantity (`fermentation.md`), so its estimates and accepted
+  suggestions stay valid; a model that reads the quantity must say so and estimate at the scaled
+  quantity.
+- Later formula overrides during the bake (`AdjustFormula`) apply to the scaled formula, as they
+  do to any snapshot.
+
+Examples (hand-computed; the revision has a flour total of 1000 g, water 72 %, salt 2 %, instant
+yeast 0.3 %, so 1000 + 720 + 20 + 3 = 1743 g of dough):
+
+1. **Scale by flour.** New anchor `flourTotal` 600 g: water 432 g, salt 12 g, yeast 1.8 g, dough
+   1045.8 g. `scaledFrom.anchor` is `{ kind: 'flourTotal', grams: 1000 }`. The percentages are unchanged.
+2. **Scale by dough weight.** New anchor `doughWeight` 1000 g: flour 1000 / 1.743 ≈ 573.7 g,
+   water ≈ 413.1 g, salt ≈ 11.5 g, yeast ≈ 1.7 g.
+3. **Same anchor.** 1000 g of flour again: no `scaledFrom`, the same as any other start.
+4. **The recipe is untouched.** Version 3 stays the head of the recipe after a scaled start; the
+   history of the Preparation shows 600 g beside the recipe's 1000 g.
+5. **Durations do not scale.** A 6 h bulk stays 6 h at 600 g.
+6. **Refused.** `scaledFrom: { anchor: { kind: 'flourTotal', grams: 0 } }`: `InvalidCommand`.
 
 ## Repository (SQLite adapter)
 
