@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint agent handoff'
+  short_description: 'Write a relayable message between Flourprint agents'
+  default_prompt: 'Use $flourprint-agent-handoff to write the message for the owner to relay.'
