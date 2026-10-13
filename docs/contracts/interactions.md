@@ -1,7 +1,7 @@
 # Contract: formula analysis and ingredient interactions (#27)
 
-Status: **proposed**, revision 2 after the owner's audit of 2026-10-13 (#89). Target: **after
-0.2.0** (owner decision: not part of the 0.2.0 release). Related issues: #26, #27, #9, #20, #33.
+Status: **proposed**, revision 2 after the owner's audit of 2026-10-13 (#89). Target: **0.3.0**, on
+`canary` (owner decision: not part of the 0.2.0 release; ADR 0018). Related issues: #26, #27, #9, #20, #33.
 Capability level: **N1 + qualitative analyses** (`capability-levels.md`): sourced, tested, never
 blocking. No quantitative interaction model ships with this contract.
 
@@ -332,7 +332,7 @@ values are computed by hand.
 | `fermentation.md` | none; a later change may read the salt balance instead of the id `salt`                |
 | `persistence.md`  | none (the snapshot is a JSON document)                                                 |
 | Code              | `core/domain` `analyzeFormula`, salt balance, rules; `application` context; UI and CLI |
-| Versions          | `CONTRACT_VERSION` minor bump (after 0.2.0); ruleset `flourprint.interactions` `1.0.0` |
+| Versions          | `CONTRACT_VERSION` minor bump (on canary); ruleset `flourprint.interactions` `1.0.0`   |
 | Science           | `docs/science/interactions.md`: immutable, versioned source records per mechanism rule |
 | Fixtures          | independent cases for examples 1, 2, 4 and 8                                           |
 
@@ -349,5 +349,5 @@ From the audit of 2026-10-13 (#89):
 4. **No new thresholds**: approved; the model bounds are applicability conditions, not physical
    thresholds.
 5. **Display apart from the checks**, with reasons, data quality and source: approved.
-6. **Delivery**: not in 0.2.0; this pull request stays a draft until 0.2.0 is merged into `main`,
-   then moves to the post-0.2 branch.
+6. **Delivery**: not in 0.2.0; this pull request targets `canary` (0.3.0, ADR 0018) and stays a
+   draft until the owner approves the revised rules.
