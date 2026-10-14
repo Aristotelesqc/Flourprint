@@ -253,9 +253,11 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   hint for automatic outcomes ("Déduit des étapes de préparation.") and an authored indicator ("Défini pour cette recette.")
   when explicitly chosen. The fermentation card structures details into labelled groups
   with a recognizable warning icon (⚠️) and plain localized wording, never rendering out-of-domain or unsupported
-  predictions as 0 min–0 min ranges. Bottom outer scroll content reserves clearance (`pb-32`) to clear the
-  primary floating footer at 360 px viewports and enlarged text.
-- **Planning:** shorter summary wording (`{step} se termine {when}` / `{step} ends {when}`), single discoverable
+  predictions as 0 min–0 min ranges. Bottom outer scroll content uses ordinary trailing spacing (`pb-6`)
+  alongside the Ionic footer's reserved viewport, rather than duplicating the footer height. The final
+  result remains fully visible above the primary action at 360 px and with enlarged text, without a dead gap.
+- **Planning:** concise step-first summary wording (`{step} · fin {when}` / `{step} · end {when}`, with
+  `début` / `start` for the reverse projection), single discoverable
   pencil edit affordance per step navigating to Recipe step editing, linear dependency omission matching Recipe,
   and clear preview explanations when raw fields are invalid.
 - **Editing:** Composition, Components, Steps and Result sections share the same draft. Preserve mounted raw

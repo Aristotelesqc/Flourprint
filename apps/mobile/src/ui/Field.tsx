@@ -45,6 +45,7 @@ interface FieldProps<V> {
   /** Shown while empty: a value that applies without being stored (e.g. an inherited one). */
   readonly placeholder?: string;
   readonly disabled?: boolean;
+  readonly describedBy?: string;
 }
 
 /**
@@ -63,6 +64,7 @@ const Field = <V,>({
   width = '100%',
   placeholder,
   disabled = false,
+  describedBy,
 }: FieldProps<V>) => {
   const id = useId();
   const errorId = `${id}-error`;
@@ -138,7 +140,9 @@ const Field = <V,>({
           disabled={disabled}
           aria-label={unit ? `${label} (${unit})` : label}
           aria-invalid={invalid}
-          aria-describedby={invalid ? errorId : undefined}
+          aria-describedby={
+            [describedBy, invalid ? errorId : undefined].filter(Boolean).join(' ') || undefined
+          }
           className={`fp-input w-full ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
           inputMode="decimal"
           placeholder={placeholder}
@@ -176,6 +180,7 @@ interface NumberFieldProps {
   readonly maximumFractionDigits?: number;
   readonly invalidText?: string;
   readonly disabled?: boolean;
+  readonly describedBy?: string;
 }
 
 export const NumberField = ({

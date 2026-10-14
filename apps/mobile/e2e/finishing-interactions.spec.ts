@@ -5,6 +5,52 @@ import type { Process } from '@flourprint/core/domain';
 import milkFixture from '../../../docs/contracts/fixtures/enriched-milk-butter.json' with { type: 'json' };
 
 const sheet = (page: Page) => page.locator('ion-modal:not(.overlay-hidden)');
+
+for (const theme of ['light', 'dark', 'amoled'] as const) {
+  test(`consultation result clears the footer without a dead gap at 360px: ${theme}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto('/advanced');
+    await routed(page)
+      .getByRole('button', {
+        name: theme === 'light' ? /^Clair$/ : theme === 'dark' ? /^Sombre$/ : /^AMOLED$/,
+      })
+      .click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    await routed(page).locator('ion-back-button').click();
+    await routed(page).getByText('Poolish + tangzhong', { exact: true }).click();
+    await expect(routed(page)).toHaveCount(1);
+    const result = routed(page).getByTestId('recipe-method').getByTestId('recipe-outcome');
+    await expect(result).toContainText('Résultat');
+    const content = routed(page).locator('ion-content');
+    const footer = routed(page).locator('ion-footer');
+    for (const fontSize of [16, 20]) {
+      await page.addStyleTag({ content: `html, body { font-size: ${fontSize}px !important; }` });
+      await content.evaluate(async (host) => {
+        const scroll = await (
+          host as HTMLElement & { getScrollElement(): Promise<HTMLElement> }
+        ).getScrollElement();
+        scroll.scrollTop = scroll.scrollHeight;
+      });
+      await expect
+        .poll(async () => {
+          const [end, bar] = await Promise.all([result.boundingBox(), footer.boundingBox()]);
+          return end && bar ? bar.y - (end.y + end.height) : -1;
+        })
+        .toBeGreaterThanOrEqual(16);
+      const [end, bar] = await Promise.all([result.boundingBox(), footer.boundingBox()]);
+      expect(end).not.toBeNull();
+      expect(bar).not.toBeNull();
+      if (!end || !bar) throw new Error('Result and primary footer must have rendered bounds');
+      expect(bar.y - (end.y + end.height)).toBeLessThanOrEqual(96);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        360,
+      );
+    }
+  });
+}
+
 const importRecipe = async (page: Page, process: Process) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto('/advanced');

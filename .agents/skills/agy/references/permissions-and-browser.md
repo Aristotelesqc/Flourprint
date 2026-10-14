@@ -61,6 +61,12 @@ agy --conversation <recorded-id> --model gemini-3.8-flash-high --mode plan --log
   conversation. The observed CLI required a second Ctrl+C to exit; verify exit before attaching
   another terminal to the same conversation. An interrupted backend turn is not a completed report.
 
+A later server restart stopped the owned children and presented Read URL and browser MCP
+confirmations again, even when resuming the exact coordinator conversation. Conversation IDs
+do not prove that runtime grants survived a server restart. Re-establish required tools through
+normal scoped confirmations and verify their actual results before creating new reviewers;
+keep interrupted reports distinct from completed acceptance evidence.
+
 The observed coordinator grants for Read URL and browser navigation/snapshot/screenshot/click
 were inherited by its actual invoked subagent. Verify this with the **first child's real tool
 result**; do not assume inheritance for another version, conversation or newly requested tool.
@@ -79,6 +85,15 @@ frequently while new tools are introduced. Prefer a normal conversation-scoped t
 where the UI offers it and the repeated scope is authorized. After an expiry/denial, record
 the untested case or obtain a fresh scoped permission-state decision before dependent access;
 do not silently retry the failed call.
+
+When the parent terminal was lost, later children returned source/bundle analyses after tool
+confirmation timeouts. A coordinator initially described these as runtime passes; inspection of
+the actual reports corrected that classification. Retain the partial reports rather than count
+them as independent app use. A verified recovery was attaching a PTY directly to the exact
+existing Gemini child conversation, keeping the parent idle and browser journeys sequential.
+Normal child-scoped navigation and click confirmations then surfaced and returned actual UI
+results. This remains the original child's review, rather than parent proxy use or a substitute
+provider. Verify the child is idle before attaching, and verify each needed grant/result again.
 
 ## Supply the missing browser capability when authorized
 

@@ -37,6 +37,15 @@ test('undo never silently destroys invalid raw input', async ({ page }) => {
   await water.fill('720');
   await water.press('Enter');
   await water.fill('abc');
+  await water.press('Tab');
+  await expect(water).toHaveAttribute('aria-invalid', 'true');
+  await expect(water).toHaveAttribute('aria-describedby', /.+/);
+  expect(
+    await water.evaluate((input) => {
+      const id = input.getAttribute('aria-describedby');
+      return id ? document.getElementById(id)?.textContent : undefined;
+    }),
+  ).toContain('Entrer un nombre');
   await footer(page)
     .getByRole('button', { name: 'Annuler', exact: true })
     .evaluate((button) => (button as HTMLElement).click());

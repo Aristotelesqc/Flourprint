@@ -532,8 +532,8 @@ export const en = {
   'process.startsNow':
     'The preparation starts when tapped: its timers run from that moment. The times above are for planning.',
   'process.when.readyBy': 'End of {step}',
-  'process.summary.startAt': '{step} ends {when}',
-  'process.summary.readyBy': 'Start {step} {when}',
+  'process.summary.startAt': '{step} · end {when}',
+  'process.summary.readyBy': '{step} · start {when}',
   'process.unknownDay': 'Time unknown',
   'process.target': 'Ready at the end of',
   'process.alap': 'As late as possible',
@@ -1720,8 +1720,8 @@ export const fr: Catalog = {
   'process.startsNow':
     'La préparation démarre au moment du toucher : ses minuteries partent de là. Les heures ci-dessus servent à planifier.',
   'process.when.readyBy': 'Fin : {step}',
-  'process.summary.startAt': '{step} se termine {when}',
-  'process.summary.readyBy': 'Début : {step}, {when}',
+  'process.summary.startAt': '{step} · fin {when}',
+  'process.summary.readyBy': '{step} · début {when}',
   'process.unknownDay': 'Heure inconnue',
   'process.target': 'Prêt à la fin de',
   'process.alap': 'Le plus tard possible',

@@ -308,6 +308,17 @@ for (const english of [false, true]) {
     });
     await expect(lock).toBeVisible();
     await lock.click();
+    const rate = routed(page).getByLabel(english ? 'Hydration (%)' : 'Hydratation (%)', {
+      exact: true,
+    });
+    await expect(rate).toBeDisabled();
+    await expect(rate).toHaveAttribute('aria-describedby', /.+/);
+    expect(
+      await rate.evaluate((input) => {
+        const id = input.getAttribute('aria-describedby');
+        return id ? document.getElementById(id)?.textContent : undefined;
+      }),
+    ).toContain(english ? 'locked' : 'verrouillée');
     await footer(page)
       .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
       .click();
@@ -325,6 +336,8 @@ for (const english of [false, true]) {
         exact: true,
       })
       .click();
+    await expect(rate).toBeEnabled();
+    await expect(rate).not.toHaveAttribute('aria-describedby', /.+/);
     await footer(page)
       .getByRole('button', { name: english ? 'Save v3' : 'Enregistrer v3', exact: true })
       .click();

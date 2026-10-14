@@ -1129,7 +1129,7 @@ const RecipePageContent = () => {
         )}
 
         {!isEditing && (
-          <div hidden={tab !== 'formula'} className="pb-32">
+          <div hidden={tab !== 'formula'} className="pb-6">
             <FormulaConsultation
               formula={draft.formula}
               {...(resolved.ok ? { resolved: resolved.value } : {})}

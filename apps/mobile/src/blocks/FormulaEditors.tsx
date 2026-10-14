@@ -51,6 +51,7 @@ export const Hydration = forwardRef<
   }
 >(({ formula, resolved, onEdit, onExplain }, ref) => {
   const { t, wholePct } = useMessages();
+  const lockedHintId = useId();
   const target = formula.waterTarget;
   const water = target?.absorbInto ?? absorbingWater(formula);
   const label = t('formula.stat.hydration');
@@ -83,6 +84,7 @@ export const Hydration = forwardRef<
                 size="large"
                 width="7.5rem"
                 disabled={target !== undefined}
+                {...(target !== undefined ? { describedBy: lockedHintId } : {})}
                 value={target?.totalWaterPct ?? resolved.totalWaterPct}
                 maximumFractionDigits={0}
                 onCommit={(value) =>
@@ -119,7 +121,9 @@ export const Hydration = forwardRef<
               </button>
             </span>
             {target !== undefined && (
-              <span className="text-xs text-muted">{t('formula.hydration.lockedExplain')}</span>
+              <span id={lockedHintId} className="text-xs text-muted">
+                {t('formula.hydration.lockedExplain')}
+              </span>
             )}
           </div>
         ) : (
