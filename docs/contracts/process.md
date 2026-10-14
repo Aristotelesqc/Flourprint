@@ -161,7 +161,7 @@ validates the result like any process, and a validation failure is also a refusa
    the dependencies around it.
 3. **Order only.** The step moves in the list and **no dependency changes** when the new list is
    still a valid topological order. This is the move of an independent step (a tangzhong branch,
-   a preheat's display position).
+   a preheat's display position). An order-only move keeps every field, the `subject` included.
 4. **Chain move.** When order only is invalid because the step, or a step that depends on it,
    would come before one of its dependencies, the step is moved **along the chain** under the
    conditions below. The result lists `changedEdges` (`{ step, before, after }` for each
@@ -170,16 +170,31 @@ validates the result like any process, and a validation failure is also a refusa
    dependency) or `AmbiguousMove` (with a `reason`). The baker then edits the dependencies
    explicitly; no guess is made.
 
+**Subject of a step.** One predicate decides which work a step belongs to, here and in
+duplication: `subjectOf(step)` is the step's explicit `subject` when it has one (component phases,
+#96), else the component whose id is the step's id, else the main dough. A chain move never
+changes a step's subject.
+
 The chain move applies only when all of these hold; any other case is `AmbiguousMove`:
 
 - The step has at most one dependency `P` and at most one dependent `T`.
 - The target `after` has at most one dependent `B`, counted after the step is taken out. The
   target is not a descendant of the step.
+- **Same subject.** `P`, `T`, `after` and `B`, where present, have the step's subject; otherwise
+  `reason: 'crossesWorkpiece'`. A component's steps are rearranged among themselves; a step never
+  crosses into another component or into the main dough by a drag.
+- **No incorporation moved.** The step carries no `incorporations` (`reason: 'incorporationStep'`):
+  moving the step where a component or ingredient joins the dough changes what the dough holds
+  when. It is moved by order only, or its dependencies are edited explicitly.
 - The step is not an `alap` step (it can only be moved by order only; its dependencies and its
-  "as late as possible" meaning are never rewritten by a drag), is not the step of a component
-  (its `id` is a component id) and carries no `incorporations`: those wait for the contract of
-  component phases (`reason: 'workpieceStep'`). An `alongside` step (the preheat of Steps
-  alongside) is moved by chain move, since its position is its start.
+  "as late as possible" meaning are never rewritten by a drag).
+- The step is not a `beforeTarget` step (Steps before a target). Nothing depends on it and its
+  start comes from its target, not from its list position, so a drag only moves it by order only;
+  when order only is invalid the move is refused (`reason: 'scheduledFromTarget'`). Its
+  `dependsOn`, `target`, `startRule` and `requiredWarmupS` change only by explicit edits.
+- The result passes validation, including "every step of a component is upstream of its
+  incorporation" (#96): a move that would incorporate a component before one of its phases ends
+  is refused as a whole.
 
 The chain move then does exactly this, and nothing else:
 
@@ -197,8 +212,9 @@ The chain move then does exactly this, and nothing else:
 not an exact clone and the interface does not present it as one: it opens the copy for review and
 lists what was not carried.
 
-- Carried: `operation`, `label`, `endCriterion`, `conditions`, `technique` and `equipment` (the
-  same item references, no new copy).
+- Carried: `operation`, `label`, `endCriterion`, `conditions`, `technique`, `equipment` (the
+  same item references, no new copy) and an explicit `subject` (the copy works on the same
+  component and adds no mass: the grams come from the formula's allocation, once).
 - `plannedDurationS` is carried only when the original's duration is the baker's (manual). A
   `durationMode: 'model'` original gives a copy **without a duration** (unknown): a model-driven
   duration belongs to one dough step (`fermentation.md`) and a literal copy of a prediction is
@@ -206,8 +222,13 @@ lists what was not carried.
 - Not carried: `incorporations` (the shares would exceed 100), `accepted`, `durationMode`.
 - The copy is `asap` and depends on the original, whose dependents now depend on the copy, as
   `InsertStepAfter` does. `NotDuplicable` is returned, with a `reason`, for an `alap` or
-  `alongside` step (a copy would be a new serial duration or a second heating target) and for the
-  step of a component (`workpieceStep`).
+  `beforeTarget` step (a copy would be a new serial duration or a second heating target) and for
+  the legacy step whose **id** is a component's (`workpieceStep`): a second step with that role
+  would be ambiguous. A step with an explicit component `subject` is duplicable.
+- **Preview.** The result carries the reprojected plan, so the interface shows what the copy does
+  to the schedule before it is kept: a copied 3 h bulk moves every later step by 3 h. A copy
+  without a duration is shown as "duration required", and the steps after it are `unknownAfter`
+  that copy until the baker gives one: never 0.
 - The id is new, unique and never reused (derived from the operation, as for an added step).
 
 ### Undo, redo and reset
@@ -247,14 +268,36 @@ preheat]`. In: `shape` `[bulk]`, `proof` → `[shape]`. `preheat` untouched.
    (it is `alap`); order only is invalid because `bake` depends on it: `MoveBreaksDependencies`.
 7. **Unknown.** `stepId: 'missing'`: `UnknownReference`, not `unchanged`.
 8. **Duplicate, manual.** `bulk` (manual, 3 h) `[mix]`, `shape` `[bulk]`: `bulk-2` (3 h, same
-   technique) `[bulk]`, `shape` → `[bulk-2]`; the copy carries no incorporation.
+   technique) `[bulk]`, `shape` → `[bulk-2]`; the copy carries no incorporation. The preview
+   shows `shape` and every later step 3 h later.
 9. **Duplicate, model-driven.** The same with `durationMode: 'model'`, 6 h: `bulk-2` has no
-   duration and is manual; the interface asks for one.
-10. **Not duplicable.** An `alap` `preheat`, an `alongside` preheat, or the step whose id is a
-    component's: `NotDuplicable`.
-11. **Undo.** A formula edit then a step move, then undo twice: the draft shows the starting
+   duration and is manual; the interface shows "duration required" and the steps after it are
+   `unknownAfter: ['bulk-2']`, never planned with 0.
+10. **Not duplicable.** An `alap` `preheat`, a `beforeTarget` preheat, or the legacy step whose id
+    is a component's: `NotDuplicable`.
+11. **Duplicate a component phase.** `poolish-fridge` (`preferment`, 8 h, 4 °C, subject
+    `{ kind: 'component', id: 'poolish' }`) `[poolish-counter]`, the main `frasage`
+    `[poolish-fridge]`: `poolish-fridge-2` (8 h, 4 °C, same subject) `[poolish-fridge]`, the
+    `frasage` → `[poolish-fridge-2]`. The poolish still joins once, with the same grams.
+12. **Same-subject chain.** All with subject poolish: `poolish-prepare`, `poolish-counter`
+    `[poolish-prepare]`, `poolish-fridge` `[poolish-counter]`, `poolish-rest` `[poolish-fridge]`;
+    then the main `frasage` `[poolish-rest]`. Move `poolish-fridge` after `poolish-prepare`: `P` =
+    `poolish-counter`, `T` = `poolish-rest`, target `poolish-prepare` with dependent `B` =
+    `poolish-counter`, all poolish. Out: `poolish-rest` → `[poolish-counter]`. In:
+    `poolish-fridge` `[poolish-prepare]`, `poolish-counter` → `[poolish-fridge]`. `changedEdges`:
+    `poolish-rest`, `poolish-fridge`, `poolish-counter`; the `frasage` is untouched. Moving
+    `poolish-rest` instead (its dependent `T` is the main-dough `frasage`): `AmbiguousMove`,
+    `crossesWorkpiece`, nothing changes.
+13. **Incorporation join.** The main `frasage` incorporating the poolish is dragged above
+    `poolish-fridge`: order only is invalid, and the step carries incorporations:
+    `AmbiguousMove`, `incorporationStep`.
+14. **A preheat scheduled from its target.** A `beforeTarget` preheat `[shape]` dragged after
+    `proof`: order only is valid (nothing depends on it), its `dependsOn`, `target` and warm-up are
+    unchanged, and its planned start is still computed from the bake. Dragged above `shape`:
+    order only is invalid; `AmbiguousMove`, `scheduledFromTarget`.
+15. **Undo.** A formula edit then a step move, then undo twice: the draft shows the starting
     formula and process, each undo saved; a new edit then clears the redo.
-12. **Reset.** A `revision` draft at revision 3 with edits: reset offers "back to revision 3" with
+16. **Reset.** A `revision` draft at revision 3 with edits: reset offers "back to revision 3" with
     a confirmation, and revision 3 itself is untouched.
 
 ## Projection
