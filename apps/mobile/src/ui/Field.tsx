@@ -44,6 +44,8 @@ interface FieldProps<V> {
   readonly width?: string;
   /** Shown while empty: a value that applies without being stored (e.g. an inherited one). */
   readonly placeholder?: string;
+  readonly disabled?: boolean;
+  readonly describedBy?: string;
 }
 
 /**
@@ -61,6 +63,8 @@ const Field = <V,>({
   size = 'regular',
   width = '100%',
   placeholder,
+  disabled = false,
+  describedBy,
 }: FieldProps<V>) => {
   const id = useId();
   const errorId = `${id}-error`;
@@ -133,10 +137,13 @@ const Field = <V,>({
       >
         <input
           id={id}
+          disabled={disabled}
           aria-label={unit ? `${label} (${unit})` : label}
           aria-invalid={invalid}
-          aria-describedby={invalid ? errorId : undefined}
-          className="fp-input w-full"
+          aria-describedby={
+            [describedBy, invalid ? errorId : undefined].filter(Boolean).join(' ') || undefined
+          }
+          className={`fp-input w-full ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
           inputMode="decimal"
           placeholder={placeholder}
           enterKeyHint="done"
@@ -169,19 +176,31 @@ interface NumberFieldProps {
   readonly onCommit: Commit<number>;
   readonly size?: 'regular' | 'large';
   readonly width?: string;
+  /** Display rounding only: an untouched formatted field never commits it to the domain. */
+  readonly maximumFractionDigits?: number;
+  readonly invalidText?: string;
+  readonly disabled?: boolean;
+  readonly describedBy?: string;
 }
 
-export const NumberField = ({ value, ...props }: NumberFieldProps) => {
+export const NumberField = ({
+  value,
+  maximumFractionDigits = 2,
+  invalidText,
+  ...props
+}: NumberFieldProps) => {
   const { t, locale } = useMessages();
   return (
     <Field<number>
       {...props}
-      text={editableNumber(value, locale)}
+      text={new Intl.NumberFormat(locale, { maximumFractionDigits, useGrouping: false }).format(
+        value,
+      )}
       parse={(text) => {
         const parsed = parseDecimal(text);
         return parsed === undefined ? { ok: false } : { ok: true, value: parsed };
       }}
-      invalidText={t('field.invalidNumber')}
+      invalidText={invalidText ?? t('field.invalidNumber')}
     />
   );
 };

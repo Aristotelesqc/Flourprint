@@ -17,8 +17,9 @@ revision and candidate changes; an old report or screenshot is not the current b
 Distinguish shipped behavior, explored proposals and missing visual work. Passing journeys do
 not demonstrate that an interface is attractive or understandable.
 
-For the current #35 redesign, the owner's review set is **Recipes list, Recipe consultation
-and an active Preparation, in French at 360 px**, before production implementation. Use the
+For the current #35 redesign, the owner's approved review set is **Recipes list, Recipe consultation,
+Recipe editing and an active Preparation, in French at 360 px**, in light, dark and AMOLED. The revised
+four-screen v2 mockup was approved before implementation. Use the
 screen set, locale, viewport and approval scope requested for subsequent assignments rather
 than imposing this example on every UI change. Preserve any explicit feature freeze and
 coordinate the single UI writer with other contributors.
@@ -39,8 +40,10 @@ separate from `apps/mobile`. Reuse the approved mark unchanged. Keep warm orange
 in light, warm-dark and AMOLED where relevant. Establish reusable visual roles, spacing and
 action hierarchy instead of independent styles for every screen.
 
-For #35, use one principal gesture per screen, secondary actions in an overflow menu, and
-destructive actions separated from the primary gesture. Avoid duplicate navigation actions,
+For #35, use one principal gesture per screen, occasional secondary actions in an overflow menu,
+and destructive actions separated from the primary gesture. Keep frequently used Preparation
+controls (+15 min, Duration, Note and readiness observations) visible, as required by the owner.
+Avoid duplicate navigation actions,
 layout-shifting feedback and false editing affordances in consultation. Preserve detailed
 information and advanced paths through discoverable progressive disclosure.
 
@@ -90,6 +93,11 @@ pending until that approval arrives. Positive initial feedback, silence and a re
 the gallery are not final visual approval. Identify the artifact version and screens approved;
 reuse an existing approval within that scope rather than asking again. This is not a new
 approval requirement for routine fixes or otherwise authorized implementation.
+
+An approved mockup does not impose a recurring Gemini reviewer count. After production verification,
+move to ordinary integration and the owner's dev-app feedback; later changes become focused work.
+Use the [AGY review budget](../agy/SKILL.md#bound-review-and-recovery-costs), respecting current
+delegation requests, stops and waivers rather than inheriting #87's withdrawn four-reviewer gate.
 
 After acceptance, implement the design with shared production components and runtime tokens;
 the standalone HTML is a visual reference, not an app replacement to paste into Ionic.

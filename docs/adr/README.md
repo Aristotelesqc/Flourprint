@@ -25,3 +25,4 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0016](0016-versions-and-releases.md)        | App versions and releases                                | Accepted                                  |
 | [0017](0017-design-brief.md)                 | Shared DESIGN.md brief for the interface                 | Accepted; no stack migration              |
 | [0018](0018-canary-channel.md)               | Canary branch and web channel for the release after next | Accepted                                  |
+| [0019](0019-material3-presentation.md)       | Material 3 presentation through shared components        | Accepted; Ionic shell retained            |
