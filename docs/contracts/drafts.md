@@ -25,7 +25,8 @@ interface Draft {
 ```
 
 - A draft is **persisted** (persistence.md) as soon as it is created and after every edit, so it
-  survives closing the app. Last write wins; a draft has no history.
+  survives closing the app. Last write wins; a draft has no persisted history (the interface's
+  undo and redo live in memory only, process.md, Undo, redo and reset).
 - Formula edits in a draft (`formula.md`) are applied without the final resolution: an edit is
   refused only when it cannot be applied at all (an unknown reference, a grams edit on a formula
   that cannot be resolved). Process edits are applied as typed. The check list (below) says what
