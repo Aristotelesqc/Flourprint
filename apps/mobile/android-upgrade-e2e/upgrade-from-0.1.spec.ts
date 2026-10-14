@@ -173,6 +173,19 @@ const readDatabase = async (label: string): Promise<Snapshot> => {
   }
 };
 
+/** Runs an interaction; on failure, says what the WebView showed instead. */
+const explain = async (page: Page, action: () => Promise<unknown>) => {
+  try {
+    await action();
+  } catch (cause) {
+    const body = await page
+      .locator('body')
+      .innerText({ timeout: 5_000 })
+      .catch(() => '(no body)');
+    throw new Error(`At ${page.url()}: ${body.slice(0, 800)}`, { cause });
+  }
+};
+
 /** One line per piece of evidence in the job log, and the same as an attachment. */
 const evidence = async (name: string, value: unknown) => {
   const text = JSON.stringify(value);
@@ -281,19 +294,25 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
   });
 
   await test.step('0.1.0: a personal flour in the registry', async () => {
-    await goTo(page, '/flours');
-    await expect(page).toHaveURL(/\/flours$/);
-    await page.locator('ion-item:visible', { hasText: 'Bread flour' }).first().click();
-    const sheet = page.locator('ion-modal:visible');
-    await sheet.getByRole('button', { name: 'Customize' }).click();
-    await sheet.getByLabel('Protein (%): value').fill('13.2');
-    await sheet.getByLabel('Protein (%): basis').selectOption({ label: 'As sold' });
-    await sheet
-      .getByLabel('Protein (%): source', { exact: true })
-      .selectOption({ label: 'Package label' });
-    await sheet.getByRole('button', { name: 'Save' }).click();
-    await expect(page.locator('ion-modal:visible')).toHaveCount(0);
-    await expect(page.locator('ion-item:visible', { hasText: 'Version 1' }).first()).toBeVisible();
+    await explain(page, async () => {
+      // Through the recipe list's Flours button, as a baker would (and as the 0.1.0 journey does).
+      await goTo(page, '/recipes');
+      await page.getByLabel('Flours', { exact: true }).locator('visible=true').first().click();
+      await expect(page).toHaveURL(/\/flours$/);
+      await shown(page, 'Bread flour').first().click();
+      const sheet = page.locator('ion-modal:visible');
+      await sheet.getByRole('button', { name: 'Customize' }).click();
+      await sheet.getByLabel('Protein (%): value').fill('13.2');
+      await sheet.getByLabel('Protein (%): basis').selectOption({ label: 'As sold' });
+      await sheet
+        .getByLabel('Protein (%): source', { exact: true })
+        .selectOption({ label: 'Package label' });
+      await sheet.getByRole('button', { name: 'Save' }).click();
+      await expect(page.locator('ion-modal:visible')).toHaveCount(0);
+      await expect(
+        page.locator('ion-item:visible', { hasText: 'Version 1' }).first(),
+      ).toBeVisible();
+    });
   });
 
   const old = await test.step('0.1.0: the database holds that data', async () => {
@@ -331,48 +350,58 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
   page = await open();
 
   await test.step('candidate: the recipe, its versions, its history and the draft are shown', async () => {
-    await expect(shown(page, 'Recipe 1').first()).toBeVisible();
-    await shown(page, RECIPE).first().click();
-    await expect(shown(page, 'Version 2').first()).toBeVisible();
-    await page
-      .getByRole('button', { name: 'History', exact: true })
-      .locator('visible=true')
-      .click();
-    await expect(shown(page, /Abandoned/).first()).toBeVisible();
-    await expect(shown(page, /In progress/).first()).toBeVisible();
+    await explain(page, async () => {
+      await expect(shown(page, 'Recipe 1').first()).toBeVisible();
+      await shown(page, RECIPE).first().click();
+      await expect(shown(page, 'Version 2').first()).toBeVisible();
+      await page
+        .getByRole('button', { name: 'History', exact: true })
+        .locator('visible=true')
+        .click();
+      await expect(shown(page, /Abandoned/).first()).toBeVisible();
+      await expect(shown(page, /In progress/).first()).toBeVisible();
+    });
   });
 
   await test.step('candidate: both bakes replay their events and notes', async () => {
-    await goTo(page, `/bakes/${abandoned}`);
-    await expect(shown(page, /Fine bubbles/).first()).toBeVisible();
-    await expect(shown(page, /Tight crumb/).first()).toBeVisible();
-    await goTo(page, `/bakes/${active}`);
-    await expect(shown(page, /Second bake running/).first()).toBeVisible();
+    await explain(page, async () => {
+      await goTo(page, `/bakes/${abandoned}`);
+      await expect(shown(page, /Fine bubbles/).first()).toBeVisible();
+      await expect(shown(page, /Tight crumb/).first()).toBeVisible();
+      await goTo(page, `/bakes/${active}`);
+      await expect(shown(page, /Second bake running/).first()).toBeVisible();
+    });
   });
 
   await test.step('candidate: the personal flour is in the registry', async () => {
-    await goTo(page, '/flours');
-    await expect(page).toHaveURL(/\/flours$/);
-    await expect(page.locator('ion-item:visible', { hasText: 'Version 1' }).first()).toBeVisible();
+    await explain(page, async () => {
+      await goTo(page, '/flours');
+      await expect(page).toHaveURL(/\/flours$/);
+      await expect(
+        page.locator('ion-item:visible', { hasText: 'Version 1' }).first(),
+      ).toBeVisible();
+    });
   });
 
   await test.step('candidate: edit and save version 3', async () => {
-    await goTo(page, '/recipes');
-    await shown(page, RECIPE).first().click();
-    await expect(shown(page, 'Version 2').first()).toBeVisible();
-    // A saved recipe opens in consultation (#70): editing is explicit.
-    await page
-      .getByRole('button', { name: 'Recipe actions', exact: true })
-      .locator('visible=true')
-      .click();
-    const actions = page.locator('ion-action-sheet');
-    await actions.getByRole('button', { name: 'Edit recipe', exact: true }).click();
-    await expect(actions).toHaveCount(0);
-    const salt = page.getByLabel('Salt (g)', { exact: true }).locator('visible=true');
-    await salt.fill('26');
-    await salt.press('Enter');
-    await page.getByRole('button', { name: 'Save v3' }).locator('visible=true').click();
-    await expect(shown(page, 'Version 3').first()).toBeVisible();
+    await explain(page, async () => {
+      await goTo(page, '/recipes');
+      await shown(page, RECIPE).first().click();
+      await expect(shown(page, 'Version 2').first()).toBeVisible();
+      // A saved recipe opens in consultation (#70): editing is explicit.
+      await page
+        .getByRole('button', { name: 'Recipe actions', exact: true })
+        .locator('visible=true')
+        .click();
+      const actions = page.locator('ion-action-sheet');
+      await actions.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+      await expect(actions).toHaveCount(0);
+      const salt = page.getByLabel('Salt (g)', { exact: true }).locator('visible=true');
+      await salt.fill('26');
+      await salt.press('Enter');
+      await page.getByRole('button', { name: 'Save v3' }).locator('visible=true').click();
+      await expect(shown(page, 'Version 3').first()).toBeVisible();
+    });
   });
 
   await test.step('candidate: forced stop and reopen keep version 3', async () => {
