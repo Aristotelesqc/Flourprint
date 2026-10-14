@@ -11,7 +11,8 @@ Give the delegate:
 - allowed source paths or a supplied corpus with filenames and revision/date;
 - relevant `AGENTS.md`, contracts and ADR references;
 - permitted reads, writes, network research and external actions;
-- expected result and acceptance evidence; finite time budget;
+- expected result and acceptance evidence; finite reviewer, turn, time and output budgets,
+  with a named caller responsible for collecting results;
 - instruction to report missing access or evidence rather than inventing it.
 
 For snapshot analysis, include the needed file contents/excerpts with path and revision delimiters.
@@ -44,9 +45,11 @@ format (actual changes or a patch for caller integration). State the single-writ
 The delegate reports touched paths, tests actually run, blockers and remaining limitations; the
 caller reviews the actual artifacts and runs acceptance independently.
 
-When the owner requests Gemini's own subagents for UI/UX acceptance, include that requirement
+When the owner's current instructions request Gemini's own subagents for UI/UX acceptance, include that requirement
 in the implementation assignment. Confirm actual delegation tool calls and retain distinct
-reviewer reports. The writer fixes findings; the affected reviewer retests the revised build.
+reviewer reports within the [entrypoint's review budget](../SKILL.md#bound-review-and-recovery-costs).
+The writer fixes demonstrated findings; target verification to the affected behavior without
+automatically restarting the cohort. Respect subsequent owner stops and waivers.
 Reviewers use disposable browser contexts and the running implementation, identifying build,
 locale, viewport, theme, observed actions and captures. A code-only review, the writer's own
 "sentinel" plan, or mockup approval does not establish independent running-app use. If tool

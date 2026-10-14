@@ -60,6 +60,11 @@ to snapshot mode after a Git error.
 
 ## Recovery
 
+Apply the [bounded review/recovery policy](../SKILL.md#bound-review-and-recovery-costs) before
+using these exception paths. A final `ERROR` with response text is still failure; at most one
+justified tool-free retrieval may recover a missing report. Another failed retrieval ends that
+recovery, without relaunching the review cohort.
+
 | Observation                                                            | Next action                                                                                                                                                                                                                                      |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Nonzero exit / authentication or launch error                          | Inspect retained diagnostics; correct the demonstrated cause before retrying.                                                                                                                                                                    |

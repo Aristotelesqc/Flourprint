@@ -104,7 +104,7 @@ This is the shared visual and interaction brief for all UI agents, following the
 [Google Labs DESIGN.md format](https://github.com/google-labs-code/design.md). Contracts define
 domain meaning; ADRs define architecture. This file defines presentation. Read
 [ADR 0017](docs/adr/0017-design-brief.md) and
-[ADR 0018](docs/adr/0018-material3-presentation.md). Earlier exploration reports are historical
+[ADR 0019](docs/adr/0019-material3-presentation.md). Earlier exploration reports are historical
 evidence, not a pending decision for the approved screens.
 
 **Decision:** the owner approved the [revised four-screen mockup](https://aristotelesqc.github.io/Flourprint/?review=v2)

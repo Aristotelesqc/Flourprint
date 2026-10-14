@@ -1,6 +1,9 @@
-# ADR 0018: Material 3 presentation through shared Flourprint components
+# ADR 0019: Material 3 presentation through shared Flourprint components
 
 Status: Accepted (owner-approved four-screen mockup, 2026-10-12).
+
+Numbering correction (2026-10-13): this PR's provisional 0018 was reassigned to 0019 because
+`canary` already allocates 0018 to its delivery channel. The presentation decision is unchanged.
 
 ## Context
 
@@ -54,11 +57,18 @@ exploration direction for the approved screens.
 
 - Implement the approved screens in reviewed slices into dev, with shared components and
   before/after captures. Owner approval establishes a baseline, not a prohibition on later changes.
-- Gemini writes the UI and delegates independent running-app use checks to its own subagents;
-  Codex reviews their evidence and performs separate verification before integration.
+- Gemini writes the UI; Codex reviews the code and performs separate verification before
+  integration. Independent Gemini running-app checks follow current owner instructions and a
+  finite review budget, rather than a recurring reviewer-count requirement.
 - Passing automated journeys does not establish visual quality. Inspect narrow French renders,
   light/dark/AMOLED variants, larger text, accessible controls and real workflow, preserving unknowns.
 - Browser evidence does not establish Android keyboard/back behavior or native plugin behavior.
   Select native/emulator checks for affected interactions under the repository's device workflow.
 - This decision does not mark #35 complete or claim all screens/platforms have shipped. Record
   actual implementation and remaining acceptance on the issue and pull request.
+
+Acceptance update (owner, 2026-10-13): #87's exceptional four-Gemini runtime review gate was
+withdrawn in [the direction on #88](https://github.com/Aristotelesqc/Flourprint/pull/88#issuecomment-6158701433).
+Retain useful evidence, end further review/recovery rounds, and prepare the verified candidate for
+ordinary integration and owner dev-app testing. This waiver does not claim the gate passed or
+replace automated checks, required native evidence or resolution of demonstrated blocking defects.

@@ -24,4 +24,7 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0015](0015-browser-persistence.md)          | Persistent data in the browser preview            | Accepted                                  |
 | [0016](0016-versions-and-releases.md)        | App versions and releases                         | Accepted                                  |
 | [0017](0017-design-brief.md)                 | Shared DESIGN.md brief for the interface          | Accepted; no stack migration              |
-| [0018](0018-material3-presentation.md)       | Material 3 presentation through shared components | Accepted; Ionic shell retained            |
+| [0019](0019-material3-presentation.md)       | Material 3 presentation through shared components | Accepted; Ionic shell retained            |
+
+ADR 0018 is allocated to the [canary-channel decision on `canary`](https://github.com/Aristotelesqc/Flourprint/blob/c0fb90c86616cf090141ccf4265b09315095475c/docs/adr/0018-canary-channel.md).
+Keep that number when synchronizing branches; this 0.2.0 PR does not introduce the canary delivery changes.

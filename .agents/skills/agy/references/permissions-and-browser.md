@@ -150,6 +150,10 @@ this is report recovery, not another running-app review or permission retry.
 
 ## Stop conditions and honest evidence
 
+These diagnosed recovery procedures remain subject to the
+[entrypoint's finite budget and owner stop policy](../SKILL.md#bound-review-and-recovery-costs).
+They are not prerequisites for routine UI acceptance when Codex can verify the preview directly.
+
 If a normal confirmation is denied or cannot be presented, stop dependent interaction. If tools
 remain absent after the authorized setup, report that precise capability gap. Use supplied-source
 reviews only as a labelled fallback; do not call four static reports four running-app reviewers.

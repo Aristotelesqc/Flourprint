@@ -94,6 +94,11 @@ the gallery are not final visual approval. Identify the artifact version and scr
 reuse an existing approval within that scope rather than asking again. This is not a new
 approval requirement for routine fixes or otherwise authorized implementation.
 
+An approved mockup does not impose a recurring Gemini reviewer count. After production verification,
+move to ordinary integration and the owner's dev-app feedback; later changes become focused work.
+Use the [AGY review budget](../agy/SKILL.md#bound-review-and-recovery-costs), respecting current
+delegation requests, stops and waivers rather than inheriting #87's withdrawn four-reviewer gate.
+
 After acceptance, implement the design with shared production components and runtime tokens;
 the standalone HTML is a visual reference, not an app replacement to paste into Ionic.
 Update `DESIGN.md` and the relevant ADR alongside the first implementation, distinguishing
