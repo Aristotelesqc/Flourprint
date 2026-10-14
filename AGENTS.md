@@ -31,6 +31,10 @@ a dedicated pull request, before the code that depends on it.
   integration branch of the open major pull request (`dev` → `main`), and are merged into it once
   green and reviewed; the dev channel (dev APK, `dev` preview address) follows `dev` (ADR 0013).
   Only the owner decides when the major pull request is merged into `main`.
+- Work for the **release after next** targets `canary` instead (ADR 0018), whose web address is
+  `https://canary.flourprint-aristotelesqc.pages.dev` (no APK). Say in each PR which release it is
+  for. Changes flow `main` → `dev` → `canary` only, by reviewed merges; `canary` joins `dev` only
+  at the promotion after a release. Never reset, rename or force-push an integration branch.
 - Run `pnpm check`, `pnpm build` and the full Playwright run before every push of code; a red push
   is fixed first.
 - One writer at a time for overlapping files. The interface (#35) is implemented by Gemini under
