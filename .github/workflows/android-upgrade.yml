@@ -86,12 +86,14 @@ jobs:
         run: |
           echo "FLOURPRINT_APK=${PWD}/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_ENV"
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          digest() { "$BT/apksigner" verify --print-certs "$1" | grep 'Signer #1 certificate SHA-256 digest' | sed 's/.*: //'; }
+          # The certificate lines read "Signer #1 certificate ..." or "Signer (minSdkVersion=…) ..."
+          # depending on the build-tools version: match the end of the line only.
+          digest() { "$BT/apksigner" verify --print-certs "$1" | awk '/certificate SHA-256 digest/ { print $NF; exit }'; }
           for APK in "$FLOURPRINT_APK_FROM" apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk; do
             echo "== $APK"
             sha256sum "$APK"
             "$BT/aapt" dump badging "$APK" | grep -E "^(package|sdkVersion|targetSdkVersion|application-debuggable)"
-            "$BT/apksigner" verify --verbose --print-certs "$APK" | grep -E "Verified using|Signer #1 certificate (DN|SHA-256)"
+            "$BT/apksigner" verify --verbose --print-certs "$APK"
           done
           FROM=$(digest "$FLOURPRINT_APK_FROM")
           TO=$(digest apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk)
