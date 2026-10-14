@@ -31,6 +31,15 @@ describe('build names (ADR 0016)', () => {
     });
   });
 
+  it('names a canary build after its branch, with its own channel (ADR 0018)', () => {
+    expect(buildNames('0.3.0', { ...ci, GITHUB_REF_NAME: 'canary' })).toMatchObject({
+      build: '0.3.0-canary.156+4e3dd94',
+      label: `v0.3.0-canary-${codeName(SHA)}`,
+      channel: 'canary',
+      versionCode: 3000,
+    });
+  });
+
   it('names a local build without a code name', () => {
     expect(buildNames('0.2.0', {})).toMatchObject({
       build: '0.2.0-local',
