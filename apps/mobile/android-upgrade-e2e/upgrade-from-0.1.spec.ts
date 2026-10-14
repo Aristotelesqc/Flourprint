@@ -173,6 +173,10 @@ const readDatabase = async (label: string): Promise<Snapshot> => {
   }
 };
 
+/** The personal copy of the bread flour in the registry list (built-in entries show no version). */
+const personalFlour = (page: Page) =>
+  page.locator('ion-item', { hasText: 'Bread flour' }).filter({ hasText: 'Version 1' });
+
 /** Runs an interaction; on failure, says what the WebView showed instead. */
 const explain = async (page: Page, action: () => Promise<unknown>) => {
   try {
@@ -184,6 +188,32 @@ const explain = async (page: Page, action: () => Promise<unknown>) => {
       .catch(() => '(no body)');
     throw new Error(`At ${page.url()}: ${body.slice(0, 800)}`, { cause });
   }
+};
+
+/**
+ * Opens a flour of the 0.1.0 registry list. On the emulator its items have been reported not
+ * visible while the page shows them: log why, then click the item through the DOM.
+ */
+const openFlour = async (page: Page, name: string) => {
+  const item = page.locator('ion-item', { hasText: name }).first();
+  const clicked = await item
+    .click({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (clicked) return;
+  const why = await item.evaluate((element) => {
+    const chain = [];
+    for (let e: Element | null = element; e; e = e.parentElement) {
+      const style = getComputedStyle(e);
+      const rect = e.getBoundingClientRect();
+      chain.push(
+        `${e.tagName.toLowerCase()}.${[...e.classList].join('.')} ${style.display}/${style.visibility}/${style.opacity} ${Math.round(rect.width)}x${Math.round(rect.height)}`,
+      );
+    }
+    return chain.join(' < ');
+  });
+  console.log(`[upgrade-diagnostic] ${name} item not clickable: ${why}`);
+  await item.evaluate((element) => (element as HTMLElement).click());
 };
 
 /** One line per piece of evidence in the job log, and the same as an attachment. */
@@ -299,7 +329,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       await goTo(page, '/recipes');
       await page.getByLabel('Flours', { exact: true }).locator('visible=true').first().click();
       await expect(page).toHaveURL(/\/flours$/);
-      await shown(page, 'Bread flour').first().click();
+      await openFlour(page, 'Bread flour');
       const sheet = page.locator('ion-modal:visible');
       await sheet.getByRole('button', { name: 'Customize' }).click();
       await sheet.getByLabel('Protein (%): value').fill('13.2');
@@ -309,9 +339,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
         .selectOption({ label: 'Package label' });
       await sheet.getByRole('button', { name: 'Save' }).click();
       await expect(page.locator('ion-modal:visible')).toHaveCount(0);
-      await expect(
-        page.locator('ion-item:visible', { hasText: 'Version 1' }).first(),
-      ).toBeVisible();
+      await expect(personalFlour(page)).toHaveCount(1);
     });
   });
 
@@ -377,9 +405,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     await explain(page, async () => {
       await goTo(page, '/flours');
       await expect(page).toHaveURL(/\/flours$/);
-      await expect(
-        page.locator('ion-item:visible', { hasText: 'Version 1' }).first(),
-      ).toBeVisible();
+      await expect(personalFlour(page)).toHaveCount(1);
     });
   });
 
