@@ -38,6 +38,11 @@ interface BakeStartedPayload {
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
   origin?: 'physical' | 'simulation'; // from StartBake; absent = unknown (written before 0.6.0)
   flours?: Array<{ id: string; version: number }>; // registry entries used (flours.md); absent before 0.8.0
+  scaledFrom?: { anchor: Anchor }; // the revision's anchor when the preparation was scaled (bake-session.md); absent = no scale recorded
+  scaleReview?: Array<{
+    stepId: StepId;
+    field: 'equipment.load.pieces' | 'equipment.load.massG' | 'technique.phases';
+  }>; // absolute fields to review after a scale
   equipment?: EquipmentEntry[]; // copies of the entry versions the process references (equipment.md); absent before 0.12.0
 }
 ```
@@ -47,6 +52,16 @@ never inferred later from the device that holds or exports it: restoring a backu
 device keeps it. It follows the simulation mode in force when the bake starts (ADR 0014):
 `simulation` while the mode is on, `physical` otherwise. History and statistics show the bakes of
 the current mode only; a bake without `origin` counts as real.
+
+`scaledFrom` is set only when the bake started at another quantity than its revision (bake-session.md,
+Scaled preparation) and the domain verified the claim. In the snapshot, `formula.anchor` is the
+Preparation's quantity and `scaledFrom.anchor` the recipe's, tied to `revisions.formula`; History
+shows the scaled quantity first and the recipe's beside it. An event written before it records
+**no scale**, not "not scaled": its provenance was never attested. `scaleReview` lists the steps
+whose absolute loads or machine phases the baker should check; nothing in it is rescaled.
+A backup holding it is refused by an app that does not know the field, as for other additive
+fields (`persistence.md`), never misread. `CONTRACT_VERSION` is bumped by one minor step, from
+the version current at merge, by the implementing pull request.
 
 `usedProperties` contains only the properties actually consumed by the calculation. For an
 ingredient with an `entry`, `ingredient` and `version` name the entry, `formulaIngredient` the
@@ -124,6 +139,7 @@ interface BakeDigest {
   outcomeSource?: 'recipe' | 'baker'; // with a known outcome
   origin: 'physical' | 'simulation' | 'unknown';
   recipe: { id: string; name?: string; version: number };
+  scaledFrom?: { anchor: Anchor }; // the preparation was scaled from this anchor (bake-session.md)
   startedAt?: Instant;
   endedAt?: Instant;
   manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
