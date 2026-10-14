@@ -126,5 +126,7 @@ type GroupDisplay = {
 
 ## Status
 
-The contract of the timeline is a proposal for 0.3.0, on `canary` (#91 to #94, #96, #97). The
-interface slice follows an accepted contract.
+The 0.3.0 timeline and component contracts have been merged into `canary` (#91 to #94,
+#96, #97). They specify behavior and presentation but **do not implement the UI**. The
+implementation task and its acceptance criteria are tracked in [#100](https://github.com/Aristotelesqc/Flourprint/issues/100),
+under the #35 UX workstream. Historical review discussion is linked above for decision context.
