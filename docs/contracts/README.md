@@ -16,6 +16,7 @@ fixtures conform to them. Architecture choices live in `../adr/`.
 | [flours.md](flours.md)                       | —        | flour registry, built-in flours, flour refs in bakes        |
 | [ingredients.md](ingredients.md)             | —        | ingredient registry, built-in ingredients, entry pins       |
 | [equipment.md](equipment.md)                 | —        | cooking settings, Flourprint oven modes, equipment entries  |
+| [interactions.md](interactions.md)           | —        | formula analysis, qualitative ingredient interactions       |
 | [capability-levels.md](capability-levels.md) | D4, D5   | N1/N2/N3, Alpha and Engine MVP                              |
 | [fixtures/](fixtures/README.md)              | —        | reference cases computed outside the engine                 |
 
