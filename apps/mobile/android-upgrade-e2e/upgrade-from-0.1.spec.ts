@@ -401,6 +401,9 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       await goTo(page, `/bakes/${abandoned}`);
       await expect(shown(page, /Fine bubbles/).first()).toBeVisible();
       await expect(shown(page, /Tight crumb/).first()).toBeVisible();
+      // Ionic does not swap the page between two preparations of the same route: leave it first.
+      await goTo(page, '/recipes');
+      await expect(page).toHaveURL(/\/recipes$/);
       await goTo(page, `/bakes/${active}`);
       await expect(shown(page, /Second bake running/).first()).toBeVisible();
     });
