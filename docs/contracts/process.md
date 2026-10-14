@@ -1,8 +1,9 @@
 # Contract: process (D3)
 
 Status: **approved** (issue #30); the mixing steps (`frasage`, below), steps before a target
-(preheating) and step move and duplicate are **proposals** of 2026-10-13, revised after the audits,
-pending the owner's approval. Related issues: #5, #9, #21, #28, #35.
+(preheating), subjects and component phases, and step move and duplicate are **proposals** of
+2026-10-13, revised after the audits, pending the owner's approval. Related issues: #5, #9, #21,
+#28, #35.
 
 ## Model
 
@@ -19,6 +20,7 @@ interface ProcessStep {
   endCriterion?: EndCriterion; // observation or user decision
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
   durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one dough step (fermentation.md)
+  subject?: Subject; // the mass the step works on; absent = derived (Subjects and component phases)
   // `beforeTarget` only (Steps before a target): target, requiredWarmupS, startRule
 }
 ```
@@ -386,6 +388,102 @@ Examples (hand-checked against the rules above):
 10. **Frasage then kneading at once.** `frasage` (incorporates everything, yeast included, 5 min),
     `mix` (8 min), `bulk`. Only mixing steps lie between: no `leaven_before_mixing`, and the
     estimate runs from the end of the `mix`, as it always did for a lone `mix`.
+
+## Subjects and component phases
+
+**Proposal of 2026-10-13 (audit 91-R2), pending the owner's approval.** A recipe describes the
+whole production protocol: a poolish prepared once, fermented 16 h at 21 °C and then 8 h at
+4 °C, a tangzhong cooked while it rests, and only then the main dough. These phases concern the
+**same component and the same mass**, not independent poolishes.
+
+```ts
+type Subject = { kind: 'mainDough' } | { kind: 'component'; id: string }; // id: a formula component
+```
+
+- A step works on one **subject**. When `subject` is absent it is derived: a step whose id is a
+  component id works on that component (the existing rule, "the step with the component's id");
+  any other step works on the main dough.
+- A component may have **several steps**: preparing it (`frasage`, `mix`, `scald`), its
+  fermenting phases (`preferment`, each with its own conditions, such as 21 °C then 4 °C), cooling
+  it, in sequence or in parallel with other work. They share its subject, stay in the **one**
+  process graph with stable ids, and no nested scheduler exists. Grouping steps by subject is a
+  view, never a second scheduling authority.
+- **Incorporation.** The component joins the main dough **once**: exactly one main-dough step
+  declares `{ item: 'component', id, sharePct: 100 }` (Incorporations above: every final-mix item
+  once, shares summing to 100). **Every step of the component is upstream of that step**, directly
+  or through others; otherwise the process is `InvalidProcess` (a component cannot be
+  incorporated before its phases end). A process that declares no incorporations joins the
+  component at the first main-dough step that depends on one of its steps, as before, and the
+  same rule holds for that join: every step of the component is upstream of it.
+- **Adding a phase keeps the chronology.** The editor adds a component phase **before the join**:
+  inserted after the component's last phase, it takes that phase's place in the join's
+  `dependsOn` (as `InsertStepAfter` does), so the main dough waits for it. An edit that would leave
+  a phase after or beside the join is refused as a whole (`InvalidProcess`); a component never
+  keeps fermenting after it was incorporated.
+- **A timeline is not a mass.** Steps carry no masses: the component's grams come from the
+  formula's allocation and are counted once, however many steps prepare it. Its timeline is the
+  window of its steps (derived); its incorporated mass is one allocation.
+- **Mixing steps.** An explicit `subject` decides whether a mixing step belongs to the main dough
+  (`mainDough`) or to a component. The incorporation rule of Mixing steps applies only to a step
+  without a `subject`.
+- **Validation.** `subject.id` must be a component of the formula (`InvalidProcess` otherwise,
+  with the step as `path`). `subject: mainDough` on a step whose id is a component id is
+  contradictory and refused.
+- **Fermentation** (`fermentation.md`). A component with one fermenting phase (one step whose
+  operation is `preferment`) is estimated as before. With **several** fermenting phases the
+  estimate is `insufficient_data` with the reason `component_phases_unmodelled`: this model has no
+  validated temperature path across them, no coefficient is added here, and it never silently
+  counts one phase. The recorded phases, durations and temperatures remain, are scheduled and are
+  shown.
+- **Moves and copies** (Step move and duplicate, #92). One predicate, `subjectOf(step)` (the
+  explicit `subject`, else the component named by the step's id, else the main dough), is used by
+  both. A chain move needs the step's neighbours and target to share its subject
+  (`crossesWorkpiece` otherwise) and never moves a step carrying incorporations
+  (`incorporationStep`); an order-only move keeps the subject. A step with an explicit component
+  subject can be duplicated and the copy keeps the subject and adds no mass; the legacy step whose
+  id is the component's is not duplicable.
+- **Compatibility.** Existing recipes have no `subject` and mean what they meant. Adding phases to
+  one, as above, keeps it valid: the legacy step stays, the new steps name their subject, and the
+  join is rewired to wait for them. An
+  older app refuses a document holding `subject` as an unknown field (`persistence.md`), never
+  misreads it. `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge,
+  by the implementing pull request.
+
+Examples (hand-checked against the rules above):
+
+1. **Poolish in three steps.** `poolish-prepare` (`frasage`, subject poolish, 10 min),
+   `poolish-counter` (`preferment`, 16 h, 21 °C), `poolish-fridge` (`preferment`, 8 h, 4 °C), then
+   the main-dough `frasage` incorporating `component` poolish once. Valid. The poolish estimate is
+   `insufficient_data` (`component_phases_unmodelled`); every phase stays visible and scheduled.
+2. **Tangzhong beside it.** `tangzhong-cook` (`scald`, 15 min) and `tangzhong-cool` (`cool`, 25
+   min), subject tangzhong, run during the poolish's last hours; the main-dough `frasage` depends
+   on `poolish-fridge` and `tangzhong-cool`. The graph places them in parallel: the durations are
+   not added serially.
+3. **Legacy.** A step `poolish` (`preferment`, no `subject`) beside a main `mix` depending on it:
+   unchanged.
+4. **Adding a phase to a legacy recipe.** `poolish` stays; `poolish-fridge` is added with subject
+   poolish and `dependsOn: ['poolish']`; the main step depends on `poolish-fridge`. Valid, and
+   the legacy estimate is replaced by `insufficient_data` only because two phases now ferment.
+5. **Incorporated too early.** The main-dough `frasage` incorporates the poolish but depends on
+   `poolish-counter` only, not on `poolish-fridge`: `InvalidProcess`.
+6. **Mass once.** A poolish of 30 % of the flour, 600 g of flour: 180 g of flour in the poolish,
+   counted once, not per step.
+7. **Move within a subject.** `poolish-fridge` moved before `poolish-counter`: a chain move among
+   the same subject's steps, valid and shown. Moved after the main-dough `frasage`:
+   `AmbiguousMove`, `crossesWorkpiece`.
+8. **Unknown component.** `subject` `{ kind: 'component', id: 'levain' }` with no such component:
+   `InvalidProcess`.
+9. **Adding a phase rewires the join.** In example 3, adding `poolish-fridge` (subject poolish,
+   8 h) after `poolish`: the main `mix` → `[poolish-fridge]` and `poolish-fridge` → `[poolish]`.
+   Leaving the `mix` on `[poolish]` would let the poolish ferment after the mix: refused,
+   `InvalidProcess`.
+10. **Explicit subject beats the heuristic.** `poolish-frasage` (`frasage`, subject poolish, no
+    incorporations), `poolish-counter` (subject poolish), then a main-dough `frasage` with
+    `subject: mainDough` that declares no incorporations either, and a `mix`. The mixing-steps
+    heuristic of #91 would call the first mixing step without incorporations a component's and
+    could misread the main `frasage`; with explicit subjects, `poolish-frasage` is the poolish's,
+    the main `frasage` begins the main dough's assembly, and the reference mixing step is the
+    `mix`. List order alone classifies nothing.
 
 ## Step removal
 
