@@ -2,7 +2,7 @@
 
 Status: **approved** (issue #30); the mixing steps (`frasage`, below), steps before a target
 (preheating), subjects and component phases, step move and duplicate, and the relative timeline
-are **proposals** of 2026-10-13, revised after the audits, pending the owner's approval. Related
+are **accepted contract proposals for 0.3.0**, integrated into `canary` after owner-authorized technical reviews. They are **not yet implemented** in the domain/application/UI. Related
 issues: #5, #9, #21, #28, #35.
 
 ## Model
@@ -96,7 +96,7 @@ interface StepConditions {
 
 ## Steps before a target (preheating)
 
-**Proposal of 2026-10-13, revision 3: the owner chose option C on #97.** A baker preheats the oven
+**Accepted 0.3.0 contract (merged #94; the owner chose option C on #97, implementation pending).** A baker preheats the oven
 while the dough proofs, and switches it on **a set time before the cooking step it is for**, not at
 the boundary of another step: a 2 h proof stays one step, and the oven does not heat for 2 h when
 30 min are wanted. Four facts stay distinct: the **trigger** (switching the heating on), the
@@ -391,7 +391,7 @@ Examples (hand-checked against the rules above):
 
 ## Subjects and component phases
 
-**Proposal of 2026-10-13 (audit 91-R2), pending the owner's approval.** A recipe describes the
+**Accepted 0.3.0 contract (audit 91-R2, merged #96; implementation pending).** A recipe describes the
 whole production protocol: a poolish prepared once, fermented 16 h at 21 °C and then 8 h at
 4 °C, a tangzhong cooked while it rests, and only then the main dough. These phases concern the
 **same component and the same mass**, not independent poolishes.
@@ -679,7 +679,7 @@ preheat]`. In: `shape` `[bulk]`, `proof` → `[shape]`. `preheat` untouched.
 
 ## Relative timeline and groups
 
-**Proposal of 2026-10-13 (audit 91-R5), pending the owner's approval.** The Recipe tab must be
+**Accepted 0.3.0 contract (audit 91-R5, merged #97; implementation tracked in #100).** The Recipe tab must be
 usable without opening Planning: it shows the whole production protocol with, for each step, its
 own duration and its position in time, and the steps grouped by the mass they work on. The
 interface requirement is recorded in `docs/architecture/2026-10-13-recipe-groups-mockup.md`.
