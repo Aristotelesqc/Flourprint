@@ -247,7 +247,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     await startBake();
     await page.getByRole('button', { name: 'Start Preferment' }).first().click();
     await note('Fine bubbles');
-    await page.getByRole('button', { name: 'Preferment done' }).first().click();
+    // Abandoned while the preferment runs: 0.1.0 offers the review note only when no step is next.
     await page.getByRole('button', { name: 'Abandon the bake' }).click();
     await page
       .locator('ion-alert')
@@ -266,6 +266,8 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     await startBake();
     await page.getByRole('button', { name: 'Start Preferment' }).first().click();
     await note('Second bake running');
+    await page.getByRole('button', { name: 'Preferment done' }).first().click();
+    await expect(shown(page, /Preferment done/).first()).toBeVisible();
   });
 
   await test.step('0.1.0: a draft from a blank recipe', async () => {
@@ -346,7 +348,6 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     await expect(shown(page, /Tight crumb/).first()).toBeVisible();
     await goTo(page, `/bakes/${active}`);
     await expect(shown(page, /Second bake running/).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Preferment done' }).first()).toBeVisible();
   });
 
   await test.step('candidate: the personal flour is in the registry', async () => {
