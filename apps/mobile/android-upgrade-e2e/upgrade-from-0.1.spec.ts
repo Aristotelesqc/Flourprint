@@ -379,6 +379,9 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
 
   await test.step('candidate: the recipe, its versions, its history and the draft are shown', async () => {
     await explain(page, async () => {
+      // The candidate reopens on the running preparation: start from the recipe list.
+      await goTo(page, '/recipes');
+      await expect(page).toHaveURL(/\/recipes$/);
       await expect(shown(page, 'Recipe 1').first()).toBeVisible();
       await shown(page, RECIPE).first().click();
       await expect(shown(page, 'Version 2').first()).toBeVisible();
@@ -433,8 +436,12 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
   await test.step('candidate: forced stop and reopen keep version 3', async () => {
     await forceStop();
     page = await open();
-    await shown(page, RECIPE).first().click();
-    await expect(shown(page, 'Version 3').first()).toBeVisible();
+    await explain(page, async () => {
+      await goTo(page, '/recipes');
+      await expect(page).toHaveURL(/\/recipes$/);
+      await shown(page, RECIPE).first().click();
+      await expect(shown(page, 'Version 3').first()).toBeVisible();
+    });
   });
 
   await test.step('candidate: migrations 5 to 7 ran and no row was lost', async () => {
