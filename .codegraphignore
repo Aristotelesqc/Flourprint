@@ -1,0 +1,26 @@
+# GlobSet patterns (not full gitignore syntax): exclusions apply at index startup.
+dogfood
+**/dogfood/**
+.agy-runs
+**/.agy-runs/**
+.codegraph-local
+**/.codegraph-local/**
+.codex
+**/.codex/**
+.claude
+**/.claude/**
+.agents
+**/.agents/**
+.env*
+**/.env*
+**/node_modules/**
+**/dist/**
+**/build/**
+**/coverage/**
+**/test-results/**
+**/playwright-report/**
+**/*.db
+**/*.sqlite*
+**/*.log
+**/credentials*
+**/secrets*
