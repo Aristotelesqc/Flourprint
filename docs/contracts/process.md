@@ -1,9 +1,9 @@
 # Contract: process (D3)
 
 Status: **approved** (issue #30); the mixing steps (`frasage`, below), steps before a target
-(preheating), subjects and component phases, and step move and duplicate are **proposals** of
-2026-10-13, revised after the audits, pending the owner's approval. Related issues: #5, #9, #21,
-#28, #35.
+(preheating), subjects and component phases, step move and duplicate, and the relative timeline
+are **proposals** of 2026-10-13, revised after the audits, pending the owner's approval. Related
+issues: #5, #9, #21, #28, #35.
 
 ## Model
 
@@ -676,6 +676,122 @@ preheat]`. In: `shape` `[bulk]`, `proof` → `[shape]`. `preheat` untouched.
 - No step completes automatically because its planned duration has elapsed.
 - The scheduler only does time arithmetic. Biological continuity (fermentation during handling)
   belongs to #9/#29.
+
+## Relative timeline and groups
+
+**Proposal of 2026-10-13 (audit 91-R5), pending the owner's approval.** The Recipe tab must be
+usable without opening Planning: it shows the whole production protocol with, for each step, its
+own duration and its position in time, and the steps grouped by the mass they work on. The
+interface requirement is recorded in `docs/architecture/2026-10-13-recipe-groups-mockup.md`.
+
+- **One projection.** Recipe and Planning read the same `Projection` (`projectProcess`). Planning
+  anchors its origin to a chosen start or ready-by time; Recipe reads the **relative** timeline:
+  the same projection with the origin at the earliest planned start of the process (time 0). No
+  other time solver exists, and a list index is never a time: the list is a topological order,
+  not a total temporal one.
+
+```ts
+type Timing =
+  | { status: 'known'; startS: number; endS: number } // seconds from the origin
+  | { status: 'unknown'; unknownAfter: StepId[] }; // never zero-filled
+
+type Window =
+  | { status: 'complete'; startS: number; endS: number; elapsedS: number }
+  | { status: 'partial' | 'unknown'; reasons: StepId[] };
+
+interface StepTiming {
+  stepId: StepId;
+  durationS?: number; // the step's own duration, where known
+  timing: Timing;
+}
+interface GroupTiming {
+  id: string; // 'component:<id>', 'mainDough' or 'cooking'
+  stepIds: StepId[];
+  window: Window;
+}
+interface RelativeTimeline {
+  steps: StepTiming[];
+  groups: GroupTiming[];
+  total: Window;
+}
+```
+
+- **Groups** are derived and not persisted: one per component (the steps whose subject is that
+  component, Subjects and component phases), `cooking` (the cooking operations, `preheat` steps
+  and every step downstream of a cooking step, such as the `cool`) and `mainDough` (the other
+  main-dough steps). A step belongs to exactly one group. A group is a view, not a scheduling
+  authority.
+- **Window.** A group's window is `complete` only when every member's timing is known:
+  `startS` is the earliest start, `endS` the latest end and `elapsedS = endS − startS`, **never**
+  the sum of the members' durations (parallel steps overlap). With one unknown member the window
+  is `partial` and claims **no envelope** from the known members; `reasons` names the blockers.
+  With none known it is `unknown`. The `total` follows the same rule over all steps.
+- **Overlap is normal.** Group windows overlap and the total is not their sum; a branch that runs
+  concurrently never lengthens the total as though it were sequential.
+- **Preheating.** A `beforeTarget` preheat (#94, option C chosen by the owner) is an overlapping
+  branch placed from its target. Its timing in the timeline is the derived heating interval
+  `[plannedStart, targetStart]` (it has no `plannedDurationS`), so the cooking group of the mockup
+  reads `+29:15 → +30:25`, 1 h 10 min, while the total stays 30 h 25 min. Three readings stay
+  separate: the required warm-up, the projected interval and, in a Preparation, the observed
+  "ready" (never inferred from elapsed time). When its `warmup` is `unknown` the preheat's timing
+  is unknown and its group is `partial`; when it is `unavailable` (a start after the target) no
+  interval is drawn and the group is not given an envelope from it; an overdue trigger is shown as
+  due since `dueAt`, never as an inverted or backdated bar. It never lengthens the total or any
+  other step.
+- **Nothing is stored twice.** The relative start and end are never persisted; they are derived
+  from the durations and the dependencies, so a change of one duration changes every reading in
+  Recipe and Planning together.
+
+Information architecture for the Recipe tab (the interface, #35):
+
+- Collapsible groups (Poolish, Tangzhong, Main dough, Cooking) containing their steps, the
+  temperatures, the instructions and three distinct readings: the step's **own duration**, its
+  **relative start** and its **relative end**; the header shows the group's **window** and its
+  **elapsed span**, and the total span of the recipe.
+- A partial or unknown window is shown as such, with its reasons, never as a number. A group with
+  one unknown step is "provisional", not a definitive envelope.
+- Open and closed groups are interface state, kept across Recipe and Planning navigation in the
+  open recipe, and never change the recipe. The disclosure is accessible (a button with
+  `aria-expanded`, focus and touch targets) and usable in French and English on a narrow phone.
+- This asks for no accordion in the core and no replacement of Ionic.
+- An optional **Steps | Timeline** switch (owner decision of 2026-10-13, review on #97): Steps is
+  the default grouped list above; Timeline is a read-only lane view of the same projection, where
+  overlapping branches (the tangzhong during the cold poolish, the preheat during the proof) sit on
+  separate lanes. On a narrow phone it scrolls horizontally or zooms to a selected window rather
+  than squeezing the whole recipe. It is a view, not an editor and not a calendar: Planning anchors
+  the same projection to clock times.
+
+Examples (hand-computed; times are `+hh:mm` from the start of the first step, and the values are
+scheduled, not predictions of the biology). A poolish bread with a tangzhong:
+
+- Poolish (`component:poolish`): prepare 10 min, counter 16 h, fridge 8 h: `+00:00 → +24:10`,
+  elapsed 24 h 10 min.
+- Tangzhong (`component:tangzhong`): cook 15 min, cool 25 min, run alongside the poolish's last
+  hours: `+23:30 → +24:10`, elapsed 40 min.
+- Main dough: frasage 10 min, kneading 10 min, bulk 3 h, shaping 15 min, proof 2 h:
+  `+24:10 → +29:45`, elapsed 5 h 35 min.
+- Cooking: preheat (30 min required), bake 40 min: `+29:15 → +30:25`, elapsed 1 h 10 min.
+
+1. **The whole recipe.** The total is `+00:00 → +30:25`, elapsed 30 h 25 min. The sum of the four
+   group windows is 24:10 + 0:40 + 5:35 + 1:10 = 31 h 35 min, which is not the total: the
+   groups overlap.
+2. **A shorter cold phase.** The fridge phase goes from 8 h to 6 h. Poolish `+00:00 → +22:10`;
+   tangzhong `+21:30 → +22:10`; main dough `+22:10 → +27:45`; cooking `+27:15 → +28:25`; total
+   28 h 25 min. Recipe and Planning show the same offsets from the same projection.
+3. **An unknown duration.** The fridge phase has no duration: the poolish window and every
+   window after it are `partial` with the blocker as `reasons`, the total is `partial`, and
+   nothing shows a "complete" envelope or a zero.
+4. **Concurrent branch.** Removing the tangzhong from the process does not change the total, and
+   adding it back does not lengthen it.
+5. **Preheat.** A `beforeTarget` preheat after shaping with 30 min required starts at `+29:15`
+   (30 min before the bake at `+29:45`); the proof stays one 2 h step. The cooking group's window
+   starts at `+29:15` and overlaps the last 30 min of the proof; no span grows by the 30 min. A
+   legacy `alap` preheat of 30 min gives the same times here (its hard dependency only shows when
+   the window is too short).
+6. **Planning anchoring.** Planning starts the same process on Saturday 06:00: each step's clock
+   time is 06:00 plus its relative start, and the relative readings are unchanged.
+7. **Not persisted.** Saving the recipe stores no group, no relative time and no open or closed
+   state.
 
 Implementation (`@flourprint/core/domain`): `validateProcess`, `projectProcess`,
 `planIncorporations`, and the graph utilities `topologicalSort`, `isTopologicalOrder`,
