@@ -411,9 +411,15 @@ interface RelativeTimeline {
 - **Overlap is normal.** Group windows overlap and the total is not their sum; a branch that runs
   concurrently never lengthens the total as though it were sequential.
 - **Preheating.** A `beforeTarget` preheat (#94, option C chosen by the owner) is an overlapping
-  branch placed from its target: it shows its required time and its available window as two
-  separate readings next to its timing, its span ends when its target starts, and it never
-  lengthens the total or any other step.
+  branch placed from its target. Its timing in the timeline is the derived heating interval
+  `[plannedStart, targetStart]` (it has no `plannedDurationS`), so the cooking group of the mockup
+  reads `+29:15 → +30:25`, 1 h 10 min, while the total stays 30 h 25 min. Three readings stay
+  separate: the required warm-up, the projected interval and, in a Preparation, the observed
+  "ready" (never inferred from elapsed time). When its `warmup` is `unknown` the preheat's timing
+  is unknown and its group is `partial`; when it is `unavailable` (a start after the target) no
+  interval is drawn and the group is not given an envelope from it; an overdue trigger is shown as
+  due since `dueAt`, never as an inverted or backdated bar. It never lengthens the total or any
+  other step.
 - **Nothing is stored twice.** The relative start and end are never persisted; they are derived
   from the durations and the dependencies, so a change of one duration changes every reading in
   Recipe and Planning together.
