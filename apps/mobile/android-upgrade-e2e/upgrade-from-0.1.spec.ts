@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { enterEditor } from '../e2e/ui-actions';
 import { _android as android, expect, test, type AndroidDevice, type Page } from '@playwright/test';
 
 /**
@@ -438,30 +439,13 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     });
   });
 
-  await test.step('candidate: the personal flour is in the registry', async () => {
-    await explain(page, async () => {
-      // Through the recipe list's Flours button: a pushed route can leave the previous page shown.
-      await goTo(page, '/recipes');
-      await expect(page).toHaveURL(/\/recipes$/);
-      await page.getByLabel('Flours', { exact: true }).locator('visible=true').first().click();
-      await expect(page).toHaveURL(/\/flours$/);
-      await expect(personalFlour(page)).toHaveCount(1);
-    });
-  });
-
   await test.step('candidate: edit and save version 3', async () => {
     await explain(page, async () => {
       await goTo(page, '/recipes');
       await goTo(page, `/recipes/${recipeId}`);
       await expect(shown(page, 'Version 2').first()).toBeVisible();
-      // A saved recipe opens in consultation (#70): editing is explicit.
-      await page
-        .getByRole('button', { name: 'Recipe actions', exact: true })
-        .locator('visible=true')
-        .click();
-      const actions = page.locator('ion-action-sheet');
-      await actions.getByRole('button', { name: 'Edit recipe', exact: true }).click();
-      await expect(actions).toHaveCount(0);
+      // A saved recipe opens in consultation (#70): editing is explicit (the browser suite's helper).
+      await enterEditor(page);
       const salt = page.getByLabel('Salt (g)', { exact: true }).locator('visible=true');
       await salt.fill('26');
       await salt.press('Enter');
@@ -478,6 +462,27 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       await expect(page).toHaveURL(/\/recipes$/);
       await goTo(page, `/recipes/${recipeId}`);
       await expect(shown(page, 'Version 3').first()).toBeVisible();
+    });
+  });
+
+  await test.step('candidate: the personal flour is in the registry', async () => {
+    // A fresh launch, the recipe list, then its Flours link: a pushed route to the registry can
+    // leave the previous page shown (seen on the emulator and in the browser build).
+    await forceStop();
+    page = await open();
+    await explain(page, async () => {
+      await goTo(page, '/recipes');
+      await expect(page).toHaveURL(/\/recipes$/);
+      await expect(
+        page.getByRole('heading', { name: 'Recipes' }).locator('visible=true'),
+      ).toHaveCount(1);
+      await page
+        .getByRole('link', { name: 'Flours', exact: true })
+        .locator('visible=true')
+        .first()
+        .click();
+      await expect(page).toHaveURL(/\/flours$/);
+      await expect(personalFlour(page)).toHaveCount(1);
     });
   });
 
