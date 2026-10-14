@@ -374,6 +374,8 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
 
   const abandoned = Object.entries(old.bakes).find(([, s]) => s === 'abandoned')?.[0];
   const active = Object.entries(old.bakes).find(([, s]) => s === 'active')?.[0];
+  // The list shows the running preparation under the recipe's name: open the recipe by its id.
+  const recipeId = old.recipes.find((r) => r.name === RECIPE)?.id ?? '';
 
   page = await open();
 
@@ -383,7 +385,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       await goTo(page, '/recipes');
       await expect(page).toHaveURL(/\/recipes$/);
       await expect(shown(page, 'Recipe 1').first()).toBeVisible();
-      await shown(page, RECIPE).first().click();
+      await goTo(page, `/recipes/${recipeId}`);
       await expect(shown(page, 'Version 2').first()).toBeVisible();
       await page
         .getByRole('button', { name: 'History', exact: true })
@@ -415,7 +417,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
   await test.step('candidate: edit and save version 3', async () => {
     await explain(page, async () => {
       await goTo(page, '/recipes');
-      await shown(page, RECIPE).first().click();
+      await goTo(page, `/recipes/${recipeId}`);
       await expect(shown(page, 'Version 2').first()).toBeVisible();
       // A saved recipe opens in consultation (#70): editing is explicit.
       await page
@@ -439,7 +441,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     await explain(page, async () => {
       await goTo(page, '/recipes');
       await expect(page).toHaveURL(/\/recipes$/);
-      await shown(page, RECIPE).first().click();
+      await goTo(page, `/recipes/${recipeId}`);
       await expect(shown(page, 'Version 3').first()).toBeVisible();
     });
   });
