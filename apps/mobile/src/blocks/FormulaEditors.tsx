@@ -3,6 +3,8 @@ import { forwardRef, useId, useState } from 'react';
 import {
   OFFERED_BUILT_IN_FLOURS,
   INGREDIENT_PRESETS,
+  hydrationForRatio,
+  liquidMassRatio,
   removeStep,
   type FlourEntry,
   type Formula,
@@ -29,7 +31,7 @@ import { totalWaterKey } from './water-label';
 export type StructureEdit = (edit: FormulaEdit, process?: Process) => boolean;
 
 /** The water absorbing a lock: the first water ingredient of the dough. */
-const absorbingWater = (formula: Formula) =>
+export const absorbingWater = (formula: Formula) =>
   formula.ingredients.find((i) => i.kind === 'water' && i.role === 'dough')?.id;
 
 /**
@@ -48,12 +50,13 @@ export const Hydration = forwardRef<
     onExplain: () => void;
   }
 >(({ formula, resolved, onEdit, onExplain }, ref) => {
-  const { t, pct } = useMessages();
+  const { t, wholePct } = useMessages();
+  const lockedHintId = useId();
   const target = formula.waterTarget;
   const water = target?.absorbInto ?? absorbingWater(formula);
   const label = t('formula.stat.hydration');
   const estimate = totalWaterKey(resolved.totalWater) === 'formula.stat.totalWaterEstimate';
-  const shown = t(totalWaterKey(resolved.totalWater), { pct: pct(resolved.totalWaterPct) });
+  const shown = t(totalWaterKey(resolved.totalWater), { pct: wholePct(resolved.totalWaterPct) });
   return (
     <div
       ref={ref}
@@ -68,43 +71,61 @@ export const Hydration = forwardRef<
           <InfoButton topic="hydration" term={label} />
         </span>
         {water ? (
-          <span className="flex items-center gap-1.5">
-            {estimate && (
-              <span className="text-lg font-bold" aria-hidden="true">
-                ≈
+          <div className="flex flex-col items-end gap-1">
+            <span className="flex items-center gap-1.5">
+              {estimate && (
+                <span className="text-lg font-bold" aria-hidden="true">
+                  ≈
+                </span>
+              )}
+              <NumberField
+                label={label}
+                unit="%"
+                size="large"
+                width="7.5rem"
+                disabled={target !== undefined}
+                {...(target !== undefined ? { describedBy: lockedHintId } : {})}
+                value={target?.totalWaterPct ?? resolved.totalWaterPct}
+                maximumFractionDigits={0}
+                onCommit={(value) =>
+                  onEdit({ type: 'LockTotalWater', totalWaterPct: value, water })
+                }
+              />
+              <button
+                type="button"
+                aria-pressed={target !== undefined}
+                aria-label={
+                  target
+                    ? t('formula.hydration.unlock')
+                    : t('formula.hydration.lock', { pct: shown })
+                }
+                title={
+                  target
+                    ? t('formula.hydration.unlock')
+                    : t('formula.hydration.lock', { pct: shown })
+                }
+                className={`fp-reset inline-flex size-12 shrink-0 items-center justify-center rounded-full transition-colors motion-reduce:transition-none ${
+                  target
+                    ? 'bg-accent text-on-accent'
+                    : 'border border-line bg-surface text-muted hover:border-field'
+                }`}
+                onClick={() =>
+                  void onEdit(
+                    target
+                      ? { type: 'UnlockTotalWater' }
+                      : { type: 'LockTotalWater', totalWaterPct: resolved.totalWaterPct, water },
+                  )
+                }
+              >
+                <LockIcon locked={target !== undefined} />
+              </button>
+            </span>
+            {target !== undefined && (
+              <span id={lockedHintId} className="text-xs text-muted">
+                {t('formula.hydration.lockedExplain')}
               </span>
             )}
-            <NumberField
-              label={label}
-              unit="%"
-              size="large"
-              width="7.5rem"
-              value={target?.totalWaterPct ?? resolved.totalWaterPct}
-              onCommit={(value) => onEdit({ type: 'LockTotalWater', totalWaterPct: value, water })}
-            />
-            <button
-              type="button"
-              aria-pressed={target !== undefined}
-              aria-label={
-                target ? t('formula.hydration.unlock') : t('formula.hydration.lock', { pct: shown })
-              }
-              title={
-                target ? t('formula.hydration.unlock') : t('formula.hydration.lock', { pct: shown })
-              }
-              className={`fp-reset inline-flex size-11 shrink-0 items-center justify-center rounded-full ${
-                target ? 'bg-accent text-on-accent' : 'border-[1.5px] border-field text-ink'
-              }`}
-              onClick={() =>
-                void onEdit(
-                  target
-                    ? { type: 'UnlockTotalWater' }
-                    : { type: 'LockTotalWater', totalWaterPct: resolved.totalWaterPct, water },
-                )
-              }
-            >
-              <LockIcon locked={target !== undefined} />
-            </button>
-          </span>
+          </div>
         ) : (
           <span className="text-xl font-bold">{shown}</span>
         )}
@@ -397,6 +418,44 @@ export const PreparationFields = ({
           }
         />
       </span>
+      {(() => {
+        const ratioParts = liquidMassRatio(component);
+        return ratioParts !== undefined ? (
+          <div className="flex flex-col gap-1">
+            <span className="flex items-center justify-between gap-3">
+              <span className="flex flex-col">
+                <span>{t('component.ratioLabel')}</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span aria-hidden="true">1:</span>
+                <NumberField
+                  label={`${label}, ${t('component.ratioLabel')}`}
+                  width="7rem"
+                  value={ratioParts}
+                  invalidText={t('component.ratioRejected')}
+                  onCommit={(parts) => {
+                    const res = hydrationForRatio(component, parts);
+                    if (res.ok) {
+                      return onEdit({
+                        type: 'UpdateComponent',
+                        component: component.id,
+                        changes: { hydrationPct: res.value },
+                      });
+                    }
+                    return false;
+                  }}
+                />
+              </span>
+            </span>
+            <span className="text-[11px] text-muted">{t('component.ratioBasisDesc')}</span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium text-muted">{t('component.ratioLabel')}</span>
+            <span className="text-xs text-muted">{t('component.ratioUnknown')}</span>
+          </div>
+        );
+      })()}
       <button
         type="button"
         aria-label={t('formula.removeNamed', { name: label })}

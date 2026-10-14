@@ -132,51 +132,58 @@ export const DoughResult = ({
       )}
       <Details>
         <ReadinessRow process={process} onProcess={onProcess} />
-        {duration.status === 'ok' && (
-          <>
-            {step && !before && (
-              <span className="flex items-center justify-between gap-2">
-                <span>
-                  {timeBand
-                    ? t('fermentation.detail.time', {
-                        step: stepName(step),
-                        duration: formatDuration(duration.value),
-                        ...timeBand,
-                      })
-                    : t('fermentation.detail.timeUnbounded', {
-                        step: stepName(step),
-                        duration: formatDuration(duration.value),
-                      })}
+        <div className="flex flex-col gap-2 pt-1">
+          {duration.status === 'ok' ? (
+            <>
+              {step && !before && (
+                <span className="flex items-center justify-between gap-2">
+                  <span>
+                    {timeBand
+                      ? t('fermentation.detail.time', {
+                          step: stepName(step),
+                          duration: formatDuration(duration.value),
+                          ...timeBand,
+                        })
+                      : t('fermentation.detail.timeUnbounded', {
+                          step: stepName(step),
+                          duration: formatDuration(duration.value),
+                        })}
+                  </span>
+                  {!auto && !isApplied(step, duration) && (
+                    <IonButton
+                      size="small"
+                      fill="outline"
+                      className="shrink-0"
+                      onClick={() => onDuration(step.id, duration)}
+                    >
+                      {t('fermentation.applyDuration')}
+                    </IonButton>
+                  )}
                 </span>
-                {!auto && !isApplied(step, duration) && (
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    className="shrink-0"
-                    onClick={() => onDuration(step.id, duration)}
-                  >
-                    {t('fermentation.applyDuration')}
-                  </IonButton>
-                )}
+              )}
+              {progressBand && <span>{t('fermentation.detail.progress', progressBand)}</span>}
+              {yeastBands.map((band) => (
+                <span key={band.id}>
+                  {t('fermentation.detail.yeast', {
+                    name: yeastBands.length > 1 ? name(band.id) : t('fermentation.yeastName'),
+                    low: band.low,
+                    high: band.high,
+                  })}
+                </span>
+              ))}
+              {outside && (
+                <span className="flex items-center gap-1.5 text-alert font-medium">
+                  <span aria-hidden="true">⚠</span>
+                  <span>{t('fermentation.bandOutsideDomain')}</span>
+                </span>
+              )}
+              <span className="flex items-center gap-1.5">
+                {t('fermentation.timeTerm')}
+                <InfoButton topic="modelTime" term={t('fermentation.timeTerm')} />
               </span>
-            )}
-            {progressBand && <span>{t('fermentation.detail.progress', progressBand)}</span>}
-            {yeastBands.map((band) => (
-              <span key={band.id}>
-                {t('fermentation.detail.yeast', {
-                  name: yeastBands.length > 1 ? name(band.id) : t('fermentation.yeastName'),
-                  low: band.low,
-                  high: band.high,
-                })}
-              </span>
-            ))}
-            {outside && <span>{t('fermentation.bandOutsideDomain')}</span>}
-            <span className="flex items-center gap-1.5">
-              {t('fermentation.timeTerm')}
-              <InfoButton topic="modelTime" term={t('fermentation.timeTerm')} />
-            </span>
-          </>
-        )}
+            </>
+          ) : null}
+        </div>
       </Details>
     </section>
   );

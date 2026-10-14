@@ -1,5 +1,6 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
+import { enterEditor, editorSection, showPlanning } from './ui-actions';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
 const modal = (page: Page) => page.locator('ion-modal:not(.overlay-hidden)');
@@ -83,8 +84,6 @@ for (const english of [false, true]) {
   };
   const recipe = (page: Page) =>
     routed(page).getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true });
-  const planning = (page: Page) =>
-    routed(page).getByRole('button', { name: english ? 'Planning' : 'Planification', exact: true });
   const shortcut = (page: Page) =>
     routed(page).getByRole('button', {
       name: english ? 'Edit Bulk fermentation in recipe' : 'Modifier Pointage dans la recette',
@@ -106,7 +105,7 @@ for (const english of [false, true]) {
     page,
   }) => {
     await openSaved(page);
-    await planning(page).click();
+    await showPlanning(page);
     await routed(page)
       .getByRole('button', { name: english ? 'Ready by' : 'Prêt pour', exact: true })
       .click();
@@ -149,18 +148,18 @@ for (const english of [false, true]) {
     page,
   }) => {
     await openSaved(page);
-    await routed(page)
-      .getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true })
-      .click();
+    await enterEditor(page);
+    await editorSection(page, 'steps');
     const duration = routed(page).getByLabel(english ? 'Duration of Mix' : 'Durée : Pétrissage', {
       exact: true,
     });
     await duration.fill('12 min');
     await duration.press('Enter');
+    await editorSection(page, 'composition');
     const water = routed(page).getByLabel(english ? 'Water (g)' : 'Eau (g)', { exact: true });
     await water.fill('abc');
     await water.blur();
-    await planning(page).click();
+    await showPlanning(page);
     await expect(routed(page).locator('input:visible')).toHaveCount(0);
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
@@ -170,6 +169,7 @@ for (const english of [false, true]) {
     await close(page);
     await returnToPlanning(page).click();
     await recipe(page).click();
+    await enterEditor(page);
     await expect(water).toHaveValue('abc');
     await expect(water).toHaveAttribute('aria-invalid', 'true');
     await expect(duration).toHaveValue('12 min');
@@ -184,8 +184,8 @@ for (const english of [false, true]) {
     await footer(page)
       .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
       .click();
-    await expect(footer(page)).toHaveCount(0);
-    await planning(page).click();
+    await expect(footer(page).getByRole('status')).toHaveCount(0);
+    await showPlanning(page);
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
     ).toBeVisible();
@@ -196,9 +196,8 @@ for (const english of [false, true]) {
     page,
   }) => {
     await openSaved(page);
-    await routed(page)
-      .getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true })
-      .click();
+    await enterEditor(page);
+    await editorSection(page, 'result');
     const auto = routed(page).getByRole('button', {
       name: english
         ? 'Bulk fermentation: duration from the model'
@@ -212,6 +211,7 @@ for (const english of [false, true]) {
         exact: true,
       }),
     ).toHaveCount(0);
+    await editorSection(page, 'steps');
     await routed(page)
       .getByRole('button', {
         name: english
@@ -222,10 +222,12 @@ for (const english of [false, true]) {
       .click();
     await expect(routed(page).getByTestId('fermentation-card')).toBeFocused();
     await expect(auto).toHaveAttribute('aria-pressed', 'true');
-    await planning(page).click();
+    await showPlanning(page);
     await expect(routed(page).locator('input:visible')).toHaveCount(0);
     await expect(routed(page).getByText(/^≈ /).filter({ visible: true })).not.toHaveCount(0);
     await recipe(page).click();
+    await enterEditor(page);
+    await editorSection(page, 'result');
     await expect(auto).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -233,9 +235,8 @@ for (const english of [false, true]) {
     page,
   }) => {
     await openSaved(page);
-    await routed(page)
-      .getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true })
-      .click();
+    await enterEditor(page);
+    await editorSection(page, 'steps');
     const bulk = routed(page).getByRole('button', {
       name: english ? 'Edit step Bulk fermentation' : 'Modifier l’étape Pointage',
       exact: true,
@@ -263,9 +264,8 @@ for (const english of [false, true]) {
     await footer(page)
       .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
       .click();
-    await routed(page)
-      .getByRole('button', { name: english ? 'Edit' : 'Modifier', exact: true })
-      .click();
+    await enterEditor(page);
+    await editorSection(page, 'steps');
     await bulk.click();
     await expect(style).toHaveValue('coilFold');
     await modal(page)
@@ -281,7 +281,7 @@ for (const english of [false, true]) {
     await expect(style).toHaveValue('');
   });
 
-  test(`Consultation exposes hydration lock state and a nonmutating edit shortcut${suffix}`, async ({
+  test(`Hydration lock exists in editing only; consultation shows hydration without edit button or lock glyph${suffix}`, async ({
     page,
   }) => {
     await openSaved(page);
@@ -289,18 +289,13 @@ for (const english of [false, true]) {
       name: english ? 'Edit hydration' : 'Modifier l’hydratation',
       exact: true,
     });
+    await expect(hydrationEdit).toHaveCount(0);
     await expect(
-      routed(page).getByText(english ? 'Hydration unlocked' : 'Hydratation déverrouillée', {
-        exact: true,
+      routed(page).getByRole('img', {
+        name: english ? /Hydration (locked|unlocked)/ : /Hydratation (verrouillée|déverrouillée)/,
       }),
-    ).toBeVisible();
-    await hydrationEdit.click();
-    await expect(
-      routed(page).getByRole('region', {
-        name: english ? 'Hydration' : 'Hydratation',
-        exact: true,
-      }),
-    ).toBeFocused();
+    ).toHaveCount(0);
+    await enterEditor(page);
     await expect(footer(page).getByRole('status')).toHaveText(english ? 'Up to date' : 'À jour');
     await expect(
       footer(page).getByRole('button', {
@@ -313,29 +308,46 @@ for (const english of [false, true]) {
     });
     await expect(lock).toBeVisible();
     await lock.click();
+    const rate = routed(page).getByLabel(english ? 'Hydration (%)' : 'Hydratation (%)', {
+      exact: true,
+    });
+    await expect(rate).toBeDisabled();
+    await expect(rate).toHaveAttribute('aria-describedby', /.+/);
+    expect(
+      await rate.evaluate((input) => {
+        const id = input.getAttribute('aria-describedby');
+        return id ? document.getElementById(id)?.textContent : undefined;
+      }),
+    ).toContain(english ? 'locked' : 'verrouillée');
     await footer(page)
       .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
       .click();
+    await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+    await expect(hydrationEdit).toHaveCount(0);
     await expect(
-      routed(page)
-        .getByText(english ? /^Hydration locked at/ : /^Hydratation verrouillée à/)
-        .filter({ visible: true }),
-    ).toBeVisible();
-    await hydrationEdit.click();
+      routed(page).getByRole('img', {
+        name: english ? /Hydration (locked|unlocked)/ : /Hydratation (verrouillée|déverrouillée)/,
+      }),
+    ).toHaveCount(0);
+    await enterEditor(page);
     await routed(page)
       .getByRole('button', {
         name: english ? 'Unlock the hydration' : 'Déverrouiller l’hydratation',
         exact: true,
       })
       .click();
+    await expect(rate).toBeEnabled();
+    await expect(rate).not.toHaveAttribute('aria-describedby', /.+/);
     await footer(page)
       .getByRole('button', { name: english ? 'Save v3' : 'Enregistrer v3', exact: true })
       .click();
+    await expect(routed(page).getByText('Version 3', { exact: true })).toBeVisible();
+    await expect(hydrationEdit).toHaveCount(0);
     await expect(
-      routed(page).getByText(english ? 'Hydration unlocked' : 'Hydratation déverrouillée', {
-        exact: true,
+      routed(page).getByRole('img', {
+        name: english ? /Hydration (locked|unlocked)/ : /Hydratation (verrouillée|déverrouillée)/,
       }),
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 }
 
@@ -351,12 +363,12 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
     .getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true })
     .click();
   await expect(modal(page)).toBeVisible();
-  await modal(page).getByRole('button', { name: 'Retirer cette étape', exact: true }).click();
+  await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
   await page.locator('ion-alert').getByRole('button', { name: 'Annuler', exact: true }).click();
   await expect(page.locator('ion-alert')).toHaveCount(0);
   await expect(modal(page)).toBeVisible();
   await expect(modal(page).locator('ion-title')).toHaveText('Façonnage');
-  await modal(page).getByRole('button', { name: 'Retirer cette étape', exact: true }).click();
+  await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
   await page
     .locator('ion-alert')
     .getByRole('button', { name: 'Retirer cette étape', exact: true })

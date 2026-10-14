@@ -3,10 +3,12 @@ import {
   IonButton,
   IonButtons,
   IonContent,
+  IonFooter,
   IonHeader,
   IonPage,
   IonToolbar,
   useIonAlert,
+  useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -25,7 +27,14 @@ import { useOutcomePicker, useOutcomeText } from '../blocks/Outcome';
 import { techniqueSummary } from '../blocks/StepSheet';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
-import { formatDuration, formatTime, parseDuration, editableDuration } from '../i18n/time';
+import {
+  formatDayTime,
+  formatDuration,
+  formatTime,
+  parseDuration,
+  editableDuration,
+} from '../i18n/time';
+import { OverflowMenu } from '../ui/OverflowMenu';
 import {
   bakeAlerts,
   bakeLog,
@@ -50,6 +59,7 @@ const CRITERIA = ['poke', 'feel', 'time', 'other'] as const;
 export const BakePage = () => {
   const bakeId = useParams<{ bakeId: string }>().bakeId ?? '';
   const services = useServices();
+  const router = useIonRouter();
   const { t, error, stepName, locale } = useMessages();
   const [presentAlert] = useIonAlert();
   const outcomeText = useOutcomeText();
@@ -153,6 +163,8 @@ export const BakePage = () => {
   const view = state.status === 'active' ? bakeView(state, now) : undefined;
   const focus = view?.focus;
   const log = bakeLog(state);
+  const completedSteps =
+    state.process?.steps.filter((s) => state.steps[s.id]?.endedAt !== undefined) ?? [];
   const criterionLabel = (code: string) => {
     const key = `bake.doughReady.${code}`;
     return isKey(key) ? t(key) : code;
@@ -312,14 +324,76 @@ export const BakePage = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/recipes" />
           </IonButtons>
-          <div className="truncate px-1 text-sm text-muted">
-            {recipeName === null ? t('recipe.deleted') : recipeName}
-          </div>
-          {view && focus && (
-            <span slot="end" className="pr-4 text-sm text-muted">
-              {t('bake.position', { index: view.position, total: view.total })}
-            </span>
-          )}
+          <div className="min-w-0 px-2 font-bold text-lg">{t('bake.headerTitle')}</div>
+          <IonButtons slot="end">
+            <OverflowMenu
+              ariaLabel={t('bake.overflowActions')}
+              title={t('bake.overflowActions')}
+              actions={[
+                {
+                  label: t('bake.note'),
+                  handler: note,
+                },
+                ...(focus
+                  ? [
+                      {
+                        label: t('bake.adjust'),
+                        handler: () => adjust(focus),
+                      },
+                    ]
+                  : []),
+                ...(state.snapshot?.revisions.formula.id
+                  ? [
+                      {
+                        label: t('recipe.consultation'),
+                        handler: () =>
+                          router.push(`/recipes/${state.snapshot?.revisions.formula.id}`),
+                      },
+                    ]
+                  : []),
+                'divider',
+                ...(state.status === 'active' && !view?.allDone
+                  ? [
+                      {
+                        label: t('bake.finishNow'),
+                        handler: () =>
+                          pickOutcome(t('bake.finishNow'), intended, (outcome) => {
+                            void send({ type: 'FinishBake', outcome });
+                          }),
+                      },
+                    ]
+                  : []),
+                ...(state.status === 'active'
+                  ? [
+                      {
+                        label: t('bake.abandon'),
+                        destructive: true,
+                        handler: abandon,
+                      },
+                    ]
+                  : []),
+                ...(state.status === 'finished'
+                  ? [
+                      {
+                        label: t('bake.outcome.change'),
+                        handler: () =>
+                          pickOutcome(t('bake.outcome.change'), state.outcome, (outcome) => {
+                            void send({ type: 'CorrectOutcome', outcome });
+                          }),
+                      },
+                    ]
+                  : []),
+                ...(state.status === 'finished' || state.status === 'abandoned'
+                  ? [
+                      {
+                        label: t('bake.reopen'),
+                        handler: reopen,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </IonButtons>
         </IonToolbar>
         <SimulationBanner />
       </IonHeader>
@@ -342,58 +416,45 @@ export const BakePage = () => {
             </div>
           )}
 
-          {state.status !== 'active' && (
-            <h1 className="m-0 text-3xl font-bold">
-              {t(state.status === 'abandoned' ? 'bake.abandoned' : 'bake.finished')}
+          <div>
+            <h1 className="m3-type-page m-0 break-words">
+              {recipeName === null ? t('recipe.deleted') : (recipeName ?? t('bake.headerTitle'))}
             </h1>
+            <div className="mt-1 text-sm text-muted">
+              {state.snapshot &&
+                t('recipe.version', { version: state.snapshot.revisions.formula.version })}
+              {state.startedAt &&
+                t('prep.sessionStarted', { time: formatDayTime(state.startedAt, locale) })}
+            </div>
+          </div>
+
+          {state.status !== 'active' && (
+            <h2 className="m3-type-title m-0">
+              {t(state.status === 'abandoned' ? 'bake.abandoned' : 'bake.finished')}
+            </h2>
           )}
           {state.status === 'finished' && (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-lg" data-testid="bake-outcome">
                 {t('bake.outcome', { outcome: outcomeText(state.outcome ?? 'unknown') })}
               </span>
-              <IonButton
-                fill="outline"
-                size="small"
-                disabled={commands.busy}
-                onClick={() =>
-                  pickOutcome(t('bake.outcome.change'), state.outcome, (outcome) => {
-                    void send({ type: 'CorrectOutcome', outcome });
-                  })
-                }
-              >
-                {t('bake.outcome.change')}
-              </IonButton>
             </div>
-          )}
-          {(state.status === 'finished' || state.status === 'abandoned') && (
-            <IonButton fill="clear" color="medium" disabled={commands.busy} onClick={reopen}>
-              {t('bake.reopen')}
-            </IonButton>
           )}
 
           {focus && <Focus focus={focus} now={now} />}
 
           {focus && (
             <>
-              <IonButton
-                expand="block"
-                className="h-[72px] text-[22px] font-bold [--border-radius:18px]"
-                disabled={commands.busy || pending !== undefined}
-                onClick={() =>
-                  void send(
-                    focus.running
-                      ? { type: 'CompleteStep', stepId: focus.step.id }
-                      : { type: 'StartStep', stepId: focus.step.id },
-                  )
-                }
-              >
-                {t(focus.running ? 'bake.done' : 'bake.start', { step: stepName(focus.step) })}
-              </IonButton>
               <div className="grid grid-cols-3 gap-2.5">
                 <IonButton
                   fill="outline"
-                  disabled={focus.step.plannedDurationS === undefined}
+                  shape="round"
+                  className="min-h-12 font-semibold btn-pill-secondary"
+                  disabled={
+                    focus.step.plannedDurationS === undefined ||
+                    commands.busy ||
+                    pending !== undefined
+                  }
                   onClick={() =>
                     void send({
                       type: 'AdjustStep',
@@ -407,10 +468,20 @@ export const BakePage = () => {
                 >
                   {t('bake.plus15')}
                 </IonButton>
-                <IonButton fill="outline" onClick={() => adjust(focus)}>
+                <IonButton
+                  fill="outline"
+                  shape="round"
+                  className="min-h-12 font-semibold btn-pill-secondary"
+                  onClick={() => adjust(focus)}
+                >
                   {t('bake.adjust')}
                 </IonButton>
-                <IonButton fill="outline" onClick={note}>
+                <IonButton
+                  fill="outline"
+                  shape="round"
+                  className="min-h-12 font-semibold btn-pill-secondary"
+                  onClick={note}
+                >
                   {t('bake.note')}
                 </IonButton>
               </div>
@@ -419,9 +490,11 @@ export const BakePage = () => {
                   const stage = readyStage(focus);
                   return (
                     stage && (
-                      <div className="flex items-center justify-center gap-3">
+                      <div className="flex items-center justify-center gap-3 py-1">
                         <IonButton
                           fill="outline"
+                          shape="round"
+                          className="min-h-12 font-semibold btn-pill-secondary"
                           disabled={commands.busy || pending !== undefined}
                           onClick={() => doughReady(focus.step.id)}
                         >
@@ -497,18 +570,8 @@ export const BakePage = () => {
           {view?.allDone && (
             <>
               <p className="m-0 text-lg">{t('bake.allDone')}</p>
-              {/* One tap records the recipe's intended outcome; the choice beside it, another. */}
+              {/* The primary footer records the intended outcome; this offers another result. */}
               <div className="flex flex-wrap items-center gap-2">
-                <IonButton
-                  className="min-w-[60%] flex-1"
-                  size="large"
-                  disabled={commands.busy}
-                  onClick={() => void send({ type: 'FinishBake' })}
-                >
-                  {intended
-                    ? t('bake.finishAs', { outcome: outcomeText(intended) })
-                    : t('bake.finish')}
-                </IonButton>
                 <IonButton
                   fill="outline"
                   disabled={commands.busy}
@@ -586,9 +649,31 @@ export const BakePage = () => {
             </StepList>
           )}
 
+          {completedSteps.length > 0 && (
+            <StepList title={t('bake.completedSteps')}>
+              {completedSteps.map((step) => {
+                const record = state.steps[step.id];
+                return (
+                  <StepLine
+                    key={step.id}
+                    time={record?.endedAt ? formatTime(record.endedAt, locale) : '—'}
+                    name={stepName(step)}
+                    detail={
+                      step.plannedDurationS === undefined
+                        ? ''
+                        : t('bake.stepPlannedDuration', {
+                            duration: formatDuration(step.plannedDurationS),
+                          })
+                    }
+                  />
+                );
+              })}
+            </StepList>
+          )}
+
           {log.length > 0 && (
-            <StepList title={t('bake.log')}>
-              {log.slice(0, state.status === 'active' ? 3 : undefined).map((entry) => (
+            <StepList title={t('bake.log')} testId="preparation-journal">
+              {log.map((entry) => (
                 <p
                   key={`${entry.kind}-${entry.at}-${entry.stepId ?? ''}-${entry.set ?? ''}`}
                   className="m-0 py-2 text-sm text-muted"
@@ -683,24 +768,6 @@ export const BakePage = () => {
           {/* Finishing does not need every planned step done: a dough frozen before its
               planned bake is a finished Preparation (bake-session.md). No step is completed
               for the baker; the result is chosen explicitly. */}
-          {state.status === 'active' && !view?.allDone && (
-            <IonButton
-              fill="clear"
-              disabled={commands.busy}
-              onClick={() =>
-                pickOutcome(t('bake.finishNow'), intended, (outcome) => {
-                  void send({ type: 'FinishBake', outcome });
-                })
-              }
-            >
-              {t('bake.finishNow')}
-            </IonButton>
-          )}
-          {state.status === 'active' && (
-            <IonButton fill="clear" color="medium" onClick={abandon}>
-              {t('bake.abandon')}
-            </IonButton>
-          )}
         </div>
         <NoteSheet
           open={noteOn !== undefined}
@@ -711,6 +778,35 @@ export const BakePage = () => {
           onClose={() => setNoteOn(undefined)}
         />
       </IonContent>
+      {(focus || view?.allDone) && state.status === 'active' && (
+        <IonFooter className="ion-no-border">
+          <IonToolbar>
+            <div className="px-4 py-2">
+              <IonButton
+                expand="block"
+                shape="round"
+                className="h-12 text-base font-bold btn-pill-primary"
+                disabled={commands.busy || pending !== undefined}
+                onClick={() =>
+                  void send(
+                    !focus
+                      ? { type: 'FinishBake' }
+                      : focus.running
+                        ? { type: 'CompleteStep', stepId: focus.step.id }
+                        : { type: 'StartStep', stepId: focus.step.id },
+                  )
+                }
+              >
+                {focus
+                  ? t(focus.running ? 'bake.done' : 'bake.start', { step: stepName(focus.step) })
+                  : intended
+                    ? t('bake.finishAs', { outcome: outcomeText(intended) })
+                    : t('bake.finish')}
+              </IonButton>
+            </div>
+          </IonToolbar>
+        </IonFooter>
+      )}
     </IonPage>
   );
 };
@@ -719,12 +815,10 @@ export const BakePage = () => {
 const noteText = (entry: LogEntry): string =>
   [ratingText(entry.rating), entry.text ?? ''].filter((part) => part !== '').join(' ');
 
-/** Stars for a whole rating in [0, 5]; any other recorded value as a number, never a crash. */
+/** Stars for positive whole ratings up to 5; zero and other recorded values remain readable. */
 const ratingText = (rating: number | undefined): string => {
   if (rating === undefined || !Number.isFinite(rating)) return '';
-  return Number.isInteger(rating) && rating >= 0 && rating <= 5
-    ? '★'.repeat(rating)
-    : `${rating}/5`;
+  return Number.isInteger(rating) && rating > 0 && rating <= 5 ? '★'.repeat(rating) : `${rating}/5`;
 };
 
 type Translate = ReturnType<typeof useMessages>['t'];
@@ -758,28 +852,33 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
         {t(focus.running ? 'bake.now' : 'bake.upNext')}
         <InfoButton topic="bakeFocus" term={t(focus.running ? 'bake.now' : 'bake.upNext')} />
       </span>
-      <h1 className="m-0 text-[40px] leading-tight font-bold">{stepName(focus.step)}</h1>
+      <h2 className="m3-type-title m-0 break-words">{stepName(focus.step)}</h2>
       {focus.step.technique && (
         <span className="text-[15px] text-muted">{techniqueSummary(t, focus.step.technique)}</span>
       )}
-      <div className="flex items-baseline gap-2.5">
-        <span className="text-[52px] leading-none font-bold">{big}</span>
-        <span className="text-lg text-muted">{unit}</span>
+      <div className="flex flex-wrap items-baseline gap-2">
+        <span className="m3-type-hero-timer min-w-0">{big}</span>
+        <span className="m3-type-supporting text-muted">{unit}</span>
       </div>
-      {focus.running && (
-        <div
-          className="mt-2.5 h-2 rounded bg-track"
-          role="progressbar"
-          aria-label={stepName(focus.step)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(progress * 100)}
-          aria-valuetext={unit ? `${big} ${unit}` : big}
-        >
-          <div className="h-2 rounded bg-accent" style={{ width: `${progress * 100}%` }} />
-        </div>
+      {focus.running && startedAt && projected?.end && (
+        <>
+          <div
+            className="mt-2.5 h-2 rounded bg-track"
+            role="progressbar"
+            aria-label={stepName(focus.step)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress * 100)}
+            aria-valuetext={unit ? `${big} ${unit}` : big}
+          >
+            <div className="h-2 rounded bg-accent" style={{ width: `${progress * 100}%` }} />
+          </div>
+          <div className="text-xs text-muted">
+            {t('prep.progressPct', { pct: Math.round(progress * 100) })}
+          </div>
+        </>
       )}
-      <div className="flex justify-between text-[15px] text-muted">
+      <div className="m3-type-supporting flex flex-wrap justify-between gap-2 text-muted">
         <span>
           {startedAt
             ? t('bake.startedAt', { time: formatTime(startedAt, locale) })
@@ -798,13 +897,15 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
 const StepList = ({
   title,
   help,
+  testId,
   children,
 }: {
   title: string;
   help?: ReactNode;
+  testId?: string;
   children: ReactNode;
 }) => (
-  <section className="flex flex-col">
+  <section className="flex flex-col" data-testid={testId}>
     <div className="flex items-center gap-1.5 pb-1">
       <SectionTitle>{title}</SectionTitle>
       {help}

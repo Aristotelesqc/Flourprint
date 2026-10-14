@@ -10,7 +10,7 @@ import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { WeighingChecklist } from './WeighingChecklist';
-import { Enrichment, FlourSummary, GroupHeader, ROW, Stat } from './FormulaSection';
+import { Enrichment, FlourSummary, GroupHeader, ROW } from './FormulaSection';
 
 interface Props {
   readonly formula: Formula;
@@ -18,7 +18,6 @@ interface Props {
   readonly process: Process;
   readonly weighed: ReadonlyMap<string, number>;
   readonly onToggleWeighed: (key: string, grams: number) => void;
-  readonly onEditHydration?: () => void;
 }
 
 /**
@@ -31,11 +30,10 @@ export const FormulaConsultation = ({
   process,
   weighed,
   onToggleWeighed,
-  onEditHydration,
 }: Props) => {
-  const { t, grams, pct, name, componentName, stepName } = useMessages();
+  const { t, grams, pct, wholePct, name, componentName, stepName } = useMessages();
   const temperature = useTemperature();
-  const { reason, extrapolations, ends, wholePct } = useEstimateText();
+  const { reason, extrapolations, ends } = useEstimateText();
   const [explaining, setExplaining] = useState(false);
   const anchor = formula.anchor;
   const lockedWater = formula.waterTarget?.absorbInto;
@@ -51,103 +49,81 @@ export const FormulaConsultation = ({
         : '—';
 
   return (
-    <div className="flex flex-col gap-5 pb-6">
-      <Card>
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="flex items-center gap-1.5 font-bold">
-            {t('formula.quantity')}
+    <div className="flex flex-col gap-5">
+      <Card className="m3-card-quiet">
+        <div className="flex items-baseline justify-between gap-3 tabular">
+          <span className="flex items-center gap-1.5 font-medium text-muted">
+            {t('formula.anchorField.flourTotal')}
             <InfoButton topic="anchor" term={t('formula.quantity')} />
           </span>
-          <span className="text-lg font-bold">
-            {anchor.kind === 'pieces'
-              ? `${anchor.count} × ${grams(anchor.gramsEach)}`
-              : grams(anchor.grams)}
-          </span>
+          <span className="text-lg font-bold">{resolved ? grams(resolved.flourTotal) : '—'}</span>
         </div>
-        <div className="text-xs text-muted">{t(`formula.anchor.${anchor.kind}`)}</div>
-
-        {!resolved ? (
-          <p className="m-0 border-t border-line pt-3 text-sm text-muted">
-            {t('formula.unresolved')}
-          </p>
-        ) : (
-          <>
-            <div className="flex flex-col gap-2 border-t border-line pt-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="flex items-center gap-1.5 font-semibold">
-                  {t('formula.stat.hydration')}
-                  <InfoButton topic="hydration" term={t('formula.stat.hydration')} />
-                </span>
-                <span className="text-xl font-bold">
-                  {t(totalWaterKey(resolved.totalWater), {
-                    pct: pct(resolved.totalWaterPct),
-                  })}
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
-                <span className="inline-flex min-h-12 items-center gap-2 text-sm text-muted">
-                  <LockStatusIcon locked={formula.waterTarget !== undefined} />
-                  <span className="font-medium">
-                    {formula.waterTarget !== undefined
-                      ? t('formula.hydration.locked', {
-                          pct: pct(formula.waterTarget.totalWaterPct),
-                        })
-                      : t('formula.hydration.unlocked')}
-                  </span>
-                </span>
-                {onEditHydration && (
-                  <button
-                    type="button"
-                    className="fp-reset inline-flex min-h-12 items-center justify-center rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold text-accent-text shadow-sm hover:bg-field-bg active:bg-accent-soft"
-                    onClick={onEditHydration}
-                  >
-                    {t('formula.hydration.editAction')}
-                  </button>
-                )}
-              </div>
+        {resolved && (
+          <div className="flex items-baseline justify-between gap-3 tabular">
+            <span className="font-medium text-muted">{t('formula.stat.dough')}</span>
+            <span className="text-lg font-bold">{grams(resolved.doughWeight)}</span>
+          </div>
+        )}
+        {anchor.kind === 'pieces' && (
+          <div className="flex items-baseline justify-between gap-3 text-sm text-muted">
+            <span>{t('formula.anchor.pieces')}</span>
+            <span>
+              {anchor.count} × {grams(anchor.gramsEach)}
+            </span>
+          </div>
+        )}
+        {resolved && (
+          <div className="flex flex-col gap-1 border-t border-line-subtle pt-2">
+            <div className="flex items-baseline justify-between gap-3 tabular">
+              <span className="flex items-center gap-1.5 font-medium text-muted">
+                {t('formula.stat.hydration')}
+                <InfoButton topic="hydration" term={t('formula.stat.hydration')} />
+              </span>
+              <span className="text-xl font-bold">
+                {totalWaterKey(resolved.totalWater) === 'formula.stat.totalWaterEstimate' ||
+                resolved.totalWater.completeness === 'incomplete'
+                  ? `≈ ${wholePct(resolved.totalWaterPct)}`
+                  : wholePct(resolved.totalWaterPct)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between pt-1">
               <button
                 type="button"
-                className="fp-reset self-start text-sm text-accent-text underline decoration-dotted underline-offset-4"
+                aria-haspopup="dialog"
+                className="fp-reset self-start text-sm text-accent underline decoration-dotted underline-offset-4"
                 onClick={() => setExplaining(true)}
               >
                 {t('formula.hydration.breakdown')}
               </button>
-              {resolved.totalWater.completeness === 'incomplete' && (
-                <p className="m-0 text-sm text-muted">
-                  {t('formula.water.incomplete', {
-                    ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
-                  })}
-                </p>
-              )}
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
-              <Stat label={t('formula.stat.pureWater')} value={pct(resolved.pureWaterPct)} />
-            </div>
-            <Enrichment resolved={resolved} />
-          </>
+            {resolved.totalWater.completeness === 'incomplete' && (
+              <p className="m-0 text-xs text-muted">
+                {t('formula.water.incomplete', {
+                  ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
+                })}
+              </p>
+            )}
+          </div>
         )}
+        {resolved && <Enrichment resolved={resolved} />}
+        {!resolved && <p className="m-0 text-sm text-muted">{t('formula.unresolved')}</p>}
       </Card>
 
       <section>
         <GroupHeader
           title={t('formula.group.flours')}
-          pctLabel={t('formula.column.flourPct')}
-          gramsLabel={t('formula.column.grams')}
+          pctLabel={t('formula.column.basisFlour')}
+          gramsLabel={t('formula.column.basisGrams')}
         />
         <Rows>
           {formula.flours.map((flour) => (
-            <div key={flour.id} className={`${ROW} min-h-[52px] px-3`}>
-              <span className="flex min-w-0 flex-col items-start">
-                <span className="font-semibold">{name(flour.id)}</span>
-                <FlourSummary id={flour.id} />
-              </span>
-              <span className="pr-2.5 text-right font-medium">{pct(flour.sharePct)}</span>
-              <span className="pr-2.5 text-right font-bold">
-                {resolved ? grams(resolved.flourByFlour[flour.id] ?? 0) : '—'}
-              </span>
-            </div>
+            <ConsultationRow
+              key={flour.id}
+              title={name(flour.id)}
+              subtitle={<FlourSummary id={flour.id} />}
+              pctText={pct(flour.sharePct)}
+              gramsText={resolved ? grams(resolved.flourByFlour[flour.id] ?? 0) : '—'}
+            />
           ))}
         </Rows>
       </section>
@@ -155,24 +131,23 @@ export const FormulaConsultation = ({
       <section>
         <GroupHeader
           title={t('formula.group.ingredients')}
-          pctLabel={t('formula.column.bakerPct')}
-          gramsLabel={t('formula.column.grams')}
-          help={<InfoButton topic="bakerPct" term={t('formula.column.bakerPct')} />}
+          pctLabel={t('formula.column.basisBaker')}
+          gramsLabel={t('formula.column.basisGrams')}
+          help={<InfoButton topic="bakerPct" term={t('formula.column.basisBaker')} />}
         />
         <Rows>
           {formula.ingredients.map((ingredient) => (
-            <div key={ingredient.id} className={`${ROW} min-h-[52px] px-3`}>
-              <span className="flex min-w-0 flex-col items-start">
-                <span className="font-semibold">{name(ingredient.id)}</span>
-                {ingredient.id === lockedWater && (
+            <ConsultationRow
+              key={ingredient.id}
+              title={name(ingredient.id)}
+              subtitle={
+                ingredient.id === lockedWater ? (
                   <span className="text-[13px] text-muted">{t('formula.lock.follows')}</span>
-                )}
-              </span>
-              <span className="pr-2.5 text-right font-medium">{pct(ingredient.bakerPct)}</span>
-              <span className="pr-2.5 text-right font-bold">
-                {resolved ? grams(resolved.grams[ingredient.id] ?? 0) : '—'}
-              </span>
-            </div>
+                ) : undefined
+              }
+              pctText={pct(ingredient.bakerPct)}
+              gramsText={resolved ? grams(resolved.grams[ingredient.id] ?? 0) : '—'}
+            />
           ))}
         </Rows>
       </section>
@@ -275,51 +250,77 @@ export const FormulaConsultation = ({
           <summary className="min-h-11 cursor-pointer font-semibold text-accent-text">
             {t('fermentation.details')}
           </summary>
-          <p className="m-0 py-2 text-sm text-muted">{t('recipe.estimateCaption')}</p>
-          <p className="m-0 pb-2 text-sm">
-            {t('fermentation.readiness')}: {profileLabel}
-          </p>
-          {[['dough', estimates.dough] as const, ...Object.entries(estimates.preferments)].map(
-            ([id, mass]) => {
-              const step = process.steps.find((item) => item.id === mass.stepId);
-              const band = ends(mass.duration, formatDuration);
-              return (
-                <div key={id} className="flex flex-col gap-1 border-t border-line py-2 text-sm">
-                  <span className="font-semibold">
-                    {step ? stepName(step) : id === 'dough' ? t('recipe.doughEstimate') : name(id)}
-                  </span>
-                  <span>
-                    {mass.duration.status === 'ok'
-                      ? formatDuration(mass.duration.value)
-                      : reason(mass.duration)}
-                  </span>
-                  {band && (
-                    <span className="text-muted">
-                      {band.low} – {band.high}
+          <div className="flex flex-col gap-3 py-2 text-sm">
+            <p className="m-0 text-muted">{t('recipe.estimateCaption')}</p>
+            <div className="flex flex-col gap-1 border-t border-line/60 pt-2">
+              <span className="font-semibold text-muted">{t('fermentation.readiness')}</span>
+              <span className="font-medium">{profileLabel}</span>
+            </div>
+            {[['dough', estimates.dough] as const, ...Object.entries(estimates.preferments)].map(
+              ([id, mass]) => {
+                const step = process.steps.find((item) => item.id === mass.stepId);
+                const band = ends(mass.duration, formatDuration);
+                const extra = extrapolations(mass.duration);
+                return (
+                  <div key={id} className="flex flex-col gap-1.5 border-t border-line/60 pt-2">
+                    <span className="font-semibold text-ink">
+                      {step
+                        ? stepName(step)
+                        : id === 'dough'
+                          ? t('recipe.doughEstimate')
+                          : name(id)}
                     </span>
-                  )}
-                  {mass.progressPct.status === 'ok' && (
-                    <span>
-                      {t('fermentation.result.covers', { pct: wholePct(mass.progressPct.value) })}
-                    </span>
-                  )}
-                  {Object.entries(mass.yeastPct).map(([ingredient, estimate]) => (
-                    <span key={ingredient}>
-                      {estimate.status === 'ok'
-                        ? t('recipe.estimatedYeast', {
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="font-medium">
+                        {mass.duration.status === 'ok'
+                          ? formatDuration(mass.duration.value)
+                          : reason(mass.duration)}
+                      </span>
+                      {mass.duration.status === 'ok' && band && (
+                        <span className="text-muted">
+                          ({band.low} – {band.high})
+                        </span>
+                      )}
+                    </div>
+                    {mass.progressPct.status === 'ok' && (
+                      <span className="text-muted">
+                        {t('fermentation.result.covers', { pct: wholePct(mass.progressPct.value) })}
+                      </span>
+                    )}
+                    {Object.entries(mass.yeastPct).map(([ingredient, estimate]) => {
+                      if (estimate.status !== 'ok') {
+                        if (
+                          mass.duration.status !== 'ok' &&
+                          estimate.reason === mass.duration.reason
+                        ) {
+                          return null;
+                        }
+                        return (
+                          <span key={ingredient} className="text-muted">
+                            {reason(estimate)}
+                          </span>
+                        );
+                      }
+                      return (
+                        <span key={ingredient} className="text-muted">
+                          {t('recipe.estimatedYeast', {
                             name: name(ingredient),
                             pct: pct(estimate.value),
-                          })
-                        : reason(estimate)}
-                    </span>
-                  ))}
-                  {extrapolations(mass.duration) && (
-                    <span className="text-alert">{extrapolations(mass.duration)}</span>
-                  )}
-                </div>
-              );
-            },
-          )}
+                          })}
+                        </span>
+                      );
+                    })}
+                    {extra && (
+                      <span className="flex items-center gap-1.5 text-alert font-medium">
+                        <span aria-hidden="true">⚠</span>
+                        <span>{extra}</span>
+                      </span>
+                    )}
+                  </div>
+                );
+              },
+            )}
+          </div>
         </details>
       </Card>
 
@@ -343,18 +344,23 @@ export const FormulaConsultation = ({
   );
 };
 
-const LockStatusIcon = ({ locked }: { locked: boolean }) => (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    aria-hidden="true"
-  >
-    <rect x="5" y="11" width="14" height="10" rx="2" />
-    <path d={locked ? 'M8 11V7a4 4 0 0 1 8 0v4' : 'M8 11V7a4 4 0 0 1 7.5-2'} />
-  </svg>
+export const ConsultationRow = ({
+  title,
+  subtitle,
+  pctText,
+  gramsText,
+}: {
+  readonly title: React.ReactNode;
+  readonly subtitle?: React.ReactNode;
+  readonly pctText: string;
+  readonly gramsText: string;
+}) => (
+  <div className={`${ROW} min-h-[52px] px-3 py-2.5`}>
+    <span className="flex min-w-0 flex-col items-start">
+      <span className="font-semibold">{title}</span>
+      {subtitle}
+    </span>
+    <span className="pr-2.5 text-right font-medium">{pctText}</span>
+    <span className="pr-2.5 text-right font-bold">{gramsText}</span>
+  </div>
 );

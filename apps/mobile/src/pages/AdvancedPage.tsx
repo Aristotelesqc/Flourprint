@@ -214,6 +214,28 @@ export const AdvancedPage = () => {
             </IonLabel>
           </IonItem>
           <IonListHeader>
+            <IonLabel>{t('advanced.theme')}</IonLabel>
+          </IonListHeader>
+          <IonItem lines="none">
+            <div className="flex w-full flex-col gap-2 py-1">
+              <Segmented
+                value={preferences.theme}
+                options={[
+                  { value: 'system', label: t('advanced.theme.system') },
+                  { value: 'light', label: t('advanced.theme.light') },
+                  { value: 'dark', label: t('advanced.theme.dark') },
+                  { value: 'amoled', label: t('advanced.theme.amoled') },
+                ]}
+                onChange={(theme) => services.preferences.setTheme(theme)}
+              />
+            </div>
+          </IonItem>
+          <IonItem>
+            <IonLabel>
+              <p className="whitespace-normal">{t('advanced.theme.hint')}</p>
+            </IonLabel>
+          </IonItem>
+          <IonListHeader>
             <IonLabel>{t('advanced.units')}</IonLabel>
           </IonListHeader>
           {CONTEXTS.map((context) => (
