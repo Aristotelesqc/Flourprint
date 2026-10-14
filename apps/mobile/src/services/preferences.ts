@@ -6,15 +6,19 @@ import type {
   TemperatureUnit,
 } from '@flourprint/core/domain';
 
+export type ThemePreference = 'system' | 'light' | 'dark' | 'amoled';
+
 /**
  * Settings of this device, never written into a document, a backup or an export: the simulation
- * mode and its clock offset (ADR 0014), and the temperature units (values-and-units.md).
+ * mode and its clock offset (ADR 0014), the temperature units (values-and-units.md), and the
+ * theme preference.
  */
 export interface DevicePreferences {
   readonly simulation: boolean;
   /** Simulated time ahead of the real clock, in milliseconds; it only grows. */
   readonly offsetMs: number;
   readonly units: Readonly<Record<TemperatureContext, TemperatureUnit>>;
+  readonly theme: ThemePreference;
 }
 
 export interface PreferenceStore {
@@ -23,6 +27,7 @@ export interface PreferenceStore {
   /** Moves the simulated clock forward; a negative or invalid step is ignored. */
   advance(ms: number): void;
   setUnit(context: TemperatureContext, unit: TemperatureUnit): void;
+  setTheme(theme: ThemePreference): void;
   subscribe(listener: () => void): () => void;
 }
 
@@ -32,7 +37,11 @@ export const DEFAULT_PREFERENCES: DevicePreferences = {
   simulation: false,
   offsetMs: 0,
   units: { oven: 'C', cold: 'C', ambient: 'C' },
+  theme: 'system',
 };
+
+const decodeTheme = (theme: unknown): ThemePreference =>
+  theme === 'light' || theme === 'dark' || theme === 'amoled' ? theme : 'system';
 
 /** Reads stored preferences field by field: anything unreadable keeps its default. */
 export const decodePreferences = (raw: string | null | undefined): DevicePreferences => {
@@ -58,6 +67,7 @@ export const decodePreferences = (raw: string | null | undefined): DevicePrefere
         ? stored.offsetMs
         : 0,
     units: { oven: unit('oven'), cold: unit('cold'), ambient: unit('ambient') },
+    theme: decodeTheme(stored.theme),
   };
 };
 
@@ -77,6 +87,12 @@ const write = (preferences: DevicePreferences): void => {
   }
 };
 
+/** Synchronously reads stored preferences from storage. */
+export const readStoredPreferences = (): DevicePreferences => decodePreferences(read());
+
+/** Synchronously reads the stored theme preference from storage. */
+export const readStoredTheme = (): ThemePreference => readStoredPreferences().theme;
+
 export const createPreferences = (): PreferenceStore => {
   let current = decodePreferences(read());
   const listeners = new Set<() => void>();
@@ -93,6 +109,7 @@ export const createPreferences = (): PreferenceStore => {
     },
     setUnit: (context, unit) =>
       change({ ...current, units: { ...current.units, [context]: unit } }),
+    setTheme: (theme) => change({ ...current, theme: decodeTheme(theme) }),
     subscribe: (listener) => {
       listeners.add(listener);
       return () => listeners.delete(listener);

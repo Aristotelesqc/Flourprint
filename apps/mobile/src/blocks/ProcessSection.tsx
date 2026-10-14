@@ -19,6 +19,7 @@ import { Segmented } from '../ui/Segmented';
 import { RecipeOutcome } from './RecipeOutcome';
 import { StepEquipmentDetails } from './StepEquipmentDetails';
 import { techniqueSummary } from './StepSheet';
+import { isImmediatelyPreceding } from './RecipeMethod';
 
 interface Props {
   readonly process: Process;
@@ -29,6 +30,8 @@ interface Props {
   /** A bake of this recipe in progress: the main action opens it; another start is explicit. */
   readonly activeBakeId?: string;
   readonly onOpenBake: (bakeId: string) => void;
+  /** The Recipe page supplies the single primary action and its overflow alternatives. */
+  readonly showActions?: boolean;
   /** Shortcut to edit a specific step in the authored method in Recipe tab (#71). */
   readonly onEditStepInRecipe?: (stepId: string) => void;
 }
@@ -63,9 +66,10 @@ export const ProcessSection = ({
   onStart,
   activeBakeId,
   onOpenBake,
+  showActions = true,
   onEditStepInRecipe,
 }: Props) => {
-  const { t, error, stepName, locale } = useMessages();
+  const { t, error, stepName, stepInstructions, locale } = useMessages();
   const temperature = useTemperature();
   const services = useServices();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
@@ -210,8 +214,9 @@ export const ProcessSection = ({
           <SectionTitle>{day.label}</SectionTitle>
           <Rows>
             {day.steps.map(({ step, planned: p }) => {
+              const isLinearPrev = isImmediatelyPreceding(step, process.steps);
               const hints = [
-                ...(step.dependsOn.length > 0
+                ...(step.dependsOn.length > 0 && !isLinearPrev
                   ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
                   : []),
                 ...(p && p.unknownAfter.length > 0
@@ -243,11 +248,24 @@ export const ProcessSection = ({
                       {onEditStepInRecipe && (
                         <button
                           type="button"
-                          className="fp-reset inline-flex min-h-12 items-center justify-center rounded-lg border border-line bg-surface px-3 text-xs font-semibold text-accent-text shadow-sm hover:bg-field-bg active:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          className="fp-reset inline-flex min-h-12 min-w-12 h-12 w-12 items-center justify-center rounded-lg border border-line bg-surface text-muted hover:text-accent-text hover:bg-field-bg active:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                           aria-label={t('planning.editStepInRecipe', { step: stepName(step) })}
                           onClick={() => onEditStepInRecipe(step.id)}
                         >
-                          {t('planning.editInRecipe')}
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
                         </button>
                       )}
                     </div>
@@ -257,21 +275,28 @@ export const ProcessSection = ({
                       {techniqueSummary(t, step.technique)}
                     </span>
                   )}
+                  {stepInstructions(step) && (
+                    <span className="text-[13px] text-muted">{stepInstructions(step)}</span>
+                  )}
                   {step.conditions && (
                     <span className="text-[13px] text-muted">
                       {[
                         step.conditions.location,
                         step.conditions.temperatureC !== undefined
-                          ? temperature.format(
+                          ? `${
+                              temperatureContext(step) === 'oven'
+                                ? t('equipment.label.setpoint')
+                                : t('fermentation.room')
+                            } : ${temperature.format(
                               step.conditions.temperatureC,
                               temperatureContext(step),
-                            )
+                            )}`
                           : undefined,
                         step.conditions.doughTemperatureC !== undefined
-                          ? `${t('fermentation.target')}: ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
+                          ? `${t('fermentation.target')} : ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
                           : undefined,
                         step.conditions.frictionC !== undefined
-                          ? `${t('fermentation.friction')}: ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
+                          ? `${t('fermentation.friction')} : ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
                           : undefined,
                       ]
                         .filter(Boolean)
@@ -308,7 +333,7 @@ export const ProcessSection = ({
       {canStart && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
       )}
-      {activeBakeId && (
+      {showActions && activeBakeId && (
         <>
           <IonButton expand="block" size="large" onClick={() => onOpenBake(activeBakeId)}>
             {t('process.openBake')}

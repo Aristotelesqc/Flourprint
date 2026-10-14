@@ -9,6 +9,11 @@ Read repository `AGENTS.md` and the acceptance of the affected issue/PR first. T
 the requested change; it does not choose a new framework, redesign the logo or reduce feature
 scope. UI implementation is assigned to Gemini under Codex review; use the `agy` skill when that
 delegation is requested or required. The verifier owns the acceptance evidence.
+Gemini implementation does not imply an additional independent reviewer cohort for every edit.
+Use current owner instructions and the [AGY review budget](../agy/SKILL.md#bound-review-and-recovery-costs).
+For requested Gemini running-app checks, verify actual browser capability; diagnose failures
+before using [AGY's recovery reference](../agy/references/permissions-and-browser.md). A successful
+URL-text read or static capture review does not prove independent app use.
 
 ## Choose the evidence surface
 
@@ -58,6 +63,13 @@ the defect is in the app, selector, environment or baseline before changing asse
 replace a precise check with a weaker one just to make the suite green.
 
 ## Deliver evidence
+
+Once the approved design is implemented and focused Codex/browser/native checks are satisfactory,
+advance to ordinary PR integration and the owner's scoped dev-app test. Do not keep redesigning
+or restart a reviewer cohort for cosmetic hypotheses; record bounded follow-on defects instead.
+The owner withdrew #87's exceptional four-Gemini running-app gate on 2026-10-13. Preserve existing
+reports and distinguish a waived gate from a passed one. Documentation-only changes need relevant
+documentation checks, not regeneration of unchanged screenshots, journeys or reviewer reports.
 
 Run the required repository checks before a code push. Report the exact build and commands,
 observed behavior, measurements/captures actually inspected, and passed/failed/not-run cases.

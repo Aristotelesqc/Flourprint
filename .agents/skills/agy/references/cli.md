@@ -60,18 +60,25 @@ to snapshot mode after a Git error.
 
 ## Recovery
 
-| Observation                                                            | Next action                                                                                                                                                                   |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Nonzero exit / authentication or launch error                          | Inspect retained diagnostics; correct the demonstrated cause before retrying.                                                                                                 |
-| Headless permission auto-denied                                        | Stop dependent work. Use authorized caller-collected source snapshots for analysis/patch generation, or obtain properly scoped access through the normal permission workflow. |
-| Truncated output / no final result                                     | Treat as incomplete even if some text looks like an answer. Retain raw events and use the recorded conversation ID only after inspecting its state.                           |
-| Completed report invents file paths or cannot cite the supplied source | Verify inputs and request a bounded correction with exact source context; do not treat it as an applied implementation.                                                       |
-| Invalid generated diff                                                 | Keep the original answer; request corrected context or integrate reviewed edits explicitly. Preserve attribution and rerun checks.                                            |
-| Timeout                                                                | The helper stops its CLI invocation; the backend turn may still exist. Inspect the owned session before another run. No automatic replay.                                     |
+Apply the [bounded review/recovery policy](../SKILL.md#bound-review-and-recovery-costs) before
+using these exception paths. A final `ERROR` with response text is still failure; at most one
+justified tool-free retrieval may recover a missing report. Another failed retrieval ends that
+recovery, without relaunching the review cohort.
+
+| Observation                                                            | Next action                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Nonzero exit / authentication or launch error                          | Inspect retained diagnostics; correct the demonstrated cause before retrying.                                                                                                                                                                    |
+| Headless permission auto-denied                                        | Stop dependent access. Use the [interactive permission workflow](permissions-and-browser.md) to obtain a scoped grant, or authorized caller-collected snapshots. Do not repeat a denied request in print mode without a permission-state change. |
+| Truncated output / no final result                                     | Treat as incomplete even if some text looks like an answer. Retain raw events and use the recorded conversation ID only after inspecting its state.                                                                                              |
+| Completed report invents file paths or cannot cite the supplied source | Verify inputs and request a bounded correction with exact source context; do not treat it as an applied implementation.                                                                                                                          |
+| Invalid generated diff                                                 | Keep the original answer; request corrected context or integrate reviewed edits explicitly. Preserve attribution and rerun checks.                                                                                                               |
+| Timeout                                                                | The helper stops its CLI invocation; the backend turn may still exist. Inspect the owned session before another run. No automatic replay.                                                                                                        |
 
 Resume with `--conversation ID`, never the global most-recent session. Give resumed reviewers the
 new HEAD/diff and stale assumptions to discard. Use a fresh session for independent assessment.
-No permission bypass, auto-approval switch or persistent settings change is part of this skill.
+No permission bypass or auto-approval switch is part of this skill. Normal, explicitly authorized
+MCP registration and scoped interactive tool grants are described in
+[permissions-and-browser.md](permissions-and-browser.md); they do not disable permission checks.
 
 ## Helper verification
 

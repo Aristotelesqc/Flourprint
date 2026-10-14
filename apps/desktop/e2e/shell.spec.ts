@@ -56,6 +56,18 @@ const launch = async (userData: string): Promise<Running> => {
 const tap = async (page: Page, target: Locator) => {
   await expect(target).toBeVisible();
   await expect(target).toBeEnabled();
+  // CDP mouse events bypass Playwright's click actionability checks. Wait for finite Ionic
+  // overlay/page movement before taking coordinates, so a release cannot hit the backdrop.
+  await page.evaluate(async () => {
+    await new Promise(requestAnimationFrame);
+    await Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+        .map((animation) => animation.finished.catch(() => undefined)),
+    );
+    await new Promise(requestAnimationFrame);
+  });
   const box = await target.boundingBox();
   if (!box) throw new Error('no box');
   const at = { x: box.x + box.width / 2, y: box.y + box.height / 2, button: 'left' as const };
@@ -167,10 +179,14 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
 
   // A saved recipe opens in consultation (#70): editing is explicit.
   const salt = app.page.getByLabel('Sel (g)', { exact: true });
-  await expect(async () => {
-    await tap(app.page, app.page.getByRole('button', { name: 'Modifier', exact: true }));
-    await expect(salt).toBeVisible({ timeout: 2_000 });
-  }).toPass({ timeout: 20_000 });
+  await tap(
+    app.page,
+    app.page.getByRole('button', { name: 'Actions sur la recette', exact: true }),
+  );
+  const actions = app.page.locator('ion-action-sheet');
+  await tap(app.page, actions.getByRole('button', { name: 'Modifier la recette', exact: true }));
+  await expect(actions).toHaveCount(0);
+  await expect(salt).toBeVisible();
   await salt.fill('25');
   await salt.press('Enter');
   await tap(app.page, app.page.getByRole('button', { name: 'Enregistrer v2' }));

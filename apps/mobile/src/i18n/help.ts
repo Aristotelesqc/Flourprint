@@ -45,7 +45,7 @@ export const helpEn = {
   'help.preparations.body3':
     'A preparation has its own step in the Process, and removing it removes that step.',
 
-  'help.finalMix.title': 'Final mix to weigh',
+  'help.finalMix.title': 'Ingredients',
   'help.finalMix.body1':
     'What you weigh when you mix: each preparation as one ready item, the flour left, the water left after the preparations took theirs, and the other ingredients.',
   'help.finalMix.body2':
@@ -224,7 +224,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
   'help.preparations.body3':
     'Une préparation a sa propre étape dans le Processus, et la retirer retire cette étape.',
 
-  'help.finalMix.title': 'Pétrissage final à peser',
+  'help.finalMix.title': 'Ingrédients',
   'help.finalMix.body1':
     'Ce qui est pesé au pétrissage : chaque préparation comme un seul élément prêt, la farine restante, l’eau restante après celle des préparations, et les autres ingrédients.',
   'help.finalMix.body2':

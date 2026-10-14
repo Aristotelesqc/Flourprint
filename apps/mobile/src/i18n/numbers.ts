@@ -18,6 +18,9 @@ export const formatGrams = (grams: number, locale: string): string =>
 export const formatPct = (pct: number, locale: string): string =>
   `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(pct)} %`;
 
+export const formatWholePct = (pct: number, locale: string): string =>
+  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.round(pct))} %`;
+
 export const formatNumber = (value: number, locale: string): string =>
   new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
 

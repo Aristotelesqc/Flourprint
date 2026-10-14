@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { enterEditor } from './ui-actions';
 import { sampleBackup } from '../test/fixtures/sample-recipe';
 
 for (const english of [false, true]) {
@@ -52,6 +53,8 @@ for (const english of [false, true]) {
       }),
     ).toBeVisible();
     await routed.getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true }).click();
-    await expect(editHydration).toBeVisible();
+    await enterEditor(page);
+    await expect(routed.getByRole('button', { name: 'Composition', exact: true })).toBeVisible();
+    await expect(editHydration).toHaveCount(0);
   });
 }

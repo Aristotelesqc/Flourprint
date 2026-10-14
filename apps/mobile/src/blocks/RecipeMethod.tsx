@@ -37,7 +37,19 @@ interface Props {
   readonly fermentationStepIds?: ReadonlySet<string>;
   /** Callback to navigate to FermentationCard for a step. */
   readonly onEditFermentation?: (stepId: string) => void;
+  /** Whether to show RecipeOutcome (defaults to true; false when authored in Result section). */
+  readonly showOutcome?: boolean;
 }
+
+/** Whether a step depends exclusively on the immediately preceding authored step. */
+export const isImmediatelyPreceding = (
+  step: ProcessStep,
+  allSteps: readonly ProcessStep[],
+): boolean => {
+  if (step.dependsOn.length !== 1) return false;
+  const index = allSteps.findIndex((s) => s.id === step.id);
+  return index > 0 && step.dependsOn[0] === allSteps[index - 1]?.id;
+};
 
 /**
  * Authored method component for the Recipe tab (#71).
@@ -55,8 +67,9 @@ export const RecipeMethod = ({
   onReturnToPlanning,
   fermentationStepIds,
   onEditFermentation,
+  showOutcome = true,
 }: Props) => {
-  const { t, stepName } = useMessages();
+  const { t, stepName, stepInstructions } = useMessages();
   const temperature = useTemperature();
   const [selectedStepId, setSelectedStepId] = useState<string>();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -161,9 +174,10 @@ export const RecipeMethod = ({
       </div>
 
       <Rows>
-        {process.steps.map((step) => {
+        {process.steps.map((step, index) => {
+          const isLinearPrev = isImmediatelyPreceding(step, process.steps);
           const hints = [
-            ...(step.dependsOn.length > 0
+            ...(step.dependsOn.length > 0 && !isLinearPrev
               ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
               : []),
           ];
@@ -177,43 +191,73 @@ export const RecipeMethod = ({
               }`}
             >
               <div className="flex min-w-[140px] flex-1 flex-col gap-0.5">
-                {editable ? (
-                  <button
-                    ref={(el) => {
-                      if (el) stepButtonRefs.current.set(step.id, el);
-                      else stepButtonRefs.current.delete(step.id);
-                    }}
-                    type="button"
-                    className="fp-reset min-h-12 rounded text-left font-semibold text-accent-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-                    aria-label={t('process.editStep', { step: stepName(step) })}
-                    onClick={() => {
-                      setHighlightedStepId(step.id);
-                      setSelectedStepId(step.id);
-                      setIsSheetOpen(true);
-                    }}
-                  >
-                    {stepName(step)}
-                  </button>
-                ) : (
-                  <span className="min-h-12 py-3 font-semibold text-ink">{stepName(step)}</span>
-                )}
+                <div className="flex items-center gap-2">
+                  <span className="w-5 shrink-0 tabular-nums text-sm font-bold text-muted">
+                    {index + 1}.
+                  </span>
+                  {editable ? (
+                    <button
+                      ref={(el) => {
+                        if (el) stepButtonRefs.current.set(step.id, el);
+                        else stepButtonRefs.current.delete(step.id);
+                      }}
+                      type="button"
+                      className="fp-reset inline-flex min-h-12 items-center gap-1.5 rounded text-left font-semibold text-accent-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                      aria-label={t('process.editStep', { step: stepName(step) })}
+                      onClick={() => {
+                        setHighlightedStepId(step.id);
+                        setSelectedStepId(step.id);
+                        setIsSheetOpen(true);
+                      }}
+                    >
+                      <span>{stepName(step)}</span>
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                        className="shrink-0 opacity-70"
+                      >
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <span className="min-h-12 py-3 font-semibold text-ink">{stepName(step)}</span>
+                  )}
+                </div>
                 {step.technique && (
                   <span className="text-[13px] text-ink">
                     {techniqueSummary(t, step.technique)}
                   </span>
+                )}
+                {stepInstructions(step) && (
+                  <span className="text-[13px] text-muted">{stepInstructions(step)}</span>
                 )}
                 {step.conditions && (
                   <span className="text-[13px] text-muted">
                     {[
                       step.conditions.location,
                       step.conditions.temperatureC !== undefined
-                        ? temperature.format(step.conditions.temperatureC, temperatureContext(step))
+                        ? `${
+                            temperatureContext(step) === 'oven'
+                              ? t('equipment.label.setpoint')
+                              : t('fermentation.room')
+                          } : ${temperature.format(
+                            step.conditions.temperatureC,
+                            temperatureContext(step),
+                          )}`
                         : undefined,
                       step.conditions.doughTemperatureC !== undefined
-                        ? `${t('fermentation.target')}: ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
+                        ? `${t('fermentation.target')} : ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
                         : undefined,
                       step.conditions.frictionC !== undefined
-                        ? `${t('fermentation.friction')}: ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
+                        ? `${t('fermentation.friction')} : ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
                         : undefined,
                     ]
                       .filter(Boolean)
@@ -236,15 +280,20 @@ export const RecipeMethod = ({
               </div>
               {isFermentationManaged ? (
                 <div className="flex flex-wrap items-center justify-end gap-2 text-right sm:max-w-[65%]">
-                  <span className="font-medium text-ink">
-                    {step.durationMode === 'model'
-                      ? step.plannedDurationS !== undefined
-                        ? `≈ ${formatDuration(step.plannedDurationS)}`
-                        : t('fermentation.auto')
-                      : step.plannedDurationS !== undefined
-                        ? formatDuration(step.plannedDurationS)
-                        : '—'}
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                      {t('prep.duration')}
+                    </span>
+                    <span className="font-medium text-ink">
+                      {step.durationMode === 'model'
+                        ? step.plannedDurationS !== undefined
+                          ? `≈ ${formatDuration(step.plannedDurationS)}`
+                          : t('fermentation.auto')
+                        : step.plannedDurationS !== undefined
+                          ? formatDuration(step.plannedDurationS)
+                          : '—'}
+                    </span>
+                  </div>
                   {editable && onEditFermentation && (
                     <button
                       type="button"
@@ -266,15 +315,27 @@ export const RecipeMethod = ({
                   />
                 </div>
               ) : (
-                <span className="shrink-0 text-right font-medium text-ink">
-                  {step.plannedDurationS !== undefined
-                    ? formatDuration(step.plannedDurationS)
-                    : '—'}
-                </span>
+                <div className="flex shrink-0 flex-col items-end text-right">
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                    {t('prep.duration')}
+                  </span>
+                  <span className="font-medium text-ink">
+                    {step.plannedDurationS !== undefined
+                      ? formatDuration(step.plannedDurationS)
+                      : '—'}
+                  </span>
+                </div>
               )}
             </div>
           );
         })}
+        {showOutcome && (
+          <RecipeOutcome
+            process={process}
+            editable={editable}
+            {...(onProcessChange ? { onChange: onProcessChange } : {})}
+          />
+        )}
       </Rows>
 
       {editable && onProcessChange && (
@@ -293,14 +354,6 @@ export const RecipeMethod = ({
           />
         </Rows>
       )}
-
-      <div className="pt-2">
-        <RecipeOutcome
-          process={process}
-          editable={editable}
-          {...(onProcessChange ? { onChange: onProcessChange } : {})}
-        />
-      </div>
 
       {editable && onProcessChange && (
         <StepSheet
