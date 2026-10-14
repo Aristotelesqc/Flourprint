@@ -1,7 +1,8 @@
 # Contract: process (D3)
 
-Status: **approved** (issue #30); step move and duplicate are a **proposal** of 2026-10-13,
-revised after the audit, pending the owner's approval. Related issues: #5, #9, #21, #28, #35.
+Status: **approved** (issue #30); the mixing steps (`frasage`, below) and step move and
+duplicate are **proposals** of 2026-10-13, revised after the audits, pending the owner's approval.
+Related issues: #5, #9, #21, #28, #35.
 
 ## Model
 
@@ -75,13 +76,14 @@ type Incorporation =
 interface StepConditions {
   location?: string; // open code: counter, fridge, proofer, oven…
   temperatureC?: number; // ambient temperature of the step
-  doughTemperatureC?: number; // mix step only: target dough temperature (advanced mode)
-  frictionC?: number; // mix step only: mixer friction for the water temperature
+  doughTemperatureC?: number; // mixing step only: target dough temperature (advanced mode)
+  frictionC?: number; // mixing step only: mixer friction for the water temperature
 }
 ```
 
 - `temperatureC` is the ambient the dough sits in. `doughTemperatureC` and `frictionC` are only
-  read on a `mix` step; elsewhere they are refused (`InvalidProcess`). Their use is defined in
+  read on a mixing step (`frasage` or `mix`, Mixing steps below); elsewhere they are refused
+  (`InvalidProcess`). Their use is defined in
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
 
@@ -105,7 +107,8 @@ interface StepTechnique {
 ```
 
 - Operation codes stay open. Codes the app names: `autolyse` (flour and water rest), `fermentolyse`
-  (flour, water and leavening, salt later), `mix`, `fold`, `bulk`, `rest`, `degas`, `divide`,
+  (flour, water and leavening, salt later), `frasage` (combining the ingredients), `mix`
+  (kneading), `fold`, `bulk`, `rest`, `degas`, `divide`,
   `preshape`, `shape`, `proof`, `retard`, `preheat`, `bake`, `boil`, `steam`, `fry`, `panCook`, `grill`, `cool`, and the preparation steps.
 - **Cooking operations**: `bake` (oven, whatever its mode), `boil` (water: bagels, pretzels,
   poached doughs), `steam`, `fry` (in oil), `panCook` (skillet, griddle, plancha) and `grill` (on a
@@ -129,6 +132,109 @@ interface StepTechnique {
 - `endCheck` names what ends the step for the baker; with `endCriterion` it is shown, never acted
   on.
 - An invalid technique (a phase or interval ≤ 0, a non-integer count) is `InvalidProcess`.
+
+## Mixing steps (frasage and kneading)
+
+Two operations describe mixing, and a recipe holds the ones it needs:
+
+- `frasage`: combining the ingredients until no dry flour remains, by hand, with a spoon or in a
+  first low-speed phase. No gluten development is intended. It begins the **assembly of a dough**.
+- `mix`: kneading, which develops the gluten (by hand, slap and fold, stand mixer, spiral…). A
+  no-knead or Dutch-oven recipe has none. The `noKnead` method stays accepted on a `mix` step
+  written before this rule; the interface does not offer it for a new step, since such a recipe
+  has a `frasage` and no `mix`.
+
+Rules:
+
+- The **mixing steps** are the steps whose operation is `frasage` or `mix`.
+- The `frasage` begins the assembly of the **main dough**; it is not necessarily the first step
+  of the recipe. A poolish, levain, tangzhong, scald or soaker may be prepared hours before and
+  appear as steps of the same recipe, in sequence or in parallel, ahead of it. The blank draft
+  (the minimal main-dough recipe) starts with a `frasage`; a template with components starts with
+  its component steps and has its `frasage` after them. Weighing the ingredients is not a step.
+- A recipe whose first step is `mix` stays valid and is never rewritten: there is no migration,
+  and its behaviour does not change.
+- The **main-dough mixing steps** are the mixing steps from the **assembly** on. The assembly is
+  the first mixing step that has incorporations of final-mix items (Incorporations above); a mixing
+  step ahead of it, with none (the frasage of a poolish), is treated as belonging to its
+  component. This is a **compatibility heuristic**, not an invariant: when a step states its
+  subject explicitly (the component phases proposal, #96), the stated subject wins, and a main-dough
+  frasage with incomplete incorporation declarations is never reclassified as a component by it. A
+  process that declares no incorporations has every mixing step as a main-dough one, as before.
+- The **reference mixing step** is the **last** main-dough mixing step in list order. Wherever
+  `fermentation.md` and `drafts.md` say "the mix step", they mean this step: its end is the end of
+  the mix, and its conditions give the ambient temperature, the target dough temperature and the
+  friction.
+- **Leaven before the reference.** A step ahead of the reference mixing step may already hold
+  yeast: a step with a yeast-marked ingredient or a leaven component among its incorporations,
+  or the operation `fermentolyse`. When a non-mixing step with a planned duration lies between
+  such a step and the reference mixing step (a 45 min fermentolyse before the final kneading),
+  the dough estimate is `insufficient_data` with the reason `leaven_before_mixing`, naming the
+  step. It is never silently started at the reference mixing step. Mixing steps in between (a
+  frasage followed at once by a kneading) do not trigger it. Nothing is inferred when no
+  incorporation is declared and no step is a `fermentolyse`. No biological coefficient is added
+  here: a model that integrates the earlier period replaces this rule only by a contract change.
+- A process without a mixing step has no reference mixing step (`no_mix_step`, `drafts.md`;
+  `insufficient_data`, `fermentation.md`).
+- `doughTemperatureC` and `frictionC` are accepted on either mixing step and read only on the
+  reference one. On the other, they are kept and ignored, and the interface says that they do not
+  drive the dough's estimate; the recipe stays valid.
+- **Kneading is only what the list says.** A process without a `mix` step has no kneading, and
+  the engine adds none. Time, autolyse, gentle handling, flour and hydration also build a dough,
+  so a missing kneading is not a defect. The check `no_kneading_or_folds` (`drafts.md`, a note,
+  never blocking) only asks the baker to confirm that this is the intended technique: no `mix`,
+  no `fold` step and no `folds` technique anywhere. It never says that the gluten is
+  undeveloped and never asks for folds.
+- Folds are added in one of two ways, both already in this contract: **one `fold` step each**
+  (manual), or **a repeating series on a step** (`technique.folds`: every `intervalS`, `count`
+  times, during that step). The interface may compute `count` from the step's duration and the
+  interval (for example every 45 min through a bulk of 3 h gives 3 folds, at 45, 90 and 135 min, none
+  at the very end). A series that spans several
+  steps is not expressible: use `fold` steps there.
+- The labels are interface messages (ADR 0009): in French, **Frasage** and **Pétrissage**. A
+  persisted `frasage` or `mix` keeps its meaning whatever the label.
+
+Compatibility: operation codes are open, so no schema changes and no existing document needs an
+upcaster. `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge, by
+the implementing pull request. An older app reads a `frasage` step as an unknown operation: it
+shows the code and keeps the step, but its fermentation estimate and its recipe checks do not
+treat it as a mixing step. The `leaven_before_mixing` rule changes one existing silent behaviour:
+a recipe with a `fermentolyse` ahead of its `mix` used to be estimated from the end of the
+`mix`, and now says `insufficient_data`; this is stated in the engine version notes.
+
+Examples (hand-checked against the rules above):
+
+1. **No-knead Dutch-oven loaf**: `frasage` (2 min, 21 °C), `bulk`, `shape`, `proof`, an `alap`
+   `preheat`, `bake`, `cool`. Valid, no `no_mix_step`. The reference mixing step is the
+   `frasage`: the dough steps are `bulk`, `shape` and `proof`, and the ambient temperature at the
+   start is 21 °C.
+2. **Stand-mixer loaf**: `frasage` (hand, 3 min), `autolyse` (30 min), `mix` (`standMixer`,
+   phases low 4 min then medium 6 min, `frictionC` 8), `bulk`… The reference mixing step is the
+   `mix`: the dough steps are those after it, and the friction 8 °C is read.
+3. **Friction on the `frasage` of example 2** in place of the `mix`: kept, ignored, and the
+   result says that friction is not counted.
+4. **Existing recipe**: `mix`, `bulk`, `shape`, `proof`, `bake`. Unchanged: the `mix` is the
+   reference mixing step.
+5. **`frictionC` on a `fold` step**: `InvalidProcess`, as before.
+6. **No-knead loaf without folds**: `frasage`, `bulk`, `shape`, `proof`, `bake`. Valid.
+   `no_kneading_or_folds` is raised as a note to confirm the technique, and blocks nothing. A
+   `technique.folds` `{ count: 3, intervalS: 2700 }` on the 3 h `bulk` (folds at 45, 90 and 135
+   min, within the step), a `fold` step or a `mix` clears it.
+7. **Poolish first.** `poolish` (the component's step, 12 h, no incorporations), `frasage`
+   (incorporates `component` poolish, the flour, the water and the other ingredients), `bulk`,
+   `shape`, `proof`, `bake`. The first step is not a `frasage`. The assembly is the `frasage`: it
+   is the reference mixing step, and the dough steps follow it.
+8. **Preliminary frasage.** `frasage` (of the poolish, no incorporations, 10 min), `proof`
+   (12 h), `frasage` (assembly, with incorporations), `mix` (kneading, 8 min), `bulk`. The first
+   `frasage` belongs to the poolish. The reference mixing step is the `mix`.
+9. **Fermentolyse before the final kneading.** `fermentolyse` (incorporates flour, water and
+   yeast, 45 min), `mix` (incorporates the salt, 8 min), `bulk`. The `fermentolyse` holds yeast
+   and a non-mixing step with a duration separates it from the reference `mix`: the estimate is
+   `insufficient_data`, reason `leaven_before_mixing`, not an estimate counted from the end of
+   the `mix`.
+10. **Frasage then kneading at once.** `frasage` (incorporates everything, yeast included, 5 min),
+    `mix` (8 min), `bulk`. Only mixing steps lie between: no `leaven_before_mixing`, and the
+    estimate runs from the end of the `mix`, as it always did for a lone `mix`.
 
 ## Step removal
 
