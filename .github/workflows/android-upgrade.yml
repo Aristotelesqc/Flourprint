@@ -1,0 +1,122 @@
+name: Android upgrade
+
+# Upgrade from 0.1.0 on an emulator (issue #24, audit finding F43-1): the 0.1.0 APK gets real data
+# through its own interface, then the candidate built from this commit installs over it.
+#
+# No GitHub release was published for 0.1.0 (the v0.1.0 tag says so; ADR 0016): the start APK is
+# the CI artifact `flourprint-debug-apk` of PR #31's last head (run 38163085428, 809aa86), whose
+# tree is the tree of the v0.1.0 tag (240450f). The step below checks that. GitHub keeps that
+# artifact until 2026-11-10; after that this workflow can no longer run as written.
+on:
+  pull_request:
+    paths:
+      - apps/mobile/android-upgrade-e2e/**
+      - apps/mobile/playwright.android-upgrade.config.ts
+      - .github/workflows/android-upgrade.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: android-upgrade-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+  FROM_RUN_ID: '38163085428'
+  FROM_HEAD_SHA: 809aa8600650ab38c2facc044fd81a998408b09a
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
+            /usr/local/share/powershell /usr/share/swift "$AGENT_TOOLSDIRECTORY/CodeQL"
+          df -h /
+      - name: Download the 0.1.0 APK (PR #31 CI artifact)
+        uses: actions/download-artifact@v4
+        with:
+          name: flourprint-debug-apk
+          run-id: ${{ env.FROM_RUN_ID }}
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          path: apk-0.1.0
+      - name: Check the start APK is the v0.1.0 source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_SHA=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${FROM_RUN_ID}" --jq .head_sha)
+          echo "Artifact run ${FROM_RUN_ID} built ${RUN_SHA}"
+          test "$RUN_SHA" = "$FROM_HEAD_SHA"
+          git fetch --no-tags --depth=1 origin "$FROM_HEAD_SHA" "+refs/tags/v0.1.0:refs/tags/v0.1.0"
+          FROM_TREE=$(git rev-parse "${FROM_HEAD_SHA}^{tree}")
+          TAG_TREE=$(git rev-parse "v0.1.0^{commit}^{tree}")
+          echo "Tree of ${FROM_HEAD_SHA}: ${FROM_TREE}; tree of v0.1.0 ($(git rev-parse 'v0.1.0^{commit}')): ${TAG_TREE}"
+          test "$FROM_TREE" = "$TAG_TREE"
+          APK=$(ls "$PWD"/apk-0.1.0/*.apk)
+          echo "FLOURPRINT_APK_FROM=${APK}" >> "$GITHUB_ENV"
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - run: pnpm install --frozen-lockfile
+      - name: Build names (ADR 0016)
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/build-id.mjs
+      - run: pnpm build
+      - run: pnpm build:mobile
+      - run: pnpm --filter @flourprint/mobile exec cap sync android
+      - run: ./gradlew assembleDebug --no-daemon
+        working-directory: apps/mobile/android
+      - name: Record both APKs (package, versionCode, minSdk, signer)
+        run: |
+          echo "FLOURPRINT_APK=${PWD}/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_ENV"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          digest() { "$BT/apksigner" verify --print-certs "$1" | grep 'Signer #1 certificate SHA-256 digest' | sed 's/.*: //'; }
+          for APK in "$FLOURPRINT_APK_FROM" apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk; do
+            echo "== $APK"
+            sha256sum "$APK"
+            "$BT/aapt" dump badging "$APK" | grep -E "^(package|sdkVersion|targetSdkVersion|application-debuggable)"
+            "$BT/apksigner" verify --verbose --print-certs "$APK" | grep -E "Verified using|Signer #1 certificate (DN|SHA-256)"
+          done
+          FROM=$(digest "$FLOURPRINT_APK_FROM")
+          TO=$(digest apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk)
+          echo "Signer SHA-256: 0.1.0 ${FROM}; candidate ${TO}"
+          test -n "$FROM" && test "$FROM" = "$TO"
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          disk-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: pnpm --filter @flourprint/mobile e2e:android-upgrade
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flourprint-android-upgrade-report
+          path: |
+            apps/mobile/playwright-report
+            apps/mobile/test-results
+          if-no-files-found: ignore
