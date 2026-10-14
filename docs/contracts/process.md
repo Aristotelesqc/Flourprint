@@ -220,9 +220,11 @@ Examples (hand-checked; `+h:mm` from the start of the recipe):
 13. **Start equals the target.** The preheat depends on the `proof`, whose end is the `bake`'s
     start: the start is the target's start, the window 0, `insufficient` (`availableS` 0,
     `requiredS` 1800).
-14. **Start after the target.** A preheat `[cool]` targeting the `bake` that `cool` follows: its
-    earliest start is after the bake's start. `unavailable`, `startsAfterTarget`, no span drawn,
-    `preheat_window_unavailable`; no negative window.
+14. **Start after the target.** The preheat depends on a parallel branch, `soak` (6 h) after
+    `mix`, while the `bake` starts 4 h after `mix`: its earliest start (+6:00) is after the
+    bake's start (+4:00). `unavailable`, `startsAfterTarget`, no span drawn,
+    `preheat_window_unavailable`; no negative window. (A target upstream of the preheat is refused
+    by validation instead.)
 15. **Unknown.** The proof has no duration: the `fromTarget` start, window and status are
     `unknown` with `unknownAfter: ['proof']`. With `afterDependencies` after a known shaping, the
     start is known and the window `unknown`.
