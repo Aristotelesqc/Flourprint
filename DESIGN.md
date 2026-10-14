@@ -260,6 +260,11 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   `début` / `start` for the reverse projection), single discoverable
   pencil edit affordance per step navigating to Recipe step editing, linear dependency omission matching Recipe,
   and clear preview explanations when raw fields are invalid.
+- **Completed preparation steps:** show the actual end clock alongside an explicitly labelled planned
+  recipe duration. Never present the planned duration as elapsed time; the journal retains actual facts.
+- **Active preparation cards:** put the current step action on its own full-width row, with Note and
+  Open beneath it. Wrap long authored step names, retain intrinsic button height and shared touch
+  targets, and avoid an empty row when no primary action is available.
 - **Editing:** Composition, Components, Steps and Result sections share the same draft. Preserve mounted raw
   fields or commit/guard them through the existing validation mechanism before navigation.
   Hydration target rate field is editable only when unlocked; lock/unlock controls exist exclusively within editing.

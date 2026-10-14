@@ -661,7 +661,9 @@ export const BakePage = () => {
                     detail={
                       step.plannedDurationS === undefined
                         ? ''
-                        : formatDuration(step.plannedDurationS)
+                        : t('bake.stepPlannedDuration', {
+                            duration: formatDuration(step.plannedDurationS),
+                          })
                     }
                   />
                 );

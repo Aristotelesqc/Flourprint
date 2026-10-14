@@ -94,6 +94,10 @@ existing Gemini child conversation, keeping the parent idle and browser journeys
 Normal child-scoped navigation and click confirmations then surfaced and returned actual UI
 results. This remains the original child's review, rather than parent proxy use or a substitute
 provider. Verify the child is idle before attaching, and verify each needed grant/result again.
+Direct attachment does not remove the child's timeout: click and snapshot prompts still expired
+after 60 seconds when caller input arrived late. Establish needed conversation-scoped grants
+before lengthy independent work, and inspect the attached terminal every 15–30 seconds while
+new tools can request confirmation. Retain expired requests as partial setup, not completed use.
 
 ## Supply the missing browser capability when authorized
 

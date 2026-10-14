@@ -117,6 +117,9 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await page.getByRole('button', { name: 'Échaudage terminé' }).click();
   await page.getByRole('button', { name: 'Préferment terminé' }).click();
   await expect(page.getByRole('button', { name: 'Commencer : Pétrissage' })).toBeVisible();
+  // Fast manual completion never turns the recipe's planned durations into elapsed-time claims.
+  await expect(page.getByText('Prévu : 12 h', { exact: true })).toBeVisible();
+  await expect(page.getByText('Prévu : 1 h', { exact: true })).toBeVisible();
   // Latest log entries first: the scald started and ended while the preferment ran.
   const log = page.getByTestId('preparation-journal').locator('p', { hasText: / · / });
   await expect(log.nth(0)).toContainText('Préferment terminé');
