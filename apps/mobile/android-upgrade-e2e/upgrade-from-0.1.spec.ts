@@ -216,6 +216,24 @@ const openFlour = async (page: Page, name: string) => {
   await item.evaluate((element) => (element as HTMLElement).click());
 };
 
+/**
+ * Schema 7 (migrations 5 to 7 applied), and every 0.1.0 revision, bake event, flour, draft and
+ * bake status still there, byte for byte. Revisions may only have been added.
+ */
+const expectMigrated = (old: Snapshot, now: Snapshot) => {
+  expect(now.schemaVersion).toBe(7);
+  expect(now.tables).toEqual(expect.arrayContaining(['equipment', 'ingredients']));
+  expect(now.recipeColumns).toContain('trashed_at');
+  expect(now.recipes.every((r) => r.trashed_at == null)).toBe(true);
+  for (const [key, document] of Object.entries(old.revisions)) {
+    expect(now.revisions[key], `revision ${key}`).toBe(document);
+  }
+  expect(now.bakeEvents).toEqual(old.bakeEvents);
+  expect(now.flours).toEqual(old.flours);
+  expect(now.drafts).toEqual(old.drafts);
+  expect(now.bakes).toEqual(old.bakes);
+};
+
 /** One line per piece of evidence in the job log, and the same as an attachment. */
 const evidence = async (name: string, value: unknown) => {
   const text = JSON.stringify(value);
@@ -379,6 +397,17 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
 
   page = await open();
 
+  await test.step('candidate: the first launch migrated to 7 and kept every row', async () => {
+    // The app has opened its database once: the migrations ran. Read it before any further use.
+    await expect(shown(page, RECIPE).first()).toBeVisible();
+    const migrated = await readDatabase('candidate-first-launch');
+    await evidence('database-candidate-first-launch', summary(migrated));
+    expectMigrated(old, migrated);
+    expect(migrated.revisions).toEqual(old.revisions);
+    expect(migrated.recipes.find((r) => r.name === RECIPE)?.head_version).toBe(2);
+    page = await open();
+  });
+
   await test.step('candidate: the recipe, its versions, its history and the draft are shown', async () => {
     await explain(page, async () => {
       // The candidate reopens on the running preparation: start from the recipe list.
@@ -411,7 +440,10 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
 
   await test.step('candidate: the personal flour is in the registry', async () => {
     await explain(page, async () => {
-      await goTo(page, '/flours');
+      // Through the recipe list's Flours button: a pushed route can leave the previous page shown.
+      await goTo(page, '/recipes');
+      await expect(page).toHaveURL(/\/recipes$/);
+      await page.getByLabel('Flours', { exact: true }).locator('visible=true').first().click();
       await expect(page).toHaveURL(/\/flours$/);
       await expect(personalFlour(page)).toHaveCount(1);
     });
@@ -452,21 +484,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
   await test.step('candidate: migrations 5 to 7 ran and no row was lost', async () => {
     const now = await readDatabase('candidate');
     await evidence('database-candidate', summary(now));
-    expect(now.schemaVersion).toBe(7);
-    expect(now.tables).toEqual(expect.arrayContaining(['equipment', 'ingredients']));
-    expect(now.recipeColumns).toContain('trashed_at');
-    expect(now.recipes.every((r) => r.trashed_at == null)).toBe(true);
-    // Every 0.1.0 revision, event and flour is still there, byte for byte.
-    for (const [key, document] of Object.entries(old.revisions)) {
-      expect(now.revisions[key], `revision ${key}`).toBe(document);
-    }
-    for (const [key, document] of Object.entries(old.bakeEvents)) {
-      expect(now.bakeEvents[key], `bake event ${key}`).toBe(document);
-    }
-    expect(now.flours).toEqual(old.flours);
-    expect(now.drafts).toEqual(old.drafts);
-    expect(now.bakes).toEqual(old.bakes);
-    expect(now.counts.bake_events).toBe(old.counts.bake_events);
+    expectMigrated(old, now);
     // The one new revision is version 3 of the edited recipe.
     expect(now.counts.revisions).toBe((old.counts.revisions ?? 0) + 1);
     expect(now.recipes.find((r) => r.name === RECIPE)?.head_version).toBe(3);
