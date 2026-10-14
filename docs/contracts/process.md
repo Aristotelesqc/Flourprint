@@ -129,14 +129,27 @@ interface ProcessStep {
     requirement allows, never before the earliest allowed start;
   - `afterDependencies`: `earliest`, an explicit choice to heat from the end of the previous
     step (for example a stone that needs long heating).
-    `requiredWarmupS` (≥ 0) is required with `fromTarget`, optional with `afterDependencies`. When
-    `targetStart` is unknown, a `fromTarget` start is unknown too, never guessed.
+
+  `requiredWarmupS` (≥ 0) is required with `fromTarget`, optional with `afterDependencies`. During
+  a Preparation, a trigger not yet started is never planned before `now`, like any step not yet
+  started: the start is then `max(…, now)`.
+
+- **Unknown times.** When `earliest` is unknown, the start is unknown. When `targetStart` is
+  unknown, a `fromTarget` start is unknown; an `afterDependencies` start may still be known (its
+  dependencies ended), but its window is unknown. An unknown time is never replaced by a number,
+  and no window or readiness is derived from it.
 - **Heating window.** The step's planned span is `[plannedStart, targetStart]`: heating continues
   until the target starts. `windowS = targetStart − plannedStart` is derived, never stored, and is
   never added to any total; the span counts in its group's window like any step (relative timeline
-  and groups) but never extends the recipe beyond its target.
+  and groups) but never extends the recipe beyond its target. **The window is never negative.**
+  When the start falls after the target's start (its dependencies end after the target starts, or
+  the target was started before the heating), there is no span: the status is `unavailable` with
+  `reason: 'startsAfterTarget'`, no interval is drawn and nothing is called sufficient. When the
+  start equals the target's start, the window is 0: `insufficient` whenever a warm-up is
+  required.
 - **Status.** The projection gives each `beforeTarget` step a structured `warmup`: `sufficient` or
-  `insufficient` (with `availableS` and `requiredS`), `unknown` (with the scheduler's
+  `insufficient` (with `availableS` and `requiredS`), `unavailable` (with its `reason`, raising
+  the nonblocking check `preheat_window_unavailable`), `unknown` (with the scheduler's
   `unknownAfter` blockers) and `notApplicable` (no requirement). An absent warning is never read as
   sufficient: `insufficient` raises `preheat_too_short` and `unknown` raises
   `preheat_window_unknown` (`drafts.md`), both nonblocking. An insufficient window changes no other
@@ -144,7 +157,12 @@ interface ProcessStep {
 - **In a Preparation.** `StartStep` records `StepStarted`: the heating was switched on. Before
   that, the planned trigger follows the target when the plan is reprojected (a proof extended
   before the oven is on moves the trigger later); once started, the recorded start stays and only
-  the window changes. `CompleteStep` is optional and means the baker observed the equipment ready
+  the window changes. **Overdue trigger:** when the trigger computed from the target
+  (`targetStart − requiredWarmupS`) is already past and the heating has not started, the planned
+  start is `now`, the step carries `overdue: { dueAt }` with that original instant, and the window
+  is computed from `now` (often `insufficient`). It is never backdated and never shown as heating;
+  the reminder fires once at `dueAt`, and the interface then shows the action as due since
+  `dueAt`, not as done. `CompleteStep` is optional and means the baker observed the equipment ready
   (`StepCompleted` at `at`). Nothing completes when the required time elapses, readiness is never
   inferred, and a started step that was never completed is not an open step: finishing the
   Preparation does not need it. If the target is started with no readiness recorded and less than
@@ -199,6 +217,21 @@ Examples (hand-checked; `+h:mm` from the start of the recipe):
 12. **Recipe and Planning.** Both read the same projection: the same start and end for every step,
     and a distinct "30 min required · 30 min available" annotation for the preheat (example 1), or
     "30 min required · 2 h available" (example 2).
+13. **Start equals the target.** The preheat depends on the `proof`, whose end is the `bake`'s
+    start: the start is the target's start, the window 0, `insufficient` (`availableS` 0,
+    `requiredS` 1800).
+14. **Start after the target.** A preheat `[cool]` targeting the `bake` that `cool` follows: its
+    earliest start is after the bake's start. `unavailable`, `startsAfterTarget`, no span drawn,
+    `preheat_window_unavailable`; no negative window.
+15. **Unknown.** The proof has no duration: the `fromTarget` start, window and status are
+    `unknown` with `unknownAfter: ['proof']`. With `afterDependencies` after a known shaping, the
+    start is known and the window `unknown`.
+16. **Overdue.** In a Preparation at 14:20, the bake is planned at 14:45 with 30 min required: the
+    trigger was due at 14:15 and the oven is not on. The planned start is 14:20 with
+    `overdue: { dueAt: 14:15 }`, the window 25 min, `insufficient`. Switched on at 14:22: the start
+    is recorded at 14:22 and the window becomes 23 min; nothing is backdated.
+17. **Target started first.** The bake was started at 14:35 and the oven recorded on at 14:40:
+    `unavailable`, `startsAfterTarget`; both records stay as they are.
 
 ## Techniques (#32, first slice)
 
