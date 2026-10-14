@@ -1,8 +1,8 @@
 # Contract: process (D3)
 
-Status: **approved** (issue #30); the mixing steps (`frasage`, below) and step move and
-duplicate are **proposals** of 2026-10-13, revised after the audits, pending the owner's approval.
-Related issues: #5, #9, #21, #28, #35.
+Status: **approved** (issue #30); the mixing steps (`frasage`, below), subjects and component
+phases, and step move and duplicate are **proposals** of 2026-10-13, revised after the audits,
+pending the owner's approval. Related issues: #5, #9, #21, #28, #35.
 
 ## Model
 
