@@ -67,8 +67,11 @@ export interface SourceRef {
   readonly detail?: string;
 }
 
-/** Unit of a property value: a canonical unit, or one a property defines (alveograph W). */
-export type PropertyUnit = Unit | '1e-4 J';
+/**
+ * Unit of a property value: a canonical unit, or one a property defines (alveograph W,
+ * flours.md; diastatic power in degrees Lintner, ingredients.md).
+ */
+export type PropertyUnit = Unit | '1e-4 J' | '°L';
 
 /** Basis of a composition value (values-and-units.md, flours.md). */
 export type PropertyBasis = 'per100g' | 'perServing' | 'dryMatter' | 'asIs' | 'moisture14';

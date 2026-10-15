@@ -1,6 +1,98 @@
 # Contract: bake session (D7)
 
-Status: **approved** (issue #30). Related issues: #6, #21, #24.
+Status: **approved** (issue #30); lifecycle and outcome amended for contract `0.11.0` (#21).
+Related issues: #6, #21, #24, #28.
+
+## Preparation and persisted names
+
+A bake session is what the app calls a **Preparation** (Préparation in French): the record of
+actual work on a dough, from the start of a recipe's process to its end, whether or not the dough
+is cooked. The persisted names stay as they are (`bakeId`, `BakeStarted`, `FinishBake`, the
+`bakes` table…): a label change never renames a persisted event type or field. The rest of the
+contracts keep "bake" for the session.
+
+## Lifecycle
+
+A session is `active` from `BakeStarted`, then ends, `finished` or `abandoned`:
+
+- **finished** (`FinishBake`): the preparation reached a usable result, cooked or not. Its
+  **outcome** says which (below).
+- **abandoned** (`AbandonBake`): the preparation stopped without a usable result (a failed dough,
+  a step gone wrong). A dough kept, frozen, given or sold is finished, never abandoned.
+
+There is no suspended state. Closing the app, or the device being off, pauses nothing: the
+fermentation goes on, recorded times stay where they are, and the state at any instant is derived
+from the events and the injected clock. No step completes because its planned duration has
+elapsed. Holding the dough (a cold retard, an extra rest) is a step, added with
+`InsertStepAfter`, not a pause of the session.
+
+Several sessions may be active at once, and steps without a dependency between them may run in
+parallel (process.md). Ending a session keeps all its data.
+
+**Reopening.** `ReopenBake` makes a finished or abandoned session active again (`BakeReopened`),
+for instance to put underbaked bread back in the oven after declaring it done. The earlier end
+stays in the log; the session then ends again with a new `FinishBake` or `AbandonBake`, and only
+its latest end counts (status, outcome, end time). The reopened session takes commands as any
+active one, reminders included. Reopening is never required: a baker who does not keep such a
+detailed record simply finishes.
+
+**Going back to a stage.** Doing a step again once it is done (bagels returned to the pot for
+longer) is a new step, inserted with `InsertStepAfter` after the step last done, with the same
+operation: the first time stays recorded as it happened, the second is recorded as its own step.
+`RetractCompletion` is for a completion recorded by mistake (the step was not finished), not for
+a step done twice.
+
+## Cooking stages
+
+A **cooking step** is a step whose operation is a cooking operation (process.md): `bake`,
+`boil`, `steam`, `fry`, `panCook`, `grill`. A process may hold zero, one or several of them, in
+sequence (boil then bake for bagels; panCook then bake under the broiler) or not. The heat
+setting of a stage (oven mode, burner level…) belongs to #28 and does not change what a stage is.
+
+- A completed cooking step records that this stage was done, nothing more. Completing one,
+  even the last, never ends the session, never sets an outcome and never means the intended
+  product is done.
+- Cooking stages are read from the recorded operation codes of the snapshot's process and of
+  inserted steps. Classifying a code is reading recorded data, not recomputing a value; a change
+  of the list of cooking operations is a contract change that states its effect on history.
+
+## Outcome
+
+```ts
+interface PreparationOutcome {
+  result: 'cooked' | 'dough' | 'cookedAndDough';
+  dough?: 'frozen' | 'refrigerated' | 'given' | 'sold' | 'other'; // what became of the raw dough
+  pieces?: number; // raw dough pieces kept, for a later inventory
+}
+```
+
+- `cooked`: the intended product was cooked (all of it). `dough`: the result is the raw dough
+  itself (pizza balls frozen for later, a dough given away). `cookedAndDough`: part cooked, part
+  kept as dough.
+- `dough` and `pieces` are only accepted with `result` `dough` or `cookedAndDough`; elsewhere
+  they are `InvalidCommand`. `pieces` is an integer ≥ 1. Both are optional: unknown stays unknown.
+- **Intended outcome.** A recipe states the outcome it ends with (process.md,
+  `intendedOutcome`): a dough that is always frozen says `{ result: 'dough', dough: 'frozen' }`
+  once, in the recipe. Without one, the intended outcome is `cooked` when the session's effective
+  process (inserted steps included) has a cooking step, else `dough` with no disposition.
+- **Finishing.** `FinishBake` takes an optional `outcome`:
+  - without one, the domain records the intended outcome of the session's snapshot in the event,
+    with `outcomeSource: 'recipe'`: finishing never asks a question;
+  - with one, it records that outcome with `outcomeSource: 'baker'`, for a session that ended
+    differently this time.
+
+  The interface shows this as a Finish button with a choice beside it, the intended outcome being
+  the default. The domain neither derives the outcome from completed cooking steps nor refuses it
+  against them (a cooking step may have been done outside the process).
+
+- Events written before `0.11.0` have no outcome: the result is **unknown**, never read as
+  cooked, whatever steps were completed.
+- `CorrectOutcome { outcome }` changes only the outcome, without reopening: a typed
+  `OutcomeCorrected` event (`outcomeSource: 'baker'`) replaces the outcome of a **finished**
+  session; the original `BakeFinished` stays in the log. On an active or abandoned session it is
+  refused with `NotFinished`. The latest `OutcomeCorrected` wins.
+- Dough pieces kept are not yet an inventory: a later feature may track them and start a new
+  session from them (#56). Their count is recorded now so that history can feed it.
 
 ## Commands and events
 
@@ -45,14 +137,16 @@ interface BakeEvent<P> {
 | `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; validates the formula, the process and their incorporations together, and projects the process; optional `origin` and `flours` (flours.md)           |
 | `StartStep`                  | `StepStarted`                                                                | dependencies completed, and `at` not before their latest end; not already started                                                                               |
 | `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start); a completion before it is refused (`InvalidTime`) |
-| `AdjustStep`                 | `OverrideApplied` (step duration or temperature)                             | step not completed                                                                                                                                              |
+| `AdjustStep`                 | `OverrideApplied` (step duration, temperature or `equipment`, equipment.md)  | step not completed                                                                                                                                              |
 | `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                    |
 | `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                          |
 | `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                         |
 | `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                  |
 | `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start     |
 | `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                        |
-| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept                                                                                                                                  |
+| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept; `FinishBake` takes an optional `outcome` (above), recorded in its event                                                         |
+| `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                           |
+| `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                     |
 
 `AddObservation` accepts an optional stable `kind`. `kind: 'doughReady'` records that the baker
 judges the dough ready for its next stage:
@@ -86,7 +180,8 @@ dependency has ended. Commands that would record or correct a contradicting time
 adjusted. `AdjustFormula` and `InsertStepAfter` keep the formula and the process consistent,
 incorporations included (`process.md`).
 
-Every command except `StartBake` and `AddObservation` requires an active bake. `AddObservation`
+Every command except `StartBake`, `AddObservation`, `CorrectOutcome` and `ReopenBake` requires an
+active bake. `AddObservation`
 also applies to a finished or abandoned bake (the review after the bake: crumb, flavor, what went
 wrong); `kind: 'doughReady'` still needs an active bake. It never reopens the bake. Business errors are typed codes
 (`StepAlreadyCompleted`, `DependenciesNotCompleted`, `BakeNotActive`, …).

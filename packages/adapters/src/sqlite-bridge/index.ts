@@ -11,7 +11,9 @@ import {
 
 export {
   SqlBakeEventStore,
+  SqlEquipmentRegistry,
   SqlFlourRegistry,
+  SqlIngredientRegistry,
   SqlRecipeRepository,
   SqlRestoreTarget,
 } from '../sql/index.js';

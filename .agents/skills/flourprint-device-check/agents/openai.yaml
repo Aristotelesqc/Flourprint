@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint device check'
+  short_description: 'Prepare and record a phone or desktop check of a build'
+  default_prompt: 'Use $flourprint-device-check to prepare the device steps for this change and record the result.'

@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Agents sharing one machine each pick their own port (FLOURPRINT_E2E_PORT), so one run never
+// reuses another checkout's preview server and tests a foreign build.
+const port = Number(process.env.FLOURPRINT_E2E_PORT ?? 4173);
+
 /**
  * Browser journeys on the production web build (memory stores, session-only). They protect UI
  * behavior on every change; SQLite durability and the APK are covered by device checks (#24).
@@ -11,7 +15,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     ...devices['Pixel 7'],
-    baseURL: 'http://localhost:4173',
+    baseURL: `http://localhost:${port}`,
     timezoneId: 'America/Toronto',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -23,8 +27,8 @@ export default defineConfig({
     { name: 'en', use: { locale: 'en-US' }, grep: /@en/ },
   ],
   webServer: {
-    command: 'pnpm exec vite preview --port 4173 --strictPort',
-    url: 'http://localhost:4173',
+    command: `pnpm exec vite preview --port ${port} --strictPort`,
+    url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
   },
 });

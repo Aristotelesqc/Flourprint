@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { parseFormula } from '../src/contracts/index.js';
 import {
   componentStyle,
+  hydrationForRatio,
+  liquidMassRatio,
   liquidRatioPct,
   resolveFormula,
   type Component,
@@ -214,5 +216,51 @@ describe('component style', () => {
       [{ id: 'milk', kind: 'other', bakerPct: 25, role: 'dough' }],
     );
     expect(componentStyle(formula, only(formula))).toBeUndefined();
+  });
+});
+
+describe('ratio entry by mass (formula.md, Ratio entry)', () => {
+  const milk = {
+    id: 'milk',
+    kind: 'other' as const,
+    bakerPct: 25,
+    role: 'dough' as const,
+    water: { status: 'known' as const, valuePct: 88 },
+  };
+  const milkScald = withComponent(
+    { ...scald(0), allocations: [{ ingredient: 'milk', bakerPct: 25 }] },
+    [milk],
+  );
+
+  it('a 1:6 tangzhong of water is 600 % hydration, and reads back as 1:6', () => {
+    const formula = withComponent(scald(500));
+    expect(hydrationForRatio(only(formula), 6)).toEqual({ ok: true, value: 600 });
+    const updated = withComponent(scald(600));
+    expect(liquidMassRatio(only(updated))).toBeCloseTo(6, 9);
+  });
+
+  it('counts the milk itself, not its water: 5 % flour and 25 % milk is 1:5', () => {
+    expect(liquidMassRatio(only(milkScald))).toBeCloseTo(5, 9);
+    // The style still counts water: 22 points over 5 is 440 %, a tangzhong.
+    expect(liquidRatioPct(milkScald, only(milkScald))).toBeCloseTo(440, 9);
+  });
+
+  it('tops a milk tangzhong up with water to reach 1:6', () => {
+    // 1:6 needs 30 points of liquid; the milk gives 25: 5 points of water, 100 % of 5 % flour.
+    const result = hydrationForRatio(only(milkScald), 6);
+    expect(result.ok && result.value).toBeCloseTo(100, 9);
+  });
+
+  it.each([
+    ['zero parts', 0],
+    ['negative parts', -1],
+    ['not a number', Number.NaN],
+  ])('refuses %s', (_, parts) => {
+    const formula = withComponent(scald(500));
+    expect(hydrationForRatio(only(formula), parts).ok).toBe(false);
+  });
+
+  it('refuses when the milk alone exceeds the ratio', () => {
+    expect(hydrationForRatio(only(milkScald), 4).ok).toBe(false);
   });
 });

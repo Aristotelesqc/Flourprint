@@ -6,6 +6,7 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "resolveJsonModule": true,
     "types": ["node"]
   },
   "include": [
@@ -14,6 +15,8 @@
     "playwright.config.ts",
     "e2e",
     "playwright.android.config.ts",
-    "android-e2e"
+    "android-e2e",
+    "playwright.android-upgrade.config.ts",
+    "android-upgrade-e2e"
   ]
 }

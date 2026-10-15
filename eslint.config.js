@@ -64,6 +64,13 @@ export default tseslint.config(
     },
   },
   {
+    // The upgrade suite runs in Node and reads the app's database copied off the device; it is
+    // never part of the mobile bundle.
+    files: ['apps/mobile/android-upgrade-e2e/**/*.ts'],
+    languageOptions: { globals: { ...globals.node } },
+    rules: { 'no-restricted-imports': 'off' },
+  },
+  {
     // Adapters that run in the mobile bundle: no Node modules.
     files: [
       'packages/adapters/src/{memory,shared,sql,testing,sqlite-capacitor,sqlite-bridge}/**/*.ts',

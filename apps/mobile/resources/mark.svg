@@ -1,0 +1,14 @@
+<!-- Flourprint logo (owner decision of 2026-10-12): a loaf with three scores under a dimension
+     line, bread and measurement. Release colours. 108 x 108 adaptive icon canvas: launchers show the
+     central 72 x 72. Source of the launcher icons, the splash and the favicon; the Android vector
+     drawables (res/drawable/ic_launcher_*.xml) mirror it. Do not redraw without the owner. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2614"/><stop offset="1" stop-color="#7d4626"/></linearGradient><linearGradient id="lf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8954e"/><stop offset="1" stop-color="#b4561c"/></linearGradient></defs>
+  <rect width="108" height="108" fill="url(#bg)"/>
+  <g stroke="#fbefd9" stroke-linecap="round" stroke-width="3.2" fill="none">
+    <path d="M34 30 V40"/><path d="M74 30 V40"/><path d="M39 35 H69"/>
+  </g>
+  <path d="M35.5 35 L41.5 31.2 L41.5 38.8 Z M72.5 35 L66.5 31.2 L66.5 38.8 Z" fill="#fbefd9"/>
+  <path d="M30.57 71.33 C30.57 54.28 42.28 45.77 54 45.77 C65.72 45.77 77.43 54.28 77.43 71.33 C77.43 79.84 65.72 83.04 54 83.04 C42.28 83.04 30.57 79.84 30.57 71.33 Z" fill="url(#lf)"/>
+  <g fill="#fbefd9"><path d="M38.86 70.28 Q45.29 66.85 46.78 59.72 Q40.35 63.15 38.86 70.28 Z"/><path d="M47.93 73.09 Q57.66 67.75 60.07 56.91 Q50.34 62.25 47.93 73.09 Z"/><path d="M61.22 70.28 Q67.65 66.85 69.14 59.72 Q62.71 63.15 61.22 70.28 Z"/></g>
+</svg>

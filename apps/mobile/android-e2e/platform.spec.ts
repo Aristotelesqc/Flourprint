@@ -1,4 +1,5 @@
 import { _android as android, expect, test, type AndroidDevice, type Page } from '@playwright/test';
+import { sampleRecipesFile } from '../test/fixtures/sample-recipe';
 
 /** Platform checks on the emulator (English locale); the APK path comes from FLOURPRINT_APK. */
 const PKG = 'app.flourprint';
@@ -7,6 +8,38 @@ const apk = process.env.FLOURPRINT_APK;
 test.describe.configure({ mode: 'serial' });
 
 let device: AndroidDevice;
+
+/**
+ * The app seeds no recipe (persistence.md, Recipe trash): the suite imports the reference recipe
+ * through Advanced, the way a baker would, unless the database already holds it. In-app
+ * navigation only: a WebView reload would reopen the native connection.
+ */
+const loadSample = async (page: Page): Promise<void> => {
+  const goTo = (path: string) =>
+    page.evaluate((to) => {
+      window.history.pushState({}, '', to);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }, path);
+  // The list loads after the heading: wait a moment for the recipe before deciding to import it.
+  const present = await page
+    .getByText('Poolish + tangzhong')
+    .first()
+    .waitFor({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (present) return;
+  await goTo('/advanced');
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'recipes.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(sampleRecipesFile())),
+  });
+  // Imported now, or already there if the list was only slow to show it.
+  await expect(
+    page.getByText(/^(1 recipe imported|No new recipe, 1 already here)\.$/),
+  ).toBeVisible();
+  await goTo('/recipes');
+};
 
 /**
  * Starts the app and attaches to the WebView of this process: after a forced stop, the WebView of
@@ -28,6 +61,8 @@ const open = async (): Promise<Page> => {
   if (!webView) throw new Error('WebView vanished');
   const page = await webView.page();
   try {
+    await expect(page.getByRole('heading', { name: 'Recipes' })).toBeVisible({ timeout: 60_000 });
+    await loadSample(page);
     await expect(page.getByText('Poolish + tangzhong').first()).toBeVisible({ timeout: 60_000 });
   } catch (cause) {
     // Say what the WebView showed instead: a blank page, an error state, another route.
@@ -109,6 +144,11 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
   await expect(page.getByText(/Browser preview/)).toHaveCount(0);
   await page.getByText('Poolish + tangzhong').first().click();
   await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  // A saved recipe opens in consultation (#70): editing is explicit.
+  await page.getByRole('button', { name: 'Recipe actions', exact: true }).click();
+  const actions = page.locator('ion-action-sheet');
+  await actions.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+  await expect(actions).toHaveCount(0);
   const salt = page.getByLabel('Salt (g)', { exact: true });
   await salt.fill('25');
   await salt.press('Enter');

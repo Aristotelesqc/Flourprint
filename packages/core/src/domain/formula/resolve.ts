@@ -3,6 +3,7 @@ import { isReservedId } from '../ids.js';
 import { approxAtMost, approxEqual, sum } from '../numeric.js';
 import { err, ok, type Result } from '../result.js';
 import type { FormulaError } from './errors.js';
+import { OVERRIDABLE_FIELDS, PREPARATION_STATES } from './types.js';
 import type {
   Anchor,
   ContentPct,
@@ -49,6 +50,57 @@ const checkContent = (path: string, content: ContentPct | undefined): FormulaErr
     const [low, high] = content.rangePct;
     if (!(low >= 0 && low <= content.valuePct && content.valuePct <= high && high <= 100)) {
       return invalid(path, 'rangePct must bracket valuePct within [0, 100]');
+    }
+  }
+  return undefined;
+};
+
+const isCount = (value: unknown): boolean =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 1;
+
+/**
+ * The registry pin, the overrides and the preparation of an ingredient (ingredients.md): checked
+ * for shape only, never read by a calculation.
+ */
+const checkProvenance = (path: string, ingredient: Ingredient): FormulaError | undefined => {
+  const { entry, overrides, preparation } = ingredient;
+  if (entry !== undefined) {
+    if (typeof entry.id !== 'string' || entry.id.length === 0 || isReservedId(entry.id)) {
+      return invalid(`${path}.entry.id`, 'must be a non-empty string');
+    }
+    if (!isCount(entry.version)) return invalid(`${path}.entry.version`, 'must be an integer ≥ 1');
+    if (entry.customized !== undefined && entry.customized !== true) {
+      return invalid(`${path}.entry.customized`, 'is true or absent');
+    }
+  }
+  if (overrides !== undefined) {
+    if (entry === undefined) return invalid(`${path}.overrides`, 'exists only with an entry');
+    if (!Array.isArray(overrides) || overrides.length === 0) {
+      return invalid(`${path}.overrides`, 'is a non-empty list, absent when empty');
+    }
+    let previous = -1;
+    for (const field of overrides) {
+      const index = OVERRIDABLE_FIELDS.indexOf(field);
+      if (index < 0) return invalid(`${path}.overrides`, `${String(field)} cannot be overridden`);
+      if (index <= previous) {
+        return invalid(
+          `${path}.overrides`,
+          'lists each field once, in the order kind, water, fat, sugar, yeast',
+        );
+      }
+      previous = index;
+    }
+  }
+  if (preparation !== undefined) {
+    if (!PREPARATION_STATES.includes(preparation.state)) {
+      return invalid(`${path}.preparation.state`, 'is not a known preparation');
+    }
+    const { note } = preparation;
+    if (note !== undefined && (typeof note !== 'string' || note.trim().length === 0)) {
+      return invalid(`${path}.preparation.note`, 'is never empty when present');
+    }
+    if (preparation.state === 'other' && note === undefined) {
+      return invalid(`${path}.preparation.note`, 'is required for the state other');
     }
   }
   return undefined;
@@ -151,6 +203,8 @@ export const validateFormula = (formula: Formula): Result<void, FormulaError> =>
     if (ingredient.yeast !== undefined && !YEAST_FORMS.has(ingredient.yeast.form)) {
       return err(invalid(`${path}.yeast.form`, 'form must be fresh, active-dry or instant'));
     }
+    const provenance = checkProvenance(path, ingredient);
+    if (provenance) return err(provenance);
     ingredientIds.add(ingredient.id);
   }
 

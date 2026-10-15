@@ -10,3 +10,13 @@ apps/desktop/test-results/
 
 # Agent worktrees (local only)
 .claude/worktrees/
+
+# Private AGY prompts, raw logs and reports
+.agy-runs/
+__pycache__/
+
+# Checkout-local CodeGraph executable and generated client configuration
+.codegraph-local/
+.codex/config.toml
+.mcp.json
+.agents/mcp_config.json

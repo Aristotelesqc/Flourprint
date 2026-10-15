@@ -94,4 +94,27 @@ describe('saving a draft', () => {
     ).toMatchObject({ ok: false, error: { code: 'HeadConflict' } });
     expect((await repository.listDrafts()).map((d) => d.id)).toEqual(['d3']);
   });
+
+  it('keeps the edits of a deleted recipe: refused as a version, saved as a new recipe', async () => {
+    const repository = new MemoryRecipeRepository();
+    await saveDraft(repository, draft(), { newRecipeId: 'r1', createdAt: at });
+    await repository.trashRecipe('r1', at);
+    const edit = draft({ id: 'd2', origin: { kind: 'revision', recipeId: 'r1', baseVersion: 1 } });
+    await repository.saveDraft(edit);
+    // In the trash: restore first.
+    expect(await saveDraft(repository, edit, { newRecipeId: 'r2', createdAt: at })).toMatchObject({
+      ok: false,
+      error: { code: 'RecipeTrashed' },
+    });
+    await repository.deleteRecipe('r1');
+    expect(await saveDraft(repository, edit, { newRecipeId: 'r2', createdAt: at })).toMatchObject({
+      ok: false,
+      error: { code: 'NotFound' },
+    });
+    expect((await repository.listDrafts()).map((d) => d.id)).toEqual(['d2']);
+    expect(
+      await saveDraft(repository, edit, { newRecipeId: 'r2', createdAt: at, asNewRecipe: true }),
+    ).toMatchObject({ ok: true, value: { recipeId: 'r2', version: 1 } });
+    expect(await repository.listDrafts()).toEqual([]);
+  });
 });

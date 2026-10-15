@@ -33,8 +33,9 @@ Until 2026-10-11, every commit was pushed and included in the MVP pull request (
   roles, the session lifecycle and outcomes, multi-method cooking and documented modes (#28), the
   complete manual registry (#26) and reliability. The Alpha capability levels are unchanged:
   #26 and #28 remain N1 + N2 in Alpha.
-- **Focused pull requests against `main`**: a contract change in its own pull request before the
-  code that depends on it; implementation in reviewed slices, each pushed only after the checks,
+- **Focused pull requests into `dev`**, the integration branch of the open major pull request
+  (`dev` → `main`, merged when the owner decides; ADR 0013 for the dev channel that follows it):
+  a contract change in its own pull request before the code that depends on it; implementation in reviewed slices, each pushed only after the checks,
   build and browser journeys pass. Native checks cover platform-sensitive changes and milestones.
 - **One writer at a time for overlapping files.** The interface work is implemented by Gemini under
   Codex's review; Claude works on non-overlapping areas (contracts, domain, persistence, reliability)

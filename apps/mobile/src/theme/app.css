@@ -10,16 +10,19 @@
 @import '@ionic/react/css/structure.css' layer(ionic);
 @import '@ionic/react/css/typography.css' layer(ionic);
 @import '@ionic/react/css/padding.css' layer(ionic);
-@import '@ionic/react/css/palettes/dark.system.css' layer(ionic);
+@import '@ionic/react/css/palettes/dark.class.css' layer(ionic);
 @import 'tailwindcss/theme.css' layer(theme);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 @theme {
   --color-bg: #f8f7f4;
   --color-surface: #ffffff;
+  --color-surface-container: #f2efe9;
+  --color-surface-container-high: #eae5dc;
   --color-ink: #1c1b19;
   --color-muted: #69645c;
   --color-line: #e4e0d8;
+  --color-line-subtle: #eae5dc;
   --color-track: #ebe8e2;
   --color-field: #b9b3a8;
   --color-field-bg: #fbfaf8;
@@ -29,9 +32,17 @@
   --color-accent-soft: rgb(169 73 10 / 0.1);
   --color-alert: #b3261e;
   --spacing-touch: 3rem;
+  --radius-card: 1rem;
+  --radius-pill: 9999px;
 }
 
 :root {
+  --fp-space-1: 0.25rem;
+  --fp-space-2: 0.5rem;
+  --fp-space-3: 0.75rem;
+  --fp-space-4: 1rem;
+  --fp-space-6: 1.5rem;
+  --fp-space-8: 2rem;
   --ion-color-primary: var(--color-accent);
   --ion-color-primary-rgb: 169, 73, 10;
   --ion-color-primary-contrast: var(--color-on-accent);
@@ -47,21 +58,62 @@
   --ion-toolbar-border-color: var(--color-line);
   --ion-item-background: transparent;
   --ion-border-color: var(--color-line);
+  --ion-card-background: var(--color-surface);
+  --ion-overlay-background-color: var(--color-surface);
+}
+
+:root[data-theme='light'],
+:root[data-theme='light'].md,
+:root[data-theme='light'].ios {
+  --color-bg: #f8f7f4;
+  --color-surface: #ffffff;
+  --color-surface-container: #f2efe9;
+  --color-surface-container-high: #eae5dc;
+  --color-ink: #1c1b19;
+  --color-muted: #69645c;
+  --color-line: #e4e0d8;
+  --color-line-subtle: #eae5dc;
+  --color-track: #ebe8e2;
+  --color-field: #b9b3a8;
+  --color-field-bg: #fbfaf8;
+  --color-accent: #a9490a;
+  --color-on-accent: #ffffff;
+  --color-accent-text: #9a4209;
+  --color-accent-soft: rgb(169 73 10 / 0.1);
+  --color-alert: #b3261e;
+  --ion-color-primary: var(--color-accent);
+  --ion-color-primary-rgb: 169, 73, 10;
+  --ion-color-primary-contrast: var(--color-on-accent);
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #95400a;
+  --ion-color-primary-tint: #b25b23;
+  --ion-background-color: var(--color-bg);
+  --ion-background-color-rgb: 248, 247, 244;
+  --ion-text-color: var(--color-ink);
+  --ion-text-color-rgb: 28, 27, 25;
+  --ion-toolbar-background: var(--color-bg);
+  --ion-toolbar-border-color: var(--color-line);
+  --ion-item-background: transparent;
+  --ion-border-color: var(--color-line);
+  --ion-card-background: var(--color-surface);
+  --ion-overlay-background-color: var(--color-surface);
 }
 
 /*
- * Warm grey rather than black, muted accent (device feedback). On top of Ionic's dark palette
- * (main.tsx), which uses `:root.md` / `:root.ios`; the same selectors are needed to win over it.
+ * Fallback when no data-theme attribute is set yet on the root: warm grey rather than black.
  */
 @media (prefers-color-scheme: dark) {
-  :root,
-  :root.md,
-  :root.ios {
+  :root:not([data-theme]),
+  :root:not([data-theme]).md,
+  :root:not([data-theme]).ios {
     --color-bg: #201d1a;
     --color-surface: #2a2622;
+    --color-surface-container: #332e29;
+    --color-surface-container-high: #3d3731;
     --color-ink: #e9e4dc;
     --color-muted: #b1aa9f;
     --color-line: #3b3631;
+    --color-line-subtle: #3a342e;
     --color-track: #322e29;
     --color-field: #625b52;
     --color-field-bg: #2e2a26;
@@ -70,7 +122,9 @@
     --color-accent-text: #dba27c;
     --color-accent-soft: rgb(207 138 94 / 0.16);
     --color-alert: #f2b8b5;
+    --ion-color-primary: var(--color-accent);
     --ion-color-primary-rgb: 207, 138, 94;
+    --ion-color-primary-contrast: var(--color-on-accent);
     --ion-color-primary-contrast-rgb: 32, 29, 26;
     --ion-color-primary-shade: #b67953;
     --ion-color-primary-tint: #d4966e;
@@ -82,11 +136,102 @@
     --ion-toolbar-border-color: var(--color-line);
     --ion-item-background: transparent;
     --ion-border-color: var(--color-line);
+    --ion-card-background: var(--color-surface);
+    --ion-overlay-background-color: var(--color-surface);
   }
+}
+
+:root[data-theme='dark'],
+:root[data-theme='dark'].md,
+:root[data-theme='dark'].ios {
+  --color-bg: #201d1a;
+  --color-surface: #2a2622;
+  --color-surface-container: #332e29;
+  --color-surface-container-high: #3d3731;
+  --color-ink: #e9e4dc;
+  --color-muted: #b1aa9f;
+  --color-line: #3b3631;
+  --color-line-subtle: #3a342e;
+  --color-track: #322e29;
+  --color-field: #625b52;
+  --color-field-bg: #2e2a26;
+  --color-accent: #cf8a5e;
+  --color-on-accent: #201d1a;
+  --color-accent-text: #dba27c;
+  --color-accent-soft: rgb(207 138 94 / 0.16);
+  --color-alert: #f2b8b5;
+  --ion-color-primary: var(--color-accent);
+  --ion-color-primary-rgb: 207, 138, 94;
+  --ion-color-primary-contrast: var(--color-on-accent);
+  --ion-color-primary-contrast-rgb: 32, 29, 26;
+  --ion-color-primary-shade: #b67953;
+  --ion-color-primary-tint: #d4966e;
+  --ion-background-color: var(--color-bg);
+  --ion-background-color-rgb: 32, 29, 26;
+  --ion-text-color: var(--color-ink);
+  --ion-text-color-rgb: 233, 228, 220;
+  --ion-toolbar-background: var(--color-bg);
+  --ion-toolbar-border-color: var(--color-line);
+  --ion-item-background: transparent;
+  --ion-border-color: var(--color-line);
+  --ion-card-background: var(--color-surface);
+  --ion-overlay-background-color: var(--color-surface);
+}
+
+/*
+ * AMOLED theme: pure black page foundation #000000, subtle warm dark surfaces,
+ * warm orange accent #cf8a5e with black foreground #000000.
+ */
+:root[data-theme='amoled'],
+:root[data-theme='amoled'].md,
+:root[data-theme='amoled'].ios {
+  --color-bg: #000000;
+  --color-surface: #121110;
+  --color-surface-container: #1b1917;
+  --color-surface-container-high: #24211e;
+  --color-ink: #e9e4dc;
+  --color-muted: #b1aa9f;
+  --color-line: #38322b;
+  --color-line-subtle: #29241f;
+  --color-track: #1b1917;
+  --color-field: #38322b;
+  --color-field-bg: #121110;
+  --color-accent: #cf8a5e;
+  --color-on-accent: #000000;
+  --color-accent-text: #dba27c;
+  --color-accent-soft: rgb(207 138 94 / 0.16);
+  --color-alert: #f28b82;
+  --ion-color-primary: var(--color-accent);
+  --ion-color-primary-rgb: 207, 138, 94;
+  --ion-color-primary-contrast: var(--color-on-accent);
+  --ion-color-primary-contrast-rgb: 0, 0, 0;
+  --ion-color-primary-shade: #b67953;
+  --ion-color-primary-tint: #d4966e;
+  --ion-background-color: var(--color-bg);
+  --ion-background-color-rgb: 0, 0, 0;
+  --ion-text-color: var(--color-ink);
+  --ion-text-color-rgb: 233, 228, 220;
+  --ion-toolbar-background: var(--color-bg);
+  --ion-toolbar-border-color: var(--color-line);
+  --ion-item-background: transparent;
+  --ion-border-color: var(--color-line);
+  --ion-card-background: var(--color-surface);
+  --ion-overlay-background-color: var(--color-surface);
 }
 
 body {
   font-variant-numeric: tabular-nums;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+}
+
+/* Mounted panels retain raw input; layout utilities must not reveal a hidden panel. */
+[hidden] {
+  display: none !important;
+}
+/* Slotted icons must not intercept clicks on Ionic's native shadow button. */
+ion-button > svg {
+  pointer-events: none;
 }
 
 /* Base rules over Ionic's: sentence-case buttons, headings sized by the screens. */
@@ -106,6 +251,67 @@ body {
 
 /* Layered, so that utilities on the same element still win. */
 @layer components {
+  /* Shared roles from the approved Gemini proposal; rem units preserve text scaling. */
+  .m3-type-page {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .m3-type-title {
+    font-size: 1.375rem;
+    line-height: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .m3-type-body {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  .m3-type-supporting {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  .m3-type-metadata {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  .m3-type-hero-timer {
+    font-size: 3.25rem;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .m3-type-running-timer {
+    font-size: 2rem;
+    line-height: 1.2;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .m3-tabs {
+    border-bottom: 1px solid var(--color-line);
+  }
+  .m3-tab {
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+  }
+  .m3-tab[aria-pressed='true'] {
+    border-bottom-color: var(--color-accent);
+    color: var(--color-accent-text);
+  }
+  .m3-card-interactive:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .m3-card-interactive:active {
+    background-color: var(--color-surface-container);
+  }
+  .btn-pill-primary::part(native):focus-visible,
+  .btn-pill-secondary::part(native):focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
   /* Native inputs inside framed fields take the field's look. */
   .fp-input {
     min-width: 0;
@@ -137,9 +343,102 @@ body {
     padding: 0;
     list-style: none;
   }
+
+  .card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .m3-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card, 1rem);
+    padding: var(--fp-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--fp-space-3);
+  }
+
+  .m3-card-quiet {
+    background-color: var(--color-surface-container, #f2efe9);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card, 1rem);
+    padding: var(--fp-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--fp-space-3);
+  }
+
+  ion-button.btn-pill-primary {
+    --border-radius: var(--radius-pill);
+    --background: var(--color-accent);
+    --color: var(--color-on-accent);
+    --box-shadow: none;
+    --padding-start: 1rem;
+    --padding-end: 1rem;
+    min-height: 3rem;
+    margin: 0;
+    width: 100%;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  ion-button.btn-pill-primary[disabled],
+  ion-button.btn-pill-primary.button-disabled {
+    --background: var(--color-surface-container);
+    --color: var(--color-muted);
+  }
+
+  /* Style Ionic's native button through its properties: a host border creates two outlines. */
+  ion-button.btn-pill-secondary {
+    --background: transparent;
+    --color: var(--color-ink);
+    --border-color: var(--color-line);
+    --border-width: 1px;
+    --border-radius: var(--radius-pill);
+    --box-shadow: none;
+    --padding-start: 0.75rem;
+    --padding-end: 0.75rem;
+    min-height: 3rem;
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .column-basis {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 72px 84px;
+    gap: 6px;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--color-muted);
+    font-weight: 500;
+  }
 }
 
 /* Unlayered: the focus frame wins over the field's border utility. */
 .fp-field:focus-within {
   border-color: var(--color-accent);
+}
+
+/* Ionic dims the host and can inherit toolbar ink inside its shadow button. */
+ion-button.btn-pill-primary.button-disabled {
+  opacity: 1;
+}
+
+ion-button.btn-pill-primary.button-disabled::part(native) {
+  color: var(--color-muted);
+}
+
+ion-action-sheet.fp-overflow-sheet {
+  --background: var(--color-surface);
+  --button-background: var(--color-surface);
+  --button-color: var(--color-ink);
+  --color: var(--color-ink);
+}
+ion-action-sheet .fp-menu-separated {
+  border-top: 1px solid var(--color-line);
+  margin-top: var(--fp-space-2);
+  color: var(--color-alert);
 }

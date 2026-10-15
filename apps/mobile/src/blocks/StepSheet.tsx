@@ -13,6 +13,7 @@ import {
   phasesDurationS,
   removeStep,
   updateStep,
+  validateProcess,
   type MixPhase,
   type Process,
   type ProcessStep,
@@ -22,10 +23,17 @@ import {
 import { en, type MessageKey } from '../i18n/messages';
 import { formatDuration } from '../i18n/time';
 import { useMessages } from '../i18n/use-messages';
-import { END_CHECKS, FOLD_STYLES, methodsFor, SPEEDS } from '../services/process-edit';
+import {
+  END_CHECKS,
+  FOLD_STYLES,
+  methodsFor,
+  SPEEDS,
+  STEP_OPERATIONS,
+} from '../services/process-edit';
 import { DurationField, OptionalNumberField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { SectionTitle } from '../ui/Layout';
+import { useValidationActions } from '../ui/ValidationContext';
 
 type Translate = ReturnType<typeof useMessages>['t'];
 
@@ -99,33 +107,87 @@ interface Props {
   /** Applies a process change to the draft; false when it was refused. */
   readonly onChange: (process: Process) => boolean;
   readonly onClose: () => void;
+  readonly onDismissed?: () => void;
 }
 
 /**
  * Edits how a step is done (process.md, Techniques) and removes it. Every change goes to the draft
  * at once, like any edit (drafts.md). Recorded data only: nothing is predicted from it.
  */
-export const StepSheet = ({ open, step, process, preparation, onChange, onClose }: Props) => {
-  const { t, stepName } = useMessages();
+export const StepSheet = ({
+  open,
+  step,
+  process,
+  preparation,
+  onChange,
+  onClose,
+  onDismissed,
+}: Props) => {
+  const { t, error, stepName, stepInstructions } = useMessages();
   const [presentAlert] = useIonAlert();
   const id = useId();
   // A phase being added waits for its duration: nothing is invented.
   const [newPhase, setNewPhase] = useState<MixPhase['speed']>();
   // Fold count and interval typed one after the other; folds exist once both are known.
   const [folds, setFolds] = useState<{ count?: number; intervalS?: number }>({});
+  const [foldStyle, setFoldStyle] = useState<string | undefined>();
+  const [label, setLabel] = useState<string>('');
+  const [isLabelTouched, setIsLabelTouched] = useState<boolean>(false);
+  const [operationError, setOperationError] = useState<string | undefined>();
+  const validationActions = useValidationActions();
 
   const stepId = step?.id;
+  const initialDisplayLabel = step?.label ? stepName(step) : '';
+
   useEffect(() => {
     if (!open) return;
     setNewPhase(undefined);
     setFolds({ ...step?.technique?.folds });
+    setFoldStyle(step?.technique?.folds?.style);
+    setOperationError(undefined);
     // Reset only when the sheet opens or moves to another step.
   }, [open, stepId]);
+
+  useEffect(() => {
+    if (!open) return;
+    setLabel(initialDisplayLabel);
+    setIsLabelTouched(false);
+  }, [open, stepId, initialDisplayLabel]);
 
   if (!step) return <IonModal isOpen={false} />;
   const technique = step.technique ?? {};
 
-  const change = (changes: StepChanges): boolean => onChange(updateStep(process, step.id, changes));
+  const change = (changes: StepChanges): boolean => {
+    if (
+      changes.operation !== undefined &&
+      changes.operation !== step.operation &&
+      validationActions?.isBlocked()
+    ) {
+      setOperationError(t('step.operationBlockedRaw'));
+      return false;
+    }
+    const next = updateStep(process, step.id, changes);
+    const valid = validateProcess(next);
+    if (!valid.ok) {
+      setOperationError(error(valid.error));
+      return false;
+    }
+    setOperationError(undefined);
+    return onChange(next);
+  };
+
+  const commitLabel = () => {
+    if (!isLabelTouched) return;
+    const trimmed = label.trim();
+    if (trimmed !== initialDisplayLabel) {
+      change({ label: trimmed === '' ? undefined : trimmed });
+    }
+  };
+
+  const handleClose = () => {
+    commitLabel();
+    onClose();
+  };
 
   const setTechnique = (next: TechniqueEdit, withPhases = false): boolean => {
     const cleaned = compact(next);
@@ -144,7 +206,7 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
   const applyFolds = (next: { count?: number; intervalS?: number }): boolean => {
     setFolds(next);
     if (next.count !== undefined && next.intervalS !== undefined) {
-      const style = technique.folds?.style;
+      const style = foldStyle ?? technique.folds?.style;
       return setTechnique({
         ...technique,
         folds: {
@@ -162,7 +224,9 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
   };
 
   const methods = methodsFor(step.operation);
-  const remove = () =>
+  const remove = () => {
+    let accepted = false;
+    let confirmed = false;
     void presentAlert({
       header: t('technique.removeStep'),
       message: t('technique.removeConfirm', { step: stepName(step) }),
@@ -172,19 +236,61 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
           text: t('technique.removeStep'),
           role: 'destructive',
           handler: () => {
-            if (onChange(removeStep(process, step.id))) onClose();
+            if (!confirmed) {
+              confirmed = true;
+              accepted = onChange(removeStep(process, step.id));
+            }
           },
         },
       ],
+      onDidDismiss: () => {
+        if (accepted) onClose();
+      },
     });
+  };
 
   return (
-    <IonModal isOpen={open} onDidDismiss={onClose}>
+    <IonModal
+      isOpen={open}
+      onDidDismiss={() => {
+        handleClose();
+        onDismissed?.();
+      }}
+    >
       <IonHeader>
         <IonToolbar>
           <IonTitle>{stepName(step)}</IonTitle>
           <IonButtons slot="end">
-            <IonButton strong onClick={onClose}>
+            {!preparation && (
+              <IonButton
+                color="danger"
+                className="min-h-12 min-w-12"
+                aria-label={t('step.delete')}
+                title={t('step.delete')}
+                onClick={remove}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="pointer-events-none"
+                  aria-hidden="true"
+                >
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </IonButton>
+            )}
+            <IonButton
+              strong
+              className="min-h-12 min-w-12 text-sm"
+              aria-label={t('technique.close')}
+              onClick={handleClose}
+            >
               {t('technique.close')}
             </IonButton>
           </IonButtons>
@@ -192,6 +298,59 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
       </IonHeader>
       <IonContent className="ion-padding">
         <div className="flex flex-col gap-6">
+          <section className="flex flex-col gap-3">
+            <span className="flex items-center justify-between gap-3">
+              <label htmlFor={`${id}-operation`} className="font-semibold text-ink">
+                {t('step.operationType')}
+              </label>
+              <select
+                id={`${id}-operation`}
+                className={selectClass}
+                value={step.operation}
+                disabled={preparation}
+                onChange={(e) => change({ operation: e.target.value })}
+              >
+                {((STEP_OPERATIONS as readonly string[]).includes(step.operation)
+                  ? STEP_OPERATIONS
+                  : [step.operation, ...STEP_OPERATIONS]
+                ).map((code) => (
+                  <option key={code} value={code}>
+                    {stepName({ operation: code })}
+                  </option>
+                ))}
+              </select>
+            </span>
+            {preparation && (
+              <span className="text-xs text-muted">{t('step.preparationOwnedRefusal')}</span>
+            )}
+            {operationError && (
+              <p role="alert" className="m-0 text-sm text-alert">
+                {operationError}
+              </p>
+            )}
+
+            <span className="flex flex-col gap-1.5">
+              <label htmlFor={`${id}-label`} className="font-semibold text-ink">
+                {t('step.customName')}
+              </label>
+              <input
+                id={`${id}-label`}
+                type="text"
+                className="fp-field h-11 w-full rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 text-ink"
+                value={label}
+                placeholder={stepName({ operation: step.operation })}
+                onChange={(e) => {
+                  setLabel(e.target.value);
+                  setIsLabelTouched(true);
+                }}
+                onBlur={commitLabel}
+              />
+              {stepInstructions(step) && (
+                <span className="text-xs text-muted">{stepInstructions(step)}</span>
+              )}
+            </span>
+          </section>
+
           <span className="flex items-center gap-1.5 font-bold">
             {t('technique.title')}
             <InfoButton topic="technique" term={t('technique.title')} />
@@ -292,6 +451,7 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
                   codes={FOLD_STYLES}
                   prefix="technique.method"
                   onChange={(style) => {
+                    setFoldStyle(style);
                     const { style: _, ...rest } = technique.folds ?? { count: 1, intervalS: 1 };
                     setTechnique({
                       ...technique,
@@ -303,7 +463,10 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
                 <button
                   type="button"
                   className="fp-reset min-h-11 self-start text-sm font-semibold text-alert"
-                  onClick={() => applyFolds({})}
+                  onClick={() => {
+                    setFoldStyle(undefined);
+                    applyFolds({});
+                  }}
                 >
                   {t('technique.folds.remove')}
                 </button>
@@ -318,18 +481,6 @@ export const StepSheet = ({ open, step, process, preparation, onChange, onClose 
             prefix="technique.endCheck"
             onChange={(endCheck) => setTechnique({ ...technique, endCheck })}
           />
-
-          <section className="flex flex-col gap-2 border-t border-line pt-4" aria-labelledby={id}>
-            {preparation ? (
-              <p id={id} className="m-0 text-sm text-muted">
-                {t('technique.preparationStep')}
-              </p>
-            ) : (
-              <IonButton id={id} fill="outline" color="danger" onClick={remove}>
-                {t('technique.removeStep')}
-              </IonButton>
-            )}
-          </section>
         </div>
       </IonContent>
     </IonModal>

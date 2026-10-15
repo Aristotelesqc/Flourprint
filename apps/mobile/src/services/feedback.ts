@@ -7,7 +7,13 @@ export const feedbackJson = async (
 ): Promise<{ json: string; bakes: number } | undefined> => {
   const now = services.realClock.now();
   // Both worlds, each bake with its origin (ADR 0014).
-  const stores = { recipes: services.recipes, bakes: services.allBakes, flours: services.flours };
+  const stores = {
+    recipes: services.recipes,
+    bakes: services.allBakes,
+    flours: services.flours,
+    equipment: services.equipment,
+    ingredients: services.ingredients,
+  };
   const result = await exportFeedback(stores, now, {
     platform: services.platform,
     storage: services.storage,

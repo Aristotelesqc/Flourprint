@@ -13,7 +13,9 @@ import {
 
 export {
   SqlBakeEventStore,
+  SqlEquipmentRegistry,
   SqlFlourRegistry,
+  SqlIngredientRegistry,
   SqlRecipeRepository,
   SqlRestoreTarget,
   MIGRATIONS,

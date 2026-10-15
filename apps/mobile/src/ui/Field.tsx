@@ -1,9 +1,10 @@
-import { useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import type { TemperatureContext } from '@flourprint/core/domain';
 import { editableNumber, parseDecimal } from '../i18n/numbers';
 import { useTemperature } from '../i18n/temperature';
 import { editableDuration, parseDuration } from '../i18n/time';
 import { useMessages } from '../i18n/use-messages';
+import { useValidationActions } from './ValidationContext';
 
 /**
  * What a field reports when the user commits: `accepted` false when the edit was refused (the
@@ -43,6 +44,8 @@ interface FieldProps<V> {
   readonly width?: string;
   /** Shown while empty: a value that applies without being stored (e.g. an inherited one). */
   readonly placeholder?: string;
+  readonly disabled?: boolean;
+  readonly describedBy?: string;
 }
 
 /**
@@ -60,21 +63,69 @@ const Field = <V,>({
   size = 'regular',
   width = '100%',
   placeholder,
+  disabled = false,
+  describedBy,
 }: FieldProps<V>) => {
   const id = useId();
   const errorId = `${id}-error`;
   const [text, setText] = useState(formatted);
   const [invalid, setInvalid] = useState(false);
+  const [domainRefused, setDomainRefused] = useState(false);
+  const validationActions = useValidationActions();
 
   useEffect(() => {
     setText(formatted);
     setInvalid(false);
+    setDomainRefused(false);
   }, [formatted]);
 
-  const commit = () => {
+  // Normal blur/Enter remains the commit mechanism.
+  const commit = useCallback(() => {
     const decision = decideCommit(text, formatted, parse);
-    if (decision.kind === 'commit') setInvalid(!onCommit(decision.value));
-    else setInvalid(decision.kind === 'invalid');
+    if (decision.kind === 'commit') {
+      const accepted = onCommit(decision.value);
+      setInvalid(!accepted);
+      setDomainRefused(!accepted);
+      validationActions?.report(id, !accepted);
+      return accepted;
+    }
+    if (decision.kind === 'invalid') {
+      setInvalid(true);
+      setDomainRefused(false);
+      validationActions?.report(id, true);
+      return false;
+    }
+    // decision.kind === 'none' (text === formatted)
+    setInvalid(false);
+    setDomainRefused(false);
+    validationActions?.report(id, false);
+    return true;
+  }, [text, formatted, parse, onCommit, validationActions, id]);
+
+  // Live validity: raw syntax error (parser-rejected), domain refusal, or blur invalidity.
+  // Restoration of formatted text clears the blocker immediately.
+  const isInvalid = text === formatted ? false : !parse(text).ok || domainRefused || invalid;
+
+  useEffect(() => {
+    if (!validationActions) return;
+    return validationActions.register(id);
+  }, [validationActions, id]);
+
+  useEffect(() => {
+    if (!validationActions) return;
+    validationActions.report(id, isInvalid);
+  }, [validationActions, id, isInvalid]);
+
+  const handleChange = (newText: string) => {
+    setText(newText);
+    validationActions?.report(id, newText !== formatted && (!parse(newText).ok || domainRefused));
+    if (newText === formatted) {
+      setInvalid(false);
+      setDomainRefused(false);
+    } else if (parse(newText).ok) {
+      // Valid correction clears parser invalidity while typing.
+      setInvalid(false);
+    }
   };
 
   return (
@@ -86,15 +137,18 @@ const Field = <V,>({
       >
         <input
           id={id}
+          disabled={disabled}
           aria-label={unit ? `${label} (${unit})` : label}
           aria-invalid={invalid}
-          aria-describedby={invalid ? errorId : undefined}
-          className="fp-input w-full"
+          aria-describedby={
+            [describedBy, invalid ? errorId : undefined].filter(Boolean).join(' ') || undefined
+          }
+          className={`fp-input w-full ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
           inputMode="decimal"
           placeholder={placeholder}
           enterKeyHint="done"
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => handleChange(event.target.value)}
           onBlur={commit}
           onKeyDown={(event) => {
             if (event.key === 'Enter') event.currentTarget.blur();
@@ -122,19 +176,31 @@ interface NumberFieldProps {
   readonly onCommit: Commit<number>;
   readonly size?: 'regular' | 'large';
   readonly width?: string;
+  /** Display rounding only: an untouched formatted field never commits it to the domain. */
+  readonly maximumFractionDigits?: number;
+  readonly invalidText?: string;
+  readonly disabled?: boolean;
+  readonly describedBy?: string;
 }
 
-export const NumberField = ({ value, ...props }: NumberFieldProps) => {
+export const NumberField = ({
+  value,
+  maximumFractionDigits = 2,
+  invalidText,
+  ...props
+}: NumberFieldProps) => {
   const { t, locale } = useMessages();
   return (
     <Field<number>
       {...props}
-      text={editableNumber(value, locale)}
+      text={new Intl.NumberFormat(locale, { maximumFractionDigits, useGrouping: false }).format(
+        value,
+      )}
       parse={(text) => {
         const parsed = parseDecimal(text);
         return parsed === undefined ? { ok: false } : { ok: true, value: parsed };
       }}
-      invalidText={t('field.invalidNumber')}
+      invalidText={invalidText ?? t('field.invalidNumber')}
     />
   );
 };

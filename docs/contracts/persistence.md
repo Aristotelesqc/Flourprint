@@ -16,12 +16,42 @@ note? }`. Versions start at 1 and increase by one.
   declared by the process must match the formula's final mix (`process.md`). Persisted documents carry
   `schemaVersion`; unsupported versions are refused when read.
 
+## Recipe trash
+
+Owner decision of 2026-10-12: a recipe is put in a trash before it can be deleted, and the trash
+is emptied by hand only.
+
+- `trashRecipe(id, at)` sets the recipe's `trashedAt` (an instant); `restoreRecipe(id)` clears it.
+  Both create no revision and keep every revision, the family membership and the name. Trashing a
+  trashed recipe is refused (`AlreadyTrashed`), restoring one not in the trash too
+  (`NotTrashed`); an unknown id is `NotFound`. The implementing pull request bumps
+  `CONTRACT_VERSION` to `0.13.0`.
+- A trashed recipe is out of the recipe list, the family default and every picker; it is listed in
+  the trash, most recently trashed first. Saving a revision of it is refused (`RecipeTrashed`):
+  restore it first.
+- `deleteRecipe(id)` deletes a **trashed** recipe for good, with all its revisions, in one
+  transaction; a recipe not in the trash is refused (`NotTrashed`). It leaves its family (a family
+  left with no member is deleted, a pin on it is cleared). `emptyTrash()` deletes every trashed
+  recipe in one transaction and returns their ids. Nothing is ever deleted without the baker's
+  action: there is no automatic purge.
+- Bakes are never touched: a Preparation keeps its snapshot of the formula and the process
+  (`history.md`) and still replays, shows and exports after its recipe is trashed or deleted. The
+  history names it from the recipe when it exists, else as a deleted recipe.
+- A draft is not a recipe and has no trash; one whose origin recipe is deleted can still be saved
+  as a new recipe, while saving it as a version of that recipe is refused (`NotFound`).
+- A full backup carries trashed recipes with their `trashedAt` (optional, absent means not
+  trashed); a restore keeps them in the trash. A recipes file never carries a trashed recipe, so
+  sharing never sends the trash.
+- A new installation starts with no recipe: nothing is seeded; the templates of `drafts.md` start
+  a recipe. A recipe seeded by an earlier build stays an ordinary recipe that can be trashed.
+
 ## Recipe families
 
 - A **family** groups variants of one recipe: `{ id, name, pinnedRecipeId? }`. A recipe belongs
   to at most one family (`familyId`). Each variant keeps its own revisions.
-- The **default variant** is the pinned recipe when it belongs to the family, otherwise the most
-  recently updated member (ties: smallest id). The recipe list shows a family once, through its
+- The **default variant** is the pinned recipe when it belongs to the family and is not trashed,
+  otherwise the most recently updated member not in the trash (ties: smallest id). A family whose
+  members are all in the trash is not listed. The recipe list shows a family once, through its
   default variant.
 - Families are organisation, not recipe content: grouping, leaving and pinning create no
   revision. Grouping (`groupRecipes(family, recipeIds)`) is one transaction. A family left with
@@ -51,7 +81,7 @@ createdAt, updatedAt }` as one JSON document. `saveDraft` writes or replaces it;
 
 `deleteBakes(origin)` deletes every bake of that origin (`physical` also takes bakes without
 `origin`): their events, command records and summaries, in one transaction. It is the only way a
-bake log is ever deleted, triggered by the baker (ADR 0014). Recipes, drafts and flours are
+bake log is ever deleted, triggered by the baker (ADR 0014). Recipes, drafts, flours and ingredients are
 untouched.
 
 ## Flour registry
@@ -60,11 +90,19 @@ Personal flour entries (`flours.md`) are stored by `(id, version)`; a version is
 Writing an entry whose version is not the next one for its id is refused (`HeadConflict`).
 Built-in entries are code and are not stored.
 
-## SQLite schema (version 4)
+## Ingredient registry
+
+Personal ingredient entries (`ingredients.md`) are stored by `(id, version)` like flours; a version
+is never rewritten, and a version that is not the next one for its id is refused (`HeadConflict`).
+Built-in entries are code and are not stored; a customization of a built-in is a personal entry
+stored under the built-in's id (`ingredients.md`).
+
+## SQLite schema (version 7)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
-                updated_at TEXT NOT NULL, family_id TEXT)                      -- family_id: v2
+                updated_at TEXT NOT NULL, family_id TEXT,                      -- family_id: v2
+                trashed_at TEXT)                                               -- trashed_at: v6
 recipe_families (id TEXT PRIMARY KEY, name TEXT NOT NULL, pinned_recipe_id TEXT)  -- v2
 revisions      (recipe_id TEXT NOT NULL, version INTEGER NOT NULL, schema_version INTEGER NOT NULL,
                 document TEXT NOT NULL, created_at TEXT NOT NULL,
@@ -82,6 +120,13 @@ drafts         (id TEXT PRIMARY KEY, name TEXT NOT NULL, document TEXT NOT NULL,
 flours         (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER NOT NULL,
                 schema_version INTEGER NOT NULL, document TEXT NOT NULL,
                 created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v4
+equipment      (id TEXT NOT NULL, version INTEGER NOT NULL, kind TEXT NOT NULL,
+                archived INTEGER NOT NULL, schema_version INTEGER NOT NULL,
+                document TEXT NOT NULL, created_at TEXT NOT NULL,
+                PRIMARY KEY (id, version))                                         -- v5
+ingredients    (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER NOT NULL,
+                schema_version INTEGER NOT NULL, document TEXT NOT NULL,
+                created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v7
 ```
 
 The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node
@@ -113,6 +158,7 @@ on a connection is serialized, so a transaction never interleaves with another o
   kind: 'flourprint-recipes', schemaVersion, exportedAt,
   recipes: [{ id, name, familyId?, revisions }],
   families: [{ id, name, pinnedRecipeId? }],
+  ingredients?: IngredientEntry[], // personal entry versions the revisions pin (ingredients.md)
 }
 ```
 
@@ -129,8 +175,13 @@ on a connection is serialized, so a transaction never interleaves with another o
     its family.
 - The result lists the imported and the skipped recipe ids. Importing the same file again
   imports nothing.
-- A full backup may also carry `families` and `familyId`, and `flours` (every personal flour entry
-  version); all are optional, so older backups still restore.
+- Entries of `ingredients` are written when absent and skipped when present, like recipes: never
+  compared, merged or overwritten.
+- A full backup may also carry `families` and `familyId`, `flours` (every personal flour entry
+  version), `equipment` (every personal equipment entry version, equipment.md) and `ingredients`
+  (every personal ingredient entry version, ingredients.md); all are optional, so older backups
+  still restore. A pin to an entry version absent from the backup is kept: the formula holds its
+  copied contents (ingredients.md).
 
 ## Shared contract tests
 
@@ -138,6 +189,7 @@ Every implementation (memory, SQLite Node, SQLite Capacitor, SQLite bridge) runs
 idempotent retry, reused command id, version conflict, atomic rejection of an invalid batch,
 head conflicts, immutability of revisions, families (grouping, pinning, default variant) and
 additive import (skips present ids, idempotent, atomic) and drafts (save, replace, delete, and
-the atomic promotion of a draft to a recipe or a version) and personal flours (versions, archive,
-next-version check). SQLite implementations add durability tests (reopen,
+the atomic promotion of a draft to a recipe or a version) and personal flours and ingredients
+(versions, archive, next-version check) and the trash (trash, restore, refused revision, family
+default, delete and empty in one transaction, bakes untouched). SQLite implementations add durability tests (reopen,
 failed migration, newer database refused).

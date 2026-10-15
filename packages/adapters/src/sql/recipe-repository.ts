@@ -7,18 +7,21 @@ import type {
   RecordedRecipe,
   SaveRevisionInput,
   Draft,
+  TrashError,
 } from '@flourprint/core/application';
 import {
   DOCUMENT_SCHEMA_VERSION,
   domainError,
   err,
   ok,
+  type Instant,
   type Recipe,
   type RecipeFamily,
   type Result,
   type Revision,
 } from '@flourprint/core/domain';
 import type { SqlDriver, SqlExecutor } from './driver.js';
+import { insertIngredientIfAbsent } from './ingredient-registry.js';
 
 interface RecipeRow {
   id: string;
@@ -26,6 +29,7 @@ interface RecipeRow {
   head_version: number;
   updated_at: string;
   family_id: string | null;
+  trashed_at: string | null;
 }
 
 interface FamilyRow {
@@ -34,12 +38,17 @@ interface FamilyRow {
   pinned_recipe_id: string | null;
 }
 
+/** Some drivers return a missing value as `undefined` rather than `null`. */
+const inTrash = (trashedAt: string | null | undefined): boolean =>
+  trashedAt !== null && trashedAt !== undefined;
+
 const toRecipe = (row: RecipeRow): Recipe => ({
   id: row.id,
   name: row.name,
   headVersion: Number(row.head_version),
   updatedAt: row.updated_at as Recipe['updatedAt'],
   ...(row.family_id === null ? {} : { familyId: row.family_id }),
+  ...(inTrash(row.trashed_at) ? { trashedAt: row.trashed_at as Instant } : {}),
 });
 
 const toFamily = (row: FamilyRow): RecipeFamily => ({
@@ -81,6 +90,21 @@ const setFamily = async (
 export const insertRecipe = async (tx: SqlExecutor, recipe: RecordedRecipe): Promise<void> => {
   for (const revision of recipe.revisions) await insertRevision(tx, recipe.name, revision);
   if (recipe.familyId !== undefined) await setFamily(tx, recipe.id, recipe.familyId);
+  if (recipe.trashedAt !== undefined) {
+    await tx.run('UPDATE recipes SET trashed_at = ? WHERE id = ?', [recipe.trashedAt, recipe.id]);
+  }
+};
+
+const trashNotFound = (recipeId: string): TrashError =>
+  domainError('NotFound', `Recipe ${recipeId} does not exist`, { recipeId });
+const notTrashed = (recipeId: string): TrashError =>
+  domainError('NotTrashed', `Recipe ${recipeId} is not in the trash`, { recipeId });
+
+/** Deletes a trashed recipe with its revisions; it leaves its family first (pin, empty family). */
+const removeRecipe = async (tx: SqlExecutor, recipeId: string): Promise<void> => {
+  await setFamily(tx, recipeId, null);
+  await tx.run('DELETE FROM revisions WHERE recipe_id = ?', [recipeId]);
+  await tx.run('DELETE FROM recipes WHERE id = ?', [recipeId]);
 };
 
 export const insertFamily = async (tx: SqlExecutor, family: RecipeFamily): Promise<void> => {
@@ -143,10 +167,24 @@ export class SqlRecipeRepository implements RecipeRepository {
 
   saveRevision(input: SaveRevisionInput): Promise<Result<Revision, RecipeStoreError>> {
     return this.driver.transaction(async (tx) => {
-      const [current] = await tx.query<{ head_version: number }>(
-        'SELECT head_version FROM recipes WHERE id = ?',
+      const [current] = await tx.query<{ head_version: number; trashed_at: string | null }>(
+        'SELECT head_version, trashed_at FROM recipes WHERE id = ?',
         [input.recipeId],
       );
+      if (inTrash(current?.trashed_at)) {
+        return err(
+          domainError('RecipeTrashed', `Recipe ${input.recipeId} is in the trash`, {
+            recipeId: input.recipeId,
+          }),
+        );
+      }
+      if (current === undefined && input.expectedHead > 0) {
+        return err(
+          domainError('NotFound', `Recipe ${input.recipeId} does not exist`, {
+            recipeId: input.recipeId,
+          }),
+        );
+      }
       const currentHead = Number(current?.head_version ?? 0);
       if (currentHead !== input.expectedHead) {
         return err(
@@ -181,13 +219,70 @@ export class SqlRecipeRepository implements RecipeRepository {
 
   async listRecipes(): Promise<readonly Recipe[]> {
     const rows = await this.driver.query<RecipeRow>(
-      'SELECT * FROM recipes ORDER BY updated_at DESC',
+      'SELECT * FROM recipes WHERE trashed_at IS NULL ORDER BY updated_at DESC',
     );
     return rows.map(toRecipe);
   }
 
-  async listFamilies(): Promise<readonly RecipeFamily[]> {
-    const rows = await this.driver.query<FamilyRow>('SELECT * FROM recipe_families ORDER BY id');
+  async listTrash(): Promise<readonly Recipe[]> {
+    const rows = await this.driver.query<RecipeRow>(
+      'SELECT * FROM recipes WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC, id',
+    );
+    return rows.map(toRecipe);
+  }
+
+  trashRecipe(recipeId: string, at: Instant): Promise<Result<void, TrashError>> {
+    return this.driver.transaction(async (tx) => {
+      const [row] = await tx.query<RecipeRow>('SELECT * FROM recipes WHERE id = ?', [recipeId]);
+      if (!row) return err(trashNotFound(recipeId));
+      if (inTrash(row.trashed_at)) {
+        return err(
+          domainError('AlreadyTrashed', `Recipe ${recipeId} is in the trash`, { recipeId }),
+        );
+      }
+      await tx.run('UPDATE recipes SET trashed_at = ? WHERE id = ?', [at, recipeId]);
+      return ok(undefined);
+    });
+  }
+
+  restoreRecipe(recipeId: string): Promise<Result<void, TrashError>> {
+    return this.driver.transaction(async (tx) => {
+      const [row] = await tx.query<RecipeRow>('SELECT * FROM recipes WHERE id = ?', [recipeId]);
+      if (!row) return err(trashNotFound(recipeId));
+      if (!inTrash(row.trashed_at)) return err(notTrashed(recipeId));
+      await tx.run('UPDATE recipes SET trashed_at = NULL WHERE id = ?', [recipeId]);
+      return ok(undefined);
+    });
+  }
+
+  deleteRecipe(recipeId: string): Promise<Result<void, TrashError>> {
+    return this.driver.transaction(async (tx) => {
+      const [row] = await tx.query<RecipeRow>('SELECT * FROM recipes WHERE id = ?', [recipeId]);
+      if (!row) return err(trashNotFound(recipeId));
+      if (!inTrash(row.trashed_at)) return err(notTrashed(recipeId));
+      await removeRecipe(tx, recipeId);
+      return ok(undefined);
+    });
+  }
+
+  emptyTrash(): Promise<readonly string[]> {
+    return this.driver.transaction(async (tx) => {
+      const rows = await tx.query<{ id: string }>(
+        'SELECT id FROM recipes WHERE trashed_at IS NOT NULL ORDER BY trashed_at DESC, id',
+      );
+      for (const { id } of rows) await removeRecipe(tx, id);
+      return rows.map((row) => row.id);
+    });
+  }
+
+  async listFamilies(options?: { readonly all?: boolean }): Promise<readonly RecipeFamily[]> {
+    const rows = await this.driver.query<FamilyRow>(
+      options?.all === true
+        ? 'SELECT * FROM recipe_families ORDER BY id'
+        : `SELECT * FROM recipe_families WHERE EXISTS
+             (SELECT 1 FROM recipes WHERE family_id = recipe_families.id AND trashed_at IS NULL)
+           ORDER BY id`,
+    );
     return rows.map(toFamily);
   }
 
@@ -291,6 +386,8 @@ export class SqlRecipeRepository implements RecipeRepository {
           [family.id, family.id],
         );
       }
+      // Pinned entry versions: absent ones are written, present ones skipped (ingredients.md).
+      for (const entry of plan.ingredients ?? []) await insertIngredientIfAbsent(tx, entry);
       return { imported, skipped };
     });
   }

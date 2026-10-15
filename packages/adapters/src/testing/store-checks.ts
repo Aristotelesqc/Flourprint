@@ -2,15 +2,19 @@ import type {
   AppendInput,
   BakeEventStore,
   Draft,
+  EquipmentRegistry,
   FlourRegistry,
+  IngredientRegistry,
   RecipeRepository,
 } from '@flourprint/core/application';
 import {
   defaultVariant,
   type BakeEvent,
   type BakeSummary,
+  type EquipmentEntry,
   type FlourEntry,
   type Formula,
+  type IngredientEntry,
   type Instant,
   type Process,
   type Revision,
@@ -470,6 +474,159 @@ export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
       equal((await repository.getRecipe('kept'))?.familyId, undefined, 'recipe');
     },
   },
+  {
+    name: 'trashes and restores a recipe without a revision; the trash lists latest first',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'a', '2026-01-01T00:00:00.000Z');
+      await saveAs(repository, 'b', '2026-01-02T00:00:00.000Z');
+      const first = '2026-02-01T00:00:00.000Z' as Instant;
+      const second = '2026-02-02T00:00:00.000Z' as Instant;
+      equal(code(await repository.trashRecipe('a', first)), 'ok', 'trash a');
+      equal(code(await repository.trashRecipe('b', second)), 'ok', 'trash b');
+      equal(
+        (await repository.listRecipes()).map((r) => r.id),
+        [],
+        'out of the list',
+      );
+      equal(
+        (await repository.listTrash()).map((r) => r.id),
+        ['b', 'a'],
+        'trash order',
+      );
+      equal((await repository.getRecipe('a'))?.trashedAt, first, 'trashedAt');
+      equal((await repository.getRecipe('a'))?.headVersion, 1, 'no revision');
+      equal(code(await repository.trashRecipe('a', second)), 'AlreadyTrashed', 'again');
+      equal(code(await repository.restoreRecipe('a')), 'ok', 'restore');
+      equal(code(await repository.restoreRecipe('a')), 'NotTrashed', 'restore twice');
+      equal(code(await repository.trashRecipe('ghost', first)), 'NotFound', 'trash unknown');
+      equal(code(await repository.restoreRecipe('ghost')), 'NotFound', 'restore unknown');
+      const restored = await repository.getRecipe('a');
+      equal(restored?.trashedAt, undefined, 'cleared');
+      equal(restored?.name, 'a', 'name kept');
+      equal(
+        (await repository.listRecipes()).map((r) => r.id),
+        ['a'],
+        'back in the list',
+      );
+      equal(
+        (await repository.listTrash()).map((r) => r.id),
+        ['b'],
+        'trash',
+      );
+    },
+  },
+  {
+    name: 'refuses a revision of a trashed recipe and a version of a missing one',
+    run: async (make) => {
+      const repository = await make();
+      await save(repository, 0);
+      await repository.trashRecipe('pullman', at);
+      equal(code(await save(repository, 1, 75)), 'RecipeTrashed', 'trashed');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 1, 'head');
+      await repository.restoreRecipe('pullman');
+      equal(code(await save(repository, 1, 75)), 'ok', 'after restore');
+      await repository.trashRecipe('pullman', at);
+      await repository.deleteRecipe('pullman');
+      equal(code(await save(repository, 2, 80)), 'NotFound', 'deleted');
+    },
+  },
+  {
+    name: 'a trashed member leaves the family default; an all-trashed family is not listed',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'a', '2026-01-01T00:00:00.000Z');
+      await saveAs(repository, 'b', '2026-01-02T00:00:00.000Z');
+      await repository.groupRecipes({ id: 'f', name: 'F' }, ['a', 'b']);
+      await repository.pinVariant('f', 'b');
+      equal(await shownVariant(repository, 'f'), 'b', 'pinned');
+      await repository.trashRecipe('b', at);
+      equal(await shownVariant(repository, 'f'), 'a', 'pin in the trash is skipped');
+      await repository.trashRecipe('a', at);
+      equal(await repository.listFamilies(), [], 'not listed');
+      equal(
+        (await repository.listFamilies({ all: true })).map((f) => f.id),
+        ['f'],
+        'listed for backups',
+      );
+      await repository.restoreRecipe('b');
+      equal(await shownVariant(repository, 'f'), 'b', 'restored pin');
+      equal((await repository.getRecipe('b'))?.familyId, 'f', 'membership kept');
+    },
+  },
+  {
+    name: 'deletes only a trashed recipe, with its revisions, leaving its family',
+    run: async (make) => {
+      const repository = await make();
+      await save(repository, 0);
+      await save(repository, 1, 72);
+      await saveAs(repository, 'other', '2026-01-01T00:00:00.000Z');
+      equal(code(await repository.deleteRecipe('pullman')), 'NotTrashed', 'not trashed');
+      equal(code(await repository.deleteRecipe('ghost')), 'NotFound', 'unknown');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 2, 'kept');
+      await repository.groupRecipes({ id: 'f', name: 'F' }, ['pullman', 'other']);
+      await repository.pinVariant('f', 'pullman');
+      await repository.trashRecipe('pullman', at);
+      equal(code(await repository.deleteRecipe('pullman')), 'ok', 'delete');
+      equal(await repository.getRecipe('pullman'), undefined, 'recipe gone');
+      equal(await repository.getRevision('pullman', 1), { ok: true, value: undefined }, 'rev 1');
+      equal(await repository.getRevision('pullman', 2), { ok: true, value: undefined }, 'rev 2');
+      equal(await repository.listTrash(), [], 'trash empty');
+      equal(
+        (await repository.listFamilies()).map((f) => f.pinnedRecipeId),
+        [undefined],
+        'pin cleared',
+      );
+      equal((await repository.getRecipe('other'))?.familyId, 'f', 'family kept');
+      await repository.trashRecipe('other', at);
+      await repository.deleteRecipe('other');
+      equal(await repository.listFamilies({ all: true }), [], 'empty family deleted');
+    },
+  },
+  {
+    name: 'empties the trash: every trashed recipe goes, the others stay',
+    run: async (make) => {
+      const repository = await make();
+      await saveAs(repository, 'a', '2026-01-01T00:00:00.000Z');
+      await saveAs(repository, 'b', '2026-01-02T00:00:00.000Z');
+      await saveAs(repository, 'c', '2026-01-03T00:00:00.000Z');
+      await repository.trashRecipe('a', '2026-02-01T00:00:00.000Z' as Instant);
+      await repository.trashRecipe('c', '2026-02-02T00:00:00.000Z' as Instant);
+      equal(await repository.emptyTrash(), ['c', 'a'], 'ids');
+      equal(await repository.listTrash(), [], 'trash');
+      equal(await repository.getRecipe('a'), undefined, 'a gone');
+      equal(await repository.getRevision('c', 1), { ok: true, value: undefined }, 'c revision');
+      equal(
+        (await repository.listRecipes()).map((r) => r.id),
+        ['b'],
+        'b stays',
+      );
+      equal(await repository.emptyTrash(), [], 'nothing left');
+    },
+  },
+  {
+    name: 'imports a recorded trashed recipe into the trash',
+    run: async (make) => {
+      const repository = await make();
+      await repository.importRecipes({
+        recipes: [
+          {
+            id: 'gone',
+            name: 'Gone',
+            trashedAt: '2026-02-01T00:00:00.000Z' as Instant,
+            revisions: recorded('gone', 1),
+          },
+        ],
+        families: [],
+      });
+      equal(
+        (await repository.listTrash()).map((r) => r.id),
+        ['gone'],
+        'trash',
+      );
+      equal(await repository.listRecipes(), [], 'list');
+    },
+  },
 ];
 
 const flour = (id: string, version: number, changes: Partial<FlourEntry> = {}): FlourEntry => ({
@@ -559,6 +716,237 @@ export const flourRegistryChecks: readonly StoreCheck<FlourRegistry>[] = [
       );
       const first = await registry.getFlour('mine', 1);
       equal(first.ok && first.value?.archived, false, 'v1 not archived');
+    },
+  },
+];
+
+const equipment = (
+  id: string,
+  version: number,
+  changes: Partial<EquipmentEntry> = {},
+): EquipmentEntry => ({
+  id,
+  version,
+  kind: 'vessel',
+  name: `Vessel ${id}`,
+  builtIn: false,
+  shape: 'dutchOven',
+  material: 'castIron',
+  lid: { material: 'castIron' },
+  interior: { diameterMm: 240 + version },
+  volumeMl: { status: 'known', value: 4000, source: { kind: 'personal', detail: 'measured' } },
+  archived: false,
+  createdAt: `2026-10-0${version}T08:00:00.000Z` as Instant,
+  ...changes,
+});
+
+/** Personal equipment entries (persistence.md, equipment.md). */
+export const equipmentRegistryChecks: readonly StoreCheck<EquipmentRegistry>[] = [
+  {
+    name: 'writes equipment versions in order, keeps earlier ones and lists the latest',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      equal(code(await registry.saveEquipment(equipment('mine', 1))), 'ok', 'v1');
+      equal(
+        code(await registry.saveEquipment(equipment('mine', 2, { notes: 'seasoned' }))),
+        'ok',
+        'v2',
+      );
+      equal(
+        code(await registry.saveEquipment(equipment('a-other', 1, { kind: 'support' }))),
+        'ok',
+        'other v1',
+      );
+      const latest = await registry.listEquipment();
+      equal(
+        latest.map((e) => `${e.id}@${e.version}`),
+        ['a-other@1', 'mine@2'],
+        'latest of each id',
+      );
+      equal(latest[1], equipment('mine', 2, { notes: 'seasoned' }), 'stored as written');
+      equal(
+        await registry.getEquipment('mine', 1),
+        { ok: true, value: equipment('mine', 1) },
+        'v1 kept',
+      );
+      equal(await registry.getEquipment('mine', 3), { ok: true }, 'absent version');
+      equal(
+        (await registry.listEquipmentVersions()).map((e) => `${e.id}@${e.version}`),
+        ['a-other@1', 'mine@1', 'mine@2'],
+        'every version',
+      );
+    },
+  },
+  {
+    name: 'refuses an equipment version that is not the next one and writes nothing',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      await registry.saveEquipment(equipment('mine', 1));
+      const again = await registry.saveEquipment(equipment('mine', 1, { notes: 'other' }));
+      equal(code(again), 'HeadConflict', 'rewrite');
+      equal(
+        again.ok ? undefined : again.error.details,
+        { equipmentId: 'mine', currentHead: 1 },
+        'head',
+      );
+      equal(code(await registry.saveEquipment(equipment('mine', 3))), 'HeadConflict', 'skip');
+      equal(code(await registry.saveEquipment(equipment('new', 2))), 'HeadConflict', 'new at 2');
+      equal(
+        (await registry.listEquipmentVersions()).map((e) => `${e.id}@${e.version}`),
+        ['mine@1'],
+        'nothing written',
+      );
+    },
+  },
+  {
+    name: 'archives equipment as a new version; earlier versions still resolve',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      await registry.saveEquipment(equipment('mine', 1));
+      await registry.saveEquipment(equipment('mine', 2, { archived: true }));
+      equal(
+        (await registry.listEquipment()).map((e) => [e.version, e.archived]),
+        [[2, true]],
+        'archived head listed',
+      );
+      const first = await registry.getEquipment('mine', 1);
+      equal(first.ok && first.value?.archived, false, 'v1 not archived');
+    },
+  },
+];
+
+const UNKNOWN = { status: 'unknown' } as const;
+
+const ingredient = (
+  id: string,
+  version: number,
+  changes: Partial<IngredientEntry> = {},
+): IngredientEntry => ({
+  id,
+  version,
+  name: `Butter ${id}`,
+  builtIn: false,
+  family: 'fat',
+  kind: 'other',
+  organic: UNKNOWN,
+  composition: {
+    waterPct: UNKNOWN,
+    fatPct: {
+      status: 'known',
+      value: 82,
+      unit: 'pct',
+      basis: 'per100g',
+      source: { kind: 'package', detail: 'label, 82 % fat' },
+    },
+    sugarPct: UNKNOWN,
+    carbohydratePct: UNKNOWN,
+    proteinPct: UNKNOWN,
+    fibrePct: UNKNOWN,
+    saltPct: UNKNOWN,
+  },
+  properties: { ph: UNKNOWN, diastaticPower: UNKNOWN },
+  archived: false,
+  createdAt: `2026-10-0${version}T08:00:00.000Z` as Instant,
+  ...changes,
+});
+
+/** Personal ingredient entries, customizations included (persistence.md, ingredients.md). */
+export const ingredientRegistryChecks: readonly StoreCheck<IngredientRegistry>[] = [
+  {
+    name: 'writes ingredient versions in order, keeps earlier ones and lists the latest',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      equal(code(await registry.saveIngredient(ingredient('mine', 1))), 'ok', 'v1');
+      equal(
+        code(await registry.saveIngredient(ingredient('mine', 2, { brand: 'Laiterie' }))),
+        'ok',
+        'v2',
+      );
+      equal(
+        code(await registry.saveIngredient(ingredient('a-other', 1, { family: 'dairy' }))),
+        'ok',
+        'other v1',
+      );
+      const latest = await registry.listIngredients();
+      equal(
+        latest.map((e) => `${e.id}@${e.version}`),
+        ['a-other@1', 'mine@2'],
+        'latest of each id',
+      );
+      equal(latest[1], ingredient('mine', 2, { brand: 'Laiterie' }), 'stored as written');
+      equal(
+        await registry.getIngredient('mine', 1),
+        { ok: true, value: ingredient('mine', 1) },
+        'v1 kept',
+      );
+      equal(await registry.getIngredient('mine', 3), { ok: true }, 'absent version');
+      equal(
+        (await registry.listIngredientVersions()).map((e) => `${e.id}@${e.version}`),
+        ['a-other@1', 'mine@1', 'mine@2'],
+        'every version',
+      );
+    },
+  },
+  {
+    name: 'refuses an ingredient version that is not the next one and writes nothing',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      await registry.saveIngredient(ingredient('mine', 1));
+      const again = await registry.saveIngredient(ingredient('mine', 1, { notes: 'other' }));
+      equal(code(again), 'HeadConflict', 'rewrite');
+      equal(
+        again.ok ? undefined : again.error.details,
+        { ingredientId: 'mine', currentHead: 1 },
+        'head',
+      );
+      equal(code(await registry.saveIngredient(ingredient('mine', 3))), 'HeadConflict', 'skip');
+      equal(code(await registry.saveIngredient(ingredient('new', 2))), 'HeadConflict', 'new at 2');
+      equal(
+        (await registry.listIngredientVersions()).map((e) => `${e.id}@${e.version}`),
+        ['mine@1'],
+        'nothing written',
+      );
+    },
+  },
+  {
+    name: 'archives an ingredient as a new version; earlier versions still resolve',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      await registry.saveIngredient(ingredient('mine', 1));
+      await registry.saveIngredient(ingredient('mine', 2, { archived: true }));
+      equal(
+        (await registry.listIngredients()).map((e) => [e.version, e.archived]),
+        [[2, true]],
+        'archived head listed',
+      );
+      const first = await registry.getIngredient('mine', 1);
+      equal(first.ok && first.value?.archived, false, 'v1 not archived');
+    },
+  },
+  {
+    name: 'stores a customization of a built-in under its id, versioned like any entry',
+    run: async (makeStore) => {
+      const registry = await makeStore();
+      const { name: _name, ...customization } = ingredient('butter', 1, {
+        customizes: { id: 'butter', version: 1 },
+      });
+      equal(code(await registry.saveIngredient(customization)), 'ok', 'customization v1');
+      equal(
+        code(await registry.saveIngredient({ ...customization, version: 2, archived: true })),
+        'ok',
+        'reset to factory',
+      );
+      equal(
+        code(await registry.saveIngredient({ ...customization, version: 2 })),
+        'HeadConflict',
+        'rewrite',
+      );
+      const head = await registry.listIngredients();
+      equal(
+        head.map((e) => [e.id, e.version, e.archived, e.customizes]),
+        [['butter', 2, true, { id: 'butter', version: 1 }]],
+        'head',
+      );
     },
   },
 ];

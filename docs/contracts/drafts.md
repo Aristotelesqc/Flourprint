@@ -50,21 +50,24 @@ interface RecipeIssue {
   path?: string; // the field concerned, e.g. "ingredients.salt.bakerPct", "steps.bulk"
   details?: Record<string, string | number>;
 }
-checkRecipe(formula, process): RecipeIssue[]
+checkRecipe(formula, process, entryFamilies?: Record<string, IngredientFamily>): RecipeIssue[]
 ```
 
+- `entryFamilies` maps a formula ingredient id to the family of the registry entry it pins
+  (`ingredients.md`). The application resolves it; the domain never reads the registry or `entry`,
+  and without it only the ingredient ids and the yeast marks count.
 - **Blocking**: every error of `validateRecipe` (formula, process and incorporations, with its own
   code), a recipe without a step.
 - **Warning** (never blocks):
 
 | Code                     | When                                                                          |
 | ------------------------ | ----------------------------------------------------------------------------- |
-| `salt_missing`           | no dough ingredient with id `salt` (until ingredients are typed, #26)         |
+| `salt_missing`           | no dough ingredient with id `salt` or with an `entry` of family `salt`        |
 | `salt_outside_1_to_3_5`  | salt below 1 % or above 3.5 % of the flour                                    |
 | `water_outside_45_to_90` | total water below 45 % or above 90 % of the flour, when it is complete        |
-| `no_leavening`           | no ingredient marked as yeast and no preferment                               |
+| `no_leavening`           | no ingredient marked as yeast, none with a `leaven` entry, and no preferment  |
 | `no_mix_step`            | no step with operation `mix`                                                  |
-| `no_bake_step`           | no step with operation `bake`                                                 |
+| `no_bake_step`           | no cooking step (process.md); a dough-only recipe stays valid                 |
 | `step_without_duration`  | an `asap` step without a planned duration (one issue per step, `path` its id) |
 | `folds_exceed_step`      | `folds.count × folds.intervalS` exceeds the step's planned duration           |
 

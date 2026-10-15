@@ -5,7 +5,7 @@ import type { BakeCommandPayload, BakeState, Instant, Process } from '@flourprin
 import { bakeAlerts, bakeLog, bakeView, foldStatus, stepProgress } from '../src/services/bake-view';
 import { defaultCategory, noteSteps } from '../src/services/notes';
 import { reminderId, remindersFor } from '../src/services/notifications';
-import { sampleRecipe } from '../src/services/seed';
+import { sampleRecipe } from './fixtures/sample-recipe';
 
 const at = (time: string) => `2026-10-07T${time}:00.000Z` as Instant;
 

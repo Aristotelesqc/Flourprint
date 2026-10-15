@@ -13,7 +13,12 @@ android {
         // Dev channel (ADR 0013): a second app that loads the web preview, beside the normal one.
         def dev = project.findProperty("flourprintChannel") == "dev"
         if (dev) applicationIdSuffix ".dev"
-        manifestPlaceholders = [appLabel: dev ? "Flourprint Dev" : "Flourprint"]
+        manifestPlaceholders = [
+            appLabel: dev ? "Flourprint Dev" : "Flourprint",
+            // Same mark, green background for the dev channel (resources/mark.svg).
+            appIcon: dev ? "@mipmap/ic_launcher_dev" : "@mipmap/ic_launcher",
+            appIconRound: dev ? "@mipmap/ic_launcher_dev_round" : "@mipmap/ic_launcher_round",
+        ]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

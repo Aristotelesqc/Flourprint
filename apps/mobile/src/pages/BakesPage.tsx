@@ -217,11 +217,11 @@ const BakeCard = ({
   }
   return (
     <section
-      aria-label={bake.recipe ?? state.bakeId}
+      aria-label={bake.recipe ?? t('recipe.deleted')}
       className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
     >
       <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-lg font-semibold">{bake.recipe}</span>
+        <span className="truncate text-lg font-semibold">{bake.recipe ?? t('recipe.deleted')}</span>
         {view && (
           <span className="shrink-0 text-sm text-muted">
             {t('bake.position', { index: view.position, total: view.total })}
@@ -274,9 +274,10 @@ const BakeCard = ({
           {t('state.retry')}
         </IonButton>
       )}
-      <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {focus ? (
           <IonButton
+            className="col-span-2 m-0 h-auto min-h-touch min-w-0"
             disabled={busy}
             onClick={() =>
               onSend(
@@ -286,19 +287,33 @@ const BakeCard = ({
               )
             }
           >
-            {t(focus.running ? 'bake.done' : 'bake.start', { step: stepName(focus.step) })}
+            <span className="pointer-events-none whitespace-normal break-words text-center leading-snug">
+              {t(focus.running ? 'bake.done' : 'bake.start', { step: stepName(focus.step) })}
+            </span>
           </IonButton>
         ) : view?.allDone ? (
-          <IonButton disabled={busy} onClick={() => onSend({ type: 'FinishBake' })}>
-            {t('bake.finish')}
+          <IonButton
+            className="col-span-2 m-0 h-auto min-h-touch min-w-0"
+            disabled={busy}
+            onClick={() => onSend({ type: 'FinishBake' })}
+          >
+            <span className="pointer-events-none whitespace-normal break-words text-center leading-snug">
+              {t('bake.finish')}
+            </span>
           </IonButton>
-        ) : (
-          <span />
-        )}
-        <IonButton fill="outline" onClick={() => onNote(focus?.step.id)}>
+        ) : null}
+        <IonButton
+          className="m-0 h-auto min-h-touch min-w-0"
+          fill="outline"
+          onClick={() => onNote(focus?.step.id)}
+        >
           {t('bake.note')}
         </IonButton>
-        <IonButton fill="outline" routerLink={`/bakes/${state.bakeId}`}>
+        <IonButton
+          className="m-0 h-auto min-h-touch min-w-0"
+          fill="outline"
+          routerLink={`/bakes/${state.bakeId}`}
+        >
           {t('bakes.open')}
         </IonButton>
       </div>

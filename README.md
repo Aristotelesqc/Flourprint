@@ -1,3 +1,5 @@
+<img src="apps/mobile/public/favicon.svg" alt="" width="96" height="96" />
+
 # Flourprint
 
 Local-first, mobile-first engine for formulating, planning and logging bread bakes. The engine is
@@ -27,17 +29,27 @@ Add `--json` to any command for machine-readable output.
 
 ```text
 packages/core     domain (pure calculations), application (use cases, ports), contracts (boundaries)
-packages/adapters port implementations (memory today; SQLite with step 5)
+packages/adapters port implementations: memory, and SQLite for Node, Capacitor and the desktop shell
 apps/cli          Commander CLI, a client of the engine
-apps/mobile       Ionic React + Capacitor app (browser exploration with memory stores today)
+apps/mobile       Ionic React + Capacitor app (Android, web preview)
+apps/desktop      Electron shell running the same web build on a PC (ADR 0011)
 docs/contracts    data semantics and reference fixtures
 docs/adr          architecture decisions
 examples          sample formula files for the CLI
 ```
 
-Run the app in a browser with `pnpm build && pnpm --filter @flourprint/mobile dev`. Data lives in
-memory until the Capacitor SQLite adapter lands (spike #24). `packages/ui` is extracted when blocks
-are shared by several screens.
+## Trying the app
+
+- **Android, normal app**: the APK of the latest
+  [release](https://github.com/Aristotelesqc/Flourprint/releases), built from `main` (ADR 0016).
+- **Android, dev channel**: `flourprint-dev.apk` from the `dev-channel` pre-release. It loads the
+  `dev` web preview, so it follows the integration branch without reinstalling (ADR 0013).
+- **Browser**: `https://dev.flourprint-aristotelesqc.pages.dev` (the `dev` branch), or the
+  `pr-<number>` address CI posts on each pull request. Data stays in that browser (IndexedDB,
+  ADR 0015).
+- **Locally**: `pnpm build && pnpm --filter @flourprint/mobile dev`.
+
+On Android and in the desktop shell, data is stored in SQLite (`docs/contracts/persistence.md`).
 
 ## Language
 

@@ -16,11 +16,11 @@ import { useFlourCatalog } from '../services/flours';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { FermentationCard } from './Fermentation';
+import { WeighingChecklist } from './WeighingChecklist';
 import {
   AddFlour,
   AddIngredient,
   AddPreparation,
-  ChangesSummary,
   PreparationFields,
   Hydration,
   type StructureEdit,
@@ -30,8 +30,6 @@ interface Props {
   readonly formula: Formula;
   /** Absent when the draft's formula cannot be resolved yet (drafts.md): grams show as "—". */
   readonly resolved?: ResolvedFormula;
-  /** The saved revision's formula, to show what the draft changes. */
-  readonly base: Formula;
   readonly process: Process;
   readonly now: string;
   /** Returns false when the engine refused the edit; the page shows the reason. */
@@ -40,9 +38,15 @@ interface Props {
   readonly onStructure: StructureEdit;
   /** A process change (temperatures, an applied duration); false when refused. */
   readonly onProcess: (process: Process) => boolean;
+  /** Shared weighing checklist state lifted to page (#67). */
+  readonly weighed: ReadonlyMap<string, number>;
+  readonly onToggleWeighed: (key: string, grams: number) => void;
+  readonly fermentationRef?: React.RefObject<HTMLDivElement | null>;
+  readonly hydrationRef?: React.RefObject<HTMLDivElement | null>;
+  readonly visibleSection?: 'comp' | 'parts' | 'res' | 'all' | 'none';
 }
 
-const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
+export const ROW = 'grid grid-cols-[minmax(0,1fr)_88px_104px] items-center gap-2';
 
 /**
  * Formula tab of the #8 mockups: quantity and key figures first, then flours, ingredients,
@@ -51,266 +55,263 @@ const ROW = 'grid grid-cols-[1fr_88px_104px] items-center gap-2';
 export const FormulaSection = ({
   formula,
   resolved,
-  base,
   process,
   now,
   onEdit,
   onStructure,
   onProcess,
+  weighed,
+  onToggleWeighed,
+  fermentationRef,
+  hydrationRef,
+  visibleSection = 'all',
 }: Props) => {
   const { t, grams, pct, name, componentName } = useMessages();
-  const componentLabel = (id: string) => {
-    const component = formula.components.find((c) => c.id === id);
-    return component ? componentName(formula, component) : name(id);
-  };
   const [explaining, setExplaining] = useState(false);
-  // Weighed items remember the grams they were weighed at: a quantity change unchecks them.
-  const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
   const anchor = formula.anchor;
 
   const rescale = (next: Anchor) => onEdit({ type: 'SetAnchor', mode: 'rescale', anchor: next });
-
-  const finalMix: { key: string; label: string; grams: number }[] = !resolved
-    ? []
-    : [
-        ...Object.entries(resolved.finalMix.componentMasses).map(([id, g]) => ({
-          key: `component:${id}`,
-          label: componentLabel(id),
-          grams: g,
-        })),
-        ...Object.entries(resolved.finalMix.flourByFlour).map(([id, g]) => ({
-          key: `flour:${id}`,
-          label: name(id),
-          grams: g,
-        })),
-        { key: 'water', label: name('water'), grams: resolved.finalMix.water },
-        ...Object.entries(resolved.finalMix.grams).map(([id, g]) => ({
-          key: `ingredient:${id}`,
-          label: name(id),
-          grams: g,
-        })),
-      ];
-  const isWeighed = (item: { key: string; grams: number }) => weighed.get(item.key) === item.grams;
 
   const lockedWater = formula.waterTarget?.absorbInto;
 
   return (
     <div className="flex flex-col gap-5 pb-6">
-      <ChangesSummary base={base} formula={formula} />
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-1.5 font-bold">
-            {t('formula.quantity')}
-            <InfoButton topic="anchor" term={t('formula.quantity')} />
-          </span>
-          <div className="w-56">
-            <Segmented
-              size="small"
-              value={anchor.kind}
-              options={(['flourTotal', 'doughWeight', 'pieces'] as const).map((kind) => ({
-                value: kind,
-                label: t(`formula.anchor.${kind}`),
-              }))}
-              onChange={(kind) =>
-                void onEdit({
-                  type: 'SetAnchor',
-                  mode: 'reinterpret',
-                  kind,
-                  ...(kind === 'pieces' ? { count: 1 } : {}),
-                })
-              }
-            />
-          </div>
-        </div>
-        {anchor.kind === 'pieces' ? (
-          <>
-            <LabeledField label={t('formula.anchorField.count')}>
-              <NumberField
-                label={t('formula.anchorField.count')}
-                size="large"
-                width="8rem"
-                value={anchor.count}
-                onCommit={(count) => rescale({ ...anchor, count })}
-              />
-            </LabeledField>
-            <LabeledField label={t('formula.anchorField.gramsEach')}>
-              <NumberField
-                label={t('formula.anchorField.gramsEach')}
-                unit="g"
-                size="large"
-                width="8rem"
-                value={anchor.gramsEach}
-                onCommit={(gramsEach) => rescale({ ...anchor, gramsEach })}
-              />
-            </LabeledField>
-          </>
-        ) : (
-          <LabeledField label={t(`formula.anchorField.${anchor.kind}`)}>
-            <NumberField
-              label={t(`formula.anchorField.${anchor.kind}`)}
-              unit="g"
-              size="large"
-              width="8rem"
-              value={anchor.grams}
-              onCommit={(value) => rescale({ kind: anchor.kind, grams: value })}
-            />
-          </LabeledField>
-        )}
-        {!resolved ? (
-          <p className="m-0 border-t border-line pt-3 text-sm text-muted">
-            {t('formula.unresolved')}
-          </p>
-        ) : (
-          <>
-            <Hydration
-              formula={formula}
-              resolved={resolved}
-              onEdit={onEdit}
-              onExplain={() => setExplaining(true)}
-            />
-            {resolved.totalWater.completeness === 'incomplete' && (
-              <p className="m-0 text-sm text-muted">
-                {t('formula.water.incomplete', {
-                  ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
-                })}
-              </p>
-            )}
-            <div className="grid grid-cols-3 gap-2">
-              <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
-              <Stat label={t('formula.stat.pureWater')} value={pct(resolved.pureWaterPct)} />
-            </div>
-            <Enrichment resolved={resolved} />
-          </>
-        )}
-      </Card>
-
-      <section>
-        <GroupHeader
-          title={t('formula.group.flours')}
-          pctLabel={t('formula.column.flourPct')}
-          gramsLabel={t('formula.column.grams')}
-        />
-        <Rows>
-          {formula.flours.map((flour) => (
-            <div key={flour.id} className={`${ROW} min-h-[60px] px-3`}>
-              <span className="flex min-w-0 flex-col items-start">
-                <span className="font-semibold">{name(flour.id)}</span>
-                <FlourSummary id={flour.id} />
-                {formula.flours.length > 1 && (
-                  <button
-                    type="button"
-                    aria-label={t('formula.removeNamed', { name: name(flour.id) })}
-                    className="fp-reset text-[13px] text-muted underline"
-                    onClick={() =>
-                      void onEdit({
-                        type: 'SetFlourBlend',
-                        flours: formula.flours.filter((f) => f.id !== flour.id),
-                      })
-                    }
-                  >
-                    {t('formula.remove')}
-                  </button>
-                )}
-              </span>
-              <NumberField
-                label={`${name(flour.id)}, ${t('formula.column.flourPct')}`}
-                unit="%"
-                value={flour.sharePct}
-                onCommit={(value) =>
-                  onEdit({
-                    type: 'SetFlourBlend',
-                    flours: formula.flours.map((f) =>
-                      f.id === flour.id ? { ...f, sharePct: value } : f,
-                    ),
+      <div
+        hidden={visibleSection !== 'all' && visibleSection !== 'comp'}
+        className="flex flex-col gap-5"
+      >
+        <Card>
+          <div className="flex flex-col gap-2">
+            <span className="flex items-center gap-1.5 font-bold">
+              {t('formula.quantity')}
+              <InfoButton topic="anchor" term={t('formula.quantity')} />
+            </span>
+            <div className="w-full">
+              <Segmented
+                size="small"
+                value={anchor.kind}
+                options={(['flourTotal', 'doughWeight', 'pieces'] as const).map((kind) => ({
+                  value: kind,
+                  label: t(`formula.anchor.${kind}`),
+                }))}
+                onChange={(kind) =>
+                  void onEdit({
+                    type: 'SetAnchor',
+                    mode: 'reinterpret',
+                    kind,
+                    ...(kind === 'pieces' ? { count: 1 } : {}),
                   })
                 }
               />
-              {resolved ? (
-                <NumberField
-                  label={name(flour.id)}
-                  unit="g"
-                  value={resolved.flourByFlour[flour.id] ?? 0}
-                  onCommit={(value) =>
-                    onEdit({ type: 'SetIngredientGrams', ingredient: flour.id, grams: value })
-                  }
-                />
-              ) : (
-                <span className="pr-2.5 text-right text-muted">—</span>
-              )}
             </div>
-          ))}
-          <AddFlour formula={formula} onEdit={onEdit} />
-        </Rows>
-      </section>
-
-      <section>
-        <GroupHeader
-          title={t('formula.group.ingredients')}
-          pctLabel={t('formula.column.bakerPct')}
-          gramsLabel={t('formula.column.grams')}
-          help={<InfoButton topic="bakerPct" term={t('formula.column.bakerPct')} />}
-        />
-        <Rows>
-          <p className="m-0 px-3 py-2 text-[13px] text-muted">{t('formula.editRule')}</p>
-          {formula.ingredients.map((ingredient) =>
-            ingredient.id === lockedWater ? (
-              <div key={ingredient.id} className={`${ROW} min-h-[60px] px-3`}>
-                <span className="flex flex-col">
-                  <span className="font-semibold">{name(ingredient.id)}</span>
-                  <span className="text-[13px] text-muted">{t('formula.lock.follows')}</span>
-                </span>
-                <span className="pr-2.5 text-right">{pct(ingredient.bakerPct)}</span>
-                <span className="pr-2.5 text-right font-semibold">
-                  {resolved ? grams(resolved.grams[ingredient.id] ?? 0) : '—'}
-                </span>
+          </div>
+          {anchor.kind === 'pieces' ? (
+            <>
+              <LabeledField label={t('formula.anchorField.count')}>
+                <NumberField
+                  label={t('formula.anchorField.count')}
+                  size="large"
+                  width="8rem"
+                  value={anchor.count}
+                  onCommit={(count) => rescale({ ...anchor, count })}
+                />
+              </LabeledField>
+              <LabeledField label={t('formula.anchorField.gramsEach')}>
+                <NumberField
+                  label={t('formula.anchorField.gramsEach')}
+                  unit="g"
+                  size="large"
+                  width="8rem"
+                  value={anchor.gramsEach}
+                  onCommit={(gramsEach) => rescale({ ...anchor, gramsEach })}
+                />
+              </LabeledField>
+            </>
+          ) : (
+            <LabeledField label={t(`formula.anchorField.${anchor.kind}`)}>
+              <NumberField
+                label={t(`formula.anchorField.${anchor.kind}`)}
+                unit="g"
+                size="large"
+                width="8rem"
+                value={anchor.grams}
+                onCommit={(value) => rescale({ kind: anchor.kind, grams: value })}
+              />
+            </LabeledField>
+          )}
+          {!resolved ? (
+            <p className="m-0 border-t border-line pt-3 text-sm text-muted">
+              {t('formula.unresolved')}
+            </p>
+          ) : (
+            <>
+              <Hydration
+                ref={hydrationRef}
+                formula={formula}
+                resolved={resolved}
+                onEdit={onEdit}
+                onExplain={() => setExplaining(true)}
+              />
+              {resolved.totalWater.completeness === 'incomplete' && (
+                <p className="m-0 text-sm text-muted">
+                  {t('formula.water.incomplete', {
+                    ingredients: resolved.totalWater.unknownContributors.map(name).join(', '),
+                  })}
+                </p>
+              )}
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <Stat label={t('formula.stat.dough')} value={grams(resolved.doughWeight)} />
+                {anchor.kind !== 'flourTotal' && (
+                  <Stat
+                    label={t('formula.anchorField.flourTotal')}
+                    value={grams(resolved.flourTotal)}
+                  />
+                )}
               </div>
-            ) : (
-              <div key={ingredient.id} className={`${ROW} min-h-[60px] px-3`}>
+              <Enrichment resolved={resolved} />
+            </>
+          )}
+        </Card>
+
+        <section>
+          <GroupHeader
+            title={t('formula.group.flours')}
+            pctLabel={t('formula.column.basisFlour')}
+            gramsLabel={t('formula.column.basisGrams')}
+          />
+          <Rows>
+            {formula.flours.map((flour) => (
+              <div key={flour.id} className={`${ROW} min-h-[60px] px-3`}>
                 <span className="flex min-w-0 flex-col items-start">
-                  <span className="font-semibold">{name(ingredient.id)}</span>
-                  <button
-                    type="button"
-                    aria-label={t('formula.removeNamed', { name: name(ingredient.id) })}
-                    className="fp-reset text-[13px] text-muted underline"
-                    onClick={() =>
-                      void onEdit({ type: 'RemoveIngredient', ingredient: ingredient.id })
-                    }
-                  >
-                    {t('formula.remove')}
-                  </button>
+                  <span className="font-semibold">{name(flour.id)}</span>
+                  <FlourSummary id={flour.id} />
+                  {formula.flours.length > 1 && (
+                    <button
+                      type="button"
+                      aria-label={t('formula.removeNamed', { name: name(flour.id) })}
+                      className="fp-reset text-[13px] text-muted underline"
+                      onClick={() =>
+                        void onEdit({
+                          type: 'SetFlourBlend',
+                          flours: formula.flours.filter((f) => f.id !== flour.id),
+                        })
+                      }
+                    >
+                      {t('formula.remove')}
+                    </button>
+                  )}
                 </span>
                 <NumberField
-                  label={`${name(ingredient.id)}, ${t('formula.column.bakerPct')}`}
+                  label={`${name(flour.id)}, ${t('formula.column.flourPct')}`}
                   unit="%"
-                  value={ingredient.bakerPct}
+                  value={flour.sharePct}
                   onCommit={(value) =>
-                    onEdit({ type: 'SetBakerPct', ingredient: ingredient.id, pct: value })
+                    onEdit({
+                      type: 'SetFlourBlend',
+                      flours: formula.flours.map((f) =>
+                        f.id === flour.id ? { ...f, sharePct: value } : f,
+                      ),
+                    })
                   }
                 />
                 {resolved ? (
                   <NumberField
-                    label={name(ingredient.id)}
+                    label={name(flour.id)}
                     unit="g"
-                    value={resolved.grams[ingredient.id] ?? 0}
+                    value={resolved.flourByFlour[flour.id] ?? 0}
                     onCommit={(value) =>
-                      onEdit({
-                        type: 'SetIngredientGrams',
-                        ingredient: ingredient.id,
-                        grams: value,
-                      })
+                      onEdit({ type: 'SetIngredientGrams', ingredient: flour.id, grams: value })
                     }
                   />
                 ) : (
                   <span className="pr-2.5 text-right text-muted">—</span>
                 )}
               </div>
-            ),
-          )}
-          <AddIngredient formula={formula} onEdit={onEdit} />
-        </Rows>
-      </section>
+            ))}
+            <AddFlour formula={formula} onEdit={onEdit} />
+          </Rows>
+        </section>
 
-      {
+        <section>
+          <GroupHeader
+            title={t('formula.group.ingredients')}
+            pctLabel={t('formula.column.basisBaker')}
+            gramsLabel={t('formula.column.basisGrams')}
+            help={<InfoButton topic="bakerPct" term={t('formula.column.basisBaker')} />}
+          />
+          <Rows>
+            <p className="m-0 px-3 py-2 text-[13px] text-muted">{t('formula.editRule')}</p>
+            {formula.ingredients.map((ingredient) =>
+              ingredient.id === lockedWater ? (
+                <div
+                  key={ingredient.id}
+                  data-ingredient-id={ingredient.id}
+                  className={`${ROW} min-h-[60px] px-3`}
+                >
+                  <span className="flex flex-col">
+                    <span className="font-semibold">{name(ingredient.id)}</span>
+                    <span className="text-[13px] text-muted">{t('formula.lock.follows')}</span>
+                  </span>
+                  <span className="pr-2.5 text-right">{pct(ingredient.bakerPct)}</span>
+                  <span className="pr-2.5 text-right font-semibold">
+                    {resolved ? grams(resolved.grams[ingredient.id] ?? 0) : '—'}
+                  </span>
+                </div>
+              ) : (
+                <div
+                  key={ingredient.id}
+                  data-ingredient-id={ingredient.id}
+                  className={`${ROW} min-h-[60px] px-3`}
+                >
+                  <span className="flex min-w-0 flex-col items-start">
+                    <span className="font-semibold">{name(ingredient.id)}</span>
+                    <button
+                      type="button"
+                      aria-label={t('formula.removeNamed', { name: name(ingredient.id) })}
+                      className="fp-reset text-[13px] text-muted underline"
+                      onClick={() =>
+                        void onEdit({ type: 'RemoveIngredient', ingredient: ingredient.id })
+                      }
+                    >
+                      {t('formula.remove')}
+                    </button>
+                  </span>
+                  <NumberField
+                    label={`${name(ingredient.id)}, ${t('formula.column.bakerPct')}`}
+                    unit="%"
+                    value={ingredient.bakerPct}
+                    onCommit={(value) =>
+                      onEdit({ type: 'SetBakerPct', ingredient: ingredient.id, pct: value })
+                    }
+                  />
+                  {resolved ? (
+                    <NumberField
+                      label={name(ingredient.id)}
+                      unit="g"
+                      value={resolved.grams[ingredient.id] ?? 0}
+                      onCommit={(value) =>
+                        onEdit({
+                          type: 'SetIngredientGrams',
+                          ingredient: ingredient.id,
+                          grams: value,
+                        })
+                      }
+                    />
+                  ) : (
+                    <span className="pr-2.5 text-right text-muted">—</span>
+                  )}
+                </div>
+              ),
+            )}
+            <AddIngredient formula={formula} onEdit={onEdit} />
+          </Rows>
+        </section>
+      </div>
+
+      <div
+        hidden={visibleSection !== 'all' && visibleSection !== 'parts'}
+        className="flex flex-col gap-5"
+      >
         <section className="flex flex-col gap-2">
           <span className="flex items-center gap-1.5">
             <SectionTitle>{t('formula.preparations')}</SectionTitle>
@@ -364,57 +365,37 @@ export const FormulaSection = ({
           })}
           <AddPreparation formula={formula} process={process} onStructure={onStructure} />
         </section>
-      }
+      </div>
 
-      <FermentationCard
-        formula={formula}
-        process={process}
-        now={now}
-        onEdit={onEdit}
-        onProcess={onProcess}
-      />
+      <div
+        hidden={visibleSection !== 'all' && visibleSection !== 'res'}
+        className="flex flex-col gap-5"
+      >
+        <div
+          ref={fermentationRef}
+          id="fermentation-settings"
+          data-testid="fermentation-card"
+          tabIndex={-1}
+          className="outline-none"
+        >
+          <FermentationCard
+            formula={formula}
+            process={process}
+            now={now}
+            onEdit={onEdit}
+            onProcess={onProcess}
+          />
+        </div>
 
-      {resolved && (
-        <section className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between">
-            <span className="flex items-center gap-1.5">
-              <SectionTitle>{t('formula.finalMix')}</SectionTitle>
-              <InfoButton topic="finalMix" term={t('formula.finalMix')} />
-            </span>
-            <span className="px-1 text-[13px] text-muted">
-              {t('formula.finalMix.progress', {
-                done: finalMix.filter(isWeighed).length,
-                total: finalMix.length,
-              })}
-            </span>
-          </div>
-          <Rows>
-            {finalMix.map((item) => {
-              const done = isWeighed(item);
-              return (
-                <label
-                  key={item.key}
-                  className={`flex min-h-[52px] items-center gap-3 px-4 ${done ? 'text-muted line-through' : ''}`}
-                >
-                  <input
-                    type="checkbox"
-                    className="size-[22px] accent-[var(--color-accent)]"
-                    checked={done}
-                    onChange={() => {
-                      const next = new Map(weighed);
-                      if (done) next.delete(item.key);
-                      else next.set(item.key, item.grams);
-                      setWeighed(next);
-                    }}
-                  />
-                  <span className="flex-1">{item.label}</span>
-                  <span className="font-bold">{grams(item.grams)}</span>
-                </label>
-              );
-            })}
-          </Rows>
-        </section>
-      )}
+        {resolved && (
+          <WeighingChecklist
+            formula={formula}
+            resolved={resolved}
+            weighed={weighed}
+            onToggle={onToggleWeighed}
+          />
+        )}
+      </div>
 
       {resolved && (
         <WaterExplanation
@@ -433,7 +414,7 @@ const ENRICHED_PCT = 0.5;
  * Added fat and sugar next to the water (formula.md, Fat and sugar), for enriched doughs; an
  * unknown content keeps the total marked as an estimate.
  */
-const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
+export const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
   const { t, pct, name } = useMessages();
   const { totalFat, totalSugar, totalFatPct, totalSugarPct } = resolved;
   if (!totalFat || !totalSugar || totalFatPct === undefined || totalSugarPct === undefined) {
@@ -442,8 +423,6 @@ const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
   const unknown = [
     ...new Set([...totalFat.unknownContributors, ...totalSugar.unknownContributors]),
   ];
-  // Yeast alone brings traces of fat: below half a point the dough is not enriched, unless an
-  // ingredient's content is unknown, which may hide any amount.
   if (Math.max(totalFatPct, totalSugarPct) < ENRICHED_PCT && unknown.length === 0) return null;
   return (
     <>
@@ -466,7 +445,7 @@ const Enrichment = ({ resolved }: { resolved: ResolvedFormula }) => {
   );
 };
 
-const GroupHeader = ({
+export const GroupHeader = ({
   title,
   pctLabel,
   gramsLabel,
@@ -478,9 +457,9 @@ const GroupHeader = ({
   help?: ReactNode;
 }) => (
   <div className={`${ROW} px-4 pb-1.5 text-[13px] font-semibold text-muted`}>
-    <span className="flex items-center gap-1.5">
-      <span className="tracking-wide uppercase">{title}</span>
-      {help}
+    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <span className="min-w-0 tracking-wide uppercase break-words">{title}</span>
+      {help && <span className="shrink-0">{help}</span>}
     </span>
     <span className="text-right">{pctLabel}</span>
     <span className="text-right">{gramsLabel}</span>
@@ -494,7 +473,7 @@ const LabeledField = ({ label, children }: { label: string; children: ReactNode 
   </div>
 );
 
-const Stat = ({ label, value }: { label: string; value: string }) => (
+export const Stat = ({ label, value }: { label: string; value: string }) => (
   <div className="flex flex-col">
     <span className="text-xs text-muted">{label}</span>
     <span className="text-lg font-bold">{value}</span>
@@ -502,9 +481,11 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
 );
 
 /** What the registry knows about a flour, in one line; nothing without an entry (flours.md). */
-const FlourSummary = ({ id }: { id: string }) => {
+export const FlourSummary = ({ id }: { id: string }) => {
   const { t, locale } = useMessages();
   const entry = useFlourCatalog().entry(id);
   const summary = entry ? flourSummary(entry, t, locale) : '';
-  return summary === '' ? null : <span className="text-[13px] text-muted">{summary}</span>;
+  return summary === '' ? null : (
+    <span className="m3-type-metadata text-muted">{summary.replace(/\s+%/g, '\u00a0%')}</span>
+  );
 };

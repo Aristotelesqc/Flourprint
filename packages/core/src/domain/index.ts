@@ -12,6 +12,8 @@ export * from './values.js';
 export * from './temperature-units.js';
 export * from './bake/index.js';
 export * from './flour/index.js';
+export * from './equipment/index.js';
+export * from './ingredient/index.js';
 export * from './recipe/types.js';
 export * from './recipe/validate.js';
 export * from './recipe/check.js';

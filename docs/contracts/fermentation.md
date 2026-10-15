@@ -16,11 +16,11 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   bake" (the baker's readiness decision, see Readiness profiles below). Bulk, cold retard,
   shaping and proof are counted together: the state is never reset between steps (#9).
 - **Dough steps**: the `asap` steps that come after the `mix` step and before the first **heat
-  step** (`bake` or `boil`: boiling bagels or pretzels ends the fermentation as baking does) in
-  the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
+  step** (a cooking operation, process.md: boiling bagels, grilling or frying a dough ends the fermentation
+  as baking does) in the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
   one sequence, each after the previous one; dough steps in parallel (two rests side by side)
   are `insufficient_data` (`non_linear_dough_path`) until split masses are modelled. Without a
-  `mix` step, the estimate is `insufficient_data`; without a `bake` step, every `asap` step after
+  `mix` step, the estimate is `insufficient_data`; without a heat step, every `asap` step after
   the mix counts.
 - **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5), at progress 1.
 - A preferment is a `preferment`-kind component; its step is the step with the component's id.
