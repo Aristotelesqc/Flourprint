@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "e2e": "playwright test",
-    "e2e:android": "playwright test -c playwright.android.config.ts"
+    "e2e:android": "playwright test -c playwright.android.config.ts",
+    "e2e:android-upgrade": "playwright test -c playwright.android-upgrade.config.ts"
   },
   "dependencies": {
     "@capacitor-community/sqlite": "^8.1.1",
