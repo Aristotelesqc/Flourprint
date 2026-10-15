@@ -267,6 +267,7 @@ jobs:
       - run: pnpm build
       - run: pnpm build:mobile
       - run: pnpm build:desktop
+      - run: pnpm build:desktop -- --channel=dev
       - run: pnpm --filter @flourprint/desktop e2e
       - uses: actions/upload-artifact@v4
         with:
@@ -361,6 +362,25 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Dev desktop shell for Windows (#113)
+        # It loads the dev address, so it needs no web build and no Windows runner: Electron's
+        # Windows distribution is packaged from Linux.
+        working-directory: apps/desktop
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ''
+          ELECTRON_INSTALL_PLATFORM: win32
+        run: |
+          node node_modules/electron/install.js
+          node scripts/package.mjs --channel=dev --platform=win32
+          (cd out && zip -qr ../../../flourprint-dev-windows.zip Flourprint-Dev-win32-x64)
       - uses: actions/download-artifact@v4
         with:
           name: flourprint-dev-apk
@@ -369,6 +389,6 @@ jobs:
         run: |
           mv artifact/*.apk flourprint-dev.apk
           gh release delete dev-channel --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
-          gh release create dev-channel flourprint-dev.apk --repo "$GITHUB_REPOSITORY" --prerelease \
-            --target "$GITHUB_SHA" --title "Dev channel" \
-            --notes "Dev APK (app.flourprint.dev). It loads https://dev.flourprint-aristotelesqc.pages.dev, the integration branch of the open major pull request: install once, restart the app to update. Last rebuilt from ${GITHUB_SHA::7}."
+          gh release create dev-channel flourprint-dev.apk flourprint-dev-windows.zip \
+            --repo "$GITHUB_REPOSITORY" --prerelease --target "$GITHUB_SHA" --title "Dev channel" \
+            --notes "Dev APK (app.flourprint.dev) and dev desktop shell for Windows (unzip, run FlourprintDev.exe; data in %APPDATA%\\Flourprint Dev). Both load https://dev.flourprint-aristotelesqc.pages.dev, the integration branch of the open major pull request: install once, restart the app to update. Last rebuilt from ${GITHUB_SHA::7}."
