@@ -32,8 +32,8 @@ Write it in the owner's language unless asked otherwise, in one copyable block:
 
 For a future implementation, open the **assigned issue or sub-issue** first. Read its current
 acceptance, scope, linked dependencies and the **canonical** documents it cites; then follow
-\`AGENTS.md\`'s permanent authority order: contracts for behavior, ADRs for architecture,
-\`DESIGN.md\` and reviewed architecture mockups for presentation. Treat an accepted
+`AGENTS.md`'s permanent authority order: contracts for behavior, ADRs for architecture,
+`DESIGN.md` and reviewed architecture mockups for presentation. Treat an accepted
 **contract-only PR** or merged mockup as a specification, not evidence that the feature works.
 
 Include the exact issue number and links to the relevant canonical files in the handoff; direct
@@ -42,8 +42,11 @@ threads. Historical issue and PR comments are useful **only to explain why** dec
 or to resolve a specific ambiguity; they are not a substitute for keeping the issue's acceptance
 and the linked documents up to date.
 
+Current owner instructions still apply; do not dismiss them as historical discussion. Identify
+and reconcile any resulting discrepancy in the task and canonical documents before implementation.
+
 Keep transient release progress, feature lists and PR statuses **in GitHub issues**, not in
-\`AGENTS.md\` or this skill. If the issue's current wording conflicts with an accepted contract,
+`AGENTS.md` or this skill. If the issue's current wording conflicts with an accepted contract,
 identify the discrepancy, request or make the appropriate targeted correction, and do not
 silently choose the older discussion. Avoid duplicating a complete specification in the
 handoff: link to it and state only actionable next steps.

@@ -1,9 +1,17 @@
 # Contract: process (D3)
 
-Status: **approved** (issue #30); the mixing steps (`frasage`, below), steps before a target
-(preheating), subjects and component phases, step move and duplicate, and the relative timeline
-are **accepted contract proposals for 0.3.0**, integrated into `canary` after owner-authorized technical reviews. They are **not yet implemented** in the domain/application/UI. Related
-issues: #5, #9, #21, #28, #35.
+Status: the baseline contract is **approved** (issue #30). The 0.3.0 extensions for mixing
+(`frasage`), target-based preheating, subjects/component phases, move/duplicate and relative
+timing are **specifications merged into `canary`** through #91, #92, #94, #96 and #97 after
+owner-authorized independent technical reviews. The owner selected preheat option C on #97.
+Merged specification status is distinct from implementation or release validation; it is not
+a blanket request to repeat owner approval. Any remaining product arbitration must identify
+the specific unresolved choice.
+
+Existing `asap`/`alap` projection and basic step editing remain implemented. The new subject,
+`beforeTarget` and grouped relative-projection behavior still needs implementation and evidence:
+engine/application/compatibility work is tracked in #106, the grouped UI in #100, and the
+remaining step-editor work separately in #104. Related workstreams: #5, #9, #21, #28, #35.
 
 ## Model
 
@@ -96,7 +104,7 @@ interface StepConditions {
 
 ## Steps before a target (preheating)
 
-**Accepted 0.3.0 contract (merged #94; the owner chose option C on #97, implementation pending).** A baker preheats the oven
+**0.3.0 specification merged in #94; owner-selected option C on #97; implementation tracked in #106.** A baker preheats the oven
 while the dough proofs, and switches it on **a set time before the cooking step it is for**, not at
 the boundary of another step: a 2 h proof stays one step, and the oven does not heat for 2 h when
 30 min are wanted. Four facts stay distinct: the **trigger** (switching the heating on), the
@@ -391,7 +399,7 @@ Examples (hand-checked against the rules above):
 
 ## Subjects and component phases
 
-**Accepted 0.3.0 contract (audit 91-R2, merged #96; implementation pending).** A recipe describes the
+**0.3.0 specification merged in #96 (audit 91-R2); implementation tracked in #106.** A recipe describes the
 whole production protocol: a poolish prepared once, fermented 16 h at 21 °C and then 8 h at
 4 °C, a tangzhong cooked while it rests, and only then the main dough. These phases concern the
 **same component and the same mass**, not independent poolishes.
@@ -679,7 +687,7 @@ preheat]`. In: `shape` `[bulk]`, `proof` → `[shape]`. `preheat` untouched.
 
 ## Relative timeline and groups
 
-**Accepted 0.3.0 contract (audit 91-R5, merged #97; implementation tracked in #100).** The Recipe tab must be
+**0.3.0 specification merged in #97 (audit 91-R5); engine implementation #106, UI implementation #100.** The Recipe tab must be
 usable without opening Planning: it shows the whole production protocol with, for each step, its
 own duration and its position in time, and the steps grouped by the mass they work on. The
 interface requirement is recorded in `docs/architecture/2026-10-13-recipe-groups-mockup.md`.

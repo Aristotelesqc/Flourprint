@@ -126,7 +126,14 @@ type GroupDisplay = {
 
 ## Status
 
-The 0.3.0 timeline and component contracts have been merged into `canary` (#91 to #94,
-#96, #97). They specify behavior and presentation but **do not implement the UI**. The
-implementation task and its acceptance criteria are tracked in [#100](https://github.com/Aristotelesqc/Flourprint/issues/100),
-under the #35 UX workstream. Historical review discussion is linked above for decision context.
+The owner-selected interaction and reviewed 0.3.0 specifications are recorded in `canary`
+(#91, #92, #94, #96, #97); merging those documents does not implement the new behavior.
+Existing basic step editing and `asap`/`alap` projection remain available.
+
+Engine/application/compatibility prerequisites are tracked in [#106](https://github.com/Aristotelesqc/Flourprint/issues/106)
+under #5. The grouped Recipe/Planning consumer and its acceptance are tracked in
+[#100](https://github.com/Aristotelesqc/Flourprint/issues/100) under #35. The remaining step-editor
+work is separate in [#104](https://github.com/Aristotelesqc/Flourprint/issues/104); it need not wait
+for the grouped timeline when it uses existing supported APIs. UI exploration may use agreed
+output fixtures, but runtime acceptance needs the real shared projection, never a React-side
+independent time solver. Historical review discussion above explains the decisions.
