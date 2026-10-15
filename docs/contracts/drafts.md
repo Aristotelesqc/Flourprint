@@ -25,7 +25,8 @@ interface Draft {
 ```
 
 - A draft is **persisted** (persistence.md) as soon as it is created and after every edit, so it
-  survives closing the app. Last write wins; a draft has no history.
+  survives closing the app. Last write wins; a draft has no persisted history (the interface's
+  undo and redo live in memory only, process.md, Undo, redo and reset).
 - Formula edits in a draft (`formula.md`) are applied without the final resolution: an edit is
   refused only when it cannot be applied at all (an unknown reference, a grams edit on a formula
   that cannot be resolved). Process edits are applied as typed. The check list (below) says what
@@ -60,16 +61,21 @@ checkRecipe(formula, process, entryFamilies?: Record<string, IngredientFamily>):
   code), a recipe without a step.
 - **Warning** (never blocks):
 
-| Code                     | When                                                                          |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| `salt_missing`           | no dough ingredient with id `salt` or with an `entry` of family `salt`        |
-| `salt_outside_1_to_3_5`  | salt below 1 % or above 3.5 % of the flour                                    |
-| `water_outside_45_to_90` | total water below 45 % or above 90 % of the flour, when it is complete        |
-| `no_leavening`           | no ingredient marked as yeast, none with a `leaven` entry, and no preferment  |
-| `no_mix_step`            | no step with operation `mix`                                                  |
-| `no_bake_step`           | no cooking step (process.md); a dough-only recipe stays valid                 |
-| `step_without_duration`  | an `asap` step without a planned duration (one issue per step, `path` its id) |
-| `folds_exceed_step`      | `folds.count × folds.intervalS` exceeds the step's planned duration           |
+| Code                         | When                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------- |
+| `salt_missing`               | no dough ingredient with id `salt` or with an `entry` of family `salt`            |
+| `salt_outside_1_to_3_5`      | salt below 1 % or above 3.5 % of the flour                                        |
+| `water_outside_45_to_90`     | total water below 45 % or above 90 % of the flour, when it is complete            |
+| `no_leavening`               | no ingredient marked as yeast, none with a `leaven` entry, and no preferment      |
+| `no_mix_step`                | no mixing step: no step with operation `frasage` or `mix` (process.md)            |
+| `no_kneading_or_folds`       | a note to confirm the technique: no `mix`, no `fold`, no `folds` on any step      |
+| `no_bake_step`               | no cooking step (process.md); a dough-only recipe stays valid                     |
+| `step_without_duration`      | an `asap` step without a planned duration (one issue per step, `path` its id)     |
+| `folds_exceed_step`          | `folds.count × folds.intervalS` exceeds the step's planned duration               |
+| `preheat_too_short`          | a `beforeTarget` step's `warmup` is `insufficient` (window under the requirement) |
+| `preheat_window_unknown`     | a `beforeTarget` step's `warmup` is `unknown`: its window cannot be computed      |
+| `preheat_window_unavailable` | a `beforeTarget` step's start falls after its target's start: no window           |
+| `preheat_target_mismatch`    | a preheat and its target name different appliances                                |
 
 - The ranges are deliberately wide (bagels near 55 %, focaccia near 85 % total water); they flag
   likely typos, not style choices.
@@ -78,9 +84,10 @@ checkRecipe(formula, process, entryFamilies?: Record<string, IngredientFamily>):
 
 ## Fermentation schedules
 
-A **fermentation schedule** is a preset for the dough steps between the mix and the first heat
+A **fermentation schedule** is a preset for the dough steps between the reference mixing step
+(process.md) and the first heat
 step (fermentation.md). Applying one to a draft replaces those steps with the schedule's steps,
-each with its operation, duration, location and temperature, linked in order after the mix and
+each with its operation, duration, location and temperature, linked in order after the mixing step and
 before the steps that followed the replaced ones. It refuses (`InvalidProcess`) when a replaced
 step carries incorporations or a technique other than folds. Folds of a replaced bulk are kept on
 the schedule's bulk.
@@ -126,4 +133,5 @@ interface RecipeTemplate {
   and says when the ranges are not verified. A guide describes the style; it never changes a
   recipe or a check.
 - The blank recipe is not a template: flour 100 %, water 65 %, salt 2 %, instant yeast 0.5 %, and
-  the steps mix, bulk, shape, proof, bake, with durations.
+  the steps frasage, bulk, shape, proof, bake, with durations (a first `frasage`: process.md,
+  Mixing steps).

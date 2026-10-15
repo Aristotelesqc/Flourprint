@@ -10,7 +10,8 @@ one writer per area, labels). This skill is the procedure and the traps already 
 
 ## Branch
 
-- Start from fresh `dev`: `git fetch origin dev && git checkout -B <branch> origin/dev`.
+- Start from fresh `dev`: `git fetch origin dev && git checkout -B <branch> origin/dev`. Work for
+  the release after next starts from `canary` instead and targets it (ADR 0018).
 - Several agents share one machine: work in your own worktree, never in another agent's
   checkout, and never `pkill` broad patterns (they kill other agents' servers and shells).
 - A contract change goes in its own PR, merged before the code that depends on it.
@@ -62,6 +63,8 @@ consultation required tapping Edit in both native suites).
 - A red check: find the cause before re-running. A failure that also fails on `dev` is not
   this PR's; port its fix if one exists and say so on the PR.
 - Only the owner merges the major PR (`dev` → `main`).
+- `dev` → `canary` synchronization is its own reviewed PR, by batch; never merge `canary` into
+  `dev` outside the promotion of ADR 0018.
 
 ## After the merge
 
