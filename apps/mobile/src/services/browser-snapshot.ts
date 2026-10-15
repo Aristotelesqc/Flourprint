@@ -22,6 +22,10 @@ const open = (): Promise<IDBDatabase> =>
     request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
   });
 
+/**
+ * Runs one request in its own transaction and resolves only when the transaction completes: a
+ * request's success does not mean its write is durable, since the transaction can still abort.
+ */
 const run = async <T>(
   mode: IDBTransactionMode,
   action: (store: IDBObjectStore) => IDBRequest<T>,
@@ -29,9 +33,13 @@ const run = async <T>(
   const db = await open();
   try {
     return await new Promise<T>((resolve, reject) => {
-      const request = action(db.transaction(STORE, mode).objectStore(STORE));
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error('IndexedDB request failed'));
+      const transaction = db.transaction(STORE, mode);
+      const request = action(transaction.objectStore(STORE));
+      transaction.oncomplete = () => resolve(request.result);
+      transaction.onabort = () =>
+        reject(transaction.error ?? request.error ?? new Error('IndexedDB transaction aborted'));
+      transaction.onerror = () =>
+        reject(transaction.error ?? request.error ?? new Error('IndexedDB transaction failed'));
     });
   } finally {
     db.close();
