@@ -14,8 +14,24 @@ mark.svg                Exact approved asset
 before-*.png            Actual baseline captures
 proposal-*.png          Reviewed proposal captures
 comparison-*.png        Optional paired captures
+manifest.json           Revision, capture states, dimensions and file hashes
 .nojekyll               GitHub Pages only
 ```
+
+The proposal screenshot set is mandatory for every interactive revision. PNG and JPEG are both
+acceptable. Publish real browser renders and full-resolution image links, with thumbnails or a
+contact sheet for quick comparison; an iframe-only gallery is insufficient. Keep the screenshots
+reachable at stable URLs alongside the prototype so a reviewer can inspect or download them
+without operating the interactive page. An optional archive may help bulk download, but must
+not be the only way to view the images.
+
+For each image, the manifest records its relative path, hash, prototype revision, screen/state,
+fixture, navigation option, theme, locale, viewport width/height and text scale. Gallery captions
+show the relevant identifying values. Cover the assignment's screens and meaningful variants,
+including the narrow/larger-text cases under review; do not invent a full Cartesian test matrix
+or extra agent rounds. State any coverage gaps. Before/after captures identify their respective
+revisions and matched states. Refresh affected images with a prototype update; label retained
+historical images rather than presenting stale screenshots as the current proposal.
 
 Use an explicit file allowlist and record hashes before publishing. Keep raw AGY prompts,
 reports, credentials, logs, browser profiles, personal IndexedDB exports and capture scripts
@@ -84,6 +100,11 @@ before/after disclosure and direct prototype routes. Verify menus, tabs and the 
 interaction examples on the deployed copy. Check the published bytes against the reviewed
 manifest when practical, accounting for a host's documented transformations.
 
-Share both gallery and interactive URLs, plus a brief statement of mockup status and actual
-verification. Record the deployed commit/artifact version on the relevant issue within
+Verify the gallery's direct screenshot links independently of the interactive page: images must
+load, be readable at original size, and match their captions and manifest. Publish the screenshot
+set with its prototype revision, not as a promised later supplement. Static inspection does not
+replace testing buttons, animation, navigation or state transitions in a live browser.
+
+Share the gallery, direct interactive and screenshot-set URLs, plus a brief statement of mockup
+status and actual verification. Record the deployed commit/artifact version on the relevant issue within
 existing publishing authorization. A successful upload is not visual approval.

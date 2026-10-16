@@ -76,6 +76,25 @@ controls, an interactive-prototype link and before/after comparisons. Put revisi
 and mockup-only explanations outside the simulated product screens. Make the gallery usable
 on a narrow phone and desktop; individual screens should remain directly linkable.
 
+Every interactive mockup revision must also ship with a companion set of **actual rendered
+screenshots**, published alongside the prototype. This is the owner's standing requirement:
+some reviewers and LLM harnesses cannot operate the interactive view, and static images enable
+quick visual/design review. Local-only captures, iframe previews and the HTML source do not
+replace this deliverable. Link directly to the full-resolution PNG/JPEG files from the gallery
+and issue/PR; opening an image must not require running the prototype.
+
+Cover every proposed screen, its material states (such as reading versus editing and open
+menus/sheets), and the navigation alternatives, themes, locales and text-size cases in the
+review scope. Reuse the captures from verification instead of starting another reviewer round.
+Identify each capture's prototype revision, screen/state, fixture, A/B option, theme, locale,
+viewport and text scale in a manifest and gallery captions outside the phone. Capture the same
+revision as the interactive deliverable; refresh affected images when it changes and distinguish
+historical comparisons from current proposals. See [hosting.md](references/hosting.md) for packaging.
+
+Screenshots complement live testing: use them to assess hierarchy, spacing, contrast and wrapping.
+They cannot pass buttons, animation, navigation, focus or state transitions. Keep the interactive
+journey evidence and its limitations explicit alongside the static coverage.
+
 Use [hosting.md](references/hosting.md) when packaging or publishing. Prefer a stable HTTPS
 review address over localhost for owner review: the Windows Codex browser surface may be
 unsupported, and a phone cannot reach the caller's loopback address. Publishing is authorized
