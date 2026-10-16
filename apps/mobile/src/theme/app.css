@@ -442,3 +442,30 @@ ion-action-sheet .fp-menu-separated {
   margin-top: var(--fp-space-2);
   color: var(--color-alert);
 }
+
+/*
+ * Desktop browsers (a mouse and a wide window) show the app in a phone-sized frame, so the dev and
+ * preview addresses read as on the phone without the browser's device tools (owner request of
+ * 2026-10-15, #113). Phones, tablets with touch and the desktop shell's phone-sized window are not
+ * affected. The transform makes the frame the containing block of Ionic's fixed overlays (action
+ * sheets, loading), so they open inside the phone, not across the whole window.
+ */
+@media (pointer: fine) and (min-width: 700px) and (min-height: 600px) {
+  html,
+  body {
+    background: var(--color-surface-container-high);
+  }
+
+  ion-app {
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    width: 412px;
+    height: min(915px, calc(100vh - 32px));
+    transform: translate(-50%, -50%);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 12px 48px rgb(0 0 0 / 0.28);
+    outline: 1px solid var(--color-line);
+  }
+}

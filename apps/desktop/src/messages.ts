@@ -13,6 +13,18 @@ export const en = {
   'restart.message': 'This setting applies after a restart.',
   'restart.now': 'Restart now',
   'restart.later': 'Later',
+  'menu.version': 'Version',
+  'version.release': 'Release (main)',
+  'version.dev': 'Dev',
+  'version.canary': 'Canary',
+  'menu.debug': 'Debug',
+  'debug.grid': 'Alignment grid (4 and 8 px)',
+  'debug.outlines': 'Element outlines',
+  'debug.screenshot': 'Screenshot of the app',
+  'debug.screenshots': 'Open the screenshots folder',
+  'debug.saved': 'Screenshot saved',
+  'debug.failed': 'Screenshot failed',
+  'debug.hardReload': 'Reload without the cache',
 };
 
 export type MessageKey = keyof typeof en;
@@ -31,6 +43,18 @@ export const fr: Record<MessageKey, string> = {
   'restart.message': 'Ce réglage s’applique après un redémarrage.',
   'restart.now': 'Redémarrer maintenant',
   'restart.later': 'Plus tard',
+  'menu.version': 'Version',
+  'version.release': 'Release (main)',
+  'version.dev': 'Dev',
+  'version.canary': 'Canary',
+  'menu.debug': 'Débogage',
+  'debug.grid': 'Grille d’alignement (4 et 8 px)',
+  'debug.outlines': 'Contours des éléments',
+  'debug.screenshot': 'Capture d’écran de l’app',
+  'debug.screenshots': 'Ouvrir le dossier des captures',
+  'debug.saved': 'Capture enregistrée',
+  'debug.failed': 'Échec de la capture',
+  'debug.hardReload': 'Recharger sans le cache',
 };
 
 export const catalogFor = (locale: string): Record<MessageKey, string> =>

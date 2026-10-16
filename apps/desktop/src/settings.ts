@@ -1,3 +1,5 @@
+import { WEB_TARGETS, type WebTarget } from './channel.js';
+
 /**
  * Display and window settings of the desktop shell (ADR 0011), kept in `settings.json` in the
  * user data folder. Pure: no Electron import, so it is unit-tested.
@@ -26,6 +28,8 @@ export interface Settings {
   readonly forceSrgb: boolean;
   readonly device: DeviceId;
   readonly zoom: number;
+  /** The dev shell's version (View → Version); the release shell ignores it. */
+  readonly webTarget: WebTarget;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -33,6 +37,7 @@ export const DEFAULT_SETTINGS: Settings = {
   forceSrgb: false,
   device: 'pixel-9-pro-xl',
   zoom: 1,
+  webTarget: 'dev',
 };
 
 /** Reads stored settings; anything missing or malformed falls back to its default. */
@@ -53,6 +58,9 @@ export const parseSettings = (text: string | undefined): Settings => {
       ? (value.device as DeviceId)
       : DEFAULT_SETTINGS.device,
     zoom: ZOOMS.includes(value.zoom as number) ? (value.zoom as number) : DEFAULT_SETTINGS.zoom,
+    webTarget: WEB_TARGETS.includes(value.webTarget as WebTarget)
+      ? (value.webTarget as WebTarget)
+      : DEFAULT_SETTINGS.webTarget,
   };
 };
 
