@@ -425,3 +425,31 @@ body[data-capture='true'] .phone-frame {
 .metric-value {
   font-size: 1.25rem;
 }
+[data-text-scale='200'] .phone-header {
+  flex-wrap: wrap;
+}
+[data-text-scale='200'] .header-title {
+  flex-basis: 100%;
+}
+[data-text-scale='200'] .header-actions {
+  margin-left: auto;
+}
+[data-text-scale='200'] .metric-grid {
+  grid-template-columns: 1fr;
+}
+[data-text-scale='200'] .metric-cell:nth-child(3) {
+  grid-column: auto;
+}
+.metric-cell.hydration-cell {
+  flex-direction: row;
+  justify-content: space-between;
+}
+.metric-cell.hydration-cell .metric-label {
+  flex: 1;
+}
+.metric-cell.hydration-cell .metric-detail {
+  flex-basis: 100%;
+}
+.metric-cell.hydration-cell .metric-value {
+  font-size: 1.35rem;
+}

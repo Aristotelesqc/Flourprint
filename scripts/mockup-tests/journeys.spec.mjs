@@ -209,3 +209,16 @@ test('hydration display does not round the formula on an untouched blur', async 
     page.getByRole('button', { name: 'Annuler la modification', exact: true }),
   ).toBeDisabled();
 });
+
+test('320px at 200 percent text retains a usable content viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 852 });
+  await page.goto('/mockup.html?screen=recipe&lang=en&width=320&scale=200&capture=1');
+  expect(
+    await page.locator('.phone-header').evaluate((el) => el.getBoundingClientRect().height),
+  ).toBeLessThan(280);
+  expect(await page.locator('.phone-content').evaluate((el) => el.clientHeight)).toBeGreaterThan(
+    200,
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.getByRole('button', { name: 'Start', exact: true })).toBeVisible();
+});

@@ -44,17 +44,35 @@ async function capture(page, meta) {
   const filename = `${meta.baseline ? 'before' : 'proposal'}-${meta.screen}-${meta.state}-${meta.navigation}-${meta.theme}-${meta.locale}-${meta.width}-${meta.textScale}.png`;
   const relative = `screenshots/${filename}`;
   const dest = path.join(output, relative);
+  if (meta.baseline) {
+    await expect(page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)')).toHaveCount(
+      1,
+    );
+    await page.waitForFunction(() =>
+      document
+        .getAnimations()
+        .every((a) => a.effect?.getTiming().iterations === Infinity || a.playState !== 'running'),
+    );
+  }
   await page.screenshot({ path: dest, animations: 'disabled' });
   const bytes = await readFile(dest);
+  const linkParams = new URL(page.url()).searchParams;
+  if (meta.state.startsWith('editing')) linkParams.set('mode', 'edit');
+  if (meta.state === 'editing-quantities') linkParams.set('focus', 'ingredient-grams-milk');
+  if (meta.state === 'editing-ratio') linkParams.set('focus', 'component-ratio-tangzhong');
+  if (meta.state === 'grouped') linkParams.set('view', 'grouped');
+  if (meta.state === 'hydration-sheet') linkParams.set('sheet', 'hydration');
+  if (meta.state === 'fresh-start') linkParams.set('prep', 'fresh');
+  if (meta.state === 'menu') linkParams.set('sheet', 'menu');
   images.push({
     ...meta,
     path: relative,
     sha256: createHash('sha256').update(bytes).digest('hex'),
     sourceRevision: build.revision,
     prototypeHash: meta.baseline ? 'production-app-baseline' : build.sourceSha256,
-    fixture: 'core template: shokupan',
+    fixture: meta.fixture ?? 'core template: shokupan',
     height: 852,
-    ...(!meta.baseline ? { interactive: `mockup.html?${new URL(page.url()).searchParams}` } : {}),
+    ...(!meta.baseline ? { interactive: `mockup.html?${linkParams}` } : {}),
   });
   console.log(relative);
 }
@@ -210,6 +228,47 @@ try {
     );
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await capture(page, { ...spec, state: 'larger-text' });
+    await c.close();
+  }
+  for (const spec of [
+    { screen: 'recipe', state: 'step-sheet', query: 'mode=edit&section=steps&step=bulk' },
+    { screen: 'library', state: 'create-sheet', query: 'sheet=create' },
+    { screen: 'recipe', state: 'menu', query: 'sheet=menu' },
+  ]) {
+    const c = await context('fr'),
+      page = await c.newPage();
+    await page.goto(
+      `http://127.0.0.1:${port}/mockup.html?screen=${spec.screen}&lang=fr&theme=dark&nav=B&width=360&capture=1&${spec.query}`,
+    );
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await capture(page, {
+      screen: spec.screen,
+      state: spec.state,
+      navigation: 'B',
+      theme: 'dark',
+      locale: 'fr',
+      width: 360,
+      textScale: 100,
+    });
+    await c.close();
+  }
+  for (const scenario of ['valid', 'out', 'noResult']) {
+    const c = await context('fr'),
+      page = await c.newPage();
+    await page.goto(
+      `http://127.0.0.1:${port}/mockup.html?screen=recipe&section=steps&lang=fr&theme=dark&nav=B&width=360&capture=1&diagnostics=1&scenario=${scenario}`,
+    );
+    await page.locator('.status-panel:visible').scrollIntoViewIfNeeded();
+    await capture(page, {
+      screen: 'diagnostics',
+      state: scenario,
+      navigation: 'B',
+      theme: 'dark',
+      locale: 'fr',
+      width: 360,
+      textScale: 100,
+      fixture: `model reference scenario ${scenario}: core blank recipe`,
+    });
     await c.close();
   }
   // Capture a fresh preparation from the same actual user journey as the baseline.

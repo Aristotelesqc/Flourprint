@@ -157,7 +157,12 @@ export function initialState(locale: Locale): DemoState {
     recipes,
     selected: selected.id,
     draft,
-    session: makeSession(recipes[0], locale, true, parameters.get('prep') === 'cooking'),
+    session: makeSession(
+      recipes[0],
+      locale,
+      parameters.get('prep') !== 'fresh',
+      parameters.get('prep') === 'cooking',
+    ),
     checks: {},
     error: '',
     invalid: {},

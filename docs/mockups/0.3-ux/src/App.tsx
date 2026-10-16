@@ -63,7 +63,15 @@ export default function App() {
   const [route, setRoute] = useState<Route>(readRoute);
   const [overlay, setOverlay] = useState<
     'menu' | 'nav' | 'help' | 'create' | 'trash' | 'build' | null
-  >(null);
+  >(
+    params.get('sheet') === 'hydration'
+      ? 'help'
+      : params.get('sheet') === 'create'
+        ? 'create'
+        : params.get('sheet') === 'menu'
+          ? 'menu'
+          : null,
+  );
   const [pending, setPending] = useState<(() => void) | null>(null);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -77,10 +85,19 @@ export default function App() {
     document.documentElement.lang = locale;
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.targetSize = targets;
+    document.documentElement.dataset.textScale = scale;
     document.documentElement.style.fontSize = `${(Number(scale) / 100) * 16}px`;
     document.documentElement.style.setProperty('--phone-width', `${width}px`);
     document.body.dataset.capture = params.get('capture') === '1' ? 'true' : 'false';
   }, [locale, theme, targets, scale, width, params]);
+  useEffect(() => {
+    const focus = new URLSearchParams(location.search).get('focus');
+    if (!focus || !['ingredient-grams-milk', 'component-ratio-tangzhong'].includes(focus)) return;
+    requestAnimationFrame(() => {
+      for (const node of document.querySelectorAll<HTMLElement>('[data-testid]'))
+        if (node.dataset.testid === focus) node.scrollIntoView({ block: 'center' });
+    });
+  }, []);
   const writeURL = (next: Route, push: boolean) => {
     const url = new URL(location.href);
     url.searchParams.set('screen', next.screen);

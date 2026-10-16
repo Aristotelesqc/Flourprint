@@ -269,12 +269,12 @@ const messages = {
   ],
   stepsTab: ['Étapes', 'Steps'],
   reorderHelp: [
-    'Proposition de placement visuel : les dépendances restent inchangées. Aucun contrat de déplacement de production n’est simulé.',
-    'Visual placement proposal: dependencies stay unchanged. This does not simulate a production move contract.',
+    'Déplacer une étape en conservant ses dépendances. Un ordre incompatible est refusé.',
+    'Move a step while preserving its dependencies. An incompatible order is refused.',
   ],
   groupHelp: [
-    'Regroupement visuel proposé par identifiant de composant dans ces modèles de départ ; aucun nouvel objet métier.',
-    'Proposed visual grouping by component identifier in these starting templates; no new domain subject.',
+    'Afficher les étapes par composant préparé ou suivre leur ordre dans la ligne de temps.',
+    'View steps by prepared component, or follow their order in the timeline.',
   ],
   invalidPlan: [
     'Projection indisponible : vérifier les paramètres et les dépendances.',

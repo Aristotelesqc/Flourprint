@@ -297,12 +297,17 @@ export function stepDetails(step: ProcessStep, locale: Locale): string[] {
   ];
 }
 export function Diagnostics({ store, locale }: { store: Prototype; locale: Locale }) {
-  const [scenario, setScenario] = useState('recipe');
+  const [scenario, setScenario] = useState(
+    new URLSearchParams(location.search).get('scenario') ?? 'recipe',
+  );
   const estimate = diagnosticFixture(scenario, store.content).dough;
   const direct = estimate.duration;
   const candidate = Object.entries(estimate.yeastPct).find(([, v]) => v.status === 'ok');
   return (
-    <Disclosure title={t(locale, 'diagnostics')}>
+    <Disclosure
+      title={t(locale, 'diagnostics')}
+      defaultOpen={new URLSearchParams(location.search).get('diagnostics') === '1'}
+    >
       <div className="stack">
         <label className="field-label">
           {t(locale, 'preview')}
@@ -407,8 +412,18 @@ export function ProcessView({
   locale: Locale;
   planning?: boolean;
 }) {
-  const [view, setView] = useState('timeline');
-  const [editing, setEditing] = useState<ProcessStep | null>(null);
+  const [view, setView] = useState(
+    new URLSearchParams(location.search).get('view') === 'grouped' ? 'grouped' : 'timeline',
+  );
+  const [editing, setEditing] = useState<ProcessStep | null>(() =>
+    store.state.draft &&
+    (new URLSearchParams(location.search).get('section') ?? 'steps') ===
+      (planning ? 'planning' : 'steps')
+      ? (store.content.process.steps.find(
+          (s) => s.id === new URLSearchParams(location.search).get('step'),
+        ) ?? null)
+      : null,
+  );
   const [removing, setRemoving] = useState<string | null>(null);
   const [ordering, setOrdering] = useState(false);
   const [proposal, setProposal] = useState<Process | null>(null);
@@ -434,6 +449,9 @@ export function ProcessView({
         title={titleOf(step, locale)}
         details={[
           ...(planning ? [`${time(locale, timing?.start)} → ${time(locale, timing?.end)}`] : []),
+          ...(!planning && view === 'timeline' && timing?.start && starts.length
+            ? [`+${duration(locale, (Date.parse(timing.start) - Math.min(...starts)) / 1000)}`]
+            : []),
           ...stepDetails(step, locale),
         ]}
         onEdit={store.state.draft ? () => setEditing(step) : undefined}

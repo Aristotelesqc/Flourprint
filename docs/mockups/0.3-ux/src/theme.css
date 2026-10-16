@@ -49,7 +49,7 @@
   --radius-sheet: 24px;
   --radius-pill: 9999px;
 
-  --touch-target: 3rem;
+  --touch-target: 48px;
   --phone-width: 393px;
 
   --dur-effect: 150ms;
@@ -109,10 +109,10 @@
 }
 
 [data-target-size='40'] {
-  --touch-target: 2.5rem;
+  --touch-target: 40px;
 }
 [data-target-size='48'] {
-  --touch-target: 3rem;
+  --touch-target: 48px;
 }
 
 @media (prefers-reduced-motion: reduce) {
