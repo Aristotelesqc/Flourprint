@@ -101,6 +101,13 @@ test('step editing changes process and planning, removal asks confirmation', asy
   await dialog.getByRole('textbox', { name: 'Nom', exact: true }).fill('Pointage lent');
   await dialog.getByRole('textbox', { name: 'Durée', exact: true }).fill('90');
   await dialog.getByRole('textbox', { name: 'Durée', exact: true }).press('Enter');
+  const temperature = dialog.getByRole('textbox', { name: 'Température', exact: true });
+  await temperature.fill('-');
+  await temperature.press('Enter');
+  await expect(temperature).toHaveValue('-');
+  await expect(dialog.getByRole('button', { name: 'Appliquer', exact: true })).toBeDisabled();
+  await temperature.fill('21,5');
+  await temperature.press('Enter');
   await dialog.getByRole('button', { name: 'Appliquer', exact: true }).click();
   await expect(
     page.locator('.step-title:visible').filter({ hasText: 'Pointage lent' }),

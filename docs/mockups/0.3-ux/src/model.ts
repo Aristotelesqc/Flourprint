@@ -231,7 +231,12 @@ export function usePrototype(locale: Locale) {
     return true;
   };
   const save = (): boolean => {
-    if (!state.draft || Object.values(state.invalid).some(Boolean)) return false;
+    if (
+      !state.draft ||
+      Object.values(state.invalid).some(Boolean) ||
+      (content.name !== undefined && !content.name.trim())
+    )
+      return false;
     const formula = resolveFormula(content.formula),
       process = validateProcess(content.process);
     if (!formula.ok || !process.ok) {

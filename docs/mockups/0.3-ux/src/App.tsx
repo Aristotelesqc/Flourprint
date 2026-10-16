@@ -169,7 +169,7 @@ export default function App() {
         <Button
           variant="primary"
           dataTestId="save-recipe"
-          disabled={Object.values(state.invalid).some(Boolean)}
+          disabled={Object.values(state.invalid).some(Boolean) || !name.trim()}
           onClick={store.save}
         >
           {t(locale, 'save')}

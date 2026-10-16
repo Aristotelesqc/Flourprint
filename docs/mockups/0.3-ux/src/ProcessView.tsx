@@ -137,24 +137,14 @@ export function StepEditor({
               accepted: undefined,
             }),
           )}
-        <label className="field-label">
-          {t(locale, 'temperature')}
-          <input
-            inputMode="decimal"
-            value={draft.conditions?.temperatureC ?? ''}
-            placeholder={t(locale, 'optional')}
-            onChange={(e) => {
-              const raw = e.target.value;
-              const value = Number(raw.replace(',', '.'));
-              setInvalid((s) => ({ ...s, temperature: raw !== '' && !Number.isFinite(value) }));
-              if (raw === '' || Number.isFinite(value))
-                setDraft({
-                  ...draft,
-                  conditions: { ...draft.conditions, temperatureC: raw === '' ? undefined : value },
-                });
-            }}
-          />
-        </label>
+        {field(
+          'ambient-temperature',
+          draft.conditions?.temperatureC ?? NaN,
+          t(locale, 'temperature'),
+          '°C',
+          (value) =>
+            setDraft({ ...draft, conditions: { ...draft.conditions, temperatureC: value } }),
+        )}
         <label className="field-label">
           {t(locale, 'location')}
           <input
