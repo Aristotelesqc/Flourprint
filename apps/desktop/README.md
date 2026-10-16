@@ -30,8 +30,8 @@ the one with SQLite.
   spacing scale).
 - **Element outlines**: every element's box.
 - **Screenshot of the app** (Ctrl+Shift+S): the page alone, without the window frame or menu,
-  saved in `Pictures\Flourprint`; the title bar confirms it. Not copied to the clipboard, which
-  crashed the shell on Windows.
+  saved in `Pictures\Flourprint`; the title bar confirms it. Taken through the DevTools protocol;
+  Electron's `capturePage()` crashed the shell on Windows.
 - **Reload without the cache**, **Developer tools**.
 
 ## Display options (menu View)
@@ -43,6 +43,11 @@ the one with SQLite.
 
 For one launch only: `Flourprint.exe --disable-gpu`, `Flourprint.exe --force-color-profile=srgb`,
 or the variables `FLOURPRINT_DISABLE_GPU=1` and `FLOURPRINT_FORCE_SRGB=1`.
+
+## When something goes wrong
+
+Shell errors go to `shell.log` in the data folder (Data → Open the data folder). A crash leaves a
+minidump in its `Crashpad` folder; nothing is uploaded.
 
 ## Develop
 

@@ -1,8 +1,16 @@
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { join, normalize, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
   app,
+  crashReporter,
   BrowserWindow,
   dialog,
   ipcMain,
@@ -63,6 +71,9 @@ const store = (settings: Settings) => {
   mkdirSync(app.getPath('userData'), { recursive: true });
   writeFileSync(settingsFile, `${JSON.stringify(settings, null, 2)}\n`);
 };
+
+// A native crash leaves a minidump in the data folder's Crashpad folder; nothing is uploaded.
+crashReporter.start({ uploadToServer: false });
 
 let stored = readStored();
 const settings = effectiveSettings(stored, process.argv, process.env);
@@ -147,20 +158,41 @@ const toggleOverlay = async (contents: WebContents, overlay: Overlay, on: boolea
 
 const screenshotsFolder = () => join(app.getPath('pictures'), 'Flourprint');
 
+/** Shell errors, appended to `shell.log` in the data folder (Data → Open the data folder). */
+const logError = (what: string, cause: unknown) => {
+  const detail = cause instanceof Error ? (cause.stack ?? cause.message) : String(cause);
+  try {
+    appendFileSync(
+      join(app.getPath('userData'), 'shell.log'),
+      `${new Date().toISOString()} ${what}: ${detail}\n`,
+    );
+  } catch {
+    // Logging must never be what fails.
+  }
+};
+
 /**
- * The page alone, at its CSS size times the zoom, without the window's frame or menu: saved as a
- * PNG in Pictures\Flourprint. The title bar says it for a moment. Not copied to the clipboard:
- * Electron 44's image clipboard crashed the shell on Windows (owner report of 2026-10-16).
+ * The page alone, without the window's frame or menu, saved as a PNG in Pictures\Flourprint; the
+ * title bar says it for a moment. Taken through the DevTools protocol the shell already drives for
+ * phone emulation (Page.captureScreenshot, as browser tests do), not `capturePage()`, which
+ * crashed the shell on Windows (owner reports of 2026-10-16); no clipboard copy either.
  */
 const takeScreenshot = async (window: BrowserWindow) => {
   try {
-    const image = await window.webContents.capturePage();
+    const { debugger: protocol } = window.webContents;
+    if (!protocol.isAttached()) protocol.attach('1.3');
+    const { data } = (await protocol.sendCommand('Page.captureScreenshot', {
+      format: 'png',
+    })) as { data: string };
     mkdirSync(screenshotsFolder(), { recursive: true });
     const version = channel.kind === 'dev' ? stored.webTarget : 'release';
-    writeFileSync(join(screenshotsFolder(), screenshotName(version, new Date())), image.toPNG());
+    writeFileSync(
+      join(screenshotsFolder(), screenshotName(version, new Date())),
+      Buffer.from(data, 'base64'),
+    );
     window.setTitle(`${windowTitle()} — ${t('debug.saved')}`);
   } catch (cause) {
-    console.error('Screenshot failed', cause);
+    logError('Screenshot failed', cause);
     window.setTitle(`${windowTitle()} — ${t('debug.failed')}`);
   }
   setTimeout(() => {
