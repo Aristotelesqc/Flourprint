@@ -30,7 +30,8 @@ the one with SQLite.
   spacing scale).
 - **Element outlines**: every element's box.
 - **Screenshot of the app** (Ctrl+Shift+S): the page alone, without the window frame or menu,
-  saved in `Pictures\Flourprint` and copied to the clipboard; the title bar confirms it.
+  saved in `Pictures\Flourprint`; the title bar confirms it. Not copied to the clipboard, which
+  crashed the shell on Windows.
 - **Reload without the cache**, **Developer tools**.
 
 ## Display options (menu View)

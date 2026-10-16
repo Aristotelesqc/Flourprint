@@ -22,7 +22,7 @@ export const en = {
   'debug.outlines': 'Element outlines',
   'debug.screenshot': 'Screenshot of the app',
   'debug.screenshots': 'Open the screenshots folder',
-  'debug.saved': 'Screenshot saved and copied',
+  'debug.saved': 'Screenshot saved',
   'debug.failed': 'Screenshot failed',
   'debug.hardReload': 'Reload without the cache',
 };
@@ -52,7 +52,7 @@ export const fr: Record<MessageKey, string> = {
   'debug.outlines': 'Contours des éléments',
   'debug.screenshot': 'Capture d’écran de l’app',
   'debug.screenshots': 'Ouvrir le dossier des captures',
-  'debug.saved': 'Capture enregistrée et copiée',
+  'debug.saved': 'Capture enregistrée',
   'debug.failed': 'Échec de la capture',
   'debug.hardReload': 'Recharger sans le cache',
 };
