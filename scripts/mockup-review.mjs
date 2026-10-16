@@ -118,8 +118,30 @@ if (mode === 'build') {
   const destination = process.env.FLOURPRINT_MOCKUP_EXPORT;
   if (!destination)
     throw new Error('Set FLOURPRINT_MOCKUP_EXPORT to an explicit publication directory');
-  await mkdir(destination, { recursive: true });
-  await cp(path.join(root, 'dist'), destination, { recursive: true });
+  const dist = path.join(root, 'dist');
+  const manifest = JSON.parse(await readFile(path.join(dist, 'manifest.json'), 'utf8'));
+  if (manifest.sourceSha256 !== sourceSha256)
+    throw new Error('Screenshot bundle does not match the current sources');
+  const allowed = ['index.html', 'mockup.html', 'mark.svg', 'review-build.json', 'manifest.json'];
+  for (const asset of await readdir(path.join(dist, 'assets'))) {
+    if (!/^[A-Za-z0-9_.-]+\.(js|css)$/.test(asset)) throw new Error('Unexpected build asset');
+    allowed.push(`assets/${asset}`);
+  }
+  for (const shot of manifest.images) {
+    if (!/^screenshots\/[A-Za-z0-9_.-]+\.png$/.test(shot.path))
+      throw new Error('Unexpected image path');
+    const hash = createHash('sha256')
+      .update(await readFile(path.join(dist, shot.path)))
+      .digest('hex');
+    if (hash !== shot.sha256) throw new Error('Screenshot hash mismatch');
+    allowed.push(shot.path);
+  }
+  // Copy reviewed files only: traces, reports and other test output are never publication assets.
+  for (const file of allowed) {
+    await mkdir(path.dirname(path.join(destination, file)), { recursive: true });
+    await cp(path.join(dist, file), path.join(destination, file));
+  }
+  process.stdout.write(`Exported ${allowed.length} reviewed files\n`);
 } else {
   throw new Error('Expected build, serve, preview or export');
 }
