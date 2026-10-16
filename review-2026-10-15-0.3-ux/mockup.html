@@ -1,0 +1,2765 @@
+<!doctype html>
+<html lang="fr" data-theme="dark" data-motion="standard">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Flourprint 0.3 — Atelier UX, Maquettes Interactives & Registre de Modules</title>
+  <style>
+    /* ==========================================================================
+       1. TOKENS & PALETTES (Light, Warm Dark, AMOLED) — DESIGN.md Canonical
+       ========================================================================== */
+    :root {
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      --font-mono: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+
+      /* Palette Clair (Warm Light) */
+      --color-bg: #f6f1e8;
+      --color-surface: #fffcf7;
+      --color-surface-container: #efe8dc;
+      --color-surface-container-high: #e6decb;
+      --color-outline: #d8cfc0;
+      --color-outline-subtle: #e7dfd2;
+      --color-ink: #1e1b18;
+      --color-ink-muted: #686158;
+      --color-ink-subtle: #888075;
+      --color-primary: #a9490a;
+      --color-on-primary: #ffffff;
+      --color-primary-container: #fbeee4;
+      --color-on-primary-container: #5c2301;
+      --color-warning-bg: rgba(196, 118, 12, 0.13);
+      --color-warning-border: rgba(196, 118, 12, 0.38);
+      --color-warning-ink: #7c4700;
+      --color-danger: #b3261e;
+      --color-danger-bg: rgba(179, 38, 30, 0.1);
+      --color-success: #266b3a;
+      --color-success-bg: rgba(38, 107, 58, 0.12);
+      --color-shadow: rgba(28, 25, 21, 0.12);
+      --color-backdrop: rgba(20, 17, 14, 0.52);
+
+      /* Échelle d'espacement & Cibles tactiles en REM (mise à l'échelle Grand Texte) */
+      --fp-space-1: 0.25rem;   /* 4px @ 16px */
+      --fp-space-1-5: 0.375rem;/* 6px @ 16px */
+      --fp-space-2: 0.5rem;    /* 8px @ 16px */
+      --fp-space-2-5: 0.625rem;/* 10px @ 16px */
+      --fp-space-3: 0.75rem;   /* 12px @ 16px */
+      --fp-space-4: 1rem;      /* 16px @ 16px */
+      --fp-space-5: 1.25rem;   /* 20px @ 16px */
+      --fp-space-6: 1.5rem;    /* 24px @ 16px */
+      --touch-target: 3rem;    /* 48px @ 16px — grandit avec la police système */
+      --touch-row: 3.25rem;    /* 52px @ 16px */
+
+      /* Rôles typographiques stricts en REM (Zéro text-[13px] arbitraire) */
+      --type-headline: 1.5rem;     /* 24px */
+      --type-title: 1.25rem;       /* 20px */
+      --type-section: 1.0625rem;   /* 17px */
+      --type-metric-lg: 1.375rem;  /* 22px */
+      --type-metric-md: 1.125rem;  /* 18px */
+      --type-body: 0.9375rem;      /* 15px */
+      --type-label: 0.8125rem;     /* 13px */
+      --type-meta: 0.75rem;        /* 12px */
+
+      /* Rayons (en px pour préserver la géométrie des cartes au zoom texte) */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-card: 16px;
+      --radius-sheet: 24px;
+      --radius-pill: 9999px;
+
+      /* Animations bornées (#130 / #73) */
+      --ease-m3-standard: cubic-bezier(0.2, 0, 0, 1);
+      --ease-m3-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+      --dur-effect: 150ms;
+      --dur-spatial: 220ms;
+      --dur-sheet: 260ms;
+    }
+
+    [data-theme="dark"] {
+      --color-bg: #201d1a;
+      --color-surface: #2a2622;
+      --color-surface-container: #332e29;
+      --color-surface-container-high: #3e3832;
+      --color-outline: #4a433b;
+      --color-outline-subtle: #39332d;
+      --color-ink: #ede7de;
+      --color-ink-muted: #b5ada2;
+      --color-ink-subtle: #8e867b;
+      --color-primary: #d99164;
+      --color-on-primary: #211812;
+      --color-primary-container: #522c14;
+      --color-on-primary-container: #fbd9c2;
+      --color-warning-bg: rgba(235, 168, 64, 0.14);
+      --color-warning-border: rgba(235, 168, 64, 0.36);
+      --color-warning-ink: #f6c97e;
+      --color-danger: #f28b82;
+      --color-danger-bg: rgba(242, 139, 130, 0.14);
+      --color-success: #7cc992;
+      --color-success-bg: rgba(124, 201, 146, 0.14);
+      --color-shadow: rgba(0, 0, 0, 0.42);
+      --color-backdrop: rgba(8, 7, 6, 0.68);
+    }
+
+    [data-theme="amoled"] {
+      --color-bg: #000000;
+      --color-surface: #121110;
+      --color-surface-container: #1b1917;
+      --color-surface-container-high: #25221f;
+      --color-outline: #3a342c;
+      --color-outline-subtle: #27231e;
+      --color-ink: #f0ebe3;
+      --color-ink-muted: #b5ada2;
+      --color-ink-subtle: #8c8479;
+      --color-primary: #dc9467;
+      --color-on-primary: #000000;
+      --color-primary-container: #4d2912;
+      --color-on-primary-container: #fcdbc5;
+      --color-warning-bg: rgba(235, 168, 64, 0.16);
+      --color-warning-border: rgba(235, 168, 64, 0.42);
+      --color-warning-ink: #f8cf88;
+      --color-danger: #f28b82;
+      --color-danger-bg: rgba(242, 139, 130, 0.16);
+      --color-success: #7cc992;
+      --color-success-bg: rgba(124, 201, 146, 0.16);
+      --color-shadow: rgba(0, 0, 0, 0.82);
+      --color-backdrop: rgba(0, 0, 0, 0.78);
+    }
+
+    /* Respect strict de prefers-reduced-motion et du toggle manuel (#130) */
+    @media (prefers-reduced-motion: reduce) {
+      :root {
+        --dur-effect: 0ms !important;
+        --dur-spatial: 0ms !important;
+        --dur-sheet: 0ms !important;
+      }
+    }
+    [data-motion="reduced"] {
+      --dur-effect: 0ms !important;
+      --dur-spatial: 0ms !important;
+      --dur-sheet: 0ms !important;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background-color: #161412;
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      line-height: 1.45;
+    }
+    [data-theme="light"] body {
+      background-color: #e6dfd3;
+    }
+
+    .tabular { font-variant-numeric: tabular-nums; }
+
+    /* ==========================================================================
+       2. STUDIO SHELL (Barre de contrôle hors écran téléphone)
+       ========================================================================== */
+    .studio-header {
+      width: 100%;
+      max-width: 1440px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px var(--color-shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 14px; /* Fixé en px pour que l'interface studio ne bouge pas pendant le test REM du téléphone */
+    }
+    .studio-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .studio-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .studio-brand img {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+    }
+    .studio-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .studio-sub {
+      font-size: 12px;
+      color: var(--color-ink-muted);
+      margin: 0;
+    }
+    .studio-modes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: var(--color-surface-container);
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid var(--color-outline-subtle);
+    }
+    .studio-mode-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--color-ink-muted);
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color var(--dur-effect) var(--ease-m3-standard), color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .studio-mode-btn.active {
+      background: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+    .studio-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--color-outline-subtle);
+    }
+    .ctrl-cluster {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--color-surface-container);
+      padding: 3px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--color-outline-subtle);
+    }
+    .ctrl-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-ink-muted);
+      padding: 0 6px;
+    }
+    .ctrl-pill {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--color-ink);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background-color var(--dur-effect) var(--ease-m3-standard), color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .ctrl-pill.active {
+      background: var(--color-surface);
+      color: var(--color-primary);
+      box-shadow: 0 1px 4px var(--color-shadow);
+    }
+
+    /* ==========================================================================
+       3. CADRE TÉLÉPHONE (Géométrie externe en PX selon #118, intérieur 100% REM)
+       ========================================================================== */
+    .phone-stage {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 1440px;
+    }
+    .phone-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .phone-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-ink-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .phone-frame {
+      width: var(--phone-width, 393px);
+      height: 852px;
+      background-color: var(--color-bg);
+      color: var(--color-ink);
+      border-radius: 28px;
+      border: 1.5px solid var(--color-outline);
+      box-shadow: 0 18px 48px var(--color-shadow);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      contain: layout paint;
+    }
+
+    /* ==========================================================================
+       4. REGISTRE DES MODULES CANONIQUES (fp-*) — 100% REM
+       ========================================================================== */
+
+    /* MODULE 1 : fp-app-bar (Barre supérieure compacte + Point d'ancrage menu flottant) */
+    .fp-app-bar {
+      min-height: 3.5rem;
+      background-color: var(--color-surface);
+      border-bottom: 1px solid var(--color-outline-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--fp-space-3);
+      position: relative;
+      z-index: 30;
+      flex-shrink: 0;
+    }
+    .fp-app-bar-start {
+      display: flex;
+      align-items: center;
+      gap: var(--fp-space-2);
+      min-width: 0;
+    }
+    .fp-app-bar-titles {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .fp-app-bar-title {
+      font-size: var(--type-title);
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .fp-app-bar-subtitle {
+      font-size: var(--type-meta);
+      color: var(--color-ink-muted);
+      line-height: 1.2;
+    }
+    .fp-icon-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      width: var(--touch-target);
+      height: var(--touch-target);
+      border-radius: var(--radius-pill);
+      color: var(--color-ink);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background-color var(--dur-effect) var(--ease-m3-standard), transform var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-icon-btn:hover { background-color: var(--color-surface-container); }
+    .fp-icon-btn:active { transform: scale(0.95); }
+    .fp-icon-btn svg { width: 1.25rem; height: 1.25rem; }
+
+    /* MODULE 2 : fp-floating-menu (Menu flottant ancré en haut à droite, remplace ActionSheet) */
+    .fp-floating-menu {
+      position: absolute;
+      top: calc(100% - 0.25rem);
+      right: var(--fp-space-3);
+      min-width: 13.5rem;
+      max-width: calc(100% - 2rem);
+      background-color: var(--color-surface-container-high);
+      border: 1px solid var(--color-outline);
+      border-radius: var(--radius-md);
+      box-shadow: 0 12px 32px var(--color-shadow);
+      padding: var(--fp-space-1-5);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 60;
+      transform-origin: top right;
+      opacity: 0;
+      transform: scale(0.92) translateY(-4px);
+      pointer-events: none;
+      transition: opacity var(--dur-effect) var(--ease-m3-standard), transform var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-floating-menu.open {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+    .fp-menu-item {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--color-ink);
+      font-size: var(--type-body);
+      font-weight: 500;
+      min-height: 2.75rem;
+      padding: 0 var(--fp-space-3);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--fp-space-2-5);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background-color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-menu-item:hover { background-color: var(--color-surface); }
+    .fp-menu-item svg { width: 1.125rem; height: 1.125rem; color: var(--color-ink-muted); flex-shrink: 0; }
+    .fp-menu-item.danger { color: var(--color-danger); }
+    .fp-menu-item.danger svg { color: var(--color-danger); }
+    .fp-menu-divider { height: 1px; background-color: var(--color-outline-subtle); margin: var(--fp-space-1) 0; }
+
+    /* MODULE 3 : fp-tabs (Onglets de section avec indicateur glissant) */
+    .fp-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background-color: var(--color-surface);
+      border-bottom: 1px solid var(--color-outline-subtle);
+      padding: 0 var(--fp-space-2);
+      flex-shrink: 0;
+    }
+    .fp-tab {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--color-ink-muted);
+      font-size: var(--type-label);
+      font-weight: 600;
+      min-height: 2.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--fp-space-1-5);
+      position: relative;
+      cursor: pointer;
+      transition: color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-tab.active { color: var(--color-primary); font-weight: 700; }
+    .fp-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 18%;
+      right: 18%;
+      height: 3px;
+      border-radius: 3px 3px 0 0;
+      background-color: var(--color-primary);
+    }
+
+    /* Zone scrollable du téléphone */
+    .fp-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: var(--fp-space-4);
+      padding-bottom: 6rem;
+      display: flex;
+      flex-direction: column;
+      gap: var(--fp-space-4);
+      scrollbar-width: thin;
+    }
+
+    /* MODULE 4 : fp-hero-summary & fp-metric-tile (Carte de résumé visuelle sans dead space, #125) */
+    .fp-hero-summary {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-card);
+      padding: var(--fp-space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--fp-space-2-5);
+    }
+    .fp-metric-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--fp-space-2);
+    }
+    .fp-metric-tile {
+      background-color: var(--color-surface-container);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--fp-space-2-5) var(--fp-space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--fp-space-1);
+      min-width: 0;
+    }
+    .fp-metric-tile.highlight {
+      background-color: var(--color-primary-container);
+      border-color: rgba(217, 145, 100, 0.35);
+    }
+    .fp-metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--fp-space-1);
+      color: var(--color-ink-muted);
+      font-size: var(--type-label);
+      font-weight: 600;
+    }
+    .fp-metric-tile.highlight .fp-metric-header {
+      color: var(--color-on-primary-container);
+    }
+    .fp-metric-label-group {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--fp-space-1-5);
+      min-width: 0;
+    }
+    .fp-semantic-icon {
+      width: 1rem;
+      height: 1rem;
+      color: var(--color-primary);
+      flex-shrink: 0;
+    }
+    .fp-metric-value {
+      font-size: var(--type-metric-lg);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--color-ink);
+      letter-spacing: -0.01em;
+    }
+    .fp-metric-tile.highlight .fp-metric-value {
+      color: var(--color-on-primary-container);
+    }
+    .fp-metric-sub {
+      font-size: var(--type-meta);
+      color: var(--color-ink-muted);
+    }
+
+    /* MODULE 5 : fp-hydration-gauge (Bloc d'hydratation avec barre segmentée & bouton Détail) */
+    .fp-hydration-card {
+      background-color: var(--color-surface-container);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--fp-space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--fp-space-2);
+    }
+    .fp-hydration-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--fp-space-2);
+      flex-wrap: wrap;
+    }
+    .fp-hydration-bar {
+      height: 0.5rem;
+      border-radius: var(--radius-pill);
+      background-color: var(--color-surface);
+      overflow: hidden;
+      display: flex;
+      gap: 2px;
+    }
+    .fp-hydration-seg {
+      height: 100%;
+      transition: width var(--dur-spatial) var(--ease-m3-standard);
+    }
+    .fp-hydration-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--fp-space-2);
+      flex-wrap: wrap;
+    }
+    .fp-pill-action {
+      appearance: none;
+      border: 1px solid var(--color-outline);
+      background-color: var(--color-surface);
+      color: var(--color-primary);
+      font-size: var(--type-label);
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-pill);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--fp-space-1);
+      cursor: pointer;
+      transition: background-color var(--dur-effect) var(--ease-m3-standard), border-color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-pill-action:hover {
+      background-color: var(--color-primary-container);
+      color: var(--color-on-primary-container);
+    }
+
+    /* MODULE 6 : fp-warning-banner (Bandeau d'avertissement unifié en bas de carte, #125) */
+    .fp-warning-banner {
+      background-color: var(--color-warning-bg);
+      border: 1px solid var(--color-warning-border);
+      color: var(--color-warning-ink);
+      border-radius: var(--radius-sm);
+      padding: var(--fp-space-2) var(--fp-space-2-5);
+      font-size: var(--type-meta);
+      font-weight: 500;
+      display: flex;
+      align-items: flex-start;
+      gap: var(--fp-space-2);
+      line-height: 1.35;
+    }
+    .fp-warning-banner svg {
+      width: 1rem;
+      height: 1rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* MODULE 7 : fp-ingredient-group & fp-check-row (Liste hiérarchique unique + Pesée, #122) */
+    .fp-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--fp-space-2);
+      padding: 0 var(--fp-space-1);
+    }
+    .fp-section-title {
+      font-size: var(--type-section);
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--fp-space-1-5);
+      margin: 0;
+    }
+    .fp-group-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+    .fp-group-banner {
+      background-color: var(--color-surface-container);
+      padding: var(--fp-space-2-5) var(--fp-space-3);
+      border-bottom: 1px solid var(--color-outline-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .fp-group-banner-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--fp-space-2);
+    }
+    .fp-group-title {
+      font-size: var(--type-body);
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--fp-space-1-5);
+    }
+    .fp-group-ratios {
+      font-size: var(--type-meta);
+      color: var(--color-ink-muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--fp-space-1-5);
+    }
+    .fp-ratio-chip {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-pill);
+      padding: 0.1rem 0.5rem;
+      font-size: var(--type-meta);
+      font-weight: 600;
+      color: var(--color-ink);
+    }
+
+    /* Grille de ligne d'ingrédient 100% REM (s'adapte au Grand Texte 125%) */
+    .fp-ing-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) 4.25rem 4.75rem;
+      align-items: center;
+      gap: var(--fp-space-2);
+      min-height: var(--touch-row);
+      padding: var(--fp-space-2) var(--fp-space-3);
+      border-bottom: 1px solid var(--color-outline-subtle);
+      transition: background-color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-ing-row:last-child { border-bottom: none; }
+    .fp-ing-row.weighed {
+      background-color: rgba(124, 201, 146, 0.06);
+    }
+    .fp-ing-row.weighed .fp-ing-name {
+      text-decoration: line-through;
+      color: var(--color-ink-muted);
+    }
+    .fp-ing-row.incorporation {
+      background-color: var(--color-surface-container);
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      min-height: 2.6rem;
+      font-size: var(--type-label);
+      color: var(--color-ink-muted);
+    }
+    .fp-checkbox {
+      appearance: none;
+      width: 1.375rem;
+      height: 1.375rem;
+      border: 2px solid var(--color-outline);
+      border-radius: 6px;
+      background-color: var(--color-surface);
+      cursor: pointer;
+      display: inline-grid;
+      place-content: center;
+      transition: background-color var(--dur-effect) var(--ease-m3-standard), border-color var(--dur-effect) var(--ease-m3-standard), transform var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-checkbox:checked {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      transform: scale(1.05);
+    }
+    .fp-checkbox:checked::before {
+      content: '✓';
+      color: var(--color-on-primary);
+      font-size: 0.875rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .fp-ing-name {
+      font-size: var(--type-body);
+      font-weight: 600;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .fp-ing-sub {
+      font-size: var(--type-meta);
+      color: var(--color-ink-muted);
+      display: block;
+    }
+    .fp-ing-pct {
+      font-size: var(--type-label);
+      color: var(--color-ink-muted);
+      text-align: right;
+      font-weight: 500;
+    }
+    .fp-ing-grams {
+      font-size: var(--type-body);
+      font-weight: 700;
+      text-align: right;
+    }
+
+    /* Champs d'édition sur place (fp-field en REM, #121) */
+    .fp-field {
+      width: 100%;
+      height: 2.375rem;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--color-outline);
+      background-color: var(--color-surface-container);
+      color: var(--color-ink);
+      font-family: inherit;
+      font-size: var(--type-label);
+      font-weight: 700;
+      text-align: right;
+      padding: 0 var(--fp-space-2);
+      transition: border-color var(--dur-effect) var(--ease-m3-standard), background-color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-field:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background-color: var(--color-surface);
+    }
+
+    /* MODULE 8 : fp-step-group & fp-step-card (Étapes groupées + Timeline + Icônes métier, #100/#123) */
+    .fp-accordion {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+    .fp-accordion-trigger {
+      width: 100%;
+      appearance: none;
+      border: none;
+      background-color: var(--color-surface-container);
+      color: var(--color-ink);
+      padding: var(--fp-space-3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--fp-space-2);
+      cursor: pointer;
+      text-align: left;
+    }
+    .fp-chevron {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--color-ink-muted);
+      transition: transform var(--dur-spatial) var(--ease-m3-standard);
+      flex-shrink: 0;
+    }
+    .fp-accordion.open .fp-chevron {
+      transform: rotate(180deg);
+    }
+    .fp-accordion-grid {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows var(--dur-spatial) var(--ease-m3-standard);
+    }
+    .fp-accordion.open .fp-accordion-grid {
+      grid-template-rows: 1fr;
+    }
+    .fp-accordion-inner {
+      overflow: hidden;
+    }
+    .fp-timeline-list {
+      padding: var(--fp-space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--fp-space-3);
+      position: relative;
+    }
+    .fp-step-node {
+      display: grid;
+      grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+      gap: var(--fp-space-2-5);
+      align-items: flex-start;
+      position: relative;
+    }
+    .fp-step-node:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 1.0625rem;
+      top: 2.25rem;
+      bottom: calc(-1 * var(--fp-space-3));
+      width: 2px;
+      background-color: var(--color-outline-subtle);
+    }
+    .fp-step-icon-badge {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: var(--radius-pill);
+      background-color: var(--color-primary-container);
+      color: var(--color-on-primary-container);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+      border: 1px solid rgba(217, 145, 100, 0.3);
+    }
+    .fp-step-icon-badge svg {
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+    .fp-step-body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--fp-space-1);
+      min-width: 0;
+    }
+    .fp-step-title {
+      font-size: var(--type-body);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .fp-step-desc {
+      font-size: var(--type-label);
+      color: var(--color-ink-muted);
+      line-height: 1.35;
+    }
+    .fp-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--fp-space-1-5);
+      margin-top: 2px;
+    }
+    .fp-stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background-color: var(--color-surface-container);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-pill);
+      padding: 0.15rem 0.55rem;
+      font-size: var(--type-meta);
+      font-weight: 600;
+      color: var(--color-ink);
+    }
+    .fp-stat-pill svg {
+      width: 0.85rem;
+      height: 0.85rem;
+      color: var(--color-primary);
+    }
+    .fp-reorder-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .fp-mini-btn {
+      appearance: none;
+      border: 1px solid var(--color-outline);
+      background-color: var(--color-surface-container);
+      color: var(--color-ink);
+      width: 2rem;
+      height: 2rem;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: var(--type-label);
+      font-weight: 700;
+    }
+    .fp-mini-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    /* MODULE 9 : fp-bottom-sheet (Vrai Bottom Sheet M3 animé pour Détail Hydratation & Nouvelle Recette, #125/#128/#129) */
+    .fp-sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      background-color: var(--color-backdrop);
+      z-index: 70;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dur-sheet) var(--ease-m3-standard);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .fp-sheet-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .fp-bottom-sheet {
+      background-color: var(--color-surface);
+      border-top: 1px solid var(--color-outline);
+      border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+      max-height: 82%;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform var(--dur-sheet) var(--ease-m3-decelerate);
+      box-shadow: 0 -12px 36px var(--color-shadow);
+    }
+    .fp-sheet-backdrop.open .fp-bottom-sheet {
+      transform: translateY(0);
+    }
+    .fp-sheet-handle {
+      width: 2.25rem;
+      height: 0.25rem;
+      border-radius: var(--radius-pill);
+      background-color: var(--color-outline);
+      margin: var(--fp-space-2-5) auto var(--fp-space-1);
+      flex-shrink: 0;
+    }
+    .fp-sheet-header {
+      padding: var(--fp-space-2) var(--fp-space-4) var(--fp-space-3);
+      border-bottom: 1px solid var(--color-outline-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--fp-space-2);
+    }
+    .fp-sheet-title {
+      font-size: var(--type-section);
+      font-weight: 700;
+      margin: 0;
+    }
+    .fp-sheet-body {
+      padding: var(--fp-space-3) var(--fp-space-4);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--fp-space-3);
+    }
+    .fp-sheet-footer {
+      padding: var(--fp-space-3) var(--fp-space-4);
+      border-top: 1px solid var(--color-outline-subtle);
+      background-color: var(--color-surface);
+      flex-shrink: 0;
+    }
+
+    /* MODULE 10 : fp-bottom-bar (Barre d'action basse au pouce A vs B, #112) */
+    .fp-bottom-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      min-height: 4.5rem;
+      background-color: var(--color-surface);
+      border-top: 1px solid var(--color-outline-subtle);
+      padding: var(--fp-space-2) var(--fp-space-3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--fp-space-2);
+      z-index: 40;
+    }
+    .fp-btn-primary {
+      appearance: none;
+      border: none;
+      min-height: var(--touch-target);
+      padding: 0 var(--fp-space-4);
+      border-radius: var(--radius-pill);
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      font-size: var(--type-body);
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--fp-space-2);
+      cursor: pointer;
+      flex: 1;
+      transition: transform var(--dur-effect) var(--ease-m3-standard), filter var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-btn-primary:active { transform: scale(0.98); }
+    .fp-btn-secondary {
+      appearance: none;
+      border: 1px solid var(--color-outline);
+      min-height: var(--touch-target);
+      padding: 0 var(--fp-space-3);
+      border-radius: var(--radius-pill);
+      background-color: var(--color-surface-container);
+      color: var(--color-ink);
+      font-size: var(--type-label);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--fp-space-1-5);
+      cursor: pointer;
+    }
+
+    /* MODULE 11 : fp-segmented (Contrôle segmenté M3 en REM) */
+    .fp-segmented {
+      display: flex;
+      background-color: var(--color-surface-container);
+      border: 1px solid var(--color-outline-subtle);
+      border-radius: var(--radius-pill);
+      padding: 0.2rem;
+      gap: 0.2rem;
+    }
+    .fp-seg-btn {
+      flex: 1;
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--color-ink-muted);
+      font-size: var(--type-label);
+      font-weight: 600;
+      min-height: 2.25rem;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: background-color var(--dur-effect) var(--ease-m3-standard), color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-seg-btn.active {
+      background-color: var(--color-surface);
+      color: var(--color-primary);
+      box-shadow: 0 1px 4px var(--color-shadow);
+    }
+
+    /* MODULE 12 : fp-template-card (Carte de modèle Nouvelle Recette, #128) */
+    .fp-template-card {
+      background-color: var(--color-surface-container);
+      border: 1.5px solid var(--color-outline-subtle);
+      border-radius: var(--radius-md);
+      padding: var(--fp-space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--fp-space-2);
+      cursor: pointer;
+      transition: border-color var(--dur-effect) var(--ease-m3-standard), background-color var(--dur-effect) var(--ease-m3-standard);
+    }
+    .fp-template-card.selected {
+      border-color: var(--color-primary);
+      background-color: var(--color-primary-container);
+    }
+
+    /* ==========================================================================
+       5. PANNEAU BUILDER & REGISTRE DE MODULES (Vue Registre pour Agents)
+       ========================================================================== */
+    .registry-workspace {
+      width: 100%;
+      max-width: 1440px;
+      display: none;
+      grid-template-columns: 300px minmax(0, 1fr) 420px;
+      gap: 20px;
+      align-items: start;
+    }
+    .registry-workspace.active {
+      display: grid;
+    }
+    @media (max-width: 1180px) {
+      .registry-workspace.active {
+        grid-template-columns: 1fr;
+      }
+    }
+    .registry-panel {
+      background: var(--color-surface);
+      border: 1px solid var(--color-outline);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .registry-item-btn {
+      appearance: none;
+      border: 1px solid var(--color-outline-subtle);
+      background: var(--color-surface-container);
+      color: var(--color-ink);
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: border-color 150ms ease;
+    }
+    .registry-item-btn.active {
+      border-color: var(--color-primary);
+      background: var(--color-primary-container);
+    }
+    .code-box {
+      background: #11100f;
+      color: #f5efe6;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 14px;
+      border-radius: 10px;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.45;
+      border: 1px solid var(--color-outline);
+      margin: 0;
+    }
+    .rules-workspace {
+      width: 100%;
+      max-width: 1080px;
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .rules-workspace.active {
+      display: flex;
+    }
+    .rules-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .rules-table th, .rules-table td {
+      border: 1px solid var(--color-outline-subtle);
+      padding: 10px 12px;
+      text-align: left;
+    }
+    .rules-table th {
+      background: var(--color-surface-container);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       BARRE DE CONTRÔLE DE L'ATELIER (Hors écran téléphone)
+       ======================================================================== -->
+  <header class="studio-header">
+    <div class="studio-top">
+      <div class="studio-brand">
+        <img src="mark.svg" alt="Flourprint" />
+        <div>
+          <h1 class="studio-title">Flourprint 0.3 — Atelier UX, Maquettes &amp; Builder Modulaire (#120)</h1>
+          <p class="studio-sub">Unités 100 % REM dans le téléphone · Icônes SVG sémantiques sobres · Animations M3 bornées · Registre anti-broche-à-poule</p>
+        </div>
+      </div>
+
+      <div class="studio-modes" role="tablist" aria-label="Mode de l'atelier">
+        <button type="button" class="studio-mode-btn active" onclick="setStudioView('screens', this)">📱 5 Écrans Interactifs</button>
+        <button type="button" class="studio-mode-btn" onclick="setStudioView('builder', this)">🧩 Builder &amp; Registre de Modules (12)</button>
+        <button type="button" class="studio-mode-btn" onclick="setStudioView('rules', this)">📐 Spécification DESIGN.md (REM &amp; Motion)</button>
+      </div>
+    </div>
+
+    <div class="studio-controls">
+      <!-- Choix de l'écran ou vue d'ensemble -->
+      <div class="ctrl-cluster" id="screen-selector-cluster">
+        <span class="ctrl-label">Affichage</span>
+        <button type="button" class="ctrl-pill active" onclick="filterScreens('all', this)">Tous (Côte à côte)</button>
+        <button type="button" class="ctrl-pill" onclick="filterScreens('s1', this)">1. Recette &amp; Eau</button>
+        <button type="button" class="ctrl-pill" onclick="filterScreens('s2', this)">2. Étapes &amp; Timeline</button>
+        <button type="button" class="ctrl-pill" onclick="filterScreens('s3', this)">3. Bibliothèque &amp; Modèles</button>
+        <button type="button" class="ctrl-pill" onclick="filterScreens('s4', this)">4. Préparation Active</button>
+        <button type="button" class="ctrl-pill" onclick="filterScreens('s5', this)">5. Farines &amp; Corbeille</button>
+      </div>
+
+      <!-- Thème -->
+      <div class="ctrl-cluster">
+        <span class="ctrl-label">Thème</span>
+        <button type="button" class="ctrl-pill" onclick="setTheme('light', this)">Clair</button>
+        <button type="button" class="ctrl-pill active" onclick="setTheme('dark', this)">Sombre chaud</button>
+        <button type="button" class="ctrl-pill" onclick="setTheme('amoled', this)">AMOLED</button>
+      </div>
+
+      <!-- Test de mise à l'échelle REM (#120 N1 Larger Text) -->
+      <div class="ctrl-cluster">
+        <span class="ctrl-label">Police (REM)</span>
+        <button type="button" class="ctrl-pill active" onclick="setRemScale(16, this)">100 % (16px)</button>
+        <button type="button" class="ctrl-pill" onclick="setRemScale(18.4, this)">115 %</button>
+        <button type="button" class="ctrl-pill" onclick="setRemScale(20, this)">125 % Grand texte</button>
+      </div>
+
+      <!-- Largeur téléphone -->
+      <div class="ctrl-cluster">
+        <span class="ctrl-label">Largeur</span>
+        <button type="button" class="ctrl-pill" onclick="setPhoneWidth(360, this)">360 px</button>
+        <button type="button" class="ctrl-pill active" onclick="setPhoneWidth(393, this)">393 px</button>
+        <button type="button" class="ctrl-pill" onclick="setPhoneWidth(412, this)">412 px</button>
+      </div>
+
+      <!-- Toggles A/B des décisions ouvertes (#112, #121, #123, #130) -->
+      <div class="ctrl-cluster">
+        <span class="ctrl-label">Recette (#121)</span>
+        <button type="button" class="ctrl-pill active" id="btn-mode-consult" onclick="setRecipeMode('consult')">Consultation</button>
+        <button type="button" class="ctrl-pill" id="btn-mode-edit" onclick="setRecipeMode('edit')">Édition sur place</button>
+      </div>
+
+      <div class="ctrl-cluster">
+        <span class="ctrl-label">Barre (#112)</span>
+        <button type="button" class="ctrl-pill active" onclick="setBottomBarVariant('A', this)">Option A</button>
+        <button type="button" class="ctrl-pill" onclick="setBottomBarVariant('B', this)">Option B</button>
+      </div>
+
+      <div class="ctrl-cluster">
+        <span class="ctrl-label">Motion (#130)</span>
+        <button type="button" class="ctrl-pill active" onclick="setMotion('standard', this)">Activé</button>
+        <button type="button" class="ctrl-pill" onclick="setMotion('reduced', this)">Réduit</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       VUE 1 : LES 5 ÉCRANS INTERACTIFS DANS LE CADRE TÉLÉPHONE
+       ======================================================================== -->
+  <main class="phone-stage" id="view-screens">
+
+    <!-- ======================================================================
+         ÉCRAN 1 : RECETTE UNIFIÉE (Résumé visuel, Détail de l'eau, Liste hiérarchique, Menu flottant)
+         ====================================================================== -->
+    <section class="phone-column" data-screen="s1">
+      <div class="phone-badge">
+        <span>Écran 1 · Recette unifiée (#121, #122, #125, #129)</span>
+        <button type="button" class="ctrl-pill" style="background:var(--color-surface);border:1px solid var(--color-outline);" onclick="toggleWaterSheet(true)">💧 Ouvrir Détail Hydratation</button>
+      </div>
+
+      <div class="phone-frame" id="phone-s1">
+        <!-- MODULE fp-app-bar + fp-floating-menu -->
+        <div class="fp-app-bar">
+          <div class="fp-app-bar-start">
+            <button type="button" class="fp-icon-btn" aria-label="Retour aux recettes">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="fp-app-bar-titles">
+              <span class="fp-app-bar-title">Shokupan</span>
+              <span class="fp-app-bar-subtitle" id="s1-subtitle">Version 1 · Pain de mie japonais au tangzhong</span>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:0.25rem;">
+            <button type="button" class="fp-icon-btn" aria-label="Menu de la recette" onclick="toggleFloatingMenu(event)">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+            </button>
+          </div>
+
+          <!-- Vrai menu flottant ancré en haut à droite (#129 — Fini l'ActionSheet en bas de l'écran) -->
+          <div class="fp-floating-menu" id="s1-floating-menu" role="menu">
+            <button type="button" class="fp-menu-item" onclick="setRecipeMode('edit'); toggleFloatingMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              <span>Modifier sur place</span>
+            </button>
+            <button type="button" class="fp-menu-item" onclick="toggleFloatingMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Dupliquer la recette</span>
+            </button>
+            <button type="button" class="fp-menu-item" onclick="toggleFloatingMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Exporter JSON</span>
+            </button>
+            <div class="fp-menu-divider"></div>
+            <button type="button" class="fp-menu-item danger" onclick="toggleFloatingMenu()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              <span>Mettre à la corbeille</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- MODULE fp-tabs -->
+        <nav class="fp-tabs" aria-label="Sections de la recette">
+          <button type="button" class="fp-tab active">Recette</button>
+          <button type="button" class="fp-tab">Planification</button>
+          <button type="button" class="fp-tab">Historique (3)</button>
+        </nav>
+
+        <!-- Contenu scrollable -->
+        <div class="fp-scroll" onclick="closeFloatingMenu()">
+
+          <!-- MODULE fp-hero-summary (#125 : Zéro dead space, grille 2 colonnes équilibrée, icônes SVG sobres, précision cohérente) -->
+          <div class="fp-hero-summary" aria-label="Résumé de la formule">
+            <!-- Ligne 1 : Farine totale & Pâte totale côte à côte -->
+            <div class="fp-metric-grid-2">
+              <div class="fp-metric-tile">
+                <div class="fp-metric-header">
+                  <span class="fp-metric-label-group">
+                    <!-- Icône Épi de blé -->
+                    <svg class="fp-semantic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/></svg>
+                    <span>Farine totale</span>
+                  </span>
+                </div>
+                <div class="fp-metric-value tabular" id="hero-flour-val">314 g</div>
+                <span class="fp-metric-sub">100 % base boulangère</span>
+              </div>
+
+              <div class="fp-metric-tile">
+                <div class="fp-metric-header">
+                  <span class="fp-metric-label-group">
+                    <!-- Icône Balance / Pâton -->
+                    <svg class="fp-semantic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h12"/><path d="M3 22h18"/><path d="M12 3v15"/><path d="m5 8 7-3 7 3"/><path d="M5 8c0 2.5 2 4 3.5 4S12 10.5 12 8"/><path d="M12 8c0 2.5 2 4 3.5 4S19 10.5 19 8"/></svg>
+                    <span>Pâte finale</span>
+                  </span>
+                </div>
+                <div class="fp-metric-value tabular">699 g</div>
+                <span class="fp-metric-sub">1 pièce × 699 g</span>
+              </div>
+            </div>
+
+            <!-- Bloc central : Hydratation avec goutte d'eau + jauge segmentée + bouton Détail de l'hydratation -->
+            <div class="fp-hydration-card">
+              <div class="fp-hydration-top">
+                <span class="fp-metric-label-group" style="font-size:var(--type-body);font-weight:700;">
+                  <!-- Icône Goutte d'eau -->
+                  <svg class="fp-semantic-icon" style="width:1.15rem;height:1.15rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                  <span>Hydratation effective</span>
+                </span>
+                <span class="fp-metric-value tabular" style="color:var(--color-primary);">≈ 73 %</span>
+              </div>
+
+              <!-- Micro-jauge visuelle des apports en eau -->
+              <div class="fp-hydration-bar" title="Lait entier (62%) · Tangzhong (28%) · Eau ajoutée (6%) · Beurre (4%)">
+                <div class="fp-hydration-seg" style="width:62%;background-color:var(--color-primary);"></div>
+                <div class="fp-hydration-seg" style="width:28%;background-color:#e0a370;"></div>
+                <div class="fp-hydration-seg" style="width:6%;background-color:#74a8c8;"></div>
+                <div class="fp-hydration-seg" style="width:4%;background-color:#d8c383;"></div>
+              </div>
+
+              <div class="fp-hydration-footer">
+                <span class="fp-metric-sub tabular">228 g d'eau totale / 314 g farine</span>
+                <button type="button" class="fp-pill-action" onclick="toggleWaterSheet(true)">
+                  <span>Détail de l'hydratation</span>
+                  <span aria-hidden="true">▸</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Ligne 3 : Enrichissement (Grille 2 colonnes alignée — fini le grid-cols-3 cassé et les 2 décimales !) -->
+            <div class="fp-metric-grid-2">
+              <div class="fp-metric-tile">
+                <div class="fp-metric-header">
+                  <span class="fp-metric-label-group">
+                    <!-- Icône Beurre / Lipides -->
+                    <svg class="fp-semantic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M7 8v8M12 8v8M2 16h20"/></svg>
+                    <span>Matières grasses</span>
+                  </span>
+                </div>
+                <div class="fp-metric-value tabular" style="font-size:var(--type-metric-md);">≈ 17 %</div>
+                <span class="fp-metric-sub tabular">54 g (Beurre + Lait)</span>
+              </div>
+
+              <div class="fp-metric-tile">
+                <div class="fp-metric-header">
+                  <span class="fp-metric-label-group">
+                    <!-- Icône Sucres -->
+                    <svg class="fp-semantic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 19 7 19 17 12 22 5 17 5 7 12 2"/></svg>
+                    <span>Sucres totaux</span>
+                  </span>
+                </div>
+                <div class="fp-metric-value tabular" style="font-size:var(--type-metric-md);">≈ 18 %</div>
+                <span class="fp-metric-sub tabular">58 g (Sucre + Lactose)</span>
+              </div>
+            </div>
+
+            <!-- MODULE fp-warning-banner : Un seul bandeau unifié au lieu de 2 phrases grises de tailles différentes -->
+            <div class="fp-warning-banner" role="status">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span><strong>Profil incomplet :</strong> teneur en eau, gras et sucres non renseignée pour <em>Lait en poudre</em> (16 g).</span>
+            </div>
+          </div>
+
+          <!-- MODULE fp-ingredient-group (#122 : Liste hiérarchique unique avec pesée sur composants + pétrissage final) -->
+          <div class="fp-section-header">
+            <h2 class="fp-section-title">
+              <svg class="fp-semantic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span>Ingrédients &amp; Pesée</span>
+            </h2>
+            <span class="fp-ratio-chip tabular" id="weigh-counter">Pesés : 2 / 9</span>
+          </div>
+
+          <!-- Groupe 1 : Composant Tangzhong avec les 2 pourcentages requis par l'owner (#120) -->
+          <div class="fp-group-card">
+            <div class="fp-group-banner">
+              <div class="fp-group-banner-top">
+                <span class="fp-group-title">1. Tangzhong (Roux d'eau)</span>
+                <span class="tabular" style="font-weight:800;font-size:var(--type-body);">108 g cuit</span>
+              </div>
+              <div class="fp-group-ratios tabular">
+                <span class="fp-ratio-chip" title="Part de la farine totale de la recette">6,4 % de la farine</span>
+                <span class="fp-ratio-chip" title="Masse du composant rapportée à la farine totale">38,2 % du poids farine</span>
+                <span>Hydrat. 500 % (-12 g évap.)</span>
+              </div>
+            </div>
+
+            <div class="fp-ing-row weighed" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" checked aria-label="Farine de pain (Tangzhong)" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Farine de pain</span>
+                <span class="fp-ing-sub">12,5 % protéines · T65</span>
+              </div>
+              <span class="fp-ing-pct tabular">6,4 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="20 g">20 g</span>
+            </div>
+
+            <div class="fp-ing-row weighed" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" checked aria-label="Eau (Tangzhong)" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Eau</span>
+                <span class="fp-ing-sub">63 g retenus après cuisson</span>
+              </div>
+              <span class="fp-ing-pct tabular">31,8 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="100 g">100 g</span>
+            </div>
+          </div>
+
+          <!-- Groupe 2 : Pétrissage final (Pâte principale) -->
+          <div class="fp-group-card">
+            <div class="fp-group-banner">
+              <div class="fp-group-banner-top">
+                <span class="fp-group-title">2. Pétrissage final (Pâte principale)</span>
+                <span class="tabular" style="font-weight:800;font-size:var(--type-body);">699 g total</span>
+              </div>
+              <div class="fp-group-ratios">
+                <span>93,6 % de la farine restante + Tangzhong refroidi</span>
+              </div>
+            </div>
+
+            <!-- Référence d'incorporation (sans double comptage de masse, #122) -->
+            <div class="fp-ing-row incorporation">
+              <span aria-hidden="true" style="font-weight:700;color:var(--color-primary);">↳</span>
+              <span>Incorporer le <strong>Tangzhong refroidi</strong> préparé à l'étape 1</span>
+              <span class="tabular" style="font-weight:700;">108 g</span>
+            </div>
+
+            <div class="fp-ing-row" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" aria-label="Farine de pain (Pâte finale)" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Farine de pain</span>
+                <span class="fp-ing-sub">Reste des 314 g totaux</span>
+              </div>
+              <span class="fp-ing-pct tabular">93,6 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="294 g">294 g</span>
+            </div>
+
+            <div class="fp-ing-row" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" aria-label="Lait entier" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Lait entier</span>
+                <span class="fp-ing-sub">Apporte 141 g d'eau</span>
+              </div>
+              <span class="fp-ing-pct tabular">51,6 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="162 g">162 g</span>
+            </div>
+
+            <div class="fp-ing-row" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" aria-label="Sucre" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Sucre blanc</span>
+              </div>
+              <span class="fp-ing-pct tabular">10,0 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="31 g">31 g</span>
+            </div>
+
+            <div class="fp-ing-row" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" aria-label="Beurre doux" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Beurre doux</span>
+                <span class="fp-ing-sub">Incorporé au bassinage</span>
+              </div>
+              <span class="fp-ing-pct tabular">10,0 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="31 g">31 g</span>
+            </div>
+
+            <div class="fp-ing-row" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" aria-label="Lait en poudre" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Lait en poudre</span>
+                <span class="fp-ing-sub" style="color:var(--color-warning-ink);">⚠ Composition inconnue</span>
+              </div>
+              <span class="fp-ing-pct tabular">5,0 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="16 g">16 g</span>
+            </div>
+
+            <div class="fp-ing-row" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" aria-label="Eau ajoutée" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Eau ajoutée</span>
+                <span class="fp-ing-sub">🔒 Suit la cible d'hydratation</span>
+              </div>
+              <span class="fp-ing-pct tabular">4,8 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="15 g">15 g</span>
+            </div>
+
+            <div class="fp-ing-row" onclick="toggleWeighRow(this)">
+              <input type="checkbox" class="fp-checkbox" aria-label="Sel fin" onclick="event.stopPropagation(); toggleWeighRow(this.parentElement)" />
+              <div>
+                <span class="fp-ing-name">Sel fin</span>
+              </div>
+              <span class="fp-ing-pct tabular">2,0 %</span>
+              <span class="fp-ing-grams tabular" data-edit-grams="6,3 g">6,3 g</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- MODULE fp-bottom-bar (#112 : Comparateur Option A vs Option B + Mode Édition sur place #121) -->
+        <div class="fp-bottom-bar" id="s1-bottom-bar">
+          <button type="button" class="fp-btn-secondary" onclick="setRecipeMode(currentRecipeMode === 'consult' ? 'edit' : 'consult')" id="s1-secondary-btn">
+            <span>✎ Modifier</span>
+          </button>
+          <button type="button" class="fp-btn-primary" id="s1-primary-btn">
+            <span>▶ Démarrer la fournée</span>
+          </button>
+        </div>
+
+        <!-- MODULE fp-bottom-sheet : Détail de l'hydratation (#125 — Zéro Sel 0g / Sucre 0g, Zéro "(connue)" partout) -->
+        <div class="fp-sheet-backdrop" id="water-sheet" role="dialog" aria-modal="true" aria-labelledby="water-sheet-title" onclick="if(event.target===this) toggleWaterSheet(false)">
+          <div class="fp-bottom-sheet">
+            <div class="fp-sheet-handle"></div>
+            <div class="fp-sheet-header">
+              <div>
+                <h3 class="fp-sheet-title" id="water-sheet-title">Détail de l'hydratation</h3>
+                <span style="font-size:var(--type-meta);color:var(--color-ink-muted);">Seuls les ingrédients contribuant à l'eau ou inconnus sont listés</span>
+              </div>
+              <button type="button" class="fp-icon-btn" aria-label="Fermer" onclick="toggleWaterSheet(false)">✕</button>
+            </div>
+
+            <div class="fp-sheet-body">
+              <div class="fp-metric-grid-2">
+                <div class="fp-metric-tile highlight">
+                  <span class="fp-metric-header">Hydratation effective</span>
+                  <span class="fp-metric-value tabular">≈ 73 %</span>
+                  <span class="fp-metric-sub tabular">Arrondi cohérent avec la recette</span>
+                </div>
+                <div class="fp-metric-tile">
+                  <span class="fp-metric-header">Eau totale retenue</span>
+                  <span class="fp-metric-value tabular">228 g</span>
+                  <span class="fp-metric-sub tabular">Pour 314 g de farine totale</span>
+                </div>
+              </div>
+
+              <!-- Contributions réelles (> 0 g) avec micro-barres visuelles -->
+              <div class="fp-group-card" style="padding:var(--fp-space-2-5) var(--fp-space-3);display:flex;flex-direction:column;gap:var(--fp-space-2-5);">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-body);font-weight:600;">
+                    <span>Lait entier (162 g × 87 %)</span>
+                    <span class="tabular" style="font-weight:700;">141 g</span>
+                  </div>
+                  <div class="fp-hydration-bar" style="margin-top:4px;"><div class="fp-hydration-seg" style="width:62%;background:var(--color-primary);"></div></div>
+                </div>
+
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-body);font-weight:600;">
+                    <span>Eau du Tangzhong (100 g − 37 g évap./farine)</span>
+                    <span class="tabular" style="font-weight:700;">63 g</span>
+                  </div>
+                  <div class="fp-hydration-bar" style="margin-top:4px;"><div class="fp-hydration-seg" style="width:28%;background:#e0a370;"></div></div>
+                </div>
+
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-body);font-weight:600;">
+                    <span>Eau ajoutée (Pétrissage final)</span>
+                    <span class="tabular" style="font-weight:700;">15 g</span>
+                  </div>
+                  <div class="fp-hydration-bar" style="margin-top:4px;"><div class="fp-hydration-seg" style="width:7%;background:#74a8c8;"></div></div>
+                </div>
+
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-body);font-weight:600;">
+                    <span>Beurre doux (31 g × 16 %)</span>
+                    <span class="tabular" style="font-weight:700;">5 g</span>
+                  </div>
+                  <div class="fp-hydration-bar" style="margin-top:4px;"><div class="fp-hydration-seg" style="width:3%;background:#d8c383;"></div></div>
+                </div>
+              </div>
+
+              <!-- Ingrédient à teneur inconnue clairement distingué -->
+              <div class="fp-warning-banner">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                <span><strong>Lait en poudre (16 g) :</strong> teneur en eau non renseignée dans le catalogue. Les ingrédients anhydres connus (<em>Sucre 0 g</em>, <em>Sel 0 g</em>) sont masqués.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         ÉCRAN 2 : ÉTAPES GROUPÉES, TIMELINE, ICÔNES MÉTIER & RÉORGANISATION (#100, #104, #123)
+         ====================================================================== -->
+    <section class="phone-column" data-screen="s2">
+      <div class="phone-badge">
+        <span>Écran 2 · Étapes groupées, Icônes &amp; Réorganisation (#100, #123)</span>
+        <button type="button" class="ctrl-pill" style="background:var(--color-surface);border:1px solid var(--color-outline);" onclick="toggleReorderMode()">⇅ Basculer mode Réorganiser</button>
+      </div>
+
+      <div class="phone-frame" id="phone-s2">
+        <div class="fp-app-bar">
+          <div class="fp-app-bar-start">
+            <div class="fp-app-bar-titles">
+              <span class="fp-app-bar-title">Protocole &amp; Étapes</span>
+              <span class="fp-app-bar-subtitle tabular">Durée projetée totale : 30 h 25 min</span>
+            </div>
+          </div>
+          <button type="button" class="fp-pill-action" id="btn-reorder-chip" onclick="toggleReorderMode()">
+            <span>⇅ Réorganiser</span>
+          </button>
+        </div>
+
+        <div class="fp-scroll">
+          <!-- Sélecteur Étapes groupées vs Ligne de temps (#100) -->
+          <div class="fp-segmented" role="tablist">
+            <button type="button" class="fp-seg-btn active" onclick="setProcessSubView('groups', this)">Étapes groupées</button>
+            <button type="button" class="fp-seg-btn" onclick="setProcessSubView('lanes', this)">Ligne de temps (Parallèle)</button>
+          </div>
+
+          <!-- Vue 2A : Groupes d'étapes avec accordéons fluides et icônes SVG par opération -->
+          <div id="process-groups-view" style="display:flex;flex-direction:column;gap:var(--fp-space-3);">
+
+            <!-- Groupe 1 : Poolish -->
+            <div class="fp-accordion open">
+              <button type="button" class="fp-accordion-trigger" onclick="this.parentElement.classList.toggle('open')">
+                <div>
+                  <div style="font-size:var(--type-body);font-weight:700;">1. Poolish (Pré-ferment)</div>
+                  <div class="tabular" style="font-size:var(--type-meta);color:var(--color-ink-muted);">Fenêtre : +00:00 → +24:10 · 24 h 10 min · 3 étapes</div>
+                </div>
+                <svg class="fp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="fp-accordion-grid">
+                <div class="fp-accordion-inner">
+                  <div class="fp-timeline-list">
+                    <div class="fp-step-node">
+                      <div class="fp-step-icon-badge" title="Mélange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11h16a1 1 0 0 1 1 1v.5a8.5 8.5 0 0 1-17 0V12a1 1 0 0 1 1-1Z"/><path d="M12 4v7"/></svg>
+                      </div>
+                      <div class="fp-step-body">
+                        <span class="fp-step-title">Frasage de la poolish</span>
+                        <span class="fp-step-desc">Mélanger eau et farine jusqu'à disparition des grumeaux.</span>
+                        <div class="fp-pill-row tabular">
+                          <span class="fp-stat-pill">⏱ 10 min</span>
+                          <span class="fp-stat-pill">+00:00 → +00:10</span>
+                        </div>
+                      </div>
+                      <div class="fp-reorder-controls" hidden>
+                        <button type="button" class="fp-mini-btn" title="Descendre">↓</button>
+                        <button type="button" class="fp-mini-btn" title="Dupliquer">⧉</button>
+                      </div>
+                    </div>
+
+                    <div class="fp-step-node">
+                      <div class="fp-step-icon-badge" title="Fermentation ambiante">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+                      </div>
+                      <div class="fp-step-body">
+                        <span class="fp-step-title">Fermentation au comptoir</span>
+                        <div class="fp-pill-row tabular">
+                          <span class="fp-stat-pill">⏱ 16 h</span>
+                          <span class="fp-stat-pill">🌡 21 °C</span>
+                          <span class="fp-stat-pill">+00:10 → +16:10</span>
+                        </div>
+                      </div>
+                      <div class="fp-reorder-controls" hidden>
+                        <button type="button" class="fp-mini-btn" title="Monter">↑</button>
+                        <button type="button" class="fp-mini-btn" title="Descendre">↓</button>
+                      </div>
+                    </div>
+
+                    <div class="fp-step-node">
+                      <div class="fp-step-icon-badge" title="Froid">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><path d="m20 16-4-4 4-4M4 8l4 4-4 4"/></svg>
+                      </div>
+                      <div class="fp-step-body">
+                        <span class="fp-step-title">Maturation au réfrigérateur</span>
+                        <div class="fp-pill-row tabular">
+                          <span class="fp-stat-pill">⏱ 8 h</span>
+                          <span class="fp-stat-pill">❄ 4 °C</span>
+                          <span class="fp-stat-pill">+16:10 → +24:10</span>
+                        </div>
+                      </div>
+                      <div class="fp-reorder-controls" hidden>
+                        <button type="button" class="fp-mini-btn" title="Monter">↑</button>
+                        <button type="button" class="fp-mini-btn" title="Dupliquer">⧉</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Groupe 2 : Tangzhong (Branche parallèle) -->
+            <div class="fp-accordion open">
+              <button type="button" class="fp-accordion-trigger" onclick="this.parentElement.classList.toggle('open')">
+                <div>
+                  <div style="font-size:var(--type-body);font-weight:700;">2. Tangzhong · <span style="color:var(--color-primary);">En parallèle</span></div>
+                  <div class="tabular" style="font-size:var(--type-meta);color:var(--color-ink-muted);">Fenêtre : +23:30 → +24:10 · 40 min · Chevauche la fin de poolish</div>
+                </div>
+                <svg class="fp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="fp-accordion-grid">
+                <div class="fp-accordion-inner">
+                  <div class="fp-timeline-list">
+                    <div class="fp-step-node">
+                      <div class="fp-step-icon-badge" title="Cuisson sur feu">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.741-3 6-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5-1.786 3-2.791 3-4 2z"/></svg>
+                      </div>
+                      <div class="fp-step-body">
+                        <span class="fp-step-title">Cuire le tangzhong à 65 °C</span>
+                        <div class="fp-pill-row tabular">
+                          <span class="fp-stat-pill">⏱ 15 min</span>
+                          <span class="fp-stat-pill">+23:30 → +23:45</span>
+                        </div>
+                      </div>
+                      <div class="fp-reorder-controls" hidden>
+                        <button type="button" class="fp-mini-btn">↓</button>
+                        <button type="button" class="fp-mini-btn">⧉</button>
+                      </div>
+                    </div>
+
+                    <div class="fp-step-node">
+                      <div class="fp-step-icon-badge" title="Refroidissement">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                      </div>
+                      <div class="fp-step-body">
+                        <span class="fp-step-title">Refroidir au contact</span>
+                        <div class="fp-pill-row tabular">
+                          <span class="fp-stat-pill">⏱ 25 min</span>
+                          <span class="fp-stat-pill">🌡 21 °C</span>
+                          <span class="fp-stat-pill">+23:45 → +24:10</span>
+                        </div>
+                      </div>
+                      <div class="fp-reorder-controls" hidden>
+                        <button type="button" class="fp-mini-btn">↑</button>
+                        <button type="button" class="fp-mini-btn">⧉</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Groupe 3 : Pâte principale & Cuisson avec Préchauffage en chevauchement (#94 / #106) -->
+            <div class="fp-accordion open">
+              <button type="button" class="fp-accordion-trigger" onclick="this.parentElement.classList.toggle('open')">
+                <div>
+                  <div style="font-size:var(--type-body);font-weight:700;">3. Pâte principale &amp; Cuisson</div>
+                  <div class="tabular" style="font-size:var(--type-meta);color:var(--color-ink-muted);">Fenêtre : +24:10 → +30:25 · Préchauffage superposé à l'apprêt</div>
+                </div>
+                <svg class="fp-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="fp-accordion-grid">
+                <div class="fp-accordion-inner">
+                  <div class="fp-timeline-list">
+                    <div class="fp-step-node">
+                      <div class="fp-step-icon-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h20"/></svg>
+                      </div>
+                      <div class="fp-step-body">
+                        <span class="fp-step-title">Apprêt en moule Pullman</span>
+                        <div class="fp-pill-row tabular">
+                          <span class="fp-stat-pill">⏱ 2 h 00</span>
+                          <span class="fp-stat-pill">🌡 26 °C</span>
+                          <span class="fp-stat-pill">+27:45 → +29:45</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="fp-step-node">
+                      <div class="fp-step-icon-badge" style="background:var(--color-warning-bg);color:var(--color-warning-ink);">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.741-3 6-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5-1.786 3-2.791 3-4 2z"/></svg>
+                      </div>
+                      <div class="fp-step-body">
+                        <span class="fp-step-title">Préchauffage du four (Superposé)</span>
+                        <span class="fp-step-desc">Déclenché 30 min avant l'enfournement, pendant l'apprêt.</span>
+                        <div class="fp-pill-row tabular">
+                          <span class="fp-stat-pill">🔥 190 °C</span>
+                          <span class="fp-stat-pill">⏱ 30 min (chevauchement)</span>
+                          <span class="fp-stat-pill">+29:15 → +29:45</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="fp-step-node">
+                      <div class="fp-step-icon-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+                      </div>
+                      <div class="fp-step-body">
+                        <span class="fp-step-title">Cuisson couverte</span>
+                        <div class="fp-pill-row tabular">
+                          <span class="fp-stat-pill">🔥 190 °C</span>
+                          <span class="fp-stat-pill">⏱ 40 min</span>
+                          <span class="fp-stat-pill">+29:45 → +30:25</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Vue 2B : Ligne de temps visuelle des branches parallèles (#97 / #100) -->
+          <div id="process-lanes-view" style="display:none;flex-direction:column;gap:var(--fp-space-3);">
+            <div class="fp-hero-summary">
+              <span style="font-size:var(--type-body);font-weight:700;">Vue des chevauchements (Même projection #106)</span>
+              <span style="font-size:var(--type-meta);color:var(--color-ink-muted);">Visualise comment le Tangzhong et le Préchauffage s'exécutent en temps masqué sans allonger le chemin critique.</span>
+
+              <div style="display:flex;flex-direction:column;gap:0.65rem;margin-top:0.5rem;" class="tabular">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-meta);margin-bottom:3px;">
+                    <strong>1. Poolish</strong><span>+00:00 → +24:10</span>
+                  </div>
+                  <div style="height:0.75rem;background:var(--color-surface-container);border-radius:99px;position:relative;">
+                    <div style="position:absolute;left:0%;width:78%;height:100%;background:var(--color-primary);border-radius:99px;"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-meta);margin-bottom:3px;">
+                    <strong>2. Tangzhong (Parallèle)</strong><span>+23:30 → +24:10</span>
+                  </div>
+                  <div style="height:0.75rem;background:var(--color-surface-container);border-radius:99px;position:relative;">
+                    <div style="position:absolute;left:68%;width:10%;height:100%;background:#e0a370;border-radius:99px;"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-meta);margin-bottom:3px;">
+                    <strong>3. Pâte principale (Frasage → Apprêt)</strong><span>+24:10 → +29:45</span>
+                  </div>
+                  <div style="height:0.75rem;background:var(--color-surface-container);border-radius:99px;position:relative;">
+                    <div style="position:absolute;left:78%;width:15%;height:100%;background:#74a8c8;border-radius:99px;"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-meta);margin-bottom:3px;">
+                    <strong>4. Préchauffage Four (Chevauche l'apprêt)</strong><span>+29:15 → +29:45</span>
+                  </div>
+                  <div style="height:0.75rem;background:var(--color-surface-container);border-radius:99px;position:relative;">
+                    <div style="position:absolute;left:89%;width:4%;height:100%;background:var(--color-warning-ink);border-radius:99px;"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:var(--type-meta);margin-bottom:3px;">
+                    <strong>5. Cuisson</strong><span>+29:45 → +30:25</span>
+                  </div>
+                  <div style="height:0.75rem;background:var(--color-surface-container);border-radius:99px;position:relative;">
+                    <div style="position:absolute;left:93%;width:7%;height:100%;background:var(--color-success);border-radius:99px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="fp-bottom-bar">
+          <button type="button" class="fp-btn-secondary">+ Ajouter une étape</button>
+          <button type="button" class="fp-btn-primary">▶ Planifier l'horaire</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         ÉCRAN 3 : BIBLIOTHÈQUE, RECHERCHE & SÉLECTEUR « NOUVELLE RECETTE » (#127, #128, #131)
+         ====================================================================== -->
+    <section class="phone-column" data-screen="s3">
+      <div class="phone-badge">
+        <span>Écran 3 · Bibliothèque &amp; Sélecteur de Modèles (#127, #128, #131)</span>
+        <button type="button" class="ctrl-pill" style="background:var(--color-surface);border:1px solid var(--color-outline);" onclick="toggleTemplateSheet(true)">✨ Ouvrir « Nouvelle recette »</button>
+      </div>
+
+      <div class="phone-frame" id="phone-s3">
+        <div class="fp-app-bar">
+          <div class="fp-app-bar-start">
+            <img src="mark.svg" alt="" style="width:2rem;height:2rem;border-radius:8px;" />
+            <div class="fp-app-bar-titles">
+              <span class="fp-app-bar-title">Flourprint</span>
+              <!-- Identité de build visible et copiable en 1 clic (#131) -->
+              <button type="button" class="fp-app-bar-subtitle tabular" style="background:none;border:none;padding:0;text-align:left;cursor:pointer;text-decoration:underline dotted;" onclick="this.textContent='✓ Copié : 0.3.0-dev (Levain-des-Neiges)'">
+                0.3.0-dev · Levain-des-Neiges ⧉
+              </button>
+            </div>
+          </div>
+          <button type="button" class="fp-icon-btn" aria-label="Paramètres et surfaces secondaires">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+          </button>
+        </div>
+
+        <div class="fp-scroll">
+          <!-- Recherche + Filtres de bibliothèque (#127) -->
+          <div style="position:relative;">
+            <input type="search" class="fp-field" style="text-align:left;padding-left:2.25rem;height:2.75rem;border-radius:var(--radius-pill);" placeholder="Rechercher une recette, farine, méthode..." />
+            <svg style="position:absolute;left:0.8rem;top:50%;transform:translateY(-50%);width:1rem;height:1rem;color:var(--color-ink-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+
+          <div class="fp-pill-row">
+            <span class="fp-stat-pill" style="background:var(--color-primary);color:var(--color-on-primary);">Toutes (4)</span>
+            <span class="fp-stat-pill">Pains enrichis</span>
+            <span class="fp-stat-pill">Pains maigres</span>
+            <span class="fp-stat-pill">Pizzas</span>
+          </div>
+
+          <!-- Cartes de recettes avec repères visuels -->
+          <div class="fp-hero-summary" style="cursor:pointer;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <strong style="font-size:var(--type-section);">Shokupan</strong>
+              <span class="fp-ratio-chip">Version 1</span>
+            </div>
+            <div class="fp-pill-row tabular">
+              <span class="fp-stat-pill">💧 ≈ 73 %</span>
+              <span class="fp-stat-pill">⚖ 699 g</span>
+              <span class="fp-stat-pill">🧈 17 %</span>
+              <span class="fp-stat-pill">⏱ 5 h 25</span>
+              <span class="fp-stat-pill">Tangzhong</span>
+            </div>
+          </div>
+
+          <div class="fp-hero-summary" style="cursor:pointer;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <strong style="font-size:var(--type-section);">Baguette de tradition</strong>
+              <span class="fp-ratio-chip">Version 4</span>
+            </div>
+            <div class="fp-pill-row tabular">
+              <span class="fp-stat-pill">💧 72 %</span>
+              <span class="fp-stat-pill">⚖ 3 × 350 g</span>
+              <span class="fp-stat-pill">⏱ 24 h 10</span>
+              <span class="fp-stat-pill">Poolish</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fp-bottom-bar">
+          <button type="button" class="fp-btn-primary" onclick="toggleTemplateSheet(true)">
+            <span>+ Nouvelle recette</span>
+          </button>
+        </div>
+
+        <!-- MODULE fp-bottom-sheet : Sélecteur « Nouvelle recette » repensé (#128 — Catégorisé, CTA sticky, zéro "wall of text", nom libre sans "1") -->
+        <div class="fp-sheet-backdrop open" id="template-sheet" role="dialog" aria-modal="true" aria-labelledby="template-sheet-title" onclick="if(event.target===this) toggleTemplateSheet(false)">
+          <div class="fp-bottom-sheet" style="max-height:88%;">
+            <div class="fp-sheet-handle"></div>
+            <div class="fp-sheet-header">
+              <div>
+                <h3 class="fp-sheet-title" id="template-sheet-title">Nouvelle recette</h3>
+                <span style="font-size:var(--type-meta);color:var(--color-ink-muted);">Choisir une base boulangère ou partir d'une feuille blanche</span>
+              </div>
+              <button type="button" class="fp-icon-btn" aria-label="Fermer" onclick="toggleTemplateSheet(false)">✕</button>
+            </div>
+
+            <div class="fp-sheet-body">
+              <!-- Catégories claires au lieu d'une liste plate de 15 items -->
+              <div class="fp-pill-row">
+                <button type="button" class="fp-pill-action" style="background:var(--color-primary);color:var(--color-on-primary);border-color:var(--color-primary);">Enrichis &amp; Brioches (4)</button>
+                <button type="button" class="fp-pill-action">Pains maigres (6)</button>
+                <button type="button" class="fp-pill-action">Pizzas &amp; Focaccias (5)</button>
+              </div>
+
+              <!-- Modèle 1 : Shokupan (Sélectionné) -->
+              <div class="fp-template-card selected" onclick="selectTemplate('Shokupan', this)">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                  <strong style="font-size:var(--type-body);">Shokupan (Pain de mie japonais)</strong>
+                  <span class="fp-ratio-chip">Tangzhong</span>
+                </div>
+                <span style="font-size:var(--type-label);color:var(--color-ink-muted);">Mie filante ultra-moelleuse grâce au roux d'eau gélatinisé à 65 °C.</span>
+                <div class="fp-pill-row tabular">
+                  <span class="fp-stat-pill">💧 73 % hydrat.</span>
+                  <span class="fp-stat-pill">🧈 10 % beurre</span>
+                  <span class="fp-stat-pill">🍯 10 % sucre</span>
+                  <span class="fp-stat-pill">🥛 Lait entier</span>
+                </div>
+
+                <!-- Repères & Source structurés (Fini le "wall of text" brut en anglais de 25 lignes !) -->
+                <details style="margin-top:4px;border-top:1px solid var(--color-outline-subtle);padding-top:6px;" onclick="event.stopPropagation()">
+                  <summary style="font-size:var(--type-meta);font-weight:700;color:var(--color-primary);cursor:pointer;">Repères du style &amp; source documentaire</summary>
+                  <div style="font-size:var(--type-meta);color:var(--color-ink-muted);margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+                    <div>• <strong>Plage d'hydratation typique :</strong> 70 – 78 % (incluant lait + tangzhong)</div>
+                    <div>• <strong>Part de farine en tangzhong :</strong> 5 – 8 % hydraté à 1:5 (500 %)</div>
+                    <div>• <strong>Source :</strong> Barham et al. (2010), <em>Molecular Gastronomy</em> ; standard boulanger japonais (Yu-dane / Tangzhong).</div>
+                  </div>
+                </details>
+              </div>
+
+              <!-- Modèle 2 : Brioche pâtissière -->
+              <div class="fp-template-card" onclick="selectTemplate('Brioche', this)">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                  <strong style="font-size:var(--type-body);">Brioche pur beurre</strong>
+                  <span class="fp-ratio-chip">Direct + Froid</span>
+                </div>
+                <span style="font-size:var(--type-label);color:var(--color-ink-muted);">Pâte levée très riche en œufs et beurre incorporé au bassinage.</span>
+                <div class="fp-pill-row tabular">
+                  <span class="fp-stat-pill">🥚 60 % œufs</span>
+                  <span class="fp-stat-pill">🧈 50 % beurre</span>
+                  <span class="fp-stat-pill">🍯 12 % sucre</span>
+                </div>
+              </div>
+
+              <!-- Modèle 3 : Pain au lait -->
+              <div class="fp-template-card" onclick="selectTemplate('Pain au lait', this)">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                  <strong style="font-size:var(--type-body);">Pain au lait viennois</strong>
+                  <span class="fp-ratio-chip">Direct</span>
+                </div>
+                <div class="fp-pill-row tabular">
+                  <span class="fp-stat-pill">🥛 68 % lait</span>
+                  <span class="fp-stat-pill">🧈 15 % beurre</span>
+                  <span class="fp-stat-pill">🍯 8 % sucre</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer sticky : le bouton d'action est toujours visible sans scroller tout en bas, et crée "Shokupan" sans "1" ! -->
+            <div class="fp-sheet-footer">
+              <button type="button" class="fp-btn-primary" id="btn-create-template" style="width:100%;" onclick="toggleTemplateSheet(false)">
+                <span>Créer « Shokupan »</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         ÉCRAN 4 : PRÉPARATION ACTIVE (BakePage #124 — Quantités, Four/Vapeur/Récipient & Actions rapides)
+         ====================================================================== -->
+    <section class="phone-column" data-screen="s4">
+      <div class="phone-badge">
+        <span>Écran 4 · Préparation Active (#124)</span>
+      </div>
+
+      <div class="phone-frame" id="phone-s4">
+        <div class="fp-app-bar">
+          <div class="fp-app-bar-start">
+            <button type="button" class="fp-icon-btn" aria-label="Retour">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="fp-app-bar-titles">
+              <span class="fp-app-bar-title">Fournée · Shokupan</span>
+              <span class="fp-app-bar-subtitle">Étape 7 sur 7 · Cuisson en cours</span>
+            </div>
+          </div>
+          <span class="fp-ratio-chip" style="background:var(--color-success-bg);color:var(--color-success);">● Active</span>
+        </div>
+
+        <div class="fp-scroll">
+          <!-- Minuteur & Progression de l'étape active -->
+          <div class="fp-hero-summary" style="border-color:var(--color-primary);">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="fp-ratio-chip" style="background:var(--color-primary-container);color:var(--color-on-primary-container);">Étape en cours · Cuisson</span>
+              <span class="tabular" style="font-size:var(--type-meta);color:var(--color-ink-muted);">Fin prévue : 16:40</span>
+            </div>
+            <div class="tabular" style="font-size:2.5rem;font-weight:800;line-height:1.1;color:var(--color-primary);text-align:center;padding:0.4rem 0;">
+              28:15
+            </div>
+            <div class="fp-hydration-bar">
+              <div class="fp-hydration-seg" style="width:30%;background:var(--color-primary);"></div>
+            </div>
+            <span style="font-size:var(--type-label);color:var(--color-ink-muted);text-align:center;">
+              Enfourner le moule Pullman fermé sur la grille basse pendant 40 min.
+            </span>
+          </div>
+
+          <!-- Consignes d'équipement, four, vapeur et récipient (#124 / #28) -->
+          <div class="fp-section-header">
+            <h2 class="fp-section-title">Consignes Four &amp; Équipement</h2>
+          </div>
+
+          <div class="fp-metric-grid-2">
+            <div class="fp-metric-tile">
+              <span class="fp-metric-header">🔥 Température &amp; Mode</span>
+              <span class="fp-metric-value tabular" style="font-size:var(--type-metric-md);">190 °C</span>
+              <span class="fp-metric-sub">Sole + Voûte (Statique)</span>
+            </div>
+            <div class="fp-metric-tile">
+              <span class="fp-metric-header">💨 Vapeur &amp; Couvercle</span>
+              <span class="fp-metric-value" style="font-size:var(--type-metric-md);">Couvercle fermé</span>
+              <span class="fp-metric-sub">Sans buée externe</span>
+            </div>
+            <div class="fp-metric-tile">
+              <span class="fp-metric-header">🍞 Récipient</span>
+              <span class="fp-metric-value" style="font-size:var(--type-metric-md);">Moule Pullman</span>
+              <span class="fp-metric-sub tabular">Capacité 699 g de pâte</span>
+            </div>
+            <div class="fp-metric-tile">
+              <span class="fp-metric-header">🌡 Cible à cœur</span>
+              <span class="fp-metric-value tabular" style="font-size:var(--type-metric-md);">94 °C</span>
+              <span class="fp-metric-sub">Démouler dès la sortie</span>
+            </div>
+          </div>
+
+          <!-- Les 4 raccourcis fréquents exigés visibles par DESIGN.md (#124) -->
+          <div class="fp-section-header">
+            <h2 class="fp-section-title">Actions rapides de fournée</h2>
+          </div>
+          <div class="fp-metric-grid-2">
+            <button type="button" class="fp-btn-secondary" style="justify-content:flex-start;">⏱ +15 min</button>
+            <button type="button" class="fp-btn-secondary" style="justify-content:flex-start;">⚙ Ajuster durée</button>
+            <button type="button" class="fp-btn-secondary" style="justify-content:flex-start;">📝 Ajouter une note</button>
+            <button type="button" class="fp-btn-secondary" style="justify-content:flex-start;">👁 État de la pâte</button>
+          </div>
+        </div>
+
+        <div class="fp-bottom-bar">
+          <button type="button" class="fp-btn-primary">✓ Terminer l'étape (Démoulage)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         ÉCRAN 5 : SURFACES SECONDAIRES M3 (#129 : Catalogue des Farines & Corbeille)
+         ====================================================================== -->
+    <section class="phone-column" data-screen="s5">
+      <div class="phone-badge">
+        <span>Écran 5 · Surfaces secondaires harmonisées (#129)</span>
+      </div>
+
+      <div class="phone-frame" id="phone-s5">
+        <div class="fp-app-bar">
+          <div class="fp-app-bar-start">
+            <button type="button" class="fp-icon-btn" aria-label="Retour">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="fp-app-bar-titles">
+              <span class="fp-app-bar-title">Catalogue &amp; Corbeille</span>
+              <span class="fp-app-bar-subtitle">Zéro IonItem ni input brut non stylé</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fp-scroll">
+          <!-- Section Catalogue des farines -->
+          <div class="fp-section-header">
+            <h2 class="fp-section-title">Catalogue des farines</h2>
+            <button type="button" class="fp-pill-action">+ Nouvelle farine</button>
+          </div>
+
+          <div class="fp-group-card" style="padding:var(--fp-space-3);display:flex;flex-direction:column;gap:var(--fp-space-2);">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <strong style="font-size:var(--type-body);">Farine de gruau T45</strong>
+              <span class="fp-ratio-chip">Personnalisée</span>
+            </div>
+            <div class="fp-pill-row tabular">
+              <span class="fp-stat-pill">Protéines : 13,8 %</span>
+              <span class="fp-stat-pill">Cendres : 0,45 %</span>
+              <span class="fp-stat-pill">Force : W 340</span>
+            </div>
+          </div>
+
+          <div class="fp-group-card" style="padding:var(--fp-space-3);display:flex;flex-direction:column;gap:var(--fp-space-2);">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <strong style="font-size:var(--type-body);">Farine de pain T65 Tradition</strong>
+              <span class="fp-ratio-chip">Référence</span>
+            </div>
+            <div class="fp-pill-row tabular">
+              <span class="fp-stat-pill">Protéines : 11,8 %</span>
+              <span class="fp-stat-pill">Cendres : 0,62 %</span>
+              <span class="fp-stat-pill">Absorption : 62 %</span>
+            </div>
+          </div>
+
+          <!-- Section Corbeille M3 (Remplace les IonItem + boutons texte bruts) -->
+          <div class="fp-section-header" style="margin-top:var(--fp-space-2);">
+            <h2 class="fp-section-title">Corbeille (1 recette)</h2>
+          </div>
+
+          <div class="fp-group-card" style="padding:var(--fp-space-3);display:flex;flex-direction:column;gap:var(--fp-space-2-5);">
+            <div>
+              <strong style="font-size:var(--type-body);">Test Ciabatta 85 %</strong>
+              <span class="fp-ing-sub">Supprimée il y a 2 jours · 3 versions conservées</span>
+            </div>
+            <div style="display:flex;gap:var(--fp-space-2);">
+              <button type="button" class="fp-btn-secondary" style="flex:1;min-height:2.5rem;">↺ Restaurer</button>
+              <button type="button" class="fp-btn-secondary" style="flex:1;min-height:2.5rem;color:var(--color-danger);border-color:var(--color-danger);background:var(--color-danger-bg);">Supprimer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       VUE 2 : BUILDER GRAPHIQUE & REGISTRE DES 12 MODULES RÉUTILISABLES (Pour Agents & Owner)
+       ======================================================================== -->
+  <section class="registry-workspace" id="view-builder">
+    <!-- Colonne 1 : Liste des 12 modules officiels -->
+    <div class="registry-panel">
+      <h2 style="margin:0;font-size:16px;">🧩 Registre des 12 Modules</h2>
+      <p style="margin:0;font-size:12px;color:var(--color-ink-muted);">
+        Règle stricte : les agents (Claude, Codex, Gemini) doivent assembler les écrans exclusivement à partir de ces modules canoniques en <code>rem</code>.
+      </p>
+      <div id="registry-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
+    <!-- Colonne 2 : Configurateur & Aperçu Live en REM dans un conteneur téléphone -->
+    <div class="registry-panel" style="align-items:center;">
+      <div style="width:100%;display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:15px;" id="builder-title">Aperçu du module</h3>
+        <div id="builder-variant-controls" style="display:flex;gap:6px;"></div>
+      </div>
+
+      <div style="width:var(--phone-width, 393px);background:var(--color-bg);border:1.5px solid var(--color-outline);border-radius:20px;padding:1rem;position:relative;min-height:240px;display:flex;flex-direction:column;justify-content:center;" id="builder-preview-stage">
+        <!-- Rendu dynamique du module sélectionné -->
+      </div>
+    </div>
+
+    <!-- Colonne 3 : Code canonique prêt à copier pour React / CSS -->
+    <div class="registry-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:15px;">Snippet Canonique (REM)</h3>
+        <button type="button" class="ctrl-pill active" onclick="copyBuilderCode(this)">⧉ Copier le code</button>
+      </div>
+      <p style="margin:0;font-size:12px;color:var(--color-ink-muted);" id="builder-usage-note"></p>
+      <pre class="code-box" id="builder-code-box"></pre>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       VUE 3 : RÈGLES DESIGN.MD (Discipline REM, Animations #130 & Registre Modulaire)
+       ======================================================================== -->
+  <section class="rules-workspace" id="view-rules">
+    <div class="registry-panel">
+      <h2 style="margin:0;font-size:18px;">📐 Nouvelles règles prêtes à intégrer dans <code>DESIGN.md</code></h2>
+      <p style="margin:0;color:var(--color-ink-muted);font-size:14px;">
+        Ce document consolide les règles validées pour 0.3.0 : conversion ciblée en <code>rem</code>, repères graphiques sémantiques sobres, animations bornées (#130) et obligation d'utiliser le Registre des Modules.
+      </p>
+
+      <h3 style="margin:8px 0 4px;font-size:15px;">1. Discipline des unités : <code>rem</code> vs <code>px</code> (Conformité Grand Texte #120 N1)</h3>
+      <table class="rules-table">
+        <thead>
+          <tr>
+            <th>Catégorie</th>
+            <th>Unité obligatoire</th>
+            <th>Tokens / Valeurs canoniques</th>
+            <th>Ce qui est interdit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Typographie</strong></td>
+            <td><code>rem</code> uniquement</td>
+            <td><code>--type-headline (1.5rem)</code>, <code>--type-title (1.25rem)</code>, <code>--type-section (1.0625rem)</code>, <code>--type-body (0.9375rem)</code>, <code>--type-label (0.8125rem)</code>, <code>--type-meta (0.75rem)</code></td>
+            <td>Classes arbitraires figées : <code>text-[11px]</code>, <code>text-[13px]</code>, <code>text-[15px]</code>, <code>text-[17px]</code>, <code>text-[19px]</code></td>
+          </tr>
+          <tr>
+            <td><strong>Cibles tactiles &amp; Lignes</strong></td>
+            <td><code>rem</code> uniquement</td>
+            <td><code>--touch-target: 3rem</code> (48px), <code>--touch-row: 3.25rem</code> (52px), icônes <code>1rem–1.25rem</code></td>
+            <td>Hauteurs figées <code>min-h-[48px]</code>, <code>min-h-[52px]</code>, <code>size-[22px]</code></td>
+          </tr>
+          <tr>
+            <td><strong>Colonnes numériques</strong></td>
+            <td><code>rem</code> / <code>minmax</code></td>
+            <td><code>grid-template-columns: auto minmax(0, 1fr) 4.25rem 4.75rem</code></td>
+            <td>Colonnes fixes en pixels (<code>88px 104px</code>) qui tronquent les nombres à <code>20px</code></td>
+          </tr>
+          <tr>
+            <td><strong>Cadre téléphone &amp; Filets</strong></td>
+            <td><code>px</code> uniquement</td>
+            <td>Cadre desktop <code>412px × 915px</code> (#118), viewports <code>360px/393px</code>, bordures <code>1px / 1.5px</code>, rayons <code>8px–24px</code></td>
+            <td>Mettre le cadre téléphone en <code>rem</code> (ce qui élargirait l'écran virtuel au lieu de tester le reflux du texte)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin:12px 0 4px;font-size:15px;">2. Langage graphique sémantique (Zéro « syndrome ChatGPT », Zéro formulaire terne)</h3>
+      <ul style="margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:6px;">
+        <li><strong>Interdiction des émojis décoratifs aléatoires :</strong> ne jamais préfixer chaque label de texte par un émoji générique.</li>
+        <li><strong>Icônes SVG monochromes/duotones sémantiques :</strong> utiliser le jeu d'icônes métier (épi de blé pour la farine, goutte + jauge segmentée pour l'hydratation, balance/pâton pour la masse, opérations de boulangerie sur la ligne de temps des étapes).</li>
+        <li><strong>Cohérence numérique dans une même carte :</strong> ne jamais mélanger <code>≈ 73 %</code> (0 décimale) et <code>≈ 17,34 %</code> (2 décimales) dans la carte de résumé.</li>
+      </ul>
+
+      <h3 style="margin:12px 0 4px;font-size:15px;">3. Animations bornées (#130 / #73)</h3>
+      <ul style="margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:6px;">
+        <li><strong>Effets de surface et d'ancrage :</strong> <code>150ms cubic-bezier(0.2, 0, 0, 1)</code> (menu flottant <code>transform-origin: top right</code>, coche de pesée, pilules segmentées).</li>
+        <li><strong>Transitions spatiales bornées :</strong> <code>220ms–260ms</code> pour les accordéons de groupes d'étapes (<code>grid-template-rows: 0fr → 1fr</code>) et les bottom sheets M3 (<code>translateY</code>).</li>
+        <li><strong>Interdictions strictes :</strong> aucun compteur de chiffres roulant, aucun délai d'action bloqué par une animation, et désactivation immédiate (<code>0ms</code>) sous <code>prefers-reduced-motion: reduce</code>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SCRIPTS INTERACTIFS DE L'ATELIER & DU BUILDER DE MODULES
+       ======================================================================== -->
+  <script>
+    let currentRecipeMode = 'consult';
+    let currentBottomVariant = 'A';
+    let reorderModeActive = false;
+
+    function setStudioView(view, btn) {
+      document.querySelectorAll('.studio-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-screens').style.display = view === 'screens' ? 'flex' : 'none';
+      document.getElementById('screen-selector-cluster').style.display = view === 'screens' ? 'inline-flex' : 'none';
+      document.getElementById('view-builder').classList.toggle('active', view === 'builder');
+      document.getElementById('view-rules').classList.toggle('active', view === 'rules');
+    }
+
+    function filterScreens(target, btn) {
+      btn.parentElement.querySelectorAll('.ctrl-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('#view-screens .phone-column').forEach(col => {
+        col.style.display = (target === 'all' || col.dataset.screen === target) ? 'flex' : 'none';
+      });
+    }
+
+    function setTheme(theme, btn) {
+      document.documentElement.setAttribute('data-theme', theme);
+      btn.parentElement.querySelectorAll('.ctrl-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function setRemScale(px, btn) {
+      document.documentElement.style.fontSize = px + 'px';
+      btn.parentElement.querySelectorAll('.ctrl-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function setPhoneWidth(w, btn) {
+      document.documentElement.style.setProperty('--phone-width', w + 'px');
+      btn.parentElement.querySelectorAll('.ctrl-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function setMotion(mode, btn) {
+      document.documentElement.setAttribute('data-motion', mode);
+      btn.parentElement.querySelectorAll('.ctrl-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function toggleFloatingMenu(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('s1-floating-menu').classList.toggle('open');
+    }
+
+    function closeFloatingMenu() {
+      document.getElementById('s1-floating-menu').classList.remove('open');
+    }
+
+    function toggleWaterSheet(open) {
+      document.getElementById('water-sheet').classList.toggle('open', open);
+    }
+
+    function toggleTemplateSheet(open) {
+      document.getElementById('template-sheet').classList.toggle('open', open);
+    }
+
+    function selectTemplate(name, card) {
+      card.parentElement.querySelectorAll('.fp-template-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      document.getElementById('btn-create-template').innerHTML = '<span>Créer « ' + name + ' »</span>';
+    }
+
+    function toggleWeighRow(row) {
+      if (currentRecipeMode === 'edit') return;
+      const cb = row.querySelector('.fp-checkbox');
+      if (!cb) return;
+      cb.checked = !cb.checked;
+      row.classList.toggle('weighed', cb.checked);
+      const total = document.querySelectorAll('#phone-s1 .fp-checkbox').length;
+      const checked = document.querySelectorAll('#phone-s1 .fp-checkbox:checked').length;
+      document.getElementById('weigh-counter').textContent = 'Pesés : ' + checked + ' / ' + total;
+    }
+
+    function setRecipeMode(mode) {
+      currentRecipeMode = mode;
+      document.getElementById('btn-mode-consult').classList.toggle('active', mode === 'consult');
+      document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
+      document.getElementById('s1-subtitle').textContent = mode === 'edit'
+        ? 'Édition sur place · Brouillon non enregistré'
+        : 'Version 1 · Pain de mie japonais au tangzhong';
+
+      document.querySelectorAll('#phone-s1 [data-edit-grams]').forEach(span => {
+        const val = span.getAttribute('data-edit-grams');
+        if (mode === 'edit') {
+          span.innerHTML = '<input type="text" class="fp-field tabular" value="' + val + '" aria-label="Masse" />';
+        } else {
+          span.textContent = val;
+        }
+      });
+      updateBottomBar();
+    }
+
+    function setBottomBarVariant(variant, btn) {
+      currentBottomVariant = variant;
+      btn.parentElement.querySelectorAll('.ctrl-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateBottomBar();
+    }
+
+    function updateBottomBar() {
+      const bar = document.getElementById('s1-bottom-bar');
+      if (currentRecipeMode === 'edit') {
+        bar.innerHTML = `
+          <button type="button" class="fp-btn-secondary" onclick="setRecipeMode('consult')">Annuler</button>
+          <button type="button" class="fp-btn-primary" onclick="setRecipeMode('consult')">✓ Enregistrer la version</button>
+        `;
+      } else if (currentBottomVariant === 'A') {
+        bar.innerHTML = `
+          <button type="button" class="fp-btn-secondary" onclick="setRecipeMode('edit')">✎ Modifier</button>
+          <button type="button" class="fp-btn-primary">▶ Démarrer la fournée</button>
+        `;
+      } else {
+        bar.innerHTML = `
+          <button type="button" class="fp-btn-secondary" title="Bibliothèque">☰ Recettes</button>
+          <button type="button" class="fp-btn-secondary" onclick="setRecipeMode('edit')">✎ Éditer</button>
+          <button type="button" class="fp-btn-primary">▶ Démarrer</button>
+        `;
+      }
+    }
+
+    function toggleReorderMode() {
+      reorderModeActive = !reorderModeActive;
+      const chip = document.getElementById('btn-reorder-chip');
+      chip.style.background = reorderModeActive ? 'var(--color-primary)' : 'var(--color-surface)';
+      chip.style.color = reorderModeActive ? 'var(--color-on-primary)' : 'var(--color-primary)';
+      chip.innerHTML = reorderModeActive ? '<span>✓ Terminer réorganisation</span>' : '<span>⇅ Réorganiser</span>';
+      document.querySelectorAll('#phone-s2 .fp-reorder-controls').forEach(el => {
+        el.hidden = !reorderModeActive;
+      });
+    }
+
+    function setProcessSubView(view, btn) {
+      btn.parentElement.querySelectorAll('.fp-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('process-groups-view').style.display = view === 'groups' ? 'flex' : 'none';
+      document.getElementById('process-lanes-view').style.display = view === 'lanes' ? 'flex' : 'none';
+    }
+
+    /* ========================================================================
+       DONNÉES DU REGISTRE DES 12 MODULES RÉUTILISABLES (BUILDER GRAPHIQUE)
+       ======================================================================== */
+    const MODULES_REGISTRY = [
+      {
+        id: 'fp-hero-summary',
+        name: '1. fp-hero-summary',
+        role: 'Carte de résumé de formule (#125)',
+        note: 'Remplace les lignes justify-between vides et le grid-cols-3 cassé de FormulaConsultation.tsx.',
+        variants: ['Enrichi (Shokupan)', 'Pain maigre (Baguette)'],
+        render: (v) => v === 0 ? `
+          <div class="fp-hero-summary">
+            <div class="fp-metric-grid-2">
+              <div class="fp-metric-tile">
+                <span class="fp-metric-header">🌾 Farine totale</span>
+                <span class="fp-metric-value tabular">314 g</span>
+              </div>
+              <div class="fp-metric-tile">
+                <span class="fp-metric-header">⚖ Pâte finale</span>
+                <span class="fp-metric-value tabular">699 g</span>
+              </div>
+            </div>
+            <div class="fp-hydration-card">
+              <div class="fp-hydration-top">
+                <strong style="font-size:var(--type-body);">💧 Hydratation effective</strong>
+                <span class="fp-metric-value tabular" style="color:var(--color-primary);">≈ 73 %</span>
+              </div>
+              <div class="fp-hydration-bar">
+                <div class="fp-hydration-seg" style="width:65%;background:var(--color-primary);"></div>
+                <div class="fp-hydration-seg" style="width:35%;background:#e0a370;"></div>
+              </div>
+            </div>
+          </div>` : `
+          <div class="fp-hero-summary">
+            <div class="fp-metric-grid-2">
+              <div class="fp-metric-tile">
+                <span class="fp-metric-header">🌾 Farine totale</span>
+                <span class="fp-metric-value tabular">600 g</span>
+              </div>
+              <div class="fp-metric-tile highlight">
+                <span class="fp-metric-header">💧 Hydratation</span>
+                <span class="fp-metric-value tabular">72 %</span>
+              </div>
+            </div>
+          </div>`
+      },
+      {
+        id: 'fp-metric-tile',
+        name: '2. fp-metric-tile',
+        role: 'Tuile de métrique unitaire (REM)',
+        note: 'Tuile standard ou mise en valeur (highlight) avec icône SVG sémantique, valeur tabulaire et sous-texte.',
+        variants: ['Standard', 'Highlight (Accent)'],
+        render: (v) => `
+          <div class="fp-metric-tile ${v === 1 ? 'highlight' : ''}">
+            <div class="fp-metric-header">
+              <span class="fp-metric-label-group">💧 Hydratation</span>
+            </div>
+            <div class="fp-metric-value tabular">≈ 73 %</div>
+            <span class="fp-metric-sub tabular">228 g d'eau / 314 g farine</span>
+          </div>`
+      },
+      {
+        id: 'fp-warning-banner',
+        name: '3. fp-warning-banner',
+        role: 'Bandeau d\'avertissement unifié (#125)',
+        note: 'Unifie les avertissements d\'ingrédients incomplets en un seul bloc compact en bas de carte.',
+        variants: ['Profil incomplet', 'Extrapolation modèle'],
+        render: (v) => `
+          <div class="fp-warning-banner" role="status">
+            <span>⚠</span>
+            <span>${v === 0
+              ? '<strong>Profil incomplet :</strong> eau, gras et sucres non renseignés pour <em>Lait en poudre</em>.'
+              : '<strong>Hors domaine validé :</strong> dose de levure extrapolée au-delà des mesures Izzreen 2016.'}</span>
+          </div>`
+      },
+      {
+        id: 'fp-floating-menu',
+        name: '4. fp-floating-menu',
+        role: 'Menu flottant ancré (#129)',
+        note: 'Remplace useIonActionSheet dans OverflowMenu.tsx. S\'ouvre à côté du bouton ⋮ avec animation scale+fade.',
+        variants: ['Menu Recette', 'Menu Fournée'],
+        render: (v) => `
+          <div class="fp-floating-menu open" style="position:relative;top:0;right:0;margin:0 auto;">
+            <button type="button" class="fp-menu-item">✎ Modifier sur place</button>
+            <button type="button" class="fp-menu-item">⧉ Dupliquer</button>
+            <div class="fp-menu-divider"></div>
+            <button type="button" class="fp-menu-item danger">🗑 Mettre à la corbeille</button>
+          </div>`
+      },
+      {
+        id: 'fp-ing-row',
+        name: '5. fp-ing-row',
+        role: 'Ligne d\'ingrédient & pesée (#122)',
+        note: 'Grille REM (auto 1fr 4.25rem 4.75rem) supportant la coche de pesée, l\'incorporation de composant et l\'édition sur place.',
+        variants: ['À peser', 'Pesé (coché)', 'Édition sur place', 'Incorporation composant'],
+        render: (v) => v === 3 ? `
+          <div class="fp-group-card">
+            <div class="fp-ing-row incorporation">
+              <span style="color:var(--color-primary);font-weight:700;">↳</span>
+              <span>Incorporer le <strong>Tangzhong refroidi</strong></span>
+              <span class="tabular" style="font-weight:700;">108 g</span>
+            </div>
+          </div>` : `
+          <div class="fp-group-card">
+            <div class="fp-ing-row ${v === 1 ? 'weighed' : ''}">
+              <input type="checkbox" class="fp-checkbox" ${v === 1 ? 'checked' : ''} />
+              <div>
+                <span class="fp-ing-name">Farine de pain T65</span>
+                <span class="fp-ing-sub">12,5 % protéines</span>
+              </div>
+              <span class="fp-ing-pct tabular">93,6 %</span>
+              <span class="fp-ing-grams tabular">${v === 2 ? '<input class="fp-field" value="294 g" />' : '294 g'}</span>
+            </div>
+          </div>`
+      },
+      {
+        id: 'fp-step-node',
+        name: '6. fp-step-node',
+        role: 'Nœud d\'étape sur Timeline (#100/#123)',
+        note: 'Associe un badge d\'opération SVG, un connecteur vertical, les pastilles Température/Durée et les boutons de réorganisation.',
+        variants: ['Consultation', 'Mode Réorganiser actif'],
+        render: (v) => `
+          <div class="fp-group-card" style="padding:1rem;">
+            <div class="fp-step-node">
+              <div class="fp-step-icon-badge">🔥</div>
+              <div class="fp-step-body">
+                <span class="fp-step-title">Cuisson couverte</span>
+                <span class="fp-step-desc">Moule Pullman fermé sur grille basse.</span>
+                <div class="fp-pill-row tabular">
+                  <span class="fp-stat-pill">🔥 190 °C</span>
+                  <span class="fp-stat-pill">⏱ 40 min</span>
+                </div>
+              </div>
+              ${v === 1 ? '<div class="fp-reorder-controls"><button class="fp-mini-btn">↑</button><button class="fp-mini-btn">↓</button><button class="fp-mini-btn">⧉</button></div>' : ''}
+            </div>
+          </div>`
+      },
+      {
+        id: 'fp-template-card',
+        name: '7. fp-template-card',
+        role: 'Carte de modèle Nouvelle Recette (#128)',
+        note: 'Présente le style, les badges de ratios clés et un accordéon structuré au lieu d\'un bloc de texte brut.',
+        variants: ['Sélectionné', 'Repos'],
+        render: (v) => `
+          <div class="fp-template-card ${v === 0 ? 'selected' : ''}">
+            <div style="display:flex;justify-content:space-between;">
+              <strong>Shokupan</strong>
+              <span class="fp-ratio-chip">Tangzhong</span>
+            </div>
+            <div class="fp-pill-row tabular">
+              <span class="fp-stat-pill">💧 73 %</span>
+              <span class="fp-stat-pill">🧈 10 %</span>
+              <span class="fp-stat-pill">🍯 10 %</span>
+            </div>
+          </div>`
+      },
+      {
+        id: 'fp-bottom-sheet',
+        name: '8. fp-bottom-sheet',
+        role: 'Bottom Sheet M3 animé (#125/#128/#129)',
+        note: 'Remplace les IonModal plein écran pour Détail de l\'hydratation, Nouvelle Recette et InfoSheet.',
+        variants: ['Aperçu en-tête + poignée'],
+        render: () => `
+          <div class="fp-bottom-sheet" style="transform:none;max-height:none;border:1px solid var(--color-outline);">
+            <div class="fp-sheet-handle"></div>
+            <div class="fp-sheet-header">
+              <h3 class="fp-sheet-title">Détail de l'hydratation</h3>
+              <button class="fp-icon-btn">✕</button>
+            </div>
+            <div class="fp-sheet-body">Contenu fluide en REM...</div>
+          </div>`
+      },
+      {
+        id: 'fp-segmented',
+        name: '9. fp-segmented',
+        role: 'Sélecteur segmenté M3 (#130)',
+        note: 'Utilisé pour Étapes groupées | Ligne de temps et pour le choix d\'ancrage.',
+        variants: ['2 options', '3 options'],
+        render: (v) => v === 0 ? `
+          <div class="fp-segmented">
+            <button class="fp-seg-btn active">Étapes groupées</button>
+            <button class="fp-seg-btn">Ligne de temps</button>
+          </div>` : `
+          <div class="fp-segmented">
+            <button class="fp-seg-btn active">Farine</button>
+            <button class="fp-seg-btn">Pâte</button>
+            <button class="fp-seg-btn">Pièces</button>
+          </div>`
+      },
+      {
+        id: 'fp-bottom-bar',
+        name: '10. fp-bottom-bar',
+        role: 'Barre d\'actions au pouce (#112)',
+        note: 'Supporte l\'Option A, l\'Option B et la barre d\'enregistrement d\'édition sur place.',
+        variants: ['Option A', 'Option B', 'Édition active'],
+        render: (v) => `
+          <div class="fp-bottom-bar" style="position:relative;border-radius:12px;border:1px solid var(--color-outline);">
+            ${v === 0 ? '<button class="fp-btn-secondary">✎ Modifier</button><button class="fp-btn-primary">▶ Démarrer</button>' :
+              v === 1 ? '<button class="fp-btn-secondary">☰ Recettes</button><button class="fp-btn-secondary">✎ Éditer</button><button class="fp-btn-primary">▶ Démarrer</button>' :
+              '<button class="fp-btn-secondary">Annuler</button><button class="fp-btn-primary">✓ Enregistrer</button>'}
+          </div>`
+      },
+      {
+        id: 'fp-stat-pill',
+        name: '11. fp-stat-pill',
+        role: 'Pastille de métadonnée sémantique',
+        note: 'Affiche température, durée, hydratation ou équipement avec icône discrète.',
+        variants: ['Ensemble de pastilles'],
+        render: () => `
+          <div class="fp-pill-row tabular">
+            <span class="fp-stat-pill">💧 ≈ 73 %</span>
+            <span class="fp-stat-pill">🌡 24 °C</span>
+            <span class="fp-stat-pill">⏱ 2 h 00</span>
+            <span class="fp-stat-pill">🔥 190 °C</span>
+          </div>`
+      },
+      {
+        id: 'fp-field',
+        name: '12. fp-field',
+        role: 'Champ de saisie unifié en REM (#121/#129)',
+        note: 'Remplace tous les inputs bruts non stylés (FloursPage, ProcessSection).',
+        variants: ['Numérique tabulaire', 'Recherche bibliothèque'],
+        render: (v) => v === 0
+          ? `<input type="text" class="fp-field tabular" style="width:7rem;" value="314 g" />`
+          : `<input type="search" class="fp-field" style="text-align:left;border-radius:999px;padding:0 1rem;" placeholder="Rechercher une recette..." />`
+      }
+    ];
+
+    let activeModuleIdx = 0;
+    let activeVariantIdx = 0;
+
+    function initBuilder() {
+      const list = document.getElementById('registry-list');
+      list.innerHTML = MODULES_REGISTRY.map((m, idx) => `
+        <button type="button" class="registry-item-btn ${idx === 0 ? 'active' : ''}" onclick="selectBuilderModule(${idx})">
+          <strong style="font-size:13px;">${m.name}</strong>
+          <span style="font-size:11px;color:var(--color-ink-muted);">${m.role}</span>
+        </button>
+      `).join('');
+      selectBuilderModule(0);
+    }
+
+    function selectBuilderModule(idx) {
+      activeModuleIdx = idx;
+      activeVariantIdx = 0;
+      document.querySelectorAll('#registry-list .registry-item-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === idx);
+      });
+      renderBuilderStage();
+    }
+
+    function selectBuilderVariant(vIdx) {
+      activeVariantIdx = vIdx;
+      renderBuilderStage();
+    }
+
+    function renderBuilderStage() {
+      const m = MODULES_REGISTRY[activeModuleIdx];
+      document.getElementById('builder-title').textContent = m.name + ' — ' + m.role;
+      document.getElementById('builder-usage-note').textContent = m.note;
+      document.getElementById('builder-variant-controls').innerHTML = m.variants.map((v, i) => `
+        <button type="button" class="ctrl-pill ${i === activeVariantIdx ? 'active' : ''}" style="border:1px solid var(--color-outline);" onclick="selectBuilderVariant(${i})">${v}</button>
+      `).join('');
+      const html = m.render(activeVariantIdx).trim();
+      document.getElementById('builder-preview-stage').innerHTML = html;
+      document.getElementById('builder-code-box').textContent = html;
+    }
+
+    function copyBuilderCode(btn) {
+      const code = document.getElementById('builder-code-box').textContent;
+      navigator.clipboard?.writeText(code);
+      const old = btn.textContent;
+      btn.textContent = '✓ Snippet copié !';
+      setTimeout(() => { btn.textContent = old; }, 1400);
+    }
+
+    initBuilder();
+
+    (function applyQueryParams() {
+      const p = new URLSearchParams(window.location.search);
+      const theme = p.get('theme');
+      if (theme && ['light', 'dark', 'amoled'].includes(theme)) {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+      const rem = Number(p.get('rem'));
+      if (rem && [16, 18.4, 20].includes(rem)) {
+        document.documentElement.style.fontSize = rem + 'px';
+      }
+      const view = p.get('view');
+      if (view && ['screens', 'builder', 'rules'].includes(view)) {
+        const btns = document.querySelectorAll('.studio-mode-btn');
+        const idx = view === 'screens' ? 0 : view === 'builder' ? 1 : 2;
+        if (btns[idx]) setStudioView(view, btns[idx]);
+      }
+      const screen = p.get('screen');
+      if (screen && ['s1', 's2', 's3', 's4', 's5'].includes(screen)) {
+        const pill = document.querySelector(`#screen-selector-cluster button[onclick*="'${screen}'"]`);
+        if (pill) filterScreens(screen, pill);
+      }
+      if (p.get('sheet') === 'water') toggleWaterSheet(true);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Flourprint 0.3 — Galerie de Revue UX, Maquettes &amp; Registre de Modules (#120)</title>
+  <style>
+    :root {
+      --bg: #181614;
+      --surface: #25211e;
+      --surface-high: #302b26;
+      --outline: #443d35;
+      --ink: #eee8df;
+      --muted: #b4aba0;
+      --primary: #d99164;
+      --on-primary: #1f1610;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      padding: 24px 16px 64px;
+    }
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .hero-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .hero-brand img {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .sub { margin: 0; color: var(--muted); font-size: 14px; }
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid var(--outline);
+      background: var(--surface-high);
+      color: var(--ink);
+    }
+    .btn.primary {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--surface-high);
+      border: 1px solid var(--outline);
+      color: var(--primary);
+    }
+    .card p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 8px;
+    }
+    .chip-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink);
+      background: var(--surface-high);
+      border: 1px solid var(--outline);
+      padding: 5px 11px;
+      border-radius: 999px;
+      text-decoration: none;
+    }
+    .chip-link:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .iframe-wrap {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--outline);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    iframe {
+      width: 100%;
+      height: 980px;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="hero-brand">
+        <img src="mark.svg" alt="Flourprint" />
+        <div>
+          <h1>Flourprint 0.3 — Atelier UX, Maquettes Interactives &amp; Builder Modulaire (#120)</h1>
+          <p class="sub">Révision de référence : <code>origin/dev</code> · Discipline 100 % <code>rem</code> · Icônes SVG sémantiques · Animations M3 bornées (#130) · Registre de 12 modules canoniques</p>
+        </div>
+      </div>
+      <div class="cta-row">
+        <a class="btn primary" href="mockup.html">📱 Ouvrir l'Atelier Complet (5 Écrans)</a>
+        <a class="btn" href="mockup.html?view=builder">🧩 Ouvrir le Builder &amp; Registre de Modules</a>
+        <a class="btn" href="mockup.html?view=rules">📐 Règles DESIGN.md (REM &amp; Motion)</a>
+      </div>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <h2><span>1. Recette, Résumé Visuel &amp; Eau</span><span class="tag">#121 #122 #125 #129</span></h2>
+        <p>Carte de résumé 2×2 sans espace mort ni <code>grid-cols-3</code> cassé, jauge d'hydratation avec goutte d'eau, bottom sheet « Détail de l'hydratation » sans <em>Sel 0 g</em> / <em>Sucre 0 g</em>, bandeau d'avertissement unifié, liste d'ingrédients hiérarchique unique avec pesée, et vrai menu flottant en haut à droite.</p>
+        <div class="links">
+          <a class="chip-link" href="mockup.html?screen=s1&amp;theme=dark">Sombre chaud</a>
+          <a class="chip-link" href="mockup.html?screen=s1&amp;theme=light">Clair</a>
+          <a class="chip-link" href="mockup.html?screen=s1&amp;theme=amoled">AMOLED</a>
+          <a class="chip-link" href="mockup.html?screen=s1&amp;sheet=water">Bottom Sheet Hydratation</a>
+          <a class="chip-link" href="mockup.html?screen=s1&amp;rem=20">Test Grand Texte 125 % (20px)</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2><span>2. Étapes Groupées, Timeline &amp; Ordre</span><span class="tag">#100 #104 #123</span></h2>
+        <p>Groupes repliables animés (Poolish, Tangzhong en parallèle, Pâte principale, Préchauffage en chevauchement), fil conducteur vertical avec icônes d'opérations boulangères, vue Ligne de temps et comparateur du mode « Réorganiser ».</p>
+        <div class="links">
+          <a class="chip-link" href="mockup.html?screen=s2&amp;theme=dark">Voir Étapes &amp; Timeline</a>
+          <a class="chip-link" href="mockup.html?screen=s2&amp;theme=light">Thème Clair</a>
+          <a class="chip-link" href="mockup.html?screen=s2&amp;rem=20">Grand Texte 125 %</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2><span>3. Bibliothèque &amp; « Nouvelle Recette »</span><span class="tag">#127 #128 #131</span></h2>
+        <p>Identité de build copiable en 1 clic, recherche &amp; filtres, et sélecteur de modèles catégorisé avec badges de ratios, repères structurés (fini le pavé de 25 lignes en anglais) et bouton sticky « Créer Shokupan » sans suffixe « 1 ».</p>
+        <div class="links">
+          <a class="chip-link" href="mockup.html?screen=s3&amp;theme=dark">Voir Sélecteur Modèles</a>
+          <a class="chip-link" href="mockup.html?screen=s3&amp;theme=amoled">AMOLED</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2><span>4. Préparation Active &amp; Surfaces M3</span><span class="tag">#124 #129</span></h2>
+        <p>Écran d'exécution active exposant les consignes Four/Vapeur/Récipient en tuiles visuelles et les 4 actions rapides (+15 min, Durée, Note, Observation), plus harmonisation du Catalogue des farines et de la Corbeille.</p>
+        <div class="links">
+          <a class="chip-link" href="mockup.html?screen=s4&amp;theme=dark">4. Préparation Active</a>
+          <a class="chip-link" href="mockup.html?screen=s5&amp;theme=dark">5. Farines &amp; Corbeille</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2><span>🧩 Builder &amp; Registre des 12 Modules</span><span class="tag">Anti-Broche-à-Poule</span></h2>
+        <p>Catalogue interactif des 12 briques UI officielles (<code>fp-hero-summary</code>, <code>fp-metric-tile</code>, <code>fp-floating-menu</code>, <code>fp-bottom-sheet</code>, etc.) permettant aux agents de copier le code canonique en <code>rem</code> sans réinventer de styles ad hoc.</p>
+        <div class="links">
+          <a class="chip-link" href="mockup.html?view=builder">Ouvrir le Builder Modulaire</a>
+          <a class="chip-link" href="mockup.html?view=rules">Spécification DESIGN.md (REM &amp; Motion)</a>
+        </div>
+      </article>
+    </section>
+
+    <div class="iframe-wrap">
+      <iframe src="mockup.html" title="Aperçu interactif de l'Atelier UX Flourprint 0.3"></iframe>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[
+  {
+    "file": "index.html",
+    "bytes": 8417,
+    "sha256": "86b766e95dee12b534eebce6384894208c5ba11521eec9072c6f7969a7dd83d6"
+  },
+  {
+    "file": "mockup.html",
+    "bytes": 128168,
+    "sha256": "91b99606117643fec624c881bb8db2f5504a0a0a01937e826b1c33b91a0b0b12"
+  },
+  {
+    "file": "mark.svg",
+    "bytes": 1514,
+    "sha256": "24acf2d553285a027142eebcd349b0deca207242f8ced003f54ee2fe6342a9c9"
+  }
+]
