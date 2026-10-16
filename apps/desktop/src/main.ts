@@ -4,6 +4,8 @@ import { pathToFileURL } from 'node:url';
 import {
   app,
   BrowserWindow,
+  clipboard,
+  ClipboardItem,
   dialog,
   ipcMain,
   Menu,
@@ -15,7 +17,8 @@ import {
 } from 'electron';
 import { BRIDGE_OPS, type BridgeOp } from '@flourprint/adapters/sqlite-bridge';
 import { nodeSqliteBridge, openNodeDatabase } from '@flourprint/adapters/sqlite-node';
-import { sameApp, shellChannel } from './channel.js';
+import { sameApp, shellChannel, WEB_TARGETS, type WebTarget } from './channel.js';
+import { OVERLAY_CSS, screenshotName, type Overlay } from './debug.js';
 import { catalogFor, type MessageKey } from './messages.js';
 import {
   contentSize,
@@ -121,6 +124,55 @@ const restartPrompt = async (window: BrowserWindow) => {
   }
 };
 
+/** The address the window shows: the bundled app, or the dev shell's chosen version. */
+const pageUrl = (): string =>
+  channel.kind === 'dev' ? channel.targets[stored.webTarget].url : `${ORIGIN}/`;
+
+const windowTitle = (): string =>
+  channel.kind === 'dev' ? `${channel.name} — ${t(`version.${stored.webTarget}`)}` : channel.name;
+
+/** Debug overlays switched on, and the key of each one's CSS in the current page. */
+const overlays = new Map<Overlay, string | undefined>();
+
+const showOverlays = async (contents: WebContents) => {
+  for (const overlay of overlays.keys()) {
+    overlays.set(overlay, await contents.insertCSS(OVERLAY_CSS[overlay]));
+  }
+};
+
+const toggleOverlay = async (contents: WebContents, overlay: Overlay, on: boolean) => {
+  const key = overlays.get(overlay);
+  if (key) await contents.removeInsertedCSS(key);
+  if (on) overlays.set(overlay, await contents.insertCSS(OVERLAY_CSS[overlay]));
+  else overlays.delete(overlay);
+};
+
+const screenshotsFolder = () => join(app.getPath('pictures'), 'Flourprint');
+
+/**
+ * The page alone, at its CSS size times the zoom, without the window's frame or menu: saved as a
+ * PNG in Pictures\Flourprint and copied to the clipboard. The title bar says it for a moment.
+ */
+const takeScreenshot = async (window: BrowserWindow) => {
+  try {
+    const image = await window.webContents.capturePage();
+    mkdirSync(screenshotsFolder(), { recursive: true });
+    const version = channel.kind === 'dev' ? stored.webTarget : 'release';
+    const png = image.toPNG();
+    writeFileSync(join(screenshotsFolder(), screenshotName(version, new Date())), png);
+    await clipboard.write([
+      new ClipboardItem({ 'image/png': new Blob([new Uint8Array(png)], { type: 'image/png' }) }),
+    ]);
+    window.setTitle(`${windowTitle()} — ${t('debug.saved')}`);
+  } catch (cause) {
+    console.error('Screenshot failed', cause);
+    window.setTitle(`${windowTitle()} — ${t('debug.failed')}`);
+  }
+  setTimeout(() => {
+    if (!window.isDestroyed()) window.setTitle(windowTitle());
+  }, 2500);
+};
+
 const applyWindowSize = (window: BrowserWindow) => {
   const size = contentSize(stored);
   window.setContentSize(size.width, size.height);
@@ -135,7 +187,28 @@ const buildMenu = (window: BrowserWindow) => {
     else applyWindowSize(window);
     buildMenu(window);
   };
+  // One click loads the other version; its data stays with its own address.
+  const switchTo = (webTarget: WebTarget) => {
+    if (webTarget === stored.webTarget) return;
+    update({ webTarget }, false);
+    window.setTitle(windowTitle());
+    void window.loadURL(pageUrl());
+  };
+  const contents = window.webContents;
   const template: MenuItemConstructorOptions[] = [
+    ...(channel.kind === 'dev'
+      ? [
+          {
+            label: t('menu.version'),
+            submenu: WEB_TARGETS.map((target): MenuItemConstructorOptions => ({
+              label: t(`version.${target}`),
+              type: 'radio',
+              checked: stored.webTarget === target,
+              click: () => switchTo(target),
+            })),
+          },
+        ]
+      : []),
     {
       label: t('menu.view'),
       submenu: [
@@ -172,6 +245,38 @@ const buildMenu = (window: BrowserWindow) => {
         },
         { type: 'separator' },
         { label: t('menu.reload'), role: 'reload' },
+      ],
+    },
+    {
+      label: t('menu.debug'),
+      submenu: [
+        {
+          label: t('debug.grid'),
+          type: 'checkbox',
+          checked: overlays.has('grid'),
+          click: (item) => void toggleOverlay(contents, 'grid', item.checked),
+        },
+        {
+          label: t('debug.outlines'),
+          type: 'checkbox',
+          checked: overlays.has('outlines'),
+          click: (item) => void toggleOverlay(contents, 'outlines', item.checked),
+        },
+        { type: 'separator' },
+        {
+          label: t('debug.screenshot'),
+          accelerator: 'CmdOrCtrl+Shift+S',
+          click: () => void takeScreenshot(window),
+        },
+        {
+          label: t('debug.screenshots'),
+          click: () => {
+            mkdirSync(screenshotsFolder(), { recursive: true });
+            void shell.openPath(screenshotsFolder());
+          },
+        },
+        { type: 'separator' },
+        { label: t('debug.hardReload'), role: 'forceReload' },
         { label: t('menu.devTools'), role: 'toggleDevTools' },
       ],
     },
@@ -187,7 +292,8 @@ const buildMenu = (window: BrowserWindow) => {
       ],
     },
   ];
-  window.setMenu(Menu.buildFromTemplate(template));
+  // The application menu, the only window's menu bar; also what tests read back.
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 };
 
 const serveWeb = () => {
@@ -230,7 +336,7 @@ const createWindow = (database: ReturnType<typeof openNodeDatabase> | undefined)
   const size = contentSize(stored);
   const icon = windowIcon();
   const window = new BrowserWindow({
-    title: channel.name,
+    title: windowTitle(),
     useContentSize: true,
     width: size.width,
     height: size.height,
@@ -254,16 +360,22 @@ const createWindow = (database: ReturnType<typeof openNodeDatabase> | undefined)
     if (database?.isTransaction) database.exec('ROLLBACK');
   });
   contents.on('will-navigate', (event, url) => {
-    if (!sameApp(channel, url, ORIGIN)) event.preventDefault();
+    if (!sameApp(channel, url, ORIGIN, stored.webTarget)) event.preventDefault();
   });
   contents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  contents.on('dom-ready', () => contents.setZoomFactor(stored.zoom));
+  contents.on('dom-ready', () => {
+    contents.setZoomFactor(stored.zoom);
+    // Injected CSS lasts one document: put the overlays back after a reload or a switch.
+    void showOverlays(contents);
+  });
+  // The page's own title would replace the shell's, which names the version.
+  window.on('page-title-updated', (event) => event.preventDefault());
   buildMenu(window);
   // Emulation needs a live document; set it on a blank page so the app starts as on a phone.
   void window
     .loadURL('about:blank')
     .then(() => emulatePhone(contents))
-    .then(() => window.loadURL(channel.kind === 'dev' ? channel.url : `${ORIGIN}/`));
+    .then(() => window.loadURL(pageUrl()));
   return window;
 };
 

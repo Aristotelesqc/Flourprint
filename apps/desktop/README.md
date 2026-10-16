@@ -17,6 +17,22 @@ with the shell. It needs the network. The remote page gets no SQLite bridge: its
 browser-preview storage (ADR 0015) of its own folder, `%APPDATA%\Flourprint Dev`, apart from the
 release shell's.
 
+## Version (dev shell, menu Version)
+
+One click switches the dev shell between **Release (main)**, **Dev** and **Canary**: it loads that
+version's web address and remembers the choice. Each address keeps its own data. This is the
+published web build of each branch, in browser storage; the release shell (`Flourprint.exe`) is
+the one with SQLite.
+
+## Debug menu
+
+- **Alignment grid**: 8 px lines over 4 px lines, from the page's top-left corner (DESIGN.md
+  spacing scale).
+- **Element outlines**: every element's box.
+- **Screenshot of the app** (Ctrl+Shift+S): the page alone, without the window frame or menu,
+  saved in `Pictures\Flourprint` and copied to the clipboard; the title bar confirms it.
+- **Reload without the cache**, **Developer tools**.
+
 ## Display options (menu View)
 
 - **Phone**: Pixel 9 Pro XL or Pixel 7 viewport. **Window size**: 100 % to 67 % for small screens.

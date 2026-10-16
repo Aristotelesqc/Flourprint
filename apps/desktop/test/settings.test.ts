@@ -19,7 +19,15 @@ describe('desktop settings', () => {
   it('keeps valid stored values', () => {
     expect(
       parseSettings('{"disableGpu":true,"forceSrgb":true,"device":"pixel-7","zoom":0.8}'),
-    ).toEqual({ disableGpu: true, forceSrgb: true, device: 'pixel-7', zoom: 0.8 });
+    ).toEqual({
+      disableGpu: true,
+      forceSrgb: true,
+      device: 'pixel-7',
+      zoom: 0.8,
+      webTarget: 'dev',
+    });
+    expect(parseSettings('{"webTarget":"canary"}').webTarget).toBe('canary');
+    expect(parseSettings('{"webTarget":"prod"}').webTarget).toBe('dev');
   });
 
   it('lets a switch or a variable turn the GPU off for one launch', () => {
