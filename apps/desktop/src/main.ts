@@ -4,8 +4,6 @@ import { pathToFileURL } from 'node:url';
 import {
   app,
   BrowserWindow,
-  clipboard,
-  ClipboardItem,
   dialog,
   ipcMain,
   Menu,
@@ -151,18 +149,15 @@ const screenshotsFolder = () => join(app.getPath('pictures'), 'Flourprint');
 
 /**
  * The page alone, at its CSS size times the zoom, without the window's frame or menu: saved as a
- * PNG in Pictures\Flourprint and copied to the clipboard. The title bar says it for a moment.
+ * PNG in Pictures\Flourprint. The title bar says it for a moment. Not copied to the clipboard:
+ * Electron 44's image clipboard crashed the shell on Windows (owner report of 2026-10-16).
  */
 const takeScreenshot = async (window: BrowserWindow) => {
   try {
     const image = await window.webContents.capturePage();
     mkdirSync(screenshotsFolder(), { recursive: true });
     const version = channel.kind === 'dev' ? stored.webTarget : 'release';
-    const png = image.toPNG();
-    writeFileSync(join(screenshotsFolder(), screenshotName(version, new Date())), png);
-    await clipboard.write([
-      new ClipboardItem({ 'image/png': new Blob([new Uint8Array(png)], { type: 'image/png' }) }),
-    ]);
+    writeFileSync(join(screenshotsFolder(), screenshotName(version, new Date())), image.toPNG());
     window.setTitle(`${windowTitle()} — ${t('debug.saved')}`);
   } catch (cause) {
     console.error('Screenshot failed', cause);
