@@ -46,6 +46,10 @@ export default tseslint.config(
     rules: { 'no-restricted-imports': ['error', { patterns: domainForbidden }] },
   },
   {
+    files: ['docs/mockups/0.3-ux/src/**/*.{ts,tsx}', 'scripts/mockup-tests/**/*.mjs'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+  {
     files: ['apps/mobile/**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.browser } },
     rules: {

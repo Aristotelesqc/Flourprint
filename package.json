@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p apps/mobile && tsc -p apps/mobile/tsconfig.node.json && tsc -p apps/desktop/tsconfig.e2e.json",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p apps/mobile && tsc -p apps/mobile/tsconfig.node.json && tsc -p apps/desktop/tsconfig.e2e.json && tsc -p docs/mockups/0.3-ux",
     "lint": "eslint .",
     "test": "tsc -b && vitest run",
     "format": "prettier --write .",
@@ -17,7 +17,10 @@
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && vitest run && pnpm test:backlog",
     "test:backlog": "node --test scripts/backlog-view.test.mjs",
     "build:mobile": "pnpm --filter @flourprint/mobile build",
-    "build:desktop": "pnpm --filter @flourprint/desktop package"
+    "build:desktop": "pnpm --filter @flourprint/desktop package",
+    "build:mockups": "node scripts/mockup-review.mjs build",
+    "test:mockups": "node scripts/test-mockups.mjs",
+    "capture:mockups": "node scripts/capture-mockups.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

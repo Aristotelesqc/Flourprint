@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": [],
+    "paths": {
+      "react": ["../../../apps/mobile/node_modules/@types/react"],
+      "react/*": ["../../../apps/mobile/node_modules/@types/react/*"],
+      "react-dom/*": ["../../../apps/mobile/node_modules/@types/react-dom/*"],
+      "@flourprint/core/domain": ["../../../packages/core/src/domain/index.ts"],
+      "@flourprint/core/application": ["../../../packages/core/src/application/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

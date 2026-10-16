@@ -340,3 +340,13 @@ DESIGN.md does not select a new dependency or migrate routes.
 - Do not treat accepted lifecycle contracts as already implemented APIs, or invent outcomes in UI.
 - Do not declare native behavior or accessibility verified from source alone.
 - Track work on individual GitHub issues and labels; this brief is not a second backlog.
+
+## Experimental 0.3 review components (#133 / #134)
+
+`docs/mockups/0.3-ux/src/` contains a standalone React prototype with shared primitives and
+presentation blocks, imported by its screens and live component catalogue. Its spacing,
+typography, warm Light/Dark/AMOLED tokens, real input hit areas, stable draft status footprint
+and native-dialog dismissal can be evaluated in the hosted review and screenshot bundle.
+This is a proposal under owner review, not a replacement for the runtime component inventory
+above or a decision to change the app's Ionic shell. A/B navigation and weighing lifetime
+remain explicit choices. Prototype state is in memory; production adoption is a separate slice.

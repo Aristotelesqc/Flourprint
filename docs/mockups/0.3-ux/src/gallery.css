@@ -1,0 +1,51 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #191612;
+  color: #f1e7db;
+  font:
+    16px/1.6 system-ui,
+    sans-serif;
+}
+main {
+  max-width: 1280px;
+  margin: auto;
+  padding: 24px;
+}
+h1 {
+  color: #e6ad7d;
+}
+a {
+  color: #ffc493;
+}
+code {
+  overflow-wrap: anywhere;
+}
+.shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 24px;
+}
+figure {
+  margin: 0;
+  background: #29221c;
+  border: 1px solid #665345;
+  border-radius: 18px;
+  padding: 16px;
+}
+img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #665345;
+}
+figcaption {
+  font-size: 14px;
+  padding-top: 12px;
+}
+figcaption p {
+  margin: 6px 0;
+}
