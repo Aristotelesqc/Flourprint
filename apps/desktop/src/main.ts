@@ -219,8 +219,16 @@ const openDatabase = () => {
   return database;
 };
 
+/** Packaged: icon.png next to the app; in the repository, the channel's icon in resources/. */
+const windowIcon = (): string | undefined =>
+  [
+    join(app.getAppPath(), 'icon.png'),
+    join(app.getAppPath(), 'resources', channel.kind === 'dev' ? 'icon-dev.png' : 'icon.png'),
+  ].find((path) => existsSync(path));
+
 const createWindow = (database: ReturnType<typeof openNodeDatabase> | undefined) => {
   const size = contentSize(stored);
+  const icon = windowIcon();
   const window = new BrowserWindow({
     title: channel.name,
     useContentSize: true,
@@ -230,6 +238,7 @@ const createWindow = (database: ReturnType<typeof openNodeDatabase> | undefined)
     maximizable: false,
     fullscreenable: false,
     backgroundColor: '#f7f5f0',
+    ...(icon ? { icon } : {}),
     autoHideMenuBar: false,
     webPreferences: {
       // Only the bundled app gets the SQLite bridge, never a remote page.

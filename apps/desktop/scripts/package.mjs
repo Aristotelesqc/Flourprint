@@ -16,6 +16,7 @@ import {
 } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
+import { Data, NtExecutable, NtExecutableResource, Resource } from 'resedit';
 
 const here = resolve(import.meta.dirname, '..');
 const repo = resolve(here, '..', '..');
@@ -46,6 +47,44 @@ if (executable) {
     throw new Error(`Electron's ${platform} distribution is not installed in ${electronDist}`);
   renameSync(join(out, executable[0]), join(out, executable[1]));
 }
+const icon = join(here, 'resources', dev ? 'icon-dev' : 'icon');
+
+/**
+ * The Windows executable shows the Flourprint logo and name (Explorer, taskbar, Task Manager)
+ * instead of Electron's. Rewriting its resources drops Electron's signature; the zip is unsigned
+ * either way (ADR 0016).
+ */
+const brandWindowsExecutable = (path, version) => {
+  const exe = NtExecutable.from(readFileSync(path), { ignoreCert: true });
+  const resources = NtExecutableResource.from(exe);
+  const iconFile = Data.IconFile.from(readFileSync(`${icon}.ico`));
+  for (const group of Resource.IconGroupEntry.fromEntries(resources.entries)) {
+    Resource.IconGroupEntry.replaceIconsForResource(
+      resources.entries,
+      group.id,
+      group.lang,
+      iconFile.icons.map((item) => item.data),
+    );
+  }
+  const [info] = Resource.VersionInfo.fromEntries(resources.entries);
+  if (!info) throw new Error('No version information in the Electron executable');
+  for (const language of info.getAllLanguagesForStringValues()) {
+    info.setStringValues(language, {
+      CompanyName: 'Flourprint',
+      FileDescription: productName,
+      InternalName: productName,
+      OriginalFilename: executable[1],
+      ProductName: productName,
+      LegalCopyright: '',
+    });
+  }
+  info.setFileVersion(version);
+  info.setProductVersion(version);
+  info.outputToResourceEntries(resources.entries);
+  resources.outputResource(exe);
+  writeFileSync(path, Buffer.from(exe.generate()));
+};
+
 rmSync(join(out, 'resources', 'default_app.asar'), { force: true });
 
 const app = join(out, 'resources', 'app');
@@ -67,6 +106,8 @@ writeFileSync(
   )}\n`,
 );
 cpSync(join(here, 'dist'), join(app, 'dist'), { recursive: true });
+// The window's icon (main.ts).
+cpSync(`${icon}.png`, join(app, 'icon.png'));
 if (!dev) {
   const web = join(repo, 'apps', 'mobile', 'dist');
   if (!existsSync(join(web, 'index.html'))) throw new Error('Build the mobile app first.');
@@ -78,5 +119,10 @@ for (const name of ['core', 'adapters']) {
   mkdirSync(target, { recursive: true });
   cpSync(join(source, 'package.json'), join(target, 'package.json'));
   cpSync(join(source, 'dist'), join(target, 'dist'), { recursive: true });
+}
+if (platform === 'win32') {
+  // The app's version (root package.json), not the shell package's placeholder.
+  const { version } = JSON.parse(readFileSync(join(repo, 'package.json'), 'utf8'));
+  brandWindowsExecutable(join(out, executable[1]), version);
 }
 console.log(out);

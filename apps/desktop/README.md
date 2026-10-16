@@ -38,3 +38,8 @@ pnpm --filter @flourprint/desktop e2e        # smoke tests of both packaged shel
 ```
 
 Mouse input becomes touch input in the window; scroll with a drag or the wheel.
+
+The icons (`resources/icon.ico` and `icon.png`, `icon-dev.*` for the dev shell) are rendered
+from the app logo with `node resources/render-icons.mjs`. Packaging for Windows writes the icon and
+the name into the executable, so Explorer, the taskbar and Task Manager show Flourprint, not
+Electron.
