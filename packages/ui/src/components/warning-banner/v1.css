@@ -1,0 +1,20 @@
+/* Presentation owned by fp.warning-banner v1. */
+[data-fp-container='fp.warning-banner'][data-fp-container-version='v1'].status-panel {
+  display: grid;
+  gap: var(--fp-space-2);
+}
+[data-fp-container='fp.warning-banner'][data-fp-container-version='v1'] .status-panel-header {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+[data-fp-container='fp.warning-banner'][data-fp-container-version='v1'] .status-panel-title {
+  font-weight: 700;
+}
+[data-fp-container='fp.warning-banner'][data-fp-container-version='v1'] .status-panel-message {
+  margin: 0;
+  line-height: 1.5;
+}
+[data-fp-container='fp.warning-banner'][data-fp-container-version='v1'] .status-panel-children {
+  display: grid;
+  gap: var(--fp-space-2);
+}

@@ -1,0 +1,79 @@
+/* Presentation owned by fp.number-field v1. */
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-1);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0 var(--fp-space-2);
+  background: var(--color-surface-container);
+  color: var(--color-ink);
+  border: 1.5px solid var(--color-outline);
+  border-radius: var(--radius-sm);
+  font-size: var(--type-label);
+  font-weight: 700;
+  text-align: right;
+  transition:
+    border-color var(--dur-effect) var(--ease-standard),
+    background-color var(--dur-effect) var(--ease-standard);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-unit {
+  position: absolute;
+  right: var(--fp-space-2-5);
+  font-size: var(--type-meta);
+  color: var(--color-ink-muted);
+  pointer-events: none;
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-error .field-input {
+  border-color: var(--color-danger);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-error-msg {
+  font-size: var(--type-meta);
+  color: var(--color-danger);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input {
+  padding-right: 2.25rem;
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact {
+  width: 4.5rem;
+  min-width: 0;
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact .field-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact .field-input {
+  min-width: 0;
+  padding-left: var(--fp-space-1);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-hint {
+  color: var(--color-ink-muted);
+  font-size: var(--type-meta);
+  margin: var(--fp-space-1) 0 0;
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact {
+  flex: 0 0 5rem;
+  width: 5rem;
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact .field-hint {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

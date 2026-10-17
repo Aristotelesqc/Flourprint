@@ -163,3 +163,34 @@ Record only reviewed setup facts in repo documentation: CLI/MCP versions, scope 
 results. Keep machine-specific paths, prompts, raw account/session diagnostics and synthetic
 browser artifacts in ignored scratch space. Normal grants solve access, not accessibility,
 native-device acceptance, visual quality or the PR merge decision.
+
+## Tool-free implementation fallback (2026-10-16)
+
+On a new isolated checkout, headless `accept-edits` may still receive a denied workspace read.
+A normal interactive launch may then present a whole-folder trust prompt covering read, edit
+and execution. Do not treat the repository assignment or legacy `[READ-TOKEN]`/`[WRITE-TOKEN]`
+text as a trust grant. In the #133 run, automatic approval rejected that broader trust action;
+the owned interactive process was exited normally. No guard was disabled and no denied file
+was accessed through a different tool.
+
+A permitted alternative was to supply the already-authorized source text in the assignment and
+require a tool-free response containing an explicit file map. Inspect the structured transcript
+for actual tool calls, parse its final JSON strictly, check every relative output path against
+an allowlist, and stage it outside the repository for review before integrating selected files.
+A completion can contain a phase prefix before the JSON; do not execute the response or assume
+it is valid JSON without parsing. The #133 kit needed one bounded correction; Codex rejected
+unreviewed screen/solver code and integrated only the reviewed presentation files.
+
+Report this accurately as supplied-source generation, not direct workspace editing, successful
+permission recovery, browser use or Gemini-executed tests. Codex integration/tests remain the
+caller's responsibility. This fallback does not authorize sharing other source or bypassing an
+approval denial.
+
+## Browser capability probe (2026-10-17)
+
+In the bounded #133 check with AGY CLI 1.4.0 and `gemini-3.8-flash-high`, the exposed toolset
+contained workspace/command tools and static URL extraction, but no interactive browser-control
+tool. The reviewer returned `UNSUPPORTED` without using tools or changing grants. This was a
+capability gap, not an authentication or folder-trust failure. Do not relaunch permission recovery
+for this same toolset or count URL extraction as button testing. Codex owns the actual browser
+journeys and visual captures when this capability remains absent.
