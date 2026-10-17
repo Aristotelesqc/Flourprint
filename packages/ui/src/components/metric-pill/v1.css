@@ -1,0 +1,14 @@
+/* Presentation owned by fp.metric-pill v1. */
+[data-fp-component='fp.metric-pill'][data-fp-version='v1'].stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: var(--color-surface-container);
+  border: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-pill);
+  padding: 0.15rem 0.55rem;
+  font-size: var(--type-meta);
+  font-weight: 600;
+  color: var(--color-ink);
+  white-space: nowrap;
+}

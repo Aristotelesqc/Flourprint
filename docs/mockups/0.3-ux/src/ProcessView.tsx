@@ -1,3 +1,4 @@
+import { Ui } from './library';
 import { catalogText, curatedText } from './template-presentation';
 import { useState } from 'react';
 import {
@@ -10,9 +11,18 @@ import {
   type OvenMode,
 } from '@flourprint/core/domain';
 import { StepRow, StatusPanel } from './components';
-import { Button, IconButton, NumberField, Modal, Disclosure, Surface } from './ui';
+import { Button, Tabs, Icon, IconButton, NumberField, Modal, Disclosure, Surface } from './ui';
 import { type Prototype, type Content, project, diagnosticFixture, clone } from './model';
-import { t, duration, num, operationName, time, type Locale, type MessageKey } from './messages';
+import {
+  t,
+  duration,
+  num,
+  operationName,
+  time,
+  componentName,
+  type Locale,
+  type MessageKey,
+} from './messages';
 
 export const titleOf = (step: ProcessStep, locale: Locale) =>
   curatedText(locale, step.label) ?? step.label ?? operationName(locale, step.operation);
@@ -287,9 +297,7 @@ export function stepDetails(step: ProcessStep, locale: Locale): string[] {
   ];
 }
 export function Diagnostics({ store, locale }: { store: Prototype; locale: Locale }) {
-  const [scenario, setScenario] = useState(
-    new URLSearchParams(location.search).get('scenario') ?? 'recipe',
-  );
+  const scenario = new URLSearchParams(location.search).get('scenario') ?? 'recipe';
   const estimate = diagnosticFixture(scenario, store.content).dough;
   const direct = estimate.duration;
   const candidate = Object.entries(estimate.yeastPct).find(([, v]) => v.status === 'ok');
@@ -299,26 +307,13 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
       defaultOpen={new URLSearchParams(location.search).get('diagnostics') === '1'}
     >
       <div className="stack">
-        <label className="field-label">
-          {t(locale, 'preview')}
-          <select value={scenario} onChange={(e) => setScenario(e.target.value)}>
-            <option value="recipe">{t(locale, 'currentRecipe')}</option>
-            <option value="valid">
-              {t(locale, 'valid')} · {t(locale, 'preview')}
-            </option>
-            <option value="out">
-              {t(locale, 'outOfDomain')} · {t(locale, 'preview')}
-            </option>
-            <option value="noResult">
-              {t(locale, 'noResult')} · {t(locale, 'preview')}
-            </option>
-          </select>
-        </label>
         <StatusPanel
           title={t(locale, 'diagnostics')}
           status={
             direct.status === 'ok'
-              ? 'ok'
+              ? direct.extrapolations?.length
+                ? 'warning'
+                : 'ok'
               : direct.status === 'out_of_domain'
                 ? 'warning'
                 : 'unavailable'
@@ -333,13 +328,27 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
           )}
         >
           {direct.status === 'ok' && (
-            <strong>
-              {t(locale, 'estimate')} : {duration(locale, direct.value)}
-            </strong>
+            <div className="stack">
+              <strong>
+                {t(locale, 'estimate')} : {duration(locale, direct.value)}
+              </strong>
+              {direct.extrapolations && direct.extrapolations.length > 0 && (
+                <ul className="muted">
+                  {direct.extrapolations.map((extra) => (
+                    <li key={extra}>
+                      {catalogText(locale, `fermentation.extra.${extra}`) ?? extra}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
           {direct.status !== 'ok' && (
             <p>
-              {catalogText(locale, `fermentation.reason.${direct.reason}`) ?? t(locale, 'noResult')}
+              {catalogText(locale, `fermentation.reason.${direct.reason}`) ??
+                (direct.status === 'out_of_domain'
+                  ? t(locale, 'outOfDomain')
+                  : t(locale, 'noResult'))}
             </p>
           )}
           <p>{t(locale, 'readyTarget')}</p>
@@ -403,7 +412,7 @@ export function ProcessView({
   planning?: boolean;
 }) {
   const [view, setView] = useState(
-    new URLSearchParams(location.search).get('view') === 'grouped' ? 'grouped' : 'timeline',
+    new URLSearchParams(location.search).get('view') === 'timeline' ? 'timeline' : 'grouped',
   );
   const [editing, setEditing] = useState<ProcessStep | null>(() =>
     store.state.draft &&
@@ -480,26 +489,31 @@ export function ProcessView({
             </small>
           ))}
         {store.state.draft && (
-          <div className="actions">
-            <Button
-              variant="quiet"
-              icon="copy"
-              onClick={() =>
-                store.applyProcess(
-                  insertStepAfter(process, step.id, {
-                    ...step,
-                    id: crypto.randomUUID(),
-                    schedule: 'asap',
-                  }),
-                )
-              }
-            >
-              {t(locale, 'duplicate')}
-            </Button>
-            <Button variant="quiet" onClick={() => setRemoving(step.id)}>
-              {t(locale, 'remove')}
-            </Button>
-          </div>
+          <details className="step-more-actions">
+            <summary className="step-more-trigger" aria-label={t(locale, 'recipeActions')}>
+              <Icon name="more" size="1rem" />
+            </summary>
+            <div className="actions row">
+              <Button
+                variant="quiet"
+                icon="copy"
+                onClick={() =>
+                  store.applyProcess(
+                    insertStepAfter(process, step.id, {
+                      ...step,
+                      id: crypto.randomUUID(),
+                      schedule: 'asap',
+                    }),
+                  )
+                }
+              >
+                {t(locale, 'duplicate')}
+              </Button>
+              <Button variant="quiet" onClick={() => setRemoving(step.id)}>
+                {t(locale, 'remove')}
+              </Button>
+            </div>
+          </details>
         )}
       </StepRow>
     );
@@ -531,10 +545,17 @@ export function ProcessView({
           </p>
         </Surface>
       )}
-      <div className="actions">
-        <Button onClick={() => setView(view === 'timeline' ? 'grouped' : 'timeline')}>
-          {t(locale, view === 'timeline' ? 'grouped' : 'timeline')}
-        </Button>
+      <div className="process-view-toolbar row">
+        <Tabs
+          variant="pills"
+          label={t(locale, 'steps')}
+          tabs={[
+            { id: 'grouped', label: t(locale, 'grouped') },
+            { id: 'timeline', label: t(locale, 'timeline') },
+          ]}
+          activeId={view}
+          onChange={(id) => setView(id)}
+        />
         {store.state.draft && (
           <Button onClick={() => setOrdering(!ordering)}>
             {t(locale, ordering ? 'done' : 'order')}
@@ -544,11 +565,58 @@ export function ProcessView({
       {view === 'grouped' && <p className="muted">{t(locale, 'groupHelp')}</p>}
       {ordering && <p className="muted">{t(locale, 'reorderHelp')}</p>}
       {view === 'timeline' ? (
-        process.steps.map(renderStep)
+        <div className="timeline-lanes stack">
+          {full && (
+            <Ui
+              component="fp.timeline"
+              startLabel={time(locale, new Date(Math.min(...starts)).toISOString())}
+              endLabel={time(locale, new Date(Math.max(...ends)).toISOString())}
+              lanes={[
+                ...store.content.formula.components.map((c) => ({
+                  id: c.id,
+                  label: componentName(locale, c.id, store.content.names),
+                  steps: process.steps.filter((s) => s.id === c.id || s.id.startsWith(`${c.id}-`)),
+                })),
+                {
+                  id: 'dough',
+                  label: t(locale, 'dough'),
+                  steps: process.steps.filter(
+                    (s) =>
+                      !store.content.formula.components.some(
+                        (c) => s.id === c.id || s.id.startsWith(`${c.id}-`),
+                      ),
+                  ),
+                },
+              ].map((lane) => ({
+                id: lane.id,
+                label: lane.label,
+                events: lane.steps.flatMap((step) => {
+                  const timing = projection.ok ? projection.value.steps[step.id] : undefined;
+                  if (!timing?.start || !timing.end) return [];
+                  const span = Math.max(1, Math.max(...ends) - Math.min(...starts));
+                  return [
+                    {
+                      id: step.id,
+                      label: titleOf(step, locale),
+                      range: `${time(locale, timing.start)} – ${time(locale, timing.end)}`,
+                      startPct: ((Date.parse(timing.start) - Math.min(...starts)) / span) * 100,
+                      endPct: ((Date.parse(timing.end) - Math.min(...starts)) / span) * 100,
+                    },
+                  ];
+                }),
+              }))}
+            />
+          )}
+          {process.steps.map(renderStep)}
+        </div>
       ) : (
         <>
           {store.content.formula.components.map((component) => (
-            <Disclosure key={component.id} title={component.id} defaultOpen>
+            <Disclosure
+              key={component.id}
+              title={componentName(locale, component.id, store.content.names)}
+              defaultOpen
+            >
               {process.steps
                 .filter(
                   (step) => step.id === component.id || step.id.startsWith(`${component.id}-`),

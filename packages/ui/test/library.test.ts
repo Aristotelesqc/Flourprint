@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { Catalogue, catalogue as flourprintCatalogue } from '../src/catalogue/index.ts';
-import { checkCatalogue, createUi, parseOverrides } from '../src/library.ts';
+import { checkCatalogue, createLibrary, createUi, parseOverrides } from '../src/library.ts';
 import badgeV1 from './fixtures/badge/v1.ts';
 import badgeV2 from './fixtures/badge/v2.ts';
 import cardV1 from './fixtures/card-v1.ts';
@@ -100,8 +100,44 @@ describe('catalogue page', () => {
       expect(html).toContain(`data-theme="${theme}"`);
   });
 
-  it('says so when the library has no component yet', () => {
-    const html = render(createElement(Catalogue, { catalogue: flourprintCatalogue }));
+  it('says so for an empty catalogue', () => {
+    const html = render(createElement(Catalogue<Record<never, never>>, { catalogue: {} }));
     expect(html).toContain('data-testid="catalogue-empty"');
+  });
+});
+
+describe('nested selection', () => {
+  it('switches nested components through one manifest entry without changing their parent', () => {
+    type Parts = { 'fp.parent': object; 'fp.child': { label: string } };
+    const kit = createLibrary<Parts>();
+    const parent = kit.version({
+      id: 'fp.parent',
+      version: 'v1',
+      component: () => createElement(kit.Slot, { component: 'fp.child', label: 'Nested' }),
+      notes: 'Parent unchanged',
+      examples: [{ name: 'Parent', props: {} }],
+    });
+    const v1 = kit.version({
+      id: 'fp.child',
+      version: 'v1',
+      component: ({ label }) => createElement('span', null, 'CHILD_V1 ' + label),
+      notes: 'First',
+      examples: [{ name: 'First', props: { label: 'One' } }],
+    });
+    const v2 = kit.version({
+      id: 'fp.child',
+      version: 'v2',
+      component: ({ label }) => createElement('span', null, 'CHILD_V2 ' + label),
+      notes: 'Second',
+      examples: [{ name: 'Second', props: { label: 'Two' } }],
+    });
+    const first = createUi(kit.manifest({ 'fp.parent': parent, 'fp.child': v1 }));
+    const second = createUi(kit.manifest({ 'fp.parent': parent, 'fp.child': v2 }));
+    expect(render(createElement(first.Ui, { component: 'fp.parent' }))).toContain(
+      'CHILD_V1 Nested',
+    );
+    const changed = render(createElement(second.Ui, { component: 'fp.parent' }));
+    expect(changed).toContain('CHILD_V2 Nested');
+    expect(changed).not.toContain('CHILD_V1');
   });
 });

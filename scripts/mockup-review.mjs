@@ -4,6 +4,7 @@ import { cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { buildNames, codeName } from './build-names.mjs';
 
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const root = path.join(repo, 'docs/mockups/0.3-ux');
@@ -48,11 +49,14 @@ async function sourceHash() {
     }
   }
   await domainFiles('packages/core/src');
+  await domainFiles('packages/ui/src');
   for (const file of [
     'pnpm-lock.yaml',
     'apps/mobile/src/i18n/messages.ts',
     'apps/mobile/src/i18n/help.ts',
     'scripts/mockup-review.mjs',
+    'scripts/build-names.mjs',
+    'package.json',
   ]) {
     hash.update(file);
     hash.update(await readFile(path.join(repo, file)));
@@ -66,6 +70,12 @@ const port = Number(process.env.FLOURPRINT_MOCKUP_PORT ?? 4263);
 if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid port');
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim();
 const sourceSha256 = await sourceHash();
+const { version } = JSON.parse(await readFile(path.join(repo, 'package.json'), 'utf8'));
+const buildIdentity = buildNames(version, process.env);
+const buildLabel =
+  buildIdentity.channel === 'local'
+    ? `v${version} · ${codeName(revision)} · local`
+    : `${buildIdentity.label} · ${buildIdentity.channel}`;
 const config = {
   configFile: false,
   root,
@@ -88,6 +98,8 @@ const config = {
   define: {
     __MOCKUP_REVISION__: JSON.stringify(revision),
     __MOCKUP_SOURCE_HASH__: JSON.stringify(sourceSha256),
+    __MOCKUP_BUILD_LABEL__: JSON.stringify(buildLabel),
+    __MOCKUP_BUILD__: JSON.stringify(`${buildIdentity.build} · ${revision}`),
   },
   server: { host: '127.0.0.1', port, strictPort: true },
   preview: { host: '127.0.0.1', port, strictPort: true },
@@ -105,7 +117,7 @@ if (mode === 'build') {
   await cp(path.join(root, 'mark.svg'), path.join(root, 'dist/mark.svg'));
   await writeFile(
     path.join(root, 'dist/review-build.json'),
-    `${JSON.stringify({ revision, sourceSha256 }, null, 2)}\n`,
+    `${JSON.stringify({ revision, sourceSha256, build: buildIdentity, label: buildLabel }, null, 2)}\n`,
   );
 } else if (mode === 'serve') {
   const server = await createServer(config);

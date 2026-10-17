@@ -4,7 +4,8 @@
  * developer and review page generated from a catalogue registry, so its own labels are fixed
  * English; product text reaches components only through their props.
  */
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { createUi, type UiRenderer, type ComponentId } from '../library.ts';
 import type { Catalogue as CatalogueRegistry, ComponentMap, Manifest } from '../library.ts';
 
 const THEMES = ['light', 'dark', 'amoled'] as const;
@@ -87,6 +88,26 @@ export const Catalogue = <C extends ComponentMap>({ catalogue, manifest }: Catal
 
   const ids = Object.keys(catalogue).sort() as (keyof CatalogueRegistry<C> & string)[];
   const themes = theme === 'all' ? THEMES : [theme];
+  const renderers = useMemo(() => {
+    const keys = Object.keys(catalogue) as ComponentId<C>[];
+    const base =
+      manifest ??
+      (Object.fromEntries(keys.map((id) => [id, catalogue[id][0]])) as unknown as Manifest<C>);
+    return new Map<string, UiRenderer<C>>(
+      keys.flatMap((id) =>
+        catalogue[id].map((version) => [
+          `${id}@${version.version}`,
+          createUi<C>({ ...base, [id]: version }),
+        ]),
+      ),
+    );
+  }, [catalogue, manifest]);
+  useEffect(() => {
+    if (location.hash)
+      document
+        .getElementById(decodeURIComponent(location.hash.slice(1)))
+        ?.scrollIntoView({ block: 'start' });
+  }, []);
 
   return (
     <main style={styles.page}>
@@ -141,35 +162,45 @@ export const Catalogue = <C extends ComponentMap>({ catalogue, manifest }: Catal
       {ids.map((id) => (
         <section key={id} id={id} data-testid={`catalogue-${id}`} style={styles.section}>
           <h2 style={styles.id}>{id}</h2>
-          {catalogue[id].map((version) => {
-            const Component = version.component;
-            const selected = manifest?.[id] === version;
-            return (
-              <article
-                key={version.version}
-                data-testid={`catalogue-${id}-${version.version}`}
-                style={styles.version}
-              >
-                <h3 style={styles.versionTitle}>
-                  {version.version}
-                  {selected ? <span style={styles.selected}>selected</span> : null}
-                </h3>
-                <p style={styles.muted}>{version.notes}</p>
-                {version.examples.map((example) => (
-                  <div key={example.name} style={styles.example}>
-                    <h4 style={styles.exampleTitle}>{example.name}</h4>
-                    <div style={styles.frames}>
-                      {themes.map((frameTheme) => (
-                        <Frame key={frameTheme} theme={frameTheme} width={width} reduced={reduced}>
-                          <Component {...example.props} />
-                        </Frame>
-                      ))}
+          <div style={styles.versions}>
+            {catalogue[id].map((version) => {
+              const renderer = renderers.get(`${id}@${version.version}`);
+              if (!renderer)
+                throw new Error(`Missing catalogue renderer: ${id}@${version.version}`);
+              const Component = renderer.Ui;
+              const selected = manifest?.[id] === version;
+              return (
+                <article
+                  key={version.version}
+                  data-testid={`catalogue-${id}-${version.version}`}
+                  style={styles.version}
+                >
+                  <h3 style={styles.versionTitle}>
+                    {version.version}
+                    {selected ? <span style={styles.selected}>selected</span> : null}
+                  </h3>
+                  <p style={styles.muted}>{version.notes}</p>
+                  {version.examples.map((example) => (
+                    <div key={example.name} style={styles.example}>
+                      <h4 style={styles.exampleTitle}>{example.name}</h4>
+                      <div style={styles.frames}>
+                        {themes.map((frameTheme) => (
+                          <Frame
+                            key={frameTheme}
+                            theme={frameTheme}
+                            width={width}
+                            reduced={reduced}
+                          >
+                            <Component component={id} {...example.props} />
+                          </Frame>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </article>
-            );
-          })}
+                  ))}
+                </article>
+              );
+            })}
+          </div>
         </section>
       ))}
     </main>
@@ -195,7 +226,8 @@ const styles = {
   navLink: { fontSize: '0.8rem', color: '#9c4221' },
   section: { borderTop: '1px solid #d5cabb', padding: '1rem 0' },
   id: { fontFamily: 'ui-monospace, monospace', fontSize: '1.05rem', margin: '0 0 0.5rem' },
-  version: { margin: '0 0 1.25rem' },
+  versions: { display: 'flex', gap: '1rem', alignItems: 'flex-start', overflowX: 'auto' },
+  version: { margin: '0 0 1.25rem', minWidth: 0, flex: '1 0 393px', maxWidth: '100%' },
   versionTitle: {
     fontSize: '0.95rem',
     margin: '0',

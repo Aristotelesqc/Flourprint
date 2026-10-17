@@ -1,0 +1,61 @@
+/* Presentation owned by fp.step-node v1. */
+[data-fp-component='fp.step-node'][data-fp-version='v1'].step-row {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  gap: var(--fp-space-2-5);
+  align-items: flex-start;
+  padding: var(--fp-space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-md);
+  position: relative;
+  transition:
+    background-color var(--dur-effect) var(--ease-standard),
+    border-color var(--dur-effect) var(--ease-standard);
+}
+[data-fp-component='fp.step-node'][data-fp-version='v1'].step-row.step-state-running {
+  border-color: var(--color-primary);
+  background: var(--color-primary-container);
+}
+[data-fp-component='fp.step-node'][data-fp-version='v1'] .step-number-badge {
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--type-label);
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 1px solid rgba(217, 145, 100, 0.3);
+}
+[data-fp-component='fp.step-node'][data-fp-version='v1'].step-row.step-state-done
+  .step-number-badge {
+  background: var(--color-success);
+  color: #ffffff;
+  border-color: var(--color-success);
+}
+[data-fp-component='fp.step-node'][data-fp-version='v1'] .step-title {
+  font-size: var(--type-body);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+[data-fp-component='fp.step-node'][data-fp-version='v1'] .step-actions-cell {
+  margin-left: auto;
+  gap: 0.25rem;
+}
+[data-fp-component='fp.step-node'][data-fp-version='v1'].step-state-planned {
+  color: var(--color-ink);
+}
+[data-fp-component='fp.step-node'][data-fp-version='v1'] .step-title-row {
+  flex-wrap: wrap;
+  gap: var(--fp-space-2);
+}
+[data-fp-component='fp.step-node'][data-fp-version='v1'] .step-details {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--fp-space-1);
+}

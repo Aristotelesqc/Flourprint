@@ -1,14 +1,23 @@
+import { createPortal } from 'react-dom';
 import { curatedText } from './template-presentation';
 import { useEffect, useState } from 'react';
 import { resolveFormula, updateStep } from '@flourprint/core/domain';
 import { PreparationTimer, StepRow, IngredientRow } from './components';
-import { Button, Disclosure, Modal, NumberField } from './ui';
+import { Button, IconButton, Disclosure, Modal, NumberField } from './ui';
 import { type Prototype, instant, project } from './model';
-import { titleOf, instructionKey, stepDetails } from './ProcessView';
+import { titleOf, instructionKey, stepDetails, modeLabel } from './ProcessView';
 import { groupsOf } from './RecipeView';
 import { t, duration, time, grams, num, type Locale } from './messages';
 
-export function PreparationView({ store, locale }: { store: Prototype; locale: Locale }) {
+export function PreparationView({
+  store,
+  locale,
+  footerHost,
+}: {
+  store: Prototype;
+  locale: Locale;
+  footerHost?: HTMLElement | null;
+}) {
   const [now, setNow] = useState(Date.now());
   const [sheet, setSheet] = useState<'duration' | 'note' | 'photo' | null>(null);
   const [note, setNote] = useState('');
@@ -80,30 +89,74 @@ export function PreparationView({ store, locale }: { store: Prototype; locale: L
     });
   return (
     <div className="stack">
-      <Disclosure
-        title={session.recipeName}
-        subtitle={`${t(locale, 'frozen')} · ${t(locale, 'version')} ${session.recipeVersion}`}
-      >
-        <p>{t(locale, 'snapshotHelp')}</p>
-      </Disclosure>
       {session.finished ? (
         <h2>{t(locale, 'completeSession')}</h2>
       ) : (
         <>
-          <h2>{titleOf(current, locale)}</h2>
-          <PreparationTimer
-            title={t(locale, 'remaining')}
-            remaining={duration(locale, remaining)}
-            start={time(locale, fact?.startedAt)}
-            end={time(locale, projection.ok ? projection.value.steps[current.id]?.end : undefined)}
-            progress={current.plannedDurationS ? elapsed / current.plannedDurationS : 0}
-            labels={{
-              start: t(locale, 'started'),
-              end: t(locale, 'finish'),
-              progress: t(locale, 'progress'),
-            }}
-          />
-          <div className="actions quick-actions">
+          <div key={current.id} className="current-step-hero stack" data-step={current.id}>
+            <h2>{titleOf(current, locale)}</h2>
+            <PreparationTimer
+              title={t(locale, 'remaining')}
+              remaining={duration(locale, remaining)}
+              start={time(locale, fact?.startedAt)}
+              end={time(
+                locale,
+                projection.ok ? projection.value.steps[current.id]?.end : undefined,
+              )}
+              progress={current.plannedDurationS ? elapsed / current.plannedDurationS : 0}
+              instruction={
+                curatedText(locale, current.label, true) ??
+                t(locale, instructionKey(current.operation))
+              }
+              conditions={[
+                ...(current.equipment?.setpointC !== undefined
+                  ? [
+                      {
+                        label: t(locale, 'temperature'),
+                        value: `${num(locale, current.equipment.setpointC)} °C`,
+                        sub: current.equipment.mode
+                          ? modeLabel(locale, current.equipment.mode)
+                          : undefined,
+                      },
+                    ]
+                  : current.conditions?.temperatureC !== undefined
+                    ? [
+                        {
+                          label: t(locale, 'temperature'),
+                          value: `${num(locale, current.conditions.temperatureC)} °C`,
+                          sub: current.conditions.location,
+                        },
+                      ]
+                    : []),
+                ...(current.equipment?.steam
+                  ? [
+                      {
+                        label: t(locale, 'steam'),
+                        value: t(
+                          locale,
+                          current.equipment.steam.source === 'none'
+                            ? 'steamNone'
+                            : current.equipment.steam.source === 'manual'
+                              ? 'steamManual'
+                              : 'steamFunction',
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(current.equipment?.vessel
+                  ? [{ label: t(locale, 'vessel'), value: current.equipment.vessel.item.id }]
+                  : []),
+              ]}
+              labels={{
+                start: `${t(locale, 'started')}${locale === 'fr' ? ' :' : ':'}`,
+                end: `${t(locale, 'finish')}${locale === 'fr' ? ' :' : ':'}`,
+                progress: t(locale, 'progress'),
+              }}
+            />
+          </div>
+          <div
+            className={`actions quick-actions ${['bulk', 'proof', 'retard'].includes(current.operation) ? '' : 'quick-actions-three'}`}
+          >
             <Button onClick={() => addTime(900)}>{t(locale, 'add15')}</Button>
             <Button
               onClick={() => {
@@ -113,39 +166,47 @@ export function PreparationView({ store, locale }: { store: Prototype; locale: L
             >
               {t(locale, 'duration')}
             </Button>
-            <Button icon="note" onClick={() => setSheet('note')}>
+            <Button dataTestId="prep-note-btn" icon="note" onClick={() => setSheet('note')}>
               {t(locale, 'note')}
             </Button>
-            <Button icon="photo" onClick={() => setSheet('photo')}>
-              {t(locale, 'photo')}
-            </Button>
+            {['bulk', 'proof', 'retard'].includes(current.operation) && (
+              <Button
+                onClick={() =>
+                  store.log(
+                    `${t(locale, 'observed')} · ${t(locale, current.operation === 'bulk' ? 'readyShape' : 'readyCook')}`,
+                  )
+                }
+              >
+                {t(locale, current.operation === 'bulk' ? 'readyShape' : 'readyCook')}
+              </Button>
+            )}
           </div>
-          {['bulk', 'proof', 'retard'].includes(current.operation) && (
-            <Button
-              onClick={() =>
-                store.log(
-                  `${t(locale, 'observed')} · ${t(locale, current.operation === 'bulk' ? 'readyShape' : 'readyCook')}`,
-                )
-              }
-            >
-              {t(locale, current.operation === 'bulk' ? 'readyShape' : 'readyCook')}
-            </Button>
-          )}
-          <Button variant="primary" icon="check" onClick={complete}>
-            {t(locale, 'stageComplete')}
-          </Button>
-          <Disclosure title={t(locale, 'instructions')} defaultOpen>
-            <p>
-              {curatedText(locale, current.label, true) ??
-                t(locale, instructionKey(current.operation))}
-            </p>
-            {stepDetails(current, locale).map((d) => (
-              <p key={d}>{d}</p>
-            ))}
-          </Disclosure>
+          {footerHost &&
+            createPortal(
+              <>
+                <IconButton
+                  icon="photo"
+                  label={t(locale, 'photo')}
+                  onClick={() => setSheet('photo')}
+                />
+                <Button
+                  dataTestId="prep-complete-btn"
+                  variant="primary"
+                  icon="check"
+                  onClick={complete}
+                >
+                  {t(locale, 'stageComplete')}
+                </Button>
+              </>,
+              footerHost,
+            )}
         </>
       )}
-      <Disclosure title={t(locale, 'quantities')}>
+      <Disclosure
+        title={t(locale, 'quantities')}
+        subtitle={`${session.recipeName} · ${t(locale, 'version')} ${session.recipeVersion}`}
+      >
+        <p className="muted">{t(locale, 'snapshotHelp')}</p>
         <p className="muted">{t(locale, 'sessionScope')}</p>
         {groups.map((group) => (
           <Disclosure

@@ -25,7 +25,9 @@
     "build:mockups": "node scripts/mockup-review.mjs build",
     "test:mockups": "node scripts/test-mockups.mjs",
     "capture:mockups": "node scripts/capture-mockups.mjs",
-    "compare:mockups": "node scripts/compare-mockups.mjs"
+    "compare:mockups": "node scripts/compare-mockups.mjs",
+    "capture:restoration": "node scripts/capture-restoration.mjs",
+    "export:restoration": "node scripts/export-restoration.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

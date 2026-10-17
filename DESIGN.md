@@ -3,6 +3,32 @@ version: alpha
 name: Flourprint — Warm baking workspace
 description: Owner-approved warm Material 3 presentation through shared Flourprint components, retaining the Ionic shell.
 colors:
+  surface-container-high: '#e7e3dc'
+  warning-bg: 'rgb(196 118 12 / 0.12)'
+  warning-border: 'rgb(196 118 12 / 0.38)'
+  warning-ink: '#7a4500'
+  danger-bg: 'rgb(179 38 30 / 0.1)'
+  success: '#256b39'
+  success-bg: 'rgb(37 107 57 / 0.12)'
+  shadow: 'rgb(28 25 21 / 0.12)'
+  backdrop: 'rgb(20 17 14 / 0.52)'
+  dark-surface-container-high: '#3e3832'
+  dark-warning-bg: 'rgb(235 168 64 / 0.13)'
+  dark-warning-border: 'rgb(235 168 64 / 0.36)'
+  dark-warning-ink: '#f6c97e'
+  dark-danger-bg: 'rgb(242 139 130 / 0.14)'
+  dark-success: '#7cc992'
+  dark-success-bg: 'rgb(124 201 146 / 0.14)'
+  dark-shadow: 'rgb(0 0 0 / 0.42)'
+  dark-backdrop: 'rgb(8 7 6 / 0.68)'
+  amoled-warning-bg: 'rgb(235 168 64 / 0.13)'
+  amoled-warning-border: 'rgb(235 168 64 / 0.36)'
+  amoled-warning-ink: '#f6c97e'
+  amoled-danger-bg: 'rgb(242 139 130 / 0.14)'
+  amoled-success: '#7cc992'
+  amoled-success-bg: 'rgb(124 201 146 / 0.14)'
+  amoled-shadow: 'rgb(0 0 0 / 0.84)'
+  amoled-backdrop: 'rgb(0 0 0 / 0.78)'
   primary: '#a9490a'
   on-primary: '#ffffff'
   background: '#f8f7f4'
@@ -50,14 +76,22 @@ colors:
   amoled-primary-container: 'rgb(207 138 94 / 0.16)'
   amoled-error: '#f28b82'
 rounded:
+  sheet: 24px
+  pill: 9999px
   card: 1rem
   segmented-option: 0.75rem
 spacing:
   scale: [0.25rem, 0.5rem, 0.75rem, 1rem, 1.5rem, 2rem]
+  compact: 0.375rem
+  control: 0.625rem
+  section: 1.25rem
   page-gutter: 1rem
   touch: 3rem
   card-padding: 1rem
 typography:
+  font: { family: 'system-ui, sans-serif' }
+  navigation: { size: 0.6875rem, line: 1.15 }
+  heading: { size: 1.125rem, line: 1.5rem, weight: 700 }
   page: { size: 1.5rem, line: 2rem, weight: 700 }
   title: { size: 1.375rem, line: 1.75rem, weight: 700 }
   body: { size: 1rem, line: 1.5rem }
@@ -224,9 +258,9 @@ spatial movement. Static labels and states remain understandable with motion dis
 numeric values, simulate progress, delay actions behind decoration, or animate restored panel scroll.
 Keep input anchors stable within editing and preserve pending/invalid text. Reduced-motion policy
 must examine scoped CSS and the installed overlay/navigation runtime separately, including preference
-changes during use and interrupted transitions. Exact tokens, timings, library and runtime choices
-remain pending the [reviewed prototype comparison](docs/architecture/2026-10-12-motion-exploration.md);
-these principles do not ship animations or establish native/performance conformance.
+changes during use and interrupted transitions. The versioned review library uses the owner-selected round 2 timings below, informed by the
+[reviewed exploration](docs/architecture/2026-10-12-motion-exploration.md). Production overlay
+adoption and native/performance conformance require their own verification.
 
 ## Elevation & Depth
 
@@ -297,7 +331,7 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   and actual lifecycle/outcome actions. A readiness observation neither completes the stage nor
   establishes a cooked result. Unknown times remain unknown.
 
-## Components
+## Current runtime components (migration context)
 
 Extend the current `Field`, `Segmented`, `Card`, `Rows`, `InfoSheet` and `DraftActionBar` foundation.
 The target is a reusable Flourprint component layer with consistent behavior and theme roles.
@@ -347,12 +381,53 @@ DESIGN.md does not select a new dependency or migrate routes.
 - Do not declare native behavior or accessibility verified from source alone.
 - Track work on individual GitHub issues and labels; this brief is not a second backlog.
 
-## Experimental 0.3 review components (#133 / #134)
+## Components (#133 / #134, ADR 0020)
 
-`docs/mockups/0.3-ux/src/` contains a standalone React prototype with shared primitives and
-presentation blocks, imported by its screens and live component catalogue. Its spacing,
-typography, warm Light/Dark/AMOLED tokens, real input hit areas, stable draft status footprint
-and native-dialog dismissal can be evaluated in the hosted review and screenshot bundle.
-This is a proposal under owner review, not a replacement for the runtime component inventory
-above or a decision to change the app's Ionic shell. A/B navigation and weighing lifetime
-remain explicit choices. Prototype state is in memory; production adoption is a separate slice.
+The restored prototype composes the first versions from `packages/ui`, using stable `fp.*` ids
+through `docs/mockups/0.3-ux/src/ui.manifest.ts`. Its screens map actual core results to
+localized props; the library imports no core, adapters, recipes or domain solver. These v1
+components are review candidates, not a claim that the production app has already migrated.
+Ionic's production shell remains in place. Prototype session state remains in memory.
+
+### Isolate, change, compare, reuse
+
+1. Reproduce the problem in a screen. The review studio's **Inspect components** mode identifies
+   the clicked component and its containing components, with ids and versions. It links their
+   generated catalogue entries. Product actions are paused only while this explicit inspector
+   is enabled; inspection metadata never appears in capture-mode product screens.
+2. Work on the component version and its scoped stylesheet in `packages/ui/src/components/<name>/`, not a screen-local
+   copy of its markup or internal styles. Tokens have one home in `packages/ui/src/tokens.ts`;
+   regenerate their CSS and this file's front matter with `pnpm tokens`.
+3. Check the version's examples in the generated catalogue in Light, Dark and AMOLED, at
+   393px and 360px / 130%, with normal and reduced motion. Examples show labelled states;
+   fixed sample quantities in the catalogue are illustrative, never engine predictions.
+4. Use the consumer manifest to switch versions. Screens keep their ids and typed props. Nested components use typed `library.Slot` calls, so a manifest change also reaches cards, rows and other compositions. Version styles are scoped to both id and version; changing v2 cannot restyle v1.
+   This round has v1 only; historical monolithic prototypes are references, not invented v2s.
+5. Exercise affected screen journeys and inspect before/after captures before publishing.
+   A component fix must not break another screen, first input, focus or unknown-value labels.
+   Production adoption uses these same version modules in reviewed slices, not a rewrite.
+
+### Rules by component id
+
+| Id                                          | Rule shared by every version                                                                                                                                                          |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fp.button`, `fp.icon-button`               | One clear primary action; real disabled states; destructive actions separated; visible focus and bounded press feedback.                                                              |
+| `fp.icon`                                   | Consistent SVG pictograms; accessible labels belong to the action or accompanying text.                                                                                               |
+| `fp.surface`, `fp.badge`, `fp.metric-pill`  | Warm semantic surfaces; labelled statuses; tabular quantities and atomic number/unit pairs.                                                                                           |
+| `fp.number-field`                           | Preserve raw invalid and pending text; untouched display rounding emits no edit; locale parsing and refusal remain explicit.                                                          |
+| `fp.weighing-checkbox`, `fp.ingredient-row` | Real touch target; one toggle per gesture; no duplicate visible ingredient label; editing a field must not toggle weighing.                                                           |
+| `fp.tabs`                                   | Selected state, keyboard navigation and readable labels; overflow remains reachable at large text sizes.                                                                              |
+| `fp.group-card`                             | Accessible expanded state; inert collapsed content; grid accordion and rotating chevron with a zero-motion alternative.                                                               |
+| `fp.bottom-sheet`, `fp.floating-menu`       | Viewport placement, Escape/outside dismissal and native focus containment while open. Close modality immediately; an inert visual exit must never swallow the first subsequent input. |
+| `fp.hero-summary`                           | Distinguish flour, assembled dough and hydration; retain unknown contributors and hydration help. No substitute water metric or fake complete value.                                  |
+| `fp.recipe-card`                            | Version, actual duration/weight and cooking history stay explicit; active Preparation exposes its real remaining time and Resume action.                                              |
+| `fp.step-node`, `fp.timeline`               | Show actual operations and projection bounds, dependencies and uncertainty. Timeline geometry is display-only and must not become a second scheduler.                                 |
+| `fp.warning-banner`                         | Separate model failure, extrapolation and known outputs; never replace an unavailable estimate with a zero duration.                                                                  |
+| `fp.prep-hero`                              | Dominant remaining time; actual start, planned finish and instruction before quick controls; no rolling timer or decorative progress animation.                                       |
+| `fp.bottom-bar`                             | A contextual toolbar or B toolbar plus stable destinations; no destructive action beside Start/Save.                                                                                  |
+
+The owner's round 2 motion inventory is retained: 150ms effect, 220ms spatial, 260ms sheet,
+M3 standard/decelerate curves, press/selection, menu, row/check, chevron/accordion, sheet/backdrop,
+screen/tab changes and Preparation completion. Both system and manual reduced motion resolve to
+0ms. Evidence samples actual CSS animations before/during/after; reduced states have no fabricated
+intermediate frame. Native overlay/performance conformance remains separately testable.

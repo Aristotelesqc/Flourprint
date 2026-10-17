@@ -1,0 +1,138 @@
+/* Presentation owned by fp.floating-menu v1. */
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--color-ink);
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  display: flex;
+  pointer-events: none;
+  z-index: 65;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog[open] {
+  pointer-events: auto;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog::backdrop {
+  background: transparent;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-bottom {
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 var(--fp-space-3) calc(3.75rem + var(--fp-space-2));
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-top {
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: calc(3.5rem + var(--fp-space-1)) var(--fp-space-3) 0;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-popup {
+  min-width: 13.5rem;
+  max-width: calc(100% - 1.5rem);
+  background-color: var(--color-surface-container-high);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px var(--color-shadow);
+  padding: var(--fp-space-1-5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition:
+    opacity var(--dur-effect) var(--ease-standard),
+    transform var(--dur-effect) var(--ease-standard);
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-bottom
+  .menu-popup {
+  transform-origin: bottom right;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-top
+  .menu-popup {
+  transform-origin: top right;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.closing .menu-popup {
+  opacity: 0;
+  transform: scale(0.92);
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--fp-space-1) var(--fp-space-2);
+  border-bottom: 1px solid var(--color-outline-subtle);
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-title {
+  font-size: var(--type-label);
+  font-weight: 700;
+  margin: 0;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--color-ink);
+  font-size: var(--type-label);
+  font-weight: 600;
+  min-height: var(--touch-target);
+  padding: 0 var(--fp-space-2-5);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--fp-space-2);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background-color var(--dur-effect) var(--ease-standard);
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-item:hover {
+  background-color: var(--color-surface);
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-item.danger {
+  color: var(--color-danger);
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog:not([open]) {
+  display: none;
+}
+@keyframes fp-floating-menu-v1-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes fp-floating-menu-v1-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog[open] .menu-popup {
+  position: fixed;
+  left: var(--menu-x, 12px);
+  top: var(--menu-y, 64px);
+  margin: 0;
+  animation: fp-floating-menu-v1-in var(--dur-effect) var(--ease-decelerate) both;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog[data-closing] .menu-popup {
+  animation-name: fp-floating-menu-v1-out;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-top,
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-bottom {
+  padding: 0;
+}
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-footer {
+  padding: var(--fp-space-2);
+  border-top: 1px solid var(--color-outline-subtle);
+}

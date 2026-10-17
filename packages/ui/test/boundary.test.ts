@@ -33,6 +33,15 @@ describe('packages/ui dependency boundary', () => {
     },
   );
 
+  it('version implementations do not pin versions of their children', () => {
+    for (const file of files.filter((file) =>
+      /components[\\/]([^\\/]+)[\\/]v\d+\.tsx$/.test(file),
+    )) {
+      for (const specifier of importsOf(file))
+        expect(specifier).not.toMatch(/\.\.\/.*\/v\d+(?:\.tsx?)?$/);
+    }
+  });
+
   it('lists every version file of every component in the catalogue registry', () => {
     const registry = readFileSync(join(srcDir, 'catalogue/registry.ts'), 'utf8');
     const componentsDir = join(srcDir, 'components');

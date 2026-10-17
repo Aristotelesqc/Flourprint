@@ -4,7 +4,7 @@ const { test, expect } = requireMobile('@playwright/test');
 const recipe = '/mockup.html?screen=recipe&lang=fr&width=360&capture=1';
 async function edit(page) {
   await page.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
-  await page.getByRole('button', { name: 'Modifier', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Modifier', exact: true }).click();
 }
 async function enter(page, id, value) {
   const field = page.getByTestId(id);
@@ -71,7 +71,7 @@ for (const nav of ['A', 'B'])
       page.getByText('Projection generated from recipe steps.', { exact: true }),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Start', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Preparations', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Shokupan', exact: true })).toBeVisible();
     await page.getByRole('button', { name: '+15 min', exact: true }).click();
     await page.getByRole('button', { name: 'Note', exact: true }).click();
     await page.getByRole('textbox', { name: 'Note text' }).fill('New note');
@@ -117,6 +117,7 @@ test('step editing changes process and planning, removal asks confirmation', asy
     page.locator('.step-title:visible').filter({ hasText: 'Pointage lent' }),
   ).toBeVisible();
   await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
+  await page.locator('.step-more-trigger:visible').first().click();
   await page.getByRole('button', { name: 'Supprimer', exact: true }).first().click();
   await expect(page.getByRole('dialog', { name: 'Confirmer la suppression' })).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Fermer', exact: true }).click();
@@ -129,6 +130,10 @@ test('closed menus are inert, Escape returns focus, tabs support arrows', async 
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(trigger).toBeFocused();
+  await trigger.click();
+  await page.mouse.click(8, 100);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(trigger).toBeFocused();
   await page.getByRole('tab', { name: 'Ingrédients', exact: true }).focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Étapes', exact: true })).toHaveAttribute(
@@ -137,19 +142,23 @@ test('closed menus are inert, Escape returns focus, tabs support arrows', async 
   );
 });
 test('diagnostic states never invent a duration on failure', async ({ page }) => {
-  await page.goto(recipe + '&section=steps');
+  await page.goto(recipe.replace('capture=1', 'capture=0') + '&section=steps');
   await page.getByRole('button', { name: 'Fermentation', exact: true }).first().click();
-  const selector = page.getByRole('combobox', { name: 'Aperçu du déplacement', exact: true });
+  const selector = page.getByRole('combobox', { name: 'Cas de référence du modèle', exact: true });
   await selector.selectOption('noResult');
-  await expect(page.getByText('Aucun résultat exploitable', { exact: true })).toBeVisible();
+  await expect(
+    page.locator('.status-panel:visible').getByText('Aucun résultat exploitable', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(/Durée estimée :/)).toHaveCount(0);
   await selector.selectOption('out');
   await expect(
-    page.getByText('Dose actuelle hors du domaine', { exact: true }).locator('visible=true'),
+    page
+      .locator('.status-panel:visible')
+      .getByText('Dose actuelle hors du domaine', { exact: true }),
   ).toBeVisible();
   await selector.selectOption('valid');
   await expect(
-    page.getByText('Dans le domaine du modèle', { exact: true }).locator('visible=true'),
+    page.locator('.status-panel:visible').getByText('Dans le domaine du modèle', { exact: true }),
   ).toBeVisible();
 });
 for (const theme of ['light', 'dark', 'amoled'])
@@ -171,13 +180,23 @@ for (const theme of ['light', 'dark', 'amoled'])
     await page.keyboard.press('Escape');
     expect(errors).toEqual([]);
   });
-test('catalogue uses shared controls with real state', async ({ page }) => {
-  await page.goto('/mockup.html?screen=catalogue&lang=en&capture=1');
-  await page.getByRole('checkbox', { name: 'Weighed', exact: true }).first().check();
-  await expect(page.getByRole('checkbox', { name: 'Weighed', exact: true }).last()).toBeChecked();
-  await page.getByRole('textbox', { name: 'Free entry', exact: true }).fill('30');
-  await page.getByRole('textbox', { name: 'Free entry', exact: true }).press('Enter');
-  await expect(page.getByRole('textbox', { name: 'Free entry', exact: true })).toHaveValue('30');
+test('catalogue is generated from shared versions and retains editable raw input', async ({
+  page,
+}) => {
+  await page.goto('/mockup.html?screen=catalogue&lang=en');
+  await expect(page.getByTestId('catalogue-fp.recipe-card-v1')).toBeVisible();
+  await expect(page.getByTestId('catalogue-fp.bottom-bar-v1')).toBeVisible();
+  await expect(
+    page.getByRole('checkbox', { name: 'Weighed', exact: true, checked: true }).first(),
+  ).toBeChecked();
+  const input = page.getByRole('textbox', { name: 'Quantity', exact: true }).first();
+  await input.fill('30');
+  await input.press('Enter');
+  await expect(input).toHaveValue('30');
+  await page.getByRole('button', { name: 'Open sheet', exact: true }).first().click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
 test('browser Back guards a pending edit and Stay retains it', async ({ page }) => {
@@ -228,4 +247,55 @@ test('320px at 200 percent text retains a usable content viewport', async ({ pag
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.getByRole('button', { name: 'Start', exact: true })).toBeVisible();
+});
+
+test('component ratio edits survive save without adding formula mass', async ({ page }) => {
+  await page.goto(recipe);
+  await edit(page);
+  await enter(page, 'component-ratio-tangzhong', '5');
+  await expect(page.getByTestId('component-ratio-tangzhong')).toHaveValue('5');
+  await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
+  await page.getByTestId('save-recipe').click();
+  await edit(page);
+  await expect(page.getByTestId('component-ratio-tangzhong')).toHaveValue('5');
+});
+
+test('piece anchor reinterpretation and rescaling use the core without changing the stored ratios', async ({
+  page,
+}) => {
+  await page.goto(recipe);
+  await edit(page);
+  await page.getByRole('button', { name: 'Taille de la recette', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Taille de la recette', exact: true })
+    .selectOption('pieces');
+  await expect(page.getByTestId('anchor-count')).toHaveValue('2');
+  await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
+  await enter(page, 'anchor-count', '3');
+  await expect
+    .poll(async () => Number(await page.getByTestId('formula-dough-weight').textContent()))
+    .toBeCloseTo(1048.5, 8);
+  await page.getByTestId('save-recipe').click();
+  await expect
+    .poll(async () => Number(await page.getByTestId('formula-dough-weight').textContent()))
+    .toBeCloseTo(1048.5, 8);
+});
+
+test('recipe trash is confirmed with trash terminology and removes only the chosen card', async ({
+  page,
+}) => {
+  await page.goto(recipe);
+  await page.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Mettre à la corbeille', exact: true })
+    .click();
+  const confirmation = page.getByRole('dialog', {
+    name: 'Déplacer dans la corbeille ?',
+    exact: true,
+  });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole('button', { name: 'Mettre à la corbeille', exact: true }).click();
+  await expect(page.locator('.recipe-card').filter({ hasText: 'Shokupan' })).toHaveCount(0);
+  await expect(page.locator('.recipe-card').filter({ hasText: 'Bagels' })).toBeVisible();
 });

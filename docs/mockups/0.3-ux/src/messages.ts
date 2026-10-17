@@ -2,13 +2,21 @@ import { catalogText } from './template-presentation';
 export type Locale = 'fr' | 'en';
 
 const messages = {
+  confirmTrash: ['Déplacer dans la corbeille ?', 'Move to trash?'],
+  tangzhongName: ['Tangzhong (roux d’eau)', 'Tangzhong (water roux)'],
+  poolishName: ['Poolish', 'Poolish'],
+  inspectUi: ['Inspecter les composants', 'Inspect components'],
+  inspectionHint: [
+    'Inspection active : cliquer sur un élément pour identifier son composant et ouvrir le catalogue. Désactiver pour utiliser les commandes.',
+    'Inspection active: click an element to identify its component and open the catalogue. Disable inspection to use controls.',
+  ],
   flourBlend: ['Mélange de farines', 'Flour blend'],
   blendHelp: [
     'Les parts doivent totaliser 100 %. Appliquer le mélange complet en une seule commande.',
     'Shares must total 100%. Apply the complete blend in one command.',
   ],
   library: ['Recettes', 'Recipes'],
-  preparation: ['Préparations', 'Preparations'],
+  preparation: ['Préparation', 'Preparation'],
   registry: ['Catalogue', 'Registry'],
   settings: ['Réglages', 'Settings'],
   ingredients: ['Ingrédients', 'Ingredients'],
@@ -321,6 +329,10 @@ const messages = {
   editable: ['Saisie libre', 'Free entry'],
   navigationChoice: ['Navigation à comparer', 'Navigation to compare'],
   targetChoice: ['Taille des cibles tactiles', 'Touch target size'],
+  motionChoice: ['Animation', 'Motion'],
+  motionStandard: ['Standard', 'Standard'],
+  motionReduced: ['Réduite', 'Reduced'],
+  modelReferenceCase: ['Cas de référence du modèle', 'Model reference case'],
 } as const;
 
 export type MessageKey = keyof typeof messages;
@@ -386,3 +398,11 @@ export const duration = (locale: Locale, seconds?: number): string => {
     ? `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`
     : `${minutes} min`;
 };
+
+export const componentName = (locale: Locale, id: string, names: Record<string, string>) =>
+  names[id] ??
+  (id === 'tangzhong'
+    ? t(locale, 'tangzhongName')
+    : id === 'poolish'
+      ? t(locale, 'poolishName')
+      : id);

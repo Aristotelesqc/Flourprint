@@ -185,3 +185,12 @@ Report this accurately as supplied-source generation, not direct workspace editi
 permission recovery, browser use or Gemini-executed tests. Codex integration/tests remain the
 caller's responsibility. This fallback does not authorize sharing other source or bypassing an
 approval denial.
+
+## Browser capability probe (2026-10-17)
+
+In the bounded #133 check with AGY CLI 1.4.0 and `gemini-3.8-flash-high`, the exposed toolset
+contained workspace/command tools and static URL extraction, but no interactive browser-control
+tool. The reviewer returned `UNSUPPORTED` without using tools or changing grants. This was a
+capability gap, not an authentication or folder-trust failure. Do not relaunch permission recovery
+for this same toolset or count URL extraction as button testing. Codex owns the actual browser
+journeys and visual captures when this capability remains absent.

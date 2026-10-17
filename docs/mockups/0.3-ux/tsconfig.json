@@ -17,8 +17,10 @@
       "react/*": ["../../../apps/mobile/node_modules/@types/react/*"],
       "react-dom/*": ["../../../apps/mobile/node_modules/@types/react-dom/*"],
       "@flourprint/core/domain": ["../../../packages/core/src/domain/index.ts"],
-      "@flourprint/core/application": ["../../../packages/core/src/application/index.ts"]
-    }
+      "@flourprint/core/application": ["../../../packages/core/src/application/index.ts"],
+      "react-dom": ["../../../apps/mobile/node_modules/@types/react-dom"]
+    },
+    "allowImportingTsExtensions": true
   },
   "include": ["src"]
 }

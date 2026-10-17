@@ -10,7 +10,7 @@ import {
 import { INGREDIENT_PRESETS } from '@flourprint/core/domain';
 import { Button, IconButton, NumberField, Surface, Disclosure, Modal } from './ui';
 import { IngredientRow, RecipeSummary } from './components';
-import { grams, num, t, ingredientName, type Locale } from './messages';
+import { grams, num, t, ingredientName, componentName, type Locale } from './messages';
 import { type Prototype, type Content } from './model';
 
 export interface WeighRow {
@@ -65,9 +65,10 @@ export function groupsOf(
           pct: n.allocations[id],
           name: ingredientName(locale, id, content.names),
         });
+    const compTitle = componentName(locale, component.id, content.names);
     groups.push({
       id: component.id,
-      title: content.names[component.id] ?? component.id,
+      title: compTitle,
       mass: r.mass,
       pct: n.mass,
       share: component.flourPct,
@@ -121,8 +122,10 @@ export function Summary({
   content,
   resolved,
   locale,
+  editor,
   onHelp,
 }: {
+  editor?: ReactNode;
   content: Content;
   resolved: ResolvedFormula;
   locale: Locale;
@@ -144,7 +147,7 @@ export function Summary({
       label: t(locale, 'hydration'),
       value: `${num(locale, resolved.totalWaterPct, 0)} %`,
       icon: 'water' as const,
-      detail: partial ? t(locale, 'known') : undefined,
+      detail: `${grams(locale, resolved.totalWater.value)} ${t(locale, 'water').toLocaleLowerCase()} ${partial ? `(${t(locale, 'known').toLocaleLowerCase()})` : ''}`,
     },
     {
       label: t(locale, 'fat'),
@@ -172,6 +175,7 @@ export function Summary({
   return (
     <>
       <RecipeSummary
+        editor={editor}
         metrics={metrics}
         notice={
           partial
@@ -181,10 +185,10 @@ export function Summary({
         onHelp={onHelp}
         helpLabel={t(locale, 'hydrationDetails')}
       />
-      <output className="sr-only" data-testid="formula-flour-total">
+      <output aria-hidden="true" className="sr-only" data-testid="formula-flour-total">
         {resolved.flourTotal}
       </output>
-      <output className="sr-only" data-testid="formula-dough-weight">
+      <output aria-hidden="true" className="sr-only" data-testid="formula-dough-weight">
         {resolved.doughWeight}
       </output>
     </>
@@ -203,6 +207,7 @@ export function WaterDetails({
   return (
     <div className="stack">
       <p>{t(locale, 'helpHydration')}</p>
+      {content.formula.waterTarget && <p>{t(locale, 'locked')}</p>}
       <strong>
         {t(locale, 'hydration')} : {num(locale, resolved.totalWaterPct, 0)} % ·{' '}
         {t(locale, resolved.totalWater.completeness === 'incomplete' ? 'known' : 'estimated')}
@@ -240,10 +245,12 @@ export function RecipeIngredients({
   store,
   locale,
   onHelp,
+  onSizeHelp,
 }: {
   store: Prototype;
   locale: Locale;
   onHelp: () => void;
+  onSizeHelp: () => void;
 }) {
   const { content, resolved, normalized, state } = store;
   const [addName, setAddName] = useState('');
@@ -267,9 +274,12 @@ export function RecipeIngredients({
     unit: string,
     commit: (value: number) => boolean,
     disabled = false,
+    compact = false,
   ): ReactNode => (
     <NumberField
       key={id}
+      compact={compact}
+      hint={id === 'hydration-target' && formula.waterTarget ? t(locale, 'locked') : undefined}
       value={value}
       resetKey={state.resetEpoch}
       displayDigits={id === 'hydration-target' ? 0 : 2}
@@ -286,21 +296,132 @@ export function RecipeIngredients({
   const formula = content.formula;
   return (
     <div className="stack">
-      <Summary content={content} resolved={r} locale={locale} onHelp={onHelp} />
+      <Summary
+        content={content}
+        resolved={r}
+        locale={locale}
+        onHelp={onHelp}
+        editor={
+          state.draft ? (
+            <>
+              {field(
+                'hydration-target',
+                formula.waterTarget?.totalWaterPct ?? r.totalWaterPct,
+                t(locale, 'target'),
+                '%',
+                (value) => store.setHydrationTarget(value),
+                Boolean(formula.waterTarget),
+                true,
+              )}
+              <IconButton
+                icon={formula.waterTarget ? 'unlock' : 'lock'}
+                label={t(locale, formula.waterTarget ? 'unlock' : 'lock')}
+                onClick={() =>
+                  formula.waterTarget
+                    ? store.apply({ type: 'UnlockTotalWater' })
+                    : store.apply({
+                        type: 'LockTotalWater',
+                        totalWaterPct: r.totalWaterPct,
+                        water: formula.ingredients.find((i) => i.kind === 'water')?.id ?? 'water',
+                      })
+                }
+              />
+            </>
+          ) : undefined
+        }
+      />
       <div className="detail-row">
         <span>{t(locale, 'checkScope')}</span>
         <span data-testid="weigh-count">
           {checks.length} / {groups.flatMap((g) => g.rows).length}
         </span>
       </div>
+      {groups.map((group) => (
+        <Disclosure
+          key={group.id}
+          title={group.title}
+          badge={grams(locale, group.mass)}
+          subtitle={
+            group.share !== undefined
+              ? `${num(locale, group.share)} ${t(locale, 'flourShare')} · ${num(locale, group.pct ?? 0)} ${t(locale, 'massPct')}`
+              : t(locale, 'additions')
+          }
+          defaultOpen
+        >
+          {group.id === 'final' &&
+            content.formula.components.map((c) => (
+              <p className="incorporation" key={c.id}>
+                {t(locale, 'incorporate')} : {componentName(locale, c.id, content.names)} ·{' '}
+                {grams(locale, r.components[c.id].mass)}
+              </p>
+            ))}
+          {group.rows.map((row) => (
+            <IngredientRow
+              key={row.key}
+              id={row.key}
+              name={row.name}
+              gramsText={grams(locale, row.grams)}
+              pctText={`${num(locale, row.pct)} ${t(locale, 'bakerPct')}`}
+              note={row.note}
+              checked={checks.includes(row.key)}
+              onToggle={() => store.weigh(row.key)}
+              checkLabel={`${t(locale, 'weighed')} : ${row.name}`}
+              editing={Boolean(state.draft)}
+            >
+              {state.draft && group.id === 'final' && (
+                <div className="field-grid">
+                  {field(
+                    `ingredient-grams-${row.id}`,
+                    r.grams[row.id] ?? r.flourByFlour[row.id],
+                    `${row.name} · ${t(locale, 'totalRecipe')}`,
+                    'g',
+                    (value) =>
+                      store.apply({
+                        type: 'SetIngredientGrams',
+                        ingredient: row.id,
+                        grams: value,
+                        hold: 'otherGrams',
+                      }),
+                    formula.waterTarget?.absorbInto === row.id,
+                  )}
+                  {formula.ingredients.some((i) => i.id === row.id) &&
+                    field(
+                      `ingredient-pct-${row.id}`,
+                      r.bakerPct[row.id],
+                      `${row.name} · ${t(locale, 'bakerPct')}`,
+                      '%',
+                      (value) =>
+                        store.apply({ type: 'SetBakerPct', ingredient: row.id, pct: value }),
+                      formula.waterTarget?.absorbInto === row.id,
+                    )}
+                  {formula.flours.some((f) => f.id === row.id) &&
+                    field(
+                      `flour-share-${row.id}`,
+                      formula.flours.find((f) => f.id === row.id)?.sharePct ?? 0,
+                      `${row.name} · ${t(locale, 'flourShare')}`,
+                      '%',
+                      (value) =>
+                        store.apply({
+                          type: 'SetFlourBlend',
+                          flours: formula.flours.map((f) =>
+                            f.id === row.id ? { ...f, sharePct: value } : f,
+                          ),
+                        }),
+                    )}
+                </div>
+              )}
+            </IngredientRow>
+          ))}
+        </Disclosure>
+      ))}
       {state.draft && (
-        <Surface>
+        <Disclosure title={t(locale, 'size')}>
           <div className="detail-row">
             <h2>{t(locale, 'size')}</h2>
             <IconButton
               icon="info"
               label={`${t(locale, 'help')} · ${t(locale, 'size')}`}
-              onClick={onHelp}
+              onClick={onSizeHelp}
             />
           </div>
           <label className="field-label">
@@ -365,111 +486,8 @@ export function RecipeIngredients({
             )
           )}
           <Button onClick={() => setBlendOpen(true)}>{t(locale, 'flourBlend')}</Button>
-          <div className="detail-row">
-            <h3>{t(locale, 'hydration')}</h3>
-            <Button
-              icon={formula.waterTarget ? 'unlock' : 'lock'}
-              onClick={() =>
-                formula.waterTarget
-                  ? store.apply({ type: 'UnlockTotalWater' })
-                  : store.apply({
-                      type: 'LockTotalWater',
-                      totalWaterPct: r.totalWaterPct,
-                      water: formula.ingredients.find((i) => i.kind === 'water')?.id ?? 'water',
-                    })
-              }
-            >
-              {t(locale, formula.waterTarget ? 'unlock' : 'lock')}
-            </Button>
-          </div>
-          {field(
-            'hydration-target',
-            formula.waterTarget?.totalWaterPct ?? r.totalWaterPct,
-            t(locale, 'target'),
-            '%',
-            (value) => store.setHydrationTarget(value),
-            Boolean(formula.waterTarget),
-          )}
-          <p className="muted">{t(locale, formula.waterTarget ? 'locked' : 'helpLock')}</p>
-        </Surface>
-      )}
-      {groups.map((group) => (
-        <Disclosure
-          key={group.id}
-          title={group.title}
-          badge={grams(locale, group.mass)}
-          subtitle={
-            group.share !== undefined
-              ? `${num(locale, group.share)} ${t(locale, 'flourShare')} · ${num(locale, group.pct ?? 0)} ${t(locale, 'massPct')}`
-              : t(locale, 'additions')
-          }
-          defaultOpen
-        >
-          {group.id === 'final' &&
-            content.formula.components.map((c) => (
-              <p className="incorporation" key={c.id}>
-                {t(locale, 'incorporate')} : {c.id} · {grams(locale, r.components[c.id].mass)}
-              </p>
-            ))}
-          {group.rows.map((row) => (
-            <IngredientRow
-              key={row.key}
-              id={row.key}
-              name={row.name}
-              gramsText={grams(locale, row.grams)}
-              pctText={`${num(locale, row.pct)} ${t(locale, 'bakerPct')}`}
-              note={row.note}
-              checked={checks.includes(row.key)}
-              onToggle={() => store.weigh(row.key)}
-              checkLabel={`${t(locale, 'weighed')} : ${row.name}`}
-              editing={Boolean(state.draft)}
-            >
-              {state.draft && group.id === 'final' && (
-                <div className="field-grid">
-                  {field(
-                    `ingredient-grams-${row.id}`,
-                    r.grams[row.id] ?? r.flourByFlour[row.id],
-                    `${row.name} · ${t(locale, 'totalRecipe')}`,
-                    'g',
-                    (value) =>
-                      store.apply({
-                        type: 'SetIngredientGrams',
-                        ingredient: row.id,
-                        grams: value,
-                        hold: 'otherGrams',
-                      }),
-                    formula.waterTarget?.absorbInto === row.id,
-                  )}
-                  {formula.ingredients.some((i) => i.id === row.id) &&
-                    field(
-                      `ingredient-pct-${row.id}`,
-                      r.bakerPct[row.id],
-                      `${row.name} · ${t(locale, 'bakerPct')}`,
-                      '%',
-                      (value) =>
-                        store.apply({ type: 'SetBakerPct', ingredient: row.id, pct: value }),
-                      formula.waterTarget?.absorbInto === row.id,
-                    )}
-                  {formula.flours.some((f) => f.id === row.id) &&
-                    field(
-                      `flour-share-${row.id}`,
-                      formula.flours.find((f) => f.id === row.id)?.sharePct ?? 0,
-                      `${row.name} · ${t(locale, 'flourShare')}`,
-                      '%',
-                      (value) =>
-                        store.apply({
-                          type: 'SetFlourBlend',
-                          flours: formula.flours.map((f) =>
-                            f.id === row.id ? { ...f, sharePct: value } : f,
-                          ),
-                        }),
-                    )}
-                </div>
-              )}
-            </IngredientRow>
-          ))}
         </Disclosure>
-      ))}
+      )}
       <Disclosure title={t(locale, 'totals')}>
         {[
           ...formula.flours.map((f) => ({
@@ -513,7 +531,7 @@ export function RecipeIngredients({
           <Disclosure title={t(locale, 'components')} defaultOpen>
             {formula.components.map((component) => (
               <Surface key={component.id}>
-                <h3>{component.id}</h3>
+                <h3>{componentName(locale, component.id, content.names)}</h3>
                 {field(
                   `component-share-${component.id}`,
                   component.flourPct,
