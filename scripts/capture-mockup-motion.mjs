@@ -21,7 +21,7 @@ const cases = [
   {
     id: 'pill-selection',
     screen: 'library',
-    target: (p) => p.getByRole('tab', { name: 'En cours', exact: true }),
+    target: (p) => p.getByRole('tab', { name: /^En cours \(/ }),
   },
   {
     id: 'weighing-row-and-check',

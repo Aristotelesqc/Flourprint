@@ -14,7 +14,7 @@ export const Tabs: React.FC<TabsProps> = ({
     <nav
       data-fp-component="fp.tabs"
       data-fp-version="v1"
-      className={`section-tabs ${variant === 'pills' ? 'tabs-pills' : ''}`}
+      className={`section-tabs ${variant === 'pills' ? 'tabs-pills' : variant === 'chips' ? 'tabs-chips' : ''}`}
       role="tablist"
       aria-label={label}
     >

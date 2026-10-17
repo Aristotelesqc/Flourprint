@@ -24,6 +24,15 @@ import {
   type MessageKey,
 } from './messages';
 
+export const operationIcon = (operation: string): import('./ui').IconName =>
+  ['bake', 'scald', 'boil', 'preheat'].includes(operation)
+    ? 'oven'
+    : ['bulk', 'proof', 'retard', 'preferment'].includes(operation)
+      ? 'clock'
+      : ['mix', 'knead', 'fold', 'shape'].includes(operation)
+        ? 'ingredient'
+        : 'temperature';
+
 export const titleOf = (step: ProcessStep, locale: Locale) =>
   curatedText(locale, step.label) ?? step.label ?? operationName(locale, step.operation);
 const operations = [
@@ -433,6 +442,16 @@ export function ProcessView({
   const starts = times.flatMap((s) => (s.start ? [Date.parse(s.start)] : [])),
     ends = times.flatMap((s) => (s.end ? [Date.parse(s.end)] : []));
   const full = times.length > 0 && times.every((s) => s.start && s.end);
+  const windowLabel = (steps: ProcessStep[]) => {
+    const values = projection.ok
+      ? steps.flatMap((s) => (projection.value.steps[s.id] ? [projection.value.steps[s.id]] : []))
+      : [];
+    if (!values.length || values.some((v) => !v.start || !v.end))
+      return t(locale, 'unknownDuration');
+    const start = Math.min(...values.map((v) => Date.parse(v.start ?? ''))),
+      end = Math.max(...values.map((v) => Date.parse(v.end ?? '')));
+    return `${duration(locale, (end - start) / 1000)} · ${time(locale, new Date(start).toISOString())} → ${time(locale, new Date(end).toISOString())} · ${steps.length} ${t(locale, 'stepsTab')}`;
+  };
   const propose = (index: number, delta: number) => {
     const steps = [...process.steps];
     [steps[index], steps[index + delta]] = [steps[index + delta], steps[index]];
@@ -445,9 +464,10 @@ export function ProcessView({
       <StepRow
         key={step.id}
         number={index + 1}
+        icon={operationIcon(step.operation)}
         title={titleOf(step, locale)}
         details={[
-          ...(planning ? [`${time(locale, timing?.start)} → ${time(locale, timing?.end)}`] : []),
+          ...(timing ? [`${time(locale, timing.start)} → ${time(locale, timing.end)}`] : []),
           ...(!planning && view === 'timeline' && timing?.start && starts.length
             ? [`+${duration(locale, (Date.parse(timing.start) - Math.min(...starts)) / 1000)}`]
             : []),
@@ -562,7 +582,7 @@ export function ProcessView({
           </Button>
         )}
       </div>
-      {view === 'grouped' && <p className="muted">{t(locale, 'groupHelp')}</p>}
+
       {ordering && <p className="muted">{t(locale, 'reorderHelp')}</p>}
       {view === 'timeline' ? (
         <div className="timeline-lanes stack">
@@ -578,10 +598,16 @@ export function ProcessView({
                   steps: process.steps.filter((s) => s.id === c.id || s.id.startsWith(`${c.id}-`)),
                 })),
                 {
+                  id: 'preheat',
+                  label: operationName(locale, 'preheat'),
+                  steps: process.steps.filter((s) => s.operation === 'preheat'),
+                },
+                {
                   id: 'dough',
                   label: t(locale, 'dough'),
                   steps: process.steps.filter(
                     (s) =>
+                      s.operation !== 'preheat' &&
                       !store.content.formula.components.some(
                         (c) => s.id === c.id || s.id.startsWith(`${c.id}-`),
                       ),
@@ -614,7 +640,12 @@ export function ProcessView({
           {store.content.formula.components.map((component) => (
             <Disclosure
               key={component.id}
-              title={componentName(locale, component.id, store.content.names)}
+              title={`${store.content.formula.components.indexOf(component) + 1}. ${componentName(locale, component.id, store.content.names)}`}
+              subtitle={windowLabel(
+                process.steps.filter(
+                  (s) => s.id === component.id || s.id.startsWith(`${component.id}-`),
+                ),
+              )}
               defaultOpen
             >
               {process.steps
@@ -624,7 +655,18 @@ export function ProcessView({
                 .map((step) => renderStep(step, process.steps.indexOf(step)))}
             </Disclosure>
           ))}
-          <Disclosure title={t(locale, 'dough')} defaultOpen>
+          <Disclosure
+            title={`${store.content.formula.components.length + 1}. ${t(locale, 'dough')}`}
+            subtitle={windowLabel(
+              process.steps.filter(
+                (s) =>
+                  !store.content.formula.components.some(
+                    (c) => s.id === c.id || s.id.startsWith(`${c.id}-`),
+                  ),
+              ),
+            )}
+            defaultOpen
+          >
             {process.steps
               .filter(
                 (step) =>

@@ -70,3 +70,22 @@
   font-size: var(--type-label);
   line-height: 1.45;
 }
+
+[data-fp-container='fp.prep-hero'][data-fp-container-version='v1'] .preparation-timer-digits {
+  font-size: clamp(2rem, 9vw, 2.5rem);
+}
+[data-fp-container='fp.prep-hero'][data-fp-container-version='v1'] .preparation-timer-header {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+[data-fp-container='fp.prep-hero'][data-fp-container-version='v1'] .prep-conditions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  gap: 0.5rem;
+  text-align: left;
+}
+[data-fp-container='fp.prep-hero'][data-fp-container-version='v1'] .prep-condition {
+  display: grid;
+  align-content: start;
+}

@@ -12,6 +12,7 @@ const IconButton = (props: IconButtonProps) => (
 
 export const StepRow: React.FC<StepRowProps> = ({
   number,
+  icon,
   title,
   details,
   state = 'planned',
@@ -27,12 +28,21 @@ export const StepRow: React.FC<StepRowProps> = ({
       className={`step-row step-state-${state}`}
     >
       <div className="step-number-badge" aria-hidden="true">
-        {state === 'done' ? <Icon name="check" size="0.875rem" /> : number}
+        {state === 'done' ? (
+          <Icon name="check" size="0.875rem" />
+        ) : icon ? (
+          <Icon name={icon} size="1rem" />
+        ) : (
+          number
+        )}
       </div>
 
       <div className="step-body stack">
         <div className="step-title-row row">
-          <span className="step-title">{title}</span>
+          <span className="step-title">
+            {icon && <small className="step-ordinal">{number}. </small>}
+            {title}
+          </span>
         </div>
 
         {details.length > 0 && (

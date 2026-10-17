@@ -10,6 +10,9 @@ const Badge = (props: BadgeProps) => <library.Slot component="fp.badge" {...prop
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({
   title,
+  selected,
+  onResume,
+  resumeLabel,
   details = [],
   metrics,
   status,
@@ -24,9 +27,11 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
     <div
       data-fp-component="fp.recipe-card"
       data-fp-version="v1"
-      className={`recipe-card ${featured ? 'featured' : ''}`}
+      className={`recipe-card ${featured ? 'featured' : ''} ${selected ? 'selected-template' : ''}`}
       onClick={onOpen}
       role="button"
+      aria-label={title}
+      aria-pressed={selected}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
@@ -38,13 +43,21 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
       <div className="recipe-card-header row">
         <span className="recipe-card-title">{title}</span>
         {featured ? (
-          <span className="active-prep-chip tabular">
+          <button
+            type="button"
+            className="active-prep-chip tabular"
+            aria-label={resumeLabel}
+            onClick={(e) => {
+              e.stopPropagation();
+              onResume?.();
+            }}
+          >
             <Icon name="clock" size="0.8rem" />
             <span>{status}</span>
-          </span>
-        ) : (
+          </button>
+        ) : status ? (
           <Badge variant={badgeVariant}>{status}</Badge>
-        )}
+        ) : null}
       </div>
 
       {metrics && metrics.length > 0 ? (

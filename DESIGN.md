@@ -424,10 +424,21 @@ Ionic's production shell remains in place. Prototype session state remains in me
 | `fp.step-node`, `fp.timeline`               | Show actual operations and projection bounds, dependencies and uncertainty. Timeline geometry is display-only and must not become a second scheduler.                                 |
 | `fp.warning-banner`                         | Separate model failure, extrapolation and known outputs; never replace an unavailable estimate with a zero duration.                                                                  |
 | `fp.prep-hero`                              | Dominant remaining time; actual start, planned finish and instruction before quick controls; no rolling timer or decorative progress animation.                                       |
-| `fp.bottom-bar`                             | A contextual toolbar or B toolbar plus stable destinations; no destructive action beside Start/Save.                                                                                  |
+| `fp.bottom-bar`                             | A contextual toolbar below, or B actions in the header plus stable bottom destinations; no destructive action beside Start/Save.                                                      |
 
 The owner's round 2 motion inventory is retained: 150ms effect, 220ms spatial, 260ms sheet,
 M3 standard/decelerate curves, press/selection, menu, row/check, chevron/accordion, sheet/backdrop,
 screen/tab changes and Preparation completion. Both system and manual reduced motion resolve to
 0ms. Evidence samples actual CSS animations before/during/after; reduced states have no fabricated
 intermediate frame. Native overlay/performance conformance remains separately testable.
+
+### Round 2 fidelity corrections (#134)
+
+The owner rejected the first restoration proposal as still regressive. Passing controls,
+component coverage and motion evidence do not establish visual fidelity. In particular,
+A and B must retain their different action placement; an active card must not gain a large
+second Resume block; model creation needs informative selectable cards rather than a list
+of unlabeled-shape buttons; and summary detail, partial-value markers, horizontal ingredient
+quantities, operation pictograms and group time windows must not disappear during extraction.
+Compare these roles against round 2 directly. Retain necessary accessibility and core-data
+corrections, documenting their differences rather than calling every difference restored.

@@ -36,3 +36,9 @@
 [data-fp-component='fp.icon-button'][data-fp-version='v1'].icon-btn-default {
   color: var(--color-ink);
 }
+
+[data-fp-component='fp.icon-button'][data-fp-version='v1'] .icon-button-image {
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 0.375rem;
+}

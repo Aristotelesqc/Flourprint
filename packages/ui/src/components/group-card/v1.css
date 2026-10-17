@@ -53,3 +53,16 @@
   padding: var(--fp-space-3) var(--fp-space-3-5);
   border-top: 1px solid var(--color-outline-subtle);
 }
+
+[data-fp-component='fp.group-card'][data-fp-version='v1'] .disclosure-headings > .row {
+  justify-content: space-between;
+}
+[data-fp-component='fp.group-card'][data-fp-version='v1'] .disclosure-subtitle {
+  font-size: var(--type-meta);
+}
+[data-fp-component='fp.group-card'][data-fp-version='v1'] .disclosure-title {
+  font-size: var(--type-label);
+}
+[data-fp-component='fp.group-card'][data-fp-version='v1'] .disclosure-content {
+  gap: 0.5rem;
+}

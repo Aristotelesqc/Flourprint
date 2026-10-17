@@ -46,7 +46,7 @@ export const Menu: React.FC<MenuProps> = ({
       >
         <div className="menu-popup">
           <header className="menu-header">
-            <h2 id={titleId} className="menu-title">
+            <h2 id={titleId} className="menu-title sr-only">
               {title}
             </h2>
             <IconButton icon="close" label={closeLabel} onClick={close} />

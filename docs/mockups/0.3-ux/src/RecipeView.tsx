@@ -137,15 +137,24 @@ export function Summary({
       label: t(locale, 'flour'),
       value: grams(locale, resolved.flourTotal),
       icon: 'flour' as const,
+      detail: t(locale, 'bakerBase'),
     },
     {
       label: t(locale, 'dough'),
       value: grams(locale, resolved.doughWeight),
       icon: 'scale' as const,
+      detail: `${grams(locale, sum(Object.values(resolved.components).map((c) => c.mass)))} ${t(locale, 'component')} · ${grams(
+        locale,
+        sum(
+          groupsOf(content, resolved, resolved, locale)
+            .find((g) => g.id === 'final')
+            ?.rows.map((r) => r.grams) ?? [],
+        ),
+      )} ${t(locale, 'additions')}`,
     },
     {
       label: t(locale, 'hydration'),
-      value: `${num(locale, resolved.totalWaterPct, 0)} %`,
+      value: `${partial ? '≈ ' : ''}${num(locale, resolved.totalWaterPct, 0)} %`,
       icon: 'water' as const,
       detail: `${grams(locale, resolved.totalWater.value)} ${t(locale, 'water').toLocaleLowerCase()} ${partial ? `(${t(locale, 'known').toLocaleLowerCase()})` : ''}`,
     },
@@ -154,22 +163,26 @@ export function Summary({
       value:
         resolved.totalFatPct === undefined
           ? t(locale, 'unknown')
-          : `${num(locale, resolved.totalFatPct, 0)} %`,
+          : `${resolved.totalFat?.completeness === 'incomplete' ? '≈ ' : ''}${num(locale, resolved.totalFatPct, 0)} %`,
       detail:
         resolved.totalFat?.completeness === 'incomplete'
-          ? t(locale, 'known')
-          : t(locale, 'estimated'),
+          ? `${grams(locale, resolved.totalFat.value)} · ${t(locale, 'known')}`
+          : resolved.totalFat
+            ? `${grams(locale, resolved.totalFat.value)} · ${t(locale, 'estimated')}`
+            : t(locale, 'unknown'),
     },
     {
       label: t(locale, 'sugar'),
       value:
         resolved.totalSugarPct === undefined
           ? t(locale, 'unknown')
-          : `${num(locale, resolved.totalSugarPct, 0)} %`,
+          : `${resolved.totalSugar?.completeness === 'incomplete' ? '≈ ' : ''}${num(locale, resolved.totalSugarPct, 0)} %`,
       detail:
         resolved.totalSugar?.completeness === 'incomplete'
-          ? t(locale, 'known')
-          : t(locale, 'estimated'),
+          ? `${grams(locale, resolved.totalSugar.value)} · ${t(locale, 'known')}`
+          : resolved.totalSugar
+            ? `${grams(locale, resolved.totalSugar.value)} · ${t(locale, 'estimated')}`
+            : t(locale, 'unknown'),
     },
   ];
   return (
@@ -206,7 +219,26 @@ export function WaterDetails({
 }) {
   return (
     <div className="stack">
-      <p>{t(locale, 'helpHydration')}</p>
+      <div className="water-detail-summary">
+        <Surface>
+          <span>{t(locale, 'hydration')}</span>
+          <strong>
+            {resolved.totalWater.completeness === 'incomplete' ? '≈ ' : ''}
+            {num(locale, resolved.totalWaterPct, 0)} %
+          </strong>
+          <small>
+            {t(locale, resolved.totalWater.completeness === 'incomplete' ? 'known' : 'estimated')}
+          </small>
+        </Surface>
+        <Surface>
+          <span>{t(locale, 'knownWater')}</span>
+          <strong>{grams(locale, resolved.totalWater.value)}</strong>
+          <small>
+            {grams(locale, resolved.flourTotal)} {t(locale, 'flour')}
+          </small>
+        </Surface>
+      </div>
+      <p className="muted">{t(locale, 'helpHydration')}</p>
       {content.formula.waterTarget && <p>{t(locale, 'locked')}</p>}
       <strong>
         {t(locale, 'hydration')} : {num(locale, resolved.totalWaterPct, 0)} % ·{' '}
@@ -331,7 +363,10 @@ export function RecipeIngredients({
         }
       />
       <div className="detail-row">
-        <span>{t(locale, 'checkScope')}</span>
+        <span>
+          {t(locale, 'ingredientsWeighing')}
+          <small className="baker-scope">{t(locale, 'bakerPct')}</small>
+        </span>
         <span data-testid="weigh-count">
           {checks.length} / {groups.flatMap((g) => g.rows).length}
         </span>
@@ -339,7 +374,7 @@ export function RecipeIngredients({
       {groups.map((group) => (
         <Disclosure
           key={group.id}
-          title={group.title}
+          title={`${groups.indexOf(group) + 1}. ${group.title}`}
           badge={grams(locale, group.mass)}
           subtitle={
             group.share !== undefined
@@ -361,7 +396,7 @@ export function RecipeIngredients({
               id={row.key}
               name={row.name}
               gramsText={grams(locale, row.grams)}
-              pctText={`${num(locale, row.pct)} ${t(locale, 'bakerPct')}`}
+              pctText={`${num(locale, row.pct)} %`}
               note={row.note}
               checked={checks.includes(row.key)}
               onToggle={() => store.weigh(row.key)}
@@ -703,7 +738,8 @@ export function RecipeIngredients({
         </>
       )}
       <p className="muted">
-        {t(locale, 'checkScope')} · {t(locale, 'totalRecipe')}
+        {t(locale, 'ingredientsWeighing')}
+        <small className="baker-scope">{t(locale, 'bakerPct')}</small> · {t(locale, 'totalRecipe')}
       </p>
     </div>
   );

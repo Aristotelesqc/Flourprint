@@ -2,6 +2,13 @@ import { catalogText } from './template-presentation';
 export type Locale = 'fr' | 'en';
 
 const messages = {
+  appName: ['Flourprint', 'Flourprint'],
+  createSelected: ['Créer', 'Create'],
+  copy: ['Copie', 'Copy'],
+  bakerBase: ['Base 100 % boulangère', '100% baker’s basis'],
+  ingredientsWeighing: ['Ingrédients par étape · Pesée', 'Ingredients by stage · Weighing'],
+  knownWater: ['Eau totale connue', 'Known total water'],
+  searchOpen: ['Ouvrir la recherche', 'Open search'],
   confirmTrash: ['Déplacer dans la corbeille ?', 'Move to trash?'],
   tangzhongName: ['Tangzhong (roux d’eau)', 'Tangzhong (water roux)'],
   poolishName: ['Poolish', 'Poolish'],

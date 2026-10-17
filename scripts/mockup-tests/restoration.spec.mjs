@@ -4,6 +4,38 @@ import { auditMockupStyles } from '../mockup-style-audit.mjs';
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = requireMobile('@playwright/test');
 
+for (const navigation of ['A', 'B'])
+  test(`round 2 action placement remains distinct: ${navigation}`, async ({ page }) => {
+    await page.goto(`/mockup.html?screen=library&nav=${navigation}&capture=1&motion=reduce`);
+    await expect(page.getByRole('searchbox')).toHaveCount(1);
+    const create = page.getByRole('button', { name: 'Nouvelle recette', exact: true });
+    expect(await create.evaluate((el) => Boolean(el.closest('header')))).toBe(navigation === 'B');
+    await expect(page.getByRole('tab', { name: /^Toutes \(/ })).toBeVisible();
+    await page.getByRole('searchbox').fill('shoku');
+    await page.getByRole('button', { name: 'Shokupan', exact: true }).click();
+    const start = page.getByRole('button', { name: 'Lancer', exact: true });
+    expect(await start.evaluate((el) => Boolean(el.closest('header')))).toBe(navigation === 'B');
+    await page.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Dupliquer', exact: true }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Shokupan · Copie', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
+  });
+
+test('library density retains four complete cards without an extra active-preparation block', async ({
+  page,
+}) => {
+  await page.goto('/mockup.html?screen=library&nav=B&capture=1&motion=reduce');
+  const cards = page.locator('[data-fp-component="fp.recipe-card"]');
+  expect(await cards.first().evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(160);
+  expect(await cards.nth(3).evaluate((el) => el.getBoundingClientRect().bottom)).toBeLessThan(
+    await page.locator('.phone-content').evaluate((el) => el.getBoundingClientRect().bottom),
+  );
+  await page.getByRole('button', { name: 'Reprendre', exact: true }).click();
+  await expect(page.getByTestId('prep-complete-btn')).toBeVisible();
+});
+
 test('every finite component style is defined and screens bind ids instead of implementations', () => {
   const audit = auditMockupStyles();
   expect(audit.classes).toBeGreaterThan(150);

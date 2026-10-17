@@ -49,6 +49,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export interface IconButtonProps {
+  imageSrc?: string;
   icon: IconName;
   label: string;
   onClick: () => void;
@@ -96,7 +97,7 @@ export interface CheckboxProps {
 }
 
 export interface TabsProps {
-  variant?: 'underlined' | 'pills';
+  variant?: 'underlined' | 'pills' | 'chips';
   tabs: { id: string; label: string }[];
   activeId: string;
   onChange: (id: string) => void;
@@ -159,6 +160,7 @@ export interface IngredientRowProps {
 }
 
 export interface StepRowProps {
+  icon?: IconName;
   number: number;
   title: string;
   details: string[];
@@ -176,6 +178,9 @@ export interface RecipeCardMetric {
 }
 
 export interface RecipeCardProps {
+  selected?: boolean;
+  onResume?: () => void;
+  resumeLabel?: string;
   title: string;
   details?: string[];
   metrics?: RecipeCardMetric[];

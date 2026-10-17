@@ -384,3 +384,90 @@ body[data-capture='true'] .component-inspector {
 .prep-actions-host {
   gap: var(--fp-space-2);
 }
+
+/* The owner's alternatives differ in action placement; neither stacks both bars. */
+.header-actions {
+  flex-shrink: 0;
+  gap: 0.25rem;
+}
+.header-actions > .btn {
+  padding-inline: 0.65rem;
+}
+.header-actions > .btn-secondary {
+  padding-inline: 0.45rem;
+}
+.header-actions .prep-actions-host {
+  gap: 0.25rem;
+}
+.phone-content > input[type='search'] {
+  margin: 0;
+  min-height: 2.625rem;
+  border-radius: var(--radius-pill);
+  padding-inline: 0.875rem;
+}
+.toolbar-search {
+  min-width: 0;
+  flex: 1;
+  border-radius: var(--radius-pill);
+  font-size: var(--type-label);
+  min-height: 2.625rem;
+}
+.water-detail-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.water-detail-summary > * {
+  padding: 0.75rem;
+  font-size: var(--type-label);
+  display: grid;
+  gap: 0.35rem;
+}
+.water-detail-summary strong {
+  font-size: 1.25rem;
+}
+.draft-status {
+  font-size: var(--type-meta);
+  min-height: 1.5rem;
+  flex-shrink: 0;
+  line-height: 1.5rem;
+  padding-block: 0;
+}
+
+.baker-scope {
+  display: block;
+  color: var(--color-ink-muted);
+  font-size: var(--type-meta);
+}
+.header-actions {
+  max-width: 62%;
+}
+.header-actions > .btn {
+  font-size: var(--type-label);
+  min-height: 2.5rem;
+}
+.header-actions > .btn-quiet {
+  padding: 0.4rem;
+}
+.header-actions > .btn-secondary {
+  font-size: var(--type-meta);
+}
+.header-title {
+  flex: 1;
+  min-width: 0;
+}
+.phone-header {
+  padding-inline: 0.5rem;
+  gap: 0.25rem;
+}
+
+.phone-frame[data-navigation='B'] .phone-header {
+  flex-wrap: wrap;
+}
+.phone-frame[data-navigation='B'] .header-title {
+  flex: 1 1 9rem;
+}
+.phone-frame[data-navigation='B'] .header-actions {
+  max-width: 100%;
+  margin-left: auto;
+}

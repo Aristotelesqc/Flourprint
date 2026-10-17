@@ -6,6 +6,7 @@ const Icon = (props: IconProps) => <library.Slot component="fp.icon" {...props} 
 
 export const IconButton: React.FC<IconButtonProps> = ({
   icon,
+  imageSrc,
   label,
   onClick,
   disabled = false,
@@ -25,7 +26,11 @@ export const IconButton: React.FC<IconButtonProps> = ({
       data-testid={dataTestId}
       className={classNames}
     >
-      <Icon name={icon} />
+      {imageSrc ? (
+        <img className="icon-button-image" src={imageSrc} alt="" />
+      ) : (
+        <Icon name={icon} />
+      )}
     </button>
   );
 };

@@ -44,11 +44,11 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
       <div className="ingredient-info stack">
         <span className="ingredient-name">{name}</span>
         <div className="ingredient-meta row">
-          {pctText && <span className="ingredient-pct tabular">{pctText}</span>}
           {note && <span className="ingredient-note">• {note}</span>}
         </div>
       </div>
 
+      {pctText && <span className="ingredient-pct tabular">{pctText}</span>}
       <div className="ingredient-row-end" onClick={handleNestedInteractiveClick}>
         {editing && children ? (
           <div className="ingredient-edit-wrap">{children}</div>

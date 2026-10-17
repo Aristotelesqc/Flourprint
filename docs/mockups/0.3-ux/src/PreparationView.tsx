@@ -96,7 +96,7 @@ export function PreparationView({
           <div key={current.id} className="current-step-hero stack" data-step={current.id}>
             <h2>{titleOf(current, locale)}</h2>
             <PreparationTimer
-              title={t(locale, 'remaining')}
+              title={`${session.effective.steps.indexOf(current) + 1} / ${session.effective.steps.length} · ${titleOf(current, locale)}`}
               remaining={duration(locale, remaining)}
               start={time(locale, fact?.startedAt)}
               end={time(

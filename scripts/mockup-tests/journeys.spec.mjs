@@ -63,8 +63,8 @@ for (const nav of ['A', 'B'])
   test(`complete library to preparation journey ${nav}`, async ({ page }) => {
     await page.goto(`/mockup.html?screen=library&lang=en&nav=${nav}&capture=1`);
     await page.getByRole('searchbox').fill('shoku');
-    await expect(page.locator('.recipe-card')).toHaveCount(1);
-    await page.locator('.recipe-card').click();
+    await expect(page.locator('.phone-content .recipe-card')).toHaveCount(1);
+    await page.locator('.phone-content .recipe-card').click();
     await expect(page.getByRole('heading', { name: 'Shokupan', exact: true })).toBeVisible();
     await page.getByRole('tab', { name: 'Planning', exact: true }).click();
     await expect(
@@ -86,11 +86,18 @@ test('new template opens a working draft and collisions are named', async ({ pag
   await page.goto('/mockup.html?screen=library&lang=fr&capture=1');
   await page.getByRole('button', { name: 'Nouvelle recette', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Shokupan', exact: true }).click();
+  await expect(page.getByTestId('recipe-name')).toHaveCount(0);
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Créer « Shokupan »', exact: true })
+    .click();
   await expect(page.getByTestId('recipe-name')).toHaveValue('Shokupan 2');
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
   await page.getByTestId('save-recipe').click();
   await page.getByRole('button', { name: 'Retour', exact: true }).click();
-  await expect(page.locator('.recipe-card').filter({ hasText: 'Shokupan 2' })).toHaveCount(1);
+  await expect(
+    page.locator('.phone-content .recipe-card').filter({ hasText: 'Shokupan 2' }),
+  ).toHaveCount(1);
 });
 test('step editing changes process and planning, removal asks confirmation', async ({ page }) => {
   await page.goto(recipe);
@@ -201,7 +208,7 @@ test('catalogue is generated from shared versions and retains editable raw input
 
 test('browser Back guards a pending edit and Stay retains it', async ({ page }) => {
   await page.goto('/mockup.html?screen=library&lang=fr&capture=1');
-  await page.locator('.recipe-card').filter({ hasText: 'Shokupan' }).click();
+  await page.locator('.phone-content .recipe-card').filter({ hasText: 'Shokupan' }).click();
   await edit(page);
   await enter(page, 'ingredient-grams-salt', '8');
   await page.goBack();
@@ -223,7 +230,7 @@ test('a dependency-breaking move is previewed and refused without mutation', asy
     page.getByRole('dialog').getByRole('button', { name: 'Appliquer', exact: true }),
   ).toBeDisabled();
   await page.keyboard.press('Escape');
-  await expect(page.locator('.step-title:visible').nth(3)).toHaveText('Pointage');
+  await expect(page.locator('.step-title:visible').nth(3)).toHaveText('4. Pointage');
 });
 test('hydration display does not round the formula on an untouched blur', async ({ page }) => {
   await page.goto(recipe + '&mode=edit');
@@ -296,6 +303,10 @@ test('recipe trash is confirmed with trash terminology and removes only the chos
   });
   await expect(confirmation).toBeVisible();
   await confirmation.getByRole('button', { name: 'Mettre à la corbeille', exact: true }).click();
-  await expect(page.locator('.recipe-card').filter({ hasText: 'Shokupan' })).toHaveCount(0);
-  await expect(page.locator('.recipe-card').filter({ hasText: 'Bagels' })).toBeVisible();
+  await expect(
+    page.locator('.phone-content .recipe-card').filter({ hasText: 'Shokupan' }),
+  ).toHaveCount(0);
+  await expect(
+    page.locator('.phone-content .recipe-card').filter({ hasText: 'Bagels' }),
+  ).toBeVisible();
 });

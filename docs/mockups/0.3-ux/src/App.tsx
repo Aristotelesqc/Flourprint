@@ -33,7 +33,16 @@ import { PreparationView } from './PreparationView';
 
 import { usePrototype, recipeName, type Route, type Screen, type Section } from './model';
 
-import { t, duration, grams, num, ingredientName, type Locale, type MessageKey } from './messages';
+import {
+  t,
+  duration,
+  grams,
+  num,
+  ingredientName,
+  componentName,
+  type Locale,
+  type MessageKey,
+} from './messages';
 
 declare const __MOCKUP_REVISION__: string;
 
@@ -109,6 +118,7 @@ export default function App() {
   const [pending, setPending] = useState<(() => void) | null>(null);
 
   const [query, setQuery] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState('shokupan');
 
   const [filter, setFilter] = useState('all');
 
@@ -287,7 +297,9 @@ export default function App() {
         ? state.session.recipeName
         : route.screen === 'catalogue'
           ? t(locale, 'catalogue')
-          : t(locale, route.screen as MessageKey);
+          : route.screen === 'library'
+            ? t(locale, 'appName')
+            : t(locale, route.screen as MessageKey);
 
   const primary =
     route.screen === 'library' ? (
@@ -321,6 +333,63 @@ export default function App() {
         </Button>
       )
     ) : null;
+
+  const contextualControls = (
+    <>
+      {route.screen !== 'preparation' ? (
+        <>
+          {route.screen === 'recipe' &&
+            (state.draft ? (
+              variant === 'B' ? (
+                <IconButton
+                  icon="close"
+                  label={t(locale, 'discard')}
+                  onClick={() => setPending(() => store.cancel)}
+                />
+              ) : (
+                <Button onClick={() => setPending(() => store.cancel)}>
+                  {t(locale, 'discard')}
+                </Button>
+              )
+            ) : variant === 'B' ? (
+              <IconButton icon="edit" label={t(locale, 'edit')} onClick={store.edit} />
+            ) : (
+              <Button icon="edit" variant="quiet" onClick={store.edit}>
+                {t(locale, 'edit')}
+              </Button>
+            ))}
+
+          {route.screen === 'library' && variant === 'A' && (
+            <input
+              className="toolbar-search"
+              type="search"
+              aria-label={t(locale, 'search')}
+              placeholder={t(locale, 'search')}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          )}
+          {primary}
+
+          {route.screen === 'recipe' && (
+            <IconButton
+              icon="more"
+              label={t(locale, 'recipeActions')}
+              onClick={() => setOverlay('menu')}
+            />
+          )}
+
+          {!primary && (
+            <Button onClick={() => guard(() => navigate({ screen: 'library' }))}>
+              {t(locale, 'library')}
+            </Button>
+          )}
+        </>
+      ) : state.session?.finished ? undefined : (
+        <div className="prep-actions-host" ref={setPrepHost} />
+      )}
+    </>
+  );
 
   const navigateGlobal = (screen: Screen) => guard(() => navigate({ screen }));
 
@@ -511,10 +580,11 @@ export default function App() {
         ))}
       </aside>
       <div className="phone-stage">
-        <div className="phone-frame" data-testid="phone">
+        <div className="phone-frame" data-testid="phone" data-navigation={variant}>
           <header className="phone-header">
             <div className="header-title">
               <IconButton
+                imageSrc={route.screen === 'library' ? 'mark.svg' : undefined}
                 icon={route.screen === 'recipe' ? 'back' : 'menu'}
 
                 label={t(locale, route.screen === 'recipe' ? 'back' : 'navigation')}
@@ -550,22 +620,28 @@ export default function App() {
             </div>
 
             <div className="header-actions">
-              {state.session && route.screen !== 'preparation' && (
-                <IconButton
-                  icon="clock"
-
-                  label={t(locale, 'resume')}
-
-                  onClick={() => guard(() => navigate({ screen: 'preparation' }))}
-                />
-              )}
-
-              {route.screen !== 'recipe' && (
-                <IconButton
-                  icon="more"
-                  label={t(locale, 'copyBuild')}
-                  onClick={() => setOverlay('build')}
-                />
+              {variant === 'B' &&
+              (route.screen === 'recipe' ||
+                route.screen === 'library' ||
+                route.screen === 'preparation') ? (
+                contextualControls
+              ) : (
+                <>
+                  {state.session && route.screen !== 'preparation' && (
+                    <IconButton
+                      icon="clock"
+                      label={t(locale, 'resume')}
+                      onClick={() => guard(() => navigate({ screen: 'preparation' }))}
+                    />
+                  )}
+                  {route.screen !== 'recipe' && (
+                    <IconButton
+                      icon="more"
+                      label={t(locale, 'copyBuild')}
+                      onClick={() => setOverlay('build')}
+                    />
+                  )}
+                </>
               )}
             </div>
           </header>
@@ -573,7 +649,7 @@ export default function App() {
           {route.screen === 'recipe' && (
             <>
               <div className="draft-status" aria-live="polite">
-                {state.draft ? t(locale, 'unsaved') : t(locale, 'currentRecipe')}
+                {state.draft ? t(locale, 'unsaved') : ''}
               </div>
 
               <Tabs
@@ -605,28 +681,23 @@ export default function App() {
 
             {route.screen === 'library' && (
               <>
-                <label className="field-label">
-                  {t(locale, 'search')}
-
+                {variant === 'B' && (
                   <input
                     type="search"
-
+                    aria-label={t(locale, 'search')}
                     value={query}
-
                     onChange={(e) => setQuery(e.target.value)}
-
                     placeholder={t(locale, 'search')}
                   />
-                </label>
-
+                )}
                 <Tabs
-                  variant="pills"
+                  variant="chips"
                   label={t(locale, 'filter')}
 
                   tabs={['all', 'running', 'ready', 'drafts'].map((id) => ({
                     id,
 
-                    label: t(locale, id as MessageKey),
+                    label: `${t(locale, id as MessageKey)} (${state.recipes.filter((r) => !r.trashed && (id === 'all' || (id === 'running' && r.id === state.session?.recipeId) || (id === 'ready' && r.version > 0 && r.id !== state.session?.recipeId) || (id === 'drafts' && r.version === 0))).length})`,
                   }))}
 
                   activeId={filter}
@@ -657,21 +728,29 @@ export default function App() {
 
                       metrics={[
                         ...(hyd
-                          ? [{ icon: 'water' as const, value: hyd, label: t(locale, 'hydration') }]
+                          ? [
+                              {
+                                icon: 'water' as const,
+                                value: `${resolved.ok && resolved.value.totalWater.completeness === 'incomplete' ? '≈ ' : ''}${hyd}`,
+                              },
+                            ]
                           : []),
 
                         ...(dWeight ? [{ icon: 'scale' as const, value: dWeight }] : []),
 
                         { icon: 'clock' as const, value: dur },
-
                         { value: `${t(locale, 'version')} ${r.version}` },
+
+                        ...r.formula.components.map((c) => ({
+                          value: componentName(locale, c.id, r.names),
+                        })),
                       ]}
 
-                      status={t(
-                        locale,
-
-                        isRunning ? 'running' : r.version === 0 ? 'draft' : 'neverCooked',
-                      )}
+                      status={
+                        isRunning
+                          ? `${t(locale, 'running')} · ${duration(locale, sessionRemaining)}`
+                          : t(locale, r.version === 0 ? 'draft' : 'neverCooked')
+                      }
 
                       statusVariant={
                         isRunning ? 'success' : r.version === 0 ? 'primary' : 'default'
@@ -679,15 +758,9 @@ export default function App() {
 
                       featured={isRunning}
 
-                      actions={
-                        isRunning ? (
-                          <Button icon="play" onClick={() => navigate({ screen: 'preparation' })}>
-                            {t(locale, 'resume')} · {duration(locale, sessionRemaining)}
-                          </Button>
-                        ) : undefined
-                      }
-
                       onOpen={() => openRecipe(r.id)}
+                      onResume={isRunning ? () => navigate({ screen: 'preparation' }) : undefined}
+                      resumeLabel={t(locale, 'resume')}
                     />
                   );
                 })}
@@ -862,44 +935,13 @@ export default function App() {
               onSelect: () => navigateGlobal(screen),
             }))}
           >
-            {route.screen !== 'preparation' ? (
-              <>
-                {route.screen === 'recipe' &&
-                  (state.draft ? (
-                    <Button onClick={() => setPending(() => store.cancel)}>
-                      {t(locale, 'discard')}
-                    </Button>
-                  ) : (
-                    <Button icon="edit" variant="quiet" onClick={store.edit}>
-                      {t(locale, 'edit')}
-                    </Button>
-                  ))}
-
-                {primary}
-
-                {route.screen === 'recipe' && (
-                  <IconButton
-                    icon="more"
-                    label={t(locale, 'recipeActions')}
-                    onClick={() => setOverlay('menu')}
-                  />
-                )}
-
-                {!primary && (
-                  <Button onClick={() => guard(() => navigate({ screen: 'library' }))}>
-                    {t(locale, 'library')}
-                  </Button>
-                )}
-              </>
-            ) : state.session?.finished ? undefined : (
-              <div className="prep-actions-host" ref={setPrepHost} />
-            )}
+            {variant === 'A' && contextualControls}
           </BottomBar>
         </div>
       </div>
 
       <Menu
-        anchor="top"
+        anchor={variant === 'A' ? 'bottom' : 'top'}
 
         open={overlay === 'menu'}
 
@@ -909,27 +951,58 @@ export default function App() {
 
         closeLabel={t(locale, 'close')}
       >
-        <div className="stack">
+        <div className="menu-actions">
           <Button
             icon="edit"
-
+            variant="quiet"
             disabled={Boolean(state.draft)}
-
             onClick={() => {
               store.edit();
-
               setOverlay(null);
             }}
           >
             {t(locale, 'edit')}
           </Button>
-
-          <Button icon="trash" variant="danger" onClick={() => setOverlay('trash')}>
-            {t(locale, 'trash')}
+          <Button
+            icon="copy"
+            variant="quiet"
+            onClick={() => {
+              const duplicate = structuredClone(recipe);
+              duplicate.id = crypto.randomUUID();
+              duplicate.name = `${name} · ${t(locale, 'copy')}`;
+              duplicate.trashed = false;
+              store.setState((s) => ({
+                ...s,
+                recipes: [duplicate, ...s.recipes],
+                selected: duplicate.id,
+                draft: null,
+                checks: { ...s.checks, [duplicate.id]: [] },
+              }));
+              setOverlay(null);
+            }}
+          >
+            {t(locale, 'duplicate')}
           </Button>
-
-          <Button icon="info" onClick={() => setOverlay('build')}>
+          <Button
+            icon="settings"
+            variant="quiet"
+            onClick={() => {
+              setOverlay(null);
+              navigateGlobal('registry');
+            }}
+          >
+            {t(locale, 'registry')}
+          </Button>
+          <Button icon="info" variant="quiet" onClick={() => setOverlay('build')}>
             {t(locale, 'copyBuild')}
+          </Button>
+          <Button
+            icon="trash"
+            variant="quiet"
+            className="menu-destructive"
+            onClick={() => setOverlay('trash')}
+          >
+            {t(locale, 'trash')}
           </Button>
         </div>
       </Menu>
@@ -980,47 +1053,66 @@ export default function App() {
       </Modal>
       <Modal
         open={overlay === 'create'}
-
         onClose={() => setOverlay(null)}
-
         title={t(locale, 'new')}
-
         closeLabel={t(locale, 'close')}
+        footer={
+          <Button
+            variant="primary"
+            onClick={() => {
+              const id = store.create(selectedTemplate);
+              const url = new URL(location.href);
+              url.searchParams.set('screen', 'recipe');
+              url.searchParams.set('recipe', id);
+              url.searchParams.set('section', 'ingredients');
+              history.pushState({}, '', url);
+              setOverlay(null);
+              setRoute({ screen: 'recipe', section: 'ingredients' });
+            }}
+          >
+            {t(locale, 'createSelected')} «{' '}
+            {selectedTemplate
+              ? recipeName({ templateId: selectedTemplate } as typeof recipe, locale)
+              : t(locale, 'blank')}{' '}
+            »
+          </Button>
+        }
       >
         <div className="stack">
-          {[
-            { id: '', label: t(locale, 'blank') },
-
-            ...RECIPE_TEMPLATES.map((template) => ({
-              id: template.id,
-
-              label: recipeName({ templateId: template.id } as typeof recipe, locale),
-            })),
-          ].map((template) => (
-            <Button
-              key={template.id}
-
-              onClick={() => {
-                const id = store.create(template.id);
-
-                const url = new URL(location.href);
-
-                url.searchParams.set('screen', 'recipe');
-
-                url.searchParams.set('recipe', id);
-
-                url.searchParams.set('section', 'ingredients');
-
-                history.pushState({}, '', url);
-
-                setOverlay(null);
-
-                setRoute({ screen: 'recipe', section: 'ingredients' });
-              }}
-            >
-              {template.label}
-            </Button>
-          ))}
+          <Button aria-pressed={selectedTemplate === ''} onClick={() => setSelectedTemplate('')}>
+            {t(locale, 'blank')}
+          </Button>
+          {[...RECIPE_TEMPLATES]
+            .sort((a, b) => (a.id === 'shokupan' ? -1 : b.id === 'shokupan' ? 1 : 0))
+            .map((template) => {
+              const result = resolveFormula(template.formula);
+              return (
+                <RecipeCard
+                  key={template.id}
+                  title={recipeName({ templateId: template.id } as typeof recipe, locale)}
+                  selected={selectedTemplate === template.id}
+                  status={template.formula.components
+                    .map((c) => componentName(locale, c.id, {}))
+                    .join(' · ')}
+                  metrics={
+                    result.ok
+                      ? [
+                          {
+                            icon: 'water',
+                            value: `${result.value.totalWater.completeness === 'incomplete' ? '≈ ' : ''}${num(locale, result.value.totalWaterPct, 0)} %`,
+                          },
+                          { icon: 'scale', value: grams(locale, result.value.doughWeight) },
+                          {
+                            icon: 'clock',
+                            value: duration(locale, processDuration({ ...template, names: {} })),
+                          },
+                        ]
+                      : []
+                  }
+                  onOpen={() => setSelectedTemplate(template.id)}
+                />
+              );
+            })}
         </div>
       </Modal>
 

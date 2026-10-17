@@ -1,3 +1,8 @@
+> **Visual-restoration claim withdrawn after owner feedback.** The initial ae6cbd2 gallery was
+> technically exercised but still regressed from round 2. Its checked-item report overstated
+> restoration. The correction keeps the same library/core and fixes the concrete losses below;
+> it is a new review proposal, not a claim of owner acceptance.
+
 # Round 2 restoration on the shared UI library
 
 Refs #120, #133 and #134. This is the 0.3 review delivery following the owner's
@@ -7,7 +12,7 @@ supplemental reference. Historical quantities and predictions are not imported.
 
 ## Delivered surface and evidence
 
-[Hosted review gallery](https://aristotelesqc.github.io/Flourprint/review-2026-10-17-0.3-restored/)
+[Hosted review gallery](https://aristotelesqc.github.io/Flourprint/review-2026-10-17-0.3-fidelity/)
 contains the interactive A/B proposals, screenshots, component catalogue and motion evidence.
 Its `manifest.json`, `review-build.json` and `publication.json` identify the exact source
 revision, source digest, viewport, locale, fixture and image hashes. The gallery is a review
@@ -99,7 +104,7 @@ does not pretend historical static mockups are reusable library versions.
 The delivery is verified in Chrome on Windows, using disposable browser contexts and a
 private preview port. Repository checks cover formatting, lint, TypeScript, token generation,
 1,029 unit tests and 11 backlog tests. Build, mobile build and catalogue build are checked.
-The prototype suite covers 29 tests, including actual input and control activation, A/B
+The prototype suite covers 32 tests, including actual input and control activation, A/B
 journeys, ratio edits and mass conservation, anchor resizing, history, trash, dialog focus,
 all three themes, larger text, style coverage and the component inspector. The full existing
 production-app browser suite passes 115 tests; its app/core source trees are unchanged.
@@ -117,3 +122,32 @@ predictive-model or real-bake validation. Production adoption remains a reviewed
 change using these exact library modules, rather than a second handwritten reconstruction.
 A/B navigation and target-size preferences remain owner decisions; this report does not
 choose them by a test result.
+
+## Correction after owner feedback
+
+Direct inspection of the round 2 / ae6cbd2 triptychs confirmed these losses:
+
+- A/B action placement had been homogenized. B wrongly had both a contextual footer and
+  global navigation, while A lost its search toolbar. B now uses header actions and bottom
+  destinations; A uses the contextual footer with its library search. Menus anchor accordingly.
+- Recipe cards had grown without carrying more useful information. Remaining time now belongs
+  to the active status/Resume control; the large extra Resume row is removed. Actual component
+  tags, version and filter counts are available, without inventing ratings or cooking history.
+- Summary tiles had dropped the baker basis, component/final breakdown, known fat/sugar masses
+  and partial-value approximation markers. These actual core values are visible again.
+- Ingredient percentage/amount columns, numbered ingredient groups and their percentage scope
+  have been restored. The larger-text version remains wrappable rather than clipping values.
+- Process steps had become nested cards with generic number discs, and group windows had
+  disappeared. They now have operation pictograms, compact connected rows, projected intervals
+  and group windows. Preheat has a separate timeline lane rather than being merged into dough.
+- Hydration details regain two glanceable summary tiles. Creation regains selectable template
+  cards with actual core metrics and an explicit Create confirmation. Selecting a model alone
+  no longer creates a draft. Duplicate is a functioning in-memory menu action again.
+- Preparation shows the actual step index/count and a smaller timer; instructions, start/end,
+  progress and conditions remain. Completion follows the chosen A/B action location.
+
+These are presentation/interaction corrections in the same v1 modules, not a domain/model rewrite.
+The original gallery and its limitations remain available. No production app adoption or native
+verification is claimed, and owner visual acceptance remains open. The new AGY source task was
+bounded at 180 seconds and returned an empty response; it contributed no patch or runtime pass.
+Codex corrected the identified defects without relaunching a review campaign.
