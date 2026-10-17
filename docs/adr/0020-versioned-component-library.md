@@ -1,8 +1,8 @@
 # ADR 0020: Versioned component library called by the layout engine
 
-Status: Proposed (owner request, 2026-10-17,
-[#134](https://github.com/Aristotelesqc/Flourprint/issues/134#issuecomment-6228731936)).
-Accepted when the owner merges it.
+Status: Accepted (owner, 2026-10-17; requested in
+[#134](https://github.com/Aristotelesqc/Flourprint/issues/134#issuecomment-6228731936), accepted on
+[#137](https://github.com/Aristotelesqc/Flourprint/pull/137)).
 
 ## Context
 
