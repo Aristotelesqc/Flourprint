@@ -73,7 +73,7 @@ does not pretend historical static mockups are reusable library versions.
 - Consultation and editing remain distinct. Hydration is rounded for display, details are
   accessible, and the lock exists only in editing. Unchanged precision is not rounded back
   into state. Size, ratios, percentage edits, anchors and allocation still call the core.
-- The reference fixture retains actual core totals (314 g total water, 699 g dough), with
+- The reference fixture retains actual core totals (314 g flour, 699 g dough), with
   component allocations distinguished from the final mix. Unknown contributions stay unknown.
   No domain or prototype-model calculation is changed in this restoration.
 - Process views use the core projection, including actual parallel lanes. Model failure,
