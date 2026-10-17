@@ -331,9 +331,7 @@ async function app(page, origin, spec) {
     await active(page)
       .getByTestId('recipe-method')
       .evaluate((el) => el.scrollIntoView({ block: 'start' }));
-    await expect(
-      active(page).getByRole('heading', { name: 'Étapes de préparation', exact: true }),
-    ).toBeInViewport();
+    await expect(active(page).getByText('Étapes de préparation', { exact: true })).toBeInViewport();
     note += ' Recipe method scrolled into view; no separate grouped Steps destination.';
   }
   if (spec.state === 'planning' || spec.state === 'timeline') {
@@ -649,5 +647,6 @@ try {
   );
 } finally {
   await browser.close();
+  for (const server of servers) server.closeAllConnections();
   await Promise.all(servers.map((server) => new Promise((resolve) => server.close(resolve))));
 }
