@@ -301,6 +301,12 @@ async function app(page, origin, spec) {
   }
   await active(page).getByText('Shokupan', { exact: true }).click();
   await expect(active(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await settle(page, true);
+  // The app restores panel scroll over two layout frames after recipe loading.
+  // Wait for that restoration before intentionally scrolling a comparison anchor.
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
   if (spec.state === 'menu' || spec.state === 'edit') {
     await active(page)
       .locator('ion-header')
@@ -325,6 +331,9 @@ async function app(page, origin, spec) {
     await active(page)
       .getByTestId('recipe-method')
       .evaluate((el) => el.scrollIntoView({ block: 'start' }));
+    await expect(
+      active(page).getByRole('heading', { name: 'Étapes de préparation', exact: true }),
+    ).toBeInViewport();
     note += ' Recipe method scrolled into view; no separate grouped Steps destination.';
   }
   if (spec.state === 'planning' || spec.state === 'timeline') {
