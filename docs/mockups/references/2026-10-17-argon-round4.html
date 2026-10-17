@@ -1,0 +1,2734 @@
+<!doctype html>
+<html lang="fr" data-theme="dark" data-font-scale="1">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flourprint 0.3 UX — Prototype Comparatif (Round 4 Baseline)</title>
+    <style>
+      /* ==========================================================================
+         1. DESIGN TOKENS (rem-based, Warm Bakery Palette, Light / Dark / AMOLED)
+         ========================================================================== */
+      :root,
+      [data-theme='light'] {
+        color-scheme: light;
+        --bg-studio: #e6dfd3;
+        --bg-canvas: #f8f4ec;
+        --bg-surface: #ffffff;
+        --bg-surface-hover: #fcfaf5;
+        --bg-container: #f1eadf;
+        --bg-elevated: #ffffff;
+        --bg-featured: #fffaf2;
+        --bg-overlay: rgba(28, 22, 18, 0.48);
+
+        --text-main: #1f1814;
+        --text-secondary: #4a3f37;
+        --text-muted: #6b5e54;
+        --text-on-primary: #ffffff;
+
+        --primary: #9c4221;
+        --primary-hover: #b34d28;
+        --primary-soft: #fbe6d8;
+        --primary-border: #e6b396;
+
+        --secondary: #4a5568;
+        --secondary-soft: #e6ecf2;
+
+        --success: #226444;
+        --success-soft: #def5e8;
+        --warning: #a84d08;
+        --warning-soft: #fef0c7;
+        --danger: #9b2c2c;
+        --danger-soft: #fde2e2;
+
+        --border-subtle: #e4dacb;
+        --border-strong: #c9bba6;
+        --focus-ring: #9c4221;
+
+        --shadow-xs: 0 0.0625rem 0.125rem rgba(28, 22, 18, 0.06);
+        --shadow-sm: 0 0.125rem 0.375rem rgba(28, 22, 18, 0.08), 0 0.0625rem 0.125rem rgba(28, 22, 18, 0.05);
+        --shadow-md: 0 0.375rem 1rem rgba(28, 22, 18, 0.12), 0 0.125rem 0.25rem rgba(28, 22, 18, 0.06);
+        --shadow-lg: 0 0.75rem 2rem rgba(28, 22, 18, 0.18), 0 0.25rem 0.625rem rgba(28, 22, 18, 0.1);
+        --shadow-featured: 0 0.25rem 0.875rem rgba(156, 66, 33, 0.14);
+
+        --radius-xs: 0.375rem;
+        --radius-sm: 0.5rem;
+        --radius-md: 0.75rem;
+        --radius-lg: 1rem;
+        --radius-xl: 1.25rem;
+        --radius-full: 9999px;
+
+        --space-1: 0.25rem;
+        --space-1-5: 0.375rem;
+        --space-2: 0.5rem;
+        --space-2-5: 0.625rem;
+        --space-3: 0.75rem;
+        --space-4: 1rem;
+        --space-5: 1.25rem;
+        --space-6: 1.5rem;
+
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+        --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+
+        --touch-target: 2.75rem;
+        --transition-fast: 140ms cubic-bezier(0.2, 0, 0, 1);
+        --transition-med: 220ms cubic-bezier(0.2, 0, 0, 1);
+      }
+
+      [data-theme='dark'] {
+        color-scheme: dark;
+        --bg-studio: #0c0a09;
+        --bg-canvas: #151210;
+        --bg-surface: #201b18;
+        --bg-surface-hover: #28221e;
+        --bg-container: #2b2420;
+        --bg-elevated: #2e2622;
+        --bg-featured: #291f1a;
+        --bg-overlay: rgba(0, 0, 0, 0.68);
+
+        --text-main: #f6f1e7;
+        --text-secondary: #d8cfc3;
+        --text-muted: #b0a395;
+        --text-on-primary: #17120f;
+
+        --primary: #f0925c;
+        --primary-hover: #f5a678;
+        --primary-soft: #3d2417;
+        --primary-border: #7a4326;
+
+        --secondary: #b2becd;
+        --secondary-soft: #28313e;
+
+        --success: #6ee7a0;
+        --success-soft: #193b2a;
+        --warning: #f8b864;
+        --warning-soft: #3f2912;
+        --danger: #fc8989;
+        --danger-soft: #431c1c;
+
+        --border-subtle: #332b26;
+        --border-strong: #4e423a;
+        --focus-ring: #f0925c;
+
+        --shadow-xs: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.35);
+        --shadow-sm: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.45);
+        --shadow-md: 0 0.375rem 1rem rgba(0, 0, 0, 0.55);
+        --shadow-lg: 0 0.875rem 2.25rem rgba(0, 0, 0, 0.72);
+        --shadow-featured: 0 0.25rem 1rem rgba(240, 146, 92, 0.16);
+      }
+
+      [data-theme='amoled'] {
+        color-scheme: dark;
+        --bg-studio: #000000;
+        --bg-canvas: #000000;
+        --bg-surface: #0b0908;
+        --bg-surface-hover: #14110f;
+        --bg-container: #151210;
+        --bg-elevated: #181412;
+        --bg-featured: #17100c;
+        --bg-overlay: rgba(0, 0, 0, 0.82);
+
+        --text-main: #ffffff;
+        --text-secondary: #e2dad0;
+        --text-muted: #b8aca0;
+        --text-on-primary: #000000;
+
+        --primary: #ff9d66;
+        --primary-hover: #ffb085;
+        --primary-soft: #2e180d;
+        --primary-border: #874827;
+
+        --secondary: #c4d0df;
+        --secondary-soft: #1e2631;
+
+        --success: #7ef2ad;
+        --success-soft: #112e1f;
+        --warning: #ffc270;
+        --warning-soft: #33200a;
+        --danger: #ff9494;
+        --danger-soft: #361212;
+
+        --border-subtle: #26201c;
+        --border-strong: #453a33;
+        --focus-ring: #ff9d66;
+
+        --shadow-xs: 0 0 0 0.0625rem #26201c;
+        --shadow-sm: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.8);
+        --shadow-md: 0 0.375rem 1rem rgba(0, 0, 0, 0.9);
+        --shadow-lg: 0 0.875rem 2.25rem rgba(0, 0, 0, 0.95);
+        --shadow-featured: 0 0 0 0.0625rem var(--primary-border);
+      }
+
+      html[data-font-scale='1'] {
+        font-size: 100%;
+      }
+      html[data-font-scale='1.3'] {
+        font-size: 130%;
+      }
+      html[data-font-scale='2'] {
+        font-size: 200%;
+      }
+
+      /* ==========================================================================
+         2. RESET & BASE TYPOGRAPHY (Fixes Dark-Mode Button Contrast Bug)
+         ========================================================================== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg-studio);
+        color: var(--text-main);
+        font-family: var(--font-sans);
+        line-height: 1.45;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Crucial fix: buttons, inputs and selects ALWAYS inherit --text-main */
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+        color: inherit;
+      }
+
+      /* Tabular numbers on body font instead of developer console monospace */
+      .tabular {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .mono-code {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+      }
+
+      /* ==========================================================================
+         3. STUDIO HARNESS (Top Comparison Toolbar + Phone Frame)
+         ========================================================================== */
+      .studio-bar {
+        position: sticky;
+        top: 0;
+        z-index: 200;
+        background: #1a1614;
+        color: #f5f0e6;
+        border-bottom: 0.0625rem solid #362e29;
+        padding: 0.5rem 0.875rem;
+        font-size: 13px; /* Fixed px on studio harness so 130% scale only scales the phone */
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.625rem;
+      }
+
+      .studio-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      .studio-label {
+        color: #b0a395;
+        font-weight: 600;
+        margin-right: 0.25rem;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .studio-pill {
+        background: #2b2420;
+        color: #e6dfd5;
+        border: 1px solid #453a33;
+        border-radius: 6px;
+        padding: 4px 9px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+
+      .studio-pill:hover {
+        background: #382f2a;
+      }
+
+      .studio-pill.active {
+        background: #f0925c;
+        color: #17120f;
+        border-color: #f0925c;
+      }
+
+      .studio-stage {
+        display: flex;
+        justify-content: center;
+        padding: 1.25rem 0.75rem 3rem;
+      }
+
+      .phone-viewport {
+        width: 100%;
+        max-width: 393px;
+        background: var(--bg-canvas);
+        color: var(--text-main);
+        border: 0.0625rem solid var(--border-strong);
+        border-radius: 1.75rem;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 780px;
+      }
+
+      .phone-viewport[data-vp='360'] {
+        max-width: 360px;
+      }
+      .phone-viewport[data-vp='320'] {
+        max-width: 320px;
+      }
+      .phone-viewport[data-vp='full'] {
+        max-width: 46rem;
+        border-radius: 1rem;
+      }
+
+      /* ==========================================================================
+         4. APP SHELL, TOP BAR & ANCHORED POPOVER MENU
+         ========================================================================== */
+      .app-shell {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 780px;
+        position: relative;
+        padding-bottom: 4.75rem;
+      }
+
+      .top-bar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: var(--bg-surface);
+        border-bottom: 0.0625rem solid var(--border-subtle);
+        padding: var(--space-2-5) var(--space-3);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        box-shadow: var(--shadow-xs);
+      }
+
+      .top-bar-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        min-height: 2.5rem;
+      }
+
+      .top-bar-title-group {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-width: 0;
+        flex: 1;
+      }
+
+      .top-bar-title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--text-main);
+        overflow-wrap: anywhere;
+      }
+
+      .top-bar-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1-5);
+        flex-shrink: 0;
+        position: relative;
+      }
+
+      /* Build identity chip (#131) */
+      .build-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1-5);
+        padding: 0.1875rem 0.5rem;
+        border-radius: var(--radius-full);
+        background: var(--bg-container);
+        border: 0.0625rem solid var(--border-subtle);
+        color: var(--text-muted);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+
+      .build-chip:hover {
+        border-color: var(--primary);
+        color: var(--text-main);
+      }
+
+      /* Screen Content & Stack */
+      .screen {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+
+      .screen-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        width: 100%;
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2-5);
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      .row-between {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+      }
+
+      .muted {
+        color: var(--text-muted);
+      }
+
+      /* ==========================================================================
+         5. SURFACES, BADGES & BUTTONS
+         ========================================================================== */
+      .surface {
+        background: var(--bg-surface);
+        color: var(--text-main);
+        border: 0.0625rem solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-3);
+        box-shadow: var(--shadow-xs);
+      }
+
+      .surface-container {
+        background: var(--bg-container);
+      }
+
+      .surface-elevated {
+        background: var(--bg-elevated);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3125rem;
+        padding: 0.1875rem 0.5625rem;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.25;
+        white-space: nowrap;
+        border: 0.0625rem solid transparent;
+      }
+
+      .badge-default {
+        background: var(--bg-container);
+        color: var(--text-secondary);
+        border-color: var(--border-subtle);
+      }
+
+      .badge-primary {
+        background: var(--primary-soft);
+        color: var(--primary);
+        border-color: var(--primary-border);
+      }
+
+      .badge-success {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+
+      .badge-warning {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+
+      .badge-danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      .pulse-dot {
+        width: 0.4375rem;
+        height: 0.4375rem;
+        border-radius: 50%;
+        background: currentColor;
+        display: inline-block;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-1-5);
+        min-height: 2.375rem;
+        padding: 0.4375rem 0.875rem;
+        border-radius: var(--radius-md);
+        border: 0.0625rem solid var(--border-strong);
+        background: var(--bg-surface);
+        color: var(--text-main);
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+
+      .btn:hover:not(:disabled) {
+        background: var(--bg-surface-hover);
+        border-color: var(--primary);
+      }
+
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: var(--text-on-primary);
+        border-color: var(--primary);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--primary-hover);
+        border-color: var(--primary-hover);
+      }
+
+      .btn-soft {
+        background: var(--primary-soft);
+        color: var(--primary);
+        border-color: var(--primary-border);
+      }
+
+      .btn-danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+        border-color: transparent;
+      }
+
+      .btn-sm {
+        min-height: 2rem;
+        padding: 0.25rem 0.625rem;
+        font-size: 0.8125rem;
+      }
+
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.375rem;
+        height: 2.375rem;
+        border-radius: var(--radius-md);
+        border: 0.0625rem solid var(--border-subtle);
+        background: var(--bg-surface);
+        color: var(--text-main);
+        cursor: pointer;
+        transition: var(--transition-fast);
+        flex-shrink: 0;
+      }
+
+      .icon-btn:hover {
+        background: var(--bg-container);
+        border-color: var(--border-strong);
+      }
+
+      .icon-btn-primary {
+        background: var(--primary-soft);
+        color: var(--primary);
+        border-color: var(--primary-border);
+      }
+
+      /* ==========================================================================
+         6. SEGMENTED CONTROLS & FILTER CHIPS (Fixes ProcessView single button)
+         ========================================================================== */
+      .segmented {
+        display: flex;
+        background: var(--bg-container);
+        padding: 0.1875rem;
+        border-radius: var(--radius-md);
+        border: 0.0625rem solid var(--border-subtle);
+        gap: 0.125rem;
+      }
+
+      .segmented-btn {
+        flex: 1;
+        min-height: 2.125rem;
+        padding: 0.25rem 0.625rem;
+        border: none;
+        border-radius: calc(var(--radius-md) - 0.125rem);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        transition: var(--transition-fast);
+      }
+
+      .segmented-btn[aria-selected='true'],
+      .segmented-btn.active {
+        background: var(--bg-surface);
+        color: var(--text-main);
+        box-shadow: var(--shadow-xs);
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-1-5);
+      }
+
+      .filter-chip {
+        padding: 0.3125rem 0.75rem;
+        border-radius: var(--radius-full);
+        border: 0.0625rem solid var(--border-subtle);
+        background: var(--bg-surface);
+        color: var(--text-secondary);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+
+      .filter-chip.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        border-color: var(--primary-border);
+      }
+
+      /* ==========================================================================
+         7. LIBRARY CARDS (Fixes all 21 missing classes + elevation + icon pills)
+         ========================================================================== */
+      .recipe-card {
+        width: 100%;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2-5);
+        padding: var(--space-3);
+        border-radius: var(--radius-lg);
+        background: var(--bg-surface);
+        color: var(--text-main);
+        border: 0.0625rem solid var(--border-subtle);
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+        transition: var(--transition-med);
+      }
+
+      .recipe-card:hover {
+        transform: translateY(-0.0625rem);
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow-md);
+      }
+
+      .recipe-card.featured {
+        background: var(--bg-featured);
+        border-color: var(--primary-border);
+        box-shadow: var(--shadow-featured);
+      }
+
+      .recipe-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--space-2);
+      }
+
+      .recipe-card-title {
+        font-size: 1.0625rem;
+        font-weight: 700;
+        color: var(--text-main);
+        line-height: 1.3;
+      }
+
+      .recipe-card-subtitle {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-top: 0.125rem;
+      }
+
+      .recipe-card-details {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-1-5);
+      }
+
+      .recipe-card-detail-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3125rem;
+        padding: 0.1875rem 0.5rem;
+        border-radius: var(--radius-xs);
+        background: var(--bg-container);
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ==========================================================================
+         8. RECIPE SUMMARY CARD (#125 — Primary vs Secondary Metrics + Bottom Notice)
+         ========================================================================== */
+      .recipe-summary-box {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2-5);
+        background: var(--bg-surface);
+        border: 0.0625rem solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-3);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .recipe-summary-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+      }
+
+      .recipe-summary-heading {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+      }
+
+      .recipe-summary-title {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-2);
+      }
+
+      @media (max-width: 350px) {
+        .metric-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      .metric-box {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1875rem;
+        padding: var(--space-2-5);
+        border-radius: var(--radius-md);
+        background: var(--bg-container);
+        border: 0.0625rem solid var(--border-subtle);
+        text-align: left;
+      }
+
+      button.metric-box {
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+
+      button.metric-box:hover {
+        border-color: var(--primary);
+        background: var(--primary-soft);
+      }
+
+      .metric-label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.25rem;
+      }
+
+      .metric-value {
+        font-size: 1.1875rem;
+        font-weight: 800;
+        color: var(--text-main);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+      }
+
+      .metric-sub {
+        font-size: 0.6875rem;
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      .secondary-metrics-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        padding-top: 0.125rem;
+      }
+
+      .secondary-metric-pill {
+        flex: 1;
+        min-width: 7.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: 0.375rem 0.625rem;
+        border-radius: var(--radius-sm);
+        background: var(--bg-canvas);
+        border: 0.0625rem solid var(--border-subtle);
+        font-size: 0.75rem;
+      }
+
+      .recipe-summary-notice-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: 0.5rem 0.625rem;
+        border-radius: var(--radius-sm);
+        background: var(--warning-soft);
+        color: var(--warning);
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .recipe-summary-notice {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      /* ==========================================================================
+         9. INGREDIENT ROWS & DISCLOSURE GROUPS (Fixes orphaned ingredient-* classes)
+         ========================================================================== */
+      .disclosure {
+        background: var(--bg-surface);
+        border: 0.0625rem solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-xs);
+      }
+
+      .disclosure-header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: var(--space-2-5) var(--space-3);
+        background: var(--bg-container);
+        border: none;
+        border-bottom: 0.0625rem solid transparent;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .disclosure[data-open='true'] .disclosure-header {
+        border-bottom-color: var(--border-subtle);
+      }
+
+      .disclosure-headings {
+        display: flex;
+        align-items: baseline;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+      }
+
+      .disclosure-title {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+
+      .disclosure-subtitle {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .disclosure-body {
+        padding: var(--space-2) var(--space-3);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ingredient-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: 0.5625rem 0.25rem;
+        border-bottom: 0.0625rem solid var(--border-subtle);
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+
+      .ingredient-row:last-child {
+        border-bottom: none;
+      }
+
+      .ingredient-row.is-checked .ingredient-name,
+      .ingredient-row.is-checked .ingredient-mass {
+        text-decoration: line-through;
+        color: var(--text-muted);
+      }
+
+      .ingredient-row.is-incorporation {
+        background: var(--primary-soft);
+        margin-inline: -0.5rem;
+        padding-inline: 0.5rem;
+        border-radius: var(--radius-sm);
+        border-bottom: none;
+        margin-bottom: 0.25rem;
+      }
+
+      .ingredient-row-main {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2-5);
+        min-width: 0;
+        flex: 1;
+      }
+
+      .checkbox-custom {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 0.3125rem;
+        border: 0.125rem solid var(--border-strong);
+        background: var(--bg-surface);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-on-primary);
+        flex-shrink: 0;
+        transition: var(--transition-fast);
+      }
+
+      .ingredient-row.is-checked .checkbox-custom {
+        background: var(--primary);
+        border-color: var(--primary);
+      }
+
+      .ingredient-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        gap: 0.0625rem;
+      }
+
+      .ingredient-name {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: var(--text-main);
+        overflow-wrap: anywhere;
+      }
+
+      .ingredient-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.375rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .ingredient-pct {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+
+      .ingredient-note {
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      .ingredient-row-end {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        flex-shrink: 0;
+      }
+
+      .ingredient-mass {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--text-main);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Compact inline edit fields (replaces verbose 3-NumberField stack) */
+      .inline-edit-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+      }
+
+      .compact-input-wrap {
+        display: inline-flex;
+        align-items: center;
+        background: var(--bg-canvas);
+        border: 0.0625rem solid var(--border-strong);
+        border-radius: var(--radius-xs);
+        padding: 0.1875rem 0.375rem;
+        gap: 0.1875rem;
+      }
+
+      .compact-input-wrap:focus-within {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.125rem var(--primary-soft);
+      }
+
+      .compact-input {
+        width: 3.25rem;
+        border: none;
+        background: transparent;
+        text-align: right;
+        font-size: 0.875rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-main);
+        outline: none;
+      }
+
+      .compact-unit {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+
+      /* ==========================================================================
+         10. STEP ROWS & TIMELINE (Fixes step-* classes & lane visualization)
+         ========================================================================== */
+      .step-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: var(--space-2-5);
+        border-radius: var(--radius-md);
+        background: var(--bg-canvas);
+        border: 0.0625rem solid var(--border-subtle);
+        margin-bottom: var(--space-2);
+      }
+
+      .step-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .step-row.is-active {
+        background: var(--bg-featured);
+        border-color: var(--primary-border);
+      }
+
+      .step-row-main {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2-5);
+        min-width: 0;
+        flex: 1;
+      }
+
+      .step-index {
+        width: 1.625rem;
+        height: 1.625rem;
+        border-radius: var(--radius-full);
+        background: var(--bg-container);
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 0.125rem;
+      }
+
+      .step-row.is-active .step-index {
+        background: var(--primary);
+        color: var(--text-on-primary);
+      }
+
+      .step-row-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3125rem;
+        min-width: 0;
+        flex: 1;
+      }
+
+      .step-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+      }
+
+      .step-title {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+
+      .step-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+      }
+
+      .step-detail-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.125rem 0.4375rem;
+        border-radius: var(--radius-xs);
+        background: var(--bg-surface);
+        border: 0.0625rem solid var(--border-subtle);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Timeline Lane Bar */
+      .timeline-track {
+        position: relative;
+        padding-left: 1.25rem;
+        border-left: 0.125rem solid var(--border-strong);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2-5);
+        margin-left: 0.5rem;
+      }
+
+      .timeline-node {
+        position: relative;
+        background: var(--bg-surface);
+        border: 0.0625rem solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-2-5);
+      }
+
+      .timeline-node::before {
+        content: '';
+        position: absolute;
+        left: -1.6875rem;
+        top: 0.875rem;
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: 50%;
+        background: var(--primary);
+        border: 0.125rem solid var(--bg-canvas);
+      }
+
+      /* ==========================================================================
+         11. ACTIVE PREPARATION VIEW (#124 — Instructions & Oven/Steam inside Card)
+         ========================================================================== */
+      .prep-hero-card {
+        background: var(--bg-featured);
+        border: 0.0625rem solid var(--primary-border);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        box-shadow: var(--shadow-featured);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+      }
+
+      .preparation-timer-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--primary);
+      }
+
+      .prep-timer-display {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-main);
+      }
+
+      .prep-instruction-box {
+        background: var(--bg-surface);
+        border: 0.0625rem solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+      }
+
+      .oven-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-2);
+      }
+
+      /* ==========================================================================
+         12. OPTION A vs OPTION B BOTTOM BARS (#111, #112, #120 — Zero Giant CTA)
+         ========================================================================== */
+      .bottom-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 50;
+        margin-top: auto;
+        background: var(--bg-surface);
+        border-top: 0.0625rem solid var(--border-subtle);
+        padding: 0.5rem var(--space-3);
+        box-shadow: 0 -0.25rem 1rem rgba(0, 0, 0, 0.12);
+      }
+
+      /* Option A: Browser-like contextual action toolbar */
+      .option-a-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-1-5);
+      }
+
+      .toolbar-action {
+        flex: 1;
+        min-height: 2.625rem;
+        padding: 0.375rem 0.5rem;
+        border-radius: var(--radius-md);
+        border: 0.0625rem solid transparent;
+        background: transparent;
+        color: var(--text-main);
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.1875rem;
+        cursor: pointer;
+        transition: var(--transition-fast);
+      }
+
+      .toolbar-action:hover {
+        background: var(--bg-container);
+      }
+
+      .toolbar-action.is-primary {
+        background: var(--primary-soft);
+        color: var(--primary);
+        border-color: var(--primary-border);
+      }
+
+      /* Option B: 4-tab Material navigation bar */
+      .option-b-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.25rem;
+      }
+
+      .nav-tab {
+        min-height: 2.75rem;
+        padding: 0.25rem;
+        border: none;
+        border-radius: var(--radius-md);
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.1875rem;
+        cursor: pointer;
+        position: relative;
+      }
+
+      .nav-tab.active {
+        color: var(--primary);
+        background: var(--primary-soft);
+      }
+
+      /* ==========================================================================
+         13. ANCHORED POPOVER MENU (`⋯`) & MODALS
+         ========================================================================== */
+      .anchored-menu {
+        position: absolute;
+        right: 0.75rem;
+        width: 15.5rem;
+        background: var(--bg-elevated);
+        border: 0.0625rem solid var(--border-strong);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        padding: 0.375rem;
+        z-index: 120;
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+      }
+
+      .anchored-menu.from-bottom {
+        bottom: 4.25rem;
+      }
+
+      .anchored-menu.from-top {
+        top: 3.5rem;
+      }
+
+      .menu-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        padding: 0.5625rem 0.6875rem;
+        border: none;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-main);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .menu-item:hover {
+        background: var(--bg-container);
+      }
+
+      .menu-item.danger {
+        color: var(--danger);
+      }
+
+      .menu-divider {
+        height: 0.0625rem;
+        background: var(--border-subtle);
+        margin: 0.25rem 0;
+      }
+
+      .modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: var(--bg-overlay);
+        z-index: 150;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: var(--space-3);
+      }
+
+      .modal-sheet {
+        width: 100%;
+        max-height: 85%;
+        overflow-y: auto;
+        background: var(--bg-elevated);
+        border: 0.0625rem solid var(--border-strong);
+        border-radius: var(--radius-xl);
+        padding: var(--space-4);
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+      }
+
+      .modal-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2-5);
+        font-size: 0.875rem;
+      }
+
+      .status-panel {
+        padding: var(--space-2-5) var(--space-3);
+        border-radius: var(--radius-md);
+        border: 0.0625rem solid var(--border-subtle);
+        background: var(--bg-container);
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .status-panel.warning {
+        background: var(--warning-soft);
+        border-color: var(--warning);
+        color: var(--warning);
+      }
+
+      .status-panel.success {
+        background: var(--success-soft);
+        border-color: var(--success);
+        color: var(--success);
+      }
+
+      .status-panel-message {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- STUDIO COMPARISON CONTROLS (Outside Phone Viewport) -->
+    <header class="studio-bar" aria-label="Contrôles de comparaison du prototype">
+      <div class="studio-group">
+        <span class="studio-label">#112 Nav :</span>
+        <button class="studio-pill active" id="ctrl-nav-a" onclick="setNavOption('A')">
+          Option A (Barre d'actions bas)
+        </button>
+        <button class="studio-pill" id="ctrl-nav-b" onclick="setNavOption('B')">
+          Option B (4 onglets + actions haut)
+        </button>
+      </div>
+
+      <div class="studio-group">
+        <span class="studio-label">Écran :</span>
+        <button class="studio-pill" onclick="jumpScreen('library')">Bibliothèque</button>
+        <button class="studio-pill active" onclick="jumpScreen('recipe')">Recette</button>
+        <button class="studio-pill" onclick="jumpScreen('steps')">Étapes / Timeline</button>
+        <button class="studio-pill" onclick="jumpScreen('plan')">Planification</button>
+        <button class="studio-pill" onclick="jumpScreen('prep')">Préparation</button>
+      </div>
+
+      <div class="studio-group">
+        <span class="studio-label">Thème :</span>
+        <button class="studio-pill" id="ctrl-theme-light" onclick="setTheme('light')">Clair</button>
+        <button class="studio-pill active" id="ctrl-theme-dark" onclick="setTheme('dark')">Sombre</button>
+        <button class="studio-pill" id="ctrl-theme-amoled" onclick="setTheme('amoled')">AMOLED</button>
+      </div>
+
+      <div class="studio-group">
+        <span class="studio-label">Viewport / Zoom :</span>
+        <button class="studio-pill active" id="ctrl-vp-393" onclick="setViewport('393', '1')">393px · 100%</button>
+        <button class="studio-pill" id="ctrl-vp-360" onclick="setViewport('360', '1.3')">360px · 130%</button>
+        <button class="studio-pill" id="ctrl-vp-320" onclick="setViewport('320', '1')">320px · 100%</button>
+      </div>
+    </header>
+
+    <!-- PHONE VIEWPORT -->
+    <main class="studio-stage">
+      <div class="phone-viewport" id="phone-vp" data-vp="393">
+        <div class="app-shell" id="app-root"></div>
+      </div>
+    </main>
+
+    <script>
+      /* ==========================================================================
+         STATE & REAL FORMULA ENGINE (Preserves Round 3 Math + Round 2 Visuals)
+         ========================================================================== */
+      const state = {
+        navOption: 'A', // 'A' | 'B'
+        theme: 'dark',
+        screen: 'recipe', // 'library' | 'recipe' | 'plan' | 'prep' | 'history'
+        recipeSubtab: 'ingredients', // 'ingredients' | 'steps'
+        recipeMode: 'consult', // 'consult' | 'edit'
+        processView: 'grouped', // 'grouped' | 'timeline'
+        reorderMode: false,
+        fermentationValid: true, // Toggle #126 domain validity
+        menuOpen: false,
+        modal: null, // null | 'hydration' | 'newRecipe' | 'deleteConfirm'
+        searchQuery: '',
+        libraryFilter: 'all', // 'all' | 'active' | 'baked' | 'draft'
+        copiedBuild: false,
+        activePrepStep: 3, // index into steps (0-based; 3 = Pointage, 7 = Cuisson)
+        timerMinutes: 65,
+        weighedIds: { 'tz-flour': true, 'tz-water': true, 'fd-flour': true },
+        openGroups: { tangzhong: true, final: true, totals: false },
+        historyStack: [],
+        redoStack: [],
+
+        // Library Recipes (#127 semantic statuses)
+        recipes: [
+          {
+            id: 'shokupan',
+            title: 'Shokupan au tangzhong',
+            subtitle: 'Pain de mie japonais ultra-moelleux',
+            status: 'En cours · Étape 4/9',
+            statusVariant: 'warning',
+            category: 'active',
+            featured: true,
+            mass: 699,
+            duration: '5 h 12',
+            hydration: '73 %',
+            version: 'v1.2',
+          },
+          {
+            id: 'baguette',
+            title: 'Baguette de tradition',
+            subtitle: 'Pointage en bac 18 h à 4 °C',
+            status: 'Prête · ★ 4,8',
+            statusVariant: 'success',
+            category: 'baked',
+            featured: false,
+            mass: 1050,
+            duration: '21 h 30',
+            hydration: '72 %',
+            version: 'v3.0',
+          },
+          {
+            id: 'campagne',
+            title: 'Pain de campagne au levain',
+            subtitle: 'T65 + Seigle T130 (15 %)',
+            status: 'Brouillon',
+            statusVariant: 'default',
+            category: 'draft',
+            featured: false,
+            mass: 900,
+            duration: '8 h 45',
+            hydration: '76 %',
+            version: 'v0.4',
+          },
+          {
+            id: 'brioche',
+            title: 'Brioche tressée au beurre',
+            subtitle: 'Pétrissage intensif, beurre 50 %',
+            status: 'Jamais cuite',
+            statusVariant: 'default',
+            category: 'unbaked',
+            featured: false,
+            mass: 780,
+            duration: '14 h 00',
+            hydration: '62 %',
+            version: 'v1.0',
+          },
+        ],
+
+        // Active Shokupan Formula (Matches @flourprint/core numbers)
+        ingredients: {
+          tangzhong: [
+            { id: 'tz-flour', name: 'Farine de gruau T45', mass: 16, isFlour: true, waterRatio: 0 },
+            { id: 'tz-water', name: 'Eau (Tangzhong)', mass: 80, isFlour: false, waterRatio: 1 },
+          ],
+          final: [
+            { id: 'fd-flour', name: 'Farine de gruau T45', mass: 298, isFlour: true, waterRatio: 0 },
+            { id: 'fd-water', name: 'Eau', mass: 110, isFlour: false, waterRatio: 1 },
+            { id: 'fd-milk', name: 'Lait entier (87,5 % eau)', mass: 45, isFlour: false, waterRatio: 0.875 },
+            {
+              id: 'fd-milk-powder',
+              name: 'Poudre de lait écrémé',
+              mass: 9,
+              isFlour: false,
+              waterRatio: null,
+              note: 'Composition inconnue',
+            },
+            { id: 'fd-sugar', name: 'Sucre de canne', mass: 25, isFlour: false, waterRatio: 0, isSugar: true },
+            { id: 'fd-butter', name: 'Beurre doux (16 % eau)', mass: 31, isFlour: false, waterRatio: 0.16, isFat: true },
+            { id: 'fd-salt', name: 'Sel fin de Guérande', mass: 6, isFlour: false, waterRatio: 0 },
+            { id: 'fd-yeast', name: 'Levure sèche instantanée', mass: 3.8, isFlour: false, waterRatio: 0 },
+          ],
+        },
+
+        steps: [
+          {
+            id: 's1',
+            group: 'Tangzhong',
+            title: 'Cuisson de l’empois (Tangzhong)',
+            duration: '5 min',
+            temp: '65 °C',
+            start: '12:00',
+            end: '12:05',
+            instructions: 'Fouetter la farine (16 g) et l’eau (80 g) à feu doux jusqu’à épaississement à 65 °C.',
+          },
+          {
+            id: 's2',
+            group: 'Tangzhong',
+            title: 'Refroidissement au contact',
+            duration: '30 min',
+            temp: '22 °C',
+            start: '12:05',
+            end: '12:35',
+            instructions: 'Filmer au contact et laisser tiédir avant incorporation au pétrissage.',
+          },
+          {
+            id: 's3',
+            group: 'Pâte principale',
+            title: 'Frasage & pétrissage (incorporer Tangzhong)',
+            duration: '14 min',
+            temp: '24 °C',
+            start: '12:35',
+            end: '12:49',
+            instructions: 'Incorporer les 96 g de Tangzhong, les farines, liquides, sucre, sel et levure, puis le beurre en fin de pétrissage.',
+          },
+          {
+            id: 's4',
+            group: 'Pâte principale',
+            title: 'Pointage (1re fermentation)',
+            duration: '1 h 05',
+            temp: '25 °C',
+            start: '12:49',
+            end: '13:54',
+            cue: 'Pâte doublée, dôme lisse, test du doigt souple',
+            instructions: 'Couvrir la cuve. Laisser pointer à 25 °C jusqu’au doublement franc du volume.',
+          },
+          {
+            id: 's5',
+            group: 'Pâte principale',
+            title: 'Division (3 pâtons) & boulage',
+            duration: '10 min',
+            temp: '24 °C',
+            start: '13:54',
+            end: '14:04',
+            instructions: 'Diviser en 3 pâtons égaux (~233 g), dégazer légèrement et bouler sans déchirer le réseau.',
+          },
+          {
+            id: 's6',
+            group: 'Pâte principale',
+            title: 'Détente sur tour',
+            duration: '20 min',
+            temp: '24 °C',
+            start: '14:04',
+            end: '14:24',
+            instructions: 'Laisser détendre sous un linge humide pour faciliter l’allongement.',
+          },
+          {
+            id: 's7',
+            group: 'Pâte principale',
+            title: 'Façonnage en rouleaux & mise en moule',
+            duration: '12 min',
+            temp: '24 °C',
+            start: '14:24',
+            end: '14:36',
+            vessel: 'Moule Pullman 20 cm',
+            instructions: 'Abaisser chaque pâton en langue, replier les tiers, rouler serré et déposer les 3 rouleaux dans le moule.',
+          },
+          {
+            id: 's8',
+            group: 'Pâte principale',
+            title: 'Apprêt final & préchauffage four',
+            duration: '1 h 00',
+            temp: '26 °C',
+            start: '14:36',
+            end: '15:36',
+            cue: 'Pâte à 1,5 cm du bord supérieur du moule',
+            instructions: 'Préchauffer le four à 190 °C (statique) 30 min avant la fin de l’apprêt.',
+          },
+          {
+            id: 's9',
+            group: 'Pâte principale',
+            title: 'Cuisson en moule Pullman',
+            duration: '35 min',
+            temp: '190 °C',
+            steam: 'Buée légère',
+            vessel: 'Moule Pullman 20 cm',
+            start: '15:36',
+            end: '16:11',
+            cue: 'Température à cœur 94 °C, croûte dorée fine',
+            instructions: 'Enfourner à 190 °C pendant 35 min. Démouler immédiatement sur grille à la sortie du four.',
+          },
+        ],
+
+        bakeLogs: [
+          { time: '12:05', text: 'Tangzhong cuit à 65 °C (96 g pesés).' },
+          { time: '12:49', text: 'Fin du pétrissage : température de base mesurée à 24,4 °C.' },
+        ],
+      };
+
+      /* ==========================================================================
+         COMPUTED METRICS (@flourprint/core logic)
+         ========================================================================== */
+      function computeFormula() {
+        const all = [...state.ingredients.tangzhong, ...state.ingredients.final];
+        const totalFlour = all.filter((i) => i.isFlour).reduce((s, i) => s + i.mass, 0);
+        const tzMass = state.ingredients.tangzhong.reduce((s, i) => s + i.mass, 0);
+        const finalMixMass = state.ingredients.final.reduce((s, i) => s + i.mass, 0);
+        const totalDough = Math.round((tzMass + finalMixMass) * 10) / 10;
+
+        let knownWater = 0;
+        const unknownItems = [];
+        all.forEach((i) => {
+          if (i.waterRatio === null) {
+            unknownItems.push(i);
+          } else if (i.waterRatio > 0) {
+            knownWater += i.mass * i.waterRatio;
+          }
+        });
+
+        const hydrationPct = totalFlour > 0 ? Math.round((knownWater / totalFlour) * 1000) / 10 : 0;
+        const fatMass = all.filter((i) => i.isFat).reduce((s, i) => s + i.mass, 0);
+        const sugarMass = all.filter((i) => i.isSugar).reduce((s, i) => s + i.mass, 0);
+
+        return {
+          totalFlour: Math.round(totalFlour * 10) / 10,
+          tzMass: Math.round(tzMass * 10) / 10,
+          finalMixMass: Math.round(finalMixMass * 10) / 10,
+          totalDough,
+          knownWater: Math.round(knownWater * 10) / 10,
+          hydrationPct,
+          fatMass,
+          fatPct: Math.round((fatMass / totalFlour) * 1000) / 10,
+          sugarMass,
+          sugarPct: Math.round((sugarMass / totalFlour) * 1000) / 10,
+          unknownItems,
+        };
+      }
+
+      /* ==========================================================================
+         SVG ICONS (Uniform 1.75px stroke set)
+         ========================================================================== */
+      function icon(name, size = 16) {
+        const paths = {
+          back: '<path d="M15 18l-6-6 6-6"/>',
+          search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+          plus: '<path d="M12 5v14M5 12h14"/>',
+          edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+          calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+          play: '<polygon points="6 4 20 12 6 20 6 4"/>',
+          more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
+          check: '<polyline points="20 6 9 17 4 12"/>',
+          info: '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/>',
+          clock: '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/>',
+          droplet: '<path d="M12 2.7l5.6 5.6a8 8 0 1 1-11.3 0L12 2.7z"/>',
+          scale: '<path d="M6 20h12M12 4v16M5 8l7-4 7 4"/>',
+          flame: '<path d="M12 2c1 4 4 6 4 10a4 4 0 1 1-8 0c0-2 1-4 2-6 1 2 2 2 2-4z"/>',
+          copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+          undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+          redo: '<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>',
+          up: '<path d="M12 19V5M5 12l7-7 7 7"/>',
+          down: '<path d="M12 5v14M19 12l-7 7-7-7"/>',
+          book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+          list: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+        };
+        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || ''}</svg>`;
+      }
+
+      /* ==========================================================================
+         ACTIONS & INTERACTIVITY
+         ========================================================================== */
+      function setNavOption(opt) {
+        state.navOption = opt;
+        state.menuOpen = false;
+        document.getElementById('ctrl-nav-a').classList.toggle('active', opt === 'A');
+        document.getElementById('ctrl-nav-b').classList.toggle('active', opt === 'B');
+        render();
+      }
+
+      function setTheme(theme) {
+        state.theme = theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        ['light', 'dark', 'amoled'].forEach((t) => {
+          document.getElementById('ctrl-theme-' + t).classList.toggle('active', t === theme);
+        });
+      }
+
+      function setViewport(vp, scale) {
+        document.getElementById('phone-vp').setAttribute('data-vp', vp);
+        document.documentElement.setAttribute('data-font-scale', scale);
+        ['393', '360', '320'].forEach((v) => {
+          document.getElementById('ctrl-vp-' + v).classList.toggle('active', v === vp);
+        });
+      }
+
+      function jumpScreen(target) {
+        state.menuOpen = false;
+        if (target === 'steps') {
+          state.screen = 'recipe';
+          state.recipeSubtab = 'steps';
+        } else {
+          state.screen = target;
+          if (target === 'recipe') state.recipeSubtab = 'ingredients';
+        }
+        render();
+      }
+
+      function toggleWeighed(id) {
+        if (state.recipeMode === 'edit') return;
+        state.weighedIds[id] = !state.weighedIds[id];
+        render();
+      }
+
+      function resetWeighed() {
+        state.weighedIds = {};
+        render();
+      }
+
+      function toggleGroup(key) {
+        state.openGroups[key] = !state.openGroups[key];
+        render();
+      }
+
+      function enterEditMode() {
+        state.historyStack = [JSON.stringify(state.ingredients)];
+        state.redoStack = [];
+        state.recipeMode = 'edit';
+        state.menuOpen = false;
+        render();
+      }
+
+      function cancelEditMode() {
+        if (state.historyStack.length > 0) {
+          state.ingredients = JSON.parse(state.historyStack[0]);
+        }
+        state.recipeMode = 'consult';
+        render();
+      }
+
+      function saveEditMode() {
+        const f = computeFormula();
+        state.recipes[0].mass = f.totalDough;
+        state.recipes[0].hydration = Math.round(f.hydrationPct) + ' %';
+        state.recipeMode = 'consult';
+        render();
+      }
+
+      function updateIngredientMass(group, id, newValue) {
+        const val = parseFloat(newValue);
+        if (isNaN(val) || val < 0) return;
+        state.historyStack.push(JSON.stringify(state.ingredients));
+        const item = state.ingredients[group].find((i) => i.id === id);
+        if (item) item.mass = Math.round(val * 10) / 10;
+        render();
+      }
+
+      function moveStep(idx, dir) {
+        const target = idx + dir;
+        if (target < 0 || target >= state.steps.length) return;
+        const copy = [...state.steps];
+        const [item] = copy.splice(idx, 1);
+        copy.splice(target, 0, item);
+        state.steps = copy;
+        render();
+      }
+
+      function createFromTemplate(name, mass, hydration) {
+        state.recipes.unshift({
+          id: 'new-' + Date.now(),
+          title: name, // Clean name without suffix "1" (#128)
+          subtitle: 'Créée depuis le modèle de base',
+          status: 'Jamais cuite',
+          statusVariant: 'default',
+          category: 'unbaked',
+          featured: false,
+          mass,
+          duration: '4 h 30',
+          hydration,
+          version: 'v1.0',
+        });
+        state.modal = null;
+        state.screen = 'library';
+        render();
+      }
+
+      function duplicateCurrentRecipe() {
+        state.recipes.splice(1, 0, {
+          ...state.recipes[0],
+          id: 'copy-' + Date.now(),
+          title: 'Shokupan au tangzhong (Copie)',
+          status: 'Brouillon',
+          statusVariant: 'default',
+          featured: false,
+        });
+        state.menuOpen = false;
+        state.screen = 'library';
+        render();
+      }
+
+      function copyBuildInfo() {
+        state.copiedBuild = true;
+        render();
+        setTimeout(() => {
+          state.copiedBuild = false;
+          render();
+        }, 1800);
+      }
+
+      /* ==========================================================================
+         SCREEN RENDERERS
+         ========================================================================== */
+      function renderTopBar() {
+        const isLib = state.screen === 'library';
+        const isOptB = state.navOption === 'B';
+
+        let title = 'Bibliothèque';
+        if (!isLib) title = 'Shokupan au tangzhong';
+
+        // Option B places contextual actions in the Top AppBar (#112)
+        let rightActions = '';
+        if (isLib) {
+          rightActions = `
+            <button class="build-chip mono-code" onclick="copyBuildInfo()" title="Copier l'identité de build (#131)">
+              ${icon('copy', 12)} ${state.copiedBuild ? 'Copié !' : '0.3.0+7c7c2e7'}
+            </button>
+            ${
+              isOptB
+                ? `<button class="btn btn-primary btn-sm" onclick="state.modal='newRecipe';render()">${icon('plus', 15)} Nouvelle</button>`
+                : ''
+            }
+          `;
+        } else {
+          rightActions = isOptB
+            ? `
+              ${
+                state.recipeMode === 'consult'
+                  ? `<button class="icon-btn" onclick="enterEditMode()" title="Modifier">${icon('edit', 17)}</button>
+                     <button class="icon-btn icon-btn-primary" onclick="state.screen='prep';render()" title="Lancer la préparation">${icon('play', 17)}</button>`
+                  : `<button class="btn btn-sm" onclick="cancelEditMode()">Annuler</button>
+                     <button class="btn btn-primary btn-sm" onclick="saveEditMode()">Enregistrer</button>`
+              }
+              <button class="icon-btn" onclick="state.menuOpen=!state.menuOpen;render()" aria-label="Plus d'actions">${icon('more', 18)}</button>
+            `
+            : `
+              <span class="badge badge-warning"><span class="pulse-dot"></span> Fournée active</span>
+            `;
+        }
+
+        // Sub-navigation in Option A when inside a recipe
+        const optionATabs =
+          !isLib && state.navOption === 'A'
+            ? `
+          <div class="segmented" role="tablist" aria-label="Sections de la recette">
+            <button class="segmented-btn ${state.screen === 'recipe' ? 'active' : ''}" onclick="state.screen='recipe';render()">Recette</button>
+            <button class="segmented-btn ${state.screen === 'plan' ? 'active' : ''}" onclick="state.screen='plan';render()">Planification</button>
+            <button class="segmented-btn ${state.screen === 'prep' ? 'active' : ''}" onclick="state.screen='prep';render()">Préparation</button>
+            <button class="segmented-btn ${state.screen === 'history' ? 'active' : ''}" onclick="state.screen='history';render()">Historique</button>
+          </div>
+        `
+            : '';
+
+        return `
+          <header class="top-bar">
+            <div class="top-bar-main">
+              <div class="top-bar-title-group">
+                ${
+                  !isLib
+                    ? `<button class="icon-btn" onclick="state.screen='library';state.menuOpen=false;render()" aria-label="Retour à la bibliothèque">${icon('back', 18)}</button>`
+                    : ''
+                }
+                <h1 class="top-bar-title">${title}</h1>
+              </div>
+              <div class="top-bar-actions">
+                ${rightActions}
+              </div>
+            </div>
+            ${optionATabs}
+          </header>
+        `;
+      }
+
+      function renderLibraryScreen() {
+        const filtered = state.recipes.filter((r) => {
+          const matchesQuery =
+            !state.searchQuery ||
+            r.title.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+            r.subtitle.toLowerCase().includes(state.searchQuery.toLowerCase());
+          const matchesCat = state.libraryFilter === 'all' || r.category === state.libraryFilter;
+          return matchesQuery && matchesCat;
+        });
+
+        return `
+          <div class="screen-content">
+            <!-- Search & Semantic Status Filters -->
+            <div class="stack">
+              <div class="surface" style="padding: 0.5rem 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                ${icon('search', 16)}
+                <input
+                  type="search"
+                  placeholder="Rechercher une recette, farine, levain…"
+                  value="${state.searchQuery}"
+                  oninput="state.searchQuery=this.value;render()"
+                  style="border:none;background:transparent;width:100%;outline:none;font-size:0.875rem;"
+                />
+              </div>
+              <div class="chip-row" role="group" aria-label="Filtrer par état">
+                <button class="filter-chip ${state.libraryFilter === 'all' ? 'active' : ''}" onclick="state.libraryFilter='all';render()">Toutes (${state.recipes.length})</button>
+                <button class="filter-chip ${state.libraryFilter === 'active' ? 'active' : ''}" onclick="state.libraryFilter='active';render()">En cours</button>
+                <button class="filter-chip ${state.libraryFilter === 'baked' ? 'active' : ''}" onclick="state.libraryFilter='baked';render()">Cuites</button>
+                <button class="filter-chip ${state.libraryFilter === 'draft' ? 'active' : ''}" onclick="state.libraryFilter='draft';render()">Brouillons</button>
+              </div>
+            </div>
+
+            <!-- Recipe Cards with Restored Round 2 Hierarchy & Icon Pills (#127) -->
+            <div class="stack">
+              ${filtered
+                .map(
+                  (r) => `
+                <button type="button" class="recipe-card ${r.featured ? 'featured' : ''}" onclick="state.screen='recipe';render()">
+                  <div class="recipe-card-header">
+                    <div>
+                      <div class="recipe-card-title">${r.title}</div>
+                      <div class="recipe-card-subtitle">${r.subtitle}</div>
+                    </div>
+                    <span class="badge badge-${r.statusVariant}">
+                      ${r.featured ? '<span class="pulse-dot"></span>' : ''}
+                      ${r.status}
+                    </span>
+                  </div>
+                  <div class="recipe-card-details">
+                    <span class="recipe-card-detail-item">${icon('scale', 13)} ${r.mass} g</span>
+                    <span class="recipe-card-detail-item">${icon('droplet', 13)} ${r.hydration}</span>
+                    <span class="recipe-card-detail-item">${icon('clock', 13)} ${r.duration}</span>
+                    <span class="recipe-card-detail-item">${r.version}</span>
+                  </div>
+                </button>
+              `
+                )
+                .join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderRecipeScreen() {
+        const f = computeFormula();
+        const allItems = [...state.ingredients.tangzhong, ...state.ingredients.final];
+        const weighedCount = allItems.filter((i) => state.weighedIds[i.id]).length;
+
+        return `
+          <div class="screen-content">
+            <!-- Sub-view Segmented Switcher: Ingrédients | Étapes (9) -->
+            <div class="segmented" role="tablist">
+              <button class="segmented-btn ${state.recipeSubtab === 'ingredients' ? 'active' : ''}" onclick="state.recipeSubtab='ingredients';render()">
+                Ingrédients (${allItems.length})
+              </button>
+              <button class="segmented-btn ${state.recipeSubtab === 'steps' ? 'active' : ''}" onclick="state.recipeSubtab='steps';render()">
+                Étapes & Timeline (${state.steps.length})
+              </button>
+            </div>
+
+            ${state.recipeSubtab === 'ingredients' ? renderIngredientsTab(f, weighedCount, allItems.length) : renderStepsTab()}
+          </div>
+        `;
+      }
+
+      function renderIngredientsTab(f, weighedCount, totalCount) {
+        return `
+          <!-- RECIPE SUMMARY CARD (#125: 3 Primary Metrics + 2 Secondary Pills + Bottom Notice) -->
+          <section class="recipe-summary-box" aria-label="Résumé de la formule">
+            <div class="recipe-summary-top">
+              <div class="recipe-summary-heading">
+                <span class="recipe-summary-title">Résumé de la formule</span>
+                <span class="badge badge-default tabular">Ancre : Pâte ${f.totalDough} g</span>
+              </div>
+              <button class="icon-btn" onclick="state.modal='hydration';render()" aria-label="Détail de l'hydratation" title="Détail de l'hydratation">
+                ${icon('info', 16)}
+              </button>
+            </div>
+
+            <!-- 3 Primary Metrics -->
+            <div class="metric-grid">
+              <div class="metric-box">
+                <span class="metric-label">Farine totale</span>
+                <span class="metric-value">${f.totalFlour} g</span>
+                <span class="metric-sub">100 % base</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-label">Pâte assemblée</span>
+                <span class="metric-value">${f.totalDough} g</span>
+                <span class="metric-sub">1 pièce × ${f.totalDough} g</span>
+              </div>
+              <button type="button" class="metric-box" onclick="state.modal='hydration';render()">
+                <span class="metric-label">Hydratation ${icon('info', 12)}</span>
+                <span class="metric-value">${Math.round(f.hydrationPct)} %</span>
+                <span class="metric-sub">Part connue (${f.knownWater} g)</span>
+              </button>
+            </div>
+
+            <!-- 2 Secondary Enrichment Metrics -->
+            <div class="secondary-metrics-row">
+              <div class="secondary-metric-pill">
+                <span class="muted">Matières grasses</span>
+                <strong class="tabular">${f.fatPct} % · ${f.fatMass} g</strong>
+              </div>
+              <div class="secondary-metric-pill">
+                <span class="muted">Sucres</span>
+                <strong class="tabular">${f.sugarPct} % · ${f.sugarMass} g</strong>
+              </div>
+            </div>
+
+            <!-- Completeness Notice at the bottom of the card (NOT in the title slot!) -->
+            ${
+              f.unknownItems.length > 0
+                ? `
+              <div class="recipe-summary-notice-wrap">
+                <div class="recipe-summary-notice">
+                  ${icon('info', 14)}
+                  <span>Composition inconnue : ${f.unknownItems.map((u) => u.name).join(', ')}</span>
+                </div>
+                <button class="btn btn-sm" style="min-height:1.625rem;padding:0.125rem 0.5rem;font-size:0.75rem;" onclick="state.modal='hydration';render()">Détails</button>
+              </div>
+            `
+                : ''
+            }
+          </section>
+
+          <!-- Weighing Progress Bar (#122) -->
+          <div class="row-between" style="padding-inline: 0.25rem;">
+            <span class="muted" style="font-size: 0.8125rem; font-weight: 600;">
+              Pesée : <strong class="tabular" style="color:var(--text-main)">${weighedCount} / ${totalCount}</strong> ingrédients cochés
+            </span>
+            ${
+              weighedCount > 0 && state.recipeMode === 'consult'
+                ? `<button class="btn btn-sm" onclick="resetWeighed()">Réinitialiser la pesée</button>`
+                : ''
+            }
+          </div>
+
+          <!-- STAGE 1: Tangzhong (Display name "Tangzhong", never raw ID "tangzhong") -->
+          <section class="disclosure" data-open="${state.openGroups.tangzhong}">
+            <button type="button" class="disclosure-header" onclick="toggleGroup('tangzhong')">
+              <div class="disclosure-headings">
+                <span class="disclosure-title">Tangzhong (Empois à 65 °C)</span>
+                <span class="disclosure-subtitle">${f.tzMass} g</span>
+              </div>
+              <span class="badge badge-default">${state.openGroups.tangzhong ? 'Replier' : 'Déplier'}</span>
+            </button>
+            ${
+              state.openGroups.tangzhong
+                ? `
+              <div class="disclosure-body">
+                ${state.ingredients.tangzhong.map((row) => renderIngredientRow('tangzhong', row, f.totalFlour)).join('')}
+              </div>
+            `
+                : ''
+            }
+          </section>
+
+          <!-- STAGE 2: Pâte finale (Includes localized Tangzhong incorporation row) -->
+          <section class="disclosure" data-open="${state.openGroups.final}">
+            <button type="button" class="disclosure-header" onclick="toggleGroup('final')">
+              <div class="disclosure-headings">
+                <span class="disclosure-title">Pâte finale (Pétrissage)</span>
+                <span class="disclosure-subtitle">${f.finalMixMass} g + ${f.tzMass} g Tangzhong = ${f.totalDough} g</span>
+              </div>
+              <span class="badge badge-default">${state.openGroups.final ? 'Replier' : 'Déplier'}</span>
+            </button>
+            ${
+              state.openGroups.final
+                ? `
+              <div class="disclosure-body">
+                <div class="ingredient-row is-incorporation" style="cursor:default">
+                  <div class="ingredient-row-main">
+                    <span class="badge badge-primary">Incorporer</span>
+                    <div class="ingredient-info">
+                      <span class="ingredient-name">Tangzhong (préparation complète)</span>
+                      <div class="ingredient-meta">
+                        <span class="ingredient-pct">${Math.round((f.tzMass / f.totalFlour) * 1000) / 10} % boulanger</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ingredient-row-end">
+                    <span class="ingredient-mass">${f.tzMass} g</span>
+                  </div>
+                </div>
+                ${state.ingredients.final.map((row) => renderIngredientRow('final', row, f.totalFlour)).join('')}
+              </div>
+            `
+                : ''
+            }
+          </section>
+
+          <!-- Collapsed Assembled Formula Totals (#125) -->
+          <section class="disclosure" data-open="${state.openGroups.totals}">
+            <button type="button" class="disclosure-header" onclick="toggleGroup('totals')">
+              <div class="disclosure-headings">
+                <span class="disclosure-title">Totaux de la formule assemblée</span>
+                <span class="disclosure-subtitle">${f.totalDough} g</span>
+              </div>
+              <span class="badge badge-default">${state.openGroups.totals ? 'Masquer' : 'Afficher'}</span>
+            </button>
+            ${
+              state.openGroups.totals
+                ? `
+              <div class="disclosure-body">
+                <div class="ingredient-row" style="cursor:default">
+                  <span class="ingredient-name">Farine de gruau T45 (16 g + 298 g)</span>
+                  <span class="ingredient-mass">100 % · ${f.totalFlour} g</span>
+                </div>
+                <div class="ingredient-row" style="cursor:default">
+                  <span class="ingredient-name">Eau totale (80 g + 110 g)</span>
+                  <span class="ingredient-mass">60,5 % · 190 g</span>
+                </div>
+              </div>
+            `
+                : ''
+            }
+          </section>
+        `;
+      }
+
+      function renderIngredientRow(group, row, totalFlour) {
+        const checked = !!state.weighedIds[row.id];
+        const pct = totalFlour > 0 ? Math.round((row.mass / totalFlour) * 1000) / 10 : 0;
+
+        return `
+          <div class="ingredient-row ${checked ? 'is-checked' : ''}" onclick="toggleWeighed('${row.id}')">
+            <div class="ingredient-row-main">
+              <span class="checkbox-custom" role="checkbox" aria-checked="${checked}" aria-label="Peser ${row.name}">
+                ${checked ? icon('check', 13) : ''}
+              </span>
+              <div class="ingredient-info">
+                <span class="ingredient-name">${row.name}</span>
+                <div class="ingredient-meta">
+                  <span class="ingredient-pct">${pct} %</span>
+                  ${row.note ? `<span class="ingredient-note">• ${row.note}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div class="ingredient-row-end" onclick="event.stopPropagation()">
+              ${
+                state.recipeMode === 'edit'
+                  ? `
+                <div class="inline-edit-group">
+                  <label class="compact-input-wrap" aria-label="${row.name} en grammes">
+                    <input
+                      type="number"
+                      step="1"
+                      class="compact-input"
+                      value="${row.mass}"
+                      onchange="updateIngredientMass('${group}', '${row.id}', this.value)"
+                    />
+                    <span class="compact-unit">g</span>
+                  </label>
+                </div>
+              `
+                  : `<span class="ingredient-mass">${row.mass} g</span>`
+              }
+            </div>
+          </div>
+        `;
+      }
+
+      function renderStepsTab() {
+        return `
+          <!-- True 2-Option Segmented Switcher + Accessible Reorder Submode (#100, #123) -->
+          <div class="row-between">
+            <div class="segmented" role="tablist" aria-label="Mode d'affichage des étapes" style="flex:1">
+              <button class="segmented-btn ${state.processView === 'grouped' ? 'active' : ''}" onclick="state.processView='grouped';render()">
+                ${icon('list', 14)} Étapes groupées
+              </button>
+              <button class="segmented-btn ${state.processView === 'timeline' ? 'active' : ''}" onclick="state.processView='timeline';render()">
+                ${icon('clock', 14)} Ligne de temps
+              </button>
+            </div>
+            <button class="btn btn-sm ${state.reorderMode ? 'btn-soft' : ''}" onclick="state.reorderMode=!state.reorderMode;render()">
+              ${state.reorderMode ? 'Terminer l’ordre' : 'Réordonner'}
+            </button>
+          </div>
+
+          <!-- Fermentation Model Domain Validity Banner (#126) -->
+          <div class="status-panel ${state.fermentationValid ? 'success' : 'warning'}">
+            <div class="row-between">
+              <strong style="font-size:0.8125rem;">
+                ${
+                  state.fermentationValid
+                    ? '✓ Modèle de fermentation valide (domaine 4–32 °C)'
+                    : '⚠ Température hors domaine du modèle (38 °C > 32 °C)'
+                }
+              </strong>
+              <button class="btn btn-sm" style="min-height:1.625rem;padding:0.125rem 0.5rem;font-size:0.75rem;" onclick="state.fermentationValid=!state.fermentationValid;render()">
+                Simuler ${state.fermentationValid ? 'Hors domaine' : 'Valide'}
+              </button>
+            </div>
+            <div class="status-panel-message">
+              ${
+                state.fermentationValid
+                  ? 'Projection Q10 active : Pointage estimé à 1 h 05 à 25 °C (candidat inverse : 24,5 °C pour 1 h 10).'
+                  : 'L’estimation automatique est désactivée au-dessus de 32 °C (risque d’inactivation enzymatique). La durée manuelle (1 h 05) est conservée.'
+              }
+            </div>
+          </div>
+
+          ${
+            state.processView === 'grouped'
+              ? ['Tangzhong', 'Pâte principale']
+                  .map(
+                    (grp) => `
+              <section class="disclosure" data-open="true">
+                <div class="disclosure-header" style="cursor:default">
+                  <div class="disclosure-headings">
+                    <span class="disclosure-title">${grp}</span>
+                    <span class="disclosure-subtitle">${state.steps.filter((s) => s.group === grp).length} étapes</span>
+                  </div>
+                </div>
+                <div class="disclosure-body">
+                  ${state.steps
+                    .map((step, idx) => ({ step, idx }))
+                    .filter((x) => x.step.group === grp)
+                    .map(
+                      ({ step, idx }) => `
+                    <div class="step-row ${idx === state.activePrepStep ? 'is-active' : ''}">
+                      <div class="step-row-main">
+                        <span class="step-index">${idx + 1}</span>
+                        <div class="step-row-body">
+                          <div class="step-title-row">
+                            <span class="step-title">${step.title}</span>
+                          </div>
+                          <div class="step-details">
+                            <span class="step-detail-item">${icon('clock', 12)} ${step.duration}</span>
+                            <span class="step-detail-item">${icon('flame', 12)} ${step.temp}</span>
+                            ${step.steam ? `<span class="step-detail-item">${icon('droplet', 12)} ${step.steam}</span>` : ''}
+                            ${step.vessel ? `<span class="step-detail-item">${step.vessel}</span>` : ''}
+                          </div>
+                          ${step.cue ? `<div class="muted" style="font-size:0.75rem;margin-top:0.125rem;">Repère : ${step.cue}</div>` : ''}
+                        </div>
+                      </div>
+                      ${
+                        state.reorderMode
+                          ? `
+                        <div class="row" style="gap:0.25rem;">
+                          <button class="icon-btn" style="width:2rem;height:2rem;" onclick="moveStep(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} aria-label="Monter l'étape">${icon('up', 14)}</button>
+                          <button class="icon-btn" style="width:2rem;height:2rem;" onclick="moveStep(${idx}, 1)" ${idx === state.steps.length - 1 ? 'disabled' : ''} aria-label="Descendre l'étape">${icon('down', 14)}</button>
+                        </div>
+                      `
+                          : ''
+                      }
+                    </div>
+                  `
+                    )
+                    .join('')}
+                </div>
+              </section>
+            `
+                  )
+                  .join('')
+              : `
+              <!-- Visual Lane Timeline View -->
+              <div class="timeline-track">
+                ${state.steps
+                  .map(
+                    (step, idx) => `
+                  <div class="timeline-node">
+                    <div class="row-between">
+                      <span class="badge ${step.group === 'Tangzhong' ? 'badge-default' : 'badge-primary'}">${step.group}</span>
+                      <span class="tabular muted" style="font-size:0.75rem;font-weight:700;">${step.start} → ${step.end} (${step.duration})</span>
+                    </div>
+                    <div style="font-weight:700;margin-top:0.25rem;">${idx + 1}. ${step.title}</div>
+                    <div class="step-details" style="margin-top:0.375rem;">
+                      <span class="step-detail-item">${icon('flame', 12)} ${step.temp}</span>
+                      ${step.steam ? `<span class="step-detail-item">${step.steam}</span>` : ''}
+                      ${step.vessel ? `<span class="step-detail-item">${step.vessel}</span>` : ''}
+                    </div>
+                  </div>
+                `
+                  )
+                  .join('')}
+              </div>
+            `
+          }
+        `;
+      }
+
+      function renderPlanScreen() {
+        return `
+          <div class="screen-content">
+            <section class="surface stack">
+              <div class="recipe-summary-title">Cible de planification</div>
+              <div class="segmented">
+                <button class="segmented-btn active">Début à 12:00</button>
+                <button class="segmented-btn">Enfourner à 15:36</button>
+                <button class="segmented-btn">Prêt à 17:11</button>
+              </div>
+              <div class="metric-grid" style="margin-top:0.25rem;">
+                <div class="metric-box">
+                  <span class="metric-label">Début Tangzhong</span>
+                  <span class="metric-value">12:00</span>
+                  <span class="metric-sub">Aujourd’hui</span>
+                </div>
+                <div class="metric-box">
+                  <span class="metric-label">Enfournement</span>
+                  <span class="metric-value">15:36</span>
+                  <span class="metric-sub">Préchauffer 15:06</span>
+                </div>
+                <div class="metric-box">
+                  <span class="metric-label">Fin ressuage</span>
+                  <span class="metric-value">17:11</span>
+                  <span class="metric-sub">Durée 5 h 11</span>
+                </div>
+              </div>
+            </section>
+            ${renderStepsTab()}
+          </div>
+        `;
+      }
+
+      function renderPrepScreen() {
+        const step = state.steps[state.activePrepStep];
+        return `
+          <div class="screen-content">
+            <!-- Step Selector Pill Row (Allows inspecting Step 4 Pointage vs Step 9 Cuisson #124) -->
+            <div class="row-between">
+              <span class="badge badge-warning">Étape ${state.activePrepStep + 1} sur ${state.steps.length} · ${step.group}</span>
+              <div class="row" style="gap:0.25rem;">
+                <button class="btn btn-sm" onclick="state.activePrepStep=3;state.timerMinutes=65;render()">Voir Étape 4 (Pointage)</button>
+                <button class="btn btn-sm" onclick="state.activePrepStep=8;state.timerMinutes=35;render()">Voir Étape 9 (Cuisson)</button>
+              </div>
+            </div>
+
+            <!-- ACTIVE STEP HERO CARD (#124: Timer + Instructions + Oven/Steam/Vessel BEFORE action buttons) -->
+            <section class="prep-hero-card">
+              <div>
+                <div class="preparation-timer-title">Étape active (${step.start} → ${step.end})</div>
+                <h2 style="margin:0.25rem 0 0;font-size:1.25rem;">${step.title}</h2>
+              </div>
+
+              <div class="row-between">
+                <div class="prep-timer-display">${state.timerMinutes} min</div>
+                <div class="step-details">
+                  <span class="step-detail-item">${icon('flame', 13)} Cible ${step.temp}</span>
+                  ${step.steam ? `<span class="step-detail-item">${icon('droplet', 13)} ${step.steam}</span>` : ''}
+                </div>
+              </div>
+
+              <!-- Oven / Steam / Vessel Callout when on Baking step (#124) -->
+              ${
+                step.vessel || step.steam
+                  ? `
+                <div class="oven-grid">
+                  <div class="metric-box">
+                    <span class="metric-label">Four</span>
+                    <span class="metric-value" style="font-size:1rem;">${step.temp}</span>
+                    <span class="metric-sub">Statique</span>
+                  </div>
+                  <div class="metric-box">
+                    <span class="metric-label">Buée</span>
+                    <span class="metric-value" style="font-size:0.9375rem;">${step.steam || 'Sans'}</span>
+                    <span class="metric-sub">Coup initial</span>
+                  </div>
+                  <div class="metric-box">
+                    <span class="metric-label">Récipient</span>
+                    <span class="metric-value" style="font-size:0.875rem;">Pullman</span>
+                    <span class="metric-sub">20 cm fermé</span>
+                  </div>
+                </div>
+              `
+                  : ''
+              }
+
+              <!-- Instructions integrated directly inside the active card (NOT buried below 6 buttons!) -->
+              <div class="prep-instruction-box">
+                <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);">
+                  Consigne de l’étape
+                </div>
+                <div style="font-size:0.9375rem;font-weight:500;">${step.instructions}</div>
+                ${
+                  step.cue
+                    ? `<div class="badge badge-primary" style="align-self:flex-start;white-space:normal;">Repère visuel : ${step.cue}</div>`
+                    : ''
+                }
+              </div>
+
+              <!-- Quick Action Controls Below Instructions -->
+              <div class="row" style="flex-wrap:wrap;">
+                <button class="btn btn-sm" onclick="state.timerMinutes+=15;state.bakeLogs.unshift({time:'Maintenant',text:'+15 min ajoutées à « '+step.title+' »'});render()">+15 min</button>
+                <button class="btn btn-sm" onclick="state.bakeLogs.unshift({time:'Maintenant',text:'Observation notée : Pâte souple, dôme régulier'});render()">+ Observation</button>
+                <button class="btn btn-primary" style="flex:1;" onclick="state.activePrepStep=(state.activePrepStep+1)%state.steps.length;render()">
+                  ${icon('check', 16)} Étape terminée
+                </button>
+              </div>
+            </section>
+
+            <!-- Bake Log -->
+            <section class="surface stack">
+              <div class="recipe-summary-title">Journal de la fournée en cours</div>
+              ${state.bakeLogs
+                .map(
+                  (l) => `
+                <div class="row" style="font-size:0.8125rem;border-bottom:0.0625rem solid var(--border-subtle);padding-bottom:0.375rem;">
+                  <span class="badge badge-default tabular">${l.time}</span>
+                  <span>${l.text}</span>
+                </div>
+              `
+                )
+                .join('')}
+            </section>
+          </div>
+        `;
+      }
+
+      function renderHistoryScreen() {
+        return `
+          <div class="screen-content">
+            <section class="surface stack">
+              <div class="row-between">
+                <strong>Fournée #12 · 12 oct. 2026</strong>
+                <span class="badge badge-success">★ 4,8 / 5</span>
+              </div>
+              <p class="muted" style="margin:0;font-size:0.875rem;">
+                Mie filante très régulière, cuisson en moule Pullman fermé 34 min à 190 °C.
+              </p>
+            </section>
+          </div>
+        `;
+      }
+
+      /* ==========================================================================
+         BOTTOM BAR: OPTION A vs OPTION B (#111, #112, #120 — Zero Giant Persistent CTA)
+         ========================================================================== */
+      function renderBottomBar() {
+        if (state.navOption === 'A') {
+          // Option A: Browser-like contextual action toolbar
+          if (state.screen === 'library') {
+            return `
+              <nav class="bottom-bar" aria-label="Barre d'actions Option A (Bibliothèque)">
+                <div class="option-a-toolbar">
+                  <button class="toolbar-action" onclick="document.querySelector('input[type=search]')?.focus()">
+                    ${icon('search', 17)}
+                    <span>Rechercher</span>
+                  </button>
+                  <button class="toolbar-action is-primary" onclick="state.modal='newRecipe';render()">
+                    ${icon('plus', 17)}
+                    <span>Nouvelle recette</span>
+                  </button>
+                  <button class="toolbar-action" onclick="state.menuOpen=!state.menuOpen;render()">
+                    ${icon('more', 17)}
+                    <span>Menu</span>
+                  </button>
+                </div>
+              </nav>
+            `;
+          }
+
+          if (state.recipeMode === 'edit') {
+            return `
+              <nav class="bottom-bar" aria-label="Barre d'édition Option A">
+                <div class="option-a-toolbar">
+                  <button class="toolbar-action" onclick="cancelEditMode()">Annuler</button>
+                  <button class="toolbar-action is-primary" onclick="saveEditMode()">
+                    ${icon('check', 17)}
+                    <span>Enregistrer</span>
+                  </button>
+                </div>
+              </nav>
+            `;
+          }
+
+          return `
+            <nav class="bottom-bar" aria-label="Barre d'actions contextuelle Option A">
+              <div class="option-a-toolbar">
+                <button class="toolbar-action" onclick="enterEditMode()">
+                  ${icon('edit', 17)}
+                  <span>Modifier</span>
+                </button>
+                <button class="toolbar-action" onclick="state.screen='plan';render()">
+                  ${icon('calendar', 17)}
+                  <span>Planifier</span>
+                </button>
+                <button class="toolbar-action is-primary" onclick="state.screen='prep';render()">
+                  ${icon('play', 17)}
+                  <span>Lancer</span>
+                </button>
+                <button class="toolbar-action" onclick="state.menuOpen=!state.menuOpen;render()">
+                  ${icon('more', 17)}
+                  <span>Plus</span>
+                </button>
+              </div>
+            </nav>
+          `;
+        }
+
+        // Option B: 4-tab Material bottom navigation bar
+        return `
+          <nav class="bottom-bar" aria-label="Navigation principale Option B">
+            <div class="option-b-tabs">
+              <button class="nav-tab ${state.screen === 'library' ? 'active' : ''}" onclick="state.screen='library';render()">
+                ${icon('book', 18)}
+                <span>Bibliothèque</span>
+              </button>
+              <button class="nav-tab ${state.screen === 'recipe' ? 'active' : ''}" onclick="state.screen='recipe';render()">
+                ${icon('list', 18)}
+                <span>Recette</span>
+              </button>
+              <button class="nav-tab ${state.screen === 'plan' ? 'active' : ''}" onclick="state.screen='plan';render()">
+                ${icon('calendar', 18)}
+                <span>Planification</span>
+              </button>
+              <button class="nav-tab ${state.screen === 'prep' ? 'active' : ''}" onclick="state.screen='prep';render()">
+                ${icon('flame', 18)}
+                <span>Préparation</span>
+              </button>
+            </div>
+          </nav>
+        `;
+      }
+
+      /* ==========================================================================
+         ANCHORED POPOVER MENU (`⋯`) & MODALS
+         ========================================================================== */
+      function renderAnchoredMenu() {
+        if (!state.menuOpen) return '';
+        const posClass = state.navOption === 'A' ? 'from-bottom' : 'from-top';
+        return `
+          <div class="anchored-menu ${posClass}" role="menu" aria-label="Actions de la recette">
+            <button class="menu-item" onclick="enterEditMode()">
+              <span>Modifier la recette</span>
+              ${icon('edit', 15)}
+            </button>
+            <button class="menu-item" onclick="duplicateCurrentRecipe()">
+              <span>Dupliquer la recette</span>
+              ${icon('copy', 15)}
+            </button>
+            <button class="menu-item" onclick="state.recipeSubtab='steps';state.reorderMode=!state.reorderMode;state.menuOpen=false;render()">
+              <span>Réordonner les étapes</span>
+              ${icon('list', 15)}
+            </button>
+            <button class="menu-item" onclick="state.screen='history';state.menuOpen=false;render()">
+              <span>Historique des fournées</span>
+              ${icon('clock', 15)}
+            </button>
+            <div class="menu-divider"></div>
+            <button class="menu-item danger" onclick="state.menuOpen=false;state.modal='deleteConfirm';render()">
+              <span>Supprimer la recette</span>
+            </button>
+            <div class="menu-divider"></div>
+            <div class="row-between" style="padding:0.25rem 0.5rem;font-size:0.6875rem;color:var(--text-muted);">
+              <span class="mono-code">Flourprint 0.3.0+7c7c2e7</span>
+              <span>Local-first</span>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderModal() {
+        if (!state.modal) return '';
+        const f = computeFormula();
+
+        if (state.modal === 'hydration') {
+          // Cleaned of the wrong copy-pasted helpSize text (#134 finding)
+          return `
+            <div class="modal-backdrop" onclick="state.modal=null;render()">
+              <div class="modal-sheet" role="dialog" aria-modal="true" aria-label="Détail de l'hydratation" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                  <h3 style="margin:0;font-size:1.0625rem;">Détail de l’hydratation (Part connue)</h3>
+                  <button class="btn btn-sm" onclick="state.modal=null;render()">Fermer</button>
+                </div>
+                <div class="modal-body">
+                  <p class="muted" style="margin:0;">
+                    L’hydratation additionne l’eau libre et la part d’eau connue des ingrédients composés (lait, beurre), rapportée à la farine totale (${f.totalFlour} g).
+                  </p>
+                  <div class="metric-grid">
+                    <div class="metric-box">
+                      <span class="metric-label">Eau connue</span>
+                      <span class="metric-value">${f.knownWater} g</span>
+                    </div>
+                    <div class="metric-box">
+                      <span class="metric-label">Farine totale</span>
+                      <span class="metric-value">${f.totalFlour} g</span>
+                    </div>
+                    <div class="metric-box">
+                      <span class="metric-label">Hydratation</span>
+                      <span class="metric-value">${f.hydrationPct} %</span>
+                    </div>
+                  </div>
+                  <div class="surface stack" style="padding:0.625rem;">
+                    <div class="row-between"><span>Eau (Tangzhong)</span><strong class="tabular">80,0 g</strong></div>
+                    <div class="row-between"><span>Eau (Pâte finale)</span><strong class="tabular">110,0 g</strong></div>
+                    <div class="row-between"><span>Lait entier (45 g × 87,5 %)</span><strong class="tabular">39,4 g</strong></div>
+                    <div class="row-between"><span>Beurre doux (31 g × 16 %)</span><strong class="tabular">5,0 g</strong></div>
+                  </div>
+                  <div class="recipe-summary-notice-wrap">
+                    <span>Non comptabilisé (composition inconnue) : Poudre de lait écrémé (9 g)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        if (state.modal === 'newRecipe') {
+          return `
+            <div class="modal-backdrop" onclick="state.modal=null;render()">
+              <div class="modal-sheet" role="dialog" aria-modal="true" aria-label="Nouvelle recette" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                  <h3 style="margin:0;font-size:1.0625rem;">Choisir un modèle (#128)</h3>
+                  <button class="btn btn-sm" onclick="state.modal=null;render()">Fermer</button>
+                </div>
+                <div class="modal-body">
+                  <button class="recipe-card" onclick="createFromTemplate('Shokupan', 699, '73 %')">
+                    <div class="recipe-card-header">
+                      <span class="recipe-card-title">Shokupan (Tangzhong)</span>
+                      <span class="badge badge-primary">699 g · 73 %</span>
+                    </div>
+                    <div class="recipe-card-subtitle">Crée « Shokupan » sans suffixe « 1 » superflu</div>
+                  </button>
+                  <button class="recipe-card" onclick="createFromTemplate('Pain au levain', 900, '75 %')">
+                    <div class="recipe-card-header">
+                      <span class="recipe-card-title">Pain au levain naturel</span>
+                      <span class="badge badge-default">900 g · 75 %</span>
+                    </div>
+                    <div class="recipe-card-subtitle">Fermentation mixte sur levain liquide</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        if (state.modal === 'deleteConfirm') {
+          return `
+            <div class="modal-backdrop" onclick="state.modal=null;render()">
+              <div class="modal-sheet" role="dialog" aria-modal="true" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                  <h3 style="margin:0;font-size:1.0625rem;">Supprimer « Shokupan au tangzhong » ?</h3>
+                </div>
+                <div class="modal-body">
+                  <p class="muted" style="margin:0;">Cette action retirera la recette de la bibliothèque en mémoire.</p>
+                  <div class="row" style="justify-content:flex-end;">
+                    <button class="btn" onclick="state.modal=null;render()">Annuler</button>
+                    <button class="btn btn-danger" onclick="state.recipes.shift();state.modal=null;state.screen='library';render()">Supprimer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        return '';
+      }
+
+      function render() {
+        const root = document.getElementById('app-root');
+        let bodyHtml = '';
+        if (state.screen === 'library') bodyHtml = renderLibraryScreen();
+        else if (state.screen === 'recipe') bodyHtml = renderRecipeScreen();
+        else if (state.screen === 'plan') bodyHtml = renderPlanScreen();
+        else if (state.screen === 'prep') bodyHtml = renderPrepScreen();
+        else if (state.screen === 'history') bodyHtml = renderHistoryScreen();
+
+        root.innerHTML = `
+          ${renderTopBar()}
+          <div class="screen">${bodyHtml}</div>
+          ${renderAnchoredMenu()}
+          ${renderBottomBar()}
+          ${renderModal()}
+        `;
+      }
+
+      render();
+    </script>
+  </body>
+</html>
