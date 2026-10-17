@@ -9,15 +9,19 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p apps/mobile && tsc -p apps/mobile/tsconfig.node.json && tsc -p apps/desktop/tsconfig.e2e.json",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p apps/mobile && tsc -p apps/mobile/tsconfig.node.json && tsc -p apps/desktop/tsconfig.e2e.json && tsc -p packages/ui",
     "lint": "eslint .",
     "test": "tsc -b && vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && vitest run && pnpm test:backlog",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm tokens:check && vitest run && pnpm test:backlog",
     "test:backlog": "node --test scripts/backlog-view.test.mjs",
     "build:mobile": "pnpm --filter @flourprint/mobile build",
-    "build:desktop": "pnpm --filter @flourprint/desktop package"
+    "build:desktop": "pnpm --filter @flourprint/desktop package",
+    "tokens": "node scripts/ui-tokens.mjs",
+    "tokens:check": "node scripts/ui-tokens.mjs --check",
+    "catalogue": "node scripts/ui-catalogue.mjs serve",
+    "build:catalogue": "node scripts/ui-catalogue.mjs build"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
