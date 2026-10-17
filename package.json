@@ -21,7 +21,8 @@
     "tokens": "node scripts/ui-tokens.mjs",
     "tokens:check": "node scripts/ui-tokens.mjs --check",
     "catalogue": "node scripts/ui-catalogue.mjs serve",
-    "build:catalogue": "node scripts/ui-catalogue.mjs build"
+    "build:catalogue": "node scripts/ui-catalogue.mjs build",
+    "ui:index": "UPDATE_CATALOGUE=1 vitest run packages/ui/test/catalogue-index.test.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

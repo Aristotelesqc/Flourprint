@@ -4,8 +4,18 @@
  * developer and review page generated from a catalogue registry, so its own labels are fixed
  * English; product text reaches components only through their props.
  */
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import type { Catalogue as CatalogueRegistry, ComponentMap, Manifest } from '../library.ts';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import type { Guide } from '../guides.ts';
+import type {
+  Catalogue as CatalogueRegistry,
+  ComponentMap,
+  Manifest,
+  Versioned,
+} from '../library.ts';
+import { MotionProvider } from '../motion-context.ts';
+import { playMotion, transitionCss, type Motion } from '../motion.ts';
+import type { MotionManifest } from '../motion.ts';
+import type { FlourprintMotion } from '../motions.ts';
 
 const THEMES = ['light', 'dark', 'amoled'] as const;
 const WIDTHS = [393, 360] as const;
@@ -17,7 +27,110 @@ export interface CatalogueProps<C extends ComponentMap> {
   readonly catalogue: CatalogueRegistry<C>;
   /** Marks the version each id uses in this manifest. */
   readonly manifest?: Manifest<C>;
+  /** Component guides, shown above each id's versions (ADR 0021). */
+  readonly guides?: Readonly<
+    Record<string, Guide & { readonly props?: Readonly<Record<string, string>> }>
+  >;
+  /** Motion items, played in each theme frame in standard or reduced form. */
+  readonly motions?: Readonly<Record<string, readonly Motion[]>>;
+  readonly motionGuides?: Readonly<Record<string, Guide>>;
+  /** Marks selected motion versions and is provided to components through `useMotion`. */
+  readonly motionManifest?: MotionManifest<FlourprintMotion>;
 }
+
+const GuidePanel = ({
+  guide,
+}: {
+  guide: (Guide & { readonly props?: Readonly<Record<string, string>> }) | undefined;
+}) =>
+  guide ? (
+    <div data-testid="catalogue-guide" style={styles.guide}>
+      <p style={styles.guidePurpose}>{guide.purpose}</p>
+      <GuideList title="Use when" items={guide.useWhen} />
+      <GuideList title="Avoid when" items={guide.avoidWhen} />
+      <GuideList
+        title="Props"
+        items={Object.entries(guide.props ?? {}).map(([prop, text]) => `${prop}: ${text}`)}
+      />
+      <GuideList title="Accessibility" items={guide.accessibility} />
+      <GuideList title="Related" items={guide.related} />
+      {guide.decisions.length > 0 ? (
+        <p style={styles.muted}>
+          {guide.decisions.map((decision) => (
+            <a key={decision.url} href={decision.url} style={styles.decision}>
+              {decision.label}
+            </a>
+          ))}
+        </p>
+      ) : null}
+    </div>
+  ) : (
+    <p data-testid="catalogue-no-guide" style={styles.missing}>
+      No guide: every item needs one (ADR 0021).
+    </p>
+  );
+
+const GuideList = ({ title, items }: { title: string; items: readonly string[] }) =>
+  items.length === 0 ? null : (
+    <div style={styles.guideList}>
+      <strong>{title}</strong>
+      <ul style={styles.ul}>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+
+const camel = (property: string): string =>
+  property.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+
+const cssObject = (declarations: Readonly<Record<string, string>>): CSSProperties =>
+  Object.fromEntries(
+    Object.entries(declarations).map(([property, value]) => [camel(property), value]),
+  ) as CSSProperties;
+
+/** One motion in one frame: a sample element and a Play button. */
+const MotionDemo = ({ motion, reduced }: { motion: Motion; reduced: boolean }) => {
+  const sample = useRef<HTMLDivElement>(null);
+  const [on, setOn] = useState(false);
+  if (motion.kind === 'keyframes') {
+    return (
+      <div style={styles.demo}>
+        <div ref={sample} data-testid="motion-sample" style={styles.sample}>
+          {motion.id}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (sample.current) playMotion(motion, sample.current, { reduced });
+          }}
+        >
+          Play
+        </button>
+      </div>
+    );
+  }
+  const state = on ? motion.demo.to : motion.demo.from;
+  return (
+    <div style={styles.demo}>
+      <div
+        data-testid="motion-sample"
+        style={{
+          ...styles.sample,
+          display: 'grid',
+          ...cssObject(state),
+          transition: transitionCss(motion, reduced),
+        }}
+      >
+        <div style={{ overflow: 'hidden', minHeight: 0 }}>{motion.id}</div>
+      </div>
+      <button type="button" aria-pressed={on} onClick={() => setOn(!on)}>
+        Toggle
+      </button>
+    </div>
+  );
+};
 
 const Choice = <T extends string | number>({
   label,
@@ -69,7 +182,14 @@ const Frame = ({
   </div>
 );
 
-export const Catalogue = <C extends ComponentMap>({ catalogue, manifest }: CatalogueProps<C>) => {
+export const Catalogue = <C extends ComponentMap>({
+  catalogue,
+  manifest,
+  guides,
+  motions = {},
+  motionGuides = {},
+  motionManifest,
+}: CatalogueProps<C>) => {
   const [theme, setTheme] = useState<Theme | 'all'>('all');
   const [width, setWidth] = useState<(typeof WIDTHS)[number]>(393);
   const [textScale, setTextScale] = useState<(typeof TEXT_SCALES)[number]>(100);
@@ -88,7 +208,7 @@ export const Catalogue = <C extends ComponentMap>({ catalogue, manifest }: Catal
   const ids = Object.keys(catalogue).sort() as (keyof CatalogueRegistry<C> & string)[];
   const themes = theme === 'all' ? THEMES : [theme];
 
-  return (
+  const page = (
     <main style={styles.page}>
       <header style={styles.header}>
         <h1 style={styles.title}>Flourprint component catalogue</h1>
@@ -141,6 +261,7 @@ export const Catalogue = <C extends ComponentMap>({ catalogue, manifest }: Catal
       {ids.map((id) => (
         <section key={id} id={id} data-testid={`catalogue-${id}`} style={styles.section}>
           <h2 style={styles.id}>{id}</h2>
+          {guides ? <GuidePanel guide={guides[id]} /> : null}
           {catalogue[id].map((version) => {
             const Component = version.component;
             const selected = manifest?.[id] === version;
@@ -172,8 +293,48 @@ export const Catalogue = <C extends ComponentMap>({ catalogue, manifest }: Catal
           })}
         </section>
       ))}
+      <h2 style={styles.kindTitle}>Motions</h2>
+      {Object.keys(motions).length === 0 ? (
+        <p data-testid="catalogue-motions-empty" style={styles.muted}>
+          No motion items in this catalogue.
+        </p>
+      ) : null}
+      {Object.keys(motions)
+        .sort()
+        .map((id) => (
+          <section key={id} id={id} data-testid={`catalogue-${id}`} style={styles.section}>
+            <h2 style={styles.id}>{id}</h2>
+            <GuidePanel guide={motionGuides[id]} />
+            {(motions[id] ?? []).map((motion) => {
+              const selected =
+                (motionManifest as Readonly<Record<string, Versioned>> | undefined)?.[id] ===
+                motion;
+              return (
+                <article
+                  key={motion.version}
+                  data-testid={`catalogue-${id}-${motion.version}`}
+                  style={styles.version}
+                >
+                  <h3 style={styles.versionTitle}>
+                    {motion.version}
+                    {selected ? <span style={styles.selected}>selected</span> : null}
+                  </h3>
+                  <p style={styles.muted}>{motion.notes}</p>
+                  <div style={styles.frames}>
+                    {themes.map((frameTheme) => (
+                      <Frame key={frameTheme} theme={frameTheme} width={width} reduced={reduced}>
+                        <MotionDemo motion={motion} reduced={reduced} />
+                      </Frame>
+                    ))}
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        ))}
     </main>
   );
+  return motionManifest ? <MotionProvider value={motionManifest}>{page}</MotionProvider> : page;
 };
 
 const styles = {
@@ -221,5 +382,30 @@ const styles = {
     border: '1px solid #c9bba6',
     maxWidth: '100%',
     boxSizing: 'border-box',
+  },
+  kindTitle: { fontSize: '1.2rem', margin: '1.5rem 0 0.25rem' },
+  guide: {
+    background: '#f7f2ea',
+    border: '1px solid #d5cabb',
+    borderRadius: '0.5rem',
+    padding: '0.5rem 0.75rem',
+    margin: '0 0 0.75rem',
+    fontSize: '0.85rem',
+    maxWidth: '48rem',
+  },
+  guidePurpose: { margin: '0 0 0.4rem', fontWeight: 600 },
+  guideList: { margin: '0.25rem 0' },
+  ul: { margin: '0.15rem 0 0', paddingLeft: '1.2rem' },
+  decision: { color: '#9c4221', marginRight: '0.75rem' },
+  missing: { color: '#b3261e', fontWeight: 600, fontSize: '0.85rem' },
+  demo: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
+  sample: {
+    flex: 1,
+    padding: '0.75rem',
+    borderRadius: '0.75rem',
+    background: 'var(--fp-color-surface)',
+    border: '1px solid var(--fp-color-outline)',
+    fontFamily: 'ui-monospace, monospace',
+    fontSize: '0.75rem',
   },
 } satisfies Record<string, CSSProperties>;

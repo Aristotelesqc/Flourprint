@@ -92,6 +92,40 @@ Load `@flourprint/ui/tokens.css` once in the consumer. Themes follow `data-theme
 (`light`, `dark`, `amoled`) on any ancestor. Reduced motion follows the system setting or
 `data-motion="reduced"`.
 
+## Motions (ADR 0021)
+
+Every animation is a versioned item, `fp.motion.<name>`, in `src/motions/<name>/v<N>.ts`, with a
+guide in `guide.ts`. An item names its duration and easing by token (`effect`, `spatial`,
+`sheet`; `standard`, `decelerate`). It also gives a **required** reduced-motion form: `'none'`,
+or a lighter form.
+
+- `keyframes` items run with `playMotion(motion, element)`. For Ionic overlays they run through
+  `ionicAnimation(motion, createAnimation, '.modal-wrapper')`, passed to `enterAnimation` or
+  `leaveAnimation`.
+- `transition` items set a CSS `transition` with `transitionCss(motion, reduced)` for changes
+  driven by styles: colour, rotation, accordion height.
+- Components read motions with `useMotion('fp.motion.sheet-enter')` under a
+  `<MotionProvider value={motionManifest}>`. They never write transitions themselves.
+- `v1` of every id is round 2's motion. `defaultMotionManifest` selects it until the owner
+  approves another version in the catalogue.
+- `?ui=fp.motion.sheet-enter:v2` overrides a motion, as for components.
+
+## Guides and the agent index (ADR 0021)
+
+Every component id and motion id has a guide:
+
+- purpose;
+- when to use it and when not;
+- every prop, which the type checks;
+- accessibility;
+- related ids;
+- owner decisions.
+
+Component guides go in `src/catalogue/registry.ts`, motion guides in each motion's `guide.ts`.
+The catalogue shows them. `CATALOGUE.md` is generated from them as the index agents read
+first. A test fails when a guide is missing or blank, or when the index is stale. Run
+`pnpm ui:index` after changing a guide or a version.
+
 ## Tokens
 
 Change values in `src/tokens.ts` only, then run `pnpm tokens`. That rewrites `src/tokens.css`
