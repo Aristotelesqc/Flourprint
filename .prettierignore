@@ -7,3 +7,5 @@ apps/desktop/test-results/
 dogfood/*/source/
 dogfood/*/converted/
 dogfood/*/migration-report/
+# External mockup references, kept byte-for-byte as received.
+docs/mockups/references/*.html
