@@ -64,6 +64,12 @@ typography:
   supporting: { size: 0.875rem, line: 1.25rem }
   metadata: { size: 0.75rem, line: 1rem }
   timer: { size: 3.25rem, line: 1.1, weight: 800 }
+motion:
+  duration-effect: 150ms
+  duration-spatial: 220ms
+  duration-sheet: 260ms
+  easing-standard: 'cubic-bezier(0.2, 0, 0, 1)'
+  easing-decelerate: 'cubic-bezier(0.05, 0.7, 0.1, 1)'
 components:
   section-surface:
     backgroundColor: '{colors.surface}'

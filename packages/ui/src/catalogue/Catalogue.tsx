@@ -1,0 +1,225 @@
+/**
+ * The component catalogue (ADR 0020): every id, every version side by side with its examples,
+ * in Light, Dark and AMOLED, at phone widths, with larger text and reduced motion. It is a
+ * developer and review page generated from a catalogue registry, so its own labels are fixed
+ * English; product text reaches components only through their props.
+ */
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import type { Catalogue as CatalogueRegistry, ComponentMap, Manifest } from '../library.ts';
+
+const THEMES = ['light', 'dark', 'amoled'] as const;
+const WIDTHS = [393, 360] as const;
+const TEXT_SCALES = [100, 130] as const;
+
+type Theme = (typeof THEMES)[number];
+
+export interface CatalogueProps<C extends ComponentMap> {
+  readonly catalogue: CatalogueRegistry<C>;
+  /** Marks the version each id uses in this manifest. */
+  readonly manifest?: Manifest<C>;
+}
+
+const Choice = <T extends string | number>({
+  label,
+  options,
+  value,
+  onChange,
+  format = String,
+}: {
+  label: string;
+  options: readonly T[];
+  value: T;
+  onChange: (value: T) => void;
+  format?: (value: T) => string;
+}) => (
+  <fieldset style={styles.choice}>
+    <legend style={styles.legend}>{label}</legend>
+    {options.map((option) => (
+      <label key={String(option)} style={styles.option}>
+        <input
+          type="radio"
+          name={label}
+          checked={option === value}
+          onChange={() => onChange(option)}
+        />{' '}
+        {format(option)}
+      </label>
+    ))}
+  </fieldset>
+);
+
+const Frame = ({
+  theme,
+  width,
+  reduced,
+  children,
+}: {
+  theme: Theme;
+  width: number;
+  reduced: boolean;
+  children: ReactNode;
+}) => (
+  <div
+    data-theme={theme}
+    data-motion={reduced ? 'reduced' : 'standard'}
+    data-testid={`catalogue-frame-${theme}`}
+    style={{ ...styles.frame, width }}
+  >
+    {children}
+  </div>
+);
+
+export const Catalogue = <C extends ComponentMap>({ catalogue, manifest }: CatalogueProps<C>) => {
+  const [theme, setTheme] = useState<Theme | 'all'>('all');
+  const [width, setWidth] = useState<(typeof WIDTHS)[number]>(393);
+  const [textScale, setTextScale] = useState<(typeof TEXT_SCALES)[number]>(100);
+  const [reduced, setReduced] = useState(false);
+
+  // Larger text scales rem, so it applies to the root, as the system setting does on a phone.
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.style.fontSize;
+    root.style.fontSize = `${textScale}%`;
+    return () => {
+      root.style.fontSize = previous;
+    };
+  }, [textScale]);
+
+  const ids = Object.keys(catalogue).sort() as (keyof CatalogueRegistry<C> & string)[];
+  const themes = theme === 'all' ? THEMES : [theme];
+
+  return (
+    <main style={styles.page}>
+      <header style={styles.header}>
+        <h1 style={styles.title}>Flourprint component catalogue</h1>
+        <p style={styles.muted}>
+          Generated from the library registry (ADR 0020). Each version is shown with its examples;
+          the selected one is the version the manifest uses.
+        </p>
+        <div style={styles.controls}>
+          <Choice
+            label="Theme"
+            options={['all', ...THEMES] as const}
+            value={theme}
+            onChange={setTheme}
+          />
+          <Choice
+            label="Width"
+            options={WIDTHS}
+            value={width}
+            onChange={setWidth}
+            format={(value) => `${value} px`}
+          />
+          <Choice
+            label="Text"
+            options={TEXT_SCALES}
+            value={textScale}
+            onChange={setTextScale}
+            format={(value) => `${value} %`}
+          />
+          <Choice
+            label="Motion"
+            options={['standard', 'reduced'] as const}
+            value={reduced ? 'reduced' : 'standard'}
+            onChange={(value) => setReduced(value === 'reduced')}
+          />
+        </div>
+      </header>
+      {ids.length === 0 ? (
+        <p data-testid="catalogue-empty" style={styles.muted}>
+          No components yet. Components are added in packages/ui/src/components (ADR 0020).
+        </p>
+      ) : (
+        <nav style={styles.nav}>
+          {ids.map((id) => (
+            <a key={id} href={`#${id}`} style={styles.navLink}>
+              {id}
+            </a>
+          ))}
+        </nav>
+      )}
+      {ids.map((id) => (
+        <section key={id} id={id} data-testid={`catalogue-${id}`} style={styles.section}>
+          <h2 style={styles.id}>{id}</h2>
+          {catalogue[id].map((version) => {
+            const Component = version.component;
+            const selected = manifest?.[id] === version;
+            return (
+              <article
+                key={version.version}
+                data-testid={`catalogue-${id}-${version.version}`}
+                style={styles.version}
+              >
+                <h3 style={styles.versionTitle}>
+                  {version.version}
+                  {selected ? <span style={styles.selected}>selected</span> : null}
+                </h3>
+                <p style={styles.muted}>{version.notes}</p>
+                {version.examples.map((example) => (
+                  <div key={example.name} style={styles.example}>
+                    <h4 style={styles.exampleTitle}>{example.name}</h4>
+                    <div style={styles.frames}>
+                      {themes.map((frameTheme) => (
+                        <Frame key={frameTheme} theme={frameTheme} width={width} reduced={reduced}>
+                          <Component {...example.props} />
+                        </Frame>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </article>
+            );
+          })}
+        </section>
+      ))}
+    </main>
+  );
+};
+
+const styles = {
+  page: {
+    fontFamily: 'system-ui, sans-serif',
+    padding: '1rem',
+    background: '#ece7df',
+    color: '#211b16',
+    minHeight: '100vh',
+  },
+  header: { maxWidth: '60rem' },
+  title: { fontSize: '1.4rem', margin: '0 0 0.25rem' },
+  muted: { color: '#6b5e54', margin: '0.25rem 0', fontSize: '0.875rem' },
+  controls: { display: 'flex', flexWrap: 'wrap', gap: '0.75rem', margin: '0.75rem 0' },
+  choice: { border: '1px solid #d5cabb', borderRadius: '0.5rem', padding: '0.25rem 0.5rem' },
+  legend: { fontSize: '0.75rem', fontWeight: 600 },
+  option: { marginRight: '0.5rem', fontSize: '0.85rem' },
+  nav: { display: 'flex', flexWrap: 'wrap', gap: '0.4rem', margin: '0.5rem 0 1rem' },
+  navLink: { fontSize: '0.8rem', color: '#9c4221' },
+  section: { borderTop: '1px solid #d5cabb', padding: '1rem 0' },
+  id: { fontFamily: 'ui-monospace, monospace', fontSize: '1.05rem', margin: '0 0 0.5rem' },
+  version: { margin: '0 0 1.25rem' },
+  versionTitle: {
+    fontSize: '0.95rem',
+    margin: '0',
+    display: 'flex',
+    gap: '0.5rem',
+    alignItems: 'center',
+  },
+  selected: {
+    fontSize: '0.7rem',
+    background: '#9c4221',
+    color: '#fff',
+    borderRadius: '999px',
+    padding: '0.1rem 0.5rem',
+  },
+  example: { margin: '0.5rem 0' },
+  exampleTitle: { fontSize: '0.8rem', fontWeight: 600, margin: '0 0 0.25rem' },
+  frames: { display: 'flex', flexWrap: 'wrap', gap: '0.75rem', overflowX: 'auto' },
+  frame: {
+    background: 'var(--fp-color-background)',
+    color: 'var(--fp-color-on-surface)',
+    padding: '1rem',
+    borderRadius: '0.75rem',
+    border: '1px solid #c9bba6',
+    maxWidth: '100%',
+    boxSizing: 'border-box',
+  },
+} satisfies Record<string, CSSProperties>;

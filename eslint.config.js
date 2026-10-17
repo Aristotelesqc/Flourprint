@@ -73,6 +73,26 @@ export default tseslint.config(
     },
   },
   {
+    // The component library (ADR 0020): browser code that depends on React only. No baking
+    // math or product data, so no @flourprint package; no Node in the bundle.
+    files: ['packages/ui/src/**/*.{ts,tsx}', 'packages/ui/test/fixtures/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser } },
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { group: ['node:*'], message: 'The component library runs in the browser.' },
+            {
+              group: ['@flourprint/*'],
+              message: 'Components receive display-ready props; the layout engine calls core.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // The upgrade suite runs in Node and reads the app's database copied off the device; it is
     // never part of the mobile bundle.
     files: ['apps/mobile/android-upgrade-e2e/**/*.ts'],
