@@ -1,0 +1,43 @@
+// Compile-time guarantees of ADR 0020, checked by `tsc -p packages/ui`: every line under
+// `@ts-expect-error` must keep failing to type-check. Nothing here runs.
+import { createUi } from '../src/library.ts';
+import badgeV1 from './fixtures/badge/v1.ts';
+import cardV1 from './fixtures/card-v1.ts';
+import { testLibrary } from './fixtures/components.ts';
+import { testManifest } from './fixtures/manifest.ts';
+
+const { Ui } = createUi(testManifest);
+
+export const accepted = () => (
+  <>
+    <Ui component="fp.badge" label="Partial" tone="warning" />
+    <Ui component="fp.card" title="Shokupan" />
+  </>
+);
+
+export const refused = () => {
+  // @ts-expect-error A manifest needs an entry for every id.
+  testLibrary.manifest({ 'fp.badge': badgeV1 });
+  // @ts-expect-error A manifest entry must be a version of that id.
+  testLibrary.manifest({ 'fp.badge': cardV1, 'fp.card': cardV1 });
+  testLibrary.version({
+    id: 'fp.card',
+    version: 'v2',
+    component: () => null,
+    notes: '',
+    // @ts-expect-error Examples use the id's props.
+    examples: [{ name: 'Wrong', props: { label: 'x' } }],
+  });
+  // @ts-expect-error A version name is v<number>.
+  testLibrary.version({ ...cardV1, version: 'beta' });
+  return (
+    <>
+      {/* @ts-expect-error Props are checked against the id's props type. */}
+      <Ui component="fp.badge" title="x" />
+      {/* @ts-expect-error Required props of the id are required. */}
+      <Ui component="fp.card" />
+      {/* @ts-expect-error Unknown ids do not exist. */}
+      <Ui component="fp.nope" label="x" />
+    </>
+  );
+};
