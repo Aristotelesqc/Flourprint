@@ -1,0 +1,1170 @@
+{
+  "revision": "ae6cbd2cba4a2db473e5dee375fc55f96dc517c8",
+  "sourceSha256": "f8618bd700e98feca4511e51013cc4b45419115bd447f61cbc36bf9385124df0",
+  "files": [
+    {
+      "path": "index.html",
+      "sha256": "a1f4f526ba1162fe4366bd100de34d36eec7a57e49ccc54a41939388471b12fc"
+    },
+    {
+      "path": "components.html",
+      "sha256": "4c09faad331e4fd7aec76ae9febf3e36c8ec21a5ec1df5538e3d3d09797e8100"
+    },
+    {
+      "path": "mockup.html",
+      "sha256": "28cffce5ee47ce316c7206447573e2e4c215efe3d25330b7e35459a208b915c0"
+    },
+    {
+      "path": "mark.svg",
+      "sha256": "24acf2d553285a027142eebcd349b0deca207242f8ced003f54ee2fe6342a9c9"
+    },
+    {
+      "path": "review-build.json",
+      "sha256": "dafa33edc497c86df8b9ab59e1c2640c5a076a543b9bbb06ce451dab8ea8194b"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "80654e916712708c11953efca7b636e9054af24844f66de2788f59202c5ba006"
+    },
+    {
+      "path": "motion/index.html",
+      "sha256": "b8c4cd58686818c3fa6eddecf7cb9877a31e3bd2c712695b16ad48382a7042f7"
+    },
+    {
+      "path": "motion/manifest.json",
+      "sha256": "56d247df5fb5258a414f1aa6f7730cca8465b3ba6be7b507b79cb1805d386fb8"
+    },
+    {
+      "path": "screenshots/round2-library-A-393-100.png",
+      "sha256": "1f725b44f222f985bc99231134628f85c460b64c6568c31ea091f739091cfe97"
+    },
+    {
+      "path": "screenshots/round3-library-A-393-100.png",
+      "sha256": "a6a40699fffea0291689a9fb762adf465ee871c8ada2eb1a258d31d2a9be79a3"
+    },
+    {
+      "path": "screenshots/restored-library-A-dark-393-100.png",
+      "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+    },
+    {
+      "path": "screenshots/round2-recipe-A-393-100.png",
+      "sha256": "a4f63b6de1d98b4a61cbdc2550659fd4638a37dfec9c9702eeeb129c83eef429"
+    },
+    {
+      "path": "screenshots/round3-recipe-A-393-100.png",
+      "sha256": "83640ee0b375a883762e13236a7562be8ee36de1304cad42e117ed15db77a36d"
+    },
+    {
+      "path": "screenshots/restored-recipe-A-dark-393-100.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "screenshots/round2-edit-A-393-100.png",
+      "sha256": "75294cda2868155510f7f1ff017c67df782305417b781079a45111506b51d905"
+    },
+    {
+      "path": "screenshots/round3-edit-A-393-100.png",
+      "sha256": "6ab1295f03d7482eadcc6d6b215d4a92bcf7d0375c9b449596a1f2d12333960c"
+    },
+    {
+      "path": "screenshots/restored-edit-A-dark-393-100.png",
+      "sha256": "6d33205ec03a0a0a213ffc9bb89e9c248b6a4491f4f23e90ed44c06188b01f1a"
+    },
+    {
+      "path": "screenshots/round2-menu-A-393-100.png",
+      "sha256": "840f7abe88485512ce234a7e72046248ca1cd74adc67717b6913dcc2a3023b41"
+    },
+    {
+      "path": "screenshots/round3-menu-A-393-100.png",
+      "sha256": "f536ba216e2824a8c342d8afa4293bd4381fd2cb88a9563c92abf107b30a0664"
+    },
+    {
+      "path": "screenshots/restored-menu-A-dark-393-100.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "screenshots/round2-hydration-A-393-100.png",
+      "sha256": "de4aaf93e7722079db64b88604ab6e2bba4bddfba9594a5602ba7c5c686afd92"
+    },
+    {
+      "path": "screenshots/round3-hydration-A-393-100.png",
+      "sha256": "57999ee872ab3c66c9db71106452a9b0ebdfec134dd02cc67aa8518eb5dbb326"
+    },
+    {
+      "path": "screenshots/restored-hydration-A-dark-393-100.png",
+      "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+    },
+    {
+      "path": "screenshots/round2-steps-A-393-100.png",
+      "sha256": "0c74b195591887efd8813ac25d2ed947df99d7e2d4d6f91575a6a42a01ff2818"
+    },
+    {
+      "path": "screenshots/round3-steps-A-393-100.png",
+      "sha256": "8abb727242a169a0afbd88cfed0d807b85fb318a42969c2c1008476ca28c76cb"
+    },
+    {
+      "path": "screenshots/restored-steps-A-dark-393-100.png",
+      "sha256": "f74f89063fd9f4072c1dcd62714a0e28d187c616653059fd03436c18e9f17ec7"
+    },
+    {
+      "path": "screenshots/round2-timeline-A-393-100.png",
+      "sha256": "633d6d0c03cee45b69ec1af16cbbc4b6d1e57ccc01cdf2729896873423f1cf9e"
+    },
+    {
+      "path": "screenshots/round3-timeline-A-393-100.png",
+      "sha256": "bdfbda322631ee3cf46f282e13414baa1c3c82eba10c287ed076f5e47e4d2d08"
+    },
+    {
+      "path": "screenshots/restored-timeline-A-dark-393-100.png",
+      "sha256": "c0f64fcf8c072761d22aab1d5f7c2330cb342050391d3c47b934cfb64f5438c1"
+    },
+    {
+      "path": "screenshots/round2-planning-A-393-100.png",
+      "sha256": "a4f63b6de1d98b4a61cbdc2550659fd4638a37dfec9c9702eeeb129c83eef429"
+    },
+    {
+      "path": "screenshots/round3-planning-A-393-100.png",
+      "sha256": "8a41e284bf7ce402a6a70ed42a8cb19ee3376f2dd7b9e01e9a6d1281f3d1b860"
+    },
+    {
+      "path": "screenshots/restored-planning-A-dark-393-100.png",
+      "sha256": "4b185e989dc2443675dcff9b0e0300620cfe89c3c0a2e7e1bb5a7103d9a2428b"
+    },
+    {
+      "path": "screenshots/round2-preparation-A-393-100.png",
+      "sha256": "80913ee8e9865b5d236bdc1f7f75e8fe7a4b1097f83db42dcb4f22152469d7e2"
+    },
+    {
+      "path": "screenshots/round3-preparation-A-393-100.png",
+      "sha256": "ef387d212391b6125e4d50d04699d2b740fee1a668556bcb1e56284be899bb20"
+    },
+    {
+      "path": "screenshots/restored-preparation-A-dark-393-100.png",
+      "sha256": "4280f479dc92c58f34cd241cc4f46865644ca8d85ac7dbd8cc117962b99a184b"
+    },
+    {
+      "path": "screenshots/round2-creation-A-393-100.png",
+      "sha256": "e38dac6f598b22b49fd77ed835c8d4c6d86e0f654795a393e9cb56f0f553d723"
+    },
+    {
+      "path": "screenshots/round3-creation-A-393-100.png",
+      "sha256": "b676c6a05ca1c9c33e41707c5e6631f00231f5882b2afc2731662b53b24f7132"
+    },
+    {
+      "path": "screenshots/restored-creation-A-dark-393-100.png",
+      "sha256": "5de99fa34190eeebf0b9ab4491e6afe21d1bcb1c5784e4be2279a48ac9f1a2a6"
+    },
+    {
+      "path": "screenshots/round2-recipe-A-360-130.png",
+      "sha256": "c77dec103ce5644ff83f47e916b98f92840132cbecc641ad64f49ba2c851880d"
+    },
+    {
+      "path": "screenshots/round3-recipe-A-360-130.png",
+      "sha256": "bd29c67439d8261e64721372d6090d8675923171f94235dbee1dacd1bee57b0e"
+    },
+    {
+      "path": "screenshots/restored-recipe-A-dark-360-130.png",
+      "sha256": "6d26ec1a1e42b27b953f7a39652f62fa1847de9698a46cbf88376de948a29abe"
+    },
+    {
+      "path": "screenshots/round2-planning-A-360-130.png",
+      "sha256": "c77dec103ce5644ff83f47e916b98f92840132cbecc641ad64f49ba2c851880d"
+    },
+    {
+      "path": "screenshots/round3-planning-A-360-130.png",
+      "sha256": "eb81e775737700f95fe0938660694a24ac1778f199352b938cf2cabe8a3dc27e"
+    },
+    {
+      "path": "screenshots/restored-planning-A-dark-360-130.png",
+      "sha256": "5ba0e1610bdbb58787283488227b3135b8ef3b7bb5408941f2d5325481b5ad7c"
+    },
+    {
+      "path": "screenshots/round2-preparation-A-360-130.png",
+      "sha256": "b4c7d92b185ebe21d1e4987c6bbdc6c6cc3858731e35871a5bbf7dc84e30ece0"
+    },
+    {
+      "path": "screenshots/round3-preparation-A-360-130.png",
+      "sha256": "c93ae25498ef102859ffbe059b51b8d0b2083b1331c23953e38addfb253d3a14"
+    },
+    {
+      "path": "screenshots/restored-preparation-A-dark-360-130.png",
+      "sha256": "975f5ec3de9a984da2e531b7b6a273823a78dae46b03da1da96cba8a20a58c13"
+    },
+    {
+      "path": "screenshots/round2-library-B-393-100.png",
+      "sha256": "be36c826919835e86a8cdd393ed74d5a645ab73447ad0e46b671dfe2067ca6e5"
+    },
+    {
+      "path": "screenshots/round3-library-B-393-100.png",
+      "sha256": "339394105e06757dc5045495de0e38f3e83c4f97d482970aac8a864d6c4f334d"
+    },
+    {
+      "path": "screenshots/restored-library-B-dark-393-100.png",
+      "sha256": "61b4ab358cf6964e28b56c2c0d35b886724c45bf2e4c5b0853df87ebb51b836f"
+    },
+    {
+      "path": "screenshots/round2-recipe-B-393-100.png",
+      "sha256": "4127e72240c6019629ec2e36d10ccae5e121f8ea12c3a46efa06bd09c414be5d"
+    },
+    {
+      "path": "screenshots/round3-recipe-B-393-100.png",
+      "sha256": "3832bceff17aa37c01911f6f84ae635c134c02fb524318b096d19bfb90354faf"
+    },
+    {
+      "path": "screenshots/restored-recipe-B-dark-393-100.png",
+      "sha256": "d5edd673279c3b2fc684cc324752e458636c7ab156f6d244e389967bf64acc1b"
+    },
+    {
+      "path": "screenshots/round2-edit-B-393-100.png",
+      "sha256": "f61f142cb265bf1db25389afc832b33d20782ffc33963428b92b07cc8b04f600"
+    },
+    {
+      "path": "screenshots/round3-edit-B-393-100.png",
+      "sha256": "e542659b21bf927153b8e68d0175263c7c5d06927b58ce3819136262e54a5be0"
+    },
+    {
+      "path": "screenshots/restored-edit-B-dark-393-100.png",
+      "sha256": "f784efc301dba3a61c275206a74f702d3bf2fa98efc2c32ff792136721354560"
+    },
+    {
+      "path": "screenshots/round2-menu-B-393-100.png",
+      "sha256": "e8e958c8e3974cef0c5679ec6a160f487d2f41c5029cf9d4d95f98556f82c3a8"
+    },
+    {
+      "path": "screenshots/round3-menu-B-393-100.png",
+      "sha256": "f536ba216e2824a8c342d8afa4293bd4381fd2cb88a9563c92abf107b30a0664"
+    },
+    {
+      "path": "screenshots/restored-menu-B-dark-393-100.png",
+      "sha256": "7f8aa7d25e34286b67b8b0f69d81b15c5453d8f55ac3ddfb8db0ad39cc4443e0"
+    },
+    {
+      "path": "screenshots/round2-hydration-B-393-100.png",
+      "sha256": "591852ef9a8427d5945ad98d15adfce930d7852bb7d8d90486b175cac2043197"
+    },
+    {
+      "path": "screenshots/round3-hydration-B-393-100.png",
+      "sha256": "57999ee872ab3c66c9db71106452a9b0ebdfec134dd02cc67aa8518eb5dbb326"
+    },
+    {
+      "path": "screenshots/restored-hydration-B-dark-393-100.png",
+      "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+    },
+    {
+      "path": "screenshots/round2-steps-B-393-100.png",
+      "sha256": "207f2fd7a5b64ca53b2ed1b47b016aad454f3a6c3edb4b82334ea73c821b0892"
+    },
+    {
+      "path": "screenshots/round3-steps-B-393-100.png",
+      "sha256": "d2f09911b10770baaac345e8ea6c01492ec309c76e708d8a6ded0ef2d369fd6e"
+    },
+    {
+      "path": "screenshots/restored-steps-B-dark-393-100.png",
+      "sha256": "ad60aa1083791cb51501a3647d5cd3967fb2a2a17a40b933710eb3a0f07e2309"
+    },
+    {
+      "path": "screenshots/round2-timeline-B-393-100.png",
+      "sha256": "f16dcd79dc2e91b6510cce0e9f989d9c5416a0150b7951fdacf6caebee560fb5"
+    },
+    {
+      "path": "screenshots/round3-timeline-B-393-100.png",
+      "sha256": "f0a67bd39e30b5b41117fd5aaef501e8296bb55333a1e636f228cb887efc0d46"
+    },
+    {
+      "path": "screenshots/restored-timeline-B-dark-393-100.png",
+      "sha256": "4b32de137496e1efecdd9b287ac86a328831ac26603bd681189658b98dfed5f1"
+    },
+    {
+      "path": "screenshots/round2-planning-B-393-100.png",
+      "sha256": "4127e72240c6019629ec2e36d10ccae5e121f8ea12c3a46efa06bd09c414be5d"
+    },
+    {
+      "path": "screenshots/round3-planning-B-393-100.png",
+      "sha256": "33597ef907769c822b7d6de4b608219abc41491a6665a3232db4b8ba73c8137c"
+    },
+    {
+      "path": "screenshots/restored-planning-B-dark-393-100.png",
+      "sha256": "532a0585c9c5ca855495154f6e6aa85f5072f67e93472a62887379666af10ee8"
+    },
+    {
+      "path": "screenshots/round2-preparation-B-393-100.png",
+      "sha256": "9019ddbed1a45b214a31fb87c73dc164d256bc8dd94edfee63ec52ea2aaf044c"
+    },
+    {
+      "path": "screenshots/round3-preparation-B-393-100.png",
+      "sha256": "9b9122015415f9dcdcad5b911170d4dcb1ae044c8ae9ba1b70dc6807896cc48b"
+    },
+    {
+      "path": "screenshots/restored-preparation-B-dark-393-100.png",
+      "sha256": "75eec83043253eb82964a5d24d09350acf893028c5d7ac5e99d3c69df94b6cc4"
+    },
+    {
+      "path": "screenshots/round2-creation-B-393-100.png",
+      "sha256": "692dde38fbf3fec2b076dbde149f979deed3e0158c8d780db0f3c789efbcbd99"
+    },
+    {
+      "path": "screenshots/round3-creation-B-393-100.png",
+      "sha256": "b676c6a05ca1c9c33e41707c5e6631f00231f5882b2afc2731662b53b24f7132"
+    },
+    {
+      "path": "screenshots/restored-creation-B-dark-393-100.png",
+      "sha256": "5de99fa34190eeebf0b9ab4491e6afe21d1bcb1c5784e4be2279a48ac9f1a2a6"
+    },
+    {
+      "path": "screenshots/round2-recipe-B-360-130.png",
+      "sha256": "4a17562c847feee05213fd28e28e8b85fbf0e7f043b4a762358cf0e3ac00bcb9"
+    },
+    {
+      "path": "screenshots/round3-recipe-B-360-130.png",
+      "sha256": "24e6137eaf67ff95e6a5f5745b4770d962e88594b2516fa4ae9c1a5c851e8f3a"
+    },
+    {
+      "path": "screenshots/restored-recipe-B-dark-360-130.png",
+      "sha256": "c422aa12593d92fd1a5fca6aa0292edaedd230d9359725c4681e7c1aa9591ce5"
+    },
+    {
+      "path": "screenshots/round2-planning-B-360-130.png",
+      "sha256": "4a17562c847feee05213fd28e28e8b85fbf0e7f043b4a762358cf0e3ac00bcb9"
+    },
+    {
+      "path": "screenshots/round3-planning-B-360-130.png",
+      "sha256": "71ae538e7df9af738c6e41ba12269ad7fd0f887da19098258fcfe76afcbdf8c5"
+    },
+    {
+      "path": "screenshots/restored-planning-B-dark-360-130.png",
+      "sha256": "dbf30dcefa1c3670096ee26e2789775e4944d57fc2bdfceb6f1e006c2e904950"
+    },
+    {
+      "path": "screenshots/round2-preparation-B-360-130.png",
+      "sha256": "82860064a468ab3349ed1bf885773ee96e0981766c4002d0b55f2a0ac24b90bc"
+    },
+    {
+      "path": "screenshots/round3-preparation-B-360-130.png",
+      "sha256": "3113f2d4db8fac3abbb15d18b814e73d93e825b330111acb729d0a6954880d85"
+    },
+    {
+      "path": "screenshots/restored-preparation-B-dark-360-130.png",
+      "sha256": "dc1b495745bb8d4d4d25b73a06f307f2061f9572999ffce05eb255055601b260"
+    },
+    {
+      "path": "screenshots/restored-library-A-light-360-100.png",
+      "sha256": "2f94284b0e9c96f0c4f9e855489684276a2aed3d3fd65a0f371124bcef75c107"
+    },
+    {
+      "path": "screenshots/restored-recipe-A-light-360-100.png",
+      "sha256": "13b08c87b729fd6a79761954d54ed5aea1458f512e85e25f2a1b8efb636d27e3"
+    },
+    {
+      "path": "screenshots/restored-edit-A-light-360-100.png",
+      "sha256": "bdb11f99142a9a01953850794601fcf7bd2d62e87b0df91bcd58b74d33d6f3a8"
+    },
+    {
+      "path": "screenshots/restored-preparation-A-light-360-100.png",
+      "sha256": "6660bde768d20c22c20515e7cad0737a64da530211fe7bac3da71f1e9375db6f"
+    },
+    {
+      "path": "screenshots/restored-library-B-light-360-100.png",
+      "sha256": "f2c9bbe0a4388216371682f44f46f0fd549ddbfbe9fe828860f3f92542a66336"
+    },
+    {
+      "path": "screenshots/restored-recipe-B-light-360-100.png",
+      "sha256": "b1143afa0e9910f6fb59c575e21b55d9dc54f1a2a139266f46e204ef477f3c46"
+    },
+    {
+      "path": "screenshots/restored-edit-B-light-360-100.png",
+      "sha256": "a97bd67f344e0d01a273e0af065d999328385af8dfb348d3590b4d31cb02ae71"
+    },
+    {
+      "path": "screenshots/restored-preparation-B-light-360-100.png",
+      "sha256": "9ee966c54557f98d168fc54fed22ff11ad06b43d5877e8e000e6c6e1cd6ff447"
+    },
+    {
+      "path": "screenshots/restored-library-A-amoled-360-100.png",
+      "sha256": "42ed234f0646528d95e327336cc398f4a1ba40870a3a1b1f44f520d52ea6eec4"
+    },
+    {
+      "path": "screenshots/restored-recipe-A-amoled-360-100.png",
+      "sha256": "79998ea180d520b7cf84bc86fdc50295cfd5e4413a1e2ed752895301c52b82d0"
+    },
+    {
+      "path": "screenshots/restored-edit-A-amoled-360-100.png",
+      "sha256": "3308241093a5c98c7d55efbb884b17517d9a3fb3cba47048bc8a79d996ad742b"
+    },
+    {
+      "path": "screenshots/restored-preparation-A-amoled-360-100.png",
+      "sha256": "02528c5867384e8fa1303e15e5dcfad73139b4b8353cbd605545eb17a1e5c5fb"
+    },
+    {
+      "path": "screenshots/restored-library-B-amoled-360-100.png",
+      "sha256": "e29541212f93424dc35e18cb1e85c1f4e5631a1c2b2d4f62dad64ef8975c62d5"
+    },
+    {
+      "path": "screenshots/restored-recipe-B-amoled-360-100.png",
+      "sha256": "e5d3a81e46aba47caf6adeb723d6b235365d6a46ff7707a49d0d670b14dd7d76"
+    },
+    {
+      "path": "screenshots/restored-edit-B-amoled-360-100.png",
+      "sha256": "bca55fad8784341250e1c4c0e847c3483344e4b25e6a25a85149dd2471593f51"
+    },
+    {
+      "path": "screenshots/restored-preparation-B-amoled-360-100.png",
+      "sha256": "1eb4bc409ba92eb241c9bc4ae016acdb1d37805ea7504e0ce3d15d602f6deae9"
+    },
+    {
+      "path": "screenshots/restored-preparation-A-light-360-100-cooking.png",
+      "sha256": "29e43d11e7d5d23bac5afda0de73df4c61bc92e2e3dc34451a4bfdf28c19498c"
+    },
+    {
+      "path": "screenshots/restored-preparation-B-light-360-100-cooking.png",
+      "sha256": "a58c6870c0d6aa817be5ad7c823331dca4ea6acffd62475200d6dd8213f54d93"
+    },
+    {
+      "path": "screenshots/restored-preparation-A-dark-360-100-cooking.png",
+      "sha256": "cf1d62557f113a120803a5ea7a5265cc2066228532b4fbdab1d02712e8bdb7cf"
+    },
+    {
+      "path": "screenshots/restored-preparation-B-dark-360-100-cooking.png",
+      "sha256": "64d7e9c765e30dfbc84df7310ad8c822a1b0356e21db1a1a1dd421ce09011de2"
+    },
+    {
+      "path": "screenshots/restored-preparation-A-amoled-360-100-cooking.png",
+      "sha256": "b7493b1691729fc6fd0a7bcb55ee2dd8e257683823bdf6d6e4263de5576614b2"
+    },
+    {
+      "path": "screenshots/restored-preparation-B-amoled-360-100-cooking.png",
+      "sha256": "122e25e04d37b45af95e924a59a7d816029caef86f3de821dba7c6a0ecc544ae"
+    },
+    {
+      "path": "screenshots/restored-diagnostics-B-dark-360-100-valid.png",
+      "sha256": "99abfdf51eb6adea3ed9ebd707a972eec5ebbe121e34872666956412804d567a"
+    },
+    {
+      "path": "screenshots/restored-diagnostics-B-dark-360-100-out.png",
+      "sha256": "d7cbaa26d35d85397f48ebf3510d1c8d6a7139c251c10d7e66d34cf4cac030e6"
+    },
+    {
+      "path": "screenshots/restored-diagnostics-B-dark-360-100-noResult.png",
+      "sha256": "d49eafa6026f6b622507bc151f4bcf56faaddb78c2c0115bce766d38d1d3d271"
+    },
+    {
+      "path": "screenshots/restored-history-A-light-393-100.png",
+      "sha256": "ee5dec06bd419b5f3d0622972e73814d3442c90d0a58d166f3776b4e1d7bf21c"
+    },
+    {
+      "path": "screenshots/restored-history-B-light-393-100.png",
+      "sha256": "14450ee45dff079ad50524f085a230428ee24d5507a4cd156a7105644bb01c26"
+    },
+    {
+      "path": "screenshots/restored-history-A-dark-393-100.png",
+      "sha256": "dda187d7cb4cd623076c8975ef155554db17a26fb836a8bcdccf513e91247a00"
+    },
+    {
+      "path": "screenshots/restored-history-B-dark-393-100.png",
+      "sha256": "019f58b0909427ea59eb640825b78fd9bc8735ade35be7d7d8448dd37f602e8e"
+    },
+    {
+      "path": "screenshots/restored-history-A-amoled-393-100.png",
+      "sha256": "d867731c9f52eb4632eae37e7bacd5ea5125e4fe4613f2dd73fe346a836852e1"
+    },
+    {
+      "path": "screenshots/restored-history-B-amoled-393-100.png",
+      "sha256": "6c8ce24d50a787728d1e2ccd8c91de686ada30847ed87269be449f84bc50fbeb"
+    },
+    {
+      "path": "screenshots/restored-registry-A-light-393-100.png",
+      "sha256": "c4c04c405bb0e85701772f28bfe3c67ac703866989b423b869dd75b201b295c7"
+    },
+    {
+      "path": "screenshots/restored-registry-B-light-393-100.png",
+      "sha256": "b46870764cea10c2cabeee33ae2cd0f208ed475ba98298ca1fd090b54355face"
+    },
+    {
+      "path": "screenshots/restored-registry-A-dark-393-100.png",
+      "sha256": "15c813d515e542113a41f0ee2de83013324115b2406511091e948d747b98abc5"
+    },
+    {
+      "path": "screenshots/restored-registry-B-dark-393-100.png",
+      "sha256": "5e7858e10eb190b28c1a1214e961cda6e6c5f9b6bdf5acf889fcb65803469414"
+    },
+    {
+      "path": "screenshots/restored-registry-A-amoled-393-100.png",
+      "sha256": "752f86d6fc6c0cab0dea7b57c6945363c184d44d7afd0a5b6b786a4d882aa110"
+    },
+    {
+      "path": "screenshots/restored-registry-B-amoled-393-100.png",
+      "sha256": "9f7ee53140c5de4e6fae54f097c5a8a500d4208e7a1f95b10785a15526d47aad"
+    },
+    {
+      "path": "screenshots/restored-settings-A-light-393-100.png",
+      "sha256": "9ffd92c62d78e5b055d045f85ef8d66cd9df0d85172e96c13029c8321a19989a"
+    },
+    {
+      "path": "screenshots/restored-settings-B-light-393-100.png",
+      "sha256": "232d3e93cf009f055df99d2edbe374ca5b1170513afd0fcc9eaa0906df7a8220"
+    },
+    {
+      "path": "screenshots/restored-settings-A-dark-393-100.png",
+      "sha256": "7bbe047778da687430e5b65cfd5f072771b587b6ab2a9e43038d58463b3e7fd3"
+    },
+    {
+      "path": "screenshots/restored-settings-B-dark-393-100.png",
+      "sha256": "96fe717dec94c55ea77fb4a8763afb3e47f8c9aa9673b8b872920e7adfd65fbc"
+    },
+    {
+      "path": "screenshots/restored-settings-A-amoled-393-100.png",
+      "sha256": "9f09606533084ff3f52b6e06884fdf08323718f78da0a78506e6696925765219"
+    },
+    {
+      "path": "screenshots/restored-settings-B-amoled-393-100.png",
+      "sha256": "196872ecb57b9ddd751523b4c99675779fb1446a502d5fb6367390cc49a33dd3"
+    },
+    {
+      "path": "screenshots/component-fp.badge-v1-393-100.png",
+      "sha256": "39545badd86ee69b37faa0a642cedde90d351ddda31a6a377b782ecc1c428ff6"
+    },
+    {
+      "path": "screenshots/component-fp.bottom-bar-v1-393-100.png",
+      "sha256": "1c0beaaad48fddcecdfe3584198c5c3ed73fe7566af67a1128d639485060d282"
+    },
+    {
+      "path": "screenshots/component-fp.bottom-sheet-v1-393-100.png",
+      "sha256": "61535beebed928569bfd5ad2a6e471b129a75aae712e83ff832f6671bc7285bb"
+    },
+    {
+      "path": "screenshots/component-fp.button-v1-393-100.png",
+      "sha256": "5c56c8afdc1f6dad7cea32ee779fd2487e80904c80499fbf93d6e9f016d48d64"
+    },
+    {
+      "path": "screenshots/component-fp.floating-menu-v1-393-100.png",
+      "sha256": "c0770c05a16b5abff43962443ca9fa206ba069cb38e88ae48b3da2ba7fe46e97"
+    },
+    {
+      "path": "screenshots/component-fp.group-card-v1-393-100.png",
+      "sha256": "ffa1b600e2ade98c13bdf391f4e42a345b46f16c90033a297e0d642e141f2f7a"
+    },
+    {
+      "path": "screenshots/component-fp.hero-summary-v1-393-100.png",
+      "sha256": "3c41a21a709c19b96c102490be59f292fa3afa24e8806f04509139c0419942bd"
+    },
+    {
+      "path": "screenshots/component-fp.icon-v1-393-100.png",
+      "sha256": "223658edab77aa10b77dc02c6ecb5fe8c31ce074cec89d65d2053fccc0f60040"
+    },
+    {
+      "path": "screenshots/component-fp.icon-button-v1-393-100.png",
+      "sha256": "5abfafd3df59bdaff3d2ba9935eeedf30e19fd466c24e267cb0e86e5643386f2"
+    },
+    {
+      "path": "screenshots/component-fp.ingredient-row-v1-393-100.png",
+      "sha256": "8fb73e707edbd5296e2f3c206c37d849ab01f5e69dc31ee001271d4186e23af6"
+    },
+    {
+      "path": "screenshots/component-fp.metric-pill-v1-393-100.png",
+      "sha256": "2d0a16ec24f175f803200c57749ad579ce8723bc9a2bfac2bbf5e4f6c26ce59c"
+    },
+    {
+      "path": "screenshots/component-fp.number-field-v1-393-100.png",
+      "sha256": "2b1067704030436c736928e40a3ecb972206726cba6f30a39fc6d650b07a3843"
+    },
+    {
+      "path": "screenshots/component-fp.prep-hero-v1-393-100.png",
+      "sha256": "bc3bb8654ae7a3c5e1e110fe851ff38f20c58a481c0c5acdea819b820ec2b089"
+    },
+    {
+      "path": "screenshots/component-fp.recipe-card-v1-393-100.png",
+      "sha256": "af8fa8b4d239a31f1b92680bb7f2a96f542df8a644aba54e148c11bce73a1fa3"
+    },
+    {
+      "path": "screenshots/component-fp.step-node-v1-393-100.png",
+      "sha256": "b43a9dcc7b05f0f1cb870d95c5b24c076f021e4dbde2aa90476daa98743ba3af"
+    },
+    {
+      "path": "screenshots/component-fp.surface-v1-393-100.png",
+      "sha256": "eb99770b939e4565e79acbbcdaf529929343f0e6fb20d97128566c36e7f77e15"
+    },
+    {
+      "path": "screenshots/component-fp.tabs-v1-393-100.png",
+      "sha256": "b2c9b7e1788e73f2c3db8ddd2ca4e95b2e571674bccdcf5c5f4e4b993f4f4bc3"
+    },
+    {
+      "path": "screenshots/component-fp.timeline-v1-393-100.png",
+      "sha256": "707b83b38741359ac9bbda7eabee9878e6866abd35d082a4a3cd369e9ebe5a3b"
+    },
+    {
+      "path": "screenshots/component-fp.warning-banner-v1-393-100.png",
+      "sha256": "155a337ac1c248b4539b438719a90a5ee73fa466bcddba10f5eb4836e0c071ca"
+    },
+    {
+      "path": "screenshots/component-fp.weighing-checkbox-v1-393-100.png",
+      "sha256": "bc3d17f8ae2eff60200c0f68fb91d86f3b36bfdf75a4eeef4da22c0bb8640ebe"
+    },
+    {
+      "path": "screenshots/component-fp.badge-v1-360-130.png",
+      "sha256": "fb1080783bd560019799fc10af7080c8507a64e7678011a674453fb0dd312819"
+    },
+    {
+      "path": "screenshots/component-fp.bottom-bar-v1-360-130.png",
+      "sha256": "edf28198062ce8332f9184be6115462db05ec892edc18fced493cb43a6df7506"
+    },
+    {
+      "path": "screenshots/component-fp.bottom-sheet-v1-360-130.png",
+      "sha256": "645d9eb991d80e39e4ba25cc58888932a053ca42d57e4d2c638527bc4a93b103"
+    },
+    {
+      "path": "screenshots/component-fp.button-v1-360-130.png",
+      "sha256": "982dc3de8fb7587eacf2a377710466133bd220e75c95807c9038af12c30b6268"
+    },
+    {
+      "path": "screenshots/component-fp.floating-menu-v1-360-130.png",
+      "sha256": "e2badcb00a8af3a2eacb61b33bc8c328b13b19a659ae6e03e5bf0da86d24b662"
+    },
+    {
+      "path": "screenshots/component-fp.group-card-v1-360-130.png",
+      "sha256": "7a4ef4eb788c18e7d82ff4c76d1a04095bc83b84bdadbc030c63f4095485ff48"
+    },
+    {
+      "path": "screenshots/component-fp.hero-summary-v1-360-130.png",
+      "sha256": "02df41daf2ff9328223a41d279618deee0750e3b67e618ef690499a40bfac585"
+    },
+    {
+      "path": "screenshots/component-fp.icon-v1-360-130.png",
+      "sha256": "be56f7c46d028762e49e66fdd86b13cc99594dfae5f82cfc259caf1a7adee73b"
+    },
+    {
+      "path": "screenshots/component-fp.icon-button-v1-360-130.png",
+      "sha256": "eb7c183d4e1c0b069444efec5a59d6eed674d35d993cd634d6220252d73d4fa5"
+    },
+    {
+      "path": "screenshots/component-fp.ingredient-row-v1-360-130.png",
+      "sha256": "4bd336b7b95cdf5098ddfb9084b0b849dc926b54b84be596705bf10fe7a49592"
+    },
+    {
+      "path": "screenshots/component-fp.metric-pill-v1-360-130.png",
+      "sha256": "562d8068506fb8cc172efc1b508c4e4eb510cf7f35308d3fc00d59bb5999a878"
+    },
+    {
+      "path": "screenshots/component-fp.number-field-v1-360-130.png",
+      "sha256": "e91a96f1d0a3e2794117a9abc30452f4b43e9f9b7fa16561b06296788c15d614"
+    },
+    {
+      "path": "screenshots/component-fp.prep-hero-v1-360-130.png",
+      "sha256": "12f2478d956afd5758e5d7ef4e784c1e73c4e8560dab0c387bed6b6fe2aa92cd"
+    },
+    {
+      "path": "screenshots/component-fp.recipe-card-v1-360-130.png",
+      "sha256": "b204284774dbfe693b034869a0a3e6b5813c438aea737617429720775c2bba7d"
+    },
+    {
+      "path": "screenshots/component-fp.step-node-v1-360-130.png",
+      "sha256": "bc54bed785ff49138a3e52a9df6aa20cd51824ce50471205eb798f39eac8fd29"
+    },
+    {
+      "path": "screenshots/component-fp.surface-v1-360-130.png",
+      "sha256": "4185bcddf9fe118cbabcee67f7aec68e15e5a793ef4ef9ec1737213e95d6a9fd"
+    },
+    {
+      "path": "screenshots/component-fp.tabs-v1-360-130.png",
+      "sha256": "3690fe020d47f0ddf349898f90b57ee8fb223cf5c5f9cf1e4fcfa7ddfabab0c1"
+    },
+    {
+      "path": "screenshots/component-fp.timeline-v1-360-130.png",
+      "sha256": "e561fbbe36ce8359100c7d8059e561de59f15c0cc854bbbec2bbaf8554b831c4"
+    },
+    {
+      "path": "screenshots/component-fp.warning-banner-v1-360-130.png",
+      "sha256": "5ff5d865980dc284ead239cff63af0578d32a664ad3deaf041accef1a3bb4864"
+    },
+    {
+      "path": "screenshots/component-fp.weighing-checkbox-v1-360-130.png",
+      "sha256": "5cff573095ce456c793a42a9ec553e08711f17b44127577a3272c85c6778191f"
+    },
+    {
+      "path": "comparison-library-A-393-100.png",
+      "sha256": "20d329f32a813cef3644165e42b19387fea6792215c349640a55d4db06b3bb9e"
+    },
+    {
+      "path": "comparison-recipe-A-393-100.png",
+      "sha256": "6ee8c2a990b79afa36a466b832a9c7e7ee2acea697b2efb447827199b6d19d70"
+    },
+    {
+      "path": "comparison-edit-A-393-100.png",
+      "sha256": "9083587e11ac2f15b83144ad0f4710b7f610eca0f2ca3ab025eb0384c4652839"
+    },
+    {
+      "path": "comparison-menu-A-393-100.png",
+      "sha256": "7b1685fedccbf8adf6241a3151f56ecafbebe1459973ae82c3ef1b1118ac9c05"
+    },
+    {
+      "path": "comparison-hydration-A-393-100.png",
+      "sha256": "11e79cfec9aad00a7b5757973469452d560f1104aa08cdad5611f6d433816129"
+    },
+    {
+      "path": "comparison-steps-A-393-100.png",
+      "sha256": "5e9e1921939b49398430afc49cac5b9d02ad122714dcf4a10f027030abb5bf5d"
+    },
+    {
+      "path": "comparison-timeline-A-393-100.png",
+      "sha256": "ee92134321375da7b51191dbacdbb0cfa31d75e3de07a88b86237aee8595a5d2"
+    },
+    {
+      "path": "comparison-planning-A-393-100.png",
+      "sha256": "c96d2986baeb4499c47f04cf17f1aabb0c69318edf252f899390cd44515ab457"
+    },
+    {
+      "path": "comparison-preparation-A-393-100.png",
+      "sha256": "789af45a0aba3265ced93307d30879d76cf373e06d6158103556a57df3cb8d82"
+    },
+    {
+      "path": "comparison-creation-A-393-100.png",
+      "sha256": "7877d23e880a817d95d9240288ca9b00664534f04ea81262850b6631ae9d04bc"
+    },
+    {
+      "path": "comparison-recipe-A-360-130.png",
+      "sha256": "1d372ab630d85aea9b52b194d91e87e4e4e4f80057ae7115a82cdc32b06ce1f7"
+    },
+    {
+      "path": "comparison-planning-A-360-130.png",
+      "sha256": "16244140b75f5e96392b78feb0b08ccc0a66be624f50317c262621b7d53c7e03"
+    },
+    {
+      "path": "comparison-preparation-A-360-130.png",
+      "sha256": "df1ea31ccd604aad2a9ed07377288aec1c13c037714ef558ec7d84ab05c426eb"
+    },
+    {
+      "path": "comparison-library-B-393-100.png",
+      "sha256": "c35ce05c56cc7e472f8bacd3fbff6f04d6d10041fe9b6cb3e688318bd239b4ae"
+    },
+    {
+      "path": "comparison-recipe-B-393-100.png",
+      "sha256": "44765ea5a5edd09b45b81bde9fb4bce88dda39b4da5d62c619910f1e9c3273ad"
+    },
+    {
+      "path": "comparison-edit-B-393-100.png",
+      "sha256": "ce5e2ecebbf72c1277981f123b4fd7e050efd05f4df69b821173571d4932f649"
+    },
+    {
+      "path": "comparison-menu-B-393-100.png",
+      "sha256": "d1c6b0bf4f9daf94e84ed02d5a142ab12ea4b3b845e64225f6143af8c65f64fc"
+    },
+    {
+      "path": "comparison-hydration-B-393-100.png",
+      "sha256": "22dc12f4dbeac08f3a40da52de0fae2ad953b1eee4c0bdedfd8e5b5d2e4b4af5"
+    },
+    {
+      "path": "comparison-steps-B-393-100.png",
+      "sha256": "c7d843b4eddabfda3de667c4b0b53d3b98451e5716b371c643d1febf82209087"
+    },
+    {
+      "path": "comparison-timeline-B-393-100.png",
+      "sha256": "db534476d4a25e049c0a7bf6794d37a01b130221cb53e15ad5fcf87968667360"
+    },
+    {
+      "path": "comparison-planning-B-393-100.png",
+      "sha256": "46e7b1295583a1c81588122d150f796907ba2e062796c68280e29d612d16001f"
+    },
+    {
+      "path": "comparison-preparation-B-393-100.png",
+      "sha256": "8b7f2662f87f43b8d6dc0ef8da35610180902a59d3b70a93aaf503cc7b70464c"
+    },
+    {
+      "path": "comparison-creation-B-393-100.png",
+      "sha256": "630bd27176a9f0e09f6e2241b00381122f734a09f7dea0935f9d751bfd797b54"
+    },
+    {
+      "path": "comparison-recipe-B-360-130.png",
+      "sha256": "b85c306814d16d5b68a64be2f09b80ed20c4af3dc5cd85710c974feea4797892"
+    },
+    {
+      "path": "comparison-planning-B-360-130.png",
+      "sha256": "191c33a45af21903b06d0683966eb9f11ee4e22ff98434340f5c5fe726dbb27b"
+    },
+    {
+      "path": "comparison-preparation-B-360-130.png",
+      "sha256": "58b7cc9641eeff44a0db52062578f672bf3406e1534e399ed88139b463668209"
+    },
+    {
+      "path": "motion/button-press-normal-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/button-press-normal-during.png",
+      "sha256": "612426f174fb281486718f6fbe553b3ed4c5da83b3a41b23615162ea3785fe51"
+    },
+    {
+      "path": "motion/button-press-normal-after.png",
+      "sha256": "6d33205ec03a0a0a213ffc9bb89e9c248b6a4491f4f23e90ed44c06188b01f1a"
+    },
+    {
+      "path": "motion/toolbar-press-normal-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/toolbar-press-normal-during.png",
+      "sha256": "e5d47aad17c8654815b59338f050f860825ebe055de40814cfc2907edf1de69b"
+    },
+    {
+      "path": "motion/toolbar-press-normal-after.png",
+      "sha256": "5b81067d2a90e0b4b822c24e42609870ddddab07fa8cdfea4577bd6b81b643d8"
+    },
+    {
+      "path": "motion/pill-selection-normal-before.png",
+      "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+    },
+    {
+      "path": "motion/pill-selection-normal-during.png",
+      "sha256": "eb23f0a94dc513d056d56baaa252b9c2d4e097e200a420965454a2d958cf955f"
+    },
+    {
+      "path": "motion/pill-selection-normal-after.png",
+      "sha256": "48cc1ad09bda4b08ec5fa0ac58ec161577371914a6e55ca900c747db1c401f54"
+    },
+    {
+      "path": "motion/weighing-row-and-check-normal-before.png",
+      "sha256": "47fefb324a5697c15f059e0cc6f2e54ad40ccffeb263c2aa85a43cfded4e91d7"
+    },
+    {
+      "path": "motion/weighing-row-and-check-normal-during.png",
+      "sha256": "6323cd707ee68d961f998b6f4e93956da7bf3637f9469624815c34b4364c5985"
+    },
+    {
+      "path": "motion/weighing-row-and-check-normal-after.png",
+      "sha256": "cf6fc57b0aab9ef11ab36a6c9467ed3c7cc3a38c99f418ab07e373906ee891f1"
+    },
+    {
+      "path": "motion/accordion-and-chevron-close-normal-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/accordion-and-chevron-close-normal-during.png",
+      "sha256": "ce3abea80b891aa0073cd6e84d0d845cb680b97aefcf6fa5662d8ffd84944545"
+    },
+    {
+      "path": "motion/accordion-and-chevron-close-normal-after.png",
+      "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+    },
+    {
+      "path": "motion/accordion-and-chevron-open-normal-before.png",
+      "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+    },
+    {
+      "path": "motion/accordion-and-chevron-open-normal-during.png",
+      "sha256": "3a20fc921a248d52aca7e520d4c1a9f97b4416f7999445979e6c48113d092dd9"
+    },
+    {
+      "path": "motion/accordion-and-chevron-open-normal-after.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/menu-open-normal-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/menu-open-normal-during.png",
+      "sha256": "9291e3f6dbf87cfe85fd329df01d7b872d42c5de6a6b4b8f6d2f6301c32fa326"
+    },
+    {
+      "path": "motion/menu-open-normal-after.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "motion/menu-close-normal-before.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "motion/menu-close-normal-during.png",
+      "sha256": "fa627b8d9a3b5230552b1b06f456c738ffe341cf95ba2c2d4acdde5fd48e5227"
+    },
+    {
+      "path": "motion/menu-close-normal-after.png",
+      "sha256": "c2f30086ff719968b7a637935f54dbfbec23624cdd07c606a6c6a139548f7220"
+    },
+    {
+      "path": "motion/sheet-open-normal-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/sheet-open-normal-during.png",
+      "sha256": "fd18f762ba55116713a612a5f1de3f7222d5bbc9f66a6416848e88027e68d6d9"
+    },
+    {
+      "path": "motion/sheet-open-normal-after.png",
+      "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+    },
+    {
+      "path": "motion/sheet-close-normal-before.png",
+      "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+    },
+    {
+      "path": "motion/sheet-close-normal-during.png",
+      "sha256": "ff5a50520aa063a8b271924704331fddebdc9820c64174387000a1fb1550ac9f"
+    },
+    {
+      "path": "motion/sheet-close-normal-after.png",
+      "sha256": "ddea5180ffc517c2e8e7babb71d4fb3ee6832f7028d99464faa56cbac537269c"
+    },
+    {
+      "path": "motion/tab-change-normal-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/tab-change-normal-during.png",
+      "sha256": "51b2a5ba44244c6aa417d7b687562254db0ae8dd14a435a41e9fe073edb98906"
+    },
+    {
+      "path": "motion/tab-change-normal-after.png",
+      "sha256": "f74f89063fd9f4072c1dcd62714a0e28d187c616653059fd03436c18e9f17ec7"
+    },
+    {
+      "path": "motion/screen-change-normal-before.png",
+      "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+    },
+    {
+      "path": "motion/screen-change-normal-during.png",
+      "sha256": "c8a18ef194f65bb0a76ebea475c24741b0d5c6057051e7e79cecd3b199a16fbe"
+    },
+    {
+      "path": "motion/screen-change-normal-after.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/preparation-step-complete-normal-before.png",
+      "sha256": "4280f479dc92c58f34cd241cc4f46865644ca8d85ac7dbd8cc117962b99a184b"
+    },
+    {
+      "path": "motion/preparation-step-complete-normal-during.png",
+      "sha256": "b1a7af24e969e842a0ae83072c24a3d2d4b3f0272383eb9fc03a66422398218b"
+    },
+    {
+      "path": "motion/preparation-step-complete-normal-after.png",
+      "sha256": "dc1f00f4a5b95275bd123323d82851bd666b2d05fce565ce458b72d3eb0609ab"
+    },
+    {
+      "path": "motion/button-press-system-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/button-press-system-reduced-after.png",
+      "sha256": "6d33205ec03a0a0a213ffc9bb89e9c248b6a4491f4f23e90ed44c06188b01f1a"
+    },
+    {
+      "path": "motion/toolbar-press-system-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/toolbar-press-system-reduced-after.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "motion/pill-selection-system-reduced-before.png",
+      "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+    },
+    {
+      "path": "motion/pill-selection-system-reduced-after.png",
+      "sha256": "48cc1ad09bda4b08ec5fa0ac58ec161577371914a6e55ca900c747db1c401f54"
+    },
+    {
+      "path": "motion/weighing-row-and-check-system-reduced-before.png",
+      "sha256": "47fefb324a5697c15f059e0cc6f2e54ad40ccffeb263c2aa85a43cfded4e91d7"
+    },
+    {
+      "path": "motion/weighing-row-and-check-system-reduced-after.png",
+      "sha256": "cf6fc57b0aab9ef11ab36a6c9467ed3c7cc3a38c99f418ab07e373906ee891f1"
+    },
+    {
+      "path": "motion/accordion-and-chevron-close-system-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/accordion-and-chevron-close-system-reduced-after.png",
+      "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+    },
+    {
+      "path": "motion/accordion-and-chevron-open-system-reduced-before.png",
+      "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+    },
+    {
+      "path": "motion/accordion-and-chevron-open-system-reduced-after.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/menu-open-system-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/menu-open-system-reduced-after.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "motion/menu-close-system-reduced-before.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "motion/menu-close-system-reduced-after.png",
+      "sha256": "c2f30086ff719968b7a637935f54dbfbec23624cdd07c606a6c6a139548f7220"
+    },
+    {
+      "path": "motion/sheet-open-system-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/sheet-open-system-reduced-after.png",
+      "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+    },
+    {
+      "path": "motion/sheet-close-system-reduced-before.png",
+      "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+    },
+    {
+      "path": "motion/sheet-close-system-reduced-after.png",
+      "sha256": "ddea5180ffc517c2e8e7babb71d4fb3ee6832f7028d99464faa56cbac537269c"
+    },
+    {
+      "path": "motion/tab-change-system-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/tab-change-system-reduced-after.png",
+      "sha256": "f74f89063fd9f4072c1dcd62714a0e28d187c616653059fd03436c18e9f17ec7"
+    },
+    {
+      "path": "motion/screen-change-system-reduced-before.png",
+      "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+    },
+    {
+      "path": "motion/screen-change-system-reduced-after.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/preparation-step-complete-system-reduced-before.png",
+      "sha256": "4280f479dc92c58f34cd241cc4f46865644ca8d85ac7dbd8cc117962b99a184b"
+    },
+    {
+      "path": "motion/preparation-step-complete-system-reduced-after.png",
+      "sha256": "dc1f00f4a5b95275bd123323d82851bd666b2d05fce565ce458b72d3eb0609ab"
+    },
+    {
+      "path": "motion/button-press-manual-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/button-press-manual-reduced-after.png",
+      "sha256": "6d33205ec03a0a0a213ffc9bb89e9c248b6a4491f4f23e90ed44c06188b01f1a"
+    },
+    {
+      "path": "motion/toolbar-press-manual-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/toolbar-press-manual-reduced-after.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "motion/pill-selection-manual-reduced-before.png",
+      "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+    },
+    {
+      "path": "motion/pill-selection-manual-reduced-after.png",
+      "sha256": "48cc1ad09bda4b08ec5fa0ac58ec161577371914a6e55ca900c747db1c401f54"
+    },
+    {
+      "path": "motion/weighing-row-and-check-manual-reduced-before.png",
+      "sha256": "47fefb324a5697c15f059e0cc6f2e54ad40ccffeb263c2aa85a43cfded4e91d7"
+    },
+    {
+      "path": "motion/weighing-row-and-check-manual-reduced-after.png",
+      "sha256": "cf6fc57b0aab9ef11ab36a6c9467ed3c7cc3a38c99f418ab07e373906ee891f1"
+    },
+    {
+      "path": "motion/accordion-and-chevron-close-manual-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/accordion-and-chevron-close-manual-reduced-after.png",
+      "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+    },
+    {
+      "path": "motion/accordion-and-chevron-open-manual-reduced-before.png",
+      "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+    },
+    {
+      "path": "motion/accordion-and-chevron-open-manual-reduced-after.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/menu-open-manual-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/menu-open-manual-reduced-after.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "motion/menu-close-manual-reduced-before.png",
+      "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+    },
+    {
+      "path": "motion/menu-close-manual-reduced-after.png",
+      "sha256": "c2f30086ff719968b7a637935f54dbfbec23624cdd07c606a6c6a139548f7220"
+    },
+    {
+      "path": "motion/sheet-open-manual-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/sheet-open-manual-reduced-after.png",
+      "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+    },
+    {
+      "path": "motion/sheet-close-manual-reduced-before.png",
+      "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+    },
+    {
+      "path": "motion/sheet-close-manual-reduced-after.png",
+      "sha256": "ddea5180ffc517c2e8e7babb71d4fb3ee6832f7028d99464faa56cbac537269c"
+    },
+    {
+      "path": "motion/tab-change-manual-reduced-before.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/tab-change-manual-reduced-after.png",
+      "sha256": "f74f89063fd9f4072c1dcd62714a0e28d187c616653059fd03436c18e9f17ec7"
+    },
+    {
+      "path": "motion/screen-change-manual-reduced-before.png",
+      "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+    },
+    {
+      "path": "motion/screen-change-manual-reduced-after.png",
+      "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+    },
+    {
+      "path": "motion/preparation-step-complete-manual-reduced-before.png",
+      "sha256": "4280f479dc92c58f34cd241cc4f46865644ca8d85ac7dbd8cc117962b99a184b"
+    },
+    {
+      "path": "motion/preparation-step-complete-manual-reduced-after.png",
+      "sha256": "dc1f00f4a5b95275bd123323d82851bd666b2d05fce565ce458b72d3eb0609ab"
+    },
+    {
+      "path": "assets/gallery-DzH3Km2u.css",
+      "sha256": "c486df3c4cb7751f8a9ac1ea8522ecc58afbd88f5857d188d4c68ba68995b615"
+    },
+    {
+      "path": "assets/gallery-vc-7Swgw.js",
+      "sha256": "a0b63ff333358f337cf0f6df0e6141152f6b99a01c731fcaeaee06b8e4e62561"
+    },
+    {
+      "path": "assets/jsx-runtime-Cl-0m_Qe.js",
+      "sha256": "1ae24d1c6ebe48e93d496ad681e2d7aaa867e5e59bf226bcde8562b44eb622f5"
+    },
+    {
+      "path": "assets/mockup-BYb7HcJ1.css",
+      "sha256": "652afaddead24d95dc41f6a2b4166bb2c8b5ee68d1ada4932c97ac7e1c36357c"
+    },
+    {
+      "path": "assets/mockup-D7hQaJKM.js",
+      "sha256": "da6a785a65e0a308baadfa07b9fdb687d34227a57e7981b08a3a8e6629d609dd"
+    }
+  ]
+}

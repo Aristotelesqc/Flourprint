@@ -1,0 +1,1723 @@
+{
+  "revision": "ae6cbd2cba4a2db473e5dee375fc55f96dc517c8",
+  "sourceSha256": "f8618bd700e98feca4511e51013cc4b45419115bd447f61cbc36bf9385124df0",
+  "sampling": "Actual CSS Web Animations sampled at 50% of their duration; no fabricated interface frames. Reduced motion has before/after only because it has no intermediate state.",
+  "records": [
+    {
+      "id": "button-press",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/button-press-normal-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "during",
+          "path": "motion/button-press-normal-during.png",
+          "sha256": "612426f174fb281486718f6fbe553b3ed4c5da83b3a41b23615162ea3785fe51"
+        },
+        {
+          "phase": "after",
+          "path": "motion/button-press-normal-after.png",
+          "sha256": "6d33205ec03a0a0a213ffc9bb89e9c248b6a4491f4f23e90ed44c06188b01f1a"
+        }
+      ],
+      "animations": [
+        {
+          "name": "transform",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "btn btn-quiet",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "transform": "none"
+            },
+            {
+              "easing": "linear",
+              "transform": "scale(0.97)"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "toolbar-press",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/toolbar-press-normal-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "during",
+          "path": "motion/toolbar-press-normal-during.png",
+          "sha256": "e5d47aad17c8654815b59338f050f860825ebe055de40814cfc2907edf1de69b"
+        },
+        {
+          "phase": "after",
+          "path": "motion/toolbar-press-normal-after.png",
+          "sha256": "5b81067d2a90e0b4b822c24e42609870ddddab07fa8cdfea4577bd6b81b643d8"
+        }
+      ],
+      "animations": [
+        {
+          "name": "background-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "icon-btn icon-btn-default",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            },
+            {
+              "easing": "linear",
+              "backgroundColor": "rgb(51, 46, 41)"
+            }
+          ]
+        },
+        {
+          "name": "transform",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "icon-btn icon-btn-default",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "transform": "none"
+            },
+            {
+              "easing": "linear",
+              "transform": "scale(0.95)"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "pill-selection",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/pill-selection-normal-before.png",
+          "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+        },
+        {
+          "phase": "during",
+          "path": "motion/pill-selection-normal-during.png",
+          "sha256": "eb23f0a94dc513d056d56baaa252b9c2d4e097e200a420965454a2d958cf955f"
+        },
+        {
+          "phase": "after",
+          "path": "motion/pill-selection-normal-after.png",
+          "sha256": "48cc1ad09bda4b08ec5fa0ac58ec161577371914a6e55ca900c747db1c401f54"
+        }
+      ],
+      "animations": [
+        {
+          "name": "color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "tab-btn ",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "color": "rgb(219, 162, 124)"
+            },
+            {
+              "easing": "linear",
+              "color": "rgb(177, 170, 159)"
+            }
+          ]
+        },
+        {
+          "name": "color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "tab-btn active",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "color": "rgb(177, 170, 159)"
+            },
+            {
+              "easing": "linear",
+              "color": "rgb(219, 162, 124)"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=library&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "weighing-row-and-check",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/weighing-row-and-check-normal-before.png",
+          "sha256": "47fefb324a5697c15f059e0cc6f2e54ad40ccffeb263c2aa85a43cfded4e91d7"
+        },
+        {
+          "phase": "during",
+          "path": "motion/weighing-row-and-check-normal-during.png",
+          "sha256": "6323cd707ee68d961f998b6f4e93956da7bf3637f9469624815c34b4364c5985"
+        },
+        {
+          "phase": "after",
+          "path": "motion/weighing-row-and-check-normal-after.png",
+          "sha256": "cf6fc57b0aab9ef11ab36a6c9467ed3c7cc3a38c99f418ab07e373906ee891f1"
+        }
+      ],
+      "animations": [
+        {
+          "name": "background-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "ingredient-row weighed ",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            },
+            {
+              "easing": "linear",
+              "backgroundColor": "rgba(207, 138, 94, 0.16)"
+            }
+          ]
+        },
+        {
+          "name": "background-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "checkbox-custom",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "backgroundColor": "rgb(42, 38, 34)"
+            },
+            {
+              "easing": "linear",
+              "backgroundColor": "rgb(207, 138, 94)"
+            }
+          ]
+        },
+        {
+          "name": "border-bottom-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "checkbox-custom",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "borderBottomColor": "rgb(59, 54, 49)"
+            },
+            {
+              "easing": "linear",
+              "borderBottomColor": "rgb(207, 138, 94)"
+            }
+          ]
+        },
+        {
+          "name": "border-left-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "checkbox-custom",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "borderLeftColor": "rgb(59, 54, 49)"
+            },
+            {
+              "easing": "linear",
+              "borderLeftColor": "rgb(207, 138, 94)"
+            }
+          ]
+        },
+        {
+          "name": "border-right-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "checkbox-custom",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "borderRightColor": "rgb(59, 54, 49)"
+            },
+            {
+              "easing": "linear",
+              "borderRightColor": "rgb(207, 138, 94)"
+            }
+          ]
+        },
+        {
+          "name": "border-top-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "checkbox-custom",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "borderTopColor": "rgb(59, 54, 49)"
+            },
+            {
+              "easing": "linear",
+              "borderTopColor": "rgb(207, 138, 94)"
+            }
+          ]
+        },
+        {
+          "name": "transform",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "checkbox-custom",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "transform": "none"
+            },
+            {
+              "easing": "linear",
+              "transform": "scale(1.05)"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "accordion-and-chevron-close",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/accordion-and-chevron-close-normal-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "during",
+          "path": "motion/accordion-and-chevron-close-normal-during.png",
+          "sha256": "ce3abea80b891aa0073cd6e84d0d845cb680b97aefcf6fa5662d8ffd84944545"
+        },
+        {
+          "phase": "after",
+          "path": "motion/accordion-and-chevron-close-normal-after.png",
+          "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+        }
+      ],
+      "animations": [
+        {
+          "name": "transform",
+          "duration": 220,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": {},
+          "keyframes": [
+            {
+              "easing": "linear",
+              "transform": "rotate(180deg)"
+            },
+            {
+              "easing": "linear",
+              "transform": "none"
+            }
+          ]
+        },
+        {
+          "name": "grid-template-rows",
+          "duration": 220,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "disclosure-grid",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "gridTemplateRows": "219px"
+            },
+            {
+              "easing": "linear",
+              "gridTemplateRows": "219px"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "accordion-and-chevron-open",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/accordion-and-chevron-open-normal-before.png",
+          "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+        },
+        {
+          "phase": "during",
+          "path": "motion/accordion-and-chevron-open-normal-during.png",
+          "sha256": "3a20fc921a248d52aca7e520d4c1a9f97b4416f7999445979e6c48113d092dd9"
+        },
+        {
+          "phase": "after",
+          "path": "motion/accordion-and-chevron-open-normal-after.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        }
+      ],
+      "animations": [
+        {
+          "name": "transform",
+          "duration": 220,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": {},
+          "keyframes": [
+            {
+              "easing": "linear",
+              "transform": "none"
+            },
+            {
+              "easing": "linear",
+              "transform": "rotate(180deg)"
+            }
+          ]
+        },
+        {
+          "name": "grid-template-rows",
+          "duration": 220,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "disclosure-grid",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "gridTemplateRows": "0px"
+            },
+            {
+              "easing": "linear",
+              "gridTemplateRows": "0px"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "menu-open",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/menu-open-normal-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "during",
+          "path": "motion/menu-open-normal-during.png",
+          "sha256": "9291e3f6dbf87cfe85fd329df01d7b872d42c5de6a6b4b8f6d2f6301c32fa326"
+        },
+        {
+          "phase": "after",
+          "path": "motion/menu-open-normal-after.png",
+          "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+        }
+      ],
+      "animations": [
+        {
+          "name": "fp-floating-menu-v1-in",
+          "duration": 150,
+          "easing": "linear",
+          "target": "menu-popup",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+              "transform": "translateY(6px) scale(0.96)",
+              "opacity": "0"
+            },
+            {
+              "easing": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+              "transform": "translateY(0px) scale(1)",
+              "opacity": "1"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "menu-close",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/menu-close-normal-before.png",
+          "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+        },
+        {
+          "phase": "during",
+          "path": "motion/menu-close-normal-during.png",
+          "sha256": "fa627b8d9a3b5230552b1b06f456c738ffe341cf95ba2c2d4acdde5fd48e5227"
+        },
+        {
+          "phase": "after",
+          "path": "motion/menu-close-normal-after.png",
+          "sha256": "c2f30086ff719968b7a637935f54dbfbec23624cdd07c606a6c6a139548f7220"
+        }
+      ],
+      "animations": [
+        {
+          "name": "background-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "icon-btn icon-btn-default",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            },
+            {
+              "easing": "linear",
+              "backgroundColor": "rgb(51, 46, 41)"
+            }
+          ]
+        },
+        {
+          "name": "fp-floating-menu-v1-out",
+          "duration": 150,
+          "easing": "linear",
+          "target": "menu-popup",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+              "transform": "translateY(0px) scale(1)",
+              "opacity": "1"
+            },
+            {
+              "easing": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+              "transform": "translateY(6px) scale(0.96)",
+              "opacity": "0"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "sheet-open",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/sheet-open-normal-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "during",
+          "path": "motion/sheet-open-normal-during.png",
+          "sha256": "fd18f762ba55116713a612a5f1de3f7222d5bbc9f66a6416848e88027e68d6d9"
+        },
+        {
+          "phase": "after",
+          "path": "motion/sheet-open-normal-after.png",
+          "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+        }
+      ],
+      "animations": [
+        {
+          "name": "fp-backdrop-in",
+          "duration": 150,
+          "easing": "linear",
+          "target": "modal-dialog",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            },
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "backgroundColor": "rgba(8, 7, 6, 0.68)"
+            }
+          ]
+        },
+        {
+          "name": "fp-bottom-sheet-v1-in",
+          "duration": 260,
+          "easing": "linear",
+          "target": "modal-sheet",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+              "transform": "translateY(100%)"
+            },
+            {
+              "easing": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+              "transform": "translateY(0px)"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "sheet-close",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/sheet-close-normal-before.png",
+          "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+        },
+        {
+          "phase": "during",
+          "path": "motion/sheet-close-normal-during.png",
+          "sha256": "ff5a50520aa063a8b271924704331fddebdc9820c64174387000a1fb1550ac9f"
+        },
+        {
+          "phase": "after",
+          "path": "motion/sheet-close-normal-after.png",
+          "sha256": "ddea5180ffc517c2e8e7babb71d4fb3ee6832f7028d99464faa56cbac537269c"
+        }
+      ],
+      "animations": [
+        {
+          "name": "background-color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "icon-btn icon-btn-default",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            },
+            {
+              "easing": "linear",
+              "backgroundColor": "rgb(51, 46, 41)"
+            }
+          ]
+        },
+        {
+          "name": "fp-backdrop-out",
+          "duration": 150,
+          "easing": "linear",
+          "target": "fp-exit-backdrop",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "backgroundColor": "rgba(8, 7, 6, 0.68)"
+            },
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            }
+          ]
+        },
+        {
+          "name": "fp-bottom-sheet-v1-out",
+          "duration": 260,
+          "easing": "linear",
+          "target": "modal-sheet",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+              "transform": "translateY(0px)"
+            },
+            {
+              "easing": "cubic-bezier(0.05, 0.7, 0.1, 1)",
+              "transform": "translateY(100%)"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "tab-change",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/tab-change-normal-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "during",
+          "path": "motion/tab-change-normal-during.png",
+          "sha256": "51b2a5ba44244c6aa417d7b687562254db0ae8dd14a435a41e9fe073edb98906"
+        },
+        {
+          "phase": "after",
+          "path": "motion/tab-change-normal-after.png",
+          "sha256": "f74f89063fd9f4072c1dcd62714a0e28d187c616653059fd03436c18e9f17ec7"
+        }
+      ],
+      "animations": [
+        {
+          "name": "color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "tab-btn ",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "color": "rgb(207, 138, 94)"
+            },
+            {
+              "easing": "linear",
+              "color": "rgb(177, 170, 159)"
+            }
+          ]
+        },
+        {
+          "name": "color",
+          "duration": 150,
+          "easing": "cubic-bezier(0.2, 0, 0, 1)",
+          "target": "tab-btn active",
+          "keyframes": [
+            {
+              "easing": "linear",
+              "color": "rgb(177, 170, 159)"
+            },
+            {
+              "easing": "linear",
+              "color": "rgb(207, 138, 94)"
+            }
+          ]
+        },
+        {
+          "name": "fp-scene-feedback",
+          "duration": 150,
+          "easing": "linear",
+          "target": "",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "opacity": "0.8"
+            },
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "opacity": "1"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "screen-change",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/screen-change-normal-before.png",
+          "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+        },
+        {
+          "phase": "during",
+          "path": "motion/screen-change-normal-during.png",
+          "sha256": "c8a18ef194f65bb0a76ebea475c24741b0d5c6057051e7e79cecd3b199a16fbe"
+        },
+        {
+          "phase": "after",
+          "path": "motion/screen-change-normal-after.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        }
+      ],
+      "animations": [
+        {
+          "name": "fp-scene-feedback",
+          "duration": 150,
+          "easing": "linear",
+          "target": "",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "opacity": "0.8"
+            },
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "opacity": "1"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=library&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "preparation-step-complete",
+      "mode": "normal",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/preparation-step-complete-normal-before.png",
+          "sha256": "4280f479dc92c58f34cd241cc4f46865644ca8d85ac7dbd8cc117962b99a184b"
+        },
+        {
+          "phase": "during",
+          "path": "motion/preparation-step-complete-normal-during.png",
+          "sha256": "b1a7af24e969e842a0ae83072c24a3d2d4b3f0272383eb9fc03a66422398218b"
+        },
+        {
+          "phase": "after",
+          "path": "motion/preparation-step-complete-normal-after.png",
+          "sha256": "dc1f00f4a5b95275bd123323d82851bd666b2d05fce565ce458b72d3eb0609ab"
+        }
+      ],
+      "animations": [
+        {
+          "name": "fp-step-feedback",
+          "duration": 220,
+          "easing": "linear",
+          "target": "current-step-hero stack",
+          "keyframes": [
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "backgroundColor": "rgba(207, 138, 94, 0.16)"
+            },
+            {
+              "easing": "cubic-bezier(0.2, 0, 0, 1)",
+              "backgroundColor": "rgba(0, 0, 0, 0)"
+            }
+          ]
+        }
+      ],
+      "tokens": {
+        "--dur-effect": ".15s",
+        "--dur-spatial": ".22s",
+        "--dur-sheet": ".26s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=preparation&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "button-press",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/button-press-system-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/button-press-system-reduced-after.png",
+          "sha256": "6d33205ec03a0a0a213ffc9bb89e9c248b6a4491f4f23e90ed44c06188b01f1a"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "toolbar-press",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/toolbar-press-system-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/toolbar-press-system-reduced-after.png",
+          "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "pill-selection",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/pill-selection-system-reduced-before.png",
+          "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+        },
+        {
+          "phase": "after",
+          "path": "motion/pill-selection-system-reduced-after.png",
+          "sha256": "48cc1ad09bda4b08ec5fa0ac58ec161577371914a6e55ca900c747db1c401f54"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=library&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "weighing-row-and-check",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/weighing-row-and-check-system-reduced-before.png",
+          "sha256": "47fefb324a5697c15f059e0cc6f2e54ad40ccffeb263c2aa85a43cfded4e91d7"
+        },
+        {
+          "phase": "after",
+          "path": "motion/weighing-row-and-check-system-reduced-after.png",
+          "sha256": "cf6fc57b0aab9ef11ab36a6c9467ed3c7cc3a38c99f418ab07e373906ee891f1"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "accordion-and-chevron-close",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/accordion-and-chevron-close-system-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/accordion-and-chevron-close-system-reduced-after.png",
+          "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "accordion-and-chevron-open",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/accordion-and-chevron-open-system-reduced-before.png",
+          "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+        },
+        {
+          "phase": "after",
+          "path": "motion/accordion-and-chevron-open-system-reduced-after.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "menu-open",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/menu-open-system-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/menu-open-system-reduced-after.png",
+          "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "menu-close",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/menu-close-system-reduced-before.png",
+          "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+        },
+        {
+          "phase": "after",
+          "path": "motion/menu-close-system-reduced-after.png",
+          "sha256": "c2f30086ff719968b7a637935f54dbfbec23624cdd07c606a6c6a139548f7220"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "sheet-open",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/sheet-open-system-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/sheet-open-system-reduced-after.png",
+          "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "sheet-close",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/sheet-close-system-reduced-before.png",
+          "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+        },
+        {
+          "phase": "after",
+          "path": "motion/sheet-close-system-reduced-after.png",
+          "sha256": "ddea5180ffc517c2e8e7babb71d4fb3ee6832f7028d99464faa56cbac537269c"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "tab-change",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/tab-change-system-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/tab-change-system-reduced-after.png",
+          "sha256": "f74f89063fd9f4072c1dcd62714a0e28d187c616653059fd03436c18e9f17ec7"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "screen-change",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/screen-change-system-reduced-before.png",
+          "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+        },
+        {
+          "phase": "after",
+          "path": "motion/screen-change-system-reduced-after.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=library&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "preparation-step-complete",
+      "mode": "system-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/preparation-step-complete-system-reduced-before.png",
+          "sha256": "4280f479dc92c58f34cd241cc4f46865644ca8d85ac7dbd8cc117962b99a184b"
+        },
+        {
+          "phase": "after",
+          "path": "motion/preparation-step-complete-system-reduced-after.png",
+          "sha256": "dc1f00f4a5b95275bd123323d82851bd666b2d05fce565ce458b72d3eb0609ab"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=preparation&lang=fr&theme=dark&nav=A&capture=1&motion=standard"
+    },
+    {
+      "id": "button-press",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/button-press-manual-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/button-press-manual-reduced-after.png",
+          "sha256": "6d33205ec03a0a0a213ffc9bb89e9c248b6a4491f4f23e90ed44c06188b01f1a"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "toolbar-press",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/toolbar-press-manual-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/toolbar-press-manual-reduced-after.png",
+          "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "pill-selection",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/pill-selection-manual-reduced-before.png",
+          "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+        },
+        {
+          "phase": "after",
+          "path": "motion/pill-selection-manual-reduced-after.png",
+          "sha256": "48cc1ad09bda4b08ec5fa0ac58ec161577371914a6e55ca900c747db1c401f54"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=library&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "weighing-row-and-check",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/weighing-row-and-check-manual-reduced-before.png",
+          "sha256": "47fefb324a5697c15f059e0cc6f2e54ad40ccffeb263c2aa85a43cfded4e91d7"
+        },
+        {
+          "phase": "after",
+          "path": "motion/weighing-row-and-check-manual-reduced-after.png",
+          "sha256": "cf6fc57b0aab9ef11ab36a6c9467ed3c7cc3a38c99f418ab07e373906ee891f1"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "accordion-and-chevron-close",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/accordion-and-chevron-close-manual-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/accordion-and-chevron-close-manual-reduced-after.png",
+          "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "accordion-and-chevron-open",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/accordion-and-chevron-open-manual-reduced-before.png",
+          "sha256": "685627274c4571afaabb7e747fee05d0ec3220572296595060a5b219e2b2aa73"
+        },
+        {
+          "phase": "after",
+          "path": "motion/accordion-and-chevron-open-manual-reduced-after.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "menu-open",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/menu-open-manual-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/menu-open-manual-reduced-after.png",
+          "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "menu-close",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/menu-close-manual-reduced-before.png",
+          "sha256": "1b54431d96aae8216c0f217b3f8860cd23041c4d0228f21df0d88357f3708880"
+        },
+        {
+          "phase": "after",
+          "path": "motion/menu-close-manual-reduced-after.png",
+          "sha256": "c2f30086ff719968b7a637935f54dbfbec23624cdd07c606a6c6a139548f7220"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "sheet-open",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/sheet-open-manual-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/sheet-open-manual-reduced-after.png",
+          "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "sheet-close",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/sheet-close-manual-reduced-before.png",
+          "sha256": "602e20e259d515317676221c2ed0e8f56ba23ab57b6b9fd72739f77c5fd53e69"
+        },
+        {
+          "phase": "after",
+          "path": "motion/sheet-close-manual-reduced-after.png",
+          "sha256": "ddea5180ffc517c2e8e7babb71d4fb3ee6832f7028d99464faa56cbac537269c"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "tab-change",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/tab-change-manual-reduced-before.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        },
+        {
+          "phase": "after",
+          "path": "motion/tab-change-manual-reduced-after.png",
+          "sha256": "f74f89063fd9f4072c1dcd62714a0e28d187c616653059fd03436c18e9f17ec7"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=recipe&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "screen-change",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/screen-change-manual-reduced-before.png",
+          "sha256": "5828f558a89060f574a591073be3829696a31911d0343965284d3f64a2bbbcd3"
+        },
+        {
+          "phase": "after",
+          "path": "motion/screen-change-manual-reduced-after.png",
+          "sha256": "a64d807ca1c65971eca7e77ff10320bd49ccf3c01c0d53e86464bca71bd43f47"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=library&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    },
+    {
+      "id": "preparation-step-complete",
+      "mode": "manual-reduced",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "locale": "fr-CA",
+      "theme": "dark",
+      "frames": [
+        {
+          "phase": "before",
+          "path": "motion/preparation-step-complete-manual-reduced-before.png",
+          "sha256": "4280f479dc92c58f34cd241cc4f46865644ca8d85ac7dbd8cc117962b99a184b"
+        },
+        {
+          "phase": "after",
+          "path": "motion/preparation-step-complete-manual-reduced-after.png",
+          "sha256": "dc1f00f4a5b95275bd123323d82851bd666b2d05fce565ce458b72d3eb0609ab"
+        }
+      ],
+      "animations": [],
+      "tokens": {
+        "--dur-effect": "0s",
+        "--dur-spatial": "0s",
+        "--dur-sheet": "0s"
+      },
+      "errors": [],
+      "interactive": "../mockup.html?screen=preparation&lang=fr&theme=dark&nav=A&capture=1&motion=reduce"
+    }
+  ]
+}

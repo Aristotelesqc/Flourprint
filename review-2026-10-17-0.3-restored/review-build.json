@@ -1,0 +1,12 @@
+{
+  "revision": "ae6cbd2cba4a2db473e5dee375fc55f96dc517c8",
+  "sourceSha256": "f8618bd700e98feca4511e51013cc4b45419115bd447f61cbc36bf9385124df0",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · proud-rye · local"
+}
