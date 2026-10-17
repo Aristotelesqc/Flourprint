@@ -1,0 +1,12 @@
+{
+  "revision": "dfe6cebdada1a592afc585983a23494896065b7f",
+  "sourceSha256": "07f1212ef7deb005446ddafda07a341686bfdf7e6631b45cbc772e114b55e96b",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · velvet-ginger · local"
+}
