@@ -95,10 +95,22 @@ It is published with the web preview and with mockup galleries, so owner reviews
 versions of one component rather than whole rewritten screens. `DESIGN.md` points to it for
 current component guidance.
 
-### Tokens and motion
+### Tokens, motion and DESIGN.md
 
-Colour, shape, spacing, type and motion tokens live in the library and are documented in
-`DESIGN.md`. Motion follows `DESIGN.md`'s motion direction and the reviewed exploration in
+Today `DESIGN.md`'s front matter and `apps/mobile/src/theme/app.css` both hold the token values,
+synchronized by hand. Each piece of information now has one home:
+
+| Information                                                                                                           | Home                                                                       | `DESIGN.md` role                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Token values: colour per theme, shape, spacing, type, motion durations and easing                                     | A token module in `packages/ui`, the only source the components read       | Its front matter is **generated** from that module by a script. `pnpm check` fails when they differ, so the brief never contradicts the code. |
+| Identity, principles, screen composition, do's and don'ts, motion direction                                           | `DESIGN.md` body (ADR 0017)                                                | Unchanged: written by people, reviewed with presentation changes                                                                              |
+| Behavioral rules of a component, such as keeping raw input, focus return, destructive separation or touch-target size | `DESIGN.md` "Components" section, one entry per component id (`fp.<name>`) | Rules every version must meet; the entry links the component in the catalogue                                                                 |
+| What a given version looks like and what changed from the previous one                                                | The version's catalogue notes in `packages/ui`                             | Not repeated in `DESIGN.md`                                                                                                                   |
+
+A new version therefore changes `DESIGN.md` only if it changes a rule or a token. A new token
+value is changed once, in the token module, and the generated front matter follows.
+
+Motion follows `DESIGN.md`'s motion direction and the reviewed exploration in
 `docs/architecture/2026-10-12-motion-exploration.md`. Reduced motion is a required state of
 every animated component, not an option of the screen.
 
@@ -142,7 +154,10 @@ No new dependency is introduced.
   - a unit test that every manifest entry resolves and every id used by a screen has an entry;
   - an architecture test for the library's import boundary;
   - a test that the release bundle excludes unselected versions;
-  - a catalogue render check in the browser suite.
+  - a catalogue render check in the browser suite;
+  - a check that `DESIGN.md`'s front matter matches the generated token values.
+- `DESIGN.md`'s "Components" section is reorganized by component id when the library lands,
+  keeping today's behavioral rules; screen-specific CSS class names leave it.
 - The indirection adds one lookup per component and a manifest to maintain. Reviews must check
   that layout code does not reach into a component's internals, or the separation erodes.
 - Owner approval of a component version establishes a baseline. It does not forbid a later
