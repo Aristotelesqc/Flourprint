@@ -50,6 +50,7 @@ export default tseslint.config(
       'docs/mockups/0.3-ux/src/**/*.{ts,tsx}',
       'scripts/mockup-tests/**/*.mjs',
       'scripts/capture-mockups.mjs',
+      'scripts/compare-mockups.mjs',
     ],
     languageOptions: { globals: { ...globals.browser } },
   },

@@ -20,7 +20,8 @@
     "build:desktop": "pnpm --filter @flourprint/desktop package",
     "build:mockups": "node scripts/mockup-review.mjs build",
     "test:mockups": "node scripts/test-mockups.mjs",
-    "capture:mockups": "node scripts/capture-mockups.mjs"
+    "capture:mockups": "node scripts/capture-mockups.mjs",
+    "compare:mockups": "node scripts/compare-mockups.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

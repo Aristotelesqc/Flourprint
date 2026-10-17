@@ -4,6 +4,30 @@ This is an isolated React/TypeScript prototype for #120, #133 and #134. It is no
 not an approved production component registry, and not an implementation of future contracts.
 The production UI, domain, persistence and contracts are unchanged.
 
+## Pre-restoration comparison (#134)
+
+The [comparison report](comparison-report.md) records the visual regressions and the owner's
+intermediate approval gate. No visual restoration is implied by the evidence tooling.
+
+`pnpm compare:mockups` captures 26 three-version comparisons and four additional editor details.
+First build the core and mobile app. Supply `FLOURPRINT_COMPARISON_PAGES` as the path to the
+existing `gh-pages` checkout containing the immutable October 15 and October 16 review directories.
+The default is the sibling `flourprint-pr-133-pages` checkout. The app source must match the
+pinned dev reference; the tool refuses a different mobile/core tree. It never repairs historical
+controls, values or layouts. It waits for Ionic overlay presentation before capturing an overlay.
+
+The tool owns localhost ports 4271–4273 and writes only to
+`docs/mockups/0.3-ux/comparison/dist/` (ignored). Set `FLOURPRINT_COMPARISON_OUTPUT` to choose another
+explicit output directory, and `FLOURPRINT_TEST_BROWSER` only when deliberately using a different
+local browser. Its actual version is recorded. Text enlargement is measured, not inferred from a
+query parameter. Current-app A/B repetition, unavailable Planning and limited timelines are captioned.
+
+Publish only `index.html`, `report.html`, `report.md`, `manifest.json`, and the image paths in
+`manifest.images`, `manifest.supplements` and `manifest.comparisons`, after validating their hashes.
+Never copy the output directory wholesale: interrupted attempts may leave failure captures and
+`progress.json`. The interactive links point to the preserved historical releases, not a newly
+redesigned prototype. Review every comparison and verify the deployed gallery before posting it.
+
 ## Build and operate
 
 ```text
