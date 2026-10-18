@@ -176,6 +176,32 @@ try {
             await expect(dialog).toHaveCount(0);
             await settle(p);
           }
+          if (screen === 'library') {
+            const first = p.getByRole('tab', { name: /^Toutes \(/ });
+            const last = p.getByRole('tab', { name: /^Brouillons \(/ });
+            await first.press('End');
+            await expect(last).toHaveAttribute('aria-selected', 'true');
+            await expect
+              .poll(() =>
+                last.evaluate((el) => {
+                  const b = el.getBoundingClientRect(),
+                    n = el.parentElement.getBoundingClientRect();
+                  return b.left >= n.left - 1 && b.right <= n.right + 1;
+                }),
+              )
+              .toBe(true);
+            await last.press('Home');
+            await expect(first).toHaveAttribute('aria-selected', 'true');
+            await expect
+              .poll(() =>
+                first.evaluate((el) => {
+                  const b = el.getBoundingClientRect(),
+                    n = el.parentElement.getBoundingClientRect();
+                  return b.left >= n.left - 1 && b.right <= n.right + 1;
+                }),
+              )
+              .toBe(true);
+          }
           const image = `${screen}-${nav}-${theme}-${width}-${scale}.png`;
           await p.screenshot({ path: path.join(output, image) });
           records.push({ screen, nav, theme, width, scale, geometry, image, errors: [...errors] });

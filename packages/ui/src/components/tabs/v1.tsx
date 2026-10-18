@@ -1,5 +1,5 @@
 import './v1.css';
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTransitionMotionStyle } from '../use-transition-motion.ts';
 import type { TabsProps } from '../../props.ts';
 import { library } from '../../index.ts';
@@ -13,6 +13,12 @@ export const Tabs: React.FC<TabsProps> = ({
 }) => {
   const ref = useRef<HTMLElement>(null);
   const motionStyle = useTransitionMotionStyle('fp.motion.highlight', ref);
+  useEffect(() => {
+    const selected = ref.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]');
+    if (selected && selected === document.activeElement) {
+      selected.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [activeId]);
   return (
     <nav
       ref={ref}
