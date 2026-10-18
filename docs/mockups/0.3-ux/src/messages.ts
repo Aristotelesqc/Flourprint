@@ -404,8 +404,83 @@ const messages = {
   ],
   stepsTab: ['Étapes', 'Steps'],
   reorderHelp: [
-    'Déplacer une étape en conservant ses dépendances. Un ordre incompatible est refusé.',
-    'Move a step while preserving its dependencies. An incompatible order is refused.',
+    'Choisir Monter ou Descendre. L’ordre d’affichage change directement ; un changement de dépendances demande une vérification. Les cas ambigus sont refusés.',
+    'Choose Move up or Move down. Display-only moves apply immediately; dependency changes require review. Ambiguous cases are refused.',
+  ],
+  changeDependenciesUnchanged: [
+    'Les dépendances et les horaires restent inchangés.',
+    'Dependencies and scheduled times stay unchanged.',
+  ],
+  changeAffectedSteps: ['Étapes touchées', 'Affected steps'],
+  changeBefore: ['Avant', 'Before'],
+  changeAfter: ['Après', 'After'],
+  changeDependencies: ['Dépend de', 'Depends on'],
+  changeNoDependencies: ['Aucun préalable', 'No prerequisite'],
+  changeNewStep: ['Nouvelle étape', 'New step'],
+  changeDurationRequired: ['Durée à préciser', 'Duration required'],
+  changeNoProjection: [
+    'Horaire inconnu : vérifier la durée et les dépendances.',
+    'Schedule unknown: check the duration and dependencies.',
+  ],
+  changeCandidateOrder: ['Ordre proposé', 'Proposed order'],
+  changeWindows: ['Fenêtres de préparation', 'Preparation windows'],
+  changeNotCarried: ['Non repris dans la copie', 'Not carried into the copy'],
+  changeDroppedIncorporations: ['Incorporations', 'Incorporations'],
+  changeDroppedEstimate: [
+    'Estimation acceptée et provenance du modèle',
+    'Accepted estimate and model provenance',
+  ],
+  changeDroppedDurationMode: ['Suivi automatique du modèle', 'Automatic model tracking'],
+  changeDroppedDuration: ['Durée issue du modèle', 'Model-derived duration'],
+  changeChain: [
+    'Ce déplacement change les dépendances. Vérifier les étapes touchées avant d’appliquer.',
+    'This move changes dependencies. Review the affected steps before applying.',
+  ],
+  changeOrderOnly: ['Seul l’ordre d’affichage change.', 'Only the display order changes.'],
+  changeApplied: [
+    'Modification des étapes appliquée au brouillon.',
+    'Step change applied to the draft.',
+  ],
+  changeStale: [
+    'Le brouillon a changé depuis cet aperçu. Fermer et refaire la demande depuis l’état actuel.',
+    'The draft changed after this preview. Close it and make the request again from the current state.',
+  ],
+  changeRefused: ['Modification refusée', 'Change refused'],
+  changeCopyRefused: [
+    'La copie ne peut pas être créée dans ce contexte.',
+    'The copy cannot be created in this context.',
+  ],
+  changeCopyNextAction: [
+    'Revoir les paramètres dans Modifier l’étape, ou ajouter une nouvelle étape avec ses propres paramètres.',
+    'Review settings in Edit step, or add a new step with its own settings.',
+  ],
+  changeEditDependencies: [
+    'Choisir un autre emplacement ou ouvrir Modifier l’étape pour revoir les dépendances explicitement.',
+    'Choose another position or open Edit step to review dependencies explicitly.',
+  ],
+  changeBreaksDependencies: [
+    'L’étape passerait avant un préalable, ou après une étape qui en dépend. Le graphe est conservé.',
+    'The step would precede a prerequisite or follow a step that depends on it. The graph is preserved.',
+  ],
+  changeCopyComponentRefused: [
+    'Cette étape représente le composant préparé. Une copie de ce rôle est ambiguë.',
+    'This step represents the prepared component. Copying that role is ambiguous.',
+  ],
+  changeCopyScheduleRefused: [
+    'Cette étape est placée au plus tard par le planificateur et ne peut pas être dupliquée.',
+    'This step is scheduled as late as possible and cannot be duplicated.',
+  ],
+  changeIncorporationRefused: [
+    'Le déplacement changerait le moment d’incorporation. Modifier les dépendances explicitement.',
+    'The move would change when ingredients are incorporated. Edit dependencies explicitly.',
+  ],
+  changeSubjectRefused: [
+    'Le déplacement traverserait une autre pâte ou un autre composant. Le travail concerné reste inchangé.',
+    'The move would cross into another dough or component. Its workpiece remains unchanged.',
+  ],
+  changeBranchRefused: [
+    'Plusieurs branches empêchent de déterminer un enchaînement unique. Modifier les dépendances explicitement.',
+    'Multiple branches prevent an unambiguous chain change. Edit dependencies explicitly.',
   ],
   groupHelp: [
     'Afficher les étapes par composant préparé ou suivre leur ordre dans la ligne de temps.',

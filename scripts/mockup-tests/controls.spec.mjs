@@ -145,6 +145,10 @@ test('adding and duplicating steps update the process and Undo restores the orig
   });
   await row.locator('.step-more-trigger').click();
   await row.getByRole('button', { name: 'Dupliquer', exact: true }).click();
+  const preview = page.getByRole('dialog', { name: 'Dupliquer : Pointage', exact: true });
+  await expect(preview).toBeVisible();
+  await expect(page.locator('.step-title:visible')).toHaveCount(10);
+  await preview.getByRole('button', { name: 'Appliquer', exact: true }).click();
   await expect(page.locator('.step-title:visible')).toHaveCount(11);
   await expect(
     page.getByRole('button', { name: 'Modifier l’étape : Pointage', exact: true }),

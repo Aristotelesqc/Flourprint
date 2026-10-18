@@ -458,6 +458,16 @@ intermediate frame. Native overlay/performance conformance remains separately te
 
 ### Round 2 fidelity corrections (#134)
 
+The #123 review consumer uses `moveStep` and `duplicateStep` from core. An order-only move
+applies immediately, without confirmation, and announces that only display order changed.
+A pending chain change is separate from the draft: the sheet lists affected dependencies,
+core-projected times and preparation windows before Apply. Before/After blocks wrap without nested list indentation; dates disambiguate
+changes across midnight. A copy opens for review with the omitted fields listed, and an unknown
+duration stays explicitly unknown. Cancellation and typed refusals leave the draft unchanged;
+accepted changes join its existing undo/redo history. This remains a prototype binding, not
+production adoption or a decision on drag handles versus an explicit reorder mode. The UI never
+turns a refused downward move into an equivalent upward move.
+
 The owner rejected the first restoration proposal as still regressive. Passing controls,
 component coverage and motion evidence do not establish visual fidelity. In particular,
 A and B must retain their different action placement; an active card must not gain a large

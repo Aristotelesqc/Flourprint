@@ -1,17 +1,23 @@
 import { Ui } from './library';
 import { catalogText, curatedText } from './template-presentation';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
+  duplicateStep,
   insertStepAfter,
+  moveStep,
   removeStep,
-  validateProcess,
   intendedOutcome,
   OVEN_MODES,
   COOKING_OPERATIONS,
   type ProcessStep,
   type Process,
   type OvenMode,
+  type DomainError,
+  type MoveResult,
+  type DuplicateResult,
+  type Projection,
 } from '@flourprint/core/domain';
+import { ProcessChangePreview } from './ProcessChangePreview';
 import { StepRow, StatusPanel } from './components';
 import { Button, Tabs, Icon, IconButton, NumberField, Modal, Disclosure, Surface } from './ui';
 import {
@@ -44,6 +50,24 @@ export const operationIcon = (operation: string): import('./ui').IconName =>
 
 export const titleOf = (step: ProcessStep, locale: Locale) =>
   curatedText(locale, step.label) ?? step.label ?? operationName(locale, step.operation);
+const refusalKey = (error: DomainError): MessageKey => {
+  const reason =
+    error.details && typeof error.details === 'object' && 'reason' in error.details
+      ? String(error.details.reason)
+      : '';
+  if (error.code === 'MoveBreaksDependencies') return 'changeBreaksDependencies';
+  if (error.code === 'UnknownReference') return 'changeStale';
+  if (error.code === 'NotDuplicable')
+    return reason === 'workpieceStep' ? 'changeCopyComponentRefused' : 'changeCopyScheduleRefused';
+  const reasons: Readonly<Record<string, MessageKey>> = {
+    incorporationStep: 'changeIncorporationRefused',
+    crossesWorkpiece: 'changeSubjectRefused',
+    stepDependencies: 'changeBranchRefused',
+    stepDependents: 'changeBranchRefused',
+    targetDependents: 'changeBranchRefused',
+  };
+  return reasons[reason] ?? 'invalidPlan';
+};
 const operations = [
   'scald',
   'preferment',
@@ -66,12 +90,18 @@ export function StepEditor({
   locale,
   onClose,
   onApply,
+  title,
+  blocked = false,
+  review,
 }: {
   step: ProcessStep;
   process: Process;
   locale: Locale;
   onClose: () => void;
   onApply: (step: ProcessStep) => boolean;
+  title?: string;
+  blocked?: boolean;
+  review?: (candidate: ProcessStep) => ReactNode;
 }) {
   const [draft, setDraft] = useState(() => clone(step));
   const [invalid, setInvalid] = useState<Record<string, boolean>>({});
@@ -101,12 +131,12 @@ export function StepEditor({
     <Modal
       open
       onClose={onClose}
-      title={t(locale, 'editStep')}
+      title={title ?? t(locale, 'editStep')}
       closeLabel={t(locale, 'close')}
       footer={
         <Button
           variant="primary"
-          disabled={Object.values(invalid).some(Boolean)}
+          disabled={blocked || Object.values(invalid).some(Boolean)}
           onClick={() => {
             if (onApply(draft)) onClose();
             else setError(true);
@@ -117,6 +147,7 @@ export function StepEditor({
       }
     >
       <div className="stack">
+        {review?.(draft)}
         <label className="field-label">
           {t(locale, 'type')}
           <select
@@ -516,7 +547,17 @@ export function ProcessView({
   );
   const [removing, setRemoving] = useState<string | null>(null);
   const [ordering, setOrdering] = useState(false);
-  const [proposal, setProposal] = useState<Process | null>(null);
+  const [proposal, setProposal] = useState<{
+    source: Process;
+    result: MoveResult;
+    stepId: string;
+  } | null>(null);
+  const [duplication, setDuplication] = useState<{
+    source: Process;
+    result: DuplicateResult;
+  } | null>(null);
+  const [refusal, setRefusal] = useState<{ stepId: string; error: DomainError } | null>(null);
+  const [announcement, setAnnouncement] = useState('');
   const [at, setAt] = useState('2026-10-16T08:00');
   const { process } = store.content;
   const [planDirection, setPlanDirection] = useState<'startAt' | 'readyBy'>('startAt');
@@ -534,20 +575,66 @@ export function ProcessView({
   const starts = times.flatMap((s) => (s.start ? [Date.parse(s.start)] : [])),
     ends = times.flatMap((s) => (s.end ? [Date.parse(s.end)] : []));
   const full = times.length > 0 && times.every((s) => s.start && s.end);
-  const windowLabel = (steps: ProcessStep[]) => {
-    const values = projection.ok
-      ? steps.flatMap((s) => (projection.value.steps[s.id] ? [projection.value.steps[s.id]] : []))
-      : [];
-    if (!values.length || values.some((v) => !v.start || !v.end))
+  const formatWindow = (steps: ProcessStep[], plan: Projection | undefined, dated = false) => {
+    const values = plan ? steps.flatMap((s) => (plan.steps[s.id] ? [plan.steps[s.id]] : [])) : [];
+    if (!values.length || values.length !== steps.length || values.some((v) => !v.start || !v.end))
       return t(locale, 'unknownDuration');
     const start = Math.min(...values.map((v) => Date.parse(v.start ?? ''))),
       end = Math.max(...values.map((v) => Date.parse(v.end ?? '')));
-    return `${duration(locale, (end - start) / 1000)} · ${time(locale, new Date(start).toISOString())} → ${time(locale, new Date(end).toISOString())} · ${steps.length} ${t(locale, 'stepsTab')}`;
+    const moment = (value: number) =>
+      (dated ? dateTime : time)(locale, new Date(value).toISOString());
+    return `${duration(locale, (end - start) / 1000)} · ${moment(start)} → ${moment(end)} · ${steps.length} ${t(locale, 'stepsTab')}`;
   };
+  const windowLabel = (steps: ProcessStep[]) =>
+    formatWindow(steps, projection.ok ? projection.value : undefined);
   const propose = (index: number, delta: number) => {
-    const steps = [...process.steps];
-    [steps[index], steps[index + delta]] = [steps[index + delta], steps[index]];
-    setProposal({ ...process, steps });
+    const step = process.steps[index];
+    const after = delta < 0 ? (process.steps[index - 2]?.id ?? null) : process.steps[index + 1]?.id;
+    if (!step || after === undefined) return;
+    const result = moveStep(process, step.id, after);
+    if (!result.ok) setRefusal({ stepId: step.id, error: result.error });
+    else if (result.value.kind === 'orderOnly') {
+      if (store.applyProcess(result.value.process)) setAnnouncement(t(locale, 'changeOrderOnly'));
+    } else if (result.value.kind === 'chain')
+      setProposal({ source: process, result: result.value, stepId: step.id });
+  };
+  const proposeDuplicate = (step: ProcessStep) => {
+    const result = duplicateStep(process, step.id, `${step.operation}-${crypto.randomUUID()}`);
+    if (!result.ok) setRefusal({ stepId: step.id, error: result.error });
+    else setDuplication({ source: process, result: result.value });
+  };
+  const previewOf = (candidate: Process) => {
+    const result = project(
+      candidate,
+      at,
+      undefined,
+      planning && planDirection === 'readyBy' ? effectiveTarget : undefined,
+    );
+    return result.ok ? result.value : undefined;
+  };
+  const previewWindows = (before: Process, after: Process) => {
+    const beforePlan = previewOf(before),
+      afterPlan = previewOf(after);
+    const components = store.content.formula.components;
+    // Match the existing grouped view; explicit component subjects await #106.
+    const groups = [
+      { label: t(locale, 'totalDuration'), select: () => true },
+      ...components.map((component) => ({
+        label: componentName(locale, component.id, store.content.names),
+        select: (step: ProcessStep) =>
+          step.id === component.id || step.id.startsWith(`${component.id}-`),
+      })),
+      {
+        label: t(locale, 'dough'),
+        select: (step: ProcessStep) =>
+          !components.some((c) => step.id === c.id || step.id.startsWith(`${c.id}-`)),
+      },
+    ];
+    return groups.map(({ label, select }) => ({
+      label,
+      before: formatWindow(before.steps.filter(select), beforePlan, true),
+      after: formatWindow(after.steps.filter(select), afterPlan, true),
+    }));
   };
   const renderStep = (step: ProcessStep, index: number) => {
     const timing = projection.ok ? projection.value.steps[step.id] : undefined;
@@ -607,19 +694,7 @@ export function ProcessView({
               <Icon name="more" size="1rem" />
             </summary>
             <div className="actions row">
-              <Button
-                variant="quiet"
-                icon="copy"
-                onClick={() =>
-                  store.applyProcess(
-                    insertStepAfter(process, step.id, {
-                      ...step,
-                      id: crypto.randomUUID(),
-                      schedule: 'asap',
-                    }),
-                  )
-                }
-              >
+              <Button variant="quiet" icon="copy" onClick={() => proposeDuplicate(step)}>
                 {t(locale, 'duplicate')}
               </Button>
               <Button variant="quiet" onClick={() => setRemoving(step.id)}>
@@ -633,6 +708,9 @@ export function ProcessView({
   };
   return (
     <div className="stack">
+      <p className="sr-only" role="status" aria-live="polite">
+        {announcement}
+      </p>
       {planning && (
         <Surface>
           <p>{t(locale, 'generated')}</p>
@@ -848,6 +926,51 @@ export function ProcessView({
           }
         />
       )}
+      {duplication && (
+        <StepEditor
+          step={duplication.result.copy}
+          process={duplication.result.process}
+          locale={locale}
+          title={`${t(locale, 'duplicate')} : ${titleOf(duplication.result.copy, locale)}`}
+          blocked={process !== duplication.source}
+          onClose={() => setDuplication(null)}
+          review={(candidate) => {
+            const next = {
+              ...duplication.result.process,
+              steps: duplication.result.process.steps.map((step) =>
+                step.id === candidate.id ? candidate : step,
+              ),
+            };
+            return (
+              <>
+                {process !== duplication.source && <p role="alert">{t(locale, 'changeStale')}</p>}
+                <ProcessChangePreview
+                  locale={locale}
+                  before={duplication.source}
+                  after={next}
+                  beforeProjection={previewOf(duplication.source)}
+                  afterProjection={previewOf(next)}
+                  windows={previewWindows(duplication.source, next)}
+                  titleForStep={(step) => titleOf(step, locale)}
+                  notCarried={duplication.result.notCarried}
+                  copyId={candidate.id}
+                />
+              </>
+            );
+          }}
+          onApply={(candidate) => {
+            if (process !== duplication.source) return false;
+            const accepted = store.applyProcess({
+              ...duplication.result.process,
+              steps: duplication.result.process.steps.map((step) =>
+                step.id === candidate.id ? candidate : step,
+              ),
+            });
+            if (accepted) setAnnouncement(t(locale, 'changeApplied'));
+            return accepted;
+          }}
+        />
+      )}
       <Modal
         open={Boolean(removing)}
         onClose={() => setRemoving(null)}
@@ -874,9 +997,16 @@ export function ProcessView({
         closeLabel={t(locale, 'close')}
         footer={
           <Button
-            disabled={!proposal || !validateProcess(proposal).ok}
+            disabled={!proposal || process !== proposal.source}
             onClick={() => {
-              if (proposal && store.applyProcess(proposal)) setProposal(null);
+              if (
+                proposal &&
+                process === proposal.source &&
+                store.applyProcess(proposal.result.process)
+              ) {
+                setAnnouncement(t(locale, 'changeApplied'));
+                setProposal(null);
+              }
             }}
           >
             {t(locale, 'apply')}
@@ -885,13 +1015,57 @@ export function ProcessView({
       >
         {proposal && (
           <>
-            <p>{t(locale, validateProcess(proposal).ok ? 'reorderHelp' : 'refusedMove')}</p>
-            <ol>
-              {proposal.steps.map((s) => (
-                <li key={s.id}>{titleOf(s, locale)}</li>
-              ))}
-            </ol>
+            {process !== proposal.source && <p role="alert">{t(locale, 'changeStale')}</p>}
+            <p>{t(locale, 'changeChain')}</p>
+            <ProcessChangePreview
+              locale={locale}
+              before={proposal.source}
+              after={proposal.result.process}
+              beforeProjection={previewOf(proposal.source)}
+              afterProjection={previewOf(proposal.result.process)}
+              windows={previewWindows(proposal.source, proposal.result.process)}
+              titleForStep={(step) => titleOf(step, locale)}
+            />
           </>
+        )}
+      </Modal>
+      <Modal
+        open={Boolean(refusal)}
+        onClose={() => setRefusal(null)}
+        title={t(locale, 'changeRefused')}
+        closeLabel={t(locale, 'close')}
+        footer={
+          <>
+            <Button disabled>{t(locale, 'apply')}</Button>
+            <Button
+              onClick={() => {
+                setEditing(process.steps.find((step) => step.id === refusal?.stepId) ?? null);
+                setRefusal(null);
+              }}
+            >
+              {t(locale, 'editStep')}
+            </Button>
+          </>
+        }
+      >
+        {refusal && (
+          <div role="alert" data-process-refusal={refusal.error.code}>
+            <p>
+              {t(
+                locale,
+                refusal.error.code === 'NotDuplicable' ? 'changeCopyRefused' : 'refusedMove',
+              )}
+            </p>
+            <p>{t(locale, refusalKey(refusal.error))}</p>
+            <p>
+              {t(
+                locale,
+                refusal.error.code === 'NotDuplicable'
+                  ? 'changeCopyNextAction'
+                  : 'changeEditDependencies',
+              )}
+            </p>
+          </div>
         )}
       </Modal>
     </div>

@@ -637,3 +637,38 @@ body[data-capture='true'] .component-inspector {
   grid-column: 1/-1;
   justify-self: start;
 }
+
+/* Consumer-owned change-review layout; component internals remain library-owned. */
+.process-change-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.process-change-preview dl,
+.process-change-preview dd {
+  margin: 0;
+}
+
+.process-change-preview dl {
+  gap: var(--fp-space-1);
+}
+
+.process-change-preview dd + dt {
+  margin-top: var(--fp-space-2);
+}
+
+.process-change-list > li + li {
+  border-top: 1px solid var(--color-outline);
+  padding-top: var(--fp-space-3);
+}
+
+.process-change-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fp-space-1);
+}
+
+.process-change-times > span {
+  white-space: nowrap;
+}
