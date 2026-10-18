@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { format, resolveConfig } from 'prettier';
 import { describe, expect, it } from 'vitest';
 import { catalogueMarkdown } from '../src/catalogue/markdown.ts';
 import { defaultMotionManifest, motionCatalogue, motionGuides } from '../src/catalogue/motions.ts';
@@ -11,13 +12,17 @@ import { checkGuides } from '../src/guides.ts';
  * current. Regenerate with `pnpm ui:index`.
  */
 const file = fileURLToPath(new URL('../CATALOGUE.md', import.meta.url));
-const generated = catalogueMarkdown({
-  components: catalogue,
-  componentGuides: guides,
-  motions: motionCatalogue,
-  motionGuides,
-  motionManifest: defaultMotionManifest,
-});
+// Formatted as `pnpm format:check` expects, so the committed file passes both checks.
+const generated = await format(
+  catalogueMarkdown({
+    components: catalogue,
+    componentGuides: guides,
+    motions: motionCatalogue,
+    motionGuides,
+    motionManifest: defaultMotionManifest,
+  }),
+  { ...(await resolveConfig(file)), filepath: file },
+);
 
 describe('agent index', () => {
   it('has a complete guide for every component id', () => {
