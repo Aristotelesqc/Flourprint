@@ -274,6 +274,7 @@ for (const [scenario, status] of diagnosticStates) {
     await disclosure.click();
     await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
     await expect(panel).toContainText(status);
+    await expect(panel.locator('.status-panel-header')).toHaveCount(0);
     if (scenario === 'noResult') await expect(panel).not.toContainText(/Durée estimée\s*:/);
     await disclosure.click();
     await expect(disclosure).toHaveAttribute('aria-expanded', 'false');

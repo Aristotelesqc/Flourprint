@@ -346,6 +346,7 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
     >
       <div className="stack">
         <StatusPanel
+          embedded
           title={t(locale, 'diagnostics')}
           status={
             direct.status === 'ok'

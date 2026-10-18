@@ -199,6 +199,7 @@ export interface RecipeCardProps {
 }
 
 export interface StatusPanelProps {
+  embedded?: boolean;
   title: string;
   status: 'ok' | 'warning' | 'unavailable';
   message: string;

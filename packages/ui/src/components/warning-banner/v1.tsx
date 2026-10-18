@@ -1,26 +1,22 @@
 import './v1.css';
 import React from 'react';
-import type {
-  IconProps,
-  SurfaceProps,
-  BadgeProps,
-  StatusPanelProps,
-  IconName,
-} from '../../props.ts';
+import type { IconProps, SurfaceProps, StatusPanelProps, IconName } from '../../props.ts';
 import { library } from '../../index.ts';
 const Icon = (props: IconProps) => <library.Slot component="fp.icon" {...props} />;
 const Surface = (props: SurfaceProps) => <library.Slot component="fp.surface" {...props} />;
-const Badge = (props: BadgeProps) => <library.Slot component="fp.badge" {...props} />;
 
-export const StatusPanel: React.FC<StatusPanelProps> = ({ title, status, message, children }) => {
-  let badgeVariant: 'success' | 'warning' | 'default' = 'default';
+export const StatusPanel: React.FC<StatusPanelProps> = ({
+  title,
+  status,
+  message,
+  children,
+  embedded = false,
+}) => {
   let iconName: IconName = 'info';
 
   if (status === 'ok') {
-    badgeVariant = 'success';
     iconName = 'check';
   } else if (status === 'warning') {
-    badgeVariant = 'warning';
     iconName = 'warning';
   }
 
@@ -31,13 +27,14 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ title, status, message
       variant="container"
       className="status-panel"
     >
-      <div className="status-panel-header row">
-        <div className="row">
-          <Icon name={iconName} size="1rem" />
-          <span className="status-panel-title">{title}</span>
+      {!embedded && (
+        <div className="status-panel-header row">
+          <div className="row">
+            <Icon name={iconName} size="1rem" />
+            <span className="status-panel-title">{title}</span>
+          </div>
         </div>
-        <Badge variant={badgeVariant}>{title}</Badge>
-      </div>
+      )}
       <p className="status-panel-message muted">{message}</p>
       {children && <div className="status-panel-children">{children}</div>}
     </Surface>
