@@ -1,0 +1,12 @@
+{
+  "revision": "8aadebb7fd643b83fd3f4cd22188a6346331df64",
+  "sourceSha256": "56e6be99aec16d8462d34f1398fc248ef3286de2b5dfbfb067652c7f2c530a77",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · starry-bun · local"
+}
