@@ -24,6 +24,7 @@ import {
 } from './ui';
 
 import { RecipeCard } from './components';
+import { catalogText } from './template-presentation';
 
 import { RecipeIngredients, WaterDetails } from './RecipeView';
 
@@ -1218,6 +1219,11 @@ export default function App() {
                   <RecipeCard
                     title={recipeName({ templateId: template.id } as typeof recipe, locale)}
                     selected={selectedTemplate === template.id}
+                    description={
+                      selectedTemplate === template.id
+                        ? catalogText(locale, `template.${template.id}.traits`)
+                        : undefined
+                    }
                     status={template.formula.components
                       .map((c) => componentName(locale, c.id, {}))
                       .join(' · ')}

@@ -184,6 +184,7 @@ export interface RecipeCardMetric {
 }
 
 export interface RecipeCardProps {
+  description?: string;
   selected?: boolean;
   onResume?: () => void;
   resumeLabel?: string;

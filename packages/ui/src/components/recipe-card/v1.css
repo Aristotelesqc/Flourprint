@@ -85,3 +85,10 @@
   border-color: var(--color-primary);
   background: var(--color-primary-container);
 }
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-description {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--type-meta);
+  line-height: 1.5;
+}

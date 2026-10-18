@@ -10,6 +10,7 @@ const Badge = (props: BadgeProps) => <library.Slot component="fp.badge" {...prop
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({
   title,
+  description,
   selected,
   onResume,
   resumeLabel,
@@ -59,6 +60,8 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
           <Badge variant={badgeVariant}>{status}</Badge>
         ) : null}
       </div>
+
+      {description && <p className="recipe-card-description">{description}</p>}
 
       {metrics && metrics.length > 0 ? (
         <div className="recipe-card-metrics pill-row row">

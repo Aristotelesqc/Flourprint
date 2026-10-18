@@ -281,6 +281,9 @@ test('template details expose the actual sourced basis without creating a recipe
   await page.getByRole('button', { name: 'Nouvelle recette', exact: true }).click();
   const sheet = page.getByRole('dialog');
   const wrapper = sheet.getByRole('button', { name: 'Shokupan', exact: true }).locator('..');
+  await expect(wrapper.locator('.recipe-card-description')).toContainText(
+    'Un pain au lait japonais',
+  );
   const details = wrapper.locator('.template-details');
   await details.locator('summary').click();
   await expect(details).toHaveAttribute('open', '');
