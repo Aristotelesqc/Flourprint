@@ -2,6 +2,8 @@
 
 These observations were verified with the installed Antigravity CLI on 2026-10-11. Recheck
 `agy --help` and `agy models` when flags or models differ; this is not a frozen vendor API.
+The [2026-10-18 Windows investigation](windows-codex.md) adds current 1.4.2 evidence and
+distinguishes output exhaustion from older console and tool-permission failures.
 
 ## Invocation
 

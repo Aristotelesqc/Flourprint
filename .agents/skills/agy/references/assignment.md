@@ -60,3 +60,13 @@ For generated patches, request a unified diff against the supplied source, witho
 adjacent context or placeholder code. Tool-free source-snapshot generation must say no filesystem
 changes/tests were performed. Direct implementation must not commit/push or publish unless those
 actions are explicitly assigned.
+
+Size the expected answer, not just the input. Start supplied-source implementation with one
+component or one cohesive change, usually one to three changed files. Include only the required
+shared API excerpts. Prefer a focused diff over repeating complete unchanged files; permit a
+concise missing-context response. Do not request a dozen complete files in an escaped JSON map.
+A word limit in the prompt does not enforce the model's output-token ceiling. For machine-readable
+results, use an actual supported schema and validate `structured_output`; `--output-format`
+alone only structures the CLI envelope. See [windows-codex.md](windows-codex.md) for the observed
+failure and a concrete brief. Direct editing, once scoped access works, avoids retransmitting
+whole source files but still requires the delegate's actual checks and the caller's acceptance.
