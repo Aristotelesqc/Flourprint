@@ -1,0 +1,12 @@
+{
+  "revision": "45b848b9bdd006df240b1609bafa24fbbfd0d1d9",
+  "sourceSha256": "07a61047bcf3623143462c19bef08c13034cb373f0d9d49cbcaef10339b5e6d2",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · sunny-glacier · local"
+}
