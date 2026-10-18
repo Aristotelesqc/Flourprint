@@ -43,9 +43,6 @@
   gap: 2px;
   opacity: 1;
   transform: scale(1) translateY(0);
-  transition:
-    opacity var(--dur-effect) var(--ease-standard),
-    transform var(--dur-effect) var(--ease-standard);
 }
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-bottom
   .menu-popup {
@@ -54,10 +51,6 @@
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-top
   .menu-popup {
   transform-origin: top right;
-}
-[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.closing .menu-popup {
-  opacity: 0;
-  transform: scale(0.92);
 }
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-header {
   display: flex;
@@ -87,7 +80,6 @@
   cursor: pointer;
   text-align: left;
   width: 100%;
-  transition: background-color var(--dur-effect) var(--ease-standard);
 }
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-item:hover {
   background-color: var(--color-surface);
@@ -98,35 +90,11 @@
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog:not([open]) {
   display: none;
 }
-@keyframes fp-floating-menu-v1-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-@keyframes fp-floating-menu-v1-out {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(6px) scale(0.96);
-  }
-}
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog[open] .menu-popup {
   position: fixed;
   left: var(--menu-x, 12px);
   top: var(--menu-y, 64px);
   margin: 0;
-  animation: fp-floating-menu-v1-in var(--dur-effect) var(--ease-decelerate) both;
-}
-[data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog[data-closing] .menu-popup {
-  animation-name: fp-floating-menu-v1-out;
 }
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-top,
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'].menu-dialog.menu-anchor-bottom {

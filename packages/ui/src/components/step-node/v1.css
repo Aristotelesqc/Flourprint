@@ -9,19 +9,16 @@
   border: 1px solid var(--color-outline-subtle);
   border-radius: var(--radius-md);
   position: relative;
-  transition:
-    background-color var(--dur-effect) var(--ease-standard),
-    border-color var(--dur-effect) var(--ease-standard);
 }
 [data-fp-component='fp.step-node'][data-fp-version='v1'].step-row.step-state-running {
   border-color: var(--color-primary);
-  background: var(--color-primary-container);
+  background: var(--color-surface-container-high);
 }
 [data-fp-component='fp.step-node'][data-fp-version='v1'] .step-number-badge {
   width: 2.125rem;
   height: 2.125rem;
   border-radius: var(--radius-pill);
-  background-color: var(--color-primary-container);
+  background-color: var(--color-surface-container-high);
   color: var(--color-on-primary-container);
   display: flex;
   align-items: center;

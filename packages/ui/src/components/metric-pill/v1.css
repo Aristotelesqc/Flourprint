@@ -1,6 +1,8 @@
 /* Presentation owned by fp.metric-pill v1. */
 [data-fp-component='fp.metric-pill'][data-fp-version='v1'].stat-pill {
   display: inline-flex;
+  min-height: 32px;
+  box-sizing: border-box;
   align-items: center;
   gap: 0.25rem;
   background-color: var(--color-surface-container);

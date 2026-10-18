@@ -22,12 +22,8 @@
   pointer-events: auto;
 }
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog::backdrop {
-  background: var(--color-backdrop);
+  background: transparent;
   opacity: 1;
-  transition: opacity var(--dur-sheet) var(--ease-standard);
-}
-[data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog.closing::backdrop {
-  opacity: 0;
 }
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'] .modal-sheet {
   width: 100%;
@@ -41,21 +37,6 @@
   display: flex;
   flex-direction: column;
   transform: translateY(0);
-  transition: transform var(--dur-sheet) var(--ease-decelerate);
-}
-[data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog.opening .modal-sheet {
-  animation: fp-bottom-sheet-v1-sheet-slide-in var(--dur-sheet) var(--ease-decelerate);
-}
-[data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog.closing .modal-sheet {
-  transform: translateY(100%);
-}
-@keyframes fp-bottom-sheet-v1-sheet-slide-in {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
 }
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'] .sheet-handle {
   width: 2.25rem;
@@ -91,33 +72,16 @@
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog:not([open]) {
   display: none;
 }
-@keyframes fp-bottom-sheet-v1-in {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-@keyframes fp-bottom-sheet-v1-out {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(100%);
-  }
-}
-
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog[open] .modal-sheet {
-  animation: fp-bottom-sheet-v1-in var(--dur-sheet) var(--ease-decelerate) both;
-}
-[data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog[data-closing]
-  .modal-sheet {
-  animation-name: fp-bottom-sheet-v1-out;
 }
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog[open]::backdrop {
-  animation: fp-backdrop-in var(--dur-effect) var(--ease-standard) both;
 }
-[data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog[data-closing]::backdrop {
-  animation-name: fp-backdrop-out;
+[data-fp-component='fp.bottom-sheet'][data-fp-version='v1'] .sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--color-backdrop);
+  pointer-events: none;
+}
+[data-fp-component='fp.bottom-sheet'][data-fp-version='v1'] .modal-sheet {
+  position: relative;
 }

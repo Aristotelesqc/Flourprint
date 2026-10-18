@@ -7,9 +7,11 @@ export default {
   useWhen: ['Planning views that show when steps run relative to each other.'],
   avoidWhen: [
     'Exact times the baker acts on: list them with fp.step-node.',
-    'Computing positions: startPct and endPct come from @flourprint/core projections.',
+    'Computing schedules: the consumer supplies display positions derived from its projection; the library has no core dependency.',
   ],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     "Each event's label and range are text, not only bar position.",
     'Lanes keep their order for screen readers; colour is never the only cue.',
   ],

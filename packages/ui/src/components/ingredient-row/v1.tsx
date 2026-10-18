@@ -1,7 +1,9 @@
 import './v1.css';
-import React from 'react';
+import React, { useRef } from 'react';
 import type { CheckboxProps, IngredientRowProps } from '../../props.ts';
 import { library } from '../../index.ts';
+import { useTransitionMotionStyle } from '../use-transition-motion.ts';
+
 const Checkbox = (props: CheckboxProps) => (
   <library.Slot component="fp.weighing-checkbox" {...props} />
 );
@@ -18,6 +20,9 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
   editing = false,
   children,
 }) => {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const highlightMotionStyle = useTransitionMotionStyle('fp.motion.highlight', rootRef);
+
   const handleRowClick = () => {
     if (editing) return; // Prevent accidental checkbox toggle during in-place field edit
     onToggle();
@@ -29,6 +34,8 @@ export const IngredientRow: React.FC<IngredientRowProps> = ({
 
   return (
     <div
+      ref={rootRef}
+      style={highlightMotionStyle}
       data-fp-component="fp.ingredient-row"
       data-fp-version="v1"
       data-testid={`ingredient-row-${id}`}

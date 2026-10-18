@@ -30,6 +30,7 @@ A short status word, such as Draft, Ready or Running.
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The status is the text; the colour variant only reinforces it.
 
 **Related**
@@ -48,7 +49,7 @@ A short status word, such as Draft, Ready or Running.
 
 ### `fp.bottom-bar`
 
-The bottom area of a screen: navigation A is a contextual toolbar; navigation B adds four stable destinations under the contextual controls.
+The bottom area of a screen: navigation A is a contextual toolbar; navigation B can add stable destinations. The consumer places contextual controls in the header or footer; the component does not select the A/B design.
 
 **Use when**
 
@@ -62,13 +63,14 @@ The bottom area of a screen: navigation A is a contextual toolbar; navigation B 
 
 | Prop              | Meaning                                                                                              |
 | ----------------- | ---------------------------------------------------------------------------------------------------- |
-| `variant`         | 'A' (contextual toolbar) or 'B' (contextual controls plus destinations), #112.                       |
+| `variant`         | 'A' (contextual footer) or 'B' (optional footer and destinations), #112 remains an owner choice.     |
 | `children`        | The screen's contextual actions, in both variants.                                                   |
 | `destinations`    | Variant B only: destinations with id, label, pictogram, selected state, optional badge and onSelect. |
 | `navigationLabel` | Accessible name of the navigation landmark.                                                          |
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The navigation landmark carries navigationLabel; the selected destination is exposed as current.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
@@ -139,6 +141,7 @@ A text button, optionally with a leading pictogram. Primary for the screen's mai
 **Use when**
 
 - Actions named by a verb in the infinitive (French UI).
+- Main screen action (primary) or secondary/supporting actions (secondary, quiet, danger).
 
 **Avoid when**
 
@@ -147,18 +150,22 @@ A text button, optionally with a leading pictogram. Primary for the screen's mai
 
 **Props**
 
-| Prop         | Meaning                                                             |
-| ------------ | ------------------------------------------------------------------- |
-| `variant`    | 'primary', 'secondary' (default), 'quiet' or 'danger' (menus only). |
-| `icon`       | Optional leading pictogram.                                         |
-| `dataTestId` | Test id for browser suites.                                         |
-| `children`   | The label text from a message key.                                  |
+| Prop         | Meaning                                                              |
+| ------------ | -------------------------------------------------------------------- |
+| `variant`    | 'primary', 'secondary' (default), 'quiet', or 'danger' (menus only). |
+| `icon`       | Optional leading pictogram (IconName).                               |
+| `children`   | The label text from a message key.                                   |
+| `dataTestId` | Test id for browser suites.                                          |
 
 **Accessibility**
 
-- type defaults to button, so it never submits by accident.
-- Disabled buttons say why nearby when the reason is not obvious.
-- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+- Native button attributes (type, disabled, onClick, className, aria attributes and style) are forwarded; selected motion timing is retained over style overrides.
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
+- Touch target is an independent 48 px minimum height box (--fp-spacing-touch); the visible material shape is 40 px (--fp-spacing-touch-compact) inset 4 px vertically using a decorative span (ADR 0021, #142).
+- type defaults to "button", so it never submits forms by accident.
+- Disabled buttons receive disabled attribute, opacity 0.45, and pointer-events none; explain the reason nearby when not obvious.
+- The native button receives the shared :focus-visible outline.
+- The consumer must check label fit and non-overlapping hit boxes at 393 px / 100% and 360 px / 130%.
 
 **Related**
 
@@ -167,8 +174,9 @@ A text button, optionally with a leading pictogram. Primary for the screen's mai
 
 **Decisions**
 
-- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [Owner: round 2 is the visual baseline proposal (#134; not yet shipped on main)](https://github.com/Aristotelesqc/Flourprint/issues/134)
 - [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+- [ADR 0021: motion tokens and 48px hit target separation](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
 
 **Versions**
 
@@ -245,8 +253,9 @@ A card with a header that opens and closes its content, such as a step group or 
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The header is a button with aria-expanded and aria-controls; closed content is inert.
-- Status text is also given as text, not only colour.
+- Provide a textual subtitle describing the status; the warning/check pictogram alone is decorative.
 
 **Related**
 
@@ -289,6 +298,7 @@ The recipe's summary tiles: total flour, dough, hydration, fats and sugars, with
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Each tile is label plus value text; partial values say so in words.
 - Help buttons carry their labels.
 
@@ -309,7 +319,7 @@ The recipe's summary tiles: total flour, dough, hydration, fats and sugars, with
 
 ### `fp.icon`
 
-The Flourprint pictogram set as inline SVG that follows the current text colour.
+The current provisional pictograms as inline SVG following text colour; the permanent source remains an owner decision.
 
 **Use when**
 
@@ -329,6 +339,7 @@ The Flourprint pictogram set as inline SVG that follows the current text colour.
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Always aria-hidden: meaning comes from nearby text or the control's label.
 
 **Related**
@@ -350,28 +361,34 @@ A button showing only a pictogram (or an image), with its label as accessible na
 
 **Use when**
 
-- Toolbars and headers: back, more, undo.
+- Toolbars and headers: back, more, undo, close, navigation.
+- Compact controls where space is constrained and pictogram meaning is standard and obvious.
 
 **Avoid when**
 
 - Actions whose pictogram is not obvious: use fp.button with text.
+- Destructive actions without confirmation dialogs.
 
 **Props**
 
-| Prop         | Meaning                                                     |
-| ------------ | ----------------------------------------------------------- |
-| `imageSrc`   | Optional image shown instead of the pictogram (decorative). |
-| `icon`       | Pictogram name.                                             |
-| `label`      | Accessible name and tooltip.                                |
-| `onClick`    | Called on activation.                                       |
-| `disabled`   | Disables the button.                                        |
-| `dataTestId` | Test id for browser suites.                                 |
-| `variant`    | 'default', 'primary' or 'danger'.                           |
+| Prop         | Meaning                                                                     |
+| ------------ | --------------------------------------------------------------------------- |
+| `icon`       | Pictogram name (IconName). Rendered when imageSrc is omitted.               |
+| `imageSrc`   | Optional image shown instead of the pictogram (decorative, rounded square). |
+| `label`      | Required accessible name and tooltip (aria-label and title).                |
+| `onClick`    | Callback invoked on button click/activation.                                |
+| `disabled`   | Disables the button; renders visually dimmed (opacity 0.35) and inert.      |
+| `dataTestId` | Test id for browser suites.                                                 |
+| `variant`    | 'default' (ink text/icon), 'primary', or 'danger'.                          |
 
 **Accessibility**
 
-- label is required and becomes aria-label and title.
-- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
+- label is required and becomes aria-label and title for full screen reader and tooltip coverage.
+- Touch target is an independent 48 px square box (--fp-spacing-touch); the visible material shape is 40 px (--fp-spacing-touch-compact) circular inset 4 px (half the difference between touch and touch-compact) using a decorative span (ADR 0021, #142).
+- Recognisable active, hover, and focus states on the anchored shape (opaque --color-surface-container and outline ring).
+- Disabled buttons receive disabled attribute, opacity 0.35, and pointer-events none.
+- The consumer must check toolbar fit at 393 px / 100% and 360 px / 130%.
 
 **Related**
 
@@ -381,8 +398,9 @@ A button showing only a pictogram (or an image), with its label as accessible na
 
 **Decisions**
 
-- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [Owner: round 2 is the visual baseline proposal (#134; not yet shipped on main)](https://github.com/Aristotelesqc/Flourprint/issues/134)
 - [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+- [ADR 0021: motion tokens and 48px hit target separation](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
 
 **Versions**
 
@@ -402,21 +420,22 @@ One ingredient of a step: name, grams, baker's percentage, optional note and its
 
 **Props**
 
-| Prop         | Meaning                                         |
-| ------------ | ----------------------------------------------- |
-| `id`         | Ingredient id, for keys and tests.              |
-| `name`       | Ingredient name.                                |
-| `gramsText`  | Formatted grams.                                |
-| `pctText`    | Formatted baker's percentage.                   |
-| `note`       | Optional note such as the share in a component. |
-| `checked`    | Weighed state.                                  |
-| `onToggle`   | Called when the weighing checkbox changes.      |
-| `checkLabel` | Label of the weighing checkbox.                 |
-| `editing`    | Shows the edit controls passed as children.     |
-| `children`   | Edit controls while editing.                    |
+| Prop         | Meaning                                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `id`         | Ingredient id, for keys and tests.                                                                                 |
+| `name`       | Ingredient name.                                                                                                   |
+| `gramsText`  | Formatted grams.                                                                                                   |
+| `pctText`    | Formatted percentage with its explicit basis (baker percentage or share of flour); the component computes neither. |
+| `note`       | Optional note such as the share in a component.                                                                    |
+| `checked`    | Weighed state.                                                                                                     |
+| `onToggle`   | Called by the checkbox or the non-editing row body; the quantity/end cell stops propagation.                       |
+| `checkLabel` | Label of the weighing checkbox.                                                                                    |
+| `editing`    | Shows the edit controls passed as children.                                                                        |
+| `children`   | Edit controls while editing.                                                                                       |
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Grams and percentage are text with tabular figures; the checkbox has its own label.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
@@ -458,6 +477,7 @@ A compact pill showing one value, with an optional pictogram and label, such as 
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The value is text with tabular figures; the pictogram is decorative.
 - Pass a label when the pictogram alone would carry the meaning.
 
@@ -490,27 +510,28 @@ A numeric input that keeps the raw text while typing and commits a parsed number
 
 **Props**
 
-| Prop               | Meaning                                                                               |
-| ------------------ | ------------------------------------------------------------------------------------- |
-| `compact`          | Smaller layout for rows.                                                              |
-| `hint`             | Optional help text under the field.                                                   |
-| `value`            | Committed number shown when not editing.                                              |
-| `label`            | Accessible label.                                                                     |
-| `unit`             | Unit text such as g or %.                                                             |
-| `unitPosition`     | 'prefix' or 'suffix' (default) for the unit.                                          |
-| `locale`           | 'fr' or 'en' decimal separator.                                                       |
-| `onCommit`         | Called with the parsed value; returning false keeps the raw text and shows the error. |
-| `onValidityChange` | Called when the raw text becomes valid or invalid.                                    |
-| `disabled`         | Disables editing.                                                                     |
-| `dataTestId`       | Test id for browser suites.                                                           |
-| `errorMessage`     | Message shown when a value is refused.                                                |
-| `resetKey`         | Changing it discards the raw text and shows value again.                              |
-| `displayDigits`    | Fraction digits shown when not editing.                                               |
+| Prop               | Meaning                                                                                                                          |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `compact`          | Smaller layout for rows.                                                                                                         |
+| `hint`             | Optional help text under the field.                                                                                              |
+| `value`            | Committed number shown when not editing.                                                                                         |
+| `label`            | Accessible label.                                                                                                                |
+| `unit`             | Unit text such as g or %.                                                                                                        |
+| `unitPosition`     | 'prefix' or 'suffix' (default) for the unit.                                                                                     |
+| `locale`           | 'fr' or 'en' decimal separator.                                                                                                  |
+| `onCommit`         | Called with the parsed value; returning false keeps the raw text and shows the error.                                            |
+| `onValidityChange` | Receives true for an invalid or refused value and false after valid input/reset; it reports invalidity, despite its name.        |
+| `disabled`         | Disables editing.                                                                                                                |
+| `dataTestId`       | Test id for browser suites.                                                                                                      |
+| `errorMessage`     | Message shown when a value is refused.                                                                                           |
+| `resetKey`         | Changing it discards the raw text and shows value again.                                                                         |
+| `displayDigits`    | Maximum fraction digits for formatted display (default 2); accepted values keep their precision until the consumer changes them. |
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value.
-- The unit is shown but hidden from screen readers when the label already names it.
+- The unit adornment is always aria-hidden; include the unit in label or hint so its meaning remains accessible.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
 **Related**
@@ -541,20 +562,21 @@ The dominant block of a running preparation: current step, time remaining, start
 
 **Props**
 
-| Prop             | Meaning                                                                     |
-| ---------------- | --------------------------------------------------------------------------- |
-| `remainingLabel` | Optional label above the remaining time.                                    |
-| `title`          | Current step.                                                               |
-| `remaining`      | Formatted remaining time.                                                   |
-| `start`          | Formatted start time.                                                       |
-| `end`            | Formatted planned end.                                                      |
-| `progress`       | Progress from 0 to 1.                                                       |
-| `labels`         | Texts for the start, end and progress labels.                               |
-| `instruction`    | Optional instruction for the current step.                                  |
-| `conditions`     | Optional tiles such as temperature or vessel, with label, value and detail. |
+| Prop             | Meaning                                                                                      |
+| ---------------- | -------------------------------------------------------------------------------------------- |
+| `remainingLabel` | Optional label above the remaining time.                                                     |
+| `title`          | Current step.                                                                                |
+| `remaining`      | Formatted remaining time.                                                                    |
+| `start`          | Formatted start time.                                                                        |
+| `end`            | Formatted planned end.                                                                       |
+| `progress`       | Progress from 0 to 1.                                                                        |
+| `labels`         | Texts for the start, end and progress labels.                                                |
+| `instruction`    | Optional instruction for the current step.                                                   |
+| `conditions`     | Optional condition items with label, value and sub text (for example temperature or vessel). |
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Remaining time is text; progress also has a label.
 - No rolling numbers and no action delayed behind an animation (DESIGN.md).
 
@@ -586,23 +608,24 @@ A recipe in the library: title, status, key values and, for a running preparatio
 
 **Props**
 
-| Prop            | Meaning                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------- |
-| `description`   | Optional short description.                                                                 |
-| `selected`      | Highlights the selected template (template picker).                                         |
-| `onResume`      | Optional: resumes the running preparation.                                                  |
-| `resumeLabel`   | Label of the Resume button.                                                                 |
-| `title`         | Recipe name.                                                                                |
-| `details`       | Optional short detail texts.                                                                |
-| `metrics`       | Optional values shown as pills.                                                             |
-| `status`        | Status text.                                                                                |
-| `statusVariant` | Tone of the status.                                                                         |
-| `featured`      | Highlights the card, as for a running preparation; the default status tone becomes success. |
-| `onOpen`        | Opens the recipe.                                                                           |
-| `actions`       | Optional extra actions.                                                                     |
+| Prop            | Meaning                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `description`   | Optional short description.                                                                                                  |
+| `selected`      | Highlights the selected template (template picker).                                                                          |
+| `onResume`      | Optional: resumes the running preparation.                                                                                   |
+| `resumeLabel`   | Label of the Resume button.                                                                                                  |
+| `title`         | Recipe name.                                                                                                                 |
+| `details`       | Optional short detail texts.                                                                                                 |
+| `metrics`       | Optional values shown as pills.                                                                                              |
+| `status`        | Status text.                                                                                                                 |
+| `statusVariant` | Tone of the status.                                                                                                          |
+| `featured`      | Shows a separate Resume chip instead of a passive status badge; defaults the status tone to success. Does not add elevation. |
+| `onOpen`        | Opens the recipe.                                                                                                            |
+| `actions`       | Optional extra actions.                                                                                                      |
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The whole card opens the recipe; Resume and other actions are separate buttons.
 - The status is text (fp.badge style), not only colour.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
@@ -649,7 +672,8 @@ One step of the process as a numbered node on a connected line, with its details
 
 **Accessibility**
 
-- The number and title are text; state is also given in words, not only colour.
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
+- The node pictogram is decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon is present.
 - Reorder controls (#123) need a keyboard path besides dragging.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
@@ -733,6 +757,7 @@ Switches between sections of one screen (Ingredients, Steps, Planning, History) 
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Tablist with arrow-key navigation and roving focus; the selected tab is aria-selected.
 - Narrow tab rows scroll horizontally and stay keyboard reachable.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
@@ -761,7 +786,7 @@ Horizontal lanes that place the steps of a plan on one time axis, so parallel wo
 **Avoid when**
 
 - Exact times the baker acts on: list them with fp.step-node.
-- Computing positions: startPct and endPct come from @flourprint/core projections.
+- Computing schedules: the consumer supplies display positions derived from its projection; the library has no core dependency.
 
 **Props**
 
@@ -773,6 +798,7 @@ Horizontal lanes that place the steps of a plan on one time axis, so parallel wo
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Each event's label and range are text, not only bar position.
 - Lanes keep their order for screen readers; colour is never the only cue.
 
@@ -805,16 +831,17 @@ A message about the state of a calculation or a value: partial, unavailable or f
 
 **Props**
 
-| Prop       | Meaning                             |
-| ---------- | ----------------------------------- |
-| `embedded` | Lighter layout inside another card. |
-| `title`    | Short title.                        |
-| `status`   | 'ok', 'warning' or 'unavailable'.   |
-| `message`  | Explanation.                        |
-| `children` | Optional extra content.             |
+| Prop       | Meaning                                                                                                              |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- |
+| `embedded` | Hides the title/pictogram header only; message and children remain. Include the status meaning in message when true. |
+| `title`    | Short title.                                                                                                         |
+| `status`   | 'ok', 'warning' or 'unavailable'.                                                                                    |
+| `message`  | Explanation.                                                                                                         |
+| `children` | Optional extra content.                                                                                              |
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The status is stated in the title or message, not only by colour or pictogram.
 
 **Related**
@@ -833,7 +860,7 @@ A message about the state of a calculation or a value: partial, unavailable or f
 
 ### `fp.weighing-checkbox`
 
-A large checkbox for ticking ingredients off while weighing.
+A weighing checkbox with a 48 px hit area and a compact 20 px visible box.
 
 **Use when**
 
@@ -856,6 +883,7 @@ A large checkbox for ticking ingredients off while weighing.
 
 **Accessibility**
 
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - A native checkbox input with its label; hideLabel keeps it for screen readers.
 - Unchecked boxes keep a 3:1 contrast in all three themes.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).

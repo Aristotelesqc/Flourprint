@@ -20,9 +20,6 @@
   font-size: var(--type-label);
   font-weight: 700;
   text-align: right;
-  transition:
-    border-color var(--dur-effect) var(--ease-standard),
-    background-color var(--dur-effect) var(--ease-standard);
 }
 [data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input:focus {
   outline: none;

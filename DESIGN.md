@@ -222,6 +222,14 @@ and rounded corners; the legacy app `--spacing-touch` remains 3rem. The shared-l
 reviewed target-size alternatives. These tokens do not prove every existing control meets the target. Prototype touch actions with a 48px target wherever feasible;
 compact glyphs may sit inside larger non-overlapping hit areas.
 
+In the #133 versioned prototype, button and icon-button targets are native, non-overlapping
+48 px boxes. Their decorative shapes are 40 px high; filter/resume pills paint a 32 px shape
+inside a 48 px target. Insets derive from physical target tokens, not rem spacing, so 130% text
+does not shrink the painted button. Passive metrics/status pills have a 32 px minimum height
+without an artificial interactive hit area. Recipe cards use 8 px internal padding, 6 px group
+gaps and 4 px between metric pills; the page uses 12 px vertical gaps to keep four cards visible
+in the standard list. Larger text may wrap into additional rows.
+
 Use the shared 4/8/12/16/24/32 px spacing scale, 16 px page gutters and 48 px action targets.
 Keep one visually dominant action per screen. Occasional actions belong in an overflow menu;
 destructive actions are separated there and never placed beside Start/Resume. Frequent
@@ -266,7 +274,19 @@ changes during use and interrupted transitions. The versioned review library use
 [reviewed exploration](docs/architecture/2026-10-12-motion-exploration.md). Production overlay
 adoption and native/performance conformance require their own verification.
 
+The #133 components consume `useMotion()` through a consumer-provided `MotionProvider`; their
+CSS owns endpoint states, never transition timing or keyframes. Transition items use
+`transitionCss`, overlay items use `playMotion`. A single visual exit copy releases native
+modality immediately, so the next edit is not swallowed. Both OS and manual reduced-motion
+preferences suppress these effects; changing either during use updates the component bridge.
+The existing scene/step feedback remains in the mockup consumer pending corresponding library
+items; top-anchored menu motion needs the mechanism owner's version/selection path (#134).
+
 ## Elevation & Depth
+
+ADR 0021: page-anchored painted surfaces are opaque and flat. Use existing solid surface steps
+with semantic foreground/borders for selection, weighing and warnings. Only floating sheets,
+menus, popovers, toasts and drag overlays may use translucency, blur or shadows.
 
 Use warm tonal surfaces, separators and restrained elevation for hierarchy. Sheets sit above
 the current workspace; selection and interactive state must remain clear without relying only

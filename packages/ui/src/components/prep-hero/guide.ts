@@ -7,6 +7,8 @@ export default {
   useWhen: ['At the top of the Preparation screen, once.'],
   avoidWhen: ['Planned steps not yet running: use fp.step-node.'],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     'Remaining time is text; progress also has a label.',
     'No rolling numbers and no action delayed behind an animation (DESIGN.md).',
   ],
@@ -30,6 +32,7 @@ export default {
     progress: 'Progress from 0 to 1.',
     labels: 'Texts for the start, end and progress labels.',
     instruction: 'Optional instruction for the current step.',
-    conditions: 'Optional tiles such as temperature or vessel, with label, value and detail.',
+    conditions:
+      'Optional condition items with label, value and sub text (for example temperature or vessel).',
   },
 } satisfies ComponentGuide<PreparationTimerProps>;

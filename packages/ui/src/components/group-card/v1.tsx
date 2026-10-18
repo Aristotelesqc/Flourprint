@@ -1,7 +1,9 @@
 import './v1.css';
-import React, { useId, useState } from 'react';
+import React, { useId, useState, useRef } from 'react';
 import type { IconProps, BadgeProps, DisclosureProps } from '../../props.ts';
 import { library } from '../../index.ts';
+import { useTransitionMotionStyle } from '../use-transition-motion.ts';
+
 const Icon = (props: IconProps) => <library.Slot component="fp.icon" {...props} />;
 const Badge = (props: BadgeProps) => <library.Slot component="fp.badge" {...props} />;
 
@@ -15,9 +17,13 @@ export const Disclosure: React.FC<DisclosureProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const contentId = useId();
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const chevronMotionStyle = useTransitionMotionStyle('fp.motion.chevron', rootRef);
+  const disclosureMotionStyle = useTransitionMotionStyle('fp.motion.disclosure', rootRef);
 
   return (
     <div
+      ref={rootRef}
       data-fp-component="fp.group-card"
       data-fp-version="v1"
       className={`disclosure ${isOpen ? 'open' : ''}`}
@@ -48,9 +54,17 @@ export const Disclosure: React.FC<DisclosureProps> = ({
             </span>
           )}
         </div>
-        <Icon name="chevronDown" size="1.125rem" className="disclosure-chevron" />
+        <span className="disclosure-chevron" style={chevronMotionStyle}>
+          <Icon name="chevronDown" size="1.125rem" />
+        </span>
       </button>
-      <div id={contentId} className="disclosure-grid" aria-hidden={!isOpen} inert={!isOpen}>
+      <div
+        id={contentId}
+        className="disclosure-grid"
+        style={disclosureMotionStyle}
+        aria-hidden={!isOpen}
+        inert={!isOpen}
+      >
         <div className="disclosure-inner">
           <div className="disclosure-content">{children}</div>
         </div>

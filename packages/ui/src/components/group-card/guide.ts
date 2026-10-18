@@ -7,8 +7,10 @@ export default {
   useWhen: ['Groups whose detail is not always needed.'],
   avoidWhen: ['Content the baker always needs in view.'],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     'The header is a button with aria-expanded and aria-controls; closed content is inert.',
-    'Status text is also given as text, not only colour.',
+    'Provide a textual subtitle describing the status; the warning/check pictogram alone is decorative.',
   ],
   related: ['fp.surface', 'fp.motion.disclosure', 'fp.motion.chevron'],
   decisions: [

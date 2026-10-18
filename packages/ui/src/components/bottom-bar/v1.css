@@ -37,7 +37,6 @@
   padding: var(--fp-space-1);
   min-height: var(--touch-target);
   border-radius: var(--radius-sm);
-  transition: color var(--dur-effect) var(--ease-standard);
 }
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'] .nav-item.active {
   color: var(--color-primary);
@@ -51,7 +50,7 @@
   justify-content: center;
 }
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'] .nav-item.active .nav-pill {
-  background-color: var(--color-primary-container);
+  background-color: var(--color-surface-container-high);
   color: var(--color-on-primary-container);
 }
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'] .phone-thumb-bar {
@@ -109,7 +108,7 @@
   min-height: 60px;
 }
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'].phone-footer .btn {
-  padding-inline: var(--fp-space-2);
+  padding-inline: var(--fp-space-1-5);
   font-size: var(--type-label);
 }
 

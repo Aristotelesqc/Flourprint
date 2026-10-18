@@ -1,5 +1,6 @@
 import './v1.css';
-import React from 'react';
+import React, { useRef } from 'react';
+import { useTransitionMotionStyle } from '../use-transition-motion.ts';
 import type { TabsProps } from '../../props.ts';
 import { library } from '../../index.ts';
 
@@ -10,8 +11,11 @@ export const Tabs: React.FC<TabsProps> = ({
   label,
   variant = 'underlined',
 }) => {
+  const ref = useRef<HTMLElement>(null);
+  const motionStyle = useTransitionMotionStyle('fp.motion.highlight', ref);
   return (
     <nav
+      ref={ref}
       data-fp-component="fp.tabs"
       data-fp-version="v1"
       className={`section-tabs ${variant === 'pills' ? 'tabs-pills' : variant === 'chips' ? 'tabs-chips' : ''}`}
@@ -49,7 +53,8 @@ export const Tabs: React.FC<TabsProps> = ({
             }}
             onClick={() => onChange(tab.id)}
           >
-            <span>{tab.label}</span>
+            <span className="tab-shape" aria-hidden="true" style={motionStyle} />
+            <span className="tab-label">{tab.label}</span>
           </button>
         );
       })}

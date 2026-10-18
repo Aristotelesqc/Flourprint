@@ -43,6 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
           if (event.target === event.currentTarget) close();
         }}
       >
+        <div className="sheet-backdrop" aria-hidden="true" />
         <div className="modal-sheet">
           <div className="sheet-handle" aria-hidden="true" />
           <header className="modal-header">

@@ -1,5 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { MotionProvider } from '../../../../packages/ui/src/index';
+import { motionManifest } from './library';
 import './theme.css';
 import './layout.css';
 
@@ -12,4 +14,8 @@ html.style.fontSize = `${Number(params.get('scale') ?? '100')}%`;
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing root element');
-createRoot(root).render(<App />);
+createRoot(root).render(
+  <MotionProvider value={motionManifest}>
+    <App />
+  </MotionProvider>,
+);

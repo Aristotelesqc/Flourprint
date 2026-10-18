@@ -2,6 +2,8 @@ import './v1.css';
 import React from 'react';
 import type { IconProps, ButtonProps } from '../../props.ts';
 import { library } from '../../index.ts';
+import { useTransitionMotionStyle } from '../use-transition-motion.ts';
+
 const Icon = (props: IconProps) => <library.Slot component="fp.icon" {...props} />;
 
 export const Button: React.FC<ButtonProps> = ({
@@ -12,11 +14,18 @@ export const Button: React.FC<ButtonProps> = ({
   type = 'button',
   disabled = false,
   className = '',
+  style,
   ...rest
 }) => {
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null);
+  const motionStyle = useTransitionMotionStyle('fp.motion.press', buttonRef);
   const classNames = ['btn', `btn-${variant}`, className].filter(Boolean).join(' ');
+  const mergedStyle: React.CSSProperties = style ? { ...style, ...motionStyle } : motionStyle;
+
   return (
     <button
+      ref={buttonRef}
+      style={mergedStyle}
       data-fp-component="fp.button"
       data-fp-version="v1"
       type={type}
@@ -25,8 +34,11 @@ export const Button: React.FC<ButtonProps> = ({
       className={classNames}
       {...rest}
     >
-      {icon && <Icon name={icon} />}
-      {children && <span>{children}</span>}
+      <span className="button-shape" aria-hidden="true" style={motionStyle} />
+      <span className="button-content" style={motionStyle}>
+        {icon && <Icon name={icon} />}
+        {children && <span>{children}</span>}
+      </span>
     </button>
   );
 };

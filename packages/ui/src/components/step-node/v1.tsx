@@ -1,5 +1,6 @@
 import './v1.css';
-import React from 'react';
+import React, { useRef } from 'react';
+import { useTransitionMotionStyle } from '../use-transition-motion.ts';
 import type { MetricPillProps, IconProps, IconButtonProps, StepRowProps } from '../../props.ts';
 import { library } from '../../index.ts';
 const MetricPill = (props: MetricPillProps) => (
@@ -21,8 +22,12 @@ export const StepRow: React.FC<StepRowProps> = ({
   actions,
   children,
 }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const motionStyle = useTransitionMotionStyle('fp.motion.highlight', ref);
   return (
     <div
+      ref={ref}
+      style={motionStyle}
       data-fp-component="fp.step-node"
       data-fp-version="v1"
       className={`step-row step-state-${state}`}

@@ -2,10 +2,12 @@ import type { ComponentGuide } from '../../guides.ts';
 import type { CheckboxProps } from '../../props.ts';
 
 export default {
-  purpose: 'A large checkbox for ticking ingredients off while weighing.',
+  purpose: 'A weighing checkbox with a 48 px hit area and a compact 20 px visible box.',
   useWhen: ['Weighing lists and checklists during a preparation.'],
   avoidWhen: ['Settings that switch a mode on or off: use a toggle.'],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     'A native checkbox input with its label; hideLabel keeps it for screen readers.',
     'Unchecked boxes keep a 3:1 contrast in all three themes.',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',

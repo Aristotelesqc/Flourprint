@@ -1,7 +1,9 @@
 import './v1.css';
-import React, { useId } from 'react';
+import React, { useId, useRef } from 'react';
 import type { IconProps, CheckboxProps } from '../../props.ts';
 import { library } from '../../index.ts';
+import { useTransitionMotionStyle } from '../use-transition-motion.ts';
+
 const Icon = (props: IconProps) => <library.Slot component="fp.icon" {...props} />;
 
 export const Checkbox: React.FC<CheckboxProps> = ({
@@ -13,8 +15,12 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   dataTestId,
 }) => {
   const id = useId();
+  const rootRef = useRef<HTMLLabelElement | null>(null);
+  const checkMotionStyle = useTransitionMotionStyle('fp.motion.check', rootRef);
+
   return (
     <label
+      ref={rootRef}
       data-fp-component="fp.weighing-checkbox"
       data-fp-version="v1"
       htmlFor={id}
@@ -29,7 +35,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         className="checkbox-native"
         onChange={(e) => onChange(e.target.checked)}
       />
-      <span className="checkbox-custom" aria-hidden="true">
+      <span className="checkbox-custom" style={checkMotionStyle} aria-hidden="true">
         {checked && <Icon name="check" size="0.875rem" />}
       </span>
       <span className={hideLabel ? 'sr-only' : 'checkbox-text'}>{label}</span>

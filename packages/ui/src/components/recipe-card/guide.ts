@@ -7,6 +7,8 @@ export default {
   useWhen: ['The recipe library and search results.'],
   avoidWhen: ['Inside the recipe screen itself: use fp.hero-summary.'],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     'The whole card opens the recipe; Resume and other actions are separate buttons.',
     'The status is text (fp.badge style), not only colour.',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
@@ -33,7 +35,7 @@ export default {
     status: 'Status text.',
     statusVariant: 'Tone of the status.',
     featured:
-      'Highlights the card, as for a running preparation; the default status tone becomes success.',
+      'Shows a separate Resume chip instead of a passive status badge; defaults the status tone to success. Does not add elevation.',
     onOpen: 'Opens the recipe.',
     actions: 'Optional extra actions.',
   },

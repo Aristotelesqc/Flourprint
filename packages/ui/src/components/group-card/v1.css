@@ -34,8 +34,10 @@
   width: 1.15rem;
   height: 1.15rem;
   color: var(--color-ink-muted);
-  transition: transform var(--dur-spatial) var(--ease-standard);
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 [data-fp-component='fp.group-card'][data-fp-version='v1'].disclosure.open
   > .disclosure-header
@@ -45,7 +47,6 @@
 [data-fp-component='fp.group-card'][data-fp-version='v1'] > .disclosure-grid {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows var(--dur-spatial) var(--ease-standard);
 }
 [data-fp-component='fp.group-card'][data-fp-version='v1'].disclosure.open > .disclosure-grid {
   grid-template-rows: 1fr;

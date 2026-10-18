@@ -99,7 +99,7 @@
   padding: var(--fp-space-2);
   border: 1px solid var(--color-warning-border);
   border-radius: var(--radius-sm);
-  background: var(--color-warning-bg);
+  background: var(--color-surface-container-high);
   color: var(--color-warning-ink);
   font-size: var(--type-meta);
   line-height: 1.35;

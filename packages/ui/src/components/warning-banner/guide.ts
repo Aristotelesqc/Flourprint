@@ -5,7 +5,10 @@ export default {
   purpose: 'A message about the state of a calculation or a value: partial, unavailable or fine.',
   useWhen: ['Partial composition, model limits, missing data.'],
   avoidWhen: ['Short statuses: use fp.badge.', 'Errors on a field: fp.number-field shows its own.'],
-  accessibility: ['The status is stated in the title or message, not only by colour or pictogram.'],
+  accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+    'The status is stated in the title or message, not only by colour or pictogram.',
+  ],
   related: ['fp.badge', 'fp.hero-summary'],
   decisions: [
     {
@@ -18,7 +21,8 @@ export default {
     },
   ],
   props: {
-    embedded: 'Lighter layout inside another card.',
+    embedded:
+      'Hides the title/pictogram header only; message and children remain. Include the status meaning in message when true.',
     title: 'Short title.',
     status: "'ok', 'warning' or 'unavailable'.",
     message: 'Explanation.',

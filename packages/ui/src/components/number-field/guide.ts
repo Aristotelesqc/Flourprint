@@ -7,8 +7,10 @@ export default {
   useWhen: ['Every editable quantity: grams, percentages, durations, temperatures.'],
   avoidWhen: ['Read-only values: use fp.metric-pill or plain text.'],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     'Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value.',
-    'The unit is shown but hidden from screen readers when the label already names it.',
+    'The unit adornment is always aria-hidden; include the unit in label or hint so its meaning remains accessible.',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
   ],
   related: ['fp.ingredient-row', 'fp.hero-summary'],
@@ -32,11 +34,13 @@ export default {
     locale: "'fr' or 'en' decimal separator.",
     onCommit:
       'Called with the parsed value; returning false keeps the raw text and shows the error.',
-    onValidityChange: 'Called when the raw text becomes valid or invalid.',
+    onValidityChange:
+      'Receives true for an invalid or refused value and false after valid input/reset; it reports invalidity, despite its name.',
     disabled: 'Disables editing.',
     dataTestId: 'Test id for browser suites.',
     errorMessage: 'Message shown when a value is refused.',
     resetKey: 'Changing it discards the raw text and shows value again.',
-    displayDigits: 'Fraction digits shown when not editing.',
+    displayDigits:
+      'Maximum fraction digits for formatted display (default 2); accepted values keep their precision until the consumer changes them.',
   },
 } satisfies ComponentGuide<NumberFieldProps>;

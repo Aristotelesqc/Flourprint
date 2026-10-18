@@ -7,6 +7,8 @@ export default {
   useWhen: ['Short derived values in cards and summaries.'],
   avoidWhen: ['Editable values: use fp.number-field.', 'Status words: use fp.badge.'],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     'The value is text with tabular figures; the pictogram is decorative.',
     'Pass a label when the pictogram alone would carry the meaning.',
   ],

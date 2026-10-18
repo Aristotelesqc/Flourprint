@@ -7,6 +7,8 @@ export default {
   useWhen: ['Two to five peer sections or filters.'],
   avoidWhen: ['Navigation between screens: use fp.bottom-bar.', 'A single on/off choice.'],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     'Tablist with arrow-key navigation and roving focus; the selected tab is aria-selected.',
     'Narrow tab rows scroll horizontally and stay keyboard reachable.',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',

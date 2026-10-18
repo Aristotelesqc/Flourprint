@@ -22,10 +22,6 @@
   align-items: center;
   justify-content: center;
   color: var(--color-on-primary);
-  transition:
-    background-color var(--dur-effect) var(--ease-standard),
-    border-color var(--dur-effect) var(--ease-standard),
-    transform var(--dur-effect) var(--ease-standard);
 }
 [data-fp-component='fp.weighing-checkbox'][data-fp-version='v1']
   .checkbox-native:checked

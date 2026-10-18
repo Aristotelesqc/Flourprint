@@ -7,6 +7,8 @@ export default {
   useWhen: ["At the top of a recipe's Ingredients section."],
   avoidWhen: ['Lists of single values elsewhere: use fp.metric-pill.'],
   accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
     'Each tile is label plus value text; partial values say so in words.',
     'Help buttons carry their labels.',
   ],

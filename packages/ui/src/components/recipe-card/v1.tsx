@@ -2,7 +2,8 @@ import './v1.css';
 const MetricPill = (props: MetricPillProps) => (
   <library.Slot component="fp.metric-pill" {...props} />
 );
-import React from 'react';
+import React, { useRef } from 'react';
+import { useTransitionMotionStyle } from '../use-transition-motion.ts';
 import type { IconProps, BadgeProps, MetricPillProps, RecipeCardProps } from '../../props.ts';
 import { library } from '../../index.ts';
 const Icon = (props: IconProps) => <library.Slot component="fp.icon" {...props} />;
@@ -22,10 +23,15 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   onOpen,
   actions,
 }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const motionStyle = useTransitionMotionStyle('fp.motion.highlight', ref);
+  const pressStyle = useTransitionMotionStyle('fp.motion.press', ref);
   const badgeVariant = statusVariant || (featured ? 'success' : 'default');
 
   return (
     <div
+      ref={ref}
+      style={motionStyle}
       data-fp-component="fp.recipe-card"
       data-fp-version="v1"
       className={`recipe-card ${featured ? 'featured' : ''} ${selected ? 'selected-template' : ''}`}
@@ -46,6 +52,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
         {featured ? (
           <button
             type="button"
+            style={pressStyle}
             className="active-prep-chip tabular"
             aria-label={resumeLabel}
             onClick={(e) => {
@@ -53,6 +60,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
               onResume?.();
             }}
           >
+            <span className="active-prep-shape" aria-hidden="true" style={pressStyle} />
             <Icon name="clock" size="0.8rem" />
             <span>{status}</span>
           </button>

@@ -1,8 +1,10 @@
 import { Catalogue } from '../../../../packages/ui/src/catalogue/Catalogue';
 
-import { catalogue } from '../../../../packages/ui/src/catalogue/registry';
+import { catalogue, guides } from '../../../../packages/ui/src/catalogue/registry';
 
 import { manifest } from './ui.manifest';
+import { motionManifest } from './library';
+import { motionCatalogue, motionGuides } from '../../../../packages/ui/src/catalogue/motions';
 
 import { useEffect, useState } from 'react';
 
@@ -1349,5 +1351,14 @@ export default function App() {
 }
 
 function ComponentCatalogue() {
-  return <Catalogue catalogue={catalogue} manifest={manifest} />;
+  return (
+    <Catalogue
+      catalogue={catalogue}
+      manifest={manifest}
+      guides={guides}
+      motions={motionCatalogue}
+      motionGuides={motionGuides}
+      motionManifest={motionManifest}
+    />
+  );
 }

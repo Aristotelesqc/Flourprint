@@ -1,15 +1,30 @@
 import { useEffect, useRef } from 'react';
+import { useMotion } from '../motion-context.ts';
+import { playMotion, type Motion } from '../motion.ts';
+import { useReducedMotion } from './use-transition-motion.ts';
 
 /** Native focus containment, cancellable visual exit, and immediate reduced-motion closure. */
 export function useDialog(open: boolean, anchored = false, anchor: 'top' | 'bottom' = 'bottom') {
   const ref = useRef<HTMLDialogElement>(null);
+  const reduced = useReducedMotion(ref);
+  const menuEnter = useMotion('fp.motion.menu-enter');
+  const menuExit = useMotion('fp.motion.menu-exit');
+  const sheetEnter = useMotion('fp.motion.sheet-enter');
+  const sheetExit = useMotion('fp.motion.sheet-exit');
+  const backdropEnter = useMotion('fp.motion.backdrop-enter');
+  const backdropExit = useMotion('fp.motion.backdrop-exit');
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
     let cancelled = false;
-    let frame = 0;
+    const running: Animation[] = [];
     let ghost: HTMLDialogElement | undefined;
-    let backdrop: HTMLDivElement | undefined;
+    const play = (motion: Motion, element: Element | null) => {
+      if (!element) return;
+      if (motion.kind !== 'keyframes') throw new Error(`${motion.id} must be a keyframes motion`);
+      const animation = playMotion(motion, element, { reduced });
+      if (animation) running.push(animation);
+    };
     if (open) {
       const trigger =
         document.activeElement instanceof HTMLButtonElement ? document.activeElement : null;
@@ -43,17 +58,22 @@ export function useDialog(open: boolean, anchored = false, anchor: 'top' | 'bott
           );
         }
       }
+      const part = dialog.querySelector<HTMLElement>(anchored ? '.menu-popup' : '.modal-sheet');
+      if (part) {
+        part.style.removeProperty('opacity');
+        part.style.removeProperty('transform');
+      }
+      const shade = dialog.querySelector<HTMLElement>('.sheet-backdrop');
+      shade?.style.removeProperty('opacity');
+      play(anchored ? menuEnter : sheetEnter, part);
+      if (!anchored) play(backdropEnter, shade);
     } else if (dialog.open) {
       // Release native modality and return focus immediately. A purely visual, inert copy
       // supplies the exit animation; it cannot swallow the first edit on the next screen.
-      const duration = getComputedStyle(dialog)
-        .getPropertyValue(anchored ? '--dur-effect' : '--dur-sheet')
-        .trim();
-      if (parseFloat(duration) > 0) {
+      if (!reduced) {
         ghost = dialog.cloneNode(true) as HTMLDialogElement;
         ghost.inert = true;
         ghost.setAttribute('aria-hidden', 'true');
-        ghost.dataset.closing = 'true';
         ghost.dataset.fpGhost = 'true';
         ghost.style.pointerEvents = 'none';
         const theme = dialog.closest<HTMLElement>('[data-theme]')?.dataset.theme;
@@ -62,36 +82,34 @@ export function useDialog(open: boolean, anchored = false, anchor: 'top' | 'bott
           element.removeAttribute('id');
           element.removeAttribute('data-testid');
         }
-        if (!anchored) {
-          backdrop = document.createElement('div');
-          backdrop.className = 'fp-exit-backdrop';
-          backdrop.inert = true;
-          backdrop.setAttribute('aria-hidden', 'true');
-          if (theme) backdrop.dataset.theme = theme;
-          document.body.append(backdrop);
-        }
         document.body.append(ghost);
-        frame = requestAnimationFrame(() => {
-          const animations = [
-            ...(ghost?.getAnimations({ subtree: true }) ?? []),
-            ...(backdrop?.getAnimations() ?? []),
-          ];
-          void Promise.allSettled(animations.map((a) => a.finished)).then(() => {
-            if (!cancelled) {
-              ghost?.remove();
-              backdrop?.remove();
-            }
-          });
+        play(
+          anchored ? menuExit : sheetExit,
+          ghost.querySelector(anchored ? '.menu-popup' : '.modal-sheet'),
+        );
+        if (!anchored) play(backdropExit, ghost.querySelector('.sheet-backdrop'));
+        void Promise.allSettled(running.map((animation) => animation.finished)).then(() => {
+          if (!cancelled) ghost?.remove();
         });
       }
       dialog.close();
     }
     return () => {
       cancelled = true;
-      cancelAnimationFrame(frame);
+      for (const animation of running) animation.cancel();
       ghost?.remove();
-      backdrop?.remove();
     };
-  }, [open, anchored, anchor]);
+  }, [
+    open,
+    anchored,
+    anchor,
+    reduced,
+    menuEnter,
+    menuExit,
+    sheetEnter,
+    sheetExit,
+    backdropEnter,
+    backdropExit,
+  ]);
   return ref;
 }

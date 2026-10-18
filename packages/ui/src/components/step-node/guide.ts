@@ -7,7 +7,9 @@ export default {
   useWhen: ['Step lists in Recipe, Planning and Preparation.'],
   avoidWhen: ['Time placement across parallel lanes: use fp.timeline.'],
   accessibility: [
-    'The number and title are text; state is also given in words, not only colour.',
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+
+    'The node pictogram is decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon is present.',
     'Reorder controls (#123) need a keyboard path besides dragging.',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
   ],

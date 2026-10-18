@@ -2,6 +2,7 @@ import './v1.css';
 import React, { useId, useState, useEffect, useRef } from 'react';
 import type { NumberFieldProps } from '../../props.ts';
 import { library } from '../../index.ts';
+import { useTransitionMotionStyle } from '../use-transition-motion.ts';
 
 function formatDisplayValue(val: number, loc: 'fr' | 'en', digits = 2): string {
   if (!Number.isFinite(val)) return '';
@@ -41,6 +42,8 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   const inputId = useId();
   const errorId = useId();
   const hintId = useId();
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const highlightMotionStyle = useTransitionMotionStyle('fp.motion.highlight', rootRef);
   const [rawText, setRawText] = useState<string>(() =>
     formatDisplayValue(value, locale, displayDigits),
   );
@@ -122,6 +125,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
 
   return (
     <div
+      ref={rootRef}
       data-fp-component="fp.number-field"
       data-fp-version="v1"
       className={`field ${compact ? 'field-compact' : ''} ${isInvalid ? 'field-error' : ''} ${unitPosition === 'prefix' ? 'field-prefix' : ''}`}
@@ -144,6 +148,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
             undefined
           }
           className="field-input tabular"
+          style={highlightMotionStyle}
           onChange={handleTextChange}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}

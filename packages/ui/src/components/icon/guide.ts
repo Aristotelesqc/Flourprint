@@ -2,10 +2,14 @@ import type { ComponentGuide } from '../../guides.ts';
 import type { IconProps } from '../../props.ts';
 
 export default {
-  purpose: 'The Flourprint pictogram set as inline SVG that follows the current text colour.',
+  purpose:
+    'The current provisional pictograms as inline SVG following text colour; the permanent source remains an owner decision.',
   useWhen: ['Inside other components, or next to text that names the same thing.'],
   avoidWhen: ['As the only content of a control: use fp.icon-button, which carries a label.'],
-  accessibility: ["Always aria-hidden: meaning comes from nearby text or the control's label."],
+  accessibility: [
+    'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
+    "Always aria-hidden: meaning comes from nearby text or the control's label.",
+  ],
   related: ['fp.icon-button', 'fp.metric-pill'],
   decisions: [
     {
