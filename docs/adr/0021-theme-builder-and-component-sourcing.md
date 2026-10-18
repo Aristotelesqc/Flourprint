@@ -1,6 +1,6 @@
 # ADR 0021: Theme builder, component sourcing, motion items and guides
 
-Status: Proposed (owner request, 2026-10-17). Accepted when the owner merges it.
+Status: Accepted (owner, 2026-10-18).
 
 Relation to earlier ADRs:
 
@@ -224,8 +224,9 @@ components.
 - Nothing here changes #133. Its components remain valid `v1` versions on the ADR 0020
   foundation.
 - **Mechanism pull requests** (motion items and guides, then the theme builder and the Ionic
-  bridge) are prepared now. They merge only after #133 has landed and the owner starts the
-  migration, so they never move the library under an active writer.
+  bridge) never move the library under an active writer. On 2026-10-18 the owner decided to
+  merge the motion items and guides before #133, while its writer was paused: Claude merged
+  them into #133's branch and resolved the conflicts there, and #133 continues on top of them.
 - The layering then arrives as **new versions** in reviewed slices. The manifest switches each
   id when the owner approves the catalogue comparison.
 - The app's screens move onto the library in reviewed slices, as ADR 0020 planned.
@@ -247,7 +248,8 @@ components.
 ## Consequences
 
 - `packages/ui` gains the mechanisms listed under Responsibilities, each in its own reviewed
-  pull request, merged only after this ADR is accepted and #133 has landed.
+  pull request, merged only after this ADR is accepted and while no interface writer is active on
+  the same files.
 - `@material/material-color-utilities` becomes a build-time devDependency of `packages/ui`.
   `@ionic/react` becomes a peer dependency when the first Ionic-backed version lands. A headless
   library is added only with a demonstrated case.
