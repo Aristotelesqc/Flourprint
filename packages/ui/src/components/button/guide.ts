@@ -38,7 +38,8 @@ export default {
     },
   ],
   props: {
-    variant: "'primary', 'secondary' (default), 'quiet', or 'danger' (menus only).",
+    variant:
+      "'primary', 'secondary' (default), 'quiet', or 'danger' (separated destructive actions or confirmations).",
     icon: 'Optional leading pictogram (IconName).',
     children: 'The label text from a message key.',
     dataTestId: 'Test id for browser suites.',

@@ -121,6 +121,41 @@ try {
               `Translucent surface ${JSON.stringify(s)}`,
             );
           }
+          if (screen === 'recipe') {
+            await p.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
+            const dialog = p.getByRole('dialog');
+            await expect(dialog).toBeVisible();
+            await settle(p);
+            const boxes = await dialog.getByRole('button').evaluateAll((elements) =>
+              elements.map((el) => {
+                const b = el.getBoundingClientRect();
+                return {
+                  text: el.getAttribute('aria-label') ?? el.textContent.trim(),
+                  x: b.x,
+                  y: b.y,
+                  right: b.right,
+                  bottom: b.bottom,
+                  w: b.width,
+                  h: b.height,
+                };
+              }),
+            );
+            for (const box of boxes)
+              assert(box.h >= 47.9, `Short menu target ${JSON.stringify(box)}`);
+            for (let i = 0; i < boxes.length; i++)
+              for (let j = i + 1; j < boxes.length; j++) {
+                const a = boxes[i],
+                  b = boxes[j];
+                assert(
+                  Math.min(a.right, b.right) - Math.max(a.x, b.x) < 0.8 ||
+                    Math.min(a.bottom, b.bottom) - Math.max(a.y, b.y) < 0.8,
+                  `Overlapping menu actions ${JSON.stringify([a, b])}`,
+                );
+              }
+            await p.keyboard.press('Escape');
+            await expect(dialog).toHaveCount(0);
+            await settle(p);
+          }
           const image = `${screen}-${nav}-${theme}-${width}-${scale}.png`;
           await p.screenshot({ path: path.join(output, image) });
           records.push({ screen, nav, theme, width, scale, geometry, image, errors: [...errors] });

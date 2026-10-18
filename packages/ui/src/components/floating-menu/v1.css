@@ -122,7 +122,7 @@
   justify-content: flex-start;
   border: 0;
   border-radius: 0.375rem;
-  min-height: 2.75rem;
+  min-height: var(--fp-spacing-touch);
   text-align: left;
   padding: 0.5rem 0.625rem;
   background: transparent;
@@ -134,4 +134,9 @@
   border-top: 1px solid var(--color-outline-subtle);
   margin-top: 0.375rem;
   border-radius: 0;
+}
+
+/* The independent close target never overlays the first menu action's hit box. */
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-actions > button:first-child {
+  width: calc(100% - var(--fp-spacing-touch) - var(--fp-space-2));
 }

@@ -150,12 +150,12 @@ A text button, optionally with a leading pictogram. Primary for the screen's mai
 
 **Props**
 
-| Prop         | Meaning                                                              |
-| ------------ | -------------------------------------------------------------------- |
-| `variant`    | 'primary', 'secondary' (default), 'quiet', or 'danger' (menus only). |
-| `icon`       | Optional leading pictogram (IconName).                               |
-| `children`   | The label text from a message key.                                   |
-| `dataTestId` | Test id for browser suites.                                          |
+| Prop         | Meaning                                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| `variant`    | 'primary', 'secondary' (default), 'quiet', or 'danger' (separated destructive actions or confirmations). |
+| `icon`       | Optional leading pictogram (IconName).                                                                   |
+| `children`   | The label text from a message key.                                                                       |
+| `dataTestId` | Test id for browser suites.                                                                              |
 
 **Accessibility**
 
@@ -210,6 +210,7 @@ A small menu anchored to the button that opened it, for secondary actions.
 **Accessibility**
 
 - Native modal dialog anchored to its trigger; Escape and outside taps close it; focus returns to the trigger.
+- Keep the first action clear of the independent 48 px close target; subsequent actions use full rows.
 - Floating layer: may be translucent (elevation rule).
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
