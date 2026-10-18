@@ -5,7 +5,9 @@ description: Verify Flourprint UI changes with production-build browser journeys
 
 # Flourprint UI verification
 
-Read repository `AGENTS.md` and the acceptance of the affected issue/PR first. This skill verifies
+Read repository `AGENTS.md`, `docs/ux/requirements.md` and the acceptance of the affected
+issue/PR first. Check the L-items the change touches, in the rendered app, and name any it
+breaks. This skill verifies
 the requested change; it does not choose a new framework, redesign the logo or reduce feature
 scope. UI implementation is assigned to Gemini under Codex review; use the `agy` skill when that
 delegation is requested or required. The verifier owns the acceptance evidence.
