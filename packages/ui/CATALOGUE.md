@@ -533,7 +533,7 @@ A numeric input that keeps the raw text while typing and commits a parsed number
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value.
 - The unit adornment is always aria-hidden; include the unit in label or hint so its meaning remains accessible.
-- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+- The input minimum height is 2.25rem (36 px at base text). A surrounding 48 px row does not enlarge the input hit area; verify field reachability separately from button-target checks.
 
 **Related**
 
@@ -619,7 +619,7 @@ A recipe in the library: title, status, key values and, for a running preparatio
 | `details`       | Optional short detail texts.                                                                                                 |
 | `metrics`       | Optional values shown as pills.                                                                                              |
 | `status`        | Status text.                                                                                                                 |
-| `statusVariant` | Tone of the status.                                                                                                          |
+| `statusVariant` | Tone of the passive status badge; the featured Resume chip uses the success styling.                                         |
 | `featured`      | Shows a separate Resume chip instead of a passive status badge; defaults the status tone to success. Does not add elevation. |
 | `onOpen`        | Opens the recipe.                                                                                                            |
 | `actions`       | Optional extra actions.                                                                                                      |

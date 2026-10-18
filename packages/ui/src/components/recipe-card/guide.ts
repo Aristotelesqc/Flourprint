@@ -33,7 +33,8 @@ export default {
     details: 'Optional short detail texts.',
     metrics: 'Optional values shown as pills.',
     status: 'Status text.',
-    statusVariant: 'Tone of the status.',
+    statusVariant:
+      'Tone of the passive status badge; the featured Resume chip uses the success styling.',
     featured:
       'Shows a separate Resume chip instead of a passive status badge; defaults the status tone to success. Does not add elevation.',
     onOpen: 'Opens the recipe.',

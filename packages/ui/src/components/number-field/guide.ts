@@ -11,7 +11,7 @@ export default {
 
     'Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value.',
     'The unit adornment is always aria-hidden; include the unit in label or hint so its meaning remains accessible.',
-    'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
+    'The input minimum height is 2.25rem (36 px at base text). A surrounding 48 px row does not enlarge the input hit area; verify field reachability separately from button-target checks.',
   ],
   related: ['fp.ingredient-row', 'fp.hero-summary'],
   decisions: [

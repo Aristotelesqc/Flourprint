@@ -1,5 +1,7 @@
 # PR #133 — restoration acceptance and evidence
 
+> Historical report for the `8aadebb` artifact. See the [2026-10-18 component follow-up](resume-2026-10-18.md) and #134 for the current review surface, sizes, motion migration and guide corrections. The counts below describe the older build.
+
 **Current candidate: Codex visual review, committed-build interactions, motion and public verification completed; owner acceptance open.**
 The [new gallery](https://aristotelesqc.github.io/Flourprint/review-2026-10-17-0.3-tuned-8aadebb/) contains the reviewed proposal and direct images. This report
 separates what was observed, what the executable checks cover and what remains a product choice.
