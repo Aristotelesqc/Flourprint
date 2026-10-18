@@ -48,6 +48,26 @@ try {
           );
           await expect(p.getByRole('heading', { level: 1 })).toBeVisible();
           await settle(p);
+          if (process.env.FLOURPRINT_REVIEW_FONT) {
+            const bytes = await readFile(process.env.FLOURPRINT_REVIEW_FONT);
+            await p.addStyleTag({
+              content: `@font-face{font-family:ReviewFont;src:url(data:font/ttf;base64,${bytes.toString('base64')})} :root {--fp-type-font-family:ReviewFont,sans-serif}`,
+            });
+            await p.evaluate(() => document.fonts.ready);
+          }
+          if (screen === 'library' && nav === 'B' && width === 393 && scale === 100) {
+            const fourth = await p
+              .locator('[data-fp-component="fp.recipe-card"]')
+              .nth(3)
+              .boundingBox();
+            const bottom = await p
+              .locator('.phone-content')
+              .evaluate((el) => el.getBoundingClientRect().bottom);
+            assert(
+              fourth && fourth.y + fourth.height < bottom,
+              'Four complete recipe cards fit with the active platform font',
+            );
+          }
           const geometry = await p.evaluate(() => {
             const visible = (el) => {
               const b = el.getBoundingClientRect();
@@ -93,7 +113,7 @@ try {
             );
             assert(
               Math.max(...row) - Math.min(...row) < 1,
-              'The complete contextual toolbar stays on one aligned row',
+              `The complete contextual toolbar stays on one aligned row: ${JSON.stringify({ theme, nav, width, scale, row, geometry })}`,
             );
           }
           const surfaces = await p.evaluate(() =>

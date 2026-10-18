@@ -72,6 +72,7 @@
   overflow-wrap: normal;
 }
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'].toolbar-A .phone-thumb-bar {
+  gap: calc(var(--fp-space-1) / 2);
   justify-content: space-between;
 }
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'].toolbar-B .phone-thumb-bar {
