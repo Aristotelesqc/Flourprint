@@ -134,6 +134,17 @@ The library still never imports `@flourprint/*`.
 
 Today's values stay in place until the owner approves the generated roles in the catalogue.
 
+### Elevation rule
+
+- Surfaces anchored in the page (cards, rows, panels, summaries) are **opaque and flat**. They
+  show hierarchy through tonal surfaces and separators, as DESIGN.md already asks.
+- Only **floating layers** may be translucent or blurred: sheets, popovers, menus, toasts and a
+  drag overlay. Every future floating component follows the same rule.
+- The rule is a theme-builder and guide concern: floating roles get their own tokens, and each
+  `fp.*` guide states whether the item is anchored or floating.
+- DESIGN.md's "Elevation & Depth" section takes this rule in the migration's first slice, not
+  while #133 edits the interface files.
+
 ### Motion items
 
 - Each animation is a versioned library item, `fp.motion.<name>`. Motion ids form their own
@@ -166,10 +177,30 @@ Today's values stay in place until the owner approves the generated roles in the
   - its accessibility rules;
   - related ids;
   - the owner decisions that concern it, with links.
+- Every **version** carries a **maturity status**: `draft`, `prototyped`, `validated` (the owner
+  approved it in the catalogue comparison) or `shipped` (a release manifest selects it). The
+  status is typed, shown in the catalogue and in the index, and only the owner's approval moves a
+  version to `validated`. A release manifest that selects a `draft` version fails the check.
 - The catalogue shows each guide beside the item's versions.
 - An index for agents, `packages/ui/CATALOGUE.md`, is generated from the guides. A test fails
   when a guide is missing or empty, or when the index is out of date.
-- `AGENTS.md` tells interface agents to read this index before using or adding an item.
+- `AGENTS.md` tells interface agents to read this index before using or adding an item. Agents
+  read it on demand; it is not copied into each agent's instructions.
+
+### Generated files and drift checks
+
+A rule that exists only in prose drifts; a rule that is checked holds. Round 3's loss of round
+2's motion is the case in point.
+
+- **Generated files check themselves.** Each generated file (`tokens.css`, `CATALOGUE.md`, the
+  generated parts of DESIGN.md) carries a "do not edit" header naming its generator and a hash of
+  its source. The check fails both ways: an item with no entry, and an entry with no item.
+- **Drift scans run as tests** in `pnpm check`, outside generated files:
+  - no raw colour, length or shadow value in `packages/ui` components outside `tokens.ts`;
+  - no `transition` or `animation` written outside `fp.motion.*` items;
+  - after migration, no Ionic import in screens outside `fp.*` components.
+- Each scan starts as a report on today's code and becomes failing when the migration slice that
+  clears its findings lands, so it never blocks #133.
 
 ### Responsibilities
 
@@ -178,8 +209,8 @@ As in ADR 0020 and AGENTS.md (one writer per file set):
 - **Claude** owns the mechanisms:
   - the theme builder and its contrast test;
   - the Ionic bridge;
-  - the motion-item and guide mechanisms, with their generated index;
-  - the boundary test, plus the catalogue and bundle checks.
+  - the motion-item and guide mechanisms, with their generated index and maturity status;
+  - the boundary test, the drift scans, plus the catalogue and bundle checks.
 - **The interface writers (Gemini under Codex)** own:
   - components and their versions, including Ionic-backed versions;
   - motion versions beyond round 2's `v1`;
@@ -226,6 +257,8 @@ components.
 - `DESIGN.md`'s token sections grow to the Material 3 role set plus the Flourprint names when
   the builder lands. Its prose keeps the identity and composition rules (ADR 0017).
 - Agents work from the guides and the index, not from screen code, to learn what an item is
-  for. Reviews check that new items ship with their guide.
+  for. Reviews check that new items ship with their guide and status.
+- Translucency and blur are limited to floating layers (elevation rule).
+- `pnpm check` gains the drift scans, each failing only once its migration slice has landed.
 - This ADR selects no pictogram set (Ionicons or Material Symbols) and no segmented control
   source; both stay open in the inventory for the owner.
