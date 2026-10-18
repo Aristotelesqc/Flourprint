@@ -81,6 +81,14 @@ Use Codex-run Playwright and scoped owner device testing for the remaining accep
 An owner stop or waiver ends the campaign immediately, including recovery turns. #87's four-agent
 campaign was exceptional and withdrawn by the owner on 2026-10-13; it is not a reusable gate.
 
+For expensive or parallel work, check available provider-native quota evidence and reserve caller
+capacity to read, verify and integrate the result. Missing quota evidence means unavailable, not
+unlimited. Retain post-run usage even for empty/failed answers; token counts are not account quota.
+This is not a mandatory extra call for each small correction. Reduce orchestration and fan-out
+before reducing agreed functionality or silently changing the requested model. For separable
+corrections, prefer one active delegate and verify its useful output before assigning the next;
+parallelize independent questions when their benefit warrants the integration cost.
+
 ## Accept the result
 
 - Keep each reviewer's raw report distinct. For synthesis, identify shared findings, disagreements,

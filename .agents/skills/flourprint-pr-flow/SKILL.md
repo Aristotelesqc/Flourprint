@@ -52,6 +52,26 @@ consultation required tapping Edit in both native suites).
 - Commit trailers and PR footer as the host's attribution rules require; English only.
 - Set the issue to `status:review` when the PR opens.
 
+## Review evidence
+
+For a review-only request, inspect without changing the branch or starting a fix cycle. Record
+the exact head/base commits, inspect the diff and relevant existing discussion, and check the
+head again before publishing. If it moved, assess the intervening changes and state which evidence
+still applies; do not certify unreviewed code with an older report.
+
+For each material finding, distinguish **reproduced**, **confirmed by inspection**, **reported
+but not checked**, and **failed to reproduce**. Include a precise source location, trigger and
+impact. Preserve the original delegated reports separately from the caller's synthesis; a change
+in severity or rejection of a finding needs an evidence-based explanation. A synthesis is not an
+extra independent review.
+
+Keep the durable review self-contained in the PR, with repository links, checks actually run,
+environment and limits. Use the URL returned by GitHub, not a guessed comment/review anchor.
+Record each finding as corrected, still open, or explicitly deferred by the owner; deferred is
+not corrected. Check that fixes preserve the requested capabilities rather than shrinking the
+scope to pass review. A comment or green CI does not itself establish review approval, and an API
+refusal to submit a same-author changes-requested review does not resolve its blocking findings.
+
 ## Getting it merged
 
 - `dev` requires up-to-date branches. When `dev` moves: merge `origin/dev` into your branch
