@@ -1,0 +1,12 @@
+{
+  "revision": "3ab037784da2c01c39342227b304fe5528df0645",
+  "sourceSha256": "011119ca2c8433fa1a2031eb2b3cdc6edf79e97aefd79b09ddc811ec34ba1332",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · sturdy-fig · local"
+}
