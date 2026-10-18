@@ -1,0 +1,12 @@
+{
+  "revision": "3d8ebc7128b6a76551bd5a8c98068d70aaa50fd7",
+  "sourceSha256": "e0d3203956e827e14f78b200fd872e52b8e9ea166300bcf599b78e40e23c0aa5",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · silver-lantern · local"
+}
