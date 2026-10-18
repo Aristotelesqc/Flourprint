@@ -18,15 +18,15 @@ mockups need and the source each one should come from.
 
 ## Facts checked on 2026-10-17
 
-| Source                                                          | Version                                     | Status                                                                                                                                                                                                                                                                    | How checked                       |
-| --------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| Ionic (`@ionic/core`, `@ionic/react`)                           | 9.0.6, installed                            | Already the app's shell; 31 source files import it. Its 95 components are listed below.                                                                                                                                                                                   | `node_modules`, `apps/mobile/src` |
-| Material UI (`@mui/material`)                                   | 9.5.0                                       | Material Design 3 is still not implemented. The tracking issue [mui/material-ui#29345](https://github.com/mui/material-ui/issues/29345) is open and "on hold", and was removed from the v8 milestone on 2026-01-12. A May 2026 comment says it is not expected this year. | npm registry, GitHub issue        |
-| Material Web (`@material/web`)                                  | 2.5.0                                       | Maintenance mode since June 2024, with no new features or components planned ([discussion #5642](https://github.com/material-components/material-web/discussions/5642), [roadmap](https://github.com/material-components/material-web/blob/main/docs/roadmap.md))         | project pages                     |
-| Material Color Utilities (`@material/material-color-utilities`) | 0.4.0 (2026-01-21)                          | Google's library that generates Material 3 tonal palettes and colour schemes from source colours. Pure TypeScript, no DOM.                                                                                                                                                | npm registry                      |
-| React Aria Components                                           | 1.22.1 (2026-10-09)                         | Adobe. Accessible behaviour without styling, about 50 components, including keyboard drag and drop. Peer: React ≤ 19.                                                                                                                                                     | npm registry                      |
-| Base UI (`@base-ui/react`)                                      | 1.9.0 (2026-10-09)                          | MUI/WorkOS. Unstyled components. Peer: React ≤ 19.                                                                                                                                                                                                                        | npm registry                      |
-| Radix Primitives                                                | `@radix-ui/react-dialog` 1.3.1 (2026-10-14) | Still published. Reports conflict on how actively it is developed.                                                                                                                                                                                                        | npm registry                      |
+| Source                                                          | Version                                     | Status                                                                                                                                                                                                                                                                                                                      | How checked                       |
+| --------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Ionic (`@ionic/core`, `@ionic/react`)                           | 9.0.6, installed                            | Already the app's shell; 31 files under `apps/mobile/src` import it. Its components are listed below.                                                                                                                                                                                                                       | `node_modules`, `apps/mobile/src` |
+| Material UI (`@mui/material`)                                   | 9.5.0                                       | Material Design 3 is still not implemented. The tracking issue [mui/material-ui#29345](https://github.com/mui/material-ui/issues/29345) is open and "on hold", and was removed from the v8 milestone on 2026-01-12. A May 2026 comment says it is not expected this year.                                                   | npm registry, GitHub issue        |
+| Material Web (`@material/web`)                                  | 2.5.0                                       | Maintenance mode announced June 2024: no new components planned, fixes case by case. It still publishes releases (2.5.0 on 2026-07-15) ([discussion #5642](https://github.com/material-components/material-web/discussions/5642), [roadmap](https://github.com/material-components/material-web/blob/main/docs/roadmap.md)) | project pages                     |
+| Material Color Utilities (`@material/material-color-utilities`) | 0.4.0 (2026-01-21)                          | Google's library that generates Material 3 tonal palettes and colour schemes from source colours. Pure TypeScript, no DOM.                                                                                                                                                                                                  | npm registry                      |
+| React Aria Components                                           | 1.22.1 (2026-10-09)                         | Adobe. Accessible behaviour without styling, a broad component set including keyboard drag and drop. Peer: React ≤ 19.                                                                                                                                                                                                      | npm registry                      |
+| Base UI (`@base-ui/react`)                                      | 1.9.0 (2026-10-09)                          | MUI/WorkOS. Unstyled components. Peer: React ≤ 19.                                                                                                                                                                                                                                                                          | npm registry                      |
+| Radix Primitives                                                | `@radix-ui/react-dialog` 1.3.1 (2026-10-14) | Still published.                                                                                                                                                                                                                                                                                                            | npm registry                      |
 
 **Conclusion.** No maintained React library implements Material 3 today. Material 3 therefore
 reaches Flourprint as a **language**: colour roles, shape, type and motion, defined by our theme
@@ -77,7 +77,7 @@ worth importing.
 
 | Element (proposed id)                                                        | Used by                            | Source    | Basis                                                                                                                                                                                                       |
 | ---------------------------------------------------------------------------- | ---------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page shell, navigation stack, back (`fp.page`)                               | every screen                       | I         | `IonPage`, `IonRouterOutlet`, `IonBackButton`, Android back via Capacitor                                                                                                                                   |
+| Page shell and back button (`fp.page`)                                       | every screen                       | I         | `IonPage`, `IonBackButton`, Android back via Capacitor. Routing (`IonRouterOutlet`) stays in the app's layout layer, not in the library.                                                                    |
 | Top app bar (`fp.top-app-bar`)                                               | Recipe, Library                    | I         | `IonHeader`, `IonToolbar`, `IonButtons`, `IonTitle`. Titles wrap, never break mid-word (#134).                                                                                                              |
 | Bottom action bar, option A (`fp.bottom-bar`)                                | #112 A                             | I         | `IonFooter`, `IonToolbar`                                                                                                                                                                                   |
 | Navigation bar, option B (`fp.navigation-bar`)                               | #112 B                             | I         | `IonTabs`, `IonTabBar`, `IonTabButton`. Tabs mean separate stacks, which is a routing decision for #112.                                                                                                    |
@@ -116,14 +116,22 @@ worth importing.
 The inventory lists 33 elements.
 
 - **Ionic: 19 elements**, nearly all the behaviour-heavy ones: navigation, overlays, pickers,
-  accordions, checkboxes, reorder.
-- **Custom: 12 elements**, all presentation over native HTML: cards, pills, badges, summary,
-  timeline, step rows, preparation hero. This is where Material 3 and the Flourprint identity
-  show.
+  accordions, checkboxes and drag reorder. This count includes two rows that are only partly
+  Ionic:
+  - the ingredient row (I + C): Ionic checkbox, custom layout;
+  - reorder (I, then H): Ionic drag, with keyboard reordering possibly needing a headless
+    library.
+- **Custom: 12 elements.** Mostly presentation over native HTML: cards, pills, badges, summary,
+  step rows and preparation hero. This is where Material 3 and the Flourprint identity show.
+  Three of them carry app-specific behaviour:
+  - the quantity field (raw input and validation);
+  - the build label (copy);
+  - the timeline (drawn from the core projection).
 - **Open:** the segmented control (Ionic or the app's own) and the pictogram set.
-- **Headless library: none needed today.** One candidate case: keyboard reorder across groups
-  for #123. It is added only if that case is confirmed, with its own pull request.
+- **Headless library: none needed today.** One candidate case, not yet demonstrated: keyboard
+  reorder across groups for #123. It is added only if that case is confirmed, with its own pull
+  request and comparison.
 - **Theme builder:** generate the Material 3 colour roles from Flourprint source colours with
-  Material Color Utilities, apply the Flourprint overrides, and emit our `--fp-*` variables and
-  Ionic's `--ion-*` variables from the same source. This is the one new dependency proposed,
-  and it needs owner acceptance in ADR 0021.
+  Material Color Utilities, keep the owner-approved values pinned, and emit our `--fp-*`
+  variables and Ionic's `--ion-*` variables from the same source. This is the one new
+  dependency proposed (build time only), and it needs owner acceptance in ADR 0021.
