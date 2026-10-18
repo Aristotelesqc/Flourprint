@@ -1,5 +1,7 @@
 // Compile-time guarantees of ADR 0020, checked by `tsc -p packages/ui`: every line under
 // `@ts-expect-error` must keep failing to type-check. Nothing here runs.
+import type { ButtonHTMLAttributes } from 'react';
+import type { ComponentGuide } from '../src/guides.ts';
 import { createUi } from '../src/library.ts';
 import badgeV1 from './fixtures/badge/v1.ts';
 import cardV1 from './fixtures/card-v1.ts';
@@ -46,6 +48,19 @@ export const refused = () => {
   testMotionLibrary.manifest({});
   // @ts-expect-error Every motion id needs a guide.
   testMotionLibrary.guides({});
+  const guide = { purpose: 'x', useWhen: ['x'], avoidWhen: [], accessibility: ['x'] } as const;
+  const base = { ...guide, related: [], decisions: [] };
+  // A button that spreads native attributes documents its own props and children only.
+  type ButtonLike = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' };
+  const button: ComponentGuide<ButtonLike> = { ...base, props: { variant: 'x', children: 'x' } };
+  // @ts-expect-error Its own optional props still need a description.
+  const partial: ComponentGuide<ButtonLike> = { ...base, props: { children: 'x' } };
+  const pill: ComponentGuide<{ value: string; label?: string }> = {
+    ...base,
+    // @ts-expect-error A prop named like an attribute is documented when nothing is spread.
+    props: { label: 'x' },
+  };
+  void [button, partial, pill];
   return (
     <>
       {/* @ts-expect-error Props are checked against the id's props type. */}

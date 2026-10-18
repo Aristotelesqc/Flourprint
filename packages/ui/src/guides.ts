@@ -4,6 +4,7 @@
  * it. The catalogue shows them, and `CATALOGUE.md`, the index agents read first, is generated
  * from them.
  */
+import type { ButtonHTMLAttributes, HTMLAttributes } from 'react';
 import type { ComponentId, ComponentMap } from './library.ts';
 
 export interface Decision {
@@ -23,9 +24,24 @@ export interface Guide {
   readonly decisions: readonly Decision[];
 }
 
-/** A component guide documents every prop of the id, optional ones included. */
+/** The keys of `A` when `P` takes all of them (it spreads that element's attributes). */
+type Spread<P, A> = [Exclude<keyof A, keyof P>] extends [never]
+  ? Exclude<keyof A, 'children'>
+  : never;
+
+/**
+ * Props a guide documents: every prop of the id, optional ones included, except the standard
+ * attributes of a native element whose props the component takes in full (a button's `type`,
+ * `onClick`, `aria-*`…). Those are the platform's; `children` stays documented.
+ */
+export type DocumentedProps<P> = Exclude<
+  keyof P,
+  Spread<P, ButtonHTMLAttributes<HTMLButtonElement>> | Spread<P, HTMLAttributes<HTMLElement>>
+>;
+
+/** A component guide documents every documented prop of the id. */
 export interface ComponentGuide<P> extends Guide {
-  readonly props: { readonly [K in keyof P]-?: string };
+  readonly props: { readonly [K in DocumentedProps<P>]-?: string };
 }
 
 /** One guide per component id. A missing id fails to type-check. */
