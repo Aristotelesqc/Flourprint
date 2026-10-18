@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import { codeName } from '../build-names.mjs';
 
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = requireMobile('@playwright/test');
@@ -98,7 +99,13 @@ for (const nav of ['A', 'B']) {
       const response = await page.request.get('/review-build.json');
       expect(response.ok()).toBe(true);
       const build = await response.json();
-      expect(build.label).toMatch(/^v\d+\.\d+\.\d+.* · [a-z]+-[a-z]+ · \S+/);
+      // Local builds separate the bakery name; CI already includes it in the short label.
+      // Check the exact declared format without requiring CI to impersonate a local build.
+      const expectedLabel =
+        build.build.channel === 'local'
+          ? `v${build.build.version} · ${codeName(build.revision)} · local`
+          : `${build.build.label} · ${build.build.channel}`;
+      expect(build.label).toBe(expectedLabel);
       const visible = page.getByTestId('visible-build');
       await expect(visible).toHaveText(build.label);
       await expectUnclipped(visible);
