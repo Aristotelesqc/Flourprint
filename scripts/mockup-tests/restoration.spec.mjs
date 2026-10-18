@@ -82,6 +82,27 @@ for (const theme of ['light', 'dark', 'amoled'])
       .locator('.metric-value')
       .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().top));
     expect(Math.abs(metricTops[0] - metricTops[1])).toBeLessThan(1);
+    const checkboxContrast = await page
+      .locator('.checkbox-custom')
+      .first()
+      .evaluate((el) => {
+        const style = getComputedStyle(el);
+        const luminance = (color) => {
+          const channels = color
+            .match(/[\d.]+/g)
+            .slice(0, 3)
+            .map(Number)
+            .map((v) => {
+              const channel = v / 255;
+              return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+            });
+          return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+        };
+        const border = luminance(style.borderTopColor);
+        const fill = luminance(style.backgroundColor);
+        return (Math.max(border, fill) + 0.05) / (Math.min(border, fill) + 0.05);
+      });
+    expect(checkboxContrast).toBeGreaterThanOrEqual(3);
     const info = page.getByRole('button', { name: 'Détail de l’hydratation', exact: true });
     await info.click();
     await expect(page.locator('dialog[open][data-fp-component="fp.bottom-sheet"]')).toBeVisible();

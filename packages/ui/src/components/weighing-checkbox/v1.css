@@ -16,7 +16,7 @@
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 5px;
-  border: 2px solid var(--color-outline);
+  border: 2px solid var(--color-ink-muted);
   background-color: var(--color-surface);
   display: inline-flex;
   align-items: center;
