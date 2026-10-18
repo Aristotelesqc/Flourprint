@@ -6,3 +6,6 @@
 import { library } from '../index.ts';
 
 export const catalogue = library.catalogue({});
+
+/** One guide per component id (ADR 0021). */
+export const guides = library.guides({});

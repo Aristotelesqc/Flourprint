@@ -1,5 +1,6 @@
 export {
   checkCatalogue,
+  checkVersions,
   createLibrary,
   createUi,
   parseOverrides,
@@ -16,6 +17,39 @@ export {
   type VersionName,
 } from './library.ts';
 export type { FlourprintComponents } from './components.ts';
+export {
+  checkMotions,
+  createMotionLibrary,
+  durationMs,
+  easingCurve,
+  ionicAnimation,
+  isReduced,
+  parseMotionOverrides,
+  parseUiOverrides,
+  playMotion,
+  transitionCss,
+  type DurationToken,
+  type EasingToken,
+  type IonicAnimationBuilder,
+  type KeyframesMotion,
+  type Motion,
+  type MotionCatalogue,
+  type MotionId,
+  type MotionManifest,
+  type TransitionMotion,
+} from './motion.ts';
+export { motionLibrary, type FlourprintMotion } from './motions.ts';
+export { defaultMotionManifest } from './motions/default-manifest.ts';
+export { MotionProvider, useMotion } from './motion-context.ts';
+export {
+  checkGuides,
+  type ComponentGuide,
+  type ComponentGuides,
+  type Decision,
+  type Guide,
+  type GuideProblem,
+  type MotionGuides,
+} from './guides.ts';
 export { tokens, tokensCss, tokensYaml, type Tokens } from './tokens.ts';
 
 import { createLibrary } from './library.ts';
