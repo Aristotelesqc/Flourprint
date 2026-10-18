@@ -3,6 +3,20 @@ export { validateProcess, type ProcessError } from './validate.js';
 export { projectProcess } from './project.js';
 export { planIncorporations, type IncorporatedAmount } from './incorporations.js';
 export { insertStepAfter, removeStep, updateStep, type StepChanges } from './edit.js';
+export {
+  duplicateStep,
+  moveStep,
+  subjectOf,
+  type AmbiguousMoveReason,
+  type ChangedEdge,
+  type DuplicateError,
+  type DuplicateResult,
+  type MoveError,
+  type MoveResult,
+  type NotCarried,
+  type NotDuplicableReason,
+  type Subject,
+} from './move.js';
 export { foldSchedule, phasesDurationS } from './technique.js';
 export {
   doughSteps,
