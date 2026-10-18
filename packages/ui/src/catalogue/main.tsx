@@ -3,7 +3,18 @@ import { createRoot } from 'react-dom/client';
 import '../tokens.css';
 import '../components.css';
 import { Catalogue } from './Catalogue.tsx';
-import { catalogue } from './registry.ts';
+import { defaultMotionManifest, motionCatalogue, motionGuides } from './motions.ts';
+import { catalogue, guides } from './registry.ts';
 
 const root = document.getElementById('root');
-if (root) createRoot(root).render(<Catalogue catalogue={catalogue} />);
+if (root) {
+  createRoot(root).render(
+    <Catalogue
+      catalogue={catalogue}
+      guides={guides}
+      motions={motionCatalogue}
+      motionGuides={motionGuides}
+      motionManifest={defaultMotionManifest}
+    />,
+  );
+}

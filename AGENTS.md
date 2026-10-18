@@ -6,7 +6,9 @@
 2. `docs/adr/`: architecture decisions.
 3. Issue #30: record of the arbitration and high-level backlog. Issues describe needs, not contracts.
 
-For interface work, also read root [DESIGN.md](DESIGN.md): visual identity, current tokens and
+For interface work, read [packages/ui/CATALOGUE.md](packages/ui/CATALOGUE.md) first: the
+generated index of library components and motions, with what each is for and how to use it
+(ADR 0020, ADR 0021). Also read root [DESIGN.md](DESIGN.md): visual identity, current tokens and
 component/interaction guidance (ADR 0017). Update it with reviewed presentation changes. It does
 not override contracts or select a component/router dependency; prototypes remain identified.
 

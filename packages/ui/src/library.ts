@@ -13,6 +13,7 @@ import {
   type ComponentType,
   type ReactElement,
 } from 'react';
+import type { ComponentGuides } from './guides.ts';
 
 // Private erased transport; public Ui/Slot entry points retain the id-specific props contract.
 const SelectedRenderer = createContext<((id: string, props: object) => ReactElement) | null>(null);
@@ -72,6 +73,7 @@ export const createLibrary = <C extends ComponentMap>() => ({
   version: <K extends ComponentId<C>, V extends VersionName>(version: Version<C, K, V>) => version,
   manifest: (manifest: Manifest<C>) => manifest,
   catalogue: (catalogue: Catalogue<C>) => catalogue,
+  guides: (guides: ComponentGuides<C>) => guides,
 });
 
 export interface UiRenderer<C extends ComponentMap> {
@@ -114,31 +116,59 @@ export interface ParsedOverrides<C extends ComponentMap> {
   readonly rejected: readonly string[];
 }
 
-/**
- * Reads `ui=fp.recipe-card:v2,fp.badge:v1` (one or several `ui` parameters) from a query
- * string. Unknown ids or versions are returned in `rejected`, never guessed.
- */
-export const parseOverrides = <C extends ComponentMap>(
-  query: string,
-  catalogue: Catalogue<C>,
-): ParsedOverrides<C> => {
-  const overrides: Partial<Record<ComponentId<C>, Version<C>>> = {};
-  const rejected: string[] = [];
-  const entries = new URLSearchParams(query)
+/** Anything versioned: a component version or a motion item. */
+export interface Versioned {
+  readonly id: string;
+  readonly version: string;
+}
+
+/** `ui` entries of a query string, trimmed, in order. */
+const uiEntries = (query: string): string[] =>
+  new URLSearchParams(query)
     .getAll('ui')
     .flatMap((value) => value.split(','))
     .map((entry) => entry.trim())
     .filter((entry) => entry !== '');
-  for (const entry of entries) {
+
+/**
+ * Resolves `id:version` entries against a catalogue. Entries `owns` declines belong to another
+ * catalogue (components or motions) and are skipped, not rejected.
+ */
+export const readOverrides = (
+  query: string,
+  catalogue: Readonly<Record<string, readonly Versioned[]>>,
+  owns: (id: string) => boolean,
+): { readonly overrides: Readonly<Record<string, Versioned>>; readonly rejected: string[] } => {
+  const overrides: Record<string, Versioned> = {};
+  const rejected: string[] = [];
+  for (const entry of uiEntries(query)) {
     const separator = entry.lastIndexOf(':');
-    const id = entry.slice(0, separator) as ComponentId<C>;
+    const id = separator > 0 ? entry.slice(0, separator) : entry;
+    if (!owns(id)) continue;
     const name = entry.slice(separator + 1);
     const versions = separator > 0 && Object.hasOwn(catalogue, id) ? catalogue[id] : undefined;
     const version = versions?.find((candidate) => candidate.version === name);
     if (version) overrides[id] = version;
     else rejected.push(entry);
   }
-  return { overrides: overrides as Partial<Manifest<C>>, rejected };
+  return { overrides, rejected };
+};
+
+/**
+ * Reads `ui=fp.recipe-card:v2,fp.badge:v1` (one or several `ui` parameters) from a query
+ * string. Unknown ids or versions, motion ids included, are returned in `rejected`, never
+ * guessed. A consumer that also uses motion overrides reads both with `parseUiOverrides`.
+ */
+export const parseOverrides = <C extends ComponentMap>(
+  query: string,
+  catalogue: Catalogue<C>,
+): ParsedOverrides<C> => {
+  const { overrides, rejected } = readOverrides(
+    query,
+    catalogue as unknown as Readonly<Record<string, readonly Versioned[]>>,
+    () => true,
+  );
+  return { overrides: overrides as unknown as Partial<Manifest<C>>, rejected };
 };
 
 export interface CatalogueProblem {
@@ -148,15 +178,16 @@ export interface CatalogueProblem {
 
 /**
  * Checks what the type system cannot: each version's `id` matches its catalogue key, version
- * names are unique per id, and the manifest selects versions that the catalogue lists.
+ * names are unique per id, and the manifest selects versions that the catalogue lists. Works
+ * for components and motion items alike.
  */
-export const checkCatalogue = <C extends ComponentMap>(
-  catalogue: Catalogue<C>,
-  manifest?: Manifest<C>,
+export const checkVersions = (
+  catalogue: Readonly<Record<string, readonly Versioned[]>>,
+  manifest?: Readonly<Record<string, Versioned>>,
 ): readonly CatalogueProblem[] => {
   const problems: CatalogueProblem[] = [];
-  for (const id of Object.keys(catalogue) as ComponentId<C>[]) {
-    const versions = catalogue[id];
+  for (const id of Object.keys(catalogue)) {
+    const versions = catalogue[id] ?? [];
     const names = new Set<string>();
     for (const version of versions) {
       if (version.id !== id)
@@ -164,9 +195,20 @@ export const checkCatalogue = <C extends ComponentMap>(
       if (names.has(version.version)) problems.push({ id, problem: `repeats ${version.version}` });
       names.add(version.version);
     }
-    if (manifest && !versions.includes(manifest[id])) {
+    const selected = manifest?.[id];
+    if (manifest && (!selected || !versions.includes(selected))) {
       problems.push({ id, problem: 'manifest selects a version the catalogue does not list' });
     }
   }
   return problems;
 };
+
+/** `checkVersions` typed for a component catalogue. */
+export const checkCatalogue = <C extends ComponentMap>(
+  catalogue: Catalogue<C>,
+  manifest?: Manifest<C>,
+): readonly CatalogueProblem[] =>
+  checkVersions(
+    catalogue as unknown as Readonly<Record<string, readonly Versioned[]>>,
+    manifest as unknown as Readonly<Record<string, Versioned>> | undefined,
+  );
