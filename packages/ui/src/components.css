@@ -33,8 +33,8 @@
   --radius-card: var(--fp-rounded-card);
   --radius-sheet: var(--fp-rounded-sheet);
   --radius-pill: var(--fp-rounded-pill);
-  --touch-target: 48px;
-  --touch-row: 48px;
+  --touch-target: var(--fp-spacing-touch);
+  --touch-row: var(--fp-spacing-touch);
   --fp-space-1: var(--fp-spacing-1);
   --fp-space-1-5: var(--fp-spacing-compact);
   --fp-space-2: var(--fp-spacing-2);
@@ -57,10 +57,10 @@
   --type-timer: var(--fp-type-timer-size);
 }
 [data-target-size='40'] {
-  --touch-target: 40px;
+  --touch-target: var(--fp-spacing-touch-compact);
 }
 [data-target-size='48'] {
-  --touch-target: 48px;
+  --touch-target: var(--fp-spacing-touch);
 }
 @media (prefers-reduced-motion: reduce) {
   :root,

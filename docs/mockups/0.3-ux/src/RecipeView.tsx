@@ -421,7 +421,7 @@ export function RecipeIngredients({
           {t(locale, 'ingredientsWeighing')}
           <small className="baker-scope">{t(locale, 'bakerPct')}</small>
         </span>
-        <span data-testid="weigh-count">
+        <span className="weigh-count" data-testid="weigh-count">
           {checks.length} / {groups.flatMap((g) => g.rows).length}
         </span>
       </div>
@@ -487,20 +487,15 @@ export function RecipeIngredients({
                         store.apply({ type: 'SetBakerPct', ingredient: row.id, pct: value }),
                       formula.waterTarget?.absorbInto === row.id,
                     )}
-                  {formula.flours.some((f) => f.id === row.id) &&
-                    field(
-                      `flour-share-${row.id}`,
-                      formula.flours.find((f) => f.id === row.id)?.sharePct ?? 0,
-                      `${row.name} · ${t(locale, 'flourShare')}`,
-                      '%',
-                      (value) =>
-                        store.apply({
-                          type: 'SetFlourBlend',
-                          flours: formula.flours.map((f) =>
-                            f.id === row.id ? { ...f, sharePct: value } : f,
-                          ),
-                        }),
-                    )}
+                  {formula.flours.some((f) => f.id === row.id) && (
+                    <Button
+                      className="field-grid-wide"
+                      variant="quiet"
+                      onClick={() => setBlendOpen(true)}
+                    >
+                      {t(locale, 'flourBlend')}
+                    </Button>
+                  )}
                 </div>
               )}
             </IngredientRow>
@@ -521,6 +516,7 @@ export function RecipeIngredients({
             {t(locale, 'type')}
             <select
               aria-label={t(locale, 'size')}
+              disabled={Object.values(state.invalid).some(Boolean)}
               value={formula.anchor.kind}
               onChange={(e) =>
                 store.apply({
@@ -735,7 +731,10 @@ export function RecipeIngredients({
           {confirm && (
             <Surface>
               <p>
-                {t(locale, 'confirmRemove')} : {confirm.split(':')[1]}
+                {t(locale, 'confirmRemove')} :{' '}
+                {confirm.startsWith('component:')
+                  ? componentName(locale, confirm.split(':')[1], content.names)
+                  : ingredientName(locale, confirm.split(':')[1], content.names)}
               </p>
               <div className="actions">
                 <Button onClick={() => setConfirm(null)}>{t(locale, 'cancel')}</Button>
@@ -777,7 +776,7 @@ function FlourBlendEditor({
 }) {
   const [flours, setFlours] = useState(() => [...store.content.formula.flours]);
   const [id, setId] = useState('whole-wheat');
-  const [invalid, setInvalid] = useState<Record<number, boolean>>({});
+  const [invalid, setInvalid] = useState<Record<string, boolean>>({});
   const [error, setError] = useState(false);
   return (
     <Modal
@@ -799,7 +798,7 @@ function FlourBlendEditor({
       }
     >
       <div className="stack">
-        {flours.map((flour, index) => (
+        {flours.map((flour) => (
           <Surface key={flour.id}>
             <NumberField
               value={flour.sharePct}
@@ -808,16 +807,23 @@ function FlourBlendEditor({
               locale={locale}
               errorMessage={t(locale, 'invalid')}
               onValidityChange={(bad) =>
-                setInvalid((s) => (s[index] === bad ? s : { ...s, [index]: bad }))
+                setInvalid((s) => (s[flour.id] === bad ? s : { ...s, [flour.id]: bad }))
               }
               onCommit={(value) => {
                 setFlours((rows) =>
-                  rows.map((row, i) => (i === index ? { ...row, sharePct: value } : row)),
+                  rows.map((row) => (row.id === flour.id ? { ...row, sharePct: value } : row)),
                 );
                 return true;
               }}
             />
-            <Button onClick={() => setFlours((rows) => rows.filter((_, i) => i !== index))}>
+            <Button
+              onClick={() => {
+                setFlours((rows) => rows.filter((row) => row.id !== flour.id));
+                setInvalid((flags) =>
+                  Object.fromEntries(Object.entries(flags).filter(([key]) => key !== flour.id)),
+                );
+              }}
+            >
               {t(locale, 'remove')}
             </Button>
           </Surface>

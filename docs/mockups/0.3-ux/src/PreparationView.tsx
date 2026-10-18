@@ -316,6 +316,7 @@ export function PreparationView({
           {t(locale, 'outcome')}
           <select
             value={outcomeDraft.result}
+            disabled={outcomeInvalid}
             onChange={(e) =>
               setOutcomeDraft({ result: e.target.value as PreparationOutcome['result'] })
             }

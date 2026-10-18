@@ -299,7 +299,7 @@ for (const nav of ['A', 'B']) {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await page.getByRole('searchbox').fill('shoku');
     await page.locator('.phone-content .recipe-card').click();
-    const start = page.getByRole('button', { name: 'Lancer', exact: true });
+    const start = page.getByRole('button', { name: 'Reprendre', exact: true });
     await expectHitTarget(start);
     expect(await start.evaluate((el) => Boolean(el.closest('header')))).toBe(nav === 'B');
     await expectUnclipped(page.locator('.header-heading'));

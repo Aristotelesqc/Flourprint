@@ -7,6 +7,7 @@ import {
   validateProcess,
   intendedOutcome,
   OVEN_MODES,
+  COOKING_OPERATIONS,
   type ProcessStep,
   type Process,
   type OvenMode,
@@ -55,9 +56,7 @@ const operations = [
   'proof',
   'retard',
   'preheat',
-  'boil',
-  'fry',
-  'bake',
+  ...COOKING_OPERATIONS,
   'cool',
   'rest',
 ];
@@ -142,6 +141,7 @@ export function StepEditor({
           {t(locale, 'durationMode')}
           <select
             value={draft.plannedDurationS === undefined ? 'unknown' : 'manual'}
+            disabled={Boolean(invalid.duration)}
             onChange={(e) =>
               setDraft({
                 ...draft,
@@ -198,6 +198,18 @@ export function StepEditor({
         </label>
         <fieldset>
           <legend>{t(locale, 'dependencies')}</legend>
+          <label className="field-label">
+            {t(locale, 'schedule')}
+            <select
+              value={draft.schedule}
+              onChange={(e) =>
+                setDraft({ ...draft, schedule: e.target.value as ProcessStep['schedule'] })
+              }
+            >
+              <option value="asap">{t(locale, 'asap')}</option>
+              <option value="alap">{t(locale, 'alap')}</option>
+            </select>
+          </label>
           {process.steps
             .filter((s) => s.id !== draft.id)
             .map((s) => (
@@ -273,12 +285,8 @@ export function StepEditor({
               ))}
             </select>
           </label>
-          {field(
-            'setpoint',
-            draft.equipment?.setpointC ?? draft.conditions?.temperatureC ?? NaN,
-            t(locale, 'temperature'),
-            '°C',
-            (v) => setDraft({ ...draft, equipment: { ...draft.equipment, setpointC: v } }),
+          {field('setpoint', draft.equipment?.setpointC ?? NaN, t(locale, 'setpoint'), '°C', (v) =>
+            setDraft({ ...draft, equipment: { ...draft.equipment, setpointC: v } }),
           )}
         </Disclosure>
         {error && (
@@ -450,7 +458,7 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
                     direct.assumptions.map((code) =>
                       code.startsWith('ready_target_progress:')
                         ? t(locale, 'assumptionReadiness')
-                        : code.startsWith('unplanned_step:')
+                        : code.startsWith('step_without_duration:')
                           ? t(locale, 'assumptionUnplanned')
                           : (catalogText(locale, `fermentation.note.${code}`) ??
                             t(
@@ -510,7 +518,17 @@ export function ProcessView({
   const [proposal, setProposal] = useState<Process | null>(null);
   const [at, setAt] = useState('2026-10-16T08:00');
   const { process } = store.content;
-  const projection = project(process, at);
+  const [planDirection, setPlanDirection] = useState<'startAt' | 'readyBy'>('startAt');
+  const [targetStep, setTargetStep] = useState(process.steps.at(-1)?.id ?? '');
+  const effectiveTarget = process.steps.some((step) => step.id === targetStep)
+    ? targetStep
+    : (process.steps.at(-1)?.id ?? '');
+  const projection = project(
+    process,
+    at,
+    undefined,
+    planning && planDirection === 'readyBy' ? effectiveTarget : undefined,
+  );
   const times = projection.ok ? Object.values(projection.value.steps) : [];
   const starts = times.flatMap((s) => (s.start ? [Date.parse(s.start)] : [])),
     ends = times.flatMap((s) => (s.end ? [Date.parse(s.end)] : []));
@@ -618,7 +636,29 @@ export function ProcessView({
         <Surface>
           <p>{t(locale, 'generated')}</p>
           <label className="field-label">
-            {t(locale, 'startAt')}
+            {t(locale, 'planDirection')}
+            <select
+              value={planDirection}
+              onChange={(e) => setPlanDirection(e.target.value as 'startAt' | 'readyBy')}
+            >
+              <option value="startAt">{t(locale, 'startAt')}</option>
+              <option value="readyBy">{t(locale, 'readyBy')}</option>
+            </select>
+          </label>
+          {planDirection === 'readyBy' && (
+            <label className="field-label">
+              {t(locale, 'targetStep')}
+              <select value={effectiveTarget} onChange={(e) => setTargetStep(e.target.value)}>
+                {process.steps.map((step) => (
+                  <option key={step.id} value={step.id}>
+                    {titleOf(step, locale)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="field-label">
+            {t(locale, planDirection === 'startAt' ? 'startAt' : 'finish')}
             <input
               type="datetime-local"
               value={at}
@@ -627,9 +667,19 @@ export function ProcessView({
               }}
             />
           </label>
+          {planDirection === 'readyBy' && (
+            <p>
+              {t(locale, 'startAt')} :{' '}
+              {full
+                ? dateTime(locale, new Date(Math.min(...starts)).toISOString())
+                : t(locale, 'unknown')}
+            </p>
+          )}
           <strong>
             {t(locale, 'finish')} :{' '}
-            {full ? time(locale, new Date(Math.max(...ends)).toISOString()) : t(locale, 'unknown')}
+            {full
+              ? dateTime(locale, new Date(Math.max(...ends)).toISOString())
+              : t(locale, 'unknown')}
           </strong>
           <p>
             {t(locale, 'total')} :{' '}
@@ -846,6 +896,13 @@ export function ProcessView({
     </div>
   );
 }
+const dateTime = (locale: Locale, value: string) =>
+  new Intl.DateTimeFormat(locale === 'fr' ? 'fr-CA' : 'en-CA', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
 export function processDuration(content: Content): number | undefined {
   const p = project(content.process, '2026-10-16T08:00:00Z');
   if (!p.ok) return undefined;
@@ -866,4 +923,11 @@ export const instructionKey = (operation: string): MessageKey =>
     shape: 'instructionShape',
     proof: 'instructionProof',
     bake: 'instructionBake',
+    boil: 'instructionBoil',
+    steam: 'instructionSteam',
+    fry: 'instructionFry',
+    panCook: 'instructionPanCook',
+    grill: 'instructionGrill',
+    divide: 'instructionDivide',
+    fold: 'instructionFold',
   })[operation] as MessageKey) ?? 'instructionRest';

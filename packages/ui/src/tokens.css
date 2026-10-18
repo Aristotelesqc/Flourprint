@@ -40,7 +40,8 @@
   --fp-spacing-control: 0.625rem;
   --fp-spacing-section: 1.25rem;
   --fp-spacing-page-gutter: 1rem;
-  --fp-spacing-touch: 3rem;
+  --fp-spacing-touch: 48px;
+  --fp-spacing-touch-compact: 40px;
   --fp-spacing-card-padding: 1rem;
   --fp-type-font-family: system-ui, sans-serif;
   --fp-type-navigation-size: 0.6875rem;

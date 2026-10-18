@@ -86,7 +86,8 @@ spacing:
   control: 0.625rem
   section: 1.25rem
   page-gutter: 1rem
-  touch: 3rem
+  touch: 48px
+  touch-compact: 40px
   card-padding: 1rem
 typography:
   font: { family: 'system-ui, sans-serif' }
@@ -216,8 +217,9 @@ by ADR 0009 and AGENTS.md.
 
 Use reusable sections and compact rows, with related values grouped together. Keep practical
 recipe density without turning every line into a card. Existing `Card`/`Rows` use 1rem padding
-and rounded corners; `--spacing-touch` is 3rem. These are current tokens, not proof every
-existing control meets the target. Prototype touch actions with a 48px target wherever feasible;
+and rounded corners; the legacy app `--spacing-touch` remains 3rem. The shared-library
+`touch`/`touch-compact` tokens are 48px/40px so text scaling does not silently change the
+reviewed target-size alternatives. These tokens do not prove every existing control meets the target. Prototype touch actions with a 48px target wherever feasible;
 compact glyphs may sit inside larger non-overlapping hit areas.
 
 Use the shared 4/8/12/16/24/32 px spacing scale, 16 px page gutters and 48 px action targets.

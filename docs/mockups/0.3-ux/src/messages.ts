@@ -247,6 +247,41 @@ const messages = {
   after: ['Après', 'After'],
   relative: ['Heures relatives au départ', 'Times relative to start'],
   startAt: ['Départ prévu', 'Planned start'],
+  setpoint: ['Température de consigne', 'Setpoint temperature'],
+  instructionBoil: [
+    'Pocher la pâte selon les consignes de la recette.',
+    'Poach the dough following the recipe instructions.',
+  ],
+  instructionSteam: [
+    'Cuire à la vapeur selon les consignes de la recette.',
+    'Steam following the recipe instructions.',
+  ],
+  instructionFry: [
+    'Frire selon les consignes de la recette.',
+    'Fry following the recipe instructions.',
+  ],
+  instructionPanCook: [
+    'Cuire à la poêle selon les consignes de la recette.',
+    'Pan-cook following the recipe instructions.',
+  ],
+  instructionGrill: [
+    'Cuire au barbecue selon les consignes de la recette.',
+    'Grill following the recipe instructions.',
+  ],
+  instructionDivide: [
+    'Diviser la pâte selon les quantités prévues.',
+    'Divide the dough into the planned portions.',
+  ],
+  instructionFold: [
+    'Effectuer les rabats prévus par la recette.',
+    'Perform the folds specified in the recipe.',
+  ],
+  schedule: ['Placement de l’étape', 'Stage scheduling'],
+  asap: ['Dès que possible', 'As soon as possible'],
+  alap: ['Juste à temps pour la suite', 'Just in time for the next stage'],
+  planDirection: ['Fixer l’horaire', 'Set the schedule'],
+  readyBy: ['Fin d’une étape', 'Finish a stage by'],
+  targetStep: ['Étape cible', 'Target stage'],
   finish: ['Fin prévue', 'Expected end'],
   total: ['Durée totale', 'Total duration'],
   generated: [
@@ -288,6 +323,7 @@ const messages = {
     'Add a simulated photo marker to the journal without accessing a camera.',
   ],
   photoAdded: ['Repère photo ajouté', 'Photo marker added'],
+  noPreparations: ['Aucune préparation terminée.', 'No completed preparations.'],
   noSession: ['Aucune préparation en cours', 'No running preparation'],
   startRecorded: ['Préparation lancée', 'Preparation started'],
   timeChanged: ['Durée ajustée', 'Duration adjusted'],
@@ -305,10 +341,7 @@ const messages = {
   ],
 
   resetDemo: ['Réinitialiser la démonstration', 'Reset demonstration'],
-  historyEmpty: [
-    'Aucune nouvelle révision dans cette démonstration.',
-    'No new revision in this demonstration.',
-  ],
+  historyEmpty: ['Aucune révision précédente.', 'No previous revision.'],
   catalogue: ['Catalogue de composants', 'Component catalogue'],
   appearance: ['Apparence', 'Appearance'],
   light: ['Clair', 'Light'],
@@ -450,10 +483,12 @@ const operationNames: Record<string, readonly [string, string]> = {
   rest: ['Repos', 'Rest'],
   autolyse: ['Autolyse', 'Autolyse'],
   boil: ['Pochage', 'Boil'],
-  fry: ['Cuisson à la poêle', 'Pan cooking'],
+  fry: ['Friture', 'Fry'],
 };
 export const operationName = (locale: Locale, operation: string): string =>
-  operationNames[operation]?.[locale === 'fr' ? 0 : 1] ?? operation;
+  operationNames[operation]?.[locale === 'fr' ? 0 : 1] ??
+  catalogText(locale, `operation.${operation}`) ??
+  operation;
 const ingredientKeys: Record<string, MessageKey> = {
   'bread-flour': 'breadFlour',
   water: 'water',

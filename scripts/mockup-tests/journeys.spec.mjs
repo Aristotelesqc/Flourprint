@@ -75,7 +75,7 @@ for (const nav of ['A', 'B'])
     await expect(
       page.getByText('Projection generated from recipe steps.', { exact: true }),
     ).toBeVisible();
-    await page.getByRole('button', { name: 'Start', exact: true }).click();
+    await page.getByRole('button', { name: 'Resume', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Shokupan', exact: true })).toBeVisible();
     await page.getByRole('button', { name: '+15 min', exact: true }).click();
     await page.getByRole('button', { name: 'Note', exact: true }).click();
@@ -179,7 +179,7 @@ for (const theme of ['light', 'dark', 'amoled'])
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(recipe + `&nav=B&theme=${theme}&scale=130`);
-    await expect(page.getByRole('button', { name: 'Lancer', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reprendre', exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -258,7 +258,7 @@ test('320px at 200 percent text retains a usable content viewport', async ({ pag
     200,
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await expect(page.getByRole('button', { name: 'Start', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
 });
 
 test('component ratio edits survive save without adding formula mass', async ({ page }) => {

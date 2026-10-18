@@ -94,7 +94,8 @@ export const tokens = {
     control: '0.625rem',
     section: '1.25rem',
     'page-gutter': '1rem',
-    touch: '3rem',
+    touch: '48px',
+    'touch-compact': '40px',
     'card-padding': '1rem',
   },
   typography: {

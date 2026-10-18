@@ -431,9 +431,16 @@ export function usePrototype(locale: Locale) {
   };
 }
 export type Prototype = ReturnType<typeof usePrototype>;
-export function project(process: Process, at: string, facts?: Record<string, StepFact>) {
+export function project(
+  process: Process,
+  at: string,
+  facts?: Record<string, StepFact>,
+  target?: string,
+) {
   return projectProcess(process, {
-    mode: { kind: 'startAt', at: instant(at) },
+    mode: target
+      ? { kind: 'readyBy', at: instant(at), target }
+      : { kind: 'startAt', at: instant(at) },
     ...(facts ? { facts } : {}),
   });
 }

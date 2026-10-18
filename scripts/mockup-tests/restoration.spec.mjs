@@ -13,7 +13,7 @@ for (const navigation of ['A', 'B'])
     await expect(page.getByRole('tab', { name: /^Toutes \(/ })).toBeVisible();
     await page.getByRole('searchbox').fill('shoku');
     await page.getByRole('button', { name: 'Shokupan', exact: true }).click();
-    const start = page.getByRole('button', { name: 'Lancer', exact: true });
+    const start = page.getByRole('button', { name: 'Reprendre', exact: true });
     expect(await start.evaluate((el) => Boolean(el.closest('header')))).toBe(navigation === 'B');
     await page.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Dupliquer', exact: true }).click();
@@ -76,6 +76,12 @@ for (const theme of ['light', 'dark', 'amoled'])
         return range.getClientRects().length;
       }),
     ).toBe(1);
+    const metricTops = await page
+      .locator('.recipe-summary-box .metric-grid-2')
+      .first()
+      .locator('.metric-value')
+      .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().top));
+    expect(Math.abs(metricTops[0] - metricTops[1])).toBeLessThan(1);
     const info = page.getByRole('button', { name: 'Détail de l’hydratation', exact: true });
     await info.click();
     await expect(page.locator('dialog[open][data-fp-component="fp.bottom-sheet"]')).toBeVisible();

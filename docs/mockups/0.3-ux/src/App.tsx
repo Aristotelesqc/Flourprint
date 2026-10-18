@@ -350,7 +350,10 @@ export default function App() {
               navigate({ screen: 'preparation' });
           }}
         >
-          {t(locale, 'start')}
+          {t(
+            locale,
+            state.session?.recipeId === recipe.id && !state.session.finished ? 'resume' : 'start',
+          )}
         </Button>
       )
     ) : null;
@@ -640,6 +643,10 @@ export default function App() {
           </select>
         </label>
       </aside>
+      <aside className="studio-note">
+        <p>{t(locale, 'checksChoice')}</p>
+        <Button onClick={() => location.reload()}>{t(locale, 'resetDemo')}</Button>
+      </aside>
       <div className="phone-stage">
         <div className="phone-frame" data-testid="phone" data-navigation={variant}>
           <header className="phone-header">
@@ -690,13 +697,16 @@ export default function App() {
                 contextualControls
               ) : (
                 <>
-                  {state.session && !state.session.finished && route.screen !== 'preparation' && (
-                    <IconButton
-                      icon="clock"
-                      label={t(locale, 'resume')}
-                      onClick={() => guard(() => navigate({ screen: 'preparation' }))}
-                    />
-                  )}
+                  {state.session &&
+                    !state.session.finished &&
+                    route.screen !== 'preparation' &&
+                    (route.screen !== 'recipe' || state.session.recipeId !== recipe.id) && (
+                      <IconButton
+                        icon="clock"
+                        label={t(locale, 'resume')}
+                        onClick={() => guard(() => navigate({ screen: 'preparation' }))}
+                      />
+                    )}
                 </>
               )}
             </div>
@@ -888,7 +898,7 @@ export default function App() {
                       </Surface>
                     ))}
                   {!state.sessionHistory.some((session) => session.recipeId === recipe.id) && (
-                    <p>{t(locale, 'historyEmpty')}</p>
+                    <p>{t(locale, 'noPreparations')}</p>
                   )}
                   <h2>{t(locale, 'versions')}</h2>
                   {recipe.revisions.length ? (
@@ -969,7 +979,7 @@ export default function App() {
                   </Button>
                 ))}
 
-                <Disclosure title={t(locale, 'checksChoice')} defaultOpen>
+                <Disclosure title={t(locale, 'checkScope')} defaultOpen>
                   <Checkbox
                     checked={keepChecks}
 
@@ -982,8 +992,6 @@ export default function App() {
                     {t(locale, 'clearChecks')}
                   </Button>
                 </Disclosure>
-
-                <Button onClick={() => location.reload()}>{t(locale, 'resetDemo')}</Button>
               </>
             )}
           </main>

@@ -97,6 +97,9 @@ for (const nav of ['A', 'B']) {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await openRecordedHistory(page, nav, 'Cuit');
     await expect(page.getByText('Durée réelle : 10 min', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Lancer', exact: true }).click();
+    await expect(page.locator('.current-step-hero')).toHaveAttribute('data-step', 'tangzhong');
+    await expect(page.getByTestId('recorded-outcome')).toHaveCount(0);
   });
 
   test(`choosing frozen dough does not finish; explicit early Finish records the override ${nav}`, async ({

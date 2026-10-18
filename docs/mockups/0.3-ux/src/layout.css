@@ -627,3 +627,14 @@ body[data-capture='true'] .component-inspector {
   display: flex;
   justify-content: flex-end;
 }
+
+.weigh-count {
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: var(--type-meta);
+}
+
+.field-grid-wide {
+  grid-column: 1/-1;
+  justify-self: start;
+}
