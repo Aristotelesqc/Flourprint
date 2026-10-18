@@ -1,0 +1,12 @@
+{
+  "revision": "dd10bd9ff68492ffd53844bc6e07e9bbb904052a",
+  "sourceSha256": "ca406833da425fc9bc321143ba6ea29c82d98ef60cd9281b611b5a6685d06d51",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · hidden-willow · local"
+}
