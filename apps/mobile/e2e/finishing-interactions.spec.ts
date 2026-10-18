@@ -20,11 +20,14 @@ for (const theme of ['light', 'dark', 'amoled'] as const) {
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     await routed(page).locator('ion-back-button').click();
     await routed(page).getByText('Poolish + tangzhong', { exact: true }).click();
-    await expect(routed(page)).toHaveCount(1);
-    const result = routed(page).getByTestId('recipe-method').getByTestId('recipe-outcome');
+    // Ionic briefly keeps both routed pages active during navigation. Bind to the recipe
+    // before measuring it, rather than accepting the preceding single-page list state.
+    const recipePage = routed(page).filter({ has: page.getByTestId('recipe-method') });
+    await expect(recipePage).toHaveCount(1);
+    const result = recipePage.getByTestId('recipe-method').getByTestId('recipe-outcome');
     await expect(result).toContainText('Résultat');
-    const content = routed(page).locator('ion-content');
-    const footer = routed(page).locator('ion-footer');
+    const content = recipePage.locator('ion-content');
+    const footer = recipePage.locator('ion-footer');
     for (const fontSize of [16, 20]) {
       await page.addStyleTag({ content: `html, body { font-size: ${fontSize}px !important; }` });
       await content.evaluate(async (host) => {
