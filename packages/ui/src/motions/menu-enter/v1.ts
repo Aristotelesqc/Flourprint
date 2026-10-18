@@ -3,7 +3,8 @@ import { motionLibrary } from '../../motions.ts';
 export default motionLibrary.motion({
   id: 'fp.motion.menu-enter',
   version: 'v1',
-  notes: 'Round 2 (`22db386`) anchored menu: fades in and grows from 0.92 toward its anchor.',
+  notes:
+    'Round 2 (`22db386`) anchored menu opening upward from a bottom anchor: fades in and grows from 0.92, rising 4 px. A top-anchored menu needs its own version (round 2 used -4 px and a top-right origin).',
   kind: 'keyframes',
   standard: {
     keyframes: [

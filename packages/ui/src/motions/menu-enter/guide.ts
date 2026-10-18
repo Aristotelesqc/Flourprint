@@ -3,10 +3,11 @@ import type { Guide } from '../../guides.ts';
 export default {
   purpose: 'Opens the anchored overflow menu from the button that triggered it.',
   useWhen: [
-    'The overflow menu (an IonPopover) when it opens. Set transform-origin to the anchor corner.',
+    'An overflow menu anchored at the bottom and opening upward, such as from a bottom toolbar. Set transform-origin to the bottom corner of the anchor.',
   ],
   avoidWhen: [
     'Sheets and dialogs: use fp.motion.sheet-enter.',
+    'Menus anchored at the top: they need a top-anchored version.',
     'Menus that open without a visible anchor.',
   ],
   accessibility: [

@@ -135,8 +135,8 @@ export const readOverrides = (
 
 /**
  * Reads `ui=fp.recipe-card:v2,fp.badge:v1` (one or several `ui` parameters) from a query
- * string. Unknown ids or versions are returned in `rejected`, never guessed. Motion entries
- * (`fp.motion.*`) are left to `parseMotionOverrides`.
+ * string. Unknown ids or versions, motion ids included, are returned in `rejected`, never
+ * guessed. A consumer that also uses motion overrides reads both with `parseUiOverrides`.
  */
 export const parseOverrides = <C extends ComponentMap>(
   query: string,
@@ -145,7 +145,7 @@ export const parseOverrides = <C extends ComponentMap>(
   const { overrides, rejected } = readOverrides(
     query,
     catalogue as unknown as Readonly<Record<string, readonly Versioned[]>>,
-    (id) => !id.startsWith('fp.motion.'),
+    () => true,
   );
   return { overrides: overrides as unknown as Partial<Manifest<C>>, rejected };
 };

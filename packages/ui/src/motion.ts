@@ -10,7 +10,15 @@
  *   accordion height), applied with `transitionCss`.
  */
 import { tokens } from './tokens.ts';
-import { checkVersions, readOverrides, type VersionName, type Versioned } from './library.ts';
+import {
+  checkVersions,
+  readOverrides,
+  type Catalogue,
+  type ComponentMap,
+  type Manifest,
+  type VersionName,
+  type Versioned,
+} from './library.ts';
 import type { MotionGuides } from './guides.ts';
 
 export type MotionId = `fp.motion.${string}`;
@@ -108,23 +116,45 @@ export const formOf = <F>(
   reduced: boolean,
 ): F | 'none' => (reduced ? motion.reduced : motion.standard);
 
+/** Animation ids that `playMotion` gives its animations, so a new play can replace them. */
+const PLAYED = 'fp.motion:';
+
 /**
- * Plays a keyframes motion on an element. Returns the animation, or `undefined` when reduced
- * motion asks for none; callers then rely on the element's end-state styles.
+ * Plays a keyframes motion on an element. Any motion this function is still playing on the
+ * element is cancelled first, so repeated plays never stack. When the animation finishes, its end
+ * state is written to the element's inline style (`commitStyles`) and the animation is removed,
+ * so nothing stays held over the element's own styles. Returns the animation, or `undefined`
+ * when reduced motion asks for none: the caller then applies the end state itself.
  */
 export const playMotion = (
   motion: KeyframesMotion,
   element: Element,
   options: { readonly reduced?: boolean; readonly direction?: PlaybackDirection } = {},
 ): Animation | undefined => {
+  for (const running of element.getAnimations?.() ?? []) {
+    if (running.id.startsWith(PLAYED)) running.cancel();
+  }
   const form = formOf(motion, options.reduced ?? isReduced(element));
   if (form === 'none') return undefined;
-  return element.animate([...form.keyframes], {
+  const animation = element.animate([...form.keyframes], {
     duration: durationMs(form.duration),
     easing: easingCurve(form.easing),
     direction: options.direction ?? 'normal',
-    fill: 'both',
+    fill: 'forwards',
   });
+  animation.id = `${PLAYED}${motion.id}`;
+  animation.finished.then(
+    () => {
+      try {
+        animation.commitStyles();
+      } catch {
+        // The element left the document or is not rendered: nothing to keep.
+      }
+      animation.cancel();
+    },
+    () => undefined, // Cancelled by a newer play.
+  );
+  return animation;
 };
 
 /** The CSS `transition` value of a transition motion; `none` in reduced motion. */
@@ -144,10 +174,15 @@ export interface IonicAnimationBuilder {
 }
 
 /**
- * An enter or leave animation for an Ionic overlay (`IonModal enterAnimation`, …) from a
- * keyframes motion. `createAnimation` comes from `@ionic/react`, so the library does not
- * depend on Ionic. `target` picks the animated part inside the overlay (for example
- * `.modal-wrapper`). Reduced motion gives a zero-length animation, so Ionic still completes.
+ * An enter or leave animation for an Ionic overlay (`IonPopover`, or an `IonModal` **without**
+ * breakpoints) from a keyframes motion. `createAnimation` comes from `@ionic/react`, so the
+ * library does not depend on Ionic. `target` picks the animated part, looked up in the overlay's
+ * shadow root first, where Ionic keeps `.modal-wrapper` and `ion-backdrop`. Reduced motion gives
+ * a zero-length animation, which Ionic completes at once.
+ *
+ * Not for sheet modals with `breakpoints`: Ionic positions those through its own enter
+ * animation (`currentBreakpoint`), which a custom animation replaces. Keep Ionic's default there
+ * until a breakpoint-aware bridge is built and verified.
  */
 export const ionicAnimation =
   <A extends IonicAnimationBuilder>(
@@ -156,7 +191,8 @@ export const ionicAnimation =
     target?: string,
   ) =>
   (baseElement: HTMLElement): A => {
-    const part = target ? baseElement.querySelector(target) : baseElement;
+    const root: ParentNode = baseElement.shadowRoot ?? baseElement;
+    const part = target ? root.querySelector(target) : baseElement;
     const form = formOf(motion, isReduced(baseElement));
     const animation = createAnimation().addElement(part);
     if (form === 'none') return animation.duration(0) as A;
@@ -167,8 +203,8 @@ export const ionicAnimation =
   };
 
 /**
- * Reads motion entries (`fp.motion.sheet-enter:v2`) from the same `ui` parameter as component
- * overrides; component entries are left to `parseOverrides`.
+ * Reads motion entries (`fp.motion.sheet-enter:v2`) from the `ui` parameter. Component entries
+ * are skipped here; use `parseUiOverrides` to read both and reject what neither knows.
  */
 export const parseMotionOverrides = <M extends MotionId>(
   query: string,
@@ -180,6 +216,31 @@ export const parseMotionOverrides = <M extends MotionId>(
     (id) => id.startsWith('fp.motion.'),
   );
   return { overrides: overrides as unknown as Partial<MotionManifest<M>>, rejected };
+};
+
+/**
+ * Reads component and motion overrides from one `ui` parameter. Every entry that names no known
+ * component or motion version is rejected, motion typos included.
+ */
+export const parseUiOverrides = <C extends ComponentMap, M extends MotionId>(
+  query: string,
+  catalogues: { readonly components: Catalogue<C>; readonly motions: MotionCatalogue<M> },
+): {
+  readonly components: Partial<Manifest<C>>;
+  readonly motions: Partial<MotionManifest<M>>;
+  readonly rejected: readonly string[];
+} => {
+  const components = readOverrides(
+    query,
+    catalogues.components as unknown as Readonly<Record<string, readonly Versioned[]>>,
+    (id) => !id.startsWith('fp.motion.'),
+  );
+  const motions = parseMotionOverrides(query, catalogues.motions);
+  return {
+    components: components.overrides as unknown as Partial<Manifest<C>>,
+    motions: motions.overrides,
+    rejected: [...components.rejected, ...motions.rejected],
+  };
 };
 
 /** `checkVersions` typed for a motion catalogue. */

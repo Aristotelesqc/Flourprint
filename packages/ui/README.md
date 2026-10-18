@@ -99,16 +99,29 @@ guide in `guide.ts`. An item names its duration and easing by token (`effect`, `
 `sheet`; `standard`, `decelerate`). It also gives a **required** reduced-motion form: `'none'`,
 or a lighter form.
 
-- `keyframes` items run with `playMotion(motion, element)`. For Ionic overlays they run through
-  `ionicAnimation(motion, createAnimation, '.modal-wrapper')`, passed to `enterAnimation` or
-  `leaveAnimation`.
+- `keyframes` items run with `playMotion(motion, element)`.
+  - A new play cancels the motion still playing on that element, so plays never stack.
+  - On finish, the end state is committed to the element's inline style and the animation
+    removed.
+  - In reduced motion nothing plays, and the caller applies the end state.
+- `ionicAnimation(motion, createAnimation, '.modal-wrapper')` turns an item into an Ionic
+  `enterAnimation` or `leaveAnimation`.
+  - The target is looked up in the overlay's shadow root.
+  - It is for popovers and modals **without** `breakpoints`. Sheet modals with breakpoints keep
+    Ionic's own animation, which positions them.
 - `transition` items set a CSS `transition` with `transitionCss(motion, reduced)` for changes
   driven by styles: colour, rotation, accordion height.
 - Components read motions with `useMotion('fp.motion.sheet-enter')` under a
   `<MotionProvider value={motionManifest}>`. They never write transitions themselves.
-- `v1` of every id is round 2's motion. `defaultMotionManifest` selects it until the owner
-  approves another version in the catalogue.
-- `?ui=fp.motion.sheet-enter:v2` overrides a motion, as for components.
+- `v1` of every id is round 2's motion.
+  - `defaultMotionManifest` (from `@flourprint/ui`) selects it until the owner approves another
+    version in the catalogue.
+  - It imports only the selected versions, so release builds may use it.
+  - The motion catalogue, with every version, is loaded behind the overrides flag like the
+    component catalogue.
+- `?ui=fp.motion.sheet-enter:v2` overrides a motion. To read component and motion overrides
+  together, and reject typos in both, use
+  `parseUiOverrides(query, { components: catalogue, motions: motionCatalogue })`.
 
 ## Guides and the agent index (ADR 0021)
 

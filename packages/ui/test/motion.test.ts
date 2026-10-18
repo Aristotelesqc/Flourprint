@@ -4,6 +4,7 @@ import {
   durationMs,
   ionicAnimation,
   parseMotionOverrides,
+  parseUiOverrides,
   playMotion,
   transitionCss,
   type IonicAnimationBuilder,
@@ -16,11 +17,34 @@ import { testCatalogue } from './fixtures/catalogue.ts';
 
 const sheetEnter = defaultMotionManifest['fp.motion.sheet-enter'] as KeyframesMotion;
 
-/** An element stand-in: `closest` finds the nearest data-motion marker, `animate` records. */
+/**
+ * An element stand-in: `closest` finds the nearest data-motion marker, `animate` records and
+ * returns an animation whose `finished` the test resolves, and `getAnimations` lists it.
+ */
 const element = (motion?: 'reduced' | 'standard') => {
-  const animate = vi.fn(() => ({}) as Animation);
+  const animations: Array<Animation & { resolve: () => void }> = [];
+  const animate = vi.fn(() => {
+    let resolve = () => {};
+    const finished = new Promise<Animation>((done) => {
+      resolve = () => done(animation);
+    });
+    const animation = {
+      id: '',
+      finished,
+      commitStyles: vi.fn(),
+      cancel: vi.fn(),
+      resolve,
+    } as unknown as Animation & { resolve: () => void };
+    animations.push(animation);
+    return animation;
+  });
   const marker = motion ? { getAttribute: () => motion } : null;
-  return { animate, closest: () => marker } as unknown as Element & { animate: typeof animate };
+  return {
+    animate,
+    animations,
+    getAnimations: () => animations,
+    closest: () => marker,
+  } as unknown as Element & { animate: typeof animate; animations: typeof animations };
 };
 
 describe('motion items (ADR 0021)', () => {
@@ -37,6 +61,37 @@ describe('motion items (ADR 0021)', () => {
       [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
       expect.objectContaining({ duration: 260, easing: 'cubic-bezier(0.05, 0.7, 0.1, 1)' }),
     );
+  });
+
+  it('commits the end state and removes the animation when it finishes', async () => {
+    const target = element('standard');
+    const animation = playMotion(sheetEnter, target) as Animation & { resolve: () => void };
+    expect(animation.id).toBe('fp.motion:fp.motion.sheet-enter');
+    animation.resolve();
+    await animation.finished;
+    await Promise.resolve();
+    expect(animation.commitStyles).toHaveBeenCalled();
+    expect(animation.cancel).toHaveBeenCalled();
+  });
+
+  it('cancels a motion still playing on the element before playing again', () => {
+    const target = element('standard');
+    const first = playMotion(sheetEnter, target);
+    playMotion(sheetEnter, target);
+    expect(first?.cancel).toHaveBeenCalled();
+    expect(target.animate).toHaveBeenCalledTimes(2);
+  });
+
+  it('follows the system setting when no element is marked', () => {
+    const original = globalThis.matchMedia;
+    globalThis.matchMedia = ((query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+    })) as typeof matchMedia;
+    try {
+      expect(playMotion(sheetEnter, element())).toBeUndefined();
+    } finally {
+      globalThis.matchMedia = original;
+    }
   });
 
   it('plays nothing in reduced motion, whether marked or asked', () => {
@@ -65,7 +120,10 @@ describe('motion items (ADR 0021)', () => {
       keyframes: (frames) => (calls.push(`keyframes:${frames.length}`), builder),
     };
     const base = {
-      querySelector: () => ({}),
+      shadowRoot: {
+        querySelector: (selector: string) => (selector === '.modal-wrapper' ? {} : null),
+      },
+      querySelector: () => null,
       closest: () => null,
     } as unknown as HTMLElement;
     ionicAnimation(sheetEnter, () => builder, '.modal-wrapper')(base);
@@ -84,12 +142,18 @@ describe('motion items (ADR 0021)', () => {
     expect(calls).toEqual(['element:part', 'duration:0']);
   });
 
-  it('shares the ui parameter with components without rejecting each other', () => {
-    const query = '?ui=fp.badge:v2,fp.motion.sheet-enter:v1,fp.motion.press:v9';
-    const motions = parseMotionOverrides(query, motionCatalogue);
-    expect(motions.overrides).toEqual({ 'fp.motion.sheet-enter': sheetEnter });
-    expect(motions.rejected).toEqual(['fp.motion.press:v9']);
-    expect(parseOverrides(query, testCatalogue).rejected).toEqual([]);
+  it('reads components and motions from one ui parameter and rejects what neither knows', () => {
+    const query = '?ui=fp.badge:v2,fp.motion.sheet-enter:v1,fp.motion.press:v9,fp.nope:v1';
+    const both = parseUiOverrides(query, { components: testCatalogue, motions: motionCatalogue });
+    expect(Object.keys(both.components)).toEqual(['fp.badge']);
+    expect(both.motions).toEqual({ 'fp.motion.sheet-enter': sheetEnter });
+    expect(both.rejected).toEqual(['fp.nope:v1', 'fp.motion.press:v9']);
+    expect(parseMotionOverrides(query, motionCatalogue).rejected).toEqual(['fp.motion.press:v9']);
+  });
+
+  it('keeps parseOverrides rejecting every entry it does not know, motions included', () => {
+    const { rejected } = parseOverrides('?ui=fp.badge:v2,fp.motion.sheet-entr:v1', testCatalogue);
+    expect(rejected).toEqual(['fp.motion.sheet-entr:v1']);
   });
 
   it('has a consistent catalogue, default manifest and complete guides', () => {

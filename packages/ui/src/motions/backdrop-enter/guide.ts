@@ -2,7 +2,7 @@ import type { Guide } from '../../guides.ts';
 
 export default {
   purpose: 'Dims the screen behind a sheet or dialog as it opens.',
-  useWhen: ['The backdrop of fp.sheet and of dialogs, alongside their enter motion.'],
+  useWhen: ['The backdrop of the planned fp.sheet and of dialogs, alongside their enter motion.'],
   avoidWhen: ['Using the backdrop alone as the only sign that something opened.'],
   accessibility: [
     'Content behind is inert while the sheet is open.',

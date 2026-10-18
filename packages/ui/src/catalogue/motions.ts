@@ -58,18 +58,4 @@ export const motionGuides = motionLibrary.guides({
   'fp.motion.sheet-exit': sheetExitGuide,
 });
 
-/** Round 2's motion, the default selection until the owner approves another version. */
-export const defaultMotionManifest = motionLibrary.manifest({
-  'fp.motion.press': pressV1,
-  'fp.motion.press-icon': pressIconV1,
-  'fp.motion.menu-enter': menuEnterV1,
-  'fp.motion.menu-exit': menuExitV1,
-  'fp.motion.check': checkV1,
-  'fp.motion.highlight': highlightV1,
-  'fp.motion.chevron': chevronV1,
-  'fp.motion.disclosure': disclosureV1,
-  'fp.motion.backdrop-enter': backdropEnterV1,
-  'fp.motion.backdrop-exit': backdropExitV1,
-  'fp.motion.sheet-enter': sheetEnterV1,
-  'fp.motion.sheet-exit': sheetExitV1,
-});
+export { defaultMotionManifest } from '../motions/default-manifest.ts';

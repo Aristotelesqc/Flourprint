@@ -18,7 +18,7 @@ Dims the screen behind a sheet or dialog as it opens.
 
 **Use when**
 
-- The backdrop of fp.sheet and of dialogs, alongside their enter motion.
+- The backdrop of the planned fp.sheet and of dialogs, alongside their enter motion.
 
 **Avoid when**
 
@@ -49,7 +49,7 @@ Removes the dimming as a sheet or dialog closes.
 
 **Use when**
 
-- The backdrop of fp.sheet and of dialogs, alongside their exit motion.
+- The backdrop of the planned fp.sheet and of dialogs, alongside their exit motion.
 
 **Avoid when**
 
@@ -200,11 +200,12 @@ Opens the anchored overflow menu from the button that triggered it.
 
 **Use when**
 
-- The overflow menu (an IonPopover) when it opens. Set transform-origin to the anchor corner.
+- An overflow menu anchored at the bottom and opening upward, such as from a bottom toolbar. Set transform-origin to the bottom corner of the anchor.
 
 **Avoid when**
 
 - Sheets and dialogs: use fp.motion.sheet-enter.
+- Menus anchored at the top: they need a top-anchored version.
 - Menus that open without a visible anchor.
 
 **Accessibility**
@@ -223,7 +224,7 @@ Opens the anchored overflow menu from the button that triggered it.
 
 **Versions**
 
-- `v1` (keyframes), default selection: Round 2 (`22db386`) anchored menu: fades in and grows from 0.92 toward its anchor.
+- `v1` (keyframes), default selection: Round 2 (`22db386`) anchored menu opening upward from a bottom anchor: fades in and grows from 0.92, rising 4 px. A top-anchored menu needs its own version (round 2 used -4 px and a top-right origin).
 
 ### `fp.motion.menu-exit`
 
@@ -253,11 +254,11 @@ Closes the anchored overflow menu back toward its trigger.
 
 **Versions**
 
-- `v1` (keyframes), default selection: Round 2 (`22db386`) anchored menu: the reverse of menu-enter.
+- `v1` (keyframes), default selection: Round 2 (`22db386`) bottom-anchored menu: the reverse of menu-enter.
 
 ### `fp.motion.press`
 
-Feedback while a text or toolbar button is held down: the button shrinks slightly and its background changes.
+Feedback while a text or toolbar button is held down: the button shrinks slightly. In round 2 the background changed on hover only.
 
 **Use when**
 
@@ -322,11 +323,12 @@ Opens a bottom sheet from the bottom edge of the viewport.
 
 **Use when**
 
-- fp.sheet (IonModal with breakpoints): pass it as enterAnimation through ionicAnimation.
+- A bottom sheet that is an IonModal without breakpoints (the planned fp.sheet component): pass it as enterAnimation through ionicAnimation(motion, createAnimation, '.modal-wrapper').
 
 **Avoid when**
 
-- Sheets anchored to the bottom of the content instead of the viewport (Argon's defect, #134).
+- Sheet modals with breakpoints: Ionic positions them through its own enter animation, which this would replace. Keep Ionic's default there.
+- Sheets anchored to the bottom of the page content instead of the viewport (a defect found in an earlier mockup, #134).
 
 **Accessibility**
 
@@ -353,7 +355,7 @@ Closes a bottom sheet toward the bottom edge.
 
 **Use when**
 
-- fp.sheet when it closes: pass it as leaveAnimation through ionicAnimation.
+- A bottom sheet without breakpoints (the planned fp.sheet) when it closes: pass it as leaveAnimation through ionicAnimation.
 
 **Avoid when**
 

@@ -5,6 +5,8 @@ import badgeV1 from './fixtures/badge/v1.ts';
 import cardV1 from './fixtures/card-v1.ts';
 import { testLibrary } from './fixtures/components.ts';
 import { testManifest } from './fixtures/manifest.ts';
+import fadeV1 from './fixtures/fade/v1.ts';
+import { testMotionLibrary } from './fixtures/motions.ts';
 
 const { Ui } = createUi(testManifest);
 
@@ -30,6 +32,20 @@ export const refused = () => {
   });
   // @ts-expect-error A version name is v<number>.
   testLibrary.version({ ...cardV1, version: 'beta' });
+  // @ts-expect-error A motion item needs its reduced-motion form.
+  testMotionLibrary.motion({
+    id: 'fp.motion.fade',
+    version: 'v3',
+    notes: '',
+    kind: 'keyframes',
+    standard: { keyframes: [], duration: 'effect', easing: 'standard' },
+  });
+  // @ts-expect-error Motion timing uses token names, not raw values.
+  testMotionLibrary.motion({ ...fadeV1, standard: { ...fadeV1.standard, duration: '150ms' } });
+  // @ts-expect-error A motion manifest needs an entry for every motion id.
+  testMotionLibrary.manifest({});
+  // @ts-expect-error Every motion id needs a guide.
+  testMotionLibrary.guides({});
   return (
     <>
       {/* @ts-expect-error Props are checked against the id's props type. */}

@@ -12,11 +12,13 @@ type GuideWithProps = Guide & { readonly props?: Readonly<Record<string, string>
 export interface CatalogueMarkdownInput {
   readonly components: Readonly<Record<string, readonly Entry[]>>;
   readonly componentGuides: Readonly<Record<string, GuideWithProps>>;
-  readonly componentManifest?: Readonly<Record<string, Versioned>>;
   readonly motions: Readonly<Record<string, readonly Entry[]>>;
   readonly motionGuides: Readonly<Record<string, Guide>>;
   readonly motionManifest?: Readonly<Record<string, Versioned>>;
 }
+
+/** Table cells cannot hold a raw pipe or line break. */
+const cell = (text: string): string => text.replace(/\|/g, '\\|').replace(/\n/g, ' ');
 
 const list = (title: string, items: readonly string[]): string[] =>
   items.length === 0 ? [] : [`**${title}**`, '', ...items.map((item) => `- ${item}`), ''];
@@ -35,7 +37,7 @@ const section = (
   if (guide.props && Object.keys(guide.props).length > 0) {
     lines.push('**Props**', '', '| Prop | Meaning |', '| --- | --- |');
     for (const [prop, meaning] of Object.entries(guide.props)) {
-      lines.push(`| \`${prop}\` | ${meaning} |`);
+      lines.push(`| \`${prop}\` | ${cell(meaning)} |`);
     }
     lines.push('');
   }
@@ -88,7 +90,7 @@ export const catalogueMarkdown = (input: CatalogueMarkdownInput): string =>
     '',
     '## Components',
     '',
-    ...sections(input.components, input.componentGuides, input.componentManifest),
+    ...sections(input.components, input.componentGuides, undefined),
     '## Motions',
     '',
     ...sections(input.motions, input.motionGuides, input.motionManifest),

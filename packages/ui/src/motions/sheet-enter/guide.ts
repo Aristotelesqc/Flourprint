@@ -3,10 +3,11 @@ import type { Guide } from '../../guides.ts';
 export default {
   purpose: 'Opens a bottom sheet from the bottom edge of the viewport.',
   useWhen: [
-    'fp.sheet (IonModal with breakpoints): pass it as enterAnimation through ionicAnimation.',
+    "A bottom sheet that is an IonModal without breakpoints (the planned fp.sheet component): pass it as enterAnimation through ionicAnimation(motion, createAnimation, '.modal-wrapper').",
   ],
   avoidWhen: [
-    "Sheets anchored to the bottom of the content instead of the viewport (Argon's defect, #134).",
+    "Sheet modals with breakpoints: Ionic positions them through its own enter animation, which this would replace. Keep Ionic's default there.",
+    'Sheets anchored to the bottom of the page content instead of the viewport (a defect found in an earlier mockup, #134).',
   ],
   accessibility: [
     'Focus moves into the sheet; Escape and the back button close it.',

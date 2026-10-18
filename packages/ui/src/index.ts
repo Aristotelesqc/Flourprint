@@ -25,6 +25,7 @@ export {
   ionicAnimation,
   isReduced,
   parseMotionOverrides,
+  parseUiOverrides,
   playMotion,
   transitionCss,
   type DurationToken,
@@ -38,6 +39,7 @@ export {
   type TransitionMotion,
 } from './motion.ts';
 export { motionLibrary, type FlourprintMotion } from './motions.ts';
+export { defaultMotionManifest } from './motions/default-manifest.ts';
 export { MotionProvider, useMotion } from './motion-context.ts';
 export {
   checkGuides,

@@ -3,7 +3,7 @@ import { motionLibrary } from '../../motions.ts';
 export default motionLibrary.motion({
   id: 'fp.motion.menu-exit',
   version: 'v1',
-  notes: 'Round 2 (`22db386`) anchored menu: the reverse of menu-enter.',
+  notes: 'Round 2 (`22db386`) bottom-anchored menu: the reverse of menu-enter.',
   kind: 'keyframes',
   standard: {
     keyframes: [

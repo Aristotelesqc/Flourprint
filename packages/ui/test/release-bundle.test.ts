@@ -48,10 +48,13 @@ describe('release bundle (ADR 0020)', () => {
     expect(code).toContain('BADGE_V1_MARKER');
     expect(code).toContain('CARD_V1_MARKER');
     expect(code).not.toContain('BADGE_V2_MARKER');
+    expect(code).toContain('FADE_V1_MARKER');
+    expect(code).not.toContain('FADE_V2_MARKER');
   });
 
   it('can load every version when a build allows comparison overrides', async () => {
     const code = await bundle(true);
     expect(code).toContain('BADGE_V2_MARKER');
+    expect(code).toContain('FADE_V2_MARKER');
   });
 });

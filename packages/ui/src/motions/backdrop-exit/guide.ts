@@ -2,7 +2,7 @@ import type { Guide } from '../../guides.ts';
 
 export default {
   purpose: 'Removes the dimming as a sheet or dialog closes.',
-  useWhen: ['The backdrop of fp.sheet and of dialogs, alongside their exit motion.'],
+  useWhen: ['The backdrop of the planned fp.sheet and of dialogs, alongside their exit motion.'],
   avoidWhen: ['Keeping input blocked after the sheet has closed.'],
   accessibility: [
     'Content behind becomes interactive again when the exit starts.',

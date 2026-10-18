@@ -2,7 +2,9 @@ import type { Guide } from '../../guides.ts';
 
 export default {
   purpose: 'Closes a bottom sheet toward the bottom edge.',
-  useWhen: ['fp.sheet when it closes: pass it as leaveAnimation through ionicAnimation.'],
+  useWhen: [
+    'A bottom sheet without breakpoints (the planned fp.sheet) when it closes: pass it as leaveAnimation through ionicAnimation.',
+  ],
   avoidWhen: ["Delaying the result of the sheet's action until the slide ends."],
   accessibility: [
     'Focus returns to the element that opened the sheet.',

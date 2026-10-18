@@ -108,6 +108,7 @@ const MotionDemo = ({ motion, reduced }: { motion: Motion; reduced: boolean }) =
         >
           Play
         </button>
+        {reduced ? <span style={styles.hint}>reduced: no animation</span> : null}
       </div>
     );
   }
@@ -399,6 +400,7 @@ const styles = {
   decision: { color: '#9c4221', marginRight: '0.75rem' },
   missing: { color: '#b3261e', fontWeight: 600, fontSize: '0.85rem' },
   demo: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
+  hint: { fontSize: '0.7rem', opacity: 0.7 },
   sample: {
     flex: 1,
     padding: '0.75rem',
