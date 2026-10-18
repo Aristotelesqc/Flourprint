@@ -1,153 +1,197 @@
-> **Visual-restoration claim withdrawn after owner feedback.** The initial ae6cbd2 gallery was
-> technically exercised but still regressed from round 2. Its checked-item report overstated
-> restoration. The correction keeps the same library/core and fixes the concrete losses below;
-> it is a new review proposal, not a claim of owner acceptance.
+# PR #133 — restoration acceptance and evidence
 
-# Round 2 restoration on the shared UI library
+**Current candidate: verification pending.** This report maps the required corrections; it does
+not certify that they have been implemented, rendered, operated or approved. Fill the evidence
+record from the exact candidate actually tested. A previous green run, source inspection or
+published gallery cannot pass a changed revision.
 
-Refs #120, #133 and #134. This is the 0.3 review delivery following the owner's
-2026-10-17 decision: round 2 (`22db386`) supplies the visual baseline; round 3
-supplies the working state and calls to `@flourprint/core`. Argon remains a
-supplemental reference. Historical quantities and predictions are not imported.
+The owner rejected the first `ae6cbd2` restoration as visually regressive despite its functioning
+controls. The later `dfe6ceb` fidelity gallery is historical evidence, not a waiver of #134 or a
+current acceptance verdict. No production adoption, merge, issue closure or owner approval is
+asserted here.
 
-## Delivered surface and evidence
+## Decisions and references
 
-[Hosted review gallery](https://aristotelesqc.github.io/Flourprint/review-2026-10-17-0.3-fidelity/)
-contains the interactive A/B proposals, screenshots, component catalogue and motion evidence.
-Its `manifest.json`, `review-build.json` and `publication.json` identify the exact source
-revision, source digest, viewport, locale, fixture and image hashes. The gallery is a review
-artifact; this PR does not migrate `apps/mobile`, replace Ionic, or ship a new dev APK.
-Owner visual acceptance is pending. Nothing is merged or closed by this delivery.
+- [#120](https://github.com/Aristotelesqc/Flourprint/issues/120) defines the accepted product
+  directions and unresolved choices; [#134](https://github.com/Aristotelesqc/Flourprint/issues/134)
+  records the correction checklist and subsequent reviews.
+- The [owner's baseline decision](https://github.com/Aristotelesqc/Flourprint/issues/134#issuecomment-6228651482)
+  selects **round 2, source `22db386`, as the visual starting point**. Its inaccurate quantities,
+  broken controls, title truncation, mixed pictograms and other #134 findings must be corrected.
+  This is not approval to reproduce the historical prototype unchanged.
+- Round 3 supplies real `@flourprint/core` calculations, working in-memory state and accessible
+  primitives. [Argon's reference](../references/2026-10-17-argon-round4.html) is secondary; its
+  local arithmetic, unsupported model claims, navigation and overlay defects are not adopted.
+- [ADR 0020](../../adr/0020-versioned-component-library.md) governs the library/consumer
+  boundary, typed ids/versions, manifests, generated catalogue, tokens and release pruning.
+  [DESIGN.md](../../../DESIGN.md) governs presentation; contracts govern semantics.
+- The [comparison report](comparison-report.md) preserves the frozen sources and the original
+  screen-by-screen hierarchy, readability, thumb reach, density, state and pictogram assessment.
+  It is historical diagnosis, not the current run's result.
 
-- The same 26 historical states have round 2 / round 3 / restored comparisons: FR, Dark,
-  393 px, and the requested 360 px / 130% cases. Historical images are copied with their
-  hashes checked; their failures and fixture differences are retained.
-- There are 69 new phone renders, including Light and AMOLED, active fermentation and
-  cooking, actual fermentation-model outcomes, history, registry and settings.
-- The generated catalogue has 20 real v1 ids and 40 companion screenshots, at
-  393 px / 100% and 360 px / 130%, with Light, Dark and AMOLED examples.
-- Motion evidence covers 13 interactions in standard, system-reduced and manually reduced
-  modes: 39 cases and 91 actual before/during/after frames. Standard intermediate frames
-  pause the browser's real animations at half duration; reduced cases have no invented
-  intermediate state.
+## Independent gates
 
-Use the individual original PNG links for static review and the interactive links for
-buttons, input, focus, transitions and save behavior. Screenshots alone do not pass those
-interactions. Historical Planning was unreachable in round 2, and Preparation fixtures
-differ; neither is silently repaired to manufacture equivalence.
+| Gate                          | Required evidence                                                                                                                                                                                                           | What cannot pass it                                                                             |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Visual fidelity and usability | Inspect actual matched renders, including the reference, candidate and relevant app baseline; assess hierarchy, density, contrast, labels, wrapping, action placement and visible states. Record each remaining difference. | Green unit/journey tests, class counts, source inspection or a generated catalogue alone.       |
+| Interaction                   | One accountable reviewer operates every visible affordance and the complete A/B journeys. Record starting state, action, expected result, actual state and outcome; replay failures after fixes.                            | Screenshots, HTML handlers, exterior studio jumps or focus movement with no product transition. |
+| Motion                        | Actual transition recording or before/during/after frames, plus system and manual reduced-motion states for each animated interaction.                                                                                      | Tokens existing in CSS, still screenshots alone or fabricated intermediate frames.              |
+| Build and packaging           | Current-head checks, exact source/build identity, reviewed assets and hashes, direct images, reachable public links and a fresh deployed re-walk.                                                                           | An old passing run, successful upload, HTTP 200 or local-only assets.                           |
+| Owner decisions               | An explicit selection for a named artifact and the relevant alternatives.                                                                                                                                                   | Silence, initial praise, publishing authorization, tests or agent preference.                   |
 
-## Component workflow
+These gates are separate. Report partial results separately; do not call an unresolved visual
+regression restored because interaction tests passed. Do not publish a known regressive candidate
+as a completed delivery. An owner-requested interim comparison may be published as incomplete,
+with its failures visible. Preserve prior artifacts without borrowing their acceptance.
 
-`packages/ui` now supplies the first presentation versions under ADR 0020:
+## Candidate evidence record
 
-| Role                              | Stable ids                                                                                                |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Basic interaction                 | `fp.icon`, `fp.button`, `fp.icon-button`, `fp.number-field`, `fp.weighing-checkbox`, `fp.tabs`            |
-| Containers and feedback           | `fp.surface`, `fp.badge`, `fp.group-card`, `fp.warning-banner`, `fp.bottom-sheet`, `fp.floating-menu`     |
-| Recipe and process                | `fp.hero-summary`, `fp.ingredient-row`, `fp.step-node`, `fp.recipe-card`, `fp.metric-pill`, `fp.timeline` |
-| Active preparation and navigation | `fp.prep-hero`, `fp.bottom-bar`                                                                           |
+| Field                                                | Current-run evidence                                                               |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Source commit and source digest                      | Pending.                                                                           |
+| Build/catalogue identity and consumer manifest       | Pending.                                                                           |
+| Frozen reference and fixture identities              | Round 2/3/app sources in the comparison report; candidate fixture mapping pending. |
+| Browser/version, viewport and measured text scale    | Pending.                                                                           |
+| Local visual inspection and named differences        | Pending.                                                                           |
+| Operated-control inventory and A/B journey results   | Pending.                                                                           |
+| Motion/reduced-motion evidence                       | Pending.                                                                           |
+| Repository, prototype and existing-app check results | Pending.                                                                           |
+| Screenshot manifest, hashes and direct image links   | Pending.                                                                           |
+| Deployment commit and fresh public re-walk           | Pending; no new publication asserted by this document.                             |
+| Owner approval and open selections                   | Open; see decision table below.                                                    |
 
-The prototype's typed facades call ids. `ui.manifest.ts` alone selects versions. Each version
-owns its markup, examples, motion and scoped CSS; selectors and keyframes identify both the
-id and version. Shared CSS contains structural roles and aliases. Components consume
-display-ready props and callbacks, with no core/platform imports or baking calculations.
+The matrices below use **Pending** until supported by the current-run evidence. A future result
+must be `Pass` with an evidence link, `Fail` with reproduction, `Owner choice` with the alternatives,
+or an explicitly justified boundary. Do not mark a requirement passed from proposed source alone.
+Evidence URLs should identify the exact screen/state, navigation, theme, locale, width and scale;
+failure records also need the exact action sequence and expected/actual result.
 
-Nested presentation uses the selected renderer through `library.Slot`: a card does not
-import a particular metric-pill or button version. The catalogue supplies the same renderer,
-so a one-line nested-version change works in screens and catalogue examples. Tests cover
-this distinction, registry consistency, typed props, style boundaries and release pruning.
-No new external dependency is introduced.
+## Visual baseline and mandatory corrections
 
-The studio's component inspector reports the actual id/version under a clicked element
-and links its catalogue entry. Inspection is explicit and pauses product actions until
-disabled. Review tools and fixture selection stay outside the phone.
+| Id  | Requirement and source                                                                                                | Acceptance observation                                                                                                                                                                                                                                                                                            | Current evidence               |
+| --- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| V01 | Round 2 card hierarchy, elevation, metric pictogram pills and semantic badges (#134 baseline and regression reviews). | Inspect ordinary/active/draft/history states side by side. Card emphasis and useful density survive extraction; status is not universally neutral. Only real fixture states/ratings are shown.                                                                                                                    | Pending.                       |
+| V02 | Library density, active Resume and metadata (#127; #134 fidelity correction).                                         | Compact active state shows actual remaining time without an oversized duplicate Resume block. Recipe name, version, weight, hydration, duration and cooking-history meaning are legible; search and filters do not consume the whole initial view.                                                                | Pending.                       |
+| V03 | R2 summary composition and notice hierarchy (#125; #134).                                                             | Primary flour/dough/hydration and secondary enrichment are distinguishable. A composition warning is supporting text, not the card title. Baker basis, assembled/component/final detail and relevant known masses remain discoverable without flattening the hierarchy.                                           | Pending.                       |
+| V04 | Hierarchical ingredients and percentage scope (#122; #134).                                                           | Numbered component/final-mix groups, flour share and component-weight percentage have explicit recipe-total-flour bases. Incorporation is a counted-once reference. Name, grams and percentages form readable columns; allocated and total-recipe scopes are not silently interchanged.                           | Pending.                       |
+| V05 | In-place editing continuity and precision (#121; #67/#71; #134).                                                      | Consultation/edit share location and section structure; compact fields do not duplicate the ingredient name. Read-only quantities are text. Size, percentages, hydration/lock, ratios, allocations and ingredient changes have discoverable edit paths. Feedback does not shift the layout.                       | Pending.                       |
+| V06 | Genuine A/B alternatives and thumb reach (#112; #134).                                                                | A retains contextual/search footer roles; B places contextual actions above stable global destinations. Neither is merely the same full-width CTA with an added navbar. No persistent full-width bottom Start/New banner or destructive action beside Start/Save.                                                 | Pending; owner selection open. |
+| V07 | Unified Recipe structure and global reachability (#120/#121; #134).                                                   | Recipe/Planning/History and Steps are located coherently in one Recipe destination. Global Library/Preparation/Registry/Settings remain discoverable outside a recipe overflow. Avoid redundant stacked tab layers and repeated Edit/Plan actions.                                                                | Pending.                       |
+| V08 | Anchored overflow menu (#129; #134).                                                                                  | Restore compact, recognizable menu rows at the correct A/B anchor, including Duplicate and separated Trash. It does not become a sheet of oversized equal-weight pills or open below the visible viewport.                                                                                                        | Pending.                       |
+| V09 | Hydration-detail hierarchy (#125; #134).                                                                              | Glanceable water/flour summary, readable contributors and unknowns; no unrelated size/anchor explanation. Quantities and units stay together at larger text.                                                                                                                                                      | Pending.                       |
+| V10 | Grouped process hierarchy (#100/#104; #134).                                                                          | Display names, operation pictograms, compact connected rows, group windows and per-step intervals replace generic number discs and nested card clutter. Steps/Timeline is a selected two-option control.                                                                                                          | Pending.                       |
+| V11 | Actual relative timeline and Planning (#100/#106; #134).                                                              | Core-projected spans, component lanes and a separate preheat lane make overlap visible. A flat start-time list is not labelled the required lane timeline. Time range stays intact; duration/conditions use a deliberate narrow layout rather than fragmented columns.                                            | Pending.                       |
+| V12 | Preparation hierarchy (#124; #134).                                                                                   | Dominant remaining time, actual step index/count, name, instruction and settings precede quick controls. Current action has the chosen A/B placement; upcoming steps precede completed steps. No duplicate Note or overflow-hidden readiness action.                                                              | Pending.                       |
+| V13 | Informative creation chooser (#128; #134).                                                                            | Selectable template cards retain identity, descriptions and actual core metrics. Selection and explicit Create are distinct; dismissal is clear. No immediate-create list of indistinguishable pills.                                                                                                             | Pending.                       |
+| V14 | One pictogram family and number typography (#134).                                                                    | Consistent aligned SVG family replaces mixed emoji/text-arrow styles. Quantities and timer use the text font with tabular figures, not a code-font aesthetic.                                                                                                                                                     | Pending.                       |
+| V15 | Titles, navigation and amounts at 393px and 360px/larger text (#134).                                                 | Full recipe/preparation identity, step pill, timing pills, ingredient names, amount/unit pairs and build label remain readable. No mid-word fragments, clipped tabs, squeezed slivers or unexplained icon-only replacement. Reachability and accessible names remain intact.                                      | Pending.                       |
+| V16 | Warm Light/Dark/AMOLED and title contrast (#120; #134).                                                               | Inspect each distinct theme and actual computed foreground/background pairs, including native buttons/cards and disabled states. Dark titles cannot inherit near-black text. AMOLED is not a renamed Dark capture.                                                                                                | Pending.                       |
+| V17 | Product language and identity (#120/#131; #134).                                                                      | Preserve approved artwork/Flourprint identity. FR and EN are internally localized, including decimal/duration/status labels; use Preparation vocabulary. Keep the actual readable English bakery code name, channel and copyable build identity per ADR 0016, not invented hashes/names or a plain “0.3” heading. | Pending.                       |
+| V18 | Product/reviewer boundary (#134).                                                                                     | Issue numbers, scenario selection, technical ids, approval explanations and prototype limitations stay in the studio/gallery, outside the phone. All component names shown to the baker are display names.                                                                                                        | Pending.                       |
 
-The intended iteration is **identify the id → edit/add its version → verify its catalogue
-states → verify consuming screens → switch the manifest**. Frozen versions selected on
-`main` follow ADR 0020's versioning rules. There is only v1 today: the side-by-side catalogue
-does not pretend historical static mockups are reusable library versions.
+## Data and model honesty
 
-## Restored behavior and presentation
+| Id  | Requirement and source                                                              | Acceptance observation                                                                                                                                                                                                                                         | Current evidence |
+| --- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| D01 | One coherent fixture across Library/Recipe/Steps/Planning/Preparation (#120; #134). | Same formula, component identity, counts and process feed all views. Core Shokupan reference starts at 314g flour and 699g dough; intentional edits and independently frozen sessions are identified. Recipe duration and step count reconcile across screens. | Pending.         |
+| D02 | Water/ingredient reconciliation (#125; #134).                                       | Added/component/ingredient water contributors match listed allocations and sum through current core results. No invented tangzhong evaporation or local replacement solver. Contributors already allocated are not added again.                                | Pending.         |
+| D03 | Unknown, estimated and known values (#120/#125; #134).                              | A partial known sum is labelled known/partial or a justified lower bound, never “≈” as though it estimated a complete total. Preserve distinct estimated-property markers where they actually apply; fat/sugar follow the same rule.                           | Pending.         |
+| D04 | Rounding and precision (#19; #134).                                                 | Consistent column rules, locale formatting and atomic number/unit pairs. Whole-percent summary hydration does not overwrite exact stored quantities. Untouched formatted fields cause no edit.                                                                 | Pending.         |
+| D05 | Projection completeness (#100/#106; #134).                                          | All authored intermediate operations and cooking/cooling are represented; counts, relative/group windows and preheat overlap derive from the same projection. Unknown durations stay unknown, without holes filled by invented zeroes.                         | Pending.         |
+| D06 | Three fermentation situations (#126; #134).                                         | Show valid/current output; current dose outside the domain with a separately justified inverse candidate; and no supported result. Do not combine a green “valid” verdict with a failed current-dose state or fabricate a duration.                            | Pending.         |
+| D07 | Current inputs versus candidate/scenario (#126; #134 Argon review).                 | Actual recipe conditions drive diagnostics. A studio reference scenario is explicitly separate. A candidate is labelled with its changed inputs and only applicable when current core output supports it; no fake temperature/yeast alternative.               | Pending.         |
+| D08 | Honest prediction boundaries (#33/#126; #134).                                      | Preserve actual model/version, domain, assumptions and extrapolations. No replacement Q10 law, invented temperature gate, enzymatic warning or “dough doubled” target. Sugar/fat flags follow core semantics, not cosmetic certainty.                          | Pending.         |
+| D09 | Preparation snapshot, planned and actual facts (#124; #6/#20/#21).                  | Start freezes its own quantities/settings; later recipe edits do not mutate them. Planned durations/finish and actual start/end/observations stay distinct. Readiness does not complete a stage or establish a cooked result.                                  | Pending.         |
+| D10 | Scope of demonstrative APIs (#104/#106/#123).                                       | Grouping, move preview and duplication disclose the current API boundary. No mock claims future subject/incorporation/full duplication invariants or durable storage have been implemented.                                                                    | Pending.         |
 
-- Cards, semantic badges, pictogram pills, summary hierarchy, grouped steps, anchored menus
-  and the dominant remaining-time Preparation card follow round 2. SVG pictograms replace
-  mixed emoji; the full option-B title wraps at 360 px / 130%.
-- Build labels use the real source-derived bakery code name and channel (ADR 0016). Local
-  evidence says `local`, not a fabricated CI build. Reviewer explanations remain outside
-  product screens.
-- Consultation and editing remain distinct. Hydration is rounded for display, details are
-  accessible, and the lock exists only in editing. Unchanged precision is not rounded back
-  into state. Size, ratios, percentage edits, anchors and allocation still call the core.
-- The reference fixture retains actual core totals (314 g flour, 699 g dough), with
-  component allocations distinguished from the final mix. Unknown contributions stay unknown.
-  No domain or prototype-model calculation is changed in this restoration.
-- Process views use the core projection, including actual parallel lanes. Model failure,
-  insufficient-data and out-of-domain states do not become zero-duration estimates.
-  Extrapolated results remain labelled. The diagnostics fixture picker is a studio tool.
-- Editing, save, undo/redo/reset/discard, naming a revision, history, search, creation and
-  trash remain functional in disposable in-memory state. Trash marks the recipe; it does not
-  delete it. These behaviors do not establish production persistence conformance.
-- Preparation retains start/end, progress, remaining time, instructions, conditions, visible
-  +15 min / Duration / Note / readiness controls, upcoming steps, completed steps and journal.
-  The primary completion action and photo access occupy reserved footer space. A browser
-  hit-test at 360 px / 130% checks that the footer cannot cover the readiness control.
-- Native dialogs release focus and modality immediately when dismissed. An inert,
-  aria-hidden visual copy finishes the exit animation; the next input is not swallowed by
-  an invisible closing overlay. Escape, outside dismissal and focus restoration are exercised.
-- Motion restores 150 / 220 / 260 ms effect / spatial / sheet durations and the round 2 M3
-  curves: press feedback, menu, weighing row/check, chevron, grid accordion, sheet/backdrop.
-  Tab/screen and completed-step feedback are included. Both reduced-motion controls set all
-  durations to zero. Values and progress are not rolled or animated into false evidence.
+## Interactive control and journey gate
 
-## Verification and limits
+A browser-capable reviewer records an inventory for **each visible control in each mocked state**,
+not only the controls listed below. Test enabled actions; explicitly disable or explain genuine
+illustrations outside the product screen. A studio link or source handler is not a successful
+application action. Preserve failures with before/after images or a trace and any console error.
 
-The delivery is verified in Chrome on Windows, using disposable browser contexts and a
-private preview port. Repository checks cover formatting, lint, TypeScript, token generation,
-1,029 unit tests and 11 backlog tests. Build, mobile build and catalogue build are checked.
-The prototype suite covers 32 tests, including actual input and control activation, A/B
-journeys, ratio edits and mass conservation, anchor resizing, history, trash, dialog focus,
-all three themes, larger text, style coverage and the component inspector. The full existing
-production-app browser suite passes 115 tests; its app/core source trees are unchanged.
-Exact final run results and commit are recorded in the PR and issue comment.
+| Id  | Required operated path (#134 unless noted)                                                                                                                                                     | Expected state/result                                                                                                                                                                                            | Current evidence                        |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| I01 | Library search, every filter, card open, active Resume and global destinations, A and B.                                                                                                       | Search/filter selection and results change; cards and Resume reach the correct destination; global navigation remains available and selected state matches content.                                              | Pending.                                |
+| I02 | Recipe sections, Back, browser Back, Plan/Start, Steps/Timeline and A/B switching.                                                                                                             | Actual destinations/content/selection change; draft guard applies where required. Browser navigation and overlay dismissal are tested separately; native system Back remains unclaimed.                          | Pending.                                |
+| I03 | Edit name/grams/percent/size/hydration/ratio/allocation; save/reopen, cancel, undo/redo/reset; leave with pending/invalid text.                                                                | Saved in-memory state survives reopening; Cancel rolls back; accepted exact state is restored by history. Pending/invalid/refused input is preserved or guarded, never reported saved.                           | Pending.                                |
+| I04 | Direct checkbox, row activation, keyboard check/uncheck and edit-field interaction.                                                                                                            | One weighing transition per gesture, correct counter, no field-edit toggle. Recipe/preparation states remain distinct; demonstrative lifetime policy is labelled.                                                | Pending; owner policy open.             |
+| I05 | Formula totals and component/group disclosures, including keyboard activation.                                                                                                                 | Expanded state and chevron match visible content; collapsed content leaves interaction/accessibility flow appropriately.                                                                                         | Pending.                                |
+| I06 | Overflow open/close, outside tap, Escape, Duplicate, Trash/cancel and global access.                                                                                                           | Anchored menu opens, dismisses and returns focus; duplicate creates a separate in-memory recipe; Trash uses the trash flow, not permanent deletion. No closed-menu focus targets.                                | Pending.                                |
+| I07 | Library → New → select another template → Create → first usable Recipe; cancellation and name collision examples.                                                                              | Selecting alone creates no draft; Create opens the selected recipe; free base name has no unconditional “1”; collision behavior follows the current contract or is a labelled proposal.                          | Pending.                                |
+| I08 | Add/edit/delete step, operation/custom name, duration/conditions/technique/dependency/equipment; apply/cancel.                                                                                 | Supported fields and confirmation/refusal paths have visible outcomes; unresolved raw input is guarded before conditional controls disappear.                                                                    | Pending.                                |
+| I09 | Reorder alternatives, up/down and cross-group proposal, duplicate, preview, atomic refusal and undo.                                                                                           | Supported operations change the proposed order; graph-breaking moves refuse without partial mutation; preview and undo are visible. Missing future command semantics remain explicit rather than inert controls. | Pending; owner interaction choice open. |
+| I10 | Planning target/date/time controls, projection updates and start Preparation.                                                                                                                  | Meaningful input changes update the shared projection; no inert target segments. A fresh session uses its independent snapshot.                                                                                  | Pending.                                |
+| I11 | Nonfinal and cooking Preparation: +15min, Duration, Note, readiness, Photo, Journal, settings/quantities, complete, next/upcoming/completed and final outcome.                                 | Each action changes the relevant state or opens its surface; notes/observations appear in the journal; completion advances correctly and never loops final→first. Photo is explicitly a simulated marker.        | Pending.                                |
+| I12 | Every sheet/menu: focus entry, containment, Escape/outside/Close, focus return and first input immediately after dismissal.                                                                    | Viewport-anchored overlays are reachable; closed content is inert/hidden; the closing animation never swallows input or leaves invisible modality.                                                               | Pending.                                |
+| I13 | Build copy succeeds and clipboard refusal.                                                                                                                                                     | Copy or a visible fallback occurs; permission denial is caught without an uncaught error. Visible build identity remains available independently of copying.                                                     | Pending.                                |
+| I14 | Complete journey: Library → search/filter → Recipe → edit/cancel → edit/save/reopen → Steps/Timeline/Planning → start → note/+15/observation/complete → Recipe/History; plus template journey. | Whole journeys complete from ordinary app controls in A and B. Repeat representative stress paths; reload resets the disposable prototype explicitly, not as a claim of persistence.                             | Pending.                                |
 
-Gemini contributed through two bounded AGY supplied-source implementation turns. Codex
-reviewed and integrated the output, inspected rendered screens, operated controls and fixed
-runtime defects. One bounded attempt to have AGY operate the browser established that this
-CLI session has no interactive browser capability. It is **unsupported**, not a passed
-Gemini runtime review. No permission changes or repeated reviewer cohort were used. The
-capability finding is recorded in the AGY permissions/browser reference.
+Core live coverage is 393px/FR/Dark in A and B. Stress relevant interactions at 360px with the
+#134 125% requirement and the owner's later 130% comparison coverage; record the **measured**
+text scale. Include representative EN/Light and FR/AMOLED journeys. Do not infer 125% behavior
+from a URL parser or substitute 130% screenshots for operated input. Use one accountable
+reviewer and a focused replay/smoke suite, not #87's withdrawn four-agent gate.
 
-This is not native keyboard/back-button, Android, Electron, storage-migration, reminder,
-predictive-model or real-bake validation. Production adoption remains a reviewed consumer
-change using these exact library modules, rather than a second handwritten reconstruction.
-A/B navigation and target-size preferences remain owner decisions; this report does not
-choose them by a test result.
+## Motion and shared-library gate
 
-## Correction after owner feedback
+| Id  | Required evidence                                                                                      | Acceptance observation                                                                                                                                                                                                               | Current evidence |
+| --- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| M01 | R2 150/220/260ms effect/spatial/sheet tokens and standard/decelerate easing.                           | Exact values have one home in `packages/ui/src/tokens.ts`; generated CSS/frontmatter agree. Tokens are not themselves proof of a transition.                                                                                         | Pending.         |
+| M02 | Press/hover/selection, anchored menu, ingredient row/check, chevron/grid accordion and sheet/backdrop. | Actual browser transition evidence for the full R2 inventory; no lost animation during extraction. Show relevant tab/screen changes and Preparation completion too.                                                                  | Pending.         |
+| M03 | System and manual reduced motion for every animated interaction.                                       | Same readable states and immediate actions, zero-duration alternative, no fabricated intermediate frame, rolling quantities, fake progress or decorative delay.                                                                      | Pending.         |
+| L01 | Typed registry, consumer manifest, nested selection and version isolation (ADR 0020).                  | Same `fp.*` modules serve catalogue and screens. Manifest selection reaches nested components; scoped version styles cannot restyle another version. Frozen-version and pruning rules remain intact.                                 | Pending.         |
+| L02 | Display-ready props, translations and semantic boundaries.                                             | Library imports neither core/adapters nor domain data/calculations; screens map actual core results and localized text. No screen-local reconstruction of a component's interior.                                                    | Pending.         |
+| L03 | Catalogue states/themes/size/motion and inspector.                                                     | Cover real versions and relevant default/pressed/selected/disabled/error/loading states, three themes, 393px/360px/130% and reduced motion. Inspector stays outside product captures; enabling it explicitly pauses product actions. | Pending.         |
+| L04 | Structural/style coverage and consumer regression checks.                                              | No unexplained unstyled component classes; actual renders still checked because a CSS rule count cannot establish design quality. A local version change is checked in all consuming screen states.                                  | Pending.         |
 
-Direct inspection of the round 2 / ae6cbd2 triptychs confirmed these losses:
+## Delivery and technical/documentation gate
 
-- A/B action placement had been homogenized. B wrongly had both a contextual footer and
-  global navigation, while A lost its search toolbar. B now uses header actions and bottom
-  destinations; A uses the contextual footer with its library search. Menus anchor accordingly.
-- Recipe cards had grown without carrying more useful information. Remaining time now belongs
-  to the active status/Resume control; the large extra Resume row is removed. Actual component
-  tags, version and filter counts are available, without inventing ratings or cooking history.
-- Summary tiles had dropped the baker basis, component/final breakdown, known fat/sugar masses
-  and partial-value approximation markers. These actual core values are visible again.
-- Ingredient percentage/amount columns, numbered ingredient groups and their percentage scope
-  have been restored. The larger-text version remains wrappable rather than clipping values.
-- Process steps had become nested cards with generic number discs, and group windows had
-  disappeared. They now have operation pictograms, compact connected rows, projected intervals
-  and group windows. Preheat has a separate timeline lane rather than being merged into dough.
-- Hydration details regain two glanceable summary tiles. Creation regains selectable template
-  cards with actual core metrics and an explicit Create confirmation. Selecting a model alone
-  no longer creates a draft. Duplicate is a functioning in-memory menu action again.
-- Preparation shows the actual step index/count and a smaller timer; instructions, start/end,
-  progress and conditions remain. Completion follows the chosen A/B action location.
+| Id  | Requirement                                                                                                                                                                                                                                                               | Current evidence |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| G01 | PR targets `dev` for this 0.3 slice, preserving integration branches. No release/main version bump to compensate for an incorrect base. No merge without the authorized review flow.                                                                                      | Pending.         |
+| G02 | Complete PR description: no truncation or stray escaping; “mockup coverage / proposed interactions”, not “implemented contracts”; links #120/#134/#112 and states actual production boundaries.                                                                           | Pending.         |
+| G03 | Exact-head formatting/lint/typecheck/token/unit/backlog/build checks, full existing-app Playwright and focused prototype suite; preserve failures and distinguish #107 selection race from a visual verdict.                                                              | Pending.         |
+| G04 | Actual current-app baselines and the same 26 comparison states, with 393px and 360px/130% rows; pin round 2, round 3, app and candidate sources, fixture differences and unavailable historical views.                                                                    | Pending.         |
+| G05 | Companion actual PNG/JPEG set for every proposed screen and meaningful open state; A/B, theme, locale, width and scale in captions/manifest; full-resolution direct links work without operating the prototype.                                                           | Pending.         |
+| G06 | Exact source/digest/assets and file hashes; screenshot and interactive revisions match. Publish only the reviewed allowlist; keep prompts, logs, diagnostics and personal data private. Preserve prior galleries.                                                         | Pending.         |
+| G07 | Fresh public review: gallery/report/original images, relative links, themes, every failed path replayed and representative A/B journeys; no unaccounted page errors. HTTP success alone does not pass.                                                                    | Pending.         |
+| G08 | Report independent visual/interaction/motion/build results, deliberate deviations and remaining owner choices. No implication of production UI migration, durable storage, Android/Electron/native keyboard/Back/camera/reminders, scientific calibration or a real bake. | Pending.         |
 
-These are presentation/interaction corrections in the same v1 modules, not a domain/model rewrite.
-The original gallery and its limitations remain available. No production app adoption or native
-verification is claimed, and owner visual acceptance remains open. The new AGY source task was
-bounded at 180 seconds and returned an empty response; it contributed no patch or runtime pass.
-Codex corrected the identified defects without relaunching a review campaign.
+## Owner choices remain open
+
+| Choice                             | Alternatives/evidence to keep available                                                                                                                                                                                                      | Decision status                      |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| #112 navigation                    | Working A contextual thumb toolbar versus B header actions/global destinations, with complete journeys and larger-text consequences. A chosen mix requires an explicit decision.                                                             | Open; no choice inferred from tests. |
+| #123 reorder interaction           | Always-visible handles versus a distinct Reorder submode; actual collapsed/cross-group examples, refusal/preview/undo and supported command boundaries.                                                                                      | Open.                                |
+| 40/48px reorder targets            | Both sizes shown in the same normal/larger-text context, including actual hit areas and accessible labels. Current 48px convention is not an owner-selected prohibition on 40px.                                                             | Open.                                |
+| #122 weighing lifetime             | Pre-start recipe checks versus running-session checks; persistence/reload/concurrency, edit/scaling invalidation and weighing versus incorporation. Prototype alternatives stay disposable; choose policy before persistence implementation. | Open.                                |
+| #127 library density/filter policy | Required search stays usable; compare density and any additional sort/filter behavior with realistic records. No fabricated history/rating to create emphasis.                                                                               | Open where not already selected.     |
+
+A remaining product choice does not excuse broken controls, incorrect arithmetic, misleading
+diagnostics, localization or overflow. Correct those within the authorized scope. Conversely,
+technical checks do not authorize choosing a policy reserved for the owner.
+
+## Historical artifacts and current limits
+
+- [Frozen three-way comparison](https://aristotelesqc.github.io/Flourprint/review-2026-10-16-0.3-comparison/)
+  and [four-way comparison](https://aristotelesqc.github.io/Flourprint/review-2026-10-17-four-way/)
+  preserve the diagnosis, including unavailable views and different Preparation phases.
+- The [first restoration](https://aristotelesqc.github.io/Flourprint/review-2026-10-17-0.3-restored/)
+  remains available as a rejected visual proposal. Its functioning controls did not establish
+  visual acceptance.
+- The [prior fidelity proposal](https://aristotelesqc.github.io/Flourprint/review-2026-10-17-0.3-fidelity/)
+  is pinned to source `dfe6cebdada1a592afc585983a23494896065b7f`, source digest
+  `07f1212ef7deb005446ddafda07a341686bfdf7e6631b45cbc772e114b55e96b`, Pages `522db6b`.
+  Its report recorded 69 phone captures, 40 catalogue captures, 39 motion cases/91 frames,
+  32 prototype tests, 1,029 unit tests, 11 backlog tests and 115 app browser tests. These are
+  historical recorded results, **not rerun results for this candidate**, and did not decide
+  owner visual acceptance.
+- Prior AGY supplied-source contributions and an unsupported browser attempt do not establish
+  an independent Gemini runtime review. An empty bounded response supplied no patch or pass.
+
+The current evidence record and each matrix row remain pending until the actual gates above
+are performed. Record outstanding failures plainly, then link the reviewed evidence in #134
+and the PR within the existing authorization. This document is an acceptance/evidence map,
+not another backlog and not approval to publish, merge or close issues.

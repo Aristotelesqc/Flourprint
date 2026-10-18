@@ -9,6 +9,8 @@ export type IconName =
   | 'close'
   | 'clock'
   | 'flour'
+  | 'fat'
+  | 'sugar'
   | 'water'
   | 'scale'
   | 'temperature'
@@ -77,6 +79,7 @@ export interface NumberFieldProps {
   value: number;
   label: string;
   unit?: string;
+  unitPosition?: 'prefix' | 'suffix';
   locale: 'fr' | 'en';
   onCommit: (value: number) => boolean;
   onValidityChange?: (invalid: boolean) => void;
@@ -109,6 +112,7 @@ export interface DisclosureProps {
   subtitle?: string;
   badge?: string;
   defaultOpen?: boolean;
+  status?: 'warning' | 'success';
   children: React.ReactNode;
 }
 
@@ -144,6 +148,8 @@ export interface RecipeSummaryProps {
   notice?: string;
   onHelp: () => void;
   helpLabel: string;
+  onSizeHelp?: () => void;
+  sizeHelpLabel?: string;
 }
 
 export interface IngredientRowProps {
@@ -199,6 +205,7 @@ export interface StatusPanelProps {
 }
 
 export interface PreparationTimerProps {
+  remainingLabel?: string;
   title: string;
   remaining: string;
   start: string;
@@ -221,6 +228,7 @@ export interface BottomBarProps {
     label: string;
     icon: IconName;
     selected: boolean;
+    badge?: string;
     onSelect: () => void;
   }[];
   navigationLabel: string;

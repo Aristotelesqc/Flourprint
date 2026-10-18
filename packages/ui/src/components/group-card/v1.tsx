@@ -10,6 +10,7 @@ export const Disclosure: React.FC<DisclosureProps> = ({
   subtitle,
   badge,
   defaultOpen = false,
+  status,
   children,
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -26,14 +27,26 @@ export const Disclosure: React.FC<DisclosureProps> = ({
         className="disclosure-header"
         aria-expanded={isOpen}
         aria-controls={contentId}
+        aria-label={status ? title : undefined}
+        aria-describedby={status && subtitle ? `${contentId}-status` : undefined}
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className="disclosure-headings">
           <div className="row">
             <span className="disclosure-title">{title}</span>
+            {status && (
+              <Icon
+                name={status === 'warning' ? 'warning' : 'check'}
+                className={status === 'warning' ? 'warning' : 'semantic-icon'}
+              />
+            )}
             {badge && <Badge variant="default">{badge}</Badge>}
           </div>
-          {subtitle && <span className="disclosure-subtitle muted">{subtitle}</span>}
+          {subtitle && (
+            <span id={`${contentId}-status`} className="disclosure-subtitle muted">
+              {subtitle}
+            </span>
+          )}
         </div>
         <Icon name="chevronDown" size="1.125rem" className="disclosure-chevron" />
       </button>

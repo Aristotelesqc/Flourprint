@@ -17,6 +17,13 @@ revision and candidate changes; an old report or screenshot is not the current b
 Distinguish shipped behavior, explored proposals and missing visual work. Passing journeys do
 not demonstrate that an interface is attractive or understandable.
 
+Read ADR 0020 for versioned-library work. For #133/#134, round 2 is the owner's visual starting
+point **with every mandatory correction in #134 still applicable**. Preserve round 3's working
+state, accessible primitives and real core results; Argon is a secondary visual reference.
+Do not restore historical data contradictions, dead controls, false model claims, mixed emoji,
+truncated identity or large-text failures in the name of fidelity. Map the current issue findings
+to matched renders and operated journeys before calling the revision restored.
+
 For the current #35 redesign, the owner's approved review set is **Recipes list, Recipe consultation,
 Recipe editing and an active Preparation, in French at 360 px**, in light, dark and AMOLED. The revised
 four-screen v2 mockup was approved before implementation. Use the
@@ -35,10 +42,16 @@ contracts, the approved mark, exact fixture values and a bounded screen brief. K
 for overlapping output. A supplied-source HTML result is generated code, not a production
 patch or proof of direct filesystem access; inspect the final result and raw tool events.
 
-Request a standalone interactive HTML/CSS/JS prototype in ignored or private scratch space,
-separate from `apps/mobile`. Reuse the approved mark unchanged. Keep warm orange/brown identity
-in light, warm-dark and AMOLED where relevant. Establish reusable visual roles, spacing and
-action hierarchy instead of independent styles for every screen.
+For current Flourprint mockups, compose the shared versioned components in `packages/ui`
+through the mockup's typed id/version manifest (ADR 0020); keep the consumer separate from
+`apps/mobile`. Component markup, scoped styles, examples and motion belong to the library.
+Screens own composition, localized display-ready props, core bindings and disposable state.
+The generated catalogue uses those same versions. Change a component version in its library,
+compare it in the catalogue and consuming screens, then select it through the manifest; do not
+rewrite screen-local copies or invent library versions for historical HTML. A standalone HTML
+reference may inform comparison when explicitly supplied/requested, but does not replace this
+shared implementation or establish reusable production components. Reuse the approved mark
+unchanged and preserve the warm light, warm-dark and AMOLED identity.
 
 For #35, use one principal gesture per screen, occasional secondary actions in an overflow menu,
 and destructive actions separated from the primary gesture. Keep frequently used Preparation
@@ -57,6 +70,13 @@ readiness. Simulated Save/Trash/Complete actions must not claim that real data w
 Codex reviews and corrects generated output before presenting it. Inspect actual renders,
 not only the model's report. Reject technical field names, untranslated product text,
 invented ingredient classifications, inconsistent units and contradictory actions.
+
+Keep **visual** and **interactive** acceptance separate. Inspect matched actual renders for
+reference fidelity, hierarchy, density, contrast, wrapping and visible states; a passing journey
+or a component catalogue is not visual approval. Operate controls and complete journeys to
+verify action-to-state transitions; screenshots cannot establish behavior. Keep A/B navigation,
+weighing lifetime, reorder alternatives and 40/48 px targets as proposals until selected by the
+owner. Tests do not select a product preference.
 
 Use browser automation to render the requested screens and themes at the requested viewport.
 Check the visible content's width as well as the document: a clipped scroll container can hide
@@ -105,6 +125,11 @@ Verify the deployed URL, relative links, images, themes and representative inter
 fresh browser context. A green deployment or HTTP 200 alone is insufficient. Give the owner
 the gallery and direct interactive URL; do not rely on a queued in-app browser tab.
 
+Do not publish a known regression as a completed restoration or delivery. Fix it before making
+that claim, or, when an interim comparison was requested, label the artifact incomplete and
+name the remaining failures. Record gate results only for the exact tested revision; earlier
+passing tests or captures do not certify changed source. Keep unperformed checks unverified.
+
 ## Approval and implementation handoff
 
 When the owner explicitly requires mockup approval before code, keep production UI work
@@ -118,8 +143,8 @@ move to ordinary integration and the owner's dev-app feedback; later changes bec
 Use the [AGY review budget](../agy/SKILL.md#bound-review-and-recovery-costs), respecting current
 delegation requests, stops and waivers rather than inheriting #87's withdrawn four-reviewer gate.
 
-After acceptance, implement the design with shared production components and runtime tokens;
-the standalone HTML is a visual reference, not an app replacement to paste into Ionic.
+After acceptance, adopt the reviewed versioned components and tokens through the production
+consumer manifest in focused slices; do not reconstruct the mockup's markup inside Ionic.
 Update `DESIGN.md` and the relevant ADR alongside the first implementation, distinguishing
 presentation choices from framework/router decisions. Use focused PRs with before/after
 captures and the repository's checks. Keep the parent issue open while acceptance remains;

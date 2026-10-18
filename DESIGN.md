@@ -153,10 +153,12 @@ Flourprint React components, shared semantic tokens and the existing Ionic navig
 shell. No external Material library or router replacement is selected. The mockup is a visual
 reference, not production state or command logic. Later changes remain possible.
 
-The frontmatter retains the executable warm palette and records the accepted spacing scale;
-keep it synchronized with `apps/mobile/src/theme/app.css` in the implementation slice. Evidence
-of actual screen and platform coverage belongs in the PR and #35, not an implied compliance claim.
-No runtime token generator exists.
+Token values have one source: `packages/ui/src/tokens.ts` (ADR 0020).
+`scripts/ui-tokens.mjs` generates `packages/ui/src/tokens.css` and this file's token frontmatter;
+run `pnpm tokens` after a token change and `pnpm tokens:check` to verify synchronization.
+The production app's `apps/mobile/src/theme/app.css` remains migration context until its reviewed
+consumer change. Evidence of actual screen and platform coverage belongs in the PR and #35,
+not an implied compliance claim.
 
 ## Colors
 
@@ -442,3 +444,24 @@ of unlabeled-shape buttons; and summary detail, partial-value markers, horizonta
 quantities, operation pictograms and group time windows must not disappear during extraction.
 Compare these roles against round 2 directly. Retain necessary accessibility and core-data
 corrections, documenting their differences rather than calling every difference restored.
+
+Round 2 is a **starting point with mandatory corrections**, not a pixel-perfect acceptance
+target: #134's title, localization, pictogram, build identity, data, navigation and larger-text
+findings still apply. Never copy its invented quantities, contradictory model claims, dead
+controls, discarded edits or inaccessible overlays. Argon is a secondary visual reference;
+round 3 supplies the working state and core calls. Unresolved A/B, weighing lifetime, reorder
+mode and 40/48 px target choices remain visible proposals rather than silent defaults.
+
+Review two separate gates. **Visual acceptance** requires inspecting matched actual renders
+for hierarchy, density, contrast, wrapping, state visibility and fidelity to the selected
+reference. **Interactive acceptance** requires operating the visible controls and complete
+journeys, checking action-to-state transitions, raw input, focus and dismissal. A green test
+suite cannot pass the visual gate; screenshots cannot pass the interactive gate. Motion also
+needs real transition evidence and its reduced-motion state.
+
+Do not publish a known regressive candidate as a completed restoration or delivery. Diagnose
+and correct the regression before the delivery claim; if the owner requests an interim
+comparison, label it as an incomplete comparison with the remaining failures. Preserve prior
+artifacts for history without reusing their passing results for a changed revision. The
+[restoration acceptance matrix](docs/mockups/0.3-ux/restoration-report.md) maps #120/#134 to the
+required evidence; it is an evidence report, not another backlog or an owner approval.

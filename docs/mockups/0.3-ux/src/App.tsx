@@ -99,6 +99,8 @@ export default function App() {
 
   const [scale, setScale] = useState(params.get('scale') ?? '100');
 
+  const [orderStyle, setOrderStyle] = useState(params.get('ordering') ?? 'mode');
+
   const [targets, setTargets] = useState(params.get('targets') ?? '48');
 
   const [route, setRoute] = useState<Route>(readRoute);
@@ -172,6 +174,7 @@ export default function App() {
     document.documentElement.dataset.theme = theme;
 
     document.documentElement.dataset.targetSize = targets;
+    document.documentElement.dataset.ordering = orderStyle;
 
     document.documentElement.dataset.textScale = scale;
 
@@ -182,7 +185,7 @@ export default function App() {
     document.documentElement.style.setProperty('--phone-width', `${width}px`);
 
     document.body.dataset.capture = params.get('capture') === '1' ? 'true' : 'false';
-  }, [locale, theme, motion, targets, scale, width, params]);
+  }, [locale, theme, motion, targets, scale, width, orderStyle, params]);
 
   useEffect(() => {
     const focus = new URLSearchParams(location.search).get('focus');
@@ -290,6 +293,18 @@ export default function App() {
     (typeof __MOCKUP_BUILD__ !== 'undefined' && __MOCKUP_BUILD__) ||
     `Build ${__MOCKUP_REVISION__.slice(0, 7)}`;
 
+  const copyBuild = () => {
+    const value = `${buildIdentity}\n${__MOCKUP_REVISION__}\n${__MOCKUP_SOURCE_HASH__}`;
+    if (!navigator.clipboard) {
+      setCopy(t(locale, 'copyFallback'));
+      return;
+    }
+    navigator.clipboard
+      .writeText(value)
+      .then(() => setCopy(t(locale, 'copied')))
+      .catch(() => setCopy(t(locale, 'copyFallback')));
+  };
+
   const title =
     route.screen === 'recipe'
       ? name
@@ -303,8 +318,13 @@ export default function App() {
 
   const primary =
     route.screen === 'library' ? (
-      <Button variant="primary" icon="plus" onClick={() => setOverlay('create')}>
-        {t(locale, 'new')}
+      <Button
+        variant="primary"
+        icon="plus"
+        aria-label={t(locale, 'new')}
+        onClick={() => setOverlay('create')}
+      >
+        {t(locale, variant === 'A' ? 'newShort' : 'new')}
       </Button>
     ) : route.screen === 'recipe' ? (
       state.draft ? (
@@ -326,7 +346,8 @@ export default function App() {
           icon="play"
 
           onClick={() => {
-            if (store.start()) navigate({ screen: 'preparation' });
+            if ((state.session?.recipeId === recipe.id && !state.session.finished) || store.start())
+              navigate({ screen: 'preparation' });
           }}
         >
           {t(locale, 'start')}
@@ -347,14 +368,28 @@ export default function App() {
                   onClick={() => setPending(() => store.cancel)}
                 />
               ) : (
-                <Button onClick={() => setPending(() => store.cancel)}>
-                  {t(locale, 'discard')}
-                </Button>
+                <>
+                  <IconButton
+                    icon="undo"
+                    label={t(locale, 'undo')}
+                    disabled={state.draft.index === 0 || Object.values(state.invalid).some(Boolean)}
+                    onClick={store.undo}
+                  />
+                  <IconButton
+                    icon="redo"
+                    label={t(locale, 'redo')}
+                    disabled={
+                      state.draft.index === state.draft.history.length - 1 ||
+                      Object.values(state.invalid).some(Boolean)
+                    }
+                    onClick={store.redo}
+                  />
+                </>
               )
             ) : variant === 'B' ? (
               <IconButton icon="edit" label={t(locale, 'edit')} onClick={store.edit} />
             ) : (
-              <Button icon="edit" variant="quiet" onClick={store.edit}>
+              <Button variant="quiet" onClick={store.edit}>
                 {t(locale, 'edit')}
               </Button>
             ))}
@@ -369,13 +404,20 @@ export default function App() {
               onChange={(e) => setQuery(e.target.value)}
             />
           )}
+          {route.screen === 'recipe' && !state.draft && variant === 'A' && (
+            <IconButton
+              icon="calendar"
+              label={t(locale, 'planning')}
+              onClick={() => navigate({ screen: 'recipe', section: 'planning' })}
+            />
+          )}
           {primary}
 
-          {route.screen === 'recipe' && (
+          {(route.screen === 'recipe' || (route.screen === 'library' && variant === 'A')) && (
             <IconButton
               icon="more"
-              label={t(locale, 'recipeActions')}
-              onClick={() => setOverlay('menu')}
+              label={t(locale, route.screen === 'recipe' ? 'recipeActions' : 'navigation')}
+              onClick={() => setOverlay(route.screen === 'recipe' ? 'menu' : 'nav')}
             />
           )}
 
@@ -418,8 +460,10 @@ export default function App() {
       !r.trashed &&
       recipeName(r, locale).toLocaleLowerCase().includes(query.toLocaleLowerCase()) &&
       (filter === 'all' ||
-        (filter === 'running' && r.id === state.session?.recipeId) ||
-        (filter === 'ready' && r.version > 0 && r.id !== state.session?.recipeId) ||
+        (filter === 'running' && r.id === state.session?.recipeId && !state.session?.finished) ||
+        (filter === 'ready' &&
+          r.version > 0 &&
+          (r.id !== state.session?.recipeId || state.session?.finished)) ||
         (filter === 'drafts' && r.version === 0)),
   );
 
@@ -579,6 +623,23 @@ export default function App() {
           </a>
         ))}
       </aside>
+      <aside className="studio-note">
+        <label>
+          {t(locale, 'orderMode')}{' '}
+          <select
+            value={orderStyle}
+            onChange={(e) => {
+              setOrderStyle(e.target.value);
+              const url = new URL(location.href);
+              url.searchParams.set('ordering', e.target.value);
+              history.replaceState({}, '', url);
+            }}
+          >
+            <option value="mode">{t(locale, 'orderMode')}</option>
+            <option value="handles">{t(locale, 'handles')}</option>
+          </select>
+        </label>
+      </aside>
       <div className="phone-stage">
         <div className="phone-frame" data-testid="phone" data-navigation={variant}>
           <header className="phone-header">
@@ -613,9 +674,11 @@ export default function App() {
 
                 <small className="header-subtitle">
                   {route.screen === 'recipe'
-                    ? `${t(locale, 'version')} ${recipe.version} · ${duration(locale, total)}`
-                    : buildIdentity}
+                    ? `${state.draft ? t(locale, 'draft') : t(locale, 'version')} ${recipe.version} · ${duration(locale, total)}`
+                    : undefined}
                 </small>
+
+                <small hidden></small>
               </div>
             </div>
 
@@ -627,18 +690,11 @@ export default function App() {
                 contextualControls
               ) : (
                 <>
-                  {state.session && route.screen !== 'preparation' && (
+                  {state.session && !state.session.finished && route.screen !== 'preparation' && (
                     <IconButton
                       icon="clock"
                       label={t(locale, 'resume')}
                       onClick={() => guard(() => navigate({ screen: 'preparation' }))}
-                    />
-                  )}
-                  {route.screen !== 'recipe' && (
-                    <IconButton
-                      icon="more"
-                      label={t(locale, 'copyBuild')}
-                      onClick={() => setOverlay('build')}
                     />
                   )}
                 </>
@@ -648,10 +704,6 @@ export default function App() {
 
           {route.screen === 'recipe' && (
             <>
-              <div className="draft-status" aria-live="polite">
-                {state.draft ? t(locale, 'unsaved') : ''}
-              </div>
-
               <Tabs
                 label={t(locale, 'navigation')}
 
@@ -697,7 +749,7 @@ export default function App() {
                   tabs={['all', 'running', 'ready', 'drafts'].map((id) => ({
                     id,
 
-                    label: `${t(locale, id as MessageKey)} (${state.recipes.filter((r) => !r.trashed && (id === 'all' || (id === 'running' && r.id === state.session?.recipeId) || (id === 'ready' && r.version > 0 && r.id !== state.session?.recipeId) || (id === 'drafts' && r.version === 0))).length})`,
+                    label: `${t(locale, id as MessageKey)} (${state.recipes.filter((r) => !r.trashed && (id === 'all' || (id === 'running' && r.id === state.session?.recipeId && !state.session?.finished) || (id === 'ready' && r.version > 0 && (r.id !== state.session?.recipeId || state.session?.finished)) || (id === 'drafts' && r.version === 0))).length})`,
                   }))}
 
                   activeId={filter}
@@ -708,7 +760,10 @@ export default function App() {
                 {allRecipes.map((r) => {
                   const resolved = resolveFormula(r.formula);
 
-                  const isRunning = state.session?.recipeId === r.id;
+                  const isRunning = state.session?.recipeId === r.id && !state.session.finished;
+                  const lastSession = state.sessionHistory
+                    .filter((session) => session.recipeId === r.id)
+                    .at(-1);
 
                   const dWeight = resolved.ok
                     ? grams(locale, resolved.value.doughWeight)
@@ -731,14 +786,14 @@ export default function App() {
                           ? [
                               {
                                 icon: 'water' as const,
-                                value: `${resolved.ok && resolved.value.totalWater.completeness === 'incomplete' ? '≈ ' : ''}${hyd}`,
+                                value: `${resolved.ok && resolved.value.totalWater.completeness === 'incomplete' ? '≥ ' : ''}${hyd}`,
                               },
                             ]
                           : []),
 
                         ...(dWeight ? [{ icon: 'scale' as const, value: dWeight }] : []),
 
-                        { icon: 'clock' as const, value: dur },
+                        { icon: 'clock' as const, value: `${dur} · ${t(locale, 'coolingEnd')}` },
                         { value: `${t(locale, 'version')} ${r.version}` },
 
                         ...r.formula.components.map((c) => ({
@@ -749,7 +804,16 @@ export default function App() {
                       status={
                         isRunning
                           ? `${t(locale, 'running')} · ${duration(locale, sessionRemaining)}`
-                          : t(locale, r.version === 0 ? 'draft' : 'neverCooked')
+                          : lastSession?.outcome
+                            ? t(
+                                locale,
+                                lastSession.outcome.result === 'cooked'
+                                  ? 'resultCooked'
+                                  : lastSession.outcome.result === 'dough'
+                                    ? 'resultDough'
+                                    : 'resultMixed',
+                              )
+                            : t(locale, r.version === 0 ? 'draft' : 'neverCooked')
                       }
 
                       statusVariant={
@@ -771,41 +835,6 @@ export default function App() {
 
             {route.screen === 'recipe' && (
               <>
-                {state.draft && (
-                  <>
-                    <div className="actions">
-                      <IconButton
-                        icon="undo"
-
-                        label={t(locale, 'undo')}
-
-                        disabled={
-                          state.draft.index === 0 || Object.values(state.invalid).some(Boolean)
-                        }
-
-                        onClick={store.undo}
-                      />
-
-                      <IconButton
-                        icon="redo"
-
-                        label={t(locale, 'redo')}
-
-                        disabled={
-                          state.draft.index === state.draft.history.length - 1 ||
-                          Object.values(state.invalid).some(Boolean)
-                        }
-
-                        onClick={store.redo}
-                      />
-
-                      <Button variant="quiet" onClick={store.reset}>
-                        {t(locale, 'reset')}
-                      </Button>
-                    </div>
-                  </>
-                )}
-
                 <div hidden={section !== 'ingredients'}>
                   <RecipeIngredients
                     store={store}
@@ -826,6 +855,42 @@ export default function App() {
                 </div>
 
                 <div hidden={section !== 'history'}>
+                  <h2>{t(locale, 'preparations')}</h2>
+                  {state.sessionHistory
+                    .filter((session) => session.recipeId === recipe.id)
+                    .map((session) => (
+                      <Surface key={session.id}>
+                        <h3>
+                          {t(locale, 'version')} {session.recipeVersion} ·{' '}
+                          {session.outcome
+                            ? t(
+                                locale,
+                                session.outcome.result === 'cooked'
+                                  ? 'resultCooked'
+                                  : session.outcome.result === 'dough'
+                                    ? 'resultDough'
+                                    : 'resultMixed',
+                              )
+                            : t(locale, 'unknown')}
+                        </h3>
+                        <p>{session.outcome?.dough && t(locale, session.outcome.dough)}</p>
+                        <p>
+                          {t(locale, 'actualDuration')} :{' '}
+                          {session.endedAt
+                            ? duration(
+                                locale,
+                                (Date.parse(session.endedAt) - Date.parse(session.startedAt)) /
+                                  1000,
+                              )
+                            : t(locale, 'unknownDuration')}
+                        </p>
+                        <p>{t(locale, 'noRating')}</p>
+                      </Surface>
+                    ))}
+                  {!state.sessionHistory.some((session) => session.recipeId === recipe.id) && (
+                    <p>{t(locale, 'historyEmpty')}</p>
+                  )}
+                  <h2>{t(locale, 'versions')}</h2>
                   {recipe.revisions.length ? (
                     recipe.revisions.map((r, index) => (
                       <Surface key={index}>
@@ -923,6 +988,18 @@ export default function App() {
             )}
           </main>
 
+          <button
+            type="button"
+            className="build-label"
+            data-testid="visible-build"
+            aria-label={t(locale, 'copyBuild')}
+            onClick={() => {
+              setOverlay('build');
+              copyBuild();
+            }}
+          >
+            {buildIdentity}
+          </button>
           <BottomBar
             variant={variant}
             navigationLabel={t(locale, 'navigation')}
@@ -930,6 +1007,10 @@ export default function App() {
               id: screen,
               label: t(locale, screen as MessageKey),
               icon: icons[screen],
+              badge:
+                screen === 'preparation' && state.session && !state.session.finished
+                  ? '1'
+                  : undefined,
               selected:
                 route.screen === screen || (screen === 'library' && route.screen === 'recipe'),
               onSelect: () => navigateGlobal(screen),
@@ -963,6 +1044,44 @@ export default function App() {
           >
             {t(locale, 'edit')}
           </Button>
+          {state.draft && (
+            <>
+              <Button
+                icon="undo"
+                variant="quiet"
+                disabled={state.draft.index === 0}
+                onClick={store.undo}
+              >
+                {t(locale, 'undo')}
+              </Button>
+              <Button
+                icon="redo"
+                variant="quiet"
+                disabled={state.draft.index === state.draft.history.length - 1}
+                onClick={store.redo}
+              >
+                {t(locale, 'redo')}
+              </Button>
+              <Button
+                variant="quiet"
+                onClick={() => {
+                  store.reset();
+                  setOverlay(null);
+                }}
+              >
+                {t(locale, 'reset')}
+              </Button>
+              <Button
+                variant="quiet"
+                onClick={() => {
+                  setOverlay(null);
+                  setPending(() => store.cancel);
+                }}
+              >
+                {t(locale, 'discard')}
+              </Button>
+            </>
+          )}
           <Button
             icon="copy"
             variant="quiet"
@@ -1087,30 +1206,40 @@ export default function App() {
             .map((template) => {
               const result = resolveFormula(template.formula);
               return (
-                <RecipeCard
-                  key={template.id}
-                  title={recipeName({ templateId: template.id } as typeof recipe, locale)}
-                  selected={selectedTemplate === template.id}
-                  status={template.formula.components
-                    .map((c) => componentName(locale, c.id, {}))
-                    .join(' · ')}
-                  metrics={
-                    result.ok
-                      ? [
-                          {
-                            icon: 'water',
-                            value: `${result.value.totalWater.completeness === 'incomplete' ? '≈ ' : ''}${num(locale, result.value.totalWaterPct, 0)} %`,
-                          },
-                          { icon: 'scale', value: grams(locale, result.value.doughWeight) },
-                          {
-                            icon: 'clock',
-                            value: duration(locale, processDuration({ ...template, names: {} })),
-                          },
-                        ]
-                      : []
-                  }
-                  onOpen={() => setSelectedTemplate(template.id)}
-                />
+                <div key={template.id}>
+                  <RecipeCard
+                    title={recipeName({ templateId: template.id } as typeof recipe, locale)}
+                    selected={selectedTemplate === template.id}
+                    status={template.formula.components
+                      .map((c) => componentName(locale, c.id, {}))
+                      .join(' · ')}
+                    metrics={
+                      result.ok
+                        ? [
+                            {
+                              icon: 'water',
+                              value: `${result.value.totalWater.completeness === 'incomplete' ? '≥ ' : ''}${num(locale, result.value.totalWaterPct, 0)} %`,
+                            },
+                            { icon: 'scale', value: grams(locale, result.value.doughWeight) },
+                            {
+                              icon: 'clock',
+                              value: duration(locale, processDuration({ ...template, names: {} })),
+                            },
+                          ]
+                        : []
+                    }
+                    onOpen={() => setSelectedTemplate(template.id)}
+                  />
+                  <details className="template-details">
+                    <summary>{t(locale, 'templateDetails')}</summary>
+                    <p lang="en">{template.basis}</p>
+                    {template.guide && (
+                      <p>
+                        {t(locale, 'source')} : {template.guide.reference}
+                      </p>
+                    )}
+                  </details>
+                </div>
               );
             })}
         </div>
@@ -1196,21 +1325,7 @@ export default function App() {
             {__MOCKUP_REVISION__} · {__MOCKUP_SOURCE_HASH__}
           </code>
 
-          <Button
-            onClick={() => {
-              navigator.clipboard
-
-                ?.writeText(`${buildIdentity}\n${__MOCKUP_REVISION__}\n${__MOCKUP_SOURCE_HASH__}`)
-
-                .then(() => setCopy(t(locale, 'copied')))
-
-                .catch(() => setCopy(t(locale, 'copyFallback')));
-
-              if (!navigator.clipboard) setCopy(t(locale, 'copyFallback'));
-            }}
-          >
-            {t(locale, 'copyBuild')}
-          </Button>
+          <Button onClick={copyBuild}>{t(locale, 'copyBuild')}</Button>
 
           <p role="status">{copy}</p>
         </div>

@@ -7,6 +7,9 @@ import {
   projectProcess,
   parseInstant,
   estimateFermentation,
+  intendedOutcome,
+  outcomeProblem,
+  type PreparationOutcome,
   type Formula,
   type FormulaEdit,
   type Process,
@@ -50,6 +53,9 @@ export interface Session {
   journal: { at: Instant; text: string }[];
   checks: string[];
   finished: boolean;
+  endedAt?: Instant;
+  outcome?: PreparationOutcome;
+  outcomeSource?: 'recipe' | 'override';
 }
 export type Screen = 'library' | 'recipe' | 'preparation' | 'registry' | 'settings' | 'catalogue';
 export type Section = 'ingredients' | 'steps' | 'planning' | 'history';
@@ -63,6 +69,7 @@ export interface DemoState {
   selected: string;
   draft: Draft | null;
   session: Session | null;
+  sessionHistory: Session[];
   checks: Record<string, string[]>;
   error: string;
   invalid: Record<string, boolean>;
@@ -164,6 +171,7 @@ export function initialState(locale: Locale): DemoState {
       parameters.get('prep') === 'cooking',
     ),
     checks: {},
+    sessionHistory: [],
     error: '',
     invalid: {},
     resetEpoch: 0,
@@ -370,11 +378,29 @@ export function usePrototype(locale: Locale) {
     });
   const start = () => {
     if (state.draft) return false;
+    if (state.session && !state.session.finished) {
+      setState((s) => ({ ...s, error: t(locale, 'activeExists') }));
+      return false;
+    }
     setState((s) => ({ ...s, session: makeSession(recipe, locale) }));
     return true;
   };
   const updateSession = (fn: (session: Session) => Session) =>
     setState((s) => (s.session ? { ...s, session: fn(s.session) } : s));
+  const finishSession = (chosen?: PreparationOutcome) =>
+    setState((s) => {
+      if (!s.session || s.session.finished) return s;
+      const outcome = chosen ?? intendedOutcome(s.session.effective);
+      if (outcomeProblem(outcome)) return { ...s, error: t(locale, 'invalid') };
+      const session: Session = {
+        ...s.session,
+        finished: true,
+        endedAt: instant(Date.now()),
+        outcome: clone(outcome),
+        outcomeSource: chosen ? 'override' : 'recipe',
+      };
+      return { ...s, session, sessionHistory: [...s.sessionHistory, clone(session)], error: '' };
+    });
   const log = (text: string) =>
     updateSession((s) => ({ ...s, journal: [{ at: instant(Date.now()), text }, ...s.journal] }));
   return {
@@ -400,6 +426,7 @@ export function usePrototype(locale: Locale) {
     weigh,
     start,
     updateSession,
+    finishSession,
     log,
   };
 }
@@ -410,8 +437,8 @@ export function project(process: Process, at: string, facts?: Record<string, Ste
     ...(facts ? { facts } : {}),
   });
 }
-export function diagnosticFixture(scenario: string, content: Content) {
-  if (scenario === 'recipe') return estimateFermentation(content.formula, content.process);
+export function diagnosticContent(scenario: string, content: Content): Content {
+  if (scenario === 'recipe') return content;
   const blank = blankRecipe();
   const formula: Formula = {
     ...blank.formula,
@@ -427,7 +454,11 @@ export function diagnosticFixture(scenario: string, content: Content) {
         : s,
     ),
   };
-  return estimateFermentation(formula, process);
+  return { formula, process, names: {} };
+}
+export function diagnosticFixture(scenario: string, content: Content) {
+  const input = diagnosticContent(scenario, content);
+  return estimateFermentation(input.formula, input.process);
 }
 export const stepTitle = (
   step: ProcessStep,

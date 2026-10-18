@@ -31,6 +31,7 @@ const BottomBar = ({ variant, children, destinations, navigationLabel }: BottomB
           >
             <span className="nav-pill">
               <Icon name={item.icon} />
+              {item.badge && <span className="nav-count">{item.badge}</span>}
             </span>
             <span>{item.label}</span>
           </button>

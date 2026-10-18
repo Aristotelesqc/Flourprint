@@ -14,6 +14,8 @@ export const RecipeSummary: React.FC<RecipeSummaryProps> = ({
   notice,
   onHelp,
   helpLabel,
+  onSizeHelp,
+  sizeHelpLabel,
 }) => {
   // Partition metrics into 2-column flour/dough, middle hydration, and secondary fat/sugar
   const hydrationMetric = metrics.find((m) => m.icon === 'water') ?? metrics[2];
@@ -52,20 +54,27 @@ export const RecipeSummary: React.FC<RecipeSummaryProps> = ({
           </div>
         )}
         {doughMetric && (
-          <div className="metric-tile">
+          <button
+            type="button"
+            className="metric-tile metric-help"
+            onClick={onSizeHelp}
+            aria-label={sizeHelpLabel}
+            disabled={!onSizeHelp}
+          >
             <div className="metric-header row">
               <span className="metric-label-group row">
                 {doughMetric.icon && (
                   <Icon name={doughMetric.icon} size="0.95rem" className="semantic-icon" />
                 )}
                 <span>{doughMetric.label}</span>
+                {onSizeHelp && <Icon name="info" size="0.9rem" />}
               </span>
             </div>
             <div className="metric-value tabular">{doughMetric.value}</div>
             {doughMetric.detail && (
               <span className="metric-sub muted tabular">{doughMetric.detail}</span>
             )}
-          </div>
+          </button>
         )}
       </div>
 

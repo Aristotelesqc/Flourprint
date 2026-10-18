@@ -12,6 +12,37 @@ export const Icon: React.FC<IconProps> = ({ name, size = '1.125rem', className }
   };
 
   switch (name) {
+    case 'fat':
+      return (
+        <svg
+          style={s}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className={className}
+        >
+          <rect x="3" y="7" width="18" height="10" rx="2" />
+          <path d="M8 7v10M16 7v10" />
+        </svg>
+      );
+    case 'sugar':
+      return (
+        <svg
+          style={s}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className={className}
+        >
+          <path d="m12 3 8 5v8l-8 5-8-5V8zM4 8l8 5 8-5M12 13v8" />
+        </svg>
+      );
     case 'back':
       return (
         <svg

@@ -64,7 +64,7 @@ const Frame = ({
     data-theme={theme}
     data-motion={reduced ? 'reduced' : 'standard'}
     data-testid={`catalogue-frame-${theme}`}
-    style={{ ...styles.frame, width }}
+    style={{ ...styles.frame, width, containerType: 'inline-size' }}
   >
     {children}
   </div>

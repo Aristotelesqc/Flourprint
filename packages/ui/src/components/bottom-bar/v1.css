@@ -63,6 +63,7 @@
 }
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'].phone-footer .phone-thumb-bar {
   flex-wrap: wrap;
+  gap: var(--fp-space-1);
 }
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'].phone-bottom-nav
   .nav-item
@@ -101,4 +102,30 @@
 }
 [data-text-scale='200'] [data-fp-component='fp.bottom-bar'][data-fp-version='v1'].phone-footer {
   padding: var(--fp-space-1);
+}
+
+[data-fp-component='fp.bottom-bar'][data-fp-version='v1'].phone-footer {
+  padding: var(--fp-space-1-5) var(--fp-space-2);
+  min-height: 60px;
+}
+[data-fp-component='fp.bottom-bar'][data-fp-version='v1'].phone-footer .btn {
+  padding-inline: var(--fp-space-2);
+  font-size: var(--type-label);
+}
+
+[data-fp-component='fp.bottom-bar'][data-fp-version='v1'] .nav-pill {
+  position: relative;
+}
+[data-fp-component='fp.bottom-bar'][data-fp-version='v1'] .nav-count {
+  position: absolute;
+  right: -0.2rem;
+  top: -0.2rem;
+  min-width: 1rem;
+  height: 1rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--type-meta);
 }

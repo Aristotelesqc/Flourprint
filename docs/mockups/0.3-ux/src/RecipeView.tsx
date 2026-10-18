@@ -124,12 +124,14 @@ export function Summary({
   locale,
   editor,
   onHelp,
+  onSizeHelp,
 }: {
   editor?: ReactNode;
   content: Content;
   resolved: ResolvedFormula;
   locale: Locale;
   onHelp: () => void;
+  onSizeHelp?: () => void;
 }) {
   const partial = resolved.totalWater.completeness === 'incomplete';
   const metrics = [
@@ -140,21 +142,21 @@ export function Summary({
       detail: t(locale, 'bakerBase'),
     },
     {
-      label: t(locale, 'dough'),
+      label: t(locale, 'doughShort'),
       value: grams(locale, resolved.doughWeight),
       icon: 'scale' as const,
-      detail: `${grams(locale, sum(Object.values(resolved.components).map((c) => c.mass)))} ${t(locale, 'component')} · ${grams(
+      detail: `${grams(locale, sum(Object.values(resolved.components).map((c) => c.mass)))} ${t(locale, 'componentShort')} · ${grams(
         locale,
         sum(
           groupsOf(content, resolved, resolved, locale)
             .find((g) => g.id === 'final')
             ?.rows.map((r) => r.grams) ?? [],
         ),
-      )} ${t(locale, 'additions')}`,
+      )} ${t(locale, 'additionsShort')}`,
     },
     {
       label: t(locale, 'hydration'),
-      value: `${partial ? '≈ ' : ''}${num(locale, resolved.totalWaterPct, 0)} %`,
+      value: `${partial ? '≥ ' : ''}${num(locale, resolved.totalWaterPct, 0)} %`,
       icon: 'water' as const,
       detail: `${grams(locale, resolved.totalWater.value)} ${t(locale, 'water').toLocaleLowerCase()} ${partial ? `(${t(locale, 'known').toLocaleLowerCase()})` : ''}`,
     },
@@ -163,12 +165,13 @@ export function Summary({
       value:
         resolved.totalFatPct === undefined
           ? t(locale, 'unknown')
-          : `${resolved.totalFat?.completeness === 'incomplete' ? '≈ ' : ''}${num(locale, resolved.totalFatPct, 0)} %`,
+          : `${resolved.totalFat?.completeness === 'incomplete' ? '≥ ' : ''}${num(locale, resolved.totalFatPct, 0)} %`,
+      icon: 'fat' as const,
       detail:
         resolved.totalFat?.completeness === 'incomplete'
           ? `${grams(locale, resolved.totalFat.value)} · ${t(locale, 'known')}`
           : resolved.totalFat
-            ? `${grams(locale, resolved.totalFat.value)} · ${t(locale, 'estimated')}`
+            ? `${grams(locale, resolved.totalFat.value)} · ${t(locale, resolved.totalFat.contributions.some((c) => c.status === 'estimated') ? 'estimated' : 'completeValue')}`
             : t(locale, 'unknown'),
     },
     {
@@ -176,12 +179,13 @@ export function Summary({
       value:
         resolved.totalSugarPct === undefined
           ? t(locale, 'unknown')
-          : `${resolved.totalSugar?.completeness === 'incomplete' ? '≈ ' : ''}${num(locale, resolved.totalSugarPct, 0)} %`,
+          : `${resolved.totalSugar?.completeness === 'incomplete' ? '≥ ' : ''}${num(locale, resolved.totalSugarPct, 0)} %`,
+      icon: 'sugar' as const,
       detail:
         resolved.totalSugar?.completeness === 'incomplete'
           ? `${grams(locale, resolved.totalSugar.value)} · ${t(locale, 'known')}`
           : resolved.totalSugar
-            ? `${grams(locale, resolved.totalSugar.value)} · ${t(locale, 'estimated')}`
+            ? `${grams(locale, resolved.totalSugar.value)} · ${t(locale, resolved.totalSugar.contributions.some((c) => c.status === 'estimated') ? 'estimated' : 'completeValue')}`
             : t(locale, 'unknown'),
     },
   ];
@@ -191,12 +195,16 @@ export function Summary({
         editor={editor}
         metrics={metrics}
         notice={
-          partial
-            ? `${t(locale, 'unknownFor')} ${resolved.totalWater.unknownContributors.map((id) => ingredientName(locale, id, content.names)).join(', ')}`
+          [resolved.totalWater, resolved.totalFat, resolved.totalSugar].some(
+            (v) => v?.completeness === 'incomplete',
+          )
+            ? `${t(locale, 'partialTotals')} ${[...new Set([resolved.totalWater, resolved.totalFat, resolved.totalSugar].flatMap((v) => v?.unknownContributors ?? []))].map((id) => ingredientName(locale, id, content.names)).join(', ')}`
             : undefined
         }
         onHelp={onHelp}
         helpLabel={t(locale, 'hydrationDetails')}
+        onSizeHelp={onSizeHelp}
+        sizeHelpLabel={`${t(locale, 'help')} · ${t(locale, 'size')}`}
       />
       <output aria-hidden="true" className="sr-only" data-testid="formula-flour-total">
         {resolved.flourTotal}
@@ -223,11 +231,18 @@ export function WaterDetails({
         <Surface>
           <span>{t(locale, 'hydration')}</span>
           <strong>
-            {resolved.totalWater.completeness === 'incomplete' ? '≈ ' : ''}
+            {resolved.totalWater.completeness === 'incomplete' ? '≥ ' : ''}
             {num(locale, resolved.totalWaterPct, 0)} %
           </strong>
           <small>
-            {t(locale, resolved.totalWater.completeness === 'incomplete' ? 'known' : 'estimated')}
+            {t(
+              locale,
+              resolved.totalWater.completeness === 'incomplete'
+                ? 'known'
+                : resolved.totalWater.contributions.some((c) => c.status === 'estimated')
+                  ? 'estimated'
+                  : 'completeValue',
+            )}
           </small>
         </Surface>
         <Surface>
@@ -240,14 +255,6 @@ export function WaterDetails({
       </div>
       <p className="muted">{t(locale, 'helpHydration')}</p>
       {content.formula.waterTarget && <p>{t(locale, 'locked')}</p>}
-      <strong>
-        {t(locale, 'hydration')} : {num(locale, resolved.totalWaterPct, 0)} % ·{' '}
-        {t(locale, resolved.totalWater.completeness === 'incomplete' ? 'known' : 'estimated')}
-      </strong>
-      <p>
-        {grams(locale, resolved.totalWater.value)} / {grams(locale, resolved.flourTotal)}{' '}
-        {t(locale, 'flour').toLocaleLowerCase()}
-      </p>
       <Surface>
         {resolved.totalWater.contributions
           .filter((c) => c.grams !== 0)
@@ -255,7 +262,12 @@ export function WaterDetails({
             <div className="detail-row" key={`${c.source}-${i}`}>
               <span>
                 {ingredientName(locale, c.source, content.names)} ·{' '}
-                {t(locale, c.status === 'estimated' ? 'estimated' : 'known')}
+                {t(locale, c.status === 'estimated' ? 'estimated' : 'completeValue')}
+                {c.range && (
+                  <small>
+                    {grams(locale, c.range[0])} – {grams(locale, c.range[1])}
+                  </small>
+                )}
               </span>
               <strong>{grams(locale, c.grams)}</strong>
             </div>
@@ -317,6 +329,7 @@ export function RecipeIngredients({
       displayDigits={id === 'hydration-target' ? 0 : 2}
       label={label}
       unit={unit}
+      unitPosition={unit === '1:' ? 'prefix' : 'suffix'}
       locale={locale}
       onCommit={commit}
       disabled={disabled}
@@ -326,6 +339,46 @@ export function RecipeIngredients({
     />
   );
   const formula = content.formula;
+  const componentControls = (component: Formula['components'][number]) => (
+    <div className="component-controls stack">
+      {field(
+        `component-share-${component.id}`,
+        component.flourPct,
+        t(locale, 'flourShare'),
+        '%',
+        (value) =>
+          store.apply({
+            type: 'UpdateComponent',
+            component: component.id,
+            changes: { flourPct: value },
+          }),
+      )}
+      {field(
+        `component-ratio-${component.id}`,
+        liquidMassRatio(component) ?? 1,
+        t(locale, 'ratio'),
+        '1:',
+        (value) => {
+          const ratio = hydrationForRatio(component, value);
+          return ratio.ok
+            ? store.apply({
+                type: 'UpdateComponent',
+                component: component.id,
+                changes: { hydrationPct: ratio.value },
+              })
+            : false;
+        },
+      )}
+      <p className="muted">{t(locale, 'ratioHelp')}</p>
+      <div className="component-secondary-actions">
+        <IconButton
+          icon="trash"
+          label={`${t(locale, 'remove')} · ${componentName(locale, component.id, content.names)}`}
+          onClick={() => setConfirm(`component:${component.id}`)}
+        />
+      </div>
+    </div>
+  );
   return (
     <div className="stack">
       <Summary
@@ -333,6 +386,7 @@ export function RecipeIngredients({
         resolved={r}
         locale={locale}
         onHelp={onHelp}
+        onSizeHelp={onSizeHelp}
         editor={
           state.draft ? (
             <>
@@ -383,6 +437,10 @@ export function RecipeIngredients({
           }
           defaultOpen
         >
+          {state.draft &&
+            formula.components
+              .filter((c) => c.id === group.id)
+              .map((c) => <div key={c.id}>{componentControls(c)}</div>)}
           {group.id === 'final' &&
             content.formula.components.map((c) => (
               <p className="incorporation" key={c.id}>
@@ -563,44 +621,7 @@ export function RecipeIngredients({
       </Disclosure>
       {state.draft && (
         <>
-          <Disclosure title={t(locale, 'components')} defaultOpen>
-            {formula.components.map((component) => (
-              <Surface key={component.id}>
-                <h3>{componentName(locale, component.id, content.names)}</h3>
-                {field(
-                  `component-share-${component.id}`,
-                  component.flourPct,
-                  t(locale, 'flourShare'),
-                  '%',
-                  (value) =>
-                    store.apply({
-                      type: 'UpdateComponent',
-                      component: component.id,
-                      changes: { flourPct: value },
-                    }),
-                )}
-                {field(
-                  `component-ratio-${component.id}`,
-                  liquidMassRatio(component) ?? 1,
-                  t(locale, 'ratio'),
-                  '1:',
-                  (value) => {
-                    const ratio = hydrationForRatio(component, value);
-                    return ratio.ok
-                      ? store.apply({
-                          type: 'UpdateComponent',
-                          component: component.id,
-                          changes: { hydrationPct: ratio.value },
-                        })
-                      : false;
-                  },
-                )}
-                <p className="muted">{t(locale, 'ratioHelp')}</p>
-                <Button variant="danger" onClick={() => setConfirm(`component:${component.id}`)}>
-                  {t(locale, 'remove')}
-                </Button>
-              </Surface>
-            ))}
+          <Disclosure title={t(locale, 'addComponent')}>
             <Button
               icon="plus"
               onClick={() =>

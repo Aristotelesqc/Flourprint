@@ -1,6 +1,8 @@
 /* Presentation owned by fp.badge v1. */
 [data-fp-component='fp.badge'][data-fp-version='v1'].badge {
   display: inline-flex;
+  flex-shrink: 0;
+  white-space: nowrap;
   align-items: center;
   gap: 0.25rem;
   padding: 0.125rem 0.55rem;

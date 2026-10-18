@@ -8,6 +8,7 @@ const Badge = (props: BadgeProps) => <library.Slot component="fp.badge" {...prop
 export const PreparationTimer: React.FC<PreparationTimerProps> = ({
   title,
   remaining,
+  remainingLabel,
   start,
   end,
   progress,
@@ -32,7 +33,10 @@ export const PreparationTimer: React.FC<PreparationTimerProps> = ({
         </span>
       </div>
 
-      <div className="preparation-timer-digits tabular">{remaining}</div>
+      <div className="preparation-time">
+        <span className="preparation-remaining-label">{remainingLabel}</span>
+        <div className="preparation-timer-digits tabular">{remaining}</div>
+      </div>
 
       {instruction && <p className="preparation-instruction">{instruction}</p>}
 

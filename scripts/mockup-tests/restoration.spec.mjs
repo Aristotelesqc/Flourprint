@@ -154,3 +154,42 @@ for (const prep of ['fermentation', 'cooking'])
       ).toBe(true);
     }
   });
+
+test('an expanded group never visually opens its collapsed nested group', async ({ page }) => {
+  await page.goto(
+    '/mockup.html?screen=recipe&section=steps&scenario=valid&diagnostics=1&capture=1&motion=reduce',
+  );
+  const child = page.getByRole('button', { name: 'Hypothèses et limites', exact: true });
+  await expect(child).toHaveAttribute('aria-expanded', 'false');
+  const id = await child.getAttribute('aria-controls');
+  const content = page.locator(`[id="${id}"]`);
+  await expect.poll(() => content.evaluate((e) => e.getBoundingClientRect().height)).toBe(0);
+  await child.click();
+  await expect
+    .poll(() => content.evaluate((e) => e.getBoundingClientRect().height))
+    .toBeGreaterThan(40);
+  await child.click();
+  await expect.poll(() => content.evaluate((e) => e.getBoundingClientRect().height)).toBe(0);
+  const parent = page.getByRole('button', { name: 'Fermentation', exact: true }).first();
+  await parent.click();
+  await parent.click();
+  await expect(child).toHaveAttribute('aria-expanded', 'false');
+  await expect.poll(() => content.evaluate((e) => e.getBoundingClientRect().height)).toBe(0);
+
+  await page
+    .locator('[data-fp-component="fp.group-card"]')
+    .first()
+    .evaluate((root) => {
+      const foreign = document.createElement('div');
+      foreign.dataset.fpComponent = 'fp.group-card';
+      foreign.dataset.fpVersion = 'v2';
+      foreign.innerHTML =
+        '<div class="disclosure-grid" data-testid="foreign-version-grid">Other version</div>';
+      root.append(foreign);
+    });
+  expect(
+    await page
+      .getByTestId('foreign-version-grid')
+      .evaluate((node) => getComputedStyle(node).display),
+  ).toBe('block');
+});

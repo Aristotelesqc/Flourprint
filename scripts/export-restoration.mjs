@@ -10,6 +10,23 @@ const target = process.env.FLOURPRINT_MOCKUP_EXPORT;
 if (!target || !path.isAbsolute(target))
   throw Error('Set FLOURPRINT_MOCKUP_EXPORT to an explicit absolute gallery directory');
 const manifest = JSON.parse(await readFile(path.join(source, 'manifest.json'), 'utf8'));
+const frozenAppRevision = '7dd74bf435047f0982f2fe2ab10765600b3eb4bf';
+if (
+  manifest.schemaVersion !== 2 ||
+  manifest.frozenAppRevision !== frozenAppRevision ||
+  manifest.comparisons.length !== 26
+)
+  throw Error('Expected the new 26-state gallery with the frozen actual-app reference');
+for (const comparison of manifest.comparisons) {
+  const entries = comparison.images.map((file) =>
+    manifest.images.find((image) => image.path === file),
+  );
+  if (
+    entries.map((entry) => entry?.version).join(',') !== 'round2,round3,restored,app' ||
+    entries[3].sourceRevision !== frozenAppRevision
+  )
+    throw Error('Incorrect comparison order or frozen actual-app source: ' + comparison.id);
+}
 const build = JSON.parse(
   await readFile(path.join(repo, 'docs/mockups/0.3-ux/dist/review-build.json'), 'utf8'),
 );

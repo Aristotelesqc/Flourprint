@@ -1,9 +1,17 @@
 import { createPortal } from 'react-dom';
 import { curatedText } from './template-presentation';
 import { useEffect, useState } from 'react';
-import { resolveFormula, updateStep } from '@flourprint/core/domain';
+import {
+  resolveFormula,
+  updateStep,
+  intendedOutcome,
+  outcomeProblem,
+  OUTCOME_RESULTS,
+  DOUGH_DISPOSITIONS,
+  type PreparationOutcome,
+} from '@flourprint/core/domain';
 import { PreparationTimer, StepRow, IngredientRow } from './components';
-import { Button, IconButton, Disclosure, Modal, NumberField } from './ui';
+import { Button, IconButton, Disclosure, Modal, NumberField, Menu } from './ui';
 import { type Prototype, instant, project } from './model';
 import { titleOf, instructionKey, stepDetails, modeLabel } from './ProcessView';
 import { groupsOf } from './RecipeView';
@@ -20,6 +28,11 @@ export function PreparationView({
 }) {
   const [now, setNow] = useState(Date.now());
   const [sheet, setSheet] = useState<'duration' | 'note' | 'photo' | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [outcomeInvalid, setOutcomeInvalid] = useState(false);
+  const [outcomeOpen, setOutcomeOpen] = useState(false);
+  const [chosenOutcome, setChosenOutcome] = useState<PreparationOutcome | undefined>();
+  const [outcomeDraft, setOutcomeDraft] = useState<PreparationOutcome>({ result: 'cooked' });
   const [note, setNote] = useState('');
   const [minutes, setMinutes] = useState(15);
   const [invalid, setInvalid] = useState(false);
@@ -31,6 +44,17 @@ export function PreparationView({
   if (!session) return <p>{t(locale, 'noSession')}</p>;
   const current =
     session.effective.steps.find((s) => s.id === session.activeId) ?? session.effective.steps[0];
+  const readyToFinish = session.effective.steps.every((step) => session.facts[step.id]?.endedAt);
+  const outcome = chosenOutcome ?? intendedOutcome(session.effective);
+  const resultLabel = (value: PreparationOutcome) =>
+    t(
+      locale,
+      value.result === 'cooked'
+        ? 'resultCooked'
+        : value.result === 'dough'
+          ? 'resultDough'
+          : 'resultMixed',
+    );
   const fact = session.facts[current.id];
   const elapsed = Math.max(
     0,
@@ -76,7 +100,7 @@ export function PreparationView({
         ...s,
         facts,
         activeId: next?.id ?? s.activeId,
-        finished: !next,
+        finished: false,
         elapsedOffsetS: 0,
         journal: [
           {
@@ -91,13 +115,15 @@ export function PreparationView({
     <div className="stack">
       {session.finished ? (
         <h2>{t(locale, 'completeSession')}</h2>
+      ) : readyToFinish ? (
+        <h2>{t(locale, 'finishReady')}</h2>
       ) : (
         <>
           <div key={current.id} className="current-step-hero stack" data-step={current.id}>
-            <h2>{titleOf(current, locale)}</h2>
             <PreparationTimer
               title={`${session.effective.steps.indexOf(current) + 1} / ${session.effective.steps.length} · ${titleOf(current, locale)}`}
               remaining={duration(locale, remaining)}
+              remainingLabel={t(locale, 'remainingTime')}
               start={time(locale, fact?.startedAt)}
               end={time(
                 locale,
@@ -109,14 +135,14 @@ export function PreparationView({
                 t(locale, instructionKey(current.operation))
               }
               conditions={[
+                ...(current.equipment?.mode
+                  ? [{ label: t(locale, 'mode'), value: modeLabel(locale, current.equipment.mode) }]
+                  : []),
                 ...(current.equipment?.setpointC !== undefined
                   ? [
                       {
                         label: t(locale, 'temperature'),
                         value: `${num(locale, current.equipment.setpointC)} °C`,
-                        sub: current.equipment.mode
-                          ? modeLabel(locale, current.equipment.mode)
-                          : undefined,
                       },
                     ]
                   : current.conditions?.temperatureC !== undefined
@@ -185,9 +211,9 @@ export function PreparationView({
             createPortal(
               <>
                 <IconButton
-                  icon="photo"
-                  label={t(locale, 'photo')}
-                  onClick={() => setSheet('photo')}
+                  icon="more"
+                  label={t(locale, 'preparationActions')}
+                  onClick={() => setMoreOpen(true)}
                 />
                 <Button
                   dataTestId="prep-complete-btn"
@@ -202,6 +228,143 @@ export function PreparationView({
             )}
         </>
       )}
+      {!session.finished && readyToFinish && (
+        <div className="outcome-toolbar">
+          <Button
+            variant={readyToFinish ? 'primary' : 'quiet'}
+            dataTestId="finish-preparation"
+            onClick={() => store.finishSession(chosenOutcome)}
+          >
+            {t(locale, 'finishSession')}
+          </Button>
+          <Button
+            variant="quiet"
+            onClick={() => {
+              setOutcomeInvalid(false);
+              setOutcomeDraft(outcome);
+              setOutcomeOpen(true);
+            }}
+          >
+            {resultLabel(outcome)} · {t(locale, 'outcomeChoice')}
+          </Button>
+        </div>
+      )}
+      {session.finished && session.outcome && (
+        <p data-testid="recorded-outcome">
+          {resultLabel(session.outcome)}
+          {session.outcome.dough ? ` · ${t(locale, session.outcome.dough)}` : ''}
+        </p>
+      )}
+      <Menu
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title={t(locale, 'preparationActions')}
+        closeLabel={t(locale, 'close')}
+        anchor="top"
+      >
+        <Button
+          icon="photo"
+          variant="quiet"
+          onClick={() => {
+            setMoreOpen(false);
+            setSheet('photo');
+          }}
+        >
+          {t(locale, 'photo')}
+        </Button>
+        <Button
+          variant="quiet"
+          onClick={() => {
+            setMoreOpen(false);
+            setOutcomeInvalid(false);
+            setOutcomeDraft(outcome);
+            setOutcomeOpen(true);
+          }}
+        >
+          {resultLabel(outcome)} · {t(locale, 'outcomeChoice')}
+        </Button>
+        <Button
+          variant="quiet"
+          dataTestId="finish-preparation-early"
+          onClick={() => {
+            setMoreOpen(false);
+            store.finishSession(chosenOutcome);
+          }}
+        >
+          {t(locale, 'finishSession')}
+        </Button>
+      </Menu>
+      <Modal
+        open={outcomeOpen}
+        onClose={() => setOutcomeOpen(false)}
+        title={t(locale, 'outcomeChoice')}
+        closeLabel={t(locale, 'close')}
+        footer={
+          <Button
+            disabled={outcomeInvalid || Boolean(outcomeProblem(outcomeDraft))}
+            onClick={() => {
+              setChosenOutcome(outcomeDraft);
+              setOutcomeOpen(false);
+            }}
+          >
+            {t(locale, 'apply')}
+          </Button>
+        }
+      >
+        <p>{t(locale, 'defaultOutcome')}</p>
+        <label className="field-label">
+          {t(locale, 'outcome')}
+          <select
+            value={outcomeDraft.result}
+            onChange={(e) =>
+              setOutcomeDraft({ result: e.target.value as PreparationOutcome['result'] })
+            }
+          >
+            {OUTCOME_RESULTS.map((result) => (
+              <option key={result} value={result}>
+                {resultLabel({ result })}
+              </option>
+            ))}
+          </select>
+        </label>
+        {outcomeDraft.result !== 'cooked' && (
+          <>
+            <label className="field-label">
+              {t(locale, 'disposition')}
+              <select
+                value={outcomeDraft.dough ?? ''}
+                onChange={(e) =>
+                  setOutcomeDraft({
+                    ...outcomeDraft,
+                    dough: e.target.value
+                      ? (e.target.value as PreparationOutcome['dough'])
+                      : undefined,
+                  })
+                }
+              >
+                <option value="">{t(locale, 'optional')}</option>
+                {DOUGH_DISPOSITIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {t(locale, value)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <NumberField
+              value={outcomeDraft.pieces ?? NaN}
+              label={t(locale, 'count')}
+              onValidityChange={setOutcomeInvalid}
+              locale={locale}
+              errorMessage={t(locale, 'invalid')}
+              onCommit={(pieces) => {
+                if (!Number.isInteger(pieces) || pieces < 1) return false;
+                setOutcomeDraft({ ...outcomeDraft, pieces });
+                return true;
+              }}
+            />
+          </>
+        )}
+      </Modal>
       <Disclosure
         title={t(locale, 'quantities')}
         subtitle={`${session.recipeName} · ${t(locale, 'version')} ${session.recipeVersion}`}

@@ -5,6 +5,7 @@ import {
   insertStepAfter,
   removeStep,
   validateProcess,
+  intendedOutcome,
   OVEN_MODES,
   type ProcessStep,
   type Process,
@@ -12,7 +13,14 @@ import {
 } from '@flourprint/core/domain';
 import { StepRow, StatusPanel } from './components';
 import { Button, Tabs, Icon, IconButton, NumberField, Modal, Disclosure, Surface } from './ui';
-import { type Prototype, type Content, project, diagnosticFixture, clone } from './model';
+import {
+  type Prototype,
+  type Content,
+  project,
+  diagnosticFixture,
+  diagnosticContent,
+  clone,
+} from './model';
 import {
   t,
   duration,
@@ -307,12 +315,25 @@ export function stepDetails(step: ProcessStep, locale: Locale): string[] {
 }
 export function Diagnostics({ store, locale }: { store: Prototype; locale: Locale }) {
   const scenario = new URLSearchParams(location.search).get('scenario') ?? 'recipe';
+  const diagnosticInput = diagnosticContent(scenario, store.content);
   const estimate = diagnosticFixture(scenario, store.content).dough;
   const direct = estimate.duration;
   const candidate = Object.entries(estimate.yeastPct).find(([, v]) => v.status === 'ok');
+  const validity = t(
+    locale,
+    direct.status === 'ok'
+      ? direct.extrapolations?.length
+        ? 'extrapolated'
+        : 'valid'
+      : direct.status === 'out_of_domain'
+        ? 'outOfDomain'
+        : 'noResult',
+  );
   return (
     <Disclosure
       title={t(locale, 'diagnostics')}
+      subtitle={validity}
+      status={direct.status === 'ok' && !direct.extrapolations?.length ? 'success' : 'warning'}
       defaultOpen={new URLSearchParams(location.search).get('diagnostics') === '1'}
     >
       <div className="stack">
@@ -327,20 +348,25 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
                 ? 'warning'
                 : 'unavailable'
           }
-          message={t(
-            locale,
-            direct.status === 'ok'
-              ? 'valid'
-              : direct.status === 'out_of_domain'
-                ? 'outOfDomain'
-                : 'noResult',
-          )}
+          message={validity}
         >
           {direct.status === 'ok' && (
             <div className="stack">
               <strong>
                 {t(locale, 'estimate')} : {duration(locale, direct.value)}
               </strong>
+              {direct.range && (
+                <p>
+                  {t(locale, 'modelRange')} :{' '}
+                  {direct.range
+                    .map((bound) =>
+                      bound.kind === 'finite'
+                        ? duration(locale, bound.value)
+                        : `> ${duration(locale, bound.horizonS)}`,
+                    )
+                    .join(' – ')}
+                </p>
+              )}
               {direct.extrapolations && direct.extrapolations.length > 0 && (
                 <ul className="muted">
                   {direct.extrapolations.map((extra) => (
@@ -362,6 +388,16 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
           )}
           <p>{t(locale, 'readyTarget')}</p>
           <p>{t(locale, 'modelLimits')}</p>
+          {diagnosticInput.formula.ingredients
+            .filter((i) => i.yeast)
+            .map((i) => (
+              <p key={i.id}>
+                {t(locale, 'currentDose')} ·{' '}
+                {catalogText(locale, `fermentation.form.${i.yeast?.form}`) ?? i.yeast?.form} :{' '}
+                {num(locale, i.bakerPct, 3)} {t(locale, 'bakerPct')}
+              </p>
+            ))}
+          <p className="muted">{t(locale, 'freshBasis')}</p>
           {candidate && candidate[1].status === 'ok' && (
             <Surface>
               <strong>
@@ -382,13 +418,20 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
               )}
               {store.state.draft && scenario === 'recipe' && (
                 <Button
-                  onClick={() =>
+                  onClick={() => {
+                    const suggestion = candidate[1];
+                    if (suggestion.status !== 'ok') return;
                     store.apply({
                       type: 'SetBakerPct',
                       ingredient: candidate[0],
-                      pct: candidate[1].status === 'ok' ? candidate[1].value : 0,
-                    })
-                  }
+                      pct: suggestion.value,
+                      accepted: {
+                        estimate: suggestion,
+                        appliedValue: suggestion.value,
+                        model: suggestion.model,
+                      },
+                    });
+                  }}
                 >
                   {t(locale, 'applyCandidate')}
                 </Button>
@@ -400,6 +443,36 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
               {direct.model?.id} {direct.model?.version}
             </code>
             <p>{t(locale, 'modelLimits')}</p>
+            {direct.status === 'ok' && (
+              <ul>
+                {[
+                  ...new Set(
+                    direct.assumptions.map((code) =>
+                      code.startsWith('ready_target_progress:')
+                        ? t(locale, 'assumptionReadiness')
+                        : code.startsWith('unplanned_step:')
+                          ? t(locale, 'assumptionUnplanned')
+                          : (catalogText(locale, `fermentation.note.${code}`) ??
+                            t(
+                              locale,
+                              (
+                                {
+                                  dough_temperature_from_ambient: 'assumptionAmbient',
+                                  dough_temperature_target: 'assumptionTarget',
+                                  readiness_default: 'assumptionDefault',
+                                  band_unbounded: 'assumptionUnbounded',
+                                  band_outside_domain: 'assumptionBand',
+                                  end_point_before_last_step: 'assumptionEarly',
+                                } as Record<string, MessageKey>
+                              )[code] ?? 'modelLimits',
+                            )),
+                    ),
+                  ),
+                ].map((note) => (
+                  <li key={note}>{note}</li>
+                ))}
+              </ul>
+            )}
             {scenario !== 'recipe' && (
               <p>
                 {t(locale, 'preview')} · {t(locale, 'blank')}
@@ -476,7 +549,8 @@ export function ProcessView({
         onEdit={store.state.draft ? () => setEditing(step) : undefined}
         editLabel={`${t(locale, 'editStep')} : ${titleOf(step, locale)}`}
         actions={
-          ordering ? (
+          store.state.draft &&
+          (ordering || document.documentElement.dataset.ordering === 'handles') ? (
             <>
               <IconButton
                 icon="arrowUp"
@@ -696,6 +770,17 @@ export function ProcessView({
           {t(locale, 'addStep')}
         </Button>
       )}
+      <p className="process-result">
+        <Icon name="check" /> {t(locale, 'outcome')} :{' '}
+        {t(
+          locale,
+          intendedOutcome(process).result === 'cooked'
+            ? 'resultCooked'
+            : intendedOutcome(process).result === 'dough'
+              ? 'resultDough'
+              : 'resultMixed',
+        )}
+      </p>
       {!projection.ok && <p role="alert">{t(locale, 'invalidPlan')}</p>}
       <Diagnostics store={store} locale={locale} />
       {editing && (

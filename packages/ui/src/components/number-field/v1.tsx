@@ -28,6 +28,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   value,
   label,
   unit,
+  unitPosition = 'suffix',
   locale,
   onCommit,
   onValidityChange,
@@ -123,7 +124,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
     <div
       data-fp-component="fp.number-field"
       data-fp-version="v1"
-      className={`field ${compact ? 'field-compact' : ''} ${isInvalid ? 'field-error' : ''}`}
+      className={`field ${compact ? 'field-compact' : ''} ${isInvalid ? 'field-error' : ''} ${unitPosition === 'prefix' ? 'field-prefix' : ''}`}
     >
       <label htmlFor={inputId} className="field-label">
         <span>{label}</span>
