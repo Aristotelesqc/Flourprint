@@ -8,7 +8,871 @@ write transitions. Every item has a guide; a new item or version ships with its 
 
 ## Components
 
-_None yet._
+### `fp.badge`
+
+A short status word, such as Draft, Ready or Running.
+
+**Use when**
+
+- Statuses on cards, rows and headers.
+
+**Avoid when**
+
+- Values with units: use fp.metric-pill.
+- Long messages: use fp.warning-banner.
+
+**Props**
+
+| Prop       | Meaning                                                 |
+| ---------- | ------------------------------------------------------- |
+| `children` | The status text from a message key.                     |
+| `variant`  | 'default', 'primary', 'warning', 'success' or 'danger'. |
+
+**Accessibility**
+
+- The status is the text; the colour variant only reinforces it.
+
+**Related**
+
+- `fp.metric-pill`
+- `fp.recipe-card`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.bottom-bar`
+
+The bottom area of a screen: navigation A is a contextual toolbar; navigation B adds four stable destinations under the contextual controls.
+
+**Use when**
+
+- Once per screen, at the bottom.
+
+**Avoid when**
+
+- Actions inside a sheet or a menu: put them in that component's footer.
+
+**Props**
+
+| Prop              | Meaning                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------- |
+| `variant`         | 'A' (contextual toolbar) or 'B' (contextual controls plus destinations), #112.                       |
+| `children`        | The screen's contextual actions, in both variants.                                                   |
+| `destinations`    | Variant B only: destinations with id, label, pictogram, selected state, optional badge and onSelect. |
+| `navigationLabel` | Accessible name of the navigation landmark.                                                          |
+
+**Accessibility**
+
+- The navigation landmark carries navigationLabel; the selected destination is exposed as current.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.button`
+- `fp.icon-button`
+- `fp.tabs`
+
+**Decisions**
+
+- [Navigation A/B, owner choice (#112)](https://github.com/Aristotelesqc/Flourprint/issues/112)
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+
+**Versions**
+
+- `v1`: A contextual toolbar; B contextual thumb controls plus four stable destinations.
+
+### `fp.bottom-sheet`
+
+A modal sheet rising from the bottom for focused tasks: editing a step, explaining a value.
+
+**Use when**
+
+- A task or explanation that needs the full width and its own actions.
+
+**Avoid when**
+
+- A short list of choices tied to a button: use fp.floating-menu.
+
+**Props**
+
+| Prop             | Meaning                                                 |
+| ---------------- | ------------------------------------------------------- |
+| `previewTrigger` | Catalogue only: label of a button that opens a preview. |
+| `open`           | Open state.                                             |
+| `onClose`        | Called when the sheet asks to close.                    |
+| `title`          | Title, also the dialog's accessible name.               |
+| `closeLabel`     | Accessible name of the close button.                    |
+| `children`       | Content.                                                |
+| `footer`         | Optional actions pinned at the bottom.                  |
+
+**Accessibility**
+
+- Native modal dialog: focus is contained, Escape closes, focus returns to the trigger.
+- Floating layer: may be translucent (elevation rule).
+- Reduced motion closes at once.
+
+**Related**
+
+- `fp.floating-menu`
+- `fp.motion.sheet-enter`
+- `fp.motion.sheet-exit`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.button`
+
+A text button, optionally with a leading pictogram. Primary for the screen's main action, secondary by default.
+
+**Use when**
+
+- Actions named by a verb in the infinitive (French UI).
+
+**Avoid when**
+
+- Icon-only actions: use fp.icon-button.
+- More than one primary button in the same view.
+
+**Props**
+
+| Prop         | Meaning                                                             |
+| ------------ | ------------------------------------------------------------------- |
+| `variant`    | 'primary', 'secondary' (default), 'quiet' or 'danger' (menus only). |
+| `icon`       | Optional leading pictogram.                                         |
+| `dataTestId` | Test id for browser suites.                                         |
+| `children`   | The label text from a message key.                                  |
+
+**Accessibility**
+
+- type defaults to button, so it never submits by accident.
+- Disabled buttons say why nearby when the reason is not obvious.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.icon-button`
+- `fp.motion.press`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.floating-menu`
+
+A small menu anchored to the button that opened it, for secondary actions.
+
+**Use when**
+
+- The more (…) actions of a screen, card or row.
+
+**Avoid when**
+
+- Tasks with fields: use fp.bottom-sheet.
+
+**Props**
+
+| Prop             | Meaning                                                     |
+| ---------------- | ----------------------------------------------------------- |
+| `previewTrigger` | Catalogue only: label of a button that opens a preview.     |
+| `open`           | Open state.                                                 |
+| `onClose`        | Called when the menu asks to close.                         |
+| `title`          | Accessible name of the menu.                                |
+| `closeLabel`     | Accessible name of the close control.                       |
+| `anchor`         | 'bottom' (default) opens above the trigger, 'top' below it. |
+| `children`       | Menu items.                                                 |
+| `footer`         | Optional content after the items.                           |
+
+**Accessibility**
+
+- Native modal dialog anchored to its trigger; Escape and outside taps close it; focus returns to the trigger.
+- Floating layer: may be translucent (elevation rule).
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.bottom-sheet`
+- `fp.motion.menu-enter`
+- `fp.motion.menu-exit`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.group-card`
+
+A card with a header that opens and closes its content, such as a step group or a component's ingredients.
+
+**Use when**
+
+- Groups whose detail is not always needed.
+
+**Avoid when**
+
+- Content the baker always needs in view.
+
+**Props**
+
+| Prop          | Meaning                                       |
+| ------------- | --------------------------------------------- |
+| `title`       | Header text.                                  |
+| `subtitle`    | Optional secondary text.                      |
+| `badge`       | Optional short text at the end of the header. |
+| `defaultOpen` | Initial open state.                           |
+| `status`      | Optional 'warning' or 'success' tone.         |
+| `children`    | Content shown when open.                      |
+
+**Accessibility**
+
+- The header is a button with aria-expanded and aria-controls; closed content is inert.
+- Status text is also given as text, not only colour.
+
+**Related**
+
+- `fp.surface`
+- `fp.motion.disclosure`
+- `fp.motion.chevron`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.hero-summary`
+
+The recipe's summary tiles: total flour, dough, hydration, fats and sugars, with a notice when a value is partial.
+
+**Use when**
+
+- At the top of a recipe's Ingredients section.
+
+**Avoid when**
+
+- Lists of single values elsewhere: use fp.metric-pill.
+
+**Props**
+
+| Prop            | Meaning                                                                            |
+| --------------- | ---------------------------------------------------------------------------------- |
+| `editor`        | Optional editor shown in the hydration tile while editing.                         |
+| `metrics`       | Tiles with label, value, optional detail and pictogram, formatted by the consumer. |
+| `notice`        | Optional partial-value notice.                                                     |
+| `onHelp`        | Opens the explanation of the values.                                               |
+| `helpLabel`     | Accessible name of the help button.                                                |
+| `onSizeHelp`    | Optional: opens the explanation of the dough size.                                 |
+| `sizeHelpLabel` | Accessible name of that button.                                                    |
+
+**Accessibility**
+
+- Each tile is label plus value text; partial values say so in words.
+- Help buttons carry their labels.
+
+**Related**
+
+- `fp.metric-pill`
+- `fp.number-field`
+- `fp.warning-banner`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.icon`
+
+The Flourprint pictogram set as inline SVG that follows the current text colour.
+
+**Use when**
+
+- Inside other components, or next to text that names the same thing.
+
+**Avoid when**
+
+- As the only content of a control: use fp.icon-button, which carries a label.
+
+**Props**
+
+| Prop        | Meaning                                       |
+| ----------- | --------------------------------------------- |
+| `name`      | Pictogram name from the closed IconName set.  |
+| `size`      | CSS size of the square; defaults to 1.125rem. |
+| `className` | Extra class for the consumer's layout.        |
+
+**Accessibility**
+
+- Always aria-hidden: meaning comes from nearby text or the control's label.
+
+**Related**
+
+- `fp.icon-button`
+- `fp.metric-pill`
+
+**Decisions**
+
+- [Pictogram set still open (inventory, ADR 0021)](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/architecture/2026-10-17-component-sourcing-inventory.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.icon-button`
+
+A button showing only a pictogram (or an image), with its label as accessible name and tooltip.
+
+**Use when**
+
+- Toolbars and headers: back, more, undo.
+
+**Avoid when**
+
+- Actions whose pictogram is not obvious: use fp.button with text.
+
+**Props**
+
+| Prop         | Meaning                                                     |
+| ------------ | ----------------------------------------------------------- |
+| `imageSrc`   | Optional image shown instead of the pictogram (decorative). |
+| `icon`       | Pictogram name.                                             |
+| `label`      | Accessible name and tooltip.                                |
+| `onClick`    | Called on activation.                                       |
+| `disabled`   | Disables the button.                                        |
+| `dataTestId` | Test id for browser suites.                                 |
+| `variant`    | 'default', 'primary' or 'danger'.                           |
+
+**Accessibility**
+
+- label is required and becomes aria-label and title.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.icon`
+- `fp.button`
+- `fp.motion.press-icon`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.ingredient-row`
+
+One ingredient of a step: name, grams, baker's percentage, optional note and its weighing checkbox.
+
+**Use when**
+
+- Ingredient lists by step, in reading, weighing and editing modes.
+
+**Avoid when**
+
+- Values not tied to one ingredient.
+
+**Props**
+
+| Prop         | Meaning                                         |
+| ------------ | ----------------------------------------------- |
+| `id`         | Ingredient id, for keys and tests.              |
+| `name`       | Ingredient name.                                |
+| `gramsText`  | Formatted grams.                                |
+| `pctText`    | Formatted baker's percentage.                   |
+| `note`       | Optional note such as the share in a component. |
+| `checked`    | Weighed state.                                  |
+| `onToggle`   | Called when the weighing checkbox changes.      |
+| `checkLabel` | Label of the weighing checkbox.                 |
+| `editing`    | Shows the edit controls passed as children.     |
+| `children`   | Edit controls while editing.                    |
+
+**Accessibility**
+
+- Grams and percentage are text with tabular figures; the checkbox has its own label.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.weighing-checkbox`
+- `fp.number-field`
+- `fp.group-card`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.metric-pill`
+
+A compact pill showing one value, with an optional pictogram and label, such as hydration or dough weight on a recipe card.
+
+**Use when**
+
+- Short derived values in cards and summaries.
+
+**Avoid when**
+
+- Editable values: use fp.number-field.
+- Status words: use fp.badge.
+
+**Props**
+
+| Prop    | Meaning                                           |
+| ------- | ------------------------------------------------- |
+| `value` | Formatted value with its unit, from the consumer. |
+| `label` | Optional text before the value.                   |
+| `icon`  | Optional pictogram name from fp.icon.             |
+
+**Accessibility**
+
+- The value is text with tabular figures; the pictogram is decorative.
+- Pass a label when the pictogram alone would carry the meaning.
+
+**Related**
+
+- `fp.icon`
+- `fp.recipe-card`
+- `fp.hero-summary`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Compact semantic SVG pictogram with an atomic, tabular value. Labels come from the consumer.
+
+### `fp.number-field`
+
+A numeric input that keeps the raw text while typing and commits a parsed number, with its unit and an error message.
+
+**Use when**
+
+- Every editable quantity: grams, percentages, durations, temperatures.
+
+**Avoid when**
+
+- Read-only values: use fp.metric-pill or plain text.
+
+**Props**
+
+| Prop               | Meaning                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| `compact`          | Smaller layout for rows.                                                              |
+| `hint`             | Optional help text under the field.                                                   |
+| `value`            | Committed number shown when not editing.                                              |
+| `label`            | Accessible label.                                                                     |
+| `unit`             | Unit text such as g or %.                                                             |
+| `unitPosition`     | 'prefix' or 'suffix' (default) for the unit.                                          |
+| `locale`           | 'fr' or 'en' decimal separator.                                                       |
+| `onCommit`         | Called with the parsed value; returning false keeps the raw text and shows the error. |
+| `onValidityChange` | Called when the raw text becomes valid or invalid.                                    |
+| `disabled`         | Disables editing.                                                                     |
+| `dataTestId`       | Test id for browser suites.                                                           |
+| `errorMessage`     | Message shown when a value is refused.                                                |
+| `resetKey`         | Changing it discards the raw text and shows value again.                              |
+| `displayDigits`    | Fraction digits shown when not editing.                                               |
+
+**Accessibility**
+
+- Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value.
+- The unit is shown but hidden from screen readers when the label already names it.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.ingredient-row`
+- `fp.hero-summary`
+
+**Decisions**
+
+- [Raw input preserved while editing (#35)](https://github.com/Aristotelesqc/Flourprint/issues/35)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.prep-hero`
+
+The dominant block of a running preparation: current step, time remaining, start and end, progress and instructions.
+
+**Use when**
+
+- At the top of the Preparation screen, once.
+
+**Avoid when**
+
+- Planned steps not yet running: use fp.step-node.
+
+**Props**
+
+| Prop             | Meaning                                                                     |
+| ---------------- | --------------------------------------------------------------------------- |
+| `remainingLabel` | Optional label above the remaining time.                                    |
+| `title`          | Current step.                                                               |
+| `remaining`      | Formatted remaining time.                                                   |
+| `start`          | Formatted start time.                                                       |
+| `end`            | Formatted planned end.                                                      |
+| `progress`       | Progress from 0 to 1.                                                       |
+| `labels`         | Texts for the start, end and progress labels.                               |
+| `instruction`    | Optional instruction for the current step.                                  |
+| `conditions`     | Optional tiles such as temperature or vessel, with label, value and detail. |
+
+**Accessibility**
+
+- Remaining time is text; progress also has a label.
+- No rolling numbers and no action delayed behind an animation (DESIGN.md).
+
+**Related**
+
+- `fp.step-node`
+- `fp.timeline`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.recipe-card`
+
+A recipe in the library: title, status, key values and, for a running preparation, a Resume action.
+
+**Use when**
+
+- The recipe library and search results.
+
+**Avoid when**
+
+- Inside the recipe screen itself: use fp.hero-summary.
+
+**Props**
+
+| Prop            | Meaning                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| `description`   | Optional short description.                                                                 |
+| `selected`      | Highlights the selected template (template picker).                                         |
+| `onResume`      | Optional: resumes the running preparation.                                                  |
+| `resumeLabel`   | Label of the Resume button.                                                                 |
+| `title`         | Recipe name.                                                                                |
+| `details`       | Optional short detail texts.                                                                |
+| `metrics`       | Optional values shown as pills.                                                             |
+| `status`        | Status text.                                                                                |
+| `statusVariant` | Tone of the status.                                                                         |
+| `featured`      | Highlights the card, as for a running preparation; the default status tone becomes success. |
+| `onOpen`        | Opens the recipe.                                                                           |
+| `actions`       | Optional extra actions.                                                                     |
+
+**Accessibility**
+
+- The whole card opens the recipe; Resume and other actions are separate buttons.
+- The status is text (fp.badge style), not only colour.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.metric-pill`
+- `fp.badge`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.step-node`
+
+One step of the process as a numbered node on a connected line, with its details and actions.
+
+**Use when**
+
+- Step lists in Recipe, Planning and Preparation.
+
+**Avoid when**
+
+- Time placement across parallel lanes: use fp.timeline.
+
+**Props**
+
+| Prop        | Meaning                                     |
+| ----------- | ------------------------------------------- |
+| `icon`      | Optional pictogram for the operation.       |
+| `number`    | Position shown in the node.                 |
+| `title`     | Step name.                                  |
+| `details`   | Short detail texts (duration, temperature). |
+| `state`     | 'planned', 'running' or 'done'.             |
+| `onEdit`    | Optional: opens the step editor.            |
+| `editLabel` | Accessible name of the edit button.         |
+| `actions`   | Optional extra actions.                     |
+| `children`  | Optional content under the details.         |
+
+**Accessibility**
+
+- The number and title are text; state is also given in words, not only colour.
+- Reorder controls (#123) need a keyboard path besides dragging.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.timeline`
+- `fp.prep-hero`
+
+**Decisions**
+
+- [Step move and reorder (#123)](https://github.com/Aristotelesqc/Flourprint/issues/123)
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.surface`
+
+A tonal container that groups content on the page, in the warm surface steps of each theme.
+
+**Use when**
+
+- Grouping related content when no more specific component fits.
+
+**Avoid when**
+
+- Wrapping every value in its own raised box (DESIGN.md).
+
+**Props**
+
+| Prop               | Meaning                                                      |
+| ------------------ | ------------------------------------------------------------ |
+| `componentId`      | Id of the component this surface belongs to, for inspection. |
+| `componentVersion` | Version of that component, for inspection.                   |
+| `children`         | Content.                                                     |
+| `className`        | Extra class for the consumer's layout.                       |
+| `variant`          | 'default', 'container' or 'high' surface step.               |
+
+**Accessibility**
+
+- Anchored in the page, so opaque and flat (elevation rule, ADR 0021).
+- Purely visual: add headings or landmarks in the content when needed.
+
+**Related**
+
+- `fp.group-card`
+- `fp.hero-summary`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.tabs`
+
+Switches between sections of one screen (Ingredients, Steps, Planning, History) or between filters.
+
+**Use when**
+
+- Two to five peer sections or filters.
+
+**Avoid when**
+
+- Navigation between screens: use fp.bottom-bar.
+- A single on/off choice.
+
+**Props**
+
+| Prop       | Meaning                                                |
+| ---------- | ------------------------------------------------------ |
+| `variant`  | 'underlined' (sections), 'pills' or 'chips' (filters). |
+| `tabs`     | Tabs with id and label.                                |
+| `activeId` | Id of the selected tab.                                |
+| `onChange` | Called with the chosen id.                             |
+| `label`    | Accessible name of the tab list.                       |
+
+**Accessibility**
+
+- Tablist with arrow-key navigation and roving focus; the selected tab is aria-selected.
+- Narrow tab rows scroll horizontally and stay keyboard reachable.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.bottom-bar`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.timeline`
+
+Horizontal lanes that place the steps of a plan on one time axis, so parallel work (a poolish resting while a tangzhong cooks) reads at a glance.
+
+**Use when**
+
+- Planning views that show when steps run relative to each other.
+
+**Avoid when**
+
+- Exact times the baker acts on: list them with fp.step-node.
+- Computing positions: startPct and endPct come from @flourprint/core projections.
+
+**Props**
+
+| Prop         | Meaning                                                                                                         |
+| ------------ | --------------------------------------------------------------------------------------------------------------- |
+| `startLabel` | Text at the start of the axis, such as the plan's start time.                                                   |
+| `endLabel`   | Text at the end of the axis.                                                                                    |
+| `lanes`      | Rows of events: id, label and events with id, label, range text and start/end positions in percent of the axis. |
+
+**Accessibility**
+
+- Each event's label and range are text, not only bar position.
+- Lanes keep their order for screen readers; colour is never the only cue.
+
+**Related**
+
+- `fp.step-node`
+- `fp.prep-hero`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Display-only lanes. Positions and localized times arrive from the consumer projection; this component schedules nothing.
+
+### `fp.warning-banner`
+
+A message about the state of a calculation or a value: partial, unavailable or fine.
+
+**Use when**
+
+- Partial composition, model limits, missing data.
+
+**Avoid when**
+
+- Short statuses: use fp.badge.
+- Errors on a field: fp.number-field shows its own.
+
+**Props**
+
+| Prop       | Meaning                             |
+| ---------- | ----------------------------------- |
+| `embedded` | Lighter layout inside another card. |
+| `title`    | Short title.                        |
+| `status`   | 'ok', 'warning' or 'unavailable'.   |
+| `message`  | Explanation.                        |
+| `children` | Optional extra content.             |
+
+**Accessibility**
+
+- The status is stated in the title or message, not only by colour or pictogram.
+
+**Related**
+
+- `fp.badge`
+- `fp.hero-summary`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.weighing-checkbox`
+
+A large checkbox for ticking ingredients off while weighing.
+
+**Use when**
+
+- Weighing lists and checklists during a preparation.
+
+**Avoid when**
+
+- Settings that switch a mode on or off: use a toggle.
+
+**Props**
+
+| Prop         | Meaning                        |
+| ------------ | ------------------------------ |
+| `hideLabel`  | Hides the label visually only. |
+| `checked`    | Checked state.                 |
+| `onChange`   | Called with the new state.     |
+| `label`      | Label text.                    |
+| `disabled`   | Disables the checkbox.         |
+| `dataTestId` | Test id for browser suites.    |
+
+**Accessibility**
+
+- A native checkbox input with its label; hideLabel keeps it for screen readers.
+- Unchecked boxes keep a 3:1 contrast in all three themes.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+
+**Related**
+
+- `fp.ingredient-row`
+- `fp.motion.check`
+
+**Decisions**
+
+- [Weighing lifetime, owner choice (#122)](https://github.com/Aristotelesqc/Flourprint/issues/122)
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+
+**Versions**
+
+- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
 
 ## Motions
 
