@@ -31,7 +31,8 @@
         <div class="choice-callout">
           <strong>Owner Choice Required:</strong> Please test each of the 3 step row designs
           (<code>compact</code>, <code>rail</code>, <code>outline</code>) paired with both
-          activation methods (<code>move</code> for 5px motion vs <code>hold</code> for longpress).
+          activation methods (<code>move</code> for 5px motion vs <code>hold</code> for 350ms
+          longpress).
         </div>
 
         <div class="links-grid">
@@ -53,7 +54,7 @@
           >
             <div class="card-heading">
               <span class="card-title">Compact Row · Hold</span>
-              <span class="badge badge-accent">Longpress</span>
+              <span class="badge badge-accent">Hold 350ms</span>
             </div>
             <p class="card-desc">
               Dense step row with press-and-hold activation for mobile safety.
@@ -79,7 +80,7 @@
           >
             <div class="card-heading">
               <span class="card-title">Rail Row · Hold</span>
-              <span class="badge badge-accent">Longpress</span>
+              <span class="badge badge-accent">Hold 350ms</span>
             </div>
             <p class="card-desc">
               Vertical timeline rail indicator with press-and-hold activation.
@@ -105,7 +106,7 @@
           >
             <div class="card-heading">
               <span class="card-title">Outline Row · Hold</span>
-              <span class="badge badge-accent">Longpress</span>
+              <span class="badge badge-accent">Hold 350ms</span>
             </div>
             <p class="card-desc">Subtly boxed card layout with press-and-hold activation.</p>
             <span class="card-query">stepDesign=outline &amp; dragActivation=hold</span>
@@ -136,16 +137,16 @@
 
           <a
             class="review-card"
-            href="mockup.html?screen=prep&recipe=shokupan&nav=A&lang=fr&theme=dark&width=393&scale=100"
+            href="mockup.html?screen=preparation&recipe=shokupan&nav=A&lang=fr&theme=dark&width=393&scale=100"
           >
             <div class="card-heading">
               <span class="card-title">Preparation</span>
               <span class="badge">Nav A</span>
             </div>
             <p class="card-desc">
-              Step checklist, active timing, temperature tracking, and fermentation guidance.
+              Step checklist, stage progression, ingredient weights, and active timers.
             </p>
-            <span class="card-query">screen=prep</span>
+            <span class="card-query">screen=preparation</span>
           </a>
 
           <a
@@ -156,7 +157,7 @@
               <span class="card-title">Settings</span>
               <span class="badge">Nav A</span>
             </div>
-            <p class="card-desc">Theme, language, unit preferences, and calibration parameters.</p>
+            <p class="card-desc">Theme, language, and unit preferences.</p>
             <span class="card-query">screen=settings</span>
           </a>
 
@@ -168,7 +169,7 @@
               <span class="card-title">Library</span>
               <span class="badge">Nav A</span>
             </div>
-            <p class="card-desc">Recipe catalog, flour database, and saved baker formulations.</p>
+            <p class="card-desc">Recipe catalog and collection overview.</p>
             <span class="card-query">screen=library</span>
           </a>
         </div>
@@ -193,7 +194,22 @@
         </div>
       </section>
 
-      <!-- SECTION 4: Companion Screenshots (review-manifest.json) -->
+      <!-- SECTION 4: Motion Evidence -->
+      <section id="motion-evidence">
+        <h2 class="section-title">Motion Evidence</h2>
+        <p class="section-caption">
+          Recorded motion clips from <code>./review-manifest.json</code>. Delivery evidence, not
+          product UI.
+        </p>
+
+        <div id="motion-container">
+          <div class="pending-box">
+            Loading motion clips from <code>./review-manifest.json</code>...
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: Companion Screenshots (review-manifest.json) -->
       <section id="companion-screenshots">
         <h2 class="section-title">Companion Screenshots</h2>
         <p class="section-caption">
@@ -215,6 +231,7 @@
     <script>
       (function () {
         const container = document.getElementById('manifest-container');
+        const motionContainer = document.getElementById('motion-container');
 
         fetch('./review-manifest.json')
           .then((res) => {
@@ -224,23 +241,71 @@
             return res.json();
           })
           .then((manifest) => {
-            if (!manifest || !Array.isArray(manifest.views)) {
+            if (!manifest) {
               throw new Error('Invalid manifest structure');
             }
-
+            renderMotion(manifest);
             renderGallery(manifest);
           })
           .catch((err) => {
-            container.innerHTML = `
-              <div class="pending-box">
-                <p><strong>Captures pending</strong></p>
-                <p style="margin-top: 6px; font-size: 0.8rem;">Review manifest not yet present (<code>./review-manifest.json</code> will be generated by Codex). Full-resolution screenshot cards will populate automatically once available.</p>
-              </div>
-            `;
+            if (container) {
+              container.innerHTML = `
+                <div class="pending-box">
+                  <p><strong>Captures pending</strong></p>
+                  <p style="margin-top: 6px; font-size: 0.8rem;">Review manifest not yet present (<code>./review-manifest.json</code> will be generated by Codex). Full-resolution screenshot cards will populate automatically once available.</p>
+                </div>
+              `;
+            }
+            if (motionContainer) {
+              motionContainer.innerHTML = `
+                <div class="pending-box">
+                  <p><strong>Motion evidence pending</strong></p>
+                  <p style="margin-top: 6px; font-size: 0.8rem;">No motion clips available yet (<code>./review-manifest.json</code> not present).</p>
+                </div>
+              `;
+            }
           });
 
+        function renderMotion(manifest) {
+          if (!motionContainer) return;
+          const clips = Array.isArray(manifest.motionClips) ? manifest.motionClips : [];
+          if (clips.length === 0) {
+            motionContainer.innerHTML = `
+              <div class="pending-box">
+                <p><strong>Motion evidence pending</strong></p>
+                <p style="margin-top: 6px; font-size: 0.8rem;">No motion clips listed in <code>./review-manifest.json</code> yet.</p>
+              </div>
+            `;
+            return;
+          }
+
+          motionContainer.innerHTML = `
+            <div class="captures-grid">
+              ${clips
+                .map(
+                  (clip) => `
+                <div class="capture-card" style="padding: 12px; gap: 8px;">
+                  <video controls playsinline preload="metadata" style="width: 100%; max-width: 100%; border-radius: var(--radius-sm); background: #000;" src="${escapeHtml(clip.path)}">
+                    Your browser does not support video playback.
+                  </video>
+                  <div class="capture-info" style="padding: 4px 0 0 0;">
+                    <div class="capture-name">${escapeHtml(clip.title || 'Motion clip')}</div>
+                    <div class="capture-tags">
+                      ${clip.reduced ? '<span class="badge">reduced motion</span>' : ''}
+                      ${clip.sha256 ? `<span class="badge">SHA: ${escapeHtml(clip.sha256.substring(0, 8))}</span>` : ''}
+                      <a href="${escapeHtml(clip.path)}" target="_blank" rel="noopener" style="font-size: 0.75rem; color: var(--accent); margin-left: auto;">Open video</a>
+                    </div>
+                  </div>
+                </div>
+              `,
+                )
+                .join('')}
+            </div>
+          `;
+        }
+
         function renderGallery(manifest) {
-          const views = manifest.views;
+          const views = Array.isArray(manifest.views) ? manifest.views : [];
           if (views.length === 0) {
             container.innerHTML = `
               <div class="pending-box">
@@ -317,7 +382,11 @@
 
             grid.innerHTML = filtered
               .map((view) => {
+                const isBaseline = Boolean(view.baseline);
                 const tags = [
+                  isBaseline
+                    ? '<span class="badge badge-history">Historical baseline</span>'
+                    : '<span class="badge">Current</span>',
                   view.screen ? `<span class="badge">${escapeHtml(view.screen)}</span>` : '',
                   view.theme ? `<span class="badge">${escapeHtml(view.theme)}</span>` : '',
                   view.locale ? `<span class="badge">${escapeHtml(view.locale)}</span>` : '',
@@ -334,14 +403,19 @@
                   .filter(Boolean)
                   .join(' ');
 
+                const noteHtml = view.note
+                  ? `<div class="card-desc" style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(view.note)}</div>`
+                  : '';
+
                 return `
-                <div class="capture-card">
+                <div class="capture-card" ${isBaseline ? 'style="border-color: var(--border-subtle); opacity: 0.9;"' : ''}>
                   <a class="capture-img-link" href="${escapeHtml(view.path)}" target="_blank" rel="noopener" title="Open full resolution capture">
                     <img src="${escapeHtml(view.path)}" alt="${escapeHtml(view.name || 'Capture')}" loading="lazy" />
                   </a>
                   <div class="capture-info">
                     <div class="capture-name">${escapeHtml(view.name || 'Unnamed capture')}</div>
                     <div class="capture-tags">${tags}</div>
+                    ${noteHtml}
                   </div>
                 </div>
               `;
