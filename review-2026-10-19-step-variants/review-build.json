@@ -1,0 +1,12 @@
+{
+  "revision": "f2371b79e40e9665812f5b11bba82e2ddc0055a2",
+  "sourceSha256": "77eece9b1d95d5a413d4e0ff66d0e3abc53d41dc6bbd5a296556fdc88f4b48f6",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · sunny-lantern · local"
+}
