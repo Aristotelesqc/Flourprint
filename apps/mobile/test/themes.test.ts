@@ -1,3 +1,4 @@
+import { BUILT_IN_COMPONENT_DEFAULTS } from '@flourprint/core/domain';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createPreferences, decodePreferences } from '../src/services/preferences';
 import { attachThemeSync, initializeDocumentTheme } from '../src/theme/device-theme';
@@ -28,6 +29,7 @@ describe('device theme compatibility and persistence', () => {
         simulation: true,
         offsetMs: 900_000,
         units: { oven: 'F', cold: 'C', ambient: 'F' },
+        componentDefaults: BUILT_IN_COMPONENT_DEFAULTS,
       });
     }
     expect(decodePreferences('{broken').theme).toBe('system');
@@ -48,16 +50,28 @@ describe('device theme compatibility and persistence', () => {
     expect(subscriber).toHaveBeenCalledTimes(1);
     preferences.setUnit('ambient', 'F');
     preferences.advance(60_000);
+    expect(preferences.setComponentDefault('poolish', { flourPct: 30, hydrationPct: 100 }).ok).toBe(
+      true,
+    );
+    // A tangzhong at 1:2 would be named a yudane: refused, the stored default is unchanged.
+    expect(
+      preferences.setComponentDefault('tangzhong', { flourPct: 5, hydrationPct: 200 }).ok,
+    ).toBe(false);
     const reloaded = createPreferences();
     expect(reloaded.get()).toEqual({
       theme: 'amoled',
       simulation: true,
       offsetMs: 960_000,
       units: { oven: 'F', cold: 'C', ambient: 'F' },
+      componentDefaults: {
+        ...BUILT_IN_COMPONENT_DEFAULTS,
+        poolish: { flourPct: 30, hydrationPct: 100 },
+      },
     });
     unsubscribe();
     preferences.setTheme('light');
-    expect(subscriber).toHaveBeenCalledTimes(3);
+    // Theme, unit, clock and the accepted default; the refused default notifies no one.
+    expect(subscriber).toHaveBeenCalledTimes(4);
   });
 
   it('applies the stored AMOLED palette before services open, regardless of the OS', () => {

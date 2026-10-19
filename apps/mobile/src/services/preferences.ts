@@ -1,17 +1,25 @@
 import type { Clock } from '@flourprint/core/application';
-import type {
-  BakeOrigin,
-  Instant,
-  TemperatureContext,
-  TemperatureUnit,
+import {
+  BUILT_IN_COMPONENT_DEFAULTS,
+  componentDefaultsFrom,
+  validateComponentDefault,
+  type BakeOrigin,
+  type ComponentDefault,
+  type ComponentDefaults,
+  type ComponentPreset,
+  type FormulaError,
+  type Instant,
+  type Result,
+  type TemperatureContext,
+  type TemperatureUnit,
 } from '@flourprint/core/domain';
 
 export type ThemePreference = 'system' | 'light' | 'dark' | 'amoled';
 
 /**
  * Settings of this device, never written into a document, a backup or an export: the simulation
- * mode and its clock offset (ADR 0014), the temperature units (values-and-units.md), and the
- * theme preference.
+ * mode and its clock offset (ADR 0014), the temperature units (values-and-units.md), the
+ * theme preference, and the defaults of new components (formula.md, Component defaults).
  */
 export interface DevicePreferences {
   readonly simulation: boolean;
@@ -19,6 +27,7 @@ export interface DevicePreferences {
   readonly offsetMs: number;
   readonly units: Readonly<Record<TemperatureContext, TemperatureUnit>>;
   readonly theme: ThemePreference;
+  readonly componentDefaults: ComponentDefaults;
 }
 
 export interface PreferenceStore {
@@ -28,6 +37,11 @@ export interface PreferenceStore {
   advance(ms: number): void;
   setUnit(context: TemperatureContext, unit: TemperatureUnit): void;
   setTheme(theme: ThemePreference): void;
+  /** Sets the default of new components of a preset; an invalid default is refused unchanged. */
+  setComponentDefault(
+    preset: ComponentPreset,
+    value: ComponentDefault,
+  ): Result<ComponentDefault, FormulaError>;
   subscribe(listener: () => void): () => void;
 }
 
@@ -38,6 +52,7 @@ export const DEFAULT_PREFERENCES: DevicePreferences = {
   offsetMs: 0,
   units: { oven: 'C', cold: 'C', ambient: 'C' },
   theme: 'system',
+  componentDefaults: BUILT_IN_COMPONENT_DEFAULTS,
 };
 
 const decodeTheme = (theme: unknown): ThemePreference =>
@@ -68,6 +83,7 @@ export const decodePreferences = (raw: string | null | undefined): DevicePrefere
         : 0,
     units: { oven: unit('oven'), cold: unit('cold'), ambient: unit('ambient') },
     theme: decodeTheme(stored.theme),
+    componentDefaults: componentDefaultsFrom(stored.componentDefaults),
   };
 };
 
@@ -110,6 +126,16 @@ export const createPreferences = (): PreferenceStore => {
     setUnit: (context, unit) =>
       change({ ...current, units: { ...current.units, [context]: unit } }),
     setTheme: (theme) => change({ ...current, theme: decodeTheme(theme) }),
+    setComponentDefault: (preset, value) => {
+      const valid = validateComponentDefault(preset, value);
+      if (valid.ok) {
+        change({
+          ...current,
+          componentDefaults: { ...current.componentDefaults, [preset]: valid.value },
+        });
+      }
+      return valid;
+    },
     subscribe: (listener) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
