@@ -1,0 +1,12 @@
+{
+  "revision": "d2e8febb2a3150a83c50a0e63cacd1a91900b202",
+  "sourceSha256": "844d78e929486bac637f15c3e6ea9ed3b1456f1c2dad06ddddbada53e9f54a0b",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · tender-meadow · local"
+}
