@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { MemoryBakeEventStore } from '@flourprint/adapters/memory';
 import { executeBakeCommand } from '@flourprint/core/application';
-import type { BakeOrigin, Instant } from '@flourprint/core/domain';
+import {
+  BUILT_IN_COMPONENT_DEFAULTS,
+  type BakeOrigin,
+  type Instant,
+} from '@flourprint/core/domain';
 import { editableTemperature, formatTemperature } from '../src/i18n/temperature';
 import { onRealClock, type Reminder } from '../src/services/notifications';
 import { decodePreferences, worldClock, type PreferenceStore } from '../src/services/preferences';
@@ -71,6 +75,7 @@ describe('device preferences', () => {
       simulation: false,
       offsetMs: 0,
       units: { oven: 'C', cold: 'C', ambient: 'C' },
+      componentDefaults: BUILT_IN_COMPONENT_DEFAULTS,
     });
     expect(
       decodePreferences(
@@ -81,6 +86,7 @@ describe('device preferences', () => {
       simulation: true,
       offsetMs: 900_000,
       units: { oven: 'C', cold: 'C', ambient: 'F' },
+      componentDefaults: BUILT_IN_COMPONENT_DEFAULTS,
     });
     expect(decodePreferences('{not json').simulation).toBe(false);
     expect(decodePreferences(JSON.stringify({ offsetMs: -5 })).offsetMs).toBe(0);

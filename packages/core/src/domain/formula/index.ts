@@ -16,3 +16,15 @@ export {
   type ComponentStyle,
 } from './style.js';
 export { INGREDIENT_PRESETS, type IngredientPreset } from './presets.js';
+export {
+  BUILT_IN_COMPONENT_DEFAULTS,
+  COMPONENT_PRESETS,
+  componentDefaultsFrom,
+  defaultHydrationForRatio,
+  newComponent,
+  presetKind,
+  validateComponentDefault,
+  type ComponentDefault,
+  type ComponentDefaults,
+  type ComponentPreset,
+} from './defaults.js';
