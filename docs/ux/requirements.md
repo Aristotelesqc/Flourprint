@@ -10,7 +10,7 @@ link). Agents do not reopen a settled item in an issue, a mockup or a review: th
   [packages/ui/CATALOGUE.md](../../packages/ui/CATALOGUE.md) and [DESIGN.md](../../DESIGN.md).
   An item here is a requirement, not a suggestion.
 - **Acceptance grid.** Every mockup round and every interface pull request is checked against the
-  L-items, rendered and clicked, in FR and EN, navigation A and B while #112 is open, at 393 px /
+  L-items, rendered and clicked, in FR and EN, navigation A (L101), at 393 px /
   100 % and 360 px / 130 %. The review reports PASS, PARTIAL, FAIL or NOT-TESTABLE per affected
   item, with evidence.
 - **Open choices (O-items) are the owner's.** A proposal may show options side by side; it never
@@ -241,6 +241,28 @@ Screens: global, library. Source: GH/issues/111#issuecomment-6189930425; GH/issu
 Screens: global. Source: GH/issues/134 body, "Pictograms" (_Owner: pictograms are wanted… but not emoji everywhere_); GH/issues/111#issuecomment-6206059271 §2 (owner observation recorded by AGY); GH/issues/125 acceptance 5. Kind: OD-R + OI.
 
 **L39.** Numbers (metrics, fields, timer) use the text font with tabular figures, not a monospace/code font. Screens: global. Source: DESIGN.md "Typography"; GH/issues/134#issuecomment-6226163455; GH/issues/134#issuecomment-6226235543 (restore list). Kind: C + CL.
+
+**L101.** Navigation is **A**, with the section tabs at the top (owner decision, 2026-10-19, which
+settles O1; navigation B and its bottom bar of large destination buttons are no longer developed):
+
+- each screen keeps A's contextual bottom toolbar (L31, L32, L60);
+- the tabs at the top stay tappable, and a horizontal swipe also moves to the next or previous
+  tab;
+- both gestures change the tab: a slow drag past half the width, or a short quick flick above a
+  velocity threshold, whatever the distance;
+- the current screen follows the finger and the next one slides in like a carousel; on release
+  the motion finishes or springs back at a speed matched to the gesture, and the tab indicator
+  moves with it;
+- a swipe starts only on a clearly horizontal gesture; vertical scrolling wins otherwise;
+- no swipe starts near the screen edges (Android Back gesture), during a step drag (L96), or
+  inside an area that already scrolls horizontally;
+- with reduced motion the tab changes at once, without the slide;
+- switching tabs while editing keeps the same draft (L33).
+
+The motion is a library item (`fp.motion.*`) shown in the catalogue. The owner wants it truly
+fluid. Polishing the other animations is deferred, possibly to 0.4; L28 still applies. Screens:
+global, recipe. Source: owner, 2026-10-19 ("je veux A avec les tabs au haut", "on devrait aussi
+pouvoir swiper à gauche ou à droite", "un petit flick rapide horizontal du doigt"). Kind: OD.
 
 ## 4. Library (incl. template chooser)
 
@@ -541,6 +563,22 @@ Abandon is separated in the menu. Screens: preparation. Source: docs/contracts/b
 
 **L89.** The flour list shows each flour's known characteristics, with "≈" for estimates. Built-in Flourprint oven modes are used directly. Appliance profiles are **optional**, may be minimal and never gate a recipe, the plan or execution. Mode help is shown where the mode is chosen. Screens: registry, steps. Source: GH/issues/35#issuecomment-6110744754; #35 body, "Owner clarification: oven profiles are optional". Kind: OD-R.
 
+**L102.** New components start from **default values**, never from numbers written in the
+interface:
+
+- poolish 20 % of the flour at 100 % hydration;
+- tangzhong 5 % of the flour at 1:5 (500 %);
+- yudane 5 % of the flour at 1:1 (100 %).
+
+The defaults come from the engine and can be changed globally for new recipes under Advanced.
+Each recipe keeps its own values, and changing a default never changes an existing recipe. For
+scalds (tangzhong, yudane), the flour:liquid ratio ("1:5", flour first) and the hydration
+percentage are both shown and both editable, kept in step by the engine; storage stays in percent.
+The contract records the defaults, their bounds and this precedence before any code. Screens:
+recipe (edit), settings. Source: owner, 2026-10-19 ("une variable par défaut, configurable
+éventuellement dans les options avancées", "des équivalences de rapports eau:farine comme le
+standard 1:5… Mais ça prend les deux"). Kind: OD.
+
 ## 12. Mockup and redesign process (owner requirements on deliverables)
 
 **L90.** Round 2 (`22db386`) is the **visual baseline** for look and organisation:
@@ -592,20 +630,8 @@ Technical fixes (dead controls, bad sums, localization, overflow) need no new pr
 
 ## 13. OPEN owner choices (do not decide silently)
 
-**O1. #112 navigation: A, B or an explicit mix.**
-
-- **A** is a contextual bottom toolbar per screen:
-  - Recipes: wide search · `+` · `⋯`;
-  - Recipe: Edit · Plan · **▶ Start** · `⋯`;
-  - Edit: undo · redo · Save · `⋯`;
-  - Preparation: the current step action · note · `⋯`.
-
-  Global destinations go in `⋯` or a drawer, plus an active-preparation badge.
-
-- **B** is a Material bottom nav (Recipes · Preparations (badge) · Registry · Settings), with screen actions in the top bar.
-
-Claude recommended A; the owner has not chosen.
-Source: GH/issues/111#issuecomment-6189930425; GH/issues/111#issuecomment-6189971579; GH/issues/112; GH/issues/120.
+**O1. #112 navigation: resolved by the owner on 2026-10-19.** L101 applies: navigation A with
+the section tabs at the top, swipeable. Navigation B is no longer developed.
 
 **O2. Weighing-check lifetime and scope.** The owner chooses before any persistence code:
 
