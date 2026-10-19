@@ -1,10 +1,19 @@
-import type { Component, Formula, Process } from '@flourprint/core/domain';
+import {
+  newComponent,
+  type Component,
+  type ComponentDefaults,
+  type ComponentPreset,
+  type Formula,
+  type FormulaError,
+  type Process,
+  type Result,
+} from '@flourprint/core/domain';
 
 /**
- * Preparations added from the recipe page. The defaults are starting points the user edits
- * right away: a poolish at 100 % hydration and a tangzhong at 1:5 (owner decision, #18).
+ * Preparations added from the recipe page. They start from the engine's component defaults,
+ * which the user may change for new recipes (formula.md, Component defaults).
  */
-export type PreparationKind = 'poolish' | 'tangzhong';
+export type PreparationKind = ComponentPreset;
 
 const uniqueId = (formula: Formula, process: Process, base: string): string => {
   const taken = new Set([
@@ -23,16 +32,9 @@ export const newPreparation = (
   formula: Formula,
   process: Process,
   kind: PreparationKind,
-): Component => {
-  const main = [...formula.flours].sort((a, b) => b.sharePct - a.sharePct)[0];
-  return {
-    id: uniqueId(formula, process, kind),
-    kind: kind === 'poolish' ? 'preferment' : 'scald',
-    flourPct: kind === 'poolish' ? 20 : 5,
-    flourBlend: main ? [{ flour: main.id, sharePct: 100 }] : [],
-    hydrationPct: kind === 'poolish' ? 100 : 500,
-  };
-};
+  defaults?: ComponentDefaults,
+): Result<Component, FormulaError> =>
+  newComponent(formula, kind, uniqueId(formula, process, kind), defaults);
 
 /**
  * The step that makes a new preparation, before the first mix: no duration until the user

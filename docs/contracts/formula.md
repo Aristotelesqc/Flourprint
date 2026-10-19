@@ -87,6 +87,36 @@ type PreparationState =
   component's water) with its provenance, and applies at the component's step. The only default
   is 0.
 
+### Component defaults
+
+A new component starts from a **default**, never from numbers written in the interface (owner
+decision of 2026-10-19, `docs/ux/requirements.md` L102). A default is a pair
+`{ flourPct, hydrationPct }` for one of three presets:
+
+| Preset      | Kind         | Built-in default                       |
+| ----------- | ------------ | -------------------------------------- |
+| `poolish`   | `preferment` | `flourPct` 20, `hydrationPct` 100      |
+| `tangzhong` | `scald`      | `flourPct` 5, `hydrationPct` 500 (1:5) |
+| `yudane`    | `scald`      | `flourPct` 5, `hydrationPct` 100 (1:1) |
+
+- **Valid default.** `flourPct` is finite, > 0 and ≤ 100. `hydrationPct` is finite and ≥ 0, and a
+  new component carries no allocation, so its ratio is `hydrationPct` and it must keep the
+  preset's name (Component style): `poolish` ≥ 90, `tangzhong` ≥ 300, `yudane` ≤ 150. Anything
+  else is refused with `InvalidFormula` at `path` `defaults.<preset>.<field>`.
+- **Ratio entry.** A default may be typed as flour:liquid `1:n`, flour first, like a component
+  (Ratio entry): with no allocation, `hydrationPct = 100 × n`. Both readings are shown; the
+  default is stored in percent.
+- **Precedence.** The user's default for a preset replaces the built-in one for new components
+  only. A recipe keeps its own component values: changing a default never changes an existing
+  recipe, draft or bake. A stored default that is missing or no longer valid falls back to the
+  built-in default of that preset alone.
+- **Storage.** The user's defaults are a device preference, like the temperature units: they are
+  not written into a document, a backup or an export.
+- **The new component** has the preset's kind and default, an id chosen by the caller, and its
+  whole flour blend from the formula's largest flour share (the first one on a tie). It is
+  refused with `InvalidFormula` when the formula has no flour. Adding it remains an
+  `AddComponent` edit, checked as any other.
+
 ## Edit commands
 
 | Command                                                      | Kept constant                  | Recomputed                                            | `IncompatibleConstraint` when…                                               |

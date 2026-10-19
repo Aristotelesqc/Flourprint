@@ -16,6 +16,7 @@ import { parseDecimal } from '../i18n/numbers';
 import { useMessages } from '../i18n/use-messages';
 import { useFlourCatalog } from '../services/flours';
 import { formulaChanges } from '../services/formula-changes';
+import { usePreferences } from '../services/use-preferences';
 import {
   newPreparation,
   withPreparationStep,
@@ -358,8 +359,12 @@ export const AddPreparation = ({
   onStructure: StructureEdit;
 }) => {
   const { t } = useMessages();
+  const { componentDefaults } = usePreferences();
   const add = (kind: PreparationKind) => {
-    const component = newPreparation(formula, process, kind);
+    // A saved formula always has a flour, so a new component is always made.
+    const made = newPreparation(formula, process, kind, componentDefaults);
+    if (!made.ok) return;
+    const component = made.value;
     onStructure({ type: 'AddComponent', component }, withPreparationStep(process, component));
   };
   return (
