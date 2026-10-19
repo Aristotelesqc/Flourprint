@@ -8,13 +8,16 @@
   justify-content: center;
   gap: var(--fp-space-1-5);
   min-height: var(--fp-spacing-touch);
-  padding: var(--fp-space-1) var(--fp-space-3);
+  min-width: var(--fp-spacing-touch);
+  box-sizing: border-box;
+  padding: 0 var(--fp-space-3);
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-ink);
   font-size: var(--type-label);
   font-weight: 600;
+  line-height: 1.25;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
@@ -31,7 +34,18 @@
 [data-fp-component='fp.button'][data-fp-version='v1'] > .button-content {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--fp-space-1-5);
+  line-height: 1.25;
+  vertical-align: middle;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'] .button-content svg,
+[data-fp-component='fp.button'][data-fp-version='v1']
+  .button-content
+  [data-fp-component='fp.icon'] {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 [data-fp-component='fp.button'][data-fp-version='v1'].btn:active > span {
   transform: scale(0.97);

@@ -1,10 +1,10 @@
+import { editRecipe, editProcessStep, stepMenu } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = requireMobile('@playwright/test');
 const recipe = '/mockup.html?screen=recipe&lang=fr&width=360&capture=1';
 async function edit(page) {
-  await page.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Modifier', exact: true }).click();
+  await editRecipe(page);
 }
 async function enter(page, id, value) {
   const field = page.getByTestId(id);
@@ -56,10 +56,12 @@ test('invalid input remains repairable, undo redo reset and cancel work', async 
     .getByRole('dialog')
     .getByRole('button', { name: 'Réinitialiser le brouillon', exact: true })
     .click();
+  const reset = page.getByRole('dialog');
+  await expect(reset).toContainText(/révision enregistrée.*v1/);
+  await reset.getByRole('button', { name: 'Réinitialiser', exact: true }).click();
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
   await enter(page, 'ingredient-grams-salt', '9');
-  await page.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Abandonner', exact: true }).click();
+  await page.getByRole('button', { name: 'Annuler', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Abandonner', exact: true }).click();
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
   await expect(page.getByTestId('save-recipe')).toHaveCount(0);
@@ -108,7 +110,7 @@ test('step editing changes process and planning, removal asks confirmation', asy
   await page.goto(recipe);
   await edit(page);
   await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
-  await page.getByRole('button', { name: 'Modifier l’étape : Pointage', exact: true }).click();
+  await editProcessStep(page, 'bulk');
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('textbox', { name: 'Nom', exact: true }).fill('Pointage lent');
   await dialog.getByRole('textbox', { name: 'Durée', exact: true }).fill('90');
@@ -129,10 +131,13 @@ test('step editing changes process and planning, removal asks confirmation', asy
     page.locator('.step-title:visible').filter({ hasText: 'Pointage lent' }),
   ).toBeVisible();
   await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
-  await page.locator('.step-more-trigger:visible').first().click();
-  await page.getByRole('button', { name: 'Supprimer', exact: true }).first().click();
-  await expect(page.getByRole('dialog', { name: 'Confirmer la suppression' })).toBeVisible();
-  await page.getByRole('dialog').getByRole('button', { name: 'Fermer', exact: true }).click();
+  await (
+    await stepMenu(page, 'tangzhong')
+  )
+    .getByRole('button', { name: 'Supprimer', exact: true })
+    .click();
+  await expect(page.getByRole('dialog')).toContainText('Cuisson du tangzhong');
+  await page.getByRole('dialog').getByRole('button', { name: 'Annuler', exact: true }).click();
   await expect(page.locator('.step-title:visible')).toHaveCount(10);
 });
 test('closed menus are inert, Escape returns focus, tabs support arrows', async ({ page }) => {
@@ -228,17 +233,22 @@ test('browser Back guards a pending edit and Stay retains it', async ({ page }) 
 });
 test('a dependency-breaking move is previewed and refused without mutation', async ({ page }) => {
   await page.goto(recipe + '&mode=edit&section=steps');
-  await page.getByRole('button', { name: 'Ordre', exact: true }).click();
-  await page.getByRole('button', { name: 'Descendre : Pointage', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Le graphe refuse cet ordre.');
+  await (
+    await stepMenu(page, 'bulk')
+  )
+    .getByRole('button', { name: 'Descendre l’étape', exact: true })
+    .click();
+  await expect(
+    page.getByRole('dialog').locator('[data-process-refusal="MoveBreaksDependencies"]'),
+  ).toBeVisible();
   await expect(
     page.getByRole('dialog').getByRole('button', { name: 'Appliquer', exact: true }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.locator('.step-title:visible').nth(3)).toHaveText('4. Pointage');
 });
 test('hydration display does not round the formula on an untouched blur', async ({ page }) => {
-  await page.goto(recipe + '&mode=edit');
+  await page.goto(recipe + '&mode=edit&recipe=baguette');
   const original = await page.getByTestId('formula-dough-weight').textContent();
   await page.getByTestId('hydration-target').focus();
   await page.getByTestId('hydration-target').blur();

@@ -8,9 +8,9 @@ export default {
   avoidWhen: ['Editable values: use fp.number-field.', 'Status words: use fp.badge.'],
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
-
     'The value is text with tabular figures; the pictogram is decorative.',
     'Pass a label when the pictogram alone would carry the meaning.',
+    'Compact 32 px (2 rem) height aligns with neighboring metadata and controls without empty vertical margin.',
   ],
   related: ['fp.icon', 'fp.recipe-card', 'fp.hero-summary'],
   decisions: [

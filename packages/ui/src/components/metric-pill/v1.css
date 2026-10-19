@@ -1,16 +1,28 @@
 /* Presentation owned by fp.metric-pill v1. */
 [data-fp-component='fp.metric-pill'][data-fp-version='v1'].stat-pill {
   display: inline-flex;
-  min-height: 32px;
+  min-height: 2rem;
+  height: 2rem;
   box-sizing: border-box;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--fp-space-1, 0.25rem);
   background-color: var(--color-surface-container);
   border: 1px solid var(--color-outline-subtle);
   border-radius: var(--radius-pill);
-  padding: 0.15rem 0.55rem;
+  padding: 0 0.55rem;
   font-size: var(--type-meta);
   font-weight: 600;
+  line-height: 1.2;
   color: var(--color-ink);
   white-space: nowrap;
+  vertical-align: middle;
+}
+[data-fp-component='fp.metric-pill'][data-fp-version='v1'].stat-pill svg,
+[data-fp-component='fp.metric-pill'][data-fp-version='v1'].stat-pill [data-fp-component='fp.icon'] {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+[data-fp-component='fp.metric-pill'][data-fp-version='v1'].stat-pill .muted {
+  color: var(--color-ink-muted);
 }

@@ -7,7 +7,7 @@ export default {
   avoidWhen: ['Tasks with fields: use fp.bottom-sheet.'],
   accessibility: [
     'Native modal dialog anchored to its trigger; Escape and outside taps close it; focus returns to the trigger.',
-    'Keep the first action clear of the independent 48 px close target; subsequent actions use full rows.',
+    'Close is an independent 48 px non-overlapping target; action layout is owned by the component even when .menu-actions wrapper is omitted.',
     'Floating layer: may be translucent (elevation rule).',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
   ],

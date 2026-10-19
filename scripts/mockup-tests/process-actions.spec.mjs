@@ -1,3 +1,4 @@
+import { editRecipe, editProcessStep, stepMenu } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 const require = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
@@ -6,12 +7,12 @@ const rows = (page) => page.locator('.phone-content .step-row:visible');
 const titles = (page) => page.locator('.phone-content .step-title:visible');
 const step = (page, name) =>
   rows(page).filter({
-    has: page.getByRole('button', { name: `Modifier l’étape : ${name}`, exact: true }),
+    has: page.locator('.step-title').filter({ hasText: new RegExp(`${name}$`) }),
   });
 const duplicate = async (page, name) => {
-  const row = step(page, name);
-  await row.locator('summary').click();
-  await row.getByRole('button', { name: 'Dupliquer', exact: true }).click();
+  const item = step(page, name);
+  await item.locator('[data-testid^="step-menu-"]').click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Dupliquer', exact: true }).click();
   return page.getByRole('dialog');
 };
 const open = async (page, extra = '') => {
@@ -54,8 +55,7 @@ test.describe('core-backed process actions', () => {
         await open(page, `&theme=${theme}&width=${width}&scale=${scale}&nav=B`);
         const original = await titles(page).allTextContents();
         await capture(page, `process-before-${theme}-${width}-${scale}`);
-        await page.getByRole('button', { name: 'Ordre', exact: true }).click();
-        await page.getByRole('button', { name: 'Monter : Division', exact: true }).press('Enter');
+        await page.getByTestId('drag-handle-divide').filter({ visible: true }).press('ArrowUp');
         const dialog = page.getByRole('dialog');
         await expect(dialog).toContainText('Ce déplacement change les dépendances.');
         await dialog.getByRole('button', { name: 'Étapes touchées (3)', exact: true }).click();
@@ -99,13 +99,18 @@ test.describe('core-backed process actions', () => {
   }) => {
     await open(page);
     const original = await titles(page).allTextContents();
-    await page.getByRole('button', { name: 'Ordre', exact: true }).click();
-    await page.getByRole('button', { name: 'Descendre : Pointage', exact: true }).click();
+    await (
+      await stepMenu(page, 'bulk')
+    )
+      .getByRole('button', { name: 'Descendre l’étape', exact: true })
+      .click();
     const dialog = page.getByRole('dialog');
     await expect(dialog.locator('[data-process-refusal="MoveBreaksDependencies"]')).toBeVisible();
-    await expect(dialog.getByRole('button', { name: 'Appliquer', exact: true })).toBeDisabled();
+    await expect(dialog.getByRole('button', { name: 'Appliquer', exact: true })).toHaveCount(0);
     await capture(page, 'process-refusal');
-    await dialog.getByRole('button', { name: 'Modifier l’étape', exact: true }).click();
+    await expect(dialog.getByRole('checkbox')).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Fermer et inspecter', exact: true }).click();
+    await editProcessStep(page, 'bulk');
     await expect(page.getByRole('dialog', { name: 'Modifier l’étape', exact: true })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(titles(page)).toHaveText(original);
@@ -117,8 +122,7 @@ test.describe('core-backed process actions', () => {
   }) => {
     await open(page);
     const timing = await step(page, 'Préchauffage').locator('.step-details').textContent();
-    await page.getByRole('button', { name: 'Ordre', exact: true }).click();
-    await page.getByRole('button', { name: 'Monter : Préchauffage', exact: true }).click();
+    await page.getByTestId('drag-handle-preheat').filter({ visible: true }).press('ArrowUp');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByRole('status')).toHaveText('Seul l’ordre d’affichage change.');
     await expect(step(page, 'Préchauffage').locator('.step-details')).toHaveText(timing);
@@ -164,8 +168,7 @@ test.describe('core-backed process actions', () => {
     await expect(rows(page)).toHaveCount(11);
     await page.getByTestId('save-recipe').click();
     await expect(rows(page)).toHaveCount(11);
-    await page.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Modifier', exact: true }).click();
+    await editRecipe(page);
     await expect(rows(page)).toHaveCount(11);
     await expect(titles(page).nth(4)).toHaveText('5. Pointage supplémentaire');
   });
@@ -174,7 +177,7 @@ test.describe('core-backed process actions', () => {
     page,
   }) => {
     await open(page);
-    await page.getByRole('button', { name: 'Modifier l’étape : Pointage', exact: true }).click();
+    await editProcessStep(page, 'bulk');
     await page
       .getByRole('dialog')
       .getByRole('combobox', { name: 'Durée : mode', exact: true })
@@ -210,18 +213,17 @@ test.describe('core-backed process actions', () => {
     await page.goto(
       '/mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&capture=1&lang=en&width=360&scale=130&nav=A&theme=amoled',
     );
-    await page.getByRole('button', { name: 'Reorder', exact: true }).click();
-    const trigger = page.getByRole('button', { name: 'Move up : Divide', exact: true });
-    await trigger.press('Enter');
+    const trigger = page.getByTestId('drag-handle-divide').filter({ visible: true });
+    await trigger.press('ArrowUp');
     await expect(page.getByRole('dialog')).toContainText('This move changes dependencies.');
     await page.keyboard.press('Escape');
     await expect(trigger).toBeFocused();
     await expect(rows(page)).toHaveCount(10);
-    const bulk = rows(page).filter({
-      has: page.getByRole('button', { name: 'Edit step : Bulk fermentation', exact: true }),
-    });
-    await bulk.locator('summary').click();
-    await bulk.getByRole('button', { name: 'Duplicate', exact: true }).click();
+    await (
+      await stepMenu(page, 'bulk')
+    )
+      .getByRole('button', { name: 'Duplicate', exact: true })
+      .click();
     await expect(page.getByRole('dialog')).toHaveAccessibleName('Duplicate : Bulk fermentation');
     await expect(
       page.getByRole('dialog').getByRole('textbox', { name: 'Duration', exact: true }),

@@ -15,7 +15,7 @@ export const StepRow: React.FC<StepRowProps> = ({
   number,
   icon,
   title,
-  details,
+  details = [],
   state = 'planned',
   onEdit,
   editLabel = '',
@@ -30,7 +30,7 @@ export const StepRow: React.FC<StepRowProps> = ({
       style={motionStyle}
       data-fp-component="fp.step-node"
       data-fp-version="v1"
-      className={`step-row step-state-${state}`}
+      className={state === 'planned' ? 'step-row' : `step-row step-state-${state}`}
     >
       <div className="step-number-badge" aria-hidden="true">
         {state === 'done' ? (
@@ -50,7 +50,7 @@ export const StepRow: React.FC<StepRowProps> = ({
           </span>
         </div>
 
-        {details.length > 0 && (
+        {details && details.length > 0 && (
           <div className="step-details pill-row row">
             {details.map((d, i) => (
               <MetricPill key={i} value={d} />
@@ -61,10 +61,14 @@ export const StepRow: React.FC<StepRowProps> = ({
         {children && <div className="step-row-body">{children}</div>}
       </div>
 
-      <div className="step-actions-cell row">
-        {actions}
-        {onEdit && <IconButton icon="edit" label={editLabel} onClick={onEdit} variant="default" />}
-      </div>
+      {(actions || onEdit) && (
+        <div className="step-actions-cell row">
+          {actions}
+          {onEdit && (
+            <IconButton icon="edit" label={editLabel} onClick={onEdit} variant="default" />
+          )}
+        </div>
+      )}
     </div>
   );
 };

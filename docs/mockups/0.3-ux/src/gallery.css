@@ -49,3 +49,145 @@ figcaption {
 figcaption p {
   margin: 6px 0;
 }
+.gallery-banner {
+  background: #2a221b;
+  border-left: 4px solid #e6ad7d;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+.gallery-nav {
+  line-height: 1.8;
+  word-break: break-word;
+}
+.step-variants-section {
+  margin: 24px 0;
+  padding: 18px;
+  background: #221c17;
+  border: 1px solid #4a3c31;
+  border-radius: 14px;
+}
+.step-variants-section h2 {
+  margin-top: 0;
+  color: #e6ad7d;
+  font-size: 1.25rem;
+}
+.step-variants-intro {
+  margin: 8px 0 16px;
+  color: #d4c5b5;
+  font-size: 0.95rem;
+}
+.step-variants-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+.step-variant-card {
+  background: #29221c;
+  border: 1px solid #665345;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.step-variant-card p {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: #d4c5b5;
+}
+.variant-link {
+  display: inline-block;
+  padding: 10px 14px;
+  background: #3d3024;
+  color: #ffc493;
+  border: 1px solid #7d6550;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: center;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+.variant-link:hover,
+.variant-link:focus-visible {
+  background: #524030;
+  color: #fff0df;
+}
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 24px 0 16px;
+  padding: 12px 16px;
+  background: #221c17;
+  border: 1px solid #4a3c31;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-group label {
+  color: #d4c5b5;
+  font-weight: 600;
+}
+.filter-group select {
+  background: #29221c;
+  color: #f1e7db;
+  border: 1px solid #665345;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+  min-height: 38px;
+}
+.filter-reset {
+  background: #3d3024;
+  color: #f1e7db;
+  border: 1px solid #7d6550;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+  cursor: pointer;
+  min-height: 38px;
+}
+.filter-reset:hover {
+  background: #4e3d2e;
+}
+.filter-count {
+  color: #b5a494;
+  font-size: 13px;
+  margin-left: auto;
+}
+@media (max-width: 600px) {
+  main {
+    padding: 16px 12px;
+  }
+  .step-variants-section {
+    padding: 14px;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-group {
+    justify-content: space-between;
+  }
+  .filter-group select {
+    flex: 1;
+    max-width: 65%;
+  }
+  .filter-count {
+    margin-left: 0;
+    text-align: center;
+  }
+  .shots {
+    gap: 16px;
+  }
+}

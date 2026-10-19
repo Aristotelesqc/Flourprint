@@ -1,0 +1,137 @@
+/* Step Design Options & Review Controls (PR #133 review tooling) */
+
+.studio-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fp-space-1, 4px);
+  padding: 2px 4px;
+  background: var(--color-surface-container, rgba(0, 0, 0, 0.05));
+  border-radius: var(--fp-radius-sm, 6px);
+  border: 1px solid var(--color-outline-subtle, #e0d6cb);
+}
+
+.studio-segment-label {
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted, #6c635b);
+  padding: 0 4px;
+}
+
+.studio-option-btn {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  min-height: 28px;
+  border-radius: var(--fp-radius-sm, 4px);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-ink, inherit);
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+
+.studio-option-btn:hover {
+  background: var(--color-surface-hover, rgba(0, 0, 0, 0.08));
+}
+
+.studio-option-btn.is-active {
+  background: var(--color-primary, #a84e20);
+  color: #fff;
+}
+
+.step-design-panel {
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-outline-subtle, #e0d6cb);
+  border-radius: var(--fp-radius-md, 8px);
+  padding: 10px 14px;
+  margin: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-design-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.step-design-header strong {
+  font-size: 0.875rem;
+  color: var(--color-ink, #2a2421);
+}
+
+.step-design-status {
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted, #6c635b);
+}
+
+.step-design-status code {
+  font-weight: 600;
+  padding: 2px 6px;
+  background: var(--color-surface-container, #f3ece4);
+  border-radius: 4px;
+  color: var(--color-primary, #a84e20);
+}
+
+.step-design-explanation {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-ink-muted, #6c635b);
+  margin: 0;
+}
+
+.step-design-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.step-design-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--color-outline, #c8bcaf);
+  background: var(--color-surface-container-low, #fcfaf8);
+  color: var(--color-ink, inherit);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+}
+
+.step-design-link:hover {
+  background: var(--color-surface-hover, #f3ece4);
+  border-color: var(--color-primary, #a84e20);
+}
+
+.step-design-link.is-active {
+  border-color: var(--color-primary, #a84e20);
+  background: var(--color-primary-container, #fbeee7);
+  color: var(--color-primary, #a84e20);
+  font-weight: 600;
+}
+
+.step-design-badge {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  background: var(--color-primary, #a84e20);
+  color: #fff;
+  border-radius: 10px;
+}
+
+.modal-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}

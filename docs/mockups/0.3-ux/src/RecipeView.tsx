@@ -8,9 +8,10 @@ import {
   type Ingredient,
 } from '@flourprint/core/domain';
 import { INGREDIENT_PRESETS } from '@flourprint/core/domain';
-import { Button, IconButton, NumberField, Surface, Disclosure, Modal } from './ui';
+import { Button, IconButton, NumberField, Surface, Disclosure, Modal, CompactDialog } from './ui';
 import { IngredientRow, RecipeSummary } from './components';
 import { grams, num, t, ingredientName, componentName, type Locale } from './messages';
+import { recipeCopy } from './recipe-copy';
 import { type Prototype, type Content } from './model';
 
 export interface WeighRow {
@@ -319,11 +320,17 @@ export function RecipeIngredients({
     commit: (value: number) => boolean,
     disabled = false,
     compact = false,
+    hint?: string,
   ): ReactNode => (
     <NumberField
       key={id}
       compact={compact}
-      hint={id === 'hydration-target' && formula.waterTarget ? t(locale, 'locked') : undefined}
+      hint={
+        hint ??
+        (id === 'hydration-target' && formula.waterTarget
+          ? recipeCopy(locale, 'lockedHint')
+          : undefined)
+      }
       value={value}
       resetKey={state.resetEpoch}
       displayDigits={id === 'hydration-target' ? 0 : 2}
@@ -339,6 +346,11 @@ export function RecipeIngredients({
     />
   );
   const formula = content.formula;
+  const pureWaterAbsorber = formula.ingredients.find(
+    (i) => i.kind === 'water' && (i.role === undefined || i.role === 'dough'),
+  );
+  const isLocked = Boolean(formula.waterTarget);
+  const canLockHydration = isLocked || Boolean(pureWaterAbsorber);
   const componentControls = (component: Formula['components'][number]) => (
     <div className="component-controls stack">
       {field(
@@ -373,7 +385,7 @@ export function RecipeIngredients({
       <div className="component-secondary-actions">
         <IconButton
           icon="trash"
-          label={`${t(locale, 'remove')} · ${componentName(locale, component.id, content.names)}`}
+          label={`${recipeCopy(locale, 'removeAction')} · ${componentName(locale, component.id, content.names)}`}
           onClick={() => setConfirm(`component:${component.id}`)}
         />
       </div>
@@ -388,7 +400,7 @@ export function RecipeIngredients({
         onHelp={onHelp}
         onSizeHelp={onSizeHelp}
         editor={
-          state.draft ? (
+          state.draft && canLockHydration ? (
             <>
               {field(
                 'hydration-target',
@@ -396,19 +408,21 @@ export function RecipeIngredients({
                 t(locale, 'target'),
                 '%',
                 (value) => store.setHydrationTarget(value),
-                Boolean(formula.waterTarget),
+                isLocked,
                 true,
+                isLocked ? recipeCopy(locale, 'lockedHint') : undefined,
               )}
               <IconButton
-                icon={formula.waterTarget ? 'unlock' : 'lock'}
-                label={t(locale, formula.waterTarget ? 'unlock' : 'lock')}
+                icon={isLocked ? 'unlock' : 'lock'}
+                label={t(locale, isLocked ? 'unlock' : 'lock')}
                 onClick={() =>
-                  formula.waterTarget
+                  isLocked
                     ? store.apply({ type: 'UnlockTotalWater' })
-                    : store.apply({
+                    : pureWaterAbsorber &&
+                      store.apply({
                         type: 'LockTotalWater',
                         totalWaterPct: r.totalWaterPct,
-                        water: formula.ingredients.find((i) => i.kind === 'water')?.id ?? 'water',
+                        water: pureWaterAbsorber.id,
                       })
                 }
               />
@@ -720,7 +734,7 @@ export function RecipeIngredients({
               <div className="detail-row" key={i.id}>
                 <span>{ingredientName(locale, i.id, content.names)}</span>
                 <Button variant="quiet" onClick={() => setConfirm(`ingredient:${i.id}`)}>
-                  {t(locale, 'remove')}
+                  {recipeCopy(locale, 'removeAction')}
                 </Button>
               </div>
             ))}
@@ -729,31 +743,41 @@ export function RecipeIngredients({
             <FlourBlendEditor store={store} locale={locale} onClose={() => setBlendOpen(false)} />
           )}
           {confirm && (
-            <Surface>
-              <p>
-                {t(locale, 'confirmRemove')} :{' '}
-                {confirm.startsWith('component:')
+            <CompactDialog
+              open
+              onClose={() => setConfirm(null)}
+              title={
+                confirm.startsWith('component:')
                   ? componentName(locale, confirm.split(':')[1], content.names)
-                  : ingredientName(locale, confirm.split(':')[1], content.names)}
+                  : ingredientName(locale, confirm.split(':')[1], content.names)
+              }
+              closeLabel={t(locale, 'close')}
+              footer={
+                <div className="actions">
+                  <Button onClick={() => setConfirm(null)}>{t(locale, 'cancel')}</Button>
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      const [kind, id] = confirm.split(':');
+                      store.apply(
+                        kind === 'component'
+                          ? { type: 'RemoveComponent', component: id }
+                          : { type: 'RemoveIngredient', ingredient: id },
+                      );
+                      setConfirm(null);
+                    }}
+                  >
+                    {recipeCopy(locale, 'removeAction')}
+                  </Button>
+                </div>
+              }
+            >
+              <p>
+                {confirm.startsWith('component:')
+                  ? recipeCopy(locale, 'removeComponentConsequence')
+                  : recipeCopy(locale, 'removeIngredientConsequence')}
               </p>
-              <div className="actions">
-                <Button onClick={() => setConfirm(null)}>{t(locale, 'cancel')}</Button>
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    const [kind, id] = confirm.split(':');
-                    store.apply(
-                      kind === 'component'
-                        ? { type: 'RemoveComponent', component: id }
-                        : { type: 'RemoveIngredient', ingredient: id },
-                    );
-                    setConfirm(null);
-                  }}
-                >
-                  {t(locale, 'remove')}
-                </Button>
-              </div>
-            </Surface>
+            </CompactDialog>
           )}
         </>
       )}
@@ -775,7 +799,8 @@ function FlourBlendEditor({
   onClose: () => void;
 }) {
   const [flours, setFlours] = useState(() => [...store.content.formula.flours]);
-  const [id, setId] = useState('whole-wheat');
+  const defaultName = ingredientName(locale, 'whole-wheat', store.content.names);
+  const [inputName, setInputName] = useState(defaultName);
   const [invalid, setInvalid] = useState<Record<string, boolean>>({});
   const [error, setError] = useState(false);
   return (
@@ -802,7 +827,7 @@ function FlourBlendEditor({
           <Surface key={flour.id}>
             <NumberField
               value={flour.sharePct}
-              label={`${ingredientName(locale, flour.id)} · ${t(locale, 'flourShare')}`}
+              label={`${ingredientName(locale, flour.id, store.content.names)} · ${t(locale, 'flourShare')}`}
               unit="%"
               locale={locale}
               errorMessage={t(locale, 'invalid')}
@@ -824,17 +849,26 @@ function FlourBlendEditor({
                 );
               }}
             >
-              {t(locale, 'remove')}
+              {recipeCopy(locale, 'removeAction')}
             </Button>
           </Surface>
         ))}
         <label className="field-label">
           {t(locale, 'ingredientName')}
-          <input value={id} onChange={(e) => setId(e.target.value)} />
+          <input value={inputName} onChange={(e) => setInputName(e.target.value)} />
         </label>
         <Button
-          disabled={!id.trim() || flours.some((f) => f.id === id.trim())}
-          onClick={() => setFlours((rows) => [...rows, { id: id.trim(), sharePct: 0 }])}
+          disabled={
+            !inputName.trim() ||
+            flours.some(
+              (f) => f.id === (inputName.trim() === defaultName ? 'whole-wheat' : inputName.trim()),
+            )
+          }
+          onClick={() => {
+            const trimmed = inputName.trim();
+            const addId = trimmed === defaultName ? 'whole-wheat' : trimmed;
+            setFlours((rows) => [...rows, { id: addId, sharePct: 0 }]);
+          }}
         >
           {t(locale, 'addIngredient')}
         </Button>

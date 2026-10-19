@@ -19,11 +19,14 @@ import {
   Surface,
   Tabs,
   Modal,
+  CompactDialog,
   Menu,
   Checkbox,
   Disclosure,
   type IconName,
 } from './ui';
+import './review-options.css';
+import { copyT, formatResetMessage, getBaselineDescription } from './app-copy';
 
 import { RecipeCard } from './components';
 import { catalogText } from './template-presentation';
@@ -121,6 +124,12 @@ export default function App() {
   );
 
   const [pending, setPending] = useState<(() => void) | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const stepDesignParam = params.get('stepDesign');
+  const stepDesign = ['compact', 'rail', 'outline'].includes(stepDesignParam ?? '')
+    ? (stepDesignParam as 'compact' | 'rail' | 'outline')
+    : 'compact';
 
   const [query, setQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState('shokupan');
@@ -222,9 +231,45 @@ export default function App() {
 
     url.searchParams.set('motion', motion === 'reduced' ? 'reduce' : 'standard');
 
+    if (stepDesignParam) {
+      url.searchParams.set('stepDesign', stepDesignParam);
+    }
+
     url.searchParams.delete('mode');
 
     history[push ? 'pushState' : 'replaceState']({}, '', url);
+  };
+
+  const makeStepDesignUrl = (design: 'compact' | 'rail' | 'outline') => {
+    const url = new URL(location.href);
+    url.searchParams.set('screen', 'recipe');
+    url.searchParams.set('recipe', 'shokupan');
+    url.searchParams.set('section', 'steps');
+    url.searchParams.set('mode', 'edit');
+    url.searchParams.set('stepDesign', design);
+    url.searchParams.set('nav', variant);
+    url.searchParams.set('theme', theme);
+    url.searchParams.set('lang', locale);
+    url.searchParams.set('width', width);
+    url.searchParams.set('scale', scale);
+    url.searchParams.set('motion', motion === 'reduced' ? 'reduce' : 'standard');
+    url.searchParams.delete('capture');
+    return `${url.pathname}${url.search}${url.hash}`;
+  };
+
+  const makeVariantUrl = (nav: 'A' | 'B') => {
+    const url = new URL(location.href);
+    url.searchParams.set('nav', nav);
+    url.searchParams.delete('capture');
+    return `${url.pathname}${url.search}${url.hash}`;
+  };
+
+  const handleCancel = () => {
+    if (state.draft && state.draft.index > 0) {
+      setPending(() => store.cancel);
+    } else {
+      store.cancel();
+    }
   };
 
   const navigate = (next: Route) => {
@@ -368,13 +413,14 @@ export default function App() {
           {route.screen === 'recipe' &&
             (state.draft ? (
               variant === 'B' ? (
-                <IconButton
-                  icon="close"
-                  label={t(locale, 'discard')}
-                  onClick={() => setPending(() => store.cancel)}
-                />
+                <Button variant="quiet" onClick={handleCancel}>
+                  {t(locale, 'cancel')}
+                </Button>
               ) : (
                 <>
+                  <Button variant="quiet" onClick={handleCancel}>
+                    {t(locale, 'cancel')}
+                  </Button>
                   <IconButton
                     icon="undo"
                     label={t(locale, 'undo')}
@@ -487,6 +533,25 @@ export default function App() {
         <strong>{t(locale, 'versionTitle')}</strong>
 
         <a href="index.html">{t(locale, 'showGallery')}</a>
+
+        <div className="studio-segment" role="group" aria-label={t(locale, 'navigationChoice')}>
+          <a
+            className={`studio-option-btn ${variant === 'A' ? 'is-active' : ''}`}
+            href={makeVariantUrl('A')}
+            target="_blank"
+            rel="noreferrer"
+          >
+            A
+          </a>
+          <a
+            className={`studio-option-btn ${variant === 'B' ? 'is-active' : ''}`}
+            href={makeVariantUrl('B')}
+            target="_blank"
+            rel="noreferrer"
+          >
+            B
+          </a>
+        </div>
 
         <label>
           {t(locale, 'navigationChoice')}
@@ -628,6 +693,31 @@ export default function App() {
             {item.id} · {item.version}
           </a>
         ))}
+      </aside>
+      <aside className="studio-note step-design-panel">
+        <div className="step-design-header">
+          <strong>{copyT(locale, 'stepDesignHeading')}</strong>
+          <span className="step-design-status">
+            {copyT(locale, 'currentStepDesign')}: <code>{stepDesign}</code>
+          </span>
+        </div>
+        <p className="step-design-explanation">{copyT(locale, 'stepDesignExplanation')}</p>
+        <div className="step-design-links">
+          {(['compact', 'rail', 'outline'] as const).map((design) => (
+            <a
+              key={design}
+              className={`step-design-link ${stepDesign === design ? 'is-active' : ''}`}
+              href={makeStepDesignUrl(design)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span>{copyT(locale, `stepDesign_${design}`)}</span>
+              {stepDesign === design && (
+                <span className="step-design-badge">{copyT(locale, 'activeOption')}</span>
+              )}
+            </a>
+          ))}
+        </div>
       </aside>
       <aside className="studio-note">
         <label>
@@ -807,7 +897,6 @@ export default function App() {
                         ...(dWeight ? [{ icon: 'scale' as const, value: dWeight }] : []),
 
                         { icon: 'clock' as const, value: `${dur} · ${t(locale, 'coolingEnd')}` },
-                        { value: `${t(locale, 'version')} ${r.version}` },
 
                         ...r.formula.components.map((c) => ({
                           value: componentName(locale, c.id, r.names),
@@ -817,16 +906,18 @@ export default function App() {
                       status={
                         isRunning
                           ? `${t(locale, 'running')} · ${duration(locale, sessionRemaining)}`
-                          : lastSession?.outcome
-                            ? t(
-                                locale,
-                                lastSession.outcome.result === 'cooked'
-                                  ? 'resultCooked'
-                                  : lastSession.outcome.result === 'dough'
-                                    ? 'resultDough'
-                                    : 'resultMixed',
-                              )
-                            : t(locale, r.version === 0 ? 'draft' : 'neverCooked')
+                          : r.version === 0
+                            ? t(locale, 'draft')
+                            : lastSession?.outcome
+                              ? t(
+                                  locale,
+                                  lastSession.outcome.result === 'cooked'
+                                    ? 'resultCooked'
+                                    : lastSession.outcome.result === 'dough'
+                                      ? 'resultDough'
+                                      : 'resultMixed',
+                                )
+                              : copyT(locale, 'neverPrepared')
                       }
 
                       statusVariant={
@@ -859,11 +950,11 @@ export default function App() {
                   />
                 </div>
 
-                <div hidden={section !== 'steps'}>
+                <div hidden={section !== 'steps'} data-step-design={stepDesign}>
                   <ProcessView store={store} locale={locale} />
                 </div>
 
-                <div hidden={section !== 'planning'}>
+                <div hidden={section !== 'planning'} data-step-design={stepDesign}>
                   <ProcessView store={store} locale={locale} planning />
                 </div>
 
@@ -1044,52 +1135,46 @@ export default function App() {
         closeLabel={t(locale, 'close')}
       >
         <div className="menu-actions">
-          <Button
-            icon="edit"
-            variant="quiet"
-            disabled={Boolean(state.draft)}
-            onClick={() => {
-              store.edit();
-              setOverlay(null);
-            }}
-          >
-            {t(locale, 'edit')}
-          </Button>
           {state.draft && (
             <>
+              {variant === 'B' && (
+                <>
+                  <Button
+                    icon="undo"
+                    variant="quiet"
+                    disabled={state.draft.index === 0 || Object.values(state.invalid).some(Boolean)}
+                    onClick={() => {
+                      store.undo();
+                      setOverlay(null);
+                    }}
+                  >
+                    {t(locale, 'undo')}
+                  </Button>
+                  <Button
+                    icon="redo"
+                    variant="quiet"
+                    disabled={
+                      state.draft.index === state.draft.history.length - 1 ||
+                      Object.values(state.invalid).some(Boolean)
+                    }
+                    onClick={() => {
+                      store.redo();
+                      setOverlay(null);
+                    }}
+                  >
+                    {t(locale, 'redo')}
+                  </Button>
+                </>
+              )}
               <Button
-                icon="undo"
                 variant="quiet"
                 disabled={state.draft.index === 0}
-                onClick={store.undo}
-              >
-                {t(locale, 'undo')}
-              </Button>
-              <Button
-                icon="redo"
-                variant="quiet"
-                disabled={state.draft.index === state.draft.history.length - 1}
-                onClick={store.redo}
-              >
-                {t(locale, 'redo')}
-              </Button>
-              <Button
-                variant="quiet"
                 onClick={() => {
-                  store.reset();
                   setOverlay(null);
+                  setConfirmReset(true);
                 }}
               >
                 {t(locale, 'reset')}
-              </Button>
-              <Button
-                variant="quiet"
-                onClick={() => {
-                  setOverlay(null);
-                  setPending(() => store.cancel);
-                }}
-              >
-                {t(locale, 'discard')}
               </Button>
             </>
           )}
@@ -1114,19 +1199,6 @@ export default function App() {
             {t(locale, 'duplicate')}
           </Button>
           <Button
-            icon="settings"
-            variant="quiet"
-            onClick={() => {
-              setOverlay(null);
-              navigateGlobal('registry');
-            }}
-          >
-            {t(locale, 'registry')}
-          </Button>
-          <Button icon="info" variant="quiet" onClick={() => setOverlay('build')}>
-            {t(locale, 'copyBuild')}
-          </Button>
-          <Button
             icon="trash"
             variant="quiet"
             className="menu-destructive"
@@ -1136,6 +1208,36 @@ export default function App() {
           </Button>
         </div>
       </Menu>
+
+      <CompactDialog
+        open={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        title={copyT(locale, 'confirmResetTitle')}
+        closeLabel={t(locale, 'cancel')}
+        footer={
+          <div className="actions">
+            <Button variant="quiet" onClick={() => setConfirmReset(false)}>
+              {t(locale, 'cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                store.reset();
+                setConfirmReset(false);
+              }}
+            >
+              {copyT(locale, 'confirmResetAction')}
+            </Button>
+          </div>
+        }
+      >
+        <p>
+          {formatResetMessage(
+            locale,
+            getBaselineDescription(recipe, locale, recipeName(recipe, locale)),
+          )}
+        </p>
+      </CompactDialog>
 
       <Menu
         anchor="top"

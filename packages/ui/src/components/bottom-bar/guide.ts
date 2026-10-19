@@ -8,9 +8,9 @@ export default {
   avoidWhen: ["Actions inside a sheet or a menu: put them in that component's footer."],
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
-
     'The navigation landmark carries navigationLabel; the selected destination is exposed as current.',
-    'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
+    'Touch target at least 48 px; visible control rhythm is compact without overlapping adjacent destinations.',
+    'Labels use single-row ellipsis rather than mid-word wrapping (L25), preserving baseline alignment.',
   ],
   related: ['fp.button', 'fp.icon-button', 'fp.tabs'],
   decisions: [

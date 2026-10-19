@@ -86,9 +86,9 @@ export function auditMockupStyles() {
   }
   const styled = new Set();
   for (const name of [
-    'docs/mockups/0.3-ux/src/theme.css',
-    'docs/mockups/0.3-ux/src/layout.css',
-    'docs/mockups/0.3-ux/src/gallery.css',
+    ...readdirSync(path.join(repo, 'docs/mockups/0.3-ux/src'), { recursive: true })
+      .filter((name) => name.endsWith('.css'))
+      .map((name) => path.join('docs/mockups/0.3-ux/src', name)),
     'packages/ui/src/components.css',
     ...readdirSync(path.join(repo, 'packages/ui/src/components'), { recursive: true })
       .filter((name) => name.endsWith('.css'))

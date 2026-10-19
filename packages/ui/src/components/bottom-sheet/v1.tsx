@@ -3,9 +3,11 @@ import React, { useId, useState } from 'react';
 import type { IconButtonProps, ModalProps } from '../../props.ts';
 import { library } from '../../index.ts';
 import { useDialog } from '../use-dialog.ts';
+
 const IconButton = (props: IconButtonProps) => (
   <library.Slot component="fp.icon-button" {...props} />
 );
+
 export const Modal: React.FC<ModalProps> = ({
   open,
   previewTrigger,
@@ -22,6 +24,7 @@ export const Modal: React.FC<ModalProps> = ({
   };
   const dialogRef = useDialog(open || previewOpen, false);
   const titleId = useId();
+
   return (
     <>
       {previewTrigger && (
@@ -33,7 +36,7 @@ export const Modal: React.FC<ModalProps> = ({
         data-fp-component="fp.bottom-sheet"
         data-fp-version="v1"
         ref={dialogRef}
-        className={`modal-dialog`}
+        className="modal-dialog"
         aria-labelledby={titleId}
         onCancel={(event) => {
           event.preventDefault();

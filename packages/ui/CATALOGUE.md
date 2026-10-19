@@ -72,7 +72,8 @@ The bottom area of a screen: navigation A is a contextual toolbar; navigation B 
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The navigation landmark carries navigationLabel; the selected destination is exposed as current.
-- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+- Touch target at least 48 px; visible control rhythm is compact without overlapping adjacent destinations.
+- Labels use single-row ellipsis rather than mid-word wrapping (L25), preserving baseline alignment.
 
 **Related**
 
@@ -91,11 +92,12 @@ The bottom area of a screen: navigation A is a contextual toolbar; navigation B 
 
 ### `fp.bottom-sheet`
 
-A modal sheet rising from the bottom for focused tasks: editing a step, explaining a value.
+A modal sheet rising from the bottom for focused tasks (default) or a centered compact dialog via [data-overlay-presentation="compact"] content marker.
 
 **Use when**
 
-- A task or explanation that needs the full width and its own actions.
+- A task or explanation that needs the full width and its own actions (default sheet presentation).
+- Short confirmation dialogs composing a [data-overlay-presentation="compact"] content marker retained in exit clones.
 
 **Avoid when**
 
@@ -118,6 +120,7 @@ A modal sheet rising from the bottom for focused tasks: editing a step, explaini
 - Native modal dialog: focus is contained, Escape closes, focus returns to the trigger.
 - Floating layer: may be translucent (elevation rule).
 - Reduced motion closes at once.
+- Hit targets maintain 48 px minimum boundary with compact visual rhythm.
 
 **Related**
 
@@ -161,11 +164,11 @@ A text button, optionally with a leading pictogram. Primary for the screen's mai
 
 - Native button attributes (type, disabled, onClick, className, aria attributes and style) are forwarded; selected motion timing is retained over style overrides.
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
-- Touch target is an independent 48 px minimum height box (--fp-spacing-touch); the visible material shape is 40 px (--fp-spacing-touch-compact) inset 4 px vertically using a decorative span (ADR 0021, #142).
+- Touch target is an independent 48 px minimum height box (--fp-spacing-touch); the visible material shape is 40 px (--fp-spacing-touch-compact) inset 4 px vertically using a decorative span (ADR 0021, #142). Zero vertical rem padding prevents target blowout under larger text.
 - type defaults to "button", so it never submits forms by accident.
 - Disabled buttons receive disabled attribute, opacity 0.45, and pointer-events none; explain the reason nearby when not obvious.
 - The native button receives the shared :focus-visible outline.
-- The consumer must check label fit and non-overlapping hit boxes at 393 px / 100% and 360 px / 130%.
+- The consumer must check label fit and non-overlapping hit boxes at 393 px / 100% and 360 px / 130%. Labels must not wrap mid-word.
 
 **Related**
 
@@ -210,7 +213,7 @@ A small menu anchored to the button that opened it, for secondary actions.
 **Accessibility**
 
 - Native modal dialog anchored to its trigger; Escape and outside taps close it; focus returns to the trigger.
-- Keep the first action clear of the independent 48 px close target; subsequent actions use full rows.
+- Close is an independent 48 px non-overlapping target; action layout is owned by the component even when .menu-actions wrapper is omitted.
 - Floating layer: may be translucent (elevation rule).
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
@@ -481,6 +484,7 @@ A compact pill showing one value, with an optional pictogram and label, such as 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The value is text with tabular figures; the pictogram is decorative.
 - Pass a label when the pictogram alone would carry the meaning.
+- Compact 32 px (2 rem) height aligns with neighboring metadata and controls without empty vertical margin.
 
 **Related**
 
@@ -647,11 +651,12 @@ A recipe in the library: title, status, key values and, for a running preparatio
 
 ### `fp.step-node`
 
-One step of the process as a numbered node on a connected line, with its details and actions.
+One step of the process as a numbered node with its details, actions, and proposed review layout alternatives.
 
 **Use when**
 
 - Step lists in Recipe, Planning and Preparation.
+- Exploring density and hierarchy options via ancestor [data-step-design="compact"|"rail"|"outline"] (compact serves as technical fallback).
 
 **Avoid when**
 
@@ -674,9 +679,11 @@ One step of the process as a numbered node on a connected line, with its details
 **Accessibility**
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
-- The node pictogram is decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon is present.
+- The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon is present.
 - Reorder controls (#123) need a keyboard path besides dragging.
-- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+- Touch target at least 48 px; painted controls remain compact without layout dead space (ADR 0021, #142).
+- Proposed alternatives (compact, rail, outline) preserve identical semantic DOM, labeling, and reachable actions with natural wrapping at 360px / 130% zoom without truncation.
+- Alternatives are proposals for owner review and arbitration, not accepted decisions.
 
 **Related**
 
@@ -760,8 +767,8 @@ Switches between sections of one screen (Ingredients, Steps, Planning, History) 
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Tablist with arrow-key navigation and roving focus; the selected tab is aria-selected.
-- Narrow section and filter rows stay on one horizontal scroll strip; arrow/Home/End focus keeps every option reachable without shrinking text or targets.
-- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+- Narrow section and filter rows stay on one horizontal scroll strip; arrow/Home/End focus and selection changes scroll the option into view.
+- Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142). Tab labels do not break mid-word or wrap unevenly.
 
 **Related**
 

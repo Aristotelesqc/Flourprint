@@ -8,10 +8,9 @@ export default {
   avoidWhen: ['Navigation between screens: use fp.bottom-bar.', 'A single on/off choice.'],
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
-
     'Tablist with arrow-key navigation and roving focus; the selected tab is aria-selected.',
-    'Narrow section and filter rows stay on one horizontal scroll strip; arrow/Home/End focus keeps every option reachable without shrinking text or targets.',
-    'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
+    'Narrow section and filter rows stay on one horizontal scroll strip; arrow/Home/End focus and selection changes scroll the option into view.',
+    'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142). Tab labels do not break mid-word or wrap unevenly.',
   ],
   related: ['fp.bottom-bar'],
   decisions: [

@@ -1,3 +1,4 @@
+import { editRecipe, editProcessStep, stepMenu } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
@@ -5,8 +6,7 @@ const { test, expect } = requireMobile('@playwright/test');
 const recipe = '/mockup.html?screen=recipe&nav=A&lang=fr&capture=1&motion=reduce';
 
 async function edit(page) {
-  await page.getByRole('button', { name: 'Actions sur la recette', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Modifier', exact: true }).click();
+  await editRecipe(page);
   await expect(page.getByTestId('save-recipe')).toBeVisible();
 }
 
@@ -71,12 +71,11 @@ test('component removal cancels without mutation, removes allocation and can be 
 }) => {
   await page.goto(recipe);
   await edit(page);
-  const remove = page.getByRole('button', { name: /^Supprimer · Tangzhong/ });
+  const remove = page.getByRole('button', { name: /^(?:Supprimer|Retirer) · Tangzhong/ });
   const originalRatio = await page.getByTestId('component-ratio-tangzhong').inputValue();
   await remove.click();
-  const confirmation = page
-    .getByText('Confirmer la suppression : Tangzhong (roux d’eau)', { exact: true })
-    .locator('..');
+  const confirmation = page.getByRole('dialog');
+  await expect(confirmation).toContainText('Tangzhong (roux d’eau)');
   await expect(confirmation).toBeVisible();
   await confirmation.getByRole('button', { name: 'Annuler', exact: true }).click();
   await expect(remove).toBeVisible();
@@ -84,7 +83,7 @@ test('component removal cancels without mutation, removes allocation and can be 
     page.getByRole('button', { name: 'Annuler la modification', exact: true }),
   ).toBeDisabled();
   await remove.click();
-  await confirmation.getByRole('button', { name: 'Supprimer', exact: true }).click();
+  await confirmation.getByRole('button', { name: 'Retirer', exact: true }).click();
   await expect(remove).toHaveCount(0);
   await expect(page.getByTestId('component-ratio-tangzhong')).toHaveCount(0);
   // Removing a preparation returns its allocations; it does not remove its ingredient mass.
@@ -140,24 +139,17 @@ test('adding and duplicating steps update the process and Undo restores the orig
   await expect(page.locator('.step-title:visible')).toHaveCount(11);
   await page.getByRole('button', { name: 'Annuler la modification', exact: true }).click();
   await expect(page.locator('.step-title:visible')).toHaveCount(10);
-  const row = page.locator('.step-row:visible').filter({
-    has: page.getByRole('button', { name: 'Modifier l’étape : Pointage', exact: true }),
-  });
-  await row.locator('.step-more-trigger').click();
-  await row.getByRole('button', { name: 'Dupliquer', exact: true }).click();
+  const menu = await stepMenu(page, 'bulk');
+  await menu.getByRole('button', { name: 'Dupliquer', exact: true }).click();
   const preview = page.getByRole('dialog', { name: 'Dupliquer : Pointage', exact: true });
   await expect(preview).toBeVisible();
   await expect(page.locator('.step-title:visible')).toHaveCount(10);
   await preview.getByRole('button', { name: 'Appliquer', exact: true }).click();
   await expect(page.locator('.step-title:visible')).toHaveCount(11);
-  await expect(
-    page.getByRole('button', { name: 'Modifier l’étape : Pointage', exact: true }),
-  ).toHaveCount(2);
+  await expect(page.locator('.step-title:visible').filter({ hasText: /Pointage$/ })).toHaveCount(2);
   await page.getByRole('button', { name: 'Annuler la modification', exact: true }).click();
   await expect(page.locator('.step-title:visible')).toHaveCount(10);
-  await expect(
-    page.getByRole('button', { name: 'Modifier l’étape : Pointage', exact: true }),
-  ).toHaveCount(1);
+  await expect(page.locator('.step-title:visible').filter({ hasText: /Pointage$/ })).toHaveCount(1);
 });
 
 test('step editor cancels local changes and applies manual conditions, dependencies and equipment', async ({
@@ -166,14 +158,14 @@ test('step editor cancels local changes and applies manual conditions, dependenc
   await page.goto(recipe);
   await edit(page);
   await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
-  const open = page.getByRole('button', { name: 'Modifier l’étape : Pointage', exact: true });
-  await open.click();
+  const open = () => editProcessStep(page, 'bulk');
+  await open();
   let sheet = page.getByRole('dialog');
   const originalName = await sheet.getByRole('textbox', { name: 'Nom', exact: true }).inputValue();
   await sheet.getByRole('textbox', { name: 'Nom', exact: true }).fill('Brouillon annulé');
   await number(sheet, 'Durée', '90');
   await page.keyboard.press('Escape');
-  await open.click();
+  await open();
   sheet = page.getByRole('dialog');
   await expect(sheet.getByRole('textbox', { name: 'Nom', exact: true })).toHaveValue(originalName);
   await expect(sheet.getByRole('textbox', { name: 'Durée', exact: true })).toHaveValue('75');
@@ -188,11 +180,7 @@ test('step editor cancels local changes and applies manual conditions, dependenc
   await sheet
     .getByRole('combobox', { name: 'Placement de l’étape', exact: true })
     .selectOption('alap');
-  await sheet
-    .getByRole('group', { name: 'Après', exact: true })
-    .getByRole('checkbox')
-    .first()
-    .check();
+
   const equipment = await disclosure(sheet, page, 'Équipement');
   await equipment
     .getByRole('combobox', { name: 'Mode de four', exact: true })
@@ -201,7 +189,7 @@ test('step editor cancels local changes and applies manual conditions, dependenc
   await number(equipment, 'Température de consigne', '25');
   await sheet.getByRole('button', { name: 'Appliquer', exact: true }).click();
   await expect(sheet).toHaveCount(0);
-  await page.getByRole('button', { name: 'Modifier l’étape : Pointage doux', exact: true }).click();
+  await editProcessStep(page, 'bulk');
   sheet = page.getByRole('dialog');
   await expect(sheet.getByRole('textbox', { name: 'Durée', exact: true })).toHaveValue('90');
   await expect(sheet.getByRole('textbox', { name: 'Lieu', exact: true })).toHaveValue(
@@ -213,9 +201,6 @@ test('step editor cancels local changes and applies manual conditions, dependenc
   await expect(
     sheet.getByRole('combobox', { name: 'Placement de l’étape', exact: true }),
   ).toHaveValue('alap');
-  await expect(
-    sheet.getByRole('group', { name: 'Après', exact: true }).getByRole('checkbox').first(),
-  ).toBeChecked();
   const restoredEquipment = await disclosure(sheet, page, 'Équipement');
   await expect(
     restoredEquipment.getByRole('combobox', { name: 'Mode de four', exact: true }),
@@ -226,6 +211,29 @@ test('step editor cancels local changes and applies manual conditions, dependenc
   await expect(
     restoredEquipment.getByRole('textbox', { name: 'Température de consigne', exact: true }),
   ).toHaveValue('25');
+  await page.keyboard.press('Escape');
+  await (
+    await stepMenu(page, 'bulk')
+  )
+    .getByRole('button', { name: 'Modifier les dépendances', exact: true })
+    .click();
+  const dependencies = page.getByRole('dialog');
+  await expect(dependencies.getByRole('checkbox')).toHaveCount(0);
+  const add = dependencies.getByRole('combobox');
+  const value = await add.locator('option:not([value=""])').first().getAttribute('value');
+  await add.selectOption(value);
+  await dependencies.getByRole('button', { name: 'Ajouter', exact: true }).click();
+  await dependencies
+    .getByRole('button', { name: 'Enregistrer les dépendances', exact: true })
+    .click();
+  await (
+    await stepMenu(page, 'bulk')
+  )
+    .getByRole('button', { name: 'Modifier les dépendances', exact: true })
+    .click();
+  await expect(
+    page.getByRole('dialog').getByRole('button', { name: 'Supprimer', exact: true }),
+  ).toHaveCount(2);
   await page.keyboard.press('Escape');
   await page.getByRole('tab', { name: 'Planification', exact: true }).click();
   const plan = page
@@ -335,15 +343,12 @@ test('ready-by target falls back to the current final stage after the selected s
   await expect(plan.locator('strong')).toContainText(/13\s*(?:h|:)\s*30/);
   await edit(page);
   await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
-  const cooling = page.locator('.step-row:visible').filter({
-    has: page.getByRole('button', { name: 'Modifier l’étape : Ressuage', exact: true }),
-  });
-  await cooling.locator('.step-more-trigger').click();
-  await cooling.getByRole('button', { name: 'Supprimer', exact: true }).click();
-  await page
-    .getByRole('dialog', { name: 'Confirmer la suppression', exact: true })
+  await (
+    await stepMenu(page, 'cool')
+  )
     .getByRole('button', { name: 'Supprimer', exact: true })
     .click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Supprimer', exact: true }).click();
   await expect(page.locator('.step-title:visible')).toHaveCount(9);
   await page.getByRole('tab', { name: 'Planification', exact: true }).click();
   await expect(plan.getByRole('combobox', { name: 'Fixer l’horaire', exact: true })).toHaveValue(
@@ -373,7 +378,7 @@ test('flour-row removal clears only that row’s invalid input and preserves rem
   await shares.nth(1).fill('-');
   await shares.nth(1).blur();
   await expect(apply).toBeDisabled();
-  await rowOf(shares.nth(1)).getByRole('button', { name: 'Supprimer', exact: true }).click();
+  await rowOf(shares.nth(1)).getByRole('button', { name: 'Retirer', exact: true }).click();
   await expect(shares).toHaveCount(1);
   await expect(shares.nth(0)).toHaveValue('100');
   await expect(apply).toBeEnabled();
@@ -389,7 +394,7 @@ test('flour-row removal clears only that row’s invalid input and preserves rem
   await shares.nth(2).fill('-');
   await shares.nth(2).blur();
   await expect(apply).toBeDisabled();
-  await rowOf(shares.nth(1)).getByRole('button', { name: 'Supprimer', exact: true }).click();
+  await rowOf(shares.nth(1)).getByRole('button', { name: 'Retirer', exact: true }).click();
   await expect(shares).toHaveCount(2);
   await expect(shares.nth(1)).toHaveValue('-');
   await expect(shares.nth(1)).toHaveAttribute('aria-invalid', 'true');

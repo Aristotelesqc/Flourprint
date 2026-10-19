@@ -3,15 +3,19 @@ import type { StepRowProps } from '../../props.ts';
 
 export default {
   purpose:
-    'One step of the process as a numbered node on a connected line, with its details and actions.',
-  useWhen: ['Step lists in Recipe, Planning and Preparation.'],
+    'One step of the process as a numbered node with its details, actions, and proposed review layout alternatives.',
+  useWhen: [
+    'Step lists in Recipe, Planning and Preparation.',
+    'Exploring density and hierarchy options via ancestor [data-step-design="compact"|"rail"|"outline"] (compact serves as technical fallback).',
+  ],
   avoidWhen: ['Time placement across parallel lanes: use fp.timeline.'],
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
-
-    'The node pictogram is decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon is present.',
+    'The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon is present.',
     'Reorder controls (#123) need a keyboard path besides dragging.',
-    'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
+    'Touch target at least 48 px; painted controls remain compact without layout dead space (ADR 0021, #142).',
+    'Proposed alternatives (compact, rail, outline) preserve identical semantic DOM, labeling, and reachable actions with natural wrapping at 360px / 130% zoom without truncation.',
+    'Alternatives are proposals for owner review and arbitration, not accepted decisions.',
   ],
   related: ['fp.timeline', 'fp.prep-hero'],
   decisions: [

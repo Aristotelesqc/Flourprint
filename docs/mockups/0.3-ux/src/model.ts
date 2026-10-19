@@ -279,7 +279,14 @@ export function usePrototype(locale: Locale) {
     [],
   );
   const setHydrationTarget = (target: number): boolean => {
-    const water = content.formula.ingredients.find((i) => i.kind === 'water')?.id ?? 'water';
+    const water =
+      content.formula.waterTarget?.absorbInto ??
+      content.formula.ingredients.find((i) => i.kind === 'water' && i.role === 'dough')?.id ??
+      content.formula.ingredients.find((i) => i.kind === 'water')?.id;
+    if (!water) {
+      setState((s) => ({ ...s, error: t(locale, 'refused') }));
+      return false;
+    }
     const locked = applyFormulaEdit(content.formula, {
       type: 'LockTotalWater',
       totalWaterPct: target,
@@ -289,9 +296,7 @@ export function usePrototype(locale: Locale) {
       setState((s) => ({ ...s, error: t(locale, 'refused') }));
       return false;
     }
-    const unlocked = applyFormulaEdit(locked.value, { type: 'UnlockTotalWater' });
-    if (!unlocked.ok) return false;
-    push({ ...content, formula: unlocked.value });
+    push({ ...content, formula: locked.value });
     return true;
   };
   const undo = () =>

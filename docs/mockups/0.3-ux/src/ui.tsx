@@ -1,4 +1,5 @@
 import { Ui } from './library';
+import type React from 'react';
 import type {
   BottomBarProps,
   IconProps,
@@ -29,5 +30,13 @@ export const Tabs = (props: TabsProps) => <Ui component="fp.tabs" {...props} />;
 export const Disclosure = (props: DisclosureProps) => <Ui component="fp.group-card" {...props} />;
 export const Modal = (props: ModalProps) => <Ui component="fp.bottom-sheet" {...props} />;
 export const Menu = (props: MenuProps) => <Ui component="fp.floating-menu" {...props} />;
+
+export const CompactDialog = (props: ModalProps) => (
+  <Ui component="fp.bottom-sheet" {...props}>
+    <div data-overlay-presentation="compact" style={{ display: 'contents' }}>
+      {props.children}
+    </div>
+  </Ui>
+);
 
 export const BottomBar = (props: BottomBarProps) => <Ui component="fp.bottom-bar" {...props} />;

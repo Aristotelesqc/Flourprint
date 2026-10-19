@@ -3,13 +3,17 @@ import type { ModalProps } from '../../props.ts';
 
 export default {
   purpose:
-    'A modal sheet rising from the bottom for focused tasks: editing a step, explaining a value.',
-  useWhen: ['A task or explanation that needs the full width and its own actions.'],
+    'A modal sheet rising from the bottom for focused tasks (default) or a centered compact dialog via [data-overlay-presentation="compact"] content marker.',
+  useWhen: [
+    'A task or explanation that needs the full width and its own actions (default sheet presentation).',
+    'Short confirmation dialogs composing a [data-overlay-presentation="compact"] content marker retained in exit clones.',
+  ],
   avoidWhen: ['A short list of choices tied to a button: use fp.floating-menu.'],
   accessibility: [
     'Native modal dialog: focus is contained, Escape closes, focus returns to the trigger.',
     'Floating layer: may be translucent (elevation rule).',
     'Reduced motion closes at once.',
+    'Hit targets maintain 48 px minimum boundary with compact visual rhythm.',
   ],
   related: ['fp.floating-menu', 'fp.motion.sheet-enter', 'fp.motion.sheet-exit'],
   decisions: [

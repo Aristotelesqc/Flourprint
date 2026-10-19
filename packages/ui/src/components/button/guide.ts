@@ -16,11 +16,11 @@ export default {
     'Native button attributes (type, disabled, onClick, className, aria attributes and style) are forwarded; selected motion timing is retained over style overrides.',
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
 
-    'Touch target is an independent 48 px minimum height box (--fp-spacing-touch); the visible material shape is 40 px (--fp-spacing-touch-compact) inset 4 px vertically using a decorative span (ADR 0021, #142).',
+    'Touch target is an independent 48 px minimum height box (--fp-spacing-touch); the visible material shape is 40 px (--fp-spacing-touch-compact) inset 4 px vertically using a decorative span (ADR 0021, #142). Zero vertical rem padding prevents target blowout under larger text.',
     'type defaults to "button", so it never submits forms by accident.',
     'Disabled buttons receive disabled attribute, opacity 0.45, and pointer-events none; explain the reason nearby when not obvious.',
     'The native button receives the shared :focus-visible outline.',
-    'The consumer must check label fit and non-overlapping hit boxes at 393 px / 100% and 360 px / 130%.',
+    'The consumer must check label fit and non-overlapping hit boxes at 393 px / 100% and 360 px / 130%. Labels must not wrap mid-word.',
   ],
   related: ['fp.icon-button', 'fp.motion.press'],
   decisions: [

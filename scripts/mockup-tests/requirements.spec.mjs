@@ -1,3 +1,4 @@
+import { editRecipe } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 import { codeName } from '../build-names.mjs';
 
@@ -29,11 +30,7 @@ const address = (params) =>
   `/mockup.html?${new URLSearchParams({ capture: '1', motion: 'reduce', ...params })}`;
 
 async function openEdit(page, locale) {
-  await page.getByRole('button', { name: copy[locale].actions, exact: true }).click();
-  await page
-    .getByRole('dialog')
-    .getByRole('button', { name: copy[locale].edit, exact: true })
-    .click();
+  await editRecipe(page, locale);
   await expect(page.getByTestId('save-recipe')).toBeVisible();
 }
 
@@ -316,11 +313,11 @@ for (const nav of ['A', 'B']) {
     await overflow.click();
     const menu = page.getByRole('dialog');
     await expect(menu).toBeVisible();
-    await expectHitTarget(menu.getByRole('button', { name: 'Modifier', exact: true }));
-    await menu.getByRole('button', { name: 'Modifier', exact: true }).click();
+    await expect(menu.getByRole('button', { name: 'Modifier', exact: true })).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await openEdit(page, 'fr');
     await expectHitTarget(page.getByTestId('save-recipe'));
-    if (nav === 'A') await overflow.click();
-    await expectHitTarget(page.getByRole('button', { name: 'Abandonner', exact: true }));
+    await expectHitTarget(page.getByRole('button', { name: 'Annuler', exact: true }));
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );

@@ -15,7 +15,7 @@ export const Tabs: React.FC<TabsProps> = ({
   const motionStyle = useTransitionMotionStyle('fp.motion.highlight', ref);
   useEffect(() => {
     const selected = ref.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]');
-    if (selected && selected === document.activeElement) {
+    if (selected) {
       selected.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
   }, [activeId]);

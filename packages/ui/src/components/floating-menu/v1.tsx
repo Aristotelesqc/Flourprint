@@ -51,7 +51,15 @@ export const Menu: React.FC<MenuProps> = ({
             </h2>
             <IconButton icon="close" label={closeLabel} onClick={close} />
           </header>
-          <div className="menu-body">{children}</div>
+          <div className="menu-body">
+            {React.Children.count(children) === 1 &&
+            React.isValidElement(children) &&
+            (children.props as { className?: string })?.className?.includes('menu-actions') ? (
+              children
+            ) : (
+              <div className="menu-actions">{children}</div>
+            )}
+          </div>
           {footer && <footer className="menu-footer">{footer}</footer>}
         </div>
       </dialog>
