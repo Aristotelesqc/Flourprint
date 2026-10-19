@@ -36,6 +36,8 @@ interface Card {
   readonly revision?: Revision;
   readonly lastBaked?: Instant;
   readonly cookingUnknown?: boolean;
+  /** Last finished preparation that ended as dough only (no cooking). */
+  readonly lastDough?: Instant;
   /** Number of variants when the recipe is the shown variant of a family. */
   readonly variants?: number;
 }
@@ -112,6 +114,17 @@ export const RecipesPage = () => {
             .filter((endedAt): endedAt is Instant => endedAt !== undefined)
             .sort((a, b) => Date.parse(a) - Date.parse(b));
           const lastBaked = cookedHistory.at(-1);
+          // A preparation does not always end in cooking (bake-session.md, Outcome).
+          const lastDough = history
+            .filter(({ state }) => state.ok && state.value.outcome?.result === 'dough')
+            .map(
+              ({ summary, state }) =>
+                (state.ok ? state.value.endedAt : undefined) ??
+                (summary.endedAt as Instant | undefined),
+            )
+            .filter((endedAt): endedAt is Instant => endedAt !== undefined)
+            .sort((a, b) => Date.parse(a) - Date.parse(b))
+            .at(-1);
           const hasCookingUnknown = history.some(({ summary, state }) => {
             if (!state.ok || state.value.outcome === undefined) return true;
             const isCooked =
@@ -125,6 +138,7 @@ export const RecipesPage = () => {
             ...(revision.ok && revision.value ? { revision: revision.value } : {}),
             ...(lastBaked ? { lastBaked } : {}),
             ...(hasCookingUnknown ? { cookingUnknown: true } : {}),
+            ...(lastDough ? { lastDough } : {}),
             ...(count === undefined ? {} : { variants: count }),
           };
         }),
@@ -366,7 +380,13 @@ const RecipeCard = ({ card, now }: { card: Card; now: Instant }) => {
           <span className="shrink-0 whitespace-nowrap">
             {card.lastBaked
               ? t('recipes.card.lastBaked', { when: formatRelative(card.lastBaked, now, locale) })
-              : t(card.cookingUnknown ? 'recipes.card.cookingUnknown' : 'recipes.card.neverBaked')}
+              : card.cookingUnknown
+                ? t('recipes.card.cookingUnknown')
+                : card.lastDough
+                  ? t('recipes.card.lastDough', {
+                      when: formatRelative(card.lastDough, now, locale),
+                    })
+                  : t('recipes.card.neverPrepared')}
           </span>
         </div>
       </div>

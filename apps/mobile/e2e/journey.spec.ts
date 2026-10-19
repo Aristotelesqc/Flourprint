@@ -248,6 +248,11 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
 test('finishes as frozen dough before its planned bake, keeping the steps as recorded', async ({
   page,
 }) => {
+  const card = () =>
+    routed(page).locator('.m3-card').filter({ hasText: 'Poolish + tangzhong' }).first();
+  await page.goto('/recipes');
+  // A preparation does not always end in cooking: a recipe never made is "never prepared".
+  await expect(card()).toContainText('Jamais préparée');
   await openRecipe(page);
   await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
@@ -261,6 +266,10 @@ test('finishes as frozen dough before its planned bake, keeping the steps as rec
   await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Pâte crue, congelée');
   await expect(page.getByText(/Préferment terminé/).first()).toBeVisible();
   await expect(page.getByText(/Cuisson terminé/)).toHaveCount(0);
+  for (let i = 0; i < 4 && !/\/recipes$/.test(new URL(page.url()).pathname); i++)
+    await goBack(page);
+  await expect(card()).toContainText('Pâte préparée');
+  await expect(card()).not.toContainText('Jamais');
 });
 
 test('a recipe states how it ends', async ({ page }) => {

@@ -12,7 +12,9 @@ their procedures, the domain contracts or the repository's delivery rules.
 
 ## Establish the review scope
 
-Read `AGENTS.md`, `DESIGN.md` and the current issue/PR acceptance. Record the actual integrated
+Read `AGENTS.md`, `docs/ux/requirements.md`, `DESIGN.md` and the current issue/PR acceptance.
+The requirements file is the acceptance grid: report each affected L-item as PASS, PARTIAL, FAIL
+or NOT-TESTABLE with rendered evidence, and show open O-items as options, never settled. Record the actual integrated
 revision and candidate changes; an old report or screenshot is not the current baseline.
 Distinguish shipped behavior, explored proposals and missing visual work. Passing journeys do
 not demonstrate that an interface is attractive or understandable.
