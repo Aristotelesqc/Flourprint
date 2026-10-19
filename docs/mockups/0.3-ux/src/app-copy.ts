@@ -24,10 +24,24 @@ export const appCopy = {
   neverPrepared: ['Jamais préparée', 'Never prepared'],
   statusCooked: ['Cuite', 'Cooked'],
   statusDough: ['Pâte préparée', 'Dough prepared'],
+  statusMixed: ['Mélangée', 'Mixed'],
 
   // Reset confirmation dialog (Requirement 5, L65)
   confirmResetTitle: ['Réinitialiser le brouillon ?', 'Reset draft?'],
   confirmResetAction: ['Réinitialiser', 'Reset'],
+
+  // Trash view labels (L30)
+  trashTitle: ['Corbeille', 'Trash'],
+  trashDescription: [
+    'Recettes supprimées pouvant être restaurées.',
+    'Deleted recipes that can be restored.',
+  ],
+  trashEmpty: ['Aucune recette dans la corbeille', 'No recipes in trash'],
+  restoreAction: ['Restaurer', 'Restore'],
+  openTrashAction: ['Ouvrir la corbeille', 'Open trash'],
+  trashCount: ['Recettes dans la corbeille', 'Trashed recipes'],
+  advancedSection: ['Avancé', 'Advanced'],
+  startAnotherPreparation: ['Démarrer une autre préparation', 'Start another preparation'],
 } as const;
 
 export type AppCopyKey = keyof typeof appCopy;

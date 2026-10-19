@@ -1,3 +1,4 @@
+import { recipeCard } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
@@ -13,7 +14,6 @@ const stages = [
   'divide',
   'shape',
   'proof',
-  'preheat',
   'bake',
   'cool',
 ];
@@ -44,7 +44,7 @@ async function openLibrary(page, nav) {
 
 async function openRecordedHistory(page, nav, result) {
   await openLibrary(page, nav);
-  const card = page.getByRole('button', { name: 'Shokupan', exact: true });
+  const card = recipeCard(page, 'Shokupan');
   await expect(card.getByText(result, { exact: true })).toBeVisible();
   await expect(card.getByRole('button', { name: 'Reprendre', exact: true })).toHaveCount(0);
   await expect(card).not.toContainText('En cours');
@@ -62,7 +62,7 @@ async function openRecordedHistory(page, nav, result) {
   await expect(page.getByText('Non évaluée', { exact: true })).toBeVisible();
 }
 
-for (const nav of ['A', 'B']) {
+for (const nav of ['A']) {
   test(`the last stage stays active until explicit default Finish, with recorded history ${nav}`, async ({
     page,
   }) => {
@@ -96,7 +96,7 @@ for (const nav of ['A', 'B']) {
     // Default Finish records the recipe's intended result without a compulsory result dialog.
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await openRecordedHistory(page, nav, 'Cuit');
-    await expect(page.getByText('Durée réelle : 10 min', { exact: true })).toBeVisible();
+    await expect(page.getByText('Durée réelle : 9 min', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Lancer', exact: true }).click();
     await expect(page.locator('.current-step-hero')).toHaveAttribute('data-step', 'tangzhong');
     await expect(page.getByTestId('recorded-outcome')).toHaveCount(0);

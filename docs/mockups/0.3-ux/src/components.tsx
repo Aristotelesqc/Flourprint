@@ -6,6 +6,7 @@ import type {
   RecipeCardProps,
   StatusPanelProps,
   PreparationTimerProps,
+  ContextTilesProps,
 } from '../../../../packages/ui/src/props';
 export type * from '../../../../packages/ui/src/props';
 export const RecipeSummary = (props: RecipeSummaryProps) => (
@@ -21,4 +22,7 @@ export const StatusPanel = (props: StatusPanelProps) => (
 );
 export const PreparationTimer = (props: PreparationTimerProps) => (
   <Ui component="fp.prep-hero" {...props} />
+);
+export const ContextTiles = (props: ContextTilesProps) => (
+  <Ui component="fp.context-tiles" {...props} />
 );

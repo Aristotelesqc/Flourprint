@@ -4,8 +4,8 @@ import { auditMockupStyles } from '../mockup-style-audit.mjs';
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = requireMobile('@playwright/test');
 
-for (const navigation of ['A', 'B'])
-  test(`round 2 action placement remains distinct: ${navigation}`, async ({ page }) => {
+for (const navigation of ['A'])
+  test(`navigation A action placement: ${navigation}`, async ({ page }) => {
     await page.goto(`/mockup.html?screen=library&nav=${navigation}&capture=1&motion=reduce`);
     await expect(page.getByRole('searchbox')).toHaveCount(1);
     const create = page.getByRole('button', { name: 'Nouvelle recette', exact: true });
@@ -26,13 +26,13 @@ for (const navigation of ['A', 'B'])
 test('library density retains four complete cards without an extra active-preparation block', async ({
   page,
 }) => {
-  await page.goto('/mockup.html?screen=library&nav=B&capture=1&motion=reduce');
+  await page.goto('/mockup.html?screen=library&nav=A&capture=1&motion=reduce');
   const cards = page.locator('[data-fp-component="fp.recipe-card"]');
   expect(await cards.first().evaluate((el) => el.getBoundingClientRect().height)).toBeLessThan(160);
   expect(await cards.nth(3).evaluate((el) => el.getBoundingClientRect().bottom)).toBeLessThan(
     await page.locator('.phone-content').evaluate((el) => el.getBoundingClientRect().bottom),
   );
-  await page.getByRole('button', { name: 'Reprendre', exact: true }).click();
+  await page.getByRole('banner').getByRole('button', { name: 'Reprendre', exact: true }).click();
   await expect(page.getByTestId('prep-complete-btn')).toBeVisible();
 });
 
@@ -58,7 +58,7 @@ for (const theme of ['light', 'dark', 'amoled'])
   }) => {
     await page.setViewportSize({ width: 360, height: 852 });
     await page.goto(
-      `/mockup.html?screen=recipe&lang=fr&nav=B&width=360&scale=130&capture=1&theme=${theme}`,
+      `/mockup.html?screen=recipe&lang=fr&nav=A&width=360&scale=130&capture=1&theme=${theme}`,
     );
     await expect(page.getByRole('heading', { name: 'Shokupan', exact: true })).toBeVisible();
     expect(
@@ -68,7 +68,8 @@ for (const theme of ['light', 'dark', 'amoled'])
       '20.8px',
     );
     await expect(page.locator('[data-fp-component="fp.bottom-bar"] nav')).toHaveCount(0); // The bar itself owns its navigation root.
-    await expect(page.locator('nav[data-fp-component="fp.bottom-bar"] button')).toHaveCount(4);
+    await expect(page.locator('[data-fp-component="fp.bottom-bar"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reprendre', exact: true })).toBeVisible();
     expect(
       await page.locator('.hydration-value').evaluate((el) => {
         const range = document.createRange();
@@ -159,7 +160,7 @@ for (const prep of ['fermentation', 'cooking'])
   }) => {
     await page.setViewportSize({ width: 360, height: 852 });
     await page.goto(
-      `/mockup.html?screen=preparation&lang=fr&nav=B&width=360&scale=130&capture=1${prep === 'cooking' ? '&prep=cooking' : ''}`,
+      `/mockup.html?screen=preparation&lang=fr&nav=A&width=360&scale=130&capture=1${prep === 'cooking' ? '&prep=cooking' : ''}`,
     );
     for (const name of [
       '+15 min',

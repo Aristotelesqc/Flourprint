@@ -8,8 +8,8 @@ export default {
   avoidWhen: ['Inside the recipe screen itself: use fp.hero-summary.'],
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
-
-    'The whole card opens the recipe; Resume and other actions are separate buttons.',
+    'The main open action and Resume are semantic sibling controls with independent 48 px hit targets, eliminating nested interactive controls (L27).',
+    'The whole card opens the recipe on pointer use while excluding nested interactive controls; keyboard Enter/Space on the title button opens once.',
     'The status is text (fp.badge style), not only colour.',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
   ],

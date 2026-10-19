@@ -27,7 +27,7 @@ test.describe('Gemini step variants', () => {
       test(`density and readable layout ${theme} ${width}/${scale}`, async ({ page }) => {
         await page.setViewportSize({ width, height: 852 });
         for (const design of designs)
-          for (const nav of ['A', 'B'])
+          for (const nav of ['A'])
             for (const lang of ['fr', 'en']) {
               await page.goto(
                 route({
@@ -61,6 +61,10 @@ test.describe('Gemini step variants', () => {
                   `${design}/${nav}/${lang} Division height`,
                 ).toBeLessThanOrEqual(96);
               await expect(page.locator('.step-more-actions:visible')).toHaveCount(0);
+              if (lang === 'en') {
+                await expect(page.locator('.phone-content')).not.toContainText('Température');
+                await expect(page.locator('.phone-content')).toContainText('Temperature: 21 °C');
+              }
               await shot(page, `steps-${design}-${nav}-${lang}-${theme}-${width}-${scale}`);
             }
       });
@@ -92,10 +96,19 @@ test.describe('Gemini step variants', () => {
       await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       const dialog = page.getByRole('dialog');
       await expect(dialog).toContainText('Ce déplacement change les dépendances.');
+      await expect(
+        page.locator('.phone-content [role="status"]').filter({ hasText: 'Déplacement annulé.' }),
+      ).toHaveCount(0);
       await expect(titles(page)).toHaveText(original);
       await dialog.getByRole('button', { name: 'Appliquer', exact: true }).click();
       await expect(titles(page).nth(3)).toHaveText('4. Division');
       await expect(titles(page).nth(4)).toHaveText('5. Pointage');
+      await expect(
+        page
+          .locator('.phone-content [role="status"]')
+          .filter({ hasText: 'Modification des étapes appliquée au brouillon.' }),
+      ).toHaveCount(1);
+      await expect(page.getByTestId('drag-handle-divide').filter({ visible: true })).toBeFocused();
       await expect(page.locator('.fp-drag-placeholder:visible')).toHaveCount(0);
       await session.detach();
     });
@@ -141,7 +154,7 @@ test.describe('Gemini step variants', () => {
     const handle = page.getByTestId('drag-handle-bulk').filter({ visible: true });
     await handle.scrollIntoViewIfNeeded();
     const from = await handle.boundingBox();
-    const content = page.locator('.phone-content');
+    const content = page.locator('.section-carousel-pane.is-active');
     const box = await content.boundingBox();
     const before = await content.evaluate((el) => el.scrollTop);
     const original = await titles(page).allTextContents();
@@ -200,6 +213,31 @@ test.describe('Gemini step variants', () => {
       await session.detach();
     }
   });
+  test('long-press activation remains an explicit working option', async ({ page, context }) => {
+    await page.goto(route({ dragActivation: 'hold' }));
+    const grip = page.getByTestId('drag-handle-divide').filter({ visible: true });
+    await grip.scrollIntoViewIfNeeded();
+    const from = await grip.boundingBox();
+    const target = await row(page, 'bulk').boundingBox();
+    const session = await context.newCDPSession(page);
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [{ x: from.x + from.width / 2, y: from.y + from.height / 2, id: 1 }],
+    });
+    await expect(row(page, 'divide')).toHaveClass(/is-dragging/);
+    await session.send('Input.dispatchTouchEvent', {
+      type: 'touchMove',
+      touchPoints: [{ x: target.x + target.width / 2, y: target.y + target.height / 4, id: 1 }],
+    });
+    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('Ce déplacement change les dépendances.');
+    await dialog.getByRole('button', { name: 'Appliquer', exact: true }).click();
+    await expect(titles(page).nth(3)).toHaveText('4. Division');
+    await expect(grip).toBeFocused();
+    await session.detach();
+  });
+
   test('valid water target stays locked and no absorber offers no lock', async ({ page }) => {
     await page.goto(route({ recipe: 'baguette', section: 'ingredients' }));
     const target = page.getByTestId('hydration-target');

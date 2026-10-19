@@ -50,6 +50,10 @@
 [data-fp-component='fp.button'][data-fp-version='v1'].btn:active > span {
   transform: scale(0.97);
 }
+[data-fp-component='fp.button'][data-fp-version='v1'].btn:focus-visible > .button-shape {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 [data-fp-component='fp.button'][data-fp-version='v1'].btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;

@@ -99,12 +99,23 @@ export interface CheckboxProps {
   dataTestId?: string;
 }
 
+export interface TabGestureProgress {
+  /** The id of the current/from tab */
+  readonly fromId: string;
+  /** The id of the adjacent/to tab being swiped to */
+  readonly toId?: string;
+  /** Normalized progress from 0 (at fromId) to 1 (at toId) */
+  readonly progress: number;
+}
+
 export interface TabsProps {
   variant?: 'underlined' | 'pills' | 'chips';
   tabs: { id: string; label: string }[];
   activeId: string;
   onChange: (id: string) => void;
   label: string;
+  /** Optional real-time gesture progress during horizontal swipe (L101) */
+  gestureProgress?: TabGestureProgress | null;
 }
 
 export interface DisclosureProps {
@@ -167,7 +178,7 @@ export interface IngredientRowProps {
 
 export interface StepRowProps {
   icon?: IconName;
-  number: number;
+  number?: number;
   title: string;
   details: string[];
   state?: 'planned' | 'running' | 'done';
@@ -249,5 +260,18 @@ export interface TimelineProps {
     id: string;
     label: string;
     events: { id: string; label: string; range: string; startPct: number; endPct: number }[];
+  }[];
+}
+
+export interface ContextTilesProps {
+  label: string;
+  items: readonly {
+    id: string;
+    label: string;
+    value: string;
+    detail?: string;
+    icon?: IconName;
+    actionLabel?: string;
+    onAction?: () => void;
   }[];
 }

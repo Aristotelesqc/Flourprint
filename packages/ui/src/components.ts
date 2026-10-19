@@ -19,6 +19,7 @@ import type {
   RecipeCardProps,
   StatusPanelProps,
   PreparationTimerProps,
+  ContextTilesProps,
 } from './props.ts';
 export type FlourprintComponents = {
   'fp.timeline': TimelineProps;
@@ -41,4 +42,5 @@ export type FlourprintComponents = {
   'fp.recipe-card': RecipeCardProps;
   'fp.warning-banner': StatusPanelProps;
   'fp.prep-hero': PreparationTimerProps;
+  'fp.context-tiles': ContextTilesProps;
 };

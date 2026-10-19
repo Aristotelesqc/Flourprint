@@ -45,7 +45,7 @@ export const StepRow: React.FC<StepRowProps> = ({
       <div className="step-body stack">
         <div className="step-title-row row">
           <span className="step-title">
-            {icon && <small className="step-ordinal">{number}. </small>}
+            {icon && number !== undefined && <small className="step-ordinal">{number}. </small>}
             {title}
           </span>
         </div>

@@ -19,7 +19,9 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const motionStyle = useTransitionMotionStyle('fp.motion.press', buttonRef);
-  const classNames = ['btn', `btn-${variant}`, className].filter(Boolean).join(' ');
+  const classNames = ['btn', variant === 'secondary' ? '' : `btn-${variant}`, className]
+    .filter(Boolean)
+    .join(' ');
   const mergedStyle: React.CSSProperties = style ? { ...style, ...motionStyle } : motionStyle;
 
   return (

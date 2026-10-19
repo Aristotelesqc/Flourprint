@@ -4,10 +4,368 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Flourprint 0.3 · reviewed mockups</title>
+    <title>Flourprint 0.3 · UX Review Gallery</title>
+    <link rel="stylesheet" href="./gallery.css" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="./src/gallery.tsx"></script>
+    <header>
+      <div class="brand-badge">Flourprint 0.3 · UX Review</div>
+      <h1>Interactive Review Gallery</h1>
+      <p class="subtitle">Review landing page in Warm 3 identity for prototype validation.</p>
+      <div class="disclaimer-box">
+        <strong>Review Scope &amp; Status:</strong> Prototyping in <code>mockup</code> and
+        <code>packages/ui</code> (not <code>apps/mobile</code>). Does not claim all L-items are
+        passed or owner-approved. <strong>Decision L101:</strong> Navigation A adopted; Navigation B
+        links and copy are removed from active consideration.
+      </div>
+    </header>
+
+    <main>
+      <!-- SECTION 1: Step Row & Activation Options (O3 OPEN) -->
+      <section id="step-row-options">
+        <h2 class="section-title">Step Row &amp; Drag Activation Options</h2>
+        <p class="section-caption">
+          First-priority review item for open decision O3. Links open the live interactive editor
+          with inspector available (no capture mode).
+        </p>
+        <div class="choice-callout">
+          <strong>Owner Choice Required:</strong> Please test each of the 3 step row designs
+          (<code>compact</code>, <code>rail</code>, <code>outline</code>) paired with both
+          activation methods (<code>move</code> for 5px motion vs <code>hold</code> for longpress).
+        </div>
+
+        <div class="links-grid">
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=move"
+          >
+            <div class="card-heading">
+              <span class="card-title">Compact Row · Move</span>
+              <span class="badge badge-accent">5px Motion</span>
+            </div>
+            <p class="card-desc">Dense step row with immediate 5px drag activation threshold.</p>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=move</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Compact Row · Hold</span>
+              <span class="badge badge-accent">Longpress</span>
+            </div>
+            <p class="card-desc">
+              Dense step row with press-and-hold activation for mobile safety.
+            </p>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=hold</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=rail&dragActivation=move"
+          >
+            <div class="card-heading">
+              <span class="card-title">Rail Row · Move</span>
+              <span class="badge badge-accent">5px Motion</span>
+            </div>
+            <p class="card-desc">Vertical timeline rail indicator with 5px drag activation.</p>
+            <span class="card-query">stepDesign=rail &amp; dragActivation=move</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=rail&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Rail Row · Hold</span>
+              <span class="badge badge-accent">Longpress</span>
+            </div>
+            <p class="card-desc">
+              Vertical timeline rail indicator with press-and-hold activation.
+            </p>
+            <span class="card-query">stepDesign=rail &amp; dragActivation=hold</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=outline&dragActivation=move"
+          >
+            <div class="card-heading">
+              <span class="card-title">Outline Row · Move</span>
+              <span class="badge badge-accent">5px Motion</span>
+            </div>
+            <p class="card-desc">Subtly boxed card layout with 5px drag activation.</p>
+            <span class="card-query">stepDesign=outline &amp; dragActivation=move</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=outline&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Outline Row · Hold</span>
+              <span class="badge badge-accent">Longpress</span>
+            </div>
+            <p class="card-desc">Subtly boxed card layout with press-and-hold activation.</p>
+            <span class="card-query">stepDesign=outline &amp; dragActivation=hold</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- SECTION 2: Navigation A Screens -->
+      <section id="navigation-a-screens">
+        <h2 class="section-title">Navigation A Core Screens</h2>
+        <p class="section-caption">
+          Core product screens under the adopted Navigation A model (L101 decision).
+        </p>
+        <div class="links-grid">
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Recipe</span>
+              <span class="badge">Nav A</span>
+            </div>
+            <p class="card-desc">
+              Recipe overview, ingredients, bakers percentages, and process stages.
+            </p>
+            <span class="card-query">screen=recipe</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=prep&recipe=shokupan&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Preparation</span>
+              <span class="badge">Nav A</span>
+            </div>
+            <p class="card-desc">
+              Step checklist, active timing, temperature tracking, and fermentation guidance.
+            </p>
+            <span class="card-query">screen=prep</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=settings&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Settings</span>
+              <span class="badge">Nav A</span>
+            </div>
+            <p class="card-desc">Theme, language, unit preferences, and calibration parameters.</p>
+            <span class="card-query">screen=settings</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=library&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Library</span>
+              <span class="badge">Nav A</span>
+            </div>
+            <p class="card-desc">Recipe catalog, flour database, and saved baker formulations.</p>
+            <span class="card-query">screen=library</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- SECTION 3: Historical Reference (Old A/B Comparison) -->
+      <section id="historical-reference">
+        <h2 class="section-title">Historical Reference</h2>
+        <p class="section-caption">
+          Archived comparison for provenance. L101 closed: Navigation A is confirmed.
+        </p>
+        <div class="links-grid">
+          <div class="review-card" style="opacity: 0.75">
+            <div class="card-heading">
+              <span class="card-title">Decision L101 (Closed)</span>
+              <span class="badge badge-history">Archived</span>
+            </div>
+            <p class="card-desc">
+              Navigation A selected. Navigation B links and copy removed from active review choices.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: Companion Screenshots (review-manifest.json) -->
+      <section id="companion-screenshots">
+        <h2 class="section-title">Companion Screenshots</h2>
+        <p class="section-caption">
+          Rendered from <code>./review-manifest.json</code> generated by Codex capture suite.
+        </p>
+
+        <div id="manifest-container">
+          <div class="pending-box">
+            Loading captures from <code>./review-manifest.json</code>...
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Flourprint 0.3 UX Review · Static local client · No external tracking or network calls
+    </footer>
+
+    <script>
+      (function () {
+        const container = document.getElementById('manifest-container');
+
+        fetch('./review-manifest.json')
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error('Manifest not found (HTTP ' + res.status + ')');
+            }
+            return res.json();
+          })
+          .then((manifest) => {
+            if (!manifest || !Array.isArray(manifest.views)) {
+              throw new Error('Invalid manifest structure');
+            }
+
+            renderGallery(manifest);
+          })
+          .catch((err) => {
+            container.innerHTML = `
+              <div class="pending-box">
+                <p><strong>Captures pending</strong></p>
+                <p style="margin-top: 6px; font-size: 0.8rem;">Review manifest not yet present (<code>./review-manifest.json</code> will be generated by Codex). Full-resolution screenshot cards will populate automatically once available.</p>
+              </div>
+            `;
+          });
+
+        function renderGallery(manifest) {
+          const views = manifest.views;
+          if (views.length === 0) {
+            container.innerHTML = `
+              <div class="pending-box">
+                <p><strong>Manifest found, but no views listed</strong></p>
+              </div>
+            `;
+            return;
+          }
+
+          // Extract unique filters
+          const screens = Array.from(new Set(views.map((v) => v.screen).filter(Boolean)));
+          const themes = Array.from(new Set(views.map((v) => v.theme).filter(Boolean)));
+          const locales = Array.from(new Set(views.map((v) => v.locale).filter(Boolean)));
+
+          container.innerHTML = `
+            <div class="manifest-meta">
+              <span><strong>Revision:</strong> ${escapeHtml(manifest.revision || 'unspecified')}</span>
+              <span><strong>Source SHA-256:</strong> <code>${escapeHtml(manifest.sourceSha256 ? manifest.sourceSha256.substring(0, 12) : 'unspecified')}</code></span>
+              <span><strong>Captures:</strong> <span id="capture-count">${views.length}</span></span>
+            </div>
+
+            <div class="filter-bar">
+              <div class="filter-group">
+                <label for="filter-screen">Screen:</label>
+                <select id="filter-screen">
+                  <option value="">All</option>
+                  ${screens.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="filter-theme">Theme:</label>
+                <select id="filter-theme">
+                  <option value="">All</option>
+                  ${themes.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="filter-locale">Locale:</label>
+                <select id="filter-locale">
+                  <option value="">All</option>
+                  ${locales.map((l) => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="captures-grid" id="captures-grid"></div>
+          `;
+
+          const grid = document.getElementById('captures-grid');
+          const countEl = document.getElementById('capture-count');
+          const screenSelect = document.getElementById('filter-screen');
+          const themeSelect = document.getElementById('filter-theme');
+          const localeSelect = document.getElementById('filter-locale');
+
+          function updateList() {
+            const sVal = screenSelect.value;
+            const tVal = themeSelect.value;
+            const lVal = localeSelect.value;
+
+            const filtered = views.filter((v) => {
+              if (sVal && v.screen !== sVal) return false;
+              if (tVal && v.theme !== tVal) return false;
+              if (lVal && v.locale !== lVal) return false;
+              return true;
+            });
+
+            countEl.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+              grid.innerHTML =
+                '<div class="pending-box" style="grid-column: 1 / -1;">No captures match selected filters.</div>';
+              return;
+            }
+
+            grid.innerHTML = filtered
+              .map((view) => {
+                const tags = [
+                  view.screen ? `<span class="badge">${escapeHtml(view.screen)}</span>` : '',
+                  view.theme ? `<span class="badge">${escapeHtml(view.theme)}</span>` : '',
+                  view.locale ? `<span class="badge">${escapeHtml(view.locale)}</span>` : '',
+                  view.design
+                    ? `<span class="badge badge-accent">${escapeHtml(view.design)}</span>`
+                    : '',
+                  view.activation
+                    ? `<span class="badge badge-accent">${escapeHtml(view.activation)}</span>`
+                    : '',
+                  view.width && view.scale
+                    ? `<span class="badge">${escapeHtml(view.width)}px @ ${escapeHtml(view.scale)}%</span>`
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ');
+
+                return `
+                <div class="capture-card">
+                  <a class="capture-img-link" href="${escapeHtml(view.path)}" target="_blank" rel="noopener" title="Open full resolution capture">
+                    <img src="${escapeHtml(view.path)}" alt="${escapeHtml(view.name || 'Capture')}" loading="lazy" />
+                  </a>
+                  <div class="capture-info">
+                    <div class="capture-name">${escapeHtml(view.name || 'Unnamed capture')}</div>
+                    <div class="capture-tags">${tags}</div>
+                  </div>
+                </div>
+              `;
+              })
+              .join('');
+          }
+
+          screenSelect.addEventListener('change', updateList);
+          themeSelect.addEventListener('change', updateList);
+          localeSelect.addEventListener('change', updateList);
+
+          updateList();
+        }
+
+        function escapeHtml(str) {
+          if (!str) return '';
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
+      })();
+    </script>
   </body>
 </html>

@@ -66,7 +66,7 @@ test('invalid input remains repairable, undo redo reset and cancel work', async 
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
   await expect(page.getByTestId('save-recipe')).toHaveCount(0);
 });
-for (const nav of ['A', 'B'])
+for (const nav of ['A'])
   test(`complete library to preparation journey ${nav}`, async ({ page }) => {
     await page.goto(`/mockup.html?screen=library&lang=en&nav=${nav}&capture=1&prep=fresh`);
     await page.getByRole('searchbox').fill('shoku');
@@ -86,7 +86,7 @@ for (const nav of ['A', 'B'])
     await expect(page.getByText('New note', { exact: false })).toBeVisible();
     await page.getByRole('button', { name: 'Step complete', exact: true }).click();
     await expect(
-      page.locator('.current-step-hero').getByText('2 / 10 · Tangzhong cooling', { exact: true }),
+      page.locator('.current-step-hero').getByText('2 / 9 · Tangzhong cooling', { exact: true }),
     ).toBeVisible();
   });
 test('new template opens a working draft and collisions are named', async ({ page }) => {
@@ -183,7 +183,7 @@ for (const theme of ['light', 'dark', 'amoled'])
     await page.setViewportSize({ width: 360, height: 852 });
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto(recipe + `&nav=B&theme=${theme}&scale=130`);
+    await page.goto(recipe + `&nav=A&theme=${theme}&scale=130`);
     await expect(page.getByRole('button', { name: 'Reprendre', exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,

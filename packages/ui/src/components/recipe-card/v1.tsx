@@ -28,6 +28,14 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
   const pressStyle = useTransitionMotionStyle('fp.motion.press', ref);
   const badgeVariant = statusVariant || (featured ? 'success' : 'default');
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('button, a, input, select, textarea, [role="button"]')) {
+      return;
+    }
+    onOpen();
+  };
+
   return (
     <div
       ref={ref}
@@ -35,20 +43,18 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
       data-fp-component="fp.recipe-card"
       data-fp-version="v1"
       className={`recipe-card ${featured ? 'featured' : ''} ${selected ? 'selected-template' : ''}`}
-      onClick={onOpen}
-      role="button"
-      aria-label={title}
-      aria-pressed={selected}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          onOpen();
-        }
-      }}
+      onClick={handleCardClick}
     >
       <div className="recipe-card-header row">
-        <span className="recipe-card-title">{title}</span>
+        <button
+          type="button"
+          className="recipe-card-main-action"
+          onClick={onOpen}
+          aria-label={title}
+          aria-pressed={selected}
+        >
+          <span className="recipe-card-title">{title}</span>
+        </button>
         {featured ? (
           <button
             type="button"

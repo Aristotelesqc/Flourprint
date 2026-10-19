@@ -14,9 +14,10 @@ import type {
   Versioned,
 } from '../library.ts';
 import { MotionProvider } from '../motion-context.ts';
-import { playMotion, transitionCss, type Motion } from '../motion.ts';
+import { playMotion, transitionCss, type Motion, type KeyframesMotion } from '../motion.ts';
 import type { MotionManifest } from '../motion.ts';
 import type { FlourprintMotion } from '../motions.ts';
+import { playTabCarouselSlide } from '../motions/tab-carousel/index.ts';
 
 const THEMES = ['light', 'dark', 'amoled'] as const;
 const WIDTHS = [393, 360] as const;
@@ -95,6 +96,127 @@ const cssObject = (declarations: Readonly<Record<string, string>>): CSSPropertie
 const MotionDemo = ({ motion, reduced }: { motion: Motion; reduced: boolean }) => {
   const sample = useRef<HTMLDivElement>(null);
   const [on, setOn] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ startX: 0, currentDx: 0, isDragging: false });
+
+  if (motion.id === 'fp.motion.tab-carousel') {
+    const tabs = ['Ingredients', 'Steps', 'Planning'];
+    const selectTab = (nextIndex: number) => {
+      const fromP = -tabIndex * 100;
+      const toP = -nextIndex * 100;
+      setTabIndex(nextIndex);
+      if (trackRef.current) {
+        if (reduced) {
+          trackRef.current.style.transform = `translateX(${toP}%)`;
+        } else {
+          playTabCarouselSlide(trackRef.current, `${fromP}%`, `${toP}%`, {
+            motion: motion as KeyframesMotion,
+            durationMs: 220,
+            reduced,
+          });
+        }
+      }
+    };
+
+    return (
+      <div style={styles.demo}>
+        <div
+          ref={sample}
+          data-testid="motion-sample"
+          style={{ ...styles.sample, width: '260px', overflow: 'hidden', padding: '8px' }}
+        >
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+            {tabs.map((tab, idx) => (
+              <button
+                key={tab}
+                type="button"
+                style={{
+                  padding: '2px 6px',
+                  fontSize: '11px',
+                  fontWeight: tabIndex === idx ? 'bold' : 'normal',
+                  background: tabIndex === idx ? '#a9490a' : 'transparent',
+                  color: tabIndex === idx ? '#fff' : 'inherit',
+                  border: '1px solid #d4cebe',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => selectTab(idx)}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <div
+            ref={trackRef}
+            onPointerDown={(e) => {
+              dragRef.current = { startX: e.clientX, currentDx: 0, isDragging: true };
+              e.currentTarget.setPointerCapture(e.pointerId);
+            }}
+            onPointerMove={(e) => {
+              if (!dragRef.current.isDragging || !trackRef.current) return;
+              const dx = e.clientX - dragRef.current.startX;
+              dragRef.current.currentDx = dx;
+              if (!reduced) {
+                trackRef.current.style.transform = `translateX(calc(${-tabIndex * 100}% + ${dx}px))`;
+              }
+            }}
+            onPointerUp={() => {
+              if (!dragRef.current.isDragging) return;
+              dragRef.current.isDragging = false;
+              const dx = dragRef.current.currentDx;
+              let target = tabIndex;
+              if (dx < -30 && tabIndex < tabs.length - 1) target = tabIndex + 1;
+              else if (dx > 30 && tabIndex > 0) target = tabIndex - 1;
+              selectTab(target);
+            }}
+            onPointerCancel={() => {
+              if (!dragRef.current.isDragging) return;
+              dragRef.current.isDragging = false;
+              selectTab(tabIndex);
+            }}
+            style={{
+              display: 'flex',
+              width: '100%',
+              touchAction: 'pan-y',
+              cursor: 'grab',
+              userSelect: 'none',
+              transform: `translateX(-${tabIndex * 100}%)`,
+            }}
+          >
+            {tabs.map((tab) => (
+              <div
+                key={tab}
+                style={{
+                  flex: '0 0 100%',
+                  boxSizing: 'border-box',
+                  padding: '8px',
+                  background: 'rgba(0,0,0,0.03)',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  textAlign: 'center',
+                }}
+              >
+                {tab} (drag / flick)
+              </div>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const next = (tabIndex + 1) % tabs.length;
+            selectTab(next);
+          }}
+        >
+          Play
+        </button>
+        {reduced ? <span style={styles.hint}>reduced: no animation</span> : null}
+      </div>
+    );
+  }
+
   if (motion.kind === 'keyframes') {
     return (
       <div style={styles.demo}>

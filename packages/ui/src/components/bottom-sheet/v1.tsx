@@ -1,9 +1,10 @@
 import './v1.css';
 import React, { useId, useState } from 'react';
-import type { IconButtonProps, ModalProps } from '../../props.ts';
+import type { ButtonProps, IconButtonProps, ModalProps } from '../../props.ts';
 import { library } from '../../index.ts';
 import { useDialog } from '../use-dialog.ts';
 
+const Button = (props: ButtonProps) => <library.Slot component="fp.button" {...props} />;
 const IconButton = (props: IconButtonProps) => (
   <library.Slot component="fp.icon-button" {...props} />
 );
@@ -28,9 +29,9 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <>
       {previewTrigger && (
-        <button className="btn btn-secondary" onClick={() => setPreviewOpen(true)}>
+        <Button variant="secondary" onClick={() => setPreviewOpen(true)}>
           {previewTrigger}
-        </button>
+        </Button>
       )}
       <dialog
         data-fp-component="fp.bottom-sheet"

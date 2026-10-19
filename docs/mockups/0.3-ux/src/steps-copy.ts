@@ -29,7 +29,9 @@ export type StepsCopyKey =
   | 'addPredecessorAction'
   | 'choosePredecessorPlaceholder'
   | 'noAdditionalDependencies'
-  | 'closeToInspect';
+  | 'closeToInspect'
+  | 'temperature'
+  | 'instructionCoolFinal';
 
 const stepsCopy: Record<Locale, Record<StepsCopyKey, string>> = {
   fr: {
@@ -64,6 +66,8 @@ const stepsCopy: Record<Locale, Record<StepsCopyKey, string>> = {
     choosePredecessorPlaceholder: 'Choisir une étape…',
     noAdditionalDependencies: 'Aucune autre étape disponible sans créer de dépendance circulaire.',
     closeToInspect: 'Fermer et inspecter',
+    temperature: 'Température',
+    instructionCoolFinal: 'Laisser refroidir sur une grille après la cuisson.',
   },
   en: {
     plannedResult: 'Planned result',
@@ -96,6 +100,8 @@ const stepsCopy: Record<Locale, Record<StepsCopyKey, string>> = {
     choosePredecessorPlaceholder: 'Choose a step…',
     noAdditionalDependencies: 'No other step available without creating a circular dependency.',
     closeToInspect: 'Close to inspect',
+    temperature: 'Temperature',
+    instructionCoolFinal: 'Allow to cool on a wire rack after baking.',
   },
 };
 

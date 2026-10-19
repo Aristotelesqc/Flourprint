@@ -11,7 +11,7 @@ export default {
   avoidWhen: ['Time placement across parallel lanes: use fp.timeline.'],
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
-    'The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon is present.',
+    'The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon and number are present.',
     'Reorder controls (#123) need a keyboard path besides dragging.',
     'Touch target at least 48 px; painted controls remain compact without layout dead space (ADR 0021, #142).',
     'Proposed alternatives (compact, rail, outline) preserve identical semantic DOM, labeling, and reachable actions with natural wrapping at 360px / 130% zoom without truncation.',
@@ -30,7 +30,8 @@ export default {
   ],
   props: {
     icon: 'Optional pictogram for the operation.',
-    number: 'Position shown in the node.',
+    number:
+      'Optional position shown in the node; omitted for overlapping background steps such as preheat.',
     title: 'Step name.',
     details: 'Short detail texts (duration, temperature).',
     state: "'planned', 'running' or 'done'.",

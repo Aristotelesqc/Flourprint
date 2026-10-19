@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { curatedText } from './template-presentation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   resolveFormula,
   updateStep,
@@ -8,14 +8,18 @@ import {
   outcomeProblem,
   OUTCOME_RESULTS,
   DOUGH_DISPOSITIONS,
+  isCookingStep,
   type PreparationOutcome,
 } from '@flourprint/core/domain';
-import { PreparationTimer, StepRow, IngredientRow } from './components';
-import { Button, IconButton, Disclosure, Modal, NumberField, Menu } from './ui';
-import { type Prototype, instant, project } from './model';
-import { titleOf, instructionKey, stepDetails, modeLabel } from './ProcessView';
+import { PreparationTimer, StepRow, IngredientRow, ContextTiles } from './components';
+import { Button, IconButton, Disclosure, Modal, NumberField, Menu, Tabs, Surface } from './ui';
+import { type Prototype, instant, project, syncSessions } from './model';
+import { titleOf, instructionKey, stepDetails, modeLabel, operationIcon } from './ProcessView';
 import { groupsOf } from './RecipeView';
-import { t, duration, time, grams, num, type Locale } from './messages';
+import { t, duration, time, grams, num, vesselName, type Locale } from './messages';
+import { prepCopy, locationLabel } from './preparation-copy';
+import { formatTemperature, formatTemperatureForStep } from './device-preferences';
+import { stepCopy } from './steps-copy';
 
 export function PreparationView({
   store,
@@ -36,15 +40,41 @@ export function PreparationView({
   const [note, setNote] = useState('');
   const [minutes, setMinutes] = useState(15);
   const [invalid, setInvalid] = useState(false);
+  const [weighingOpenCount, setWeighingOpenCount] = useState(0);
+  const weighingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (weighingOpenCount > 0) {
+      weighingRef.current?.scrollIntoView({ block: 'start' });
+    }
+  }, [weighingOpenCount]);
+
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
   const session = store.state.session;
+
+  useEffect(() => {
+    setChosenOutcome(undefined);
+    setOutcomeDraft({ result: 'cooked' });
+    setOutcomeInvalid(false);
+    setOutcomeOpen(false);
+    setSheet(null);
+    setMoreOpen(false);
+    setNote('');
+    setMinutes(15);
+    setInvalid(false);
+    setWeighingOpenCount(0);
+  }, [session?.id]);
+
   if (!session) return <p>{t(locale, 'noSession')}</p>;
-  const current =
-    session.effective.steps.find((s) => s.id === session.activeId) ?? session.effective.steps[0];
-  const readyToFinish = session.effective.steps.every((step) => session.facts[step.id]?.endedAt);
+  const allSessions = syncSessions(store.state.sessions, store.state.session);
+  const sequentialSteps = session.effective.steps.filter((s) => s.operation !== 'preheat');
+  const preheatSteps = session.effective.steps.filter((s) => s.operation === 'preheat');
+  const current = sequentialSteps.find((s) => s.id === session.activeId) ?? sequentialSteps[0];
+  const readyToFinish =
+    sequentialSteps.length > 0 && sequentialSteps.every((step) => session.facts[step.id]?.endedAt);
   const outcome = chosenOutcome ?? intendedOutcome(session.effective);
   const resultLabel = (value: PreparationOutcome) =>
     t(
@@ -65,10 +95,21 @@ export function PreparationView({
       ? undefined
       : Math.max(0, current.plannedDurationS - elapsed);
   const projection = project(session.effective, session.startedAt, session.facts);
-  const upcoming = session.effective.steps.filter(
-    (s) => !session.facts[s.id]?.endedAt && s.id !== session.activeId,
+  const upcoming = sequentialSteps.filter(
+    (s) => !session.facts[s.id]?.endedAt && s.id !== current.id,
   );
-  const completed = session.effective.steps.filter((s) => session.facts[s.id]?.endedAt);
+  const completed = sequentialSteps.filter((s) => session.facts[s.id]?.endedAt);
+  const isCoolDirectlyAfterCooking =
+    current.operation === 'cool' &&
+    !current.label &&
+    (current.dependsOn.some((depId) => {
+      const s = session.effective.steps.find((step) => step.id === depId);
+      return s && isCookingStep(s);
+    }) ||
+      (() => {
+        const idx = session.effective.steps.findIndex((s) => s.id === current.id);
+        return idx > 0 && isCookingStep(session.effective.steps[idx - 1]);
+      })());
   const r = resolveFormula(session.snapshot.formula),
     n = resolveFormula({ ...session.snapshot.formula, anchor: { kind: 'flourTotal', grams: 100 } });
   const groups = r.ok && n.ok ? groupsOf(session.snapshot, r.value, n.value, locale) : [];
@@ -92,8 +133,15 @@ export function PreparationView({
         ...s.facts,
         [current.id]: { ...s.facts[current.id], endedAt: instant(Date.now()) },
       };
-      const next = s.effective.steps.find(
-        (step) => !facts[step.id]?.endedAt && step.dependsOn.every((id) => facts[id]?.endedAt),
+      const seqSteps = s.effective.steps.filter((step) => step.operation !== 'preheat');
+      const next = seqSteps.find(
+        (step) =>
+          !facts[step.id]?.endedAt &&
+          step.dependsOn
+            .filter(
+              (depId) => s.effective.steps.find((dep) => dep.id === depId)?.operation !== 'preheat',
+            )
+            .every((id) => facts[id]?.endedAt),
       );
       if (next) facts[next.id] = { startedAt: instant(Date.now()) };
       return {
@@ -111,8 +159,91 @@ export function PreparationView({
         ],
       };
     });
+  const contextTilesItems = [
+    ...(current.equipment?.mode
+      ? [{ id: 'mode', label: t(locale, 'mode'), value: modeLabel(locale, current.equipment.mode) }]
+      : []),
+    ...(current.equipment?.setpointC !== undefined
+      ? [
+          {
+            id: 'temperature',
+            label: t(locale, 'temperature'),
+            value: formatTemperature(
+              current.equipment.setpointC,
+              current.equipment.appliance === 'proofer' ? 'ambient' : 'oven',
+              locale,
+            ),
+          },
+        ]
+      : current.conditions?.temperatureC !== undefined
+        ? [
+            {
+              id: 'temperature',
+              label: t(locale, 'temperature'),
+              value: formatTemperatureForStep(current, current.conditions.temperatureC, locale),
+              detail: current.conditions.location
+                ? locationLabel(current.conditions.location, locale)
+                : undefined,
+            },
+          ]
+        : []),
+    ...(current.equipment?.steam
+      ? [
+          {
+            id: 'steam',
+            label: t(locale, 'steam'),
+            value: t(
+              locale,
+              current.equipment.steam.source === 'none'
+                ? 'steamNone'
+                : current.equipment.steam.source === 'manual'
+                  ? 'steamManual'
+                  : 'steamFunction',
+            ),
+          },
+        ]
+      : []),
+    ...(current.equipment?.vessel
+      ? [
+          {
+            id: 'vessel',
+            label: t(locale, 'vessel'),
+            value: vesselName(locale, current.equipment.vessel.item.id),
+          },
+        ]
+      : []),
+    ...(r.ok && r.value.doughWeight > 0
+      ? [
+          {
+            id: 'dough-mass',
+            label: prepCopy(locale, 'targetDoughMass'),
+            value: grams(locale, r.value.doughWeight),
+            actionLabel: prepCopy(locale, 'openWeighing'),
+            onAction: () => setWeighingOpenCount((c) => c + 1),
+          },
+        ]
+      : []),
+  ];
   return (
     <div className="stack">
+      {allSessions.length > 1 && (
+        <Tabs
+          variant="chips"
+          label={prepCopy(locale, 'selectPreparation')}
+          tabs={allSessions.map((s, index) => ({
+            id: s.id,
+            label: `${index + 1}. ${s.recipeName} · v${s.recipeVersion}${s.finished ? ` · ${prepCopy(locale, 'sessionFinished')}` : ''}`,
+          }))}
+          activeId={session.id}
+          onChange={(id) => store.selectSession?.(id)}
+        />
+      )}
+      <h2>
+        {session.recipeName}{' '}
+        <small className="muted">
+          · {t(locale, 'version')} {session.recipeVersion}
+        </small>
+      </h2>
       {session.finished ? (
         <h2>{t(locale, 'completeSession')}</h2>
       ) : readyToFinish ? (
@@ -121,7 +252,7 @@ export function PreparationView({
         <>
           <div key={current.id} className="current-step-hero stack" data-step={current.id}>
             <PreparationTimer
-              title={`${session.effective.steps.indexOf(current) + 1} / ${session.effective.steps.length} · ${titleOf(current, locale)}`}
+              title={`${sequentialSteps.indexOf(current) + 1} / ${sequentialSteps.length} · ${titleOf(current, locale)}`}
               remaining={duration(locale, remaining)}
               remainingLabel={t(locale, 'remainingTime')}
               start={time(locale, fact?.startedAt)}
@@ -132,53 +263,25 @@ export function PreparationView({
               progress={current.plannedDurationS ? elapsed / current.plannedDurationS : 0}
               instruction={
                 curatedText(locale, current.label, true) ??
+                (isCoolDirectlyAfterCooking
+                  ? stepCopy(locale, 'instructionCoolFinal')
+                  : undefined) ??
+                current.label ??
                 t(locale, instructionKey(current.operation))
               }
-              conditions={[
-                ...(current.equipment?.mode
-                  ? [{ label: t(locale, 'mode'), value: modeLabel(locale, current.equipment.mode) }]
-                  : []),
-                ...(current.equipment?.setpointC !== undefined
-                  ? [
-                      {
-                        label: t(locale, 'temperature'),
-                        value: `${num(locale, current.equipment.setpointC)} °C`,
-                      },
-                    ]
-                  : current.conditions?.temperatureC !== undefined
-                    ? [
-                        {
-                          label: t(locale, 'temperature'),
-                          value: `${num(locale, current.conditions.temperatureC)} °C`,
-                          sub: current.conditions.location,
-                        },
-                      ]
-                    : []),
-                ...(current.equipment?.steam
-                  ? [
-                      {
-                        label: t(locale, 'steam'),
-                        value: t(
-                          locale,
-                          current.equipment.steam.source === 'none'
-                            ? 'steamNone'
-                            : current.equipment.steam.source === 'manual'
-                              ? 'steamManual'
-                              : 'steamFunction',
-                        ),
-                      },
-                    ]
-                  : []),
-                ...(current.equipment?.vessel
-                  ? [{ label: t(locale, 'vessel'), value: current.equipment.vessel.item.id }]
-                  : []),
-              ]}
+              conditions={[]}
               labels={{
                 start: `${t(locale, 'started')}${locale === 'fr' ? ' :' : ':'}`,
                 end: `${t(locale, 'finish')}${locale === 'fr' ? ' :' : ':'}`,
                 progress: t(locale, 'progress'),
               }}
             />
+            {contextTilesItems.length > 0 && (
+              <ContextTiles
+                label={prepCopy(locale, 'contextualDetails')}
+                items={contextTilesItems}
+              />
+            )}
           </div>
           <div
             className={`actions quick-actions ${['bulk', 'proof', 'retard'].includes(current.operation) ? '' : 'quick-actions-three'}`}
@@ -207,6 +310,95 @@ export function PreparationView({
               </Button>
             )}
           </div>
+          {preheatSteps.map((preheat) => {
+            const preheatProj = projection.ok ? projection.value.steps[preheat.id] : undefined;
+            const preheatFact = session.facts[preheat.id];
+            const isStarted = Boolean(preheatFact?.startedAt);
+            const isReady = Boolean(preheatFact?.endedAt);
+            return (
+              <Surface
+                key={preheat.id}
+                variant="container"
+                componentId="preheat-branch"
+                className="stack"
+              >
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <strong>{titleOf(preheat, locale)}</strong>
+                  <span className="muted">
+                    {isReady
+                      ? prepCopy(locale, 'preheatReady')
+                      : isStarted
+                        ? prepCopy(locale, 'preheatHeating')
+                        : prepCopy(locale, 'preheatProjected')}
+                  </span>
+                </div>
+                <p className="muted" style={{ margin: 0 }}>
+                  {prepCopy(locale, 'preheatProjected')}: {time(locale, preheatProj?.start)} →{' '}
+                  {time(locale, preheatProj?.end)}
+                  {preheatFact?.startedAt &&
+                    ` · ${prepCopy(locale, 'heatingStartedAt')} ${time(locale, preheatFact.startedAt)}`}
+                  {preheatFact?.endedAt &&
+                    ` · ${prepCopy(locale, 'preheatObservedAt')} ${time(locale, preheatFact.endedAt)}`}
+                </p>
+                <div className="actions">
+                  {!isStarted && (
+                    <Button
+                      variant="quiet"
+                      onClick={() =>
+                        store.updateSession((s) => ({
+                          ...s,
+                          facts: {
+                            ...s.facts,
+                            [preheat.id]: {
+                              ...s.facts[preheat.id],
+                              startedAt: instant(Date.now()),
+                            },
+                          },
+                          journal: [
+                            {
+                              at: instant(Date.now()),
+                              text: `${prepCopy(locale, 'heatingStartedAt')} · ${titleOf(preheat, locale)}`,
+                            },
+                            ...s.journal,
+                          ],
+                        }))
+                      }
+                    >
+                      {prepCopy(locale, 'startHeating')}
+                    </Button>
+                  )}
+                  {isStarted && !isReady && (
+                    <Button
+                      variant="quiet"
+                      onClick={() =>
+                        store.updateSession((s) => ({
+                          ...s,
+                          facts: {
+                            ...s.facts,
+                            [preheat.id]: {
+                              ...s.facts[preheat.id],
+                              endedAt: instant(Date.now()),
+                            },
+                          },
+                          journal: [
+                            {
+                              at: instant(Date.now()),
+                              text: `${prepCopy(locale, 'preheatObservedAt')} · ${titleOf(preheat, locale)}`,
+                            },
+                            ...s.journal,
+                          ],
+                        }))
+                      }
+                    >
+                      {prepCopy(locale, 'markPreheatReady')}
+                    </Button>
+                  )}
+                </div>
+              </Surface>
+            );
+          })}
           {footerHost &&
             createPortal(
               <>
@@ -366,46 +558,50 @@ export function PreparationView({
           </>
         )}
       </Modal>
-      <Disclosure
-        title={t(locale, 'quantities')}
-        subtitle={`${session.recipeName} · ${t(locale, 'version')} ${session.recipeVersion}`}
-      >
-        <p className="muted">{t(locale, 'snapshotHelp')}</p>
-        <p className="muted">{t(locale, 'sessionScope')}</p>
-        {groups.map((group) => (
-          <Disclosure
-            key={group.id}
-            title={group.title}
-            badge={grams(locale, group.mass)}
-            defaultOpen
-          >
-            {group.rows.map((row) => (
-              <IngredientRow
-                key={row.key}
-                id={`prep:${row.key}`}
-                name={row.name}
-                gramsText={grams(locale, row.grams)}
-                pctText={`${num(locale, row.pct)} ${t(locale, 'bakerPct')}`}
-                checked={session.checks.includes(row.key)}
-                checkLabel={`${t(locale, 'weighed')} : ${row.name}`}
-                onToggle={() =>
-                  store.updateSession((s) => ({
-                    ...s,
-                    checks: s.checks.includes(row.key)
-                      ? s.checks.filter((id) => id !== row.key)
-                      : [...s.checks, row.key],
-                  }))
-                }
-              />
-            ))}
-          </Disclosure>
-        ))}
-      </Disclosure>
+      <div ref={weighingRef} key={`weighing-${weighingOpenCount}`}>
+        <Disclosure
+          title={t(locale, 'quantities')}
+          subtitle={`${session.recipeName} · ${t(locale, 'version')} ${session.recipeVersion}`}
+          defaultOpen={weighingOpenCount > 0 ? true : undefined}
+        >
+          <p className="muted">{t(locale, 'snapshotHelp')}</p>
+          <p className="muted">{t(locale, 'sessionScope')}</p>
+          {groups.map((group) => (
+            <Disclosure
+              key={group.id}
+              title={group.title}
+              badge={grams(locale, group.mass)}
+              defaultOpen
+            >
+              {group.rows.map((row) => (
+                <IngredientRow
+                  key={row.key}
+                  id={`prep:${row.key}`}
+                  name={row.name}
+                  gramsText={grams(locale, row.grams)}
+                  pctText={`${num(locale, row.pct)} ${t(locale, 'bakerPct')}`}
+                  checked={session.checks.includes(row.key)}
+                  checkLabel={`${t(locale, 'weighed')} : ${row.name}`}
+                  onToggle={() =>
+                    store.updateSession((s) => ({
+                      ...s,
+                      checks: s.checks.includes(row.key)
+                        ? s.checks.filter((id) => id !== row.key)
+                        : [...s.checks, row.key],
+                    }))
+                  }
+                />
+              ))}
+            </Disclosure>
+          ))}
+        </Disclosure>
+      </div>
       <Disclosure title={t(locale, 'upcoming')} defaultOpen>
         {upcoming.map((step) => (
           <StepRow
             key={step.id}
-            number={session.effective.steps.indexOf(step) + 1}
+            icon={operationIcon(step.operation)}
+            number={sequentialSteps.indexOf(step) + 1}
             title={titleOf(step, locale)}
             details={[
               time(locale, projection.ok ? projection.value.steps[step.id]?.start : undefined),
@@ -428,9 +624,13 @@ export function PreparationView({
           <StepRow
             key={step.id}
             state="done"
-            number={session.effective.steps.indexOf(step) + 1}
+            icon={operationIcon(step.operation)}
+            number={sequentialSteps.indexOf(step) + 1}
             title={titleOf(step, locale)}
-            details={[time(locale, session.facts[step.id]?.endedAt)]}
+            details={[
+              time(locale, session.facts[step.id]?.endedAt),
+              duration(locale, step.plannedDurationS),
+            ]}
           />
         ))}
       </Disclosure>

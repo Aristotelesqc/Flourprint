@@ -33,6 +33,11 @@
 [data-fp-component='fp.icon-button'][data-fp-version='v1'].icon-btn:active > span {
   transform: scale(0.95);
 }
+[data-fp-component='fp.icon-button'][data-fp-version='v1'].icon-btn:focus-visible
+  > .icon-button-shape {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 [data-fp-component='fp.icon-button'][data-fp-version='v1'].icon-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;

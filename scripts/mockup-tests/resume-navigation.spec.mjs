@@ -1,0 +1,154 @@
+import { createRequire } from 'node:module';
+import { setTimeout as gesturePause } from 'node:timers/promises';
+const require = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
+const { test, expect } = require('@playwright/test');
+const address = (extra = {}) =>
+  `/mockup.html?${new URLSearchParams({ screen: 'recipe', recipe: 'baguette', section: 'ingredients', nav: 'A', lang: 'en', theme: 'dark', width: '393', scale: '100', motion: 'standard', capture: '1', ...extra })}`;
+const sectionTab = (page, name) => page.getByRole('tab', { name, exact: true });
+async function gesture(
+  page,
+  context,
+  { fromX = 310, toX = 55, y, duration = 650, cancel = false, during },
+) {
+  const area = await page.locator('.section-carousel-container').boundingBox();
+  const yy = y ?? area.y + Math.min(area.height / 3, 130);
+  const session = await context.newCDPSession(page);
+  const touch = async (type, x) =>
+    session.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints:
+        type === 'touchEnd' || type === 'touchCancel' ? [] : [{ x: area.x + x, y: yy, id: 1 }],
+    });
+  await touch('touchStart', fromX);
+  for (let i = 1; i <= 6; i++) {
+    // Deliberate input timing distinguishes a slow drag from a flick; no application race wait.
+    await gesturePause(duration / 6);
+    await touch('touchMove', fromX + ((toX - fromX) * i) / 6);
+  }
+  if (during) await during();
+  await touch(cancel ? 'touchCancel' : 'touchEnd');
+  await session.detach();
+}
+test.describe('navigation A carousel acceptance', () => {
+  test.use({ hasTouch: true });
+  test('mounted panels stay aligned and exact draft input survives tab changes', async ({
+    page,
+  }) => {
+    await page.goto(address({ mode: 'edit' }));
+    const salt = page.getByTestId('ingredient-grams-salt');
+    await salt.fill('8.125');
+    await salt.press('Enter');
+    const editedValue = await salt.inputValue();
+    for (const name of ['Steps', 'Planning', 'History', 'Ingredients']) {
+      await sectionTab(page, name).click();
+      await expect(sectionTab(page, name)).toHaveAttribute('aria-selected', 'true');
+      await expect
+        .poll(() => page.locator('.section-carousel-container').evaluate((el) => el.scrollLeft))
+        .toBe(0);
+      await expect
+        .poll(() =>
+          page
+            .locator('.section-carousel-pane.is-active')
+            .evaluate((el) =>
+              Math.abs(
+                el.getBoundingClientRect().x -
+                  el.closest('.section-carousel-container').getBoundingClientRect().x,
+              ),
+            ),
+        )
+        .toBeLessThan(1);
+    }
+    await expect(salt).toHaveValue(editedValue);
+    await expect(page.getByTestId('save-recipe')).toBeVisible();
+    await expect(
+      page.locator('.section-carousel-pane[aria-hidden="true"]:not([inert])'),
+    ).toHaveCount(0);
+  });
+  test('slow drag beyond half follows the finger and changes section', async ({
+    page,
+    context,
+  }) => {
+    await page.goto(address());
+    await gesture(page, context, {
+      during: async () => {
+        const metrics = await page.locator('.section-carousel-track').evaluate((el) => ({
+          transform: getComputedStyle(el).transform,
+          animations: el.getAnimations().length,
+        }));
+        expect(metrics.transform).not.toBe('none');
+        expect(metrics.transform).not.toBe('matrix(1, 0, 0, 1, 0, 0)');
+        await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+      },
+    });
+    await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
+    await expect
+      .poll(() =>
+        page
+          .locator('.section-carousel-pane.is-active')
+          .evaluate((el) =>
+            Math.abs(
+              el.getBoundingClientRect().x -
+                el.closest('.section-carousel-container').getBoundingClientRect().x,
+            ),
+          ),
+      )
+      .toBeLessThan(1);
+  });
+  test('short slow drag springs back but short fast flick commits', async ({ page, context }) => {
+    await page.goto(address());
+    await gesture(page, context, { fromX: 290, toX: 160, duration: 900 });
+    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect
+      .poll(() =>
+        page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
+      )
+      .toBe(0);
+    await gesture(page, context, { fromX: 290, toX: 210, duration: 35 });
+    await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
+  });
+  test('pointer cancellation beyond half never commits a tab change', async ({ page, context }) => {
+    await page.goto(address());
+    await gesture(page, context, { cancel: true });
+    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect
+      .poll(() =>
+        page
+          .locator('.section-carousel-pane.is-active')
+          .evaluate((el) =>
+            Math.abs(
+              el.getBoundingClientRect().x -
+                el.closest('.section-carousel-container').getBoundingClientRect().x,
+            ),
+          ),
+      )
+      .toBeLessThan(1);
+  });
+  test('screen-edge gesture is excluded', async ({ page, context }) => {
+    await page.goto(address());
+    await gesture(page, context, { fromX: 8, toX: 280, duration: 100 });
+    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+  });
+  test('manual reduced motion uses instant change without finger-follow slide', async ({
+    page,
+    context,
+  }) => {
+    await page.goto(address({ motion: 'reduce' }));
+    const initial = await page
+      .locator('.section-carousel-track')
+      .evaluate((el) => getComputedStyle(el).transform);
+    await gesture(page, context, {
+      duration: 150,
+      during: async () => {
+        expect(
+          await page
+            .locator('.section-carousel-track')
+            .evaluate((el) => getComputedStyle(el).transform),
+        ).toBe(initial);
+      },
+    });
+    await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
+    expect(
+      await page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
+    ).toBe(0);
+  });
+});

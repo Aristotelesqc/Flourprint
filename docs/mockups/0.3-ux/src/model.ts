@@ -19,6 +19,7 @@ import {
 } from '@flourprint/core/domain';
 import { RECIPE_TEMPLATES, blankRecipe } from '@flourprint/core/application';
 import { t, type Locale } from './messages';
+import { formatFormulaError } from './defaults-copy';
 
 export const clone = <T>(value: T): T => structuredClone(value);
 export interface Content {
@@ -69,6 +70,7 @@ export interface DemoState {
   selected: string;
   draft: Draft | null;
   session: Session | null;
+  sessions?: Session[];
   sessionHistory: Session[];
   checks: Record<string, string[]>;
   error: string;
@@ -160,16 +162,18 @@ export function initialState(locale: Locale): DemoState {
     parameters.get('mode') === 'edit'
       ? { recipeId: selected.id, history: [clone(selected)], index: 0 }
       : null;
+  const initialSession = makeSession(
+    recipes[0],
+    locale,
+    parameters.get('prep') !== 'fresh',
+    parameters.get('prep') === 'cooking',
+  );
   return {
     recipes,
     selected: selected.id,
     draft,
-    session: makeSession(
-      recipes[0],
-      locale,
-      parameters.get('prep') !== 'fresh',
-      parameters.get('prep') === 'cooking',
-    ),
+    session: initialSession,
+    sessions: initialSession ? [initialSession] : [],
     checks: {},
     sessionHistory: [],
     error: '',
@@ -177,6 +181,49 @@ export function initialState(locale: Locale): DemoState {
     resetEpoch: 0,
   };
 }
+export function syncSessions(
+  sessions: Session[] | undefined,
+  currentSession: Session | null,
+): Session[] {
+  const map = new Map<string, Session>();
+  if (sessions) {
+    for (const s of sessions) {
+      map.set(s.id, s);
+    }
+  }
+  if (currentSession) {
+    map.set(currentSession.id, currentSession);
+  }
+  return Array.from(map.values());
+}
+
+/**
+ * Exact integration API for App's per-card running statuses (L82):
+ * Returns all currently active (non-finished) sessions from DemoState.
+ */
+export function getActiveSessions(state: DemoState): Session[] {
+  return syncSessions(state.sessions, state.session).filter((s) => !s.finished);
+}
+
+/**
+ * Returns the running session for a given recipe ID, if any.
+ */
+export function getRunningSession(state: DemoState, recipeId: string): Session | undefined {
+  return getActiveSessions(state).find((s) => s.recipeId === recipeId);
+}
+
+/**
+ * Residual UI arithmetic for an active session's step remaining seconds.
+ */
+export function getSessionRemainingSeconds(session: Session, clockNow: number): number | undefined {
+  const currentStep = session.effective.steps.find((s) => s.id === session.activeId);
+  const plannedDurationS = currentStep?.plannedDurationS;
+  if (plannedDurationS === undefined) return undefined;
+  const startedAt = session.facts[session.activeId]?.startedAt ?? session.startedAt;
+  const elapsed = (clockNow - Date.parse(startedAt)) / 1000 + session.elapsedOffsetS;
+  return Math.max(0, plannedDurationS - elapsed);
+}
+
 export function usePrototype(locale: Locale) {
   const [state, setState] = useState<DemoState>(() => initialState(locale));
   const content = currentContent(state);
@@ -218,7 +265,7 @@ export function usePrototype(locale: Locale) {
     if (!state.draft) return false;
     const result = applyFormulaEdit(content.formula, command);
     if (!result.ok) {
-      setState((s) => ({ ...s, error: t(locale, 'refused') }));
+      setState((s) => ({ ...s, error: formatFormulaError(locale, result.error) }));
       return false;
     }
     push({
@@ -293,7 +340,7 @@ export function usePrototype(locale: Locale) {
       water,
     });
     if (!locked.ok) {
-      setState((s) => ({ ...s, error: t(locale, 'refused') }));
+      setState((s) => ({ ...s, error: formatFormulaError(locale, locked.error) }));
       return false;
     }
     push({ ...content, formula: locked.value });
@@ -381,30 +428,61 @@ export function usePrototype(locale: Locale) {
         },
       };
     });
-  const start = () => {
+  const start = (targetRecipe?: Recipe): boolean => {
     if (state.draft) return false;
-    if (state.session && !state.session.finished) {
-      setState((s) => ({ ...s, error: t(locale, 'activeExists') }));
-      return false;
-    }
-    setState((s) => ({ ...s, session: makeSession(recipe, locale) }));
+    const next = makeSession(targetRecipe ?? recipe, locale);
+    setState((s) => {
+      const currentList = syncSessions(s.sessions, s.session);
+      return {
+        ...s,
+        session: next,
+        sessions: [...currentList.filter((item) => item.id !== next.id), next],
+        error: '',
+      };
+    });
     return true;
   };
+  const selectSession = (id: string) =>
+    setState((s) => {
+      const list = syncSessions(s.sessions, s.session);
+      const target = list.find((item) => item.id === id);
+      if (!target) return s;
+      return {
+        ...s,
+        session: target,
+        sessions: list,
+      };
+    });
   const updateSession = (fn: (session: Session) => Session) =>
-    setState((s) => (s.session ? { ...s, session: fn(s.session) } : s));
+    setState((s) => {
+      if (!s.session) return s;
+      const updated = fn(s.session);
+      const list = syncSessions(s.sessions, s.session);
+      return {
+        ...s,
+        session: updated,
+        sessions: list.map((item) => (item.id === updated.id ? updated : item)),
+      };
+    });
   const finishSession = (chosen?: PreparationOutcome) =>
     setState((s) => {
       if (!s.session || s.session.finished) return s;
       const outcome = chosen ?? intendedOutcome(s.session.effective);
       if (outcomeProblem(outcome)) return { ...s, error: t(locale, 'invalid') };
-      const session: Session = {
+      const finished: Session = {
         ...s.session,
         finished: true,
         endedAt: instant(Date.now()),
         outcome: clone(outcome),
         outcomeSource: chosen ? 'override' : 'recipe',
       };
-      return { ...s, session, sessionHistory: [...s.sessionHistory, clone(session)], error: '' };
+      const list = syncSessions(s.sessions, s.session);
+      const sessions = list.map((item) => (item.id === finished.id ? finished : item));
+      const alreadyInHistory = s.sessionHistory.some((item) => item.id === finished.id);
+      const sessionHistory = alreadyInHistory
+        ? s.sessionHistory.map((item) => (item.id === finished.id ? clone(finished) : item))
+        : [...s.sessionHistory, clone(finished)];
+      return { ...s, session: finished, sessions, sessionHistory, error: '' };
     });
   const log = (text: string) =>
     updateSession((s) => ({ ...s, journal: [{ at: instant(Date.now()), text }, ...s.journal] }));
@@ -430,9 +508,12 @@ export function usePrototype(locale: Locale) {
     create,
     weigh,
     start,
+    selectSession,
     updateSession,
     finishSession,
     log,
+    getActiveSessions: () => getActiveSessions(state),
+    getRunningSession: (recipeId: string) => getRunningSession(state, recipeId),
   };
 }
 export type Prototype = ReturnType<typeof usePrototype>;

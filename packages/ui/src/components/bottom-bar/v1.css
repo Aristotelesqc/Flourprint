@@ -20,9 +20,6 @@
   gap: var(--fp-space-1-5);
   flex-wrap: nowrap;
 }
-[data-fp-component='fp.bottom-bar'][data-fp-version='v1'].toolbar-A .phone-thumb-bar {
-  justify-content: space-between;
-}
 [data-fp-component='fp.bottom-bar'][data-fp-version='v1'].toolbar-B {
   padding: var(--fp-space-2) var(--fp-space-3);
   background: var(--color-surface-container);

@@ -26,9 +26,13 @@ export const Menu: React.FC<MenuProps> = ({
   return (
     <>
       {previewTrigger && (
-        <button className="btn btn-secondary" onClick={() => setPreviewOpen(true)}>
+        <library.Slot
+          component="fp.button"
+          variant="secondary"
+          onClick={() => setPreviewOpen(true)}
+        >
           {previewTrigger}
-        </button>
+        </library.Slot>
       )}
       <dialog
         data-fp-component="fp.floating-menu"

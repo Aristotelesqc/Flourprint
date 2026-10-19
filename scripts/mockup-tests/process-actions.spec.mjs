@@ -52,7 +52,7 @@ test.describe('core-backed process actions', () => {
     ]) {
       test(`chain preview and confirmation ${theme} ${width}/${scale}`, async ({ page }) => {
         await page.setViewportSize({ width, height: 852 });
-        await open(page, `&theme=${theme}&width=${width}&scale=${scale}&nav=B`);
+        await open(page, `&theme=${theme}&width=${width}&scale=${scale}&nav=A`);
         const original = await titles(page).allTextContents();
         await capture(page, `process-before-${theme}-${width}-${scale}`);
         await page.getByTestId('drag-handle-divide').filter({ visible: true }).press('ArrowUp');
@@ -126,9 +126,9 @@ test.describe('core-backed process actions', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByRole('status')).toHaveText('Seul l’ordre d’affichage change.');
     await expect(step(page, 'Préchauffage').locator('.step-details')).toHaveText(timing);
-    await expect(titles(page).nth(6)).toHaveText('7. Préchauffage');
+    await expect(titles(page).nth(6)).toHaveText('Préchauffage');
     await historyAction(page, 'Annuler la modification');
-    await expect(titles(page).nth(7)).toHaveText('8. Préchauffage');
+    await expect(titles(page).nth(7)).toHaveText('Préchauffage');
   });
 
   test('manual duplicate is reviewed and cancelled atomically', async ({ page }) => {

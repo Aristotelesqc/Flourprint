@@ -105,9 +105,11 @@
   background-color: var(--color-surface);
 }
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-body button.menu-destructive,
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-body button.danger,
 [data-fp-component='fp.floating-menu'][data-fp-version='v1']
   .menu-actions
   > button.menu-destructive,
+[data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-actions > button.danger,
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-item.danger {
   color: var(--color-danger);
   border-top: 1px solid var(--color-outline-subtle);

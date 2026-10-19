@@ -1,3 +1,4 @@
+import { openGlobalDestination, recipeCard } from './screen-actions.mjs';
 import { editRecipe, editProcessStep, stepMenu } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 
@@ -257,10 +258,10 @@ test('step editor cancels local changes and applies manual conditions, dependenc
 test('settings change actual theme and clear weighing checks without discarding recipe quantities', async ({
   page,
 }) => {
-  await page.goto(recipe.replace('nav=A', 'nav=B'));
+  await page.goto(recipe);
   const salt = page.getByTestId('ingredient-row-final:salt').getByRole('checkbox');
   await salt.check();
-  await page.getByRole('button', { name: 'Réglages', exact: true }).click();
+  await openGlobalDestination(page, 'Réglages');
   for (const [label, value] of [
     ['Clair', 'light'],
     ['Sombre chaud', 'dark'],
@@ -273,13 +274,13 @@ test('settings change actual theme and clear weighing checks without discarding 
     page.getByRole('checkbox', { name: 'Conserver pendant la visite', exact: true }),
   ).toBeChecked();
   await page.getByRole('button', { name: 'Effacer les coches', exact: true }).click();
-  await page.getByRole('button', { name: 'Recettes', exact: true }).click();
+  await openGlobalDestination(page, 'Recettes');
   await page.getByRole('button', { name: 'Shokupan', exact: true }).click();
   await expect(salt).not.toBeChecked();
   await salt.check();
-  await page.getByRole('button', { name: 'Réglages', exact: true }).click();
+  await openGlobalDestination(page, 'Réglages');
   await page.getByRole('checkbox', { name: 'Conserver pendant la visite', exact: true }).uncheck();
-  await page.getByRole('button', { name: 'Recettes', exact: true }).click();
+  await openGlobalDestination(page, 'Recettes');
   await page.getByRole('button', { name: 'Shokupan', exact: true }).click();
   await expect(salt).not.toBeChecked();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'amoled');
@@ -289,10 +290,10 @@ test('settings change actual theme and clear weighing checks without discarding 
 test('template details expose the actual sourced basis without creating a recipe', async ({
   page,
 }) => {
-  await page.goto('/mockup.html?screen=library&lang=fr&nav=B&capture=1&motion=reduce');
+  await page.goto('/mockup.html?screen=library&lang=fr&nav=A&capture=1&motion=reduce');
   await page.getByRole('button', { name: 'Nouvelle recette', exact: true }).click();
   const sheet = page.getByRole('dialog');
-  const wrapper = sheet.getByRole('button', { name: 'Shokupan', exact: true }).locator('..');
+  const wrapper = recipeCard(sheet, 'Shokupan').locator('..');
   await expect(wrapper.locator('.recipe-card-description')).toContainText(
     'Un pain au lait japonais',
   );
@@ -302,8 +303,8 @@ test('template details expose the actual sourced basis without creating a recipe
   await expect(details.locator('p').first()).toContainText(
     'King Arthur Baking / Charlotte Rutledge',
   );
-  await expect(details.locator('p').first()).toContainText('314 g bread flour');
-  await expect(details.locator('p').first()).toContainText('9x5-inch');
+  await expect(details.locator('p').first()).toContainText('314 g de farine de force');
+  await expect(details.locator('p').first()).toContainText('23 × 13 cm');
   await expect(page.getByTestId('recipe-name')).toHaveCount(0);
   await details.locator('summary').click();
   await expect(details).not.toHaveAttribute('open', '');
@@ -312,7 +313,7 @@ test('template details expose the actual sourced basis without creating a recipe
 test('Preparation duration is applied and Photo adds a clearly simulated journal marker', async ({
   page,
 }) => {
-  await page.goto('/mockup.html?screen=preparation&lang=fr&nav=B&capture=1&motion=reduce');
+  await page.goto('/mockup.html?screen=preparation&lang=fr&nav=A&capture=1&motion=reduce');
   await page.getByRole('button', { name: 'Durée', exact: true }).click();
   let sheet = page.getByRole('dialog');
   await number(sheet, 'Durée', '90');

@@ -22,6 +22,7 @@
 }
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-info {
   min-width: 0;
+  flex: 1;
   grid-column: 2;
   grid-row: 1;
 }

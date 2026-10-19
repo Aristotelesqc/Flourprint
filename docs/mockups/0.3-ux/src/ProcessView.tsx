@@ -47,13 +47,22 @@ import {
   num,
   operationName,
   time,
-  componentName,
+  colon,
   type Locale,
   type MessageKey,
 } from './messages';
+import { componentDisplayName } from './RecipeView';
 import { stepCopy } from './steps-copy';
 import { DragHandle, useStepDrag } from './StepDrag';
 import { DependencyEditor } from './DependencyEditor';
+import {
+  formatTemperatureForStep,
+  getTemperatureUnit,
+  celsiusTo,
+  parseTemperature,
+  useDevicePreferences,
+  temperatureContext,
+} from './device-preferences';
 import './step-drag.css';
 
 export const operationIcon = (operation: string): import('./ui').IconName =>
@@ -123,9 +132,25 @@ export function StepEditor({
   blocked?: boolean;
   review?: (candidate: ProcessStep) => ReactNode;
 }) {
+  useDevicePreferences();
   const [draft, setDraft] = useState(() => clone(step));
   const [invalid, setInvalid] = useState<Record<string, boolean>>({});
   const [error, setError] = useState(false);
+
+  const condContext = temperatureContext(draft);
+  const condUnit = getTemperatureUnit(condContext);
+  const condDisplay =
+    draft.conditions?.temperatureC !== undefined
+      ? celsiusTo(draft.conditions.temperatureC, condUnit)
+      : NaN;
+
+  const equipContext = draft.equipment?.appliance === 'proofer' ? 'ambient' : 'oven';
+  const equipUnit = getTemperatureUnit(equipContext);
+  const equipDisplay =
+    draft.equipment?.setpointC !== undefined
+      ? celsiusTo(draft.equipment.setpointC, equipUnit)
+      : NaN;
+
   const field = (
     id: string,
     value: number,
@@ -217,11 +242,13 @@ export function StepEditor({
           )}
         {field(
           'ambient-temperature',
-          draft.conditions?.temperatureC ?? NaN,
+          condDisplay,
           t(locale, 'temperature'),
-          '°C',
-          (value) =>
-            setDraft({ ...draft, conditions: { ...draft.conditions, temperatureC: value } }),
+          `°${condUnit}`,
+          (value) => {
+            const c = parseTemperature(value, condContext);
+            setDraft({ ...draft, conditions: { ...draft.conditions, temperatureC: c } });
+          },
         )}
         <label className="field-label">
           {t(locale, 'location')}
@@ -263,7 +290,8 @@ export function StepEditor({
           </label>
           {draft.dependsOn.length > 0 && (
             <p className="muted" style={{ margin: 0 }}>
-              {t(locale, 'dependencies')} :{' '}
+              {t(locale, 'dependencies')}
+              {colon(locale)}
               {draft.dependsOn
                 .map((id) => {
                   const s = process.steps.find((st) => st.id === id);
@@ -328,9 +356,10 @@ export function StepEditor({
               ))}
             </select>
           </label>
-          {field('setpoint', draft.equipment?.setpointC ?? NaN, t(locale, 'setpoint'), '°C', (v) =>
-            setDraft({ ...draft, equipment: { ...draft.equipment, setpointC: v } }),
-          )}
+          {field('setpoint', equipDisplay, t(locale, 'setpoint'), `°${equipUnit}`, (v) => {
+            const c = parseTemperature(v, equipContext);
+            setDraft({ ...draft, equipment: { ...draft.equipment, setpointC: c } });
+          })}
         </Disclosure>
         {error && (
           <p role="alert" className="warning">
@@ -346,10 +375,14 @@ export const modeLabel = (locale: Locale, mode: string) =>
   catalogText(locale, `mode.${mode}.name`) ?? catalogText(locale, `equipment.mode.${mode}`) ?? mode;
 
 export function stepDetails(step: ProcessStep, locale: Locale): string[] {
+  const tempLabel = stepCopy(locale, 'temperature');
+  const colonSep = colon(locale);
   return [
     duration(locale, step.plannedDurationS),
     ...(step.conditions?.temperatureC !== undefined
-      ? [`${t(locale, 'temperature')} : ${num(locale, step.conditions.temperatureC)} °C`]
+      ? [
+          `${tempLabel}${colonSep}${formatTemperatureForStep(step, step.conditions.temperatureC, locale)}`,
+        ]
       : []),
     ...(step.equipment?.mode ? [modeLabel(locale, step.equipment.mode)] : []),
     ...(step.equipment?.steam
@@ -448,7 +481,8 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
             .map((i) => (
               <p key={i.id}>
                 {t(locale, 'currentDose')} ·{' '}
-                {catalogText(locale, `fermentation.form.${i.yeast?.form}`) ?? i.yeast?.form} :{' '}
+                {catalogText(locale, `fermentation.form.${i.yeast?.form}`) ?? i.yeast?.form}
+                {colon(locale)}
                 {num(locale, i.bakerPct, 3)} {t(locale, 'bakerPct')}
               </p>
             ))}
@@ -456,12 +490,14 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
           {candidate && candidate[1].status === 'ok' && (
             <Surface>
               <strong>
-                {t(locale, 'candidate')} : {num(locale, candidate[1].value, 3)}{' '}
-                {t(locale, 'bakerPct')}
+                {t(locale, 'candidate')}
+                {colon(locale)}
+                {num(locale, candidate[1].value, 3)} {t(locale, 'bakerPct')}
               </strong>
               {scenario === 'recipe' && (
                 <p>
-                  {t(locale, 'currentRecipe')} :{' '}
+                  {t(locale, 'currentRecipe')}
+                  {colon(locale)}
                   {num(
                     locale,
                     store.content.formula.ingredients.find((i) => i.id === candidate[0])
@@ -549,6 +585,7 @@ export function ProcessView({
   locale: Locale;
   planning?: boolean;
 }) {
+  useDevicePreferences();
   const [view, setView] = useState(
     new URLSearchParams(typeof location !== 'undefined' ? location.search : '').get('view') ===
       'timeline'
@@ -592,6 +629,7 @@ export function ProcessView({
   } | null>(null);
 
   const [refusal, setRefusal] = useState<{ stepId: string; error: DomainError } | null>(null);
+  const { process } = store.content;
   const rootRef = useRef<HTMLDivElement>(null);
   const focusTargetRef = useRef<{ id: string; type: 'menu' | 'drag' } | null>(null);
   useEffect(() => {
@@ -606,11 +644,10 @@ export function ProcessView({
           : `[data-step-id="${id}"] .fp-drag-handle`;
       rootRef.current?.querySelector<HTMLElement>(sel)?.focus();
     }
-  }, [removing, refusal]);
+  }, [removing, refusal, proposal, process]);
   const [announcement, setAnnouncement] = useState('');
   const [at, setAt] = useState('2026-10-16T08:00');
 
-  const { process } = store.content;
   const [planDirection, setPlanDirection] = useState<'startAt' | 'readyBy'>('startAt');
   const [targetStep, setTargetStep] = useState(process.steps.at(-1)?.id ?? '');
   const effectiveTarget = process.steps.some((step) => step.id === targetStep)
@@ -664,6 +701,7 @@ export function ProcessView({
       setAnnouncement(stepCopy(locale, 'refusalNextSteps'));
     } else if (result.value.kind === 'orderOnly') {
       if (store.applyProcess(result.value.process)) {
+        focusTargetRef.current = { id: step.id, type: 'drag' };
         setAnnouncement(t(locale, 'changeOrderOnly'));
       }
     } else if (result.value.kind === 'chain') {
@@ -688,27 +726,34 @@ export function ProcessView({
   };
 
   // Drag and drop implementation via useStepDrag (L96)
-  const { dragState, handlePointerDown, handlePointerMove, handlePointerUp, handlePointerCancel } =
-    useStepDrag({
-      process,
-      locale,
-      onMove: (stepId: StepId, after: StepId | null) => {
-        const result = moveStep(process, stepId, after);
-        if (!result.ok) {
-          setRefusal({ stepId, error: result.error });
-          setAnnouncement(stepCopy(locale, 'refusalNextSteps'));
-        } else if (result.value.kind === 'unchanged') {
-          // No mutation on unchanged move
-        } else if (result.value.kind === 'orderOnly') {
-          if (store.applyProcess(result.value.process)) {
-            setAnnouncement(t(locale, 'changeOrderOnly'));
-          }
-        } else if (result.value.kind === 'chain') {
-          setProposal({ source: process, result: result.value, stepId });
+  const {
+    dragState,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handlePointerCancel,
+    handleLostPointerCapture,
+  } = useStepDrag({
+    process,
+    locale,
+    onMove: (stepId: StepId, after: StepId | null) => {
+      const result = moveStep(process, stepId, after);
+      if (!result.ok) {
+        setRefusal({ stepId, error: result.error });
+        setAnnouncement(stepCopy(locale, 'refusalNextSteps'));
+      } else if (result.value.kind === 'unchanged') {
+        // No mutation on unchanged move
+      } else if (result.value.kind === 'orderOnly') {
+        if (store.applyProcess(result.value.process)) {
+          focusTargetRef.current = { id: stepId, type: 'drag' };
+          setAnnouncement(t(locale, 'changeOrderOnly'));
         }
-      },
-      onAnnounce: (msg: string) => setAnnouncement(msg),
-    });
+      } else if (result.value.kind === 'chain') {
+        setProposal({ source: process, result: result.value, stepId });
+      }
+    },
+    onAnnounce: (msg: string) => setAnnouncement(msg),
+  });
 
   const previewOf = (candidate: Process) => {
     const result = project(
@@ -727,7 +772,7 @@ export function ProcessView({
     const groups = [
       { label: t(locale, 'totalDuration'), select: () => true },
       ...components.map((component) => ({
-        label: componentName(locale, component.id, store.content.names),
+        label: componentDisplayName(locale, store.content.formula, component, store.content.names),
         select: (step: ProcessStep) => getStepComponentId(step) === component.id,
       })),
       {
@@ -742,25 +787,48 @@ export function ProcessView({
     }));
   };
 
+  const stepNumbers = (() => {
+    const map = new Map<string, number>();
+    let count = 0;
+    for (const s of process.steps) {
+      if (s.operation !== 'preheat') {
+        count += 1;
+        map.set(s.id, count);
+      }
+    }
+    return map;
+  })();
+
   const renderStep = (step: ProcessStep, index: number) => {
     const timing = projection.ok ? projection.value.steps[step.id] : undefined;
     const previous = process.steps[index - 1]?.id;
     const isDragging = dragState.activeStepId === step.id;
+    const isPreheat = step.operation === 'preheat';
+    const displayNumber = isPreheat ? undefined : stepNumbers.get(step.id);
     const showPlaceholderAbove =
       dragState.isDragging &&
       dragState.targetAfterId !== undefined &&
       ((index === 0 && dragState.targetAfterId === null) ||
         (index > 0 && dragState.targetAfterId === process.steps[index - 1]?.id));
 
+    const dragStyle =
+      isDragging && dragState.offsetY !== 0
+        ? ({
+            transform: `translateY(${dragState.offsetY}px)`,
+            zIndex: 50,
+          } as const)
+        : undefined;
+
     return (
       <div
         key={step.id}
         data-step-id={step.id}
-        className={`fp-step-draggable ${isDragging ? 'is-dragging' : ''}`}
+        style={dragStyle}
+        className={`fp-step-draggable ${isDragging ? 'is-dragging' : ''} ${isPreheat ? 'fp-step-branch-preheat' : ''}`}
       >
         {showPlaceholderAbove && <div className="fp-drag-placeholder" aria-hidden="true" />}
         <StepRow
-          number={index + 1}
+          number={displayNumber}
           icon={operationIcon(step.operation)}
           title={titleOf(step, locale)}
           details={[
@@ -785,7 +853,7 @@ export function ProcessView({
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerCancel}
-                  onLostPointerCapture={handlePointerCancel}
+                  onLostPointerCapture={handleLostPointerCapture}
                   onKeyboardMove={(idx, delta) => propose(idx, delta)}
                 />
                 <div style={{ position: 'relative' }}>
@@ -977,7 +1045,12 @@ export function ProcessView({
               lanes={[
                 ...store.content.formula.components.map((c) => ({
                   id: c.id,
-                  label: componentName(locale, c.id, store.content.names),
+                  label: componentDisplayName(
+                    locale,
+                    store.content.formula,
+                    c,
+                    store.content.names,
+                  ),
                   steps: process.steps.filter((s) => getStepComponentId(s) === c.id),
                 })),
                 {
@@ -1019,7 +1092,7 @@ export function ProcessView({
           {store.content.formula.components.map((component) => (
             <Disclosure
               key={component.id}
-              title={`${store.content.formula.components.indexOf(component) + 1}. ${componentName(locale, component.id, store.content.names)}`}
+              title={`${store.content.formula.components.indexOf(component) + 1}. ${componentDisplayName(locale, store.content.formula, component, store.content.names)}`}
               subtitle={windowLabel(
                 process.steps.filter((s) => getStepComponentId(s) === component.id),
               )}
@@ -1205,7 +1278,12 @@ export function ProcessView({
 
       <Modal
         open={Boolean(proposal)}
-        onClose={() => setProposal(null)}
+        onClose={() => {
+          if (proposal) {
+            focusTargetRef.current = { id: proposal.stepId, type: 'drag' };
+          }
+          setProposal(null);
+        }}
         title={t(locale, 'preview')}
         closeLabel={t(locale, 'close')}
         footer={
@@ -1217,6 +1295,7 @@ export function ProcessView({
                 process === proposal.source &&
                 store.applyProcess(proposal.result.process)
               ) {
+                focusTargetRef.current = { id: proposal.stepId, type: 'drag' };
                 setAnnouncement(t(locale, 'changeApplied'));
                 setProposal(null);
               }

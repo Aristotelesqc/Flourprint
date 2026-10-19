@@ -16,6 +16,7 @@ import press from './press/v1.ts';
 import pressIcon from './press-icon/v1.ts';
 import sheetEnter from './sheet-enter/v1.ts';
 import sheetExit from './sheet-exit/v1.ts';
+import tabCarousel from './tab-carousel/v1.ts';
 
 export const defaultMotionManifest = motionLibrary.manifest({
   'fp.motion.backdrop-enter': backdropEnter,
@@ -30,4 +31,5 @@ export const defaultMotionManifest = motionLibrary.manifest({
   'fp.motion.press-icon': pressIcon,
   'fp.motion.sheet-enter': sheetEnter,
   'fp.motion.sheet-exit': sheetExit,
+  'fp.motion.tab-carousel': tabCarousel,
 });

@@ -3,15 +3,30 @@ import {
   sum,
   hydrationForRatio,
   liquidMassRatio,
+  liquidRatioPct,
+  componentStyle,
+  newComponent,
   type Formula,
   type ResolvedFormula,
   type Ingredient,
+  type Component,
+  INGREDIENT_PRESETS,
 } from '@flourprint/core/domain';
-import { INGREDIENT_PRESETS } from '@flourprint/core/domain';
 import { Button, IconButton, NumberField, Surface, Disclosure, Modal, CompactDialog } from './ui';
 import { IngredientRow, RecipeSummary } from './components';
-import { grams, num, t, ingredientName, componentName, type Locale } from './messages';
+import {
+  grams,
+  num,
+  percent,
+  colon,
+  t,
+  ingredientName,
+  componentName,
+  type Locale,
+} from './messages';
 import { recipeCopy } from './recipe-copy';
+import { defaultsCopy, extractFormulaErrorReason, formatEngineReason } from './defaults-copy';
+import { loadComponentDefaults } from './component-defaults';
 import { type Prototype, type Content } from './model';
 
 export interface WeighRow {
@@ -22,6 +37,17 @@ export interface WeighRow {
   name: string;
   note?: string;
 }
+
+export function componentDisplayName(
+  locale: Locale,
+  formula: Formula,
+  component: Component,
+  names: Record<string, string> = {},
+): string {
+  const style = componentStyle(formula, component);
+  return componentName(locale, component.id, names, style);
+}
+
 export function groupsOf(
   content: Content,
   resolved: ResolvedFormula,
@@ -66,7 +92,7 @@ export function groupsOf(
           pct: n.allocations[id],
           name: ingredientName(locale, id, content.names),
         });
-    const compTitle = componentName(locale, component.id, content.names);
+    const compTitle = componentDisplayName(locale, content.formula, component, content.names);
     groups.push({
       id: component.id,
       title: compTitle,
@@ -157,7 +183,7 @@ export function Summary({
     },
     {
       label: t(locale, 'hydration'),
-      value: `${partial ? '≥ ' : ''}${num(locale, resolved.totalWaterPct, 0)} %`,
+      value: `${partial ? '≥ ' : ''}${percent(locale, resolved.totalWaterPct, 0)}`,
       icon: 'water' as const,
       detail: `${grams(locale, resolved.totalWater.value)} ${t(locale, 'water').toLocaleLowerCase()} ${partial ? `(${t(locale, 'known').toLocaleLowerCase()})` : ''}`,
     },
@@ -166,7 +192,7 @@ export function Summary({
       value:
         resolved.totalFatPct === undefined
           ? t(locale, 'unknown')
-          : `${resolved.totalFat?.completeness === 'incomplete' ? '≥ ' : ''}${num(locale, resolved.totalFatPct, 0)} %`,
+          : `${resolved.totalFat?.completeness === 'incomplete' ? '≥ ' : ''}${percent(locale, resolved.totalFatPct, 0)}`,
       icon: 'fat' as const,
       detail:
         resolved.totalFat?.completeness === 'incomplete'
@@ -180,7 +206,7 @@ export function Summary({
       value:
         resolved.totalSugarPct === undefined
           ? t(locale, 'unknown')
-          : `${resolved.totalSugar?.completeness === 'incomplete' ? '≥ ' : ''}${num(locale, resolved.totalSugarPct, 0)} %`,
+          : `${resolved.totalSugar?.completeness === 'incomplete' ? '≥ ' : ''}${percent(locale, resolved.totalSugarPct, 0)}`,
       icon: 'sugar' as const,
       detail:
         resolved.totalSugar?.completeness === 'incomplete'
@@ -233,7 +259,7 @@ export function WaterDetails({
           <span>{t(locale, 'hydration')}</span>
           <strong>
             {resolved.totalWater.completeness === 'incomplete' ? '≥ ' : ''}
-            {num(locale, resolved.totalWaterPct, 0)} %
+            {percent(locale, resolved.totalWaterPct, 0)}
           </strong>
           <small>
             {t(
@@ -276,7 +302,8 @@ export function WaterDetails({
       </Surface>
       {resolved.totalWater.unknownContributors.length > 0 && (
         <p className="warning">
-          {t(locale, 'unknownFor')} :{' '}
+          {t(locale, 'unknownFor')}
+          {colon(locale)}
           {resolved.totalWater.unknownContributors
             .map((id) => ingredientName(locale, id, content.names))
             .join(', ')}
@@ -302,6 +329,7 @@ export function RecipeIngredients({
   const [addPreset, setAddPreset] = useState('water');
   const [blendOpen, setBlendOpen] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [componentError, setComponentError] = useState<string | null>(null);
   if (!resolved.ok || !normalized.ok)
     return (
       <p role="alert" className="warning">
@@ -351,46 +379,110 @@ export function RecipeIngredients({
   );
   const isLocked = Boolean(formula.waterTarget);
   const canLockHydration = isLocked || Boolean(pureWaterAbsorber);
-  const componentControls = (component: Formula['components'][number]) => (
-    <div className="component-controls stack">
-      {field(
-        `component-share-${component.id}`,
-        component.flourPct,
-        t(locale, 'flourShare'),
-        '%',
-        (value) =>
-          store.apply({
-            type: 'UpdateComponent',
-            component: component.id,
-            changes: { flourPct: value },
-          }),
-      )}
-      {field(
-        `component-ratio-${component.id}`,
-        liquidMassRatio(component) ?? 1,
-        t(locale, 'ratio'),
-        '1:',
-        (value) => {
-          const ratio = hydrationForRatio(component, value);
-          return ratio.ok
-            ? store.apply({
-                type: 'UpdateComponent',
-                component: component.id,
-                changes: { hydrationPct: ratio.value },
-              })
-            : false;
-        },
-      )}
-      <p className="muted">{t(locale, 'ratioHelp')}</p>
-      <div className="component-secondary-actions">
-        <IconButton
-          icon="trash"
-          label={`${recipeCopy(locale, 'removeAction')} · ${componentName(locale, component.id, content.names)}`}
-          onClick={() => setConfirm(`component:${component.id}`)}
-        />
+  const componentControls = (component: Formula['components'][number]) => {
+    const hasAllocations = Boolean(component.allocations && component.allocations.length > 0);
+    const reading = liquidRatioPct(formula, component);
+    const isEstimated = component.allocations?.some((a) => {
+      const ing = formula.ingredients.find((i) => i.id === a.ingredient);
+      return ing?.water?.status === 'estimated';
+    });
+    const baseHint = defaultsCopy(locale, 'adjustRatioHint');
+    const hintText = isEstimated ? `${t(locale, 'estimated')} · ${baseHint}` : baseHint;
+
+    return (
+      <div className="component-controls stack">
+        {field(
+          `component-share-${component.id}`,
+          component.flourPct,
+          t(locale, 'flourShare'),
+          '%',
+          (value) =>
+            store.apply({
+              type: 'UpdateComponent',
+              component: component.id,
+              changes: { flourPct: value },
+            }),
+        )}
+        <div
+          className="detail-row"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+            gap: '0.75rem',
+            alignItems: 'start',
+          }}
+        >
+          {field(
+            `component-ratio-${component.id}`,
+            liquidMassRatio(component) ?? 1,
+            t(locale, 'ratio'),
+            '1:',
+            (value) => {
+              const ratio = hydrationForRatio(component, value);
+              return ratio.ok
+                ? store.apply({
+                    type: 'UpdateComponent',
+                    component: component.id,
+                    changes: { hydrationPct: ratio.value },
+                  })
+                : false;
+            },
+          )}
+          {hasAllocations ? (
+            reading !== undefined ? (
+              field(
+                `component-hydration-${component.id}`,
+                reading,
+                t(locale, 'hydration'),
+                '%',
+                () => false,
+                true,
+                false,
+                hintText,
+              )
+            ) : (
+              <div className="field">
+                <label className="field-label">
+                  <span>{t(locale, 'hydration')}</span>
+                </label>
+                <div className="field-input-wrap">
+                  <input
+                    type="text"
+                    disabled
+                    value={t(locale, 'unknown')}
+                    data-testid={`component-hydration-${component.id}`}
+                    className="field-input tabular"
+                  />
+                </div>
+                <p className="field-hint">{hintText}</p>
+              </div>
+            )
+          ) : (
+            field(
+              `component-hydration-${component.id}`,
+              component.hydrationPct,
+              t(locale, 'hydration'),
+              '%',
+              (value) =>
+                store.apply({
+                  type: 'UpdateComponent',
+                  component: component.id,
+                  changes: { hydrationPct: value },
+                }),
+            )
+          )}
+        </div>
+        <p className="muted">{t(locale, 'ratioHelp')}</p>
+        <div className="component-secondary-actions">
+          <IconButton
+            icon="trash"
+            label={`${recipeCopy(locale, 'removeAction')} · ${componentDisplayName(locale, formula, component, content.names)}`}
+            onClick={() => setConfirm(`component:${component.id}`)}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
   return (
     <div className="stack">
       <Summary
@@ -458,7 +550,9 @@ export function RecipeIngredients({
           {group.id === 'final' &&
             content.formula.components.map((c) => (
               <p className="incorporation" key={c.id}>
-                {t(locale, 'incorporate')} : {componentName(locale, c.id, content.names)} ·{' '}
+                {t(locale, 'incorporate')}
+                {colon(locale)}
+                {componentDisplayName(locale, content.formula, c, content.names)} ·{' '}
                 {grams(locale, r.components[c.id].mass)}
               </p>
             ))}
@@ -468,11 +562,11 @@ export function RecipeIngredients({
               id={row.key}
               name={row.name}
               gramsText={grams(locale, row.grams)}
-              pctText={`${num(locale, row.pct)} %`}
+              pctText={percent(locale, row.pct)}
               note={row.note}
               checked={checks.includes(row.key)}
               onToggle={() => store.weigh(row.key)}
-              checkLabel={`${t(locale, 'weighed')} : ${row.name}`}
+              checkLabel={`${t(locale, 'weighed')}${colon(locale)}${row.name}`}
               editing={Boolean(state.draft)}
             >
               {state.draft && group.id === 'final' && (
@@ -480,7 +574,7 @@ export function RecipeIngredients({
                   {field(
                     `ingredient-grams-${row.id}`,
                     r.grams[row.id] ?? r.flourByFlour[row.id],
-                    `${row.name} · ${t(locale, 'totalRecipe')}`,
+                    t(locale, 'totalRecipe'),
                     'g',
                     (value) =>
                       store.apply({
@@ -490,16 +584,20 @@ export function RecipeIngredients({
                         hold: 'otherGrams',
                       }),
                     formula.waterTarget?.absorbInto === row.id,
+                    false,
+                    `${row.name} · ${t(locale, 'totalRecipe')}`,
                   )}
                   {formula.ingredients.some((i) => i.id === row.id) &&
                     field(
                       `ingredient-pct-${row.id}`,
                       r.bakerPct[row.id],
-                      `${row.name} · ${t(locale, 'bakerPct')}`,
+                      t(locale, 'bakerPct'),
                       '%',
                       (value) =>
                         store.apply({ type: 'SetBakerPct', ingredient: row.id, pct: value }),
                       formula.waterTarget?.absorbInto === row.id,
+                      false,
+                      `${row.name} · ${t(locale, 'bakerPct')}`,
                     )}
                   {formula.flours.some((f) => f.id === row.id) && (
                     <Button
@@ -614,7 +712,7 @@ export function RecipeIngredients({
                 field(
                   `total-grams-${row.id}`,
                   row.value,
-                  `${ingredientName(locale, row.id, content.names)} · ${t(locale, 'totalRecipe')}`,
+                  t(locale, 'totalRecipe'),
                   'g',
                   (value) =>
                     store.apply({
@@ -624,6 +722,8 @@ export function RecipeIngredients({
                       hold: 'otherGrams',
                     }),
                   formula.waterTarget?.absorbInto === row.id,
+                  false,
+                  `${ingredientName(locale, row.id, content.names)} · ${t(locale, 'totalRecipe')}`,
                 )}
             </div>
           </div>
@@ -632,23 +732,127 @@ export function RecipeIngredients({
       {state.draft && (
         <>
           <Disclosure title={t(locale, 'addComponent')}>
-            <Button
-              icon="plus"
-              onClick={() =>
-                store.apply({
-                  type: 'AddComponent',
-                  component: {
-                    id: `component-${crypto.randomUUID().slice(0, 6)}`,
-                    kind: 'scald',
-                    flourPct: 1,
-                    flourBlend: formula.flours.map((f) => ({ flour: f.id, sharePct: f.sharePct })),
-                    hydrationPct: 0,
-                  },
-                })
-              }
-            >
-              {t(locale, 'addComponent')}
-            </Button>
+            <div className="stack" style={{ gap: '0.75rem' }}>
+              <div className="actions" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <Button
+                  icon="plus"
+                  onClick={() => {
+                    const uuid = crypto.randomUUID().slice(0, 6);
+                    const id = `poolish-${uuid}`;
+                    const stored = loadComponentDefaults();
+                    const created = newComponent(formula, 'poolish', id, stored);
+                    if (!created.ok) {
+                      setComponentError(
+                        formatEngineReason(
+                          locale,
+                          extractFormulaErrorReason(created.error),
+                          'poolish',
+                        ),
+                      );
+                      return;
+                    }
+                    setComponentError(null);
+                    store.apply({
+                      type: 'AddComponent',
+                      component: created.value,
+                    });
+                  }}
+                >
+                  {defaultsCopy(locale, 'addPoolish')}
+                </Button>
+                <Button
+                  icon="plus"
+                  onClick={() => {
+                    const uuid = crypto.randomUUID().slice(0, 6);
+                    const id = `tangzhong-${uuid}`;
+                    const stored = loadComponentDefaults();
+                    const created = newComponent(formula, 'tangzhong', id, stored);
+                    if (!created.ok) {
+                      setComponentError(
+                        formatEngineReason(
+                          locale,
+                          extractFormulaErrorReason(created.error),
+                          'tangzhong',
+                        ),
+                      );
+                      return;
+                    }
+                    setComponentError(null);
+                    store.apply({
+                      type: 'AddComponent',
+                      component: created.value,
+                    });
+                  }}
+                >
+                  {defaultsCopy(locale, 'addTangzhong')}
+                </Button>
+                <Button
+                  icon="plus"
+                  onClick={() => {
+                    const uuid = crypto.randomUUID().slice(0, 6);
+                    const id = `yudane-${uuid}`;
+                    const stored = loadComponentDefaults();
+                    const created = newComponent(formula, 'yudane', id, stored);
+                    if (!created.ok) {
+                      setComponentError(
+                        formatEngineReason(
+                          locale,
+                          extractFormulaErrorReason(created.error),
+                          'yudane',
+                        ),
+                      );
+                      return;
+                    }
+                    setComponentError(null);
+                    store.apply({
+                      type: 'AddComponent',
+                      component: created.value,
+                    });
+                  }}
+                >
+                  {defaultsCopy(locale, 'addYudane')}
+                </Button>
+                <Button
+                  icon="plus"
+                  variant="quiet"
+                  onClick={() => {
+                    const uuid = crypto.randomUUID().slice(0, 6);
+                    const id = `component-${uuid}`;
+                    const stored = loadComponentDefaults();
+                    const baseline = newComponent(formula, 'poolish', id, stored);
+                    if (!baseline.ok) {
+                      setComponentError(
+                        formatEngineReason(
+                          locale,
+                          extractFormulaErrorReason(baseline.error),
+                          'poolish',
+                        ),
+                      );
+                      return;
+                    }
+                    setComponentError(null);
+                    store.apply({
+                      type: 'AddComponent',
+                      component: {
+                        ...baseline.value,
+                        kind: 'custom',
+                      },
+                    });
+                  }}
+                >
+                  {defaultsCopy(locale, 'addCustom')}
+                </Button>
+              </div>
+              {componentError && (
+                <p
+                  role="alert"
+                  className="field-error-msg"
+                  style={{ color: 'var(--color-error)', margin: 0 }}
+                >
+                  {componentError}
+                </p>
+              )}
+            </div>
           </Disclosure>
           <Disclosure title={t(locale, 'addIngredient')}>
             <label className="field-label">
@@ -748,7 +952,13 @@ export function RecipeIngredients({
               onClose={() => setConfirm(null)}
               title={
                 confirm.startsWith('component:')
-                  ? componentName(locale, confirm.split(':')[1], content.names)
+                  ? (() => {
+                      const compId = confirm.split(':')[1];
+                      const comp = formula.components.find((c) => c.id === compId);
+                      return comp
+                        ? componentDisplayName(locale, formula, comp, content.names)
+                        : componentName(locale, compId, content.names);
+                    })()
                   : ingredientName(locale, confirm.split(':')[1], content.names)
               }
               closeLabel={t(locale, 'close')}

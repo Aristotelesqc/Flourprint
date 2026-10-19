@@ -1,4 +1,4 @@
-import { editRecipe } from './screen-actions.mjs';
+import { editRecipe, recipeCard } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 import { codeName } from '../build-names.mjs';
 
@@ -83,7 +83,7 @@ const buildViews = [
   { name: 'settings', screen: 'settings' },
 ];
 
-for (const nav of ['A', 'B']) {
+for (const nav of ['A']) {
   for (const view of buildViews) {
     test(`visible, copyable exact build at 360/130: ${nav} ${view.name}`, async ({
       page,
@@ -139,7 +139,7 @@ test('denied clipboard keeps exact build selectable and reports failure', async 
       },
     });
   });
-  await page.goto(address({ screen: 'recipe', lang: 'en', nav: 'B' }));
+  await page.goto(address({ screen: 'recipe', lang: 'en', nav: 'A' }));
   await page.getByTestId('visible-build').click();
   const sheet = page.getByRole('dialog');
   await expect(sheet.getByRole('status')).toHaveText(copy.en.fallback);
@@ -155,7 +155,7 @@ for (const locale of ['fr', 'en']) {
     page,
   }) => {
     await page.goto(address({ screen: 'library', lang: locale }));
-    const card = page.getByRole('button', { name: 'Shokupan', exact: true });
+    const card = recipeCard(page, 'Shokupan');
     await expect(card).toContainText(/≥\s*73\s*%/);
     await expect(card).not.toContainText('≈');
     await page
@@ -164,9 +164,7 @@ for (const locale of ['fr', 'en']) {
         exact: true,
       })
       .click();
-    const template = page
-      .getByRole('dialog')
-      .getByRole('button', { name: 'Shokupan', exact: true });
+    const template = recipeCard(page.getByRole('dialog'), 'Shokupan');
     await expect(template).toContainText(/≥\s*73\s*%/);
     await expect(template).not.toContainText('≈');
   });
@@ -192,7 +190,7 @@ for (const locale of ['fr', 'en']) {
     await expect(sheet).toContainText(/229[,.]4\s*g/);
   });
 
-  for (const nav of ['A', 'B']) {
+  for (const nav of ['A']) {
     test(`Save commits the last focused raw value without Enter: ${locale} ${nav}`, async ({
       page,
     }) => {
@@ -286,8 +284,8 @@ for (const [scenario, status] of diagnosticStates) {
   });
 }
 
-for (const nav of ['A', 'B']) {
-  test(`A/B toolbar remains operable and distinct at 360/130: ${nav}`, async ({ page }) => {
+for (const nav of ['A']) {
+  test(`A toolbar remains operable at 360/130: ${nav}`, async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 852 });
     await page.goto(
       address({ screen: 'library', nav, lang: 'fr', width: '360', scale: '130', theme: 'amoled' }),

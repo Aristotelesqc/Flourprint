@@ -15,7 +15,7 @@ const BottomBar = ({ variant, children, destinations, navigationLabel }: BottomB
         <footer
           data-fp-component="fp.bottom-bar"
           data-fp-version="v1"
-          className={`phone-footer toolbar-${variant}`}
+          className={variant === 'B' ? 'phone-footer toolbar-B' : 'phone-footer'}
         >
           <div className="phone-thumb-bar">{children}</div>
         </footer>
@@ -53,31 +53,15 @@ export default library.version({
   id: 'fp.bottom-bar',
   version: 'v1',
   component: BottomBar,
-  notes: 'A contextual toolbar; B contextual thumb controls plus four stable destinations.',
+  notes:
+    'A contextual toolbar (prototype selects A, L101); legacy B destinations remain compatible but are not a current candidate.',
   examples: [
     {
-      name: 'B navigation',
+      name: 'A contextual toolbar',
       props: {
-        variant: 'B',
-        navigationLabel: 'Main navigation',
-        destinations: [
-          { id: 'recipes', label: 'Recipes', icon: 'book', selected: true, onSelect: () => {} },
-          {
-            id: 'preparation',
-            label: 'Preparation',
-            icon: 'clock',
-            selected: false,
-            onSelect: () => {},
-          },
-          { id: 'registry', label: 'Registry', icon: 'flour', selected: false, onSelect: () => {} },
-          {
-            id: 'settings',
-            label: 'Settings',
-            icon: 'settings',
-            selected: false,
-            onSelect: () => {},
-          },
-        ],
+        variant: 'A',
+        navigationLabel: 'Contextual actions',
+        children: 'Contextual toolbar actions',
       },
     },
   ],

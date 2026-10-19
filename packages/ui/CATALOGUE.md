@@ -49,7 +49,7 @@ A short status word, such as Draft, Ready or Running.
 
 ### `fp.bottom-bar`
 
-The bottom area of a screen: navigation A is a contextual toolbar; navigation B can add stable destinations. The consumer places contextual controls in the header or footer; the component does not select the A/B design.
+The bottom area of a screen: prototype selects navigation A as a contextual toolbar (L101). Legacy navigation B stays compatible but is not a current candidate.
 
 **Use when**
 
@@ -61,12 +61,12 @@ The bottom area of a screen: navigation A is a contextual toolbar; navigation B 
 
 **Props**
 
-| Prop              | Meaning                                                                                              |
-| ----------------- | ---------------------------------------------------------------------------------------------------- |
-| `variant`         | 'A' (contextual footer) or 'B' (optional footer and destinations), #112 remains an owner choice.     |
-| `children`        | The screen's contextual actions, in both variants.                                                   |
-| `destinations`    | Variant B only: destinations with id, label, pictogram, selected state, optional badge and onSelect. |
-| `navigationLabel` | Accessible name of the navigation landmark.                                                          |
+| Prop              | Meaning                                                                                                                                         |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variant`         | 'A' (contextual footer; prototype selects A under L101) or legacy 'B' (optional footer and destinations; stays compatible but not a candidate). |
+| `children`        | The screen's contextual actions, in both variants.                                                                                              |
+| `destinations`    | Legacy variant B only: destinations with id, label, pictogram, selected state, optional badge and onSelect.                                     |
+| `navigationLabel` | Accessible name of the navigation landmark.                                                                                                     |
 
 **Accessibility**
 
@@ -83,12 +83,12 @@ The bottom area of a screen: navigation A is a contextual toolbar; navigation B 
 
 **Decisions**
 
-- [Navigation A/B, owner choice (#112)](https://github.com/Aristotelesqc/Flourprint/issues/112)
+- [Navigation A selected (L101 / #112)](https://github.com/Aristotelesqc/Flourprint/issues/112)
 - [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
 
 **Versions**
 
-- `v1`: A contextual toolbar; B contextual thumb controls plus four stable destinations.
+- `v1`: A contextual toolbar (prototype selects A, L101); legacy B destinations remain compatible but are not a current candidate.
 
 ### `fp.bottom-sheet`
 
@@ -184,6 +184,47 @@ A text button, optionally with a leading pictogram. Primary for the screen's mai
 **Versions**
 
 - `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+
+### `fp.context-tiles`
+
+A two-column contextual facts tile grid for live process and preparation states, restoring Round 2 contextual tiles.
+
+**Use when**
+
+- Displaying secondary contextual metrics and operational facts alongside a dominant hero or preparation view.
+
+**Avoid when**
+
+- Dominant preparation countdowns: use fp.prep-hero.
+- Grouped collapsible lists: use fp.group-card.
+- Single metric displays: use fp.metric-pill.
+
+**Props**
+
+| Prop    | Meaning                                                                                                                        |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `label` | Accessible name for the section landmarks grouping the contextual tiles.                                                       |
+| `items` | Read-only list of fact items with id, label, formatted value, optional detail, optional pictogram, and optional action button. |
+
+**Accessibility**
+
+- Page-anchored presentation stays flat; painted tile surfaces are opaque without decorative gradients or fake progress bars (elevation rule, ADR 0021).
+- Section has accessible name from label; tiles present semantic label and value pairs with tabular figures.
+- Optional tile actions are native buttons with accessible names; no nested interactive controls or clickable card wrappers.
+
+**Related**
+
+- `fp.prep-hero`
+- `fp.surface`
+
+**Decisions**
+
+- [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Generic 2-column contextual facts tile grid restoring Round 2 preparation tiles. First version; not yet shipped on main.
 
 ### `fp.floating-menu`
 
@@ -631,7 +672,8 @@ A recipe in the library: title, status, key values and, for a running preparatio
 **Accessibility**
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
-- The whole card opens the recipe; Resume and other actions are separate buttons.
+- The main open action and Resume are semantic sibling controls with independent 48 px hit targets, eliminating nested interactive controls (L27).
+- The whole card opens the recipe on pointer use while excluding nested interactive controls; keyboard Enter/Space on the title button opens once.
 - The status is text (fp.badge style), not only colour.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
@@ -664,22 +706,22 @@ One step of the process as a numbered node with its details, actions, and propos
 
 **Props**
 
-| Prop        | Meaning                                     |
-| ----------- | ------------------------------------------- |
-| `icon`      | Optional pictogram for the operation.       |
-| `number`    | Position shown in the node.                 |
-| `title`     | Step name.                                  |
-| `details`   | Short detail texts (duration, temperature). |
-| `state`     | 'planned', 'running' or 'done'.             |
-| `onEdit`    | Optional: opens the step editor.            |
-| `editLabel` | Accessible name of the edit button.         |
-| `actions`   | Optional extra actions.                     |
-| `children`  | Optional content under the details.         |
+| Prop        | Meaning                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| `icon`      | Optional pictogram for the operation.                                                          |
+| `number`    | Optional position shown in the node; omitted for overlapping background steps such as preheat. |
+| `title`     | Step name.                                                                                     |
+| `details`   | Short detail texts (duration, temperature).                                                    |
+| `state`     | 'planned', 'running' or 'done'.                                                                |
+| `onEdit`    | Optional: opens the step editor.                                                               |
+| `editLabel` | Accessible name of the edit button.                                                            |
+| `actions`   | Optional extra actions.                                                                        |
+| `children`  | Optional content under the details.                                                            |
 
 **Accessibility**
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
-- The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon is present.
+- The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon and number are present.
 - Reorder controls (#123) need a keyboard path besides dragging.
 - Touch target at least 48 px; painted controls remain compact without layout dead space (ADR 0021, #142).
 - Proposed alternatives (compact, rail, outline) preserve identical semantic DOM, labeling, and reachable actions with natural wrapping at 360px / 130% zoom without truncation.
@@ -755,13 +797,14 @@ Switches between sections of one screen (Ingredients, Steps, Planning, History) 
 
 **Props**
 
-| Prop       | Meaning                                                |
-| ---------- | ------------------------------------------------------ |
-| `variant`  | 'underlined' (sections), 'pills' or 'chips' (filters). |
-| `tabs`     | Tabs with id and label.                                |
-| `activeId` | Id of the selected tab.                                |
-| `onChange` | Called with the chosen id.                             |
-| `label`    | Accessible name of the tab list.                       |
+| Prop              | Meaning                                                             |
+| ----------------- | ------------------------------------------------------------------- |
+| `variant`         | 'underlined' (sections), 'pills' or 'chips' (filters).              |
+| `tabs`            | Tabs with id and label.                                             |
+| `activeId`        | Id of the selected tab.                                             |
+| `onChange`        | Called with the chosen id.                                          |
+| `label`           | Accessible name of the tab list.                                    |
+| `gestureProgress` | Optional real-time gesture progress during horizontal swipe (L101). |
 
 **Accessibility**
 
@@ -1279,3 +1322,37 @@ Closes a bottom sheet toward the bottom edge.
 **Versions**
 
 - `v1` (keyframes), default selection: Round 2 (`22db386`) bottom sheet: slides back down.
+
+### `fp.motion.tab-carousel`
+
+Horizontal carousel slide between adjacent section tabs (L101), supporting finger-follow gestures, flick velocity, and gesture-matched springback.
+
+**Use when**
+
+- Recipe section tabs at the top of a screen where swiping horizontally moves between tabs.
+
+**Avoid when**
+
+- Vertical scrolling content (touch-action: pan-y must preserve native vertical scroll).
+- Starts within 24 px of screen edges (Android Back gesture margin).
+- During active step dragging or within elements with horizontal scrolling.
+
+**Accessibility**
+
+- Panes remain mounted so draft values and form focus are preserved.
+- Reduced motion: instant transition without sliding animation.
+- 48 px minimum touch targets for all tab controls.
+
+**Related**
+
+- `fp.motion.highlight`
+- `fp.motion.sheet-enter`
+
+**Decisions**
+
+- [L101: Navigation is A with swipeable section tabs](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [ADR 0021: motion items](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
+
+**Versions**
+
+- `v1` (keyframes), default selection: Round 2 / L101 tab carousel: horizontal slide between adjacent tabs with finger-follow, flick velocity, and gesture-matched springback.

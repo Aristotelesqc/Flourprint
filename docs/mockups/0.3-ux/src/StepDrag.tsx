@@ -4,10 +4,20 @@ import type { Locale } from './messages';
 import { stepCopy } from './steps-copy';
 import './step-drag.css';
 
+export const DRAG_ACTIVATION_QUERY = 'dragActivation';
+export type DragActivationMode = 'move' | 'hold';
+
+export const getDragActivationMode = (): DragActivationMode => {
+  if (typeof location === 'undefined') return 'move';
+  const param = new URLSearchParams(location.search).get(DRAG_ACTIVATION_QUERY);
+  return param === 'hold' ? 'hold' : 'move';
+};
+
 export interface DragState {
   activeStepId: StepId | null;
   targetAfterId: StepId | null | undefined;
   isDragging: boolean;
+  offsetY: number;
 }
 
 export interface UseStepDragProps {
@@ -17,19 +27,12 @@ export interface UseStepDragProps {
   onAnnounce: (message: string) => void;
 }
 
-const getScrollContainer = (): HTMLElement => {
-  const phone = document.querySelector('.phone-content');
-  if (phone instanceof HTMLElement) {
-    return phone;
-  }
-  return (document.scrollingElement as HTMLElement) || document.documentElement;
-};
-
 export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDragProps) {
   const [dragState, setDragState] = useState<DragState>({
     activeStepId: null,
     targetAfterId: undefined,
     isDragging: false,
+    offsetY: 0,
   });
 
   const onMoveRef = useRef(onMove);
@@ -57,7 +60,16 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
   const pointerCoordRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const targetAfterRef = useRef<StepId | null | undefined>(undefined);
   const autoscrollInterval = useRef<number | null>(null);
-  const isCompletingDropRef = useRef(false);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const activeProcessViewRef = useRef<HTMLElement | null>(null);
+  const holdTimerRef = useRef<number | null>(null);
+
+  const clearHoldTimer = useCallback(() => {
+    if (holdTimerRef.current !== null) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }, []);
 
   const stopAutoscroll = useCallback(() => {
     if (autoscrollInterval.current !== null) {
@@ -69,7 +81,10 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
   const computeTargetAtPoint = useCallback(
     (clientX: number, clientY: number, activeId: StepId): StepId | null | undefined => {
       const elements = document.elementsFromPoint(clientX, clientY);
-      const stepRowElement = elements.find((el) => el.hasAttribute('data-step-id'));
+      const activeView = activeProcessViewRef.current;
+      const stepRowElement = elements.find(
+        (el) => el.hasAttribute('data-step-id') && (!activeView || activeView.contains(el)),
+      );
       if (!stepRowElement) return undefined;
 
       const targetId = stepRowElement.getAttribute('data-step-id');
@@ -87,18 +102,22 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
   );
 
   const cancelDrag = useCallback(() => {
+    clearHoldTimer();
     stopAutoscroll();
+    const wasDragging = dragStateRef.current.isDragging;
     pointerTracker.current = null;
     pointerCoordRef.current = null;
     targetAfterRef.current = undefined;
-    isCompletingDropRef.current = false;
     setDragState({
       activeStepId: null,
       targetAfterId: undefined,
       isDragging: false,
+      offsetY: 0,
     });
-    onAnnounceRef.current(stepCopy(localeRef.current, 'dragCancelled'));
-  }, [stopAutoscroll]);
+    if (wasDragging) {
+      onAnnounceRef.current(stepCopy(localeRef.current, 'dragCancelled'));
+    }
+  }, [stopAutoscroll, clearHoldTimer]);
 
   const tickAutoscroll = useCallback(() => {
     const tracker = pointerTracker.current;
@@ -109,7 +128,10 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
     const coords = pointerCoordRef.current;
     if (!coords) return;
 
-    const container = getScrollContainer();
+    const container =
+      scrollContainerRef.current ||
+      (document.scrollingElement as HTMLElement) ||
+      document.documentElement;
     const rect = container.getBoundingClientRect();
     const edgeThreshold = 56;
     let delta = 0;
@@ -123,9 +145,8 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
     }
 
     if (delta !== 0) {
-      const prevTop = container.scrollTop;
       container.scrollTop += delta;
-      if (container === document.documentElement || container.scrollTop === prevTop) {
+      if (container === document.documentElement) {
         window.scrollBy({ top: delta, behavior: 'auto' });
       }
 
@@ -151,7 +172,18 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
     } catch {
       // Ignore if not supported in mock environment
     }
-    isCompletingDropRef.current = false;
+    clearHoldTimer();
+    const grip = e.currentTarget;
+    activeProcessViewRef.current =
+      grip.closest<HTMLElement>('[data-process-root]') ||
+      grip.closest<HTMLElement>('.section-carousel-pane') ||
+      grip.closest<HTMLElement>('[data-step-design]');
+    scrollContainerRef.current =
+      grip.closest<HTMLElement>('.section-carousel-pane') ||
+      grip.closest<HTMLElement>('.phone-content') ||
+      (document.scrollingElement as HTMLElement) ||
+      document.documentElement;
+
     pointerTracker.current = {
       pointerId: e.pointerId,
       startY: e.clientY,
@@ -160,6 +192,25 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
     };
     pointerCoordRef.current = { clientX: e.clientX, clientY: e.clientY };
     targetAfterRef.current = undefined;
+
+    const mode = getDragActivationMode();
+    if (mode === 'hold') {
+      holdTimerRef.current = window.setTimeout(() => {
+        const tracker = pointerTracker.current;
+        if (tracker && tracker.pointerId === e.pointerId && !tracker.isMoved) {
+          tracker.isMoved = true;
+          targetAfterRef.current = undefined;
+          setDragState({
+            activeStepId: tracker.activeStepId,
+            targetAfterId: undefined,
+            isDragging: true,
+            offsetY: 0,
+          });
+          onAnnounceRef.current(stepCopy(localeRef.current, 'dragGrabbed'));
+          startAutoscroll();
+        }
+      }, 350);
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -169,19 +220,30 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
     pointerCoordRef.current = { clientX: e.clientX, clientY: e.clientY };
     const deltaY = e.clientY - tracker.startY;
 
-    if (!tracker.isMoved && Math.abs(deltaY) > 5) {
+    const mode = getDragActivationMode();
+    if (mode === 'hold' && !tracker.isMoved && Math.abs(deltaY) > 10) {
+      clearHoldTimer();
+    }
+
+    if (!tracker.isMoved && mode === 'move' && Math.abs(deltaY) > 5) {
       tracker.isMoved = true;
       targetAfterRef.current = undefined;
       setDragState({
         activeStepId: tracker.activeStepId,
         targetAfterId: undefined,
         isDragging: true,
+        offsetY: deltaY,
       });
       onAnnounceRef.current(stepCopy(localeRef.current, 'dragGrabbed'));
       startAutoscroll();
     }
 
     if (!tracker.isMoved) return;
+
+    setDragState((prev) => ({
+      ...prev,
+      offsetY: deltaY,
+    }));
 
     const dropAfter = computeTargetAtPoint(e.clientX, e.clientY, tracker.activeStepId);
     if (dropAfter !== undefined && dropAfter !== targetAfterRef.current) {
@@ -194,8 +256,13 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
     const tracker = pointerTracker.current;
     if (!tracker || tracker.pointerId !== e.pointerId) return;
 
-    isCompletingDropRef.current = true;
+    clearHoldTimer();
     stopAutoscroll();
+
+    const targetAfter = targetAfterRef.current;
+    pointerTracker.current = null;
+    pointerCoordRef.current = null;
+    targetAfterRef.current = undefined;
 
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -205,7 +272,6 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
 
     if (tracker.isMoved) {
       const activeId = tracker.activeStepId;
-      const targetAfter = targetAfterRef.current;
       const steps = processRef.current.steps;
       const activeIndex = steps.findIndex((s) => s.id === activeId);
       const currentPredecessor = activeIndex <= 0 ? null : steps[activeIndex - 1].id;
@@ -220,19 +286,18 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
       }
     }
 
-    pointerTracker.current = null;
-    pointerCoordRef.current = null;
-    targetAfterRef.current = undefined;
-    isCompletingDropRef.current = false;
     setDragState({
       activeStepId: null,
       targetAfterId: undefined,
       isDragging: false,
+      offsetY: 0,
     });
   };
 
   const handlePointerCancel = (e: React.PointerEvent<HTMLButtonElement>) => {
-    if (isCompletingDropRef.current) return;
+    const tracker = pointerTracker.current;
+    if (!tracker || tracker.pointerId !== e.pointerId) return;
+    clearHoldTimer();
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {
@@ -241,9 +306,11 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
     cancelDrag();
   };
 
-  const handleLostPointerCapture = () => {
-    if (isCompletingDropRef.current) return;
-    if (pointerTracker.current?.isMoved) {
+  const handleLostPointerCapture = (e?: React.PointerEvent<HTMLButtonElement>) => {
+    const tracker = pointerTracker.current;
+    if (!tracker) return;
+    if (e && e.pointerId !== undefined && tracker.pointerId !== e.pointerId) return;
+    if (tracker.isMoved) {
       cancelDrag();
     }
   };
@@ -261,15 +328,16 @@ export function useStepDrag({ process, locale, onMove, onAnnounce }: UseStepDrag
     };
   }, [cancelDrag]);
 
-  // Clean up interval exclusively on unmount
+  // Clean up interval and hold timer on unmount
   useEffect(() => {
     return () => {
+      clearHoldTimer();
       if (autoscrollInterval.current !== null) {
         window.clearInterval(autoscrollInterval.current);
         autoscrollInterval.current = null;
       }
     };
-  }, []);
+  }, [clearHoldTimer]);
 
   return {
     dragState,
@@ -330,7 +398,7 @@ export const DragHandle = ({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerCancel}
-      onLostPointerCapture={onLostPointerCapture || onPointerCancel}
+      onLostPointerCapture={onLostPointerCapture}
       onKeyDown={handleKeyDown}
       data-testid={`drag-handle-${step.id}`}
     >

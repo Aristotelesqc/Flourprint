@@ -29,5 +29,6 @@ export default {
     activeId: 'Id of the selected tab.',
     onChange: 'Called with the chosen id.',
     label: 'Accessible name of the tab list.',
+    gestureProgress: 'Optional real-time gesture progress during horizontal swipe (L101).',
   },
 } satisfies ComponentGuide<TabsProps>;
