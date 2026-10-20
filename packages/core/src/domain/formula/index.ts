@@ -10,6 +10,7 @@ export {
 } from './edit.js';
 export {
   componentStyle,
+  hydrationForLiquidRatio,
   hydrationForRatio,
   liquidMassRatio,
   liquidRatioPct,
