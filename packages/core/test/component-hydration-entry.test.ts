@@ -37,6 +37,7 @@ const known = formula({ status: 'known', valuePct: 89, source: 'test' });
 describe('hydration entry of a component', () => {
   it('reads 580.5 % and inverts back to the stored value', () => {
     expect(liquidRatioPct(known, milkTangzhong)).toBeCloseTo(580.5, 9);
+    expect(milkTangzhong.hydrationPct).toBeCloseTo(307.142857142857, 9);
     const same = hydrationForLiquidRatio(known, milkTangzhong, 580.5);
     expect(same.ok && same.value).toBeCloseTo((100 * 43) / 14, 9);
   });
@@ -52,9 +53,24 @@ describe('hydration entry of a component', () => {
     );
   });
 
+  it('accepts the milk water exactly and stores no pool water', () => {
+    // 100 × (0.89 × 43 / 280 × 100) / 5 = 273.357142…
+    const milkOnly = (100 * ((0.89 * 43 * 100) / 280)) / 5;
+    expect(milkOnly).toBeCloseTo(273.357142857, 9);
+    expect(hydrationForLiquidRatio(known, milkTangzhong, milkOnly)).toEqual({ ok: true, value: 0 });
+  });
+
   it('equals hydrationPct without allocations', () => {
     const plain = { ...milkTangzhong, allocations: [] };
     expect(hydrationForLiquidRatio(known, plain, 500)).toEqual({ ok: true, value: 500 });
+    expect(hydrationForLiquidRatio(known, plain, 0)).toEqual({ ok: true, value: 0 });
+    expect(hydrationForLiquidRatio(known, plain, -5)).toMatchObject({
+      ok: false,
+      error: {
+        code: 'InvalidFormula',
+        details: { path: 'hydration', reason: 'the hydration must be ≥ 0' },
+      },
+    });
   });
 
   it('refuses a target below the milk water, an unknown water, no flour and non-finite input', () => {
@@ -68,5 +84,10 @@ describe('hydration entry of a component', () => {
     expect(reason(formula({ status: 'unknown' }), milkTangzhong, 500)).toMatch(/unknown/);
     expect(reason(known, { ...milkTangzhong, flourPct: 0 }, 500)).toMatch(/no flour/);
     expect(reason(known, milkTangzhong, Number.NaN)).toMatch(/finite/);
+    expect(reason(known, milkTangzhong, Infinity)).toMatch(/finite/);
+    expect(hydrationForLiquidRatio(known, milkTangzhong, 273)).toMatchObject({
+      ok: false,
+      error: { code: 'InvalidFormula', details: { path: 'hydration' } },
+    });
   });
 });

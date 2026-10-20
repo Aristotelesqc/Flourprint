@@ -52,9 +52,18 @@ export const hydrationForLiquidRatio = (
   if (allocated === undefined) {
     return refuse('an allocated ingredient has an unknown water content');
   }
-  const hydrationPct = targetPct - (100 * allocated) / component.flourPct;
-  if (hydrationPct < 0) return refuse('the allocated ingredients alone bring more water');
-  return ok(hydrationPct);
+  const allocatedPct = (100 * allocated) / component.flourPct;
+  const hydrationPct = targetPct - allocatedPct;
+  // A target equal to the allocated water, up to rounding, stores no pool water.
+  const tolerance = 1e-9 * Math.max(1, allocatedPct);
+  if (hydrationPct < -tolerance) {
+    return refuse(
+      allocatedPct > 0
+        ? 'the hydration is below the water the allocated ingredients bring'
+        : 'the hydration must be ≥ 0',
+    );
+  }
+  return ok(Math.abs(hydrationPct) <= tolerance ? 0 : hydrationPct);
 };
 
 /** Mass of the component's allocated ingredients, in points of total flour. */
