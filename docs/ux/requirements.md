@@ -311,7 +311,7 @@ Screens: library. Source: GH/issues/128; GH/issues/111#issuecomment-6205813397 �
 
 **L49.** One Recipe destination. Reading and editing share the same page, layout and section structure. Editing is a **state in place**, not a separate screen, and the separate Composition/Components/Steps/Result tab set is never reintroduced. Leaving edit mode returns to the same page, scroll position and focus. Screens: recipe, edit. Source: GH/issues/111#issuecomment-6190006177 and GH/issues/112#issuecomment-6190005920 ("Owner clarification (2026-10-15)"); GH/issues/121; GH/issues/120 direction 1. Kind: OD-R.
 
-**L50.** Edit is discoverable from reading. Under A it sits in the bar (Edit · Plan · ▶ Start · ⋯), not hidden in ⋮. Start follows the #112 hierarchy. Screens: recipe. Source: GH/issues/121 acceptance 2; GH/issues/112 option A; GH/issues/111 body, finding 1. Kind: OI. (DESIGN.md's older "Edit in overflow" (#67) conflicts: see O18.)
+**L50.** Edit is discoverable from reading. Under A it sits in the bar (Edit · Plan · ▶ Start · ⋯), not hidden in ⋮. Start follows the #112 hierarchy. Screens: recipe. Source: GH/issues/121 acceptance 2; GH/issues/112 option A; GH/issues/111 body, finding 1. Kind: OI. (DESIGN.md's older "Edit in overflow" (#67) conflicts: see O18. An actual step drag may also enter editing: L104.)
 
 **L51.** One hierarchical ingredient list:
 
@@ -579,6 +579,24 @@ recipe (edit), settings. Source: owner, 2026-10-19 ("une variable par défaut, c
 éventuellement dans les options avancées", "des équivalences de rapports eau:farine comme le
 standard 1:5… Mais ça prend les deux"). Kind: OD.
 
+**L103.** Saving and versions are three separate things (owner decision, 2026-10-20, #7). **Save**
+(never "Save version") keeps a recoverable saved revision automatically; a no-op Save adds nothing.
+A **reference version** exists only when the baker explicitly promotes one saved revision (optional
+name, own sequential number); Save never does. A **variant** is a separate recipe. The internal
+revision counter is never shown as the baker's version count. **Restore** copies an old revision into
+a new head and deletes nothing; restore and promote act on saved revisions only and never touch an
+open draft. Old revisions are not treated as reference versions. The contract is persistence.md,
+Recipe history. Screens: recipe, history. Source: GH/issues/7 owner decision 2026-10-20. Kind: OD.
+
+**L104.** An **actual drag** of a step enters editing directly, creating or resuming the recipe
+draft; a touch on the handle without a drag does not (owner decision, 2026-10-20, #123). A valid drop
+is one undoable draft operation and Save is still required. A rejected, cancelled or outside drop
+changes nothing and does not make the draft dirty; Back during a drag cancels only the gesture;
+earlier draft edits are kept; a refusal gives a short reason and is never turned into another move.
+This amends the explicit-Edit-only policy (#67, L50, O18) by a direct-manipulation entry point; it
+selects nothing in O3. The contract is drafts.md, Drag enters editing. Screens: steps, edit. Source:
+GH/issues/123 owner direction 2026-10-20. Kind: OD.
+
 ## 12. Mockup and redesign process (owner requirements on deliverables)
 
 **L90.** Round 2 (`22db386`) is the **visual baseline** for look and organisation:
@@ -647,6 +665,7 @@ _Owner: to refine._ Source: GH/issues/122; GH/issues/120; GH/issues/134 body, "W
 
 - Always-visible handles versus an explicit Reorder submode.
 - Collapsed and cross-group behaviour.
+- Activation threshold (movement, hold) and compact / rail / outline treatment: still OPEN; L104 only fixes that a drag enters editing.
 - **Downward drags along a chain** are refused by the engine (`moveStep`, #143). Either the UI turns them into the equivalent upward move, or the contract allows the mirror case: an owner reading is needed.
 
 Claude's touch values (180 ms lift, 12 px tolerance, 140 px autoscroll…) are starting values, not decisions. Source: GH/issues/123; GH/issues/123#issuecomment-6244918588; GH/pull/143; GH/issues/142 §B; GH/issues/100#issuecomment-6206264377.
