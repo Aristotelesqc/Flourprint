@@ -1,6 +1,7 @@
 import type { Component, Formula, Ingredient, YeastForm } from '../formula/types.js';
 import { resolveFormula } from '../formula/resolve.js';
 import { ancestors, doughSteps } from '../process/dough.js';
+import { phasesOf } from '../process/move.js';
 import type { Process, ProcessStep, StepId } from '../process/types.js';
 import type { Estimate, RangeBound } from '../values.js';
 import {
@@ -408,12 +409,38 @@ const doughMass = (
   };
 };
 
+const fermentingPhases = (
+  process: Process,
+  component: Component,
+  components: ReadonlySet<string>,
+): ProcessStep[] =>
+  phasesOf(process, component.id, components).filter((s) => s.operation === 'preferment');
+
+/** The last fermenting phase of a preferment, else its legacy step. */
+const prefermentPhase = (
+  process: Process,
+  component: Component,
+  components: ReadonlySet<string>,
+): ProcessStep | undefined =>
+  fermentingPhases(process, component, components).at(-1) ??
+  process.steps.find((s) => s.id === component.id);
+
 const prefermentMass = (
   formula: Formula,
   process: Process,
   component: Component,
 ): Mass | Failure => {
-  const step = process.steps.find((s) => s.id === component.id);
+  // Fermenting phases of the component (process.md, Subjects and component phases).
+  const components = new Set(formula.components.map((c) => c.id));
+  const phases = fermentingPhases(process, component, components);
+  if (phases.length > 1) {
+    return failure(
+      'insufficient_data',
+      'component_phases_unmodelled',
+      phases.map((s) => s.id),
+    );
+  }
+  const step = phases[0] ?? process.steps.find((s) => s.id === component.id);
   if (!step) return failure('insufficient_data', 'no_preferment_step', [component.id]);
   const yeastForms = new Map(formula.ingredients.filter(isYeast).map((i) => [i.id, i.yeast.form]));
   const yeasts = (component.allocations ?? []).flatMap((a) => {
@@ -474,8 +501,10 @@ const waterTemperature = (formula: Formula, process: Process): Estimate | undefi
   }
   const preferments = formula.components.filter((c) => c.kind === 'preferment' && c.flourPct > 0);
   const assumptions: string[] = ['flour_at_room_temperature'];
+  const components = new Set(formula.components.map((c) => c.id));
   const prefermentC = preferments.map((c) => {
-    const t = process.steps.find((s) => s.id === c.id)?.conditions?.temperatureC;
+    // The temperature of its last fermenting phase: the one it has when it joins the dough.
+    const t = prefermentPhase(process, c, components)?.conditions?.temperatureC;
     if (t === undefined) assumptions.push('preferment_at_room_temperature');
     return t ?? roomC;
   });

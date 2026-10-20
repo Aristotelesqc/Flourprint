@@ -16,6 +16,77 @@ note? }`. Versions start at 1 and increase by one.
   declared by the process must match the formula's final mix (`process.md`). Persisted documents carry
   `schemaVersion`; unsupported versions are refused when read.
 
+## Recipe history: saved revisions, reference versions, variants
+
+Owner decision of 2026-10-20 (#7). Three things are kept apart; none is inferred from another.
+
+- A **saved revision** is the immutable record above. Every effective Save writes one,
+  automatically; it exists to be recovered. Its `version` is an **internal counter**: the interface
+  never presents it as a version the baker chose or counts (it may show "saved 2026-10-20 14:03",
+  and "revision N" only where a precise reference is needed, such as Reset or a Preparation's
+  baseline).
+- A **reference version** is the explicit promotion of **one precise saved revision**:
+  `ReferenceVersion { recipeId, number, version, name?, createdAt }`. `number` is its own sequence
+  per recipe (1, 2, 3, ...), unrelated to `version`; `version` points to the promoted revision;
+  `name` is optional free text. A reference version is immutable (renaming it is out of scope until
+  decided). Ordinary Save never promotes. The same revision may be promoted once.
+- A **variant** is a new recipe identity (families, below), optionally recording its origin
+  `{ recipeId, version }`. Saving and promoting never create one.
+
+Rules, all in one transaction (`BEGIN IMMEDIATE`) and all stating `expectedHead`:
+
+- **Save** (the former "Save version") appends revision `expectedHead + 1`. If the checked formula
+  and process are semantically identical to the head's, nothing is appended, nothing is written and
+  the current head is returned (a no-op; `note` and timestamps do not count). A different current head
+  returns `HeadConflict { currentHead }`; nothing is written.
+- **Restore** `restoreRevision(recipeId, version, expectedHead)` appends revision `expectedHead + 1`
+  whose formula, process and note copy revision `version`, together. Nothing is rewritten or
+  deleted: the revisions between stay recoverable, and a Preparation keeps its exact
+  `{ id, version }` reference and snapshot (#20). Restoring content identical to the head is a
+  no-op like Save. A different head returns `HeadConflict`.
+- **Promote** `promoteReferenceVersion(recipeId, version, name?, expectedHead)` writes the next
+  `number`. It adds no revision and changes no head; `expectedHead` guards that the baker saw the
+  current history, so a different head returns `HeadConflict` and nothing is written. An unknown
+  `version` is refused; a revision already promoted is refused (`AlreadyReferenced`, returning
+  its `number`).
+- **Draft.** Restore and promote act on **saved revisions only** and never read, change or delete
+  the recipe's open draft. The draft keeps its `baseVersion`; after a Restore or Save from another
+  device the draft's next Save is refused with `HeadConflict` as usual.
+- A trashed recipe refuses all three (`RecipeTrashed`). Deleting a recipe deletes its reference
+  versions with its revisions.
+
+Compatibility:
+
+- Existing revisions load as saved revisions. **No reference version is inferred**: old data does
+  not establish that the baker chose any milestone. Revision numbers, Preparation references and
+  snapshots are unchanged.
+- Backups and recipe exports carry `referenceVersions` per recipe (optional, so older backups and
+  exports restore with none). Import follows the existing additive rule: a present recipe is skipped
+  whole, reference versions included.
+- **Version bump.** The persisted shape grows by a new `reference_versions` table
+  (`recipe_id`, `number`, `version`, `name`, `created_at`; primary key `(recipe_id, number)`,
+  unique `(recipe_id, version)`, foreign key to `revisions`) and the new optional field above. This
+  requires one database migration step, and one `schemaVersion` increment for the full backup and
+  the recipe export (older readers would silently drop the field, so they must refuse). The
+  revision record itself is unchanged. Exact numbers are set when the contract change is
+  implemented (`flourprint-contract-change`).
+
+Worked examples:
+
+1. Ten Saves of different content on a new recipe: revisions 1 to 10, zero reference versions,
+   one recipe.
+2. Save with unchanged content at head 10: nothing written, head stays 10, the same head returned.
+3. Head is 7; Restore from 3 with `expectedHead = 7`: revision 8 copies revision 3; revisions 1 to
+   7 are untouched; a Preparation started on revision 5 still points to 5.
+4. Promote revision 5 (head 8) with `expectedHead = 8`, name "Winter loaf": reference version 1 points
+   to revision 5. The baker keeps editing and saves: revisions 9, 10; reference version 1 still
+   points to revision 5. Promote revision 5 again: `AlreadyReferenced`.
+5. Two devices open head 8. Device A saves (head 9). Device B's Save, Restore or Promote with
+   `expectedHead = 8` returns `HeadConflict { currentHead: 9 }`; nothing is written.
+6. A draft with edits is open at base 8; the baker restores revision 3 (head 9): the draft is
+   unchanged and its Save is refused with `HeadConflict` until the baker reconciles it.
+7. An older backup (no `referenceVersions`) restores: all revisions load, zero reference versions.
+
 ## Recipe trash
 
 Owner decision of 2026-10-12: a recipe is put in a trash before it can be deleted, and the trash
@@ -159,6 +230,7 @@ on a connection is serialized, so a transaction never interleaves with another o
   recipes: [{ id, name, familyId?, revisions }],
   families: [{ id, name, pinnedRecipeId? }],
   ingredients?: IngredientEntry[], // personal entry versions the revisions pin (ingredients.md)
+  // per recipe: referenceVersions?: ReferenceVersion[] (absent = none; see Recipe history)
 }
 ```
 

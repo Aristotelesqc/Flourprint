@@ -33,14 +33,33 @@ interface Draft {
   is wrong.
 - A draft never starts a bake.
 - **Save as recipe** (`blank`, `template`): runs the checks; with no blocking issue it creates a
-  recipe with a new id, its name and revision 1, then deletes the draft. **Save version**
-  (`revision`): the same, as a new revision of the recipe with `expectedHead = baseVersion`
+  recipe with a new id, its name and revision 1, then deletes the draft. **Save**
+  (`revision`; formerly "Save version"): the same, as a new saved revision of the recipe with `expectedHead = baseVersion`
   (`HeadConflict` as for any save). **Delete** removes the draft and nothing else.
 - At most one `revision` draft per recipe: opening a recipe with a draft resumes it.
 - **Generated names**: a draft from a template is named after the template, a blank one after a
   generic label, followed by the smallest number ≥ 1 that no recipe or draft name with that
   prefix uses ("Baguette 1", "Baguette 2"). The label is localized (ADR 0009); the user can
   rename the draft.
+
+## Drag enters editing
+
+Owner decision of 2026-10-20 (#123), an addition to the older "explicit Edit only" rule (#67).
+
+- An **actual drag** of a step (movement past the activation threshold, whatever its value) opens
+  the recipe draft if none is open, or resumes the existing one. Touching the handle without
+  starting a drag changes nothing and opens nothing. The explicit Edit action stays.
+- A **valid drop** is **one undoable draft operation** (process.md, Undo, redo and reset). **Save
+  is still required** before the move counts as a saved revision or a baseline.
+- A **rejected, cancelled or outside drop** restores the pre-gesture order and dependencies,
+  changes nothing and does **not** mark the draft dirty. If the gesture opened editing and nothing
+  changed, the draft is not dirty (it may be dropped silently on leaving). A refusal gives a short
+  plain-language reason; the engine's refusal is never converted into a different move, and the last
+  valid candidate is never committed on release.
+- **Back during a drag** cancels the gesture only. Leaving editing afterwards uses the normal loss
+  guard.
+- A draft with prior edits keeps them: the move is added on top, and Undo reverses only the move.
+- The activation threshold and the visual treatment stay open (requirements O3).
 
 ## Recipe checks
 

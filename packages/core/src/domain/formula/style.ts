@@ -30,6 +30,42 @@ export const liquidRatioPct = (formula: Formula, component: Component): number |
   return component.hydrationPct + (100 * allocated) / component.flourPct;
 };
 
+/**
+ * The `hydrationPct` that gives the component a hydration as read (`liquidRatioPct`) of
+ * `targetPct` (formula.md, Hydration entry).
+ */
+export const hydrationForLiquidRatio = (
+  formula: Formula,
+  component: Component,
+  targetPct: number,
+): Result<number, FormulaError> => {
+  const refuse = (reason: string) =>
+    err(
+      domainError('InvalidFormula', `Invalid hydration: ${reason}`, {
+        path: 'hydration',
+        reason,
+      }),
+    );
+  if (!Number.isFinite(targetPct)) return refuse('the hydration must be a finite number');
+  if (!(component.flourPct > 0)) return refuse('the component has no flour');
+  const allocated = allocatedWaterPct(formula, component);
+  if (allocated === undefined) {
+    return refuse('an allocated ingredient has an unknown water content');
+  }
+  const allocatedPct = (100 * allocated) / component.flourPct;
+  const hydrationPct = targetPct - allocatedPct;
+  // A target equal to the allocated water, up to rounding, stores no pool water.
+  const tolerance = 1e-9 * Math.max(1, allocatedPct);
+  if (hydrationPct < -tolerance) {
+    return refuse(
+      allocatedPct > 0
+        ? 'the hydration is below the water the allocated ingredients bring'
+        : 'the hydration must be ≥ 0',
+    );
+  }
+  return ok(Math.abs(hydrationPct) <= tolerance ? 0 : hydrationPct);
+};
+
 /** Mass of the component's allocated ingredients, in points of total flour. */
 const allocatedMassPct = (component: Component): number =>
   (component.allocations ?? []).reduce((sum, a) => sum + a.bakerPct, 0);
