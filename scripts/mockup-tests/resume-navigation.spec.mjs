@@ -1,29 +1,32 @@
 import { createRequire } from 'node:module';
 import { setTimeout as gesturePause } from 'node:timers/promises';
+import { attachBrowserDiagnostics, installPointerDiagnostics } from './browser-diagnostics.mjs';
 const require = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = require('@playwright/test');
+test.beforeEach(async ({ page }) => installPointerDiagnostics(page));
+test.afterEach(async ({ page }, testInfo) => attachBrowserDiagnostics(page, testInfo));
 const address = (extra = {}) =>
   `/mockup.html?${new URLSearchParams({ screen: 'recipe', recipe: 'baguette', section: 'ingredients', nav: 'A', lang: 'en', theme: 'dark', width: '393', scale: '100', motion: 'standard', capture: '1', ...extra })}`;
 const sectionTab = (page, name) => page.getByRole('tab', { name, exact: true });
 async function gesture(
   page,
   context,
-  { fromX = 310, toX = 55, y, duration = 650, cancel = false, during },
+  { fromX = 310, toX = 55, y, toY, duration = 650, cancel = false, during },
 ) {
   const area = await page.locator('.section-carousel-container').boundingBox();
   const yy = y ?? area.y + Math.min(area.height / 3, 130);
   const session = await context.newCDPSession(page);
-  const touch = async (type, x) =>
+  const touch = async (type, x, atY = yy) =>
     session.send('Input.dispatchTouchEvent', {
       type,
       touchPoints:
-        type === 'touchEnd' || type === 'touchCancel' ? [] : [{ x: area.x + x, y: yy, id: 1 }],
+        type === 'touchEnd' || type === 'touchCancel' ? [] : [{ x: area.x + x, y: atY, id: 1 }],
     });
   await touch('touchStart', fromX);
   for (let i = 1; i <= 6; i++) {
     // Deliberate input timing distinguishes a slow drag from a flick; no application race wait.
     await gesturePause(duration / 6);
-    await touch('touchMove', fromX + ((toX - fromX) * i) / 6);
+    await touch('touchMove', fromX + ((toX - fromX) * i) / 6, yy + (((toY ?? yy) - yy) * i) / 6);
   }
   if (during) await during();
   await touch(cancel ? 'touchCancel' : 'touchEnd');
@@ -126,6 +129,40 @@ test.describe('navigation A carousel acceptance', () => {
   test('screen-edge gesture is excluded', async ({ page, context }) => {
     await page.goto(address());
     await gesture(page, context, { fromX: 8, toX: 280, duration: 100 });
+    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+  });
+  test('the scrolling pane keeps native vertical touch scrolling', async ({ page, context }) => {
+    await page.goto(address());
+    const area = await page.locator('.section-carousel-container').boundingBox();
+    await gesture(page, context, {
+      fromX: 150,
+      toX: 150,
+      y: area.y + 430,
+      toY: area.y + 170,
+      duration: 500,
+    });
+    await expect
+      .poll(() => page.locator('.section-carousel-pane.is-active').evaluate((el) => el.scrollTop))
+      .toBeGreaterThan(100);
+    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+  });
+  test('a nested horizontal scroller consumes its own touch gesture', async ({ page, context }) => {
+    await page.goto(address());
+    // Exercise the carousel's existing scroll-area exclusion with an actual native scroll owner.
+    await page.locator('.section-carousel-pane.is-active').evaluate((pane) => {
+      const scroller = document.createElement('div');
+      scroller.dataset.testid = 'nested-horizontal-scroller';
+      scroller.style.cssText =
+        'overflow-x:auto;overflow-y:hidden;flex:none;height:80px;touch-action:pan-x';
+      const content = document.createElement('div');
+      content.style.cssText = 'width:1200px;height:80px';
+      scroller.append(content);
+      pane.prepend(scroller);
+    });
+    const scroller = page.getByTestId('nested-horizontal-scroller');
+    const box = await scroller.boundingBox();
+    await gesture(page, context, { y: box.y + 40, duration: 500 });
+    await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100);
     await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
   });
   test('manual reduced motion uses instant change without finger-follow slide', async ({

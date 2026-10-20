@@ -1,8 +1,10 @@
 import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { auditMockupStyles } from '../mockup-style-audit.mjs';
+import { attachBrowserDiagnostics } from './browser-diagnostics.mjs';
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = requireMobile('@playwright/test');
+test.afterEach(async ({ page }, testInfo) => attachBrowserDiagnostics(page, testInfo));
 
 for (const navigation of ['A'])
   test(`navigation A action placement: ${navigation}`, async ({ page }) => {

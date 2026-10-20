@@ -5,7 +5,7 @@
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: var(--fp-space-1-5);
+  gap: var(--fp-space-1);
   background: var(--color-surface);
   border: 1px solid var(--color-outline-subtle);
   border-radius: var(--radius-card);
@@ -132,7 +132,7 @@
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: var(--fp-space-1-5);
+  gap: var(--fp-space-1);
   margin-top: var(--fp-space-1);
 }
 
