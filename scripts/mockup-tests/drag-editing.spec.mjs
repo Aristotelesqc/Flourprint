@@ -91,6 +91,24 @@ test.describe('L104 direct drag enters editing', () => {
     await gesture.close();
   });
 
+  test('the reading-mode keyboard alternative previews the new draft without becoming stale', async ({
+    page,
+  }) => {
+    await page.goto(url({ stepDesign: 'rail' }));
+    const before = await titles(page).allTextContents();
+    await page.getByTestId('drag-handle-divide').filter({ visible: true }).press('ArrowUp');
+    await expect(page.getByTestId('save-recipe')).toBeVisible();
+    await expect(modal(page)).toContainText('This move changes dependencies');
+    await expect(modal(page)).not.toContainText('draft has changed');
+    const apply = modal(page).getByRole('button', { name: 'Apply', exact: true });
+    await expect(apply).toBeEnabled();
+    await apply.click();
+    await expect(titles(page)).not.toHaveText(before);
+    await page.getByRole('button', { name: 'Undo change', exact: true }).click();
+    await expect(titles(page)).toHaveText(before);
+    await expect(page.getByRole('button', { name: 'Undo change', exact: true })).toBeDisabled();
+  });
+
   for (const motion of ['standard', 'reduce']) {
     test(`outside drop uses actual return motion, respecting ${motion}`, async ({
       page,

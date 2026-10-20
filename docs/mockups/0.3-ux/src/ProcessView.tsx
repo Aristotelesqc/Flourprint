@@ -686,6 +686,7 @@ export function ProcessView({
   const [touchRefusal, setTouchRefusal] = useState<{ stepId: string; error: DomainError } | null>(
     null,
   );
+  const [pendingMove, setPendingMove] = useState<{ index: number; delta: number } | null>(null);
   const { process } = store.content;
   const rootRef = useRef<HTMLDivElement>(null);
   const focusTargetRef = useRef<{ id: string; type: 'menu' | 'drag' } | null>(null);
@@ -748,15 +749,14 @@ export function ProcessView({
     return comp ? comp.id : null;
   };
 
-  const propose = (index: number, delta: number) => {
-    if (touchRefusal) setTouchRefusal(null);
-    const step = process.steps[index];
-    const after = delta < 0 ? (process.steps[index - 2]?.id ?? null) : process.steps[index + 1]?.id;
+  const executePropose = (index: number, delta: number, currentProcess: Process) => {
+    const step = currentProcess.steps[index];
+    const after =
+      delta < 0
+        ? (currentProcess.steps[index - 2]?.id ?? null)
+        : currentProcess.steps[index + 1]?.id;
     if (!step || after === undefined) return;
-    if (!store.state.draft) {
-      store.edit();
-    }
-    const result = moveStep(process, step.id, after);
+    const result = moveStep(currentProcess, step.id, after);
     if (!result.ok) {
       setRefusal({ stepId: step.id, error: result.error });
       setAnnouncement(stepCopy(locale, 'refusalNextSteps'));
@@ -766,8 +766,26 @@ export function ProcessView({
         setAnnouncement(t(locale, 'changeOrderOnly'));
       }
     } else if (result.value.kind === 'chain') {
-      setProposal({ source: process, result: result.value, stepId: step.id });
+      setProposal({ source: currentProcess, result: result.value, stepId: step.id });
     }
+  };
+
+  useEffect(() => {
+    if (pendingMove && store.state.draft) {
+      const { index, delta } = pendingMove;
+      setPendingMove(null);
+      executePropose(index, delta, process);
+    }
+  }, [pendingMove, store.state.draft, process]);
+
+  const propose = (index: number, delta: number) => {
+    if (touchRefusal) setTouchRefusal(null);
+    if (!store.state.draft) {
+      setPendingMove({ index, delta });
+      store.edit();
+      return;
+    }
+    executePropose(index, delta, process);
   };
 
   const proposeDuplicate = (step: ProcessStep) => {
