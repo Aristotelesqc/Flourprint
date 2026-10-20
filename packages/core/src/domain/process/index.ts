@@ -15,7 +15,6 @@ export {
   type MoveResult,
   type NotCarried,
   type NotDuplicableReason,
-  type Subject,
 } from './move.js';
 export { foldSchedule, phasesDurationS } from './technique.js';
 export {

@@ -160,6 +160,12 @@ const anchor = union('kind', {
   pieces: (v, w) => fields(v, w, { kind: string, count: number, gramsEach: number }),
 });
 
+/** The mass a step works on (process.md, Subjects and component phases). */
+const subject = union('kind', {
+  mainDough: (v, w) => fields(v, w, { kind: string }),
+  component: (v, w) => fields(v, w, { kind: string, id: string }),
+});
+
 const endCriterion = union('kind', {
   duration: (v, w) => fields(v, w, { kind: string }),
   observation: (v, w) => fields(v, w, { kind: string }, { description: string }),
@@ -268,6 +274,7 @@ const step: Check = (v, w) =>
       technique,
       durationMode: oneOf('manual', 'model'),
       equipment: stepEquipment,
+      subject,
     },
   );
 

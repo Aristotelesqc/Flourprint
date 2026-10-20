@@ -399,7 +399,8 @@ Examples (hand-checked against the rules above):
 
 ## Subjects and component phases
 
-**0.3.0 specification merged in #96 (audit 91-R2); implementation tracked in #106.** A recipe describes the
+**0.3.0 specification merged in #96 (audit 91-R2); subjects, their validation, moves, copies,
+documents and the fermentation rule implemented in #106 slice A (contract 0.16.0).** A recipe describes the
 whole production protocol: a poolish prepared once, fermented 16 h at 21 °C and then 8 h at
 4 °C, a tangzhong cooked while it rests, and only then the main dough. These phases concern the
 **same component and the same mass**, not independent poolishes.
@@ -442,7 +443,8 @@ type Subject = { kind: 'mainDough' } | { kind: 'component'; id: string }; // id:
   estimate is `insufficient_data` with the reason `component_phases_unmodelled`: this model has no
   validated temperature path across them, no coefficient is added here, and it never silently
   counts one phase. The recorded phases, durations and temperatures remain, are scheduled and are
-  shown.
+  shown. The water temperature (fermentation.md) uses the temperature of the component's last
+  fermenting phase, the one it has when it joins the dough.
 - **Moves and copies** (Step move and duplicate, #92). One predicate, `subjectOf(step)` (the
   explicit `subject`, else the component named by the step's id, else the main dough), is used by
   both. A chain move needs the step's neighbours and target to share its subject
@@ -450,12 +452,14 @@ type Subject = { kind: 'mainDough' } | { kind: 'component'; id: string }; // id:
   (`incorporationStep`); an order-only move keeps the subject. A step with an explicit component
   subject can be duplicated and the copy keeps the subject and adds no mass; the legacy step whose
   id is the component's is not duplicable.
-- **Compatibility.** Existing recipes have no `subject` and mean what they meant. Adding phases to
+- **Compatibility.** Existing recipes have no `subject` and mean what they meant: the rule that
+  every step of a component is upstream of its join is checked only for a component with at least
+  one step that names it as its `subject`, so a stored legacy recipe is never refused by it. Adding phases to
   one, as above, keeps it valid: the legacy step stays, the new steps name their subject, and the
   join is rewired to wait for them. An
   older app refuses a document holding `subject` as an unknown field (`persistence.md`), never
-  misreads it. `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge,
-  by the implementing pull request.
+  misreads it. `CONTRACT_VERSION` is bumped by one minor step, from `0.15.0` to `0.16.0`, by the
+  implementing pull request (#106 slice A).
 
 Examples (hand-checked against the rules above):
 
@@ -544,8 +548,12 @@ The chain move applies only when all of these hold; any other case is `Ambiguous
 - The target `after` has at most one dependent `B`, counted after the step is taken out. The
   target is not a descendant of the step.
 - **Same subject.** `P`, `T`, `after` and `B`, where present, have the step's subject; otherwise
-  `reason: 'crossesWorkpiece'`. A component's steps are rearranged among themselves; a step never
-  crosses into another component or into the main dough by a drag.
+  `reason: 'crossesWorkpiece'`. One exception: for a component's step, `T` or `B` may be the step
+  where that component joins the main dough (the step incorporating it, else, without declared
+  incorporations, the first step of another subject depending on one of its phases), so the last
+  phase can be moved among the others (Subjects, example 7). A component's steps are rearranged
+  among themselves; a step never crosses into another component or into the main dough by a
+  drag.
 - **No incorporation moved.** The step carries no `incorporations` (`reason: 'incorporationStep'`):
   moving the step where a component or ingredient joins the dough changes what the dough holds
   when. It is moved by order only, or its dependencies are edited explicitly.

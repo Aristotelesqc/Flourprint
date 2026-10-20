@@ -58,6 +58,10 @@ export interface StepTechnique {
   readonly endCheck?: string;
 }
 
+/** Which work a step belongs to (process.md, Subjects and component phases). */
+export type Subject =
+  { readonly kind: 'mainDough' } | { readonly kind: 'component'; readonly id: string };
+
 export interface ProcessStep {
   readonly id: StepId;
   /** Open operation code (`autolyse`, `mix`, `fold`, `bulk`, `shape`, `bake`, …), see #5. */
@@ -80,6 +84,8 @@ export interface ProcessStep {
   readonly durationMode?: 'manual' | 'model';
   /** How the step is cooked or held (equipment.md); recorded, never read by the scheduler. */
   readonly equipment?: StepEquipment;
+  /** The mass the step works on; absent = derived (process.md, Subjects and component phases). */
+  readonly subject?: Subject;
 }
 
 export interface Process {
