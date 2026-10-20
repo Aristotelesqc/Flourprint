@@ -81,10 +81,21 @@ describe('hydration entry of a component', () => {
     // The milk alone brings 273.357… points.
     expect(reason(known, milkTangzhong, 273)).toMatch(/allocated/);
     expect(reason(known, milkTangzhong, 273.36)).toBeUndefined();
+    expect(reason(known, milkTangzhong, 273.35)).toMatch(/allocated/);
     expect(reason(formula({ status: 'unknown' }), milkTangzhong, 500)).toMatch(/unknown/);
     expect(reason(known, { ...milkTangzhong, flourPct: 0 }, 500)).toMatch(/no flour/);
     expect(reason(known, milkTangzhong, Number.NaN)).toMatch(/finite/);
     expect(reason(known, milkTangzhong, Infinity)).toMatch(/finite/);
+    for (const [f, c, t] of [
+      [formula({ status: 'unknown' }), milkTangzhong, 500],
+      [known, { ...milkTangzhong, flourPct: 0 }, 500],
+      [known, milkTangzhong, Number.NaN],
+    ] as const) {
+      expect(hydrationForLiquidRatio(f, c, t)).toMatchObject({
+        ok: false,
+        error: { code: 'InvalidFormula', details: { path: 'hydration' } },
+      });
+    }
     expect(hydrationForLiquidRatio(known, milkTangzhong, 273)).toMatchObject({
       ok: false,
       error: { code: 'InvalidFormula', details: { path: 'hydration' } },

@@ -263,7 +263,8 @@ The engine names a component from its liquid ratio
   content counts, as in `r`). It is refused with `InvalidFormula` (`path: 'hydration'`) when `t`
   is not finite, when the component has no flour, when an allocated ingredient's water content
   is unknown, or when `t` is below the water the allocated ingredients already bring; `t` equal
-  to it stores 0. Without allocations, `t = hydrationPct`, so a negative `t` is refused. The
+  to it stores 0. Without allocations (or with allocations that bring no water), `t = hydrationPct`, so a
+  negative `t` is refused. The
   flour:liquid ratio below stays a separate input by mass.
 - **Ratio entry** (owner decisions of 2026-10-12). A component's ratio is read and typed as
   flour:liquid parts by **mass**, the way a baker weighs it: a milk tangzhong of 50 g flour and
