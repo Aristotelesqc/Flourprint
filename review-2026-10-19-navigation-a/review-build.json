@@ -1,6 +1,6 @@
 {
-  "revision": "d2e8febb2a3150a83c50a0e63cacd1a91900b202",
-  "sourceSha256": "844d78e929486bac637f15c3e6ea9ed3b1456f1c2dad06ddddbada53e9f54a0b",
+  "revision": "85f9a69ccea48ddd48be06f2f5d5481060b1da28",
+  "sourceSha256": "1b2bd13ad448e4c456e4f6c2682806b80fab86920f648f25a5b425a85125346d",
   "build": {
     "version": "0.3.0",
     "build": "0.3.0-local",
@@ -8,5 +8,5 @@
     "channel": "local",
     "versionCode": 3000
   },
-  "label": "v0.3.0 · tender-meadow · local"
+  "label": "v0.3.0 · golden-naan · local"
 }
