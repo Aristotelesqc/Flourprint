@@ -1,4 +1,4 @@
-/* Flourprint Step Drag & Reorder Styles (L96, L97, L100) */
+/* Flourprint Step Drag & Reorder Styles (L96, L97, L100, L104) */
 
 .step-cluster {
   display: inline-flex;
@@ -45,16 +45,94 @@
   position: relative;
 }
 
-.fp-step-draggable.is-dragging {
-  opacity: 0.95;
-  box-shadow: var(--shadow-high, 0 10px 25px -5px rgba(0, 0, 0, 0.2));
-  z-index: 50;
+/* Origin placeholder retains dimensions while clone floats */
+.fp-step-draggable.is-origin-placeholder {
+  opacity: 0.35;
+  filter: grayscale(0.5);
+  border-radius: var(--radius-card, 1rem);
   pointer-events: none;
-  touch-action: none;
-  will-change: transform;
 }
 
-/* Immediate geometric feedback without CSS animations/keyframes (ADR / OS reduction) */
+/* Detached Portal Layer & Scrim escaping nested carousels and accordions */
+.fp-drag-portal-layer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.fp-drag-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 17, 14, 0.08);
+  pointer-events: none;
+}
+
+[data-theme='dark'] .fp-drag-scrim,
+[data-theme='amoled'] .fp-drag-scrim {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Floating lifted opaque card above rows/accordion headers (ADR 0021 fp.motion.step-drag) */
+.fp-drag-floating-card {
+  position: fixed;
+  pointer-events: none;
+  box-shadow:
+    0 12px 32px -4px rgba(28, 25, 21, 0.28),
+    0 4px 12px -2px rgba(28, 25, 21, 0.16);
+  border-radius: var(--radius-card, 1rem);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-outline, #e4e0d8);
+  opacity: 1;
+  overflow: hidden;
+  box-sizing: border-box;
+  will-change: left, top;
+}
+
+[data-theme='dark'] .fp-drag-floating-card,
+[data-theme='amoled'] .fp-drag-floating-card {
+  box-shadow:
+    0 16px 36px -4px rgba(0, 0, 0, 0.6),
+    0 6px 16px -2px rgba(0, 0, 0, 0.4);
+  background: var(--color-surface, #2a2622);
+  border-color: var(--color-outline, #3b3631);
+}
+
+/* Visible insertion marker between step rows */
+.fp-drag-insertion-marker {
+  height: 4px;
+  margin: 4px 0;
+  border-radius: 9999px;
+  background: var(--color-primary, #a9490a);
+  box-shadow: 0 0 8px rgba(169, 73, 10, 0.5);
+  pointer-events: none;
+  position: relative;
+  z-index: 10;
+}
+
+.fp-drag-insertion-marker::before,
+.fp-drag-insertion-marker::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary, #a9490a);
+}
+
+.fp-drag-insertion-marker::before {
+  left: 0;
+}
+
+.fp-drag-insertion-marker::after {
+  right: 0;
+}
+
+/* Backward compatibility placeholder */
 .fp-drag-placeholder {
   height: 0.25rem;
   margin: 0.25rem 0;

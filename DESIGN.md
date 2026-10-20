@@ -458,15 +458,34 @@ intermediate frame. Native overlay/performance conformance remains separately te
 
 ### Round 2 fidelity corrections (#134)
 
-The #123 review consumer uses `moveStep` and `duplicateStep` from core. An order-only move
-applies immediately, without confirmation, and announces that only display order changed.
+The #123 review consumer uses `moveStep` and `duplicateStep` from core. An actual drag
+enters or resumes editing; a valid drop constitutes one undoable draft edit, and Save is required
+before the move counts as a saved revision.
 A pending chain change is separate from the draft: the sheet lists affected dependencies,
 core-projected times and preparation windows before Apply. Before/After blocks wrap without nested list indentation; dates disambiguate
 changes across midnight. A copy opens for review with the omitted fields listed, and an unknown
 duration stays explicitly unknown. Cancellation and typed refusals leave the draft unchanged;
 accepted changes join its existing undo/redo history. This remains a prototype binding, not
-production adoption or a decision on drag handles versus an explicit reorder mode. The UI never
-turns a refused downward move into an equivalent upward move.
+production adoption. The UI never turns a refused downward move into an equivalent upward move.
+
+### Step drag-and-drop and recipe history semantics (L103, L104, #123, #133)
+
+**Recipe history & recovery (L103, #152):**
+
+- **Meaningful Save:** an effective Save creates immutable recovery states (`SavedRevision`), not curated baker milestones ("v2", "v3") or separate variants; `Recipe.version` is strictly an internal head counter.
+- **Explicit reference promotion:** reference versions (`ReferenceVersion { number, version, name? }`) are explicit user promotions of a specific saved revision. They carry their own per-recipe sequence (`number`), leaving head version untouched. No historical reference version or milestone is inferred from legacy data.
+- **Non-destructive restore:** restoring a saved revision copies that revision's content into a new head revision without deleting, rewriting, or truncating any intervening revisions. A bake session started on an earlier revision retains its snapshot and reference.
+- **Draft isolation:** restore and promote operate on saved revisions only and never read, rebase, or delete an open draft. If a draft's baseline becomes stale (`baseVersion !== recipe.version`), its subsequent Save is refused with `HeadConflict` without modifying state or losing draft edits. Trashed recipes refuse save, restore, and promote (`RecipeTrashed`).
+- **Mockup prototype boundary:** these state semantics in `docs/mockups/0.3-ux/src/model.ts` provide disposable prototype state for interface evaluation only; they do not represent real engine persistence, SQLite storage, or certified multi-device synchronization.
+
+**Drag enters editing (L104, #123):**
+
+- **Activation:** an actual drag past the movement activation threshold enters or resumes recipe editing; touching or tapping the handle alone does not open editing.
+- **Drop semantics:** one valid drop constitutes one undoable draft edit. Save is still required before the moved order counts as a saved revision or a baseline.
+- **Cancellations & invalid drops:** a rejected, cancelled, or outside drop returns to the origin, restores pre-gesture order and dependencies, and marks nothing dirty. If a drag opened editing but resulted in no change, the draft is clean and may be discarded silently on exit.
+- **Back navigation:** pressing Back during an active drag gesture cancels the drag operation only. A subsequent Back triggers the normal unsaved changes leave guard.
+- **Visuals & feedback:** during drag, the lifted step row is rendered as an opaque surface above accordions following finger coordinates (`fingerX`, `fingerY`). An explicit placeholder indicates the insertion gap with autoscroll near list edges. Surrounding steps use gentle dimming for target visibility without shifting unrelated panels.
+- **Open choices (O-items):** compact/rail/outline treatments, drag threshold distances, and hold timings remain open proposals rather than rigid universal defaults (no mandatory 5px / 350ms Material restriction).
 
 The owner rejected the first restoration proposal as still regressive. Passing controls,
 component coverage and motion evidence do not establish visual fidelity. In particular,

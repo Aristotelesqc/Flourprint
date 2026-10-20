@@ -37,7 +37,11 @@ test('grams recompute, save persists, name persists, revisions exist', async ({ 
   await expect(page.getByRole('heading', { name: 'Pain du samedi', exact: true })).toBeVisible();
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('701');
   await page.getByRole('tab', { name: 'Historique', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Version 1', exact: true })).toBeVisible();
+  // L103: recovery revisions are not automatically promoted reference versions.
+  await expect(page.getByTestId('restore-revision-1')).toBeVisible();
+  await expect(page.locator('[aria-labelledby="heading-ref-versions"]')).toContainText(
+    'Aucune version de référence définie',
+  );
 });
 test('invalid input remains repairable, undo redo reset and cancel work', async ({ page }) => {
   await page.goto(recipe);

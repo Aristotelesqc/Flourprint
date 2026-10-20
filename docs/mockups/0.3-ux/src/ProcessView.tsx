@@ -1,6 +1,7 @@
 import { Ui } from './library';
 import { catalogText, curatedText } from './template-presentation';
 import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import {
   duplicateStep,
   insertStepAfter,
@@ -682,6 +683,9 @@ export function ProcessView({
   } | null>(null);
 
   const [refusal, setRefusal] = useState<{ stepId: string; error: DomainError } | null>(null);
+  const [touchRefusal, setTouchRefusal] = useState<{ stepId: string; error: DomainError } | null>(
+    null,
+  );
   const { process } = store.content;
   const rootRef = useRef<HTMLDivElement>(null);
   const focusTargetRef = useRef<{ id: string; type: 'menu' | 'drag' } | null>(null);
@@ -745,9 +749,13 @@ export function ProcessView({
   };
 
   const propose = (index: number, delta: number) => {
+    if (touchRefusal) setTouchRefusal(null);
     const step = process.steps[index];
     const after = delta < 0 ? (process.steps[index - 2]?.id ?? null) : process.steps[index + 1]?.id;
     if (!step || after === undefined) return;
+    if (!store.state.draft) {
+      store.edit();
+    }
     const result = moveStep(process, step.id, after);
     if (!result.ok) {
       setRefusal({ stepId: step.id, error: result.error });
@@ -778,9 +786,10 @@ export function ProcessView({
     }
   };
 
-  // Drag and drop implementation via useStepDrag (L96)
+  // Drag and drop implementation via useStepDrag (L96, L104)
   const {
     dragState,
+    floatingCardRef,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
@@ -789,21 +798,36 @@ export function ProcessView({
   } = useStepDrag({
     process,
     locale,
+    planning,
+    onStartDrag: () => {
+      if (touchRefusal) setTouchRefusal(null);
+      if (!store.state.draft) {
+        store.edit();
+      }
+    },
     onMove: (stepId: StepId, after: StepId | null) => {
       const result = moveStep(process, stepId, after);
       if (!result.ok) {
-        setRefusal({ stepId, error: result.error });
-        setAnnouncement(stepCopy(locale, 'refusalNextSteps'));
+        setTouchRefusal({ stepId, error: result.error });
+        setAnnouncement(t(locale, refusalKey(result.error)));
+        focusTargetRef.current = { id: stepId, type: 'drag' };
+        return 'refused';
       } else if (result.value.kind === 'unchanged') {
-        // No mutation on unchanged move
+        return 'unchanged';
       } else if (result.value.kind === 'orderOnly') {
         if (store.applyProcess(result.value.process)) {
+          if (touchRefusal) setTouchRefusal(null);
           focusTargetRef.current = { id: stepId, type: 'drag' };
-          setAnnouncement(t(locale, 'changeOrderOnly'));
+          setAnnouncement(stepCopy(locale, 'orderChanged'));
+          return 'accepted';
         }
+        return 'refused';
       } else if (result.value.kind === 'chain') {
+        if (touchRefusal) setTouchRefusal(null);
         setProposal({ source: process, result: result.value, stepId });
+        return 'pending';
       }
+      return 'refused';
     },
     onAnnounce: (msg: string) => setAnnouncement(msg),
   });
@@ -863,23 +887,18 @@ export function ProcessView({
       dragState.targetAfterId !== undefined &&
       ((index === 0 && dragState.targetAfterId === null) ||
         (index > 0 && dragState.targetAfterId === process.steps[index - 1]?.id));
-
-    const dragStyle =
-      isDragging && dragState.offsetY !== 0
-        ? ({
-            transform: `translateY(${dragState.offsetY}px)`,
-            zIndex: 50,
-          } as const)
-        : undefined;
+    const showPlaceholderBelow =
+      dragState.isDragging &&
+      dragState.targetAfterId === step.id &&
+      index === process.steps.length - 1;
 
     return (
       <div
         key={step.id}
         data-step-id={step.id}
-        style={dragStyle}
-        className={`fp-step-draggable ${isDragging ? 'is-dragging' : ''} ${isPreheat ? 'fp-step-branch-preheat' : ''}`}
+        className={`fp-step-draggable ${isDragging ? 'is-origin-placeholder' : ''} ${isPreheat ? 'fp-step-branch-preheat' : ''}`}
       >
-        {showPlaceholderAbove && <div className="fp-drag-placeholder" aria-hidden="true" />}
+        {showPlaceholderAbove && <div className="fp-drag-insertion-marker" aria-hidden="true" />}
         <StepRow
           number={displayNumber}
           icon={operationIcon(step.operation)}
@@ -898,7 +917,7 @@ export function ProcessView({
               : `${t(locale, 'editStep')} : ${titleOf(step, locale)}`
           }
           actions={
-            planning ? undefined : store.state.draft ? (
+            planning ? undefined : (
               <div className="step-cluster">
                 <DragHandle
                   step={step}
@@ -907,95 +926,100 @@ export function ProcessView({
                   locale={locale}
                   title={titleOf(step, locale)}
                   isDragging={isDragging}
-                  onPointerDown={(e) => handlePointerDown(step.id, e)}
+                  onPointerDown={(e) => {
+                    if (touchRefusal) setTouchRefusal(null);
+                    handlePointerDown(step.id, e);
+                  }}
                   onPointerMove={handlePointerMove}
                   onPointerUp={handlePointerUp}
                   onPointerCancel={handlePointerCancel}
                   onLostPointerCapture={handleLostPointerCapture}
                   onKeyboardMove={(idx, delta) => propose(idx, delta)}
                 />
-                <div style={{ position: 'relative' }}>
-                  <IconButton
-                    icon="more"
-                    label={`${stepCopy(locale, 'stepActions')} : ${titleOf(step, locale)}`}
-                    onClick={() => setMenuOpenStepId(menuOpenStepId === step.id ? null : step.id)}
-                    dataTestId={`step-menu-${step.id}`}
-                  />
-                  {menuOpenStepId === step.id && (
-                    <Menu
-                      open
-                      onClose={() => setMenuOpenStepId(null)}
-                      title={titleOf(step, locale)}
-                      closeLabel={t(locale, 'close')}
-                      anchor="bottom"
-                    >
-                      <div
-                        className="stack"
-                        style={{ gap: '0.25rem', minWidth: '11rem', padding: '0.25rem' }}
+                {store.state.draft && (
+                  <div style={{ position: 'relative' }}>
+                    <IconButton
+                      icon="more"
+                      label={`${stepCopy(locale, 'stepActions')} : ${titleOf(step, locale)}`}
+                      onClick={() => setMenuOpenStepId(menuOpenStepId === step.id ? null : step.id)}
+                      dataTestId={`step-menu-${step.id}`}
+                    />
+                    {menuOpenStepId === step.id && (
+                      <Menu
+                        open
+                        onClose={() => setMenuOpenStepId(null)}
+                        title={titleOf(step, locale)}
+                        closeLabel={t(locale, 'close')}
+                        anchor="bottom"
                       >
-                        <Button
-                          variant="quiet"
-                          onClick={() => {
-                            setEditing(step);
-                            setMenuOpenStepId(null);
-                          }}
+                        <div
+                          className="stack"
+                          style={{ gap: '0.25rem', minWidth: '11rem', padding: '0.25rem' }}
                         >
-                          {stepCopy(locale, 'editStep')}
-                        </Button>
-                        <Button
-                          variant="quiet"
-                          disabled={index === 0}
-                          onClick={() => {
-                            propose(index, -1);
-                            setMenuOpenStepId(null);
-                          }}
-                        >
-                          {stepCopy(locale, 'moveUp')}
-                        </Button>
-                        <Button
-                          variant="quiet"
-                          disabled={index === process.steps.length - 1}
-                          onClick={() => {
-                            propose(index, 1);
-                            setMenuOpenStepId(null);
-                          }}
-                        >
-                          {stepCopy(locale, 'moveDown')}
-                        </Button>
-                        <Button
-                          variant="quiet"
-                          onClick={() => {
-                            setDependencyEditingStep(step);
-                            setMenuOpenStepId(null);
-                          }}
-                        >
-                          {stepCopy(locale, 'editDependencies')}
-                        </Button>
-                        <Button
-                          variant="quiet"
-                          icon="copy"
-                          onClick={() => {
-                            proposeDuplicate(step);
-                            setMenuOpenStepId(null);
-                          }}
-                        >
-                          {t(locale, 'duplicate')}
-                        </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() => {
-                            setRemoving(step.id);
-                            setMenuOpenStepId(null);
-                          }}
-                        >
-                          {t(locale, 'remove')}
-                        </Button>
-                      </div>
-                    </Menu>
-                  )}
-                </div>
+                          <Button
+                            variant="quiet"
+                            onClick={() => {
+                              setEditing(step);
+                              setMenuOpenStepId(null);
+                            }}
+                          >
+                            {stepCopy(locale, 'editStep')}
+                          </Button>
+                          <Button
+                            variant="quiet"
+                            disabled={index === 0}
+                            onClick={() => {
+                              propose(index, -1);
+                              setMenuOpenStepId(null);
+                            }}
+                          >
+                            {stepCopy(locale, 'moveUp')}
+                          </Button>
+                          <Button
+                            variant="quiet"
+                            disabled={index === process.steps.length - 1}
+                            onClick={() => {
+                              propose(index, 1);
+                              setMenuOpenStepId(null);
+                            }}
+                          >
+                            {stepCopy(locale, 'moveDown')}
+                          </Button>
+                          <Button
+                            variant="quiet"
+                            onClick={() => {
+                              setDependencyEditingStep(step);
+                              setMenuOpenStepId(null);
+                            }}
+                          >
+                            {stepCopy(locale, 'editDependencies')}
+                          </Button>
+                          <Button
+                            variant="quiet"
+                            icon="copy"
+                            onClick={() => {
+                              proposeDuplicate(step);
+                              setMenuOpenStepId(null);
+                            }}
+                          >
+                            {t(locale, 'duplicate')}
+                          </Button>
+                          <Button
+                            variant="danger"
+                            onClick={() => {
+                              setRemoving(step.id);
+                              setMenuOpenStepId(null);
+                            }}
+                          >
+                            {t(locale, 'remove')}
+                          </Button>
+                        </div>
+                      </Menu>
+                    )}
+                  </div>
+                )}
               </div>
-            ) : undefined
+            )
           }
         >
           {step.dependsOn.some((id) => id !== previous) && (
@@ -1013,15 +1037,46 @@ export function ProcessView({
               </small>
             ))}
         </StepRow>
+        {showPlaceholderBelow && <div className="fp-drag-insertion-marker" aria-hidden="true" />}
       </div>
     );
   };
 
   return (
-    <div ref={rootRef} className="stack" data-step-design={stepDesign}>
+    <div
+      ref={rootRef}
+      className="stack"
+      data-process-root={planning ? 'planning' : 'recipe'}
+      data-step-design={stepDesign}
+    >
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>
+      {touchRefusal && (
+        <div
+          role="status"
+          aria-live="polite"
+          data-process-refusal={touchRefusal.error.code}
+          className="row"
+          style={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 'var(--fp-space-2) var(--fp-space-3)',
+            backgroundColor: 'var(--color-surface-container)',
+            borderRadius: 'var(--radius-card)',
+            color: 'var(--color-ink)',
+            fontSize: 'var(--type-label)',
+            marginBottom: 'var(--fp-space-2)',
+          }}
+        >
+          <span>{t(locale, refusalKey(touchRefusal.error))}</span>
+          <IconButton
+            icon="close"
+            label={t(locale, 'close')}
+            onClick={() => setTouchRefusal(null)}
+          />
+        </div>
+      )}
       {returnToPlanning && (
         <div
           className="row"
@@ -1433,6 +1488,94 @@ export function ProcessView({
           </div>
         </CompactDialog>
       )}
+
+      {typeof document !== 'undefined' &&
+        dragState.isDragging &&
+        dragState.floatingPosition &&
+        (() => {
+          const draggedStep = process.steps.find((s) => s.id === dragState.activeStepId);
+          if (!draggedStep) return null;
+          const isPreheat = draggedStep.operation === 'preheat';
+          const displayNumber = isPreheat ? undefined : stepNumbers.get(draggedStep.id);
+          const timing = projection.ok ? projection.value.steps[draggedStep.id] : undefined;
+          const draggedIdx = process.steps.indexOf(draggedStep);
+          const prevStepId = draggedIdx > 0 ? process.steps[draggedIdx - 1]?.id : undefined;
+
+          return createPortal(
+            <div className="fp-drag-portal-layer" data-step-design={stepDesign} aria-hidden="true">
+              <div className="fp-drag-scrim" />
+              <div
+                ref={floatingCardRef}
+                className="fp-drag-floating-card"
+                style={{
+                  left: `${dragState.floatingPosition.x}px`,
+                  top: `${dragState.floatingPosition.y}px`,
+                  width: `${dragState.floatingPosition.width}px`,
+                  height: `${dragState.floatingPosition.height}px`,
+                }}
+              >
+                <StepRow
+                  number={displayNumber}
+                  icon={operationIcon(draggedStep.operation)}
+                  title={titleOf(draggedStep, locale)}
+                  details={[
+                    ...(timing
+                      ? [`${time(locale, timing.start)} → ${time(locale, timing.end)}`]
+                      : []),
+                    ...(!planning && view === 'timeline' && timing?.start && starts.length
+                      ? [
+                          `+${duration(locale, (Date.parse(timing.start) - Math.min(...starts)) / 1000)}`,
+                        ]
+                      : []),
+                    ...stepDetails(draggedStep, locale),
+                  ]}
+                  state="planned"
+                  actions={
+                    <div className="step-cluster" aria-hidden="true">
+                      <div className="fp-drag-handle is-grabbing" aria-hidden="true">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          aria-hidden="true"
+                          focusable="false"
+                          style={{ display: 'block', pointerEvents: 'none' }}
+                        >
+                          <circle cx="5" cy="3" r="1.5" />
+                          <circle cx="11" cy="3" r="1.5" />
+                          <circle cx="5" cy="8" r="1.5" />
+                          <circle cx="11" cy="8" r="1.5" />
+                          <circle cx="5" cy="13" r="1.5" />
+                          <circle cx="11" cy="13" r="1.5" />
+                        </svg>
+                      </div>
+                    </div>
+                  }
+                >
+                  {draggedStep.dependsOn.some((id) => id !== prevStepId) && (
+                    <small>
+                      {t(locale, 'dependencies')} :{' '}
+                      {draggedStep.dependsOn
+                        .map((id) =>
+                          titleOf(process.steps.find((s) => s.id === id) ?? draggedStep, locale),
+                        )
+                        .join(', ')}
+                    </small>
+                  )}
+                  {view === 'grouped' &&
+                    draggedStep.incorporations?.map((item, i) => (
+                      <small key={i}>
+                        {t(locale, 'incorporate')} :{' '}
+                        {item.item === 'water' ? t(locale, 'water') : item.id}
+                      </small>
+                    ))}
+                </StepRow>
+              </div>
+            </div>,
+            document.body,
+          );
+        })()}
     </div>
   );
 }

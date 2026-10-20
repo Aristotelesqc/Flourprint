@@ -16,7 +16,6 @@ import {
   Button,
   BottomBar,
   IconButton,
-  Surface,
   Tabs,
   Modal,
   CompactDialog,
@@ -38,6 +37,9 @@ import { RecipeIngredients, WaterDetails } from './RecipeView';
 import { ProcessView, processDuration } from './ProcessView';
 
 import { PreparationView } from './PreparationView';
+import { RecipeHistory } from './RecipeHistory';
+import { cancelActiveStepDrag } from './StepDrag';
+import { formatHistoryError } from './history-copy';
 
 import {
   usePrototype,
@@ -52,7 +54,6 @@ import {
   t,
   duration,
   grams,
-  num,
   percent,
   colon,
   ingredientName,
@@ -292,6 +293,7 @@ export default function App() {
   );
 
   const handleCancel = () => {
+    if (cancelActiveStepDrag()) return;
     setOverlay(null);
     setEditingStepId(null);
     setReturnToPlanning(false);
@@ -316,6 +318,7 @@ export default function App() {
   };
 
   const guard = (action: () => void) => {
+    if (cancelActiveStepDrag()) return;
     if (isDraftDirty) {
       setOverlay(null);
       setPending(() => () => {
@@ -330,6 +333,11 @@ export default function App() {
 
   useEffect(() => {
     const onPop = () => {
+      if (cancelActiveStepDrag()) {
+        writeURL(route, false);
+        return;
+      }
+
       const target = readRoute();
 
       if (isDraftDirty) {
@@ -488,7 +496,7 @@ export default function App() {
                 />
               </>
             ) : (
-              <Button variant="quiet" onClick={store.edit}>
+              <Button variant="quiet" onClick={() => store.edit()}>
                 {t(locale, 'edit')}
               </Button>
             ))}
@@ -813,11 +821,20 @@ export default function App() {
 
                 <small className="header-subtitle">
                   {route.screen === 'recipe'
-                    ? `${state.draft ? t(locale, 'draft') : t(locale, 'version')} ${recipe.version} · ${duration(locale, total)}`
+                    ? (() => {
+                        if (state.draft) {
+                          return `${t(locale, 'draft')} · ${duration(locale, total)}`;
+                        }
+                        const currentMilestone = recipe.referenceVersions.find(
+                          (ref) => ref.version === recipe.version,
+                        );
+                        if (currentMilestone) {
+                          return `v${currentMilestone.number}${currentMilestone.name ? ` (${currentMilestone.name})` : ''} · ${duration(locale, total)}`;
+                        }
+                        return `${t(locale, 'ready')} · ${duration(locale, total)}`;
+                      })()
                     : undefined}
                 </small>
-
-                <small hidden></small>
               </div>
             </div>
 
@@ -877,11 +894,14 @@ export default function App() {
             className={`phone-content ${route.screen === 'recipe' ? 'has-carousel' : ''}`}
             data-scene={`${route.screen}-${section}`}
           >
-            {state.error && (
-              <p className="error-banner" role="alert">
-                {state.error}
-              </p>
-            )}
+            {!(route.screen === 'recipe' && section === 'history' && state.historyError) &&
+              (state.historyError || state.error) && (
+                <p className="error-banner" role="alert">
+                  {state.historyError
+                    ? formatHistoryError(state.historyError, locale)
+                    : state.error}
+                </p>
+              )}
 
             {route.screen === 'library' && (
               <>
@@ -933,11 +953,17 @@ export default function App() {
 
                   const dur = duration(locale, processDuration(r));
 
+                  const currentMilestone = r.referenceVersions.find(
+                    (ref) => ref.version === r.version,
+                  );
+
                   const statusText = isRunning
                     ? `${t(locale, 'running')}${remaining !== undefined ? ` · ${duration(locale, remaining)}` : ''}`
                     : r.version === 0
                       ? t(locale, 'draft')
-                      : `${t(locale, 'ready')} · v${r.version}`;
+                      : currentMilestone
+                        ? `${t(locale, 'ready')} · v${currentMilestone.number}`
+                        : t(locale, 'ready');
 
                   const description = isRunning
                     ? undefined
@@ -1091,82 +1117,12 @@ export default function App() {
                   />
                 </div>
 
-                <div>
-                  <h2>{t(locale, 'preparations')}</h2>
-                  {state.sessionHistory
-                    .filter((session) => session.recipeId === recipe.id)
-                    .map((session) => (
-                      <Surface key={session.id}>
-                        <h3>
-                          {t(locale, 'version')} {session.recipeVersion} ·{' '}
-                          {session.abandoned
-                            ? editingCopyT(locale, 'statusAbandoned')
-                            : session.outcome
-                              ? t(
-                                  locale,
-                                  session.outcome.result === 'cooked'
-                                    ? 'resultCooked'
-                                    : session.outcome.result === 'dough'
-                                      ? 'resultDough'
-                                      : session.outcome.result === 'cookedAndDough'
-                                        ? 'resultMixed'
-                                        : 'unknown',
-                                )
-                              : t(locale, 'unknown')}
-                        </h3>
-                        {!session.abandoned && session.outcome?.dough && (
-                          <p>{t(locale, session.outcome.dough)}</p>
-                        )}
-                        <p>
-                          {t(locale, 'actualDuration')}
-                          {colon(locale)}
-                          {session.endedAt
-                            ? duration(
-                                locale,
-                                (Date.parse(session.endedAt) - Date.parse(session.startedAt)) /
-                                  1000,
-                              )
-                            : t(locale, 'unknownDuration')}
-                        </p>
-                        <p>{t(locale, 'noRating')}</p>
-                      </Surface>
-                    ))}
-                  {!state.sessionHistory.some((session) => session.recipeId === recipe.id) && (
-                    <p>{t(locale, 'noPreparations')}</p>
-                  )}
-                  <h2>{t(locale, 'versions')}</h2>
-                  {recipe.revisions.length ? (
-                    recipe.revisions.map((r, index) => (
-                      <Surface key={index}>
-                        <h2>
-                          {t(locale, 'version')} {recipe.version - index - 1}
-                        </h2>
-
-                        <p>{r.name ?? recipeName(recipe, locale)}</p>
-
-                        <p className="detail-row">
-                          <span>
-                            {t(
-                              locale,
-                              r.formula.anchor.kind === 'flourTotal'
-                                ? 'flourAnchor'
-                                : r.formula.anchor.kind === 'doughWeight'
-                                  ? 'doughAnchor'
-                                  : 'piecesAnchor',
-                            )}
-                          </span>
-                          <strong>
-                            {r.formula.anchor.kind === 'pieces'
-                              ? `${num(locale, r.formula.anchor.count)} × ${grams(locale, r.formula.anchor.gramsEach)}`
-                              : grams(locale, r.formula.anchor.grams)}
-                          </strong>
-                        </p>
-                      </Surface>
-                    ))
-                  ) : (
-                    <p>{t(locale, 'historyEmpty')}</p>
-                  )}
-                </div>
+                <RecipeHistory
+                  recipe={recipe}
+                  store={store}
+                  locale={locale}
+                  isDraftDirty={isDraftDirty}
+                />
               </SectionCarousel>
             )}
 

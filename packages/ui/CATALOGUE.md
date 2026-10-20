@@ -1380,6 +1380,36 @@ Closes a bottom sheet toward the bottom edge.
 
 - `v1` (keyframes), default selection: Round 2 (`22db386`) bottom sheet: slides back down.
 
+### `fp.motion.step-drag`
+
+Settle animation for dragged step node cards snapping back to origin or settling into slot (L96, L104).
+
+**Use when**
+
+- Step drag gesture releases outside valid target, dropped on engine refusal, or cancelled by Escape/Back.
+
+**Avoid when**
+
+- Direct active finger tracking (must directly follow finger without lag or transition easing).
+
+**Accessibility**
+
+- Honours prefers-reduced-motion and manual motion reduction (instant settle without duration).
+
+**Related**
+
+- `fp.motion.tab-carousel`
+- `fp.motion.highlight`
+
+**Decisions**
+
+- [L96/L104: Step drag and drop settle motion](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [ADR 0021: motion items](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
+
+**Versions**
+
+- `v1` (keyframes), default selection: Settle animation for step drag and drop from release coordinates to target or origin position (L96, L104).
+
 ### `fp.motion.tab-carousel`
 
 Horizontal carousel slide between adjacent section tabs (L101), supporting finger-follow gestures, flick velocity, and gesture-matched springback.

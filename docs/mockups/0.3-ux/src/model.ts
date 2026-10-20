@@ -29,15 +29,28 @@ export interface Content {
   name?: string;
   names: Record<string, string>;
 }
+export interface SavedRevision extends Content {
+  version: number;
+  createdAt: string;
+  note?: string;
+}
 export interface Recipe extends Content {
   id: string;
   templateId: string;
   version: number;
-  revisions: Content[];
+  revisions: SavedRevision[];
+  savedAt: string;
+  referenceVersions: {
+    number: number;
+    version: number;
+    name?: string;
+    createdAt: string;
+  }[];
   trashed?: boolean;
 }
 export interface Draft {
   recipeId: string;
+  baseVersion: number;
   history: Content[];
   index: number;
 }
@@ -76,6 +89,10 @@ export interface DemoState {
   sessionHistory: Session[];
   checks: Record<string, string[]>;
   error: string;
+  historyError?: {
+    code: 'HeadConflict' | 'AlreadyReferenced' | 'UnknownRevision' | 'RecipeTrashed';
+    number?: number;
+  };
   invalid: Record<string, boolean>;
   pendingInputs?: Record<string, boolean>;
   resetEpoch: number;
@@ -85,6 +102,40 @@ export const instant = (value: string | number): Instant => {
   if (!parsed.ok) throw new Error('Invalid time');
   return parsed.value;
 };
+function isDeepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || typeof a !== 'object' || b === null || typeof b !== 'object') {
+    return false;
+  }
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!isDeepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  const aObj = a as Record<string, unknown>;
+  const bObj = b as Record<string, unknown>;
+  const aKeys = Object.keys(aObj).filter((k) => aObj[k] !== undefined);
+  const bKeys = Object.keys(bObj).filter((k) => bObj[k] !== undefined);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!(key in bObj)) return false;
+    if (!isDeepEqual(aObj[key], bObj[key])) return false;
+  }
+  return true;
+}
+
+export function isContentEqual(a: Content, b: Content): boolean {
+  if (a === b) return true;
+  if ((a.name ?? '') !== (b.name ?? '')) return false;
+  if (!isDeepEqual(a.names ?? {}, b.names ?? {})) return false;
+  if (!isDeepEqual(a.formula, b.formula)) return false;
+  if (!isDeepEqual(a.process, b.process)) return false;
+  return true;
+}
+
 export const recipeName = (recipe: Recipe, locale: Locale): string =>
   recipe.name ??
   catalogText(locale, `template.${recipe.templateId}`) ??
@@ -101,6 +152,8 @@ export function initialRecipes(): Recipe[] {
     process: clone(template.process),
     names: {},
     revisions: [],
+    savedAt: '2026-10-16T08:00:00.000Z',
+    referenceVersions: [],
   }));
 }
 export const currentContent = (state: DemoState): Content =>
@@ -163,7 +216,12 @@ export function initialState(locale: Locale): DemoState {
   const selected = recipes.find((r) => r.id === parameters.get('recipe')) ?? recipes[0];
   const draft =
     parameters.get('mode') === 'edit'
-      ? { recipeId: selected.id, history: [clone(selected)], index: 0 }
+      ? {
+          recipeId: selected.id,
+          baseVersion: selected.version,
+          history: [clone(selected)],
+          index: 0,
+        }
       : null;
   const initialSession = makeSession(
     recipes[0],
@@ -180,6 +238,7 @@ export function initialState(locale: Locale): DemoState {
     checks: {},
     sessionHistory: [],
     error: '',
+    historyError: undefined,
     invalid: {},
     pendingInputs: {},
     resetEpoch: 0,
@@ -253,20 +312,37 @@ export function usePrototype(locale: Locale) {
           }
         : s,
     );
-  const edit = () =>
+  const edit = (targetRecipeId?: string) =>
+    setState((s) => {
+      const id = targetRecipeId ?? s.selected;
+      if (s.draft && s.draft.recipeId === id) {
+        return s;
+      }
+      const target = s.recipes.find((r) => r.id === id) ?? s.recipes[0];
+      return {
+        ...s,
+        selected: id,
+        error: '',
+        historyError: undefined,
+        invalid: {},
+        pendingInputs: {},
+        draft: {
+          recipeId: target.id,
+          baseVersion: target.version,
+          history: [clone(target)],
+          index: 0,
+        },
+      };
+    });
+  const cancel = () =>
     setState((s) => ({
       ...s,
       error: '',
+      historyError: undefined,
       invalid: {},
       pendingInputs: {},
-      draft: {
-        recipeId: s.selected,
-        history: [clone(s.recipes.find((r) => r.id === s.selected) ?? s.recipes[0])],
-        index: 0,
-      },
+      draft: null,
     }));
-  const cancel = () =>
-    setState((s) => ({ ...s, error: '', invalid: {}, pendingInputs: {}, draft: null }));
   const apply = (command: FormulaEdit, names?: Record<string, string>): boolean => {
     if (!state.draft) return false;
     const result = applyFormulaEdit(content.formula, command);
@@ -304,19 +380,66 @@ export function usePrototype(locale: Locale) {
       setState((s) => ({ ...s, error: t(locale, 'refused') }));
       return false;
     }
+    const targetRecipe = state.recipes.find((r) => r.id === state.draft?.recipeId);
+    if (!targetRecipe) return false;
+    if (targetRecipe.trashed) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'RecipeTrashed' },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    if (state.draft.baseVersion !== targetRecipe.version) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'HeadConflict' },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    const isNewRecipe = targetRecipe.version === 0;
+    if (!isNewRecipe && isContentEqual(content, targetRecipe)) {
+      setState((s) => ({
+        ...s,
+        draft: null,
+        invalid: {},
+        pendingInputs: {},
+        error: '',
+        historyError: undefined,
+      }));
+      return true;
+    }
+    const nowIso = new Date().toISOString();
+    const nextRevisions = isNewRecipe
+      ? targetRecipe.revisions
+      : [
+          ...targetRecipe.revisions,
+          {
+            formula: clone(targetRecipe.formula),
+            process: clone(targetRecipe.process),
+            name: targetRecipe.name,
+            names: clone(targetRecipe.names),
+            version: targetRecipe.version,
+            createdAt: targetRecipe.savedAt,
+          },
+        ];
+    const nextVersion = isNewRecipe ? 1 : targetRecipe.version + 1;
     setState((s) => ({
       ...s,
       draft: null,
       invalid: {},
       pendingInputs: {},
       error: '',
+      historyError: undefined,
       recipes: s.recipes.map((r) =>
-        r.id === s.selected
+        r.id === targetRecipe.id
           ? {
               ...r,
               ...clone(content),
-              version: r.version + 1,
-              revisions: [clone(r), ...r.revisions],
+              version: nextVersion,
+              savedAt: nowIso,
+              revisions: nextRevisions,
             }
           : r,
       ),
@@ -393,24 +516,33 @@ export function usePrototype(locale: Locale) {
         : s,
     );
   const reset = () =>
-    setState((s) =>
-      s.draft
-        ? {
-            ...s,
-            error: '',
-            invalid: {},
-            pendingInputs: {},
-            resetEpoch: s.resetEpoch + 1,
-            draft: {
-              ...s.draft,
-              history: [clone(s.recipes.find((r) => r.id === s.selected) ?? s.recipes[0])],
-              index: 0,
-            },
-          }
-        : s,
-    );
+    setState((s) => {
+      if (!s.draft) return s;
+      const target = s.recipes.find((r) => r.id === s.selected) ?? s.recipes[0];
+      return {
+        ...s,
+        error: '',
+        historyError: undefined,
+        invalid: {},
+        pendingInputs: {},
+        resetEpoch: s.resetEpoch + 1,
+        draft: {
+          ...s.draft,
+          baseVersion: target.version,
+          history: [clone(target)],
+          index: 0,
+        },
+      };
+    });
   const select = (id: string) =>
-    setState((s) => ({ ...s, selected: id, error: '', invalid: {}, pendingInputs: {} }));
+    setState((s) => ({
+      ...s,
+      selected: id,
+      error: '',
+      historyError: undefined,
+      invalid: {},
+      pendingInputs: {},
+    }));
   const create = (templateId: string) => {
     const template = RECIPE_TEMPLATES.find((r) => r.id === templateId);
     const base = template ? clone(template) : blankRecipe();
@@ -432,6 +564,8 @@ export function usePrototype(locale: Locale) {
       names: {},
       version: 0,
       revisions: [],
+      savedAt: new Date().toISOString(),
+      referenceVersions: [],
     };
     setState((s) => ({
       ...s,
@@ -439,8 +573,9 @@ export function usePrototype(locale: Locale) {
       selected: created.id,
       invalid: {},
       pendingInputs: {},
-      draft: { recipeId: created.id, history: [clone(created)], index: 0 },
+      draft: { recipeId: created.id, baseVersion: 0, history: [clone(created)], index: 0 },
       error: '',
+      historyError: undefined,
     }));
     return created.id;
   };
@@ -539,6 +674,142 @@ export function usePrototype(locale: Locale) {
     });
   const log = (text: string) =>
     updateSession((s) => ({ ...s, journal: [{ at: instant(Date.now()), text }, ...s.journal] }));
+  const restoreRevision = (version: number, expectedHead?: number): boolean => {
+    const targetRecipe = state.recipes.find((r) => r.id === state.selected);
+    if (!targetRecipe) return false;
+    if (targetRecipe.trashed) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'RecipeTrashed' },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    if (expectedHead !== undefined && expectedHead !== targetRecipe.version) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'HeadConflict' },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    const sourceRevision: Content | undefined =
+      targetRecipe.version === version
+        ? targetRecipe
+        : targetRecipe.revisions.find((r) => r.version === version);
+    if (!sourceRevision) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'UnknownRevision' },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    if (isContentEqual(sourceRevision, targetRecipe)) {
+      setState((s) => ({
+        ...s,
+        error: '',
+        historyError: undefined,
+      }));
+      return true;
+    }
+    const archivedHead: SavedRevision = {
+      formula: clone(targetRecipe.formula),
+      process: clone(targetRecipe.process),
+      name: targetRecipe.name,
+      names: clone(targetRecipe.names),
+      version: targetRecipe.version,
+      createdAt: targetRecipe.savedAt,
+    };
+    const nowIso = new Date().toISOString();
+    setState((s) => ({
+      ...s,
+      error: '',
+      historyError: undefined,
+      recipes: s.recipes.map((r) =>
+        r.id === targetRecipe.id
+          ? {
+              ...r,
+              formula: clone(sourceRevision.formula),
+              process: clone(sourceRevision.process),
+              name: sourceRevision.name,
+              names: clone(sourceRevision.names),
+              version: r.version + 1,
+              savedAt: nowIso,
+              revisions: [...r.revisions, archivedHead],
+            }
+          : r,
+      ),
+    }));
+    return true;
+  };
+  const promoteReferenceVersion = (
+    version: number,
+    name?: string,
+    expectedHead?: number,
+  ): boolean => {
+    const targetRecipe = state.recipes.find((r) => r.id === state.selected);
+    if (!targetRecipe) return false;
+    if (targetRecipe.trashed) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'RecipeTrashed' },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    if (expectedHead !== undefined && expectedHead !== targetRecipe.version) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'HeadConflict' },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    const exists =
+      targetRecipe.version === version || targetRecipe.revisions.some((r) => r.version === version);
+    if (!exists) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'UnknownRevision' },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    const already = targetRecipe.referenceVersions.find((r) => r.version === version);
+    if (already) {
+      setState((s) => ({
+        ...s,
+        historyError: { code: 'AlreadyReferenced', number: already.number },
+        error: t(locale, 'refused'),
+      }));
+      return false;
+    }
+    const nextNumber =
+      targetRecipe.referenceVersions.length > 0
+        ? Math.max(...targetRecipe.referenceVersions.map((r) => r.number)) + 1
+        : 1;
+    const newRef = {
+      number: nextNumber,
+      version,
+      ...(name !== undefined && name.trim() !== '' ? { name: name.trim() } : {}),
+      createdAt: new Date().toISOString(),
+    };
+    setState((s) => ({
+      ...s,
+      error: '',
+      historyError: undefined,
+      recipes: s.recipes.map((r) =>
+        r.id === targetRecipe.id
+          ? {
+              ...r,
+              referenceVersions: [...r.referenceVersions, newRef],
+            }
+          : r,
+      ),
+    }));
+    return true;
+  };
   return {
     state,
     setState,
@@ -567,6 +838,8 @@ export function usePrototype(locale: Locale) {
     abandonSession,
     finishSession,
     log,
+    restoreRevision,
+    promoteReferenceVersion,
     getActiveSessions: () => getActiveSessions(state),
     getRunningSession: (recipeId: string) => getRunningSession(state, recipeId),
   };

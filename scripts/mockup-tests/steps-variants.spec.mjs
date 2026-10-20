@@ -90,8 +90,9 @@ test.describe('Gemini step variants', () => {
         type: 'touchMove',
         touchPoints: [{ x: target.x + target.width / 2, y: target.y + target.height / 4, id: 1 }],
       });
-      await expect(row(page, 'divide')).toHaveClass(/is-dragging/);
-      await expect(page.locator('.fp-drag-placeholder:visible')).toHaveCount(1);
+      await expect(row(page, 'divide')).toHaveClass(/is-origin-placeholder/);
+      await expect(page.locator('.fp-drag-floating-card:visible')).toHaveCount(1);
+      await expect(page.locator('.fp-drag-insertion-marker:visible')).toHaveCount(1);
       await shot(page, `touch-lift-${design}`);
       await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       const dialog = page.getByRole('dialog');
@@ -109,7 +110,8 @@ test.describe('Gemini step variants', () => {
           .filter({ hasText: 'Modification des étapes appliquée au brouillon.' }),
       ).toHaveCount(1);
       await expect(page.getByTestId('drag-handle-divide').filter({ visible: true })).toBeFocused();
-      await expect(page.locator('.fp-drag-placeholder:visible')).toHaveCount(0);
+      await expect(page.locator('.fp-drag-floating-card:visible')).toHaveCount(0);
+      await expect(page.locator('.fp-drag-insertion-marker:visible')).toHaveCount(0);
       await session.detach();
     });
 
@@ -169,7 +171,7 @@ test.describe('Gemini step variants', () => {
     });
     await expect.poll(() => content.evaluate((el) => el.scrollTop)).toBeGreaterThan(before + 20);
     await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
-    await expect(page.locator('.is-dragging:visible')).toHaveCount(0);
+    await expect(page.locator('.fp-drag-floating-card:visible')).toHaveCount(0);
     await expect(titles(page)).toHaveText(original);
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await session.detach();
@@ -195,17 +197,14 @@ test.describe('Gemini step variants', () => {
           { x: target.x + target.width / 2, y: target.y + target.height * 0.75, id: 1 },
         ],
       });
-      await expect(row(page, 'bulk')).toHaveClass(/is-dragging/);
+      await expect(row(page, 'bulk')).toHaveClass(/is-origin-placeholder/);
       await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-      const refusal = page.getByRole('dialog');
-      await expect(
-        refusal.locator('[data-process-refusal="MoveBreaksDependencies"]'),
-      ).toBeVisible();
-      await expect(refusal.getByRole('button', { name: 'Appliquer', exact: true })).toHaveCount(0);
-      await expect(page.locator('.is-dragging:visible')).toHaveCount(0);
-      await expect(page.locator('.fp-drag-placeholder:visible')).toHaveCount(0);
+      // L104: a refused touch drop returns immediately and explains without a blocking dialog.
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(page.locator('[data-process-refusal="MoveBreaksDependencies"]')).toBeVisible();
+      await expect(page.locator('.fp-drag-floating-card:visible')).toHaveCount(0);
+      await expect(page.locator('.fp-drag-insertion-marker:visible')).toHaveCount(0);
       await expect(titles(page)).toHaveText(before);
-      await page.keyboard.press('Escape');
       await expect(grip).toBeFocused();
       await expect(
         page.getByRole('button', { name: 'Annuler la modification', exact: true }),
@@ -218,16 +217,24 @@ test.describe('Gemini step variants', () => {
     const grip = page.getByTestId('drag-handle-divide').filter({ visible: true });
     await grip.scrollIntoViewIfNeeded();
     const from = await grip.boundingBox();
-    const target = await row(page, 'bulk').boundingBox();
     const session = await context.newCDPSession(page);
     await session.send('Input.dispatchTouchEvent', {
       type: 'touchStart',
       touchPoints: [{ x: from.x + from.width / 2, y: from.y + from.height / 2, id: 1 }],
     });
-    await expect(row(page, 'divide')).toHaveClass(/is-dragging/);
+    await expect(row(page, 'divide')).toHaveClass(/is-origin-placeholder/);
+    await expect(page.locator('.fp-drag-floating-card:visible')).toHaveCount(1);
+    // Long-press lift may autoscroll: aim at the target's actual on-screen position.
+    const liftedTarget = await row(page, 'bulk').boundingBox();
     await session.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
-      touchPoints: [{ x: target.x + target.width / 2, y: target.y + target.height / 4, id: 1 }],
+      touchPoints: [
+        {
+          x: liftedTarget.x + liftedTarget.width / 2,
+          y: liftedTarget.y + liftedTarget.height / 4,
+          id: 1,
+        },
+      ],
     });
     await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     const dialog = page.getByRole('dialog');

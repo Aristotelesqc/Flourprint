@@ -51,15 +51,17 @@ async function openRecordedHistory(page, nav, result) {
   await expect.soft(page.getByRole('tab', { name: 'En cours (0)', exact: true })).toBeVisible();
   await card.click();
   await page.getByRole('tab', { name: 'Historique', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Préparations', exact: true })).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: `Version 1 · ${result}`, exact: true }),
+    page.getByRole('heading', { name: 'Historique des préparations', exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Versions de la recette', exact: true }),
+    page.getByRole('heading', { name: `Révision 1 · ${result}`, exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Versions de référence', exact: true }),
   ).toBeVisible();
   // No rating has been recorded; a completed preparation must not acquire a fabricated score.
-  await expect(page.getByText('Non évaluée', { exact: true })).toBeVisible();
+  await expect(page.getByText('Non notée', { exact: true })).toBeVisible();
 }
 
 for (const nav of ['A']) {
