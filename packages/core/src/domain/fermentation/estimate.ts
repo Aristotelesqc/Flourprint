@@ -1,6 +1,7 @@
 import type { Component, Formula, Ingredient, YeastForm } from '../formula/types.js';
 import { resolveFormula } from '../formula/resolve.js';
 import { ancestors, doughSteps } from '../process/dough.js';
+import { subjectOf } from '../process/move.js';
 import type { Process, ProcessStep, StepId } from '../process/types.js';
 import type { Estimate, RangeBound } from '../values.js';
 import {
@@ -413,7 +414,22 @@ const prefermentMass = (
   process: Process,
   component: Component,
 ): Mass | Failure => {
-  const step = process.steps.find((s) => s.id === component.id);
+  // Fermenting phases of the component (process.md, Subjects and component phases).
+  const components = new Set(formula.components.map((c) => c.id));
+  const phases = process.steps.filter((s) => {
+    const subject = subjectOf(process, s, components);
+    return (
+      subject.kind === 'component' && subject.id === component.id && s.operation === 'preferment'
+    );
+  });
+  if (phases.length > 1) {
+    return failure(
+      'insufficient_data',
+      'component_phases_unmodelled',
+      phases.map((s) => s.id),
+    );
+  }
+  const step = phases[0] ?? process.steps.find((s) => s.id === component.id);
   if (!step) return failure('insufficient_data', 'no_preferment_step', [component.id]);
   const yeastForms = new Map(formula.ingredients.filter(isYeast).map((i) => [i.id, i.yeast.form]));
   const yeasts = (component.allocations ?? []).flatMap((a) => {

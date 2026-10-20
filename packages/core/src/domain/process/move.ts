@@ -3,7 +3,14 @@ import { isTopologicalOrder } from '../graph.js';
 import { err, ok, type Result } from '../result.js';
 import { descendants } from './dough.js';
 import { projectProcess } from './project.js';
-import type { Process, ProcessStep, Projection, ProjectionInput, StepId } from './types.js';
+import type {
+  Process,
+  ProcessStep,
+  Projection,
+  ProjectionInput,
+  StepId,
+  Subject,
+} from './types.js';
 import { validateProcess, type ProcessError } from './validate.js';
 
 /**
@@ -11,9 +18,6 @@ import { validateProcess, type ProcessError } from './validate.js';
  * `dependsOn` alone defines timing, so an edit either keeps every dependency, rewires exactly the
  * edges of a single chain, or is refused. A refusal changes nothing.
  */
-
-/** Which work a step belongs to (process.md, Subjects and component phases). */
-export type Subject = { readonly kind: 'mainDough' } | { readonly kind: 'component'; id: string };
 
 /**
  * The components of a process: the ids its steps incorporate. Every formula component joins the
@@ -27,11 +31,36 @@ const componentIds = (process: Process): Set<string> =>
   );
 
 /**
- * `subjectOf` (process.md): the component whose id is the step's id, else the main dough. An
- * explicit `subject` field takes precedence once it exists (#106).
+ * `subjectOf` (process.md): the step's explicit `subject`, else the component whose id is the
+ * step's id, else the main dough. The components are the formula's when given, else the ids the
+ * process incorporates.
  */
-export const subjectOf = (process: Process, step: ProcessStep): Subject =>
-  componentIds(process).has(step.id) ? { kind: 'component', id: step.id } : { kind: 'mainDough' };
+export const subjectOf = (
+  process: Process,
+  step: ProcessStep,
+  components: ReadonlySet<string> = componentIds(process),
+): Subject =>
+  step.subject ??
+  (components.has(step.id) ? { kind: 'component', id: step.id } : { kind: 'mainDough' });
+
+/**
+ * The step where component `id` joins the main dough (process.md, Subjects and component phases):
+ * the step incorporating it, else, when the process declares no incorporations, the first step of
+ * another subject that depends on one of its steps.
+ */
+const joinOf = (process: Process, id: string): StepId | undefined => {
+  const incorporating = process.steps.find((s) =>
+    (s.incorporations ?? []).some((i) => i.item === 'component' && i.id === id),
+  );
+  if (incorporating !== undefined) return incorporating.id;
+  if (process.steps.some((s) => (s.incorporations ?? []).length > 0)) return undefined;
+  const isPhase = (stepId: StepId) => {
+    const s = process.steps.find((x) => x.id === stepId);
+    const subject = s && subjectOf(process, s);
+    return subject?.kind === 'component' && subject.id === id;
+  };
+  return process.steps.find((s) => !isPhase(s.id) && s.dependsOn.some(isPhase))?.id;
+};
 
 const sameSubject = (a: Subject, b: Subject): boolean =>
   a.kind === 'mainDough' ? b.kind === 'mainDough' : b.kind === 'component' && a.id === b.id;
@@ -156,10 +185,19 @@ export const moveStep = (
   const b = targetDependents[0];
 
   const subject = subjectOf(process, step);
+  // T and B may also be the step where the step's component joins the dough: the step stays
+  // among its component's phases, upstream of the join (process.md, Move, example 7).
+  const join = subject.kind === 'component' ? joinOf(process, subject.id) : undefined;
   const neighbours = [p, t?.id, after, b?.id].flatMap((id) =>
     id === undefined || id === null ? [] : [process.steps.find((s) => s.id === id) as ProcessStep],
   );
-  if (neighbours.some((n) => !sameSubject(subjectOf(process, n), subject))) {
+  if (
+    neighbours.some(
+      (n) =>
+        !sameSubject(subjectOf(process, n), subject) &&
+        !(n.id === join && (n === t || n.id === b?.id)),
+    )
+  ) {
     return err(ambiguous('crossesWorkpiece'));
   }
 
@@ -243,6 +281,7 @@ export const duplicateStep = (
     ...(original.conditions === undefined ? {} : { conditions: original.conditions }),
     ...(original.technique === undefined ? {} : { technique: original.technique }),
     ...(original.equipment === undefined ? {} : { equipment: original.equipment }),
+    ...(original.subject === undefined ? {} : { subject: original.subject }),
   };
   const notCarried: NotCarried[] = [
     ...((original.incorporations ?? []).length > 0 ? ['incorporations' as const] : []),
