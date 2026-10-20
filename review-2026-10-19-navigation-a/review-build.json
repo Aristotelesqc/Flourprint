@@ -1,6 +1,6 @@
 {
-  "revision": "85f9a69ccea48ddd48be06f2f5d5481060b1da28",
-  "sourceSha256": "1b2bd13ad448e4c456e4f6c2682806b80fab86920f648f25a5b425a85125346d",
+  "revision": "55eb66e16641397a84e396fe9f4ba834ff1f617b",
+  "sourceSha256": "489f8123fbfd46c3ee68aed8d1aa43e0c857d723fbaddeff0e8b9856648e3b08",
   "build": {
     "version": "0.3.0",
     "build": "0.3.0-local",
@@ -8,5 +8,5 @@
     "channel": "local",
     "versionCode": 3000
   },
-  "label": "v0.3.0 · golden-naan · local"
+  "label": "v0.3.0 · jolly-starter · local"
 }
