@@ -1,6 +1,6 @@
 {
-  "revision": "55eb66e16641397a84e396fe9f4ba834ff1f617b",
-  "sourceSha256": "489f8123fbfd46c3ee68aed8d1aa43e0c857d723fbaddeff0e8b9856648e3b08",
+  "revision": "a88a7f3a55bd0eef8b5d179cc616f8c94f8270bc",
+  "sourceSha256": "7919d41eab3a3dc709b64722f689567ea71b99d489b442b77ccb95feec797ecd",
   "build": {
     "version": "0.3.0",
     "build": "0.3.0-local",
@@ -8,5 +8,5 @@
     "channel": "local",
     "versionCode": 3000
   },
-  "label": "v0.3.0 · jolly-starter · local"
+  "label": "v0.3.0 · swift-pastry · local"
 }

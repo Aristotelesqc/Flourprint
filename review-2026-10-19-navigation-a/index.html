@@ -14,13 +14,90 @@
       <p class="subtitle">Review landing page in Warm 3 identity for prototype validation.</p>
       <div class="disclaimer-box">
         <strong>Review Scope &amp; Status:</strong> Prototyping in <code>mockup</code> and
-        <code>packages/ui</code> (not <code>apps/mobile</code>). Does not claim all L-items are
-        passed or owner-approved. <strong>Decision L101:</strong> Navigation A adopted; Navigation B
-        links and copy are removed from active consideration.
+        <code>packages/ui</code> (not <code>apps/mobile</code> or real persistent history). Does not
+        claim all L-items are passed or owner-approved. <strong>Decision L101:</strong> Navigation A
+        adopted; Navigation B links and copy are removed from active consideration. Row design and
+        activation options remain open for owner review.
       </div>
     </header>
 
     <main>
+      <!-- SECTION 0: Drag and Save History Review (#133) -->
+      <section id="drag-save-history">
+        <h2 class="section-title">Drag &amp; Save History Review (#133)</h2>
+        <p class="section-caption">
+          Integrated review for issue #133 using <code>packages/ui</code> components (not
+          <code>apps/mobile</code> or real persistent native history). Test drag lift directly from
+          reading mode into editing, gesture cancellation via browser Back, and bounded recipe
+          history (saved revisions vs. reference milestones).
+        </p>
+        <div class="choice-callout">
+          <strong>Review Focus:</strong> Test read &rarr; drag &rarr; edit transition, Back
+          cancellation of active drag gestures, and promote/restore operations in History. Quick
+          links: <a href="#step-row-options">Step Row Options</a> &middot;
+          <a href="#companion-screenshots">Companion Screenshots</a> &middot;
+          <a href="#motion-evidence">Motion Evidence</a>.
+        </div>
+
+        <div class="links-grid">
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=steps&stepDesign=compact&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Steps (Reading) · Compact</span>
+              <span class="badge badge-accent">Lift to Edit</span>
+            </div>
+            <p class="card-desc">
+              Reading mode: lift handle to enter edit mode; Back cancels active drag.
+            </p>
+            <span class="card-query">section=steps &amp; stepDesign=compact</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=steps&stepDesign=rail&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Steps (Reading) · Rail</span>
+              <span class="badge badge-accent">Lift to Edit</span>
+            </div>
+            <p class="card-desc">
+              Timeline rail in reading mode; test drag gesture entry and popstate cancellation.
+            </p>
+            <span class="card-query">section=steps &amp; stepDesign=rail</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=steps&stepDesign=outline&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Steps (Reading) · Outline</span>
+              <span class="badge badge-accent">Lift to Edit</span>
+            </div>
+            <p class="card-desc">
+              Outlined cards in reading mode; test lift threshold and draft protection.
+            </p>
+            <span class="card-query">section=steps &amp; stepDesign=outline</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=history&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Recipe History</span>
+              <span class="badge badge-history">Bounded History</span>
+            </div>
+            <p class="card-desc">
+              Saved history, reference milestones, and preparation baseline review.
+            </p>
+            <span class="card-query">screen=recipe &amp; section=history</span>
+          </a>
+        </div>
+      </section>
+
       <!-- SECTION 1: Step Row & Activation Options (O3 OPEN) -->
       <section id="step-row-options">
         <h2 class="section-title">Step Row &amp; Drag Activation Options</h2>
