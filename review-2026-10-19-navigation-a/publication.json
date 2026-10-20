@@ -1,18 +1,18 @@
 {
-  "revision": "a88a7f3a55bd0eef8b5d179cc616f8c94f8270bc",
-  "sourceSha256": "7919d41eab3a3dc709b64722f689567ea71b99d489b442b77ccb95feec797ecd",
+  "revision": "68faf79de788c6e6698b7354bef7e31580d9e632",
+  "sourceSha256": "ae92db3d35e854f22195f3f5ec0c14bc08b7804d97fc68de0a4ae320c0a6f807",
   "files": [
     {
       "path": "assets/gallery-BiUghKrY.css",
       "sha256": "d88f0436aed59e9beace8783d258b5d5b191fa1b78d317b922b14c564fc99f8d"
     },
     {
-      "path": "assets/mockup-DQUYxIDD.js",
-      "sha256": "95a111cd786b8287377bb1961351fb464f165f8a6617a2348f8d619bc57d8c11"
+      "path": "assets/mockup-BEq5CEZG.css",
+      "sha256": "1cc259df4214e1fac9a83aff5d0868c8d0ed7512188b5b6f0a25dd0ae35db996"
     },
     {
-      "path": "assets/mockup-DbHWcyeu.css",
-      "sha256": "e594bdf10de3f3a12b211f5706c272349a7e0846727a7d1dc34f406b121da69b"
+      "path": "assets/mockup-C91XMFMX.js",
+      "sha256": "a571edde504354eea5ea9de7f9f56e5c64ad6573d30feb9c2819c50197b52e6c"
     },
     {
       "path": "index.html",
@@ -20,7 +20,7 @@
     },
     {
       "path": "manifest.json",
-      "sha256": "dc52cb241c1ace2b35c01aadd0609f15a1889fbc06cca8ea8e8132c6377ca0ef"
+      "sha256": "b9939cd9714a96c2c3724781cdb3c0e6f9cf8960a66c4771a9004707a65b2991"
     },
     {
       "path": "mark.svg",
@@ -28,91 +28,91 @@
     },
     {
       "path": "mockup.html",
-      "sha256": "4beacd1a1b7bfb7ed5287a02d722b4e944d235fa58d82d9ae34d6b5ca7c7721b"
+      "sha256": "5137707069791cb4d67d42be504d6bf1b1753331419f0610b96b4a858d7f5ed7"
     },
     {
       "path": "motion/drag-read-snapback-hold-standard.webm",
-      "sha256": "8d55bed8c9baff1e4e0084b254817fe207ddfe3fd340898e16cd075618742747"
+      "sha256": "075bebcd5c3b881ff5b1cebb26ad311cbc4cc0c125dccbc5adf410fff11af18b"
     },
     {
       "path": "motion/drag-read-snapback-move-reduced.webm",
-      "sha256": "4fcd415a3bb68c3dcc4e9b268a9ecd471272b05762299182caa1a90ecdbb36a1"
+      "sha256": "8b46991db6a869b72181f3219547a4348513e1a7f199f8188b24229b894d13ad"
     },
     {
       "path": "motion/drag-read-snapback-move-standard.webm",
-      "sha256": "ff4efd4c0b910674a4b65992bfd6a0c6bed1414bf4226c833f7bf63d3c654929"
+      "sha256": "16e6aba636d5533f4d0729ac651f10f680900b079b4f934b5c8ea1e98fe27f16"
     },
     {
       "path": "motion/step-drag-reduced.webm",
-      "sha256": "a277c9011582a037331eb0926bcc2501b91bd476bca60375be55fc8431796b86"
+      "sha256": "15b4cc036619d3956ed1aca1bf0b0691fe24e4b27f3fddfefc25f0d457d77b53"
     },
     {
       "path": "motion/step-drag-standard.webm",
-      "sha256": "23ae775a058a70d7d5af15bb66bb11c6371adbcccfd205ffdc334d0b56b8416b"
+      "sha256": "0b93be989f337b61c2a793641e2959fcd4ae827c85bbfac06540808aedd04cf9"
     },
     {
       "path": "motion/tab-carousel-reduced.webm",
-      "sha256": "2791fedfbc6e3332b663c23ee5e1752266d8b1887e7c1ca8ac84eba8f1dd5068"
+      "sha256": "bc9579753532a14e96df67c1ba850e7c7b6a4bf04f31d37b648cbeccdad61480"
     },
     {
       "path": "motion/tab-carousel-standard.webm",
-      "sha256": "e044bbe3a28312fb56206904003e0a56cb7dfaf65eacae83ebffa6e083fab096"
+      "sha256": "949d4f681725c28aed7e569517a14b4e5c91567d1eedb9ca5a7be0f84821c6b9"
     },
     {
       "path": "review-build.json",
-      "sha256": "b8095809187eba7b73690d12551b02df54458f8ade88827b42867138b6cbad9c"
+      "sha256": "769954e3134349fb95b92277560a4ddaf2959e6bbe20dca8d60b139b2926b1c2"
     },
     {
       "path": "review-manifest.json",
-      "sha256": "293d81efe1698e9747bca50c1f3866649808a3a0de9a0de56267c2cdc0c22f4e"
+      "sha256": "9b2b99b353f9fb98de7d550466771bc112a37fbf01e8032a8df27e71b72c6ac6"
     },
     {
       "path": "screenshots/abandon-confirmation-compact-move-en-amoled-360-130.png",
-      "sha256": "7a718e8edbc6a6438fed3e9da54fd8a3da6b387016aff892f3e99f3579f24aee"
+      "sha256": "bb3bfb4390afb95bd3d45d5aa56d40de27d9409119df9fe982f7a3682a837cba"
     },
     {
       "path": "screenshots/abandon-confirmation-compact-move-en-dark-360-130.png",
-      "sha256": "2c3f84464c400f7765c0d8a85ff898ed9fcdb9161bfefbe022fb91eb785bae56"
+      "sha256": "c4e4e25652c29d3e859b2d9d92f348ee4c0248a42b1028b8bfa344672228d190"
     },
     {
       "path": "screenshots/abandon-confirmation-compact-move-en-light-360-130.png",
-      "sha256": "86b0749ee7a426192b642a0e7be7c70f00ec6b93a6b706b3c5b73710442bd1f1"
+      "sha256": "26f9088860250d0cd2c5100eccd3f0e922ba1bd347ad06feb5a7edea149c6c09"
     },
     {
       "path": "screenshots/abandon-confirmation-compact-move-fr-amoled-360-130.png",
-      "sha256": "3d71ba1de59d3aaa93da6b3ca4bd7f83364032c0c658d120c5d6a9c6a8500543"
+      "sha256": "9fdbe565a400445cf5d9f96d0cc6d40a128595f00b7298575ec8cde5f0141829"
     },
     {
       "path": "screenshots/abandon-confirmation-compact-move-fr-dark-360-130.png",
-      "sha256": "bc2ff519a815d72e2c66812237c48e23df5a28c5c9320a912bce4d0cb6049a67"
+      "sha256": "f005d4ed28b3b008b243dfc5646d3cc00d34ea8637ec389e057bbfb469da6fe6"
     },
     {
       "path": "screenshots/abandon-confirmation-compact-move-fr-light-360-130.png",
-      "sha256": "dfb9723567486f14303c7687a4dd211c6016baa356603ad3629a43008f9aca1a"
+      "sha256": "60e0d415907a30f79b225ac67f6629041f4f06a6c7b1d30096d79544483c5fe4"
     },
     {
       "path": "screenshots/after-drag-amoled-360-130.png",
-      "sha256": "0367416df243f4942f0ddff0e0aa7fe6796e570f36176fae4dd113bbd5111dba"
+      "sha256": "5f756b998f30cb6c75cbd45735907e9af9b9275bf20f5ea7050de457de060dfd"
     },
     {
       "path": "screenshots/after-drag-amoled-393-100.png",
-      "sha256": "5953f253fe85b1ae5bbdc587a253c195672328cbe113cd0cd3f53456b00fcf7b"
+      "sha256": "68f15c6075277f435cbc6c76cbc9b73433bc0cbe96cf0b7b19c074657a983ffe"
     },
     {
       "path": "screenshots/after-drag-dark-360-130.png",
-      "sha256": "267f12f9717bfb301072c44391bfaa2a5e095dd3d43e37f9009b3f5c2c17ddf7"
+      "sha256": "a1f5ad64218fa08c74cb15e975a6b5c574dd7a5517e33ea7d1365c70dc19878f"
     },
     {
       "path": "screenshots/after-drag-dark-393-100.png",
-      "sha256": "9c86544f646199753265980a94cb91b64de40a21248c9a05d3ba049c53f093b1"
+      "sha256": "b5b23e522b473ca2218beab55b641c48c8deaba00bf550a1c17e129589c34edf"
     },
     {
       "path": "screenshots/after-drag-light-360-130.png",
-      "sha256": "7cd97b4af0f6c0c12c72e3b46bced0eccdb4eaf55016fa0b486dac1f0a5512c8"
+      "sha256": "4569f782170b56ef0c171bf7d982597a22343bf52aa841dbe2a49c6debaa540b"
     },
     {
       "path": "screenshots/after-drag-light-393-100.png",
-      "sha256": "3bdf5cad7a28eed696cc8fa3deeda40765d8549bca285ebeb9953b57828aeddf"
+      "sha256": "df41e9d0b9b201d50a3e6e237d4193d02a0b7444ac434ce8353ec1a641d632c3"
     },
     {
       "path": "screenshots/app-creation-A-393-100.png",
@@ -191,84 +191,108 @@
       "sha256": "e0a11ac43835dfdfd65c040c7210b936458e605ad552733eecd96e88dbfc9006"
     },
     {
+      "path": "screenshots/before-preparation-compact-move-fr-amoled-360-130.png",
+      "sha256": "43d76bc03d84380a46b21e989336568f172117031c82133b8ad3318eaa5652f2"
+    },
+    {
+      "path": "screenshots/before-preparation-compact-move-fr-amoled-393-100.png",
+      "sha256": "a2fb710ee578b5238d22be6f54e0b3dacc299df7628d1e8a3a151ebdbdb39790"
+    },
+    {
+      "path": "screenshots/before-preparation-compact-move-fr-dark-360-130.png",
+      "sha256": "9959ecdf79031109601f9f75cb20765d4e9c5a1a44ab3a9221f29d0407e91a9c"
+    },
+    {
+      "path": "screenshots/before-preparation-compact-move-fr-dark-393-100.png",
+      "sha256": "1453fa879b46ba034d4521952cb0826d35fd0e244d34e7077f13ef72d314d5f4"
+    },
+    {
+      "path": "screenshots/before-preparation-compact-move-fr-light-360-130.png",
+      "sha256": "b2b34bd1ea891dac93e7c801387fd87435ed5dd6a61a412838dae5bb5905c13c"
+    },
+    {
+      "path": "screenshots/before-preparation-compact-move-fr-light-393-100.png",
+      "sha256": "fa0d6c4ed7243c90b89cafceb1dcfd127c6e584f11706c6be68df1a58e2198da"
+    },
+    {
       "path": "screenshots/carousel-reduced-after-fast-flick.png",
-      "sha256": "82bea7485af9034ebf11f465871a7105e1b434b165ed296f6ef9ebcda9194af5"
+      "sha256": "deb2f865aebf4eaad03363d11fc680cdf25360d2916625e742feb622807c6774"
     },
     {
       "path": "screenshots/carousel-reduced-after.png",
-      "sha256": "d09fad44d5634d412addb00cf8346cccd6175fd2f2f734dd4fd0f87f32547cdc"
+      "sha256": "674f9a2d73642bcef902e47980c6356471b9a29a2e67a1428120180abec51c86"
     },
     {
       "path": "screenshots/carousel-reduced-before.png",
-      "sha256": "82bea7485af9034ebf11f465871a7105e1b434b165ed296f6ef9ebcda9194af5"
+      "sha256": "deb2f865aebf4eaad03363d11fc680cdf25360d2916625e742feb622807c6774"
     },
     {
       "path": "screenshots/carousel-reduced-during.png",
-      "sha256": "2d053c8a751959b10f0ae4e4693a6725f73ca9983c01e940dae7e90aadb92688"
+      "sha256": "2d39bfb1639515b92e6cda2780b9caf0b2afb6d39549eb2f16631af7376176e0"
     },
     {
       "path": "screenshots/carousel-standard-after-fast-flick.png",
-      "sha256": "e15d0ed60ba0f9cc63feb2bd760e1983089602267e496f2f5f244cd10330a9cb"
+      "sha256": "e7c27f2122926c4c74e0287210b1eff15c5beecf86318616b70dbee3e4e6cbb7"
     },
     {
       "path": "screenshots/carousel-standard-after.png",
-      "sha256": "d09fad44d5634d412addb00cf8346cccd6175fd2f2f734dd4fd0f87f32547cdc"
+      "sha256": "674f9a2d73642bcef902e47980c6356471b9a29a2e67a1428120180abec51c86"
     },
     {
       "path": "screenshots/carousel-standard-before.png",
-      "sha256": "9c6cbb38563353ec86542b9b5e0e91750a47ff5b600a0cea4d0e51e8fbb567f2"
+      "sha256": "0ce8795fa554b75b9dc6eafcc9cfe80b213e21439f6ab0a5114f007e3b2b126b"
     },
     {
       "path": "screenshots/carousel-standard-during.png",
-      "sha256": "63d9e21d3ec479fef90277432d8ef8711a4e161d28e222ae5c8cccdae188cb86"
+      "sha256": "2c3283a5574defa5608d6469a406d4290a5a03fccb961dd250f55381ec037e00"
     },
     {
       "path": "screenshots/cooking-compact-move-en-amoled-360-130.png",
-      "sha256": "d413d510e150055dc1b4e9c1059c1b1aa4c39ca7b037b85e7ba67269aac93596"
+      "sha256": "fcdea7df0d85d4c21e58f4e4ea1f3e229624738580b5adbc71153268df76efee"
     },
     {
       "path": "screenshots/cooking-compact-move-en-amoled-393-100.png",
-      "sha256": "fdb1dde78cec0c2ccc963c324636da0d9247258ea53e3724bcf3c65095c347a4"
+      "sha256": "63c3ca7b29b50e4680d0ad2d511423805692cef82d7d35b166c0dbda4509bfd3"
     },
     {
       "path": "screenshots/cooking-compact-move-en-dark-360-130.png",
-      "sha256": "275656eaa6cf075453f872d359a89ce6105c5a9c7dcc465ae3080284c3e5b866"
+      "sha256": "5f8adef20d092faddf30bfb253bd680dbb1ab20ef8ad59358809a00a02019a0f"
     },
     {
       "path": "screenshots/cooking-compact-move-en-dark-393-100.png",
-      "sha256": "9878b81ef44034f724e39e9feb95919f0deddb47dea460d6c04c417a1cf8314f"
+      "sha256": "eb0d2a954e891986c2d0b23017098852b7e6e9a9a1dabfbeaea7b51347acced4"
     },
     {
       "path": "screenshots/cooking-compact-move-en-light-360-130.png",
-      "sha256": "303c535eee93e6b00c552b4d25a4a1d5d9c3d79aa8ca145fe3520a209fc9234e"
+      "sha256": "8a2fdc8e6c5d6fb3965fa140eca2a771b1129b472d038f0c54f00edf180235ce"
     },
     {
       "path": "screenshots/cooking-compact-move-en-light-393-100.png",
-      "sha256": "47bd2579b528651e412251ed4e31f8eb5a3eebba51a19bd236f9732ef0213ff8"
+      "sha256": "a0ccc07f875bcb482c701e7672ed89b8e73c248abe43d0b6d932dc73f9437203"
     },
     {
       "path": "screenshots/cooking-compact-move-fr-amoled-360-130.png",
-      "sha256": "b12bd5b76fde40dc21d31a86a7284908db2fc8c3137b415641125a9ce54b569c"
+      "sha256": "bcbb5ba9b3febf271c5a3668ed5bef1d7b0ab1971adfd330324ff81fca72174f"
     },
     {
       "path": "screenshots/cooking-compact-move-fr-amoled-393-100.png",
-      "sha256": "3bbb805c95085507c5cf975a4f0d9f5d4a9c3ae02b7a8d6b44051bffedffc812"
+      "sha256": "273d0fa259ac44b00294cb7f62cb87cb17cb66a4e258ec5db2a80ff08f4165d7"
     },
     {
       "path": "screenshots/cooking-compact-move-fr-dark-360-130.png",
-      "sha256": "acb94150ca872d32c1ae90effbf1528f19590d1eaf7a1d0e2ea59f76aabbc424"
+      "sha256": "0aa83a50fa1fa4e068701cb85c28c9dce366e3244d173a15c3a33dd08892ce1d"
     },
     {
       "path": "screenshots/cooking-compact-move-fr-dark-393-100.png",
-      "sha256": "113be2a2eae8bd3e9e5996f1667d1f1297598d7c9fe7ebc3d9accf1dd8f8fc10"
+      "sha256": "784fbee30307b48ce21de2f2c0427ff76a462ee0b9ca8a791f5b201124fa0ab6"
     },
     {
       "path": "screenshots/cooking-compact-move-fr-light-360-130.png",
-      "sha256": "e1603bff6179fca76a92f050bf0519e2474db51af3be5ade66d1077ca478f71d"
+      "sha256": "89420a0a53e619f30a99401561aedd997cb507dd23ee5f34a9ffe01d6ac1b1b8"
     },
     {
       "path": "screenshots/cooking-compact-move-fr-light-393-100.png",
-      "sha256": "f8bb21ea5bfbc4ca0828c8aa92b8c21af33b6cb3bb7c0141c8524ef61a9c1d72"
+      "sha256": "c0ab2a281335a5000505c31b3eeeb7630a7d2158c35b0efb194412d8c9a92d14"
     },
     {
       "path": "screenshots/creation-compact-move-fr-amoled-393-100.png",
@@ -284,159 +308,159 @@
     },
     {
       "path": "screenshots/drag-read-snapback-hold-standard-above-accordion.png",
-      "sha256": "6865fc93145a8c276ed47ac7fe11be233dc5052bc689bc30b49612ba75006328"
+      "sha256": "e4e5b8af88dc3a1f406d4c41969499bffd99162a8e87c6a5aaf17181884a48fd"
     },
     {
       "path": "screenshots/drag-read-snapback-hold-standard-reading.png",
-      "sha256": "d450de284d6ec7c166fb239c63054d02ca98a317bb2a999bce909a6899c6dca6"
+      "sha256": "bbe2a474eced2aa3b57fbf21d2a8e52db7896ee9a0412d9431c1209c0286793a"
     },
     {
       "path": "screenshots/drag-read-snapback-hold-standard-returned-clean.png",
-      "sha256": "256c96279a4a9b18ac102d2af3b54d72f572d500fccf4449a43c690a1817570f"
+      "sha256": "9d84b8aa0edef8f2887cf68a6f98bf0e7a57870dae026d12052419018a9cf0d9"
     },
     {
       "path": "screenshots/drag-read-snapback-move-reduced-above-accordion.png",
-      "sha256": "35594524df5f133e4c612d9ee1fcca008bc426567d64a2ee180dfabb1006a12c"
+      "sha256": "4bb785d929248c4aebfa9c8c46bb5a190bcb49d6dab2628ad05e4bd46e8f95b5"
     },
     {
       "path": "screenshots/drag-read-snapback-move-reduced-reading.png",
-      "sha256": "d450de284d6ec7c166fb239c63054d02ca98a317bb2a999bce909a6899c6dca6"
+      "sha256": "bbe2a474eced2aa3b57fbf21d2a8e52db7896ee9a0412d9431c1209c0286793a"
     },
     {
       "path": "screenshots/drag-read-snapback-move-reduced-returned-clean.png",
-      "sha256": "0a8a17c4cbf3a354ec7d0cac314e68fcc460467509cfa43c763470cdde09ea09"
+      "sha256": "57f878a472c1d74a8739668e2575783b677bd15113bac84e594b5ae4b3b802fa"
     },
     {
       "path": "screenshots/drag-read-snapback-move-standard-above-accordion.png",
-      "sha256": "184e6a0a50c9beae842d8373d997c09a9fb18efcc5f25ff043c73c41c4bc836f"
+      "sha256": "2cddf7de6cbb98831332fc2eeff59c317ca0f71e68c4903889bc0b57eff91f9b"
     },
     {
       "path": "screenshots/drag-read-snapback-move-standard-reading.png",
-      "sha256": "d450de284d6ec7c166fb239c63054d02ca98a317bb2a999bce909a6899c6dca6"
+      "sha256": "bbe2a474eced2aa3b57fbf21d2a8e52db7896ee9a0412d9431c1209c0286793a"
     },
     {
       "path": "screenshots/drag-read-snapback-move-standard-returned-clean.png",
-      "sha256": "679d278c48902ae832bcdfd0b8e035d7859efafd156880b291c1fa523bf3ee5b"
+      "sha256": "5c444288f5a64b72b63f6cae30c09848d0d66d383a6f2420c3968928b1cbdfdb"
     },
     {
       "path": "screenshots/early-finish-confirmation-compact-move-en-amoled-360-130.png",
-      "sha256": "450d24ec0fbcad61058dc0881e10e42ab9e744f3cf10385c74537d6a001cd6e6"
+      "sha256": "b83f35a1806942b35c3f50946fa34013ffb4a682c4aff2068dc8a97e9c5eb2f9"
     },
     {
       "path": "screenshots/early-finish-confirmation-compact-move-en-dark-360-130.png",
-      "sha256": "41cada926c117daa6177bae5bc397050475d1a7b7c996fa2b19faa562acfc6bc"
+      "sha256": "2f3e3d00e5ce2c2ced7960a5553f72853a6da151b1d358d8d48c3000f8f99a25"
     },
     {
       "path": "screenshots/early-finish-confirmation-compact-move-en-light-360-130.png",
-      "sha256": "9fdc6fabfdbc103992387279eac32fb7d0df1466a56362b17e041477cdb7c8d6"
+      "sha256": "8f4417d60d2d201319a046613c836a90560ba6fb21d053e8e9c78b90e6c6568f"
     },
     {
       "path": "screenshots/early-finish-confirmation-compact-move-fr-amoled-360-130.png",
-      "sha256": "2149ce05b1991d3a4c96ec7efa50a72a664e59127decbcb97a2a5631287d1cb9"
+      "sha256": "7ba08848c13283691bdbc0f8d804e9977927b3598e2b616d0b3821c89dc2c3fa"
     },
     {
       "path": "screenshots/early-finish-confirmation-compact-move-fr-dark-360-130.png",
-      "sha256": "d2d0c8272faa330b6557f63ec5400a898773a1e14a84bad0531222b87378534a"
+      "sha256": "e22c9fa3d13816abcf8f3dc90cae5b6aa891cef34cd4bd179c09ce785557ee3e"
     },
     {
       "path": "screenshots/early-finish-confirmation-compact-move-fr-light-360-130.png",
-      "sha256": "929002aeaa73c646e4797600fbc634e7eb59cf77d93a1e27f4d3073d39b66809"
+      "sha256": "1818a6360cea5d375a6ff51fbf2831e08a2b603af95432a8fdf07aecd44a4985"
     },
     {
       "path": "screenshots/edit-compact-move-en-amoled-360-130.png",
-      "sha256": "1b8037d4bf85f965dade902b9d95ca5a69a63b10459afc5cb1725db2dd9837b0"
+      "sha256": "13d411d2f8ac5ffe8d540ea5392a27dc92cc5a76fb4e04b8c7e359986eb14095"
     },
     {
       "path": "screenshots/edit-compact-move-en-amoled-393-100.png",
-      "sha256": "5104b8854cc47fdfa5830cde76ab1b6560d2a6c8f19b4c080ec20b00978d1a82"
+      "sha256": "602aba628815bdaff42912bc2709fa7849946f8a6e0a96c2456d2e19081bf5c0"
     },
     {
       "path": "screenshots/edit-compact-move-en-dark-360-130.png",
-      "sha256": "37c9462b8cb0748fa3f5b0db293cbe3babf9630d8e57997399a5a4ea2caf684c"
+      "sha256": "de139cc309bdd0fafd461faa61b1a4304640001c9bbeb3b684664abf302a4fff"
     },
     {
       "path": "screenshots/edit-compact-move-en-dark-393-100.png",
-      "sha256": "aa12c542863cc8351591b5be64b64e0ecb96a366490ecb68fe39b4a1bfe26376"
+      "sha256": "0a3de7db1040e989ab7ab42008bd312279f6f3d49ad5178a6c96c56508a9c08c"
     },
     {
       "path": "screenshots/edit-compact-move-en-light-360-130.png",
-      "sha256": "147dd20b0cd251dde63746af57b74d1433262241ce999323fce752b7f8c2ec3f"
+      "sha256": "2ab79860f7ac1436e782320686475e1e70c1547645449b54ac2e4230804901d9"
     },
     {
       "path": "screenshots/edit-compact-move-en-light-393-100.png",
-      "sha256": "e24095b26ce0af08bec53b6d7cc74e9530cba47adf019a88d7db562641bcdec8"
+      "sha256": "b5bcd9420e5865e7b86ace8012c9c188906cc4a9d0ff527d06ad93a28c915f6b"
     },
     {
       "path": "screenshots/edit-compact-move-fr-amoled-360-130.png",
-      "sha256": "6513331b7b9cda742e32f93e2129a5052ce7f238abf730445cd28d60f24661cb"
+      "sha256": "9b7cf2ede095abf3d5f1e61ab2d079920d9dc850436981b62a278e0b795dd6bf"
     },
     {
       "path": "screenshots/edit-compact-move-fr-amoled-393-100.png",
-      "sha256": "c9b96d0869579556c9d52d7a8f7b99607e9c69009dd1c33fdac89fab9d1475f2"
+      "sha256": "f3d33a55d36fbb36c50fe1873a0661154e86799b865c035c0155edcaeee70b70"
     },
     {
       "path": "screenshots/edit-compact-move-fr-dark-360-130.png",
-      "sha256": "329ad366abbd3d5ec6321abe75e4c0fe2d8b990809982b1dad8043d44b2f0d57"
+      "sha256": "a48c18a2428f87d5e6f41c79457f2a7308ebcb36a88b66f992c69e0a5f645569"
     },
     {
       "path": "screenshots/edit-compact-move-fr-dark-393-100.png",
-      "sha256": "c052609b0dd5dc5e9a097db3a4ce7d063e9e74966571c167360d5275b9b6b0ee"
+      "sha256": "0dc90d7e9b3d7e80b194cc716887c485e05e6d6c2eedc6d5b674fd201c4ed463"
     },
     {
       "path": "screenshots/edit-compact-move-fr-light-360-130.png",
-      "sha256": "a734928ee207d4d7e5dc99250ab689d505951dc9e3b69823566ce67958205cc3"
+      "sha256": "4ecca1c854c842ba72cf81628c0100dd10fc30fa3ab1a567a4f1bd40c00a5c14"
     },
     {
       "path": "screenshots/edit-compact-move-fr-light-393-100.png",
-      "sha256": "922f12f6cb20c5ab7c0896d06e78e2abe159345bcf9590525b62bdc154ada93c"
+      "sha256": "e85c34c086451d808d33d84d8e01d663d1eb7600aee2bf720ff86fe2dcca35ef"
     },
     {
       "path": "screenshots/explicit-reference-history-en-amoled-360-130.png",
-      "sha256": "6c64d29c740b8ace8bef2eb97a2dcdc7deba33735592a052540c6ca0af80c840"
+      "sha256": "047986c840bf5d9102cb81128ad4822c40005297a2498b241023248dc00bed53"
     },
     {
       "path": "screenshots/explicit-reference-history-en-amoled-393-100.png",
-      "sha256": "e833d7336255275b453a8791a44e8fb4938c9bc14727f463ae92038ea518a97e"
+      "sha256": "d136a62a160845c51266bbab3ae35698e57526fb9a17c5869b0cf5d8540b0360"
     },
     {
       "path": "screenshots/explicit-reference-history-en-dark-360-130.png",
-      "sha256": "be5b331a3b3412d941c89c677e1d7e426fac43ecc73ce2e8dbb9760eec3dd28b"
+      "sha256": "b50937b439555ace2791022e30de284659c48c104240999266c80310a054edca"
     },
     {
       "path": "screenshots/explicit-reference-history-en-dark-393-100.png",
-      "sha256": "aee9bf7ad054adab1aa61825e731bf99c014e7afb62eb40458cc4c9af6dd3aec"
+      "sha256": "9abeb9343f3385fd24bdce3a3c83dff0273ed9350bac39bc97b3800d9062d9ea"
     },
     {
       "path": "screenshots/explicit-reference-history-en-light-360-130.png",
-      "sha256": "d4afe3e65a858a9b123ae330113b2cf89126d9e6517919f6e3d33ba6a9e94f6b"
+      "sha256": "d86709fa99dbf96219fbc78e1f4506d672cd9df73fa2156e625753d0df5b3d9d"
     },
     {
       "path": "screenshots/explicit-reference-history-en-light-393-100.png",
-      "sha256": "1461c4b6403205f0bd551a84e450303e1f0b52f70ab3a31be8db28821aa7dee6"
+      "sha256": "69391d9540324b00b39173a89615e992171681c77fbba964b4d2969e2a55b52d"
     },
     {
       "path": "screenshots/explicit-reference-history-fr-amoled-360-130.png",
-      "sha256": "055e4dcea89257242f1288670127a61a7758c38e70dacbac643cb0ce2eca97f1"
+      "sha256": "fbf7a42ae2d99ab57dce1620655bd311660022124495cdf349583be2f9f0c422"
     },
     {
       "path": "screenshots/explicit-reference-history-fr-amoled-393-100.png",
-      "sha256": "47e1745e34e19ce3b22058c1450ab296221569cc56448e6cf30523d332bef8d3"
+      "sha256": "d3da1e19ea89a62c42ba75008f97faebbd511244758cdb2f3d297277d5c6085f"
     },
     {
       "path": "screenshots/explicit-reference-history-fr-dark-360-130.png",
-      "sha256": "3e978cb821ad9271c68fd3eaffc9872f1c01a69939dcfae1ad07cc6fa2513365"
+      "sha256": "849bae51f79453c1c5ec97063e836ec630c1229df029af7ede3f108f0a244699"
     },
     {
       "path": "screenshots/explicit-reference-history-fr-dark-393-100.png",
-      "sha256": "059c78e3f8e865abfb7addff22c60f54fa7831b8b9237a61c28263a7842b7d5d"
+      "sha256": "025aa4c60f834ab29a6ecc0a2fd461f2d743ea44567794d8cb7911bc7deca512"
     },
     {
       "path": "screenshots/explicit-reference-history-fr-light-360-130.png",
-      "sha256": "d65abb7f3324fcf2925802dd81856ff3a414d1f021cfc0a932507d27db4ca5e2"
+      "sha256": "259e36c20113cc0916befafc81311a29429b4718327c1334eb3d1194eca2ede1"
     },
     {
       "path": "screenshots/explicit-reference-history-fr-light-393-100.png",
-      "sha256": "2ae4d5035981b8bca069e3c930cc4e5c0055904538dffc446561afd2e2a2cc59"
+      "sha256": "e4402276674e83cce92f6232d3e78a3c51bcaa23f5ec33c0a27b461160a1dc9e"
     },
     {
       "path": "screenshots/hydration-compact-move-fr-amoled-393-100.png",
@@ -452,51 +476,51 @@
     },
     {
       "path": "screenshots/library-compact-move-en-amoled-360-130.png",
-      "sha256": "ebb684da524d8e766001a72eb3083345c7fb74a1f75db8a6d0dc915b311f3460"
+      "sha256": "464cf0d2a576ecfaf2fbbe1f8559b7119825bd3ee24fb04235bc03f7e316063d"
     },
     {
       "path": "screenshots/library-compact-move-en-amoled-393-100.png",
-      "sha256": "db63e8c31d0eac243c8e7e1817818966b9fcf594814fc1086afef382288277c6"
+      "sha256": "59d317f86aac99a5f6faa46045602adfaa37ef62f9da1e6c06f655fbc1e3193b"
     },
     {
       "path": "screenshots/library-compact-move-en-dark-360-130.png",
-      "sha256": "3007ba09f9af787502c0e512a5b7ac5c496359e451f3c6333871e6d629ce73dc"
+      "sha256": "27741d3eddd4836057fee9dbee07b09832df2ec206fbb56e6557381c338ba5a7"
     },
     {
       "path": "screenshots/library-compact-move-en-dark-393-100.png",
-      "sha256": "b63b36cfa7d89d3b3a696c164d7268da9505cb84c21900e2f9c552bfc971ee87"
+      "sha256": "8e04e64db80af5da200c09c02d6ef02cfa8a3e2bf77cd79dcb77bc097bc5f11c"
     },
     {
       "path": "screenshots/library-compact-move-en-light-360-130.png",
-      "sha256": "1f4f9d6f798d9cc67d5fe36d07393bea4f20b6afaa05a8c2b8e2faed0aedb211"
+      "sha256": "3641dd2c65c9b5758dabb5e1ce6be50186c3dad9d1eca7c30fe6b2b0390d3e17"
     },
     {
       "path": "screenshots/library-compact-move-en-light-393-100.png",
-      "sha256": "c79253414c189a2945236e2123006017ec002d0f27febf74902d4271d686559d"
+      "sha256": "174c502ba8328d8ffda8c2a4d8e509c469d99930e798a76188566288732e97c2"
     },
     {
       "path": "screenshots/library-compact-move-fr-amoled-360-130.png",
-      "sha256": "245b6cb940be8a2159e19b9ec3a470ad859d701198e873fc9618d1da139818d3"
+      "sha256": "3b652095ba1c4b1e234ae6834d138076d611bbcc0a881285996822108771135f"
     },
     {
       "path": "screenshots/library-compact-move-fr-amoled-393-100.png",
-      "sha256": "989f84f1a9c1ff08f8991c318bfe3d2994c19ceabc925cbf1b32f611fef2e614"
+      "sha256": "a9cb8548022b1ef184d84af3d68a108f3026a4d0a60b7171bfef504edffda8e4"
     },
     {
       "path": "screenshots/library-compact-move-fr-dark-360-130.png",
-      "sha256": "b626e32f64381ad0c9423eef874371cff987d741a3a0a2af7fea2f609a2a7893"
+      "sha256": "249d4eb124942d38e097429136fe594ace1334f27e527812325da7b8f6be6525"
     },
     {
       "path": "screenshots/library-compact-move-fr-dark-393-100.png",
-      "sha256": "66e55e483a062c6c4e3d1e6bfe88d04fe26014024745be2d3673dd06ea092f64"
+      "sha256": "abac66b697c7e7eb6e350ef5e21117aa3b693aaa30994ee67d5474fe6f0bd14f"
     },
     {
       "path": "screenshots/library-compact-move-fr-light-360-130.png",
-      "sha256": "428eacbbb0727776bb039d4ccca8623464699c5f00081c5ff47859718db71a52"
+      "sha256": "6b98f40df66bdd1c243295f82e3d0eb1c58edf394e2a8574f8ffb841113dc893"
     },
     {
       "path": "screenshots/library-compact-move-fr-light-393-100.png",
-      "sha256": "2d93eda49751bba2e49d625b965066cf8b06d47bb0ea4fe75510c753c6fda602"
+      "sha256": "c251556872e6a91b7eae54723a4161fdad1a6f0dd1ebf253e3c101e3dfefd6c8"
     },
     {
       "path": "screenshots/menu-compact-move-fr-amoled-393-100.png",
@@ -512,219 +536,219 @@
     },
     {
       "path": "screenshots/planning-compact-move-en-amoled-360-130.png",
-      "sha256": "96761a9cfa7b2b38fb30423a66e7afa80a6f9375b5c1fe8acc7cc43c7d7c9206"
+      "sha256": "5c05cff65b948eff6ed042d38140f4d4a31565dc56257a8c7bb1a30191291820"
     },
     {
       "path": "screenshots/planning-compact-move-en-amoled-393-100.png",
-      "sha256": "1004f378d80299b6fce49ce4530cc03b4029a72c427b32dc09caad768b172700"
+      "sha256": "004fd4535171155ec769cc6c2ff6c1ba48ab997b8e33bae511baa5ddb25520af"
     },
     {
       "path": "screenshots/planning-compact-move-en-dark-360-130.png",
-      "sha256": "5c152fbc393df50b739a365e7cffe574c48390554372704ffe4b8bd54d6d1247"
+      "sha256": "258e9bbf38acb6852bbd274fdfb6e779281f8d6791d600550a678fb7ed22127d"
     },
     {
       "path": "screenshots/planning-compact-move-en-dark-393-100.png",
-      "sha256": "7d23bc3d7d7889dc7825b842cbe6162f167037fb750825dd0f95d60470c722cb"
+      "sha256": "2b1c52ce987a5bfea7eba980a1e6dc14cfa771f4bfe161e470c7d9767a256cbc"
     },
     {
       "path": "screenshots/planning-compact-move-en-light-360-130.png",
-      "sha256": "6915523c07fa7928b1215afd7d64b3b788688603302dfc54b723370e08ed9431"
+      "sha256": "b22fa93951cdc283f9b3bbdbe51c56dbe8f1cc0d551062f0ec4a8468eca5e128"
     },
     {
       "path": "screenshots/planning-compact-move-en-light-393-100.png",
-      "sha256": "03c4efa3a152fca3e8ea542f4bbfaa791aca68e16c41462975cd1d1832544402"
+      "sha256": "1533391292c319a13e455b064738d11e073fad72c2c997efa3ac1a62498d660e"
     },
     {
       "path": "screenshots/planning-compact-move-fr-amoled-360-130.png",
-      "sha256": "71e96144791db92de6923ae8ef91a60fb98a7cebefb0c6e2aa857847ae192a83"
+      "sha256": "e4255ce096ddc9479dee283f6573aead58e2aa38ac615995858c90bc7ed7d680"
     },
     {
       "path": "screenshots/planning-compact-move-fr-amoled-393-100.png",
-      "sha256": "6094368745cc5687c18189e1eea2fda26e6ea8bd958b191f1800aa88d5d2c1b3"
+      "sha256": "67b071797f91dfe449b3f8c6569900ef848b56e98fb66abb3f3e86b83f345183"
     },
     {
       "path": "screenshots/planning-compact-move-fr-dark-360-130.png",
-      "sha256": "f60b00a8e1ffb7bbfa4089608d3a294c9989a7af35f96dd654e5b99e388d9c45"
+      "sha256": "96070da51bfa3b57cc786dd082ebb9ff80a986e713610e912eefea55a36b5aab"
     },
     {
       "path": "screenshots/planning-compact-move-fr-dark-393-100.png",
-      "sha256": "7b05cc06b57c2bda6233de43a50498ea7c8161d996bce2b39e090c7760922964"
+      "sha256": "3d9d3a9acd9d8fbab5441acae78cb9345cd5cedb54e8604e56b9bf0af2996aab"
     },
     {
       "path": "screenshots/planning-compact-move-fr-light-360-130.png",
-      "sha256": "acb6ae23622443027c0617cb3861c8c63ab2e690f229aa1b4c81a28d9ebf9ca2"
+      "sha256": "6cd200b65e07cbb625aa6b1639a43585849a50bf102948115d70fdc2cfb79306"
     },
     {
       "path": "screenshots/planning-compact-move-fr-light-393-100.png",
-      "sha256": "e5aa50dc5981df7b8f339c2e24fcb955a60d668ecd37fdc7d05dfa7e784123ab"
+      "sha256": "3491be425d3e829b1faf1c8b400d1fc909cbb67e2e5d972a7d44f18f14fcfd9a"
     },
     {
       "path": "screenshots/preparation-compact-move-en-amoled-360-130.png",
-      "sha256": "a92968fb8365095458cd20820c09f9ce22eecd64ad2bd1a12d71fa5a73d85559"
+      "sha256": "00ff5b29d0cae6504f2bab8d1b05e88321f47ccf205b5757ddb313c610106cb3"
     },
     {
       "path": "screenshots/preparation-compact-move-en-amoled-393-100.png",
-      "sha256": "0935c36987ca70c824ea2e25183ce2adb96789ce7b54dc79aaebfc769dc48a4e"
+      "sha256": "44cc576cb399a99b519f96786a9e66fe06afdb2eaef9fcb6405f151521651b55"
     },
     {
       "path": "screenshots/preparation-compact-move-en-dark-360-130.png",
-      "sha256": "7bbd43ad10b59ee29cab563dac97de1f74e0ddbd1fe00854ea61ba358cd58b32"
+      "sha256": "1e67022c08796f5b2657d0244a01eec42362425e5ce03a3f7972b17b1317f129"
     },
     {
       "path": "screenshots/preparation-compact-move-en-dark-393-100.png",
-      "sha256": "50cd43c270f9c74e9153e18455d8d1a60512e344d417e9cf98ec66f7cda20e33"
+      "sha256": "810b9a6aa8434417fdc56e1b3135088e4e0e1754fa95f71a26574dcbde788e6f"
     },
     {
       "path": "screenshots/preparation-compact-move-en-light-360-130.png",
-      "sha256": "0910ff4d3620604d8a121eadf70b50e31d00191d807f448627309b99a87d1aa3"
+      "sha256": "32b8a0e85164a908d5300fd4eb311a4aa5effbec93918188c8989999bdf60819"
     },
     {
       "path": "screenshots/preparation-compact-move-en-light-393-100.png",
-      "sha256": "7f5e1daa1ca0b2d7748f9a9294469011931bf80c7752cf0f8a9f57e87189640e"
+      "sha256": "661916d350daac802cb4b0d303dc7c89d51d7024758bab64de2b3dff5257ebba"
     },
     {
       "path": "screenshots/preparation-compact-move-fr-amoled-360-130.png",
-      "sha256": "43d76bc03d84380a46b21e989336568f172117031c82133b8ad3318eaa5652f2"
+      "sha256": "c18304a427a4ee3237c71129287a14ce408c75e2b2e7297f5d340fab253db61b"
     },
     {
       "path": "screenshots/preparation-compact-move-fr-amoled-393-100.png",
-      "sha256": "a2fb710ee578b5238d22be6f54e0b3dacc299df7628d1e8a3a151ebdbdb39790"
+      "sha256": "84524ca27161fa1ceb10f3f1039b388ddf75ae69c93fdbffc03b4a3f6da6cc0d"
     },
     {
       "path": "screenshots/preparation-compact-move-fr-dark-360-130.png",
-      "sha256": "9959ecdf79031109601f9f75cb20765d4e9c5a1a44ab3a9221f29d0407e91a9c"
+      "sha256": "bb24aa70ae108f30961c7d5fe73b5c6a88ffd0bcb9cc53545cf61ffc072baece"
     },
     {
       "path": "screenshots/preparation-compact-move-fr-dark-393-100.png",
-      "sha256": "1453fa879b46ba034d4521952cb0826d35fd0e244d34e7077f13ef72d314d5f4"
+      "sha256": "46d963fe0052d9cb3fb946ac6d792b0b28a6880986145111f716a93d5dbd323b"
     },
     {
       "path": "screenshots/preparation-compact-move-fr-light-360-130.png",
-      "sha256": "b2b34bd1ea891dac93e7c801387fd87435ed5dd6a61a412838dae5bb5905c13c"
+      "sha256": "572e5724b59ed5a65752bdd89b2627c88d2ada5b3470e3a48c267b839705f774"
     },
     {
       "path": "screenshots/preparation-compact-move-fr-light-393-100.png",
-      "sha256": "fa0d6c4ed7243c90b89cafceb1dcfd127c6e584f11706c6be68df1a58e2198da"
+      "sha256": "e787e39fd844297e0c199fe44b11c8d3a36e6d9a8b5fc638cabbecdc75f8e09d"
     },
     {
       "path": "screenshots/promote-reference-dialog-en-amoled-360-130.png",
-      "sha256": "05cb9b9e9ac761fffb3d19ec98d1c810e482d49227309e63db53b4792744ba46"
+      "sha256": "51eab2d5bf4a67880ad184c5f041a47c087a26477426fb697f12fe529df2336b"
     },
     {
       "path": "screenshots/promote-reference-dialog-en-amoled-393-100.png",
-      "sha256": "b2957e98f1bb87fbab50be09285b03616b4caa84caa6ff00060b648e93554297"
+      "sha256": "50db01080291ba0c8b00f44791d10f4ed57b25f8b4cd0fbf0af2c7fa992440c3"
     },
     {
       "path": "screenshots/promote-reference-dialog-en-dark-360-130.png",
-      "sha256": "01815f324786eff97c7cfa1935fefe88fce4bcab5bc09fd8f33146f0e376cdec"
+      "sha256": "1a8d84a7a99cdfe0427d135671a6876c177167476ebda3bab61d4b4393cbae2a"
     },
     {
       "path": "screenshots/promote-reference-dialog-en-dark-393-100.png",
-      "sha256": "0977b9cc47750e57d143320d19171c0d91868567c7eeb689b6eade216cc33819"
+      "sha256": "38558f324f2f902504800f0bab5f80f7a19a56bd3014477e0357d35c58b08820"
     },
     {
       "path": "screenshots/promote-reference-dialog-en-light-360-130.png",
-      "sha256": "870a6a55beb0820b73e869313bc5d4c0833e28947c553076d1a2ad02b8706ed2"
+      "sha256": "e799a13366040667e4f5fb6792216f1b1f61a028a0f540b687b0b41229520842"
     },
     {
       "path": "screenshots/promote-reference-dialog-en-light-393-100.png",
-      "sha256": "ae9f66aa4bcb070549ee7094c00a765756db01c604c041703c10964f798706d2"
+      "sha256": "15afb485227d6950d9bbceee1c4d76c55384f9fa1925315d45e241f0fb4f0dc3"
     },
     {
       "path": "screenshots/promote-reference-dialog-fr-amoled-360-130.png",
-      "sha256": "0fe24db78d36e1af4d9c6bc6781a4758ec4aba42e74779454d6c289502ee843f"
+      "sha256": "3646f58843750db7a350fe905793766cf97e185824ded9245fe864ca63aff437"
     },
     {
       "path": "screenshots/promote-reference-dialog-fr-amoled-393-100.png",
-      "sha256": "d4cf4edbc21a8df5b11b666c7b68764b547d9f9405ddb6ef5390a61d35c2c421"
+      "sha256": "b297753bdcb06b7f4a13c77546c4acd87d6da5b66bf52e9dd08c6a85b18ccd71"
     },
     {
       "path": "screenshots/promote-reference-dialog-fr-dark-360-130.png",
-      "sha256": "4a5ddfcca2019e546ffeecd3e27636593087e2915f56c3616129aceea77adf91"
+      "sha256": "ca5cd1b8f154a61150e480ec63fabda92ad6ac140a7e747ee3c2a397baf56bcc"
     },
     {
       "path": "screenshots/promote-reference-dialog-fr-dark-393-100.png",
-      "sha256": "7110bb0e2ec335bb978ad448c46f25ec3b6504cdab691bde5f0cd05a392e5919"
+      "sha256": "9cc6c2992c8af1f49fc13ac19bb0659792769c7086caed4df307fba96ccd2c3b"
     },
     {
       "path": "screenshots/promote-reference-dialog-fr-light-360-130.png",
-      "sha256": "988390f0efc08d39ecd3a8e0c76221c3fd3fb7bb55ae6f02f52ff58a62bb23e3"
+      "sha256": "b7d3b9aa69e8f0ed7bebf161b10924793d0c7de33f70abe5670273468216c506"
     },
     {
       "path": "screenshots/promote-reference-dialog-fr-light-393-100.png",
-      "sha256": "5398cef35b307c88496daefed3d22843515f2e8c075a82345c72de25ff3a8d0d"
+      "sha256": "a4a025771013102988aab00275f0c6b76f983b842d24da1f07126b3b6f2e93aa"
     },
     {
       "path": "screenshots/recipe-compact-move-en-amoled-360-130.png",
-      "sha256": "ecca1548d7a1098342196910b71b6b244a525116def38098fb82abdea38e5c0c"
+      "sha256": "e8ba24826ed415e7a390a43d2722c07d4633b94f5e0f2cc3183312523b59f138"
     },
     {
       "path": "screenshots/recipe-compact-move-en-amoled-393-100.png",
-      "sha256": "26bae7ce95f616048f7db21fff79042ebe49abd7bb08b1630c60edfe564d22f7"
+      "sha256": "9a1db00cd1a36faa32380e8a33feac4cd151844297c6d7c05548207a63d60032"
     },
     {
       "path": "screenshots/recipe-compact-move-en-dark-360-130.png",
-      "sha256": "d0da46064dd1643167807c191ea6868e84dbaf4a1df964263616c245086bc0c5"
+      "sha256": "b444bf05abf1f5d1e56f13d68e4543c92714ed693298807d7f37d2173c4ffbdb"
     },
     {
       "path": "screenshots/recipe-compact-move-en-dark-393-100.png",
-      "sha256": "356c45673bf6d69b63c8029bcf5fd6196f2c89f99f4a74c00a8ad98d72990f14"
+      "sha256": "492722ad4dd8061b45129fd5d5a99e29cf0144a09cdff60b8fabb4356ba2f87c"
     },
     {
       "path": "screenshots/recipe-compact-move-en-light-360-130.png",
-      "sha256": "1344e09055c62b659f7c9cec25f35f9ad77c731bd202a3735d9e1c2c21eef2d9"
+      "sha256": "65f2e940362c34b1580f063c821afb978aa772e4724db6d135e11023963efa37"
     },
     {
       "path": "screenshots/recipe-compact-move-en-light-393-100.png",
-      "sha256": "abded4173f51c98623a4eb1d2ab9f1db534d503b05954aaa383b12733a624eb3"
+      "sha256": "2e5904cb2cd858df59b0b25bcd5c283fb12ddebb6d59ec25e3df08b65d38b81d"
     },
     {
       "path": "screenshots/recipe-compact-move-fr-amoled-360-130.png",
-      "sha256": "cb01019e2857e770ac34d3c5bdefe162bfce20494bcba7d13126f6a6bcd68686"
+      "sha256": "99924a5b19b95c884d9d0756e52b70f3a3f1da19b705780eab69ccb71aa355d7"
     },
     {
       "path": "screenshots/recipe-compact-move-fr-amoled-393-100.png",
-      "sha256": "8123316f0f051e48c4dae9c612e0d38f17fbb726480ee360e20f83ed6a3037bf"
+      "sha256": "5fb412dad46a81d2dca8e8e3986e4178a5091f16ff903edeb25091ec0eae50f5"
     },
     {
       "path": "screenshots/recipe-compact-move-fr-dark-360-130.png",
-      "sha256": "8e204f5f3bee2b6da85017f4bc4496e2c555b004949dcea42dfe7491726cdcda"
+      "sha256": "e4f6ebd71732ba8be0441c72d37cefa20475d702afc7a56a667b5ca9fcb71a74"
     },
     {
       "path": "screenshots/recipe-compact-move-fr-dark-393-100.png",
-      "sha256": "82bea7485af9034ebf11f465871a7105e1b434b165ed296f6ef9ebcda9194af5"
+      "sha256": "deb2f865aebf4eaad03363d11fc680cdf25360d2916625e742feb622807c6774"
     },
     {
       "path": "screenshots/recipe-compact-move-fr-light-360-130.png",
-      "sha256": "734e369f5c002b60635dd9ca175ceeac5df24ecfc99857154c313edb17599ab9"
+      "sha256": "718f30cb09cd8bbb0199f5418ac1f71cba9bda99577750c5e4b9f462d5748831"
     },
     {
       "path": "screenshots/recipe-compact-move-fr-light-393-100.png",
-      "sha256": "59d35600f8b990505faf9b0708225aa6753ad50207480ebc475bddb4dea06cfd"
+      "sha256": "b5c32a85ccaeab1d8dff3ef31e984d9f4fcdaf3f8494b6be3a83e44fa3f8d253"
     },
     {
       "path": "screenshots/refused-drag-fr-amoled-360-130.png",
-      "sha256": "74bffbdbf61d75c6b8a3481e5a58c809f1cb99695d17bd60a1dd15ea3263ea25"
+      "sha256": "42c276dd117994a24707a00e9c4a76ec2693f957dba079acf8426f9840ab055f"
     },
     {
       "path": "screenshots/refused-drag-fr-amoled-393-100.png",
-      "sha256": "b34a27b04fcdb5474b2511873bceb7c018d687ddfcd0b6a7d3d841fa45c5b5df"
+      "sha256": "8d6463b2f90e9b48b6f639864dd1531452f499f46d39494bf716b34e574e3918"
     },
     {
       "path": "screenshots/refused-drag-fr-dark-360-130.png",
-      "sha256": "bd891876b916df6213f1ecb76bf4901f6f64bc0731ac815f74b863cb4245bd82"
+      "sha256": "90eb41fdcf4a4d0cddcc45a190d6caaf85263e2090fe43dad1abd521231b08cb"
     },
     {
       "path": "screenshots/refused-drag-fr-dark-393-100.png",
-      "sha256": "f776822f4ff3cce51f23e7ae9d8b15872081bee43512cef2be20201cc2b16207"
+      "sha256": "53b24292b3d493fbdf082d3c86115389ab58a729860506af0d5e89275b12465a"
     },
     {
       "path": "screenshots/refused-drag-fr-light-360-130.png",
-      "sha256": "28c6df5e44d6bb10d05ea652ff94b0b0c2fad550f78e172057cfc1bc3881c46f"
+      "sha256": "4e97fb8c7e562f4fcfc59624d696ac058a95477233ce705438e90e2c119ed0b1"
     },
     {
       "path": "screenshots/refused-drag-fr-light-393-100.png",
-      "sha256": "bb849cb202a742ae8c4d2fc1eb5df733dfe02c92af4751c9b45a156f21597341"
+      "sha256": "e27690eb82566a30292fa4161caca7aacf403684d16bba6978c4f7176ba6a4df"
     },
     {
       "path": "screenshots/round2-creation-A-393-100.png",
@@ -780,255 +804,255 @@
     },
     {
       "path": "screenshots/saved-history-en-amoled-360-130.png",
-      "sha256": "8f30accae37f1a4b9dce44d946d2f67becc8c3d9bfc66db747546d9ad8fdadd2"
+      "sha256": "e9e0ade9734d1da9f074baf58700f0b98dc45fc393f478b2a175513556c912e2"
     },
     {
       "path": "screenshots/saved-history-en-amoled-393-100.png",
-      "sha256": "21798b5b95b355235b8e176cc99883cfffd5bdbef1f23cb5b9c359766273a2f9"
+      "sha256": "f9a5f374ca89be49df89ecef488c14eaa7cd6684703aec45f7d2d51dec5c77c2"
     },
     {
       "path": "screenshots/saved-history-en-dark-360-130.png",
-      "sha256": "a4c1655c6532a3c6c431ccda793d50abad9399b8f1442c0004c3fc7377004fd1"
+      "sha256": "e37461aa4e8507606826bde2d2901e15e149492fc77c8f90779efdd1b833e236"
     },
     {
       "path": "screenshots/saved-history-en-dark-393-100.png",
-      "sha256": "ea48665311f6eda59065569a59a0ada773933919e4f8a4beb283012fb40a778c"
+      "sha256": "119a681614c3e179499fa88c28ac5940af161b1c2abb634c38739cc9d45e749d"
     },
     {
       "path": "screenshots/saved-history-en-light-360-130.png",
-      "sha256": "0fad8d16ec44dd06633cdcb9308a6b88792c0eba55ea23f3bc885d27eafa7849"
+      "sha256": "8fadcda9234c17dfb8f60ffa57f13c926a1149dd235a86f8d25416912b8718cc"
     },
     {
       "path": "screenshots/saved-history-en-light-393-100.png",
-      "sha256": "a5fc8e7e58a80cbec469717eacd066e9e40b1194de5a52c23bdd8412e1269248"
+      "sha256": "d1588d8ece4ea0ffb0f77cc4bf8097bd97302e45529d7e4573141c915af95b2c"
     },
     {
       "path": "screenshots/saved-history-fr-amoled-360-130.png",
-      "sha256": "75dd55d1657e64d89391db06fa142b737fef11ef7cd3e5da6c2a0449de80667c"
+      "sha256": "969c3bfb8f0ccd14bb06e814a158700b48ca84ef67a5d88edc2e7ef1c4d7ae7f"
     },
     {
       "path": "screenshots/saved-history-fr-amoled-393-100.png",
-      "sha256": "439c1628075d43b299de70eae3eca1d333bb112bd8767d6a8563dbe9c59f79cd"
+      "sha256": "8832c0d57fe4f146cf1f4a2dc92919c48bfe9756590cc8474cf88c576534003a"
     },
     {
       "path": "screenshots/saved-history-fr-dark-360-130.png",
-      "sha256": "7aeddb69714e42e81f6e954357ef77c63749a52c946586419b253675e57dee77"
+      "sha256": "a0bf8981c7d24c66af81ce2f8b6b42d7bff692eb7823a9ba90ac28a106dfd3dc"
     },
     {
       "path": "screenshots/saved-history-fr-dark-393-100.png",
-      "sha256": "05712aa34be223c3b0686e0749517ebf71123a2546fb81d3d13c2d91869dd8c1"
+      "sha256": "7697a0fe5445c8c651c2392fe7c55f889280ba89bdaa31f18607e641d730040f"
     },
     {
       "path": "screenshots/saved-history-fr-light-360-130.png",
-      "sha256": "30e7d093cbc2f2fec2f6628a9a1febf259dd3e9b9faaf49d2ff19ea9f558cfb4"
+      "sha256": "4369026e1ced2130f8260e67f182f5f0b99c4ca1e167f85ad7969303fcc46d37"
     },
     {
       "path": "screenshots/saved-history-fr-light-393-100.png",
-      "sha256": "869c6a92a8e919ccfe17bb9118e4b2cfb996532c3cab5f2be066be5508760c74"
+      "sha256": "cb25b910e45fa81520def5ad20e82de9832b85ce77fa04a96444c813b36d3f91"
     },
     {
       "path": "screenshots/settings-compact-move-en-amoled-360-130.png",
-      "sha256": "5238cfb735bbf612b5aff23c75a2282c2e42cc54fabe17127258d271c5cfb085"
+      "sha256": "65fa8a94bad8533d96408b61c0306fc226e92816e79bbebdc2fe592a3cfe03a0"
     },
     {
       "path": "screenshots/settings-compact-move-en-amoled-393-100.png",
-      "sha256": "7e3a1a2dedd76162f04026033658d82498f967fa1ef5c392d39243b56fbe0fd1"
+      "sha256": "3cdb73223ac2d8f7e63d46ef0cbf3135d167b2188b0449b667b43987e4ed7a19"
     },
     {
       "path": "screenshots/settings-compact-move-en-dark-360-130.png",
-      "sha256": "67938a50898c9f2a6d72c0f243913c13d034bebbd661037ef6c7f1d30370e384"
+      "sha256": "6b41c44dbb69ff31001eb9b75ff9ae97fdab0b6b93ffc72263b8b87689e3bb34"
     },
     {
       "path": "screenshots/settings-compact-move-en-dark-393-100.png",
-      "sha256": "e926b53ee49c0ac27fa094945537b8a46065e4e2febc0fdf6125476c920c495d"
+      "sha256": "6483dc2411ceceec635e460421ea087e71e4eb6d21ff7ef66ce7942f07c868bf"
     },
     {
       "path": "screenshots/settings-compact-move-en-light-360-130.png",
-      "sha256": "9200c01dc0b738861e8769caf1ab05e332ddc9d150cad80255695f8fd8984836"
+      "sha256": "e8b8fc5aa5587fc783a7be657628bd9f42f6bc309164b1a30b55c52230c7ac97"
     },
     {
       "path": "screenshots/settings-compact-move-en-light-393-100.png",
-      "sha256": "12234efa6a33aa261007914bf5a2c3636f7ea03a9bcc8ab71726eddb53911181"
+      "sha256": "f8c87d863276392eeb335c09ed347f60ded1051363cf5229778d1fb3b90dd5e9"
     },
     {
       "path": "screenshots/settings-compact-move-fr-amoled-360-130.png",
-      "sha256": "c42b96f2d3008fd39cf41feada4f115c930164bc32f19e7f9bc25457effb0ce3"
+      "sha256": "00a77dde4b4a136dfc8252019aaa26fe303e1bf537181c58dede12ac5be0c7b6"
     },
     {
       "path": "screenshots/settings-compact-move-fr-amoled-393-100.png",
-      "sha256": "473ce42824981d484cdbe1d6dd6d65b9fd5f5f552101f400c9324f195373fff9"
+      "sha256": "3699ea75a53a176d450353f79bd84f4abae108b9feb9b11c3dd1dbf60f8b0ebf"
     },
     {
       "path": "screenshots/settings-compact-move-fr-dark-360-130.png",
-      "sha256": "250fbdf80553e79bd89bbab7cb751d8d2e5dad82eb368ed841ae249bcafdc191"
+      "sha256": "6f24d8da994cd551cf0ad0ff554ac2d696cf14b1f6b5e4a3698ef371227f5cd4"
     },
     {
       "path": "screenshots/settings-compact-move-fr-dark-393-100.png",
-      "sha256": "080a267e4aec1d8c9a61894052e137ccc569f05c3fe776da2ceaf9a5e90564e5"
+      "sha256": "d6b572ad2bab7133090eacd363119f1bd58b898c2027a51c2e07208037570d02"
     },
     {
       "path": "screenshots/settings-compact-move-fr-light-360-130.png",
-      "sha256": "6974e669b441f5f2ed67eab94185b5b920785368b90b36f7020c64390f098c2c"
+      "sha256": "1eb2de80232b7a9f9b323b19b86928877844ebb17cf1fb37a68706e9c8250cf1"
     },
     {
       "path": "screenshots/settings-compact-move-fr-light-393-100.png",
-      "sha256": "261012a79c84215b1864a34edaf63e4d86c657e4625eca9378a607c2291a1f38"
+      "sha256": "f2c4a413d23e979611eeadd817da7fe2533613c87dc9671be948b2b4daaeb6f4"
     },
     {
       "path": "screenshots/steps-compact-move-en-amoled-360-130.png",
-      "sha256": "26759ebdf673b52283bb0a6e074d487694357c9db32e7d73118c8c76cb781c54"
+      "sha256": "186de5a3067f62e46332fc01987f36ebe63a2295d7d444598b4c18d80bd93c7f"
     },
     {
       "path": "screenshots/steps-compact-move-en-amoled-393-100.png",
-      "sha256": "860522079e78314d66558b9bfd1a931f6af0fa75b83c2387b5512578931e3509"
+      "sha256": "367b094b2df151b23343416ba413dc99e839a4eda67a3c7c05778448e154f934"
     },
     {
       "path": "screenshots/steps-compact-move-en-dark-360-130.png",
-      "sha256": "ccb5b569065c3474e3a91402e31197b42d549093464d833886cd0deeb5064c1a"
+      "sha256": "30835881b2a9696cfe4472d9639e8ccb665102f044227cd50bf102c94b2b4e3e"
     },
     {
       "path": "screenshots/steps-compact-move-en-dark-393-100.png",
-      "sha256": "b51c9096ab524ab3a74fec8b3fc881108cb5e93c6f85b246d20bd9f596babcb7"
+      "sha256": "15038c794539b203f310530cf8993766570dc9d3cf8506ee1fd98d4306a7ab97"
     },
     {
       "path": "screenshots/steps-compact-move-en-light-360-130.png",
-      "sha256": "db2af53cded82d8f5c3b8660153aa6b73c7b069eb544eee08a16f896f5b5954a"
+      "sha256": "7e094cda1d82263b8b3ca8adcf584d9630e409df47d32b4bfe047a39fbf69306"
     },
     {
       "path": "screenshots/steps-compact-move-en-light-393-100.png",
-      "sha256": "d61facacb11c967b31cde19f81da60cae8c6f7ee159f81fa037973b3911e90d6"
+      "sha256": "5d9100677541f716a889dc3f45afe8d4534447e113c4bf14aeb0a108dc87a0e8"
     },
     {
       "path": "screenshots/steps-compact-move-fr-amoled-360-130.png",
-      "sha256": "20405683725b84c60a76fb6e0922b68ba38086f0df49f765628685845b54fc4a"
+      "sha256": "37e36fd8110f15f88d2707fc05b8d91ba98c1b094bf1e8e2912d57eb907ab52f"
     },
     {
       "path": "screenshots/steps-compact-move-fr-amoled-393-100.png",
-      "sha256": "d15509d91e33fd86b73afbf8aca742e22d1a64c90f2747967a2c6584dd1f580d"
+      "sha256": "1037b961ea9c92dda50bc7e83391b1fc9c692f919a600b6576ec375519948fee"
     },
     {
       "path": "screenshots/steps-compact-move-fr-dark-360-130.png",
-      "sha256": "59ea0f53b040e706dd239e6adb57aae0f33271170dc96db9ce1f0af776268072"
+      "sha256": "2fc63d2a694a31610a4cdb65077a4ac68d53fe2abab9b77669d21aca5f5340c7"
     },
     {
       "path": "screenshots/steps-compact-move-fr-dark-393-100.png",
-      "sha256": "4432f888a8c6ad19e41cc50c7938caf2e8b56ac2a1ad5a1f27f0664c14169535"
+      "sha256": "6485a44eb94d7039032693e13ea1ec2c0eeacc86c3639babda534f8fbb5a3ff3"
     },
     {
       "path": "screenshots/steps-compact-move-fr-light-360-130.png",
-      "sha256": "2d85960e28b18ba503078a09af4fe726dc385b42dca295d6ac49c6c7687c56a6"
+      "sha256": "e8fc690dbff767eb71e120b624837301d50f1858be34257946e2f47f94fcf789"
     },
     {
       "path": "screenshots/steps-compact-move-fr-light-393-100.png",
-      "sha256": "39b2a4654794e28b38740fc58c279397de87ae62e5b3bdfb46354df56eec0f01"
+      "sha256": "8193dc1a9f40c337aac2ec1006ed98859c13284a6915deca5fc9cd99fd5e84b5"
     },
     {
       "path": "screenshots/steps-outline-move-en-amoled-360-130.png",
-      "sha256": "0eaff9ea9e16b9ab95b40063c6653902ed092def33531a13b70d255bc0682020"
+      "sha256": "cd3804b93a8dad0683c65c9b971d067130d3d060ca641011f286e41c3c846dee"
     },
     {
       "path": "screenshots/steps-outline-move-en-amoled-393-100.png",
-      "sha256": "4c77e6a03d7d51a0a4a79b706729ecf5184a8362e054caa5338c65c7a6a5cb1a"
+      "sha256": "efc6041a8005c86cee08d8b3de9012c3ebba0b8d8c2447bc76f1530e530dd930"
     },
     {
       "path": "screenshots/steps-outline-move-en-dark-360-130.png",
-      "sha256": "9c7a15532b30af2013d006c7f02f69f8ee45acd659334cabf4449944c8717e2b"
+      "sha256": "5c3f44760a55c80ee2bb3dfac83b4b0793dd7a88f8fc1ef5cc345ef67a256504"
     },
     {
       "path": "screenshots/steps-outline-move-en-dark-393-100.png",
-      "sha256": "b947043b742357823162e8467a219c50bef2655ab56973fee8cd822bffb37bb3"
+      "sha256": "66e487e2cf1fc1e486e8a6a90620a2ec496008323ce63b44e31966a959ae2b85"
     },
     {
       "path": "screenshots/steps-outline-move-en-light-360-130.png",
-      "sha256": "ebb90edfdb51f805f5d01126b6688c8ecc82949f0b90b95d9f075a49f297c8e9"
+      "sha256": "4011a31565dd2470a8cb738d38684df0b9a642b71408c82370c7b5b7dee97edc"
     },
     {
       "path": "screenshots/steps-outline-move-en-light-393-100.png",
-      "sha256": "bc2b514a3c889457c93e1438a71447add4f514e81355047e42e84d6078889b77"
+      "sha256": "71dfe6b5c474b3a8c1a730996a89f8ff0abf3493d00e0388cdc0d7964f1d7f2b"
     },
     {
       "path": "screenshots/steps-outline-move-fr-amoled-360-130.png",
-      "sha256": "29849f68050dbb8d3d5047eb0f68acddda452b8103b96f903dcdd01364716302"
+      "sha256": "912e7d6baa1cdf927a1c29bf8082ff157ef74bde3d9310b6b51095d9223d75b2"
     },
     {
       "path": "screenshots/steps-outline-move-fr-amoled-393-100.png",
-      "sha256": "e3b3dbea9914ebd9e9a0e19f0df20b94fd07976cc16571e1e6fad81dbb97016d"
+      "sha256": "03d6a1f5c077fd001497a468521df5efc87798125095667c5a18535e52cccb27"
     },
     {
       "path": "screenshots/steps-outline-move-fr-dark-360-130.png",
-      "sha256": "0d15d452ec93eec5bed29e7016e83d00fab7ecea39bddaf7949e32c3bba3ce9f"
+      "sha256": "3ddc91f968a820137c27af25ecd42b5c77966f76646a50e80fc1d26ca96d6de7"
     },
     {
       "path": "screenshots/steps-outline-move-fr-dark-393-100.png",
-      "sha256": "dc52daa70cfa25ab3902ee68c57f9235dd53cea9f540e3a7e828b57d20e4ed51"
+      "sha256": "6aa6527e09b377527254b53e434c6e2bb6592b9f8cfd7c157727120a02aecf11"
     },
     {
       "path": "screenshots/steps-outline-move-fr-light-360-130.png",
-      "sha256": "56a410a5eb3cc76eaead8bebaadc08792125e8f699b8f1b3ca3d69aa1701cf90"
+      "sha256": "fd2bd5c00d983239e71e86b9fd99d8da4e36ba2036ca39240b22c03d7f188f8a"
     },
     {
       "path": "screenshots/steps-outline-move-fr-light-393-100.png",
-      "sha256": "3e9a01fcec363dee2b9a554c7ff5141db08f8b7e29e52231c739beb84e6e199a"
+      "sha256": "ffc553b4167bafee3b9885ec92f9b8bde15e396b121517d2a3096f226371bffe"
     },
     {
       "path": "screenshots/steps-rail-move-en-amoled-360-130.png",
-      "sha256": "9dac2ee7eef90cdcefb98c61a306c0bdd24894b002c940f8f42c2395487a9902"
+      "sha256": "353e9c11d0d519d8b3466b31789247e9bf6fb986dfe57dd26ccb41d716c85062"
     },
     {
       "path": "screenshots/steps-rail-move-en-amoled-393-100.png",
-      "sha256": "4d59c237062e9195a9a7d70da2e207e1755618899bb643a9bf97d76c6ad7e6ff"
+      "sha256": "fbaa5414da654a8d4eca80f93f6f6d582427cec7e056daa62a4e2d7a4677743e"
     },
     {
       "path": "screenshots/steps-rail-move-en-dark-360-130.png",
-      "sha256": "51ba61975f1d406f8cd3f349a54bbef8e40e68feb8e9031d7c797422c8d4ea49"
+      "sha256": "3cdf799e2eb629e117ab9dca545a1cef36a05d41cd763724fd283a5dc3f48bed"
     },
     {
       "path": "screenshots/steps-rail-move-en-dark-393-100.png",
-      "sha256": "449f5ea9355e4d0edf8cdf1d6f33b78c6dca69d9c256fe61753505cda2c6c1cc"
+      "sha256": "17fb33b957f791150ffe6dc41b7d9bb605660d0ea7c2ac9f231623a8f6462669"
     },
     {
       "path": "screenshots/steps-rail-move-en-light-360-130.png",
-      "sha256": "41a7dcb9f3b8e2e94db3b8c105535a5fe5155ef3fa71a2aab242abd2fa551e7b"
+      "sha256": "2fcb8281c1bff7ddf37c1233b4a5fc811a8726e3d5cc901e483cea5308fbf1a5"
     },
     {
       "path": "screenshots/steps-rail-move-en-light-393-100.png",
-      "sha256": "e484ef9fcfc33a801a4465c5ff71727ea6eb71ee20148e9215abeaccdad7c2d6"
+      "sha256": "c698b0385ca94df9597b7e627726a09627998ba05be2f74140b1678f906206a8"
     },
     {
       "path": "screenshots/steps-rail-move-fr-amoled-360-130.png",
-      "sha256": "66d69e45fbfa90c1317776dc0e7aead7ba14f843bc6501c7d0b92c921bfe3a48"
+      "sha256": "1cf16795322e5e5761fb32ca03c9ee881025b8a92006d20dd013dfa27e037925"
     },
     {
       "path": "screenshots/steps-rail-move-fr-amoled-393-100.png",
-      "sha256": "8442048a5820471089fd06d50fb2e6c2b56fdb83160c34d249c5a2fe1d16a04f"
+      "sha256": "99c685c63337a89939fea1f0217ffe9ad5b0237a270e30356bbd2dbd7f38e25f"
     },
     {
       "path": "screenshots/steps-rail-move-fr-dark-360-130.png",
-      "sha256": "cd93cfcad05331dc8a93d242a9b29de0c4937b0c870dc7e81d52c8a4c1dfd1e7"
+      "sha256": "5c5291ba321244c85f4a4830b5a3881cad09760b4d490a9034d575ad301f3de5"
     },
     {
       "path": "screenshots/steps-rail-move-fr-dark-393-100.png",
-      "sha256": "81efb20b9f6084c4e60833bd30e5d004c381557dcc308a578db20c70474845cd"
+      "sha256": "33a1bed9b64ece6193ddc47f81146b857cc0efbd98b68aef88d5b283646c7a32"
     },
     {
       "path": "screenshots/steps-rail-move-fr-light-360-130.png",
-      "sha256": "3fbaabe77d9519f0e077cdac68b4a5aa212812ac792680fcf363a871c1aa11af"
+      "sha256": "10794ae18eb3f7d6d24f73922fc05f45ce1ba5b1f7e35f85a773376995dbe14a"
     },
     {
       "path": "screenshots/steps-rail-move-fr-light-393-100.png",
-      "sha256": "aa3bb87ccf162084933e89f29d920dcbc75957be682d974923a4511de0c9a293"
+      "sha256": "8558f0dd7d2e6f19890b2be9b29278b1ff5f5b4f144d592831ee329615f7878f"
     },
     {
       "path": "screenshots/timeline-compact-move-fr-amoled-393-100.png",
-      "sha256": "cea5fe6542abfe73da02acad098d1cddd45972604c96b8ba330829d7b02cda3e"
+      "sha256": "9f2e4256655c99ccf8fe748eaf125732d8c1bd74da69802b4b7880eb89f37cb9"
     },
     {
       "path": "screenshots/timeline-compact-move-fr-dark-393-100.png",
-      "sha256": "2bda1bfcd1db51a82cc5d921cb9dd2e721a3b5bc02d03e7fd9221284f986da85"
+      "sha256": "d347940535a31b48d660e90ef058817d1135fe10bc8d10df393c1529fd86d737"
     },
     {
       "path": "screenshots/timeline-compact-move-fr-light-393-100.png",
-      "sha256": "181981b0cca39b94fbbce35d93b189c6f260363cac08a1167a9c540d477bdf4f"
+      "sha256": "6efee82faab515e24fc266a39a7698c3df24cb3cbe1ae2ed63eabc11a5739c5b"
     }
   ]
 }

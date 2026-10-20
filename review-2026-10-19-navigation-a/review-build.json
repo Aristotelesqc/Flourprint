@@ -1,6 +1,6 @@
 {
-  "revision": "a88a7f3a55bd0eef8b5d179cc616f8c94f8270bc",
-  "sourceSha256": "7919d41eab3a3dc709b64722f689567ea71b99d489b442b77ccb95feec797ecd",
+  "revision": "68faf79de788c6e6698b7354bef7e31580d9e632",
+  "sourceSha256": "ae92db3d35e854f22195f3f5ec0c14bc08b7804d97fc68de0a4ae320c0a6f807",
   "build": {
     "version": "0.3.0",
     "build": "0.3.0-local",
@@ -8,5 +8,5 @@
     "channel": "local",
     "versionCode": 3000
   },
-  "label": "v0.3.0 · swift-pastry · local"
+  "label": "v0.3.0 · grand-loaf · local"
 }
