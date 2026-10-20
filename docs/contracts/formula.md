@@ -256,6 +256,14 @@ The engine names a component from its liquid ratio
 | others       | the kind itself                                               |
 
 - The style is derived, never stored: changing the ratio renames the component.
+- **Hydration entry.** `r` is the component's hydration as read (water-inclusive), and it is the
+  value an interface shows and edits as "hydration"; the stored `hydrationPct` counts only the
+  water drawn from the pool and is not shown under that name when the component has
+  allocations. Typing a hydration `t` sets
+  `hydrationPct = t − 100 × (water of the allocated ingredients) / flourPct`. It is refused with
+  `InvalidFormula` when `t` is not finite, when the component has no flour, when an allocated
+  ingredient's water content is unknown, or when `t` is below the water the allocated
+  ingredients already bring. Without allocations, `t = hydrationPct`.
 - **Ratio entry** (owner decisions of 2026-10-12). A component's ratio is read and typed as
   flour:liquid parts by **mass**, the way a baker weighs it: a milk tangzhong of 50 g flour and
   250 g milk is 1:5. The liquid is the component's water plus the mass of its allocated
