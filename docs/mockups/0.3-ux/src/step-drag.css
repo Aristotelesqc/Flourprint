@@ -141,6 +141,35 @@
   pointer-events: none;
 }
 
+/* Floating touch refusal toast (L104: nonblocking without list reflow) */
+.fp-touch-refusal-toast {
+  position: fixed;
+  bottom: calc(var(--bottom-bar-height, 4.5rem) + 1rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100vw - 2rem), var(--phone-width, 393px));
+  max-width: calc(100% - 2rem);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-outline, #e4e0d8);
+  border-radius: var(--radius-card, 1rem);
+  box-shadow: var(--shadow-high, 0 10px 25px -5px rgba(0, 0, 0, 0.2));
+  padding: var(--fp-space-2) var(--fp-space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--color-ink, #18181b);
+  font-size: var(--type-label, 0.875rem);
+  z-index: 10000;
+  pointer-events: auto;
+}
+
+[data-theme='dark'] .fp-touch-refusal-toast,
+[data-theme='amoled'] .fp-touch-refusal-toast {
+  background: var(--color-surface, #2a2622);
+  border-color: var(--color-outline, #3b3631);
+}
+
 .process-step-title {
   hyphens: none;
 }

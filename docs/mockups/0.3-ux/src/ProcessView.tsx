@@ -1070,31 +1070,6 @@ export function ProcessView({
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>
-      {touchRefusal && (
-        <div
-          role="status"
-          aria-live="polite"
-          data-process-refusal={touchRefusal.error.code}
-          className="row"
-          style={{
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: 'var(--fp-space-2) var(--fp-space-3)',
-            backgroundColor: 'var(--color-surface-container)',
-            borderRadius: 'var(--radius-card)',
-            color: 'var(--color-ink)',
-            fontSize: 'var(--type-label)',
-            marginBottom: 'var(--fp-space-2)',
-          }}
-        >
-          <span>{t(locale, refusalKey(touchRefusal.error))}</span>
-          <IconButton
-            icon="close"
-            label={t(locale, 'close')}
-            onClick={() => setTouchRefusal(null)}
-          />
-        </div>
-      )}
       {returnToPlanning && (
         <div
           className="row"
@@ -1594,6 +1569,20 @@ export function ProcessView({
             document.body,
           );
         })()}
+
+      {typeof document !== 'undefined' &&
+        touchRefusal &&
+        createPortal(
+          <div data-process-refusal={touchRefusal.error.code} className="fp-touch-refusal-toast">
+            <span>{t(locale, refusalKey(touchRefusal.error))}</span>
+            <IconButton
+              icon="close"
+              label={t(locale, 'close')}
+              onClick={() => setTouchRefusal(null)}
+            />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

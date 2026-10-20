@@ -91,6 +91,29 @@ test.describe('L104 direct drag enters editing', () => {
     await gesture.close();
   });
 
+  test('a refused first-group move preserves the original visual reference', async ({
+    page,
+    context,
+  }) => {
+    await page.goto(url({ mode: 'edit' }));
+    const source = active(page).locator('.fp-step-draggable').first();
+    const sourceId = await source.getAttribute('data-step-id');
+    const target = await active(page).locator('.fp-step-draggable').nth(1).boundingBox();
+    const before = await source.boundingBox();
+    const original = await titles(page).allTextContents();
+    const gesture = await pointer(context, page, sourceId);
+    await gesture.move(target.x + target.width / 2, target.y + target.height * 0.8);
+    await gesture.end();
+    await expect(page.locator('[data-process-refusal]')).toBeVisible();
+    await expect(floating(page)).toHaveCount(0);
+    const after = await source.boundingBox();
+    expect(after.x).toBeCloseTo(before.x, 0);
+    expect(after.y).toBeCloseTo(before.y, 0);
+    await expect(titles(page)).toHaveText(original);
+    await expect(page.getByRole('button', { name: 'Undo change', exact: true })).toBeDisabled();
+    await gesture.close();
+  });
+
   test('the reading-mode keyboard alternative previews the new draft without becoming stale', async ({
     page,
   }) => {
