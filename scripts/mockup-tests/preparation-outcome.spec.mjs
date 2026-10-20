@@ -156,6 +156,16 @@ for (const nav of ['A']) {
     await page.getByRole('button', { name: 'Actions sur la préparation', exact: true }).click();
     await page.getByTestId('finish-preparation-early').click();
 
+    const confirmation = page.getByRole('dialog', {
+      name: 'Confirmer la fin anticipée',
+      exact: true,
+    });
+    await expect(confirmation).toBeVisible();
+    await expect(page.getByTestId('recorded-outcome')).toHaveCount(0);
+    await confirmation
+      .getByRole('button', { name: 'Terminer la préparation', exact: true })
+      .click();
+
     await expect(
       page.getByRole('heading', { name: 'Préparation terminée', exact: true }),
     ).toBeVisible();

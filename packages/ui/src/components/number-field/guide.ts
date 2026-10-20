@@ -34,8 +34,12 @@ export default {
     locale: "'fr' or 'en' decimal separator.",
     onCommit:
       'Called with the parsed value; returning false keeps the raw text and shows the error.',
+    onClear:
+      'Optional callback when clearing a finite value in an optional field; returning false keeps the field in error.',
     onValidityChange:
       'Receives true for an invalid or refused value and false after valid input/reset; it reports invalidity, despite its name.',
+    onDirtyChange:
+      'Receives true when uncommitted raw text differs from the committed value, and false after commit, reset, or unmount.',
     disabled: 'Disables editing.',
     dataTestId: 'Test id for browser suites.',
     errorMessage: 'Message shown when a value is refused.',

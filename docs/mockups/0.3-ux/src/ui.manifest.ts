@@ -20,6 +20,7 @@ import RecipeCard from '../../../../packages/ui/src/components/recipe-card/v1';
 import StatusPanel from '../../../../packages/ui/src/components/warning-banner/v1';
 import PreparationTimer from '../../../../packages/ui/src/components/prep-hero/v1';
 import ContextTiles from '../../../../packages/ui/src/components/context-tiles/v1';
+import SectionCarousel from '../../../../packages/ui/src/components/section-carousel/v1';
 export const manifest = library.manifest({
   'fp.timeline': Timeline,
   'fp.metric-pill': MetricPill,
@@ -42,4 +43,5 @@ export const manifest = library.manifest({
   'fp.warning-banner': StatusPanel,
   'fp.prep-hero': PreparationTimer,
   'fp.context-tiles': ContextTiles,
+  'fp.section-carousel': SectionCarousel,
 });

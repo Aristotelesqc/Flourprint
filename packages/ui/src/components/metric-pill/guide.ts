@@ -27,5 +27,7 @@ export default {
     value: 'Formatted value with its unit, from the consumer.',
     label: 'Optional text before the value.',
     icon: 'Optional pictogram name from fp.icon.',
+    compact:
+      'Optional density flag for tighter inline padding (0.35rem) and 32px height in metadata contexts.',
   },
 } satisfies ComponentGuide<MetricPillProps>;

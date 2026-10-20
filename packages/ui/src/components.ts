@@ -20,6 +20,7 @@ import type {
   StatusPanelProps,
   PreparationTimerProps,
   ContextTilesProps,
+  SectionCarouselProps,
 } from './props.ts';
 export type FlourprintComponents = {
   'fp.timeline': TimelineProps;
@@ -43,4 +44,5 @@ export type FlourprintComponents = {
   'fp.warning-banner': StatusPanelProps;
   'fp.prep-hero': PreparationTimerProps;
   'fp.context-tiles': ContextTilesProps;
+  'fp.section-carousel': SectionCarouselProps;
 };

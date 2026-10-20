@@ -20,6 +20,7 @@ import {
 import { RECIPE_TEMPLATES, blankRecipe } from '@flourprint/core/application';
 import { t, type Locale } from './messages';
 import { formatFormulaError } from './defaults-copy';
+import { prepActionsCopy } from './preparation-actions-copy';
 
 export const clone = <T>(value: T): T => structuredClone(value);
 export interface Content {
@@ -54,6 +55,7 @@ export interface Session {
   journal: { at: Instant; text: string }[];
   checks: string[];
   finished: boolean;
+  abandoned?: boolean;
   endedAt?: Instant;
   outcome?: PreparationOutcome;
   outcomeSource?: 'recipe' | 'override';
@@ -75,6 +77,7 @@ export interface DemoState {
   checks: Record<string, string[]>;
   error: string;
   invalid: Record<string, boolean>;
+  pendingInputs?: Record<string, boolean>;
   resetEpoch: number;
 }
 export const instant = (value: string | number): Instant => {
@@ -178,6 +181,7 @@ export function initialState(locale: Locale): DemoState {
     sessionHistory: [],
     error: '',
     invalid: {},
+    pendingInputs: {},
     resetEpoch: 0,
   };
 }
@@ -254,13 +258,15 @@ export function usePrototype(locale: Locale) {
       ...s,
       error: '',
       invalid: {},
+      pendingInputs: {},
       draft: {
         recipeId: s.selected,
         history: [clone(s.recipes.find((r) => r.id === s.selected) ?? s.recipes[0])],
         index: 0,
       },
     }));
-  const cancel = () => setState((s) => ({ ...s, error: '', invalid: {}, draft: null }));
+  const cancel = () =>
+    setState((s) => ({ ...s, error: '', invalid: {}, pendingInputs: {}, draft: null }));
   const apply = (command: FormulaEdit, names?: Record<string, string>): boolean => {
     if (!state.draft) return false;
     const result = applyFormulaEdit(content.formula, command);
@@ -302,6 +308,7 @@ export function usePrototype(locale: Locale) {
       ...s,
       draft: null,
       invalid: {},
+      pendingInputs: {},
       error: '',
       recipes: s.recipes.map((r) =>
         r.id === s.selected
@@ -323,6 +330,21 @@ export function usePrototype(locale: Locale) {
           ? s
           : { ...s, invalid: { ...s.invalid, [id]: invalid } },
       ),
+    [],
+  );
+  const pendingInput = useCallback(
+    (id: string, dirty: boolean) =>
+      setState((s) => {
+        const current = Boolean(s.pendingInputs?.[id]);
+        if (current === dirty || (!dirty && !(id in (s.pendingInputs ?? {})))) return s;
+        return {
+          ...s,
+          pendingInputs: {
+            ...s.pendingInputs,
+            [id]: dirty,
+          },
+        };
+      }),
     [],
   );
   const setHydrationTarget = (target: number): boolean => {
@@ -352,6 +374,7 @@ export function usePrototype(locale: Locale) {
         ? {
             ...s,
             invalid: {},
+            pendingInputs: {},
             resetEpoch: s.resetEpoch + 1,
             draft: { ...s.draft, index: s.draft.index - 1 },
           }
@@ -363,6 +386,7 @@ export function usePrototype(locale: Locale) {
         ? {
             ...s,
             invalid: {},
+            pendingInputs: {},
             resetEpoch: s.resetEpoch + 1,
             draft: { ...s.draft, index: s.draft.index + 1 },
           }
@@ -375,6 +399,7 @@ export function usePrototype(locale: Locale) {
             ...s,
             error: '',
             invalid: {},
+            pendingInputs: {},
             resetEpoch: s.resetEpoch + 1,
             draft: {
               ...s.draft,
@@ -384,7 +409,8 @@ export function usePrototype(locale: Locale) {
           }
         : s,
     );
-  const select = (id: string) => setState((s) => ({ ...s, selected: id, error: '', invalid: {} }));
+  const select = (id: string) =>
+    setState((s) => ({ ...s, selected: id, error: '', invalid: {}, pendingInputs: {} }));
   const create = (templateId: string) => {
     const template = RECIPE_TEMPLATES.find((r) => r.id === templateId);
     const base = template ? clone(template) : blankRecipe();
@@ -412,6 +438,7 @@ export function usePrototype(locale: Locale) {
       recipes: [created, ...s.recipes],
       selected: created.id,
       invalid: {},
+      pendingInputs: {},
       draft: { recipeId: created.id, history: [clone(created)], index: 0 },
       error: '',
     }));
@@ -455,7 +482,7 @@ export function usePrototype(locale: Locale) {
     });
   const updateSession = (fn: (session: Session) => Session) =>
     setState((s) => {
-      if (!s.session) return s;
+      if (!s.session || s.session.finished) return s;
       const updated = fn(s.session);
       const list = syncSessions(s.sessions, s.session);
       return {
@@ -463,6 +490,32 @@ export function usePrototype(locale: Locale) {
         session: updated,
         sessions: list.map((item) => (item.id === updated.id ? updated : item)),
       };
+    });
+  const abandonSession = () =>
+    setState((s) => {
+      if (!s.session || s.session.finished) return s;
+      const abandoned: Session = {
+        ...s.session,
+        finished: true,
+        abandoned: true,
+        endedAt: instant(Date.now()),
+        outcome: undefined,
+        outcomeSource: undefined,
+        journal: [
+          {
+            at: instant(Date.now()),
+            text: prepActionsCopy(locale, 'journalAbandonment'),
+          },
+          ...s.session.journal,
+        ],
+      };
+      const list = syncSessions(s.sessions, s.session);
+      const sessions = list.map((item) => (item.id === abandoned.id ? abandoned : item));
+      const alreadyInHistory = s.sessionHistory.some((item) => item.id === abandoned.id);
+      const sessionHistory = alreadyInHistory
+        ? s.sessionHistory.map((item) => (item.id === abandoned.id ? clone(abandoned) : item))
+        : [...s.sessionHistory, clone(abandoned)];
+      return { ...s, session: abandoned, sessions, sessionHistory, error: '' };
     });
   const finishSession = (chosen?: PreparationOutcome) =>
     setState((s) => {
@@ -500,6 +553,7 @@ export function usePrototype(locale: Locale) {
     apply,
     applyProcess,
     validity,
+    pendingInput,
     setHydrationTarget,
     undo,
     redo,
@@ -510,6 +564,7 @@ export function usePrototype(locale: Locale) {
     start,
     selectSession,
     updateSession,
+    abandonSession,
     finishSession,
     log,
     getActiveSessions: () => getActiveSessions(state),

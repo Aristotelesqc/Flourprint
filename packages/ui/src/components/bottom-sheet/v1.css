@@ -73,8 +73,11 @@
   word-break: normal;
 }
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'] .modal-body {
-  padding: var(--fp-space-4);
+  padding: var(--fp-space-3-5) var(--fp-space-4);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-3);
   overflow-wrap: break-word;
   word-break: normal;
 }

@@ -12,12 +12,46 @@ export const Tabs: React.FC<TabsProps> = ({
   variant = 'underlined',
   gestureProgress: propGestureProgress,
 }) => {
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLElement>(null);
   const motionStyle = useTransitionMotionStyle('fp.motion.highlight', ref);
   const [eventGestureProgress, setEventGestureProgress] = useState<TabGestureProgress | null>(null);
+  const [overflowStart, setOverflowStart] = useState(false);
+  const [overflowEnd, setOverflowEnd] = useState(false);
 
   const activeGesture =
     propGestureProgress !== undefined ? propGestureProgress : eventGestureProgress;
+
+  useEffect(() => {
+    const nav = ref.current;
+    if (!nav) return;
+
+    const checkOverflow = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = nav;
+      const maxScroll = scrollWidth - clientWidth;
+      setOverflowStart(scrollLeft > 2);
+      setOverflowEnd(maxScroll > 2 && scrollLeft < maxScroll - 2);
+    };
+
+    checkOverflow();
+    nav.addEventListener('scroll', checkOverflow, { passive: true });
+
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => {
+        checkOverflow();
+      });
+      ro.observe(nav);
+      for (const btn of nav.querySelectorAll('button')) {
+        ro.observe(btn);
+      }
+    }
+
+    return () => {
+      nav.removeEventListener('scroll', checkOverflow);
+      ro?.disconnect();
+    };
+  }, [tabs]);
 
   useEffect(() => {
     const nav = ref.current;
@@ -30,12 +64,15 @@ export const Tabs: React.FC<TabsProps> = ({
       } else if (selRect.right > navRect.right) {
         nav.scrollLeft += selRect.right - navRect.right;
       }
+      const maxScroll = nav.scrollWidth - nav.clientWidth;
+      setOverflowStart(nav.scrollLeft > 2);
+      setOverflowEnd(maxScroll > 2 && nav.scrollLeft < maxScroll - 2);
     }
   }, [activeId]);
 
   // Listen to shared progress signal via element event if not passed via props
   useEffect(() => {
-    const node = ref.current;
+    const node = wrapperRef.current;
     if (!node) return;
     const onGesture = (event: Event) => {
       const detail = (event as CustomEvent<TabGestureProgress | null>).detail;
@@ -87,61 +124,67 @@ export const Tabs: React.FC<TabsProps> = ({
   }, [tabs, activeId, activeGesture]);
 
   return (
-    <nav
-      ref={ref}
+    <div
+      ref={wrapperRef}
       data-fp-component="fp.tabs"
       data-fp-version="v1"
-      className={`section-tabs ${variant === 'pills' ? 'tabs-pills' : variant === 'chips' ? 'tabs-chips' : ''} ${indicatorStyle ? 'has-gesture-indicator' : ''}`}
-      role="tablist"
-      aria-label={label}
+      data-overflow-start={overflowStart ? 'true' : undefined}
+      data-overflow-end={overflowEnd ? 'true' : undefined}
     >
-      {tabs.map((tab) => {
-        const isSelected = tab.id === activeId;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={isSelected}
-            tabIndex={isSelected ? 0 : -1}
-            className={`tab-btn ${isSelected ? 'active' : ''}`}
-            onKeyDown={(event) => {
-              const index = tabs.findIndex((item) => item.id === activeId);
-              const next =
-                event.key === 'ArrowRight'
-                  ? (index + 1) % tabs.length
-                  : event.key === 'ArrowLeft'
-                    ? (index + tabs.length - 1) % tabs.length
-                    : event.key === 'Home'
-                      ? 0
-                      : event.key === 'End'
-                        ? tabs.length - 1
-                        : undefined;
-              if (next === undefined || !tabs[next]) return;
-              event.preventDefault();
-              onChange(tabs[next].id);
-              const buttons =
-                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('button');
-              buttons?.[next]?.focus();
+      <nav
+        ref={ref}
+        className={`section-tabs ${variant === 'pills' ? 'tabs-pills' : variant === 'chips' ? 'tabs-chips' : ''} ${indicatorStyle ? 'has-gesture-indicator' : ''}`}
+        role="tablist"
+        aria-label={label}
+      >
+        {tabs.map((tab) => {
+          const isSelected = tab.id === activeId;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              tabIndex={isSelected ? 0 : -1}
+              className={`tab-btn ${isSelected ? 'active' : ''}`}
+              onKeyDown={(event) => {
+                const index = tabs.findIndex((item) => item.id === activeId);
+                const next =
+                  event.key === 'ArrowRight'
+                    ? (index + 1) % tabs.length
+                    : event.key === 'ArrowLeft'
+                      ? (index + tabs.length - 1) % tabs.length
+                      : event.key === 'Home'
+                        ? 0
+                        : event.key === 'End'
+                          ? tabs.length - 1
+                          : undefined;
+                if (next === undefined || !tabs[next]) return;
+                event.preventDefault();
+                onChange(tabs[next].id);
+                const buttons =
+                  event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('button');
+                buttons?.[next]?.focus();
+              }}
+              onClick={() => onChange(tab.id)}
+            >
+              <span className="tab-shape" aria-hidden="true" style={motionStyle} />
+              <span className="tab-label">{tab.label}</span>
+            </button>
+          );
+        })}
+        {variant === 'underlined' && indicatorStyle && (
+          <span
+            className={`tab-indicator ${indicatorStyle.isGesture ? 'is-dragging' : ''}`}
+            aria-hidden="true"
+            style={{
+              transform: `translateX(${indicatorStyle.left}px)`,
+              width: `${indicatorStyle.width}px`,
             }}
-            onClick={() => onChange(tab.id)}
-          >
-            <span className="tab-shape" aria-hidden="true" style={motionStyle} />
-            <span className="tab-label">{tab.label}</span>
-          </button>
-        );
-      })}
-      {variant === 'underlined' && indicatorStyle && (
-        <span
-          className={`tab-indicator ${indicatorStyle.isGesture ? 'is-dragging' : ''}`}
-          aria-hidden="true"
-          style={{
-            transform: `translateX(${indicatorStyle.left}px)`,
-            width: `${indicatorStyle.width}px`,
-          }}
-        />
-      )}
-    </nav>
+          />
+        )}
+      </nav>
+    </div>
   );
 };
 

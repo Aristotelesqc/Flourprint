@@ -32,29 +32,48 @@ export function useDialog(open: boolean, anchored = false, anchor: 'top' | 'bott
       if (!dialog.open) dialog.showModal();
       if (anchored) {
         const popup = dialog.querySelector<HTMLElement>('.menu-popup');
-        const phone = document.querySelector('.phone-frame')?.getBoundingClientRect();
+        const boundaryEl = trigger?.closest<HTMLElement>('[data-fp-overlay-boundary]');
+        const boundary = boundaryEl?.getBoundingClientRect();
         const bounds = trigger?.getBoundingClientRect();
         const edge = 12;
-        const leftEdge = Math.max(edge, phone?.left ?? edge);
-        const rightEdge = Math.min(innerWidth - edge, phone?.right ?? innerWidth - edge);
+        const vp = window.visualViewport;
+        const vpWidth = vp?.width ?? window.innerWidth;
+        const vpHeight = vp?.height ?? window.innerHeight;
+        const vpLeft = vp?.offsetLeft ?? 0;
+        const vpTop = vp?.offsetTop ?? 0;
+        const minX = (boundary ? boundary.left : vpLeft) + edge;
+        const maxX = (boundary ? boundary.right : vpLeft + vpWidth) - edge;
+        const minY = (boundary ? boundary.top : vpTop) + edge;
+        const maxY = (boundary ? boundary.bottom : vpTop + vpHeight) - edge;
+        const leftEdge = Math.max(edge, minX);
+        const rightEdge = Math.min(innerWidth - edge, maxX);
         if (popup) {
-          const width = Math.min(popup.offsetWidth, rightEdge - leftEdge);
-          const left = Math.max(
-            leftEdge,
-            Math.min((bounds?.right ?? rightEdge) - width, rightEdge - width),
-          );
+          const availableWidth = Math.max(0, rightEdge - leftEdge);
+          const width = Math.min(popup.offsetWidth, availableWidth);
+          if (availableWidth > 0 && availableWidth < popup.offsetWidth) {
+            popup.style.maxWidth = `${availableWidth}px`;
+          } else {
+            popup.style.removeProperty('max-width');
+          }
+          const left =
+            availableWidth > 0
+              ? Math.max(
+                  leftEdge,
+                  Math.min((bounds?.right ?? rightEdge) - width, rightEdge - width),
+                )
+              : leftEdge;
           const proposedTop =
             bounds && bounds.height > 0
               ? anchor === 'top'
                 ? bounds.bottom + 6
                 : bounds.top - popup.offsetHeight - 6
               : anchor === 'top'
-                ? 72
-                : innerHeight - popup.offsetHeight - 84;
+                ? minY + 60
+                : maxY - popup.offsetHeight - 72;
           dialog.style.setProperty('--menu-x', `${left}px`);
           dialog.style.setProperty(
             '--menu-y',
-            `${Math.max(edge, Math.min(proposedTop, innerHeight - popup.offsetHeight - edge))}px`,
+            `${Math.max(minY, Math.min(proposedTop, Math.max(minY, maxY - popup.offsetHeight)))}px`,
           );
         }
       }

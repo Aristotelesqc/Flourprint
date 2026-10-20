@@ -1,16 +1,67 @@
 /* Compact paint, separate non-overlapping 48 px native targets. */
-[data-fp-component='fp.tabs'][data-fp-version='v1'].section-tabs {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  min-width: 0;
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1']::before,
+[data-fp-component='fp.tabs'][data-fp-version='v1']::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 4px);
+  width: 7px;
+  height: 7px;
+  pointer-events: none;
+  z-index: 3;
+  display: none;
+  background: var(--color-surface);
+  box-shadow: 0 0 8px 6px var(--color-surface);
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'][data-overflow-start='true']::before {
+  display: block;
+  left: 10px;
+  border-bottom: 2px solid var(--color-ink-muted);
+  border-left: 2px solid var(--color-ink-muted);
+  transform: rotate(45deg);
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'][data-overflow-end='true']::after {
+  display: block;
+  right: 10px;
+  border-top: 2px solid var(--color-ink-muted);
+  border-right: 2px solid var(--color-ink-muted);
+  transform: rotate(45deg);
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .section-tabs {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
+  position: relative;
   scrollbar-width: thin;
+  scrollbar-color: var(--color-outline) transparent;
   -webkit-overflow-scrolling: touch;
   min-height: var(--fp-spacing-touch);
   padding: 0 var(--fp-space-2);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-outline-subtle);
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .section-tabs::-webkit-scrollbar,
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips::-webkit-scrollbar {
+  height: 3px;
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .section-tabs::-webkit-scrollbar-track,
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .section-tabs::-webkit-scrollbar-thumb,
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips::-webkit-scrollbar-thumb {
+  background: var(--color-outline);
+  border-radius: var(--radius-pill);
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .tab-btn {
   appearance: none;
@@ -30,6 +81,10 @@
   isolation: isolate;
   cursor: pointer;
   white-space: nowrap;
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tab-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .tab-btn.active {
   color: var(--color-primary);
@@ -56,16 +111,16 @@
   z-index: 2;
   will-change: transform, width;
   transition:
-    transform 220ms cubic-bezier(0.2, 0, 0, 1),
-    width 220ms cubic-bezier(0.2, 0, 0, 1);
+    transform var(--dur-spatial, 220ms) var(--ease-standard, cubic-bezier(0.2, 0, 0, 1)),
+    width var(--dur-spatial, 220ms) var(--ease-standard, cubic-bezier(0.2, 0, 0, 1));
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .tab-indicator.is-dragging {
   transition: none !important;
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].has-gesture-indicator .tab-btn.active::after {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .has-gesture-indicator .tab-btn.active::after {
   display: none;
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-pills {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-pills {
   width: 100%;
   position: relative;
   isolation: isolate;
@@ -74,7 +129,7 @@
   border: 0;
   background: transparent;
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-pills::before {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-pills::before {
   content: '';
   position: absolute;
   inset: calc((var(--fp-spacing-touch) - var(--fp-spacing-touch-compact)) / 2) 0;
@@ -83,7 +138,7 @@
   background: var(--color-surface-container);
   z-index: -1;
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-pills .tab-btn {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-pills .tab-btn {
   flex: 1 1 0;
   padding: 0 var(--fp-space-2-5);
 }
@@ -94,11 +149,11 @@
   inset: calc((var(--fp-spacing-touch) - var(--fp-spacing-touch-compact)) / 2) 0;
   border-radius: var(--radius-pill);
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-pills .tab-btn.active .tab-shape {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-pills .tab-btn.active .tab-shape {
   background: var(--color-surface-container-high);
   border: 1px solid var(--color-primary);
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-chips {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips {
   flex-wrap: nowrap;
   gap: var(--fp-space-1-5);
   padding: 0 var(--fp-space-1);
@@ -107,24 +162,27 @@
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
+  scrollbar-color: var(--color-outline) transparent;
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-chips .tab-btn {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips .tab-btn {
   padding: 0 var(--fp-space-2);
   font-size: var(--type-meta);
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-chips .tab-shape {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips .tab-shape {
   background: var(--color-surface);
   border: 1px solid var(--color-outline);
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-chips .tab-btn.active .tab-shape {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips .tab-btn.active .tab-shape {
   background: var(--color-surface-container-high);
   border-color: var(--color-primary);
 }
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-pills .tab-btn.active::after,
-[data-fp-component='fp.tabs'][data-fp-version='v1'].tabs-chips .tab-btn.active::after {
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-pills .tab-btn.active::after,
+[data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips .tab-btn.active::after {
   display: none;
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .tab-label {
   position: relative;
   white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
 }

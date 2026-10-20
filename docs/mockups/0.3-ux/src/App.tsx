@@ -27,6 +27,7 @@ import {
 } from './ui';
 import './review-options.css';
 import { copyT, formatResetMessage, getBaselineDescription } from './app-copy';
+import { editingCopyT } from './editing-copy';
 
 import { RecipeCard } from './components';
 import { catalogText, templateBasis } from './template-presentation';
@@ -133,6 +134,11 @@ export default function App() {
 
   const [route, setRoute] = useState<Route>(readRoute);
   const [trashOpen, setTrashOpen] = useState(false);
+  const [editingStepId, setEditingStepId] = useState<string | null>(null);
+  const [returnToPlanning, setReturnToPlanning] = useState(false);
+  const [collapsedGroupsByRecipe, setCollapsedGroupsByRecipe] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
 
   const [overlay, setOverlay] = useState<
     'menu' | 'nav' | 'help' | 'sizeHelp' | 'create' | 'trash' | 'build' | null
@@ -277,9 +283,22 @@ export default function App() {
     return `${url.pathname}${url.search}${url.hash}`;
   };
 
+  const isDraftDirty = Boolean(
+    (state.draft &&
+      (state.draft.index > 0 ||
+        Object.values(state.invalid).some(Boolean) ||
+        recipe.version === 0)) ||
+    Object.values(state.pendingInputs ?? {}).some(Boolean),
+  );
+
   const handleCancel = () => {
-    if (state.draft && state.draft.index > 0) {
-      setPending(() => store.cancel);
+    setOverlay(null);
+    setEditingStepId(null);
+    setReturnToPlanning(false);
+    if (isDraftDirty) {
+      setPending(() => () => {
+        store.cancel();
+      });
     } else {
       store.cancel();
     }
@@ -297,18 +316,28 @@ export default function App() {
   };
 
   const guard = (action: () => void) => {
-    if (state.draft) setPending(() => action);
-    else action();
+    if (isDraftDirty) {
+      setOverlay(null);
+      setPending(() => () => {
+        setEditingStepId(null);
+        setReturnToPlanning(false);
+        action();
+      });
+    } else {
+      action();
+    }
   };
 
   useEffect(() => {
     const onPop = () => {
       const target = readRoute();
 
-      if (state.draft) {
+      if (isDraftDirty) {
         writeURL(route, true);
-
+        setOverlay(null);
         setPending(() => () => {
+          setEditingStepId(null);
+          setReturnToPlanning(false);
           store.cancel();
 
           if (target.recipeId) store.select(target.recipeId);
@@ -316,6 +345,9 @@ export default function App() {
           navigate(target);
         });
       } else {
+        setEditingStepId(null);
+        setReturnToPlanning(false);
+        if (state.draft) store.cancel();
         if (target.recipeId) store.select(target.recipeId);
 
         setRoute(target);
@@ -725,7 +757,12 @@ export default function App() {
         <Button onClick={() => location.reload()}>{t(locale, 'resetDemo')}</Button>
       </aside>
       <div className="phone-stage">
-        <div className="phone-frame" data-testid="phone" data-navigation="A">
+        <div
+          className="phone-frame"
+          data-testid="phone"
+          data-navigation="A"
+          data-fp-overlay-boundary
+        >
           <header className="phone-header">
             <div className="header-title">
               <IconButton
@@ -907,18 +944,20 @@ export default function App() {
                     : r.version === 0
                       ? undefined
                       : lastSession
-                        ? lastSession.outcome
-                          ? t(
-                              locale,
-                              lastSession.outcome.result === 'cooked'
-                                ? 'resultCooked'
-                                : lastSession.outcome.result === 'dough'
-                                  ? 'resultDough'
-                                  : lastSession.outcome.result === 'cookedAndDough'
-                                    ? 'resultMixed'
-                                    : 'unknown',
-                            )
-                          : t(locale, 'unknown')
+                        ? lastSession.abandoned
+                          ? editingCopyT(locale, 'statusAbandoned')
+                          : lastSession.outcome
+                            ? t(
+                                locale,
+                                lastSession.outcome.result === 'cooked'
+                                  ? 'resultCooked'
+                                  : lastSession.outcome.result === 'dough'
+                                    ? 'resultDough'
+                                    : lastSession.outcome.result === 'cookedAndDough'
+                                      ? 'resultMixed'
+                                      : 'unknown',
+                              )
+                            : t(locale, 'unknown')
                         : copyT(locale, 'neverPrepared');
 
                   return (
@@ -997,11 +1036,59 @@ export default function App() {
                 </div>
 
                 <div data-step-design={stepDesign}>
-                  <ProcessView store={store} locale={locale} />
+                  <ProcessView
+                    store={store}
+                    locale={locale}
+                    editingStepId={editingStepId}
+                    onClearEditingStepId={() => setEditingStepId(null)}
+                    returnToPlanning={
+                      returnToPlanning
+                        ? () => {
+                            setReturnToPlanning(false);
+                            setEditingStepId(null);
+                            setRoute((prev) => ({ ...prev, section: 'planning' }));
+                            writeURL({ ...route, section: 'planning' }, false);
+                          }
+                        : undefined
+                    }
+                    collapsedGroups={collapsedGroupsByRecipe[recipe.id] ?? {}}
+                    onToggleGroup={(groupId, open) =>
+                      setCollapsedGroupsByRecipe((prev) => ({
+                        ...prev,
+                        [recipe.id]: {
+                          ...(prev[recipe.id] ?? {}),
+                          [groupId]: !open,
+                        },
+                      }))
+                    }
+                  />
                 </div>
 
                 <div data-step-design={stepDesign}>
-                  <ProcessView store={store} locale={locale} planning />
+                  <ProcessView
+                    store={store}
+                    locale={locale}
+                    planning
+                    onModifyStep={(stepId) => {
+                      if (!store.state.draft) {
+                        store.edit();
+                      }
+                      setEditingStepId(stepId);
+                      setReturnToPlanning(true);
+                      setRoute((prev) => ({ ...prev, section: 'steps' }));
+                      writeURL({ ...route, section: 'steps' }, false);
+                    }}
+                    collapsedGroups={collapsedGroupsByRecipe[recipe.id] ?? {}}
+                    onToggleGroup={(groupId, open) =>
+                      setCollapsedGroupsByRecipe((prev) => ({
+                        ...prev,
+                        [recipe.id]: {
+                          ...(prev[recipe.id] ?? {}),
+                          [groupId]: !open,
+                        },
+                      }))
+                    }
+                  />
                 </div>
 
                 <div>
@@ -1012,20 +1099,24 @@ export default function App() {
                       <Surface key={session.id}>
                         <h3>
                           {t(locale, 'version')} {session.recipeVersion} ·{' '}
-                          {session.outcome
-                            ? t(
-                                locale,
-                                session.outcome.result === 'cooked'
-                                  ? 'resultCooked'
-                                  : session.outcome.result === 'dough'
-                                    ? 'resultDough'
-                                    : session.outcome.result === 'cookedAndDough'
-                                      ? 'resultMixed'
-                                      : 'unknown',
-                              )
-                            : t(locale, 'unknown')}
+                          {session.abandoned
+                            ? editingCopyT(locale, 'statusAbandoned')
+                            : session.outcome
+                              ? t(
+                                  locale,
+                                  session.outcome.result === 'cooked'
+                                    ? 'resultCooked'
+                                    : session.outcome.result === 'dough'
+                                      ? 'resultDough'
+                                      : session.outcome.result === 'cookedAndDough'
+                                        ? 'resultMixed'
+                                        : 'unknown',
+                                )
+                              : t(locale, 'unknown')}
                         </h3>
-                        <p>{session.outcome?.dough && t(locale, session.outcome.dough)}</p>
+                        {!session.abandoned && session.outcome?.dough && (
+                          <p>{t(locale, session.outcome.dough)}</p>
+                        )}
                         <p>
                           {t(locale, 'actualDuration')}
                           {colon(locale)}

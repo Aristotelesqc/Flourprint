@@ -160,7 +160,10 @@ test('closed menus are inert, Escape returns focus, tabs support arrows', async 
 });
 test('diagnostic states never invent a duration on failure', async ({ page }) => {
   await page.goto(recipe.replace('capture=1', 'capture=0') + '&section=steps');
-  await page.getByRole('button', { name: 'Fermentation', exact: true }).first().click();
+  await page
+    .locator('.section-carousel-pane.is-active')
+    .getByRole('button', { name: /^Fermentation .+/ })
+    .click();
   const selector = page.getByRole('combobox', { name: 'Cas de référence du modèle', exact: true });
   await selector.selectOption('noResult');
   await expect(

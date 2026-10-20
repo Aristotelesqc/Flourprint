@@ -82,7 +82,9 @@ export interface NumberFieldProps {
   unitPosition?: 'prefix' | 'suffix';
   locale: 'fr' | 'en';
   onCommit: (value: number) => boolean;
+  onClear?: () => boolean;
   onValidityChange?: (invalid: boolean) => void;
+  onDirtyChange?: (dirty: boolean) => void;
   disabled?: boolean;
   dataTestId?: string;
   errorMessage: string;
@@ -123,6 +125,8 @@ export interface DisclosureProps {
   subtitle?: string;
   badge?: string;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   status?: 'warning' | 'success';
   children: React.ReactNode;
 }
@@ -251,6 +255,7 @@ export interface MetricPillProps {
   value: string;
   label?: string;
   icon?: IconName;
+  compact?: boolean;
 }
 
 export interface TimelineProps {
@@ -274,4 +279,16 @@ export interface ContextTilesProps {
     actionLabel?: string;
     onAction?: () => void;
   }[];
+}
+
+export interface SectionCarouselProps {
+  readonly sections: readonly string[];
+  readonly activeSection?: string;
+  readonly defaultSection?: string;
+  readonly onChangeSection?: (section: string) => void;
+  readonly label: string;
+  readonly reduced?: boolean;
+  readonly onGestureProgress?: (progress: TabGestureProgress | null) => void;
+  readonly targetTabsElement?: HTMLElement | null;
+  readonly children: React.ReactNode;
 }

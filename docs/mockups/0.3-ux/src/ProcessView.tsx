@@ -53,6 +53,7 @@ import {
 } from './messages';
 import { componentDisplayName } from './RecipeView';
 import { stepCopy } from './steps-copy';
+import { editingCopyT } from './editing-copy';
 import { DragHandle, useStepDrag } from './StepDrag';
 import { DependencyEditor } from './DependencyEditor';
 import {
@@ -157,6 +158,7 @@ export function StepEditor({
     label: string,
     unit: string,
     change: (v: number) => void,
+    onClear?: () => boolean,
   ) => (
     <NumberField
       key={id}
@@ -169,6 +171,7 @@ export function StepEditor({
         change(v);
         return true;
       }}
+      onClear={onClear}
       onValidityChange={(bad) => setInvalid((s) => (s[id] === bad ? s : { ...s, [id]: bad }))}
     />
   );
@@ -248,6 +251,15 @@ export function StepEditor({
           (value) => {
             const c = parseTemperature(value, condContext);
             setDraft({ ...draft, conditions: { ...draft.conditions, temperatureC: c } });
+          },
+          () => {
+            const nextCond = { ...draft.conditions };
+            delete nextCond.temperatureC;
+            setDraft({
+              ...draft,
+              conditions: Object.keys(nextCond).length ? nextCond : undefined,
+            });
+            return true;
           },
         )}
         <label className="field-label">
@@ -356,10 +368,23 @@ export function StepEditor({
               ))}
             </select>
           </label>
-          {field('setpoint', equipDisplay, t(locale, 'setpoint'), `°${equipUnit}`, (v) => {
-            const c = parseTemperature(v, equipContext);
-            setDraft({ ...draft, equipment: { ...draft.equipment, setpointC: c } });
-          })}
+          {field(
+            'setpoint',
+            equipDisplay,
+            t(locale, 'setpoint'),
+            `°${equipUnit}`,
+            (v) => {
+              const c = parseTemperature(v, equipContext);
+              setDraft({ ...draft, equipment: { ...draft.equipment, setpointC: c } });
+            },
+            () => {
+              if (!draft.equipment) return true;
+              const nextEquip = { ...draft.equipment };
+              delete nextEquip.setpointC;
+              setDraft({ ...draft, equipment: nextEquip });
+              return true;
+            },
+          )}
         </Disclosure>
         {error && (
           <p role="alert" className="warning">
@@ -580,10 +605,22 @@ export function ProcessView({
   store,
   locale,
   planning = false,
+  editingStepId,
+  onClearEditingStepId,
+  onModifyStep,
+  returnToPlanning,
+  collapsedGroups = {},
+  onToggleGroup,
 }: {
   store: Prototype;
   locale: Locale;
   planning?: boolean;
+  editingStepId?: string | null;
+  onClearEditingStepId?: () => void;
+  onModifyStep?: (stepId: string) => void;
+  returnToPlanning?: () => void;
+  collapsedGroups?: Record<string, boolean>;
+  onToggleGroup?: (groupId: string, open: boolean) => void;
 }) {
   useDevicePreferences();
   const [view, setView] = useState(
@@ -608,6 +645,22 @@ export function ProcessView({
         ) ?? null)
       : null,
   );
+
+  useEffect(() => {
+    if (editingStepId && !planning) {
+      const stepToEdit = store.content.process.steps.find((s) => s.id === editingStepId);
+      if (stepToEdit) {
+        setEditing(stepToEdit);
+        onClearEditingStepId?.();
+        requestAnimationFrame(() => {
+          const el = rootRef.current?.querySelector<HTMLElement>(
+            `[data-step-id="${editingStepId}"]`,
+          );
+          el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+      }
+    }
+  }, [editingStepId, planning, onClearEditingStepId]);
 
   const [removing, setRemoving] = useState<string | null>(null);
   const [menuOpenStepId, setMenuOpenStepId] = useState<string | null>(null);
@@ -838,9 +891,14 @@ export function ProcessView({
               : []),
             ...stepDetails(step, locale),
           ]}
-          editLabel={`${t(locale, 'editStep')} : ${titleOf(step, locale)}`}
+          onEdit={planning ? () => onModifyStep?.(step.id) : undefined}
+          editLabel={
+            planning
+              ? `${editingCopyT(locale, 'editInStepsAria')} : ${titleOf(step, locale)}`
+              : `${t(locale, 'editStep')} : ${titleOf(step, locale)}`
+          }
           actions={
-            store.state.draft ? (
+            planning ? undefined : store.state.draft ? (
               <div className="step-cluster">
                 <DragHandle
                   step={step}
@@ -964,6 +1022,26 @@ export function ProcessView({
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}
       </p>
+      {returnToPlanning && (
+        <div
+          className="row"
+          style={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 'var(--fp-space-2) var(--fp-space-3)',
+            backgroundColor: 'var(--color-surface-container)',
+            borderRadius: 'var(--radius-card)',
+            marginBottom: 'var(--fp-space-2)',
+          }}
+        >
+          <span style={{ fontSize: 'var(--type-meta)', color: 'var(--color-ink-muted)' }}>
+            {editingCopyT(locale, 'editingFromPlanningNotice')}
+          </span>
+          <Button variant="secondary" icon="calendar" onClick={returnToPlanning}>
+            {editingCopyT(locale, 'returnToPlanning')}
+          </Button>
+        </div>
+      )}
       {planning && (
         <Surface>
           <p>{t(locale, 'generated')}</p>
@@ -1096,7 +1174,8 @@ export function ProcessView({
               subtitle={windowLabel(
                 process.steps.filter((s) => getStepComponentId(s) === component.id),
               )}
-              defaultOpen
+              open={!collapsedGroups[component.id]}
+              onOpenChange={(open) => onToggleGroup?.(component.id, open)}
             >
               {process.steps
                 .filter((step) => getStepComponentId(step) === component.id)
@@ -1106,7 +1185,8 @@ export function ProcessView({
           <Disclosure
             title={`${store.content.formula.components.length + 1}. ${t(locale, 'dough')}`}
             subtitle={windowLabel(process.steps.filter((s) => getStepComponentId(s) === null))}
-            defaultOpen
+            open={!collapsedGroups['dough']}
+            onOpenChange={(open) => onToggleGroup?.('dough', open)}
           >
             {process.steps
               .filter((step) => getStepComponentId(step) === null)
@@ -1115,7 +1195,7 @@ export function ProcessView({
         </>
       )}
 
-      {store.state.draft && (
+      {!planning && store.state.draft && (
         <Button
           icon="plus"
           onClick={() =>

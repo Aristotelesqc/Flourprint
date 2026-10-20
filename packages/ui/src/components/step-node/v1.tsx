@@ -53,7 +53,7 @@ export const StepRow: React.FC<StepRowProps> = ({
         {details && details.length > 0 && (
           <div className="step-details pill-row row">
             {details.map((d, i) => (
-              <MetricPill key={i} value={d} />
+              <MetricPill key={i} value={d} compact />
             ))}
           </div>
         )}

@@ -200,7 +200,9 @@ test('an expanded group never visually opens its collapsed nested group', async 
     .toBeGreaterThan(40);
   await child.click();
   await expect.poll(() => content.evaluate((e) => e.getBoundingClientRect().height)).toBe(0);
-  const parent = page.getByRole('button', { name: 'Fermentation', exact: true }).first();
+  const parent = page
+    .locator('.section-carousel-pane.is-active')
+    .getByRole('button', { name: /^Fermentation .+/ });
   await parent.click();
   await parent.click();
   await expect(child).toHaveAttribute('aria-expanded', 'false');

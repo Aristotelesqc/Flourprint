@@ -26,6 +26,21 @@
   border-color: var(--color-primary);
   background-color: var(--color-surface);
 }
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  color: var(--color-ink-muted);
+  border-color: var(--color-outline-subtle);
+  background: var(--color-surface-container);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input:disabled:focus {
+  outline: none;
+  border-color: var(--color-outline-subtle);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-disabled .field-label,
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-disabled .field-unit {
+  color: var(--color-ink-muted);
+}
 [data-fp-component='fp.number-field'][data-fp-version='v1'] .field-unit {
   position: absolute;
   right: var(--fp-space-2-5);

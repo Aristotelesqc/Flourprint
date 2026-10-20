@@ -32,7 +32,9 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   unitPosition = 'suffix',
   locale,
   onCommit,
+  onClear,
   onValidityChange,
+  onDirtyChange,
   disabled = false,
   dataTestId,
   errorMessage,
@@ -47,67 +49,135 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   const [rawText, setRawText] = useState<string>(() =>
     formatDisplayValue(value, locale, displayDigits),
   );
-  const [isInvalid, setIsInvalid] = useState<boolean>(false);
+  const [showError, setShowError] = useState<boolean>(false);
   const lastCommittedRef = useRef<number>(value);
-  const dirtyRef = useRef(false);
+  const isDirtyRef = useRef<boolean>(false);
   const previousResetRef = useRef(resetKey);
+  const previousDisabledRef = useRef(disabled);
+
   const onValidityChangeRef = useRef(onValidityChange);
   onValidityChangeRef.current = onValidityChange;
+
+  const onDirtyChangeRef = useRef(onDirtyChange);
+  onDirtyChangeRef.current = onDirtyChange;
+
+  const onClearRef = useRef(onClear);
+  onClearRef.current = onClear;
+
+  const onCommitRef = useRef(onCommit);
+  onCommitRef.current = onCommit;
+
+  const setDirty = (dirty: boolean) => {
+    if (isDirtyRef.current !== dirty) {
+      isDirtyRef.current = dirty;
+      onDirtyChangeRef.current?.(dirty);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      onDirtyChangeRef.current?.(false);
+      onValidityChangeRef.current?.(false);
+    };
+  }, []);
 
   useEffect(() => {
     const forcedReset = previousResetRef.current !== resetKey;
     previousResetRef.current = resetKey;
+    const disabledTransition = previousDisabledRef.current !== disabled && disabled;
+    previousDisabledRef.current = disabled;
+
     lastCommittedRef.current = value;
-    if (dirtyRef.current && !forcedReset) return;
-    dirtyRef.current = false;
+
+    if (isDirtyRef.current && !forcedReset && !disabledTransition) {
+      return;
+    }
+
+    setDirty(false);
     const nextFormatted = formatDisplayValue(value, locale, displayDigits);
     setRawText(nextFormatted);
-    setIsInvalid(false);
+    setShowError(false);
     onValidityChangeRef.current?.(false);
-  }, [value, locale, resetKey, displayDigits]);
+  }, [value, locale, resetKey, disabled, displayDigits]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
-    dirtyRef.current = true;
+    const currentFormatted = formatDisplayValue(lastCommittedRef.current, locale, displayDigits);
+    setDirty(text !== currentFormatted);
     setRawText(text);
+
+    const isOptionalEmpty = onClearRef.current !== undefined && text.trim() === '';
     const parsed = parseInputNumber(text);
-    const invalid = !parsed.valid;
-    setIsInvalid(invalid);
-    onValidityChangeRef.current?.(invalid);
+    const valid = isOptionalEmpty || parsed.valid;
+
+    if (valid) {
+      setShowError(false);
+      onValidityChangeRef.current?.(false);
+    } else {
+      onValidityChangeRef.current?.(true);
+    }
   };
 
   const commitValue = () => {
-    if (rawText === '' && !Number.isFinite(lastCommittedRef.current)) {
-      setIsInvalid(false);
-      onValidityChangeRef.current?.(false);
-      return;
-    }
-    const parsed = parseInputNumber(rawText);
-    if (!parsed.valid) {
-      setIsInvalid(true);
+    const trimmed = rawText.trim();
+
+    if (trimmed === '') {
+      if (onClearRef.current !== undefined) {
+        if (Number.isFinite(lastCommittedRef.current)) {
+          const accepted = onClearRef.current();
+          if (accepted) {
+            lastCommittedRef.current = NaN;
+            setDirty(false);
+            setRawText('');
+            setShowError(false);
+            onValidityChangeRef.current?.(false);
+          } else {
+            setShowError(true);
+            onValidityChangeRef.current?.(true);
+          }
+        } else {
+          setDirty(false);
+          setRawText('');
+          setShowError(false);
+          onValidityChangeRef.current?.(false);
+        }
+        return;
+      }
+
+      setShowError(true);
       onValidityChangeRef.current?.(true);
       return;
     }
+
+    const parsed = parseInputNumber(rawText);
+    if (!parsed.valid) {
+      setShowError(true);
+      onValidityChangeRef.current?.(true);
+      return;
+    }
+
+    const currentFormatted = formatDisplayValue(lastCommittedRef.current, locale, displayDigits);
     if (
-      rawText === formatDisplayValue(lastCommittedRef.current, locale, displayDigits) ||
+      !isDirtyRef.current ||
+      rawText === currentFormatted ||
       parsed.value === lastCommittedRef.current
     ) {
-      dirtyRef.current = false;
-      setRawText(formatDisplayValue(parsed.value, locale, displayDigits));
-      setIsInvalid(false);
+      setDirty(false);
+      setRawText(currentFormatted);
+      setShowError(false);
       onValidityChangeRef.current?.(false);
       return;
     }
-    const success = onCommit(parsed.value);
+
+    const success = onCommitRef.current(parsed.value);
     if (success) {
-      dirtyRef.current = false;
+      setDirty(false);
       lastCommittedRef.current = parsed.value;
-      dirtyRef.current = false;
       setRawText(formatDisplayValue(parsed.value, locale, displayDigits));
-      setIsInvalid(false);
+      setShowError(false);
       onValidityChangeRef.current?.(false);
     } else {
-      setIsInvalid(true);
+      setShowError(true);
       onValidityChangeRef.current?.(true);
     }
   };
@@ -128,7 +198,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
       ref={rootRef}
       data-fp-component="fp.number-field"
       data-fp-version="v1"
-      className={`field ${compact ? 'field-compact' : ''} ${isInvalid ? 'field-error' : ''} ${unitPosition === 'prefix' ? 'field-prefix' : ''}`}
+      className={`field ${compact ? 'field-compact' : ''} ${showError ? 'field-error' : ''} ${disabled ? 'field-disabled' : ''} ${unitPosition === 'prefix' ? 'field-prefix' : ''}`}
     >
       <label htmlFor={inputId} className="field-label">
         <span>{label}</span>
@@ -142,9 +212,9 @@ export const NumberField: React.FC<NumberFieldProps> = ({
           disabled={disabled}
           value={rawText}
           data-testid={dataTestId}
-          aria-invalid={isInvalid}
+          aria-invalid={showError}
           aria-describedby={
-            [isInvalid ? errorId : null, hint ? hintId : null].filter(Boolean).join(' ') ||
+            [showError ? errorId : null, hint ? hintId : null].filter(Boolean).join(' ') ||
             undefined
           }
           className="field-input tabular"
@@ -164,7 +234,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
           {hint}
         </p>
       )}
-      {isInvalid && (
+      {showError && (
         <span id={errorId} className="field-error-msg" role="alert">
           {errorMessage}
         </span>

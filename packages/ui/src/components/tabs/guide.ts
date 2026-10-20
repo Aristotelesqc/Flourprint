@@ -10,6 +10,7 @@ export default {
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
     'Tablist with arrow-key navigation and roving focus; the selected tab is aria-selected.',
     'Narrow section and filter rows stay on one horizontal scroll strip; arrow/Home/End focus and selection changes scroll the option into view.',
+    'At 360 px and 130% text scaling (L25), section tabs maintain a single-row scroll strip without mid-word breaks (L101). Explicit noninteractive edge chevrons and opaque gradient cues appear via wrapper pseudo-elements when content overflows at either edge, tracked via ResizeObserver and scroll events, without adding non-tab buttons to the tablist.',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142). Tab labels do not break mid-word or wrap unevenly.',
   ],
   related: ['fp.bottom-bar'],

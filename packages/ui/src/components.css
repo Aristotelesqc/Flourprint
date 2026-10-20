@@ -240,8 +240,13 @@ small {
 button {
   font-family: inherit;
 }
-button span {
-  overflow-wrap: anywhere;
+[data-fp-component='fp.button'] {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+[data-fp-component='fp.button'] span {
+  overflow-wrap: normal;
+  word-break: normal;
 }
 button:focus-visible,
 a:focus-visible,

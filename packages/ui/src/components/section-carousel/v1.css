@@ -1,0 +1,38 @@
+/* Section carousel (L101 Navigation A) */
+/* touch-action: pan-y pinch-zoom preserves native vertical scrolling and pinch-zoom */
+/* while delegating horizontal swipe to JS without browser pointercancel (Chromium 141 headless fix) */
+
+[data-fp-component='fp.section-carousel'][data-fp-version='v1'].section-carousel-container {
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  min-width: 0;
+  overflow: clip;
+  position: relative;
+  touch-action: pan-y pinch-zoom;
+}
+
+[data-fp-component='fp.section-carousel'][data-fp-version='v1'] .section-carousel-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  touch-action: pan-y pinch-zoom;
+}
+
+[data-fp-component='fp.section-carousel'][data-fp-version='v1'] .section-carousel-pane {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y pinch-zoom;
+  padding: var(--fp-space-3-5, 0.875rem);
+  padding-bottom: 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-3, 0.75rem);
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}

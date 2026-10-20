@@ -13,7 +13,7 @@ export default {
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
     'The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon and number are present.',
     'Reorder controls (#123) need a keyboard path besides dragging.',
-    'Touch target at least 48 px; painted controls remain compact without layout dead space (ADR 0021, #142).',
+    'Touch target at least 48 px; painted controls remain compact without layout dead space; font-relative narrow query (<=19rem) stacks action controls into a single 48px column and lets details span the badge gutter with compact metadata pills to prevent multiline wrapping and title overlap (ADR 0021, #142).',
     'Proposed alternatives (compact, rail, outline) preserve identical semantic DOM, labeling, and reachable actions with natural wrapping at 360px / 130% zoom without truncation.',
     'Alternatives are proposals for owner review and arbitration, not accepted decisions.',
   ],

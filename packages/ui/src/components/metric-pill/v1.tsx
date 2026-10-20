@@ -3,8 +3,13 @@ import React from 'react';
 import { library } from '../../index.ts';
 import type { IconProps, MetricPillProps } from '../../props.ts';
 const Icon = (props: IconProps) => <library.Slot component="fp.icon" {...props} />;
-const MetricPill = ({ value, label, icon }: MetricPillProps) => (
-  <span className="stat-pill tabular" data-fp-component="fp.metric-pill" data-fp-version="v1">
+const MetricPill = ({ value, label, icon, compact = false }: MetricPillProps) => (
+  <span
+    className="stat-pill tabular"
+    data-fp-component="fp.metric-pill"
+    data-fp-version="v1"
+    data-density={compact ? 'compact' : undefined}
+  >
     {icon && <Icon name={icon} size="0.85rem" />}
     {label && <span className="muted">{label} : </span>}
     <span>{value}</span>

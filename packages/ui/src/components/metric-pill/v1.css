@@ -26,3 +26,10 @@
 [data-fp-component='fp.metric-pill'][data-fp-version='v1'].stat-pill .muted {
   color: var(--color-ink-muted);
 }
+
+/* Compact density for dense metadata contexts (e.g. step-node details) */
+[data-fp-component='fp.metric-pill'][data-fp-version='v1'].stat-pill[data-density='compact'] {
+  min-height: 32px;
+  height: 32px;
+  padding-inline: 0.35rem;
+}

@@ -12,14 +12,26 @@ export const Disclosure: React.FC<DisclosureProps> = ({
   subtitle,
   badge,
   defaultOpen = false,
+  open,
+  onOpenChange,
   status,
   children,
 }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
   const contentId = useId();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const chevronMotionStyle = useTransitionMotionStyle('fp.motion.chevron', rootRef);
   const disclosureMotionStyle = useTransitionMotionStyle('fp.motion.disclosure', rootRef);
+
+  const handleToggle = () => {
+    const next = !isOpen;
+    if (!isControlled) {
+      setInternalOpen(next);
+    }
+    onOpenChange?.(next);
+  };
 
   return (
     <div
@@ -33,9 +45,7 @@ export const Disclosure: React.FC<DisclosureProps> = ({
         className="disclosure-header"
         aria-expanded={isOpen}
         aria-controls={contentId}
-        aria-label={status ? title : undefined}
-        aria-describedby={status && subtitle ? `${contentId}-status` : undefined}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
       >
         <div className="disclosure-headings">
           <div className="row">
@@ -92,6 +102,17 @@ export default library.version({
     {
       name: 'Collapsed',
       props: { title: 'Tangzhong', badge: '100 g', children: 'Ingredient rows' },
+    },
+    {
+      name: 'Controlled',
+      props: {
+        title: 'Preferment (controlled)',
+        subtitle: 'Synchronized section',
+        badge: '150 g',
+        open: true,
+        onOpenChange: () => {},
+        children: 'Controlled ingredient rows',
+      },
     },
   ],
 });

@@ -25,6 +25,7 @@ import RecipeCard from '../components/recipe-card/v1';
 import StatusPanel from '../components/warning-banner/v1';
 import PreparationTimer from '../components/prep-hero/v1';
 import ContextTiles from '../components/context-tiles/v1';
+import SectionCarousel from '../components/section-carousel/v1';
 import TimelineGuide from '../components/timeline/guide.ts';
 import MetricPillGuide from '../components/metric-pill/guide.ts';
 import BottomBarGuide from '../components/bottom-bar/guide.ts';
@@ -46,6 +47,7 @@ import RecipeCardGuide from '../components/recipe-card/guide.ts';
 import WarningBannerGuide from '../components/warning-banner/guide.ts';
 import PrepHeroGuide from '../components/prep-hero/guide.ts';
 import ContextTilesGuide from '../components/context-tiles/guide.ts';
+import SectionCarouselGuide from '../components/section-carousel/guide.ts';
 
 export const catalogue = library.catalogue({
   'fp.timeline': [Timeline],
@@ -69,6 +71,7 @@ export const catalogue = library.catalogue({
   'fp.warning-banner': [StatusPanel],
   'fp.prep-hero': [PreparationTimer],
   'fp.context-tiles': [ContextTiles],
+  'fp.section-carousel': [SectionCarousel],
 });
 
 /** One guide per component id (ADR 0021). */
@@ -94,4 +97,5 @@ export const guides = library.guides({
   'fp.warning-banner': WarningBannerGuide,
   'fp.prep-hero': PrepHeroGuide,
   'fp.context-tiles': ContextTilesGuide,
+  'fp.section-carousel': SectionCarouselGuide,
 });

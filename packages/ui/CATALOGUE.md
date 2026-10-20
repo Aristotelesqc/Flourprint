@@ -287,14 +287,16 @@ A card with a header that opens and closes its content, such as a step group or 
 
 **Props**
 
-| Prop          | Meaning                                       |
-| ------------- | --------------------------------------------- |
-| `title`       | Header text.                                  |
-| `subtitle`    | Optional secondary text.                      |
-| `badge`       | Optional short text at the end of the header. |
-| `defaultOpen` | Initial open state.                           |
-| `status`      | Optional 'warning' or 'success' tone.         |
-| `children`    | Content shown when open.                      |
+| Prop           | Meaning                                                              |
+| -------------- | -------------------------------------------------------------------- |
+| `title`        | Header text.                                                         |
+| `subtitle`     | Optional secondary text.                                             |
+| `badge`        | Optional short text at the end of the header.                        |
+| `defaultOpen`  | Initial open state when uncontrolled.                                |
+| `open`         | Optional controlled open state (drives expanded, inert, and motion). |
+| `onOpenChange` | Callback fired when header toggles the open state.                   |
+| `status`       | Optional 'warning' or 'success' tone.                                |
+| `children`     | Content shown when open.                                             |
 
 **Accessibility**
 
@@ -514,11 +516,12 @@ A compact pill showing one value, with an optional pictogram and label, such as 
 
 **Props**
 
-| Prop    | Meaning                                           |
-| ------- | ------------------------------------------------- |
-| `value` | Formatted value with its unit, from the consumer. |
-| `label` | Optional text before the value.                   |
-| `icon`  | Optional pictogram name from fp.icon.             |
+| Prop      | Meaning                                                                                          |
+| --------- | ------------------------------------------------------------------------------------------------ |
+| `value`   | Formatted value with its unit, from the consumer.                                                |
+| `label`   | Optional text before the value.                                                                  |
+| `icon`    | Optional pictogram name from fp.icon.                                                            |
+| `compact` | Optional density flag for tighter inline padding (0.35rem) and 32px height in metadata contexts. |
 
 **Accessibility**
 
@@ -566,7 +569,9 @@ A numeric input that keeps the raw text while typing and commits a parsed number
 | `unitPosition`     | 'prefix' or 'suffix' (default) for the unit.                                                                                     |
 | `locale`           | 'fr' or 'en' decimal separator.                                                                                                  |
 | `onCommit`         | Called with the parsed value; returning false keeps the raw text and shows the error.                                            |
+| `onClear`          | Optional callback when clearing a finite value in an optional field; returning false keeps the field in error.                   |
 | `onValidityChange` | Receives true for an invalid or refused value and false after valid input/reset; it reports invalidity, despite its name.        |
+| `onDirtyChange`    | Receives true when uncommitted raw text differs from the committed value, and false after commit, reset, or unmount.             |
 | `disabled`         | Disables editing.                                                                                                                |
 | `dataTestId`       | Test id for browser suites.                                                                                                      |
 | `errorMessage`     | Message shown when a value is refused.                                                                                           |
@@ -691,6 +696,57 @@ A recipe in the library: title, status, key values and, for a running preparatio
 
 - `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
 
+### `fp.section-carousel`
+
+Horizontal swipeable carousel holding screens/panes of a recipe (Ingredients, Steps, Planning, History) with synchronized tab indicator.
+
+**Use when**
+
+- Navigation between adjacent peer sections within a single screen or recipe.
+- L101 horizontal gesture navigation with top tappable tabs.
+
+**Avoid when**
+
+- Primary screen navigation: use fp.bottom-bar.
+- Arbitrary multi-step wizard flows with non-linear transitions.
+
+**Props**
+
+| Prop                | Meaning                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| `sections`          | Readonly array of section identifiers.                                                      |
+| `activeSection`     | Optional controlled active section identifier. When omitted, the component is uncontrolled. |
+| `defaultSection`    | Optional initial section identifier for uncontrolled usage.                                 |
+| `onChangeSection`   | Optional callback invoked when section changes due to swipe or external action.             |
+| `label`             | Accessible name for the carousel container.                                                 |
+| `reduced`           | Optional boolean flag indicating reduced motion preference.                                 |
+| `onGestureProgress` | Optional callback receiving real-time gesture progress during swipe.                        |
+| `targetTabsElement` | Optional target element for dispatching tab gesture events.                                 |
+| `children`          | Pane elements corresponding to each section.                                                |
+
+**Accessibility**
+
+- Panes maintain per-panel independent scroll offsets.
+- Inactive panes are marked inert and aria-hidden to keep offscreen content out of the tab and accessibility trees.
+- Swipe gestures are excluded within 24px of screen edges to prevent conflicts with OS edge navigation gestures.
+- Vertical scrolling takes priority unless a horizontal gesture is established.
+- Under reduced motion, horizontal drag animation is disabled and section transitions complete instantaneously.
+
+**Related**
+
+- `fp.tabs`
+- `fp.bottom-bar`
+
+**Decisions**
+
+- [L101: top tappable tabs and horizontal carousel navigation](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [ADR 0021: theme builder, component sourcing, motion items and guides](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
+- [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: L101 section carousel with horizontal swipe gestures, adjacent pane preview, reduced motion support and tab synchronization.
+
 ### `fp.step-node`
 
 One step of the process as a numbered node with its details, actions, and proposed review layout alternatives.
@@ -723,7 +779,7 @@ One step of the process as a numbered node with its details, actions, and propos
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon and number are present.
 - Reorder controls (#123) need a keyboard path besides dragging.
-- Touch target at least 48 px; painted controls remain compact without layout dead space (ADR 0021, #142).
+- Touch target at least 48 px; painted controls remain compact without layout dead space; font-relative narrow query (<=19rem) stacks action controls into a single 48px column and lets details span the badge gutter with compact metadata pills to prevent multiline wrapping and title overlap (ADR 0021, #142).
 - Proposed alternatives (compact, rail, outline) preserve identical semantic DOM, labeling, and reachable actions with natural wrapping at 360px / 130% zoom without truncation.
 - Alternatives are proposals for owner review and arbitration, not accepted decisions.
 
@@ -811,6 +867,7 @@ Switches between sections of one screen (Ingredients, Steps, Planning, History) 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Tablist with arrow-key navigation and roving focus; the selected tab is aria-selected.
 - Narrow section and filter rows stay on one horizontal scroll strip; arrow/Home/End focus and selection changes scroll the option into view.
+- At 360 px and 130% text scaling (L25), section tabs maintain a single-row scroll strip without mid-word breaks (L101). Explicit noninteractive edge chevrons and opaque gradient cues appear via wrapper pseudo-elements when content overflows at either edge, tracked via ResizeObserver and scroll events, without adding non-tab buttons to the tablist.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142). Tab labels do not break mid-word or wrap unevenly.
 
 **Related**

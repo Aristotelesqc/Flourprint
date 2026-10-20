@@ -109,6 +109,63 @@ test.describe('navigation A carousel acceptance', () => {
     await gesture(page, context, { fromX: 290, toX: 210, duration: 35 });
     await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
   });
+  test('the shared carousel moves the actual selected tab indicator with the finger', async ({
+    page,
+    context,
+  }) => {
+    await page.goto(address());
+    await expect(page.locator('[data-fp-component="fp.section-carousel"]')).toHaveAttribute(
+      'data-fp-version',
+      'v1',
+    );
+    const indicator = page.locator('.section-tabs .tab-indicator');
+    const x = () =>
+      indicator.evaluate((node) => new DOMMatrixReadOnly(getComputedStyle(node).transform).m41);
+    const initial = await x();
+    await gesture(page, context, {
+      during: async () => {
+        await expect.poll(x).toBeGreaterThan(initial + 20);
+        await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+      },
+    });
+    await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
+  });
+  test('the catalogue operates the same versioned carousel with a real touch swipe', async ({
+    page,
+    context,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 1000 });
+    await page.goto('/mockup.html?screen=catalogue&lang=en&motion=reduce');
+    const carousel = page
+      .locator(
+        '[data-testid="catalogue-fp.section-carousel-v1"] [data-fp-component="fp.section-carousel"]',
+      )
+      .first();
+    await carousel.scrollIntoViewIfNeeded();
+    const bounds = await carousel.boundingBox();
+    expect(bounds.height).toBeGreaterThan(200);
+    await expect(carousel.locator('.section-carousel-pane.is-active')).toHaveAttribute(
+      'data-section',
+      'ingredients',
+    );
+    const session = await context.newCDPSession(page);
+    const at = (type, x) =>
+      session.send('Input.dispatchTouchEvent', {
+        type,
+        touchPoints: type === 'touchEnd' ? [] : [{ id: 1, x: bounds.x + x, y: bounds.y + 110 }],
+      });
+    await at('touchStart', bounds.width - 45);
+    for (let i = 1; i <= 6; i++) {
+      await gesturePause(80);
+      await at('touchMove', bounds.width - 45 - ((bounds.width - 95) * i) / 6);
+    }
+    await at('touchEnd');
+    await session.detach();
+    await expect(carousel.locator('.section-carousel-pane.is-active')).toHaveAttribute(
+      'data-section',
+      'steps',
+    );
+  });
   test('pointer cancellation beyond half never commits a tab change', async ({ page, context }) => {
     await page.goto(address());
     await gesture(page, context, { cancel: true });

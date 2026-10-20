@@ -12,12 +12,27 @@ import {
   type PreparationOutcome,
 } from '@flourprint/core/domain';
 import { PreparationTimer, StepRow, IngredientRow, ContextTiles } from './components';
-import { Button, IconButton, Disclosure, Modal, NumberField, Menu, Tabs, Surface } from './ui';
+import {
+  Button,
+  IconButton,
+  Disclosure,
+  Modal,
+  NumberField,
+  Menu,
+  Tabs,
+  Surface,
+  CompactDialog,
+} from './ui';
 import { type Prototype, instant, project, syncSessions } from './model';
 import { titleOf, instructionKey, stepDetails, modeLabel, operationIcon } from './ProcessView';
 import { groupsOf } from './RecipeView';
 import { t, duration, time, grams, num, vesselName, type Locale } from './messages';
 import { prepCopy, locationLabel } from './preparation-copy';
+import {
+  prepActionsCopy,
+  formatEarlyFinishPrompt,
+  formatAbandonPrompt,
+} from './preparation-actions-copy';
 import { formatTemperature, formatTemperatureForStep } from './device-preferences';
 import { stepCopy } from './steps-copy';
 
@@ -35,6 +50,8 @@ export function PreparationView({
   const [moreOpen, setMoreOpen] = useState(false);
   const [outcomeInvalid, setOutcomeInvalid] = useState(false);
   const [outcomeOpen, setOutcomeOpen] = useState(false);
+  const [confirmEarlyFinishOpen, setConfirmEarlyFinishOpen] = useState(false);
+  const [confirmAbandonOpen, setConfirmAbandonOpen] = useState(false);
   const [chosenOutcome, setChosenOutcome] = useState<PreparationOutcome | undefined>();
   const [outcomeDraft, setOutcomeDraft] = useState<PreparationOutcome>({ result: 'cooked' });
   const [note, setNote] = useState('');
@@ -62,6 +79,8 @@ export function PreparationView({
     setOutcomeOpen(false);
     setSheet(null);
     setMoreOpen(false);
+    setConfirmEarlyFinishOpen(false);
+    setConfirmAbandonOpen(false);
     setNote('');
     setMinutes(15);
     setInvalid(false);
@@ -232,7 +251,13 @@ export function PreparationView({
           label={prepCopy(locale, 'selectPreparation')}
           tabs={allSessions.map((s, index) => ({
             id: s.id,
-            label: `${index + 1}. ${s.recipeName} · v${s.recipeVersion}${s.finished ? ` · ${prepCopy(locale, 'sessionFinished')}` : ''}`,
+            label: `${index + 1}. ${s.recipeName} · v${s.recipeVersion}${
+              s.abandoned
+                ? ` · ${prepActionsCopy(locale, 'sessionAbandoned')}`
+                : s.finished
+                  ? ` · ${prepCopy(locale, 'sessionFinished')}`
+                  : ''
+            }`,
           }))}
           activeId={session.id}
           onChange={(id) => store.selectSession?.(id)}
@@ -244,7 +269,9 @@ export function PreparationView({
           · {t(locale, 'version')} {session.recipeVersion}
         </small>
       </h2>
-      {session.finished ? (
+      {session.abandoned ? (
+        <h2>{prepActionsCopy(locale, 'sessionAbandonedTitle')}</h2>
+      ) : session.finished ? (
         <h2>{t(locale, 'completeSession')}</h2>
       ) : readyToFinish ? (
         <h2>{t(locale, 'finishReady')}</h2>
@@ -441,11 +468,18 @@ export function PreparationView({
           </Button>
         </div>
       )}
-      {session.finished && session.outcome && (
-        <p data-testid="recorded-outcome">
-          {resultLabel(session.outcome)}
-          {session.outcome.dough ? ` · ${t(locale, session.outcome.dough)}` : ''}
+      {session.abandoned ? (
+        <p data-testid="recorded-outcome" className="muted">
+          {prepActionsCopy(locale, 'noUsableOutcome')}
         </p>
+      ) : (
+        session.finished &&
+        session.outcome && (
+          <p data-testid="recorded-outcome">
+            {resultLabel(session.outcome)}
+            {session.outcome.dough ? ` · ${t(locale, session.outcome.dough)}` : ''}
+          </p>
+        )
       )}
       <Menu
         open={moreOpen}
@@ -480,12 +514,70 @@ export function PreparationView({
           dataTestId="finish-preparation-early"
           onClick={() => {
             setMoreOpen(false);
-            store.finishSession(chosenOutcome);
+            setConfirmEarlyFinishOpen(true);
           }}
         >
           {t(locale, 'finishSession')}
         </Button>
+        <Button
+          variant="danger"
+          dataTestId="abandon-preparation-btn"
+          onClick={() => {
+            setMoreOpen(false);
+            setConfirmAbandonOpen(true);
+          }}
+        >
+          {prepActionsCopy(locale, 'abandonPreparation')}
+        </Button>
       </Menu>
+      <CompactDialog
+        open={confirmEarlyFinishOpen}
+        onClose={() => setConfirmEarlyFinishOpen(false)}
+        title={prepActionsCopy(locale, 'confirmEarlyFinishTitle')}
+        closeLabel={t(locale, 'cancel')}
+        footer={
+          <div className="actions">
+            <Button variant="quiet" onClick={() => setConfirmEarlyFinishOpen(false)}>
+              {t(locale, 'cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setConfirmEarlyFinishOpen(false);
+                store.finishSession(chosenOutcome);
+              }}
+            >
+              {prepActionsCopy(locale, 'confirmEarlyFinishAction')}
+            </Button>
+          </div>
+        }
+      >
+        <p>{formatEarlyFinishPrompt(locale, session.recipeName, resultLabel(outcome))}</p>
+      </CompactDialog>
+      <CompactDialog
+        open={confirmAbandonOpen}
+        onClose={() => setConfirmAbandonOpen(false)}
+        title={prepActionsCopy(locale, 'confirmAbandonTitle')}
+        closeLabel={t(locale, 'cancel')}
+        footer={
+          <div className="actions">
+            <Button variant="quiet" onClick={() => setConfirmAbandonOpen(false)}>
+              {t(locale, 'cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setConfirmAbandonOpen(false);
+                store.abandonSession();
+              }}
+            >
+              {prepActionsCopy(locale, 'abandonPreparation')}
+            </Button>
+          </div>
+        }
+      >
+        <p>{formatAbandonPrompt(locale, session.recipeName)}</p>
+      </CompactDialog>
       <Modal
         open={outcomeOpen}
         onClose={() => setOutcomeOpen(false)}

@@ -370,6 +370,7 @@ export function RecipeIngredients({
       disabled={disabled}
       errorMessage={t(locale, 'invalid')}
       onValidityChange={(invalid) => store.validity(id, invalid)}
+      onDirtyChange={(dirty) => store.pendingInput?.(id, dirty)}
       dataTestId={id}
     />
   );
@@ -1044,6 +1045,7 @@ function FlourBlendEditor({
               onValidityChange={(bad) =>
                 setInvalid((s) => (s[flour.id] === bad ? s : { ...s, [flour.id]: bad }))
               }
+              onDirtyChange={(dirty) => store.pendingInput?.(`flour-blend-${flour.id}`, dirty)}
               onCommit={(value) => {
                 setFlours((rows) =>
                   rows.map((row) => (row.id === flour.id ? { ...row, sharePct: value } : row)),
@@ -1057,6 +1059,7 @@ function FlourBlendEditor({
                 setInvalid((flags) =>
                   Object.fromEntries(Object.entries(flags).filter(([key]) => key !== flour.id)),
                 );
+                store.pendingInput?.(`flour-blend-${flour.id}`, false);
               }}
             >
               {recipeCopy(locale, 'removeAction')}
