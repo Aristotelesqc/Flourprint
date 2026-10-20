@@ -210,7 +210,7 @@ A two-column contextual facts tile grid for live process and preparation states,
 
 - Page-anchored presentation stays flat; painted tile surfaces are opaque without decorative gradients or fake progress bars (elevation rule, ADR 0021).
 - Section has accessible name from label; tiles present semantic label and value pairs with tabular figures.
-- Optional tile actions are native buttons with accessible names; no nested interactive controls or clickable card wrappers.
+- Optional tile actions are native buttons with accessible names sharing the body row with value data and wrapping safely; no nested interactive controls or clickable card wrappers.
 
 **Related**
 

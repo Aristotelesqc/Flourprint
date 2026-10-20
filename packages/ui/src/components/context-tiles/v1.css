@@ -7,7 +7,7 @@
 [data-fp-component='fp.context-tiles'][data-fp-version='v1'] .context-tiles-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--fp-space-2);
+  gap: var(--fp-space-1-5);
   width: 100%;
 }
 
@@ -15,7 +15,7 @@
   background: var(--color-surface-container);
   border: 1px solid var(--color-outline-subtle);
   border-radius: var(--radius-card);
-  padding: var(--fp-space-2-5);
+  padding: var(--fp-space-1-5) var(--fp-space-2);
   display: flex;
   flex-direction: column;
   gap: var(--fp-space-1);
@@ -45,6 +45,26 @@
   min-width: 0;
   overflow-wrap: normal;
   word-break: normal;
+  line-height: 1.25;
+}
+
+[data-fp-component='fp.context-tiles'][data-fp-version='v1'] .context-tile-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--fp-space-1);
+  min-width: 0;
+  width: 100%;
+  margin-top: auto;
+}
+
+[data-fp-component='fp.context-tiles'][data-fp-version='v1'] .context-tile-data {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-1);
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 [data-fp-component='fp.context-tiles'][data-fp-version='v1'] .context-tile-value {
@@ -52,7 +72,7 @@
   font-weight: 700;
   color: var(--color-ink);
   font-variant-numeric: tabular-nums;
-  line-height: 1.25;
+  line-height: 1.2;
   min-width: 0;
   overflow-wrap: normal;
   word-break: normal;
@@ -61,15 +81,20 @@
 [data-fp-component='fp.context-tiles'][data-fp-version='v1'] .context-tile-detail {
   font-size: var(--type-meta);
   color: var(--color-ink-muted);
-  line-height: 1.3;
+  line-height: 1.25;
   min-width: 0;
   overflow-wrap: normal;
   word-break: normal;
 }
 
 [data-fp-component='fp.context-tiles'][data-fp-version='v1'] .context-tile-action {
-  margin-top: auto;
-  padding-top: var(--fp-space-1);
   display: flex;
-  justify-content: flex-start;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+[data-fp-component='fp.context-tiles'][data-fp-version='v1']
+  .context-tile-action
+  [data-fp-component='fp.button'].btn {
+  padding: 0 var(--fp-space-1-5);
 }

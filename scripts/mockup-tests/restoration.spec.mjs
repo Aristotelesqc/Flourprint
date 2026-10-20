@@ -164,6 +164,7 @@ for (const prep of ['fermentation', 'cooking'])
     await page.goto(
       `/mockup.html?screen=preparation&lang=fr&nav=A&width=360&scale=130&capture=1${prep === 'cooking' ? '&prep=cooking' : ''}`,
     );
+    await expect(page.getByRole('heading', { level: 2 }).first()).toContainText('Révision #1');
     for (const name of [
       '+15 min',
       'Durée',
@@ -181,7 +182,20 @@ for (const prep of ['fermentation', 'cooking'])
             el
           );
         }),
+        `${prep}: ${name} must be reachable at its visible center without scrolling`,
       ).toBe(true);
+      const bounds = await control.evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        const viewport = el.closest('.phone-content')?.getBoundingClientRect() ?? {
+          top: 0,
+          bottom: window.innerHeight,
+        };
+        return { topInset: rect.top - viewport.top, bottomOverflow: rect.bottom - viewport.bottom };
+      });
+      expect(bounds.topInset, `${prep}: ${name} top is unclipped`).toBeGreaterThanOrEqual(-0.5);
+      expect(bounds.bottomOverflow, `${prep}: ${name} bottom is unclipped`).toBeLessThanOrEqual(
+        0.5,
+      );
     }
   });
 

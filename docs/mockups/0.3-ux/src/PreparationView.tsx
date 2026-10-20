@@ -35,6 +35,7 @@ import {
 } from './preparation-actions-copy';
 import { formatTemperature, formatTemperatureForStep } from './device-preferences';
 import { stepCopy } from './steps-copy';
+import { historyCopyT } from './history-copy';
 
 export function PreparationView({
   store,
@@ -251,7 +252,7 @@ export function PreparationView({
           label={prepCopy(locale, 'selectPreparation')}
           tabs={allSessions.map((s, index) => ({
             id: s.id,
-            label: `${index + 1}. ${s.recipeName} · v${s.recipeVersion}${
+            label: `${index + 1}. ${s.recipeName} · ${historyCopyT(locale, 'revisionItem', { version: s.recipeVersion })}${
               s.abandoned
                 ? ` · ${prepActionsCopy(locale, 'sessionAbandoned')}`
                 : s.finished
@@ -266,7 +267,7 @@ export function PreparationView({
       <h2>
         {session.recipeName}{' '}
         <small className="muted">
-          · {t(locale, 'version')} {session.recipeVersion}
+          · {historyCopyT(locale, 'revisionItem', { version: session.recipeVersion })}
         </small>
       </h2>
       {session.abandoned ? (
@@ -653,7 +654,7 @@ export function PreparationView({
       <div ref={weighingRef} key={`weighing-${weighingOpenCount}`}>
         <Disclosure
           title={t(locale, 'quantities')}
-          subtitle={`${session.recipeName} · ${t(locale, 'version')} ${session.recipeVersion}`}
+          subtitle={`${session.recipeName} · ${historyCopyT(locale, 'revisionItem', { version: session.recipeVersion })}`}
           defaultOpen={weighingOpenCount > 0 ? true : undefined}
         >
           <p className="muted">{t(locale, 'snapshotHelp')}</p>

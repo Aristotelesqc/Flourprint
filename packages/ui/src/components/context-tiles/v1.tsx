@@ -25,15 +25,19 @@ export const ContextTiles: React.FC<ContextTilesProps> = ({ label, items = [] })
               )}
               <span className="context-tile-label">{item.label}</span>
             </div>
-            <div className="context-tile-value tabular">{item.value}</div>
-            {item.detail && <div className="context-tile-detail">{item.detail}</div>}
-            {item.onAction && item.actionLabel && (
-              <div className="context-tile-action">
-                <Button variant="quiet" onClick={item.onAction}>
-                  {item.actionLabel}
-                </Button>
+            <div className="context-tile-body">
+              <div className="context-tile-data">
+                <div className="context-tile-value tabular">{item.value}</div>
+                {item.detail && <div className="context-tile-detail">{item.detail}</div>}
               </div>
-            )}
+              {item.onAction && item.actionLabel && (
+                <div className="context-tile-action">
+                  <Button variant="quiet" onClick={item.onAction}>
+                    {item.actionLabel}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
