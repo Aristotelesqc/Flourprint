@@ -20,14 +20,16 @@ import { validateProcess, type ProcessError } from './validate.js';
  */
 
 /**
- * The components of a process: the ids its steps incorporate. Every formula component joins the
- * dough exactly once (Incorporations), so these are the formula's components.
+ * The components a process names without its formula: the ids its steps incorporate and the
+ * components of explicit subjects. Every formula component joins the dough exactly once
+ * (Incorporations), so with incorporations these are the formula's components.
  */
 const componentIds = (process: Process): Set<string> =>
   new Set(
-    process.steps.flatMap((s) =>
-      (s.incorporations ?? []).flatMap((i) => (i.item === 'component' ? [i.id] : [])),
-    ),
+    process.steps.flatMap((s) => [
+      ...(s.incorporations ?? []).flatMap((i) => (i.item === 'component' ? [i.id] : [])),
+      ...(s.subject?.kind === 'component' ? [s.subject.id] : []),
+    ]),
   );
 
 /**
@@ -43,23 +45,34 @@ export const subjectOf = (
   step.subject ??
   (components.has(step.id) ? { kind: 'component', id: step.id } : { kind: 'mainDough' });
 
+/** The steps of component `id` (its phases), in process order. */
+export const phasesOf = (
+  process: Process,
+  id: string,
+  components: ReadonlySet<string> = componentIds(process),
+): ProcessStep[] =>
+  process.steps.filter((s) => {
+    const subject = subjectOf(process, s, components);
+    return subject.kind === 'component' && subject.id === id;
+  });
+
 /**
  * The step where component `id` joins the main dough (process.md, Subjects and component phases):
  * the step incorporating it, else, when the process declares no incorporations, the first step of
- * another subject that depends on one of its steps.
+ * another subject that depends on one of its phases.
  */
-const joinOf = (process: Process, id: string): StepId | undefined => {
+export const joinOf = (
+  process: Process,
+  id: string,
+  components: ReadonlySet<string> = componentIds(process),
+): ProcessStep | undefined => {
   const incorporating = process.steps.find((s) =>
     (s.incorporations ?? []).some((i) => i.item === 'component' && i.id === id),
   );
-  if (incorporating !== undefined) return incorporating.id;
+  if (incorporating !== undefined) return incorporating;
   if (process.steps.some((s) => (s.incorporations ?? []).length > 0)) return undefined;
-  const isPhase = (stepId: StepId) => {
-    const s = process.steps.find((x) => x.id === stepId);
-    const subject = s && subjectOf(process, s);
-    return subject?.kind === 'component' && subject.id === id;
-  };
-  return process.steps.find((s) => !isPhase(s.id) && s.dependsOn.some(isPhase))?.id;
+  const phases = new Set(phasesOf(process, id, components).map((s) => s.id));
+  return process.steps.find((s) => !phases.has(s.id) && s.dependsOn.some((d) => phases.has(d)));
 };
 
 const sameSubject = (a: Subject, b: Subject): boolean =>
@@ -187,7 +200,7 @@ export const moveStep = (
   const subject = subjectOf(process, step);
   // T and B may also be the step where the step's component joins the dough: the step stays
   // among its component's phases, upstream of the join (process.md, Move, example 7).
-  const join = subject.kind === 'component' ? joinOf(process, subject.id) : undefined;
+  const join = subject.kind === 'component' ? joinOf(process, subject.id)?.id : undefined;
   const neighbours = [p, t?.id, after, b?.id].flatMap((id) =>
     id === undefined || id === null ? [] : [process.steps.find((s) => s.id === id) as ProcessStep],
   );

@@ -4,7 +4,7 @@ import type { Formula, ResolvedFormula } from '../formula/types.js';
 import { planIncorporations, type IncorporatedAmount } from '../process/incorporations.js';
 import { domainError } from '../errors.js';
 import { ancestors } from '../process/dough.js';
-import { subjectOf } from '../process/move.js';
+import { joinOf, phasesOf } from '../process/move.js';
 import type { Process, StepId } from '../process/types.js';
 import { validateProcess, type ProcessError } from '../process/validate.js';
 import { err, ok, type Result } from '../result.js';
@@ -22,8 +22,9 @@ const invalid = (path: string, reason: string): ProcessError =>
 
 /**
  * Subjects and component phases (process.md): an explicit subject names a component of the
- * formula and never contradicts the step's id, and every step of a component is upstream of the
- * step where the component joins the main dough.
+ * formula, `mainDough` is never the subject of a component's own step, and every phase of a
+ * component that has an explicit-subject phase is upstream of the step where it joins the dough.
+ * A component without explicit subjects keeps its legacy meaning (Compatibility).
  */
 const validateSubjects = (formula: Formula, process: Process): Result<void, ProcessError> => {
   const components = new Set(formula.components.map((c) => c.id));
@@ -36,23 +37,13 @@ const validateSubjects = (formula: Formula, process: Process): Result<void, Proc
       return err(invalid(path, `${step.id} is a component's step, not the main dough's`));
     }
   }
-  const declares = process.steps.some((s) => (s.incorporations ?? []).length > 0);
   for (const component of components) {
-    const isPhase = (id: StepId) => {
-      const step = process.steps.find((s) => s.id === id);
-      const subject = step && subjectOf(process, step, components);
-      return subject?.kind === 'component' && subject.id === component;
-    };
-    const phases = process.steps.filter((s) => isPhase(s.id));
-    if (phases.length === 0) continue;
-    const join = declares
-      ? process.steps.find((s) =>
-          (s.incorporations ?? []).some((i) => i.item === 'component' && i.id === component),
-        )
-      : process.steps.find((s) => !isPhase(s.id) && s.dependsOn.some(isPhase));
+    const phases = phasesOf(process, component, components);
+    if (!phases.some((p) => p.subject !== undefined)) continue;
+    const join = joinOf(process, component, components);
     if (join === undefined) continue;
     const joinIndex = process.steps.indexOf(join);
-    if (isPhase(join.id)) {
+    if (phases.includes(join)) {
       return err(
         invalid(
           `steps[${joinIndex}].incorporations`,

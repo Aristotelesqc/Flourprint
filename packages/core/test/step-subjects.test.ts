@@ -236,6 +236,51 @@ describe('subjects and component phases', () => {
     });
   });
 
+  it('a legacy component with no explicit subject keeps its legacy meaning', () => {
+    // Before #106 slice A this was valid: an unwired poolish beside an incorporating mix.
+    const unwired: Process = {
+      steps: [
+        step('poolish', 'preferment', [], { plannedDurationS: 3600 }),
+        step('autolyse', 'autolyse', []),
+        step('mix', 'mix', ['autolyse'], { incorporations: [...joinAll] }),
+      ],
+    };
+    expect(reason(unwired)).toBeUndefined();
+  });
+
+  it('example 4 shape: a legacy step and added phases move among themselves', () => {
+    const added: Process = {
+      steps: [
+        step('poolish', 'preferment', [], { plannedDurationS: 3600 }),
+        step('poolish-prep', 'frasage', ['poolish'], { subject: poolish }),
+        step('poolish-fridge', 'preferment', ['poolish-prep'], { subject: poolish }),
+        step('mix', 'mix', ['poolish-fridge']),
+      ],
+    };
+    const moved = moveStep(added, 'poolish-fridge', 'poolish');
+    if (!moved.ok) throw new Error(JSON.stringify(moved.error));
+    expect(moved.value.process.steps.map((s) => [s.id, s.dependsOn])).toEqual([
+      ['poolish', []],
+      ['poolish-fridge', ['poolish']],
+      ['poolish-prep', ['poolish-fridge']],
+      ['mix', ['poolish-prep']],
+    ]);
+    expect(reason(moved.value.process)).toBeUndefined();
+  });
+
+  it('the water temperature uses the last fermenting phase of the preferment', () => {
+    const target: Process = {
+      steps: threePhases.steps.map((s) =>
+        s.id === 'mix' ? { ...s, conditions: { temperatureC: 20, doughTemperatureC: 25 } } : s,
+      ),
+    };
+    // 4 × 25 − 20 (flour) − 20 (room) − 4 (the fridge phase).
+    expect(estimateFermentation(formula, target).waterTemperatureC).toMatchObject({
+      status: 'ok',
+      value: 56,
+    });
+  });
+
   it('a step with an explicit subject is duplicable and the copy keeps its subject', () => {
     const copied = duplicateStep(threePhases, 'poolish-counter', 'poolish-counter-2');
     if (!copied.ok) throw new Error(JSON.stringify(copied.error));

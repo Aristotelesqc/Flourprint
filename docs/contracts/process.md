@@ -443,7 +443,8 @@ type Subject = { kind: 'mainDough' } | { kind: 'component'; id: string }; // id:
   estimate is `insufficient_data` with the reason `component_phases_unmodelled`: this model has no
   validated temperature path across them, no coefficient is added here, and it never silently
   counts one phase. The recorded phases, durations and temperatures remain, are scheduled and are
-  shown.
+  shown. The water temperature (fermentation.md) uses the temperature of the component's last
+  fermenting phase, the one it has when it joins the dough.
 - **Moves and copies** (Step move and duplicate, #92). One predicate, `subjectOf(step)` (the
   explicit `subject`, else the component named by the step's id, else the main dough), is used by
   both. A chain move needs the step's neighbours and target to share its subject
@@ -451,7 +452,9 @@ type Subject = { kind: 'mainDough' } | { kind: 'component'; id: string }; // id:
   (`incorporationStep`); an order-only move keeps the subject. A step with an explicit component
   subject can be duplicated and the copy keeps the subject and adds no mass; the legacy step whose
   id is the component's is not duplicable.
-- **Compatibility.** Existing recipes have no `subject` and mean what they meant. Adding phases to
+- **Compatibility.** Existing recipes have no `subject` and mean what they meant: the rule that
+  every step of a component is upstream of its join is checked only for a component with at least
+  one step that names it as its `subject`, so a stored legacy recipe is never refused by it. Adding phases to
   one, as above, keeps it valid: the legacy step stays, the new steps name their subject, and the
   join is rewired to wait for them. An
   older app refuses a document holding `subject` as an unknown field (`persistence.md`), never
