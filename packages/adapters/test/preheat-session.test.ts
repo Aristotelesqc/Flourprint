@@ -122,7 +122,9 @@ describe('beforeTarget in a bake session', () => {
     await s.at(t('08:00')).ok({ type: 'StartStep', stepId: 'mix' });
     await s.at(t('08:10')).ok({ type: 'CompleteStep', stepId: 'mix' });
     await s.at(t('08:40')).ok({ type: 'StartStep', stepId: 'preheat' });
-    const finished = await s.at(t('09:00')).run({ type: 'FinishBake' });
+    const finished = await s
+      .at(t('09:00'))
+      .run({ type: 'FinishBake', outcome: { result: 'dough' } });
     expect(finished.ok).toBe(true);
   });
 

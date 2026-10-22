@@ -320,7 +320,7 @@ const seed = async (stores: BackupStores) => {
     },
     at('10:00'),
   );
-  await run({ type: 'FinishBake' }, at('11:00'));
+  await run({ type: 'FinishBake', outcome: { result: 'cooked' } }, at('11:00'));
   await run({ type: 'AddObservation', category: 'crumb', text: 'tight' }, at('11:30'));
 };
 
@@ -478,7 +478,7 @@ describe.each([
   it('restores a finish written before outcomes as an unknown result', async () => {
     const backup = await backupOf();
     const finish = backup.bakes[0].events.find((e: Loose) => e.payload.type === 'BakeFinished');
-    expect(finish.payload).toMatchObject({ outcomeSource: 'recipe' });
+    expect(finish.payload).toMatchObject({ outcomeSource: 'baker' });
     finish.payload = { type: 'BakeFinished' };
     const target = await makeTarget();
     expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
@@ -962,10 +962,9 @@ describe('feedback export (history.md)', () => {
       flours: [{ id: 'bread', version: 2 }],
       startedAt: at('08:00'),
       endedAt: at('11:00'),
-      // Finished with one tap: the recipe's intended outcome (no cooking step: the raw dough),
-      // recorded with its source.
+      // No cooking step was completed: finished with the outcome the baker chose.
       outcome: { result: 'cooked' },
-      outcomeSource: 'recipe',
+      outcomeSource: 'baker',
     });
     expect(result.value.schemaVersion).toBe(3);
     expect(digest?.steps.find((s) => s.id === 'mix')).toMatchObject({
