@@ -130,6 +130,29 @@ describe('sqlite-node durability', () => {
       error: { code: 'UnsupportedDocumentVersion' },
     });
   });
+  it('appends a Save over a head written with a newer document schema', async () => {
+    const db = await open(':memory:');
+    const repository = new SqlRecipeRepository(db.driver);
+    const input = {
+      recipeId: 'r',
+      name: 'R',
+      expectedHead: 0,
+      formula: {
+        flours: [{ id: 'f', sharePct: 100 }],
+        ingredients: [],
+        components: [],
+        anchor: { kind: 'flourTotal' as const, grams: 500 },
+      },
+      process: { steps: [] },
+      createdAt: '2026-10-07T08:00:00.000Z' as Instant,
+    };
+    await repository.saveRevision(input);
+    db.database.prepare("UPDATE revisions SET schema_version = 99 WHERE recipe_id = 'r'").run();
+    expect(await repository.saveRevision({ ...input, expectedHead: 1 })).toMatchObject({
+      ok: true,
+      value: { version: 2 },
+    });
+  });
   it('upgrades a version 3 database to the flour registry, keeping its drafts', async () => {
     const file = path('upgrade-flours.sqlite');
     const v3 = await open(file, MIGRATIONS.slice(0, 3));

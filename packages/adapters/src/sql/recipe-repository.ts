@@ -283,11 +283,16 @@ export class SqlRecipeRepository implements RecipeRepository {
         );
       }
       if (currentHead > 0) {
-        const [head] = await tx.query<{ document: string }>(
-          'SELECT document FROM revisions WHERE recipe_id = ? AND version = ?',
+        const [head] = await tx.query<{ schema_version: number; document: string }>(
+          'SELECT schema_version, document FROM revisions WHERE recipe_id = ? AND version = ?',
           [input.recipeId, currentHead],
         );
-        if (head && sameRecipeContent(parseRevision(head.document), input)) {
+        // A head written by a newer app is not read here: the Save appends, as before.
+        if (
+          head &&
+          Number(head.schema_version) <= DOCUMENT_SCHEMA_VERSION &&
+          sameRecipeContent(parseRevision(head.document), input)
+        ) {
           // No-op: no revision, but the rename and the draft's deletion still apply.
           await tx.run('UPDATE recipes SET name = ? WHERE id = ?', [input.name, input.recipeId]);
           if (input.fromDraft !== undefined) {
