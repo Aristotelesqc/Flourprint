@@ -37,6 +37,7 @@ export {
   intendedOutcome,
   isCookingStep,
   OUTCOME_RESULTS,
+  outcomeChoiceRequired,
   outcomeProblem,
   type PreparationOutcome,
 } from './cooking.js';

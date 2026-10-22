@@ -12,7 +12,7 @@ import { doughReadyStage } from '../fermentation/estimate.js';
 import { applyFormulaEdit } from '../formula/edit.js';
 import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
-import { intendedOutcome, isCookingStep, outcomeProblem } from '../process/cooking.js';
+import { intendedOutcome, outcomeChoiceRequired, outcomeProblem } from '../process/cooking.js';
 import { projectProcess } from '../process/project.js';
 import type { Process, Projection, StepFact } from '../process/types.js';
 import type { Formula } from '../formula/types.js';
@@ -702,11 +702,11 @@ export const decide = (
         if (problem) return error('InvalidCommand', `Invalid outcome: ${problem.reason}`, problem);
       }
       // Without a choice, the recipe's intended outcome, from the effective process (inserted
-      // steps included), but only once a cooking step is completed (bake-session.md): before
-      // that, nothing says the intended product was reached, so the baker must choose.
+      // steps included), but a cooked intended outcome needs a completed cooking step
+      // (bake-session.md): before that, nothing says it was reached, so the baker must choose.
       if (
         command.outcome === undefined &&
-        !process.steps.some((s) => isCookingStep(s) && state.steps[s.id]?.endedAt !== undefined)
+        outcomeChoiceRequired(process, (id) => state.steps[id]?.endedAt !== undefined)
       ) {
         return error(
           'OutcomeRequired',

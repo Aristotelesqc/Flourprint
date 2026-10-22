@@ -413,14 +413,19 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
   });
 
   it('refuses to finish without an outcome until a cooking step is completed', async () => {
-    // No cooking step in the process: nothing can default to the intended outcome.
+    // The recipe intends a cooked result and nothing is cooked: no default outcome.
     const plain = new Session();
-    await plain.start();
+    await plain.start({
+      steps: [
+        { id: 'mix', operation: 'mix', dependsOn: [], schedule: 'asap' },
+        { id: 'bake', operation: 'bake', dependsOn: ['mix'], schedule: 'asap' },
+      ],
+    });
     expect(await plain.at(t('16:00')).run({ type: 'FinishBake' })).toMatchObject({
       ok: false,
       error: { code: 'OutcomeRequired', details: { reason: 'no_cooking_step_completed' } },
     });
-    // A cooking step that is planned but not completed does not count either.
+    // A cooking step that is started but not completed does not count either.
     const planned = new Session();
     await planned.start({
       steps: [{ id: 'bake', operation: 'bake', dependsOn: [], schedule: 'asap' }],
@@ -501,17 +506,20 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
   });
 
   it('finishes with the one outcome chosen, or the recipe intended outcome', async () => {
-    // A recipe that is always frozen says so once.
+    // A recipe that is always frozen says so once, and finishes in one tap with no cooking step.
     const frozen = new Session();
     await frozen.start({
-      steps: [{ id: 'par', operation: 'bake', dependsOn: [], schedule: 'asap' }],
+      ...process_,
       intendedOutcome: { result: 'dough', dough: 'frozen', pieces: 6 },
     });
-    await frozen.ok({ type: 'CompleteStep', stepId: 'par' });
     expect((await frozen.ok({ type: 'FinishBake' })).state.outcome).toEqual({
       result: 'dough',
       dough: 'frozen',
       pieces: 6,
+    });
+    expect((await frozen.store.loadEvents('bake-1')).at(-1)?.payload).toMatchObject({
+      type: 'BakeFinished',
+      outcomeSource: 'recipe',
     });
 
     // The baker may always choose another outcome, even with a cooking step.

@@ -4,6 +4,7 @@ import {
   doughSteps,
   intendedOutcome,
   isCookingStep,
+  outcomeChoiceRequired,
   outcomeProblem,
   validateProcess,
   type Process,
@@ -61,5 +62,20 @@ describe('intended outcome (bake-session.md)', () => {
     expect(
       validateProcess({ ...dough, intendedOutcome: { result: 'cooked', dough: 'sold' } }),
     ).toMatchObject({ ok: false, error: { code: 'InvalidProcess' } });
+  });
+});
+
+describe('outcomeChoiceRequired', () => {
+  const baked: Process = { steps: [step('mix', 'mix'), step('bake', 'bake', ['mix'])] };
+  const frozen: Process = {
+    steps: [step('mix', 'mix')],
+    intendedOutcome: { result: 'dough', dough: 'frozen' },
+  };
+  it('asks only for a cooked intent with no cooking step completed', () => {
+    expect(outcomeChoiceRequired(baked, (id) => id === 'mix')).toBe(true);
+    expect(outcomeChoiceRequired(baked, () => true)).toBe(false);
+    // A dough-only recipe finishes with its intended outcome, nothing cooked.
+    expect(outcomeChoiceRequired(frozen, () => false)).toBe(false);
+    expect(outcomeChoiceRequired({ steps: [step('mix', 'mix')] }, () => false)).toBe(false);
   });
 });

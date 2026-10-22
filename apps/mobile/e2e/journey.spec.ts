@@ -259,6 +259,8 @@ test('finishes as frozen dough before its planned bake, keeping the steps as rec
   await page.getByRole('button', { name: 'Préferment terminé' }).click();
   // The bake is not reached: finishing now asks for the result, completes no step.
   await menuAction(page, /^Terminer maintenant/);
+  // The recipe intends a cooked result and nothing is cooked: no outcome is preselected.
+  await expect(page.locator('ion-alert [aria-checked="true"]')).toHaveCount(0);
   await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
   await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
   await page.locator('ion-alert').getByText('congelée', { exact: true }).click();

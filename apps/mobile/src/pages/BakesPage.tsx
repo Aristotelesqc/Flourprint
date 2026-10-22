@@ -10,8 +10,14 @@ import {
   useIonViewWillEnter,
 } from '@ionic/react';
 import { useCallback, useEffect, useState } from 'react';
-import type { BakeCommandPayload, BakeState, Instant } from '@flourprint/core/domain';
+import {
+  outcomeChoiceRequired,
+  type BakeCommandPayload,
+  type BakeState,
+  type Instant,
+} from '@flourprint/core/domain';
 import { NoteSheet } from '../blocks/NoteSheet';
+import { useOutcomePicker } from '../blocks/Outcome';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration, formatTime } from '../i18n/time';
 import { bakeAlerts, bakeView, stepProgress } from '../services/bake-view';
@@ -189,6 +195,7 @@ const BakeCard = ({
   onNote: (stepId: string | undefined) => void;
 }) => {
   const { t, stepName, locale } = useMessages();
+  const pickOutcome = useOutcomePicker();
   const { state } = bake;
   const view = bakeView(state, now);
   const focus = view?.focus;
@@ -295,7 +302,15 @@ const BakeCard = ({
           <IonButton
             className="col-span-2 m-0 h-auto min-h-touch min-w-0"
             disabled={busy}
-            onClick={() => onSend({ type: 'FinishBake' })}
+            onClick={() =>
+              // A cooked result with nothing cooked yet is never assumed: the baker picks.
+              state.process !== undefined &&
+              outcomeChoiceRequired(state.process, (id) => state.steps[id]?.endedAt !== undefined)
+                ? pickOutcome(t('bake.finish'), undefined, (outcome) =>
+                    onSend({ type: 'FinishBake', outcome }),
+                  )
+                : onSend({ type: 'FinishBake' })
+            }
           >
             <span className="pointer-events-none whitespace-normal break-words text-center leading-snug">
               {t('bake.finish')}

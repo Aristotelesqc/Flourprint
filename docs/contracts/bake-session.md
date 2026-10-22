@@ -84,13 +84,17 @@ interface PreparationOutcome {
     done (a dough kept, frozen, given or sold; part cooked, part kept);
   - without one and **at least one cooking step completed**, the domain records the intended
     outcome of the session's snapshot with `outcomeSource: 'recipe'`: finishing asks no question;
-  - without one and **no cooking step completed**, nothing says the intended product was
-    reached, so the command is refused with `OutcomeRequired { reason:
+  - without one, **no cooking step completed**, and an intended outcome of `cooked`, nothing
+    says the intended product was reached, so the command is refused with `OutcomeRequired { reason:
 'no_cooking_step_completed' }` and nothing is recorded. The baker chooses an outcome, or
-    uses `AbandonBake` for a failed preparation.
+    uses `AbandonBake` for a failed preparation;
+  - without one, no cooking step completed, and an intended outcome that is not `cooked` (a
+    recipe that is always a frozen dough, or a process with no cooking step and no stated
+    intent): the intended outcome is recorded with `outcomeSource: 'recipe'` as usual.
 
   The interface shows a Finish button with a choice beside it. The intended outcome is the
-  default only once a cooking step is completed; before that no outcome is preselected. Beyond
+  default, except when `OutcomeRequired` would apply: then the Finish control asks for the
+  outcome, with none preselected. Beyond
   this, the domain neither derives the outcome from completed cooking steps nor refuses an
   explicit one against them (a cooking step may have been done outside the process).
 
@@ -99,7 +103,8 @@ interface PreparationOutcome {
   `FinishBake { outcome: { result: 'dough', dough: 'frozen' } }` finishes with that outcome and
   `outcomeSource: 'baker'`. Once `bake` is completed, `FinishBake` alone finishes with `{ result:
 'cooked' }`, `outcomeSource: 'recipe'`, as before. A session whose process has no cooking step
-  at all always needs an explicit outcome to finish.
+  at all and no stated intent intends a dough, so it finishes in one tap with `{ result: 'dough'
+}`; so does a recipe whose `intendedOutcome` is `{ result: 'dough', dough: 'frozen' }`.
 
 - **History.** The rule only restricts new commands. A stored `BakeFinished` (with `outcome`
   and `outcomeSource: 'recipe'` or `'baker'`, or without either, before `0.11.0`) keeps its
