@@ -71,4 +71,6 @@ consultation required tapping Edit in both native suites).
 - The issue goes to `status:verified` with one evidence line per acceptance criterion, or back
   to `status:in-progress` with what remains. Never close it unless every criterion is shown.
 - Mention device checks still owed (migrations, reminders) in the issue, not as done.
+- Update the referenced issues' `status:*` labels per the `flourprint-backlog-steward` rules,
+  so routine label upkeep happens at merge time.
 - Remove your worktree and local branches.

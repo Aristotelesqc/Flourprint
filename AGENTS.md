@@ -83,6 +83,8 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
 - **Agent handoff**: [.agents/skills/flourprint-agent-handoff/SKILL.md](.agents/skills/flourprint-agent-handoff/SKILL.md).
   Use to write a message the owner relays to another agent, or when work crosses an ownership
   boundary.
+- **Backlog steward**: [.agents/skills/flourprint-backlog-steward/SKILL.md](.agents/skills/flourprint-backlog-steward/SKILL.md).
+  Use on the owner's request for a label/stale-work/next-work pass since a cutoff; bounded writes.
 
 These skills also have thin Claude Code routing entrypoints. They reuse current contracts,
 ADRs and tools rather than introducing another source of product decisions or a tracking system.
