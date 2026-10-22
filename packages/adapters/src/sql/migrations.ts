@@ -119,6 +119,21 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    version: 8,
+    sql: `
+      CREATE TABLE reference_versions (
+        recipe_id TEXT NOT NULL,
+        number INTEGER NOT NULL,
+        version INTEGER NOT NULL,
+        name TEXT,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (recipe_id, number),
+        UNIQUE (recipe_id, version),
+        FOREIGN KEY (recipe_id, version) REFERENCES revisions (recipe_id, version)
+      );
+    `,
+  },
 ];
 
 export type OpenError =

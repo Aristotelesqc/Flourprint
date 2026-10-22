@@ -130,6 +130,29 @@ describe('sqlite-node durability', () => {
       error: { code: 'UnsupportedDocumentVersion' },
     });
   });
+  it('appends a Save over a head written with a newer document schema', async () => {
+    const db = await open(':memory:');
+    const repository = new SqlRecipeRepository(db.driver);
+    const input = {
+      recipeId: 'r',
+      name: 'R',
+      expectedHead: 0,
+      formula: {
+        flours: [{ id: 'f', sharePct: 100 }],
+        ingredients: [],
+        components: [],
+        anchor: { kind: 'flourTotal' as const, grams: 500 },
+      },
+      process: { steps: [] },
+      createdAt: '2026-10-07T08:00:00.000Z' as Instant,
+    };
+    await repository.saveRevision(input);
+    db.database.prepare("UPDATE revisions SET schema_version = 99 WHERE recipe_id = 'r'").run();
+    expect(await repository.saveRevision({ ...input, expectedHead: 1 })).toMatchObject({
+      ok: true,
+      value: { version: 2 },
+    });
+  });
   it('upgrades a version 3 database to the flour registry, keeping its drafts', async () => {
     const file = path('upgrade-flours.sqlite');
     const v3 = await open(file, MIGRATIONS.slice(0, 3));
@@ -144,7 +167,7 @@ describe('sqlite-node durability', () => {
     expect(await registry.listFlours()).toEqual([]);
     expect(
       v4.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 7 });
+    ).toEqual({ value: 8 });
     v4.close();
   });
 
@@ -161,7 +184,7 @@ describe('sqlite-node durability', () => {
     expect(await new SqlEquipmentRegistry(v5.driver).listEquipment()).toEqual([]);
     expect(
       v5.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 7 });
+    ).toEqual({ value: 8 });
     v5.close();
   });
 
@@ -192,7 +215,7 @@ describe('sqlite-node durability', () => {
     expect((await repository.listTrash()).map((r) => r.id)).toEqual(['r']);
     expect(
       v6.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 7 });
+    ).toEqual({ value: 8 });
     v6.close();
   });
 
@@ -213,8 +236,27 @@ describe('sqlite-node durability', () => {
     expect(await new SqlIngredientRegistry(v7.driver).listIngredients()).toEqual([]);
     expect(
       v7.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 7 });
+    ).toEqual({ value: 8 });
     v7.close();
+  });
+
+  it('upgrades a version 7 database to recipe history, with no reference version inferred', async () => {
+    const file = path('upgrade-history.sqlite');
+    const v7 = await open(file, MIGRATIONS.slice(0, 7));
+    v7.database
+      .prepare(
+        "INSERT INTO recipes (id, name, head_version, updated_at) VALUES ('r', 'R', 1, '2026-10-07T08:00:00.000Z')",
+      )
+      .run();
+    v7.close();
+
+    const v8 = await open(file);
+    const repository = new SqlRecipeRepository(v8.driver);
+    expect(await repository.listReferenceVersions('r')).toEqual([]);
+    expect(
+      v8.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
+    ).toEqual({ value: 8 });
+    v8.close();
   });
 
   it('refuses ingredient entries written with a newer document schema', async () => {

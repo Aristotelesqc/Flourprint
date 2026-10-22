@@ -1,5 +1,5 @@
 import {
-  DOCUMENT_SCHEMA_VERSION,
+  EXPORT_SCHEMA_VERSION,
   domainError,
   err,
   ok,
@@ -60,7 +60,7 @@ export const exportRecipes = async (
     : [];
   return ok({
     kind: 'flourprint-recipes',
-    schemaVersion: DOCUMENT_SCHEMA_VERSION,
+    schemaVersion: EXPORT_SCHEMA_VERSION,
     exportedAt,
     recipes: recipes.value,
     // A pin on a recipe left in the trash is not shared: the file stays self-consistent.
@@ -79,7 +79,7 @@ export const decodeRecipeFile = (input: unknown): Result<RecipeImportPlan, Recip
     return err(invalid('not a Flourprint recipe file'));
   }
   if (!isCount(input.schemaVersion)) return err(invalid('missing schema version'));
-  if (input.schemaVersion > DOCUMENT_SCHEMA_VERSION) {
+  if (input.schemaVersion > EXPORT_SCHEMA_VERSION) {
     return err(
       domainError(
         'UnsupportedDocumentVersion',
