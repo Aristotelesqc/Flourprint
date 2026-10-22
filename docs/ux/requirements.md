@@ -274,21 +274,21 @@ _Amended: scope narrowed by L105 (style only)._
 
 **Audit acceptance criteria (independent audit of #133, 2026-10-22).** Each item below is an acceptance criterion in the grid, checked at 393 px / 100 % and 360 px / 130 %. Shared-component fixes are made in `packages/ui`, not per screen.
 
-**L115.** Blocker: at 360 px / 130 % the bottom bar must not overflow. `⋯` (Duplicate, Trash, Reset) stays reachable, Save is not clipped, and the tabs do not overflow. Screens: global, recipe, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+**L115.** Blocker: at 360 px / 130 % the bottom bar must not overflow. `⋯` (Duplicate, Trash, Reset) stays reachable, Save is not clipped, and the tabs do not overflow. Screens: global, recipe, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
-**L116.** Step drop: the drop hit-test matches the drawn slot, so releasing in the visibly opened slot above "Pointage" is accepted. Every refusal shows a visible reason (extends L104). Screens: steps, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+**L116.** Step drop: the drop hit-test matches the drawn slot, so releasing in the visibly opened slot above "Pointage" is accepted. Every refusal shows a visible reason (extends L104). Screens: steps, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
-**L117.** A tab-carousel commit animates to its final position (see L106). Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+**L117.** A tab-carousel commit animates to its final position (see L106). Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
-**L118.** Numbers agree everywhere (L18): durations and clock times (no 5 h 12 versus 5 h 11), one rounding of baker's percentages (no 2,9 / 2,87 / 2,866), no "36 %" beside "49,68 %" on one row. Baker's percentage is shown once in edit mode. Screens: recipe, edit, steps, planning. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+**L118.** Numbers agree everywhere (L18): durations and clock times (no 5 h 12 versus 5 h 11), one rounding of baker's percentages (no 2,9 / 2,87 / 2,866), no "36 %" beside "49,68 %" on one row. Baker's percentage is shown once in edit mode. Screens: recipe, edit, steps, planning. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
-**L119.** Steps show relative times until Planning sets a start or ready-by time. No fixture date is presented as a plan. Screens: steps, recipe. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+**L119.** Steps show relative times until Planning sets a start or ready-by time. No fixture date is presented as a plan. Screens: steps, recipe. Source: GPT audit pass 2, code-verified. Kind: CL.
 
 **L120.** Library: search matches what the cards show (including pre-dough names). The "· cooling" label comes from the actual last step. Card durations are rounded per L43. Every card shows "Never prepared" or "Ready" (L44). Screens: library. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
 
-**L121.** An engine refusal shows the engine's own reason (e.g. hydration lock refused because the milk powder's water content is unknown), never a generic or contradictory message. Screens: recipe, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+**L121.** An engine refusal shows the engine's own reason (e.g. hydration lock refused because the milk powder's water content is unknown), never a generic or contradictory message. Screens: recipe, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
-**L122.** Edit-mode stage rows edit the stage quantity, not the recipe total. Screens: edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+**L122.** Edit-mode stage rows edit the stage quantity, not the recipe total. Screens: edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
 **L123.** Shared-component consistency in `packages/ui`:
 
@@ -299,7 +299,7 @@ _Amended: scope narrowed by L105 (style only)._
 - card padding and radius per `DESIGN.md`;
 - step `⋯` menu anchored to its button.
 
-Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
 **L124.** Preparation: "Step done" needs confirmation or undo. "Fin prévue" says whether it is the step's end or the preparation's end. The temperature label distinguishes dough or room from oven. The step count is consistent with the editor (preheat counted or explained). Screens: preparation. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
 
