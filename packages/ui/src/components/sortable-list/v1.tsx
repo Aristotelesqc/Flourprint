@@ -288,11 +288,7 @@ function extractEventPoint(
     }
     if ('clientX' in nativeEvent) {
       const mouseEvent = nativeEvent as MouseEvent | PointerEvent;
-      if (
-        Number.isFinite(mouseEvent.clientX) &&
-        Number.isFinite(mouseEvent.clientY) &&
-        (mouseEvent.clientX !== 0 || mouseEvent.clientY !== 0 || fallback === null)
-      ) {
+      if (Number.isFinite(mouseEvent.clientX) && Number.isFinite(mouseEvent.clientY)) {
         return { x: mouseEvent.clientX, y: mouseEvent.clientY };
       }
     }

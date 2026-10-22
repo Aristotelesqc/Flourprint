@@ -489,6 +489,10 @@ production adoption. The UI never turns a refused downward move into an equivale
   position and neighbours move aside before release. The opaque lifted row follows both pointer
   axes above accordions. Restrained darkening keeps destinations legible; automatic scrolling
   stays within the list. Invalid, outside and cancelled drops restore the original order.
+- **Narrow Compact rows:** keep the title beside its pictogram with enough width for complete
+  words. In narrow containers, metadata and the edge action cluster share the following row.
+  Preserve 48 px controls and the text scale; do not make long labels fit by clipping, breaking
+  words or shrinking the type. Historical Rail/Outline layouts remain separate.
 - **Behaviour source:** `fp.sortable-list@v1` wraps modern dnd-kit 0.5.1 through a manifest-selected
   provider and stable adapter helpers. Its optimistic DOM order is a visual preview, never the
   process authority. The layout engine calls core `moveStep`; a pending chain preview also restores
