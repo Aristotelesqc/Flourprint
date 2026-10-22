@@ -805,7 +805,8 @@ scheduled, not predictions of the biology). A poolish bread with a tangzhong:
    tangzhong `+21:30 → +22:10`; main dough `+22:10 → +27:45`; cooking `+27:15 → +28:25`; total
    28 h 25 min. Recipe and Planning show the same offsets from the same projection.
 3. **An unknown duration.** The fridge phase has no duration: the poolish window and every
-   window after it are `partial` with the blocker as `reasons`, the total is `partial`, and
+   window after it are `partial` with the blocker as `reasons` (`unknown` when no member of the
+   window has a known timing), the total is `partial`, and
    nothing shows a "complete" envelope or a zero.
 4. **Concurrent branch.** Removing the tangzhong from the process does not change the total, and
    adding it back does not lengthen it.
@@ -834,16 +835,15 @@ Result<AnchoredTimeline, ProcessError>` adds the anchor: every instant is `at` p
   is the one window rule. Types: `Timing`, `Window`, `StepTiming`, `GroupTiming`,
   `RelativeTimeline`, `TimelineAnchor`, `AnchoredTimeline`, `AnchoredWindow`.
 - `StepTiming` also carries the projection's `warmup` of a `beforeTarget` step. Its timing is
-  `unknown` when the warm-up is `unknown` (`unknownAfter` = its blockers) or `unavailable` (empty
-  `unknownAfter`); a window then names the step itself in `reasons`. An unavailable preheat
-  therefore leaves its group, and the total, `partial`/`unknown` rather than enveloped.
+  `unknown` when the warm-up is `unknown` (`unknownAfter` = its blockers; its group is then
+  `partial` as for any unknown member). When `unavailable`, its timing is `unknown` with empty
+  `unknownAfter` and it is **not a window member**: it affects only itself, so its group and the
+  total are computed from the other steps (no interval, no envelope, no blocker from it).
 - Groups come in the order: components (first step order), `mainDough`, `cooking`; a step in the
   cooking set (cooking operations, `preheat`, and steps downstream of a cooking step) is in
   `cooking` whatever its subject. Empty groups are omitted.
-- A window with no known member is `unknown`, a window with some known members is `partial`, as
-  the Window rule states; hence in example 3 the groups whose every step is blocked (the main dough
-  and cooking, both downstream of the missing duration) are `unknown` with the same `reasons`, not
-  `partial`.
+- A window with no known member is `unknown`, with some known members `partial` (the Window rule;
+  Example 3 above).
 - Supported: a recipe plan (no facts, no `now`). Unsupported: a relative timeline of a Preparation
   in progress (recorded facts, `overdue`); read `projectProcess` for that. Not provided: open/closed
   group state (interface only).

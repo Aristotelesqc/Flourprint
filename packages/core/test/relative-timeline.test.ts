@@ -195,7 +195,15 @@ describe('relative timeline (process.md)', () => {
     const pre = t.steps.find((s) => s.stepId === 'preheat');
     expect(pre?.warmup).toEqual({ kind: 'unavailable', reason: 'startsAfterTarget' });
     expect(pre?.timing.status).toBe('unknown');
-    expect(group(t, 'cooking')).toEqual({ status: 'partial', reasons: ['preheat'] });
+    // It affects only itself: no member of the cooking group nor of the total (bake 4 h → 4:40;
+    // soak ends at 6 h = 21600 s, the latest end).
+    expect(group(t, 'cooking')).toEqual({
+      status: 'complete',
+      startS: 14400,
+      endS: 16800,
+      elapsedS: 2400,
+    });
+    expect(t.total).toEqual({ status: 'complete', startS: 0, endS: 21600, elapsedS: 21600 });
   });
 
   it('puts steps downstream of a cooking step in the cooking group, once each', () => {

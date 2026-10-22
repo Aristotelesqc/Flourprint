@@ -58,6 +58,9 @@ export interface RelativeTimelineOptions {
 // same result. It is internal and never appears in a returned value.
 const INTERNAL_ORIGIN_MS = 0;
 
+/** An `unavailable` preheat draws no interval and is no window member (it affects only itself). */
+const drawn = (t: StepTiming): boolean => t.warmup?.kind !== 'unavailable';
+
 /** Window of a set of timings: no envelope unless every member is known (never a sum). */
 export const windowOf = (timings: readonly StepTiming[]): Window => {
   const knownTimings = timings.flatMap((t) => (t.timing.status === 'known' ? [t.timing] : []));
@@ -142,9 +145,9 @@ export const relativeTimeline = (
     .map(([id, stepIds]) => ({
       id,
       stepIds,
-      window: windowOf(stepIds.map((s) => timingOf.get(s) as StepTiming)),
+      window: windowOf(stepIds.map((s) => timingOf.get(s) as StepTiming).filter(drawn)),
     }));
-  return ok({ steps, groups, total: windowOf(steps) });
+  return ok({ steps, groups, total: windowOf(steps.filter(drawn)) });
 };
 
 export type TimelineAnchor =
