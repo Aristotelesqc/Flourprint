@@ -1,5 +1,5 @@
 import type { RecipeTemplate } from '../../domain/index.js';
-import { alapStep, H, MIN, preset, step } from './build.js';
+import { alapStep, component, H, MIN, preset, step } from './build.js';
 
 /** Lean breads (drafts.md, Templates): selected published variants; editable plans are not prediction validation. */
 
@@ -42,7 +42,7 @@ export const baguette: RecipeTemplate = {
   },
   process: {
     steps: [
-      step('poolish', 'preferment', [], 14 * H, room),
+      step('poolish', 'preferment', [], 14 * H, { ...room, subject: component('poolish') }),
       step('mix', 'mix', ['poolish'], 4 * MIN, room),
       step('bulk', 'bulk', ['mix'], 90 * MIN, {
         conditions: room.conditions,
@@ -146,7 +146,7 @@ export const ciabatta: RecipeTemplate = {
   },
   process: {
     steps: [
-      step('biga', 'preferment', [], 16 * H, room),
+      step('biga', 'preferment', [], 16 * H, { ...room, subject: component('biga') }),
       step('mix', 'mix', ['biga'], 7.5 * MIN, {
         conditions: { temperatureC: 21, doughTemperatureC: 23.9 },
         technique: {

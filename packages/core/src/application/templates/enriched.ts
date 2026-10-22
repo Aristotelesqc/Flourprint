@@ -1,5 +1,5 @@
 import type { RecipeTemplate } from '../../domain/index.js';
-import { alapStep, H, MIN, preset, step } from './build.js';
+import { alapStep, component, H, MIN, preset, step } from './build.js';
 
 /**
  * Enriched and pan bread templates (drafts.md, Templates).
@@ -248,9 +248,11 @@ export const shokupan: RecipeTemplate = {
     steps: [
       {
         ...alapStep('tangzhong', 'scald', 4 * MIN),
+        subject: component('tangzhong'),
         label: 'Cook 14 g flour, 43 g water and 43 g milk on low heat until thickened',
       },
       step('tangzhong-cool', 'cool', ['tangzhong'], 60 * MIN, {
+        subject: component('tangzhong'),
         label:
           'Cool tangzhong to lukewarm before mixing; 60 min is an editable editorial allowance',
       }),

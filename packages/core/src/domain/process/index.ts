@@ -13,6 +13,8 @@ export {
 export {
   duplicateStep,
   moveStep,
+  joinOf,
+  phasesOf,
   subjectOf,
   type AmbiguousMoveReason,
   type ChangedEdge,
