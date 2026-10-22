@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint UI audit'
+  short_description: 'Independent read-only UI/UX audit with measured evidence'
+  default_prompt: 'Use $flourprint-ui-audit on the target I give you and return the report path and verdict.'
