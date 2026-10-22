@@ -67,7 +67,13 @@ export class MemoryRecipeRepository implements RecipeRepository {
       );
     }
     const head = this.#revisions.get(`${input.recipeId}@${currentHead}`);
-    if (head !== undefined && sameRecipeContent(head, input)) return ok(copy(head));
+    if (head !== undefined && sameRecipeContent(head, input)) {
+      // No-op: no revision, but the rename and the draft's deletion still apply.
+      if (current !== undefined)
+        this.#recipes.set(input.recipeId, { ...current, name: input.name });
+      if (input.fromDraft !== undefined) this.#drafts.delete(input.fromDraft);
+      return ok(copy(head));
+    }
     const revision: Revision = {
       recipeId: input.recipeId,
       version: currentHead + 1,

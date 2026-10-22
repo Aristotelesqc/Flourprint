@@ -395,6 +395,48 @@ export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
     },
   },
   {
+    name: 'history: a name-only Save appends no revision but renames the recipe',
+    run: async (make) => {
+      const repository = await make();
+      await save(repository, 0);
+      const renamed = await repository.saveRevision({
+        recipeId: 'pullman',
+        name: 'Pullman loaf',
+        expectedHead: 1,
+        formula: formula(70),
+        process,
+        createdAt: at,
+      });
+      equal(renamed.ok && renamed.value.version, 1, 'head returned');
+      const recipe = await repository.getRecipe('pullman');
+      equal(recipe?.headVersion, 1, 'no new revision');
+      equal(recipe?.name, 'Pullman loaf', 'name updated');
+    },
+  },
+  {
+    name: 'history: a no-op Save from a draft deletes the draft and appends nothing',
+    run: async (make) => {
+      const repository = await make();
+      await save(repository, 0);
+      await repository.saveDraft({
+        ...draft('d', '2026-10-09T08:00:00.000Z', 70),
+        origin: { kind: 'revision', recipeId: 'pullman', baseVersion: 1 },
+      });
+      const saved = await repository.saveRevision({
+        recipeId: 'pullman',
+        name: 'Pullman',
+        expectedHead: 1,
+        formula: formula(70),
+        process,
+        createdAt: at,
+        fromDraft: 'd',
+      });
+      equal(saved.ok && saved.value.version, 1, 'head returned');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 1, 'no revision');
+      equal(await repository.getDraft('d'), undefined, 'draft removed');
+    },
+  },
+  {
     name: 'history 3: restore appends a copy of an old revision and rewrites nothing',
     run: async (make) => {
       const repository = await make();

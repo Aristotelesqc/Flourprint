@@ -104,7 +104,7 @@ describe('saving a draft', () => {
     expect((await repository.listDrafts()).map((d) => d.id)).toEqual(['d3']);
   });
 
-  it('saving an unchanged draft is a no-op: no revision, the head returned, the draft kept', async () => {
+  it('saving an unchanged draft is a no-op: no revision, the head returned, the draft deleted', async () => {
     const repository = new MemoryRecipeRepository();
     await saveDraft(repository, draft(), { newRecipeId: 'r1', createdAt: at });
     const same = draft({ id: 'd2', origin: { kind: 'revision', recipeId: 'r1', baseVersion: 1 } });
@@ -114,7 +114,7 @@ describe('saving a draft', () => {
       value: { recipeId: 'r1', version: 1 },
     });
     expect((await repository.getRecipe('r1'))?.headVersion).toBe(1);
-    expect((await repository.listDrafts()).map((d) => d.id)).toEqual(['d2']);
+    expect(await repository.listDrafts()).toEqual([]);
   });
 
   it('keeps the edits of a deleted recipe: refused as a version, saved as a new recipe', async () => {

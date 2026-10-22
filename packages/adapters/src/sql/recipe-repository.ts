@@ -288,6 +288,11 @@ export class SqlRecipeRepository implements RecipeRepository {
           [input.recipeId, currentHead],
         );
         if (head && sameRecipeContent(parseRevision(head.document), input)) {
+          // No-op: no revision, but the rename and the draft's deletion still apply.
+          await tx.run('UPDATE recipes SET name = ? WHERE id = ?', [input.name, input.recipeId]);
+          if (input.fromDraft !== undefined) {
+            await tx.run('DELETE FROM drafts WHERE id = ?', [input.fromDraft]);
+          }
           return ok(parseRevision(head.document));
         }
       }

@@ -37,7 +37,7 @@ Rules, all in one transaction (`BEGIN IMMEDIATE`) and all stating `expectedHead`
 
 - **Save** (the former "Save version") appends revision `expectedHead + 1`. If the checked formula
   and process are semantically identical to the head's, nothing is appended, nothing is written and
-  the current head is returned (a no-op; `note` and timestamps do not count). A different current head
+  the current head is returned (a no-op; `note` and timestamps do not count). A no-op Save still applies a changed recipe name (no revision is appended). A no-op Save from a draft still deletes that draft, in the same transaction. A different current head
   returns `HeadConflict { currentHead }`; nothing is written.
 - **Restore** `restoreRevision(recipeId, version, expectedHead)` appends revision `expectedHead + 1`
   whose formula, process and note copy revision `version`, together. Nothing is rewritten or
