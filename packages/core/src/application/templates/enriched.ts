@@ -194,7 +194,7 @@ export const shokupan: RecipeTemplate = {
     'Formula: 314 g bread flour total (14 g tangzhong + 300 g final dough); 43 g pure water (13.694 % of total flour), ' +
     'allocated entirely to tangzhong (scald hydration 307.143 % relative to scald flour); 156 g whole milk (49.682 % of total flour), ' +
     'allocated 43 g to tangzhong (43/314*100 = 13.694 % of total flour) and 113 g to final dough; ' +
-    '14 g dry milk powder (4.459 %, inline ingredient with unknown composition); 50 g granulated sugar (15.924 %); ' +
+    '14 g dry milk powder (4.459 %, inline ingredient; water estimated at 3.5 % [3, 5] from USDA SR Legacy nonfat dry milk, fat and sugar unknown); 50 g granulated sugar (15.924 %); ' +
     '6 g table salt (1.911 %); 57 g unsalted butter (18.153 % ingredient mass); 1 large egg assumed 50 g (15.924 %); ' +
     'instant yeast 1 tbsp normalized via KAB chart to 9 g (2.866 %). Separate milk wash excluded from dough. ' +
     'Process: tangzhong cooked 4 min (editorial midpoint of sourced 3–5 min range) on low heat, then cooled to lukewarm ' +
@@ -216,6 +216,14 @@ export const shokupan: RecipeTemplate = {
         kind: 'other',
         role: 'dough',
         bakerPct: (14 / 314) * 100,
+        // Nonfat dry milk: USDA SR Legacy lists 3.2 to 3.9 g water per 100 g (ndb 01085, 01092) and
+        // the US standard caps moisture at 5 %, hence 3.5 % within [3, 5].
+        water: {
+          status: 'estimated',
+          valuePct: 3.5,
+          rangePct: [3, 5],
+          source: 'USDA SR Legacy (approx.)',
+        },
       },
       preset('sugar', (50 / 314) * 100),
       preset('salt', (6 / 314) * 100),
