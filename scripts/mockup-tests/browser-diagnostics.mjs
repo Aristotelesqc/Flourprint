@@ -20,6 +20,8 @@ export async function installPointerDiagnostics(page) {
           }
           window.__mockupPointerEvidence.push({
             type,
+            timeStamp: event.timeStamp,
+            handledAt: performance.now(),
             x: event.clientX,
             y: event.clientY,
             pointerType: event.pointerType,

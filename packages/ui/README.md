@@ -5,7 +5,8 @@ Screens (the layout engine) render components **by id**. A manifest picks the ve
 id, so switching a version is one line in the manifest. The screens and the library are not
 touched.
 
-The library imports React only. Components receive display-ready props: localized text,
+The library imports React and the pinned `@dnd-kit/react` / `@dnd-kit/dom` behaviour packages
+for sortable lists (ADR 0021, dependency PR #153). Components receive display-ready props: localized text,
 formatted quantities, states and callbacks. The layout engine calls `@flourprint/core` and
 maps its results to props. There is no baking math here.
 

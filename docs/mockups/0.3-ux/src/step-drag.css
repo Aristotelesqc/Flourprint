@@ -187,23 +187,16 @@
 }
 
 /* Real rail connectors across draggable wrappers (L97/L100) */
-.fp-step-draggable:not(:last-child)::before {
+[data-step-design='rail'] .fp-step-draggable:not(:last-child)::before {
   content: '';
   position: absolute;
-  left: 0.9375rem;
-  top: 2.125rem;
-  bottom: -0.25rem;
-  width: 2px;
-  background: var(--color-outline-subtle, rgba(0, 0, 0, 0.12));
-  z-index: 0;
-  pointer-events: none;
-}
-
-[data-step-design='rail'] .fp-step-draggable:not(:last-child)::before {
   left: 1.3125rem;
   top: 2.5rem;
   bottom: -0.375rem;
   width: 2px;
+  background: var(--color-outline-subtle, rgba(0, 0, 0, 0.12));
+  z-index: 0;
+  pointer-events: none;
 }
 
 [data-step-design='outline'] .fp-step-draggable::before {

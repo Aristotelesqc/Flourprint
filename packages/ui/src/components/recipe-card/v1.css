@@ -17,11 +17,6 @@
   border-color: var(--color-outline);
 }
 
-[data-fp-component='fp.recipe-card'][data-fp-version='v1'].recipe-card.featured {
-  border-color: var(--color-outline-subtle);
-  background-color: var(--color-surface);
-}
-
 [data-fp-component='fp.recipe-card'][data-fp-version='v1'].recipe-card.selected-template {
   border-color: var(--color-primary);
   background: var(--color-surface-container-high);
@@ -54,6 +49,10 @@
   cursor: pointer;
 }
 
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-main-action:focus {
+  outline: none;
+}
+
 [data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-main-action:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
@@ -67,7 +66,8 @@
   flex: 1 1 auto;
   min-width: 0;
   white-space: normal;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 [data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-chip {
@@ -86,10 +86,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
+  gap: var(--fp-space-1);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-chip:focus {
+  outline: none;
 }
 
 [data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-shape {
@@ -113,6 +117,19 @@
   transform: scale(0.97);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  [data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-chip:active > span {
+    transform: none;
+  }
+}
+
+[data-motion='reduced']
+  [data-fp-component='fp.recipe-card'][data-fp-version='v1']
+  .active-prep-chip:active
+  > span {
+  transform: none;
+}
+
 [data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-description {
   margin: 0;
   color: var(--color-ink-muted);
@@ -134,8 +151,4 @@
   align-items: center;
   gap: var(--fp-space-1);
   margin-top: var(--fp-space-1);
-}
-
-[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-actions .btn {
-  font-size: var(--type-label);
 }

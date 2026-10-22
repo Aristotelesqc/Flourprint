@@ -55,7 +55,7 @@ import {
 import { componentDisplayName } from './RecipeView';
 import { stepCopy } from './steps-copy';
 import { editingCopyT } from './editing-copy';
-import { DragHandle, useStepDrag } from './StepDrag';
+import { DragHandle, useStepDrag, SortableItem } from './StepDrag';
 import { DependencyEditor } from './DependencyEditor';
 import {
   formatTemperatureForStep,
@@ -805,50 +805,43 @@ export function ProcessView({
   };
 
   // Drag and drop implementation via useStepDrag (L96, L104)
-  const {
-    dragState,
-    floatingCardRef,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handlePointerCancel,
-    handleLostPointerCapture,
-  } = useStepDrag({
-    process,
-    locale,
-    planning,
-    onStartDrag: () => {
-      if (touchRefusal) setTouchRefusal(null);
-      if (!store.state.draft) {
-        store.edit();
-      }
-    },
-    onMove: (stepId: StepId, after: StepId | null) => {
-      const result = moveStep(process, stepId, after);
-      if (!result.ok) {
-        setTouchRefusal({ stepId, error: result.error });
-        setAnnouncement(t(locale, refusalKey(result.error)));
-        focusTargetRef.current = { id: stepId, type: 'drag' };
-        return 'refused';
-      } else if (result.value.kind === 'unchanged') {
-        return 'unchanged';
-      } else if (result.value.kind === 'orderOnly') {
-        if (store.applyProcess(result.value.process)) {
-          if (touchRefusal) setTouchRefusal(null);
+  const { activeStepId, sortableItems, activationMode, handleDragStart, handleDropIntent } =
+    useStepDrag({
+      process,
+      locale,
+      planning,
+      onStartDrag: () => {
+        if (touchRefusal) setTouchRefusal(null);
+        if (!store.state.draft) {
+          store.edit();
+        }
+      },
+      onMove: (stepId: StepId, after: StepId | null) => {
+        const result = moveStep(process, stepId, after);
+        if (!result.ok) {
+          setTouchRefusal({ stepId, error: result.error });
+          setAnnouncement(t(locale, refusalKey(result.error)));
           focusTargetRef.current = { id: stepId, type: 'drag' };
-          setAnnouncement(stepCopy(locale, 'orderChanged'));
-          return 'accepted';
+          return 'refused';
+        } else if (result.value.kind === 'unchanged') {
+          return 'unchanged';
+        } else if (result.value.kind === 'orderOnly') {
+          if (store.applyProcess(result.value.process)) {
+            if (touchRefusal) setTouchRefusal(null);
+            focusTargetRef.current = { id: stepId, type: 'drag' };
+            setAnnouncement(stepCopy(locale, 'orderChanged'));
+            return 'accepted';
+          }
+          return 'refused';
+        } else if (result.value.kind === 'chain') {
+          if (touchRefusal) setTouchRefusal(null);
+          setProposal({ source: process, result: result.value, stepId });
+          return 'pending';
         }
         return 'refused';
-      } else if (result.value.kind === 'chain') {
-        if (touchRefusal) setTouchRefusal(null);
-        setProposal({ source: process, result: result.value, stepId });
-        return 'pending';
-      }
-      return 'refused';
-    },
-    onAnnounce: (msg: string) => setAnnouncement(msg),
-  });
+      },
+      onAnnounce: (msg: string) => setAnnouncement(msg),
+    });
 
   const previewOf = (candidate: Process) => {
     const result = project(
@@ -897,26 +890,17 @@ export function ProcessView({
   const renderStep = (step: ProcessStep, index: number) => {
     const timing = projection.ok ? projection.value.steps[step.id] : undefined;
     const previous = process.steps[index - 1]?.id;
-    const isDragging = dragState.activeStepId === step.id;
+    const isDragging = activeStepId === step.id;
     const isPreheat = step.operation === 'preheat';
     const displayNumber = isPreheat ? undefined : stepNumbers.get(step.id);
-    const showPlaceholderAbove =
-      dragState.isDragging &&
-      dragState.targetAfterId !== undefined &&
-      ((index === 0 && dragState.targetAfterId === null) ||
-        (index > 0 && dragState.targetAfterId === process.steps[index - 1]?.id));
-    const showPlaceholderBelow =
-      dragState.isDragging &&
-      dragState.targetAfterId === step.id &&
-      index === process.steps.length - 1;
 
     return (
-      <div
+      <SortableItem
         key={step.id}
-        data-step-id={step.id}
-        className={`fp-step-draggable ${isDragging ? 'is-origin-placeholder' : ''} ${isPreheat ? 'fp-step-branch-preheat' : ''}`}
+        id={step.id}
+        index={index}
+        className={`fp-step-draggable${isPreheat ? ' fp-step-branch-preheat' : ''}`}
       >
-        {showPlaceholderAbove && <div className="fp-drag-insertion-marker" aria-hidden="true" />}
         <StepRow
           number={displayNumber}
           icon={operationIcon(step.operation)}
@@ -944,14 +928,6 @@ export function ProcessView({
                   locale={locale}
                   title={titleOf(step, locale)}
                   isDragging={isDragging}
-                  onPointerDown={(e) => {
-                    if (touchRefusal) setTouchRefusal(null);
-                    handlePointerDown(step.id, e);
-                  }}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerCancel={handlePointerCancel}
-                  onLostPointerCapture={handleLostPointerCapture}
                   onKeyboardMove={(idx, delta) => propose(idx, delta)}
                 />
                 {store.state.draft && (
@@ -1055,7 +1031,71 @@ export function ProcessView({
               </small>
             ))}
         </StepRow>
-        {showPlaceholderBelow && <div className="fp-drag-insertion-marker" aria-hidden="true" />}
+      </SortableItem>
+    );
+  };
+
+  const renderFloatingOverlay = (draggedId: string) => {
+    const draggedStep = process.steps.find((s) => s.id === draggedId);
+    if (!draggedStep) return null;
+    const isPreheat = draggedStep.operation === 'preheat';
+    const displayNumber = isPreheat ? undefined : stepNumbers.get(draggedStep.id);
+    const timing = projection.ok ? projection.value.steps[draggedStep.id] : undefined;
+    const draggedIdx = process.steps.indexOf(draggedStep);
+    const prevStepId = draggedIdx > 0 ? process.steps[draggedIdx - 1]?.id : undefined;
+
+    return (
+      <div className="fp-drag-floating-card" data-step-design={stepDesign} aria-hidden="true">
+        <StepRow
+          number={displayNumber}
+          icon={operationIcon(draggedStep.operation)}
+          title={titleOf(draggedStep, locale)}
+          details={[
+            ...(timing ? [`${time(locale, timing.start)} → ${time(locale, timing.end)}`] : []),
+            ...(!planning && view === 'timeline' && timing?.start && starts.length
+              ? [`+${duration(locale, (Date.parse(timing.start) - Math.min(...starts)) / 1000)}`]
+              : []),
+            ...stepDetails(draggedStep, locale),
+          ]}
+          state="planned"
+          actions={
+            <div className="step-cluster" aria-hidden="true">
+              <div className="fp-drag-handle is-grabbing" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  aria-hidden="true"
+                  focusable="false"
+                  style={{ display: 'block', pointerEvents: 'none' }}
+                >
+                  <circle cx="5" cy="3" r="1.5" />
+                  <circle cx="11" cy="3" r="1.5" />
+                  <circle cx="5" cy="8" r="1.5" />
+                  <circle cx="11" cy="8" r="1.5" />
+                  <circle cx="5" cy="13" r="1.5" />
+                  <circle cx="11" cy="13" r="1.5" />
+                </svg>
+              </div>
+            </div>
+          }
+        >
+          {draggedStep.dependsOn.some((id) => id !== prevStepId) && (
+            <small>
+              {t(locale, 'dependencies')} :{' '}
+              {draggedStep.dependsOn
+                .map((id) => titleOf(process.steps.find((s) => s.id === id) ?? draggedStep, locale))
+                .join(', ')}
+            </small>
+          )}
+          {view === 'grouped' &&
+            draggedStep.incorporations?.map((item, i) => (
+              <small key={i}>
+                {t(locale, 'incorporate')} : {item.item === 'water' ? t(locale, 'water') : item.id}
+              </small>
+            ))}
+        </StepRow>
       </div>
     );
   };
@@ -1161,87 +1201,97 @@ export function ProcessView({
         />
       </div>
 
-      {view === 'timeline' ? (
-        <div className="timeline-lanes stack">
-          {full && (
-            <Ui
-              component="fp.timeline"
-              startLabel={time(locale, new Date(Math.min(...starts)).toISOString())}
-              endLabel={time(locale, new Date(Math.max(...ends)).toISOString())}
-              lanes={[
-                ...store.content.formula.components.map((c) => ({
-                  id: c.id,
-                  label: componentDisplayName(
-                    locale,
-                    store.content.formula,
-                    c,
-                    store.content.names,
-                  ),
-                  steps: process.steps.filter((s) => getStepComponentId(s) === c.id),
-                })),
-                {
-                  id: 'preheat',
-                  label: operationName(locale, 'preheat'),
-                  steps: process.steps.filter((s) => s.operation === 'preheat'),
-                },
-                {
-                  id: 'dough',
-                  label: t(locale, 'dough'),
-                  steps: process.steps.filter(
-                    (s) => s.operation !== 'preheat' && getStepComponentId(s) === null,
-                  ),
-                },
-              ].map((lane) => ({
-                id: lane.id,
-                label: lane.label,
-                events: lane.steps.flatMap((step) => {
-                  const timing = projection.ok ? projection.value.steps[step.id] : undefined;
-                  if (!timing?.start || !timing.end) return [];
-                  const span = Math.max(1, Math.max(...ends) - Math.min(...starts));
-                  return [
-                    {
-                      id: step.id,
-                      label: titleOf(step, locale),
-                      range: `${time(locale, timing.start)} – ${time(locale, timing.end)}`,
-                      startPct: ((Date.parse(timing.start) - Math.min(...starts)) / span) * 100,
-                      endPct: ((Date.parse(timing.end) - Math.min(...starts)) / span) * 100,
-                    },
-                  ];
-                }),
-              }))}
-            />
-          )}
-          {process.steps.map(renderStep)}
-        </div>
-      ) : (
-        <>
-          {store.content.formula.components.map((component) => (
+      <Ui
+        component="fp.sortable-list"
+        items={sortableItems}
+        activationMode={activationMode}
+        disabled={planning}
+        onDragStart={handleDragStart}
+        onDropIntent={handleDropIntent}
+        renderOverlay={renderFloatingOverlay}
+      >
+        {view === 'timeline' ? (
+          <div className="timeline-lanes stack">
+            {full && (
+              <Ui
+                component="fp.timeline"
+                startLabel={time(locale, new Date(Math.min(...starts)).toISOString())}
+                endLabel={time(locale, new Date(Math.max(...ends)).toISOString())}
+                lanes={[
+                  ...store.content.formula.components.map((c) => ({
+                    id: c.id,
+                    label: componentDisplayName(
+                      locale,
+                      store.content.formula,
+                      c,
+                      store.content.names,
+                    ),
+                    steps: process.steps.filter((s) => getStepComponentId(s) === c.id),
+                  })),
+                  {
+                    id: 'preheat',
+                    label: operationName(locale, 'preheat'),
+                    steps: process.steps.filter((s) => s.operation === 'preheat'),
+                  },
+                  {
+                    id: 'dough',
+                    label: t(locale, 'dough'),
+                    steps: process.steps.filter(
+                      (s) => s.operation !== 'preheat' && getStepComponentId(s) === null,
+                    ),
+                  },
+                ].map((lane) => ({
+                  id: lane.id,
+                  label: lane.label,
+                  events: lane.steps.flatMap((step) => {
+                    const timing = projection.ok ? projection.value.steps[step.id] : undefined;
+                    if (!timing?.start || !timing.end) return [];
+                    const span = Math.max(1, Math.max(...ends) - Math.min(...starts));
+                    return [
+                      {
+                        id: step.id,
+                        label: titleOf(step, locale),
+                        range: `${time(locale, timing.start)} – ${time(locale, timing.end)}`,
+                        startPct: ((Date.parse(timing.start) - Math.min(...starts)) / span) * 100,
+                        endPct: ((Date.parse(timing.end) - Math.min(...starts)) / span) * 100,
+                      },
+                    ];
+                  }),
+                }))}
+              />
+            )}
+            {process.steps.map(renderStep)}
+          </div>
+        ) : (
+          <>
+            {store.content.formula.components.map((component) => (
+              <Disclosure
+                key={component.id}
+                title={`${store.content.formula.components.indexOf(component) + 1}. ${componentDisplayName(locale, store.content.formula, component, store.content.names)}`}
+                subtitle={windowLabel(
+                  process.steps.filter((s) => getStepComponentId(s) === component.id),
+                )}
+                open={!collapsedGroups[component.id]}
+                onOpenChange={(open) => onToggleGroup?.(component.id, open)}
+              >
+                {process.steps
+                  .filter((step) => getStepComponentId(step) === component.id)
+                  .map((step) => renderStep(step, process.steps.indexOf(step)))}
+              </Disclosure>
+            ))}
             <Disclosure
-              key={component.id}
-              title={`${store.content.formula.components.indexOf(component) + 1}. ${componentDisplayName(locale, store.content.formula, component, store.content.names)}`}
-              subtitle={windowLabel(
-                process.steps.filter((s) => getStepComponentId(s) === component.id),
-              )}
-              open={!collapsedGroups[component.id]}
-              onOpenChange={(open) => onToggleGroup?.(component.id, open)}
+              title={`${store.content.formula.components.length + 1}. ${t(locale, 'dough')}`}
+              subtitle={windowLabel(process.steps.filter((s) => getStepComponentId(s) === null))}
+              open={!collapsedGroups['dough']}
+              onOpenChange={(open) => onToggleGroup?.('dough', open)}
             >
               {process.steps
-                .filter((step) => getStepComponentId(step) === component.id)
+                .filter((step) => getStepComponentId(step) === null)
                 .map((step) => renderStep(step, process.steps.indexOf(step)))}
             </Disclosure>
-          ))}
-          <Disclosure
-            title={`${store.content.formula.components.length + 1}. ${t(locale, 'dough')}`}
-            subtitle={windowLabel(process.steps.filter((s) => getStepComponentId(s) === null))}
-            open={!collapsedGroups['dough']}
-            onOpenChange={(open) => onToggleGroup?.('dough', open)}
-          >
-            {process.steps
-              .filter((step) => getStepComponentId(step) === null)
-              .map((step) => renderStep(step, process.steps.indexOf(step)))}
-          </Disclosure>
-        </>
-      )}
+          </>
+        )}
+      </Ui>
 
       {!planning && store.state.draft && (
         <Button
@@ -1481,94 +1531,6 @@ export function ProcessView({
           </div>
         </CompactDialog>
       )}
-
-      {typeof document !== 'undefined' &&
-        dragState.isDragging &&
-        dragState.floatingPosition &&
-        (() => {
-          const draggedStep = process.steps.find((s) => s.id === dragState.activeStepId);
-          if (!draggedStep) return null;
-          const isPreheat = draggedStep.operation === 'preheat';
-          const displayNumber = isPreheat ? undefined : stepNumbers.get(draggedStep.id);
-          const timing = projection.ok ? projection.value.steps[draggedStep.id] : undefined;
-          const draggedIdx = process.steps.indexOf(draggedStep);
-          const prevStepId = draggedIdx > 0 ? process.steps[draggedIdx - 1]?.id : undefined;
-
-          return createPortal(
-            <div className="fp-drag-portal-layer" data-step-design={stepDesign} aria-hidden="true">
-              <div className="fp-drag-scrim" />
-              <div
-                ref={floatingCardRef}
-                className="fp-drag-floating-card"
-                style={{
-                  left: `${dragState.floatingPosition.x}px`,
-                  top: `${dragState.floatingPosition.y}px`,
-                  width: `${dragState.floatingPosition.width}px`,
-                  height: `${dragState.floatingPosition.height}px`,
-                }}
-              >
-                <StepRow
-                  number={displayNumber}
-                  icon={operationIcon(draggedStep.operation)}
-                  title={titleOf(draggedStep, locale)}
-                  details={[
-                    ...(timing
-                      ? [`${time(locale, timing.start)} → ${time(locale, timing.end)}`]
-                      : []),
-                    ...(!planning && view === 'timeline' && timing?.start && starts.length
-                      ? [
-                          `+${duration(locale, (Date.parse(timing.start) - Math.min(...starts)) / 1000)}`,
-                        ]
-                      : []),
-                    ...stepDetails(draggedStep, locale),
-                  ]}
-                  state="planned"
-                  actions={
-                    <div className="step-cluster" aria-hidden="true">
-                      <div className="fp-drag-handle is-grabbing" aria-hidden="true">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="currentColor"
-                          aria-hidden="true"
-                          focusable="false"
-                          style={{ display: 'block', pointerEvents: 'none' }}
-                        >
-                          <circle cx="5" cy="3" r="1.5" />
-                          <circle cx="11" cy="3" r="1.5" />
-                          <circle cx="5" cy="8" r="1.5" />
-                          <circle cx="11" cy="8" r="1.5" />
-                          <circle cx="5" cy="13" r="1.5" />
-                          <circle cx="11" cy="13" r="1.5" />
-                        </svg>
-                      </div>
-                    </div>
-                  }
-                >
-                  {draggedStep.dependsOn.some((id) => id !== prevStepId) && (
-                    <small>
-                      {t(locale, 'dependencies')} :{' '}
-                      {draggedStep.dependsOn
-                        .map((id) =>
-                          titleOf(process.steps.find((s) => s.id === id) ?? draggedStep, locale),
-                        )
-                        .join(', ')}
-                    </small>
-                  )}
-                  {view === 'grouped' &&
-                    draggedStep.incorporations?.map((item, i) => (
-                      <small key={i}>
-                        {t(locale, 'incorporate')} :{' '}
-                        {item.item === 'water' ? t(locale, 'water') : item.id}
-                      </small>
-                    ))}
-                </StepRow>
-              </div>
-            </div>,
-            document.body,
-          );
-        })()}
 
       {typeof document !== 'undefined' &&
         touchRefusal &&

@@ -42,7 +42,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
       style={motionStyle}
       data-fp-component="fp.recipe-card"
       data-fp-version="v1"
-      className={`recipe-card ${featured ? 'featured' : ''} ${selected ? 'selected-template' : ''}`}
+      className={`recipe-card ${selected ? 'selected-template' : ''}`}
       onClick={handleCardClick}
     >
       <div className="recipe-card-header row">

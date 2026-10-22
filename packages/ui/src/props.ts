@@ -292,3 +292,23 @@ export interface SectionCarouselProps {
   readonly targetTabsElement?: HTMLElement | null;
   readonly children: React.ReactNode;
 }
+
+export type SortableDropOutcome = 'accepted' | 'refused' | 'pending' | 'unchanged' | undefined;
+
+export interface SortableDropIntent {
+  readonly id: string;
+  readonly afterId: string | null;
+  readonly targetIndex: number;
+  readonly initialIndex: number;
+}
+
+export interface SortableListProps {
+  readonly items?: readonly { id: string; group?: string }[];
+  readonly activationMode?: 'move' | 'hold';
+  readonly disabled?: boolean;
+  readonly onDragStart?: (id: string) => void;
+  readonly onDropIntent?: (intent: SortableDropIntent | null) => SortableDropOutcome;
+  readonly renderOverlay?: (id: string) => React.ReactNode;
+  readonly className?: string;
+  readonly children?: React.ReactNode;
+}

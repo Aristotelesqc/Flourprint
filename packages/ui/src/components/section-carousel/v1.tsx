@@ -4,6 +4,11 @@ import type { SectionCarouselProps, TabGestureProgress } from '../../props.ts';
 import { library } from '../../index.ts';
 import { playTabCarouselSlide, useTabCarouselMotion } from '../../motions/tab-carousel';
 
+const VELOCITY_WINDOW_MS = 120;
+const MAX_HOLD_BEFORE_RELEASE_MS = 120;
+const getEventTime = (event: { timeStamp: number }): number =>
+  event.timeStamp > 0 ? event.timeStamp : performance.now();
+
 export const SectionCarousel: React.FC<SectionCarouselProps> = ({
   sections,
   activeSection: controlledSection,
@@ -53,6 +58,7 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     lastX: number;
     lastTime: number;
     velocityX: number;
+    samples: Array<{ x: number; t: number }>;
     pointerId: number | null;
     isLockedHorizontal: boolean;
     isCancelled: boolean;
@@ -65,6 +71,7 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     lastX: 0,
     lastTime: 0,
     velocityX: 0,
+    samples: [],
     pointerId: null,
     isLockedHorizontal: false,
     isCancelled: false,
@@ -172,12 +179,14 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
       el = el.parentElement;
     }
 
+    const now = getEventTime(event);
     gestureRef.current = {
       startX: event.clientX,
       startY: event.clientY,
       lastX: event.clientX,
-      lastTime: performance.now(),
+      lastTime: now,
       velocityX: 0,
+      samples: [{ x: event.clientX, t: now }],
       pointerId: event.pointerId,
       isLockedHorizontal: false,
       isCancelled: false,
@@ -193,11 +202,17 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
 
     const dx = event.clientX - g.startX;
     const dy = event.clientY - g.startY;
+    const now = getEventTime(event);
 
     // L101: A swipe starts only on a clearly horizontal gesture; vertical scrolling wins otherwise
     if (!g.isLockedHorizontal) {
       const distance = Math.hypot(dx, dy);
-      if (distance < 8) return; // gesture slop
+      if (distance < 8) {
+        g.samples.push({ x: event.clientX, t: now });
+        g.lastX = event.clientX;
+        g.lastTime = now;
+        return; // gesture slop
+      }
 
       if (Math.abs(dy) > Math.abs(dx)) {
         g.isCancelled = true;
@@ -213,10 +228,15 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
       }
     }
 
-    const now = performance.now();
-    const dt = now - g.lastTime;
-    if (dt > 0) {
-      g.velocityX = (event.clientX - g.lastX) / dt;
+    g.samples.push({ x: event.clientX, t: now });
+    const cutoff = now - VELOCITY_WINDOW_MS;
+    while (g.samples.length > 2 && (g.samples[0]?.t ?? now) < cutoff) {
+      g.samples.shift();
+    }
+    const firstSample = g.samples.find((s) => s.t >= cutoff) ?? { x: event.clientX, t: now };
+    const windowDt = now - firstSample.t;
+    if (windowDt > 0) {
+      g.velocityX = (event.clientX - firstSample.x) / windowDt;
     }
     g.lastX = event.clientX;
     g.lastTime = now;
@@ -287,7 +307,8 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     }
 
     const dx = g.currentDx;
-    const velocity = g.velocityX;
+    const releasePauseMs = getEventTime(event) - g.lastTime;
+    const velocity = releasePauseMs > MAX_HOLD_BEFORE_RELEASE_MS ? 0 : g.velocityX;
     const containerWidth = container.clientWidth || 393;
     const dragThreshold = containerWidth / 2;
     const flickVelocityThreshold = 0.3;

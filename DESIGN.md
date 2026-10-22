@@ -484,8 +484,19 @@ production adoption. The UI never turns a refused downward move into an equivale
 - **Drop semantics:** one valid drop constitutes one undoable draft edit. Save is still required before the moved order counts as a saved revision or a baseline.
 - **Cancellations & invalid drops:** a rejected, cancelled, or outside drop returns to the origin, restores pre-gesture order and dependencies, and marks nothing dirty. If a drag opened editing but resulted in no change, the draft is clean and may be discarded silently on exit.
 - **Back navigation:** pressing Back during an active drag gesture cancels the drag operation only. A subsequent Back triggers the normal unsaved changes leave guard.
-- **Visuals & feedback:** during drag, the lifted step row is rendered as an opaque surface above accordions following finger coordinates (`fingerX`, `fingerY`). An explicit placeholder indicates the insertion gap with autoscroll near list edges. Surrounding steps use gentle dimming for target visibility without shifting unrelated panels.
-- **Open choices (O-items):** compact/rail/outline treatments, drag threshold distances, and hold timings remain open proposals rather than rigid universal defaults (no mandatory 5px / 350ms Material restriction).
+- **Visuals & feedback:** the owner selected Compact on 2026-10-21. Resting rows read as separate
+  detachable tonal shapes. During dragging, one full-height placeholder travels to the proposed
+  position and neighbours move aside before release. The opaque lifted row follows both pointer
+  axes above accordions. Restrained darkening keeps destinations legible; automatic scrolling
+  stays within the list. Invalid, outside and cancelled drops restore the original order.
+- **Behaviour source:** `fp.sortable-list@v1` wraps modern dnd-kit 0.5.1 through a manifest-selected
+  provider and stable adapter helpers. Its optimistic DOM order is a visual preview, never the
+  process authority. The layout engine calls core `moveStep`; a pending chain preview also restores
+  the provisional order until Apply. The dependency decision and deliberate upgrade policy are
+  recorded in `docs/architecture/2026-10-21-step-drag-behaviour.md` and PR #153.
+- **Open choices (O-items):** movement versus hold activation and cross-group/reorder-mode choices
+  remain open. The 5px / 350ms comparison values are prototype options, not universal Material rules.
+  Rail and Outline are historical alternatives; they are no longer active presentation choices.
 
 The owner rejected the first restoration proposal as still regressive. Passing controls,
 component coverage and motion evidence do not establish visual fidelity. In particular,

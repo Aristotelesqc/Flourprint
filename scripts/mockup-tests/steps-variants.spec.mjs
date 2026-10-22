@@ -92,7 +92,10 @@ test.describe('Gemini step variants', () => {
       });
       await expect(row(page, 'divide')).toHaveClass(/is-origin-placeholder/);
       await expect(page.locator('.fp-drag-floating-card:visible')).toHaveCount(1);
-      await expect(page.locator('.fp-drag-insertion-marker:visible')).toHaveCount(1);
+      // The owner replaced the thin marker with one full-height travelling placeholder.
+      const placeholder = page.locator('.is-origin-placeholder:visible');
+      await expect(placeholder).toHaveCount(1);
+      expect((await placeholder.boundingBox()).height).toBeGreaterThanOrEqual(from.height);
       await shot(page, `touch-lift-${design}`);
       await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
       const dialog = page.getByRole('dialog');
@@ -111,7 +114,7 @@ test.describe('Gemini step variants', () => {
       ).toHaveCount(1);
       await expect(page.getByTestId('drag-handle-divide').filter({ visible: true })).toBeFocused();
       await expect(page.locator('.fp-drag-floating-card:visible')).toHaveCount(0);
-      await expect(page.locator('.fp-drag-insertion-marker:visible')).toHaveCount(0);
+      await expect(page.locator('.is-origin-placeholder:visible')).toHaveCount(0);
       await session.detach();
     });
 

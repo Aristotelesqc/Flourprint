@@ -145,18 +145,37 @@ test.describe('L104 direct drag enters editing', () => {
       await gesture.move(20, 12);
       await gesture.end();
       if (motion === 'standard') {
-        const animation = await floating(page).evaluate((element) => {
-          const running = element.getAnimations().find((item) => item.playState === 'running');
-          return running
-            ? {
-                duration: running.effect.getTiming().duration,
-                frames: running.effect.getKeyframes(),
-              }
-            : null;
-        });
-        expect(animation).toBeTruthy();
+        // dnd-kit animates its geometry-owning overlay, rather than the inner painted card.
+        const readAnimation = () =>
+          floating(page).evaluate((element) => {
+            const target = element.closest('[data-dnd-overlay]') ?? element;
+            const running = target.getAnimations().find((item) => item.playState === 'running');
+            return running
+              ? {
+                  duration: running.effect.getTiming().duration,
+                  frames: running.effect.getKeyframes(),
+                }
+              : null;
+          });
+        await expect.poll(readAnimation, { intervals: [10, 20, 30], timeout: 1000 }).not.toBeNull();
+        const animation = await readAnimation();
         expect(animation.duration).toBeGreaterThan(0);
-        expect(animation.frames[0].transform).not.toBe(animation.frames.at(-1).transform);
+        const position = (frame) => frame.translate ?? frame.transform;
+        expect(position(animation.frames[0])).toBeTruthy();
+        expect(position(animation.frames[0])).not.toBe(position(animation.frames.at(-1)));
+      } else {
+        expect(
+          await page.evaluate(
+            () =>
+              document.getAnimations().filter((animation) => {
+                const target = animation.effect?.target;
+                return (
+                  target instanceof Element &&
+                  (target.matches('[data-dnd-overlay]') || target.closest('[data-sortable-id]'))
+                );
+              }).length,
+          ),
+        ).toBe(0);
       }
       await expect(floating(page)).toHaveCount(0);
       await expect(page.getByRole('button', { name: 'Undo change', exact: true })).toBeDisabled();

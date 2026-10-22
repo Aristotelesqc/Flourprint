@@ -21,6 +21,7 @@ import StatusPanel from '../../../../packages/ui/src/components/warning-banner/v
 import PreparationTimer from '../../../../packages/ui/src/components/prep-hero/v1';
 import ContextTiles from '../../../../packages/ui/src/components/context-tiles/v1';
 import SectionCarousel from '../../../../packages/ui/src/components/section-carousel/v1';
+import SortableList from '../../../../packages/ui/src/components/sortable-list/v1';
 export const manifest = library.manifest({
   'fp.timeline': Timeline,
   'fp.metric-pill': MetricPill,
@@ -44,4 +45,5 @@ export const manifest = library.manifest({
   'fp.prep-hero': PreparationTimer,
   'fp.context-tiles': ContextTiles,
   'fp.section-carousel': SectionCarousel,
+  'fp.sortable-list': SortableList,
 });

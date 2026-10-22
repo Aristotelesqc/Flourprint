@@ -26,16 +26,19 @@
       <section id="drag-save-history">
         <h2 class="section-title">Drag &amp; Save History Review (#133)</h2>
         <p class="section-caption">
-          Integrated review for issue #133 using <code>packages/ui</code> components (not
-          <code>apps/mobile</code> or real persistent native history). Test drag lift directly from
-          reading mode into editing, gesture cancellation via browser Back, and bounded recipe
-          history (saved revisions vs. reference milestones).
+          Integrated review for issue #133 using <code>packages/ui</code> components (prototype
+          only; not <code>apps/mobile</code> or production persisted session certification). Review
+          objectives until Codex acceptance: verify real provisional neighbour reflow, single moving
+          gap, invalid-drop return to origin, and shared draft state across navigation.
         </p>
         <div class="choice-callout">
-          <strong>Review Focus:</strong> Test read &rarr; drag &rarr; edit transition, Back
-          cancellation of active drag gestures, and promote/restore operations in History. Quick
-          links: <a href="#step-row-options">Step Row Options</a> &middot;
-          <a href="#companion-screenshots">Companion Screenshots</a> &middot;
+          <strong>Review Objectives (Pending Codex Acceptance):</strong> Compact row design selected
+          2026-10-21; drag activation threshold (move vs. hold) remains open for owner evaluation.
+          Verify real provisional neighbour reflow, single moving gap during active drag, clean
+          invalid-drop return, and shared draft state before persistence. Quick links:
+          <a href="#matched-comparisons">Matched Comparisons</a> &middot;
+          <a href="#step-row-options">Activation Options</a> &middot;
+          <a href="#navigation-a-screens">Navigation A Screens</a> &middot;
           <a href="#motion-evidence">Motion Evidence</a>.
         </div>
 
@@ -46,40 +49,42 @@
           >
             <div class="card-heading">
               <span class="card-title">Steps (Reading) · Compact</span>
-              <span class="badge badge-accent">Lift to Edit</span>
+              <span class="badge badge-accent">Selected Row</span>
             </div>
             <p class="card-desc">
-              Reading mode: lift handle to enter edit mode; Back cancels active drag.
+              Reading mode with selected Compact row: lift handle to enter edit mode; Back cancels
+              active drag.
             </p>
             <span class="card-query">section=steps &amp; stepDesign=compact</span>
           </a>
 
           <a
             class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&section=steps&stepDesign=rail&nav=A&lang=fr&theme=dark&width=393&scale=100"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=move"
           >
             <div class="card-heading">
-              <span class="card-title">Steps (Reading) · Rail</span>
-              <span class="badge badge-accent">Lift to Edit</span>
+              <span class="card-title">Compact Row · Move (5px)</span>
+              <span class="badge badge-accent">5px Motion</span>
             </div>
             <p class="card-desc">
-              Timeline rail in reading mode; test drag gesture entry and popstate cancellation.
+              Edit mode with Compact row and immediate 5px motion drag activation threshold.
             </p>
-            <span class="card-query">section=steps &amp; stepDesign=rail</span>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=move</span>
           </a>
 
           <a
             class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&section=steps&stepDesign=outline&nav=A&lang=fr&theme=dark&width=393&scale=100"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
           >
             <div class="card-heading">
-              <span class="card-title">Steps (Reading) · Outline</span>
-              <span class="badge badge-accent">Lift to Edit</span>
+              <span class="card-title">Compact Row · Hold (350ms)</span>
+              <span class="badge badge-accent">Hold 350ms</span>
             </div>
             <p class="card-desc">
-              Outlined cards in reading mode; test lift threshold and draft protection.
+              Edit mode with Compact row and 350ms press-and-hold activation for mobile scroll
+              safety.
             </p>
-            <span class="card-query">section=steps &amp; stepDesign=outline</span>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=hold</span>
           </a>
 
           <a
@@ -98,18 +103,34 @@
         </div>
       </section>
 
+      <!-- SECTION 0B: Matched Before/After Comparisons (#133) -->
+      <section id="matched-comparisons">
+        <h2 class="section-title">Matched Before / After Comparisons</h2>
+        <p class="section-caption">
+          Controlled side-by-side comparisons against baseline revision <code>68faf79</code> using
+          identical fixtures, locales, themes, widths, and text scales from
+          <code>./review-manifest.json</code>. Static Round 2 historical samples remain archived and
+          are not treated as controlled same-data comparisons.
+        </p>
+        <div id="comparisons-container">
+          <div class="pending-box">
+            Loading matched comparisons from <code>./review-manifest.json</code>...
+          </div>
+        </div>
+      </section>
+
       <!-- SECTION 1: Step Row & Activation Options (O3 OPEN) -->
       <section id="step-row-options">
-        <h2 class="section-title">Step Row &amp; Drag Activation Options</h2>
+        <h2 class="section-title">Drag Activation Options (Decision O3)</h2>
         <p class="section-caption">
-          First-priority review item for open decision O3. Links open the live interactive editor
-          with inspector available (no capture mode).
+          Compact row design selected 2026-10-21. Open decision O3: compare move (5px) vs. hold
+          (350ms) activation thresholds. Links open the live interactive editor with inspector
+          available (no capture mode). Prototype only; no persisted session certification.
         </p>
         <div class="choice-callout">
-          <strong>Owner Choice Required:</strong> Please test each of the 3 step row designs
-          (<code>compact</code>, <code>rail</code>, <code>outline</code>) paired with both
-          activation methods (<code>move</code> for 5px motion vs <code>hold</code> for 350ms
-          longpress).
+          <strong>Owner Choice Required:</strong> Test activation threshold options on the selected
+          Compact row design: <code>move</code> (5px motion threshold) versus <code>hold</code>
+          (350ms longpress threshold). Rail and outline variants retired from active consideration.
         </div>
 
         <div class="links-grid">
@@ -138,56 +159,6 @@
             </p>
             <span class="card-query">stepDesign=compact &amp; dragActivation=hold</span>
           </a>
-
-          <a
-            class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=rail&dragActivation=move"
-          >
-            <div class="card-heading">
-              <span class="card-title">Rail Row · Move</span>
-              <span class="badge badge-accent">5px Motion</span>
-            </div>
-            <p class="card-desc">Vertical timeline rail indicator with 5px drag activation.</p>
-            <span class="card-query">stepDesign=rail &amp; dragActivation=move</span>
-          </a>
-
-          <a
-            class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=rail&dragActivation=hold"
-          >
-            <div class="card-heading">
-              <span class="card-title">Rail Row · Hold</span>
-              <span class="badge badge-accent">Hold 350ms</span>
-            </div>
-            <p class="card-desc">
-              Vertical timeline rail indicator with press-and-hold activation.
-            </p>
-            <span class="card-query">stepDesign=rail &amp; dragActivation=hold</span>
-          </a>
-
-          <a
-            class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=outline&dragActivation=move"
-          >
-            <div class="card-heading">
-              <span class="card-title">Outline Row · Move</span>
-              <span class="badge badge-accent">5px Motion</span>
-            </div>
-            <p class="card-desc">Subtly boxed card layout with 5px drag activation.</p>
-            <span class="card-query">stepDesign=outline &amp; dragActivation=move</span>
-          </a>
-
-          <a
-            class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=outline&dragActivation=hold"
-          >
-            <div class="card-heading">
-              <span class="card-title">Outline Row · Hold</span>
-              <span class="badge badge-accent">Hold 350ms</span>
-            </div>
-            <p class="card-desc">Subtly boxed card layout with press-and-hold activation.</p>
-            <span class="card-query">stepDesign=outline &amp; dragActivation=hold</span>
-          </a>
         </div>
       </section>
 
@@ -195,7 +166,8 @@
       <section id="navigation-a-screens">
         <h2 class="section-title">Navigation A Core Screens</h2>
         <p class="section-caption">
-          Core product screens under the adopted Navigation A model (L101 decision).
+          Core product screens under the adopted Navigation A model (L101 decision). Prototype
+          review; no persisted session certification.
         </p>
         <div class="links-grid">
           <a
@@ -256,7 +228,8 @@
       <section id="historical-reference">
         <h2 class="section-title">Historical Reference</h2>
         <p class="section-caption">
-          Archived comparison for provenance. L101 closed: Navigation A is confirmed.
+          Archived comparisons for provenance. L101 closed: Navigation A confirmed. Step row design:
+          Compact selected 2026-10-21.
         </p>
         <div class="links-grid">
           <div class="review-card" style="opacity: 0.75">
@@ -266,6 +239,17 @@
             </div>
             <p class="card-desc">
               Navigation A selected. Navigation B links and copy removed from active review choices.
+            </p>
+          </div>
+
+          <div class="review-card" style="opacity: 0.75">
+            <div class="card-heading">
+              <span class="card-title">Row Designs · Rail &amp; Outline</span>
+              <span class="badge badge-history">Archived</span>
+            </div>
+            <p class="card-desc">
+              Compact row selected 2026-10-21. Rail timeline and Outline card designs archived from
+              active choices.
             </p>
           </div>
         </div>
@@ -309,6 +293,7 @@
       (function () {
         const container = document.getElementById('manifest-container');
         const motionContainer = document.getElementById('motion-container');
+        const comparisonsContainer = document.getElementById('comparisons-container');
 
         fetch('./review-manifest.json')
           .then((res) => {
@@ -321,6 +306,7 @@
             if (!manifest) {
               throw new Error('Invalid manifest structure');
             }
+            renderComparisons(manifest);
             renderMotion(manifest);
             renderGallery(manifest);
           })
@@ -341,7 +327,92 @@
                 </div>
               `;
             }
+            if (comparisonsContainer) {
+              comparisonsContainer.innerHTML = `
+                <div class="pending-box">
+                  <p><strong>Matched comparisons pending</strong></p>
+                  <p style="margin-top: 6px; font-size: 0.8rem;">No matched comparison pairs available yet (<code>./review-manifest.json</code> not present).</p>
+                </div>
+              `;
+            }
           });
+
+        function renderComparisons(manifest) {
+          if (!comparisonsContainer) return;
+          const pairs = Array.isArray(manifest.comparisonPairs) ? manifest.comparisonPairs : [];
+          const rev = escapeHtml(manifest.revision || 'current');
+          const sha = escapeHtml(
+            manifest.sourceSha256 ? manifest.sourceSha256.substring(0, 12) : 'unspecified',
+          );
+          const metaHtml = `
+            <div class="manifest-meta" style="margin-bottom: 12px;">
+              <span><strong>Current Revision:</strong> ${rev}</span>
+              <span><strong>Source SHA-256:</strong> <code>${sha}</code></span>
+              <span><strong>Matched Pairs:</strong> ${pairs.length}</span>
+            </div>
+          `;
+          if (pairs.length === 0) {
+            comparisonsContainer.innerHTML =
+              metaHtml +
+              `
+              <div class="pending-box">
+                <p><strong>Matched comparison evidence pending</strong></p>
+                <p style="margin-top: 6px; font-size: 0.8rem;">No <code>comparisonPairs</code> populated in <code>./review-manifest.json</code> yet. Codex capture suite will populate controlled Before (<code>68faf79</code>) vs. Current PNG pairs.</p>
+              </div>
+            `;
+            return;
+          }
+
+          comparisonsContainer.innerHTML =
+            metaHtml +
+            `
+            <div class="captures-grid" style="grid-template-columns: 1fr;">
+              ${pairs
+                .map((p) => {
+                  const beforeRev = escapeHtml(p.beforeRevision || '68faf79');
+                  const afterRev = escapeHtml(p.afterRevision || manifest.revision || 'Current');
+                  const specs = [
+                    p.fixture ? `<span class="badge">Fixture: ${escapeHtml(p.fixture)}</span>` : '',
+                    p.locale ? `<span class="badge">${escapeHtml(p.locale)}</span>` : '',
+                    p.theme ? `<span class="badge">${escapeHtml(p.theme)}</span>` : '',
+                    p.width || p.textScale
+                      ? `<span class="badge">${escapeHtml(p.width || 393)}px @ ${escapeHtml(p.textScale || 100)}%</span>`
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+
+                  return `
+                  <div class="capture-card" style="padding: 12px;">
+                    <div class="capture-info" style="padding: 0 0 10px 0;">
+                      <div class="capture-name">${escapeHtml(p.label || 'Matched Comparison')}</div>
+                      <div class="capture-tags" style="margin-top: 4px;">${specs}</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start;">
+                      <div style="min-width: 0;">
+                        <div class="capture-tags" style="margin-bottom: 6px;">
+                          <span class="badge badge-history">Before · ${beforeRev}</span>
+                        </div>
+                        <a class="capture-img-link" href="${escapeHtml(p.before)}" target="_blank" rel="noopener" title="Open full-resolution Before (${beforeRev}) PNG">
+                          <img src="${escapeHtml(p.before)}" alt="${escapeHtml((p.label || 'Comparison') + ' Before ' + beforeRev)}" loading="lazy" style="width: 100%; height: auto; display: block;" />
+                        </a>
+                      </div>
+                      <div style="min-width: 0;">
+                        <div class="capture-tags" style="margin-bottom: 6px;">
+                          <span class="badge badge-accent">Current · ${afterRev}</span>
+                        </div>
+                        <a class="capture-img-link" href="${escapeHtml(p.after)}" target="_blank" rel="noopener" title="Open full-resolution Current (${afterRev}) PNG">
+                          <img src="${escapeHtml(p.after)}" alt="${escapeHtml((p.label || 'Comparison') + ' Current ' + afterRev)}" loading="lazy" style="width: 100%; height: auto; display: block;" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                })
+                .join('')}
+            </div>
+          `;
+        }
 
         function renderMotion(manifest) {
           if (!motionContainer) return;

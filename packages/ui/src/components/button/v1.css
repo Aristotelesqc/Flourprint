@@ -20,7 +20,12 @@
   line-height: 1.25;
   cursor: pointer;
   white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
   flex-shrink: 0;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn:focus {
+  outline: none;
 }
 [data-fp-component='fp.button'][data-fp-version='v1'] > .button-shape {
   position: absolute;
@@ -49,6 +54,14 @@
 }
 [data-fp-component='fp.button'][data-fp-version='v1'].btn:active > span {
   transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-fp-component='fp.button'][data-fp-version='v1'].btn:active > span {
+    transform: none;
+  }
+}
+[data-motion='reduced'] [data-fp-component='fp.button'][data-fp-version='v1'].btn:active > span {
+  transform: none;
 }
 [data-fp-component='fp.button'][data-fp-version='v1'].btn:focus-visible > .button-shape {
   outline: 2px solid var(--color-primary);

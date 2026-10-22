@@ -27,7 +27,7 @@ describe('packages/ui dependency boundary', () => {
     (file) => {
       for (const specifier of importsOf(join(srcDir, file))) {
         expect(specifier, `${file} imports ${specifier}`).toMatch(
-          /^(\.\.?\/|react(\/|$)|react-dom(\/|$))/,
+          /^(\.\.?\/|react(\/|$)|react-dom(\/|$)|@dnd-kit\/(react|dom)(\/|$))/,
         );
       }
     },

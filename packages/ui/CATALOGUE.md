@@ -681,6 +681,8 @@ A recipe in the library: title, status, key values and, for a running preparatio
 - The whole card opens the recipe on pointer use while excluding nested interactive controls; keyboard Enter/Space on the title button opens once.
 - The status is text (fp.badge style), not only colour.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
+- Recipe title and badges preserve natural long-FR/EN text wrapping without mid-word breaks (L25), maintaining title hierarchy over metadata.
+- Compact card rhythm fits four whole library cards in an 852 px viewport at 393/100 without gratuitous vertical voids.
 
 **Related**
 
@@ -747,14 +749,61 @@ Horizontal swipeable carousel holding screens/panes of a recipe (Ingredients, St
 
 - `v1`: L101 section carousel with horizontal swipe gestures, adjacent pane preview, reduced motion support and tab synchronization.
 
+### `fp.sortable-list`
+
+Generic reusable sortable container adapter providing modern @dnd-kit/react 0.5.1 drag and drop behavior.
+
+**Use when**
+
+- Reordering lists of items such as recipe steps, ingredients or stages.
+- Allowing grouped layouts, accordions, and custom item row wrappers without forcing flat DOM structures.
+
+**Avoid when**
+
+- Simple static lists without reorder needs.
+- Complex multi-column grid dragging across independent boards.
+
+**Props**
+
+| Prop             | Meaning                                                                                                                                                                                                               |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`          | Optional ordered list of item descriptors { id, group } for relative placement computation.                                                                                                                           |
+| `activationMode` | 'move' (drag after movement threshold) or 'hold' (press and hold).                                                                                                                                                    |
+| `disabled`       | Disables all drag and drop interactions.                                                                                                                                                                              |
+| `onDragStart`    | Called when an actual lift starts with the active item id.                                                                                                                                                            |
+| `onDropIntent`   | Called on drop completion with the computed drop intent (or null on cancellation); returns a synchronous SortableDropOutcome to accept, keep pending, or roll back optimistic ordering on refused/unchanged outcomes. |
+| `renderOverlay`  | Optional custom renderer for the lifted drag overlay row.                                                                                                                                                             |
+| `className`      | Optional CSS class for the sortable container.                                                                                                                                                                        |
+| `children`       | Items, accordions, and group wrappers composing the sortable list.                                                                                                                                                    |
+
+**Accessibility**
+
+- PointerSensor-only drag and drop; default English @dnd-kit Accessibility plugin is disabled so callers provide localized instructions, live-region announcements, and native keyboard (ArrowUp/ArrowDown) or action-menu reordering alternatives.
+- Accessible drag handle binding without unlocalized screen-reader instructions or false drop announcements.
+- Motion honoring prefers-reduced-motion and manual reduction tokens.
+
+**Related**
+
+- `fp.step-node`
+- `fp.timeline`
+
+**Decisions**
+
+- [PR #133: Modern @dnd-kit/react sortable integration](https://github.com/Aristotelesqc/Flourprint/pull/133)
+- [ADR 0020: Versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+
+**Versions**
+
+- `v1`: Modern @dnd-kit/react 0.5.1 generic sortable container with optimistic sorting.
+
 ### `fp.step-node`
 
-One step of the process as a numbered node with its details, actions, and proposed review layout alternatives.
+One step of the process as a numbered node with its details, actions, and owner-selected compact presentation.
 
 **Use when**
 
 - Step lists in Recipe, Planning and Preparation.
-- Exploring density and hierarchy options via ancestor [data-step-design="compact"|"rail"|"outline"] (compact serves as technical fallback).
+- Compact row presentation is the owner-selected default (#133); legacy rail and outline variants remain renderable via ancestor [data-step-design="rail"|"outline"] for historical comparison.
 
 **Avoid when**
 
@@ -776,12 +825,12 @@ One step of the process as a numbered node with its details, actions, and propos
 
 **Accessibility**
 
-- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
+- Page-anchored presentation stays flat; painted surfaces are opaque tonal cards (ADR 0021 elevation rule).
 - The node pictogram and badge are decorative. Supply state words in details or surrounding headings; state alone changes paint, not an accessible status label. The ordinal is included in the title when icon and number are present.
 - Reorder controls (#123) need a keyboard path besides dragging.
-- Touch target at least 48 px; painted controls remain compact without layout dead space; font-relative narrow query (<=19rem) stacks action controls into a single 48px column and lets details span the badge gutter with compact metadata pills to prevent multiline wrapping and title overlap (ADR 0021, #142).
-- Proposed alternatives (compact, rail, outline) preserve identical semantic DOM, labeling, and reachable actions with natural wrapping at 360px / 130% zoom without truncation.
-- Alternatives are proposals for owner review and arbitration, not accepted decisions.
+- Touch target at least 48 px; painted controls remain compact (32-40 px) without internal layout dead space; actions maintain edge clustering with 48px hit targets (ADR 0021, #142).
+- Intended layout behavior: discrete tonal cards with subtle border and outer row gap; metadata details row spans full available width across the badge gutter to avoid artificial wrapping constraints.
+- Rail and outline alternatives remain available for historical comparison.
 
 **Related**
 
@@ -792,6 +841,7 @@ One step of the process as a numbered node with its details, actions, and propos
 
 - [Step move and reorder (#123)](https://github.com/Aristotelesqc/Flourprint/issues/123)
 - [Owner: round 2 is the visual baseline (#134)](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [Owner: Compact row presentation selected (#133)](https://github.com/Aristotelesqc/Flourprint/issues/133)
 
 **Versions**
 

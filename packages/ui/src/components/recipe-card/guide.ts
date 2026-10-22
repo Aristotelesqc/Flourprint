@@ -12,6 +12,8 @@ export default {
     'The whole card opens the recipe on pointer use while excluding nested interactive controls; keyboard Enter/Space on the title button opens once.',
     'The status is text (fp.badge style), not only colour.',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
+    'Recipe title and badges preserve natural long-FR/EN text wrapping without mid-word breaks (L25), maintaining title hierarchy over metadata.',
+    'Compact card rhythm fits four whole library cards in an 852 px viewport at 393/100 without gratuitous vertical voids.',
   ],
   related: ['fp.metric-pill', 'fp.badge'],
   decisions: [

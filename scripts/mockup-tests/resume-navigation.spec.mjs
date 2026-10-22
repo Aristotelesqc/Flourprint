@@ -109,6 +109,24 @@ test.describe('navigation A carousel acceptance', () => {
     await gesture(page, context, { fromX: 290, toX: 210, duration: 35 });
     await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
   });
+  test('a short flick held still before release springs back instead of using stale velocity', async ({
+    page,
+    context,
+  }) => {
+    await page.goto(address());
+    await gesture(page, context, {
+      fromX: 290,
+      toX: 210,
+      duration: 35,
+      during: () => gesturePause(260),
+    });
+    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect
+      .poll(() =>
+        page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
+      )
+      .toBe(0);
+  });
   test('the shared carousel moves the actual selected tab indicator with the finger', async ({
     page,
     context,

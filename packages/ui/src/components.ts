@@ -21,6 +21,7 @@ import type {
   PreparationTimerProps,
   ContextTilesProps,
   SectionCarouselProps,
+  SortableListProps,
 } from './props.ts';
 export type FlourprintComponents = {
   'fp.timeline': TimelineProps;
@@ -45,4 +46,5 @@ export type FlourprintComponents = {
   'fp.prep-hero': PreparationTimerProps;
   'fp.context-tiles': ContextTilesProps;
   'fp.section-carousel': SectionCarouselProps;
+  'fp.sortable-list': SortableListProps;
 };
