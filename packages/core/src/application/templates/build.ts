@@ -3,6 +3,7 @@ import {
   type Ingredient,
   type ProcessStep,
   type StepConditions,
+  type Subject,
   type StepTechnique,
 } from '../../domain/index.js';
 
@@ -28,6 +29,7 @@ export const step = (
     readonly conditions?: StepConditions;
     readonly label?: string;
     readonly technique?: StepTechnique;
+    readonly subject?: Subject;
   } = {},
 ): ProcessStep => ({
   id,
@@ -38,7 +40,11 @@ export const step = (
   ...(options.conditions ? { conditions: options.conditions } : {}),
   ...(options.label ? { label: options.label } : {}),
   ...(options.technique ? { technique: options.technique } : {}),
+  ...(options.subject ? { subject: options.subject } : {}),
 });
+
+/** The explicit subject of a phase of component `id` (process.md, Subjects and component phases). */
+export const component = (id: string): Subject => ({ kind: 'component', id });
 
 /** An `alap` step (preheating): as late as possible before its successors. */
 export const alapStep = (id: string, operation: string, durationS: number): ProcessStep => ({
