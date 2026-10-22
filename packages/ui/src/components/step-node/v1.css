@@ -161,9 +161,9 @@
   border-color: var(--color-success);
 }
 
-/* Narrow Container Support (<= 22rem: ~352px at 100%, ~457px at 130%)
+/* Narrow Container Support (<= 19rem: ~304px at 100%, ~395px at 130%)
    Lets row-1 title span to the right edge and shares row 2 between metadata and actions. */
-@container (max-width: 22rem) {
+@container (max-width: 19rem) {
   [data-fp-component='fp.step-node'][data-fp-version='v1']
     .step-title-row:not([data-step-design='rail'] *, [data-step-design='outline'] *) {
     grid-column: 2 / -1;
@@ -183,6 +183,15 @@
     grid-column: 1 / 3;
     grid-row: 2;
     align-self: center;
+    min-width: 0;
+  }
+
+  [data-fp-component='fp.step-node'][data-fp-version='v1']
+    .step-details:not([data-step-design='rail'] *, [data-step-design='outline'] *)
+    > * {
+    max-width: 100%;
+    height: auto;
+    white-space: normal;
   }
 }
 

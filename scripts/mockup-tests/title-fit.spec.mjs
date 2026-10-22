@@ -37,9 +37,12 @@ for (const [width, scale] of [
             if (!title || !actions) throw new Error('Missing title/action cluster');
             const range = document.createRange();
             range.selectNodeContents(title);
+            const detailRange = document.createRange();
+            const details = row.querySelector('.step-details');
+            if (details) detailRange.selectNodeContents(details);
             const bounds = row.getBoundingClientRect();
             const target = actions.getBoundingClientRect();
-            const ink = [...range.getClientRects()].filter(
+            const ink = [...range.getClientRects(), ...detailRange.getClientRects()].filter(
               (rect) => rect.width > 0 && rect.height > 0,
             );
             const css = getComputedStyle(title);
