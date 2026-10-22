@@ -283,6 +283,29 @@ describe('projection of a beforeTarget step', () => {
   });
 });
 
+describe('a preheat depending on an alap step', () => {
+  it('constrains nothing: other steps equal the process without it', () => {
+    // scald alap 600 s; mix (900 s) depends on scald; bake (1200 s) after mix.
+    // mix 00:10 -> 00:25 after the alap scald 00:00 -> 00:10; bake 00:25 -> 00:45.
+    // preheat: earliest = scald end 00:10; trigger 00:25 - 0:30 < 00:10 -> start 00:10, window 15 min.
+    const steps: ProcessStep[] = [
+      { id: 'scald', operation: 'scald', dependsOn: [], schedule: 'alap', plannedDurationS: 600 },
+      asap('mix', ['scald'], 900),
+      asap('bake', ['mix'], 1200),
+    ];
+    const pre = preheat({ dependsOn: ['scald'] });
+    const p = run({ steps: [...steps, pre] }, { mode: start });
+    const without = run({ steps }, { mode: start });
+    expect(p.steps.mix).toMatchObject({ start: at('00:10'), end: at('00:25') });
+    expect(p.steps.bake).toMatchObject({ start: at('00:25'), end: at('00:45') });
+    for (const id of ['scald', 'mix', 'bake']) expect(p.steps[id]).toEqual(without.steps[id]);
+    expect(p.steps.preheat).toMatchObject({
+      start: at('00:10'),
+      warmup: { kind: 'insufficient', availableS: 15 * M, requiredS: 30 * M },
+    });
+  });
+});
+
 describe('validation of a beforeTarget step (example 8)', () => {
   const refused = (process: Process) => {
     const result = validateProcess(process);

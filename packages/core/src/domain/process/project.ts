@@ -126,6 +126,8 @@ const schedule = (
   // Backward pass: alap steps not started end at the earliest start of their successors.
   const successors = new Map<StepId, StepId[]>();
   for (const step of process.steps) {
+    // A step before a target never constrains another step (process.md).
+    if (step.schedule === 'beforeTarget') continue;
     for (const dep of step.dependsOn)
       successors.set(dep, [...(successors.get(dep) ?? []), step.id]);
   }
@@ -183,9 +185,9 @@ const preheatSlot = (
   } else if (!targetStart.known) {
     start = blocked(targetStart.blockers);
   } else {
-    const due = Math.max(earliest.at, targetStart.at - (required ?? 0));
-    start = known(Math.max(due, now ?? -Infinity));
-    if (now !== undefined && due < now) overdue = { dueAt: due };
+    const trigger = targetStart.at - (required ?? 0);
+    start = known(Math.max(earliest.at, trigger, now ?? -Infinity));
+    if (now !== undefined && trigger < now) overdue = { dueAt: trigger };
   }
   const blockers = [
     ...(start.known ? [] : start.blockers),

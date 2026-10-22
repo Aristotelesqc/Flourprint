@@ -191,15 +191,15 @@ interface ProcessStep {
 - **Compatibility.** An older app refuses a recipe holding the new schedule value or fields as a
   document with an unknown discriminant or field (`persistence.md`), never misreads it.
   `CONTRACT_VERSION` is bumped by one minor step, from `0.17.0` to `0.18.0`, by the implementing
-  pull request. No event or session schema changes: `StepStarted` and `StepCompleted` carry the
-  record, and the projection gains the optional `warmup` and `overdue` of a `beforeTarget` step
-  (absent on every other step, and on events written before).
+  pull request. No event type changes: `StepStarted` and `StepCompleted` carry the record. The projection
+  embedded in `BakeStarted.initialProjection` and `ProjectionAccepted` gains the optional `warmup`
+  and `overdue` of a `beforeTarget` step (absent on every other step); events written before still
+  decode, as `isProjectedStep` ignores unknown fields.
 - **Implementation notes (#106 slice B).** `warmup.sufficient` carries `availableS` and `requiredS`
   like `insufficient`. A step with no requirement and a known non-negative window, or with unknown
   times, is `notApplicable`; `unavailable` is decided first when both times are known. A
   `beforeTarget` step's projected `end` is its target's start (the recorded readiness once
-  completed), and is absent when `unavailable`. `overdue.dueAt` is the planned start before the
-  lower bound `now` (`max(earliest, targetStart − requiredWarmupS)`). `target` must be a cooking
+  completed), and is absent when `unavailable`. `target` must be a cooking
   step. The domain exposes `removeStepChecked` (`TargetInUse`) and `preheatIssues` (the nonblocking
   checks read from a projection).
 
