@@ -819,6 +819,35 @@ scheduled, not predictions of the biology). A poolish bread with a tangzhong:
 7. **Not persisted.** Saving the recipe stores no group, no relative time and no open or closed
    state.
 
+**Implementation notes (#106 slice C, no persisted shape changes: `CONTRACT_VERSION` stays `0.18.0`).**
+API of `@flourprint/core/domain`, for Recipe (#100) and Planning (#133); nothing is computed in React.
+
+- `relativeTimeline(process, { components? }): Result<RelativeTimeline, ProcessError>` runs
+  `projectProcess` once from an internal origin and returns offsets in seconds from the earliest
+  planned start. The result holds no date. `components` is the formula's component ids; absent, the
+  ids the process names (`subjectOf`). Errors are those of `projectProcess` (`InvalidProcess`, ...),
+  unchanged.
+- `anchorTimeline(timeline, { kind: 'startAt', at } | { kind: 'readyBy', at, target }):
+Result<AnchoredTimeline, ProcessError>` adds the anchor: every instant is `at` plus the offset
+  (`readyBy` shifts the origin so `target` ends at `at`). Errors: `UnknownReference` (`mode.target`)
+  and `IncompatibleConstraint` (target timing unknown), as in `projectProcess`. `windowOf(steps)`
+  is the one window rule. Types: `Timing`, `Window`, `StepTiming`, `GroupTiming`,
+  `RelativeTimeline`, `TimelineAnchor`, `AnchoredTimeline`, `AnchoredWindow`.
+- `StepTiming` also carries the projection's `warmup` of a `beforeTarget` step. Its timing is
+  `unknown` when the warm-up is `unknown` (`unknownAfter` = its blockers) or `unavailable` (empty
+  `unknownAfter`); a window then names the step itself in `reasons`. An unavailable preheat
+  therefore leaves its group, and the total, `partial`/`unknown` rather than enveloped.
+- Groups come in the order: components (first step order), `mainDough`, `cooking`; a step in the
+  cooking set (cooking operations, `preheat`, and steps downstream of a cooking step) is in
+  `cooking` whatever its subject. Empty groups are omitted.
+- A window with no known member is `unknown`, a window with some known members is `partial`, as
+  the Window rule states; hence in example 3 the groups whose every step is blocked (the main dough
+  and cooking, both downstream of the missing duration) are `unknown` with the same `reasons`, not
+  `partial`.
+- Supported: a recipe plan (no facts, no `now`). Unsupported: a relative timeline of a Preparation
+  in progress (recorded facts, `overdue`); read `projectProcess` for that. Not provided: open/closed
+  group state (interface only).
+
 Implementation (`@flourprint/core/domain`): `validateProcess`, `projectProcess`,
 `planIncorporations`, and the graph utilities `topologicalSort`, `isTopologicalOrder`,
 `validateReferences`.
