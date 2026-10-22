@@ -24,7 +24,7 @@ import { validateProcess, type ProcessError } from './validate.js';
  * components of explicit subjects. Every formula component joins the dough exactly once
  * (Incorporations), so with incorporations these are the formula's components.
  */
-const componentIds = (process: Process): Set<string> =>
+export const componentIds = (process: Process): Set<string> =>
   new Set(
     process.steps.flatMap((s) => [
       ...(s.incorporations ?? []).flatMap((i) => (i.item === 'component' ? [i.id] : [])),
