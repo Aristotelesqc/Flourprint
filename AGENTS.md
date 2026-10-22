@@ -67,6 +67,8 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
   publishing, permission changes or overlapping writers.
 - **UI verification**: [.agents/skills/flourprint-ui-check/SKILL.md](.agents/skills/flourprint-ui-check/SKILL.md).
   Use for browser/visual acceptance and selecting the native evidence needed for a UI change.
+- **UI audit**: [.agents/skills/flourprint-ui-audit/SKILL.md](.agents/skills/flourprint-ui-audit/SKILL.md).
+  Use for an on-demand independent, read-only UI/UX audit by an agent that did not build the interface.
 - **UI mockups**: [.agents/skills/flourprint-ui-mockups/SKILL.md](.agents/skills/flourprint-ui-mockups/SKILL.md).
   Use for Gemini-generated visual proposals, Codex verification, hosted galleries and the
   owner's requested approval before redesign implementation; not as a gate for routine fixes.

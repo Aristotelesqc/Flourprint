@@ -17,6 +17,9 @@ For requested Gemini running-app checks, verify actual browser capability; diagn
 before using [AGY's recovery reference](../agy/references/permissions-and-browser.md). A successful
 URL-text read or static capture review does not prove independent app use.
 
+For an independent critical review of the interface by an agent that did not build it, use
+[flourprint-ui-audit](../flourprint-ui-audit/SKILL.md) instead.
+
 ## Choose the evidence surface
 
 - Record the checkout/PR head, build, locale, viewport, theme and platform. A passing report from
