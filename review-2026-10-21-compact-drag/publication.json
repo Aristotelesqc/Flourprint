@@ -1,0 +1,962 @@
+{
+  "revision": "0d63eb40b656aa458124607a9690914d60553281",
+  "sourceSha256": "ef5e71bf8e357eb22cd931256341dc7475cc6ea01cecc68ee7347939fd03764e",
+  "files": [
+    {
+      "path": "assets/gallery-BiUghKrY.css",
+      "sha256": "d88f0436aed59e9beace8783d258b5d5b191fa1b78d317b922b14c564fc99f8d"
+    },
+    {
+      "path": "assets/mockup-CX-baoIh.js",
+      "sha256": "869d276276fbf90b358b372efaf3a1ef8c3bc59e2cea039d791c3c5ee4991124"
+    },
+    {
+      "path": "assets/mockup-Mb8cvQZ5.css",
+      "sha256": "fad93acb6e4df87b7cb490c5425adfe9a3979dffd4262afb1398001a1c7e2aca"
+    },
+    {
+      "path": "index.html",
+      "sha256": "c20a74a2e7b5740b60fb1824d2d003514b05c541d6c6c8a4ff9b51d1ac7ab8db"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "347847e7ab4408805f87064c9245de7635c0d69e829ec080017ec5f82d14132a"
+    },
+    {
+      "path": "mark.svg",
+      "sha256": "24acf2d553285a027142eebcd349b0deca207242f8ced003f54ee2fe6342a9c9"
+    },
+    {
+      "path": "mockup.html",
+      "sha256": "f328acd47e9aec105ea0a203c5fef8e36b2a45faaf928d48f9f94c66af209129"
+    },
+    {
+      "path": "motion/drag-read-snapback-hold-standard.webm",
+      "sha256": "64a01bb95ced9780ac1cc07abdb8c27db8aeb9d3cd1ef70586c4e9d542a8e0ee"
+    },
+    {
+      "path": "motion/drag-read-snapback-move-reduced.webm",
+      "sha256": "5daa9046839676d60b27a9044c1ee9a6a843ecefd257209bf4f447bf04583964"
+    },
+    {
+      "path": "motion/drag-read-snapback-move-standard.webm",
+      "sha256": "d8f31cd5698c296a85ec95613bb1aae04e28dcfbcb217019b41266dff414ddc2"
+    },
+    {
+      "path": "motion/step-drag-reduced.webm",
+      "sha256": "75f2e54d7fae85f623d43182589f3128bfc8d9ed8f598697f47b8dd5f93680a6"
+    },
+    {
+      "path": "motion/step-drag-standard.webm",
+      "sha256": "a79902a07cf4d30ac9283393b75907fc94c665c791985ee167dbdb3d274a0a68"
+    },
+    {
+      "path": "motion/tab-carousel-reduced.webm",
+      "sha256": "969c7136d91aa610a30f2a8384b285ac837ca78eb0672a4492e8bcd09cce0b9d"
+    },
+    {
+      "path": "motion/tab-carousel-standard.webm",
+      "sha256": "b9c4c750dd8e2a67acb2d33fe065d4caed040966acc3bd8420afe9781132e256"
+    },
+    {
+      "path": "review-build.json",
+      "sha256": "6ead91f3ff66d850af1beae95d513d889cf946b27cf304a6f3e8ac86256de339"
+    },
+    {
+      "path": "review-manifest.json",
+      "sha256": "5ad852cf11e8ecf44177e00775dc4fb08e37026793f98165cd52b950dd9ea3b8"
+    },
+    {
+      "path": "screenshots/abandon-confirmation-compact-move-en-amoled-360-130.png",
+      "sha256": "fa9d5efd1a9f1f5b1c6f68580fdc3643d50d6848f7d17c838a6edb42e0db59ec"
+    },
+    {
+      "path": "screenshots/abandon-confirmation-compact-move-en-dark-360-130.png",
+      "sha256": "4e7425e4f8ef3d1d4529d3a9e6ae46909e02a13fa65cb527b266f364c54fc080"
+    },
+    {
+      "path": "screenshots/abandon-confirmation-compact-move-en-light-360-130.png",
+      "sha256": "b710a33f1f88c8aee703161a763d0b097fe8246bd01b7f3a32c1a2f94e8fb189"
+    },
+    {
+      "path": "screenshots/abandon-confirmation-compact-move-fr-amoled-360-130.png",
+      "sha256": "400ef773398126fc121957e572bd16c4f394212fdaae465f197ff3963fbdca0f"
+    },
+    {
+      "path": "screenshots/abandon-confirmation-compact-move-fr-dark-360-130.png",
+      "sha256": "18ee209b324a76a92870b3bd99efb7b8a082ba18084b900c3c0ea3f59da9c5df"
+    },
+    {
+      "path": "screenshots/abandon-confirmation-compact-move-fr-light-360-130.png",
+      "sha256": "8fded825b1182c655ca013c38b7fef83953b05d3b3e3911ec7f323adf18ec07c"
+    },
+    {
+      "path": "screenshots/app-creation-A-393-100.png",
+      "sha256": "6fd010dfd5e4c063d0570c4edaa16f1eea03346a27e5361ef441582a8972194e"
+    },
+    {
+      "path": "screenshots/app-edit-A-393-100.png",
+      "sha256": "48023f6faf36fbb4c95d7586a71cda83826e3f4ee0a2f16a83c4bd428b68cf9e"
+    },
+    {
+      "path": "screenshots/app-hydration-A-393-100.png",
+      "sha256": "9b7038a0c7ea33f104d3087127a512cc6bed5edf05d39017ebbaed15be2357af"
+    },
+    {
+      "path": "screenshots/app-library-A-393-100.png",
+      "sha256": "6f33102bc1e95c516d248712c3232f4e791ba33794df1ce638ddd63d5f83b52a"
+    },
+    {
+      "path": "screenshots/app-menu-A-393-100.png",
+      "sha256": "e7eb815704f96607af20b56ec6e2cc2e301d1f7d566f263f56a90b942c967efc"
+    },
+    {
+      "path": "screenshots/app-planning-A-360-130.png",
+      "sha256": "ee54ed55328de41f07143f29ad71d1131b87b63906093296bd2ce8e7b10ec234"
+    },
+    {
+      "path": "screenshots/app-planning-A-393-100.png",
+      "sha256": "f468e8aa417e6877d0b9f3c9112cdb2d7a0f8614353563619890df67b388fca4"
+    },
+    {
+      "path": "screenshots/app-preparation-A-360-130.png",
+      "sha256": "dd0e4eb840e851133d20aaacc0adeb577af4a169713c81a5b848c3fa2c48e463"
+    },
+    {
+      "path": "screenshots/app-preparation-A-393-100.png",
+      "sha256": "f86bd161e51605bd31695507709474601badf93317807580473c564a363f809c"
+    },
+    {
+      "path": "screenshots/app-recipe-A-360-130.png",
+      "sha256": "40fe88c31aa1162b32d36114504f60e0da1a489f198d0c81338768c1ac7ce712"
+    },
+    {
+      "path": "screenshots/app-recipe-A-393-100.png",
+      "sha256": "3c407f8f04016a3360c8ca59db1a3fe4a037a79ce78ec804ef470a2204457372"
+    },
+    {
+      "path": "screenshots/app-steps-A-393-100.png",
+      "sha256": "f81e7a074d497cc17792159d206446c2a0be01844b4778345e254d3b1cf05fc3"
+    },
+    {
+      "path": "screenshots/app-timeline-A-393-100.png",
+      "sha256": "f468e8aa417e6877d0b9f3c9112cdb2d7a0f8614353563619890df67b388fca4"
+    },
+    {
+      "path": "screenshots/carousel-reduced-after-fast-flick.png",
+      "sha256": "68b386aadd2f3b00b1dcb92293d814f937ad596a5b10be3ee2113c954d3ab120"
+    },
+    {
+      "path": "screenshots/carousel-reduced-after.png",
+      "sha256": "ddc368b6508cbedff9ae6c1624ab5ff5c2d1375eb6cf7b40db23c0918acb4f61"
+    },
+    {
+      "path": "screenshots/carousel-reduced-before.png",
+      "sha256": "68b386aadd2f3b00b1dcb92293d814f937ad596a5b10be3ee2113c954d3ab120"
+    },
+    {
+      "path": "screenshots/carousel-reduced-during.png",
+      "sha256": "f4905fcd4c84b92b251b137fe8b2a4f1dd0d37d43b3fdf7fae13ed7ed378515f"
+    },
+    {
+      "path": "screenshots/carousel-standard-after-fast-flick.png",
+      "sha256": "6fca95f513d3c43b909a24225b3cc4c6656c89dbd88e624338bd69e4836bd2d5"
+    },
+    {
+      "path": "screenshots/carousel-standard-after.png",
+      "sha256": "ddc368b6508cbedff9ae6c1624ab5ff5c2d1375eb6cf7b40db23c0918acb4f61"
+    },
+    {
+      "path": "screenshots/carousel-standard-before.png",
+      "sha256": "68b386aadd2f3b00b1dcb92293d814f937ad596a5b10be3ee2113c954d3ab120"
+    },
+    {
+      "path": "screenshots/carousel-standard-during.png",
+      "sha256": "ed1f8b42f23c2ec8c349be8933a5d6205b69ba031f8f2d052a05ff853b534949"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-en-amoled-360-130.png",
+      "sha256": "0afdb048b6b78a7d591f24fc49465dda0d443ad7655e6e1e329a8336a4c1b4ce"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-en-amoled-393-100.png",
+      "sha256": "0239c4906ba6a06fe3e1b7d88d0d4c0f5fa89e7272c0dd7dba8e8e7c985d5528"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-en-dark-360-130.png",
+      "sha256": "7cb396d4f76aece7172069cd804cd7caf8e56c5b86d754249904fd885f0693c0"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-en-dark-393-100.png",
+      "sha256": "b09e93c2332177ea016a89540343a9faaaf358677a31ade209cf48fa486cda41"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-en-light-360-130.png",
+      "sha256": "d743f15f07d075cc0867d2d4f6bbc2e32f6251b0535d4a0e1424b0bc2cadd575"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-en-light-393-100.png",
+      "sha256": "189d9e586266b5e114fa12d81b85d8c928d655b70786b17725c877baee52bf28"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-fr-amoled-360-130.png",
+      "sha256": "4e70ebf693a8b4fee683699df21148f20ad5af3eaa4522b4c55b52a164e1f488"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-fr-amoled-393-100.png",
+      "sha256": "0d0340dc6a4a791a3a776f8f82870186c50af9105febff440b5dd0ee99f3d588"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-fr-dark-360-130.png",
+      "sha256": "e85b1045b5a79d6b624ce57cda05ae51d18c73530fe0b9a7d5771fd024bde8a7"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-fr-dark-393-100.png",
+      "sha256": "d09d39d5aa82275ec129884a12d9dd6c9c6eafd096f711287d5c2d4be5564c92"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-fr-light-360-130.png",
+      "sha256": "1eb8e51828c7edcf2730c7f9eebcc7164bce9c653a326c53cf24878f3a3cd4e9"
+    },
+    {
+      "path": "screenshots/cooking-compact-move-fr-light-393-100.png",
+      "sha256": "f0b9544966ddf9b9a2deb7092e8884a58759a49092addae0f8fc35507b01de06"
+    },
+    {
+      "path": "screenshots/creation-compact-move-fr-amoled-393-100.png",
+      "sha256": "792c77b8c51bb8d14d241caa4641d5ecaf0949641e228603fde3285ff5acbece"
+    },
+    {
+      "path": "screenshots/creation-compact-move-fr-dark-393-100.png",
+      "sha256": "dd3982670b6529f74258dbbacfe6a270d39b33bc26e6760c07b335b4672de0a0"
+    },
+    {
+      "path": "screenshots/creation-compact-move-fr-light-393-100.png",
+      "sha256": "b209ab92928d8bafce437469a87cfa25ffcfef9a4cc8ecf2dfdeb4a3f0376b14"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-hold-standard-above-accordion.png",
+      "sha256": "d04ebed1b79f980b306d2cddecb14e01ab4ae324a4afad460464366800b8f21f"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-hold-standard-reading.png",
+      "sha256": "2e2756171e081bc59bfdb9cdb69f9ea1ab1157c9aad87e87e529f9488d05f3a1"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-hold-standard-returned-clean.png",
+      "sha256": "540521f953539efa635ec753e75e449bd9f58731cc74708a241e2d4b1d22fee1"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-move-reduced-above-accordion.png",
+      "sha256": "a5b8c5a237e0b78251edd83cc9003b253784992b79c2e83b74e130d45e840b31"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-move-reduced-reading.png",
+      "sha256": "2e2756171e081bc59bfdb9cdb69f9ea1ab1157c9aad87e87e529f9488d05f3a1"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-move-reduced-returned-clean.png",
+      "sha256": "4b37e6cd27fe19d6b44f770c9e1e94f390da0cc34994cacf9d71f968ec2069d6"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-move-standard-above-accordion.png",
+      "sha256": "0e6d62b6b75d389b63d89fe3bbf83fda80c5d45bdfb39d365c0d6312d781a597"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-move-standard-reading.png",
+      "sha256": "2e2756171e081bc59bfdb9cdb69f9ea1ab1157c9aad87e87e529f9488d05f3a1"
+    },
+    {
+      "path": "screenshots/drag-read-snapback-move-standard-returned-clean.png",
+      "sha256": "540521f953539efa635ec753e75e449bd9f58731cc74708a241e2d4b1d22fee1"
+    },
+    {
+      "path": "screenshots/early-finish-confirmation-compact-move-en-amoled-360-130.png",
+      "sha256": "cc03175cfa212bed89f8ee322dd471c0caea6b137e4bb082036dd18c330cbde3"
+    },
+    {
+      "path": "screenshots/early-finish-confirmation-compact-move-en-dark-360-130.png",
+      "sha256": "8bd46a561677c635a84718089f038eacfc96778f908993db7f31f49c90283cd2"
+    },
+    {
+      "path": "screenshots/early-finish-confirmation-compact-move-en-light-360-130.png",
+      "sha256": "4c4d83db15832b1487c095c5069b382cb5e35f93baf5b0b0b84491c64b3269ba"
+    },
+    {
+      "path": "screenshots/early-finish-confirmation-compact-move-fr-amoled-360-130.png",
+      "sha256": "2fc0d8890bf5ed7099f6284fc5fdc520d85f55f7043354a80a4d569426a3ac96"
+    },
+    {
+      "path": "screenshots/early-finish-confirmation-compact-move-fr-dark-360-130.png",
+      "sha256": "d33e1579608b5d6b3ff07809f45acb8905a69f020c6680af97d0941734f082ca"
+    },
+    {
+      "path": "screenshots/early-finish-confirmation-compact-move-fr-light-360-130.png",
+      "sha256": "fb6230b6db02bd9c45817627d96757672b5c1773f9cb69e59067d99a4e7811a8"
+    },
+    {
+      "path": "screenshots/edit-compact-move-en-amoled-360-130.png",
+      "sha256": "60c47ac19795bb34d18a7e48f474d4d6add153e43caf9fae213ee4a2506374e5"
+    },
+    {
+      "path": "screenshots/edit-compact-move-en-amoled-393-100.png",
+      "sha256": "50c82b7376b6411024114234c2dff16223c995303e752e0588d6d221bf593dd8"
+    },
+    {
+      "path": "screenshots/edit-compact-move-en-dark-360-130.png",
+      "sha256": "326726dff7df49a6163aa91422f5d5cc957355eff492497913da69d3665acae8"
+    },
+    {
+      "path": "screenshots/edit-compact-move-en-dark-393-100.png",
+      "sha256": "6e56bed7222aacaf3493fe6a0b3edccca1b678d737a7fb3316422ce83243a23e"
+    },
+    {
+      "path": "screenshots/edit-compact-move-en-light-360-130.png",
+      "sha256": "d6d8b52a463078413745bdad1300fde776dcff6f702cbe53fcc1e0d8eeeaab39"
+    },
+    {
+      "path": "screenshots/edit-compact-move-en-light-393-100.png",
+      "sha256": "e4f08db5c2ef146cbf6a18c339fb51691e7bf35e13c54262431acb7fb5b01732"
+    },
+    {
+      "path": "screenshots/edit-compact-move-fr-amoled-360-130.png",
+      "sha256": "108af0449a28987122afcd7402ec381f1d515061ca1cd52035034035c221e764"
+    },
+    {
+      "path": "screenshots/edit-compact-move-fr-amoled-393-100.png",
+      "sha256": "6ecb06bfe7db8418628f8af755ff8e12b9a422cc9fb3d97046646c9d60bef251"
+    },
+    {
+      "path": "screenshots/edit-compact-move-fr-dark-360-130.png",
+      "sha256": "9ab32221e7ccb72e46dc05db2d0023b86e6271eabce7ab92faa55c9b874dd2ea"
+    },
+    {
+      "path": "screenshots/edit-compact-move-fr-dark-393-100.png",
+      "sha256": "e6df609aac0d773b3fb446c04c8d127726075af8a4badca9a69d4a7dff301b24"
+    },
+    {
+      "path": "screenshots/edit-compact-move-fr-light-360-130.png",
+      "sha256": "6bd76596aea524185fa52abf1292434c2b2f868f1e282bebcb320726cd36a404"
+    },
+    {
+      "path": "screenshots/edit-compact-move-fr-light-393-100.png",
+      "sha256": "3adad513b2192f00feb6a0e04eac53b379659fd9f39632f718a460587fec6eed"
+    },
+    {
+      "path": "screenshots/hydration-compact-move-fr-amoled-393-100.png",
+      "sha256": "07403520a0785a38a694e80c137292392e473bfecb01bcdef51dfe418f979eba"
+    },
+    {
+      "path": "screenshots/hydration-compact-move-fr-dark-393-100.png",
+      "sha256": "67be1b9d6c1e5ab3f006a035b6196084fd57096184298e7d474dfaf95b4b4573"
+    },
+    {
+      "path": "screenshots/hydration-compact-move-fr-light-393-100.png",
+      "sha256": "360e4bb663240c9bda841d66f8896c443cabda3b10e95c2b9bc43037947604af"
+    },
+    {
+      "path": "screenshots/library-compact-move-en-amoled-360-130.png",
+      "sha256": "19720fe3af778b74882f86b38ae7811bbddef032d6f6c099839c8fe4a99f18ab"
+    },
+    {
+      "path": "screenshots/library-compact-move-en-amoled-393-100.png",
+      "sha256": "6063c57083bc1a4d737be2218db2e7e6b61a0f3e4b6388fca9491b791b09e447"
+    },
+    {
+      "path": "screenshots/library-compact-move-en-dark-360-130.png",
+      "sha256": "e94be3af499f34621d67d855eee43ae340dadfc5ecd68b7e1d9674ea2eef54ef"
+    },
+    {
+      "path": "screenshots/library-compact-move-en-dark-393-100.png",
+      "sha256": "aacab2e3e6a50b12e57a3c14976e63af8240c57f249bc635e3227659a87ad364"
+    },
+    {
+      "path": "screenshots/library-compact-move-en-light-360-130.png",
+      "sha256": "7b389068618867a596a00c977bc66334f9c08551b247e57308c5f9dedd1e2e92"
+    },
+    {
+      "path": "screenshots/library-compact-move-en-light-393-100.png",
+      "sha256": "d0ce478dde39f9e17a871dcc4dbd55b6ef18ac53115d4ee387bd9b0a281ad88e"
+    },
+    {
+      "path": "screenshots/library-compact-move-fr-amoled-360-130.png",
+      "sha256": "ea5233885125c67afe4623dc484ed4b02badc58b0fde5405be6099d3273defac"
+    },
+    {
+      "path": "screenshots/library-compact-move-fr-amoled-393-100.png",
+      "sha256": "2898109d04c57d1660b13fc62f1187b9727e7334f3ef4b04913f974413438734"
+    },
+    {
+      "path": "screenshots/library-compact-move-fr-dark-360-130.png",
+      "sha256": "067cc4d1fff9b0551618ba9400aad5213b9b77575e337fb34f89604e07be3ef0"
+    },
+    {
+      "path": "screenshots/library-compact-move-fr-dark-393-100.png",
+      "sha256": "a9fb50fd6e8e05bcef90094d5dc1f307e6d72b8eb9998f2613d9e520ca72a15b"
+    },
+    {
+      "path": "screenshots/library-compact-move-fr-light-360-130.png",
+      "sha256": "5015d694737ce25b7efdb3ca66f5365fb9569144c2731e6d98e3e762fe5736b9"
+    },
+    {
+      "path": "screenshots/library-compact-move-fr-light-393-100.png",
+      "sha256": "e1052fa517ab815e35c70ff9105f7cd840e600d21bbb484d68547a93c2a95023"
+    },
+    {
+      "path": "screenshots/menu-compact-move-fr-amoled-393-100.png",
+      "sha256": "ea266fb358cf2fd069b8f9a2b2800b98b4b3954f062b4bfc6e015103ec877e12"
+    },
+    {
+      "path": "screenshots/menu-compact-move-fr-dark-393-100.png",
+      "sha256": "d2f78074c592d342744fe66925e6c1b519fe1af8088b541204d3664b99e3e59a"
+    },
+    {
+      "path": "screenshots/menu-compact-move-fr-light-393-100.png",
+      "sha256": "68fd0a46b752b6ad8e9e15a7789d00a805cfa6d2270888f186fe1c144d2d053d"
+    },
+    {
+      "path": "screenshots/pair-after-library-fr-amoled-360-130.png",
+      "sha256": "ea5233885125c67afe4623dc484ed4b02badc58b0fde5405be6099d3273defac"
+    },
+    {
+      "path": "screenshots/pair-after-library-fr-amoled-393-100.png",
+      "sha256": "2898109d04c57d1660b13fc62f1187b9727e7334f3ef4b04913f974413438734"
+    },
+    {
+      "path": "screenshots/pair-after-library-fr-dark-360-130.png",
+      "sha256": "067cc4d1fff9b0551618ba9400aad5213b9b77575e337fb34f89604e07be3ef0"
+    },
+    {
+      "path": "screenshots/pair-after-library-fr-dark-393-100.png",
+      "sha256": "a9fb50fd6e8e05bcef90094d5dc1f307e6d72b8eb9998f2613d9e520ca72a15b"
+    },
+    {
+      "path": "screenshots/pair-after-library-fr-light-360-130.png",
+      "sha256": "5015d694737ce25b7efdb3ca66f5365fb9569144c2731e6d98e3e762fe5736b9"
+    },
+    {
+      "path": "screenshots/pair-after-library-fr-light-393-100.png",
+      "sha256": "e1052fa517ab815e35c70ff9105f7cd840e600d21bbb484d68547a93c2a95023"
+    },
+    {
+      "path": "screenshots/pair-after-preparation-fr-amoled-360-130.png",
+      "sha256": "93b659c1df4a9e4b4c01f4f4f4d2b0709fd7b168d8923ea3144944ef930658a4"
+    },
+    {
+      "path": "screenshots/pair-after-preparation-fr-amoled-393-100.png",
+      "sha256": "d6b535639adfed39042dad828d27e2982db4ce4b3e9f5152e600d5a0c252b2a5"
+    },
+    {
+      "path": "screenshots/pair-after-preparation-fr-dark-360-130.png",
+      "sha256": "1081c289346349792050d99a0dadcdd16d31181302937d0fb1ae72895ee3ae89"
+    },
+    {
+      "path": "screenshots/pair-after-preparation-fr-dark-393-100.png",
+      "sha256": "aa547e05aa32006b6b20ce838bd081ab2066c7d492524eb59c664bb195d7e88a"
+    },
+    {
+      "path": "screenshots/pair-after-preparation-fr-light-360-130.png",
+      "sha256": "8ba2d097889a4622abfa854a4db6ff64ca3dae287bdf438ca80f18a5e029e3d3"
+    },
+    {
+      "path": "screenshots/pair-after-preparation-fr-light-393-100.png",
+      "sha256": "e37d5c0a31eec59ec6bb2c3840de4cbe04af64a91f3bb796807fbd753e76911d"
+    },
+    {
+      "path": "screenshots/pair-after-steps-edit-fr-amoled-360-130.png",
+      "sha256": "525dc847b44b35784ebc0f4de867d63d498d2c2be52a8173370024320afe5618"
+    },
+    {
+      "path": "screenshots/pair-after-steps-edit-fr-amoled-393-100.png",
+      "sha256": "68e9d1be9a95671d982320bb618947054f6347f6d2fa62d4506a67e42d11a0ba"
+    },
+    {
+      "path": "screenshots/pair-after-steps-edit-fr-dark-360-130.png",
+      "sha256": "0428b1934ed048968721d14e286551a68f515bffd9287d3fb521812dad79900f"
+    },
+    {
+      "path": "screenshots/pair-after-steps-edit-fr-dark-393-100.png",
+      "sha256": "ec024d1fe246ed3dca9f26e2329febf3bf0b4439bf3cbce76b1f5671a635c747"
+    },
+    {
+      "path": "screenshots/pair-after-steps-edit-fr-light-360-130.png",
+      "sha256": "2867a9393778475c4d1d927f229345dabbcdd7b10da85f5d292169bdb39959fa"
+    },
+    {
+      "path": "screenshots/pair-after-steps-edit-fr-light-393-100.png",
+      "sha256": "107459e55e02d877947f03efd5ae780f7b35a5437e21728f07dd827074301e9e"
+    },
+    {
+      "path": "screenshots/pair-after-steps-read-fr-amoled-360-130.png",
+      "sha256": "548223bd331fe8617e08ace6f513b3bcf67030ede906c216a5f867c3703584ec"
+    },
+    {
+      "path": "screenshots/pair-after-steps-read-fr-amoled-393-100.png",
+      "sha256": "1f932a3943a8fa1630938cdb4ca4461245cf4ecac46d6ac759079b963e939f2c"
+    },
+    {
+      "path": "screenshots/pair-after-steps-read-fr-dark-360-130.png",
+      "sha256": "6d7eb49cab2162c639e2bc806c875f79a7612aac14ccf55494d0ce9691f826a0"
+    },
+    {
+      "path": "screenshots/pair-after-steps-read-fr-dark-393-100.png",
+      "sha256": "ddc368b6508cbedff9ae6c1624ab5ff5c2d1375eb6cf7b40db23c0918acb4f61"
+    },
+    {
+      "path": "screenshots/pair-after-steps-read-fr-light-360-130.png",
+      "sha256": "070fb99e82e9f86d19feee69b2b58c34791e30a5d6ab0d09cfe1bb75fce86931"
+    },
+    {
+      "path": "screenshots/pair-after-steps-read-fr-light-393-100.png",
+      "sha256": "9ad347471c88dde923a78281f1e585fbfb1182f93817e05a68d1c6b20e7b493d"
+    },
+    {
+      "path": "screenshots/pair-before-library-fr-amoled-360-130.png",
+      "sha256": "3b652095ba1c4b1e234ae6834d138076d611bbcc0a881285996822108771135f"
+    },
+    {
+      "path": "screenshots/pair-before-library-fr-amoled-393-100.png",
+      "sha256": "a9cb8548022b1ef184d84af3d68a108f3026a4d0a60b7171bfef504edffda8e4"
+    },
+    {
+      "path": "screenshots/pair-before-library-fr-dark-360-130.png",
+      "sha256": "249d4eb124942d38e097429136fe594ace1334f27e527812325da7b8f6be6525"
+    },
+    {
+      "path": "screenshots/pair-before-library-fr-dark-393-100.png",
+      "sha256": "abac66b697c7e7eb6e350ef5e21117aa3b693aaa30994ee67d5474fe6f0bd14f"
+    },
+    {
+      "path": "screenshots/pair-before-library-fr-light-360-130.png",
+      "sha256": "6b98f40df66bdd1c243295f82e3d0eb1c58edf394e2a8574f8ffb841113dc893"
+    },
+    {
+      "path": "screenshots/pair-before-library-fr-light-393-100.png",
+      "sha256": "c251556872e6a91b7eae54723a4161fdad1a6f0dd1ebf253e3c101e3dfefd6c8"
+    },
+    {
+      "path": "screenshots/pair-before-preparation-fr-amoled-360-130.png",
+      "sha256": "c18304a427a4ee3237c71129287a14ce408c75e2b2e7297f5d340fab253db61b"
+    },
+    {
+      "path": "screenshots/pair-before-preparation-fr-amoled-393-100.png",
+      "sha256": "84524ca27161fa1ceb10f3f1039b388ddf75ae69c93fdbffc03b4a3f6da6cc0d"
+    },
+    {
+      "path": "screenshots/pair-before-preparation-fr-dark-360-130.png",
+      "sha256": "bb24aa70ae108f30961c7d5fe73b5c6a88ffd0bcb9cc53545cf61ffc072baece"
+    },
+    {
+      "path": "screenshots/pair-before-preparation-fr-dark-393-100.png",
+      "sha256": "46d963fe0052d9cb3fb946ac6d792b0b28a6880986145111f716a93d5dbd323b"
+    },
+    {
+      "path": "screenshots/pair-before-preparation-fr-light-360-130.png",
+      "sha256": "572e5724b59ed5a65752bdd89b2627c88d2ada5b3470e3a48c267b839705f774"
+    },
+    {
+      "path": "screenshots/pair-before-preparation-fr-light-393-100.png",
+      "sha256": "e787e39fd844297e0c199fe44b11c8d3a36e6d9a8b5fc638cabbecdc75f8e09d"
+    },
+    {
+      "path": "screenshots/pair-before-steps-edit-fr-amoled-360-130.png",
+      "sha256": "9a909c19fd4f219f3449b470d59ed0e0a9461030be8daacebf31d540317082d4"
+    },
+    {
+      "path": "screenshots/pair-before-steps-edit-fr-amoled-393-100.png",
+      "sha256": "85f548949378725c0ad318749264a7b98842cb7e3436837590de6068a125eeba"
+    },
+    {
+      "path": "screenshots/pair-before-steps-edit-fr-dark-360-130.png",
+      "sha256": "21f11c245b8438b4f4ecc5a7987d7c60b3103cf08f2817dd8d6e9478f872df05"
+    },
+    {
+      "path": "screenshots/pair-before-steps-edit-fr-dark-393-100.png",
+      "sha256": "7238e9f59eb4c520b365504af169f406589285c3711cccad9da399b5af66cc9d"
+    },
+    {
+      "path": "screenshots/pair-before-steps-edit-fr-light-360-130.png",
+      "sha256": "872b6407c46c19994ffec0c8fefcecafa4805a6555fc06581e4de5a472dc0779"
+    },
+    {
+      "path": "screenshots/pair-before-steps-edit-fr-light-393-100.png",
+      "sha256": "394f2461aa340020b431e186e83a41bfb5a142e8c2540ed34b1c50385aae54a2"
+    },
+    {
+      "path": "screenshots/pair-before-steps-read-fr-amoled-360-130.png",
+      "sha256": "694c5f5079723485d357caf02d768b26c2c59fd1de43efe52619b34a89a26ac5"
+    },
+    {
+      "path": "screenshots/pair-before-steps-read-fr-amoled-393-100.png",
+      "sha256": "16f36b2faa36f48bb945ee42a3d20884faaab0c5c0ee321c17efa41f49808e13"
+    },
+    {
+      "path": "screenshots/pair-before-steps-read-fr-dark-360-130.png",
+      "sha256": "feb434af0ec0a85062131367786b349895852ee916351ff37692fa3ce983e09b"
+    },
+    {
+      "path": "screenshots/pair-before-steps-read-fr-dark-393-100.png",
+      "sha256": "674f9a2d73642bcef902e47980c6356471b9a29a2e67a1428120180abec51c86"
+    },
+    {
+      "path": "screenshots/pair-before-steps-read-fr-light-360-130.png",
+      "sha256": "bb4aa8ce3af2f24eb568d779f25f7fbfa8770309bbb17e31d01f2a319388a447"
+    },
+    {
+      "path": "screenshots/pair-before-steps-read-fr-light-393-100.png",
+      "sha256": "9c53145e2f847c88c5bdcdd12e7161ec669d9ab490fd489d21ed0731202b929c"
+    },
+    {
+      "path": "screenshots/planning-compact-move-en-amoled-360-130.png",
+      "sha256": "c4a05aa01bbc44aacfdbf25c3a78e038d23eda260c9698d41c006514549dc987"
+    },
+    {
+      "path": "screenshots/planning-compact-move-en-amoled-393-100.png",
+      "sha256": "05cad8e6cbf3ff9999f1a60d1382193b3525b83779a22109ccd7762d50cab174"
+    },
+    {
+      "path": "screenshots/planning-compact-move-en-dark-360-130.png",
+      "sha256": "630c7ced76dc50a8e20e9daf45a68c5e2c8d65498d49cb9577a227579e73a98e"
+    },
+    {
+      "path": "screenshots/planning-compact-move-en-dark-393-100.png",
+      "sha256": "b9f9a1d64d629060b3fdf2de89b664131d055a853da97157930f8a0a5d45a71e"
+    },
+    {
+      "path": "screenshots/planning-compact-move-en-light-360-130.png",
+      "sha256": "1a7e80deeab79702b71c7234e537c9ca5b0522f9efca9f43d4f13298a5c4d3a7"
+    },
+    {
+      "path": "screenshots/planning-compact-move-en-light-393-100.png",
+      "sha256": "17a190d24f16625e763cabf2d92ee32690184181b8c7c8061aa8cb0aab0d2862"
+    },
+    {
+      "path": "screenshots/planning-compact-move-fr-amoled-360-130.png",
+      "sha256": "ae58aaf7b424df5d059fb2c1712e0c009334c6e6d949f65e178972453b470f77"
+    },
+    {
+      "path": "screenshots/planning-compact-move-fr-amoled-393-100.png",
+      "sha256": "f152200328c77c2d37aa86f196576e883eb0d5efe9488b67a55461597159c83d"
+    },
+    {
+      "path": "screenshots/planning-compact-move-fr-dark-360-130.png",
+      "sha256": "7c934d1024038949932dbe435232200db85cf8804e84c9c582991eacdb457d65"
+    },
+    {
+      "path": "screenshots/planning-compact-move-fr-dark-393-100.png",
+      "sha256": "ff58f55d7587de2e4f3f207d9bc5da5eb7b25e463c9beb810ff58f408e3201bb"
+    },
+    {
+      "path": "screenshots/planning-compact-move-fr-light-360-130.png",
+      "sha256": "4c90375404cc62b84e6c5e668c8a145da8209c97dad1d3dcbdbb56a10ed3536d"
+    },
+    {
+      "path": "screenshots/planning-compact-move-fr-light-393-100.png",
+      "sha256": "f4629a2659a0a1aa0231635e43cade0746c048b147587c75dbf2e0ce3b33f400"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-en-amoled-360-130.png",
+      "sha256": "d36eb7f8c6091a26d4feac604a04a43f0f12722aca914fdfc34da33b6c3d1217"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-en-amoled-393-100.png",
+      "sha256": "1fd085dfa16f1236eab140038f212c9479926d4bff54570e74a3213a705014c6"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-en-dark-360-130.png",
+      "sha256": "d1a157ca4d91b453cf0c6e0908ce1a65d3ec918daf173b3eafdd8eed3c8ae26b"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-en-dark-393-100.png",
+      "sha256": "449bc4f34bb362a79bb111ab4fd88ae37a1cd7d517c37d8a3bb99e8fdaf701b2"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-en-light-360-130.png",
+      "sha256": "02d043bc8cde87ffc2974a16f5cf63782f9dc10b4f59f605810867d78ac86f67"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-en-light-393-100.png",
+      "sha256": "cfe515be53b0b392a9ff5ee85d52f52b42d51c2eb0784ad554e9ee73e6f20761"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-fr-amoled-360-130.png",
+      "sha256": "93b659c1df4a9e4b4c01f4f4f4d2b0709fd7b168d8923ea3144944ef930658a4"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-fr-amoled-393-100.png",
+      "sha256": "d6b535639adfed39042dad828d27e2982db4ce4b3e9f5152e600d5a0c252b2a5"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-fr-dark-360-130.png",
+      "sha256": "1081c289346349792050d99a0dadcdd16d31181302937d0fb1ae72895ee3ae89"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-fr-dark-393-100.png",
+      "sha256": "aa547e05aa32006b6b20ce838bd081ab2066c7d492524eb59c664bb195d7e88a"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-fr-light-360-130.png",
+      "sha256": "8ba2d097889a4622abfa854a4db6ff64ca3dae287bdf438ca80f18a5e029e3d3"
+    },
+    {
+      "path": "screenshots/preparation-compact-move-fr-light-393-100.png",
+      "sha256": "e37d5c0a31eec59ec6bb2c3840de4cbe04af64a91f3bb796807fbd753e76911d"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-en-amoled-360-130.png",
+      "sha256": "b3698d1488b8521174318a654e921225abe338da91d1ec5c30e792d1abf9cdf3"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-en-amoled-393-100.png",
+      "sha256": "50ce478f6072b2a2ea26492c40df48ebe1fcf21cefed932c4de30410ec6807c9"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-en-dark-360-130.png",
+      "sha256": "ec1486af8e9f0687dff82dcef874888905a6e5912e75047f65ec0404a53eaf63"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-en-dark-393-100.png",
+      "sha256": "5b6b1ac034217402bb548148803e0c1648add787169d7d9e1dccb62a9b01e85f"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-en-light-360-130.png",
+      "sha256": "e6106ce302e5aae95d5317dc9027f1a76290814d04dea736599695a02d93ee8b"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-en-light-393-100.png",
+      "sha256": "798ca211a0650902d6653058574d6626f3bcc247c26b454154ef4a06b955ec9b"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-fr-amoled-360-130.png",
+      "sha256": "9e2d5ac436e7427ff94dca7d81046033c4719bacf40f1d6522ada22c07baaebe"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-fr-amoled-393-100.png",
+      "sha256": "4ef9fb156b447831c9aaccf8ba7dc820129f4c6f845830c754d3d83edde0b31b"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-fr-dark-360-130.png",
+      "sha256": "f6be161ef427db199d4174dbcef8471f882487c418342c53ba122060fc978e76"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-fr-dark-393-100.png",
+      "sha256": "68b386aadd2f3b00b1dcb92293d814f937ad596a5b10be3ee2113c954d3ab120"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-fr-light-360-130.png",
+      "sha256": "8510585b41627b58a4004ae65f49efcaccc645f0c5be037d62f7062487a6aec7"
+    },
+    {
+      "path": "screenshots/recipe-compact-move-fr-light-393-100.png",
+      "sha256": "18095a04cd660fa83afa7cb64b62f4b3c6ce5264f29a04df028e4b7d96ad6373"
+    },
+    {
+      "path": "screenshots/round2-creation-A-393-100.png",
+      "sha256": "e38dac6f598b22b49fd77ed835c8d4c6d86e0f654795a393e9cb56f0f553d723"
+    },
+    {
+      "path": "screenshots/round2-edit-A-393-100.png",
+      "sha256": "75294cda2868155510f7f1ff017c67df782305417b781079a45111506b51d905"
+    },
+    {
+      "path": "screenshots/round2-hydration-A-393-100.png",
+      "sha256": "de4aaf93e7722079db64b88604ab6e2bba4bddfba9594a5602ba7c5c686afd92"
+    },
+    {
+      "path": "screenshots/round2-library-A-393-100.png",
+      "sha256": "1f725b44f222f985bc99231134628f85c460b64c6568c31ea091f739091cfe97"
+    },
+    {
+      "path": "screenshots/round2-menu-A-393-100.png",
+      "sha256": "840f7abe88485512ce234a7e72046248ca1cd74adc67717b6913dcc2a3023b41"
+    },
+    {
+      "path": "screenshots/round2-planning-A-360-130.png",
+      "sha256": "c77dec103ce5644ff83f47e916b98f92840132cbecc641ad64f49ba2c851880d"
+    },
+    {
+      "path": "screenshots/round2-planning-A-393-100.png",
+      "sha256": "a4f63b6de1d98b4a61cbdc2550659fd4638a37dfec9c9702eeeb129c83eef429"
+    },
+    {
+      "path": "screenshots/round2-preparation-A-360-130.png",
+      "sha256": "b4c7d92b185ebe21d1e4987c6bbdc6c6cc3858731e35871a5bbf7dc84e30ece0"
+    },
+    {
+      "path": "screenshots/round2-preparation-A-393-100.png",
+      "sha256": "80913ee8e9865b5d236bdc1f7f75e8fe7a4b1097f83db42dcb4f22152469d7e2"
+    },
+    {
+      "path": "screenshots/round2-recipe-A-360-130.png",
+      "sha256": "c77dec103ce5644ff83f47e916b98f92840132cbecc641ad64f49ba2c851880d"
+    },
+    {
+      "path": "screenshots/round2-recipe-A-393-100.png",
+      "sha256": "a4f63b6de1d98b4a61cbdc2550659fd4638a37dfec9c9702eeeb129c83eef429"
+    },
+    {
+      "path": "screenshots/round2-steps-A-393-100.png",
+      "sha256": "0c74b195591887efd8813ac25d2ed947df99d7e2d4d6f91575a6a42a01ff2818"
+    },
+    {
+      "path": "screenshots/round2-timeline-A-393-100.png",
+      "sha256": "633d6d0c03cee45b69ec1af16cbbc4b6d1e57ccc01cdf2729896873423f1cf9e"
+    },
+    {
+      "path": "screenshots/settings-compact-move-en-amoled-360-130.png",
+      "sha256": "7936d400030742569c71cfd83709f3506925cabfde3ba0ae5c36cbdb5ea73b61"
+    },
+    {
+      "path": "screenshots/settings-compact-move-en-amoled-393-100.png",
+      "sha256": "d5009a3d62933081ee06ee8fc37241b72378508f29759acc73f9ff128111efce"
+    },
+    {
+      "path": "screenshots/settings-compact-move-en-dark-360-130.png",
+      "sha256": "28bedbdbaaaa96291280835024c86b72a8524d2fba227234430980ddc28b6638"
+    },
+    {
+      "path": "screenshots/settings-compact-move-en-dark-393-100.png",
+      "sha256": "306266825e8b2aba74d837c98f49d2ad24638b2e77d2a93aa5dd7b577c491273"
+    },
+    {
+      "path": "screenshots/settings-compact-move-en-light-360-130.png",
+      "sha256": "4262c87a30bed92f229dc4b9d8ddb63b79228bd327eb2d846b0d695d884edcc4"
+    },
+    {
+      "path": "screenshots/settings-compact-move-en-light-393-100.png",
+      "sha256": "516a435a4f33021776e7e0b24d03ee94519172e6ebaffc0c989be6406d212cff"
+    },
+    {
+      "path": "screenshots/settings-compact-move-fr-amoled-360-130.png",
+      "sha256": "736395f937504b23e294079bb481fe3ae5670c08be56ba20f9e818648df496a0"
+    },
+    {
+      "path": "screenshots/settings-compact-move-fr-amoled-393-100.png",
+      "sha256": "67db75283431e33862eb64f8b96d2c50859d70ecb8ac10ea152b10c108efb319"
+    },
+    {
+      "path": "screenshots/settings-compact-move-fr-dark-360-130.png",
+      "sha256": "a454380c505a0aca1adbcc926c98d16dba12705b708f0e50b2725b477db1aee8"
+    },
+    {
+      "path": "screenshots/settings-compact-move-fr-dark-393-100.png",
+      "sha256": "13497cb933c78b913d67d034d7e86ef0c1c5ae5b28379017f6b50f99eac43bcd"
+    },
+    {
+      "path": "screenshots/settings-compact-move-fr-light-360-130.png",
+      "sha256": "5197a0e7727573ad77b40cff501b4093739f295c51324d70718c8f4d1b8010ea"
+    },
+    {
+      "path": "screenshots/settings-compact-move-fr-light-393-100.png",
+      "sha256": "1bf42f61a8ebf9758cd68119878e8763980f99a6498004e5ad61f74aeaa97332"
+    },
+    {
+      "path": "screenshots/steps-compact-move-en-amoled-360-130.png",
+      "sha256": "2c3f20062d5966d6213984f22776b1df310d351a6d54d4e301efb27d073f369a"
+    },
+    {
+      "path": "screenshots/steps-compact-move-en-amoled-393-100.png",
+      "sha256": "ebaf276aa490c2825364bcaa8bba2df91438113aa5da5e981802ad9a3f8fb0ca"
+    },
+    {
+      "path": "screenshots/steps-compact-move-en-dark-360-130.png",
+      "sha256": "9c974202b8eeeaa75d27d491d37127d97270c7c10f91648a3f7f5fbc31ceeb5a"
+    },
+    {
+      "path": "screenshots/steps-compact-move-en-dark-393-100.png",
+      "sha256": "a8495c93b71d83abad87c9410a2ba10b5c96ace4ef0ff984fecafd3165512ed6"
+    },
+    {
+      "path": "screenshots/steps-compact-move-en-light-360-130.png",
+      "sha256": "9aed831cbe54340af4750f3168323e648543e77a3719fb4958601049dc568592"
+    },
+    {
+      "path": "screenshots/steps-compact-move-en-light-393-100.png",
+      "sha256": "9f034a4358aebb5fe1f4897335a9c3f9abb4ea6caee916daa3a4a8b3dc72d7db"
+    },
+    {
+      "path": "screenshots/steps-compact-move-fr-amoled-360-130.png",
+      "sha256": "525dc847b44b35784ebc0f4de867d63d498d2c2be52a8173370024320afe5618"
+    },
+    {
+      "path": "screenshots/steps-compact-move-fr-amoled-393-100.png",
+      "sha256": "68e9d1be9a95671d982320bb618947054f6347f6d2fa62d4506a67e42d11a0ba"
+    },
+    {
+      "path": "screenshots/steps-compact-move-fr-dark-360-130.png",
+      "sha256": "0428b1934ed048968721d14e286551a68f515bffd9287d3fb521812dad79900f"
+    },
+    {
+      "path": "screenshots/steps-compact-move-fr-dark-393-100.png",
+      "sha256": "ec024d1fe246ed3dca9f26e2329febf3bf0b4439bf3cbce76b1f5671a635c747"
+    },
+    {
+      "path": "screenshots/steps-compact-move-fr-light-360-130.png",
+      "sha256": "2867a9393778475c4d1d927f229345dabbcdd7b10da85f5d292169bdb39959fa"
+    },
+    {
+      "path": "screenshots/steps-compact-move-fr-light-393-100.png",
+      "sha256": "107459e55e02d877947f03efd5ae780f7b35a5437e21728f07dd827074301e9e"
+    },
+    {
+      "path": "screenshots/steps-outline-move-en-amoled-360-130.png",
+      "sha256": "532a9f9c089428658a11b1b76b41984422c31f83bdaa8149491e659ae07321d5"
+    },
+    {
+      "path": "screenshots/steps-outline-move-en-amoled-393-100.png",
+      "sha256": "86d78576d66f5ad8cc81f13c6df3896e9b8d7d6d3ae644757fd4287e541108d2"
+    },
+    {
+      "path": "screenshots/steps-outline-move-en-dark-360-130.png",
+      "sha256": "b578aca21abb95825d9e53d2153be75d6081be98480e68fc4c37aef1d22e0bb5"
+    },
+    {
+      "path": "screenshots/steps-outline-move-en-dark-393-100.png",
+      "sha256": "bef89dadebfbd32fa6b383e10ee2ddf21551dec1836c164f6d61ff7cbfa1c8dd"
+    },
+    {
+      "path": "screenshots/steps-outline-move-en-light-360-130.png",
+      "sha256": "cd55819d53de1c1c5f41fff42bc59fe9328d50da62a707f9f2f4bebedf80c7de"
+    },
+    {
+      "path": "screenshots/steps-outline-move-en-light-393-100.png",
+      "sha256": "b3a4f15fb321c900f8ca20730009a44760a924a3a23115308703474d9c3f920f"
+    },
+    {
+      "path": "screenshots/steps-rail-move-en-amoled-360-130.png",
+      "sha256": "519cd5e71931ca2c6bdafff33e2f9250350494dad6e20f5b4231c4388072660a"
+    },
+    {
+      "path": "screenshots/steps-rail-move-en-amoled-393-100.png",
+      "sha256": "8dc7c8eda9fe9095a6a9fcc85b71ea47d3b25c3efcf586ca041c3ed873d8b438"
+    },
+    {
+      "path": "screenshots/steps-rail-move-en-dark-360-130.png",
+      "sha256": "a2a8732b5919559e60b6f089e54d7e178dbfcc01e98e05c228b3df69df26e058"
+    },
+    {
+      "path": "screenshots/steps-rail-move-en-dark-393-100.png",
+      "sha256": "5189bb9d5dd3df29a46ed3dc83b08771f96c2e75b71990123ce89139302f59ad"
+    },
+    {
+      "path": "screenshots/steps-rail-move-en-light-360-130.png",
+      "sha256": "285ed68796729276ef9507935b00ca879af4085008db4c27e963da287700a02f"
+    },
+    {
+      "path": "screenshots/steps-rail-move-en-light-393-100.png",
+      "sha256": "4d1e89b7ccc4b10b4563d85fc150495ff0dc0917d6d2775c1f983148c593214b"
+    },
+    {
+      "path": "screenshots/timeline-compact-move-fr-amoled-393-100.png",
+      "sha256": "dc75e3c9c9138cefe3b0fd07ce0986ef56bcf1f5fb0a920e6311dd2cff0e1147"
+    },
+    {
+      "path": "screenshots/timeline-compact-move-fr-dark-393-100.png",
+      "sha256": "b1514323ca9cb7d0df5fa6e6c366156e22230e1ea013de9daaee943a8754c3ed"
+    },
+    {
+      "path": "screenshots/timeline-compact-move-fr-light-393-100.png",
+      "sha256": "9f4d216c1a5573fa89e1b083cbd7850f171a2af5df348614ee7250206cd16653"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Flourprint · interactive review</title>
+    <script>
+      (function () {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var urlTheme = params.get('theme');
+          var validThemes = ['light', 'dark', 'amoled'];
+          if (urlTheme && validThemes.indexOf(urlTheme) !== -1) {
+            document.documentElement.dataset.theme = urlTheme;
+            return;
+          }
+          var raw = localStorage.getItem('flourprint.mockup.03.devicePreferences');
+          var themePref = 'system';
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.theme) themePref = parsed.theme;
+          }
+          if (validThemes.indexOf(themePref) !== -1) {
+            document.documentElement.dataset.theme = themePref;
+          } else {
+            var isDark =
+              window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/mockup-CX-baoIh.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/mockup-Mb8cvQZ5.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

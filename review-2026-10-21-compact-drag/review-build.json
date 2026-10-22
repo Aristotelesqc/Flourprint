@@ -1,0 +1,12 @@
+{
+  "revision": "0d63eb40b656aa458124607a9690914d60553281",
+  "sourceSha256": "ef5e71bf8e357eb22cd931256341dc7475cc6ea01cecc68ee7347939fd03764e",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · amber-barley · local"
+}
