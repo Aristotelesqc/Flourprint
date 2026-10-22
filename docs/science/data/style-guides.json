@@ -215,6 +215,7 @@
               "dependsOn": [],
               "schedule": "asap",
               "plannedDurationS": 50400,
+              "subject": { "kind": "component", "id": "poolish" },
               "conditions": {
                 "temperatureC": 21
               }
@@ -731,6 +732,7 @@
               "dependsOn": [],
               "schedule": "asap",
               "plannedDurationS": 57600,
+              "subject": { "kind": "component", "id": "biga" },
               "conditions": {
                 "temperatureC": 21
               }
@@ -2785,6 +2787,7 @@
               "dependsOn": [],
               "schedule": "alap",
               "plannedDurationS": 240,
+              "subject": { "kind": "component", "id": "tangzhong" },
               "label": "Cook 14 g flour, 43 g water and 43 g milk on low heat until thickened"
             },
             {
@@ -2793,6 +2796,7 @@
               "dependsOn": ["tangzhong"],
               "schedule": "asap",
               "plannedDurationS": 3600,
+              "subject": { "kind": "component", "id": "tangzhong" },
               "label": "Cool tangzhong to lukewarm before mixing; 60 min is an editable editorial allowance"
             },
             {
