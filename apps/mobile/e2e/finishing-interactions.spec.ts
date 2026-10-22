@@ -27,23 +27,20 @@ for (const theme of ['light', 'dark', 'amoled'] as const) {
     const footer = routed(page).locator('ion-footer');
     for (const fontSize of [16, 20]) {
       await page.addStyleTag({ content: `html, body { font-size: ${fontSize}px !important; }` });
-      await content.evaluate(async (host) => {
-        const scroll = await (
-          host as HTMLElement & { getScrollElement(): Promise<HTMLElement> }
-        ).getScrollElement();
-        scroll.scrollTop = scroll.scrollHeight;
-      });
-      await expect
-        .poll(async () => {
-          const [end, bar] = await Promise.all([result.boundingBox(), footer.boundingBox()]);
-          return end && bar ? bar.y - (end.y + end.height) : -1;
-        })
-        .toBeGreaterThanOrEqual(16);
-      const [end, bar] = await Promise.all([result.boundingBox(), footer.boundingBox()]);
-      expect(end).not.toBeNull();
-      expect(bar).not.toBeNull();
-      if (!end || !bar) throw new Error('Result and primary footer must have rendered bounds');
-      expect(bar.y - (end.y + end.height)).toBeLessThanOrEqual(96);
+      const gap = async () => {
+        await content.evaluate(async (host) => {
+          const scroll = await (
+            host as HTMLElement & { getScrollElement(): Promise<HTMLElement> }
+          ).getScrollElement();
+          scroll.scrollTop = scroll.scrollHeight;
+        });
+        const [end, bar] = await Promise.all([result.boundingBox(), footer.boundingBox()]);
+        if (!end || !bar) throw new Error('Result and primary footer must have rendered bounds');
+        return bar.y - (end.y + end.height);
+      };
+      // Re-scroll on every attempt: layout can still settle after the first scroll.
+      await expect.poll(gap, { timeout: 10_000 }).toBeGreaterThanOrEqual(16);
+      await expect.poll(gap).toBeLessThanOrEqual(96);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         360,
       );

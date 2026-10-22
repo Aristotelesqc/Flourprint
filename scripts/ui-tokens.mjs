@@ -15,7 +15,7 @@ const format = async (text, filepath) =>
 
 /** Replaces the front matter from `colors:` up to `components:` with the generated sections. */
 const withTokens = (design) => {
-  const lines = design.split('\n');
+  const lines = design.replace(/\r\n?/g, '\n').split('\n');
   const end = lines.indexOf('---', 1);
   const from = lines.indexOf('colors:');
   const to = lines.indexOf('components:');
@@ -32,8 +32,8 @@ const targets = [
 
 let stale = 0;
 for (const { path, build } of targets) {
-  const current = await readFile(path, 'utf8').catch(() => '');
-  const expected = await format(await build(current), path);
+  const current = (await readFile(path, 'utf8').catch(() => '')).replace(/\r\n?/g, '\n');
+  const expected = (await format(await build(current), path)).replace(/\r\n?/g, '\n');
   if (current === expected) continue;
   if (check) {
     stale += 1;
