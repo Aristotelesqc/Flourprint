@@ -147,6 +147,28 @@ test.describe('owner-selected Compact: travelling insertion space', () => {
     }
   }
 
+  test('cancel cleanup does not steal focus from a subsequent deliberate pointer action', async ({
+    page,
+    context,
+  }) => {
+    await page.goto(url({ mode: 'edit' }));
+    const { cdp } = await lift(context, page, 'move');
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+    await expect(floating(page)).toHaveCount(0);
+    const name = page.getByTestId('recipe-name');
+    await name.click();
+    await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          let remaining = 6;
+          const next = () => (--remaining === 0 ? resolve(undefined) : requestAnimationFrame(next));
+          requestAnimationFrame(next);
+        }),
+    );
+    await expect(name).toBeFocused();
+    await cdp.detach();
+  });
+
   test('hold activation also previews space; moving outside never commits the last valid preview', async ({
     page,
     context,

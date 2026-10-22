@@ -346,6 +346,7 @@ export const SortableList: React.FC<SortableListProps> = ({
   const gestureActiveRef = useRef(false);
   const pendingFocusIdRef = useRef<string | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const focusRafRef = useRef<number | null>(null);
 
   const isOsReduced = useReducedMotion();
   const stepDragMotion = useMotion('fp.motion.step-drag') as KeyframesMotion | undefined;
@@ -380,22 +381,65 @@ export const SortableList: React.FC<SortableListProps> = ({
     }
   }, []);
 
-  const focusHandleForId = useCallback((id: string) => {
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        const handle = handleRegistryRef.current.get(id);
-        if (handle?.isConnected) handle.focus({ preventScroll: true });
-      }),
-    );
+  const cancelFocusRestore = useCallback(() => {
+    if (focusRafRef.current !== null) {
+      cancelAnimationFrame(focusRafRef.current);
+      focusRafRef.current = null;
+    }
   }, []);
+
+  const focusHandleForId = useCallback(
+    (id: string) => {
+      cancelFocusRestore();
+      let attempts = 0;
+      let confirmed = false;
+      const tick = () => {
+        focusRafRef.current = null;
+        if (gestureActiveRef.current || attempts++ >= 24) return;
+        const active = typeof document !== 'undefined' ? document.activeElement : null;
+        if (
+          active instanceof HTMLElement &&
+          active !== document.body &&
+          active !== document.documentElement &&
+          (Boolean(
+            active.closest('[role="dialog"],[role="alertdialog"],[aria-modal="true"],dialog'),
+          ) ||
+            (containerRef.current !== null && !containerRef.current.contains(active)))
+        ) {
+          return;
+        }
+        const regHandle = handleRegistryRef.current.get(id);
+        const dndHandle = managerRef.current?.registry.draggables.get(id)?.handle;
+        const handle = regHandle?.isConnected
+          ? regHandle
+          : dndHandle instanceof HTMLElement && dndHandle.isConnected
+            ? dndHandle
+            : null;
+        if (
+          handle &&
+          (!containerRef.current || containerRef.current.contains(handle)) &&
+          !handle.hasAttribute('disabled') &&
+          !handle.closest('.is-origin-placeholder,[inert],[aria-hidden="true"]')
+        ) {
+          if (confirmed && active === handle) return;
+          handle.focus({ preventScroll: true });
+          confirmed = typeof document !== 'undefined' && document.activeElement === handle;
+        }
+        focusRafRef.current = requestAnimationFrame(tick);
+      };
+      focusRafRef.current = requestAnimationFrame(tick);
+    },
+    [cancelFocusRestore],
+  );
 
   const settleOverlay = useCallback(
     (idToFocus: string | null) => {
+      const targetId = idToFocus ?? pendingFocusIdRef.current;
       clearSettleTimer();
       pendingFocusIdRef.current = null;
       setOverlayId(null);
       setOriginSize(null);
-      if (idToFocus) focusHandleForId(idToFocus);
+      if (targetId) focusHandleForId(targetId);
     },
     [clearSettleTimer, focusHandleForId],
   );
@@ -405,10 +449,9 @@ export const SortableList: React.FC<SortableListProps> = ({
     return ({ feedbackElement, placeholder, element }) =>
       new Promise<void>((resolve) => {
         const targetEl = placeholder ?? element;
-        const idToFocus = pendingFocusIdRef.current;
         if (!(feedbackElement instanceof HTMLElement) || !targetEl) {
-          settleOverlay(idToFocus);
           resolve();
+          settleOverlay(pendingFocusIdRef.current);
           return;
         }
         const fromRect = feedbackElement.getBoundingClientRect();
@@ -423,8 +466,8 @@ export const SortableList: React.FC<SortableListProps> = ({
             easing,
             reduced: false,
             onFinish: () => {
-              settleOverlay(idToFocus);
               resolve();
+              settleOverlay(pendingFocusIdRef.current);
             },
           },
         );
@@ -481,6 +524,7 @@ export const SortableList: React.FC<SortableListProps> = ({
   useEffect(() => {
     return () => {
       clearSettleTimer();
+      cancelFocusRestore();
       if (gestureActiveRef.current) {
         gestureActiveRef.current = false;
         activeGlobalCancelFn = null;
@@ -488,13 +532,14 @@ export const SortableList: React.FC<SortableListProps> = ({
         snapshotRef.current = [];
       }
     };
-  }, [clearSettleTimer]);
+  }, [clearSettleTimer, cancelFocusRestore]);
 
   const handleDragStart: NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragStart']> =
     useCallback(
       (event, manager) => {
         if (!event.operation.source) return;
         clearSettleTimer();
+        cancelFocusRestore();
 
         if (containerRef.current) {
           setManualReducedFlag(isReducedElement(containerRef.current));
@@ -523,6 +568,7 @@ export const SortableList: React.FC<SortableListProps> = ({
         );
         lastPointerRef.current = startPt;
         gestureActiveRef.current = true;
+        pendingFocusIdRef.current = id;
         setActiveId(id);
         setOverlayId(id);
 
@@ -536,7 +582,7 @@ export const SortableList: React.FC<SortableListProps> = ({
 
         onDragStart?.(id);
       },
-      [clearSettleTimer, onDragStart],
+      [clearSettleTimer, cancelFocusRestore, onDragStart],
     );
 
   const handleDragMove: NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragMove']> =
