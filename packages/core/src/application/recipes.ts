@@ -3,6 +3,7 @@ import {
   projectProcess,
   validateRecipe,
   type RecipeError,
+  type Instant,
   type Result,
   type Revision,
 } from '../domain/index.js';
@@ -26,3 +27,22 @@ export const saveRevision = async (
   if (!projected.ok) return err(projected.error);
   return repository.saveRevision(input);
 };
+
+/** Restores a saved revision as the new head (persistence.md, Recipe history). */
+export const restoreRevision = (
+  repository: RecipeRepository,
+  recipeId: string,
+  version: number,
+  expectedHead: number,
+  createdAt: Instant,
+) => repository.restoreRevision(recipeId, version, expectedHead, createdAt);
+
+/** Promotes a saved revision to a reference version (persistence.md, Recipe history). */
+export const promoteReferenceVersion = (
+  repository: RecipeRepository,
+  recipeId: string,
+  version: number,
+  name: string | undefined,
+  expectedHead: number,
+  createdAt: Instant,
+) => repository.promoteReferenceVersion(recipeId, version, name, expectedHead, createdAt);

@@ -37,7 +37,7 @@ Rules, all in one transaction (`BEGIN IMMEDIATE`) and all stating `expectedHead`
 
 - **Save** (the former "Save version") appends revision `expectedHead + 1`. If the checked formula
   and process are semantically identical to the head's, nothing is appended, nothing is written and
-  the current head is returned (a no-op; `note` and timestamps do not count). A different current head
+  the current head is returned (a no-op; `note` and timestamps do not count). A no-op Save still applies a changed recipe name (no revision is appended). A no-op Save from a draft still deletes that draft, in the same transaction. A different current head
   returns `HeadConflict { currentHead }`; nothing is written.
 - **Restore** `restoreRevision(recipeId, version, expectedHead)` appends revision `expectedHead + 1`
   whose formula, process and note copy revision `version`, together. Nothing is rewritten or
@@ -68,8 +68,8 @@ Compatibility:
   unique `(recipe_id, version)`, foreign key to `revisions`) and the new optional field above. This
   requires one database migration step, and one `schemaVersion` increment for the full backup and
   the recipe export (older readers would silently drop the field, so they must refuse). The
-  revision record itself is unchanged. Exact numbers are set when the contract change is
-  implemented (`flourprint-contract-change`).
+  revision record itself is unchanged. Implemented as `CONTRACT_VERSION` `0.17.0`, backup and recipe export `schemaVersion` 2
+  (`EXPORT_SCHEMA_VERSION`; revision documents stay at 1) and SQL migration 8.
 
 Worked examples:
 
