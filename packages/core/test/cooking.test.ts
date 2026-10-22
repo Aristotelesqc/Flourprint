@@ -74,6 +74,12 @@ describe('outcomeChoiceRequired', () => {
   it('asks only for a cooked intent with no cooking step completed', () => {
     expect(outcomeChoiceRequired(baked, (id) => id === 'mix')).toBe(true);
     expect(outcomeChoiceRequired(baked, () => true)).toBe(false);
+    const mixed: Process = {
+      steps: [step('mix', 'mix'), step('bake', 'bake', ['mix'])],
+      intendedOutcome: { result: 'cookedAndDough', dough: 'frozen' },
+    };
+    expect(outcomeChoiceRequired(mixed, (id) => id === 'mix')).toBe(true);
+    expect(outcomeChoiceRequired(mixed, () => true)).toBe(false);
     // A dough-only recipe finishes with its intended outcome, nothing cooked.
     expect(outcomeChoiceRequired(frozen, () => false)).toBe(false);
     expect(outcomeChoiceRequired({ steps: [step('mix', 'mix')] }, () => false)).toBe(false);

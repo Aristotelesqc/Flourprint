@@ -84,11 +84,11 @@ interface PreparationOutcome {
     done (a dough kept, frozen, given or sold; part cooked, part kept);
   - without one and **at least one cooking step completed**, the domain records the intended
     outcome of the session's snapshot with `outcomeSource: 'recipe'`: finishing asks no question;
-  - without one, **no cooking step completed**, and an intended outcome of `cooked`, nothing
+  - without one, **no cooking step completed**, and an intended outcome that includes a cooked result (`cooked` or `cookedAndDough`), nothing
     says the intended product was reached, so the command is refused with `OutcomeRequired { reason:
 'no_cooking_step_completed' }` and nothing is recorded. The baker chooses an outcome, or
     uses `AbandonBake` for a failed preparation;
-  - without one, no cooking step completed, and an intended outcome that is not `cooked` (a
+  - without one, no cooking step completed, and an intended outcome that is a dough only (a
     recipe that is always a frozen dough, or a process with no cooking step and no stated
     intent): the intended outcome is recorded with `outcomeSource: 'recipe'` as usual.
 
