@@ -28,7 +28,11 @@ reduced motion, and draft/Undo/Save behaviour through actual interactions.
 
 ## Version and maintenance policy
 
-`@dnd-kit/react` is pinned to **0.5.1**, published 2026-10-15. Its published React and React DOM
+`@dnd-kit/react` is pinned to **0.5.1**, published 2026-10-15. `@dnd-kit/dom` is also pinned to
+**0.5.1** as a direct dependency: its supported `PointerActivationConstraints` API supplies the
+movement/hold options and is not re-exported by the React entry point. This declares a package
+already present in the React dependency graph; it adds no further resolved package.
+The React package's published React and React DOM
 peer ranges explicitly include `^19.0.0`; Flourprint uses React 19.3.0. The MIT licence permits
 local patches or a fork with the required notices retained. No maintenance guarantee is assumed.
 
