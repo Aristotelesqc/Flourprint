@@ -68,8 +68,8 @@ Compatibility:
   unique `(recipe_id, version)`, foreign key to `revisions`) and the new optional field above. This
   requires one database migration step, and one `schemaVersion` increment for the full backup and
   the recipe export (older readers would silently drop the field, so they must refuse). The
-  revision record itself is unchanged. Exact numbers are set when the contract change is
-  implemented (`flourprint-contract-change`).
+  revision record itself is unchanged. Implemented as `CONTRACT_VERSION` `0.17.0`, backup and recipe export `schemaVersion` 2
+  (`EXPORT_SCHEMA_VERSION`; revision documents stay at 1) and SQL migration 8.
 
 Worked examples:
 

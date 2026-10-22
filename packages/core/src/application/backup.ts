@@ -1,6 +1,6 @@
 import {
   bakeSummary,
-  DOCUMENT_SCHEMA_VERSION,
+  EXPORT_SCHEMA_VERSION,
   domainError,
   err,
   ok,
@@ -17,6 +17,7 @@ import {
   type Instant,
   type RecipeFamily,
   type Result,
+  type ReferenceVersion,
   type Revision,
 } from '../domain/index.js';
 import { checkBakeLog } from './backup-events.js';
@@ -99,12 +100,14 @@ export const recordedRecipes = async (
       if (!revision.value) return err(invalid(`missing revision ${recipe.id}@${version}`));
       revisions.push(revision.value);
     }
+    const referenceVersions = await repository.listReferenceVersions(recipe.id);
     recipes.push({
       id: recipe.id,
       name: recipe.name,
       ...(recipe.familyId === undefined ? {} : { familyId: recipe.familyId }),
       ...(recipe.trashedAt === undefined ? {} : { trashedAt: recipe.trashedAt }),
       revisions,
+      ...(referenceVersions.length === 0 ? {} : { referenceVersions }),
     });
   }
   return ok(recipes);
@@ -124,7 +127,7 @@ export const exportBackup = async (
   }
   return ok({
     kind: 'flourprint-backup',
-    schemaVersion: DOCUMENT_SCHEMA_VERSION,
+    schemaVersion: EXPORT_SCHEMA_VERSION,
     exportedAt,
     recipes: recipes.value,
     families,
@@ -189,6 +192,45 @@ const decodeEvent = (bakeId: string, index: number, value: unknown): BakeEvent =
 };
 
 /**
+ * Decodes the reference versions of a recipe (absent means none): numbered 1..n, each pointing at
+ * an existing revision, at most one per revision (persistence.md, Recipe history).
+ */
+const decodeReferenceVersions = (
+  recipeId: string,
+  revisionCount: number,
+  input: unknown,
+): ReferenceVersion[] => {
+  if (input === undefined) return [];
+  if (!Array.isArray(input)) return refuse(`recipe ${recipeId} referenceVersions must be a list`);
+  const list: ReferenceVersion[] = [];
+  for (const [i, item] of (input as unknown[]).entries()) {
+    const where = `reference version ${i + 1} of ${recipeId}`;
+    if (!isObject(item)) return refuse(`${where} is not an object`);
+    if (item.number !== i + 1) return refuse(`${where} is not numbered 1..n`);
+    if (
+      !isCount(item.version) ||
+      item.version < 1 ||
+      item.version > revisionCount ||
+      list.some((r) => r.version === item.version)
+    ) {
+      return refuse(`${where} points to a missing or already promoted revision`);
+    }
+    if (item.name !== undefined && typeof item.name !== 'string') {
+      return refuse(`${where} has an invalid name`);
+    }
+    if (!isInstant(item.createdAt)) return refuse(`${where} has an invalid createdAt`);
+    list.push({
+      recipeId,
+      number: i + 1,
+      version: item.version,
+      ...(item.name === undefined ? {} : { name: item.name }),
+      createdAt: item.createdAt,
+    });
+  }
+  return list;
+};
+
+/**
  * Decodes recipes with their revisions and the families they refer to (backups and recipe
  * files). Throws `Refused` on the first problem.
  */
@@ -231,12 +273,19 @@ export const decodeRecipes = (
     if (familyId !== undefined && !families.some((f) => f.id === familyId)) {
       return refuse(`recipe ${id} refers to a missing family`);
     }
+    const revisions = (recipe.revisions as unknown[]).map((r, i) => decodeRevision(id, i, r));
+    const referenceVersions = decodeReferenceVersions(
+      id,
+      revisions.length,
+      recipe.referenceVersions,
+    );
     recipes.push({
       id,
       name: recipe.name,
       ...(typeof familyId === 'string' ? { familyId } : {}),
       ...(trashedAt === undefined ? {} : { trashedAt }),
-      revisions: (recipe.revisions as unknown[]).map((r, i) => decodeRevision(id, i, r)),
+      revisions,
+      ...(referenceVersions.length === 0 ? {} : { referenceVersions }),
     });
   }
   for (const family of families) {
@@ -314,7 +363,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     }
     const { schemaVersion } = input;
     if (!isCount(schemaVersion)) return err(invalid('missing schema version'));
-    if (schemaVersion > DOCUMENT_SCHEMA_VERSION) {
+    if (schemaVersion > EXPORT_SCHEMA_VERSION) {
       return err(
         domainError(
           'UnsupportedDocumentVersion',

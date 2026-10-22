@@ -368,6 +368,186 @@ export const recipeRepositoryChecks: readonly StoreCheck<RecipeRepository>[] = [
     },
   },
   {
+    name: 'history 1-2: ten different saves make ten revisions and no reference version; an unchanged save is a no-op',
+    run: async (make) => {
+      const repository = await make();
+      for (let head = 0; head < 10; head++) {
+        equal(code(await save(repository, head, 60 + head)), 'ok', `save ${head + 1}`);
+      }
+      equal((await repository.getRecipe('pullman'))?.headVersion, 10, 'head');
+      equal((await repository.listRecipes()).length, 1, 'recipes');
+      equal((await repository.listReferenceVersions('pullman')).length, 0, 'no reference version');
+      // Same formula and process as the head, other note and time: nothing is written.
+      const again = await repository.saveRevision({
+        recipeId: 'pullman',
+        name: 'Pullman',
+        expectedHead: 10,
+        formula: formula(69),
+        process,
+        createdAt: '2026-10-08T08:00:00.000Z' as Instant,
+        note: 'other note',
+      });
+      equal(again.ok && again.value.version, 10, 'current head returned');
+      equal(again.ok && again.value.note, 'water 69', 'head note kept');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 10, 'head stays 10');
+      const eleventh = await repository.getRevision('pullman', 11);
+      equal(eleventh.ok && eleventh.value, undefined, 'no revision 11');
+    },
+  },
+  {
+    name: 'history 3: restore appends a copy of an old revision and rewrites nothing',
+    run: async (make) => {
+      const repository = await make();
+      for (let head = 0; head < 7; head++) await save(repository, head, 60 + head);
+      const before = await repository.getRevision('pullman', 5);
+      const restored = await repository.restoreRevision(
+        'pullman',
+        3,
+        7,
+        '2026-10-09T08:00:00.000Z' as Instant,
+      );
+      equal(restored.ok && restored.value.version, 8, 'revision 8');
+      equal(restored.ok && restored.value.formula, formula(62), 'formula copied');
+      equal(restored.ok && restored.value.note, 'water 62', 'note copied');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 8, 'head');
+      equal(await repository.getRevision('pullman', 5), before, 'revision 5 untouched');
+      const third = await repository.getRevision('pullman', 3);
+      equal(third.ok && third.value?.formula, formula(62), 'revision 3 untouched');
+      for (let v = 1; v <= 7; v++) {
+        const r = await repository.getRevision('pullman', v);
+        equal(r.ok && r.value?.formula, formula(59 + v), `revision ${v} intact`);
+      }
+      // Content identical to the head (8 copies 3): a no-op.
+      const noop = await repository.restoreRevision(
+        'pullman',
+        3,
+        8,
+        '2026-10-09T09:00:00.000Z' as Instant,
+      );
+      equal(noop.ok && noop.value.version, 8, 'no-op returns head');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 8, 'head stays 8');
+      equal(
+        code(await repository.restoreRevision('pullman', 99, 8, at)),
+        'UnknownRevision',
+        'unknown version',
+      );
+    },
+  },
+  {
+    name: 'history 4: promote numbers reference versions apart from revisions and refuses a second promotion',
+    run: async (make) => {
+      const repository = await make();
+      for (let head = 0; head < 8; head++) await save(repository, head, 60 + head);
+      const promoted = await repository.promoteReferenceVersion('pullman', 5, 'Winter loaf', 8, at);
+      equal(
+        promoted.ok && promoted.value,
+        { recipeId: 'pullman', number: 1, version: 5, name: 'Winter loaf', createdAt: at },
+        'reference version 1',
+      );
+      equal((await repository.getRecipe('pullman'))?.headVersion, 8, 'promote changes no head');
+      equal(code(await save(repository, 8, 80)), 'ok', 'revision 9');
+      equal(code(await save(repository, 9, 81)), 'ok', 'revision 10');
+      equal(
+        (await repository.listReferenceVersions('pullman')).map((r) => [r.number, r.version]),
+        [[1, 5]],
+        'still points to 5',
+      );
+      const again = await repository.promoteReferenceVersion('pullman', 5, undefined, 10, at);
+      equal(code(again), 'AlreadyReferenced', 'second promotion');
+      equal(
+        !again.ok && again.error.details,
+        { recipeId: 'pullman', version: 5, number: 1 },
+        'number',
+      );
+      const second = await repository.promoteReferenceVersion('pullman', 9, undefined, 10, at);
+      equal(second.ok && second.value.number, 2, 'own sequence');
+      equal(second.ok && 'name' in second.value, false, 'no name');
+      equal(
+        code(await repository.promoteReferenceVersion('pullman', 99, undefined, 10, at)),
+        'UnknownRevision',
+        'unknown version',
+      );
+    },
+  },
+  {
+    name: 'history 5: Save, Restore and Promote on a stale head conflict and write nothing',
+    run: async (make) => {
+      const repository = await make();
+      for (let head = 0; head < 8; head++) await save(repository, head, 60 + head);
+      await save(repository, 8, 90); // Device A: head 9
+      const conflict = { recipeId: 'pullman', currentHead: 9 };
+      const saved = await save(repository, 8, 91);
+      equal(code(saved), 'HeadConflict', 'save');
+      equal(!saved.ok && saved.error.details, conflict, 'save currentHead');
+      const restored = await repository.restoreRevision('pullman', 2, 8, at);
+      equal(code(restored), 'HeadConflict', 'restore');
+      equal(!restored.ok && restored.error.details, conflict, 'restore currentHead');
+      const promoted = await repository.promoteReferenceVersion('pullman', 2, undefined, 8, at);
+      equal(code(promoted), 'HeadConflict', 'promote');
+      equal(!promoted.ok && promoted.error.details, conflict, 'promote currentHead');
+      equal((await repository.getRecipe('pullman'))?.headVersion, 9, 'head');
+      equal((await repository.listReferenceVersions('pullman')).length, 0, 'nothing promoted');
+    },
+  },
+  {
+    name: 'history 6: restore leaves the open draft alone and its Save conflicts',
+    run: async (make) => {
+      const repository = await make();
+      for (let head = 0; head < 8; head++) await save(repository, head, 60 + head);
+      const open: Draft = {
+        ...draft('d', '2026-10-09T08:00:00.000Z', 75),
+        origin: { kind: 'revision', recipeId: 'pullman', baseVersion: 8 },
+      };
+      await repository.saveDraft(open);
+      equal(
+        code(await repository.restoreRevision('pullman', 3, 8, at)),
+        'ok',
+        'restore gives head 9',
+      );
+      equal(await repository.getDraft('d'), open, 'draft unchanged');
+      const stale = await repository.saveRevision({
+        recipeId: 'pullman',
+        name: 'Pullman',
+        expectedHead: 8,
+        formula: open.formula,
+        process: open.process,
+        createdAt: at,
+        fromDraft: 'd',
+      });
+      equal(code(stale), 'HeadConflict', 'draft save');
+      equal((await repository.getDraft('d'))?.id, 'd', 'draft kept');
+    },
+  },
+  {
+    name: 'history: a trashed recipe refuses restore and promote; deleting removes its reference versions',
+    run: async (make) => {
+      const repository = await make();
+      await save(repository, 0);
+      await save(repository, 1, 72);
+      await repository.promoteReferenceVersion('pullman', 1, 'A', 2, at);
+      await repository.trashRecipe('pullman', at);
+      equal(
+        code(await repository.restoreRevision('pullman', 1, 2, at)),
+        'RecipeTrashed',
+        'restore',
+      );
+      equal(
+        code(await repository.promoteReferenceVersion('pullman', 2, undefined, 2, at)),
+        'RecipeTrashed',
+        'promote',
+      );
+      equal(
+        code(await repository.promoteReferenceVersion('ghost', 1, undefined, 0, at)),
+        'NotFound',
+        'unknown recipe',
+      );
+      await repository.deleteRecipe('pullman');
+      equal((await repository.listReferenceVersions('pullman')).length, 0, 'deleted with recipe');
+      await save(repository, 0);
+      equal((await repository.listReferenceVersions('pullman')).length, 0, 'none inherited');
+    },
+  },
+  {
     name: 'groups variants: the most recent is shown unless one is pinned',
     run: async (make) => {
       const repository = await make();

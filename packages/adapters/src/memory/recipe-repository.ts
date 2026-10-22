@@ -1,6 +1,7 @@
 import type {
   FamilyError,
   RecipeImportOutcome,
+  RecipeHistoryError,
   RecipeImportPlan,
   RecipeRepository,
   RecipeStoreError,
@@ -13,9 +14,11 @@ import {
   domainError,
   err,
   ok,
+  sameRecipeContent,
   type Instant,
   type Recipe,
   type RecipeFamily,
+  type ReferenceVersion,
   type Result,
   type Revision,
 } from '@flourprint/core/domain';
@@ -36,6 +39,7 @@ export class MemoryRecipeRepository implements RecipeRepository {
   readonly #revisions = new Map<string, Revision>();
   readonly #families = new Map<string, RecipeFamily>();
   readonly #drafts = new Map<string, Draft>();
+  readonly #references = new Map<string, ReferenceVersion[]>();
 
   async saveRevision(input: SaveRevisionInput): Promise<Result<Revision, RecipeStoreError>> {
     const current = this.#recipes.get(input.recipeId);
@@ -62,6 +66,8 @@ export class MemoryRecipeRepository implements RecipeRepository {
         }),
       );
     }
+    const head = this.#revisions.get(`${input.recipeId}@${currentHead}`);
+    if (head !== undefined && sameRecipeContent(head, input)) return ok(copy(head));
     const revision: Revision = {
       recipeId: input.recipeId,
       version: currentHead + 1,
@@ -73,6 +79,97 @@ export class MemoryRecipeRepository implements RecipeRepository {
     this.#writeRevision(input.name, revision);
     if (input.fromDraft !== undefined) this.#drafts.delete(input.fromDraft);
     return ok(revision);
+  }
+
+  async restoreRevision(
+    recipeId: string,
+    version: number,
+    expectedHead: number,
+    createdAt: Instant,
+  ): Promise<Result<Revision, RecipeHistoryError>> {
+    const guard = this.#guardHistory(recipeId, version, expectedHead);
+    if (!guard.ok) return guard;
+    const { recipe, source } = guard.value;
+    const head = this.#revisions.get(`${recipeId}@${recipe.headVersion}`) as Revision;
+    if (sameRecipeContent(head, source)) return ok(copy(head));
+    const revision: Revision = {
+      recipeId,
+      version: recipe.headVersion + 1,
+      formula: source.formula,
+      process: source.process,
+      createdAt,
+      ...(source.note === undefined ? {} : { note: source.note }),
+    };
+    this.#writeRevision(recipe.name, copy(revision));
+    return ok(copy(revision));
+  }
+
+  async promoteReferenceVersion(
+    recipeId: string,
+    version: number,
+    name: string | undefined,
+    expectedHead: number,
+    createdAt: Instant,
+  ): Promise<Result<ReferenceVersion, RecipeHistoryError>> {
+    const guard = this.#guardHistory(recipeId, version, expectedHead);
+    if (!guard.ok) return guard;
+    const list = this.#references.get(recipeId) ?? [];
+    const existing = list.find((reference) => reference.version === version);
+    if (existing !== undefined) {
+      return err(
+        domainError('AlreadyReferenced', `Revision ${recipeId}@${version} is already referenced`, {
+          recipeId,
+          version,
+          number: existing.number,
+        }),
+      );
+    }
+    const reference: ReferenceVersion = {
+      recipeId,
+      number: list.length + 1,
+      version,
+      ...(name === undefined ? {} : { name }),
+      createdAt,
+    };
+    this.#references.set(recipeId, [...list, reference]);
+    return ok({ ...reference });
+  }
+
+  async listReferenceVersions(recipeId: string): Promise<readonly ReferenceVersion[]> {
+    return (this.#references.get(recipeId) ?? []).map((reference) => ({ ...reference }));
+  }
+
+  /** Shared checks of Restore and Promote: trash, existence, head, then the revision. */
+  #guardHistory(
+    recipeId: string,
+    version: number,
+    expectedHead: number,
+  ): Result<{ recipe: Recipe; source: Revision }, RecipeHistoryError> {
+    const recipe = this.#recipes.get(recipeId);
+    if (recipe === undefined) {
+      return err(domainError('NotFound', `Recipe ${recipeId} does not exist`, { recipeId }));
+    }
+    if (recipe.trashedAt !== undefined) {
+      return err(domainError('RecipeTrashed', `Recipe ${recipeId} is in the trash`, { recipeId }));
+    }
+    if (recipe.headVersion !== expectedHead) {
+      return err(
+        domainError('HeadConflict', `Recipe ${recipeId} is at version ${recipe.headVersion}`, {
+          recipeId,
+          currentHead: recipe.headVersion,
+        }),
+      );
+    }
+    const source = this.#revisions.get(`${recipeId}@${version}`);
+    if (source === undefined) {
+      return err(
+        domainError('UnknownRevision', `Revision ${recipeId}@${version} does not exist`, {
+          recipeId,
+          version,
+        }),
+      );
+    }
+    return ok({ recipe, source });
   }
 
   #writeRevision(name: string, revision: Revision): void {
@@ -153,6 +250,7 @@ export class MemoryRecipeRepository implements RecipeRepository {
     for (let version = 1; version <= recipe.headVersion; version++) {
       this.#revisions.delete(`${recipeId}@${version}`);
     }
+    this.#references.delete(recipeId);
     this.#recipes.delete(recipeId);
   }
 
@@ -260,6 +358,9 @@ export class MemoryRecipeRepository implements RecipeRepository {
   /** Writes a recorded recipe synchronously; restores and imports use it to stay atomic. */
   write(recipe: RecordedRecipe): void {
     for (const revision of recipe.revisions) this.#writeRevision(recipe.name, revision);
+    if (recipe.referenceVersions !== undefined) {
+      this.#references.set(recipe.id, copy([...recipe.referenceVersions]));
+    }
     if (recipe.familyId !== undefined) this.#setFamily(recipe.id, recipe.familyId);
     if (recipe.trashedAt !== undefined) {
       const written = this.#recipes.get(recipe.id);
