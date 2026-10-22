@@ -256,7 +256,7 @@ const step: Check = (v, w) =>
       id: string,
       operation: string,
       dependsOn: list(string),
-      schedule: oneOf('asap', 'alap'),
+      schedule: oneOf('asap', 'alap', 'beforeTarget'),
     },
     {
       label: string,
@@ -275,6 +275,9 @@ const step: Check = (v, w) =>
       durationMode: oneOf('manual', 'model'),
       equipment: stepEquipment,
       subject,
+      target: string,
+      requiredWarmupS: number,
+      startRule: oneOf('fromTarget', 'afterDependencies'),
     },
   );
 

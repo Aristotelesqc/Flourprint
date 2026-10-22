@@ -501,6 +501,12 @@ export const decide = (
           reason: 'must be a finite value, durations ≥ 0',
         });
       }
+      if (field === 'plannedDurationS' && step?.schedule === 'beforeTarget') {
+        return error('InvalidCommand', 'A beforeTarget step has no duration', {
+          field,
+          reason: 'beforeTarget steps are scheduled from their target (process.md)',
+        });
+      }
       const baseline =
         field === 'plannedDurationS' ? step?.plannedDurationS : step?.conditions?.temperatureC;
       return ok([

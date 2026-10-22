@@ -104,7 +104,7 @@ interface StepConditions {
 
 ## Steps before a target (preheating)
 
-**0.3.0 specification merged in #94; owner-selected option C on #97; implementation tracked in #106.** A baker preheats the oven
+**0.3.0 specification merged in #94; owner-selected option C on #97; scheduling, validation, document boundary and session effects implemented in #106 slice B (contract 0.18.0).** A baker preheats the oven
 while the dough proofs, and switches it on **a set time before the cooking step it is for**, not at
 the boundary of another step: a 2 h proof stays one step, and the oven does not heat for 2 h when
 30 min are wanted. Four facts stay distinct: the **trigger** (switching the heating on), the
@@ -190,8 +190,18 @@ interface ProcessStep {
 - **Dough steps** (`fermentation.md`): a `beforeTarget` step is not one and holds no dough.
 - **Compatibility.** An older app refuses a recipe holding the new schedule value or fields as a
   document with an unknown discriminant or field (`persistence.md`), never misreads it.
-  `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge, by the
-  implementing pull request.
+  `CONTRACT_VERSION` is bumped by one minor step, from `0.17.0` to `0.18.0`, by the implementing
+  pull request. No event type changes: `StepStarted` and `StepCompleted` carry the record. The projection
+  embedded in `BakeStarted.initialProjection` and `ProjectionAccepted` gains the optional `warmup`
+  and `overdue` of a `beforeTarget` step (absent on every other step); events written before still
+  decode, as `isProjectedStep` ignores unknown fields.
+- **Implementation notes (#106 slice B).** `warmup.sufficient` carries `availableS` and `requiredS`
+  like `insufficient`. A step with no requirement and a known non-negative window, or with unknown
+  times, is `notApplicable`; `unavailable` is decided first when both times are known. A
+  `beforeTarget` step's projected `end` is its target's start (the recorded readiness once
+  completed), and is absent when `unavailable`. `target` must be a cooking
+  step. The domain exposes `removeStepChecked` (`TargetInUse`) and `preheatIssues` (the nonblocking
+  checks read from a projection).
 
 Examples (hand-checked; `+h:mm` from the start of the recipe):
 

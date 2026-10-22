@@ -83,7 +83,8 @@ export type AmbiguousMoveReason =
   | 'stepDependencies'
   | 'stepDependents'
   | 'targetDependents'
-  | 'crossesWorkpiece';
+  | 'crossesWorkpiece'
+  | 'scheduledFromTarget';
 
 export interface ChangedEdge {
   readonly step: StepId;
@@ -172,6 +173,8 @@ export const moveStep = (
 
   // An alap step keeps its dependencies and its "as late as possible" meaning, and a step never
   // moves below a step that depends on it by a drag: both only move by order only (example 6).
+  // A beforeTarget step is scheduled from its target, not from its place (Steps before a target).
+  if (step.schedule === 'beforeTarget') return err(ambiguous('scheduledFromTarget'));
   if (step.schedule === 'alap' || (after !== null && descendants(process, stepId).has(after))) {
     return err(firstViolation(reordered));
   }

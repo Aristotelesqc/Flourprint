@@ -1,7 +1,7 @@
 import { isCookingStep } from '../process/cooking.js';
 import type { Formula } from '../formula/types.js';
 import type { IngredientFamily } from '../ingredient/types.js';
-import type { Process } from '../process/types.js';
+import type { Process, Projection } from '../process/types.js';
 import { validateRecipe } from './validate.js';
 
 /** One finding of `checkRecipe` (docs/contracts/drafts.md, Recipe checks). */
@@ -96,6 +96,22 @@ export const checkRecipe = (
         details: { step: step.id },
       });
     }
+    const targetStep = process.steps.find((t) => t.id === step.target);
+    const heated = step.equipment?.appliance;
+    const cooked = targetStep?.equipment?.appliance;
+    if (
+      step.schedule === 'beforeTarget' &&
+      heated !== undefined &&
+      cooked !== undefined &&
+      heated !== cooked
+    ) {
+      issues.push({
+        severity: 'warning',
+        code: 'preheat_target_mismatch',
+        path: `steps.${step.id}`,
+        details: { step: step.id, target: targetStep?.id ?? '' },
+      });
+    }
     // Recorded technique only: folds that outlast the step are likely a typo (process.md).
     const folds = step.technique?.folds;
     if (
@@ -113,6 +129,32 @@ export const checkRecipe = (
   }
   return issues;
 };
+
+const PREHEAT_CODES = {
+  insufficient: 'preheat_too_short',
+  unknown: 'preheat_window_unknown',
+  unavailable: 'preheat_window_unavailable',
+} as const;
+
+/**
+ * Nonblocking checks read from a projection (drafts.md): the `warmup` of each `beforeTarget`
+ * step. `sufficient` and `notApplicable` raise nothing; an absent warmup is not read as sufficient.
+ */
+export const preheatIssues = (process: Process, projection: Projection): RecipeIssue[] =>
+  process.steps.flatMap((step): RecipeIssue[] => {
+    if (step.schedule !== 'beforeTarget') return [];
+    const warmup = projection.steps[step.id]?.warmup;
+    if (warmup === undefined) return [];
+    if (warmup.kind === 'sufficient' || warmup.kind === 'notApplicable') return [];
+    return [
+      {
+        severity: 'warning',
+        code: PREHEAT_CODES[warmup.kind],
+        path: `steps.${step.id}`,
+        details: { step: step.id },
+      },
+    ];
+  });
 
 /** Whether a recipe can be saved as a revision or baked (no blocking issue). */
 export const blockingIssues = (issues: readonly RecipeIssue[]): RecipeIssue[] =>
