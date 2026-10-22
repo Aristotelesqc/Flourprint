@@ -76,15 +76,35 @@ interface PreparationOutcome {
   `intendedOutcome`): a dough that is always frozen says `{ result: 'dough', dough: 'frozen' }`
   once, in the recipe. Without one, the intended outcome is `cooked` when the session's effective
   process (inserted steps included) has a cooking step, else `dough` with no disposition.
-- **Finishing.** `FinishBake` takes an optional `outcome`:
-  - without one, the domain records the intended outcome of the session's snapshot in the event,
-    with `outcomeSource: 'recipe'`: finishing never asks a question;
-  - with one, it records that outcome with `outcomeSource: 'baker'`, for a session that ended
-    differently this time.
+- **Finishing.** `FinishBake` takes an optional `outcome`. A **cooking step** is a step of the
+  session's effective process (inserted steps included) whose recorded operation code is in
+  `COOKING_OPERATIONS` (`isCookingStep`, the list above and process.md), and it is **completed**
+  when it has a recorded end (a started or planned one does not count):
+  - with an outcome, the domain records it with `outcomeSource: 'baker'`, whatever the steps
+    done (a dough kept, frozen, given or sold; part cooked, part kept);
+  - without one and **at least one cooking step completed**, the domain records the intended
+    outcome of the session's snapshot with `outcomeSource: 'recipe'`: finishing asks no question;
+  - without one and **no cooking step completed**, nothing says the intended product was
+    reached, so the command is refused with `OutcomeRequired { reason:
+'no_cooking_step_completed' }` and nothing is recorded. The baker chooses an outcome, or
+    uses `AbandonBake` for a failed preparation.
 
-  The interface shows this as a Finish button with a choice beside it, the intended outcome being
-  the default. The domain neither derives the outcome from completed cooking steps nor refuses it
-  against them (a cooking step may have been done outside the process).
+  The interface shows a Finish button with a choice beside it. The intended outcome is the
+  default only once a cooking step is completed; before that no outcome is preselected. Beyond
+  this, the domain neither derives the outcome from completed cooking steps nor refuses an
+  explicit one against them (a cooking step may have been done outside the process).
+
+  Example (early finish). A bread session with steps `mix` and `bake`, `intendedOutcome` absent
+  (so `cooked`). `mix` is completed, `bake` is not: `FinishBake` alone gives `OutcomeRequired`;
+  `FinishBake { outcome: { result: 'dough', dough: 'frozen' } }` finishes with that outcome and
+  `outcomeSource: 'baker'`. Once `bake` is completed, `FinishBake` alone finishes with `{ result:
+'cooked' }`, `outcomeSource: 'recipe'`, as before. A session whose process has no cooking step
+  at all always needs an explicit outcome to finish.
+
+- **History.** The rule only restricts new commands. A stored `BakeFinished` (with `outcome`
+  and `outcomeSource: 'recipe'` or `'baker'`, or without either, before `0.11.0`) keeps its
+  meaning and replays unchanged, even when no cooking step was completed in that session. The
+  persisted shape is the same, so `CONTRACT_VERSION` is not bumped for this rule.
 
 - Events written before `0.11.0` have no outcome: the result is **unknown**, never read as
   cooked, whatever steps were completed.
@@ -133,21 +153,21 @@ interface BakeEvent<P> {
 
 ## Alpha commands and events
 
-| Command                      | Events                                                                       | Rules                                                                                                                                                           |
-| ---------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; validates the formula, the process and their incorporations together, and projects the process; optional `origin` and `flours` (flours.md)           |
-| `StartStep`                  | `StepStarted`                                                                | dependencies completed, and `at` not before their latest end; not already started                                                                               |
-| `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start); a completion before it is refused (`InvalidTime`) |
-| `AdjustStep`                 | `OverrideApplied` (step duration, temperature or `equipment`, equipment.md)  | step not completed                                                                                                                                              |
-| `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                    |
-| `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                          |
-| `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                         |
-| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                  |
-| `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start     |
-| `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                        |
-| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept; `FinishBake` takes an optional `outcome` (above), recorded in its event                                                         |
-| `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                           |
-| `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                     |
+| Command                      | Events                                                                       | Rules                                                                                                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; validates the formula, the process and their incorporations together, and projects the process; optional `origin` and `flours` (flours.md)               |
+| `StartStep`                  | `StepStarted`                                                                | dependencies completed, and `at` not before their latest end; not already started                                                                                   |
+| `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start); a completion before it is refused (`InvalidTime`)     |
+| `AdjustStep`                 | `OverrideApplied` (step duration, temperature or `equipment`, equipment.md)  | step not completed                                                                                                                                                  |
+| `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                        |
+| `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                              |
+| `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                             |
+| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                      |
+| `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start         |
+| `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                            |
+| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept; `FinishBake` takes an optional `outcome` (above, `OutcomeRequired` if none and no cooking step is completed), recorded in its event |
+| `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                               |
+| `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                         |
 
 A `beforeTarget` step (process.md, Steps before a target) is never a dependency: no step waits
 for it. `StartStep` on it records `StepStarted` (the baker switched the heating on); `CompleteStep`

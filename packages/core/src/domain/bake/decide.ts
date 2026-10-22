@@ -12,7 +12,7 @@ import { doughReadyStage } from '../fermentation/estimate.js';
 import { applyFormulaEdit } from '../formula/edit.js';
 import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
-import { intendedOutcome, outcomeProblem } from '../process/cooking.js';
+import { intendedOutcome, isCookingStep, outcomeProblem } from '../process/cooking.js';
 import { projectProcess } from '../process/project.js';
 import type { Process, Projection, StepFact } from '../process/types.js';
 import type { Formula } from '../formula/types.js';
@@ -31,6 +31,7 @@ export type BakeError =
   | DomainError<'BakeAlreadyStarted'>
   | DomainError<'BakeNotActive', { status: BakeState['status'] }>
   | DomainError<'NotFinished', { status: BakeState['status'] }>
+  | DomainError<'OutcomeRequired', { reason: string }>
   | DomainError<'BakeActive', { status: BakeState['status'] }>
   | DomainError<'UnknownStep', { stepId: string }>
   | DomainError<'DuplicateStepId', { stepId: string }>
@@ -701,7 +702,18 @@ export const decide = (
         if (problem) return error('InvalidCommand', `Invalid outcome: ${problem.reason}`, problem);
       }
       // Without a choice, the recipe's intended outcome, from the effective process (inserted
-      // steps included): finishing never asks a question (bake-session.md).
+      // steps included), but only once a cooking step is completed (bake-session.md): before
+      // that, nothing says the intended product was reached, so the baker must choose.
+      if (
+        command.outcome === undefined &&
+        !process.steps.some((s) => isCookingStep(s) && state.steps[s.id]?.endedAt !== undefined)
+      ) {
+        return error(
+          'OutcomeRequired',
+          'No cooking step is completed: choose the outcome (AbandonBake for a failed preparation)',
+          { reason: 'no_cooking_step_completed' },
+        );
+      }
       return ok([
         {
           occurredAt: command.at ?? now,
