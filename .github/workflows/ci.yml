@@ -63,6 +63,10 @@ jobs:
       - run: pnpm build:mobile
       - run: pnpm --filter @flourprint/mobile exec playwright install --with-deps chromium
       - run: pnpm --filter @flourprint/mobile e2e
+      - name: Build isolated interactive mockups
+        run: pnpm build:mockups
+      - name: Mockup interaction journeys
+        run: pnpm test:mockups
       - name: Failure context in the log
         # Playwright's page snapshot of each failed test, readable without downloading the
         # artifact (agents may not reach the artifact store).
@@ -77,6 +81,7 @@ jobs:
           path: |
             apps/mobile/playwright-report
             apps/mobile/test-results
+            docs/mockups/0.3-ux/dist/test-results
           if-no-files-found: ignore
 
   android:

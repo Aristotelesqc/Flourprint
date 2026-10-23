@@ -3,6 +3,32 @@ version: alpha
 name: Flourprint — Warm baking workspace
 description: Owner-approved warm Material 3 presentation through shared Flourprint components, retaining the Ionic shell.
 colors:
+  surface-container-high: '#e7e3dc'
+  warning-bg: 'rgb(196 118 12 / 0.12)'
+  warning-border: 'rgb(196 118 12 / 0.38)'
+  warning-ink: '#7a4500'
+  danger-bg: 'rgb(179 38 30 / 0.1)'
+  success: '#256b39'
+  success-bg: 'rgb(37 107 57 / 0.12)'
+  shadow: 'rgb(28 25 21 / 0.12)'
+  backdrop: 'rgb(20 17 14 / 0.52)'
+  dark-surface-container-high: '#3e3832'
+  dark-warning-bg: 'rgb(235 168 64 / 0.13)'
+  dark-warning-border: 'rgb(235 168 64 / 0.36)'
+  dark-warning-ink: '#f6c97e'
+  dark-danger-bg: 'rgb(242 139 130 / 0.14)'
+  dark-success: '#7cc992'
+  dark-success-bg: 'rgb(124 201 146 / 0.14)'
+  dark-shadow: 'rgb(0 0 0 / 0.42)'
+  dark-backdrop: 'rgb(8 7 6 / 0.68)'
+  amoled-warning-bg: 'rgb(235 168 64 / 0.13)'
+  amoled-warning-border: 'rgb(235 168 64 / 0.36)'
+  amoled-warning-ink: '#f6c97e'
+  amoled-danger-bg: 'rgb(242 139 130 / 0.14)'
+  amoled-success: '#7cc992'
+  amoled-success-bg: 'rgb(124 201 146 / 0.14)'
+  amoled-shadow: 'rgb(0 0 0 / 0.84)'
+  amoled-backdrop: 'rgb(0 0 0 / 0.78)'
   primary: '#a9490a'
   on-primary: '#ffffff'
   background: '#f8f7f4'
@@ -50,14 +76,23 @@ colors:
   amoled-primary-container: 'rgb(207 138 94 / 0.16)'
   amoled-error: '#f28b82'
 rounded:
+  sheet: 24px
+  pill: 9999px
   card: 1rem
   segmented-option: 0.75rem
 spacing:
   scale: [0.25rem, 0.5rem, 0.75rem, 1rem, 1.5rem, 2rem]
+  compact: 0.375rem
+  control: 0.625rem
+  section: 1.25rem
   page-gutter: 1rem
-  touch: 3rem
+  touch: 48px
+  touch-compact: 40px
   card-padding: 1rem
 typography:
+  font: { family: 'system-ui, sans-serif' }
+  navigation: { size: 0.6875rem, line: 1.15 }
+  heading: { size: 1.125rem, line: 1.5rem, weight: 700 }
   page: { size: 1.5rem, line: 2rem, weight: 700 }
   title: { size: 1.375rem, line: 1.75rem, weight: 700 }
   body: { size: 1rem, line: 1.5rem }
@@ -119,10 +154,12 @@ Flourprint React components, shared semantic tokens and the existing Ionic navig
 shell. No external Material library or router replacement is selected. The mockup is a visual
 reference, not production state or command logic. Later changes remain possible.
 
-The frontmatter retains the executable warm palette and records the accepted spacing scale;
-keep it synchronized with `apps/mobile/src/theme/app.css` in the implementation slice. Evidence
-of actual screen and platform coverage belongs in the PR and #35, not an implied compliance claim.
-No runtime token generator exists.
+Token values have one source: `packages/ui/src/tokens.ts` (ADR 0020).
+`scripts/ui-tokens.mjs` generates `packages/ui/src/tokens.css` and this file's token frontmatter;
+run `pnpm tokens` after a token change and `pnpm tokens:check` to verify synchronization.
+The production app's `apps/mobile/src/theme/app.css` remains migration context until its reviewed
+consumer change. Evidence of actual screen and platform coverage belongs in the PR and #35,
+not an implied compliance claim.
 
 ## Colors
 
@@ -180,9 +217,18 @@ by ADR 0009 and AGENTS.md.
 
 Use reusable sections and compact rows, with related values grouped together. Keep practical
 recipe density without turning every line into a card. Existing `Card`/`Rows` use 1rem padding
-and rounded corners; `--spacing-touch` is 3rem. These are current tokens, not proof every
-existing control meets the target. Prototype touch actions with a 48px target wherever feasible;
+and rounded corners; the legacy app `--spacing-touch` remains 3rem. The shared-library
+`touch`/`touch-compact` tokens are 48px/40px so text scaling does not silently change the
+reviewed target-size alternatives. These tokens do not prove every existing control meets the target. Prototype touch actions with a 48px target wherever feasible;
 compact glyphs may sit inside larger non-overlapping hit areas.
+
+In the #133 versioned prototype, button and icon-button targets are native, non-overlapping
+48 px boxes. Their decorative shapes are 40 px high; filter/resume pills paint a 32 px shape
+inside a 48 px target. Insets derive from physical target tokens, not rem spacing, so 130% text
+does not shrink the painted button. Passive metrics/status pills have a 32 px minimum height
+without an artificial interactive hit area. Recipe cards use 8 px internal padding, 6 px group
+gaps and 4 px between metric pills; the page uses 12 px vertical gaps to keep four cards visible
+in the standard list. Larger text may wrap into additional rows.
 
 Use the shared 4/8/12/16/24/32 px spacing scale, 16 px page gutters and 48 px action targets.
 Keep one visually dominant action per screen. Occasional actions belong in an overflow menu;
@@ -224,11 +270,23 @@ spatial movement. Static labels and states remain understandable with motion dis
 numeric values, simulate progress, delay actions behind decoration, or animate restored panel scroll.
 Keep input anchors stable within editing and preserve pending/invalid text. Reduced-motion policy
 must examine scoped CSS and the installed overlay/navigation runtime separately, including preference
-changes during use and interrupted transitions. Exact tokens, timings, library and runtime choices
-remain pending the [reviewed prototype comparison](docs/architecture/2026-10-12-motion-exploration.md);
-these principles do not ship animations or establish native/performance conformance.
+changes during use and interrupted transitions. The versioned review library uses the owner-selected round 2 timings below, informed by the
+[reviewed exploration](docs/architecture/2026-10-12-motion-exploration.md). Production overlay
+adoption and native/performance conformance require their own verification.
+
+The #133 components consume `useMotion()` through a consumer-provided `MotionProvider`; their
+CSS owns endpoint states, never transition timing or keyframes. Transition items use
+`transitionCss`, overlay items use `playMotion`. A single visual exit copy releases native
+modality immediately, so the next edit is not swallowed. Both OS and manual reduced-motion
+preferences suppress these effects; changing either during use updates the component bridge.
+The existing scene/step feedback remains in the mockup consumer pending corresponding library
+items; top-anchored menu motion needs the mechanism owner's version/selection path (#134).
 
 ## Elevation & Depth
+
+ADR 0021: page-anchored painted surfaces are opaque and flat. Use existing solid surface steps
+with semantic foreground/borders for selection, weighing and warnings. Only floating sheets,
+menus, popovers, toasts and drag overlays may use translucency, blur or shadows.
 
 Use warm tonal surfaces, separators and restrained elevation for hierarchy. Sheets sit above
 the current workspace; selection and interactive state must remain clear without relying only
@@ -297,7 +355,7 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   and actual lifecycle/outcome actions. A readiness observation neither completes the stage nor
   establishes a cooked result. Unknown times remain unknown.
 
-## Components
+## Current runtime components (migration context)
 
 Extend the current `Field`, `Segmented`, `Card`, `Rows`, `InfoSheet` and `DraftActionBar` foundation.
 The target is a reusable Flourprint component layer with consistent behavior and theme roles.
@@ -346,3 +404,145 @@ DESIGN.md does not select a new dependency or migrate routes.
 - Do not treat accepted lifecycle contracts as already implemented APIs, or invent outcomes in UI.
 - Do not declare native behavior or accessibility verified from source alone.
 - Track work on individual GitHub issues and labels; this brief is not a second backlog.
+
+## Components (#133 / #134, ADR 0020)
+
+The restored prototype composes the first versions from `packages/ui`, using stable `fp.*` ids
+through `docs/mockups/0.3-ux/src/ui.manifest.ts`. Its screens map actual core results to
+localized props; the library imports no core, adapters, recipes or domain solver. These v1
+components are review candidates, not a claim that the production app has already migrated.
+Ionic's production shell remains in place. Prototype session state remains in memory.
+
+### Isolate, change, compare, reuse
+
+1. Reproduce the problem in a screen. The review studio's **Inspect components** mode identifies
+   the clicked component and its containing components, with ids and versions. It links their
+   generated catalogue entries. Product actions are paused only while this explicit inspector
+   is enabled; inspection metadata never appears in capture-mode product screens.
+2. Work on the component version and its scoped stylesheet in `packages/ui/src/components/<name>/`, not a screen-local
+   copy of its markup or internal styles. Tokens have one home in `packages/ui/src/tokens.ts`;
+   regenerate their CSS and this file's front matter with `pnpm tokens`.
+3. Check the version's examples in the generated catalogue in Light, Dark and AMOLED, at
+   393px and 360px / 130%, with normal and reduced motion. Examples show labelled states;
+   fixed sample quantities in the catalogue are illustrative, never engine predictions.
+4. Use the consumer manifest to switch versions. Screens keep their ids and typed props. Nested components use typed `library.Slot` calls, so a manifest change also reaches cards, rows and other compositions. Version styles are scoped to both id and version; changing v2 cannot restyle v1.
+   This round has v1 only; historical monolithic prototypes are references, not invented v2s.
+5. Exercise affected screen journeys and inspect before/after captures before publishing.
+   A component fix must not break another screen, first input, focus or unknown-value labels.
+   Production adoption uses these same version modules in reviewed slices, not a rewrite.
+
+### Rules by component id
+
+| Id                                          | Rule shared by every version                                                                                                                                                          |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fp.button`, `fp.icon-button`               | One clear primary action; real disabled states; destructive actions separated; visible focus and bounded press feedback.                                                              |
+| `fp.icon`                                   | Consistent SVG pictograms; accessible labels belong to the action or accompanying text.                                                                                               |
+| `fp.surface`, `fp.badge`, `fp.metric-pill`  | Warm semantic surfaces; labelled statuses; tabular quantities and atomic number/unit pairs.                                                                                           |
+| `fp.number-field`                           | Preserve raw invalid and pending text; untouched display rounding emits no edit; locale parsing and refusal remain explicit.                                                          |
+| `fp.weighing-checkbox`, `fp.ingredient-row` | Real touch target; one toggle per gesture; no duplicate visible ingredient label; editing a field must not toggle weighing.                                                           |
+| `fp.tabs`                                   | Selected state, keyboard navigation and readable labels; overflow remains reachable at large text sizes.                                                                              |
+| `fp.group-card`                             | Accessible expanded state; inert collapsed content; grid accordion and rotating chevron with a zero-motion alternative.                                                               |
+| `fp.bottom-sheet`, `fp.floating-menu`       | Viewport placement, Escape/outside dismissal and native focus containment while open. Close modality immediately; an inert visual exit must never swallow the first subsequent input. |
+| `fp.hero-summary`                           | Lead with dough yield and pieces, then hydration, fats and sugars (L109). Retain unknown contributors and per-metric help. No substitute water metric or fake complete value.         |
+| `fp.recipe-card`                            | Version, actual duration/weight and cooking history stay explicit; active Preparation exposes its real remaining time and Resume action.                                              |
+| `fp.step-node`, `fp.timeline`               | Show actual operations and projection bounds, dependencies and uncertainty. Timeline geometry is display-only and must not become a second scheduler.                                 |
+| `fp.warning-banner`                         | Separate model failure, extrapolation and known outputs; never replace an unavailable estimate with a zero duration.                                                                  |
+| `fp.prep-hero`                              | Dominant remaining time; actual start, planned finish and instruction before quick controls; no rolling timer or decorative progress animation.                                       |
+| `fp.bottom-bar`                             | A contextual toolbar below, or B actions in the header plus stable bottom destinations; no destructive action beside Start/Save.                                                      |
+
+The owner's round 2 motion inventory is retained: 150ms effect, 220ms spatial, 260ms sheet,
+M3 standard/decelerate curves, press/selection, menu, row/check, chevron/accordion, sheet/backdrop,
+screen/tab changes and Preparation completion. Both system and manual reduced motion resolve to
+0ms. Evidence samples actual CSS animations before/during/after; reduced states have no fabricated
+intermediate frame. Native overlay/performance conformance remains separately testable.
+
+### Round 2 fidelity corrections (#134)
+
+The #123 review consumer uses `moveStep` and `duplicateStep` from core. An actual drag
+enters or resumes editing; a valid drop constitutes one undoable draft edit, and Save is required
+before the move counts as a saved revision.
+A pending chain change is separate from the draft: the sheet lists affected dependencies,
+core-projected times and preparation windows before Apply. Before/After blocks wrap without nested list indentation; dates disambiguate
+changes across midnight. A copy opens for review with the omitted fields listed, and an unknown
+duration stays explicitly unknown. Cancellation and typed refusals leave the draft unchanged;
+accepted changes join its existing undo/redo history. This remains a prototype binding, not
+production adoption. The UI never turns a refused downward move into an equivalent upward move.
+
+### Step drag-and-drop and recipe history semantics (L103, L104, #123, #133)
+
+**Recipe history & recovery (L103, #152):**
+
+- **Meaningful Save:** an effective Save creates immutable recovery states (`SavedRevision`), not curated baker milestones ("v2", "v3") or separate variants; `Recipe.version` is strictly an internal head counter.
+- **Explicit reference promotion:** reference versions (`ReferenceVersion { number, version, name? }`) are explicit user promotions of a specific saved revision. They carry their own per-recipe sequence (`number`), leaving head version untouched. No historical reference version or milestone is inferred from legacy data.
+- **Non-destructive restore:** restoring a saved revision copies that revision's content into a new head revision without deleting, rewriting, or truncating any intervening revisions. A bake session started on an earlier revision retains its snapshot and reference.
+- **Draft isolation:** restore and promote operate on saved revisions only and never read, rebase, or delete an open draft. If a draft's baseline becomes stale (`baseVersion !== recipe.version`), its subsequent Save is refused with `HeadConflict` without modifying state or losing draft edits. Trashed recipes refuse save, restore, and promote (`RecipeTrashed`).
+- **Mockup prototype boundary:** these state semantics in `docs/mockups/0.3-ux/src/model.ts` provide disposable prototype state for interface evaluation only; they do not represent real engine persistence, SQLite storage, or certified multi-device synchronization.
+
+**Drag enters editing (L104, #123):**
+
+- **Activation (L112):** the owner selected a 350 ms hold. An activated drag enters or resumes recipe editing; touching or tapping the handle alone does not open editing. The 5 px option remains a historical comparison only.
+- **Drop semantics:** one valid drop constitutes one undoable draft edit. Save is still required before the moved order counts as a saved revision or a baseline.
+- **Cancellations & invalid drops:** a rejected, cancelled, or outside drop returns to the origin, restores pre-gesture order and dependencies, and marks nothing dirty. If a drag opened editing but resulted in no change, the draft is clean and may be discarded silently on exit.
+- **Back navigation:** pressing Back during an active drag gesture cancels the drag operation only. A subsequent Back triggers the normal unsaved changes leave guard.
+- **Visuals & feedback:** the owner selected Compact on 2026-10-21. Resting rows read as separate
+  detachable tonal shapes. During dragging, one full-height placeholder travels to the proposed
+  position and neighbours move aside before release. The opaque lifted row follows both pointer
+  axes above accordions. Restrained darkening keeps destinations legible; automatic scrolling
+  stays within the list. Invalid, outside and cancelled drops restore the original order.
+- **Narrow Compact rows:** keep the title beside its pictogram with enough width for complete
+  words. In narrow containers, metadata and the edge action cluster share the following row.
+  Preserve 48 px controls and the text scale; do not make long labels fit by clipping, breaking
+  words or shrinking the type. Historical Rail/Outline layouts remain separate.
+- **Behaviour source:** `fp.sortable-list@v1` wraps modern dnd-kit 0.5.1 through a manifest-selected
+  provider and stable adapter helpers. Its optimistic DOM order is a visual preview, never the
+  process authority. The layout engine calls core `moveStep`; a pending chain preview also restores
+  the provisional order until Apply. The dependency decision and deliberate upgrade policy are
+  recorded in `docs/architecture/2026-10-21-step-drag-behaviour.md` and PR #153.
+- **Open choices (O-items):** cross-group/reorder-mode choices remain open. The selected 350 ms
+  hold is a Flourprint decision, not a universal Material rule. Rail and Outline are historical
+  alternatives; they are no longer active presentation choices.
+
+**Current #133 composition (L108–L113, L127; mockup and library only):** Recipe, Planning and
+History are the three top tabs. Ingredients, stage weighing and preparation steps share the Recipe
+document; Planning contains projection controls. The summary places help beside each value and
+uses one column in narrow containers so large text and help targets do not collide. Its profile
+notice names only actually missing properties; estimated water is not described as unknown.
+
+The active Preparation prioritises estimated time remaining and its accumulated adjustment.
+Countdown controls (−15 min, Pause/Resume, +15 min) and Progression controls (Previous, Next) are
+visually separate. Duration and Note remain compact and visible below them. Next completes the
+current step; the following step's implicit start comes from the engine. Pause/Resume uses native
+hold/release events. Finish remains explicit and asks for an outcome when the engine requires one.
+Step changes use a brief tonal highlight selected through `fp.motion.highlight`; countdown digits
+do not roll and controls remain immediately usable. System and manual reduced motion bypass it.
+
+The owner rejected the first restoration proposal as still regressive. Passing controls,
+component coverage and motion evidence do not establish visual fidelity. In particular,
+Navigation A retains its selected action placement (L101); an active card must not gain a large
+second Resume block; model creation needs informative selectable cards rather than a list
+of unlabeled-shape buttons; and summary detail, partial-value markers, horizontal ingredient
+quantities, operation pictograms and group time windows must not disappear during extraction.
+Compare these roles against round 2 directly. Retain necessary accessibility and core-data
+corrections, documenting their differences rather than calling every difference restored.
+
+Round 2 is a **starting point with mandatory corrections**, not a pixel-perfect acceptance
+target: #134's title, localization, pictogram, build identity, data, navigation and larger-text
+findings still apply. Never copy its invented quantities, contradictory model claims, dead
+controls, discarded edits or inaccessible overlays. Argon is a secondary visual reference;
+round 3 supplies the working state and core calls. Navigation A (L101), shared weighing checks
+(L111), Compact and the 350 ms hold (L112) are selected. Remaining reorder-mode and 40/48 px
+target choices stay visible proposals rather than silent defaults.
+
+Review two separate gates. **Visual acceptance** requires inspecting matched actual renders
+for hierarchy, density, contrast, wrapping, state visibility and fidelity to the selected
+reference. **Interactive acceptance** requires operating the visible controls and complete
+journeys, checking action-to-state transitions, raw input, focus and dismissal. A green test
+suite cannot pass the visual gate; screenshots cannot pass the interactive gate. Motion also
+needs real transition evidence and its reduced-motion state.
+
+Do not publish a known regressive candidate as a completed restoration or delivery. Diagnose
+and correct the regression before the delivery claim; if the owner requests an interim
+comparison, label it as an incomplete comparison with the remaining failures. Preserve prior
+artifacts for history without reusing their passing results for a changed revision. The
+[restoration acceptance matrix](docs/mockups/0.3-ux/restoration-report.md) maps #120/#134 to the
+required evidence; it is an evidence report, not another backlog or an owner approval.

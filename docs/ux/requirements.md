@@ -741,7 +741,11 @@ _Owner: to refine._ Source: GH/issues/122; GH/issues/120; GH/issues/134 body, "W
 
 - Always-visible handles versus an explicit Reorder submode.
 - Collapsed and cross-group behaviour.
-- Activation threshold (movement, hold) and compact / rail / outline treatment: still OPEN; L104 only fixes that a drag enters editing.
+- Compact row treatment was selected by the owner on 2026-10-21. Resting rows have distinct
+  detachable shapes; during a drag, neighbours make room for one travelling full-height
+  placeholder. The lifted row keeps X/Y finger-following, and a refused/cancelled drop restores
+  the original layout. This refines L96/L97 without changing engine move semantics.
+- Activation threshold (movement, hold) remains OPEN; L104 only fixes that a drag enters editing.
 - **Downward drags along a chain** are refused by the engine (`moveStep`, #143). Either the UI turns them into the equivalent upward move, or the contract allows the mirror case: an owner reading is needed.
 
 Claude's touch values (180 ms lift, 12 px tolerance, 140 px autoscroll…) are starting values, not decisions. Source: GH/issues/123; GH/issues/123#issuecomment-6244918588; GH/pull/143; GH/issues/142 §B; GH/issues/100#issuecomment-6206264377.

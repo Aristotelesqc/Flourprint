@@ -2,6 +2,15 @@
 
 :root,
 [data-theme='light'] {
+  --fp-color-surface-container-high: #e7e3dc;
+  --fp-color-warning-bg: rgb(196 118 12 / 0.12);
+  --fp-color-warning-border: rgb(196 118 12 / 0.38);
+  --fp-color-warning-ink: #7a4500;
+  --fp-color-danger-bg: rgb(179 38 30 / 0.1);
+  --fp-color-success: #256b39;
+  --fp-color-success-bg: rgb(37 107 57 / 0.12);
+  --fp-color-shadow: rgb(28 25 21 / 0.12);
+  --fp-color-backdrop: rgb(20 17 14 / 0.52);
   --fp-color-primary: #a9490a;
   --fp-color-on-primary: #ffffff;
   --fp-color-background: #f8f7f4;
@@ -17,6 +26,8 @@
   --fp-color-action-text: #9a4209;
   --fp-color-primary-container: rgb(169 73 10 / 0.1);
   --fp-color-error: #b3261e;
+  --fp-rounded-sheet: 24px;
+  --fp-rounded-pill: 9999px;
   --fp-rounded-card: 1rem;
   --fp-rounded-segmented-option: 0.75rem;
   --fp-spacing-1: 0.25rem;
@@ -25,9 +36,19 @@
   --fp-spacing-4: 1rem;
   --fp-spacing-5: 1.5rem;
   --fp-spacing-6: 2rem;
+  --fp-spacing-compact: 0.375rem;
+  --fp-spacing-control: 0.625rem;
+  --fp-spacing-section: 1.25rem;
   --fp-spacing-page-gutter: 1rem;
-  --fp-spacing-touch: 3rem;
+  --fp-spacing-touch: 48px;
+  --fp-spacing-touch-compact: 40px;
   --fp-spacing-card-padding: 1rem;
+  --fp-type-font-family: system-ui, sans-serif;
+  --fp-type-navigation-size: 0.6875rem;
+  --fp-type-navigation-line: 1.15;
+  --fp-type-heading-size: 1.125rem;
+  --fp-type-heading-line: 1.5rem;
+  --fp-type-heading-weight: 700;
   --fp-type-page-size: 1.5rem;
   --fp-type-page-line: 2rem;
   --fp-type-page-weight: 700;
@@ -51,6 +72,15 @@
 }
 
 [data-theme='dark'] {
+  --fp-color-surface-container-high: #3e3832;
+  --fp-color-warning-bg: rgb(235 168 64 / 0.13);
+  --fp-color-warning-border: rgb(235 168 64 / 0.36);
+  --fp-color-warning-ink: #f6c97e;
+  --fp-color-danger-bg: rgb(242 139 130 / 0.14);
+  --fp-color-success: #7cc992;
+  --fp-color-success-bg: rgb(124 201 146 / 0.14);
+  --fp-color-shadow: rgb(0 0 0 / 0.42);
+  --fp-color-backdrop: rgb(8 7 6 / 0.68);
   --fp-color-primary: #cf8a5e;
   --fp-color-on-primary: #201d1a;
   --fp-color-background: #201d1a;
@@ -69,6 +99,14 @@
 }
 
 [data-theme='amoled'] {
+  --fp-color-warning-bg: rgb(235 168 64 / 0.13);
+  --fp-color-warning-border: rgb(235 168 64 / 0.36);
+  --fp-color-warning-ink: #f6c97e;
+  --fp-color-danger-bg: rgb(242 139 130 / 0.14);
+  --fp-color-success: #7cc992;
+  --fp-color-success-bg: rgb(124 201 146 / 0.14);
+  --fp-color-shadow: rgb(0 0 0 / 0.84);
+  --fp-color-backdrop: rgb(0 0 0 / 0.78);
   --fp-color-primary: #cf8a5e;
   --fp-color-on-primary: #000000;
   --fp-color-background: #000000;
@@ -89,6 +127,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
+    --fp-color-surface-container-high: #3e3832;
+    --fp-color-warning-bg: rgb(235 168 64 / 0.13);
+    --fp-color-warning-border: rgb(235 168 64 / 0.36);
+    --fp-color-warning-ink: #f6c97e;
+    --fp-color-danger-bg: rgb(242 139 130 / 0.14);
+    --fp-color-success: #7cc992;
+    --fp-color-success-bg: rgb(124 201 146 / 0.14);
+    --fp-color-shadow: rgb(0 0 0 / 0.42);
+    --fp-color-backdrop: rgb(8 7 6 / 0.68);
     --fp-color-primary: #cf8a5e;
     --fp-color-on-primary: #201d1a;
     --fp-color-background: #201d1a;

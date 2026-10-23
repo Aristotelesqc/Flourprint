@@ -2,6 +2,8 @@
 
 These observations were verified with the installed Antigravity CLI on 2026-10-11. Recheck
 `agy --help` and `agy models` when flags or models differ; this is not a frozen vendor API.
+The [2026-10-18 Windows investigation](windows-codex.md) adds current 1.4.2 evidence and
+distinguishes output exhaustion from older console and tool-permission failures.
 
 ## Invocation
 
@@ -96,3 +98,12 @@ Other agents can read the same entrypoint via `AGENTS.md`; native invocation/dis
 the host. A thin `.claude/skills/agy/SKILL.md` exposes `/agy` in Claude Code
 ([official Claude documentation](https://code.claude.com/docs/en/skills)) and links to the same
 canonical entrypoint instead of forking its procedure.
+
+## Maintain operational knowledge
+
+Before adding a workaround, find the related instruction and decide whether to amend it,
+consolidate overlapping advice, supersede a disproved rule, or retain a version-specific note.
+Retire a workaround only after verifying its fixing version and relevant local behavior. Keep
+current ownership, blockers and next actions in the issue or handoff, not as permanent skill rules.
+Do not import another repository's authorization markers, scripts or publication model: its
+workflow is evidence to evaluate, while this checkout's contracts and user instructions govern.

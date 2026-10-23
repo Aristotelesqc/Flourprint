@@ -7,7 +7,8 @@
     ".": "./src/index.ts",
     "./catalogue": "./src/catalogue/index.ts",
     "./components/*": "./src/components/*.tsx",
-    "./tokens.css": "./src/tokens.css"
+    "./tokens.css": "./src/tokens.css",
+    "./components.css": "./src/components.css"
   },
   "peerDependencies": {
     "react": "^19.3.0"
@@ -17,5 +18,9 @@
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
+  },
+  "dependencies": {
+    "@dnd-kit/dom": "0.5.1",
+    "@dnd-kit/react": "0.5.1"
   }
 }

@@ -6,8 +6,17 @@
  * screens render by id and never import a version themselves. Everything here is generic over
  * `C`, so tests can exercise the mechanism with their own components.
  */
-import { createElement, type ComponentType, type ReactElement } from 'react';
+import {
+  createContext,
+  createElement,
+  useContext,
+  type ComponentType,
+  type ReactElement,
+} from 'react';
 import type { ComponentGuides } from './guides.ts';
+
+// Private erased transport; public Ui/Slot entry points retain the id-specific props contract.
+const SelectedRenderer = createContext<((id: string, props: object) => ReactElement) | null>(null);
 
 /** `v1`, `v2`, … */
 export type VersionName = `v${number}`;
@@ -55,6 +64,12 @@ export type UiProps<C extends ComponentMap, K extends ComponentId<C>> = {
 
 /** Typed helpers bound to one component map. */
 export const createLibrary = <C extends ComponentMap>() => ({
+  Slot: <K extends ComponentId<C>>(props: UiProps<C, K>): ReactElement => {
+    const render = useContext(SelectedRenderer);
+    if (!render) throw new Error('A library Slot must be rendered through a consumer Ui manifest');
+    const { component, ...rest } = props;
+    return render(component, rest);
+  },
   version: <K extends ComponentId<C>, V extends VersionName>(version: Version<C, K, V>) => version,
   manifest: (manifest: Manifest<C>) => manifest,
   catalogue: (catalogue: Catalogue<C>) => catalogue,
@@ -82,9 +97,15 @@ export const createUi = <C extends ComponentMap>(
     if (!version) throw new Error(`No version selected for ${id}`);
     return version as Version<C, K>;
   };
+  const renderSelected = (id: string, props: object): ReactElement =>
+    createElement(pick(id as ComponentId<C>).component, props as C[ComponentId<C>]);
   const Ui = <K extends ComponentId<C>>(props: UiProps<C, K>): ReactElement => {
     const { component: id, ...rest } = props;
-    return createElement(pick(id).component, rest as unknown as C[K]);
+    return createElement(
+      SelectedRenderer.Provider,
+      { value: renderSelected },
+      renderSelected(id, rest),
+    );
   };
   return { Ui, versionOf: (id) => pick(id).version };
 };

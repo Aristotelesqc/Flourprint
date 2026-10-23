@@ -1,0 +1,104 @@
+/* Presentation owned by fp.ingredient-row v1. */
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].ingredient-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--fp-space-2);
+  row-gap: var(--fp-space-1);
+  min-height: var(--touch-row, var(--fp-spacing-touch, 48px));
+  padding: var(--fp-space-2) var(--fp-space-2);
+  border-bottom: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-md, 0.5rem);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].ingredient-row:last-child {
+  border-bottom: 0;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].weighed {
+  background: var(--color-surface-container);
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].weighed .ingredient-name {
+  text-decoration: line-through;
+  color: var(--color-ink-muted);
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-info {
+  min-width: 0;
+  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-name {
+  font-size: var(--type-label);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-pct {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: var(--type-meta);
+  color: var(--color-ink-muted);
+  line-height: 1.25;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-row-end {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  text-align: right;
+  min-width: 0;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] > :first-child:not(.ingredient-info) {
+  grid-row: 1 / 3;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-grams {
+  font-size: var(--type-label);
+  font-weight: 700;
+  white-space: nowrap;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-note {
+  font-size: var(--type-meta);
+  color: var(--color-ink-muted);
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing {
+  cursor: default;
+  grid-template-columns: minmax(0, 1fr) auto;
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-md, 0.5rem);
+  padding: var(--fp-space-2) var(--fp-space-2);
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing .ingredient-info {
+  grid-column: 1;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing .ingredient-pct {
+  grid-column: 1;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing .ingredient-row-end {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing:has(.ingredient-edit-wrap)
+  .ingredient-row-end {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-edit-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1']:focus-within {
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-meta {
+  gap: var(--fp-space-1);
+}

@@ -1,0 +1,116 @@
+[data-fp-component='fp.sortable-list'][data-fp-version='v1'] {
+  display: block;
+  position: relative;
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1']
+  .fp-sortable-placeholder.is-origin-placeholder {
+  box-sizing: border-box;
+  min-height: var(--fp-sortable-origin-height, auto);
+  opacity: 0.35;
+  background: var(--color-surface-container);
+  outline: 1px dashed var(--color-outline-subtle);
+  outline-offset: -1px;
+  border-radius: var(--radius-card);
+  pointer-events: none;
+}
+
+[data-fp-container='fp.sortable-list'][data-fp-container-version='v1'].fp-sortable-portal {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+[data-fp-container='fp.sortable-list'][data-fp-container-version='v1'] .fp-sortable-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--color-backdrop);
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 9998;
+}
+
+[data-fp-container='fp.sortable-list'][data-fp-container-version='v1']
+  .fp-sortable-overlay-container {
+  pointer-events: none;
+  z-index: 9999;
+  box-sizing: border-box;
+}
+
+[data-fp-container='fp.sortable-list'][data-fp-container-version='v1']
+  .fp-sortable-overlay-card-host {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+[data-fp-container='fp.sortable-list'][data-fp-container-version='v1']
+  .fp-sortable-overlay-container
+  .fp-drag-floating-card {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  pointer-events: none !important;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-card);
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1'] .fp-sortable-catalogue-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-2, 0.5rem);
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1'] .fp-sortable-catalogue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fp-space-2, 0.5rem);
+  padding: var(--fp-space-2, 0.5rem) var(--fp-space-3, 0.75rem);
+  border-radius: var(--radius-card, 12px);
+  border: 1px solid var(--color-outline-subtle);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1'] .fp-sortable-catalogue-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fp-space-1, 0.25rem);
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1'] .fp-sortable-catalogue-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--fp-spacing-touch, 48px);
+  min-height: var(--fp-spacing-touch, 48px);
+  padding: var(--fp-space-1, 0.25rem);
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--color-outline-subtle);
+  background: var(--color-surface-container);
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1']
+  .fp-sortable-catalogue-btn[data-sortable-handle] {
+  cursor: grab;
+  touch-action: none;
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1'] .fp-sortable-catalogue-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

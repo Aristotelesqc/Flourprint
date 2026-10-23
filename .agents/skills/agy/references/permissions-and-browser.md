@@ -16,12 +16,40 @@ An `ask_question` answer relays human authorization but does **not** update tech
 permissions. Require an actual Read URL/MCP confirmation and successful tool result. An agent's
 statement that access is granted is insufficient evidence.
 
-An implementation conversation also returned a plan instead of edits because the agent expected
-`[READ-TOKEN]` / `[WRITE-TOKEN]` in its assignment. These were that agent's prompt conventions,
-not CLI permission settings. The caller relayed the owner's existing scoped implementation
-authorization with those markers, explicitly retaining normal tool checks; subsequent source
-edits succeeded. Do not invent authorization, require these markers universally, or mistake them
-for technical grants. Verify actual tool results and the diff rather than a self-approved plan.
+## Relay a required human authorization token
+
+If the applicable `GEMINI.md` requires a human-entered token for reading or writing, ask the user
+for that token and relay their exact reply to AGY. This is an instruction-level authorization
+marker, not an API key or account credential.
+
+1. Inspect the loaded rule and its read/write scope. When asking, link the `GEMINI.md` and quote
+   the instruction requiring human authorization; do not reveal the expected token from the file
+   as if the user had entered it.
+2. Reuse a human reply already supplied for the same approved scope. Do not ask again just
+   because another AGY conversation starts. If no applicable reply exists, ask the user and wait
+   before the gated action.
+3. Relay the exact reply, preserving spelling and case, in the scoped private prompt or a
+   follow-up to the exact conversation ID. Identify it as the user's reply relayed by Codex and
+   state the authorized paths/actions. The user need not type it inside AGY itself.
+4. Verify the actual read/write result. The token satisfies the `GEMINI.md` instruction only;
+   technical tool permissions still follow the normal confirmation path below.
+
+Do not invent a human reply, hard-code the token, edit the global rule, or publish the token in
+commits, issues or reports. Do not introduce mandatory tokens for installations without this rule.
+
+An implementation conversation returned a plan instead of edits until the owner's global
+`~/.gemini/GEMINI.md` requirement was identified on 2026-10-23. An earlier successful assignment
+alone did not establish authorization for a fresh conversation; the actual human reply did.
+
+With the owner's exact reply, a bounded canary completed a native write and read-back in 28 s.
+That proves that file/tool scope only. Four later, larger implementation assignments still timed
+out without edits; authorization alone did not establish reliable complex-task execution.
+Smaller supplied-source patches then returned usable output. Keep those generated patches
+distinct from native edits and caller-run browser verification. An empty turn with zero reported
+served usage does not establish a permission denial or a prompting defect. Preserve its terminal
+status, use only the bounded recovery allowed by the entrypoint, and avoid changing grants to
+diagnose missing model output. The earlier uppercase trial and later lowercase success also
+changed task size and working directory, so they do not isolate letter case as the cause.
 
 Also distinguish tool denial from a package-manager failure. In this implementation,
 `run_command` ran `pnpm exec tsc -b` through the host's bundled runtime and attempted an automatic
@@ -163,3 +191,34 @@ Record only reviewed setup facts in repo documentation: CLI/MCP versions, scope 
 results. Keep machine-specific paths, prompts, raw account/session diagnostics and synthetic
 browser artifacts in ignored scratch space. Normal grants solve access, not accessibility,
 native-device acceptance, visual quality or the PR merge decision.
+
+## Tool-free implementation fallback (2026-10-16)
+
+On a new isolated checkout, headless `accept-edits` may still receive a denied workspace read.
+A normal interactive launch may then present a whole-folder trust prompt covering read, edit
+and execution. Do not treat the repository assignment or legacy `[READ-TOKEN]`/`[WRITE-TOKEN]`
+text as a trust grant. In the #133 run, automatic approval rejected that broader trust action;
+the owned interactive process was exited normally. No guard was disabled and no denied file
+was accessed through a different tool.
+
+A permitted alternative was to supply the already-authorized source text in the assignment and
+require a tool-free response containing an explicit file map. Inspect the structured transcript
+for actual tool calls, parse its final JSON strictly, check every relative output path against
+an allowlist, and stage it outside the repository for review before integrating selected files.
+A completion can contain a phase prefix before the JSON; do not execute the response or assume
+it is valid JSON without parsing. The #133 kit needed one bounded correction; Codex rejected
+unreviewed screen/solver code and integrated only the reviewed presentation files.
+
+Report this accurately as supplied-source generation, not direct workspace editing, successful
+permission recovery, browser use or Gemini-executed tests. Codex integration/tests remain the
+caller's responsibility. This fallback does not authorize sharing other source or bypassing an
+approval denial.
+
+## Browser capability probe (2026-10-17)
+
+In the bounded #133 check with AGY CLI 1.4.0 and `gemini-3.8-flash-high`, the exposed toolset
+contained workspace/command tools and static URL extraction, but no interactive browser-control
+tool. The reviewer returned `UNSUPPORTED` without using tools or changing grants. This was a
+capability gap, not an authentication or folder-trust failure. Do not relaunch permission recovery
+for this same toolset or count URL extraction as button testing. Codex owns the actual browser
+journeys and visual captures when this capability remains absent.

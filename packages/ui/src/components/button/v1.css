@@ -1,0 +1,95 @@
+/* 48 px native hit box; the opaque painted shape is 40 px tall. */
+[data-fp-component='fp.button'][data-fp-version='v1'].btn {
+  appearance: none;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fp-space-1-5);
+  min-height: var(--fp-spacing-touch);
+  min-width: var(--fp-spacing-touch);
+  box-sizing: border-box;
+  padding: 0 var(--fp-space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-ink);
+  font-size: var(--type-label);
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  flex-shrink: 0;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn:focus {
+  outline: none;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'] > .button-shape {
+  position: absolute;
+  z-index: -1;
+  inset: calc((var(--fp-spacing-touch) - var(--fp-spacing-touch-compact)) / 2) 0;
+  border: 1px solid var(--color-outline);
+  border-radius: inherit;
+  background: var(--color-surface-container);
+  pointer-events: none;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'] > .button-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fp-space-1-5);
+  line-height: 1.25;
+  vertical-align: middle;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'] .button-content svg,
+[data-fp-component='fp.button'][data-fp-version='v1']
+  .button-content
+  [data-fp-component='fp.icon'] {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn:active > span {
+  transform: scale(0.97);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-fp-component='fp.button'][data-fp-version='v1'].btn:active > span {
+    transform: none;
+  }
+}
+[data-motion='reduced'] [data-fp-component='fp.button'][data-fp-version='v1'].btn:active > span {
+  transform: none;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn:focus-visible > .button-shape {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn-primary {
+  color: var(--color-on-primary);
+  font-weight: 700;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn-primary > .button-shape {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn-quiet {
+  color: var(--color-primary);
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn-quiet > .button-shape {
+  background: transparent;
+  border-color: transparent;
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn-danger {
+  color: var(--color-danger);
+}
+[data-fp-component='fp.button'][data-fp-version='v1'].btn-danger > .button-shape {
+  border-color: var(--color-danger);
+}

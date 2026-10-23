@@ -1,0 +1,154 @@
+/* Presentation owned by fp.recipe-card v1. */
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'].recipe-card {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-space-1);
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--fp-space-2);
+  box-sizing: border-box;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'].recipe-card:hover {
+  border-color: var(--color-outline);
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'].recipe-card.selected-template {
+  border-color: var(--color-primary);
+  background: var(--color-surface-container-high);
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fp-space-2);
+  flex-wrap: nowrap;
+  min-height: var(--fp-spacing-touch);
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-main-action {
+  appearance: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--fp-spacing-touch);
+  cursor: pointer;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-main-action:focus {
+  outline: none;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-main-action:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-title {
+  font-size: var(--type-title);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--color-ink);
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-chip {
+  position: relative;
+  z-index: 2;
+  isolation: isolate;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--color-success);
+  font-size: var(--type-meta);
+  font-weight: 700;
+  min-height: var(--fp-spacing-touch);
+  min-width: var(--fp-spacing-touch);
+  padding: var(--fp-space-1) var(--fp-space-2-5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fp-space-1);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-chip:focus {
+  outline: none;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-shape {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: calc((var(--fp-spacing-touch) - var(--fp-spacing-touch-compact)) / 2) 0;
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-container);
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1']
+  .active-prep-chip:focus-visible
+  > .active-prep-shape {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-chip:active > span {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-fp-component='fp.recipe-card'][data-fp-version='v1'] .active-prep-chip:active > span {
+    transform: none;
+  }
+}
+
+[data-motion='reduced']
+  [data-fp-component='fp.recipe-card'][data-fp-version='v1']
+  .active-prep-chip:active
+  > span {
+  transform: none;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-description {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: var(--type-meta);
+  line-height: 1.5;
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-metrics,
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fp-space-1);
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--fp-space-1);
+  margin-top: var(--fp-space-1);
+}

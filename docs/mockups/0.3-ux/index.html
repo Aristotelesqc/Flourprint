@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Flourprint 0.3 · UX Review Gallery</title>
+    <link rel="stylesheet" href="./gallery.css" />
+  </head>
+  <body>
+    <header>
+      <div class="brand-badge">Flourprint 0.3 · UX Review</div>
+      <h1>Interactive Review Gallery</h1>
+      <p class="subtitle">Review landing page in Warm 3 identity for prototype validation.</p>
+      <div class="disclaimer-box">
+        <strong>Review Scope &amp; Status:</strong> Prototyping in <code>mockup</code> and
+        <code>packages/ui</code> (not <code>apps/mobile</code> or real persistent history). Does not
+        claim all L-items are passed or owner-approved. <strong>Decision L101:</strong> Navigation A
+        adopted; Navigation B links and copy are removed from active consideration. Compact row
+        design and 350ms hold drag activation settled (L112). Remaining open O-items (cross-group,
+        downward-chain, handle mode, device acceptance) remain under evaluation.
+      </div>
+    </header>
+
+    <main>
+      <!-- SECTION 0: Drag and Save History Review (#133) -->
+      <section id="drag-save-history">
+        <h2 class="section-title">Drag &amp; Save History Review (#133)</h2>
+        <p class="section-caption">
+          Integrated review for issue #133 using <code>packages/ui</code> components (prototype
+          only; not <code>apps/mobile</code> or production persisted session certification). Review
+          objectives until Codex acceptance: verify real provisional neighbour reflow, single moving
+          gap, invalid-drop return to origin, and shared draft state across navigation.
+        </p>
+        <div class="choice-callout">
+          <strong>Interaction checks (owner physical-phone acceptance pending):</strong> Compact row
+          design and 350ms hold activation settled (L112). Verify real provisional neighbour reflow,
+          single moving gap during active drag, clean invalid-drop return, and shared draft state
+          across the three-tab Recipe/Planning/History interface (L108). Remaining open O-items stay
+          under evaluation. Quick links:
+          <a href="#matched-comparisons">Matched Comparisons</a> &middot;
+          <a href="#step-row-options">Settled Design &amp; Activation</a> &middot;
+          <a href="#navigation-a-screens">Navigation A Screens</a> &middot;
+          <a href="#motion-evidence">Motion Evidence</a>.
+        </div>
+
+        <div class="links-grid">
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=ingredients&stepDesign=compact&dragActivation=hold&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Recipe (Reading) · Compact</span>
+              <span class="badge badge-accent">Selected (L112)</span>
+            </div>
+            <p class="card-desc">
+              Unified Recipe tab (L108) with selected Compact row and 350ms hold activation (L112).
+            </p>
+            <span class="card-query"
+              >section=ingredients &amp; stepDesign=compact &amp; dragActivation=hold</span
+            >
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=ingredients&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Recipe (Edit) · Compact + Hold</span>
+              <span class="badge badge-accent">Selected (L112)</span>
+            </div>
+            <p class="card-desc">
+              Edit mode with selected Compact row and 350ms hold drag activation (L112).
+            </p>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=hold</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=planning&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Planning · Timeline Tab</span>
+              <span class="badge badge-accent">Timeline (L108)</span>
+            </div>
+            <p class="card-desc">
+              Generated time-focused planning view (L108) sharing step projection with Recipe tab.
+            </p>
+            <span class="card-query"
+              >section=planning &amp; stepDesign=compact &amp; dragActivation=hold</span
+            >
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=history&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Recipe History</span>
+              <span class="badge badge-history">Bounded History</span>
+            </div>
+            <p class="card-desc">
+              Saved history, reference milestones, and preparation baseline review.
+            </p>
+            <span class="card-query"
+              >section=history &amp; stepDesign=compact &amp; dragActivation=hold</span
+            >
+          </a>
+        </div>
+      </section>
+
+      <!-- SECTION 0B: Matched Before/After Comparisons (#133) -->
+      <section id="matched-comparisons">
+        <h2 class="section-title">Historical Round 2 vs. Current Comparisons</h2>
+        <p class="section-caption">
+          Side-by-side comparisons of historical Round 2 (<code>22db386</code>) references versus
+          current captures across Navigation A screens, locales, and viewports. Historical fixture
+          figures and times differ from current engine values; not a pixel-identical comparison.
+        </p>
+        <div id="comparisons-container">
+          <div class="pending-box">
+            Loading historical Round 2 vs. current comparisons from
+            <code>./review-manifest.json</code>...
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 1: Step Row & Activation Options (O3 OPEN) -->
+      <section id="step-row-options">
+        <h2 class="section-title">Drag Activation &amp; Row Design (L112 Settled)</h2>
+        <p class="section-caption">
+          Compact row design and 350ms hold activation settled by L112 (5px movement threshold
+          conflicted with tab-carousel swipe L106). Genuinely open O-items remain: cross-group drag,
+          downward-chain moves, handle mode vs. Reorder submode, and physical-device acceptance.
+          Links open the live interactive editor with inspector available (no capture mode).
+          Prototype only; no persisted session certification.
+        </p>
+        <div class="choice-callout">
+          <strong>Settled Baseline (L112):</strong> Compact row design with <code>hold</code> (350ms
+          press-and-hold threshold). The legacy <code>move</code> (5px motion threshold) and
+          alternative row presentations (rail, outline) remain accessible for historical comparison
+          and compatibility.
+        </div>
+
+        <div class="links-grid">
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=ingredients&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Compact Row · Hold</span>
+              <span class="badge badge-accent">Selected (L112)</span>
+            </div>
+            <p class="card-desc">
+              Dense step row with 350ms press-and-hold activation selected under L112 for swipe
+              safety.
+            </p>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=hold</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=ingredients&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=move"
+          >
+            <div class="card-heading">
+              <span class="card-title">Compact Row · Move</span>
+              <span class="badge badge-history">Archived threshold</span>
+            </div>
+            <p class="card-desc">
+              Dense step row with immediate 5px drag activation threshold (conflicted with L106
+              swipe).
+            </p>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=move</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- SECTION 2: Navigation A Screens -->
+      <section id="navigation-a-screens">
+        <h2 class="section-title">Navigation A Core Screens</h2>
+        <p class="section-caption">
+          Core product screens under the adopted Navigation A model (L101 decision). Prototype
+          review; no persisted session certification.
+        </p>
+        <div class="links-grid">
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=ingredients&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Recipe</span>
+              <span class="badge">Nav A</span>
+            </div>
+            <p class="card-desc">
+              Recipe overview, ingredients, bakers percentages, and process stages.
+            </p>
+            <span class="card-query"
+              >screen=recipe &amp; stepDesign=compact &amp; dragActivation=hold</span
+            >
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=preparation&recipe=shokupan&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Preparation</span>
+              <span class="badge">Nav A</span>
+            </div>
+            <p class="card-desc">
+              Step checklist, stage progression, ingredient weights, and active timers.
+            </p>
+            <span class="card-query">screen=preparation</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=settings&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Settings</span>
+              <span class="badge">Nav A</span>
+            </div>
+            <p class="card-desc">Theme, language, and unit preferences.</p>
+            <span class="card-query">screen=settings</span>
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=library&nav=A&lang=fr&theme=dark&width=393&scale=100"
+          >
+            <div class="card-heading">
+              <span class="card-title">Library</span>
+              <span class="badge">Nav A</span>
+            </div>
+            <p class="card-desc">Recipe catalog and collection overview.</p>
+            <span class="card-query">screen=library</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- SECTION 3: Historical Reference (Old A/B Comparison) -->
+      <section id="historical-reference">
+        <h2 class="section-title">Historical Reference</h2>
+        <p class="section-caption">
+          Archived comparisons for provenance. L101 closed: Navigation A confirmed. Step row design:
+          Compact selected 2026-10-21.
+        </p>
+        <div class="links-grid">
+          <div class="review-card" style="opacity: 0.75">
+            <div class="card-heading">
+              <span class="card-title">Decision L101 (Closed)</span>
+              <span class="badge badge-history">Archived</span>
+            </div>
+            <p class="card-desc">
+              Navigation A selected. Navigation B links and copy removed from active review choices.
+            </p>
+          </div>
+
+          <div class="review-card" style="opacity: 0.75">
+            <div class="card-heading">
+              <span class="card-title">Decision L112 (Closed)</span>
+              <span class="badge badge-history">Archived</span>
+            </div>
+            <p class="card-desc">
+              Compact row + 350ms hold activation selected. 5px move threshold and rail/outline
+              presentations retired from active review choices.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: Motion Evidence -->
+      <section id="motion-evidence">
+        <h2 class="section-title">Motion Evidence</h2>
+        <p class="section-caption">
+          Recorded motion clips from <code>./review-manifest.json</code>. Delivery evidence, not
+          product UI.
+        </p>
+
+        <div id="motion-container">
+          <div class="pending-box">
+            Loading motion clips from <code>./review-manifest.json</code>...
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: Companion Screenshots (review-manifest.json) -->
+      <section id="companion-screenshots">
+        <h2 class="section-title">Companion Screenshots</h2>
+        <p class="section-caption">
+          Rendered from <code>./review-manifest.json</code> generated by Codex capture suite.
+        </p>
+
+        <div id="manifest-container">
+          <div class="pending-box">
+            Loading captures from <code>./review-manifest.json</code>...
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Flourprint 0.3 UX Review · Static local client · No external tracking or network calls
+    </footer>
+
+    <script>
+      (function () {
+        const container = document.getElementById('manifest-container');
+        const motionContainer = document.getElementById('motion-container');
+        const comparisonsContainer = document.getElementById('comparisons-container');
+
+        fetch('./review-manifest.json')
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error('Manifest not found (HTTP ' + res.status + ')');
+            }
+            return res.json();
+          })
+          .then((manifest) => {
+            if (!manifest) {
+              throw new Error('Invalid manifest structure');
+            }
+            renderComparisons(manifest);
+            renderMotion(manifest);
+            renderGallery(manifest);
+          })
+          .catch((err) => {
+            if (container) {
+              container.innerHTML = `
+                <div class="pending-box">
+                  <p><strong>Captures pending</strong></p>
+                  <p style="margin-top: 6px; font-size: 0.8rem;">Review manifest not yet present (<code>./review-manifest.json</code> will be generated by Codex). Full-resolution screenshot cards will populate automatically once available.</p>
+                </div>
+              `;
+            }
+            if (motionContainer) {
+              motionContainer.innerHTML = `
+                <div class="pending-box">
+                  <p><strong>Motion evidence pending</strong></p>
+                  <p style="margin-top: 6px; font-size: 0.8rem;">No motion clips available yet (<code>./review-manifest.json</code> not present).</p>
+                </div>
+              `;
+            }
+            if (comparisonsContainer) {
+              comparisonsContainer.innerHTML = `
+                <div class="pending-box">
+                  <p><strong>Matched comparisons pending</strong></p>
+                  <p style="margin-top: 6px; font-size: 0.8rem;">No matched comparison pairs available yet (<code>./review-manifest.json</code> not present).</p>
+                </div>
+              `;
+            }
+          });
+
+        function renderComparisons(manifest) {
+          if (!comparisonsContainer) return;
+          const pairs = Array.isArray(manifest.comparisonPairs) ? manifest.comparisonPairs : [];
+          const rev = escapeHtml(manifest.revision || 'current');
+          const sha = escapeHtml(
+            manifest.sourceSha256 ? manifest.sourceSha256.substring(0, 12) : 'unspecified',
+          );
+          const metaHtml = `
+            <div class="manifest-meta" style="margin-bottom: 12px;">
+              <span><strong>Current Revision:</strong> ${rev}</span>
+              <span><strong>Source SHA-256:</strong> <code>${sha}</code></span>
+              <span><strong>Matched Pairs:</strong> ${pairs.length}</span>
+            </div>
+          `;
+          if (pairs.length === 0) {
+            comparisonsContainer.innerHTML =
+              metaHtml +
+              `
+              <div class="pending-box">
+                <p><strong>Comparison evidence pending</strong></p>
+                <p style="margin-top: 6px; font-size: 0.8rem;">No <code>comparisonPairs</code> populated in <code>./review-manifest.json</code> yet. Capture suite will populate historical Round 2 (<code>22db386</code>) vs. Current PNG pairs with fixture and time differences.</p>
+              </div>
+            `;
+            return;
+          }
+
+          comparisonsContainer.innerHTML =
+            metaHtml +
+            `
+            <div class="captures-grid" style="grid-template-columns: 1fr;">
+              ${pairs
+                .map((p) => {
+                  const beforeRev = escapeHtml(p.beforeRevision || 'Round 2 (22db386)');
+                  const afterRev = escapeHtml(p.afterRevision || manifest.revision || 'Current');
+                  const specs = [
+                    p.fixture ? `<span class="badge">Fixture: ${escapeHtml(p.fixture)}</span>` : '',
+                    p.locale ? `<span class="badge">${escapeHtml(p.locale)}</span>` : '',
+                    p.theme ? `<span class="badge">${escapeHtml(p.theme)}</span>` : '',
+                    p.width || p.textScale
+                      ? `<span class="badge">${escapeHtml(p.width || 393)}px @ ${escapeHtml(p.textScale || 100)}%</span>`
+                      : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ');
+
+                  return `
+                  <div class="capture-card" style="padding: 12px;">
+                    <div class="capture-info" style="padding: 0 0 10px 0;">
+                      <div class="capture-name">${escapeHtml(p.label || 'Matched Comparison')}</div>
+                      <div class="capture-tags" style="margin-top: 4px;">${specs}</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: start;">
+                      <div style="min-width: 0;">
+                        <div class="capture-tags" style="margin-bottom: 6px;">
+                          <span class="badge badge-history">Before · ${beforeRev}</span>
+                        </div>
+                        <a class="capture-img-link" href="${escapeHtml(p.before)}" target="_blank" rel="noopener" title="Open full-resolution Before (${beforeRev}) PNG">
+                          <img src="${escapeHtml(p.before)}" alt="${escapeHtml((p.label || 'Comparison') + ' Before ' + beforeRev)}" loading="lazy" style="width: 100%; height: auto; display: block;" />
+                        </a>
+                      </div>
+                      <div style="min-width: 0;">
+                        <div class="capture-tags" style="margin-bottom: 6px;">
+                          <span class="badge badge-accent">Current · ${afterRev}</span>
+                        </div>
+                        <a class="capture-img-link" href="${escapeHtml(p.after)}" target="_blank" rel="noopener" title="Open full-resolution Current (${afterRev}) PNG">
+                          <img src="${escapeHtml(p.after)}" alt="${escapeHtml((p.label || 'Comparison') + ' Current ' + afterRev)}" loading="lazy" style="width: 100%; height: auto; display: block;" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                `;
+                })
+                .join('')}
+            </div>
+          `;
+        }
+
+        function renderMotion(manifest) {
+          if (!motionContainer) return;
+          const clips = Array.isArray(manifest.motionClips) ? manifest.motionClips : [];
+          if (clips.length === 0) {
+            motionContainer.innerHTML = `
+              <div class="pending-box">
+                <p><strong>Motion evidence pending</strong></p>
+                <p style="margin-top: 6px; font-size: 0.8rem;">No motion clips listed in <code>./review-manifest.json</code> yet.</p>
+              </div>
+            `;
+            return;
+          }
+
+          motionContainer.innerHTML = `
+            <div class="captures-grid">
+              ${clips
+                .map(
+                  (clip) => `
+                <div class="capture-card" style="padding: 12px; gap: 8px;">
+                  <video controls playsinline preload="metadata" style="width: 100%; max-width: 100%; border-radius: var(--radius-sm); background: #000;" src="${escapeHtml(clip.path)}">
+                    Your browser does not support video playback.
+                  </video>
+                  <div class="capture-info" style="padding: 4px 0 0 0;">
+                    <div class="capture-name">${escapeHtml(clip.title || 'Motion clip')}</div>
+                    <div class="capture-tags">
+                      ${clip.reduced ? '<span class="badge">reduced motion</span>' : ''}
+                      ${clip.sha256 ? `<span class="badge">SHA: ${escapeHtml(clip.sha256.substring(0, 8))}</span>` : ''}
+                      <a href="${escapeHtml(clip.path)}" target="_blank" rel="noopener" style="font-size: 0.75rem; color: var(--accent); margin-left: auto;">Open video</a>
+                    </div>
+                  </div>
+                </div>
+              `,
+                )
+                .join('')}
+            </div>
+          `;
+        }
+
+        function renderGallery(manifest) {
+          const views = Array.isArray(manifest.views) ? manifest.views : [];
+          if (views.length === 0) {
+            container.innerHTML = `
+              <div class="pending-box">
+                <p><strong>Manifest found, but no views listed</strong></p>
+              </div>
+            `;
+            return;
+          }
+
+          // Extract unique filters
+          const screens = Array.from(new Set(views.map((v) => v.screen).filter(Boolean)));
+          const themes = Array.from(new Set(views.map((v) => v.theme).filter(Boolean)));
+          const locales = Array.from(new Set(views.map((v) => v.locale).filter(Boolean)));
+
+          container.innerHTML = `
+            <div class="manifest-meta">
+              <span><strong>Revision:</strong> ${escapeHtml(manifest.revision || 'unspecified')}</span>
+              <span><strong>Source SHA-256:</strong> <code>${escapeHtml(manifest.sourceSha256 ? manifest.sourceSha256.substring(0, 12) : 'unspecified')}</code></span>
+              <span><strong>Captures:</strong> <span id="capture-count">${views.length}</span></span>
+            </div>
+
+            <div class="filter-bar">
+              <div class="filter-group">
+                <label for="filter-screen">Screen:</label>
+                <select id="filter-screen">
+                  <option value="">All</option>
+                  ${screens.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="filter-theme">Theme:</label>
+                <select id="filter-theme">
+                  <option value="">All</option>
+                  ${themes.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="filter-group">
+                <label for="filter-locale">Locale:</label>
+                <select id="filter-locale">
+                  <option value="">All</option>
+                  ${locales.map((l) => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div class="captures-grid" id="captures-grid"></div>
+          `;
+
+          const grid = document.getElementById('captures-grid');
+          const countEl = document.getElementById('capture-count');
+          const screenSelect = document.getElementById('filter-screen');
+          const themeSelect = document.getElementById('filter-theme');
+          const localeSelect = document.getElementById('filter-locale');
+
+          function updateList() {
+            const sVal = screenSelect.value;
+            const tVal = themeSelect.value;
+            const lVal = localeSelect.value;
+
+            const filtered = views.filter((v) => {
+              if (sVal && v.screen !== sVal) return false;
+              if (tVal && v.theme !== tVal) return false;
+              if (lVal && v.locale !== lVal) return false;
+              return true;
+            });
+
+            countEl.textContent = filtered.length;
+
+            if (filtered.length === 0) {
+              grid.innerHTML =
+                '<div class="pending-box" style="grid-column: 1 / -1;">No captures match selected filters.</div>';
+              return;
+            }
+
+            grid.innerHTML = filtered
+              .map((view) => {
+                const isBaseline = Boolean(view.baseline);
+                const tags = [
+                  isBaseline
+                    ? '<span class="badge badge-history">Historical baseline</span>'
+                    : '<span class="badge">Current</span>',
+                  view.screen ? `<span class="badge">${escapeHtml(view.screen)}</span>` : '',
+                  view.theme ? `<span class="badge">${escapeHtml(view.theme)}</span>` : '',
+                  view.locale ? `<span class="badge">${escapeHtml(view.locale)}</span>` : '',
+                  view.design
+                    ? `<span class="badge badge-accent">${escapeHtml(view.design)}</span>`
+                    : '',
+                  view.activation
+                    ? `<span class="badge badge-accent">${escapeHtml(view.activation)}</span>`
+                    : '',
+                  view.width && view.scale
+                    ? `<span class="badge">${escapeHtml(view.width)}px @ ${escapeHtml(view.scale)}%</span>`
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ');
+
+                const noteHtml = view.note
+                  ? `<div class="card-desc" style="margin-top: 4px; font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(view.note)}</div>`
+                  : '';
+
+                return `
+                <div class="capture-card" ${isBaseline ? 'style="border-color: var(--border-subtle); opacity: 0.9;"' : ''}>
+                  <a class="capture-img-link" href="${escapeHtml(view.path)}" target="_blank" rel="noopener" title="Open full resolution capture">
+                    <img src="${escapeHtml(view.path)}" alt="${escapeHtml(view.name || 'Capture')}" loading="lazy" />
+                  </a>
+                  <div class="capture-info">
+                    <div class="capture-name">${escapeHtml(view.name || 'Unnamed capture')}</div>
+                    <div class="capture-tags">${tags}</div>
+                    ${noteHtml}
+                  </div>
+                </div>
+              `;
+              })
+              .join('');
+          }
+
+          screenSelect.addEventListener('change', updateList);
+          themeSelect.addEventListener('change', updateList);
+          localeSelect.addEventListener('change', updateList);
+
+          updateList();
+        }
+
+        function escapeHtml(str) {
+          if (!str) return '';
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
+      })();
+    </script>
+  </body>
+</html>

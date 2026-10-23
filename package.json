@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p apps/mobile && tsc -p apps/mobile/tsconfig.node.json && tsc -p apps/desktop/tsconfig.e2e.json && tsc -p packages/ui",
+    "typecheck": "tsc -b && tsc -p tsconfig.tests.json && tsc -p apps/mobile && tsc -p apps/mobile/tsconfig.node.json && tsc -p apps/desktop/tsconfig.e2e.json && tsc -p packages/ui && tsc -p docs/mockups/0.3-ux",
     "lint": "eslint .",
     "test": "tsc -b && vitest run",
     "format": "prettier --write .",
@@ -22,6 +22,12 @@
     "tokens:check": "node scripts/ui-tokens.mjs --check",
     "catalogue": "node scripts/ui-catalogue.mjs serve",
     "build:catalogue": "node scripts/ui-catalogue.mjs build",
+    "build:mockups": "node scripts/mockup-review.mjs build",
+    "test:mockups": "node scripts/test-mockups.mjs",
+    "capture:mockups": "node scripts/capture-mockups.mjs",
+    "compare:mockups": "node scripts/compare-mockups.mjs",
+    "capture:restoration": "node scripts/capture-restoration.mjs",
+    "export:restoration": "node scripts/export-restoration.mjs",
     "ui:index": "node scripts/ui-index.mjs"
   },
   "devDependencies": {

@@ -5,7 +5,8 @@ Screens (the layout engine) render components **by id**. A manifest picks the ve
 id, so switching a version is one line in the manifest. The screens and the library are not
 touched.
 
-The library imports React only. Components receive display-ready props: localized text,
+The library imports React and the pinned `@dnd-kit/react` / `@dnd-kit/dom` behaviour packages
+for sortable lists (ADR 0021, dependency PR #153). Components receive display-ready props: localized text,
 formatted quantities, states and callbacks. The layout engine calls `@flourprint/core` and
 maps its results to props. There is no baking math here.
 
@@ -88,7 +89,7 @@ comma-separated) renders another version for comparison. An override is never st
 `test/release-bundle.test.ts` builds the pattern above with Vite to prove that a release bundle
 without the flag holds only the selected versions.
 
-Load `@flourprint/ui/tokens.css` once in the consumer. Themes follow `data-theme`
+Load `@flourprint/ui/tokens.css` and `@flourprint/ui/components.css` once in the consumer. Themes follow `data-theme`
 (`light`, `dark`, `amoled`) on any ancestor. Reduced motion follows the system setting or
 `data-motion="reduced"`.
 
@@ -161,3 +162,22 @@ motion.
 Components and their versions belong to the interface writers (AGENTS.md: Gemini under
 Codex). The mechanism, tests, token generation and catalogue build belong to Claude unless
 the owner reassigns them.
+
+## Isolating a visual defect
+
+The #133 review studio's inspector identifies real `data-fp-component` / `data-fp-version`
+attributes and links the generated catalogue. Disable inspection to resume product actions.
+Locate the id's v1 file, adjust that version and its examples, then verify it in isolation and
+in the screens that select it. A visual change must not require copying markup back into the
+mockup or the production screen. Screen facades bind typed ids; only manifests import versions.
+The catalogue contains v1 only until a real alternative is introduced; historical mockups are
+preserved references, not pretend library versions. App migration remains a reviewed consumer
+change; the prototype does not establish native shell or persistence conformance.
+
+Nested presentation uses `library.Slot` with the same id-specific props, rather than importing
+another version. The consumer's `Ui` carries its selected manifest through the component tree.
+This makes a metric-pill version switch affect the pills inside cards and step rows without
+editing those parents. The catalogue supplies that same context for each displayed version.
+Version-specific styles live in `<name>/v1.css`, imported by `v1.tsx`, and their selectors include
+both `data-fp-component` and `data-fp-version`. The shared `components.css` holds tokens and
+structural roles only. The presentation-boundary test rejects unscoped version styles.

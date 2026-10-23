@@ -4,8 +4,9 @@
  * developer and review page generated from a catalogue registry, so its own labels are fixed
  * English; product text reaches components only through their props.
  */
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { Guide } from '../guides.ts';
+import { createUi, type ComponentId, type UiRenderer } from '../library.ts';
 import type {
   Catalogue as CatalogueRegistry,
   ComponentMap,
@@ -13,9 +14,10 @@ import type {
   Versioned,
 } from '../library.ts';
 import { MotionProvider } from '../motion-context.ts';
-import { playMotion, transitionCss, type Motion } from '../motion.ts';
+import { playMotion, transitionCss, type Motion, type KeyframesMotion } from '../motion.ts';
 import type { MotionManifest } from '../motion.ts';
 import type { FlourprintMotion } from '../motions.ts';
+import { playTabCarouselSlide } from '../motions/tab-carousel/index.ts';
 
 const THEMES = ['light', 'dark', 'amoled'] as const;
 const WIDTHS = [393, 360] as const;
@@ -94,6 +96,127 @@ const cssObject = (declarations: Readonly<Record<string, string>>): CSSPropertie
 const MotionDemo = ({ motion, reduced }: { motion: Motion; reduced: boolean }) => {
   const sample = useRef<HTMLDivElement>(null);
   const [on, setOn] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ startX: 0, currentDx: 0, isDragging: false });
+
+  if (motion.id === 'fp.motion.tab-carousel') {
+    const tabs = ['Ingredients', 'Steps', 'Planning'];
+    const selectTab = (nextIndex: number) => {
+      const fromP = -tabIndex * 100;
+      const toP = -nextIndex * 100;
+      setTabIndex(nextIndex);
+      if (trackRef.current) {
+        if (reduced) {
+          trackRef.current.style.transform = `translateX(${toP}%)`;
+        } else {
+          playTabCarouselSlide(trackRef.current, `${fromP}%`, `${toP}%`, {
+            motion: motion as KeyframesMotion,
+            durationMs: 220,
+            reduced,
+          });
+        }
+      }
+    };
+
+    return (
+      <div style={styles.demo}>
+        <div
+          ref={sample}
+          data-testid="motion-sample"
+          style={{ ...styles.sample, width: '260px', overflow: 'hidden', padding: '8px' }}
+        >
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+            {tabs.map((tab, idx) => (
+              <button
+                key={tab}
+                type="button"
+                style={{
+                  padding: '2px 6px',
+                  fontSize: '11px',
+                  fontWeight: tabIndex === idx ? 'bold' : 'normal',
+                  background: tabIndex === idx ? '#a9490a' : 'transparent',
+                  color: tabIndex === idx ? '#fff' : 'inherit',
+                  border: '1px solid #d4cebe',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => selectTab(idx)}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <div
+            ref={trackRef}
+            onPointerDown={(e) => {
+              dragRef.current = { startX: e.clientX, currentDx: 0, isDragging: true };
+              e.currentTarget.setPointerCapture(e.pointerId);
+            }}
+            onPointerMove={(e) => {
+              if (!dragRef.current.isDragging || !trackRef.current) return;
+              const dx = e.clientX - dragRef.current.startX;
+              dragRef.current.currentDx = dx;
+              if (!reduced) {
+                trackRef.current.style.transform = `translateX(calc(${-tabIndex * 100}% + ${dx}px))`;
+              }
+            }}
+            onPointerUp={() => {
+              if (!dragRef.current.isDragging) return;
+              dragRef.current.isDragging = false;
+              const dx = dragRef.current.currentDx;
+              let target = tabIndex;
+              if (dx < -30 && tabIndex < tabs.length - 1) target = tabIndex + 1;
+              else if (dx > 30 && tabIndex > 0) target = tabIndex - 1;
+              selectTab(target);
+            }}
+            onPointerCancel={() => {
+              if (!dragRef.current.isDragging) return;
+              dragRef.current.isDragging = false;
+              selectTab(tabIndex);
+            }}
+            style={{
+              display: 'flex',
+              width: '100%',
+              touchAction: 'pan-y',
+              cursor: 'grab',
+              userSelect: 'none',
+              transform: `translateX(-${tabIndex * 100}%)`,
+            }}
+          >
+            {tabs.map((tab) => (
+              <div
+                key={tab}
+                style={{
+                  flex: '0 0 100%',
+                  boxSizing: 'border-box',
+                  padding: '8px',
+                  background: 'rgba(0,0,0,0.03)',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  textAlign: 'center',
+                }}
+              >
+                {tab} (drag / flick)
+              </div>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const next = (tabIndex + 1) % tabs.length;
+            selectTab(next);
+          }}
+        >
+          Play
+        </button>
+        {reduced ? <span style={styles.hint}>reduced: no animation</span> : null}
+      </div>
+    );
+  }
+
   if (motion.kind === 'keyframes') {
     return (
       <div style={styles.demo}>
@@ -177,7 +300,7 @@ const Frame = ({
     data-theme={theme}
     data-motion={reduced ? 'reduced' : 'standard'}
     data-testid={`catalogue-frame-${theme}`}
-    style={{ ...styles.frame, width }}
+    style={{ ...styles.frame, width, containerType: 'inline-size' }}
   >
     {children}
   </div>
@@ -208,6 +331,26 @@ export const Catalogue = <C extends ComponentMap>({
 
   const ids = Object.keys(catalogue).sort() as (keyof CatalogueRegistry<C> & string)[];
   const themes = theme === 'all' ? THEMES : [theme];
+  const renderers = useMemo(() => {
+    const keys = Object.keys(catalogue) as ComponentId<C>[];
+    const base =
+      manifest ??
+      (Object.fromEntries(keys.map((id) => [id, catalogue[id][0]])) as unknown as Manifest<C>);
+    return new Map<string, UiRenderer<C>>(
+      keys.flatMap((id) =>
+        catalogue[id].map((version) => [
+          `${id}@${version.version}`,
+          createUi<C>({ ...base, [id]: version }),
+        ]),
+      ),
+    );
+  }, [catalogue, manifest]);
+  useEffect(() => {
+    if (location.hash)
+      document
+        .getElementById(decodeURIComponent(location.hash.slice(1)))
+        ?.scrollIntoView({ block: 'start' });
+  }, []);
 
   const page = (
     <main style={styles.page}>
@@ -263,35 +406,45 @@ export const Catalogue = <C extends ComponentMap>({
         <section key={id} id={id} data-testid={`catalogue-${id}`} style={styles.section}>
           <h2 style={styles.id}>{id}</h2>
           {guides ? <GuidePanel guide={guides[id]} /> : null}
-          {catalogue[id].map((version) => {
-            const Component = version.component;
-            const selected = manifest?.[id] === version;
-            return (
-              <article
-                key={version.version}
-                data-testid={`catalogue-${id}-${version.version}`}
-                style={styles.version}
-              >
-                <h3 style={styles.versionTitle}>
-                  {version.version}
-                  {selected ? <span style={styles.selected}>selected</span> : null}
-                </h3>
-                <p style={styles.muted}>{version.notes}</p>
-                {version.examples.map((example) => (
-                  <div key={example.name} style={styles.example}>
-                    <h4 style={styles.exampleTitle}>{example.name}</h4>
-                    <div style={styles.frames}>
-                      {themes.map((frameTheme) => (
-                        <Frame key={frameTheme} theme={frameTheme} width={width} reduced={reduced}>
-                          <Component {...example.props} />
-                        </Frame>
-                      ))}
+          <div style={styles.versions}>
+            {catalogue[id].map((version) => {
+              const renderer = renderers.get(`${id}@${version.version}`);
+              if (!renderer)
+                throw new Error(`Missing catalogue renderer: ${id}@${version.version}`);
+              const Component = renderer.Ui;
+              const selected = manifest?.[id] === version;
+              return (
+                <article
+                  key={version.version}
+                  data-testid={`catalogue-${id}-${version.version}`}
+                  style={styles.version}
+                >
+                  <h3 style={styles.versionTitle}>
+                    {version.version}
+                    {selected ? <span style={styles.selected}>selected</span> : null}
+                  </h3>
+                  <p style={styles.muted}>{version.notes}</p>
+                  {version.examples.map((example) => (
+                    <div key={example.name} style={styles.example}>
+                      <h4 style={styles.exampleTitle}>{example.name}</h4>
+                      <div style={styles.frames}>
+                        {themes.map((frameTheme) => (
+                          <Frame
+                            key={frameTheme}
+                            theme={frameTheme}
+                            width={width}
+                            reduced={reduced}
+                          >
+                            <Component component={id} {...example.props} />
+                          </Frame>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </article>
-            );
-          })}
+                  ))}
+                </article>
+              );
+            })}
+          </div>
         </section>
       ))}
       <h2 style={styles.kindTitle}>Motions</h2>
@@ -361,7 +514,8 @@ const styles = {
   navLink: { fontSize: '0.8rem', color: 'var(--fp-color-action-text)' },
   section: { borderTop: '1px solid var(--fp-color-outline)', padding: '1rem 0' },
   id: { fontFamily: 'ui-monospace, monospace', fontSize: '1.05rem', margin: '0 0 0.5rem' },
-  version: { margin: '0 0 1.25rem' },
+  versions: { display: 'flex', gap: '1rem', alignItems: 'flex-start', overflowX: 'auto' },
+  version: { margin: '0 0 1.25rem', minWidth: 0, flex: '1 0 393px', maxWidth: '100%' },
   versionTitle: {
     fontSize: '0.95rem',
     margin: '0',

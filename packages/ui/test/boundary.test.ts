@@ -27,11 +27,20 @@ describe('packages/ui dependency boundary', () => {
     (file) => {
       for (const specifier of importsOf(join(srcDir, file))) {
         expect(specifier, `${file} imports ${specifier}`).toMatch(
-          /^(\.\.?\/|react(\/|$)|react-dom(\/|$))/,
+          /^(\.\.?\/|react(\/|$)|react-dom(\/|$)|@dnd-kit\/(react|dom)(\/|$))/,
         );
       }
     },
   );
+
+  it('version implementations do not pin versions of their children', () => {
+    for (const file of files.filter((file) =>
+      /components[\\/]([^\\/]+)[\\/]v\d+\.tsx$/.test(file),
+    )) {
+      for (const specifier of importsOf(file))
+        expect(specifier).not.toMatch(/\.\.\/.*\/v\d+(?:\.tsx?)?$/);
+    }
+  });
 
   it('lists every motion version and guide in the motion catalogue', () => {
     const registry = readFileSync(join(srcDir, 'catalogue/motions.ts'), 'utf8');

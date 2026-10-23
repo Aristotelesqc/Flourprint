@@ -1,0 +1,149 @@
+/* Presentation owned by fp.hero-summary v1. */
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'].recipe-summary-box {
+  display: grid;
+  gap: var(--fp-space-2);
+  padding: var(--fp-space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-card);
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--fp-space-2);
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-tile {
+  display: grid;
+  align-content: start;
+  gap: var(--fp-space-1);
+  min-width: 0;
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--fp-space-2-5);
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-header {
+  color: var(--color-ink-muted);
+  font-size: var(--type-label);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .warning-banner-actionable {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-label-group {
+  display: flex;
+  align-items: center;
+  gap: var(--fp-space-1-5);
+  min-width: 0;
+  line-height: 1.25;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fp-space-1);
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-value {
+  font-size: var(--type-metric-lg);
+  line-height: 1.2;
+  font-weight: 800;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-value-sm {
+  font-size: var(--type-metric-md);
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-sub {
+  font-size: var(--type-meta);
+  color: var(--color-ink-muted);
+  line-height: 1.3;
+  overflow-wrap: normal;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .hydration-summary-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--fp-space-1);
+  border: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--fp-space-2-5);
+  background: var(--color-surface-container);
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .hydration-info {
+  gap: var(--fp-space-1);
+  min-width: 0;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .hydration-label-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--fp-space-1-5);
+  font-size: var(--type-label);
+  font-weight: 700;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .hydration-value {
+  font-size: var(--type-metric-lg);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .hydration-detail {
+  display: block;
+  font-size: var(--type-meta);
+  line-height: 1.3;
+  color: var(--color-ink-muted);
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .hydration-editor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--fp-space-1);
+  min-width: 0;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--fp-space-2);
+  padding: var(--fp-space-2);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-container-high);
+  color: var(--color-warning-ink);
+  font-size: var(--type-meta);
+  line-height: 1.35;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .warning-banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-help {
+  font: inherit;
+  text-align: left;
+  appearance: none;
+  cursor: pointer;
+}
+
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .hydration-label {
+  font-weight: 700;
+}
+
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'].recipe-summary-box {
+  container-type: inline-size;
+}
+@container (max-width:18rem) {
+  [data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-header {
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,20 @@
+/* Mockup layout container rules */
+.phone-content.has-carousel {
+  padding: 0;
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-content.has-carousel > .section-carousel-container {
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  min-width: 0;
+}
+
+/* Explicit external inspector override when capture=1 */
+body[data-capture='true'] .component-inspector.is-forced-visible {
+  display: flex !important;
+}
