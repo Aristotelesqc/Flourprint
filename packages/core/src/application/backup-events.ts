@@ -3,6 +3,7 @@ import {
   equipmentUses,
   evolve,
   initialBakeState,
+  openHold,
   outcomeProblem,
   stepEquipmentProblem,
   type BakeEvent,
@@ -258,7 +259,12 @@ const isOutcome = (value: unknown): boolean => {
 };
 
 /** Checks one payload against the state before it; throws `Refused` with the reason. */
-const checkPayload = (state: BakeState, payload: Json, where: string): void => {
+const checkPayload = (
+  state: BakeState,
+  payload: Json,
+  where: string,
+  occurredAt?: string,
+): void => {
   const stepIds = new Set((state.process?.steps ?? []).map((s) => s.id));
   const knownStep = (id: unknown) => isId(id) && stepIds.has(id);
   const knownTimeEvent = (id: unknown) => typeof id === 'string' && id in state.stepEvents;
@@ -393,6 +399,24 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
         `${where}: malformed retraction`,
       );
       return;
+    case 'StepCountdownHeld':
+    case 'StepCountdownReleased': {
+      const record = knownStep(payload.stepId) ? state.steps[payload.stepId as string] : undefined;
+      const open = openHold(record);
+      const held = payload.type === 'StepCountdownHeld';
+      expect(
+        record?.startedAt !== undefined &&
+          record.endedAt === undefined &&
+          (held ? open === undefined : open !== undefined) &&
+          typeof occurredAt === 'string' &&
+          Date.parse(occurredAt) >=
+            Date.parse(
+              (held ? (record.holds?.at(-1)?.to ?? record.startedAt) : open?.from) as string,
+            ),
+        `${where}: malformed countdown hold`,
+      );
+      return;
+    }
     case 'BakeFinished':
       // Before 0.11.0 a finish has neither: its result is unknown.
       expect(
@@ -427,7 +451,12 @@ const checkPayload = (state: BakeState, payload: Json, where: string): void => {
 export const checkBakeLog = (bakeId: string, events: readonly BakeEvent[]): BakeState => {
   let state = initialBakeState(bakeId);
   for (const event of events) {
-    checkPayload(state, event.payload as unknown as Json, `event ${event.seq} of ${bakeId}`);
+    checkPayload(
+      state,
+      event.payload as unknown as Json,
+      `event ${event.seq} of ${bakeId}`,
+      event.occurredAt,
+    );
     state = evolve(state, event);
   }
   return state;

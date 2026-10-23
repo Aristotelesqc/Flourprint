@@ -181,6 +181,21 @@ describe('bake alerts', () => {
     ]);
   });
 
+  it('suspends the end alert of a held step and moves it on release', async () => {
+    const held = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      ['19:31', { type: 'HoldStepCountdown', stepId: 'poolish' }],
+    ]);
+    expect(bakeAlerts(held, at('20:00')).some((a) => a.kind === 'end')).toBe(false);
+    const released = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      ['19:31', { type: 'HoldStepCountdown', stepId: 'poolish' }],
+      ['20:01', { type: 'ReleaseStepCountdown', stepId: 'poolish' }],
+    ]);
+    const end = bakeAlerts(released, at('20:30')).find((a) => a.kind === 'end');
+    expect(end?.at.slice(11, 16)).toBe('07:31');
+  });
+
   it('is empty once the bake has ended', async () => {
     expect(bakeAlerts(await bake([['19:05', { type: 'AbandonBake' }]]), at('19:30'))).toEqual([]);
   });

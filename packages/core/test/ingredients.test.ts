@@ -108,8 +108,8 @@ const problem = (entry: IngredientEntry) => {
 };
 
 describe('contract version', () => {
-  it('is 0.18.0 with steps before a target (persistence.md)', () => {
-    expect(CONTRACT_VERSION).toBe('0.18.0');
+  it('is 0.19.0 with step countdown holds (bake-session.md)', () => {
+    expect(CONTRACT_VERSION).toBe('0.19.0');
   });
 });
 

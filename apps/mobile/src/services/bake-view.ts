@@ -1,5 +1,6 @@
 import {
   foldSchedule,
+  isStepHeld,
   liveProjection,
   type BakeState,
   type Instant,
@@ -211,7 +212,8 @@ export interface BakeAlert {
 
 /**
  * The coming moments to act on a bake, soonest first, read from the live projection. A step that
- * waits on a running one is not listed: the end of the running step already calls the baker.
+ * waits on a running one is not listed: the end of the running step already calls the baker. A
+ * step whose countdown is held has no end alert until it is released.
  */
 export const bakeAlerts = (state: BakeState, now: Instant): BakeAlert[] => {
   const views = state.status === 'active' ? stepViews(state, now) : undefined;
@@ -219,8 +221,12 @@ export const bakeAlerts = (state: BakeState, now: Instant): BakeAlert[] => {
   const running = views.filter((v) => v.startedAt !== undefined && v.endedAt === undefined);
   const ready = views.filter((v) => v.ready);
   const alerts: BakeAlert[] = [
+    // A step whose countdown is held has no end reminder: it moves with the clock, and the
+    // release schedules it again from the new projection (bake-session.md, countdown hold).
     ...running.flatMap((v) =>
-      v.projected?.end ? [{ stepId: v.step.id, kind: 'end' as const, at: v.projected.end }] : [],
+      v.projected?.end && !isStepHeld(state, v.step.id)
+        ? [{ stepId: v.step.id, kind: 'end' as const, at: v.projected.end }]
+        : [],
     ),
     ...ready.flatMap((v) =>
       v.projected?.start
