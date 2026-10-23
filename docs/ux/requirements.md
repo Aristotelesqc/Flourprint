@@ -301,7 +301,7 @@ _Amended: scope narrowed by L105 (style only)._
 
 Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
-**L124.** Preparation: "Step done" needs confirmation or undo. "Fin prévue" says whether it is the step's end or the preparation's end. The temperature label distinguishes dough or room from oven. The step count is consistent with the editor (preheat counted or explained). Screens: preparation. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+**L124.** Preparation: "Step done" needs confirmation or undo (met by undo via Previous, see L127). "Fin prévue" says whether it is the step's end or the preparation's end. The temperature label distinguishes dough or room from oven. The step count is consistent with the editor (preheat counted or explained). Screens: preparation. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
 
 ## 4. Library (incl. template chooser)
 
@@ -434,6 +434,17 @@ Screens: recipe, edit. Source: Owner, coordinating session 2026-10-22. Kind: OD.
 **L125.** Argon's round 2 Recipe mockup is the reference for these parts of the Recipe page, adjusted by L105–L124: three top tabs (Recipe, Planning, History; see L108); the incomplete-profile warning worded as what is missing and for which ingredient ("Profil incomplet : teneur en eau, gras et sucres non renseignée pour …"), not "Sommes partielles"; the dough shown as pieces ("1 pièce × 699 g"), not as engine split ("100 g comp. · 599 g ajouts"). The current "≥" for lower-bound values is kept (more honest than "≈" when a composition is unknown). Screens: recipe. Source: Owner, coordinating session 2026-10-22. Kind: OD.
 
 **L126.** Summary figures stay as plain numbers with a small ⓘ that opens the detail sheet: no "Detail" button and no segmented bar in the summary (segments are too small to touch on a phone and have no hover). No pie charts for baker's percentages: they are ratios to flour, not parts of a whole. The hydration detail sheet shows the split of total water by source as a ring or stacked bar with a legend of colour chips (one row per source: chip, name, grams, share of total water); interaction is on the legend rows, not the chart segments; an unknown share (ingredient without composition) is shown hatched and explains the "≥". Fat and sugar sheets may reuse the same pattern later. Screens: recipe. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L127.** The active step of a Preparation is one focused screen: "Preparation · <recipe>", "n / N · <step>", the estimated remaining time, the accumulated adjustment ("Ajustement : +0 min"), then two separate control groups — countdown: −15 min, Pause/Resume, +15 min; progression: Previous, Next. GPT's interactive mockup of 2026-10-23 is the layout reference, rendered with the shared components and visual system. Semantics:
+
+- **Next** records only the end of the current step (`CompleteStep`), without confirmation; the following step shows as running from that time, and its start is recorded only at the baker's first real action in it (fold, dough-ready observation, adjustment). This satisfies L124's "or undo".
+- **Previous** has three cases: (a) nothing real happened in the following step → the completion is retracted (`RetractCompletion`) and the step resumes; (b) the following step already has a recorded fact → nothing is rewritten; Previous explains why and offers "correct the end time" (`CorrectStepTime`) or "do the step again" (`InsertStepAfter`); (c) a real repetition is always "do the step again", never a retraction. Previous follows the same strand, never a parallel branch.
+- A retracted completion is hidden from the visible Preparation timeline and kept in the technical log and exports.
+- **−15 / +15 min** adjust the active step's projected duration for this Preparation only (`AdjustStep`); they never complete a step. The duration never goes below zero: the step then shows as overdue.
+- **Pause / Resume** freezes the countdown of the active step, not the Preparation or the dough: the remaining time stays, the deadline and dependent steps move by the pause length, the step-end reminder is suspended, and the pause survives closing the app. It is recorded by the engine (contract change pending in `bake-session.md`), never as a suspended Preparation; a pause never creates or classifies a rest step.
+- Planned, projected (adjustments and pauses) and actual durations stay distinct. Parallel steps keep their own controls (preheat: "switch the oven on"); Next never advances a parallel branch. Ending the last step then offers "Finish the Preparation" with the outcome choice (L113); the Preparation never finishes by itself.
+- Deferred: offering to record a pause as a rest step; coalescing repeated ±15 taps.
+  Screens: preparation. Source: Owner, coordinating session 2026-10-23. Kind: OD.
 
 ## 6. Edit (in-place state of Recipe)
 
