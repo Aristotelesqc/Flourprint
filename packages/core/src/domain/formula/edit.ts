@@ -629,6 +629,20 @@ const setStageGrams = (
   const current = resolvedCurrent.value;
   const rc = component ? current.components[component.id] : undefined;
   const isWater = target?.kind === 'water';
+  if (
+    isWater &&
+    component &&
+    formula.ingredients.filter((i) => i.kind === 'water' && i.role === 'dough').length > 1
+  ) {
+    // Component water is pooled across the water ingredients: it has no per-ingredient amount.
+    return err(
+      domainError('InvalidFormula', 'stage: component water is pooled', {
+        path: 'stage',
+        reason:
+          'component water is drawn from the pool of all water ingredients: a component-stage edit of a water ingredient needs exactly one',
+      }),
+    );
+  }
 
   const now = isFlour
     ? ((rc ? rc.flourByFlour[ingredient] : current.finalMix.flourByFlour[ingredient]) ?? 0)

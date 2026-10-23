@@ -185,7 +185,9 @@ the Shokupan template (43 g milk in the tangzhong): milk 120 g at the final mix 
   flour blend shares are recomputed from the new grams (a flour absent from the blend is appended)
   and the component's `hydrationPct` is recomputed so that its **water keeps its grams**.
 - **Water** (a `water`-kind ingredient): in a component, `hydrationPct = 100 × g / component
-flour`; the recipe's water ingredient changes by the difference. At the final mix, the water
+flour`; the recipe's water ingredient changes by the difference. With more than one water-kind
+  dough ingredient the component water is a pool, so a component-stage water edit is refused
+  (`InvalidFormula`, `path: 'stage'`). At the final mix, the water
   ingredient changes by the difference with the current final-mix water.
 - **Other dough ingredients**: in a component, the allocation is set (created if absent, removed
   when `g = 0`); at the final mix, the total becomes allocated + `g`.

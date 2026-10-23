@@ -267,3 +267,72 @@ describe('locked total water', () => {
     });
   });
 });
+
+describe('review cases', () => {
+  const base: Formula = {
+    flours: [{ id: 'bread', sharePct: 100 }],
+    ingredients: [
+      { id: 'water', kind: 'water', bakerPct: 60, role: 'dough' },
+      {
+        id: 'salt',
+        kind: 'other',
+        bakerPct: 2,
+        role: 'dough',
+        water: { status: 'known', valuePct: 0 },
+      },
+    ],
+    components: [
+      {
+        id: 'poolish',
+        kind: 'preferment',
+        flourPct: 20,
+        flourBlend: [{ flour: 'bread', sharePct: 100 }],
+        hydrationPct: 100,
+      },
+    ],
+    anchor: { kind: 'flourTotal', grams: 1000 },
+  };
+
+  it('refuses a component water edit with two water ingredients', () => {
+    const two: Formula = {
+      ...base,
+      ingredients: [...base.ingredients, { id: 'ice', kind: 'water', bakerPct: 5, role: 'dough' }],
+    };
+    expect(refused(two, stage('water', 'poolish', 150))).toMatchObject({
+      code: 'InvalidFormula',
+      details: { path: 'stage' },
+    });
+    // final mix still editable: pool 650 - 200 = 450 -> 500 g, so water 600 + 50 = 650
+    near(resolve(edit(two, stage('water', 'final', 500))).grams.water ?? 0, 650);
+  });
+
+  it('flour in a component under a lock: water 200 g stays, absorbing water re-derived', () => {
+    // 1000 g flour, total water 65 % lock, salt 2 %: water = 65 %
+    const locked: Formula = {
+      ...base,
+      ingredients: [
+        { ...(base.ingredients[0] as Formula['ingredients'][number]), bakerPct: 65 },
+        base.ingredients[1] as Formula['ingredients'][number],
+      ],
+      waterTarget: { totalWaterPct: 65, absorbInto: 'water' },
+    };
+    // poolish flour 200 -> 300: total 1100, water kept 200 g in the poolish, hydration 200/300
+    const next = edit(locked, stage('bread', 'poolish', 300));
+    const r = resolve(next);
+    near(r.flourTotal, 1100);
+    near(r.components.poolish?.water ?? 0, 200);
+    near(r.totalWaterPct, 65); // lock holds: absorbing water 65 % of 1100 = 715 g
+    near(r.grams.water ?? 0, 715);
+  });
+
+  it('flour in a component with waterLossPct 10: water 200 g stays, loss 20 g', () => {
+    const lossy: Formula = {
+      ...base,
+      components: [{ ...(base.components[0] as Component), waterLossPct: 10 }],
+    };
+    const r = resolve(edit(lossy, stage('bread', 'poolish', 300)));
+    near(r.components.poolish?.water ?? 0, 200); // kept
+    near(r.components.poolish?.waterLoss ?? 0, 20); // 10 % of 200
+    near(r.components.poolish?.mass ?? 0, 480); // 300 + 200 - 20
+  });
+});
