@@ -233,10 +233,16 @@ start plus its projected duration. It is **not clamped to `now`**, so the same s
   `beforeTarget` steps keep their own rules.
 - Holds and adjustments apply as for a running step, but a hold still requires a recorded start
   (`StepNotRunning` otherwise); the UI records `StartStep` at the implicit start on the first real
-  action. A step the baker never starts therefore shows as running, then overdue, from its implicit
-  start (owner-approved L127 semantics).
+  action. A step the baker never starts is projected like a running one (`inProgress`, its end may
+  be in the past) from its implicit start (owner-approved L127 semantics); only the preheat slot
+  sets `overdue`.
 - Reminders derived from the projection use the same interval: the end reminder of an implicitly
   running step is at implicit start plus duration; no start reminder is scheduled for it.
+- `liveProjection` is not gated on the bake status: a finished or abandoned bake may show a
+  never-started step as implicitly running in the projection (alerts are gated on the active status).
+- `AcceptProjection` stores the live projection in `ProjectionAccepted`, but without the `implicit`
+  flag: the persisted `ProjectedStep` shape is unchanged, and the accepted snapshot keeps the
+  implicit interval and status as computed.
 - `CONTRACT_VERSION` is unchanged: no persisted shape, event or backup field changes; `implicit` is
   a computed projection flag.
 

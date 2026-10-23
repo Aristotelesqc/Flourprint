@@ -674,8 +674,18 @@ export const decide = (
       if (!projection)
         return error('BakeNotActive', 'The bake has no plan', { status: state.status });
       if (!projection.ok) return projection;
+      // The computed `implicit` flag is never persisted; the interval and status stay as computed.
+      const steps = Object.fromEntries(
+        Object.entries(projection.value.steps).map(([id, { implicit: _implicit, ...step }]) => [
+          id,
+          step,
+        ]),
+      );
       return ok([
-        { occurredAt: now, payload: { type: 'ProjectionAccepted', projection: projection.value } },
+        {
+          occurredAt: now,
+          payload: { type: 'ProjectionAccepted', projection: { ...projection.value, steps } },
+        },
       ]);
     }
 

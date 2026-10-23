@@ -102,6 +102,17 @@ describe('implicitly running steps in the live projection', () => {
     expect(implicitStartOf(log.state, 'a')).toBeUndefined();
   });
 
+  it('accepts the projection without the implicit flag, keeping the interval', () => {
+    const log = started().at('12:02');
+    const result = decide(log.state, { type: 'AcceptProjection' }, log.now);
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const payload = result.value[0]?.payload;
+    if (payload?.type !== 'ProjectionAccepted') throw new Error('unexpected event');
+    const a = payload.projection.steps.a;
+    expect(a).toMatchObject({ start: t('12:00'), end: t('12:04'), status: 'inProgress' });
+    expect(JSON.stringify(payload)).not.toContain('implicit');
+  });
+
   it('records nothing: the persisted facts are unchanged', () => {
     const log = started();
     const before = JSON.stringify(log.state.steps);
