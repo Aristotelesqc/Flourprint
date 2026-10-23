@@ -1,0 +1,12 @@
+{
+  "revision": "0dac7038fb5bea2892fa09f822c0932b861de9db",
+  "sourceSha256": "cfc94de94091642badcf66adaec67cd471307d0de7df37b0b9b1d488ee7ed675",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · sturdy-meadow · local"
+}
