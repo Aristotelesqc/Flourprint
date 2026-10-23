@@ -513,6 +513,8 @@ Countdown controls (−15 min, Pause/Resume, +15 min) and Progression controls (
 visually separate. Duration and Note remain compact and visible below them. Next completes the
 current step; the following step's implicit start comes from the engine. Pause/Resume uses native
 hold/release events. Finish remains explicit and asks for an outcome when the engine requires one.
+Step changes use a brief tonal highlight selected through `fp.motion.highlight`; countdown digits
+do not roll and controls remain immediately usable. System and manual reduced motion bypass it.
 
 The owner rejected the first restoration proposal as still regressive. Passing controls,
 component coverage and motion evidence do not establish visual fidelity. In particular,

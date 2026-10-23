@@ -11,6 +11,7 @@ export default {
 
     'Remaining time is text; progress also has a label.',
     'No rolling numbers and no action delayed behind an animation (DESIGN.md).',
+    'Step change triggers tonal highlight via fp.motion.highlight; disabled under reduced motion.',
   ],
   related: ['fp.step-node', 'fp.timeline'],
   decisions: [

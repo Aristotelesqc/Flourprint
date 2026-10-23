@@ -2,6 +2,9 @@ import './v1.css';
 import React from 'react';
 import type { BadgeProps, SurfaceProps, PreparationTimerProps } from '../../props.ts';
 import { library } from '../../index.ts';
+import { useMotion } from '../../motion-context.ts';
+import { durationMs, easingCurve, formOf } from '../../motion.ts';
+import { useReducedMotion } from '../use-transition-motion.ts';
 const Surface = (props: SurfaceProps) => <library.Slot component="fp.surface" {...props} />;
 
 const Badge = (props: BadgeProps) => <library.Slot component="fp.badge" {...props} />;
@@ -27,6 +30,47 @@ export const PreparationTimer: React.FC<PreparationTimerProps> = ({
 }) => {
   const clampedProgress = Math.max(0, Math.min(1, progress));
   const percentProgress = Math.round(clampedProgress * 100);
+  const stepKey = stepLine ?? title;
+  const stepRef = React.useRef<HTMLDivElement>(null);
+  const prevStepRef = React.useRef(stepKey);
+  const animRef = React.useRef<Animation | null>(null);
+  const motion = useMotion('fp.motion.highlight');
+  const reduced = useReducedMotion(stepRef);
+
+  React.useEffect(() => {
+    if (reduced) {
+      animRef.current?.cancel();
+      animRef.current = null;
+    }
+    if (prevStepRef.current !== stepKey) {
+      prevStepRef.current = stepKey;
+      animRef.current?.cancel();
+      animRef.current = null;
+      const element = stepRef.current;
+      const form = motion.kind === 'transition' ? formOf(motion, reduced) : 'none';
+      if (element && form !== 'none' && motion.kind === 'transition') {
+        const anim = element.animate(
+          [
+            { backgroundColor: motion.demo.from['background-color'] },
+            { backgroundColor: motion.demo.to['background-color'] },
+            { backgroundColor: motion.demo.from['background-color'] },
+          ],
+          {
+            duration: durationMs(form.duration),
+            easing: easingCurve(form.easing),
+          },
+        );
+        animRef.current = anim;
+        anim.finished.then(
+          () => {
+            if (animRef.current === anim) animRef.current = null;
+          },
+          () => undefined,
+        );
+      }
+    }
+  }, [stepKey, motion, reduced]);
+  React.useEffect(() => () => animRef.current?.cancel(), []);
 
   return (
     <Surface
@@ -42,13 +86,13 @@ export const PreparationTimer: React.FC<PreparationTimerProps> = ({
       )}
 
       {stepLine && (
-        <div className="prep-step-line" data-testid="prep-step-line">
+        <div ref={stepRef} className="prep-step-line" data-testid="prep-step-line">
           {stepLine}
         </div>
       )}
 
       {!heading && (
-        <div className="preparation-timer-header row">
+        <div ref={!stepLine ? stepRef : undefined} className="preparation-timer-header row">
           <Badge variant="primary">{title}</Badge>
           <span className="tabular muted">
             {labels.end} {end}

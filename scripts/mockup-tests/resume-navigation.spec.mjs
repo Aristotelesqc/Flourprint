@@ -240,27 +240,39 @@ test.describe('navigation A carousel acceptance', () => {
     await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100);
     await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
   });
-  test('manual reduced motion uses instant change without finger-follow slide', async ({
-    page,
-    context,
-  }) => {
-    await page.goto(address({ motion: 'reduce' }));
-    const initial = await page
-      .locator('.section-carousel-track')
-      .evaluate((el) => getComputedStyle(el).transform);
-    await gesture(page, context, {
-      duration: 150,
-      during: async () => {
+  for (const reduction of ['manual', 'system']) {
+    test(`${reduction} reduced motion uses instant change without finger-follow slide`, async ({
+      page,
+      context,
+    }) => {
+      await page.emulateMedia({
+        reducedMotion: reduction === 'system' ? 'reduce' : 'no-preference',
+      });
+      await page.goto(address({ motion: reduction === 'manual' ? 'reduce' : 'standard' }));
+      const initial = await page
+        .locator('.section-carousel-track')
+        .evaluate((el) => getComputedStyle(el).transform);
+      await gesture(page, context, {
+        duration: 150,
+        during: async () => {
+          expect(
+            await page
+              .locator('.section-carousel-track')
+              .evaluate((el) => getComputedStyle(el).transform),
+          ).toBe(initial);
+        },
+      });
+      await expect(sectionTab(page, 'Planning')).toHaveAttribute('aria-selected', 'true');
+      expect(
+        await page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
+      ).toBe(0);
+      for (const name of ['Recipe', 'Planning']) {
+        await sectionTab(page, name).click();
+        await expect(sectionTab(page, name)).toHaveAttribute('aria-selected', 'true');
         expect(
-          await page
-            .locator('.section-carousel-track')
-            .evaluate((el) => getComputedStyle(el).transform),
-        ).toBe(initial);
-      },
+          await page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
+        ).toBe(0);
+      }
     });
-    await expect(sectionTab(page, 'Planning')).toHaveAttribute('aria-selected', 'true');
-    expect(
-      await page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
-    ).toBe(0);
-  });
+  }
 });

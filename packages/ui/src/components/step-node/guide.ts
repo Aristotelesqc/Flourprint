@@ -15,7 +15,7 @@ export default {
     'Reorder controls (#123) need a keyboard path besides dragging.',
     'Touch target at least 48 px; painted controls remain compact (32-40 px) without internal layout dead space; actions maintain edge clustering with 48px hit targets (ADR 0021, #142).',
     'Intended layout behavior: discrete tonal cards with subtle border and outer row gap; metadata details row spans full available width across the badge gutter to avoid artificial wrapping constraints.',
-    'In narrow row containers, the complete title spans the header while metadata and the 48 px edge action cluster share the next row. Compact column spacing also leaves room for wider system-font words at 393 px; typography is never shrunk or clipped to make controls fit.',
+    'In narrow row containers, the complete title spans the header, the 48 px edge action cluster occupies the next row, and metadata uses the full row below it so complete words never compete with targets. Without actions, metadata follows the title directly. Compact column spacing also leaves room for wider system-font words at 393 px; typography is never shrunk or clipped to make controls fit.',
     'Rail and outline alternatives remain available for historical comparison.',
   ],
   related: ['fp.timeline', 'fp.prep-hero'],

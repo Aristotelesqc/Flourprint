@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import type { SectionCarouselProps, TabGestureProgress } from '../../props.ts';
 import { library } from '../../index.ts';
 import { playTabCarouselSlide, useTabCarouselMotion } from '../../motions/tab-carousel';
+import { useReducedMotion } from '../use-transition-motion.ts';
 
 const VELOCITY_WINDOW_MS = 120;
 const MAX_HOLD_BEFORE_RELEASE_MS = 120;
@@ -15,12 +16,14 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
   defaultSection,
   onChangeSection,
   label,
-  reduced = false,
+  reduced: requestedReduced = false,
   onGestureProgress,
   targetTabsElement,
   children,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const systemReduced = useReducedMotion(containerRef);
+  const reduced = requestedReduced || systemReduced;
   const trackRef = useRef<HTMLDivElement>(null);
 
   const isControlled = controlledSection !== undefined;
