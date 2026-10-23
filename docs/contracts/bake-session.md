@@ -212,6 +212,40 @@ the fermentation go on, and no rest step is created or classified.
   the backup `schemaVersion`, the event envelope version and the SQL schema are unchanged (the
   log is JSON).
 
+**Implicitly running steps (live projection).** The baker's first real action on a step records
+its `StepStarted`; until then the step has no recorded start, but it must not be shown as waiting
+or "starting now" (docs/ux/requirements.md L127). In `liveProjection(state, now)`, an `asap` step
+that is not started or completed, that is not `alap` or `beforeTarget`, and whose dependencies are
+all ended (or that has none), is projected as **implicitly running** from its **implicit start** =
+the latest recorded end among its dependencies, or the bake start when it has none; its end is that
+start plus its projected duration. It is **not clamped to `now`**, so the same step reads
+12:00 to 12:04 before and after the first action records `StartStep` at 12:00 (a step planned at
+240 s, bake started at 12:00, observed at 12:02).
+
+- This is a read-model interpretation only: no event is recorded and the persisted facts are
+  unchanged. Such a step is flagged `implicit: true` on its `ProjectedStep` (live projection only,
+  absent from the snapshot's initial projection), and `implicitStartOf(state, stepId)` gives its
+  implicit start (`undefined` otherwise). `CompleteStep` places its implicit `StepStarted` at the
+  same instant through the same computation.
+- **Several steps can be implicitly running in parallel** when their dependencies are all ended
+  (parallel branches, or a step without dependency alongside the first).
+- A step with a dependency not yet ended keeps its projection after that dependency; `alap` and
+  `beforeTarget` steps keep their own rules.
+- Holds and adjustments apply as for a running step, but a hold still requires a recorded start
+  (`StepNotRunning` otherwise); the UI records `StartStep` at the implicit start on the first real
+  action. A step the baker never starts is projected like a running one (`inProgress`, its end may
+  be in the past) from its implicit start (owner-approved L127 semantics); only the preheat slot
+  sets `overdue`.
+- Reminders derived from the projection use the same interval: the end reminder of an implicitly
+  running step is at implicit start plus duration; no start reminder is scheduled for it.
+- `liveProjection` is not gated on the bake status: a finished or abandoned bake may show a
+  never-started step as implicitly running in the projection (alerts are gated on the active status).
+- `AcceptProjection` stores the live projection in `ProjectionAccepted`, but without the `implicit`
+  flag: the persisted `ProjectedStep` shape is unchanged, and the accepted snapshot keeps the
+  implicit interval and status as computed.
+- `CONTRACT_VERSION` is unchanged: no persisted shape, event or backup field changes; `implicit` is
+  a computed projection flag.
+
 **AdjustStep floor.** `AdjustStep` takes an absolute `plannedDurationS` ≥ 0, also on a running
 step. A "−15 min" control asks for a delta: `adjustedDurationS(current, deltaS)` =
 `max(0, current + deltaS)`. A duration never goes below zero; a running step whose planned end has

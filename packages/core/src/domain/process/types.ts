@@ -136,6 +136,11 @@ export interface ProjectedStep {
   readonly end?: Instant;
   /** Steps whose unknown end blocks this step's times; empty when both times are known. */
   readonly unknownAfter: readonly StepId[];
+  /**
+   * Live projection only: an `asap` step the baker has not started whose dependencies all ended,
+   * shown as running from its implicit start (bake-session.md). Nothing is recorded.
+   */
+  readonly implicit?: true;
   /** `beforeTarget` steps only. */
   readonly warmup?: Warmup;
   /** `beforeTarget` step not started whose trigger is past: the instant it was due. */

@@ -14,7 +14,7 @@ import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
 import { intendedOutcome, outcomeChoiceRequired, outcomeProblem } from '../process/cooking.js';
 import { projectProcess } from '../process/project.js';
-import type { Process, Projection, StepFact } from '../process/types.js';
+import type { Process, ProcessStep, Projection, StepFact } from '../process/types.js';
 import type { Formula } from '../formula/types.js';
 import type { ProcessError } from '../process/validate.js';
 import { approxEqual } from '../numeric.js';
@@ -110,6 +110,30 @@ const planOrigin = (projection: Projection): Instant | undefined =>
     return min === undefined || seconds(step.start) < seconds(min) ? step.start : min;
   }, undefined);
 
+/**
+ * Where a step with all its dependencies ended implicitly starts (bake-session.md): the latest
+ * recorded dependency end, or the bake start when it has none. Pure arithmetic on recorded facts.
+ */
+const placedStart = (state: BakeState, step: ProcessStep): Instant | undefined => {
+  if (step.dependsOn.some((dep) => state.steps[dep]?.endedAt === undefined)) return undefined;
+  return (
+    latest(step.dependsOn.flatMap((dep) => state.steps[dep]?.endedAt ?? [])) ?? state.startedAt
+  );
+};
+
+/**
+ * The implicit start of a step the baker has not started: an `asap` step whose dependencies are all
+ * ended (or that has none), at its latest dependency end or the bake start. `undefined` for a step
+ * recorded as started or completed, an `alap` or `beforeTarget` step, or one still waiting.
+ */
+export const implicitStartOf = (state: BakeState, stepId: string): Instant | undefined => {
+  const step = state.process?.steps.find((s) => s.id === stepId);
+  const record = state.steps[stepId];
+  if (!step || record?.startedAt !== undefined || record?.endedAt !== undefined) return undefined;
+  if (step.schedule !== 'asap') return undefined;
+  return placedStart(state, step);
+};
+
 /** Live plan of an active bake at `now`; recomputed from facts, never stored (history.md). */
 export const liveProjection = (
   state: BakeState,
@@ -128,10 +152,25 @@ export const liveProjection = (
         : step;
     }),
   };
-  return projectProcess(process, {
-    mode: { kind: 'startAt', at: origin },
-    facts: stepFacts(state),
-    now,
+  // Implicitly running steps (bake-session.md): read-model only, nothing is recorded.
+  const facts = stepFacts(state);
+  const implicit = new Set<string>();
+  for (const step of process.steps) {
+    const at = implicitStartOf(state, step.id);
+    if (at === undefined) continue;
+    facts[step.id] = { startedAt: at };
+    implicit.add(step.id);
+  }
+  const projection = projectProcess(process, { mode: { kind: 'startAt', at: origin }, facts, now });
+  if (!projection.ok || implicit.size === 0) return projection;
+  return ok({
+    ...projection.value,
+    steps: Object.fromEntries(
+      Object.entries(projection.value.steps).map(([id, step]) => [
+        id,
+        implicit.has(id) ? { ...step, implicit: true as const } : step,
+      ]),
+    ),
   });
 };
 
@@ -496,7 +535,8 @@ export const decide = (
         );
       }
       // The implicit start sits at the latest dependency end, or the bake start (bake-session.md).
-      const start = dependencyEnd(state, process, command.stepId) ?? state.startedAt ?? at;
+      const step = process.steps.find((s) => s.id === command.stepId);
+      const start = (step && placedStart(state, step)) ?? at;
       if (seconds(at) < seconds(start)) return beforeDependencies(command.stepId);
       return ok([
         { occurredAt: start, payload: { type: 'StepStarted', stepId: command.stepId } },
@@ -634,8 +674,18 @@ export const decide = (
       if (!projection)
         return error('BakeNotActive', 'The bake has no plan', { status: state.status });
       if (!projection.ok) return projection;
+      // The computed `implicit` flag is never persisted; the interval and status stay as computed.
+      const steps = Object.fromEntries(
+        Object.entries(projection.value.steps).map(([id, { implicit: _implicit, ...step }]) => [
+          id,
+          step,
+        ]),
+      );
       return ok([
-        { occurredAt: now, payload: { type: 'ProjectionAccepted', projection: projection.value } },
+        {
+          occurredAt: now,
+          payload: { type: 'ProjectionAccepted', projection: { ...projection.value, steps } },
+        },
       ]);
     }
 
