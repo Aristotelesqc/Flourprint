@@ -48,6 +48,7 @@ const FORMULA_EDITS = new Set([
   'SetBakerPct',
   'SetFlourBlend',
   'SetIngredientGrams',
+  'SetStageIngredientGrams',
   'SetAnchor',
   'AddIngredient',
   'UpdateIngredient',

@@ -176,7 +176,7 @@ interface BakeEvent<P> {
 | `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                               |
 | `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                         |
 
-**Step countdown hold (0.19.0).** The baker may freeze the countdown of one running step (a
+**Step countdown hold (0.20.0).** The baker may freeze the countdown of one running step (a
 phone call, a delayed oven), never the Preparation or the dough: the clock, the other steps and
 the fermentation go on, and no rest step is created or classified.
 
@@ -208,7 +208,7 @@ the fermentation go on, and no rest step is created or classified.
   recorded start and end, so `CorrectStepTime` cannot inflate it.
 - Backups: the two events are checked on restore (known running step, no nested hold, release only
   when held, times in order). An app that does not know them refuses the backup on its unknown
-  event type, never misreading it. `CONTRACT_VERSION` is `0.19.0` (minor, additive vocabulary);
+  event type, never misreading it. `CONTRACT_VERSION` is `0.20.0` (minor, additive vocabulary);
   the backup `schemaVersion`, the event envelope version and the SQL schema are unchanged (the
   log is JSON).
 
