@@ -9,7 +9,7 @@ for (const [width, scale] of [
   for (const locale of ['fr', 'en']) {
     test(`Compact titles stay outside action targets: ${locale} ${width}/${scale}, read and edit`, async ({
       page,
-    }) => {
+    }, testInfo) => {
       await page.setViewportSize({ width, height: 852 });
       for (const mode of ['read', 'edit']) {
         const params = new URLSearchParams({
@@ -67,6 +67,14 @@ for (const [width, scale] of [
             };
           }),
         );
+        await testInfo.attach(`${mode}-geometry`, {
+          body: JSON.stringify({ locale, width, scale, mode, measurements }, null, 2),
+          contentType: 'application/json',
+        });
+        await page.screenshot({
+          path: testInfo.outputPath(`${mode}-layout.png`),
+          animations: 'disabled',
+        });
         expect(measurements.length).toBeGreaterThan(5);
         for (const measurement of measurements) {
           expect(measurement.collides, `${mode}: ${measurement.title}`).toBe(false);

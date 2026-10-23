@@ -13,7 +13,7 @@
   width: 100%;
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr) auto;
-  column-gap: var(--fp-space-2, 0.5rem);
+  column-gap: var(--fp-space-1, 0.25rem);
   row-gap: var(--fp-space-1, 0.25rem);
   align-items: center;
   min-height: var(--fp-spacing-touch, 48px);
@@ -206,6 +206,7 @@
   border-radius: 0;
   padding: 0.25rem 0;
   margin-bottom: 0;
+  column-gap: var(--fp-space-2, 0.5rem);
 }
 
 [data-step-design='rail']
@@ -273,6 +274,7 @@
   border-radius: 0;
   padding: 0.25rem 0;
   margin-bottom: 0;
+  column-gap: var(--fp-space-2, 0.5rem);
 }
 
 [data-step-design='outline']

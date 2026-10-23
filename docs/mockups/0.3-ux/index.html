@@ -111,16 +111,16 @@
 
       <!-- SECTION 0B: Matched Before/After Comparisons (#133) -->
       <section id="matched-comparisons">
-        <h2 class="section-title">Matched Before / After Comparisons</h2>
+        <h2 class="section-title">Historical Round 2 vs. Current Comparisons</h2>
         <p class="section-caption">
-          Controlled side-by-side comparisons against baseline revision <code>68faf79</code> using
-          identical fixtures, locales, themes, widths, and text scales from
-          <code>./review-manifest.json</code>. Static Round 2 historical samples remain archived and
-          are not treated as controlled same-data comparisons.
+          Side-by-side comparisons of historical Round 2 (<code>22db386</code>) references versus
+          current captures across Navigation A screens, locales, and viewports. Historical fixture
+          figures and times differ from current engine values; not a pixel-identical comparison.
         </p>
         <div id="comparisons-container">
           <div class="pending-box">
-            Loading matched comparisons from <code>./review-manifest.json</code>...
+            Loading historical Round 2 vs. current comparisons from
+            <code>./review-manifest.json</code>...
           </div>
         </div>
       </section>
@@ -371,8 +371,8 @@
               metaHtml +
               `
               <div class="pending-box">
-                <p><strong>Matched comparison evidence pending</strong></p>
-                <p style="margin-top: 6px; font-size: 0.8rem;">No <code>comparisonPairs</code> populated in <code>./review-manifest.json</code> yet. Codex capture suite will populate controlled Before (<code>68faf79</code>) vs. Current PNG pairs.</p>
+                <p><strong>Comparison evidence pending</strong></p>
+                <p style="margin-top: 6px; font-size: 0.8rem;">No <code>comparisonPairs</code> populated in <code>./review-manifest.json</code> yet. Capture suite will populate historical Round 2 (<code>22db386</code>) vs. Current PNG pairs with fixture and time differences.</p>
               </div>
             `;
             return;
@@ -384,7 +384,7 @@
             <div class="captures-grid" style="grid-template-columns: 1fr;">
               ${pairs
                 .map((p) => {
-                  const beforeRev = escapeHtml(p.beforeRevision || '68faf79');
+                  const beforeRev = escapeHtml(p.beforeRevision || 'Round 2 (22db386)');
                   const afterRev = escapeHtml(p.afterRevision || manifest.revision || 'Current');
                   const specs = [
                     p.fixture ? `<span class="badge">Fixture: ${escapeHtml(p.fixture)}</span>` : '',
