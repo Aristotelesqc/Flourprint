@@ -20,6 +20,11 @@ substitute providers. The caller owns integration, acceptance and the final repo
 - Use current user instructions and trusted existing authorization for external sharing. This
   skill grants no permission to disclose private material. Reuse authorization already given
   for the same scope; never include credentials or unrelated personal data in a prompt/corpus.
+- If an applicable `GEMINI.md` requires a human-entered read/write authorization token, ask the
+  user for it unless already supplied for the same scope, then relay their exact reply to AGY.
+  A human reply relayed by Codex satisfies this instruction-level gate; the user need not enter
+  it inside AGY. Keep the token out of tracked files and public reports. See
+  [the token workflow](references/permissions-and-browser.md#relay-a-required-human-authorization-token).
 - Give each reviewer a distinct focus and output directory; honor the current requested count
   and budget. Delegation is risk-driven, not a default four-reviewer acceptance gate.
   Parallel reviews may read one checkout. Implementation has one writer per overlapping file

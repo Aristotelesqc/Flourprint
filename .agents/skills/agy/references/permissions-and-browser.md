@@ -16,14 +16,30 @@ An `ask_question` answer relays human authorization but does **not** update tech
 permissions. Require an actual Read URL/MCP confirmation and successful tool result. An agent's
 statement that access is granted is insufficient evidence.
 
-An implementation conversation also returned a plan instead of edits because it expected
-assignment authorization markers. A later local check (2026-10-23) found an explicit requirement
-in the owner's global `~/.gemini/GEMINI.md`: the applicable marker had to be entered by the human.
-Inspect the loaded rule before diagnosing such a stop; an earlier successful assignment does not
-prove that a fresh conversation has the same authorization. Reuse an actual human reply for the
-same approved plan, relay it exactly, and retain normal tool checks. Do not invent a human reply,
-edit the global rule or publish the marker. These conventions are not CLI technical grants and
-must not become mandatory markers for other installations.
+## Relay a required human authorization token
+
+If the applicable `GEMINI.md` requires a human-entered token for reading or writing, ask the user
+for that token and relay their exact reply to AGY. This is an instruction-level authorization
+marker, not an API key or account credential.
+
+1. Inspect the loaded rule and its read/write scope. When asking, link the `GEMINI.md` and quote
+   the instruction requiring human authorization; do not reveal the expected token from the file
+   as if the user had entered it.
+2. Reuse a human reply already supplied for the same approved scope. Do not ask again just
+   because another AGY conversation starts. If no applicable reply exists, ask the user and wait
+   before the gated action.
+3. Relay the exact reply, preserving spelling and case, in the scoped private prompt or a
+   follow-up to the exact conversation ID. Identify it as the user's reply relayed by Codex and
+   state the authorized paths/actions. The user need not type it inside AGY itself.
+4. Verify the actual read/write result. The token satisfies the `GEMINI.md` instruction only;
+   technical tool permissions still follow the normal confirmation path below.
+
+Do not invent a human reply, hard-code the token, edit the global rule, or publish the token in
+commits, issues or reports. Do not introduce mandatory tokens for installations without this rule.
+
+An implementation conversation returned a plan instead of edits until the owner's global
+`~/.gemini/GEMINI.md` requirement was identified on 2026-10-23. An earlier successful assignment
+alone did not establish authorization for a fresh conversation; the actual human reply did.
 
 With the owner's exact reply, a bounded canary completed a native write and read-back in 28 s.
 That proves that file/tool scope only. Four later, larger implementation assignments still timed
