@@ -127,6 +127,7 @@ decision of 2026-10-19, `docs/ux/requirements.md` L102). A default is a pair
 | `SetIngredientGrams(ing, g, hold: 'anchor')`                 | anchor, other %                | the ingredient's %, then grams                        | g ≥ W + L; a flour without a designated absorbing flour; absorbing flour < 0 |
 | `SetAnchor(anchor, 'rescale')`                               | %                              | grams                                                 | value ≤ 0                                                                    |
 | `SetAnchor(kind, 'reinterpret')`                             | grams and %                    | value of the new anchor                               | `pieces` without `count`                                                     |
+| `SetStageIngredientGrams(ing, stage, g)`                     | grams in every other stage     | every %, total flour, anchor value (anchor kind kept) | see Stage grams                                                              |
 
 - Under `pieces` with `otherGrams`, `count` is kept and `gramsEach` is recomputed.
 - With `otherGrams`, component amounts are "other grams" too: their flour, water and allocations
@@ -165,6 +166,44 @@ with an `entry` keeps the `entry` and lists the field in `overrides` (`ingredien
 commands). Every edit is validated by a full resolution; a refused edit changes nothing. Removing a
 component does not edit the process: the application removes or keeps the matching step
 explicitly (`process.md`, Step removal).
+
+### Stage grams
+
+`SetStageIngredientGrams { ingredient, stage, grams }` sets one ingredient's grams in **one stage**,
+where `stage` is `{ kind: 'component', id }` (what the component holds) or `{ kind: 'final' }` (what
+is added at the main dough: the recipe total minus what the components draw). Every other stage
+keeps its grams, so the recipe total of the ingredient becomes the sum of its stages. Example on
+the Shokupan template (43 g milk in the tangzhong): milk 120 g at the final mix gives 43 + 120 =
+163 g of milk (was 156), the tangzhong still holds 43 g.
+
+- **Percentages and anchor** follow `SetIngredientGrams(hold: 'otherGrams')`: all quantities not
+  edited keep their grams; every percentage is rewritten against the new total flour; the anchor
+  **kind is kept** and its value recomputed (`flourTotal`: new total flour; `doughWeight`: new dough
+  weight; `pieces`: `count` kept, `gramsEach` recomputed). A non-flour edit leaves total flour
+  unchanged, hence the anchor too under `flourTotal`.
+- **Flour** (an id of `flours`): the edit changes total flour by the difference. In a component the
+  flour blend shares are recomputed from the new grams (a flour absent from the blend is appended)
+  and the component's `hydrationPct` is recomputed so that its **water keeps its grams**.
+- **Water** (a `water`-kind ingredient): in a component, `hydrationPct = 100 × g / component
+flour`; the recipe's water ingredient changes by the difference. At the final mix, the water
+  ingredient changes by the difference with the current final-mix water.
+- **Other dough ingredients**: in a component, the allocation is set (created if absent, removed
+  when `g = 0`); at the final mix, the total becomes allocated + `g`.
+- **Locked total water**: the absorbing water cannot be edited in any stage (`IncompatibleConstraint`,
+  `field: 'waterTarget.locked'`: change the target or unlock), as for `SetIngredientGrams`. Any other
+  stage edit re-derives the absorbing water; its change lands in the final mix (components keep
+  their water), so the total stays at the target.
+- Refused, nothing mutated (`IncompatibleConstraint` with `field`, unless stated): `g` not finite or
+  < 0 (`grams`); an ingredient that is not a `dough` ingredient (`ingredient`); unknown ingredient
+  (`UnknownReference`, `path: 'ingredient'`); unknown component (`UnknownReference`, `path:
+'stage'`); a component left with water but no flour (`stage`); total flour ≤ 0 (`grams`); a recipe
+  amount that would become negative (`grams`); any allocation exceeded after the edit
+  (`FlourAllocationExceeded`, `WaterAllocationExceeded`, `IngredientAllocationExceeded`, e.g.
+  absorbing-water growth under a lock). Lowering a recipe **total** below an allocation is
+  `SetIngredientGrams`' case and is refused likewise.
+- **Persistence.** The command is stored in `OverrideApplied` (`AdjustFormula`, `bake-session.md`)
+  and in backups: it adds a variant to a persisted vocabulary, so `CONTRACT_VERSION` is bumped by
+  one minor step, `0.18.0` to `0.19.0`. Events written before replay unchanged (no variant removed).
 
 ### Locked total water
 

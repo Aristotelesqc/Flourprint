@@ -47,6 +47,10 @@ export interface IngredientChanges {
 /** Changes to a preparation; omitted fields are kept. */
 export type ComponentChanges = Partial<Omit<Component, 'id'>>;
 
+/** A stage of the formula: a component, or the final mix (everything the components do not draw). */
+export type StageRef =
+  { readonly kind: 'component'; readonly id: string } | { readonly kind: 'final' };
+
 /** Edit commands of docs/contracts/formula.md. */
 export type FormulaEdit =
   | {
@@ -64,6 +68,12 @@ export type FormulaEdit =
       readonly hold?: 'otherGrams' | 'anchor';
       /** Required with `hold: 'anchor'` when the edited ingredient is a flour. */
       readonly absorbInto?: string;
+    }
+  | {
+      readonly type: 'SetStageIngredientGrams';
+      readonly ingredient: string;
+      readonly stage: StageRef;
+      readonly grams: number;
     }
   | { readonly type: 'SetAnchor'; readonly mode: 'rescale'; readonly anchor: Anchor }
   | {
@@ -131,7 +141,9 @@ export const applyFormulaEdit = (
   const absorbing = formula.waterTarget?.absorbInto;
   if (
     absorbing !== undefined &&
-    (edit.type === 'SetBakerPct' || edit.type === 'SetIngredientGrams') &&
+    (edit.type === 'SetBakerPct' ||
+      edit.type === 'SetIngredientGrams' ||
+      edit.type === 'SetStageIngredientGrams') &&
     edit.ingredient === absorbing
   ) {
     return err(
@@ -176,7 +188,11 @@ export const applyDraftFormulaEdit = (
  */
 const settleAccepted = (formula: Formula, edit: FormulaEdit): Formula => {
   const written =
-    edit.type === 'SetBakerPct' || edit.type === 'SetIngredientGrams' ? edit.ingredient : undefined;
+    edit.type === 'SetBakerPct' ||
+    edit.type === 'SetIngredientGrams' ||
+    edit.type === 'SetStageIngredientGrams'
+      ? edit.ingredient
+      : undefined;
   const keep = (id: string, pct: number, accepted: AcceptedSuggestion | undefined) =>
     accepted !== undefined && id !== written && approxEqual(accepted.appliedValue, pct);
   const withAccepted = (id: string, pct: number, accepted: AcceptedSuggestion | undefined) =>
@@ -231,6 +247,8 @@ const computeEdit = (formula: Formula, edit: FormulaEdit): Result<Formula, Formu
       return edit.hold === 'anchor'
         ? setGramsHoldingAnchor(formula, edit.ingredient, edit.grams, edit.absorbInto)
         : setGramsHoldingOtherGrams(formula, edit.ingredient, edit.grams);
+    case 'SetStageIngredientGrams':
+      return setStageGrams(formula, edit.ingredient, edit.stage, edit.grams);
     case 'SetAnchor':
       if (edit.mode === 'rescale') {
         const valid = validateAnchor(edit.anchor);
@@ -551,12 +569,26 @@ const setGramsHoldingOtherGrams = (
   const ingredientGrams = isFlour
     ? current.value.grams
     : { ...current.value.grams, [ingredient]: grams };
+  return rebuildFromGrams(formula, current.value, flourGrams, ingredientGrams);
+};
+
+/**
+ * Rewrites the formula so that the given total grams hold, keeps the anchor kind (value
+ * recomputed) and re-applies a locked total water. `patch` adjusts the rewritten formula before
+ * the lock is applied.
+ */
+const rebuildFromGrams = (
+  formula: Formula,
+  current: ResolvedFormula,
+  flourGrams: Readonly<Record<string, number>>,
+  ingredientGrams: Readonly<Record<string, number>>,
+  patch: (rewritten: Formula) => Formula = (f) => f,
+): Result<Formula, FormulaError> => {
   if (!(sum(Object.values(flourGrams)) > 0)) {
     return err(incompatible('Total flour must stay above zero', 'grams'));
   }
-
   // Under a lock, the absorbing water is the one quantity whose grams are not kept.
-  const relocked = relock(fromGrams(formula, current.value, flourGrams, ingredientGrams));
+  const relocked = relock(patch(fromGrams(formula, current, flourGrams, ingredientGrams)));
   if (!relocked.ok) return relocked;
   const rescaled = relocked.value;
   const resolved = resolveFormula(rescaled);
@@ -566,6 +598,139 @@ const setGramsHoldingOtherGrams = (
       ? anchorOfKind(resolved.value, 'pieces', formula.anchor.count)
       : anchorOfKind(resolved.value, formula.anchor.kind);
   return anchor.ok ? ok({ ...rescaled, anchor: anchor.value }) : anchor;
+};
+
+/**
+ * Sets one ingredient's grams in one stage, every other stage keeping its grams
+ * (formula.md, Stage grams). The recipe total of the ingredient becomes the sum of its stages.
+ */
+const setStageGrams = (
+  formula: Formula,
+  ingredient: string,
+  stage: StageRef,
+  grams: number,
+): Result<Formula, FormulaError> => {
+  if (!(Number.isFinite(grams) && grams >= 0)) {
+    return err(incompatible('Grams must be ≥ 0', 'grams'));
+  }
+  const isFlour = formula.flours.some((f) => f.id === ingredient);
+  const target = formula.ingredients.find((i) => i.id === ingredient);
+  if (!isFlour && !target) return err(unknownRef('ingredient', ingredient));
+  if (target && target.role !== 'dough') {
+    return err(
+      incompatible(`${ingredient} is not a dough ingredient: it has no stages`, 'ingredient'),
+    );
+  }
+  const component =
+    stage.kind === 'component' ? formula.components.find((c) => c.id === stage.id) : undefined;
+  if (stage.kind === 'component' && !component) return err(unknownRef('stage', stage.id));
+  const resolvedCurrent = resolveFormula(formula);
+  if (!resolvedCurrent.ok) return resolvedCurrent;
+  const current = resolvedCurrent.value;
+  const rc = component ? current.components[component.id] : undefined;
+  const isWater = target?.kind === 'water';
+
+  const now = isFlour
+    ? ((rc ? rc.flourByFlour[ingredient] : current.finalMix.flourByFlour[ingredient]) ?? 0)
+    : isWater
+      ? rc
+        ? rc.water
+        : current.finalMix.water
+      : ((rc ? rc.allocations[ingredient] : current.finalMix.grams[ingredient]) ?? 0);
+  const delta = grams - now;
+  const total = (isFlour ? current.flourByFlour[ingredient] : current.grams[ingredient]) ?? 0;
+  const next = total + delta;
+  if (next < -RELATIVE_TOLERANCE * Math.max(1, current.flourTotal)) {
+    return err(incompatible(`The recipe would hold a negative amount of ${ingredient}`, 'grams'));
+  }
+  const newTotal = Math.max(0, next);
+
+  // A component's flour changes the flour its water is relative to; the water keeps its grams.
+  const newFlour = rc && isFlour ? rc.flour + delta : rc ? rc.flour : 0;
+  if (rc && (isFlour || isWater)) {
+    const water = isWater ? grams : rc.water;
+    if (newFlour <= 0 && water > 0) {
+      return err(
+        incompatible(
+          `${stage.kind === 'component' ? stage.id : 'the component'} would hold water without flour`,
+          'stage',
+        ),
+      );
+    }
+  }
+
+  const flourGrams = isFlour
+    ? { ...current.flourByFlour, [ingredient]: newTotal }
+    : current.flourByFlour;
+  const ingredientGrams = isFlour ? current.grams : { ...current.grams, [ingredient]: newTotal };
+
+  const draws = component?.allocations ?? [];
+  const needsAllocation =
+    component !== undefined &&
+    !isFlour &&
+    !isWater &&
+    grams > 0 &&
+    !draws.some((a) => a.ingredient === ingredient);
+  const seeded: Formula =
+    component && needsAllocation
+      ? {
+          ...formula,
+          components: formula.components.map((c) =>
+            c.id === component.id
+              ? { ...c, allocations: [...draws, { ingredient, bakerPct: 0 }] }
+              : c,
+          ),
+        }
+      : formula;
+  const seen: ResolvedFormula =
+    component && rc
+      ? {
+          ...current,
+          components: {
+            ...current.components,
+            [component.id]: {
+              ...rc,
+              flour: isFlour ? newFlour : rc.flour,
+              flourByFlour: isFlour ? { ...rc.flourByFlour, [ingredient]: grams } : rc.flourByFlour,
+              allocations:
+                isFlour || isWater ? rc.allocations : { ...rc.allocations, [ingredient]: grams },
+            },
+          },
+        }
+      : current;
+
+  const patch = (rewritten: Formula): Formula => {
+    if (!component || !rc) return rewritten;
+    return {
+      ...rewritten,
+      components: rewritten.components.map((c) => {
+        if (c.id !== component.id) return c;
+        if (isFlour) {
+          const gramsOf: Record<string, number> = { ...rc.flourByFlour, [ingredient]: grams };
+          const known = c.flourBlend.map((p) => p.flour);
+          const ids = known.includes(ingredient) ? known : [...known, ingredient];
+          return {
+            ...c,
+            flourBlend:
+              newFlour > 0
+                ? ids.map((flour) => ({
+                    flour,
+                    sharePct: (100 * (gramsOf[flour] ?? 0)) / newFlour,
+                  }))
+                : c.flourBlend,
+            hydrationPct: newFlour > 0 ? (100 * rc.water) / newFlour : 0,
+          };
+        }
+        if (isWater) {
+          return { ...c, hydrationPct: rc.flour > 0 ? (100 * grams) / rc.flour : 0 };
+        }
+        return grams === 0
+          ? { ...c, allocations: (c.allocations ?? []).filter((a) => a.ingredient !== ingredient) }
+          : c;
+      }),
+    };
+  };
+  return rebuildFromGrams(seeded, seen, flourGrams, ingredientGrams, patch);
 };
 
 const setGramsHoldingAnchor = (

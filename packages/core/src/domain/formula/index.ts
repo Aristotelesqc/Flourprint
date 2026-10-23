@@ -6,6 +6,7 @@ export {
   applyFormulaEdit,
   type ComponentChanges,
   type FormulaEdit,
+  type StageRef,
   type IngredientChanges,
 } from './edit.js';
 export {
