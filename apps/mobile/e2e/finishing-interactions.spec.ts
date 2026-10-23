@@ -20,12 +20,14 @@ for (const theme of ['light', 'dark', 'amoled'] as const) {
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     await routed(page).locator('ion-back-button').click();
     await routed(page).getByText('Poolish + tangzhong', { exact: true }).click();
-    // Ionic briefly keeps both routed pages active during navigation. Bind to the recipe
-    // before measuring it, rather than accepting the preceding single-page list state.
-    const recipePage = routed(page).filter({ has: page.getByTestId('recipe-method') });
-    await expect(recipePage).toHaveCount(1);
-    const result = recipePage.getByTestId('recipe-method').getByTestId('recipe-outcome');
+    await expect(routed(page)).toHaveCount(1);
+    const result = routed(page).getByTestId('recipe-method').getByTestId('recipe-outcome');
     await expect(result).toContainText('Résultat');
+    // Scope to the recipe page itself: during the route transition the previous page can still
+    // match the visible-page selector, so two ion-content elements may briefly coexist.
+    const recipePage = page
+      .locator('ion-router-outlet > .ion-page')
+      .filter({ has: page.getByTestId('recipe-method') });
     const content = recipePage.locator('ion-content');
     const footer = recipePage.locator('ion-footer');
     for (const fontSize of [16, 20]) {
