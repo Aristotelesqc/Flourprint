@@ -69,7 +69,7 @@ export interface ProcessStep {
   /** User label; the engine never interprets it. */
   readonly label?: string;
   readonly dependsOn: readonly StepId[];
-  readonly schedule: 'asap' | 'alap';
+  readonly schedule: 'asap' | 'alap' | 'beforeTarget';
   readonly plannedDurationS?: number;
   readonly endCriterion?: EndCriterion;
   readonly conditions?: StepConditions;
@@ -86,6 +86,12 @@ export interface ProcessStep {
   readonly equipment?: StepEquipment;
   /** The mass the step works on; absent = derived (process.md, Subjects and component phases). */
   readonly subject?: Subject;
+  /** `beforeTarget` only: the cooking step the heat is for (process.md, Steps before a target). */
+  readonly target?: StepId;
+  /** `beforeTarget` only: the warm-up wanted before the target starts, in seconds (≥ 0). */
+  readonly requiredWarmupS?: number;
+  /** `beforeTarget` only: absent = `fromTarget`. */
+  readonly startRule?: 'fromTarget' | 'afterDependencies';
 }
 
 export interface Process {
@@ -113,12 +119,27 @@ export interface ProjectionInput {
   readonly now?: Instant;
 }
 
+/**
+ * The warm-up of a `beforeTarget` step (process.md, Steps before a target). `availableS` is the
+ * heating window, never negative; an unknown time is never replaced by a number.
+ */
+export type Warmup =
+  | { readonly kind: 'sufficient'; readonly availableS: number; readonly requiredS: number }
+  | { readonly kind: 'insufficient'; readonly availableS: number; readonly requiredS: number }
+  | { readonly kind: 'unavailable'; readonly reason: 'startsAfterTarget' }
+  | { readonly kind: 'unknown'; readonly unknownAfter: readonly StepId[] }
+  | { readonly kind: 'notApplicable' };
+
 export interface ProjectedStep {
   readonly status: 'done' | 'inProgress' | 'planned';
   readonly start?: Instant;
   readonly end?: Instant;
   /** Steps whose unknown end blocks this step's times; empty when both times are known. */
   readonly unknownAfter: readonly StepId[];
+  /** `beforeTarget` steps only. */
+  readonly warmup?: Warmup;
+  /** `beforeTarget` step not started whose trigger is past: the instant it was due. */
+  readonly overdue?: { readonly dueAt: Instant };
 }
 
 export interface Projection {

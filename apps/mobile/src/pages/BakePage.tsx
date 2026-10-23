@@ -17,6 +17,7 @@ import { loadBake } from '@flourprint/core/application';
 import {
   doughReadyStage,
   intendedOutcome,
+  outcomeChoiceRequired,
   type BakeCommandPayload,
   type BakeState,
   type DomainError,
@@ -293,6 +294,14 @@ export const BakePage = () => {
       : undefined;
 
   const intended = state.process ? intendedOutcome(state.process) : undefined;
+  // A cooked result is intended but nothing was cooked yet: no outcome is assumed or preselected.
+  const mustChoose =
+    state.process !== undefined &&
+    outcomeChoiceRequired(state.process, (id) => state.steps[id]?.endedAt !== undefined);
+  const finishWith = (header: string) =>
+    pickOutcome(header, mustChoose ? undefined : intended, (outcome) => {
+      void send({ type: 'FinishBake', outcome });
+    });
   const reopen = () =>
     void presentAlert({
       header: t('bake.reopen'),
@@ -356,10 +365,7 @@ export const BakePage = () => {
                   ? [
                       {
                         label: t('bake.finishNow'),
-                        handler: () =>
-                          pickOutcome(t('bake.finishNow'), intended, (outcome) => {
-                            void send({ type: 'FinishBake', outcome });
-                          }),
+                        handler: () => finishWith(t('bake.finishNow')),
                       },
                     ]
                   : []),
@@ -571,19 +577,17 @@ export const BakePage = () => {
             <>
               <p className="m-0 text-lg">{t('bake.allDone')}</p>
               {/* The primary footer records the intended outcome; this offers another result. */}
-              <div className="flex flex-wrap items-center gap-2">
-                <IonButton
-                  fill="outline"
-                  disabled={commands.busy}
-                  onClick={() =>
-                    pickOutcome(t('bake.finishOther'), intended, (outcome) => {
-                      void send({ type: 'FinishBake', outcome });
-                    })
-                  }
-                >
-                  {t('bake.finishOther')}
-                </IonButton>
-              </div>
+              {!mustChoose && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <IonButton
+                    fill="outline"
+                    disabled={commands.busy}
+                    onClick={() => finishWith(t('bake.finishOther'))}
+                  >
+                    {t('bake.finishOther')}
+                  </IonButton>
+                </div>
+              )}
             </>
           )}
 
@@ -788,18 +792,20 @@ export const BakePage = () => {
                 className="h-12 text-base font-bold btn-pill-primary"
                 disabled={commands.busy || pending !== undefined}
                 onClick={() =>
-                  void send(
-                    !focus
-                      ? { type: 'FinishBake' }
-                      : focus.running
-                        ? { type: 'CompleteStep', stepId: focus.step.id }
-                        : { type: 'StartStep', stepId: focus.step.id },
-                  )
+                  !focus && mustChoose
+                    ? finishWith(t('bake.finish'))
+                    : void send(
+                        !focus
+                          ? { type: 'FinishBake' }
+                          : focus.running
+                            ? { type: 'CompleteStep', stepId: focus.step.id }
+                            : { type: 'StartStep', stepId: focus.step.id },
+                      )
                 }
               >
                 {focus
                   ? t(focus.running ? 'bake.done' : 'bake.start', { step: stepName(focus.step) })
-                  : intended
+                  : intended && !mustChoose
                     ? t('bake.finishAs', { outcome: outcomeText(intended) })
                     : t('bake.finish')}
               </IonButton>

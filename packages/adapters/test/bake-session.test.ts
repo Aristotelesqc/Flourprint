@@ -376,7 +376,7 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
       text: 'domed, bubbly',
       rating: 4,
     });
-    await session.at(t('16:00')).ok({ type: 'FinishBake' });
+    await session.at(t('16:00')).ok({ type: 'FinishBake', outcome: { result: 'dough' } });
 
     const reopened = await loadBake(session.store, 'bake-1');
     expect(reopened.ok).toBe(true);
@@ -393,7 +393,7 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
   it('records review notes after the end, but no dough ready mark', async () => {
     const session = new Session();
     await session.start();
-    await session.at(t('16:00')).ok({ type: 'FinishBake' });
+    await session.at(t('16:00')).ok({ type: 'FinishBake', outcome: { result: 'dough' } });
     await session.at(t('18:00')).ok({ type: 'AddObservation', category: 'crumb', text: 'open' });
     expect(
       await session.run({
@@ -412,17 +412,101 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     ]);
   });
 
-  it('finishes with the intended outcome in one tap, or the one chosen this time', async () => {
-    // No cooking step: the intended outcome is the raw dough (bake-session.md, Outcome).
+  it('refuses to finish without an outcome until a cooking step is completed', async () => {
+    // The recipe intends a cooked result and nothing is cooked: no default outcome.
     const plain = new Session();
-    await plain.start();
-    expect((await plain.at(t('16:00')).ok({ type: 'FinishBake' })).state).toMatchObject({
+    await plain.start({
+      steps: [
+        { id: 'mix', operation: 'mix', dependsOn: [], schedule: 'asap' },
+        { id: 'bake', operation: 'bake', dependsOn: ['mix'], schedule: 'asap' },
+      ],
+    });
+    expect(await plain.at(t('16:00')).run({ type: 'FinishBake' })).toMatchObject({
+      ok: false,
+      error: { code: 'OutcomeRequired', details: { reason: 'no_cooking_step_completed' } },
+    });
+    // A cooking step that is started but not completed does not count either.
+    const planned = new Session();
+    await planned.start({
+      steps: [{ id: 'bake', operation: 'bake', dependsOn: [], schedule: 'asap' }],
+    });
+    await planned.ok({ type: 'StartStep', stepId: 'bake' });
+    expect(await planned.run({ type: 'FinishBake' })).toMatchObject({
+      ok: false,
+      error: { code: 'OutcomeRequired' },
+    });
+    // Accepted with an explicit outcome, recorded as the baker's.
+    expect(
+      (
+        await plain.ok({
+          type: 'FinishBake',
+          outcome: { result: 'dough', dough: 'frozen' },
+        })
+      ).state,
+    ).toMatchObject({
       status: 'finished',
+      outcome: { result: 'dough', dough: 'frozen' },
+      outcomeSource: 'baker',
+    });
+    // Once the cooking step is completed, the intended outcome applies again.
+    await planned.at(t('15:00')).ok({ type: 'CompleteStep', stepId: 'bake' });
+    expect((await planned.at(t('16:00')).ok({ type: 'FinishBake' })).state).toMatchObject({
+      status: 'finished',
+      outcome: { result: 'cooked' },
+      outcomeSource: 'recipe',
+    });
+    // An inserted cooking step counts like a recipe one.
+    const inserted = new Session();
+    await inserted.start({
+      steps: [{ id: 'mix', operation: 'mix', dependsOn: [], schedule: 'asap' }],
+    });
+    await inserted.ok({ type: 'CompleteStep', stepId: 'mix' });
+    await inserted.ok({
+      type: 'InsertStepAfter',
+      after: 'mix',
+      step: { id: 'extra', operation: 'bake', schedule: 'asap', plannedDurationS: 600 },
+    });
+    expect(await inserted.run({ type: 'FinishBake' })).toMatchObject({ ok: false });
+    await inserted.ok({ type: 'CompleteStep', stepId: 'extra' });
+    expect((await inserted.ok({ type: 'FinishBake' })).state.outcome).toEqual({ result: 'cooked' });
+  });
+
+  it('replays a finish written before this rule, recorded without a cooking step', async () => {
+    const session = new Session();
+    await session.start();
+    const [started] = (await session.store.loadEvents('bake-1')) as [BakeEvent];
+    const store = new MemoryBakeEventStore();
+    await store.append({
+      command: { commandId: 'x', bakeId: 'bake-1', content: '{}' },
+      expectedVersion: 0,
+      events: [
+        started,
+        {
+          ...started,
+          eventId: 'old-finish',
+          seq: 2,
+          occurredAt: t('16:00'),
+          payload: {
+            type: 'BakeFinished',
+            outcome: { result: 'dough' },
+            outcomeSource: 'recipe',
+          },
+        },
+      ],
+      summary: { bakeId: 'bake-1', status: 'finished', version: 2, updatedAt: t('16:00') },
+    });
+    const loaded = await loadBake(store, 'bake-1');
+    if (!loaded.ok) throw new Error('unreadable');
+    expect(loaded.value).toMatchObject({
+      status: 'finished',
+      endedAt: t('16:00'),
       outcome: { result: 'dough' },
       outcomeSource: 'recipe',
     });
+  });
 
-    // A recipe that is always frozen says so once.
+  it('finishes with the one outcome chosen, or the recipe intended outcome', async () => {
+    // A recipe that is always frozen says so once, and finishes in one tap with no cooking step.
     const frozen = new Session();
     await frozen.start({
       ...process_,
@@ -433,8 +517,12 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
       dough: 'frozen',
       pieces: 6,
     });
+    expect((await frozen.store.loadEvents('bake-1')).at(-1)?.payload).toMatchObject({
+      type: 'BakeFinished',
+      outcomeSource: 'recipe',
+    });
 
-    // With a cooking step the default is cooked; this time part was frozen instead.
+    // The baker may always choose another outcome, even with a cooking step.
     const baked = new Session();
     const withBake: Process = {
       steps: [
@@ -484,7 +572,7 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     expect(
       await session.run({ type: 'CorrectOutcome', outcome: { result: 'cooked' } }),
     ).toMatchObject({ ok: false, error: { code: 'NotFinished' } });
-    await session.at(t('16:00')).ok({ type: 'FinishBake' });
+    await session.at(t('16:00')).ok({ type: 'FinishBake', outcome: { result: 'dough' } });
     const corrected = await session.ok({ type: 'CorrectOutcome', outcome: { result: 'cooked' } });
     expect(corrected.state).toMatchObject({
       status: 'finished',
@@ -511,7 +599,7 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
       ok: false,
       error: { code: 'BakeActive' },
     });
-    await session.at(t('16:00')).ok({ type: 'FinishBake' });
+    await session.at(t('16:00')).ok({ type: 'FinishBake', outcome: { result: 'dough' } });
     const reopened = await session.at(t('16:20')).ok({ type: 'ReopenBake' });
     expect(reopened.state.status).toBe('active');
     expect(reopened.state.endedAt).toBeUndefined();
@@ -622,7 +710,7 @@ describe.each(stores)('bake session on %s', (_name, factory) => {
     await session.ok({ type: 'CompleteStep', stepId: 'bulk' });
     expect(await fold('bulk', 3)).toMatchObject({ ok: false, error: { code: 'InvalidCommand' } });
     // Once the bake has ended, a fold is refused like a dough ready mark.
-    await session.ok({ type: 'FinishBake' });
+    await session.ok({ type: 'FinishBake', outcome: { result: 'dough' } });
     expect(await fold('bulk', 3)).toMatchObject({ ok: false, error: { code: 'BakeNotActive' } });
   });
 

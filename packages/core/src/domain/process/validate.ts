@@ -8,8 +8,8 @@ import {
 import { stepEquipmentProblem } from '../equipment/step.js';
 import { isReservedId } from '../ids.js';
 import { err, ok, type Result } from '../result.js';
-import { outcomeProblem } from './cooking.js';
-import { doughSteps } from './dough.js';
+import { isCookingStep, outcomeProblem } from './cooking.js';
+import { ancestors as ancestorsOf, doughSteps } from './dough.js';
 import type { Process, ProcessStep } from './types.js';
 
 export type ProcessError =
@@ -50,6 +50,57 @@ const validateTechnique = (
   return undefined;
 };
 
+/**
+ * Steps before a target (process.md): the fields exist only on a `beforeTarget` step, which is a
+ * `preheat`, has no duration and no incorporations, and which nothing depends on.
+ */
+const validatePreheat = (
+  process: Process,
+  step: ProcessStep,
+  path: string,
+  hasSuccessor: ReadonlySet<string>,
+): ProcessError | undefined => {
+  if (step.schedule !== 'beforeTarget') {
+    for (const key of ['target', 'requiredWarmupS', 'startRule'] as const) {
+      if (step[key] !== undefined) return invalid(`${path}.${key}`, 'beforeTarget steps only');
+    }
+    return undefined;
+  }
+  if (step.operation !== 'preheat') return invalid(path, 'beforeTarget is for preheat steps only');
+  if (step.plannedDurationS !== undefined) {
+    return invalid(`${path}.plannedDurationS`, 'a beforeTarget step has no duration');
+  }
+  if (step.durationMode !== undefined || step.accepted !== undefined) {
+    return invalid(`${path}.durationMode`, 'a beforeTarget step has no duration mode');
+  }
+  if ((step.incorporations ?? []).length > 0) {
+    return invalid(`${path}.incorporations`, 'a beforeTarget step has no incorporations');
+  }
+  if (hasSuccessor.has(step.id)) return invalid(path, 'no step may depend on a beforeTarget step');
+  if (
+    step.startRule !== undefined &&
+    !['fromTarget', 'afterDependencies'].includes(step.startRule)
+  ) {
+    return invalid(`${path}.startRule`, 'must be fromTarget or afterDependencies');
+  }
+  if (step.requiredWarmupS !== undefined) {
+    if (!(Number.isFinite(step.requiredWarmupS) && step.requiredWarmupS >= 0)) {
+      return invalid(`${path}.requiredWarmupS`, 'must be ≥ 0');
+    }
+  } else if ((step.startRule ?? 'fromTarget') === 'fromTarget') {
+    return invalid(`${path}.requiredWarmupS`, 'required with fromTarget');
+  }
+  const target = process.steps.find((s) => s.id === step.target);
+  if (step.target === undefined || target === undefined) {
+    return invalid(`${path}.target`, 'must name an existing step');
+  }
+  if (!isCookingStep(target)) return invalid(`${path}.target`, 'must be a cooking step');
+  if (ancestorsOf(process, step.id).has(target.id)) {
+    return invalid(`${path}.target`, 'the target must not be upstream of the step');
+  }
+  return undefined;
+};
+
 /** Graph and timing rules of docs/contracts/process.md. */
 export const validateProcess = (process: Process): Result<void, ProcessError> => {
   for (const [index, step] of process.steps.entries()) {
@@ -68,9 +119,11 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
   const hasSuccessor = new Set(process.steps.flatMap((step) => step.dependsOn));
   for (const [index, step] of process.steps.entries()) {
     const path = `steps[${index}]`;
-    if (step.schedule !== 'asap' && step.schedule !== 'alap') {
-      return err(invalid(`${path}.schedule`, 'must be asap or alap'));
+    if (step.schedule !== 'asap' && step.schedule !== 'alap' && step.schedule !== 'beforeTarget') {
+      return err(invalid(`${path}.schedule`, 'must be asap, alap or beforeTarget'));
     }
+    const preheat = validatePreheat(process, step, path, hasSuccessor);
+    if (preheat !== undefined) return err(preheat);
     if (step.plannedDurationS !== undefined) {
       if (!(Number.isFinite(step.plannedDurationS) && step.plannedDurationS >= 0)) {
         return err(invalid(`${path}.plannedDurationS`, 'must be ≥ 0'));

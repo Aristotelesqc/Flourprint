@@ -104,7 +104,7 @@ interface StepConditions {
 
 ## Steps before a target (preheating)
 
-**0.3.0 specification merged in #94; owner-selected option C on #97; implementation tracked in #106.** A baker preheats the oven
+**0.3.0 specification merged in #94; owner-selected option C on #97; scheduling, validation, document boundary and session effects implemented in #106 slice B (contract 0.18.0).** A baker preheats the oven
 while the dough proofs, and switches it on **a set time before the cooking step it is for**, not at
 the boundary of another step: a 2 h proof stays one step, and the oven does not heat for 2 h when
 30 min are wanted. Four facts stay distinct: the **trigger** (switching the heating on), the
@@ -190,8 +190,18 @@ interface ProcessStep {
 - **Dough steps** (`fermentation.md`): a `beforeTarget` step is not one and holds no dough.
 - **Compatibility.** An older app refuses a recipe holding the new schedule value or fields as a
   document with an unknown discriminant or field (`persistence.md`), never misreads it.
-  `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge, by the
-  implementing pull request.
+  `CONTRACT_VERSION` is bumped by one minor step, from `0.17.0` to `0.18.0`, by the implementing
+  pull request. No event type changes: `StepStarted` and `StepCompleted` carry the record. The projection
+  embedded in `BakeStarted.initialProjection` and `ProjectionAccepted` gains the optional `warmup`
+  and `overdue` of a `beforeTarget` step (absent on every other step); events written before still
+  decode, as `isProjectedStep` ignores unknown fields.
+- **Implementation notes (#106 slice B).** `warmup.sufficient` carries `availableS` and `requiredS`
+  like `insufficient`. A step with no requirement and a known non-negative window, or with unknown
+  times, is `notApplicable`; `unavailable` is decided first when both times are known. A
+  `beforeTarget` step's projected `end` is its target's start (the recorded readiness once
+  completed), and is absent when `unavailable`. `target` must be a cooking
+  step. The domain exposes `removeStepChecked` (`TargetInUse`) and `preheatIssues` (the nonblocking
+  checks read from a projection).
 
 Examples (hand-checked; `+h:mm` from the start of the recipe):
 
@@ -795,7 +805,8 @@ scheduled, not predictions of the biology). A poolish bread with a tangzhong:
    tangzhong `+21:30 → +22:10`; main dough `+22:10 → +27:45`; cooking `+27:15 → +28:25`; total
    28 h 25 min. Recipe and Planning show the same offsets from the same projection.
 3. **An unknown duration.** The fridge phase has no duration: the poolish window and every
-   window after it are `partial` with the blocker as `reasons`, the total is `partial`, and
+   window after it are `partial` with the blocker as `reasons` (`unknown` when no member of the
+   window has a known timing), the total is `partial`, and
    nothing shows a "complete" envelope or a zero.
 4. **Concurrent branch.** Removing the tangzhong from the process does not change the total, and
    adding it back does not lengthen it.
@@ -808,6 +819,34 @@ scheduled, not predictions of the biology). A poolish bread with a tangzhong:
    time is 06:00 plus its relative start, and the relative readings are unchanged.
 7. **Not persisted.** Saving the recipe stores no group, no relative time and no open or closed
    state.
+
+**Implementation notes (#106 slice C, no persisted shape changes: `CONTRACT_VERSION` stays `0.18.0`).**
+API of `@flourprint/core/domain`, for Recipe (#100) and Planning (#133); nothing is computed in React.
+
+- `relativeTimeline(process, { components? }): Result<RelativeTimeline, ProcessError>` runs
+  `projectProcess` once from an internal origin and returns offsets in seconds from the earliest
+  planned start. The result holds no date. `components` is the formula's component ids; absent, the
+  ids the process names (`subjectOf`). Errors are those of `projectProcess` (`InvalidProcess`, ...),
+  unchanged.
+- `anchorTimeline(timeline, { kind: 'startAt', at } | { kind: 'readyBy', at, target }):
+Result<AnchoredTimeline, ProcessError>` adds the anchor: every instant is `at` plus the offset
+  (`readyBy` shifts the origin so `target` ends at `at`). Errors: `UnknownReference` (`mode.target`)
+  and `IncompatibleConstraint` (target timing unknown), as in `projectProcess`. `windowOf(steps)`
+  is the one window rule. Types: `Timing`, `Window`, `StepTiming`, `GroupTiming`,
+  `RelativeTimeline`, `TimelineAnchor`, `AnchoredTimeline`, `AnchoredWindow`.
+- `StepTiming` also carries the projection's `warmup` of a `beforeTarget` step. Its timing is
+  `unknown` when the warm-up is `unknown` (`unknownAfter` = its blockers; its group is then
+  `partial` as for any unknown member). When `unavailable`, its timing is `unknown` with empty
+  `unknownAfter` and it is **not a window member**: it affects only itself, so its group and the
+  total are computed from the other steps (no interval, no envelope, no blocker from it).
+- Groups come in the order: components (first step order), `mainDough`, `cooking`; a step in the
+  cooking set (cooking operations, `preheat`, and steps downstream of a cooking step) is in
+  `cooking` whatever its subject. Empty groups are omitted.
+- A window with no known member is `unknown`, with some known members `partial` (the Window rule;
+  Example 3 above).
+- Supported: a recipe plan (no facts, no `now`). Unsupported: a relative timeline of a Preparation
+  in progress (recorded facts, `overdue`); read `projectProcess` for that. Not provided: open/closed
+  group state (interface only).
 
 Implementation (`@flourprint/core/domain`): `validateProcess`, `projectProcess`,
 `planIncorporations`, and the graph utilities `topologicalSort`, `isTopologicalOrder`,
