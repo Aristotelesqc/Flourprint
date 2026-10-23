@@ -6,6 +6,7 @@ import {
   adjustedDurationS,
   decide,
   evolve,
+  heldSeconds,
   initialBakeState,
   liveProjection,
   previousAction,
@@ -240,5 +241,40 @@ describe('previous action and visible timeline', () => {
     const types = visibleEvents(log.events).map((e) => `${e.seq}:${e.payload.type}`);
     expect(types).toEqual(['1:BakeStarted', '2:StepStarted', '5:StepCompleted']);
     expect(log.events.map((e) => e.payload.type)).toContain('StepCompletionRetracted');
+  });
+});
+
+describe('holds at the end of a session and corrected times', () => {
+  it('closes an open hold before FinishBake and AbandonBake', () => {
+    for (const end of [
+      { type: 'FinishBake', outcome: { result: 'dough' } },
+      { type: 'AbandonBake' },
+    ] as const) {
+      const log = started();
+      log.at('08:00').ok({ type: 'StartStep', stepId: 'a' });
+      log.at('08:20').ok({ type: 'HoldStepCountdown', stepId: 'a' });
+      log.at('08:40').ok(end);
+      expect(log.events.slice(-2).map((e) => e.payload.type)).toEqual([
+        'StepCountdownReleased',
+        end.type === 'AbandonBake' ? 'BakeAbandoned' : 'BakeFinished',
+      ]);
+      expect(log.state.steps.a?.holds).toEqual([{ from: t('08:20'), to: t('08:40') }]);
+      expect(() => checkBakeLog('b', log.events)).not.toThrow();
+    }
+  });
+
+  it('counts only the part of a hold inside the recorded start and end', () => {
+    const log = started();
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'a' });
+    log.at('08:10').ok({ type: 'HoldStepCountdown', stepId: 'a' });
+    log.at('08:20').ok({ type: 'ReleaseStepCountdown', stepId: 'a' });
+    log.at('08:30').ok({ type: 'CompleteStep', stepId: 'a' });
+    expect(heldSeconds(log.state.steps.a, t('09:00'))).toBe(600);
+    const start = log.state.steps.a?.startEventId as string;
+    log.ok({ type: 'CorrectStepTime', targetEventId: start, newOccurredAt: t('08:15') });
+    expect(heldSeconds(log.state.steps.a, t('09:00'))).toBe(300);
+    const end = log.state.steps.a?.endEventId as string;
+    log.ok({ type: 'CorrectStepTime', targetEventId: end, newOccurredAt: t('08:18') });
+    expect(heldSeconds(log.state.steps.a, t('09:00'))).toBe(180);
   });
 });

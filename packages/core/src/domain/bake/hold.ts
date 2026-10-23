@@ -11,14 +11,22 @@ export const openHold = (record: StepRecord | undefined): StepHold | undefined =
 };
 
 /**
- * Seconds of countdown hold accumulated by a step at `now`: closed holds plus the open one so far
- * (bake-session.md, Step countdown hold). A hold never counts negative time.
+ * Seconds of countdown hold accumulated by a step at `now`: closed holds plus the open one so far,
+ * counting only the part of each hold inside the step's recorded start and end, so that a time
+ * correction cannot inflate it (bake-session.md, Step countdown hold).
  */
 export const heldSeconds = (record: StepRecord | undefined, now: Instant): number =>
-  (record?.holds ?? []).reduce(
-    (total, hold) => total + Math.max(0, seconds(hold.to ?? now) - seconds(hold.from)),
-    0,
-  );
+  (record?.holds ?? []).reduce((total, hold) => {
+    const from = Math.max(
+      seconds(hold.from),
+      record?.startedAt === undefined ? -Infinity : seconds(record.startedAt),
+    );
+    const to = Math.min(
+      seconds(hold.to ?? now),
+      record?.endedAt === undefined ? Infinity : seconds(record.endedAt),
+    );
+    return total + Math.max(0, to - from);
+  }, 0);
 
 /** Whether the step's countdown is frozen. */
 export const isStepHeld = (state: BakeState, stepId: StepId): boolean =>

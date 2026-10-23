@@ -220,6 +220,27 @@ export const bakeAlerts = (state: BakeState, now: Instant): BakeAlert[] => {
   if (!views) return [];
   const running = views.filter((v) => v.startedAt !== undefined && v.endedAt === undefined);
   const ready = views.filter((v) => v.ready);
+  // Steps whose projected start rests on a held step (dependency, or for an as-late-as-possible or
+  // before-target step its successor or target, transitively) have
+  // no alert while it is held: the release recomputes them (bake-session.md, countdown hold).
+  const steps = state.process?.steps ?? [];
+  const shifted = new Set<StepId>(steps.filter((s) => isStepHeld(state, s.id)).map((s) => s.id));
+  for (let grew = shifted.size > 0; grew;) {
+    grew = false;
+    for (const s of steps) {
+      if (shifted.has(s.id)) continue;
+      const late = s.schedule === 'alap' || s.schedule === 'beforeTarget';
+      const rests = (id: StepId) => shifted.has(id);
+      if (
+        s.dependsOn.some(rests) ||
+        (late && (s.target !== undefined ? rests(s.target) : false)) ||
+        (late && steps.some((u) => u.dependsOn.includes(s.id) && rests(u.id)))
+      ) {
+        shifted.add(s.id);
+        grew = true;
+      }
+    }
+  }
   const alerts: BakeAlert[] = [
     // A step whose countdown is held has no end reminder: it moves with the clock, and the
     // release schedules it again from the new projection (bake-session.md, countdown hold).
@@ -229,7 +250,7 @@ export const bakeAlerts = (state: BakeState, now: Instant): BakeAlert[] => {
         : [],
     ),
     ...ready.flatMap((v) =>
-      v.projected?.start
+      v.projected?.start && !shifted.has(v.step.id)
         ? [{ stepId: v.step.id, kind: 'start' as const, at: v.projected.start }]
         : [],
     ),

@@ -135,6 +135,15 @@ export const liveProjection = (
   });
 };
 
+/** Releases for every open hold, so that ending the session leaves none open. */
+const closeHolds = (state: BakeState, at: Instant): EventDraft[] =>
+  Object.entries(state.steps).flatMap(([stepId, record]) => {
+    const hold = openHold(record);
+    if (hold === undefined) return [];
+    const when = seconds(at) < seconds(hold.from) ? hold.from : at;
+    return [{ occurredAt: when, payload: { type: 'StepCountdownReleased' as const, stepId } }];
+  });
+
 const error = <C extends string, D>(code: C, message: string, details: D) =>
   err(domainError(code, message, details));
 
@@ -803,6 +812,7 @@ export const decide = (
         );
       }
       return ok([
+        ...closeHolds(state, command.at ?? now),
         {
           occurredAt: command.at ?? now,
           payload: {
@@ -816,6 +826,7 @@ export const decide = (
 
     case 'AbandonBake':
       return ok([
+        ...closeHolds(state, now),
         {
           occurredAt: now,
           payload: {

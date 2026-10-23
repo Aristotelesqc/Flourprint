@@ -196,6 +196,21 @@ describe('bake alerts', () => {
     expect(end?.at.slice(11, 16)).toBe('07:31');
   });
 
+  it('gives no start alert to a preheat resting on a held step, until released', async () => {
+    const held = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      ['19:31', { type: 'HoldStepCountdown', stepId: 'poolish' }],
+    ]);
+    expect(bakeAlerts(held, at('20:00')).filter((a) => a.kind === 'start')).toEqual([]);
+    const released = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      ['19:31', { type: 'HoldStepCountdown', stepId: 'poolish' }],
+      ['20:01', { type: 'ReleaseStepCountdown', stepId: 'poolish' }],
+    ]);
+    const starts = bakeAlerts(released, at('20:30')).filter((a) => a.kind === 'start');
+    expect(starts.map((a) => a.stepId)).toContain('preheat');
+  });
+
   it('is empty once the bake has ended', async () => {
     expect(bakeAlerts(await bake([['19:05', { type: 'AbandonBake' }]]), at('19:30'))).toEqual([]);
   });

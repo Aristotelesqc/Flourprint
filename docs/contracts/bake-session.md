@@ -199,7 +199,13 @@ the fermentation go on, and no rest step is created or classified.
   `StepCountdownReleased` at the completion time, then `StepCompleted`, in one command. A
   completion before the hold began is refused. Retracting that completion leaves the hold closed.
 - Reminders (ADR 0012) are derived from the projection: a held step has **no end reminder**, and
-  the release schedules it again at the new projected end. Nothing is stored for reminders.
+  neither has any step whose projected start rests on it (a dependent, or a `beforeTarget` step
+  whose target is downstream, transitively); the release schedules them again from the new
+  projection. Nothing is stored for reminders. **Fold reminders stay on the actual dough clock**,
+  from the recorded start, unshifted: a hold extends the countdown, not the fermentation.
+- `FinishBake` and `AbandonBake` close any open hold in the same command (`StepCountdownReleased`
+  at the end time, before the end event). A hold counts only for the part inside the step's
+  recorded start and end, so `CorrectStepTime` cannot inflate it.
 - Backups: the two events are checked on restore (known running step, no nested hold, release only
   when held, times in order). An app that does not know them refuses the backup on its unknown
   event type, never misreading it. `CONTRACT_VERSION` is `0.19.0` (minor, additive vocabulary);
