@@ -220,6 +220,7 @@ export const bakeAlerts = (state: BakeState, now: Instant): BakeAlert[] => {
   if (!views) return [];
   const running = views.filter((v) => v.startedAt !== undefined && v.endedAt === undefined);
   const ready = views.filter((v) => v.ready);
+  const implicitlyRunning = ready.filter((v) => v.projected?.implicit === true);
   // Steps whose projected start rests on a held step (dependency, or for an as-late-as-possible or
   // before-target step its successor or target, transitively) have
   // no alert while it is held: the release recomputes them (bake-session.md, countdown hold).
@@ -249,8 +250,15 @@ export const bakeAlerts = (state: BakeState, now: Instant): BakeAlert[] => {
         ? [{ stepId: v.step.id, kind: 'end' as const, at: v.projected.end }]
         : [],
     ),
+    // A step implicitly running (never started by the baker) ends at its implicit start plus its
+    // duration, the same interval as the projection (bake-session.md).
+    ...implicitlyRunning.flatMap((v) =>
+      v.projected?.end && !isStepHeld(state, v.step.id)
+        ? [{ stepId: v.step.id, kind: 'end' as const, at: v.projected.end }]
+        : [],
+    ),
     ...ready.flatMap((v) =>
-      v.projected?.start && !shifted.has(v.step.id)
+      v.projected?.start && !v.projected.implicit && !shifted.has(v.step.id)
         ? [{ stepId: v.step.id, kind: 'start' as const, at: v.projected.start }]
         : [],
     ),

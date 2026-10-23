@@ -181,6 +181,15 @@ describe('bake alerts', () => {
     ]);
   });
 
+  it('calls at implicit start plus duration for a step the baker never started', async () => {
+    // Nothing started at 19:30: the poolish runs implicitly from the bake start (19:00, 12 h), so
+    // its end is 07:00, not clamped to now; its start alert is not repeated.
+    const alerts = bakeAlerts(await bake([]), at('19:30'));
+    expect(alerts.filter((a) => a.stepId === 'poolish').map((a) => [a.kind, a.at])).toEqual([
+      ['end', '2026-10-08T07:00:00.000Z'],
+    ]);
+  });
+
   it('suspends the end alert of a held step and moves it on release', async () => {
     const held = await bake([
       ['19:01', { type: 'StartStep', stepId: 'poolish' }],
