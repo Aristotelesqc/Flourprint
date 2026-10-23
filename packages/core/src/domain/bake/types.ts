@@ -142,6 +142,9 @@ export type BakeCommandPayload =
       readonly newOccurredAt: Instant;
     }
   | { readonly type: 'RetractCompletion'; readonly targetEventId: string }
+  /** Freezes the countdown of a running step (bake-session.md, Step countdown hold). */
+  | { readonly type: 'HoldStepCountdown'; readonly stepId: StepId; readonly at?: Instant }
+  | { readonly type: 'ReleaseStepCountdown'; readonly stepId: StepId; readonly at?: Instant }
   | {
       readonly type: 'FinishBake';
       readonly at?: Instant;
@@ -236,6 +239,10 @@ export type BakeEventPayload =
       readonly newOccurredAt: Instant;
     }
   | { readonly type: 'StepCompletionRetracted'; readonly targetEventId: string }
+  /** The countdown of the running step is frozen from `occurredAt` (0.19.0). */
+  | { readonly type: 'StepCountdownHeld'; readonly stepId: StepId }
+  /** The hold ends at `occurredAt`; the step's effective planned duration grew by its length. */
+  | { readonly type: 'StepCountdownReleased'; readonly stepId: StepId }
   | {
       readonly type: 'BakeFinished';
       /** Absent on events written before 0.11.0: the result is unknown. */
@@ -275,11 +282,19 @@ export interface BakeEvent {
 
 // State
 
+/** One countdown hold of a step; open while `to` is absent. */
+export interface StepHold {
+  readonly from: Instant;
+  readonly to?: Instant;
+}
+
 export interface StepRecord {
   readonly startedAt?: Instant;
   readonly startEventId?: string;
   readonly endedAt?: Instant;
   readonly endEventId?: string;
+  /** Countdown holds in order, at most the last one open (absent = never held). */
+  readonly holds?: readonly StepHold[];
   readonly measurements: readonly Observation[];
 }
 

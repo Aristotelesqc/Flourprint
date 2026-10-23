@@ -23,8 +23,13 @@ for (const theme of ['light', 'dark', 'amoled'] as const) {
     await expect(routed(page)).toHaveCount(1);
     const result = routed(page).getByTestId('recipe-method').getByTestId('recipe-outcome');
     await expect(result).toContainText('Résultat');
-    const content = routed(page).locator('ion-content');
-    const footer = routed(page).locator('ion-footer');
+    // Scope to the recipe page itself: during the route transition the previous page can still
+    // match the visible-page selector, so two ion-content elements may briefly coexist.
+    const recipePage = page
+      .locator('ion-router-outlet > .ion-page')
+      .filter({ has: page.getByTestId('recipe-method') });
+    const content = recipePage.locator('ion-content');
+    const footer = recipePage.locator('ion-footer');
     for (const fontSize of [16, 20]) {
       await page.addStyleTag({ content: `html, body { font-size: ${fontSize}px !important; }` });
       const gap = async () => {

@@ -163,6 +163,19 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
       };
       return { ...next, steps: { ...next.steps, [target.stepId]: record } };
     }
+    case 'StepCountdownHeld': {
+      const holds = next.steps[payload.stepId]?.holds ?? [];
+      return updateStep(next, payload.stepId, {
+        holds: [...holds, { from: event.occurredAt }],
+      });
+    }
+    case 'StepCountdownReleased': {
+      const holds = [...(next.steps[payload.stepId]?.holds ?? [])];
+      const last = holds[holds.length - 1];
+      if (last === undefined || last.to !== undefined) return next;
+      holds[holds.length - 1] = { from: last.from, to: event.occurredAt };
+      return updateStep(next, payload.stepId, { holds });
+    }
     case 'BakeFinished': {
       const { outcome: _outcome, outcomeSource: _source, ...rest } = next;
       return {

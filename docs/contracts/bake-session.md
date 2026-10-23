@@ -21,7 +21,7 @@ A session is `active` from `BakeStarted`, then ends, `finished` or `abandoned`:
 - **abandoned** (`AbandonBake`): the preparation stopped without a usable result (a failed dough,
   a step gone wrong). A dough kept, frozen, given or sold is finished, never abandoned.
 
-There is no suspended state. Closing the app, or the device being off, pauses nothing: the
+There is no suspended state (a single step's countdown can be held, below; the session never is). Closing the app, or the device being off, pauses nothing: the
 fermentation goes on, recorded times stay where they are, and the state at any instant is derived
 from the events and the injected clock. No step completes because its planned duration has
 elapsed. Holding the dough (a cold retard, an extra rest) is a step, added with
@@ -170,9 +170,64 @@ interface BakeEvent<P> {
 | `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                      |
 | `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start         |
 | `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                            |
+| `HoldStepCountdown`          | `StepCountdownHeld`                                                          | step running (started, not ended, with a planned duration, not `beforeTarget`); not already held (`StepAlreadyHeld`); `at` not before the start or the last release |
+| `ReleaseStepCountdown`       | `StepCountdownReleased`                                                      | step held (`StepNotHeld`); `at` not before the hold                                                                                                                 |
 | `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept; `FinishBake` takes an optional `outcome` (above, `OutcomeRequired` if none and no cooking step is completed), recorded in its event |
 | `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                               |
 | `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                         |
+
+**Step countdown hold (0.20.0).** The baker may freeze the countdown of one running step (a
+phone call, a delayed oven), never the Preparation or the dough: the clock, the other steps and
+the fermentation go on, and no rest step is created or classified.
+
+- `HoldStepCountdown` / `ReleaseStepCountdown` take a `stepId` and an optional `at` (default now).
+  Refusals: unknown step; not started (`StepNotRunning`); completed (`StepAlreadyCompleted`); no
+  planned duration or `beforeTarget` (`InvalidCommand`); hold on a held step (`StepAlreadyHeld`, no
+  nesting); release of a step not held (`StepNotHeld`); a time before the step's start, the
+  previous release or the hold (`InvalidTime`). As for other commands, a time in the future is
+  not refused.
+- Durations stay distinct and derivable: **planned** = the snapshot; **projected** = planned with
+  `AdjustStep` overrides **plus the holds**; **actual** = recorded start and end, never touched by
+  a hold. A step's hold total is the sum of its closed holds plus the open one up to the instant
+  asked.
+- Projection (`liveProjection`): while held, the remaining time is frozen, so the projected end is
+  `now + remaining at the hold` and moves with the clock; once released, the end stays where it
+  was and dependents shift by the hold length. Parallel branches are unaffected; a `beforeTarget`
+  step is re-anchored to its target as usual. A hold is recorded in events, so it survives closing
+  the app.
+- **Completion while held closes the hold**: `CompleteStep` on a held step emits
+  `StepCountdownReleased` at the completion time, then `StepCompleted`, in one command. A
+  completion before the hold began is refused. Retracting that completion leaves the hold closed.
+- Reminders (ADR 0012) are derived from the projection: a held step has **no end reminder**, and
+  neither has any step whose projected start rests on it (a dependent, or a `beforeTarget` step
+  whose target is downstream, transitively); the release schedules them again from the new
+  projection. Nothing is stored for reminders. **Fold reminders stay on the actual dough clock**,
+  from the recorded start, unshifted: a hold extends the countdown, not the fermentation.
+- `FinishBake` and `AbandonBake` close any open hold in the same command (`StepCountdownReleased`
+  at the end time, before the end event). A hold counts only for the part inside the step's
+  recorded start and end, so `CorrectStepTime` cannot inflate it.
+- Backups: the two events are checked on restore (known running step, no nested hold, release only
+  when held, times in order). An app that does not know them refuses the backup on its unknown
+  event type, never misreading it. `CONTRACT_VERSION` is `0.20.0` (minor, additive vocabulary);
+  the backup `schemaVersion`, the event envelope version and the SQL schema are unchanged (the
+  log is JSON).
+
+**AdjustStep floor.** `AdjustStep` takes an absolute `plannedDurationS` ≥ 0, also on a running
+step. A "−15 min" control asks for a delta: `adjustedDurationS(current, deltaS)` =
+`max(0, current + deltaS)`. A duration never goes below zero; a running step whose planned end has
+passed shows as overdue. A negative absolute value is refused.
+
+**Previous.** `previousAction(state, stepId)` gives the UI's three cases for a completed step, by
+the `RetractCompletion` rule: `{ kind: 'retract', targetEventId }` when no dependent has a
+recorded start; `{ kind: 'blocked', reason: 'dependentStarted', dependents }` otherwise (the UI
+offers `CorrectStepTime` or `InsertStepAfter`); `reason: 'notCompleted'` when there is no
+completion. A deliberate repetition is always `InsertStepAfter`. The UI passes the step of the
+strand it shows, never a parallel branch.
+
+**Retracted completions in the visible timeline.** A completion that was retracted, and its
+`StepCompletionRetracted`, are hidden from the business timeline of a Preparation (journal) and
+kept in the technical log and in exports. `visibleEvents(events)` applies the rule to an event
+list; an implicit `StepStarted` recorded with that completion stays visible.
 
 A `beforeTarget` step (process.md, Steps before a target) is never a dependency: no step waits
 for it. `StartStep` on it records `StepStarted` (the baker switched the heating on); `CompleteStep`
