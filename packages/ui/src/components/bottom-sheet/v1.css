@@ -59,6 +59,8 @@
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'] .modal-header {
   padding: var(--fp-space-2) var(--fp-space-4) var(--fp-space-2-5);
   border-bottom: 1px solid var(--color-outline-subtle);
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -87,8 +89,11 @@
   background-color: var(--color-surface);
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: var(--fp-space-2);
   flex-shrink: 0;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
 }
 
 /* Compact presentation: centered short native dialog via content marker retained in clones */
@@ -110,6 +115,7 @@
   width: 100%;
   max-width: min(calc(var(--phone-width, 393px) - 2rem), 24rem);
   margin: auto;
+  overflow: hidden;
 }
 [data-fp-component='fp.bottom-sheet'][data-fp-version='v1'].modal-dialog:has(
     [data-overlay-presentation='compact']

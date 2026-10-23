@@ -653,7 +653,7 @@ export const SortableList: React.FC<SortableListProps> = ({
         const ownedRows = Array.from(
           containerEl.querySelectorAll<HTMLElement>('[data-sortable-id]'),
         );
-        const ownsRowHit = ownedRows.some((row) => {
+        let ownsRowHit = ownedRows.some((row) => {
           const rect = row.getBoundingClientRect();
           return (
             releasePoint.x >= rect.left &&
@@ -663,31 +663,94 @@ export const SortableList: React.FC<SortableListProps> = ({
           );
         });
         if (!ownsRowHit) {
+          for (let i = 0; i < ownedRows.length - 1; i++) {
+            const curr = ownedRows[i];
+            const next = ownedRows[i + 1];
+            if (!curr || !next || curr.parentElement !== next.parentElement) continue;
+            const r1 = curr.getBoundingClientRect();
+            const r2 = next.getBoundingClientRect();
+            const gutterTop = r1.bottom;
+            const gutterBottom = r2.top;
+            if (gutterBottom <= gutterTop) continue;
+            const gutterLeft = Math.max(r1.left, r2.left);
+            const gutterRight = Math.min(r1.right, r2.right);
+            if (gutterRight <= gutterLeft) continue;
+            if (
+              releasePoint.x >= gutterLeft &&
+              releasePoint.x <= gutterRight &&
+              releasePoint.y >= gutterTop &&
+              releasePoint.y <= gutterBottom
+            ) {
+              ownsRowHit = true;
+              break;
+            }
+          }
+        }
+        if (!ownsRowHit) {
           abortAndRollback();
           return;
         }
 
-        const targetIndex = isSortable(source) ? source.index : 0;
         const snapshotEntry = snapshot.find((entry) => entry.id === sourceId);
-        const initialIndex = snapshotEntry?.index ?? (isSortable(source) ? source.initialIndex : 0);
+        const sourceEl =
+          snapshotEntry?.element instanceof HTMLElement
+            ? snapshotEntry.element
+            : containerEl.querySelector<HTMLElement>(`[data-sortable-id="${sourceId}"]`);
 
-        if (targetIndex === initialIndex) {
+        const isUnchanged =
+          snapshotEntry && sourceEl
+            ? sourceEl.parentNode === snapshotEntry.parent &&
+              sourceEl.nextSibling === snapshotEntry.nextSibling
+            : (isSortable(source) ? source.index : 0) ===
+              (snapshotEntry?.index ?? (isSortable(source) ? source.initialIndex : 0));
+
+        if (isUnchanged) {
           abortAndRollback();
           return;
         }
+
+        const sourceIndexInDom = ownedRows.findIndex(
+          (el) => el.getAttribute('data-sortable-id') === sourceId,
+        );
 
         let afterId: string | null = null;
-        if (items && items.length > 0) {
+        if (sourceIndexInDom >= 0) {
+          const domRemaining = ownedRows.filter(
+            (el) => el.getAttribute('data-sortable-id') !== sourceId,
+          );
+          afterId =
+            sourceIndexInDom > 0
+              ? (domRemaining[sourceIndexInDom - 1]?.getAttribute('data-sortable-id') ?? null)
+              : null;
+        } else if (items && items.length > 0) {
+          const sortableTargetIdx = isSortable(source) ? source.index : 0;
           const remaining = items.filter((it) => it.id !== sourceId);
-          afterId = targetIndex > 0 ? (remaining[targetIndex - 1]?.id ?? null) : null;
+          afterId = sortableTargetIdx > 0 ? (remaining[sortableTargetIdx - 1]?.id ?? null) : null;
         } else if (containerEl) {
+          const sortableTargetIdx = isSortable(source) ? source.index : 0;
           const domRows = Array.from(
             containerEl.querySelectorAll<HTMLElement>('[data-sortable-id]'),
           ).filter((el) => el.getAttribute('data-sortable-id') !== sourceId);
           afterId =
-            targetIndex > 0
-              ? (domRows[targetIndex - 1]?.getAttribute('data-sortable-id') ?? null)
+            sortableTargetIdx > 0
+              ? (domRows[sortableTargetIdx - 1]?.getAttribute('data-sortable-id') ?? null)
               : null;
+        }
+
+        const initialIndex = snapshotEntry?.index ?? (isSortable(source) ? source.initialIndex : 0);
+        let targetIndex = isSortable(source) ? source.index : 0;
+        if (items && items.length > 0) {
+          const remaining = items.filter((it) => it.id !== sourceId);
+          if (afterId === null) {
+            targetIndex = 0;
+          } else {
+            const idxInRemaining = remaining.findIndex((it) => it.id === afterId);
+            if (idxInRemaining >= 0) {
+              targetIndex = idxInRemaining + 1;
+            }
+          }
+        } else if (sourceIndexInDom >= 0) {
+          targetIndex = sourceIndexInDom;
         }
 
         const outcome: SortableDropOutcome = onDropIntent?.({

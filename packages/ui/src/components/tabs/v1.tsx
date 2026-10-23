@@ -169,7 +169,9 @@ export const Tabs: React.FC<TabsProps> = ({
               onClick={() => onChange(tab.id)}
             >
               <span className="tab-shape" aria-hidden="true" style={motionStyle} />
-              <span className="tab-label">{tab.label}</span>
+              <span className="tab-label" data-text={tab.label}>
+                {tab.label}
+              </span>
             </button>
           );
         })}

@@ -20,7 +20,8 @@ export default {
   related: ['fp.step-node', 'fp.timeline'],
   decisions: [
     {
-      label: 'PR #133: Modern @dnd-kit/react sortable integration',
+      label:
+        'PR #133: Modern @dnd-kit/react sortable integration with gutter hit-test and snapshot-backed order resolution',
       url: 'https://github.com/Aristotelesqc/Flourprint/pull/133',
     },
     {

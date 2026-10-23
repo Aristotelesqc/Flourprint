@@ -27,6 +27,7 @@ const messages = {
   preparationActions: ['Actions sur la préparation', 'Preparation actions'],
   registry: ['Catalogue', 'Registry'],
   settings: ['Réglages', 'Settings'],
+  recipeTab: ['Recette', 'Recipe'],
   ingredients: ['Ingrédients', 'Ingredients'],
   steps: ['Étapes de préparation', 'Preparation steps'],
   planning: ['Planification', 'Planning'],

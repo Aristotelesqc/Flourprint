@@ -25,8 +25,11 @@ async function freshPreparation(page, nav) {
   await page.goto(
     `/mockup.html?screen=preparation&recipe=shokupan&prep=fresh&lang=fr&nav=${nav}&capture=1&motion=reduce`,
   );
-  await expect(page.getByTestId('prep-complete-btn')).toBeVisible();
-  await expect(page.locator('.current-step-hero')).toHaveAttribute('data-step', 'tangzhong');
+  await expect(page.getByTestId('prep-next-btn')).toBeVisible();
+  await expect(page.locator('[data-testid="prep-current-step"]')).toHaveAttribute(
+    'data-step',
+    'tangzhong',
+  );
 }
 
 async function openLibrary(page, nav) {
@@ -70,9 +73,17 @@ for (const nav of ['A']) {
   }) => {
     await freshPreparation(page, nav);
     for (const [index, stage] of stages.entries()) {
-      await expect(page.locator('.current-step-hero')).toHaveAttribute('data-step', stage);
+      await expect(page.locator('[data-testid="prep-current-step"]')).toHaveAttribute(
+        'data-step',
+        stage,
+      );
       await page.clock.setFixedTime(new Date(startTime + (index + 1) * 60_000));
-      await page.getByTestId('prep-complete-btn').click();
+      if (stage === 'bake') {
+        // Parallel preheat readiness is a real recorded fact, never fabricated by Next.
+        await page.getByRole('button', { name: 'Allumer le four', exact: true }).click();
+        await page.getByRole('button', { name: 'Observer four prêt', exact: true }).click();
+      }
+      await page.getByTestId('prep-next-btn').click();
       // Completing baking is just another recorded stage; cooling and explicit Finish remain.
       await expect(page.getByTestId('recorded-outcome')).toHaveCount(0);
       await expect(
@@ -80,14 +91,10 @@ for (const nav of ['A']) {
       ).toHaveCount(0);
     }
 
-    await expect(
-      page.getByRole('heading', {
-        name: 'Étapes terminées · préparation à terminer',
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(page.locator('.current-step-hero')).toHaveCount(0);
-    await expect(page.getByTestId('prep-complete-btn')).toHaveCount(0);
+    // L127 keeps the final step visible and replaces Next with explicit Finish.
+    await expect(page.getByTestId('prep-current-step')).toHaveAttribute('data-step', 'cool');
+    await expect(page.getByTestId('prep-next-btn')).toHaveCount(0);
+    await expect(page.getByTestId('finish-preparation')).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await page.getByTestId('finish-preparation').click();
 
@@ -100,7 +107,10 @@ for (const nav of ['A']) {
     await openRecordedHistory(page, nav, 'Cuit');
     await expect(page.getByText('Durée réelle : 9 min', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Lancer', exact: true }).click();
-    await expect(page.locator('.current-step-hero')).toHaveAttribute('data-step', 'tangzhong');
+    await expect(page.locator('[data-testid="prep-current-step"]')).toHaveAttribute(
+      'data-step',
+      'tangzhong',
+    );
     await expect(page.getByTestId('recorded-outcome')).toHaveCount(0);
   });
 
@@ -130,8 +140,11 @@ for (const nav of ['A']) {
     await picker.getByRole('button', { name: 'Appliquer', exact: true }).click();
 
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.getByTestId('prep-complete-btn')).toBeVisible();
-    await expect(page.locator('.current-step-hero')).toHaveAttribute('data-step', 'tangzhong');
+    await expect(page.getByTestId('prep-next-btn')).toBeVisible();
+    await expect(page.locator('[data-testid="prep-current-step"]')).toHaveAttribute(
+      'data-step',
+      'tangzhong',
+    );
     await expect(page.getByTestId('recorded-outcome')).toHaveCount(0);
     await expect(
       page.getByRole('heading', { name: 'Préparation terminée', exact: true }),

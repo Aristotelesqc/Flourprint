@@ -9,7 +9,7 @@ const saved = (page) => page.locator('[aria-labelledby="heading-saved-history"]'
 const references = (page) => page.locator('[aria-labelledby="heading-ref-versions"]');
 const tab = (page, name) => page.getByRole('tab', { name, exact: true }).click();
 async function saltEdit(page, value) {
-  await tab(page, 'Ingredients');
+  await tab(page, 'Recipe');
   const edit = page.getByRole('button', { name: 'Edit', exact: true });
   if (await edit.isVisible()) await edit.click();
   const input = page.getByTestId('ingredient-grams-salt');
@@ -58,7 +58,7 @@ test.describe('L103 saved history and explicit reference versions', () => {
     await expect(saved(page).getByTestId('restore-revision-3')).toBeVisible();
     await expect(saved(page).getByTestId('restore-revision-2')).toBeVisible();
     await expect(references(page)).toContainText('Source revision: #2');
-    await tab(page, 'Ingredients');
+    await tab(page, 'Recipe');
     await page.getByRole('button', { name: 'Edit', exact: true }).click();
     await expect(page.getByTestId('ingredient-grams-salt')).toHaveValue('12');
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -91,11 +91,11 @@ test.describe('L103 saved history and explicit reference versions', () => {
     await saltEdit(page, '19');
     await tab(page, 'History');
     await promote(page, 2, 'Saved baseline');
-    await tab(page, 'Ingredients');
+    await tab(page, 'Recipe');
     await expect(page.getByTestId('ingredient-grams-salt')).toHaveValue('19');
     await tab(page, 'History');
     await restore(page, 1);
-    await tab(page, 'Ingredients');
+    await tab(page, 'Recipe');
     await expect(page.getByTestId('ingredient-grams-salt')).toHaveValue('19');
     await page.getByTestId('save-recipe').click();
     await expect(page.getByTestId('ingredient-grams-salt')).toHaveValue('19');

@@ -8,7 +8,8 @@ import {
   moveStep,
   removeStep,
   intendedOutcome,
-  subjectOf,
+  relativeTimeline,
+  anchorTimeline,
   OVEN_MODES,
   COOKING_OPERATIONS,
   type ProcessStep,
@@ -17,8 +18,9 @@ import {
   type DomainError,
   type MoveResult,
   type DuplicateResult,
-  type Projection,
   type StepId,
+  type Window,
+  type Instant,
 } from '@flourprint/core/domain';
 import { ProcessChangePreview } from './ProcessChangePreview';
 import { StepRow, StatusPanel } from './components';
@@ -426,7 +428,15 @@ export function stepDetails(step: ProcessStep, locale: Locale): string[] {
   ];
 }
 
-export function Diagnostics({ store, locale }: { store: Prototype; locale: Locale }) {
+export function Diagnostics({
+  store,
+  locale,
+  planning = false,
+}: {
+  store: Prototype;
+  locale: Locale;
+  planning?: boolean;
+}) {
   const scenario = new URLSearchParams(location.search).get('scenario') ?? 'recipe';
   const diagnosticInput = diagnosticContent(scenario, store.content);
   const estimate = diagnosticFixture(scenario, store.content).dough;
@@ -533,7 +543,7 @@ export function Diagnostics({ store, locale }: { store: Prototype; locale: Local
                   {t(locale, 'bakerPct')}
                 </p>
               )}
-              {store.state.draft && scenario === 'recipe' && (
+              {!planning && store.state.draft && scenario === 'recipe' && (
                 <Button
                   onClick={() => {
                     const suggestion = candidate[1];
@@ -608,7 +618,6 @@ export function ProcessView({
   planning = false,
   editingStepId,
   onClearEditingStepId,
-  onModifyStep,
   returnToPlanning,
   collapsedGroups = {},
   onToggleGroup,
@@ -666,9 +675,7 @@ export function ProcessView({
   const [removing, setRemoving] = useState<string | null>(null);
   const [menuOpenStepId, setMenuOpenStepId] = useState<string | null>(null);
   const [dependencyEditingStep, setDependencyEditingStep] = useState<ProcessStep | null>(null);
-
-  // Explicit component association mapping for display (L72)
-  const [stepComponentMap, setStepComponentMap] = useState<Record<string, string>>({});
+  const [addingStep, setAddingStep] = useState<ProcessStep | null>(null);
 
   const [proposal, setProposal] = useState<{
     source: Process;
@@ -679,7 +686,6 @@ export function ProcessView({
   const [duplication, setDuplication] = useState<{
     source: Process;
     result: DuplicateResult;
-    originalComponentId?: string;
   } | null>(null);
 
   const [refusal, setRefusal] = useState<{ stepId: string; error: DomainError } | null>(null);
@@ -704,7 +710,7 @@ export function ProcessView({
     }
   }, [removing, refusal, proposal, process]);
   const [announcement, setAnnouncement] = useState('');
-  const [at, setAt] = useState('2026-10-16T08:00');
+  const [at, setAt] = useState('');
 
   const [planDirection, setPlanDirection] = useState<'startAt' | 'readyBy'>('startAt');
   const [targetStep, setTargetStep] = useState(process.steps.at(-1)?.id ?? '');
@@ -712,41 +718,37 @@ export function ProcessView({
     ? targetStep
     : (process.steps.at(-1)?.id ?? '');
 
-  const projection = project(
-    process,
-    at,
-    undefined,
-    planning && planDirection === 'readyBy' ? effectiveTarget : undefined,
-  );
-  const times = projection.ok ? Object.values(projection.value.steps) : [];
-  const starts = times.flatMap((s) => (s.start ? [Date.parse(s.start)] : [])),
-    ends = times.flatMap((s) => (s.end ? [Date.parse(s.end)] : []));
-  const full = times.length > 0 && times.every((s) => s.start && s.end);
+  const compSet = new Set(store.content.formula.components.map((c) => c.id));
+  const relativeResult = relativeTimeline(process, { components: compSet });
+  const relative = relativeResult.ok ? relativeResult.value : undefined;
 
-  const formatWindow = (steps: ProcessStep[], plan: Projection | undefined, dated = false) => {
-    const values = plan ? steps.flatMap((s) => (plan.steps[s.id] ? [plan.steps[s.id]] : [])) : [];
-    if (!values.length || values.length !== steps.length || values.some((v) => !v.start || !v.end))
-      return t(locale, 'unknownDuration');
-    const start = Math.min(...values.map((v) => Date.parse(v.start ?? ''))),
-      end = Math.max(...values.map((v) => Date.parse(v.end ?? '')));
-    const moment = (value: number) =>
-      (dated ? dateTime : time)(locale, new Date(value).toISOString());
-    return `${duration(locale, (end - start) / 1000)} · ${moment(start)} → ${moment(end)} · ${steps.length} ${t(locale, 'stepsTab')}`;
-  };
+  const anchoredResult =
+    relative && at && at.trim() !== ''
+      ? anchorTimeline(
+          relative,
+          planDirection === 'startAt'
+            ? { kind: 'startAt', at: new Date(at).toISOString() as Instant }
+            : {
+                kind: 'readyBy',
+                at: new Date(at).toISOString() as Instant,
+                target: effectiveTarget,
+              },
+        )
+      : undefined;
+  const anchored = anchoredResult?.ok ? anchoredResult.value : undefined;
 
-  const windowLabel = (steps: ProcessStep[]) =>
-    formatWindow(steps, projection.ok ? projection.value : undefined);
-
-  // Group classification using core subjectOf + explicit display association (L72)
-  const getStepComponentId = (step: ProcessStep): string | null => {
-    const subj = subjectOf(process, step);
-    if (subj.kind === 'component') return subj.id;
-    if (stepComponentMap[step.id]) return stepComponentMap[step.id];
-    // Legacy id-prefix fallback for recipes with component prefix
-    const comp = store.content.formula.components.find(
-      (c) => step.id === c.id || step.id.startsWith(`${c.id}-`),
-    );
-    return comp ? comp.id : null;
+  const formatWindow = (
+    win: Window | import('@flourprint/core/domain').AnchoredWindow | undefined,
+    stepCount: number,
+  ) => {
+    if (!win) return t(locale, 'unknownDuration');
+    if (win.status === 'complete') {
+      if ('start' in win) {
+        return `${duration(locale, win.elapsedS)} · ${time(locale, win.start)} → ${time(locale, win.end)} · ${stepCount} ${t(locale, 'stepsTab')}`;
+      }
+      return `${duration(locale, win.elapsedS)} · +${duration(locale, win.startS)} → +${duration(locale, win.endS)} · ${stepCount} ${t(locale, 'stepsTab')}`;
+    }
+    return t(locale, 'unknownDuration');
   };
 
   const executePropose = (index: number, delta: number, currentProcess: Process) => {
@@ -795,11 +797,9 @@ export function ProcessView({
       setRefusal({ stepId: step.id, error: result.error });
       setAnnouncement(stepCopy(locale, 'refusalNextSteps'));
     } else {
-      const origComp = getStepComponentId(step);
       setDuplication({
         source: process,
         result: result.value,
-        originalComponentId: origComp ?? undefined,
       });
     }
   };
@@ -844,6 +844,7 @@ export function ProcessView({
     });
 
   const previewOf = (candidate: Process) => {
+    if (!at || at.trim() === '') return undefined;
     const result = project(
       candidate,
       at,
@@ -854,25 +855,46 @@ export function ProcessView({
   };
 
   const previewWindows = (before: Process, after: Process) => {
-    const beforePlan = previewOf(before),
-      afterPlan = previewOf(after);
-    const components = store.content.formula.components;
-    const groups = [
-      { label: t(locale, 'totalDuration'), select: () => true },
-      ...components.map((component) => ({
-        label: componentDisplayName(locale, store.content.formula, component, store.content.names),
-        select: (step: ProcessStep) => getStepComponentId(step) === component.id,
-      })),
+    const bRel = relativeTimeline(before, { components: compSet });
+    const aRel = relativeTimeline(after, { components: compSet });
+    if (!bRel.ok || !aRel.ok) return [];
+
+    const formatRelWin = (w: Window) => {
+      if (w.status === 'complete') {
+        return `${duration(locale, w.elapsedS)} (+${duration(locale, w.startS)} → +${duration(locale, w.endS)})`;
+      }
+      return t(locale, 'unknownDuration');
+    };
+
+    const groupLabel = (id: string) => {
+      if (id.startsWith('component:')) {
+        const cId = id.slice('component:'.length);
+        const comp = store.content.formula.components.find((c) => c.id === cId);
+        return comp
+          ? componentDisplayName(locale, store.content.formula, comp, store.content.names)
+          : cId;
+      }
+      if (id === 'cooking') return stepCopy(locale, 'cookingGroup');
+      return t(locale, 'dough');
+    };
+
+    const list: { label: string; before: string; after: string }[] = [
       {
-        label: t(locale, 'dough'),
-        select: (step: ProcessStep) => getStepComponentId(step) === null,
+        label: t(locale, 'totalDuration'),
+        before: formatRelWin(bRel.value.total),
+        after: formatRelWin(aRel.value.total),
       },
     ];
-    return groups.map(({ label, select }) => ({
-      label,
-      before: formatWindow(before.steps.filter(select), beforePlan, true),
-      after: formatWindow(after.steps.filter(select), afterPlan, true),
-    }));
+
+    for (const aGrp of aRel.value.groups) {
+      const bGrp = bRel.value.groups.find((g) => g.id === aGrp.id);
+      list.push({
+        label: groupLabel(aGrp.id),
+        before: bGrp ? formatRelWin(bGrp.window) : t(locale, 'unknownDuration'),
+        after: formatRelWin(aGrp.window),
+      });
+    }
+    return list;
   };
 
   const stepNumbers = (() => {
@@ -888,11 +910,27 @@ export function ProcessView({
   })();
 
   const renderStep = (step: ProcessStep, index: number) => {
-    const timing = projection.ok ? projection.value.steps[step.id] : undefined;
+    const relStep = relative?.steps.find((s) => s.stepId === step.id);
+    const anchStep = anchored?.steps.find((s) => s.stepId === step.id);
+    const timingText =
+      planning && anchStep?.start && anchStep.end
+        ? `${time(locale, anchStep.start)} → ${time(locale, anchStep.end)}`
+        : relStep?.timing.status === 'known'
+          ? `+${duration(locale, relStep.timing.startS)} → +${duration(locale, relStep.timing.endS)}`
+          : undefined;
+
+    const warmupText =
+      relStep?.warmup?.kind === 'insufficient'
+        ? stepCopy(locale, 'preheatInsufficient')
+        : relStep?.warmup?.kind === 'sufficient'
+          ? `${stepCopy(locale, 'preheatWarmup')} · ${duration(locale, relStep.warmup.requiredS)}`
+          : undefined;
+
     const previous = process.steps[index - 1]?.id;
     const isDragging = activeStepId === step.id;
     const isPreheat = step.operation === 'preheat';
     const displayNumber = isPreheat ? undefined : stepNumbers.get(step.id);
+    const countableSteps = process.steps.filter((s) => s.operation !== 'preheat');
 
     return (
       <SortableItem
@@ -906,25 +944,19 @@ export function ProcessView({
           icon={operationIcon(step.operation)}
           title={titleOf(step, locale)}
           details={[
-            ...(timing ? [`${time(locale, timing.start)} → ${time(locale, timing.end)}`] : []),
-            ...(!planning && view === 'timeline' && timing?.start && starts.length
-              ? [`+${duration(locale, (Date.parse(timing.start) - Math.min(...starts)) / 1000)}`]
-              : []),
+            ...(timingText ? [timingText] : []),
+            ...(warmupText ? [warmupText] : []),
             ...stepDetails(step, locale),
           ]}
-          onEdit={planning ? () => onModifyStep?.(step.id) : undefined}
-          editLabel={
-            planning
-              ? `${editingCopyT(locale, 'editInStepsAria')} : ${titleOf(step, locale)}`
-              : `${t(locale, 'editStep')} : ${titleOf(step, locale)}`
-          }
+          onEdit={planning ? undefined : () => setEditing(step)}
+          editLabel={`${t(locale, 'editStep')} : ${titleOf(step, locale)}`}
           actions={
             planning ? undefined : (
               <div className="step-cluster">
                 <DragHandle
                   step={step}
                   index={index}
-                  totalSteps={process.steps.length}
+                  totalSteps={countableSteps.length}
                   locale={locale}
                   title={titleOf(step, locale)}
                   isDragging={isDragging}
@@ -1040,7 +1072,22 @@ export function ProcessView({
     if (!draggedStep) return null;
     const isPreheat = draggedStep.operation === 'preheat';
     const displayNumber = isPreheat ? undefined : stepNumbers.get(draggedStep.id);
-    const timing = projection.ok ? projection.value.steps[draggedStep.id] : undefined;
+    const relStep = relative?.steps.find((s) => s.stepId === draggedStep.id);
+    const anchStep = anchored?.steps.find((s) => s.stepId === draggedStep.id);
+    const timingText =
+      planning && anchStep?.start && anchStep.end
+        ? `${time(locale, anchStep.start)} → ${time(locale, anchStep.end)}`
+        : relStep?.timing.status === 'known'
+          ? `+${duration(locale, relStep.timing.startS)} → +${duration(locale, relStep.timing.endS)}`
+          : undefined;
+
+    const warmupText =
+      relStep?.warmup?.kind === 'insufficient'
+        ? stepCopy(locale, 'preheatInsufficient')
+        : relStep?.warmup?.kind === 'sufficient'
+          ? `${stepCopy(locale, 'preheatWarmup')} · ${duration(locale, relStep.warmup.requiredS)}`
+          : undefined;
+
     const draggedIdx = process.steps.indexOf(draggedStep);
     const prevStepId = draggedIdx > 0 ? process.steps[draggedIdx - 1]?.id : undefined;
 
@@ -1051,10 +1098,8 @@ export function ProcessView({
           icon={operationIcon(draggedStep.operation)}
           title={titleOf(draggedStep, locale)}
           details={[
-            ...(timing ? [`${time(locale, timing.start)} → ${time(locale, timing.end)}`] : []),
-            ...(!planning && view === 'timeline' && timing?.start && starts.length
-              ? [`+${duration(locale, (Date.parse(timing.start) - Math.min(...starts)) / 1000)}`]
-              : []),
+            ...(timingText ? [timingText] : []),
+            ...(warmupText ? [warmupText] : []),
             ...stepDetails(draggedStep, locale),
           ]}
           state="planned"
@@ -1165,25 +1210,35 @@ export function ProcessView({
               }}
             />
           </label>
-          {planDirection === 'readyBy' && (
+          {!at && <p className="muted">{stepCopy(locale, 'unsetPlan')}</p>}
+          {anchoredResult && !anchoredResult.ok && (
+            <p className="warning" role="alert">
+              {t(locale, refusalKey(anchoredResult.error))}
+            </p>
+          )}
+          {planDirection === 'readyBy' && at && (
             <p>
               {t(locale, 'startAt')} :{' '}
-              {full
-                ? dateTime(locale, new Date(Math.min(...starts)).toISOString())
+              {anchored?.total.status === 'complete'
+                ? dateTime(locale, anchored.total.start)
                 : t(locale, 'unknown')}
             </p>
           )}
-          <strong>
-            {t(locale, 'finish')} :{' '}
-            {full
-              ? dateTime(locale, new Date(Math.max(...ends)).toISOString())
-              : t(locale, 'unknown')}
-          </strong>
+          {at && (
+            <strong>
+              {t(locale, 'finish')} :{' '}
+              {anchored?.total.status === 'complete'
+                ? dateTime(locale, anchored.total.end)
+                : t(locale, 'unknown')}
+            </strong>
+          )}
           <p>
             {t(locale, 'total')} :{' '}
-            {full
-              ? duration(locale, (Math.max(...ends) - Math.min(...starts)) / 1000)
-              : t(locale, 'unknownDuration')}
+            {anchored?.total.status === 'complete'
+              ? duration(locale, anchored.total.elapsedS)
+              : relative?.total.status === 'complete'
+                ? duration(locale, relative.total.elapsedS)
+                : t(locale, 'unknownDuration')}
           </p>
         </Surface>
       )}
@@ -1212,83 +1267,110 @@ export function ProcessView({
       >
         {view === 'timeline' ? (
           <div className="timeline-lanes stack">
-            {full && (
-              <Ui
-                component="fp.timeline"
-                startLabel={time(locale, new Date(Math.min(...starts)).toISOString())}
-                endLabel={time(locale, new Date(Math.max(...ends)).toISOString())}
-                lanes={[
-                  ...store.content.formula.components.map((c) => ({
-                    id: c.id,
-                    label: componentDisplayName(
-                      locale,
-                      store.content.formula,
-                      c,
-                      store.content.names,
-                    ),
-                    steps: process.steps.filter((s) => getStepComponentId(s) === c.id),
-                  })),
-                  {
-                    id: 'preheat',
-                    label: operationName(locale, 'preheat'),
-                    steps: process.steps.filter((s) => s.operation === 'preheat'),
-                  },
-                  {
-                    id: 'dough',
-                    label: t(locale, 'dough'),
-                    steps: process.steps.filter(
-                      (s) => s.operation !== 'preheat' && getStepComponentId(s) === null,
-                    ),
-                  },
-                ].map((lane) => ({
-                  id: lane.id,
-                  label: lane.label,
-                  events: lane.steps.flatMap((step) => {
-                    const timing = projection.ok ? projection.value.steps[step.id] : undefined;
-                    if (!timing?.start || !timing.end) return [];
-                    const span = Math.max(1, Math.max(...ends) - Math.min(...starts));
-                    return [
-                      {
-                        id: step.id,
-                        label: titleOf(step, locale),
-                        range: `${time(locale, timing.start)} – ${time(locale, timing.end)}`,
-                        startPct: ((Date.parse(timing.start) - Math.min(...starts)) / span) * 100,
-                        endPct: ((Date.parse(timing.end) - Math.min(...starts)) / span) * 100,
-                      },
-                    ];
-                  }),
-                }))}
-              />
-            )}
+            {relative?.total.status === 'complete' &&
+              (() => {
+                const totalElapsed = relative.total.elapsedS;
+                const span = Math.max(1, totalElapsed);
+                return (
+                  <Ui
+                    component="fp.timeline"
+                    startLabel={
+                      anchored?.total.status === 'complete'
+                        ? time(locale, anchored.total.start)
+                        : '+0:00'
+                    }
+                    endLabel={
+                      anchored?.total.status === 'complete'
+                        ? time(locale, anchored.total.end)
+                        : `+${duration(locale, totalElapsed)}`
+                    }
+                    lanes={relative.groups.map((group) => {
+                      const isComponent = group.id.startsWith('component:');
+                      const compId = isComponent ? group.id.slice('component:'.length) : null;
+                      const component = compId
+                        ? store.content.formula.components.find((c) => c.id === compId)
+                        : null;
+                      const label = component
+                        ? componentDisplayName(
+                            locale,
+                            store.content.formula,
+                            component,
+                            store.content.names,
+                          )
+                        : group.id === 'cooking'
+                          ? stepCopy(locale, 'cookingGroup')
+                          : t(locale, 'dough');
+                      const steps = process.steps.filter((s) => group.stepIds.includes(s.id));
+                      return {
+                        id: group.id,
+                        label,
+                        events: steps.flatMap((step) => {
+                          const relStep = relative.steps.find((s) => s.stepId === step.id);
+                          if (!relStep || relStep.timing.status !== 'known') return [];
+                          const anchStep = anchored?.steps.find((s) => s.stepId === step.id);
+                          const range =
+                            anchStep?.start && anchStep.end
+                              ? `${time(locale, anchStep.start)} – ${time(locale, anchStep.end)}`
+                              : `+${duration(locale, relStep.timing.startS)} – +${duration(locale, relStep.timing.endS)}`;
+                          return [
+                            {
+                              id: step.id,
+                              label: titleOf(step, locale),
+                              range,
+                              startPct: (relStep.timing.startS / span) * 100,
+                              endPct: (relStep.timing.endS / span) * 100,
+                            },
+                          ];
+                        }),
+                      };
+                    })}
+                  />
+                );
+              })()}
             {process.steps.map(renderStep)}
           </div>
         ) : (
           <>
-            {store.content.formula.components.map((component) => (
-              <Disclosure
-                key={component.id}
-                title={`${store.content.formula.components.indexOf(component) + 1}. ${componentDisplayName(locale, store.content.formula, component, store.content.names)}`}
-                subtitle={windowLabel(
-                  process.steps.filter((s) => getStepComponentId(s) === component.id),
-                )}
-                open={!collapsedGroups[component.id]}
-                onOpenChange={(open) => onToggleGroup?.(component.id, open)}
-              >
-                {process.steps
-                  .filter((step) => getStepComponentId(step) === component.id)
-                  .map((step) => renderStep(step, process.steps.indexOf(step)))}
-              </Disclosure>
-            ))}
-            <Disclosure
-              title={`${store.content.formula.components.length + 1}. ${t(locale, 'dough')}`}
-              subtitle={windowLabel(process.steps.filter((s) => getStepComponentId(s) === null))}
-              open={!collapsedGroups['dough']}
-              onOpenChange={(open) => onToggleGroup?.('dough', open)}
-            >
-              {process.steps
-                .filter((step) => getStepComponentId(step) === null)
-                .map((step) => renderStep(step, process.steps.indexOf(step)))}
-            </Disclosure>
+            {relative?.groups.map((group, groupIndex) => {
+              const groupSteps = process.steps.filter((s) => group.stepIds.includes(s.id));
+              const isComponent = group.id.startsWith('component:');
+              const compId = isComponent ? group.id.slice('component:'.length) : null;
+              const component = compId
+                ? store.content.formula.components.find((c) => c.id === compId)
+                : null;
+
+              const title = component
+                ? `${groupIndex + 1}. ${componentDisplayName(locale, store.content.formula, component, store.content.names)}`
+                : group.id === 'cooking'
+                  ? `${groupIndex + 1}. ${stepCopy(locale, 'cookingGroup')}`
+                  : `${groupIndex + 1}. ${t(locale, 'dough')}`;
+
+              const collapseKey = compId ?? (group.id === 'cooking' ? 'cooking' : 'dough');
+              const isCollapsed = Boolean(
+                collapsedGroups[collapseKey] ??
+                (group.id === 'cooking' ? false : collapsedGroups['dough']),
+              );
+
+              const groupWin = anchored
+                ? anchored.groups.find((g) => g.id === group.id)?.window
+                : group.window;
+
+              const nonPreheatCount = groupSteps.filter((s) => s.operation !== 'preheat').length;
+
+              const subtitle = formatWindow(groupWin, nonPreheatCount);
+
+              return (
+                <Disclosure
+                  key={group.id}
+                  title={title}
+                  subtitle={subtitle}
+                  open={!isCollapsed}
+                  onOpenChange={(open) => onToggleGroup?.(collapseKey, open)}
+                >
+                  {groupSteps.map((step) => renderStep(step, process.steps.indexOf(step)))}
+                </Disclosure>
+              );
+            })}
           </>
         )}
       </Ui>
@@ -1296,23 +1378,23 @@ export function ProcessView({
       {!planning && store.state.draft && (
         <Button
           icon="plus"
-          onClick={() =>
-            store.applyProcess(
-              insertStepAfter(process, process.steps[process.steps.length - 1].id, {
-                id: crypto.randomUUID(),
-                operation: 'rest',
-                schedule: 'asap',
-                plannedDurationS: 600,
-              }),
-            )
-          }
+          onClick={() => {
+            const lastStep = process.steps[process.steps.length - 1];
+            setAddingStep({
+              id: crypto.randomUUID(),
+              operation: 'rest',
+              schedule: 'asap',
+              dependsOn: lastStep ? [lastStep.id] : [],
+            });
+          }}
         >
           {t(locale, 'addStep')}
         </Button>
       )}
 
       <p className="process-result">
-        <Icon name="check" /> {stepCopy(locale, 'plannedResult')} :{' '}
+        <Icon name="check" /> {stepCopy(locale, 'plannedResult')}
+        {colon(locale)}
         {t(
           locale,
           intendedOutcome(process).result === 'cooked'
@@ -1323,9 +1405,9 @@ export function ProcessView({
         )}
       </p>
 
-      {!projection.ok && <p role="alert">{t(locale, 'invalidPlan')}</p>}
+      {!relativeResult.ok && <p role="alert">{t(locale, 'invalidPlan')}</p>}
 
-      <Diagnostics store={store} locale={locale} />
+      <Diagnostics store={store} locale={locale} planning={planning} />
 
       {editing && (
         <StepEditor
@@ -1339,6 +1421,23 @@ export function ProcessView({
               steps: process.steps.map((s) => (s.id === next.id ? next : s)),
             })
           }
+        />
+      )}
+
+      {addingStep && (
+        <StepEditor
+          title={t(locale, 'addStep')}
+          step={addingStep}
+          process={process}
+          locale={locale}
+          onClose={() => setAddingStep(null)}
+          onApply={(candidate) => {
+            const lastStep = process.steps[process.steps.length - 1];
+            const nextProcess = lastStep
+              ? insertStepAfter(process, lastStep.id, candidate)
+              : { ...process, steps: [{ ...candidate, dependsOn: [] }] };
+            return store.applyProcess(nextProcess);
+          }}
         />
       )}
 
@@ -1403,13 +1502,6 @@ export function ProcessView({
               ),
             });
             if (accepted) {
-              const originalComponentId = duplication.originalComponentId;
-              if (originalComponentId) {
-                setStepComponentMap((prev) => ({
-                  ...prev,
-                  [candidate.id]: originalComponentId,
-                }));
-              }
               setAnnouncement(t(locale, 'changeApplied'));
             }
             return accepted;
@@ -1558,15 +1650,11 @@ const dateTime = (locale: Locale, value: string) =>
   }).format(new Date(value));
 
 export function processDuration(content: Content): number | undefined {
-  const p = project(content.process, '2026-10-16T08:00:00Z');
-  if (!p.ok) return undefined;
-  const values = Object.values(p.value.steps);
-  if (!values.every((v) => v.start && v.end) || !values.length) return undefined;
-  return (
-    (Math.max(...values.map((v) => Date.parse(v.end ?? ''))) -
-      Math.min(...values.map((v) => Date.parse(v.start ?? '')))) /
-    1000
-  );
+  const rel = relativeTimeline(content.process, {
+    components: new Set(content.formula.components.map((c) => c.id)),
+  });
+  if (!rel.ok || rel.value.total.status !== 'complete') return undefined;
+  return rel.value.total.elapsedS;
 }
 
 export const instructionKey = (operation: string): MessageKey =>

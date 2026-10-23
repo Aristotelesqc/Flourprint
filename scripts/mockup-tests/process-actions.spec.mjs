@@ -3,8 +3,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 const require = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = require('@playwright/test');
-const rows = (page) => page.locator('.phone-content .step-row:visible');
-const titles = (page) => page.locator('.phone-content .step-title:visible');
+const rows = (page) => page.locator('.section-carousel-pane.is-active .step-row:visible');
+const titles = (page) => page.locator('.section-carousel-pane.is-active .step-title:visible');
 const step = (page, name) =>
   rows(page).filter({
     has: page.locator('.step-title').filter({ hasText: new RegExp(`${name}$`) }),
@@ -65,8 +65,8 @@ test.describe('core-backed process actions', () => {
         await expect(dialog.getByTestId('affected-step-divide')).toContainText(
           'Dépend de : Pétrissage',
         );
-        await expect(dialog.getByTestId('affected-step-divide')).toContainText('10 h 34');
-        await expect(dialog.getByTestId('affected-step-divide')).toContainText('09 h 19');
+        await expect(dialog.getByTestId('affected-step-divide')).toContainText('+2 h 34');
+        await expect(dialog.getByTestId('affected-step-divide')).toContainText('+1 h 19');
         await expect(titles(page)).toHaveText(original);
         const horizontalOverflow = await dialog.evaluate(
           (el) =>
@@ -83,7 +83,7 @@ test.describe('core-backed process actions', () => {
         await expect(dialog).toHaveCount(0);
         await expect(titles(page).nth(3)).toHaveText('4. Division');
         await expect(titles(page).nth(4)).toHaveText('5. Pointage');
-        await expect(page.getByRole('status')).toHaveText(
+        await expect(page.getByTestId('recipe-steps').getByRole('status')).toHaveText(
           'Modification des étapes appliquée au brouillon.',
         );
         await historyAction(page, 'Annuler la modification');
@@ -121,10 +121,15 @@ test.describe('core-backed process actions', () => {
     page,
   }) => {
     await open(page);
+    // The grouped view keeps parallel preheat in its cooking lane. Inspect topological
+    // display order in the unified timeline list instead of flattening separate lanes.
+    await page.getByRole('tab', { name: 'Ligne de temps', exact: true }).click();
     const timing = await step(page, 'Préchauffage').locator('.step-details').textContent();
     await page.getByTestId('drag-handle-preheat').filter({ visible: true }).press('ArrowUp');
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.getByRole('status')).toHaveText('Seul l’ordre d’affichage change.');
+    await expect(page.getByTestId('recipe-steps').getByRole('status')).toHaveText(
+      'Seul l’ordre d’affichage change.',
+    );
     await expect(step(page, 'Préchauffage').locator('.step-details')).toHaveText(timing);
     await expect(titles(page).nth(6)).toHaveText('Préchauffage');
     await historyAction(page, 'Annuler la modification');
@@ -138,8 +143,8 @@ test.describe('core-backed process actions', () => {
     await expect(dialog.getByRole('textbox', { name: 'Durée', exact: true })).toHaveValue('75');
     await expect(rows(page)).toHaveCount(10);
     await dialog.getByRole('button', { name: 'Étapes touchées (7)', exact: true }).click();
-    await expect(dialog.getByTestId('affected-step-divide')).toContainText('10 h 34');
-    await expect(dialog.getByTestId('affected-step-divide')).toContainText('11 h 49');
+    await expect(dialog.getByTestId('affected-step-divide')).toContainText('+2 h 34');
+    await expect(dialog.getByTestId('affected-step-divide')).toContainText('+3 h 49');
     await dialog.getByRole('button', { name: 'Fenêtres de préparation', exact: true }).click();
     const windows = dialog.getByTestId('process-change-windows');
     await expect(windows).toContainText('5 h 12');
@@ -186,8 +191,10 @@ test.describe('core-backed process actions', () => {
     const dialog = await duplicate(page, 'Pointage');
     await expect(dialog.getByRole('alert')).toHaveText('Durée à préciser');
     await dialog.getByRole('button', { name: /Étapes touchées/ }).click();
-    await expect(dialog.getByTestId('process-change-preview')).toContainText('Inconnu');
-    await expect(dialog.getByTestId('process-change-preview')).not.toContainText('0 min');
+    const downstream = dialog.getByTestId('affected-step-divide');
+    await expect(downstream).toContainText(/horaire inconnu/i);
+    await expect(downstream.locator('.process-change-times')).toHaveCount(0);
+    await expect(downstream).not.toContainText('0 min');
     await dialog.getByRole('textbox', { name: 'Nom', exact: true }).fill('Repos sans durée');
     await dialog.getByRole('button', { name: 'Appliquer', exact: true }).click();
     await expect(step(page, 'Repos sans durée').locator('.step-details')).toContainText(

@@ -3,10 +3,11 @@ import type { SectionCarouselProps } from '../../props.ts';
 
 export default {
   purpose:
-    'Horizontal swipeable carousel holding screens/panes of a recipe (Ingredients, Steps, Planning, History) with synchronized tab indicator.',
+    'Horizontal swipeable carousel holding screens/panes of a recipe (Ingredients, Steps, Planning, History) with synchronized tab indicator, animated commit and velocity continuation (L101, L106, L117).',
   useWhen: [
     'Navigation between adjacent peer sections within a single screen or recipe.',
     'L101 horizontal gesture navigation with top tappable tabs.',
+    'L106/L117 tab carousel gesture tracking with animated settle without frame jumps.',
   ],
   avoidWhen: [
     'Primary screen navigation: use fp.bottom-bar.',
@@ -18,11 +19,21 @@ export default {
     'Swipe gestures are excluded within 24px of screen edges to prevent conflicts with OS edge navigation gestures.',
     'Vertical scrolling takes priority unless a horizontal gesture is established.',
     'Under reduced motion, horizontal drag animation is disabled and section transitions complete instantaneously.',
+    'Starting and adjacent panes remain revealed through settle, committing selection exactly once upon completion.',
   ],
   related: ['fp.tabs', 'fp.bottom-bar'],
   decisions: [
     {
       label: 'L101: top tappable tabs and horizontal carousel navigation',
+      url: 'https://github.com/Aristotelesqc/Flourprint/issues/133',
+    },
+    {
+      label:
+        'L106: Tab carousel motion follows finger 1:1 and continues with release velocity without jumping',
+      url: 'https://github.com/Aristotelesqc/Flourprint/issues/133',
+    },
+    {
+      label: 'L117: A tab-carousel commit animates to final position',
       url: 'https://github.com/Aristotelesqc/Flourprint/issues/133',
     },
     {

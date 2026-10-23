@@ -5,9 +5,11 @@
   align-items: center;
   column-gap: var(--fp-space-2);
   row-gap: var(--fp-space-1);
-  min-height: var(--touch-row);
-  padding: var(--fp-space-2) 0;
+  min-height: var(--touch-row, var(--fp-spacing-touch, 48px));
+  padding: var(--fp-space-2) var(--fp-space-2);
   border-bottom: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-md, 0.5rem);
+  box-sizing: border-box;
   cursor: pointer;
 }
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'].ingredient-row:last-child {
@@ -60,6 +62,9 @@
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing {
   cursor: default;
   grid-template-columns: minmax(0, 1fr) auto;
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-md, 0.5rem);
+  padding: var(--fp-space-2) var(--fp-space-2);
 }
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing .ingredient-info {
   grid-column: 1;
@@ -69,19 +74,29 @@
 }
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing .ingredient-row-end {
   grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing:has(.ingredient-edit-wrap)
   .ingredient-row-end {
-  grid-column: 1 / -1;
-  grid-row: 3;
-  text-align: left;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-edit-wrap {
-  display: block;
-  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
 }
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1']:focus-within {
   background: var(--color-surface-container-high);
+  border-radius: var(--radius-md, 0.5rem);
 }
 
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .ingredient-meta {

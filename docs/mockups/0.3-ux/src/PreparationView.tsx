@@ -3,15 +3,15 @@ import { curatedText } from './template-presentation';
 import { useEffect, useState, useRef } from 'react';
 import {
   resolveFormula,
-  updateStep,
   intendedOutcome,
   outcomeProblem,
+  outcomeChoiceRequired,
   OUTCOME_RESULTS,
   DOUGH_DISPOSITIONS,
-  isCookingStep,
   type PreparationOutcome,
+  subjectOf,
 } from '@flourprint/core/domain';
-import { PreparationTimer, StepRow, IngredientRow, ContextTiles } from './components';
+import { StepRow, IngredientRow, ContextTiles, PreparationTimer } from './components';
 import {
   Button,
   IconButton,
@@ -24,9 +24,9 @@ import {
   CompactDialog,
 } from './ui';
 import { type Prototype, instant, project, syncSessions } from './model';
-import { titleOf, instructionKey, stepDetails, modeLabel, operationIcon } from './ProcessView';
+import { titleOf, stepDetails, modeLabel, operationIcon } from './ProcessView';
 import { groupsOf } from './RecipeView';
-import { t, duration, time, grams, num, vesselName, type Locale } from './messages';
+import { t, duration, time, grams, num, colon, vesselName, type Locale } from './messages';
 import { prepCopy, locationLabel } from './preparation-copy';
 import {
   prepActionsCopy,
@@ -34,8 +34,18 @@ import {
   formatAbandonPrompt,
 } from './preparation-actions-copy';
 import { formatTemperature, formatTemperatureForStep } from './device-preferences';
-import { stepCopy } from './steps-copy';
 import { historyCopyT } from './history-copy';
+import {
+  formatCountdownHHMMSS,
+  formatStepAdjustment,
+  liveProjection,
+  heldSeconds,
+  isStepHeld,
+  adjustedDurationS,
+  previousAction,
+  visibleEvents,
+  type ProcessStep,
+} from './preparation-runtime';
 
 export function PreparationView({
   store,
@@ -47,19 +57,34 @@ export function PreparationView({
   footerHost?: HTMLElement | null;
 }) {
   const [now, setNow] = useState(Date.now());
-  const [sheet, setSheet] = useState<'duration' | 'note' | 'photo' | null>(null);
+  const [sheet, setSheet] = useState<'note' | 'photo' | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [outcomeInvalid, setOutcomeInvalid] = useState(false);
   const [outcomeOpen, setOutcomeOpen] = useState(false);
   const [confirmEarlyFinishOpen, setConfirmEarlyFinishOpen] = useState(false);
   const [confirmAbandonOpen, setConfirmAbandonOpen] = useState(false);
   const [chosenOutcome, setChosenOutcome] = useState<PreparationOutcome | undefined>();
-  const [outcomeDraft, setOutcomeDraft] = useState<PreparationOutcome>({ result: 'cooked' });
+  const [pendingFinish, setPendingFinish] = useState(false);
+  const [outcomeDraft, setOutcomeDraft] = useState<PreparationOutcome | undefined>();
+  const [durationOpen, setDurationOpen] = useState(false);
+  const [durationMinutes, setDurationMinutes] = useState<number>(NaN);
+  const [durationInvalid, setDurationInvalid] = useState(false);
+  const [durationError, setDurationError] = useState<string | null>(null);
   const [note, setNote] = useState('');
-  const [minutes, setMinutes] = useState(15);
-  const [invalid, setInvalid] = useState(false);
   const [weighingOpenCount, setWeighingOpenCount] = useState(0);
   const weighingRef = useRef<HTMLDivElement>(null);
+
+  // Correction & repetition dialog states for DependentStepStarted refusal
+  const [refusalDialogOpen, setRefusalDialogOpen] = useState(false);
+  const [refusalExplanation, setRefusalExplanation] = useState('');
+  const [correctTimeOpen, setCorrectTimeOpen] = useState(false);
+  const [correctTargetEventId, setCorrectTargetEventId] = useState<string | null>(null);
+  const [correctMinutes, setCorrectMinutes] = useState(15);
+  const [correctTimeError, setCorrectTimeError] = useState<string | null>(null);
+  const [repeatStepOpen, setRepeatStepOpen] = useState(false);
+  const [predecessorToRepeat, setPredecessorToRepeat] = useState<ProcessStep | null>(null);
+  const [repeatDurationMinutes, setRepeatDurationMinutes] = useState(15);
+  const [repeatStepError, setRepeatStepError] = useState<string | null>(null);
 
   useEffect(() => {
     if (weighingOpenCount > 0) {
@@ -75,17 +100,24 @@ export function PreparationView({
 
   useEffect(() => {
     setChosenOutcome(undefined);
-    setOutcomeDraft({ result: 'cooked' });
+    setPendingFinish(false);
+    setOutcomeDraft(undefined);
     setOutcomeInvalid(false);
     setOutcomeOpen(false);
+    setDurationOpen(false);
+    setDurationError(null);
     setSheet(null);
     setMoreOpen(false);
     setConfirmEarlyFinishOpen(false);
     setConfirmAbandonOpen(false);
     setNote('');
-    setMinutes(15);
-    setInvalid(false);
     setWeighingOpenCount(0);
+    setRefusalDialogOpen(false);
+    setCorrectTimeOpen(false);
+    setCorrectTimeError(null);
+    setRepeatStepOpen(false);
+    setRepeatStepError(null);
+    setPredecessorToRepeat(null);
   }, [session?.id]);
 
   if (!session) return <p>{t(locale, 'noSession')}</p>;
@@ -93,11 +125,65 @@ export function PreparationView({
   const sequentialSteps = session.effective.steps.filter((s) => s.operation !== 'preheat');
   const preheatSteps = session.effective.steps.filter((s) => s.operation === 'preheat');
   const current = sequentialSteps.find((s) => s.id === session.activeId) ?? sequentialSteps[0];
-  const readyToFinish =
+  const currentIndex = sequentialSteps.findIndex((s) => s.id === current.id);
+  const fact = session.facts[current.id];
+
+  // Calculate prior dependency end for countdown
+  let latestDepEnd: string | undefined;
+  if (current.dependsOn.length > 0) {
+    for (const depId of current.dependsOn) {
+      const depEndedAt = session.facts[depId]?.endedAt;
+      if (depEndedAt) {
+        if (!latestDepEnd || Date.parse(depEndedAt) > Date.parse(latestDepEnd)) {
+          latestDepEnd = depEndedAt;
+        }
+      }
+    }
+  }
+  const priorEnd = latestDepEnd ?? session.startedAt;
+  const effectiveStepStart = fact?.startedAt ?? priorEnd;
+  const nowInstant = instant(now);
+
+  // Native hold state and countdown freeze
+  const stepRecord = session.engineRuntime?.state.steps[current.id];
+  const isHeld = session.engineRuntime
+    ? isStepHeld(session.engineRuntime.state, current.id)
+    : false;
+  const heldS = session.engineRuntime ? heldSeconds(stepRecord, nowInstant) : 0;
+  const elapsed = Math.max(
+    0,
+    (now - Date.parse(effectiveStepStart)) / 1000 - heldS + session.elapsedOffsetS,
+  );
+  const remaining =
+    current.plannedDurationS === undefined
+      ? undefined
+      : Math.max(0, current.plannedDurationS - elapsed);
+
+  const baselineDurationS = session.snapshot.process.steps.find(
+    (s) => s.id === current.id,
+  )?.plannedDurationS;
+
+  // Native live projection
+  const liveProj = session.engineRuntime
+    ? liveProjection(session.engineRuntime.state, nowInstant)
+    : undefined;
+  const projection =
+    liveProj && liveProj.ok
+      ? liveProj
+      : project(session.effective, session.startedAt, session.facts);
+  const stepProj = projection.ok ? projection.value.steps[current.id] : undefined;
+
+  const isLastSequentialStep = currentIndex === sequentialSteps.length - 1;
+  const isCurrentStepEnded = Boolean(session.facts[current.id]?.endedAt);
+  const isReadyToFinish =
     sequentialSteps.length > 0 && sequentialSteps.every((step) => session.facts[step.id]?.endedAt);
-  const outcome = chosenOutcome ?? intendedOutcome(session.effective);
-  const resultLabel = (value: PreparationOutcome) =>
-    t(
+
+  const defaultOutcome = intendedOutcome(session.effective);
+  const outcome = chosenOutcome ?? defaultOutcome;
+
+  const resultLabel = (value: PreparationOutcome | undefined) => {
+    if (!value) return t(locale, 'unknown');
+    return t(
       locale,
       value.result === 'cooked'
         ? 'resultCooked'
@@ -105,80 +191,160 @@ export function PreparationView({
           ? 'resultDough'
           : 'resultMixed',
     );
-  const fact = session.facts[current.id];
-  const elapsed = Math.max(
-    0,
-    (now - Date.parse(fact?.startedAt ?? session.startedAt)) / 1000 + session.elapsedOffsetS,
-  );
-  const remaining =
-    current.plannedDurationS === undefined
-      ? undefined
-      : Math.max(0, current.plannedDurationS - elapsed);
-  const projection = project(session.effective, session.startedAt, session.facts);
+  };
+
   const upcoming = sequentialSteps.filter(
     (s) => !session.facts[s.id]?.endedAt && s.id !== current.id,
   );
   const completed = sequentialSteps.filter((s) => session.facts[s.id]?.endedAt);
-  const isCoolDirectlyAfterCooking =
-    current.operation === 'cool' &&
-    !current.label &&
-    (current.dependsOn.some((depId) => {
-      const s = session.effective.steps.find((step) => step.id === depId);
-      return s && isCookingStep(s);
-    }) ||
-      (() => {
-        const idx = session.effective.steps.findIndex((s) => s.id === current.id);
-        return idx > 0 && isCookingStep(session.effective.steps[idx - 1]);
-      })());
+
   const r = resolveFormula(session.snapshot.formula),
     n = resolveFormula({ ...session.snapshot.formula, anchor: { kind: 'flourTotal', grams: 100 } });
   const groups = r.ok && n.ok ? groupsOf(session.snapshot, r.value, n.value, locale) : [];
-  const addTime = (seconds: number) =>
-    store.updateSession((s) => ({
-      ...s,
-      effective: updateStep(s.effective, current.id, {
-        plannedDurationS: (current.plannedDurationS ?? elapsed) + seconds,
-      }),
-      journal: [
-        {
-          at: instant(Date.now()),
-          text: `${t(locale, 'timeChanged')} · ${titleOf(current, locale)} · ${duration(locale, (current.plannedDurationS ?? elapsed) + seconds)}`,
-        },
-        ...s.journal,
-      ],
-    }));
-  const complete = () =>
-    store.updateSession((s) => {
-      const facts = {
-        ...s.facts,
-        [current.id]: { ...s.facts[current.id], endedAt: instant(Date.now()) },
-      };
-      const seqSteps = s.effective.steps.filter((step) => step.operation !== 'preheat');
-      const next = seqSteps.find(
-        (step) =>
-          !facts[step.id]?.endedAt &&
-          step.dependsOn
-            .filter(
-              (depId) => s.effective.steps.find((dep) => dep.id === depId)?.operation !== 'preheat',
-            )
-            .every((id) => facts[id]?.endedAt),
+
+  // Predecessor for Previous: follows current.dependsOn to most-recent completed same-subject predecessor
+  const depSteps = session.effective.steps.filter(
+    (s) => current.dependsOn.includes(s.id) && s.operation !== 'preheat',
+  );
+  const currentSubject = subjectOf(session.effective, current);
+  const sameSubject = (a: { kind: string; id?: string }, b: { kind: string; id?: string }) =>
+    a.kind === b.kind && (a.kind === 'mainDough' || a.id === b.id);
+  const sameSubjectDeps = depSteps.filter((s) =>
+    sameSubject(subjectOf(session.effective, s), currentSubject),
+  );
+  const candidateDeps = sameSubjectDeps.length > 0 ? sameSubjectDeps : depSteps;
+  const predecessorStep =
+    candidateDeps
+      .filter((s) => session.facts[s.id]?.endedAt)
+      .sort((a, b) => {
+        const endA = Date.parse(session.facts[a.id]?.endedAt ?? '0');
+        const endB = Date.parse(session.facts[b.id]?.endedAt ?? '0');
+        return endB - endA;
+      })[0] ?? candidateDeps[0];
+
+  const isPrevDisabled = !predecessorStep;
+
+  // Progression: Next
+  const handleNext = () => {
+    store.executeBakeCommand({ type: 'CompleteStep', stepId: current.id, at: nowInstant });
+  };
+
+  // Progression: Previous
+  const handlePrev = () => {
+    if (!predecessorStep) return;
+    if (!session.engineRuntime) return;
+
+    const action = previousAction(session.engineRuntime.state, predecessorStep.id);
+    if (action.kind === 'retract') {
+      store.executeBakeCommand(
+        { type: 'RetractCompletion', targetEventId: action.targetEventId },
+        nowInstant,
       );
-      if (next) facts[next.id] = { startedAt: instant(Date.now()) };
-      return {
-        ...s,
-        facts,
-        activeId: next?.id ?? s.activeId,
-        finished: false,
-        elapsedOffsetS: 0,
-        journal: [
-          {
-            at: instant(Date.now()),
-            text: `${t(locale, 'stepRecorded')} · ${titleOf(current, locale)}`,
-          },
-          ...s.journal,
-        ],
-      };
-    });
+    } else {
+      const explanation =
+        action.reason === 'dependentStarted'
+          ? prepCopy(locale, 'retractRefusalExplanation')
+          : prepCopy(locale, 'retractBlockedNotCompleted');
+      setRefusalExplanation(explanation);
+      const targetEventId =
+        session.engineRuntime.state.steps[predecessorStep.id]?.endEventId ?? null;
+      setCorrectTargetEventId(targetEventId);
+      setPredecessorToRepeat(predecessorStep);
+      setRefusalDialogOpen(true);
+    }
+  };
+
+  // Pause / Resume toggle
+  const handlePauseToggle = () => {
+    if (isHeld) {
+      store.executeBakeCommand({ type: 'ReleaseStepCountdown', stepId: current.id }, nowInstant);
+    } else {
+      store.executeBakeCommand(
+        { type: 'HoldStepCountdown', stepId: current.id },
+        nowInstant,
+        current.id,
+      );
+    }
+  };
+
+  // Adjustment ±15min using adjustedDurationS
+  const handleAdjust = (deltaMinutes: number) => {
+    const currentDuration = current.plannedDurationS ?? 0;
+    const newDuration = adjustedDurationS(currentDuration, deltaMinutes * 60);
+    store.executeBakeCommand(
+      {
+        type: 'AdjustStep',
+        stepId: current.id,
+        adjustment: { field: 'plannedDurationS', value: newDuration },
+      },
+      nowInstant,
+      current.id,
+    );
+  };
+
+  // Finishing
+  const handleFinishClick = () => {
+    const needsChoice = outcomeChoiceRequired(
+      session.effective,
+      (id) => session.facts[id]?.endedAt !== undefined,
+    );
+    if (needsChoice && !chosenOutcome) {
+      setPendingFinish(true);
+      setOutcomeDraft(undefined);
+      setOutcomeOpen(true);
+      return;
+    }
+    store.finishSession(chosenOutcome);
+  };
+
+  // Correction confirmation
+  const handleCorrectTimeConfirm = () => {
+    if (!correctTargetEventId) return;
+    const newTime = instant(Date.now() - correctMinutes * 60000);
+    const res = store.executeBakeCommand(
+      { type: 'CorrectStepTime', targetEventId: correctTargetEventId, newOccurredAt: newTime },
+      nowInstant,
+    );
+    if (!res.ok) {
+      setCorrectTimeError(
+        res.bakeError?.message ??
+          res.bakeError?.code ??
+          prepCopy(locale, 'retractBlockedNotCompleted'),
+      );
+      return;
+    }
+    setCorrectTimeError(null);
+    setCorrectTimeOpen(false);
+  };
+
+  // Repetition confirmation: clones PREVIOUS step (predecessorToRepeat), inserted after current
+  const handleRepeatStepConfirm = () => {
+    if (!predecessorToRepeat) return;
+    const newStepId = `${predecessorToRepeat.id}-rep-${Date.now()}`;
+    const repLabel = `${predecessorToRepeat.label ?? titleOf(predecessorToRepeat, locale)} (${locale === 'fr' ? 'reprise' : 'repetition'})`;
+    const newStep: ProcessStep = {
+      ...predecessorToRepeat,
+      id: newStepId,
+      label: repLabel,
+      plannedDurationS: repeatDurationMinutes * 60,
+      dependsOn: [current.id],
+    };
+    const res = store.executeBakeCommand(
+      { type: 'InsertStepAfter', after: current.id, step: newStep },
+      nowInstant,
+    );
+    if (!res.ok) {
+      setRepeatStepError(
+        res.bakeError?.message ??
+          res.bakeError?.code ??
+          prepCopy(locale, 'retractBlockedNotCompleted'),
+      );
+      return;
+    }
+    setRepeatStepError(null);
+    setRepeatStepOpen(false);
+  };
+
   const contextTilesItems = [
     ...(current.equipment?.mode
       ? [{ id: 'mode', label: t(locale, 'mode'), value: modeLabel(locale, current.equipment.mode) }]
@@ -244,6 +410,105 @@ export function PreparationView({
         ]
       : []),
   ];
+
+  // Engine events and visible business journal
+  const engineEvents = session.engineRuntime?.events ?? [];
+  const visibleEngineEvents = visibleEvents(engineEvents);
+
+  const curated = curatedText(locale, current.label, true);
+  const rawInstruction = (current as { instructions?: string }).instructions;
+  const stepInstruction =
+    curated && curated !== titleOf(current, locale)
+      ? curated
+      : rawInstruction && rawInstruction !== titleOf(current, locale)
+        ? rawInstruction
+        : undefined;
+
+  const visibleJournalItems: { at: string; text: string; id: string }[] = [];
+  for (const ev of visibleEngineEvents) {
+    const stepId =
+      'stepId' in ev.payload && ev.payload.stepId
+        ? (ev.payload as { stepId: string }).stepId
+        : undefined;
+    const step = stepId ? session.effective.steps.find((s) => s.id === stepId) : undefined;
+    const stepTitle = step ? titleOf(step, locale) : undefined;
+    let text = '';
+    switch (ev.payload.type) {
+      case 'BakeStarted':
+        text = t(locale, 'startRecorded');
+        break;
+      case 'BakeFinished':
+        text = t(locale, 'completeSession');
+        break;
+      case 'BakeAbandoned':
+        text = prepActionsCopy(locale, 'journalAbandonment');
+        break;
+      case 'StepStarted':
+        text = stepTitle ? `${stepTitle} · ${t(locale, 'started')}` : t(locale, 'started');
+        break;
+      case 'StepCompleted':
+        text = stepTitle ? `${stepTitle} · ${t(locale, 'done')}` : t(locale, 'done');
+        break;
+      case 'ObservationAdded':
+        text =
+          ev.payload.text ??
+          (stepTitle ? `${stepTitle} · ${ev.payload.category}` : ev.payload.category);
+        break;
+      case 'OverrideApplied':
+        if ('target' in ev.payload && ev.payload.target.kind === 'step') {
+          const targetStep = session.effective.steps.find(
+            (s) => s.id === (ev.payload as { target: { stepId: string } }).target.stepId,
+          );
+          const targetTitle = targetStep ? titleOf(targetStep, locale) : undefined;
+          const isDurationOverride =
+            'unit' in ev.payload &&
+            ev.payload.unit === 's' &&
+            typeof ev.payload.effective === 'number';
+          const durDesc = isDurationOverride
+            ? `${t(locale, 'timeChanged')}${colon(locale)}${duration(locale, ev.payload.effective)}`
+            : t(locale, 'timeChanged');
+          text = targetTitle ? `${targetTitle} · ${durDesc}` : durDesc;
+        }
+        break;
+      case 'StepCountdownHeld':
+        text = stepTitle
+          ? `${stepTitle} · ${prepCopy(locale, 'pauseActive')}`
+          : prepCopy(locale, 'pauseActive');
+        break;
+      case 'StepCountdownReleased':
+        text = stepTitle
+          ? `${stepTitle} · ${prepCopy(locale, 'actionResume')}`
+          : prepCopy(locale, 'actionResume');
+        break;
+      case 'StepTimeCorrected':
+        text = stepTitle
+          ? `${stepTitle} · ${prepCopy(locale, 'correctTimeTitle')}`
+          : prepCopy(locale, 'correctTimeTitle');
+        break;
+      case 'StepInserted':
+        text = stepTitle
+          ? `${stepTitle} · ${prepCopy(locale, 'repeatStepTitle')}`
+          : prepCopy(locale, 'repeatStepTitle');
+        break;
+      default:
+        text = '';
+    }
+    if (text) {
+      visibleJournalItems.push({ at: ev.occurredAt, text, id: ev.eventId });
+    }
+  }
+
+  for (let i = 0; i < session.journal.length; i++) {
+    const j = session.journal[i];
+    const alreadyIncluded = visibleJournalItems.some(
+      (item) => item.at === j.at && item.text === j.text,
+    );
+    if (!alreadyIncluded) {
+      visibleJournalItems.push({ at: j.at, text: j.text, id: `journal-${j.at}-${i}` });
+    }
+  }
+  visibleJournalItems.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+
   return (
     <div className="stack">
       {allSessions.length > 1 && (
@@ -264,73 +529,153 @@ export function PreparationView({
           onChange={(id) => store.selectSession?.(id)}
         />
       )}
-      <h2>
-        {session.recipeName}{' '}
-        <small className="muted">
-          · {historyCopyT(locale, 'revisionItem', { version: session.recipeVersion })}
-        </small>
-      </h2>
+
       {session.abandoned ? (
         <h2>{prepActionsCopy(locale, 'sessionAbandonedTitle')}</h2>
       ) : session.finished ? (
         <h2>{t(locale, 'completeSession')}</h2>
-      ) : readyToFinish ? (
-        <h2>{t(locale, 'finishReady')}</h2>
       ) : (
         <>
-          <div key={current.id} className="current-step-hero stack" data-step={current.id}>
+          {/* L127 Active Step Presentation via fp.prep-hero */}
+          <div data-step={current.id} data-testid="prep-current-step">
             <PreparationTimer
-              title={`${sequentialSteps.indexOf(current) + 1} / ${sequentialSteps.length} · ${titleOf(current, locale)}`}
-              remaining={duration(locale, remaining)}
-              remainingLabel={t(locale, 'remainingTime')}
-              start={time(locale, fact?.startedAt)}
-              end={time(
-                locale,
-                projection.ok ? projection.value.steps[current.id]?.end : undefined,
-              )}
-              progress={current.plannedDurationS ? elapsed / current.plannedDurationS : 0}
-              instruction={
-                curatedText(locale, current.label, true) ??
-                (isCoolDirectlyAfterCooking
-                  ? stepCopy(locale, 'instructionCoolFinal')
-                  : undefined) ??
-                current.label ??
-                t(locale, instructionKey(current.operation))
+              title={titleOf(current, locale)}
+              heading={prepCopy(locale, 'prepHeading', { recipe: session.recipeName })}
+              stepLine={prepCopy(locale, 'stepLine', {
+                current: currentIndex + 1,
+                total: sequentialSteps.length,
+                step: titleOf(current, locale),
+              })}
+              remaining={formatCountdownHHMMSS(remaining)}
+              remainingLabel={prepCopy(locale, 'estimatedRemainingTime')}
+              start={
+                fact?.startedAt ? time(locale, fact.startedAt) : prepCopy(locale, 'stepNotStarted')
               }
-              conditions={[]}
+              end={stepProj?.end ? time(locale, stepProj.end) : ''}
+              progress={
+                current.plannedDurationS && current.plannedDurationS > 0
+                  ? Math.min(1, elapsed / current.plannedDurationS)
+                  : 0
+              }
               labels={{
-                start: `${t(locale, 'started')}${locale === 'fr' ? ' :' : ':'}`,
-                end: `${t(locale, 'finish')}${locale === 'fr' ? ' :' : ':'}`,
-                progress: t(locale, 'progress'),
+                start: fact?.startedAt
+                  ? `${prepCopy(locale, 'actualStepStart', { time: '' }).trim()} `
+                  : '',
+                end: stepProj?.end
+                  ? `${prepCopy(locale, 'plannedStepEnd', { time: '' }).trim()} `
+                  : '',
+                progress: prepCopy(locale, 'actualStepProgress'),
               }}
+              adjustment={formatStepAdjustment(current.plannedDurationS, baselineDurationS, locale)}
+              pausedBadge={isHeld ? prepCopy(locale, 'pauseActive') : undefined}
+              overdueBadge={
+                !isHeld && remaining === 0 && current.plannedDurationS !== undefined
+                  ? prepCopy(locale, 'overdue')
+                  : undefined
+              }
+              countdownLabel={prepCopy(locale, 'countdownRow')}
+              progressLabel={prepCopy(locale, 'progressionRow')}
+              countdownControls={
+                <>
+                  <Button
+                    variant="secondary"
+                    className="touch-target-48"
+                    dataTestId="prep-adjust-minus"
+                    onClick={() => handleAdjust(-15)}
+                  >
+                    {prepCopy(locale, 'actionMinus15')}
+                  </Button>
+                  <Button
+                    variant={isHeld ? 'primary' : 'quiet'}
+                    className="touch-target-48"
+                    dataTestId="prep-pause-btn"
+                    onClick={handlePauseToggle}
+                  >
+                    {isHeld ? prepCopy(locale, 'actionResume') : prepCopy(locale, 'actionPause')}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="touch-target-48"
+                    dataTestId="prep-adjust-plus"
+                    onClick={() => handleAdjust(15)}
+                  >
+                    {prepCopy(locale, 'actionPlus15')}
+                  </Button>
+                </>
+              }
+              progressionControls={
+                <>
+                  <Button
+                    variant="quiet"
+                    className="touch-target-48"
+                    dataTestId="prep-prev-btn"
+                    disabled={isPrevDisabled}
+                    onClick={handlePrev}
+                  >
+                    {prepCopy(locale, 'actionPrev')}
+                  </Button>
+                  {isReadyToFinish || (isLastSequentialStep && isCurrentStepEnded) ? (
+                    <Button
+                      variant="primary"
+                      className="touch-target-48"
+                      dataTestId="finish-preparation"
+                      onClick={handleFinishClick}
+                    >
+                      {prepCopy(locale, 'finishPreparation')}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      className="touch-target-48"
+                      dataTestId="prep-next-btn"
+                      onClick={handleNext}
+                    >
+                      {prepCopy(locale, 'actionNext')}
+                    </Button>
+                  )}
+                </>
+              }
             />
-            {contextTilesItems.length > 0 && (
-              <ContextTiles
-                label={prepCopy(locale, 'contextualDetails')}
-                items={contextTilesItems}
-              />
-            )}
           </div>
-          <div
-            className={`actions quick-actions ${['bulk', 'proof', 'retard'].includes(current.operation) ? '' : 'quick-actions-three'}`}
-          >
-            <Button onClick={() => addTime(900)}>{t(locale, 'add15')}</Button>
+
+          {/* Current step instructions compactly below main controls */}
+          {stepInstruction && (
+            <p className="muted" data-testid="prep-step-instruction">
+              {stepInstruction}
+            </p>
+          )}
+
+          {/* Compact auxiliary actions below */}
+          <div className="actions quick-actions">
+            <Button dataTestId="prep-note-btn" icon="note" onClick={() => setSheet('note')}>
+              {t(locale, 'note')}
+            </Button>
             <Button
+              dataTestId="prep-duration-btn"
               onClick={() => {
-                setMinutes((current.plannedDurationS ?? 900) / 60);
-                setSheet('duration');
+                setDurationMinutes(
+                  current.plannedDurationS !== undefined ? current.plannedDurationS / 60 : NaN,
+                );
+                setDurationInvalid(false);
+                setDurationError(null);
+                setDurationOpen(true);
               }}
             >
               {t(locale, 'duration')}
             </Button>
-            <Button dataTestId="prep-note-btn" icon="note" onClick={() => setSheet('note')}>
-              {t(locale, 'note')}
-            </Button>
             {['bulk', 'proof', 'retard'].includes(current.operation) && (
               <Button
                 onClick={() =>
-                  store.log(
-                    `${t(locale, 'observed')} · ${t(locale, current.operation === 'bulk' ? 'readyShape' : 'readyCook')}`,
+                  store.executeBakeCommand(
+                    {
+                      type: 'AddObservation',
+                      stepId: current.id,
+                      category: 'fermentation',
+                      kind: 'doughReady',
+                      text: t(locale, current.operation === 'bulk' ? 'readyShape' : 'readyCook'),
+                    },
+                    nowInstant,
+                    current.id,
                   )
                 }
               >
@@ -338,6 +683,12 @@ export function PreparationView({
               </Button>
             )}
           </div>
+
+          {contextTilesItems.length > 0 && (
+            <ContextTiles label={prepCopy(locale, 'contextualDetails')} items={contextTilesItems} />
+          )}
+
+          {/* Independent parallel preheat controls */}
           {preheatSteps.map((preheat) => {
             const preheatProj = projection.ok ? projection.value.steps[preheat.id] : undefined;
             const preheatFact = session.facts[preheat.id];
@@ -375,23 +726,10 @@ export function PreparationView({
                     <Button
                       variant="quiet"
                       onClick={() =>
-                        store.updateSession((s) => ({
-                          ...s,
-                          facts: {
-                            ...s.facts,
-                            [preheat.id]: {
-                              ...s.facts[preheat.id],
-                              startedAt: instant(Date.now()),
-                            },
-                          },
-                          journal: [
-                            {
-                              at: instant(Date.now()),
-                              text: `${prepCopy(locale, 'heatingStartedAt')} · ${titleOf(preheat, locale)}`,
-                            },
-                            ...s.journal,
-                          ],
-                        }))
+                        store.executeBakeCommand(
+                          { type: 'StartStep', stepId: preheat.id, at: instant(now) },
+                          instant(now),
+                        )
                       }
                     >
                       {prepCopy(locale, 'startHeating')}
@@ -401,23 +739,10 @@ export function PreparationView({
                     <Button
                       variant="quiet"
                       onClick={() =>
-                        store.updateSession((s) => ({
-                          ...s,
-                          facts: {
-                            ...s.facts,
-                            [preheat.id]: {
-                              ...s.facts[preheat.id],
-                              endedAt: instant(Date.now()),
-                            },
-                          },
-                          journal: [
-                            {
-                              at: instant(Date.now()),
-                              text: `${prepCopy(locale, 'preheatObservedAt')} · ${titleOf(preheat, locale)}`,
-                            },
-                            ...s.journal,
-                          ],
-                        }))
+                        store.executeBakeCommand(
+                          { type: 'CompleteStep', stepId: preheat.id, at: instant(now) },
+                          instant(now),
+                        )
                       }
                     >
                       {prepCopy(locale, 'markPreheatReady')}
@@ -427,48 +752,19 @@ export function PreparationView({
               </Surface>
             );
           })}
+
           {footerHost &&
             createPortal(
-              <>
-                <IconButton
-                  icon="more"
-                  label={t(locale, 'preparationActions')}
-                  onClick={() => setMoreOpen(true)}
-                />
-                <Button
-                  dataTestId="prep-complete-btn"
-                  variant="primary"
-                  icon="check"
-                  onClick={complete}
-                >
-                  {t(locale, 'stageComplete')}
-                </Button>
-              </>,
+              <IconButton
+                icon="more"
+                label={t(locale, 'preparationActions')}
+                onClick={() => setMoreOpen(true)}
+              />,
               footerHost,
             )}
         </>
       )}
-      {!session.finished && readyToFinish && (
-        <div className="outcome-toolbar">
-          <Button
-            variant={readyToFinish ? 'primary' : 'quiet'}
-            dataTestId="finish-preparation"
-            onClick={() => store.finishSession(chosenOutcome)}
-          >
-            {t(locale, 'finishSession')}
-          </Button>
-          <Button
-            variant="quiet"
-            onClick={() => {
-              setOutcomeInvalid(false);
-              setOutcomeDraft(outcome);
-              setOutcomeOpen(true);
-            }}
-          >
-            {resultLabel(outcome)} · {t(locale, 'outcomeChoice')}
-          </Button>
-        </div>
-      )}
+
       {session.abandoned ? (
         <p data-testid="recorded-outcome" className="muted">
           {prepActionsCopy(locale, 'noUsableOutcome')}
@@ -482,6 +778,8 @@ export function PreparationView({
           </p>
         )
       )}
+
+      {/* More menu */}
       <Menu
         open={moreOpen}
         onClose={() => setMoreOpen(false)}
@@ -504,6 +802,7 @@ export function PreparationView({
           onClick={() => {
             setMoreOpen(false);
             setOutcomeInvalid(false);
+            setPendingFinish(false);
             setOutcomeDraft(outcome);
             setOutcomeOpen(true);
           }}
@@ -531,6 +830,132 @@ export function PreparationView({
           {prepActionsCopy(locale, 'abandonPreparation')}
         </Button>
       </Menu>
+
+      {/* Refusal Dialog for DependentStepStarted */}
+      <CompactDialog
+        open={refusalDialogOpen}
+        onClose={() => setRefusalDialogOpen(false)}
+        title={prepCopy(locale, 'retractRefusalTitle')}
+        closeLabel={prepCopy(locale, 'closeAction')}
+        footer={
+          <div className="actions">
+            <Button
+              variant="quiet"
+              onClick={() => {
+                setRefusalDialogOpen(false);
+                setCorrectMinutes(15);
+                setCorrectTimeOpen(true);
+              }}
+            >
+              {prepCopy(locale, 'correctTimeAction')}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setRefusalDialogOpen(false);
+                setRepeatDurationMinutes(15);
+                setRepeatStepOpen(true);
+              }}
+            >
+              {prepCopy(locale, 'repeatStepAction')}
+            </Button>
+          </div>
+        }
+      >
+        <p>{refusalExplanation}</p>
+      </CompactDialog>
+
+      {/* Compact Dialog for CorrectStepTime */}
+      <CompactDialog
+        open={correctTimeOpen}
+        onClose={() => {
+          setCorrectTimeOpen(false);
+          setCorrectTimeError(null);
+        }}
+        title={prepCopy(locale, 'correctTimeTitle')}
+        closeLabel={t(locale, 'cancel')}
+        footer={
+          <div className="actions">
+            <Button
+              variant="quiet"
+              onClick={() => {
+                setCorrectTimeOpen(false);
+                setCorrectTimeError(null);
+              }}
+            >
+              {t(locale, 'cancel')}
+            </Button>
+            <Button variant="primary" onClick={handleCorrectTimeConfirm}>
+              {prepCopy(locale, 'applyAction')}
+            </Button>
+          </div>
+        }
+      >
+        {correctTimeError && (
+          <p className="danger" role="alert" style={{ color: 'var(--fp-color-error, #ba1a1a)' }}>
+            {correctTimeError}
+          </p>
+        )}
+        <NumberField
+          value={correctMinutes}
+          label={prepCopy(locale, 'newTimeLabel')}
+          unit="min"
+          locale={locale}
+          errorMessage={t(locale, 'invalid')}
+          onCommit={(v) => {
+            if (v < 0) return false;
+            setCorrectMinutes(v);
+            return true;
+          }}
+        />
+      </CompactDialog>
+
+      {/* Compact Dialog for InsertStepAfter */}
+      <CompactDialog
+        open={repeatStepOpen}
+        onClose={() => {
+          setRepeatStepOpen(false);
+          setRepeatStepError(null);
+        }}
+        title={prepCopy(locale, 'repeatStepTitle')}
+        closeLabel={t(locale, 'cancel')}
+        footer={
+          <div className="actions">
+            <Button
+              variant="quiet"
+              onClick={() => {
+                setRepeatStepOpen(false);
+                setRepeatStepError(null);
+              }}
+            >
+              {t(locale, 'cancel')}
+            </Button>
+            <Button variant="primary" onClick={handleRepeatStepConfirm}>
+              {prepCopy(locale, 'applyAction')}
+            </Button>
+          </div>
+        }
+      >
+        {repeatStepError && (
+          <p className="danger" role="alert" style={{ color: 'var(--fp-color-error, #ba1a1a)' }}>
+            {repeatStepError}
+          </p>
+        )}
+        <NumberField
+          value={repeatDurationMinutes}
+          label={prepCopy(locale, 'repeatDurationLabel')}
+          unit="min"
+          locale={locale}
+          errorMessage={t(locale, 'invalid')}
+          onCommit={(v) => {
+            if (v <= 0) return false;
+            setRepeatDurationMinutes(v);
+            return true;
+          }}
+        />
+      </CompactDialog>
+
+      {/* Confirm Early Finish */}
       <CompactDialog
         open={confirmEarlyFinishOpen}
         onClose={() => setConfirmEarlyFinishOpen(false)}
@@ -545,7 +970,7 @@ export function PreparationView({
               variant="primary"
               onClick={() => {
                 setConfirmEarlyFinishOpen(false);
-                store.finishSession(chosenOutcome);
+                handleFinishClick();
               }}
             >
               {prepActionsCopy(locale, 'confirmEarlyFinishAction')}
@@ -555,6 +980,8 @@ export function PreparationView({
       >
         <p>{formatEarlyFinishPrompt(locale, session.recipeName, resultLabel(outcome))}</p>
       </CompactDialog>
+
+      {/* Confirm Abandon */}
       <CompactDialog
         open={confirmAbandonOpen}
         onClose={() => setConfirmAbandonOpen(false)}
@@ -579,17 +1006,28 @@ export function PreparationView({
       >
         <p>{formatAbandonPrompt(locale, session.recipeName)}</p>
       </CompactDialog>
+
+      {/* Outcome Selection Modal */}
       <Modal
         open={outcomeOpen}
-        onClose={() => setOutcomeOpen(false)}
+        onClose={() => {
+          setPendingFinish(false);
+          setOutcomeOpen(false);
+        }}
         title={t(locale, 'outcomeChoice')}
         closeLabel={t(locale, 'close')}
         footer={
           <Button
-            disabled={outcomeInvalid || Boolean(outcomeProblem(outcomeDraft))}
+            disabled={outcomeInvalid || !outcomeDraft || Boolean(outcomeProblem(outcomeDraft))}
             onClick={() => {
-              setChosenOutcome(outcomeDraft);
-              setOutcomeOpen(false);
+              if (outcomeDraft) {
+                setChosenOutcome(outcomeDraft);
+                setOutcomeOpen(false);
+                if (pendingFinish) {
+                  setPendingFinish(false);
+                  store.finishSession(outcomeDraft);
+                }
+              }
             }}
           >
             {t(locale, 'apply')}
@@ -600,12 +1038,20 @@ export function PreparationView({
         <label className="field-label">
           {t(locale, 'outcome')}
           <select
-            value={outcomeDraft.result}
+            value={outcomeDraft?.result ?? ''}
             disabled={outcomeInvalid}
             onChange={(e) =>
-              setOutcomeDraft({ result: e.target.value as PreparationOutcome['result'] })
+              setOutcomeDraft(
+                e.target.value
+                  ? {
+                      ...(outcomeDraft ?? {}),
+                      result: e.target.value as PreparationOutcome['result'],
+                    }
+                  : undefined,
+              )
             }
           >
+            {!outcomeDraft && <option value="">-- {t(locale, 'outcomeChoice')} --</option>}
             {OUTCOME_RESULTS.map((result) => (
               <option key={result} value={result}>
                 {resultLabel({ result })}
@@ -613,7 +1059,7 @@ export function PreparationView({
             ))}
           </select>
         </label>
-        {outcomeDraft.result !== 'cooked' && (
+        {outcomeDraft && outcomeDraft.result !== 'cooked' && (
           <>
             <label className="field-label">
               {t(locale, 'disposition')}
@@ -651,6 +1097,8 @@ export function PreparationView({
           </>
         )}
       </Modal>
+
+      {/* Weighing & quantities */}
       <div ref={weighingRef} key={`weighing-${weighingOpenCount}`}>
         <Disclosure
           title={t(locale, 'quantities')}
@@ -689,6 +1137,8 @@ export function PreparationView({
           ))}
         </Disclosure>
       </div>
+
+      {/* Upcoming steps */}
       <Disclosure title={t(locale, 'upcoming')} defaultOpen>
         {upcoming.map((step) => (
           <StepRow
@@ -703,15 +1153,42 @@ export function PreparationView({
           />
         ))}
       </Disclosure>
+
+      {/* User Journal: uses domain visibleEvents, keeps all notes/photos, hides retracted completions */}
       <Disclosure title={t(locale, 'journal')} defaultOpen>
-        <ol className="journal">
-          {session.journal.map((entry, index) => (
-            <li key={`${entry.at}-${index}`}>
+        <ol className="journal" data-testid="prep-business-journal">
+          {visibleJournalItems.map((entry) => (
+            <li key={entry.id}>
               <time>{time(locale, entry.at)}</time> {entry.text}
             </li>
           ))}
         </ol>
       </Disclosure>
+
+      {/* Technical Event Log */}
+      <div data-testid="prep-technical-journal">
+        <Disclosure
+          title={prepCopy(locale, 'technicalJournal')}
+          subtitle={prepCopy(locale, 'technicalEventsCount', { count: engineEvents.length })}
+        >
+          <ol className="journal">
+            {engineEvents.map((ev) => (
+              <li key={ev.eventId}>
+                <time>{time(locale, ev.occurredAt)}</time> <code>{ev.payload.type}</code>
+                {'stepId' in ev.payload && ev.payload.stepId ? ` · ${ev.payload.stepId}` : ''}
+                {ev.payload.type === 'OverrideApplied' && 'field' in ev.payload.target
+                  ? ` · ${ev.payload.target.field}`
+                  : ''}
+                {ev.payload.type === 'StepCompletionRetracted'
+                  ? ` · (retracted: ${(ev.payload as { targetEventId: string }).targetEventId})`
+                  : ''}
+              </li>
+            ))}
+          </ol>
+        </Disclosure>
+      </div>
+
+      {/* Completed steps */}
       <Disclosure title={t(locale, 'completed')}>
         {completed.map((step) => (
           <StepRow
@@ -727,20 +1204,18 @@ export function PreparationView({
           />
         ))}
       </Disclosure>
+
+      {/* Note / Photo Sheet Modal */}
       <Modal
         open={sheet !== null}
         onClose={() => setSheet(null)}
-        title={t(
-          locale,
-          sheet === 'duration' ? 'duration' : sheet === 'photo' ? 'photoDemo' : 'note',
-        )}
+        title={t(locale, sheet === 'photo' ? 'photoDemo' : 'note')}
         closeLabel={t(locale, 'close')}
         footer={
           <Button
             variant="primary"
-            disabled={invalid || (sheet === 'note' && !note.trim())}
+            disabled={sheet === 'note' && !note.trim()}
             onClick={() => {
-              if (sheet === 'duration') addTime(minutes * 60 - (current.plannedDurationS ?? 0));
               if (sheet === 'note') {
                 store.log(note.trim());
                 setNote('');
@@ -753,21 +1228,6 @@ export function PreparationView({
           </Button>
         }
       >
-        {sheet === 'duration' && (
-          <NumberField
-            value={minutes}
-            label={t(locale, 'duration')}
-            unit="min"
-            locale={locale}
-            errorMessage={t(locale, 'invalid')}
-            onCommit={(v) => {
-              if (v <= 0) return false;
-              setMinutes(v);
-              return true;
-            }}
-            onValidityChange={setInvalid}
-          />
-        )}
         {sheet === 'note' && (
           <label className="field-label">
             {t(locale, 'notePrompt')}
@@ -775,6 +1235,63 @@ export function PreparationView({
           </label>
         )}
         {sheet === 'photo' && <p>{t(locale, 'photoHelp')}</p>}
+      </Modal>
+
+      {/* Absolute Duration Modal */}
+      <Modal
+        open={durationOpen}
+        onClose={() => {
+          setDurationOpen(false);
+          setDurationError(null);
+        }}
+        title={t(locale, 'duration')}
+        closeLabel={t(locale, 'close')}
+        footer={
+          <Button
+            variant="primary"
+            disabled={durationInvalid || isNaN(durationMinutes) || durationMinutes < 0}
+            onClick={() => {
+              const res = store.executeBakeCommand(
+                {
+                  type: 'AdjustStep',
+                  stepId: current.id,
+                  adjustment: { field: 'plannedDurationS', value: durationMinutes * 60 },
+                },
+                nowInstant,
+                current.id,
+              );
+              if (res.ok) {
+                setDurationOpen(false);
+                setDurationError(null);
+              } else {
+                setDurationError(
+                  res.bakeError?.message ?? res.bakeError?.code ?? t(locale, 'invalid'),
+                );
+              }
+            }}
+          >
+            {t(locale, 'apply')}
+          </Button>
+        }
+      >
+        {durationError && (
+          <p className="danger" role="alert" style={{ color: 'var(--fp-color-error, #ba1a1a)' }}>
+            {durationError}
+          </p>
+        )}
+        <NumberField
+          value={durationMinutes}
+          label={t(locale, 'duration')}
+          unit="min"
+          locale={locale}
+          errorMessage={t(locale, 'invalid')}
+          onValidityChange={setDurationInvalid}
+          onCommit={(v) => {
+            if (isNaN(v) || v < 0) return false;
+            setDurationMinutes(v);
+            return true;
+          }}
+        />
       </Modal>
     </div>
   );

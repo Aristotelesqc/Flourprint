@@ -152,17 +152,22 @@ export interface MenuProps {
   footer?: React.ReactNode;
 }
 
+export interface RecipeSummaryMetric {
+  label: string;
+  value: string;
+  detail?: string;
+  icon?: IconName;
+  onHelp?: () => void;
+  helpLabel?: string;
+}
+
 export interface RecipeSummaryProps {
   editor?: React.ReactNode;
-  metrics: {
-    label: string;
-    value: string;
-    detail?: string;
-    icon?: IconName;
-  }[];
+  metrics: RecipeSummaryMetric[];
   notice?: string;
-  onHelp: () => void;
-  helpLabel: string;
+  onNotice?: () => void;
+  onHelp?: () => void;
+  helpLabel?: string;
   onSizeHelp?: () => void;
   sizeHelpLabel?: string;
 }
@@ -235,6 +240,15 @@ export interface PreparationTimerProps {
   };
   instruction?: string;
   conditions?: { label: string; value: string; sub?: string }[];
+  heading?: string;
+  stepLine?: string;
+  adjustment?: string;
+  countdownLabel?: string;
+  progressLabel?: string;
+  countdownControls?: React.ReactNode;
+  progressionControls?: React.ReactNode;
+  pausedBadge?: string;
+  overdueBadge?: string;
 }
 
 export interface BottomBarProps {

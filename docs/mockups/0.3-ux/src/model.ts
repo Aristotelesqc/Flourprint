@@ -21,6 +21,14 @@ import { RECIPE_TEMPLATES, blankRecipe } from '@flourprint/core/application';
 import { t, type Locale } from './messages';
 import { formatFormulaError } from './defaults-copy';
 import { prepActionsCopy } from './preparation-actions-copy';
+import {
+  createEngineBakeSession,
+  dispatchEngineCommand,
+  stepFacts,
+  type EngineBakeSession,
+  type BakeCommandPayload,
+  type BakeError,
+} from './preparation-runtime';
 
 export const clone = <T>(value: T): T => structuredClone(value);
 export interface Content {
@@ -71,7 +79,8 @@ export interface Session {
   abandoned?: boolean;
   endedAt?: Instant;
   outcome?: PreparationOutcome;
-  outcomeSource?: 'recipe' | 'override';
+  outcomeSource?: 'recipe' | 'override' | 'baker';
+  engineRuntime?: EngineBakeSession;
 }
 export type Screen = 'library' | 'recipe' | 'preparation' | 'registry' | 'settings' | 'catalogue';
 export type Section = 'ingredients' | 'steps' | 'planning' | 'history';
@@ -165,13 +174,17 @@ export function makeSession(
   locale: Locale,
   seed = false,
   cooking = false,
+  initialChecks: string[] = [],
 ): Session {
+  const bakeId = crypto.randomUUID();
   const now = instant(Date.now());
   const active = seed
     ? (recipe.process.steps.find((s) => s.operation === (cooking ? 'bake' : 'bulk')) ??
       recipe.process.steps[0])
     : recipe.process.steps[0];
-  const facts: Record<string, StepFact> = {};
+
+  let eng: EngineBakeSession | undefined;
+
   if (seed) {
     const planned = projectProcess(recipe.process, {
       mode: { kind: 'startAt', at: instant('2026-10-16T08:00:00Z') },
@@ -180,34 +193,93 @@ export function makeSession(
       const activeStart = planned.value.steps[active.id]?.start;
       if (activeStart) {
         const shift = Date.now() - 600000 - Date.parse(activeStart);
-        for (const step of recipe.process.steps) {
-          const timing = planned.value.steps[step.id];
-          if (timing.start && timing.end && Date.parse(timing.end) <= Date.parse(activeStart))
-            facts[step.id] = {
-              startedAt: instant(Date.parse(timing.start) + shift),
-              endedAt: instant(Date.parse(timing.end) + shift),
-            };
+        const firstStepId = recipe.process.steps[0]?.id;
+        const firstStart = firstStepId ? planned.value.steps[firstStepId]?.start : activeStart;
+        const bakeStartedAt = instant(Date.parse(firstStart ?? activeStart) + shift);
+
+        const created = createEngineBakeSession(
+          bakeId,
+          recipe.formula,
+          recipe.process,
+          bakeStartedAt,
+          {
+            formula: { id: recipe.id, version: recipe.version },
+            process: { id: recipe.id, version: recipe.version },
+          },
+          recipe.id,
+        );
+
+        if (created.ok) {
+          let curr = created.session;
+          for (const step of recipe.process.steps) {
+            const timing = planned.value.steps[step.id];
+            if (timing.start && timing.end && Date.parse(timing.end) <= Date.parse(activeStart)) {
+              const stepStart = instant(Date.parse(timing.start) + shift);
+              const stepEnd = instant(Date.parse(timing.end) + shift);
+              const startRes = dispatchEngineCommand(
+                curr,
+                { type: 'StartStep', stepId: step.id, at: stepStart },
+                stepStart,
+              );
+              if (startRes.ok) curr = startRes.session;
+              const compRes = dispatchEngineCommand(
+                curr,
+                { type: 'CompleteStep', stepId: step.id, at: stepEnd },
+                stepEnd,
+              );
+              if (compRes.ok) curr = compRes.session;
+            }
+          }
+          const activeStepStart = instant(Date.now() - 600000);
+          const activeStartRes = dispatchEngineCommand(
+            curr,
+            { type: 'StartStep', stepId: active.id, at: activeStepStart },
+            activeStepStart,
+          );
+          if (activeStartRes.ok) curr = activeStartRes.session;
+
+          eng = curr;
         }
       }
     }
   }
-  facts[active.id] = { startedAt: seed ? instant(Date.now() - 600000) : now };
+
+  if (!eng) {
+    const created = createEngineBakeSession(
+      bakeId,
+      recipe.formula,
+      recipe.process,
+      now,
+      {
+        formula: { id: recipe.id, version: recipe.version },
+        process: { id: recipe.id, version: recipe.version },
+      },
+      recipe.id,
+    );
+    if (created.ok) {
+      eng = created.session;
+    }
+  }
+
+  const facts = eng ? stepFacts(eng.state) : {};
+  const effective = eng?.state.process ? clone(eng.state.process) : clone(recipe.process);
+  const startedAt = eng?.state.startedAt ?? now;
+
   return {
-    id: crypto.randomUUID(),
+    id: bakeId,
     recipeId: recipe.id,
     recipeName: recipeName(recipe, locale),
     recipeVersion: recipe.version,
     snapshot: clone(recipe),
-    effective: clone(recipe.process),
+    effective,
     facts,
     activeId: active.id,
-    startedAt: seed
-      ? instant(Math.min(...Object.values(facts).map((f) => Date.parse(f.startedAt ?? now))))
-      : now,
+    startedAt,
     elapsedOffsetS: 0,
-    journal: [{ at: now, text: t(locale, 'startRecorded') }],
-    checks: [],
+    journal: [{ at: startedAt, text: t(locale, 'startRecorded') }],
+    checks: initialChecks,
     finished: false,
+    engineRuntime: eng,
   };
 }
 export function initialState(locale: Locale): DemoState {
@@ -592,13 +664,19 @@ export function usePrototype(locale: Locale) {
     });
   const start = (targetRecipe?: Recipe): boolean => {
     if (state.draft) return false;
-    const next = makeSession(targetRecipe ?? recipe, locale);
+    const rec = targetRecipe ?? recipe;
+    const existingChecks = state.checks[rec.id] ?? [];
+    const next = makeSession(rec, locale, false, false, existingChecks);
     setState((s) => {
       const currentList = syncSessions(s.sessions, s.session);
       return {
         ...s,
         session: next,
         sessions: [...currentList.filter((item) => item.id !== next.id), next],
+        checks: {
+          ...s.checks,
+          [rec.id]: [],
+        },
         error: '',
       };
     });
@@ -626,24 +704,37 @@ export function usePrototype(locale: Locale) {
         sessions: list.map((item) => (item.id === updated.id ? updated : item)),
       };
     });
-  const abandonSession = () =>
+  const abandonSession = (reason?: string) => {
+    const sess = state.session;
+    if (!sess || sess.finished) return;
+    const now = instant(Date.now());
+    let updatedEng = sess.engineRuntime;
+    if (updatedEng) {
+      const cmdResult = dispatchEngineCommand(updatedEng, { type: 'AbandonBake', reason }, now);
+      if (!cmdResult.ok) {
+        setState((s) => ({ ...s, error: cmdResult.error.message }));
+        return;
+      }
+      updatedEng = cmdResult.session;
+    }
+    const abandoned: Session = {
+      ...sess,
+      engineRuntime: updatedEng,
+      finished: true,
+      abandoned: true,
+      endedAt: now,
+      outcome: undefined,
+      outcomeSource: undefined,
+      journal: [
+        {
+          at: now,
+          text: prepActionsCopy(locale, 'journalAbandonment'),
+        },
+        ...sess.journal,
+      ],
+    };
     setState((s) => {
-      if (!s.session || s.session.finished) return s;
-      const abandoned: Session = {
-        ...s.session,
-        finished: true,
-        abandoned: true,
-        endedAt: instant(Date.now()),
-        outcome: undefined,
-        outcomeSource: undefined,
-        journal: [
-          {
-            at: instant(Date.now()),
-            text: prepActionsCopy(locale, 'journalAbandonment'),
-          },
-          ...s.session.journal,
-        ],
-      };
+      if (s.session?.id !== sess.id) return s;
       const list = syncSessions(s.sessions, s.session);
       const sessions = list.map((item) => (item.id === abandoned.id ? abandoned : item));
       const alreadyInHistory = s.sessionHistory.some((item) => item.id === abandoned.id);
@@ -652,18 +743,58 @@ export function usePrototype(locale: Locale) {
         : [...s.sessionHistory, clone(abandoned)];
       return { ...s, session: abandoned, sessions, sessionHistory, error: '' };
     });
-  const finishSession = (chosen?: PreparationOutcome) =>
-    setState((s) => {
-      if (!s.session || s.session.finished) return s;
-      const outcome = chosen ?? intendedOutcome(s.session.effective);
-      if (outcomeProblem(outcome)) return { ...s, error: t(locale, 'invalid') };
+  };
+  const finishSession = (chosen?: PreparationOutcome) => {
+    const sess = state.session;
+    if (!sess || sess.finished) return;
+    const now = instant(Date.now());
+    const eng = sess.engineRuntime;
+
+    if (eng) {
+      const cmdResult = dispatchEngineCommand(
+        eng,
+        { type: 'FinishBake', at: now, outcome: chosen },
+        now,
+      );
+      if (!cmdResult.ok) {
+        setState((s) => ({ ...s, error: cmdResult.error.message || t(locale, 'invalid') }));
+        return;
+      }
       const finished: Session = {
-        ...s.session,
+        ...sess,
+        engineRuntime: cmdResult.session,
         finished: true,
-        endedAt: instant(Date.now()),
-        outcome: clone(outcome),
-        outcomeSource: chosen ? 'override' : 'recipe',
+        endedAt: now,
+        outcome: cmdResult.session.state.outcome,
+        outcomeSource: cmdResult.session.state.outcomeSource,
       };
+      setState((s) => {
+        if (s.session?.id !== sess.id) return s;
+        const list = syncSessions(s.sessions, s.session);
+        const sessions = list.map((item) => (item.id === finished.id ? finished : item));
+        const alreadyInHistory = s.sessionHistory.some((item) => item.id === finished.id);
+        const sessionHistory = alreadyInHistory
+          ? s.sessionHistory.map((item) => (item.id === finished.id ? clone(finished) : item))
+          : [...s.sessionHistory, clone(finished)];
+        return { ...s, session: finished, sessions, sessionHistory, error: '' };
+      });
+      return;
+    }
+
+    const outcome = chosen ?? intendedOutcome(sess.effective);
+    if (outcomeProblem(outcome)) {
+      setState((s) => ({ ...s, error: t(locale, 'invalid') }));
+      return;
+    }
+    const finished: Session = {
+      ...sess,
+      finished: true,
+      endedAt: now,
+      outcome: clone(outcome),
+      outcomeSource: chosen ? 'override' : 'recipe',
+    };
+    setState((s) => {
+      if (s.session?.id !== sess.id) return s;
       const list = syncSessions(s.sessions, s.session);
       const sessions = list.map((item) => (item.id === finished.id ? finished : item));
       const alreadyInHistory = s.sessionHistory.some((item) => item.id === finished.id);
@@ -672,6 +803,146 @@ export function usePrototype(locale: Locale) {
         : [...s.sessionHistory, clone(finished)];
       return { ...s, session: finished, sessions, sessionHistory, error: '' };
     });
+  };
+  const executeBakeCommand = (
+    payload: BakeCommandPayload,
+    at?: Instant,
+    autoStartStepId?: string,
+  ): { ok: true } | { ok: false; error: string; bakeError?: BakeError } => {
+    const sess = state.session;
+    if (!sess || sess.finished) {
+      return { ok: false, error: 'No active session' };
+    }
+    const now = at ?? instant(Date.now());
+    let eng = sess.engineRuntime;
+
+    if (!eng) {
+      const created = createEngineBakeSession(
+        sess.id,
+        sess.snapshot.formula,
+        sess.effective,
+        sess.startedAt,
+        {
+          formula: { id: sess.recipeId, version: sess.recipeVersion },
+          process: { id: sess.recipeId, version: sess.recipeVersion },
+        },
+        sess.recipeId,
+      );
+      if (!created.ok) {
+        return { ok: false, error: created.error.message, bakeError: created.error };
+      }
+      eng = created.session;
+    }
+
+    const isAutoStartCandidate =
+      payload.type === 'AddObservation' ||
+      payload.type === 'AdjustStep' ||
+      payload.type === 'HoldStepCountdown';
+    const targetStepId = isAutoStartCandidate
+      ? (autoStartStepId ??
+        ('stepId' in payload && typeof payload.stepId === 'string' ? payload.stepId : undefined))
+      : undefined;
+
+    let trialEng = eng;
+
+    if (targetStepId && trialEng.state.steps[targetStepId]?.startedAt === undefined) {
+      const targetStep = sess.effective.steps.find((st) => st.id === targetStepId);
+      let latestDepEnd: string | undefined;
+      if (targetStep && targetStep.dependsOn.length > 0) {
+        for (const depId of targetStep.dependsOn) {
+          const depEndedAt = sess.facts[depId]?.endedAt ?? trialEng.state.steps[depId]?.endedAt;
+          if (depEndedAt) {
+            if (!latestDepEnd || Date.parse(depEndedAt) > Date.parse(latestDepEnd)) {
+              latestDepEnd = depEndedAt;
+            }
+          }
+        }
+      }
+      const priorEnd = latestDepEnd
+        ? instant(latestDepEnd)
+        : (trialEng.state.startedAt ?? sess.startedAt);
+
+      const startRes = dispatchEngineCommand(
+        trialEng,
+        { type: 'StartStep', stepId: targetStepId, at: priorEnd },
+        now,
+      );
+      if (!startRes.ok) {
+        return { ok: false, error: startRes.error.message, bakeError: startRes.error };
+      }
+      trialEng = startRes.session;
+    }
+
+    const cmdRes = dispatchEngineCommand(trialEng, payload, now);
+    if (!cmdRes.ok) {
+      return { ok: false, error: cmdRes.error.message, bakeError: cmdRes.error };
+    }
+
+    const updatedEng = cmdRes.session;
+    const facts = stepFacts(updatedEng.state);
+    const effective = updatedEng.state.process ? clone(updatedEng.state.process) : sess.effective;
+
+    let nextActiveId = sess.activeId;
+    if (payload.type === 'CompleteStep') {
+      const seqSteps = effective.steps.filter((st) => st.operation !== 'preheat');
+      const next = seqSteps.find(
+        (st) =>
+          updatedEng.state.steps[st.id]?.endedAt === undefined &&
+          st.dependsOn
+            .filter((depId) => seqSteps.some((d) => d.id === depId))
+            .every((id) => updatedEng.state.steps[id]?.endedAt !== undefined),
+      );
+      if (next) {
+        nextActiveId = next.id;
+      }
+    } else if (payload.type === 'RetractCompletion') {
+      const targetEv = updatedEng.state.stepEvents[payload.targetEventId];
+      if (targetEv) {
+        nextActiveId = targetEv.stepId;
+      }
+    }
+
+    const isFinished = updatedEng.state.status === 'finished';
+    const isAbandoned = updatedEng.state.status === 'abandoned';
+
+    const updatedSession: Session = {
+      ...sess,
+      engineRuntime: updatedEng,
+      facts,
+      effective,
+      activeId: nextActiveId,
+      finished: isFinished || isAbandoned,
+      abandoned: isAbandoned,
+      endedAt: isFinished || isAbandoned ? now : sess.endedAt,
+      outcome: updatedEng.state.outcome ?? sess.outcome,
+      outcomeSource: updatedEng.state.outcomeSource ?? sess.outcomeSource,
+    };
+
+    setState((s) => {
+      if (s.session?.id !== sess.id) return s;
+      const list = syncSessions(s.sessions, s.session);
+      const sessions = list.map((item) => (item.id === updatedSession.id ? updatedSession : item));
+      const alreadyInHistory = s.sessionHistory.some((item) => item.id === updatedSession.id);
+      const sessionHistory =
+        isFinished || isAbandoned
+          ? alreadyInHistory
+            ? s.sessionHistory.map((item) =>
+                item.id === updatedSession.id ? clone(updatedSession) : item,
+              )
+            : [...s.sessionHistory, clone(updatedSession)]
+          : s.sessionHistory;
+
+      return {
+        ...s,
+        session: updatedSession,
+        sessions,
+        sessionHistory,
+        error: '',
+      };
+    });
+
+    return { ok: true };
+  };
   const log = (text: string) =>
     updateSession((s) => ({ ...s, journal: [{ at: instant(Date.now()), text }, ...s.journal] }));
   const restoreRevision = (version: number, expectedHead?: number): boolean => {
@@ -837,6 +1108,7 @@ export function usePrototype(locale: Locale) {
     updateSession,
     abandonSession,
     finishSession,
+    executeBakeCommand,
     log,
     restoreRevision,
     promoteReferenceVersion,

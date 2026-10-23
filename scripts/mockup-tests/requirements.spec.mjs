@@ -1,4 +1,11 @@
-import { editRecipe, recipeCard } from './screen-actions.mjs';
+import { openRecipeSteps } from './screen-actions.mjs';
+import {
+  editRecipe,
+  recipeCard,
+  summaryMetric,
+  markMilkPowderWaterUnknown,
+  openGlobalDestination,
+} from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 import { codeName } from '../build-names.mjs';
 
@@ -35,9 +42,10 @@ async function openEdit(page, locale) {
 }
 
 async function totalsField(page, locale, ingredient = 'salt') {
-  const trigger = page.getByRole('button', { name: copy[locale].totals, exact: true });
-  if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
-  const field = page.getByTestId(`total-grams-${ingredient}`);
+  // L109 removes assembled totals. These ingredients are wholly in the final stage;
+  // stage editing preserves the same invariant while testing the actual everyday input.
+  const field = page.getByTestId(`ingredient-grams-${ingredient}`);
+  await field.scrollIntoViewIfNeeded();
   await expect(field).toBeVisible();
   return field;
 }
@@ -155,6 +163,9 @@ for (const locale of ['fr', 'en']) {
     page,
   }) => {
     await page.goto(address({ screen: 'library', lang: locale }));
+    await recipeCard(page, 'Shokupan').click();
+    await markMilkPowderWaterUnknown(page, locale);
+    await openGlobalDestination(page, locale === 'fr' ? 'Recettes' : 'Recipes', locale);
     const card = recipeCard(page, 'Shokupan');
     await expect(card).toContainText(/≥\s*73\s*%/);
     await expect(card).not.toContainText('≈');
@@ -164,17 +175,23 @@ for (const locale of ['fr', 'en']) {
         exact: true,
       })
       .click();
+    // A personal override never mutates the built-in template's sourced profile.
     const template = recipeCard(page.getByRole('dialog'), 'Shokupan');
-    await expect(template).toContainText(/≥\s*73\s*%/);
+    await expect(template).toContainText(/73\s*%/);
+    await expect(template).not.toContainText('≥');
     await expect(template).not.toContainText('≈');
+    await expect(recipeCard(page.getByRole('dialog'), 'Brioche')).toContainText(/≥\s*54\s*%/);
   });
 
   test(`partial known quantities use a lower bound in summary and hydration sheet: ${locale}`, async ({
     page,
   }) => {
     await page.goto(address({ screen: 'recipe', lang: locale }));
+    await markMilkPowderWaterUnknown(page, locale);
     const summary = page.locator('.recipe-summary-box');
-    await expect(summary.locator('.hydration-value')).toHaveText(/^≥\s*73\s*%$/);
+    await expect(summaryMetric(page, copy[locale].help).locator('.metric-value')).toHaveText(
+      /^≥\s*73\s*%$/,
+    );
     const partialMetrics = summary.locator('.metric-value-sm');
     await expect(partialMetrics).toHaveCount(2);
     for (const metric of await partialMetrics.all()) {
@@ -259,7 +276,7 @@ for (const [scenario, status] of diagnosticStates) {
       const yeast = await totalsField(page, 'fr', 'instant-yeast');
       await yeast.fill('1');
       await yeast.press('Enter');
-      await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
+      await openRecipeSteps(page);
     } else {
       await page.goto(address({ screen: 'recipe', section: 'steps', scenario, lang: 'fr' }));
     }

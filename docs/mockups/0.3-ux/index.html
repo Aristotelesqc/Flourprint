@@ -17,8 +17,8 @@
         <code>packages/ui</code> (not <code>apps/mobile</code> or real persistent history). Does not
         claim all L-items are passed or owner-approved. <strong>Decision L101:</strong> Navigation A
         adopted; Navigation B links and copy are removed from active consideration. Compact row
-        design selected 2026-10-21; drag activation (5px move vs. 350ms hold) remains open for owner
-        review.
+        design and 350ms hold drag activation settled (L112). Remaining open O-items (cross-group,
+        downward-chain, handle mode, device acceptance) remain under evaluation.
       </div>
     </header>
 
@@ -34,11 +34,12 @@
         </p>
         <div class="choice-callout">
           <strong>Interaction checks (owner physical-phone acceptance pending):</strong> Compact row
-          design selected 2026-10-21; drag activation threshold (5px move vs. 350ms hold) remains
-          open for owner evaluation. Verify real provisional neighbour reflow, single moving gap
-          during active drag, clean invalid-drop return, and shared draft state before persistence.
-          Quick links: <a href="#matched-comparisons">Matched Comparisons</a> &middot;
-          <a href="#step-row-options">Activation Options</a> &middot;
+          design and 350ms hold activation settled (L112). Verify real provisional neighbour reflow,
+          single moving gap during active drag, clean invalid-drop return, and shared draft state
+          across the three-tab Recipe/Planning/History interface (L108). Remaining open O-items stay
+          under evaluation. Quick links:
+          <a href="#matched-comparisons">Matched Comparisons</a> &middot;
+          <a href="#step-row-options">Settled Design &amp; Activation</a> &middot;
           <a href="#navigation-a-screens">Navigation A Screens</a> &middot;
           <a href="#motion-evidence">Motion Evidence</a>.
         </div>
@@ -46,51 +47,53 @@
         <div class="links-grid">
           <a
             class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&section=steps&stepDesign=compact&nav=A&lang=fr&theme=dark&width=393&scale=100"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=ingredients&stepDesign=compact&dragActivation=hold&nav=A&lang=fr&theme=dark&width=393&scale=100"
           >
             <div class="card-heading">
-              <span class="card-title">Steps (Reading) · Compact</span>
-              <span class="badge badge-accent">Selected Row</span>
+              <span class="card-title">Recipe (Reading) · Compact</span>
+              <span class="badge badge-accent">Selected (L112)</span>
             </div>
             <p class="card-desc">
-              Reading mode with selected Compact row: lift handle to enter edit mode; Back cancels
-              active drag.
+              Unified Recipe tab (L108) with selected Compact row and 350ms hold activation (L112).
             </p>
-            <span class="card-query">section=steps &amp; stepDesign=compact</span>
+            <span class="card-query"
+              >section=ingredients &amp; stepDesign=compact &amp; dragActivation=hold</span
+            >
           </a>
 
           <a
             class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=move"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=ingredients&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
           >
             <div class="card-heading">
-              <span class="card-title">Compact Row · Move (5px)</span>
-              <span class="badge badge-accent">5px Motion</span>
+              <span class="card-title">Recipe (Edit) · Compact + Hold</span>
+              <span class="badge badge-accent">Selected (L112)</span>
             </div>
             <p class="card-desc">
-              Edit mode with Compact row and immediate 5px motion drag activation threshold.
-            </p>
-            <span class="card-query">stepDesign=compact &amp; dragActivation=move</span>
-          </a>
-
-          <a
-            class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
-          >
-            <div class="card-heading">
-              <span class="card-title">Compact Row · Hold (350ms)</span>
-              <span class="badge badge-accent">Hold 350ms</span>
-            </div>
-            <p class="card-desc">
-              Edit mode with Compact row and 350ms press-and-hold activation for mobile scroll
-              safety.
+              Edit mode with selected Compact row and 350ms hold drag activation (L112).
             </p>
             <span class="card-query">stepDesign=compact &amp; dragActivation=hold</span>
           </a>
 
           <a
             class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&section=history&nav=A&lang=fr&theme=dark&width=393&scale=100"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=planning&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
+          >
+            <div class="card-heading">
+              <span class="card-title">Planning · Timeline Tab</span>
+              <span class="badge badge-accent">Timeline (L108)</span>
+            </div>
+            <p class="card-desc">
+              Generated time-focused planning view (L108) sharing step projection with Recipe tab.
+            </p>
+            <span class="card-query"
+              >section=planning &amp; stepDesign=compact &amp; dragActivation=hold</span
+            >
+          </a>
+
+          <a
+            class="review-card"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=history&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
           >
             <div class="card-heading">
               <span class="card-title">Recipe History</span>
@@ -99,7 +102,9 @@
             <p class="card-desc">
               Saved history, reference milestones, and preparation baseline review.
             </p>
-            <span class="card-query">screen=recipe &amp; section=history</span>
+            <span class="card-query"
+              >section=history &amp; stepDesign=compact &amp; dragActivation=hold</span
+            >
           </a>
         </div>
       </section>
@@ -122,43 +127,50 @@
 
       <!-- SECTION 1: Step Row & Activation Options (O3 OPEN) -->
       <section id="step-row-options">
-        <h2 class="section-title">Drag Activation Options (Decision O3)</h2>
+        <h2 class="section-title">Drag Activation &amp; Row Design (L112 Settled)</h2>
         <p class="section-caption">
-          Compact row design selected 2026-10-21. Open decision O3: compare move (5px) vs. hold
-          (350ms) activation thresholds. Links open the live interactive editor with inspector
-          available (no capture mode). Prototype only; no persisted session certification.
+          Compact row design and 350ms hold activation settled by L112 (5px movement threshold
+          conflicted with tab-carousel swipe L106). Genuinely open O-items remain: cross-group drag,
+          downward-chain moves, handle mode vs. Reorder submode, and physical-device acceptance.
+          Links open the live interactive editor with inspector available (no capture mode).
+          Prototype only; no persisted session certification.
         </p>
         <div class="choice-callout">
-          <strong>Owner Choice Required:</strong> Test activation threshold options on the selected
-          Compact row design: <code>move</code> (5px motion threshold) versus <code>hold</code>
-          (350ms longpress threshold). Rail and outline variants retired from active consideration.
+          <strong>Settled Baseline (L112):</strong> Compact row design with <code>hold</code> (350ms
+          press-and-hold threshold). The legacy <code>move</code> (5px motion threshold) and
+          alternative row presentations (rail, outline) remain accessible for historical comparison
+          and compatibility.
         </div>
 
         <div class="links-grid">
           <a
             class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=move"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=ingredients&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
           >
             <div class="card-heading">
-              <span class="card-title">Compact Row · Move</span>
-              <span class="badge badge-accent">5px Motion</span>
+              <span class="card-title">Compact Row · Hold</span>
+              <span class="badge badge-accent">Selected (L112)</span>
             </div>
-            <p class="card-desc">Dense step row with immediate 5px drag activation threshold.</p>
-            <span class="card-query">stepDesign=compact &amp; dragActivation=move</span>
+            <p class="card-desc">
+              Dense step row with 350ms press-and-hold activation selected under L112 for swipe
+              safety.
+            </p>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=hold</span>
           </a>
 
           <a
             class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=steps&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
+            href="mockup.html?screen=recipe&recipe=shokupan&mode=edit&section=ingredients&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=move"
           >
             <div class="card-heading">
-              <span class="card-title">Compact Row · Hold</span>
-              <span class="badge badge-accent">Hold 350ms</span>
+              <span class="card-title">Compact Row · Move</span>
+              <span class="badge badge-history">Archived threshold</span>
             </div>
             <p class="card-desc">
-              Dense step row with press-and-hold activation for mobile safety.
+              Dense step row with immediate 5px drag activation threshold (conflicted with L106
+              swipe).
             </p>
-            <span class="card-query">stepDesign=compact &amp; dragActivation=hold</span>
+            <span class="card-query">stepDesign=compact &amp; dragActivation=move</span>
           </a>
         </div>
       </section>
@@ -173,7 +185,7 @@
         <div class="links-grid">
           <a
             class="review-card"
-            href="mockup.html?screen=recipe&recipe=shokupan&nav=A&lang=fr&theme=dark&width=393&scale=100"
+            href="mockup.html?screen=recipe&recipe=shokupan&section=ingredients&nav=A&lang=fr&theme=dark&width=393&scale=100&stepDesign=compact&dragActivation=hold"
           >
             <div class="card-heading">
               <span class="card-title">Recipe</span>
@@ -182,7 +194,9 @@
             <p class="card-desc">
               Recipe overview, ingredients, bakers percentages, and process stages.
             </p>
-            <span class="card-query">screen=recipe</span>
+            <span class="card-query"
+              >screen=recipe &amp; stepDesign=compact &amp; dragActivation=hold</span
+            >
           </a>
 
           <a
@@ -245,12 +259,12 @@
 
           <div class="review-card" style="opacity: 0.75">
             <div class="card-heading">
-              <span class="card-title">Row Designs · Rail &amp; Outline</span>
+              <span class="card-title">Decision L112 (Closed)</span>
               <span class="badge badge-history">Archived</span>
             </div>
             <p class="card-desc">
-              Compact row selected 2026-10-21. Rail timeline and Outline card designs archived from
-              active choices.
+              Compact row + 350ms hold activation selected. 5px move threshold and rail/outline
+              presentations retired from active review choices.
             </p>
           </div>
         </div>

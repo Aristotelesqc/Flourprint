@@ -1,3 +1,4 @@
+import { openRecipeSteps } from './screen-actions.mjs';
 import { openGlobalDestination, recipeCard } from './screen-actions.mjs';
 import { editRecipe, editProcessStep, stepMenu } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
@@ -47,8 +48,8 @@ test('recipe size information is reachable while reading without entering editin
   await expect(sheet).toHaveCount(0);
   await expect(help).toBeFocused();
   await edit(page);
-  const size = await disclosure(page, page, 'Taille de la recette');
-  await size.getByRole('button', { name: 'Mélange de farines', exact: true }).click();
+  const flours = await disclosure(page, page, /^Farine\(s\)/);
+  await flours.getByRole('button', { name: 'Ajouter une farine', exact: true }).click();
   const blend = page.getByRole('dialog', { name: 'Mélange de farines', exact: true });
   await blend.getByRole('button', { name: 'Ajouter un ingrédient', exact: true }).click();
   const shares = blend.getByRole('textbox', { name: / · / });
@@ -61,7 +62,7 @@ test('recipe size information is reachable while reading without entering editin
   await blend.getByRole('button', { name: 'Appliquer', exact: true }).click();
   await expect(blend).toHaveCount(0);
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
-  await size.getByRole('button', { name: 'Mélange de farines', exact: true }).click();
+  await flours.getByRole('button', { name: 'Ajouter une farine', exact: true }).click();
   await expect(blend.getByRole('textbox', { name: / · / }).nth(0)).toHaveValue('80');
   await expect(blend.getByRole('textbox', { name: / · / }).nth(1)).toHaveValue('20');
   await page.keyboard.press('Escape');
@@ -100,30 +101,29 @@ test('adding an ingredient and editing its known or unknown composition changes 
 }) => {
   await page.goto(recipe);
   await edit(page);
-  const add = await disclosure(page, page, 'Ajouter un ingrédient');
-  await add.getByRole('textbox', { name: 'Nom de l’ingrédient', exact: true }).fill('Lait de test');
-  await add.getByRole('combobox', { name: 'Type', exact: true }).selectOption('milk');
-  await add.getByRole('button', { name: 'Ajouter un ingrédient', exact: true }).click();
+  await page.getByRole('button', { name: 'Ajouter un ingrédient', exact: true }).click();
+  await page
+    .getByRole('textbox', { name: 'Nom de l’ingrédient', exact: true })
+    .fill('Lait de test');
+  await page.getByRole('combobox', { name: 'Type', exact: true }).selectOption('milk');
+  await page.getByRole('button', { name: 'Ajouter un ingrédient', exact: true }).click();
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('702.14');
   await expect(page.getByText('Lait de test', { exact: true }).first()).toBeVisible();
-  const composition = await disclosure(page, page, 'Composition');
-  const card = composition
-    .getByRole('heading', { name: 'Lait de test', exact: true })
-    .locator('..');
+  await page.getByRole('button', { name: 'Informations · Lait de test', exact: true }).click();
+  const card = page.getByRole('dialog', { name: 'Lait de test', exact: true });
   await card.getByRole('button', { name: 'Composition en eau inconnue', exact: true }).click();
   await expect(card.getByRole('textbox', { name: 'Teneur en eau', exact: true })).toHaveValue('');
-  await expect(card.locator('p').first()).toHaveText('Teneur en eau · Inconnu');
+  await expect(card.getByText('Teneur en eau · Inconnu', { exact: true })).toBeVisible();
   await number(card, 'Teneur en eau', '42,5');
-  await expect(card.locator('p').first()).toHaveText('Teneur en eau · Part connue');
+  await expect(card.getByText('Teneur en eau · Part connue', { exact: true })).toBeVisible();
   await expect(card.getByRole('textbox', { name: 'Teneur en eau', exact: true })).toHaveValue(
     '42,5',
   );
+  await page.keyboard.press('Escape');
   await page.getByTestId('save-recipe').click();
   await edit(page);
-  const restored = await disclosure(page, page, 'Composition');
-  const restoredCard = restored
-    .getByRole('heading', { name: 'Lait de test', exact: true })
-    .locator('..');
+  await page.getByRole('button', { name: 'Informations · Lait de test', exact: true }).click();
+  const restoredCard = page.getByRole('dialog', { name: 'Lait de test', exact: true });
   await expect(
     restoredCard.getByRole('textbox', { name: 'Teneur en eau', exact: true }),
   ).toHaveValue('42,5');
@@ -134,10 +134,31 @@ test('adding and duplicating steps update the process and Undo restores the orig
 }) => {
   await page.goto(recipe);
   await edit(page);
-  await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
+  await openRecipeSteps(page);
   await expect(page.locator('.step-title:visible')).toHaveCount(10);
   await page.getByRole('button', { name: 'Ajouter une étape', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.locator('.step-title:visible')).toHaveCount(10);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.step-title:visible')).toHaveCount(10);
+  await expect(
+    page.getByRole('button', { name: 'Annuler la modification', exact: true }),
+  ).toBeDisabled();
+  await page.getByRole('button', { name: 'Ajouter une étape', exact: true }).click();
+  const newStep = page.getByRole('dialog');
+  await expect(newStep.getByRole('combobox', { name: 'Durée : mode', exact: true })).toHaveValue(
+    'unknown',
+  );
+  await newStep.getByRole('combobox', { name: 'Type', exact: true }).selectOption('rest');
+  await newStep.getByRole('textbox', { name: 'Nom', exact: true }).fill('Repos vérifié');
+  await newStep.getByRole('combobox', { name: 'Durée : mode', exact: true }).selectOption('manual');
+  await number(newStep, 'Durée', '10');
+  await newStep.getByRole('button', { name: 'Appliquer', exact: true }).click();
+  await expect(newStep).toHaveCount(0);
   await expect(page.locator('.step-title:visible')).toHaveCount(11);
+  await expect(
+    page.locator('.step-title:visible').filter({ hasText: 'Repos vérifié' }),
+  ).toHaveCount(1);
   await page.getByRole('button', { name: 'Annuler la modification', exact: true }).click();
   await expect(page.locator('.step-title:visible')).toHaveCount(10);
   const menu = await stepMenu(page, 'bulk');
@@ -158,7 +179,7 @@ test('step editor cancels local changes and applies manual conditions, dependenc
 }) => {
   await page.goto(recipe);
   await edit(page);
-  await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
+  await openRecipeSteps(page);
   const open = () => editProcessStep(page, 'bulk');
   await open();
   let sheet = page.getByRole('dialog');
@@ -343,7 +364,7 @@ test('ready-by target falls back to the current final stage after the selected s
   await plan.getByLabel('Fin prévue', { exact: true }).fill('2026-10-17T13:30');
   await expect(plan.locator('strong')).toContainText(/13\s*(?:h|:)\s*30/);
   await edit(page);
-  await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
+  await openRecipeSteps(page);
   await (
     await stepMenu(page, 'cool')
   )
@@ -368,8 +389,8 @@ test('flour-row removal clears only that row’s invalid input and preserves rem
 }) => {
   await page.goto(recipe);
   await edit(page);
-  const size = await disclosure(page, page, 'Taille de la recette');
-  const openBlend = size.getByRole('button', { name: 'Mélange de farines', exact: true });
+  const flours = await disclosure(page, page, /^Farine\(s\)/);
+  const openBlend = flours.getByRole('button', { name: 'Ajouter une farine', exact: true });
   await openBlend.click();
   const blend = page.getByRole('dialog', { name: 'Mélange de farines', exact: true });
   const shares = blend.getByRole('textbox', { name: / · / });

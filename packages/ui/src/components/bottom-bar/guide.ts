@@ -9,7 +9,8 @@ export default {
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
     'The navigation landmark carries navigationLabel; the selected destination is exposed as current.',
-    'Touch target at least 48 px; visible control rhythm is compact without overlapping adjacent destinations.',
+    'Touch target at least 48 px width and height; visible control rhythm is compact without overlapping adjacent destinations.',
+    'At 360 px and 130% text scaling (L115), contextual toolbar actions fit without horizontal overflow; Save, Cancel, and overflow actions remain reachable with full >=48 px targets without clipped labels or empty padded rows.',
     'Labels use single-row ellipsis rather than mid-word wrapping (L25), preserving baseline alignment.',
   ],
   related: ['fp.button', 'fp.icon-button', 'fp.tabs'],

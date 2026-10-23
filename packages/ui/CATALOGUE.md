@@ -72,7 +72,8 @@ The bottom area of a screen: prototype selects navigation A as a contextual tool
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The navigation landmark carries navigationLabel; the selected destination is exposed as current.
-- Touch target at least 48 px; visible control rhythm is compact without overlapping adjacent destinations.
+- Touch target at least 48 px width and height; visible control rhythm is compact without overlapping adjacent destinations.
+- At 360 px and 130% text scaling (L115), contextual toolbar actions fit without horizontal overflow; Save, Cancel, and overflow actions remain reachable with full >=48 px targets without clipped labels or empty padded rows.
 - Labels use single-row ellipsis rather than mid-word wrapping (L25), preserving baseline alignment.
 
 **Related**
@@ -118,6 +119,7 @@ A modal sheet rising from the bottom for focused tasks (default) or a centered c
 **Accessibility**
 
 - Native modal dialog: focus is contained, Escape closes, focus returns to the trigger.
+- Compact centered dialogs provide a single cohesive action footer, rounded corners on all edges with overflow clipping, and distinct styling from bottom-anchored sheets (L123).
 - Floating layer: may be translucent (elevation rule).
 - Reduced motion closes at once.
 - Hit targets maintain 48 px minimum boundary with compact visual rhythm.
@@ -321,7 +323,7 @@ A card with a header that opens and closes its content, such as a step group or 
 
 ### `fp.hero-summary`
 
-The recipe's summary tiles: total flour, dough, hydration, fats and sugars, with a notice when a value is partial.
+The recipe's summary tiles: dough yield and pieces first, hydration, fats and sugars, with compact info triggers and an actionable notice banner when a profile is incomplete.
 
 **Use when**
 
@@ -333,21 +335,24 @@ The recipe's summary tiles: total flour, dough, hydration, fats and sugars, with
 
 **Props**
 
-| Prop            | Meaning                                                                            |
-| --------------- | ---------------------------------------------------------------------------------- |
-| `editor`        | Optional editor shown in the hydration tile while editing.                         |
-| `metrics`       | Tiles with label, value, optional detail and pictogram, formatted by the consumer. |
-| `notice`        | Optional partial-value notice.                                                     |
-| `onHelp`        | Opens the explanation of the values.                                               |
-| `helpLabel`     | Accessible name of the help button.                                                |
-| `onSizeHelp`    | Optional: opens the explanation of the dough size.                                 |
-| `sizeHelpLabel` | Accessible name of that button.                                                    |
+| Prop            | Meaning                                                                                                                    |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `editor`        | Optional editor shown in the hydration tile while editing.                                                                 |
+| `metrics`       | Tiles with label, value, optional detail, pictogram, and per-metric help callback, formatted by consumer in natural order. |
+| `notice`        | Optional partial-value notice.                                                                                             |
+| `onNotice`      | Optional: action or sheet opener triggered when tapping the warning notice banner.                                         |
+| `onHelp`        | Opens the explanation of the values.                                                                                       |
+| `helpLabel`     | Accessible name of the help button.                                                                                        |
+| `onSizeHelp`    | Optional: opens the explanation of the dough size.                                                                         |
+| `sizeHelpLabel` | Accessible name of that button.                                                                                            |
 
 **Accessibility**
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Each tile is label plus value text; partial values say so in words.
-- Help buttons carry their labels.
+- Help buttons carry their accessible names without hardcoded fallbacks.
+- Help sits beside its value. Narrow containers use one column so large-text labels and 48 px help targets remain separate.
+- An actionable incomplete-profile notice retains native button semantics; a non-actionable notice is a status.
 
 **Related**
 
@@ -366,7 +371,7 @@ The recipe's summary tiles: total flour, dough, hydration, fats and sugars, with
 
 ### `fp.icon`
 
-The current provisional pictograms as inline SVG following text colour; the permanent source remains an owner decision.
+Stock Ionicons outline pictograms as inline SVG following text colour; source mappings are pinned in v1.tsx with the upstream MIT license.
 
 **Use when**
 
@@ -396,11 +401,11 @@ The current provisional pictograms as inline SVG following text colour; the perm
 
 **Decisions**
 
-- [Pictogram set still open (inventory, ADR 0021)](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/architecture/2026-10-17-component-sourcing-inventory.md)
+- [Pictogram sourcing inventory (ADR 0021); Ionicons outline selected for this round](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/architecture/2026-10-17-component-sourcing-inventory.md)
 
 **Versions**
 
-- `v1`: Round 2 visual restoration on the shared component contract. First version; not yet shipped on main.
+- `v1`: Round 2 visual restoration: stable mapping to stock Ionicons outline SVG paths.
 
 ### `fp.icon-button`
 
@@ -484,6 +489,7 @@ One ingredient of a step: name, grams, baker's percentage, optional note and its
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Grams and percentage are text with tabular figures; the checkbox has its own label.
+- Editing ingredient rows highlight with container padding and rounded corners, keeping row name and value alignment consistent with read mode without shrinking typography (L123).
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
 **Related**
@@ -583,7 +589,7 @@ A numeric input that keeps the raw text while typing and commits a parsed number
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value.
 - The unit adornment is always aria-hidden; include the unit in label or hint so its meaning remains accessible.
-- The input minimum height is 2.25rem (36 px at base text). A surrounding 48 px row does not enlarge the input hit area; verify field reachability separately from button-target checks.
+- The input preserves a real 48 px touch target (var(--fp-spacing-touch)) without reducing typography, even in compact row layouts (L123).
 
 **Related**
 
@@ -601,7 +607,7 @@ A numeric input that keeps the raw text while typing and commits a parsed number
 
 ### `fp.prep-hero`
 
-The dominant block of a running preparation: current step, time remaining, start and end, progress and instructions.
+The dominant block of a running preparation: current step, time remaining, start and end, progress, instructions, and L127 countdown and progression controls.
 
 **Use when**
 
@@ -613,17 +619,26 @@ The dominant block of a running preparation: current step, time remaining, start
 
 **Props**
 
-| Prop             | Meaning                                                                                      |
-| ---------------- | -------------------------------------------------------------------------------------------- |
-| `remainingLabel` | Optional label above the remaining time.                                                     |
-| `title`          | Current step.                                                                                |
-| `remaining`      | Formatted remaining time.                                                                    |
-| `start`          | Formatted start time.                                                                        |
-| `end`            | Formatted planned end.                                                                       |
-| `progress`       | Progress from 0 to 1.                                                                        |
-| `labels`         | Texts for the start, end and progress labels.                                                |
-| `instruction`    | Optional instruction for the current step.                                                   |
-| `conditions`     | Optional condition items with label, value and sub text (for example temperature or vessel). |
+| Prop                  | Meaning                                                                                      |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `remainingLabel`      | Optional label above the remaining time.                                                     |
+| `title`               | Current step.                                                                                |
+| `remaining`           | Formatted remaining time.                                                                    |
+| `start`               | Formatted start time.                                                                        |
+| `end`                 | Formatted planned end.                                                                       |
+| `progress`            | Progress from 0 to 1.                                                                        |
+| `labels`              | Texts for the start, end and progress labels.                                                |
+| `instruction`         | Optional instruction for the current step.                                                   |
+| `conditions`          | Optional condition items with label, value and sub text (for example temperature or vessel). |
+| `heading`             | Optional top heading for the active step (L127).                                             |
+| `stepLine`            | Optional step count line (n / N · step) (L127).                                              |
+| `adjustment`          | Optional accumulated adjustment text (L127).                                                 |
+| `countdownLabel`      | Optional visible label for the countdown row (L127).                                         |
+| `progressLabel`       | Optional visible label for the progression row (L127).                                       |
+| `countdownControls`   | Optional countdown controls slot (-15min / Pause-Resume / +15min) (L127).                    |
+| `progressionControls` | Optional progression controls slot (Previous / Next) (L127).                                 |
+| `pausedBadge`         | Optional badge text when step countdown is held (L127).                                      |
+| `overdueBadge`        | Optional badge text when step duration has elapsed without completion (L127).                |
 
 **Accessibility**
 
@@ -700,12 +715,13 @@ A recipe in the library: title, status, key values and, for a running preparatio
 
 ### `fp.section-carousel`
 
-Horizontal swipeable carousel holding screens/panes of a recipe (Ingredients, Steps, Planning, History) with synchronized tab indicator.
+Horizontal swipeable carousel holding screens/panes of a recipe (Ingredients, Steps, Planning, History) with synchronized tab indicator, animated commit and velocity continuation (L101, L106, L117).
 
 **Use when**
 
 - Navigation between adjacent peer sections within a single screen or recipe.
 - L101 horizontal gesture navigation with top tappable tabs.
+- L106/L117 tab carousel gesture tracking with animated settle without frame jumps.
 
 **Avoid when**
 
@@ -733,6 +749,7 @@ Horizontal swipeable carousel holding screens/panes of a recipe (Ingredients, St
 - Swipe gestures are excluded within 24px of screen edges to prevent conflicts with OS edge navigation gestures.
 - Vertical scrolling takes priority unless a horizontal gesture is established.
 - Under reduced motion, horizontal drag animation is disabled and section transitions complete instantaneously.
+- Starting and adjacent panes remain revealed through settle, committing selection exactly once upon completion.
 
 **Related**
 
@@ -742,6 +759,8 @@ Horizontal swipeable carousel holding screens/panes of a recipe (Ingredients, St
 **Decisions**
 
 - [L101: top tappable tabs and horizontal carousel navigation](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [L106: Tab carousel motion follows finger 1:1 and continues with release velocity without jumping](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [L117: A tab-carousel commit animates to final position](https://github.com/Aristotelesqc/Flourprint/issues/133)
 - [ADR 0021: theme builder, component sourcing, motion items and guides](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
 - [ADR 0020: versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
 
@@ -789,7 +808,7 @@ Generic reusable sortable container adapter providing modern @dnd-kit/react 0.5.
 
 **Decisions**
 
-- [PR #133: Modern @dnd-kit/react sortable integration](https://github.com/Aristotelesqc/Flourprint/pull/133)
+- [PR #133: Modern @dnd-kit/react sortable integration with gutter hit-test and snapshot-backed order resolution](https://github.com/Aristotelesqc/Flourprint/pull/133)
 - [ADR 0020: Versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
 
 **Versions**
@@ -916,8 +935,9 @@ Switches between sections of one screen (Ingredients, Steps, Planning, History) 
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Tablist with arrow-key navigation and roving focus; the selected tab is aria-selected.
+- Tab labels reserve intrinsic bold metrics via pseudo-element measurements so active tab bolding does not shift neighbouring tab positions.
 - Narrow section and filter rows stay on one horizontal scroll strip; arrow/Home/End focus and selection changes scroll the option into view.
-- At 360 px and 130% text scaling (L25), section tabs maintain a single-row scroll strip without mid-word breaks (L101). Explicit noninteractive edge chevrons and opaque gradient cues appear via wrapper pseudo-elements when content overflows at either edge, tracked via ResizeObserver and scroll events, without adding non-tab buttons to the tablist.
+- At 360 px and 130% text scaling (L25), section tabs maintain a single-row scroll strip without mid-word breaks (L101). Explicit noninteractive edge chevrons appear without covering tab labels or blocking interaction.
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142). Tab labels do not break mid-word or wrap unevenly.
 
 **Related**
@@ -1462,11 +1482,12 @@ Settle animation for dragged step node cards snapping back to origin or settling
 
 ### `fp.motion.tab-carousel`
 
-Horizontal carousel slide between adjacent section tabs (L101), supporting finger-follow gestures, flick velocity, and gesture-matched springback.
+Horizontal carousel slide between adjacent section tabs (L101, L106, L117), supporting 1:1 finger-follow gestures, flick velocity, momentum continuation without zero-velocity restart, and animated settle.
 
 **Use when**
 
 - Recipe section tabs at the top of a screen where swiping horizontally moves between tabs.
+- L106/L117 animated commit and velocity-matched settle continuation.
 
 **Avoid when**
 
@@ -1479,6 +1500,7 @@ Horizontal carousel slide between adjacent section tabs (L101), supporting finge
 - Panes remain mounted so draft values and form focus are preserved.
 - Reduced motion: instant transition without sliding animation.
 - 48 px minimum touch targets for all tab controls.
+- Starting and adjacent panes remain revealed through settle, committing selection exactly once upon completion.
 
 **Related**
 
@@ -1488,6 +1510,8 @@ Horizontal carousel slide between adjacent section tabs (L101), supporting finge
 **Decisions**
 
 - [L101: Navigation is A with swipeable section tabs](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [L106: Tab carousel motion follows finger 1:1 and continues with release velocity without jumping](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [L117: A tab-carousel commit animates to final position](https://github.com/Aristotelesqc/Flourprint/issues/133)
 - [ADR 0021: motion items](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
 
 **Versions**

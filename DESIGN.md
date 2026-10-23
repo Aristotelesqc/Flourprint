@@ -443,7 +443,7 @@ Ionic's production shell remains in place. Prototype session state remains in me
 | `fp.tabs`                                   | Selected state, keyboard navigation and readable labels; overflow remains reachable at large text sizes.                                                                              |
 | `fp.group-card`                             | Accessible expanded state; inert collapsed content; grid accordion and rotating chevron with a zero-motion alternative.                                                               |
 | `fp.bottom-sheet`, `fp.floating-menu`       | Viewport placement, Escape/outside dismissal and native focus containment while open. Close modality immediately; an inert visual exit must never swallow the first subsequent input. |
-| `fp.hero-summary`                           | Distinguish flour, assembled dough and hydration; retain unknown contributors and hydration help. No substitute water metric or fake complete value.                                  |
+| `fp.hero-summary`                           | Lead with dough yield and pieces, then hydration, fats and sugars (L109). Retain unknown contributors and per-metric help. No substitute water metric or fake complete value.         |
 | `fp.recipe-card`                            | Version, actual duration/weight and cooking history stay explicit; active Preparation exposes its real remaining time and Resume action.                                              |
 | `fp.step-node`, `fp.timeline`               | Show actual operations and projection bounds, dependencies and uncertainty. Timeline geometry is display-only and must not become a second scheduler.                                 |
 | `fp.warning-banner`                         | Separate model failure, extrapolation and known outputs; never replace an unavailable estimate with a zero duration.                                                                  |
@@ -480,7 +480,7 @@ production adoption. The UI never turns a refused downward move into an equivale
 
 **Drag enters editing (L104, #123):**
 
-- **Activation:** an actual drag past the movement activation threshold enters or resumes recipe editing; touching or tapping the handle alone does not open editing.
+- **Activation (L112):** the owner selected a 350 ms hold. An activated drag enters or resumes recipe editing; touching or tapping the handle alone does not open editing. The 5 px option remains a historical comparison only.
 - **Drop semantics:** one valid drop constitutes one undoable draft edit. Save is still required before the moved order counts as a saved revision or a baseline.
 - **Cancellations & invalid drops:** a rejected, cancelled, or outside drop returns to the origin, restores pre-gesture order and dependencies, and marks nothing dirty. If a drag opened editing but resulted in no change, the draft is clean and may be discarded silently on exit.
 - **Back navigation:** pressing Back during an active drag gesture cancels the drag operation only. A subsequent Back triggers the normal unsaved changes leave guard.
@@ -498,13 +498,25 @@ production adoption. The UI never turns a refused downward move into an equivale
   process authority. The layout engine calls core `moveStep`; a pending chain preview also restores
   the provisional order until Apply. The dependency decision and deliberate upgrade policy are
   recorded in `docs/architecture/2026-10-21-step-drag-behaviour.md` and PR #153.
-- **Open choices (O-items):** movement versus hold activation and cross-group/reorder-mode choices
-  remain open. The 5px / 350ms comparison values are prototype options, not universal Material rules.
-  Rail and Outline are historical alternatives; they are no longer active presentation choices.
+- **Open choices (O-items):** cross-group/reorder-mode choices remain open. The selected 350 ms
+  hold is a Flourprint decision, not a universal Material rule. Rail and Outline are historical
+  alternatives; they are no longer active presentation choices.
+
+**Current #133 composition (L108–L113, L127; mockup and library only):** Recipe, Planning and
+History are the three top tabs. Ingredients, stage weighing and preparation steps share the Recipe
+document; Planning contains projection controls. The summary places help beside each value and
+uses one column in narrow containers so large text and help targets do not collide. Its profile
+notice names only actually missing properties; estimated water is not described as unknown.
+
+The active Preparation prioritises estimated time remaining and its accumulated adjustment.
+Countdown controls (−15 min, Pause/Resume, +15 min) and Progression controls (Previous, Next) are
+visually separate. Duration and Note remain compact and visible below them. Next completes the
+current step; the following step's implicit start comes from the engine. Pause/Resume uses native
+hold/release events. Finish remains explicit and asks for an outcome when the engine requires one.
 
 The owner rejected the first restoration proposal as still regressive. Passing controls,
 component coverage and motion evidence do not establish visual fidelity. In particular,
-A and B must retain their different action placement; an active card must not gain a large
+Navigation A retains its selected action placement (L101); an active card must not gain a large
 second Resume block; model creation needs informative selectable cards rather than a list
 of unlabeled-shape buttons; and summary detail, partial-value markers, horizontal ingredient
 quantities, operation pictograms and group time windows must not disappear during extraction.
@@ -515,8 +527,9 @@ Round 2 is a **starting point with mandatory corrections**, not a pixel-perfect 
 target: #134's title, localization, pictogram, build identity, data, navigation and larger-text
 findings still apply. Never copy its invented quantities, contradictory model claims, dead
 controls, discarded edits or inaccessible overlays. Argon is a secondary visual reference;
-round 3 supplies the working state and core calls. Unresolved A/B, weighing lifetime, reorder
-mode and 40/48 px target choices remain visible proposals rather than silent defaults.
+round 3 supplies the working state and core calls. Navigation A (L101), shared weighing checks
+(L111), Compact and the 350 ms hold (L112) are selected. Remaining reorder-mode and 40/48 px
+target choices stay visible proposals rather than silent defaults.
 
 Review two separate gates. **Visual acceptance** requires inspecting matched actual renders
 for hierarchy, density, contrast, wrapping, state visibility and fidelity to the selected

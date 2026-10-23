@@ -16,12 +16,24 @@ An `ask_question` answer relays human authorization but does **not** update tech
 permissions. Require an actual Read URL/MCP confirmation and successful tool result. An agent's
 statement that access is granted is insufficient evidence.
 
-An implementation conversation also returned a plan instead of edits because the agent expected
-`[READ-TOKEN]` / `[WRITE-TOKEN]` in its assignment. These were that agent's prompt conventions,
-not CLI permission settings. The caller relayed the owner's existing scoped implementation
-authorization with those markers, explicitly retaining normal tool checks; subsequent source
-edits succeeded. Do not invent authorization, require these markers universally, or mistake them
-for technical grants. Verify actual tool results and the diff rather than a self-approved plan.
+An implementation conversation also returned a plan instead of edits because it expected
+assignment authorization markers. A later local check (2026-10-23) found an explicit requirement
+in the owner's global `~/.gemini/GEMINI.md`: the applicable marker had to be entered by the human.
+Inspect the loaded rule before diagnosing such a stop; an earlier successful assignment does not
+prove that a fresh conversation has the same authorization. Reuse an actual human reply for the
+same approved plan, relay it exactly, and retain normal tool checks. Do not invent a human reply,
+edit the global rule or publish the marker. These conventions are not CLI technical grants and
+must not become mandatory markers for other installations.
+
+With the owner's exact reply, a bounded canary completed a native write and read-back in 28 s.
+That proves that file/tool scope only. Four later, larger implementation assignments still timed
+out without edits; authorization alone did not establish reliable complex-task execution.
+Smaller supplied-source patches then returned usable output. Keep those generated patches
+distinct from native edits and caller-run browser verification. An empty turn with zero reported
+served usage does not establish a permission denial or a prompting defect. Preserve its terminal
+status, use only the bounded recovery allowed by the entrypoint, and avoid changing grants to
+diagnose missing model output. The earlier uppercase trial and later lowercase success also
+changed task size and working directory, so they do not isolate letter case as the cause.
 
 Also distinguish tool denial from a package-manager failure. In this implementation,
 `run_command` ran `pnpm exec tsc -b` through the host's bundled runtime and attempted an automatic

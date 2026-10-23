@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import { setTimeout as gesturePause } from 'node:timers/promises';
 const require = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = require('@playwright/test');
 const url = (extra = {}) =>
@@ -8,15 +9,23 @@ const row = (page, id) => active(page).locator(`.fp-step-draggable[data-step-id=
 const titles = (page) => active(page).locator('.step-title');
 const floating = (page) => page.locator('.fp-drag-floating-card');
 const modal = (page) => page.locator('dialog:modal:not([data-fp-ghost])');
-async function pointer(context, page, id = 'divide') {
+async function pointer(context, page, id = 'divide', waitForHold = true) {
   const handle = page.getByTestId(`drag-handle-${id}`).filter({ visible: true });
   await handle.scrollIntoViewIfNeeded();
   const rect = await handle.boundingBox();
+  // Compare the floating row with its position at pointer-down. Entering the draft
+  // during the hold can reflow the source; that later rectangle is not the grab origin.
+  const source = await row(page, id).boundingBox();
   const cdp = await context.newCDPSession(page);
   const start = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, id: 1 };
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] });
+  // L112 selects hold350. Only the deliberate tap test releases before activation.
+  if (waitForHold && new URL(page.url()).searchParams.get('dragActivation') !== 'move') {
+    await gesturePause(380);
+  }
   return {
     start,
+    source,
     move: async (x, y) =>
       cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y, id: 1 }] }),
     end: async () => cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }),
@@ -38,7 +47,7 @@ test.describe('L104 direct drag enters editing', () => {
         await page.goto(url({ stepDesign: design, dragActivation: activation }));
         const before = await titles(page).allTextContents();
         const gesture = await pointer(context, page);
-        const source = await row(page, 'divide').boundingBox();
+        const source = gesture.source;
         if (activation === 'move') {
           await expect(page.getByTestId('save-recipe')).toHaveCount(0);
           await gesture.move(gesture.start.x - 22, gesture.start.y - 30);
@@ -83,7 +92,7 @@ test.describe('L104 direct drag enters editing', () => {
 
   test('a handle tap opens no draft', async ({ page, context }) => {
     await page.goto(url());
-    const gesture = await pointer(context, page);
+    const gesture = await pointer(context, page, 'divide', false);
     await gesture.end();
     await expect(floating(page)).toHaveCount(0);
     await expect(page.getByTestId('save-recipe')).toHaveCount(0);
@@ -197,7 +206,7 @@ test.describe('L104 direct drag enters editing', () => {
     await expect(floating(page)).toHaveCount(0);
     await expect(modal(page)).toHaveCount(0);
     await expect(page.getByTestId('recipe-name')).toHaveValue('Retained draft');
-    await expect(page.getByRole('tab', { name: 'Steps', exact: true })).toHaveAttribute(
+    await expect(page.getByRole('tab', { name: 'Recipe', exact: true })).toHaveAttribute(
       'aria-selected',
       'true',
     );

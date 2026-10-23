@@ -17,9 +17,9 @@ export const DRAG_ACTIVATION_QUERY = 'dragActivation';
 export type DragActivationMode = 'move' | 'hold';
 
 export const getDragActivationMode = (): DragActivationMode => {
-  if (typeof location === 'undefined') return 'move';
+  if (typeof location === 'undefined') return 'hold';
   const param = new URLSearchParams(location.search).get(DRAG_ACTIVATION_QUERY);
-  return param === 'hold' ? 'hold' : 'move';
+  return param === 'move' ? 'move' : 'hold';
 };
 
 export function cancelActiveStepDrag(): boolean {

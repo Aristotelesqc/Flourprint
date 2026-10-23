@@ -26,6 +26,16 @@
   color: var(--color-ink-muted);
   font-size: var(--type-label);
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .warning-banner-actionable {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
 }
 [data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-label-group {
   display: flex;
@@ -33,6 +43,12 @@
   gap: var(--fp-space-1-5);
   min-width: 0;
   line-height: 1.25;
+}
+[data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fp-space-1);
 }
 [data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-value {
   font-size: var(--type-metric-lg);
@@ -124,8 +140,10 @@
   container-type: inline-size;
 }
 @container (max-width:18rem) {
+  [data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
   [data-fp-container='fp.hero-summary'][data-fp-container-version='v1'] .metric-header {
-    min-height: 2.5em;
     align-items: flex-start;
   }
 }

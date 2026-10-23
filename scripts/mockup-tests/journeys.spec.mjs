@@ -1,3 +1,4 @@
+import { openRecipeSteps } from './screen-actions.mjs';
 import { editRecipe, editProcessStep, stepMenu } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
@@ -88,9 +89,9 @@ for (const nav of ['A'])
     await page.getByRole('textbox', { name: 'Note text' }).fill('New note');
     await page.getByRole('dialog').getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(page.getByText('New note', { exact: false })).toBeVisible();
-    await page.getByRole('button', { name: 'Step complete', exact: true }).click();
+    await page.getByTestId('prep-next-btn').click();
     await expect(
-      page.locator('.current-step-hero').getByText('2 / 9 · Tangzhong cooling', { exact: true }),
+      page.getByTestId('prep-current-step').getByText('2 / 9 · Tangzhong cooling', { exact: true }),
     ).toBeVisible();
   });
 test('new template opens a working draft and collisions are named', async ({ page }) => {
@@ -113,7 +114,7 @@ test('new template opens a working draft and collisions are named', async ({ pag
 test('step editing changes process and planning, removal asks confirmation', async ({ page }) => {
   await page.goto(recipe);
   await edit(page);
-  await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
+  await openRecipeSteps(page);
   await editProcessStep(page, 'bulk');
   const dialog = page.getByRole('dialog');
   await dialog.getByRole('textbox', { name: 'Nom', exact: true }).fill('Pointage lent');
@@ -128,13 +129,17 @@ test('step editing changes process and planning, removal asks confirmation', asy
   await temperature.press('Enter');
   await dialog.getByRole('button', { name: 'Appliquer', exact: true }).click();
   await expect(
-    page.locator('.step-title:visible').filter({ hasText: 'Pointage lent' }),
+    page
+      .locator('.section-carousel-pane.is-active .step-title:visible')
+      .filter({ hasText: 'Pointage lent' }),
   ).toBeVisible();
   await page.getByRole('tab', { name: 'Planification', exact: true }).click();
   await expect(
-    page.locator('.step-title:visible').filter({ hasText: 'Pointage lent' }),
+    page
+      .locator('.section-carousel-pane.is-active .step-title:visible')
+      .filter({ hasText: 'Pointage lent' }),
   ).toBeVisible();
-  await page.getByRole('tab', { name: 'Étapes', exact: true }).click();
+  await openRecipeSteps(page);
   await (
     await stepMenu(page, 'tangzhong')
   )
@@ -142,7 +147,9 @@ test('step editing changes process and planning, removal asks confirmation', asy
     .click();
   await expect(page.getByRole('dialog')).toContainText('Cuisson du tangzhong');
   await page.getByRole('dialog').getByRole('button', { name: 'Annuler', exact: true }).click();
-  await expect(page.locator('.step-title:visible')).toHaveCount(10);
+  await expect(page.locator('.section-carousel-pane.is-active .step-title:visible')).toHaveCount(
+    10,
+  );
 });
 test('closed menus are inert, Escape returns focus, tabs support arrows', async ({ page }) => {
   await page.goto(recipe);
@@ -155,9 +162,9 @@ test('closed menus are inert, Escape returns focus, tabs support arrows', async 
   await page.mouse.click(8, 100);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(trigger).toBeFocused();
-  await page.getByRole('tab', { name: 'Ingrédients', exact: true }).focus();
+  await page.getByRole('tab', { name: 'Recette', exact: true }).focus();
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('tab', { name: 'Étapes', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('tab', { name: 'Planification', exact: true })).toHaveAttribute(
     'aria-selected',
     'true',
   );
@@ -252,7 +259,9 @@ test('a dependency-breaking move is previewed and refused without mutation', asy
     page.getByRole('dialog').getByRole('button', { name: 'Appliquer', exact: true }),
   ).toHaveCount(0);
   await page.keyboard.press('Escape');
-  await expect(page.locator('.step-title:visible').nth(3)).toHaveText('4. Pointage');
+  await expect(
+    page.locator('.section-carousel-pane.is-active .step-title:visible').nth(3),
+  ).toHaveText('4. Pointage');
 });
 test('hydration display does not round the formula on an untouched blur', async ({ page }) => {
   await page.goto(recipe + '&mode=edit&recipe=baguette');

@@ -11,6 +11,7 @@ export default {
   avoidWhen: ['A short list of choices tied to a button: use fp.floating-menu.'],
   accessibility: [
     'Native modal dialog: focus is contained, Escape closes, focus returns to the trigger.',
+    'Compact centered dialogs provide a single cohesive action footer, rounded corners on all edges with overflow clipping, and distinct styling from bottom-anchored sheets (L123).',
     'Floating layer: may be translucent (elevation rule).',
     'Reduced motion closes at once.',
     'Hit targets maintain 48 px minimum boundary with compact visual rhythm.',

@@ -1,3 +1,4 @@
+import { openRecipeSteps } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 import {
   openGlobalDestination,
@@ -87,7 +88,6 @@ test('stored defaults affect a new component without changing an existing one', 
   await page.getByRole('searchbox').fill('Baguette');
   await page.getByRole('button', { name: 'Baguette', exact: true }).click();
   await editRecipe(page, 'en');
-  await page.getByRole('button', { name: 'Add component', exact: true }).click();
   await page.getByRole('button', { name: 'Add yudane', exact: true }).click();
   const flour = page.locator('[data-testid^="component-share-yudane-"]');
   // The actual stable field id is discovered from the created component, not an invented UUID.
@@ -122,7 +122,7 @@ test('ambient Fahrenheit is displayed and edited through core conversion', async
   await page.getByRole('searchbox').fill('Baguette');
   await page.getByRole('button', { name: 'Baguette', exact: true }).click();
   await editRecipe(page, 'en');
-  await page.getByRole('tab', { name: 'Steps', exact: true }).click();
+  await openRecipeSteps(page, 'en');
   const dialog = await editProcessStep(page, 'mix', 'en');
   const temp = dialog.getByRole('textbox', { name: 'Temperature', exact: true });
   await committed(temp, '70');
@@ -143,6 +143,8 @@ test('two preparations keep their notes and selected recipe when resumed from ca
   await page.getByRole('tab', { name: /Shokupan/ }).click();
   await expect(page.locator('.phone-content')).not.toContainText('Baguette session only');
   await openGlobalDestination(page, 'Recipes', 'en');
+  // L120 counts the searched cards. Clear the retained Baguette query to see both sessions.
+  await page.getByRole('searchbox').fill('');
   await expect(page.getByRole('tab', { name: 'Running (2)', exact: true })).toBeVisible();
   const baguette = recipeCard(page, 'Baguette');
   await baguette.getByRole('button', { name: 'Resume', exact: true }).click();
@@ -156,7 +158,6 @@ test('component allocation refusal explains the engine reason once and keeps the
   await page.goto(
     route({ screen: 'recipe', recipe: 'shokupan', mode: 'edit', section: 'ingredients' }),
   );
-  await page.getByRole('button', { name: 'Add component', exact: true }).click();
   await page.getByRole('button', { name: 'Add yudane', exact: true }).click();
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
   await expect(page.getByRole('alert')).toHaveCount(1);

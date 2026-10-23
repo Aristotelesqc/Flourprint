@@ -32,9 +32,9 @@ import { RecipeCard } from './components';
 import { catalogText, templateBasis } from './template-presentation';
 import { TrashView } from './TrashView';
 
-import { RecipeIngredients, WaterDetails } from './RecipeView';
+import { RecipeIngredients, WaterDetails, componentDisplayName } from './RecipeView';
 
-import { ProcessView, processDuration } from './ProcessView';
+import { ProcessView, processDuration, titleOf } from './ProcessView';
 
 import { PreparationView } from './PreparationView';
 import { RecipeHistory } from './RecipeHistory';
@@ -48,6 +48,7 @@ import {
   type Route,
   type Screen,
   type Section,
+  type Recipe,
 } from './model';
 
 import {
@@ -89,12 +90,19 @@ const icons: Record<string, IconName> = {
   settings: 'settings',
 };
 
-const sections: Section[] = ['ingredients', 'steps', 'planning', 'history'];
+const sections: Section[] = ['ingredients', 'planning', 'history'];
 
 function readRoute(): Route {
   const p = new URLSearchParams(location.search);
 
   const screen = p.get('screen');
+  const rawSection = p.get('section');
+  const section: Section =
+    rawSection === 'steps'
+      ? 'ingredients'
+      : sections.includes(rawSection as Section)
+        ? (rawSection as Section)
+        : 'ingredients';
 
   return {
     screen: ['recipe', 'preparation', 'registry', 'settings', 'catalogue'].includes(screen ?? '')
@@ -103,9 +111,7 @@ function readRoute(): Route {
 
     recipeId: p.get('recipe') ?? undefined,
 
-    section: sections.includes(p.get('section') as Section)
-      ? (p.get('section') as Section)
-      : 'ingredients',
+    section,
   };
 }
 
@@ -240,6 +246,16 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    const p = new URLSearchParams(location.search);
+    if (p.get('section') === 'steps') {
+      requestAnimationFrame(() => {
+        const stepsEl = document.getElementById('recipe-steps');
+        if (stepsEl) stepsEl.scrollIntoView({ block: 'start' });
+      });
+    }
+  }, [route.section]);
+
   const writeURL = (next: Route, push: boolean) => {
     const url = new URL(location.href);
 
@@ -272,9 +288,10 @@ export default function App() {
     const url = new URL(location.href);
     url.searchParams.set('screen', 'recipe');
     url.searchParams.set('recipe', 'shokupan');
-    url.searchParams.set('section', 'steps');
+    url.searchParams.set('section', 'ingredients');
     url.searchParams.set('mode', 'edit');
     url.searchParams.set('stepDesign', design);
+    url.searchParams.set('dragActivation', 'hold');
     url.searchParams.set('theme', themePreference);
     url.searchParams.set('lang', locale);
     url.searchParams.set('width', width);
@@ -511,13 +528,6 @@ export default function App() {
               onChange={(e) => setQuery(e.target.value)}
             />
           )}
-          {route.screen === 'recipe' && !state.draft && (
-            <IconButton
-              icon="calendar"
-              label={t(locale, 'planning')}
-              onClick={() => navigate({ screen: 'recipe', section: 'planning' })}
-            />
-          )}
           {primary}
 
           {(route.screen === 'recipe' || route.screen === 'library') && (
@@ -554,10 +564,29 @@ export default function App() {
       navigate({ screen });
     });
 
-  const allRecipes = state.recipes.filter((r) => {
+  const matchesRecipeSearch = (r: Recipe, q: string): boolean => {
+    if (!q) return true;
+    const term = q.trim().toLocaleLowerCase();
+    if (!term) return true;
+    if (recipeName(r, locale).toLocaleLowerCase().includes(term)) return true;
+    for (const c of r.formula.components) {
+      if (componentDisplayName(locale, r.formula, c, r.names).toLocaleLowerCase().includes(term)) {
+        return true;
+      }
+    }
+    const lastStep = [...r.process.steps].reverse().find((s) => s.operation !== 'preheat');
+    if (lastStep && titleOf(lastStep, locale).toLocaleLowerCase().includes(term)) {
+      return true;
+    }
+    return false;
+  };
+
+  const eligibleRecipes = state.recipes.filter((r) => {
     if (r.trashed) return false;
-    if (!recipeName(r, locale).toLocaleLowerCase().includes(query.toLocaleLowerCase()))
-      return false;
+    return matchesRecipeSearch(r, query);
+  });
+
+  const allRecipes = eligibleRecipes.filter((r) => {
     const isRunning = Boolean(store.getRunningSession(r.id));
     if (filter === 'all') return true;
     if (filter === 'running') return isRunning;
@@ -736,8 +765,8 @@ export default function App() {
               rel="noreferrer"
             >
               <span>{copyT(locale, `stepDesign_${design}`)}</span>
-              {stepDesign === design && (
-                <span className="step-design-badge">{copyT(locale, 'activeOption')}</span>
+              {design === 'compact' && (
+                <span className="step-design-badge">{copyT(locale, 'selectedOption')}</span>
               )}
             </a>
           ))}
@@ -876,7 +905,7 @@ export default function App() {
                 tabs={sections.map((id) => ({
                   id,
 
-                  label: t(locale, id === 'steps' ? 'stepsTab' : id),
+                  label: t(locale, id === 'ingredients' ? 'recipeTab' : id),
                 }))}
 
                 activeId={section}
@@ -910,8 +939,7 @@ export default function App() {
                   label={t(locale, 'filter')}
 
                   tabs={['all', 'running', 'ready', 'drafts'].map((id) => {
-                    const count = state.recipes.filter((r) => {
-                      if (r.trashed) return false;
+                    const count = eligibleRecipes.filter((r) => {
                       const isRunning = Boolean(store.getRunningSession(r.id));
                       if (id === 'all') return true;
                       if (id === 'running') return isRunning;
@@ -951,7 +979,17 @@ export default function App() {
                     ? percent(locale, resolved.value.totalWaterPct, 0)
                     : undefined;
 
-                  const dur = duration(locale, processDuration(r));
+                  const totalDurS = processDuration(r);
+                  const dur = totalDurS !== undefined ? duration(locale, totalDurS) : undefined;
+                  const lastStep = [...r.process.steps]
+                    .reverse()
+                    .find((s) => s.operation !== 'preheat');
+                  const finalStepTitle = lastStep ? titleOf(lastStep, locale) : undefined;
+                  const clockMetricValue = dur
+                    ? finalStepTitle
+                      ? `${dur} · ${finalStepTitle}`
+                      : dur
+                    : t(locale, 'unknown');
 
                   const currentMilestone = r.referenceVersions.find(
                     (ref) => ref.version === r.version,
@@ -1006,10 +1044,10 @@ export default function App() {
 
                         ...(dWeight ? [{ icon: 'scale' as const, value: dWeight }] : []),
 
-                        { icon: 'clock' as const, value: `${dur} · ${t(locale, 'coolingEnd')}` },
+                        { icon: 'clock' as const, value: clockMetricValue },
 
                         ...r.formula.components.map((c) => ({
-                          value: componentName(locale, c.id, r.names),
+                          value: componentDisplayName(locale, r.formula, c, r.names),
                         })),
                       ]}
 
@@ -1059,35 +1097,34 @@ export default function App() {
                     onHelp={() => setOverlay('help')}
                     onSizeHelp={() => setOverlay('sizeHelp')}
                   />
-                </div>
-
-                <div data-step-design={stepDesign}>
-                  <ProcessView
-                    store={store}
-                    locale={locale}
-                    editingStepId={editingStepId}
-                    onClearEditingStepId={() => setEditingStepId(null)}
-                    returnToPlanning={
-                      returnToPlanning
-                        ? () => {
-                            setReturnToPlanning(false);
-                            setEditingStepId(null);
-                            setRoute((prev) => ({ ...prev, section: 'planning' }));
-                            writeURL({ ...route, section: 'planning' }, false);
-                          }
-                        : undefined
-                    }
-                    collapsedGroups={collapsedGroupsByRecipe[recipe.id] ?? {}}
-                    onToggleGroup={(groupId, open) =>
-                      setCollapsedGroupsByRecipe((prev) => ({
-                        ...prev,
-                        [recipe.id]: {
-                          ...(prev[recipe.id] ?? {}),
-                          [groupId]: !open,
-                        },
-                      }))
-                    }
-                  />
+                  <div id="recipe-steps" data-testid="recipe-steps" data-step-design={stepDesign}>
+                    <ProcessView
+                      store={store}
+                      locale={locale}
+                      editingStepId={editingStepId}
+                      onClearEditingStepId={() => setEditingStepId(null)}
+                      returnToPlanning={
+                        returnToPlanning
+                          ? () => {
+                              setReturnToPlanning(false);
+                              setEditingStepId(null);
+                              setRoute((prev) => ({ ...prev, section: 'planning' }));
+                              writeURL({ ...route, section: 'planning' }, false);
+                            }
+                          : undefined
+                      }
+                      collapsedGroups={collapsedGroupsByRecipe[recipe.id] ?? {}}
+                      onToggleGroup={(groupId, open) =>
+                        setCollapsedGroupsByRecipe((prev) => ({
+                          ...prev,
+                          [recipe.id]: {
+                            ...(prev[recipe.id] ?? {}),
+                            [groupId]: !open,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
 
                 <div data-step-design={stepDesign}>
@@ -1095,15 +1132,6 @@ export default function App() {
                     store={store}
                     locale={locale}
                     planning
-                    onModifyStep={(stepId) => {
-                      if (!store.state.draft) {
-                        store.edit();
-                      }
-                      setEditingStepId(stepId);
-                      setReturnToPlanning(true);
-                      setRoute((prev) => ({ ...prev, section: 'steps' }));
-                      writeURL({ ...route, section: 'steps' }, false);
-                    }}
                     collapsedGroups={collapsedGroupsByRecipe[recipe.id] ?? {}}
                     onToggleGroup={(groupId, open) =>
                       setCollapsedGroupsByRecipe((prev) => ({

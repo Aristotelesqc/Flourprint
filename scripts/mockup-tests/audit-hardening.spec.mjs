@@ -1,3 +1,4 @@
+import { openRecipeSteps, editProcessStep } from './screen-actions.mjs';
 import { createRequire } from 'node:module';
 const require = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = require('@playwright/test');
@@ -75,9 +76,8 @@ test.describe('external audit hardening', () => {
     await expect(planning.locator('[data-testid^="step-menu-"]')).toHaveCount(0);
     await expect(planning.locator('[data-testid^="drag-handle-"]')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Add step', exact: true })).toHaveCount(0);
-    await expect(
-      page.getByRole('button', { name: /Edit.*recipe|Modify.*recipe/i }).first(),
-    ).toBeVisible();
+    // L108: the draft remains open, but Planning has no per-step authoring shortcut.
+    await expect(page.getByTestId('save-recipe')).toBeVisible();
   });
 
   test('an untouched existing draft cancels without a discard prompt', async ({ page }) => {
@@ -109,7 +109,7 @@ test.describe('external audit hardening', () => {
     await expect(page.getByTestId('save-recipe')).toBeVisible();
   });
 
-  test('component groups share their collapsed state between Steps and Planning', async ({
+  test('component groups share their collapsed state between Recipe steps and Planning', async ({
     page,
   }) => {
     await page.goto(address({ recipe: 'shokupan', section: 'steps' }));
@@ -124,47 +124,36 @@ test.describe('external audit hardening', () => {
     await page.getByRole('tab', { name: 'Planning', exact: true }).click();
     await expect(group()).toHaveAttribute('aria-expanded', 'false');
     await group().click();
-    await page.getByRole('tab', { name: 'Steps', exact: true }).click();
+    await openRecipeSteps(page, 'en');
     await expect(group()).toHaveAttribute('aria-expanded', 'true');
   });
 
-  test('the Planning pencil opens Recipe Steps once and returns to the same projection', async ({
+  test('L108 Planning offers timing controls without per-step authoring or draft mutation', async ({
     page,
   }) => {
-    await page.goto(address({ recipe: 'shokupan', section: 'planning' }));
-    const active = page.locator('.section-carousel-pane.is-active');
-    const steps = active.locator('[data-step-id]');
-    const count = await steps.count();
-    expect(count).toBeGreaterThan(0);
-    for (let i = 0; i < count; i++) {
-      await expect(
-        steps.nth(i).getByRole('button', { name: /Edit this step in Recipe Steps/i }),
-      ).toHaveCount(1);
-    }
-    await steps
-      .first()
-      .getByRole('button', { name: /Edit this step in Recipe Steps/i })
-      .click();
-    await expect(page.getByRole('tab', { name: 'Steps', exact: true })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    await expect(modal(page)).toHaveCount(1);
-    await modal(page).getByRole('button', { name: 'Apply', exact: true }).click();
+    await page.goto(address({ recipe: 'shokupan', section: 'ingredients', mode: 'edit' }));
+    const name = page.getByTestId('recipe-name');
+    await name.fill('Preserved planning draft');
+    await page.getByRole('tab', { name: 'Planning', exact: true }).click();
+    const planning = page.locator('.section-carousel-pane.is-active');
+    await expect(
+      planning.getByRole('button', { name: /Edit.*step|Apply to draft|Add step/i }),
+    ).toHaveCount(0);
+    await expect(
+      planning.locator('[data-testid^="step-menu-"],[data-testid^="drag-handle-"]'),
+    ).toHaveCount(0);
     await expect(modal(page)).toHaveCount(0);
-    await page.getByRole('button', { name: 'Return to Planning', exact: true }).click();
-    await expect(page.getByRole('tab', { name: 'Planning', exact: true })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    await expect(modal(page)).toHaveCount(0);
+    await page.getByRole('tab', { name: 'Recipe', exact: true }).click();
+    await expect(name).toHaveValue('Preserved planning draft');
+    await expect(page.getByTestId('save-recipe')).toBeVisible();
   });
 
   test('optional step temperature can be cleared and stays empty after reopening', async ({
     page,
   }) => {
-    await page.goto(address({ recipe: 'shokupan', section: 'planning' }));
-    await page.getByRole('button', { name: /Edit this step in Recipe Steps.*Mix$/i }).click();
+    await page.goto(address({ recipe: 'shokupan', section: 'ingredients', mode: 'edit' }));
+    await openRecipeSteps(page, 'en');
+    await editProcessStep(page, 'mix', 'en');
     const temperature = modal(page).getByRole('textbox', { name: 'Temperature', exact: true });
     await expect(temperature).not.toHaveValue('');
     await temperature.fill('');
@@ -172,8 +161,7 @@ test.describe('external audit hardening', () => {
     await expect(modal(page).getByRole('button', { name: 'Apply', exact: true })).toBeEnabled();
     await modal(page).getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(modal(page)).toHaveCount(0);
-    await page.getByRole('button', { name: 'Return to Planning', exact: true }).click();
-    await page.getByRole('button', { name: /Edit this step in Recipe Steps.*Mix$/i }).click();
+    await editProcessStep(page, 'mix', 'en');
     await expect(
       modal(page).getByRole('textbox', { name: 'Temperature', exact: true }),
     ).toHaveValue('');
@@ -256,9 +244,29 @@ test.describe('external audit hardening', () => {
     await expect(actions).toBeVisible();
     await open();
     await modal(page).getByRole('button', { name: 'Finish preparation', exact: true }).click();
+    const outcome = page.getByRole('dialog', { name: 'Choose outcome', exact: true });
+    await expect(outcome.getByRole('combobox', { name: 'Outcome', exact: true })).toHaveValue('');
+    await expect(outcome.getByRole('button', { name: 'Apply', exact: true })).toBeDisabled();
+    await expect(page.getByTestId('recorded-outcome')).toHaveCount(0);
+    await outcome.getByRole('combobox', { name: 'Outcome', exact: true }).selectOption('dough');
+    const pieces = outcome.getByRole('textbox', { name: 'Count', exact: true });
+    await pieces.fill('-');
+    await pieces.press('Enter');
+    await expect(outcome.getByRole('button', { name: 'Apply', exact: true })).toBeDisabled();
+    await page.keyboard.press('Escape');
+    await expect(actions).toBeVisible();
+    await open();
+    await modal(page).getByRole('button', { name: 'Finish preparation', exact: true }).click();
+    await expect(outcome.getByRole('combobox', { name: 'Outcome', exact: true })).toBeEnabled();
+    await expect(outcome.getByRole('combobox', { name: 'Outcome', exact: true })).toHaveValue('');
+    await outcome.getByRole('combobox', { name: 'Outcome', exact: true }).selectOption('dough');
+    await outcome
+      .getByRole('combobox', { name: 'Dough disposition', exact: true })
+      .selectOption('frozen');
+    await outcome.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(modal(page)).toHaveCount(0);
     await expect(page.getByText('Preparation complete', { exact: true })).toBeVisible();
-    await expect(page.getByTestId('recorded-outcome')).toHaveText('Cooked');
+    await expect(page.getByTestId('recorded-outcome')).toHaveText('Prepared dough · Frozen');
   });
 
   test('abandonment is explicit, retains the journal and records no cooked outcome', async ({
@@ -280,7 +288,8 @@ test.describe('external audit hardening', () => {
     ).toBeVisible();
     await expect(page.getByTestId('recorded-outcome')).toHaveText('No usable outcome recorded');
     await expect(page.getByText('Preparation complete', { exact: true })).toHaveCount(0);
-    await expect(page.locator('.journal li').first()).toContainText('Preparation abandoned');
-    await expect(page.locator('.journal')).toContainText('Preparation started');
+    const businessJournal = page.getByTestId('prep-business-journal');
+    await expect(businessJournal.locator('li').first()).toContainText('Preparation abandoned');
+    await expect(businessJournal).toContainText('Preparation started');
   });
 });

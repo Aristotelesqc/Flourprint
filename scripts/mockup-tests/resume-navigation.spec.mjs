@@ -42,7 +42,7 @@ test.describe('navigation A carousel acceptance', () => {
     await salt.fill('8.125');
     await salt.press('Enter');
     const editedValue = await salt.inputValue();
-    for (const name of ['Steps', 'Planning', 'History', 'Ingredients']) {
+    for (const name of ['Planning', 'History', 'Recipe']) {
       await sectionTab(page, name).click();
       await expect(sectionTab(page, name)).toHaveAttribute('aria-selected', 'true');
       await expect
@@ -80,10 +80,10 @@ test.describe('navigation A carousel acceptance', () => {
         }));
         expect(metrics.transform).not.toBe('none');
         expect(metrics.transform).not.toBe('matrix(1, 0, 0, 1, 0, 0)');
-        await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+        await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
       },
     });
-    await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Planning')).toHaveAttribute('aria-selected', 'true');
     await expect
       .poll(() =>
         page
@@ -100,14 +100,14 @@ test.describe('navigation A carousel acceptance', () => {
   test('short slow drag springs back but short fast flick commits', async ({ page, context }) => {
     await page.goto(address());
     await gesture(page, context, { fromX: 290, toX: 160, duration: 900 });
-    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
     await expect
       .poll(() =>
         page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
       )
       .toBe(0);
     await gesture(page, context, { fromX: 290, toX: 210, duration: 35 });
-    await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Planning')).toHaveAttribute('aria-selected', 'true');
   });
   test('a short flick held still before release springs back instead of using stale velocity', async ({
     page,
@@ -120,7 +120,7 @@ test.describe('navigation A carousel acceptance', () => {
       duration: 35,
       during: () => gesturePause(260),
     });
-    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
     await expect
       .poll(() =>
         page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
@@ -143,10 +143,10 @@ test.describe('navigation A carousel acceptance', () => {
     await gesture(page, context, {
       during: async () => {
         await expect.poll(x).toBeGreaterThan(initial + 20);
-        await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+        await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
       },
     });
-    await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Planning')).toHaveAttribute('aria-selected', 'true');
   });
   test('the catalogue operates the same versioned carousel with a real touch swipe', async ({
     page,
@@ -187,7 +187,7 @@ test.describe('navigation A carousel acceptance', () => {
   test('pointer cancellation beyond half never commits a tab change', async ({ page, context }) => {
     await page.goto(address());
     await gesture(page, context, { cancel: true });
-    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
     await expect
       .poll(() =>
         page
@@ -204,7 +204,7 @@ test.describe('navigation A carousel acceptance', () => {
   test('screen-edge gesture is excluded', async ({ page, context }) => {
     await page.goto(address());
     await gesture(page, context, { fromX: 8, toX: 280, duration: 100 });
-    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
   });
   test('the scrolling pane keeps native vertical touch scrolling', async ({ page, context }) => {
     await page.goto(address());
@@ -219,7 +219,7 @@ test.describe('navigation A carousel acceptance', () => {
     await expect
       .poll(() => page.locator('.section-carousel-pane.is-active').evaluate((el) => el.scrollTop))
       .toBeGreaterThan(100);
-    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
   });
   test('a nested horizontal scroller consumes its own touch gesture', async ({ page, context }) => {
     await page.goto(address());
@@ -238,7 +238,7 @@ test.describe('navigation A carousel acceptance', () => {
     const box = await scroller.boundingBox();
     await gesture(page, context, { y: box.y + 40, duration: 500 });
     await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100);
-    await expect(sectionTab(page, 'Ingredients')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Recipe')).toHaveAttribute('aria-selected', 'true');
   });
   test('manual reduced motion uses instant change without finger-follow slide', async ({
     page,
@@ -258,7 +258,7 @@ test.describe('navigation A carousel acceptance', () => {
         ).toBe(initial);
       },
     });
-    await expect(sectionTab(page, 'Steps')).toHaveAttribute('aria-selected', 'true');
+    await expect(sectionTab(page, 'Planning')).toHaveAttribute('aria-selected', 'true');
     expect(
       await page.locator('.section-carousel-track').evaluate((el) => el.getAnimations().length),
     ).toBe(0);

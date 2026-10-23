@@ -31,7 +31,11 @@ export type StepsCopyKey =
   | 'noAdditionalDependencies'
   | 'closeToInspect'
   | 'temperature'
-  | 'instructionCoolFinal';
+  | 'instructionCoolFinal'
+  | 'unsetPlan'
+  | 'preheatWarmup'
+  | 'preheatInsufficient'
+  | 'cookingGroup';
 
 const stepsCopy: Record<Locale, Record<StepsCopyKey, string>> = {
   fr: {
@@ -68,6 +72,10 @@ const stepsCopy: Record<Locale, Record<StepsCopyKey, string>> = {
     closeToInspect: 'Fermer et inspecter',
     temperature: 'Température',
     instructionCoolFinal: 'Laisser refroidir sur une grille après la cuisson.',
+    unsetPlan: 'Choisir une heure pour planifier les étapes',
+    preheatWarmup: 'Préchauffage',
+    preheatInsufficient: 'Temps de préchauffage insuffisant',
+    cookingGroup: 'Cuisson',
   },
   en: {
     plannedResult: 'Planned result',
@@ -102,6 +110,10 @@ const stepsCopy: Record<Locale, Record<StepsCopyKey, string>> = {
     closeToInspect: 'Close to inspect',
     temperature: 'Temperature',
     instructionCoolFinal: 'Allow to cool on a wire rack after baking.',
+    unsetPlan: 'Choose a time to schedule steps',
+    preheatWarmup: 'Preheat',
+    preheatInsufficient: 'Insufficient preheat time',
+    cookingGroup: 'Baking',
   },
 };
 

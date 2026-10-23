@@ -5,13 +5,19 @@ const { test, expect } = require('@playwright/test');
 const route = (extra = {}) =>
   `/mockup.html?${new URLSearchParams({ screen: 'recipe', recipe: 'shokupan', nav: 'A', lang: 'en', motion: 'reduce', capture: '1', ...extra })}`;
 
-test('allocated milk contributes to component hydration without a false editable target', async ({
+test('allocated milk hydration edits use the native inverse and preserve allocated milk', async ({
   page,
 }) => {
   await page.goto(route({ mode: 'edit', section: 'ingredients' }));
   const hydration = page.getByTestId('component-hydration-tangzhong');
   await expect(hydration).toHaveValue('580.5');
-  await expect(hydration).toBeDisabled();
+  await expect(hydration).toBeEditable();
+  await hydration.fill('500');
+  await hydration.press('Enter');
+  await expect(hydration).toHaveValue('500');
+  await expect(page.getByTestId('ingredient-grams-tangzhong-water')).toHaveValue('31.73');
+  await expect(page.getByTestId('ingredient-grams-tangzhong-milk')).toHaveValue('43');
+  await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
   await expect(page.getByTestId('component-ratio-tangzhong')).toBeEnabled();
 });
 

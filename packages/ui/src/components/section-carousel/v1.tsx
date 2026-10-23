@@ -33,15 +33,20 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
   const activeIndexRef = useRef(activeIndex);
   activeIndexRef.current = activeIndex;
 
+  // Phase separation: 'idle' | 'tracking' | 'settling'
+  const phaseRef = useRef<'idle' | 'tracking' | 'settling'>('idle');
+  const settleAnimationRef = useRef<Animation | null>(null);
+  const cancelSettleRef = useRef<(() => void) | null>(null);
+  const [committedIndex, setCommittedIndex] = useState<number>(activeIndex);
+  const committedIndexRef = useRef<number>(activeIndex);
+  committedIndexRef.current = committedIndex;
+  const currentTransformRef = useRef<string | null>(null);
+
   // Consume motion from MotionProvider
   const motion = useTabCarouselMotion();
 
   // Track visible panes to ensure inactive panes are inert & hidden when stationary
   const [revealedPanes, setRevealedPanes] = useState<number[]>([activeIndex]);
-
-  useEffect(() => {
-    setRevealedPanes([activeIndex]);
-  }, [activeIndex]);
 
   const selectSection = (nextIndex: number) => {
     const nextSection = sections[nextIndex];
@@ -65,6 +70,7 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     isDragging: boolean;
     currentDx: number;
     adjacentIndex: number | null;
+    startIndex: number;
   }>({
     startX: 0,
     startY: 0,
@@ -78,6 +84,7 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     isDragging: false,
     currentDx: 0,
     adjacentIndex: null,
+    startIndex: 0,
   });
 
   const dispatchTabSignal = (fromId: string, toId?: string, progress: number = 0) => {
@@ -108,34 +115,100 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     }
   };
 
-  // Slide track to activeIndex when activeSection changes externally or via state
+  // Slide track when activeSection changes externally (e.g. tab tap or external prop change)
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
+
+    // If activeIndex matches what is already committed, avoid duplicate animation
+    if (activeIndex === committedIndexRef.current && phaseRef.current === 'idle') {
+      setRevealedPanes([activeIndex]);
+      return;
+    }
+
     if (gestureRef.current.isDragging) return;
 
+    // Cancel any active animation or previous settle
+    let isTransitionCleanedUp = false;
+    cancelSettleRef.current?.();
+    settleAnimationRef.current?.cancel();
+    cancelSettleRef.current = () => {
+      isTransitionCleanedUp = true;
+    };
+
+    const fromIndex = committedIndexRef.current;
     const targetPercent = -activeIndex * 100;
     if (containerRef.current && containerRef.current.scrollLeft !== 0) {
       containerRef.current.scrollLeft = 0;
     }
+
     if (reduced) {
+      phaseRef.current = 'idle';
       track.style.transform = `translateX(${targetPercent}%)`;
-    } else {
-      const currentTransform =
-        track.style.transform || `translateX(${-activeIndexRef.current * 100}%)`;
-      playTabCarouselSlide(track, currentTransform, `${targetPercent}%`, {
-        ...(motion ? { motion } : {}),
-        durationMs: 220,
-        reduced: false,
-        onFinish: () => {
-          setRevealedPanes([activeIndex]);
-          if (containerRef.current && containerRef.current.scrollLeft !== 0) {
-            containerRef.current.scrollLeft = 0;
-          }
-        },
-      });
+      currentTransformRef.current = `translateX(${targetPercent}%)`;
+      committedIndexRef.current = activeIndex;
+      setCommittedIndex(activeIndex);
+      setRevealedPanes([activeIndex]);
+      dispatchTabSignal(sections[activeIndex] ?? activeSection, undefined, 0);
+      return;
     }
+
+    phaseRef.current = 'settling';
+
+    // Capture actual computed matrix when interrupting, or track inline style, or starting percent
+    let currentTransform = track.style.transform;
+    try {
+      const computed = window.getComputedStyle(track).transform;
+      if (computed && computed !== 'none') {
+        currentTransform = computed;
+      }
+    } catch {
+      // ignore
+    }
+    if (!currentTransform) {
+      currentTransform = `translateX(${-fromIndex * 100}%)`;
+    }
+
+    const container = containerRef.current;
+    const containerWidth = container?.clientWidth || 393;
+    const distancePx = (fromIndex - activeIndex) * containerWidth;
+
+    setRevealedPanes((prev) => Array.from(new Set([...prev, fromIndex, activeIndex])));
+
+    const anim = playTabCarouselSlide(track, currentTransform, `${targetPercent}%`, {
+      ...(motion ? { motion } : {}),
+      durationMs: 220,
+      distancePx,
+      reduced: false,
+      onProgress: (p: number) => {
+        if (isTransitionCleanedUp || phaseRef.current !== 'settling') return;
+        dispatchTabSignal(sections[fromIndex] ?? activeSection, sections[activeIndex], p);
+      },
+      onFinish: () => {
+        if (isTransitionCleanedUp || phaseRef.current !== 'settling') return;
+        phaseRef.current = 'idle';
+        track.style.transform = `translateX(${targetPercent}%)`;
+        currentTransformRef.current = `translateX(${targetPercent}%)`;
+        committedIndexRef.current = activeIndex;
+        setCommittedIndex(activeIndex);
+        setRevealedPanes([activeIndex]);
+        dispatchTabSignal(sections[activeIndex] ?? activeSection, undefined, 0);
+        if (containerRef.current && containerRef.current.scrollLeft !== 0) {
+          containerRef.current.scrollLeft = 0;
+        }
+      },
+    });
+
+    settleAnimationRef.current = anim ?? null;
   }, [activeIndex, reduced, motion]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      cancelSettleRef.current?.();
+      settleAnimationRef.current?.cancel();
+    };
+  }, []);
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 && event.pointerType === 'mouse') return;
@@ -179,6 +252,23 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
       el = el.parentElement;
     }
 
+    // A new gesture cleanly cancels active settle without stale callbacks
+    if (phaseRef.current === 'settling') {
+      settleAnimationRef.current?.cancel();
+      cancelSettleRef.current?.();
+      phaseRef.current = 'idle';
+      if (trackRef.current) {
+        try {
+          const comp = window.getComputedStyle(trackRef.current).transform;
+          if (comp && comp !== 'none') {
+            currentTransformRef.current = comp;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
     const now = getEventTime(event);
     gestureRef.current = {
       startX: event.clientX,
@@ -193,6 +283,7 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
       isDragging: false,
       currentDx: 0,
       adjacentIndex: null,
+      startIndex: activeIndexRef.current,
     };
   };
 
@@ -221,6 +312,7 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
 
       g.isLockedHorizontal = true;
       g.isDragging = true;
+      phaseRef.current = 'tracking';
       try {
         containerRef.current?.setPointerCapture(event.pointerId);
       } catch {
@@ -244,23 +336,29 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
 
     const container = containerRef.current;
     const containerWidth = container?.clientWidth || 393;
+    const startIndex = g.startIndex;
 
-    // Identify adjacent pane and reveal only adjacent pane during swipe
-    let adj = activeIndexRef.current;
-    if (dx < 0 && activeIndexRef.current < sections.length - 1) {
-      adj = activeIndexRef.current + 1;
-    } else if (dx > 0 && activeIndexRef.current > 0) {
-      adj = activeIndexRef.current - 1;
+    // Identify adjacent pane and reveal starting + adjacent pane during swipe
+    let adj = startIndex;
+    if (dx < 0 && startIndex < sections.length - 1) {
+      adj = startIndex + 1;
+    } else if (dx > 0 && startIndex > 0) {
+      adj = startIndex - 1;
     }
     g.adjacentIndex = adj;
-    if (adj !== activeIndexRef.current) {
-      setRevealedPanes([activeIndexRef.current, adj]);
+    if (adj !== startIndex) {
+      setRevealedPanes((prev) => {
+        if (prev.length === 2 && prev.includes(startIndex) && prev.includes(adj)) {
+          return prev;
+        }
+        return [startIndex, adj];
+      });
     }
 
     // Send progress signal to Tabs so indicator follows finger
     const progress = Math.min(1, Math.abs(dx) / containerWidth);
-    const toId = adj !== activeIndexRef.current ? sections[adj] : undefined;
-    dispatchTabSignal(sections[activeIndexRef.current] ?? activeSection, toId, progress);
+    const toId = adj !== startIndex ? sections[adj] : undefined;
+    dispatchTabSignal(sections[startIndex] ?? activeSection, toId, progress);
 
     // L101: In reduced motion, no direct follow animation
     if (reduced) return;
@@ -268,14 +366,16 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     const track = trackRef.current;
     if (track) {
       let effectiveDx = dx;
-      if (activeIndexRef.current === 0 && dx > 0) {
+      if (startIndex === 0 && dx > 0) {
         effectiveDx = dx * 0.25;
-      } else if (activeIndexRef.current === sections.length - 1 && dx < 0) {
+      } else if (startIndex === sections.length - 1 && dx < 0) {
         effectiveDx = dx * 0.25;
       }
 
-      const basePercent = -activeIndexRef.current * 100;
-      track.style.transform = `translateX(calc(${basePercent}% + ${effectiveDx}px))`;
+      const basePercent = -startIndex * 100;
+      const transformValue = `translateX(calc(${basePercent}% + ${effectiveDx}px))`;
+      currentTransformRef.current = transformValue;
+      track.style.transform = transformValue;
     }
   };
 
@@ -286,6 +386,7 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     const track = trackRef.current;
     const container = containerRef.current;
     const wasDragging = g.isDragging;
+    const startIndex = g.startIndex;
 
     if (container && container.hasPointerCapture(event.pointerId)) {
       try {
@@ -299,9 +400,10 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     g.isDragging = false;
     g.isLockedHorizontal = false;
     g.isCancelled = false;
-    dispatchTabSignal(sections[activeIndexRef.current] ?? activeSection, undefined, 0);
 
     if (!wasDragging || !track || !container) {
+      phaseRef.current = 'idle';
+      dispatchTabSignal(sections[activeIndexRef.current] ?? activeSection, undefined, 0);
       setRevealedPanes([activeIndexRef.current]);
       return;
     }
@@ -313,58 +415,113 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     const dragThreshold = containerWidth / 2;
     const flickVelocityThreshold = 0.3;
 
-    let targetIndex = activeIndexRef.current;
+    let targetIndex = startIndex;
 
     const draggedNext = dx < -dragThreshold;
     const draggedPrev = dx > dragThreshold;
     const flickedNext = dx < -20 && velocity < -flickVelocityThreshold;
     const flickedPrev = dx > 20 && velocity > flickVelocityThreshold;
 
-    if ((draggedNext || flickedNext) && activeIndexRef.current < sections.length - 1) {
-      targetIndex = activeIndexRef.current + 1;
-    } else if ((draggedPrev || flickedPrev) && activeIndexRef.current > 0) {
-      targetIndex = activeIndexRef.current - 1;
+    if ((draggedNext || flickedNext) && startIndex < sections.length - 1) {
+      targetIndex = startIndex + 1;
+    } else if ((draggedPrev || flickedPrev) && startIndex > 0) {
+      targetIndex = startIndex - 1;
     }
 
     const targetPercent = -targetIndex * 100;
 
     // L101: In reduced motion, instant commit without sliding animation
     if (reduced) {
+      phaseRef.current = 'idle';
       track.style.transform = `translateX(${targetPercent}%)`;
+      currentTransformRef.current = `translateX(${targetPercent}%)`;
+      committedIndexRef.current = targetIndex;
+      setCommittedIndex(targetIndex);
       setRevealedPanes([targetIndex]);
+      dispatchTabSignal(sections[targetIndex] ?? activeSection, undefined, 0);
       if (targetIndex !== activeIndexRef.current) {
         selectSection(targetIndex);
       }
       return;
     }
 
-    const currentTransform =
-      track.style.transform || `translateX(${-activeIndexRef.current * 100}%)`;
+    // SETTLING PHASE: separate tracking, settling and semantic selection (L106/L117)
+    phaseRef.current = 'settling';
 
-    const distancePx = Math.abs(dx - (targetIndex - activeIndexRef.current) * containerWidth);
+    let effectiveDx = dx;
+    if (startIndex === 0 && dx > 0) {
+      effectiveDx = dx * 0.25;
+    } else if (startIndex === sections.length - 1 && dx < 0) {
+      effectiveDx = dx * 0.25;
+    }
+
+    const currentTransform =
+      track.style.transform || `translateX(calc(${-startIndex * 100}% + ${effectiveDx}px))`;
+
+    // Distance remaining to target in px
+    const distancePx = (startIndex - targetIndex) * containerWidth - effectiveDx;
+    const absDistance = Math.abs(distancePx);
+
     let durationMs: number;
     if (Math.abs(velocity) > 0.4) {
-      durationMs = Math.max(100, Math.min(220, Math.round(distancePx / Math.abs(velocity))));
+      durationMs = Math.max(100, Math.min(220, Math.round(absDistance / Math.abs(velocity))));
     } else {
-      durationMs = Math.max(140, Math.min(220, Math.round((distancePx / containerWidth) * 220)));
+      durationMs = Math.max(140, Math.min(220, Math.round((absDistance / containerWidth) * 220)));
     }
 
-    if (targetIndex !== activeIndexRef.current) {
-      selectSection(targetIndex);
+    // Keep starting and adjacent panes visible through settle
+    if (targetIndex !== startIndex) {
+      setRevealedPanes([startIndex, targetIndex]);
+    } else if (g.adjacentIndex !== null && g.adjacentIndex !== startIndex) {
+      setRevealedPanes([startIndex, g.adjacentIndex]);
     }
 
-    playTabCarouselSlide(track, currentTransform, `${targetPercent}%`, {
+    const startProgress = Math.min(1, Math.abs(dx) / containerWidth);
+    const targetProgress = targetIndex !== startIndex ? 1 : 0;
+    const movingToSection =
+      targetIndex !== startIndex
+        ? sections[targetIndex]
+        : g.adjacentIndex !== null && g.adjacentIndex !== startIndex
+          ? sections[g.adjacentIndex]
+          : undefined;
+
+    let isSettlingCleanedUp = false;
+    cancelSettleRef.current = () => {
+      isSettlingCleanedUp = true;
+    };
+
+    const anim = playTabCarouselSlide(track, currentTransform, `${targetPercent}%`, {
       ...(motion ? { motion } : {}),
       durationMs,
+      velocity,
+      distancePx,
       reduced: false,
+      onProgress: (p: number) => {
+        if (isSettlingCleanedUp || phaseRef.current !== 'settling') return;
+        const currentP = startProgress + (targetProgress - startProgress) * p;
+        dispatchTabSignal(sections[startIndex] ?? activeSection, movingToSection, currentP);
+      },
       onFinish: () => {
+        if (isSettlingCleanedUp || phaseRef.current !== 'settling') return;
+        phaseRef.current = 'idle';
         track.style.transform = `translateX(${targetPercent}%)`;
+        currentTransformRef.current = `translateX(${targetPercent}%)`;
+        committedIndexRef.current = targetIndex;
+        setCommittedIndex(targetIndex);
         setRevealedPanes([targetIndex]);
+        dispatchTabSignal(sections[targetIndex] ?? activeSection, undefined, 0);
+
+        // Commit semantic selection exactly once on settle finish
+        if (targetIndex !== activeIndexRef.current) {
+          selectSection(targetIndex);
+        }
       },
     });
+
+    settleAnimationRef.current = anim ?? null;
   };
 
-  // Defect 3: pointercancel MUST always restore starting section
+  // pointercancel MUST restore starting section and clean up
   const cancelGesture = (event: React.PointerEvent<HTMLDivElement>) => {
     const g = gestureRef.current;
     if (g.pointerId !== event.pointerId) return;
@@ -372,6 +529,7 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     const track = trackRef.current;
     const container = containerRef.current;
     const wasDragging = g.isDragging;
+    const startIndex = g.startIndex;
 
     if (container && container.hasPointerCapture(event.pointerId)) {
       try {
@@ -385,28 +543,64 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     g.isDragging = false;
     g.isLockedHorizontal = false;
     g.isCancelled = false;
-    dispatchTabSignal(sections[activeIndexRef.current] ?? activeSection, undefined, 0);
 
-    if (!wasDragging || !track) {
+    if (!wasDragging || !track || !container) {
+      phaseRef.current = 'idle';
+      dispatchTabSignal(sections[activeIndexRef.current] ?? activeSection, undefined, 0);
       setRevealedPanes([activeIndexRef.current]);
       return;
     }
 
-    const targetPercent = -activeIndexRef.current * 100;
+    const targetPercent = -startIndex * 100;
     if (reduced) {
+      phaseRef.current = 'idle';
       track.style.transform = `translateX(${targetPercent}%)`;
-      setRevealedPanes([activeIndexRef.current]);
-    } else {
-      playTabCarouselSlide(track, track.style.transform, `${targetPercent}%`, {
-        ...(motion ? { motion } : {}),
-        durationMs: 220,
-        reduced: false,
-        onFinish: () => {
-          track.style.transform = `translateX(${targetPercent}%)`;
-          setRevealedPanes([activeIndexRef.current]);
-        },
-      });
+      currentTransformRef.current = `translateX(${targetPercent}%)`;
+      committedIndexRef.current = startIndex;
+      setCommittedIndex(startIndex);
+      setRevealedPanes([startIndex]);
+      dispatchTabSignal(sections[startIndex] ?? activeSection, undefined, 0);
+      return;
     }
+
+    phaseRef.current = 'settling';
+    const containerWidth = container.clientWidth || 393;
+    const startProgress = Math.min(1, Math.abs(g.currentDx) / containerWidth);
+    const movingToSection =
+      g.adjacentIndex !== null && g.adjacentIndex !== startIndex
+        ? sections[g.adjacentIndex]
+        : undefined;
+
+    let isSettlingCleanedUp = false;
+    cancelSettleRef.current = () => {
+      isSettlingCleanedUp = true;
+    };
+
+    const currentTransform =
+      track.style.transform || `translateX(calc(${-startIndex * 100}% + ${g.currentDx}px))`;
+
+    const anim = playTabCarouselSlide(track, currentTransform, `${targetPercent}%`, {
+      ...(motion ? { motion } : {}),
+      durationMs: 220,
+      reduced: false,
+      onProgress: (p: number) => {
+        if (isSettlingCleanedUp || phaseRef.current !== 'settling') return;
+        const currentP = startProgress * (1 - p);
+        dispatchTabSignal(sections[startIndex] ?? activeSection, movingToSection, currentP);
+      },
+      onFinish: () => {
+        if (isSettlingCleanedUp || phaseRef.current !== 'settling') return;
+        phaseRef.current = 'idle';
+        track.style.transform = `translateX(${targetPercent}%)`;
+        currentTransformRef.current = `translateX(${targetPercent}%)`;
+        committedIndexRef.current = startIndex;
+        setCommittedIndex(startIndex);
+        setRevealedPanes([startIndex]);
+        dispatchTabSignal(sections[startIndex] ?? activeSection, undefined, 0);
+      },
+    });
+
+    settleAnimationRef.current = anim ?? null;
   };
 
   return (
@@ -430,11 +624,16 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
       <div
         ref={trackRef}
         className="section-carousel-track"
-        style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+        style={{
+          transform:
+            phaseRef.current === 'idle'
+              ? `translateX(-${committedIndex * 100}%)`
+              : (currentTransformRef.current ?? `translateX(-${committedIndex * 100}%)`),
+        }}
       >
         {React.Children.map(children, (child, index) => {
           const isRevealed = revealedPanes.includes(index);
-          const isCurrent = index === activeIndex;
+          const isCurrent = index === committedIndex;
 
           return (
             <div

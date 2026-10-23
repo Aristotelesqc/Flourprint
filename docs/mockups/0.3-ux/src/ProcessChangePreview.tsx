@@ -1,6 +1,13 @@
-import type { Process, ProcessStep, Projection, NotCarried } from '@flourprint/core/domain';
+import {
+  relativeTimeline,
+  type Process,
+  type ProcessStep,
+  type Projection,
+  type NotCarried,
+  type RelativeTimeline,
+} from '@flourprint/core/domain';
 import { Disclosure } from './ui';
-import { t, time, type Locale, type MessageKey } from './messages';
+import { t, time, duration, type Locale, type MessageKey } from './messages';
 
 export interface ProcessChangePreviewProps {
   locale: Locale;
@@ -8,6 +15,8 @@ export interface ProcessChangePreviewProps {
   after: Process;
   beforeProjection?: Projection;
   afterProjection?: Projection;
+  beforeRelative?: RelativeTimeline;
+  afterRelative?: RelativeTimeline;
   titleForStep: (step: ProcessStep) => string;
   notCarried?: readonly NotCarried[];
   copyId?: string;
@@ -40,6 +49,8 @@ export const ProcessChangePreview = ({
   after,
   beforeProjection,
   afterProjection,
+  beforeRelative,
+  afterRelative,
   titleForStep,
   notCarried = [],
   copyId,
@@ -55,27 +66,61 @@ export const ProcessChangePreview = ({
   const copyStep = copyId ? after.steps.find((s) => s.id === copyId) : undefined;
   const durationRequired = copyStep && copyStep.plannedDurationS === undefined;
 
+  const bRelResult = !beforeProjection ? relativeTimeline(before) : undefined;
+  const bRel: RelativeTimeline | undefined =
+    beforeRelative ?? (bRelResult && bRelResult.ok ? bRelResult.value : undefined);
+
+  const aRelResult = !afterProjection ? relativeTimeline(after) : undefined;
+  const aRel: RelativeTimeline | undefined =
+    afterRelative ?? (aRelResult && aRelResult.ok ? aRelResult.value : undefined);
+
   const affectedSteps = after.steps.flatMap((afterStep) => {
     const beforeStep = before.steps.find((s) => s.id === afterStep.id);
     const bProj = beforeProjection?.steps[afterStep.id];
     const aProj = afterProjection?.steps[afterStep.id];
+    const bTiming = bRel?.steps.find((s) => s.stepId === afterStep.id)?.timing;
+    const aTiming = aRel?.steps.find((s) => s.stepId === afterStep.id)?.timing;
     const isNew = !beforeStep;
     const depsChanged =
       !isNew &&
       (beforeStep.dependsOn.length !== afterStep.dependsOn.length ||
         beforeStep.dependsOn.some((d, i) => d !== afterStep.dependsOn[i]));
     const timesChanged =
-      bProj?.start !== aProj?.start ||
-      bProj?.end !== aProj?.end ||
-      bProj?.status !== aProj?.status ||
-      (bProj?.unknownAfter ?? []).length !== (aProj?.unknownAfter ?? []).length ||
-      (bProj?.unknownAfter ?? []).some((id, index) => id !== aProj?.unknownAfter[index]);
+      beforeProjection && afterProjection
+        ? bProj?.start !== aProj?.start ||
+          bProj?.end !== aProj?.end ||
+          bProj?.status !== aProj?.status ||
+          (bProj?.unknownAfter ?? []).length !== (aProj?.unknownAfter ?? []).length ||
+          (bProj?.unknownAfter ?? []).some((id, index) => id !== aProj?.unknownAfter[index])
+        : bTiming?.status !== aTiming?.status ||
+          (bTiming?.status === 'known' &&
+            aTiming?.status === 'known' &&
+            (bTiming.startS !== aTiming.startS || bTiming.endS !== aTiming.endS));
 
     if (isNew || depsChanged || timesChanged) {
-      return [{ afterStep, beforeStep, bProj, aProj, isNew }];
+      return [{ afterStep, beforeStep, bProj, aProj, bTiming, aTiming, isNew }];
     }
     return [];
   });
+
+  const renderTiming = (
+    proj?: { start?: string; end?: string },
+    rel?: { status: 'known'; startS: number; endS: number } | { status: 'unknown' },
+  ) => {
+    if (proj?.start && proj.end) {
+      return <TimeRange locale={locale} start={proj.start} end={proj.end} />;
+    }
+    if (rel && rel.status === 'known') {
+      return (
+        <span className="process-change-times">
+          <span>+{duration(locale, rel.startS)}</span>
+          <span aria-hidden="true">–</span>
+          <span>+{duration(locale, rel.endS)}</span>
+        </span>
+      );
+    }
+    return <p>{t(locale, 'changeNoProjection')}</p>;
+  };
 
   const renderDeps = (deps: readonly string[], proc: Process) =>
     deps.length > 0
@@ -105,7 +150,7 @@ export const ProcessChangePreview = ({
         <p className="muted">
           {t(
             locale,
-            beforeProjection && afterProjection
+            (beforeProjection && afterProjection) || (bRel && aRel)
               ? 'changeDependenciesUnchanged'
               : 'changeNoProjection',
           )}
@@ -113,43 +158,36 @@ export const ProcessChangePreview = ({
       ) : (
         <Disclosure title={`${t(locale, 'changeAffectedSteps')} (${affectedSteps.length})`}>
           <ul className="process-change-list stack">
-            {affectedSteps.map(({ afterStep, beforeStep, bProj, aProj, isNew }) => (
-              <li
-                key={afterStep.id}
-                className="stack"
-                data-testid={`affected-step-${afterStep.id}`}
-              >
-                <strong>{stepName(afterStep.id, after)}</strong>
-                <dl className="stack">
-                  <dt className="muted">{t(locale, 'changeBefore')}</dt>
-                  <dd>
-                    {beforeStep ? (
-                      <>
-                        {t(locale, 'changeDependencies')} :{' '}
-                        {renderDeps(beforeStep.dependsOn, before)}
-                      </>
-                    ) : (
-                      t(locale, 'changeNewStep')
-                    )}
-                    {!isNew &&
-                      (bProj ? (
-                        <TimeRange locale={locale} start={bProj.start} end={bProj.end} />
+            {affectedSteps.map(
+              ({ afterStep, beforeStep, bProj, aProj, bTiming, aTiming, isNew }) => (
+                <li
+                  key={afterStep.id}
+                  className="stack"
+                  data-testid={`affected-step-${afterStep.id}`}
+                >
+                  <strong>{stepName(afterStep.id, after)}</strong>
+                  <dl className="stack">
+                    <dt className="muted">{t(locale, 'changeBefore')}</dt>
+                    <dd>
+                      {beforeStep ? (
+                        <>
+                          {t(locale, 'changeDependencies')} :{' '}
+                          {renderDeps(beforeStep.dependsOn, before)}
+                        </>
                       ) : (
-                        <p>{t(locale, 'changeNoProjection')}</p>
-                      ))}
-                  </dd>
-                  <dt className="muted">{t(locale, 'changeAfter')}</dt>
-                  <dd>
-                    {t(locale, 'changeDependencies')} : {renderDeps(afterStep.dependsOn, after)}
-                    {aProj ? (
-                      <TimeRange locale={locale} start={aProj.start} end={aProj.end} />
-                    ) : (
-                      <p>{t(locale, 'changeNoProjection')}</p>
-                    )}
-                  </dd>
-                </dl>
-              </li>
-            ))}
+                        t(locale, 'changeNewStep')
+                      )}
+                      {!isNew && renderTiming(bProj, bTiming)}
+                    </dd>
+                    <dt className="muted">{t(locale, 'changeAfter')}</dt>
+                    <dd>
+                      {t(locale, 'changeDependencies')} : {renderDeps(afterStep.dependsOn, after)}
+                      {renderTiming(aProj, aTiming)}
+                    </dd>
+                  </dl>
+                </li>
+              ),
+            )}
           </ul>
         </Disclosure>
       )}

@@ -9,6 +9,130 @@ export const PREPARATION_COPY = {
     fr: 'Choisir la préparation active',
     en: 'Select active preparation',
   },
+  prepHeading: {
+    fr: 'Préparation · {recipe}',
+    en: 'Preparation · {recipe}',
+  },
+  stepLine: {
+    fr: '{current} / {total} · {step}',
+    en: '{current} / {total} · {step}',
+  },
+  estimatedRemainingTime: {
+    fr: 'Temps restant estimé',
+    en: 'Estimated remaining time',
+  },
+  adjustmentLabel: {
+    fr: 'Ajustement : {adj}',
+    en: 'Adjustment: {adj}',
+  },
+  countdownRow: {
+    fr: 'Compte à rebours',
+    en: 'Countdown',
+  },
+  progressionRow: {
+    fr: 'Progression',
+    en: 'Progression',
+  },
+  actionPrev: {
+    fr: '← Précédent',
+    en: '← Previous',
+  },
+  actionNext: {
+    fr: 'Suivant →',
+    en: 'Next →',
+  },
+  actionMinus15: {
+    fr: '−15 min',
+    en: '−15 min',
+  },
+  actionPlus15: {
+    fr: '+15 min',
+    en: '+15 min',
+  },
+  actionPause: {
+    fr: 'Pause',
+    en: 'Pause',
+  },
+  actionResume: {
+    fr: 'Reprendre',
+    en: 'Resume',
+  },
+  pauseActive: {
+    fr: 'En pause',
+    en: 'Paused',
+  },
+  overdue: {
+    fr: 'Dépassement',
+    en: 'Overdue',
+  },
+  pauseUnavailableExplanation: {
+    fr: 'Pause indisponible dans cette version du moteur',
+    en: 'Pause unavailable in this engine version',
+  },
+  finishPreparation: {
+    fr: 'Terminer la préparation',
+    en: 'Finish preparation',
+  },
+  retractRefusalTitle: {
+    fr: 'Étape suivante déjà commencée',
+    en: 'Following step already started',
+  },
+  retractRefusalExplanation: {
+    fr: 'L’étape suivante a déjà été commencée. Impossible d’annuler directement l’étape précédente.',
+    en: 'The following step has already started. Cannot directly retract previous step.',
+  },
+  retractBlockedNotCompleted: {
+    fr: 'L’étape précédente n’est pas terminée.',
+    en: 'Previous step is not completed.',
+  },
+  correctTimeAction: {
+    fr: 'Corriger l’horaire',
+    en: 'Correct time',
+  },
+  repeatStepAction: {
+    fr: 'Répéter l’étape',
+    en: 'Repeat step',
+  },
+  correctTimeTitle: {
+    fr: 'Corriger l’horaire de fin de l’étape précédente',
+    en: 'Correct end time of previous step',
+  },
+  repeatStepTitle: {
+    fr: 'Insérer une répétition d’étape',
+    en: 'Insert step repetition',
+  },
+  newTimeLabel: {
+    fr: 'Minutes écoulées',
+    en: 'Elapsed minutes',
+  },
+  repeatDurationLabel: {
+    fr: 'Durée prévue pour la répétition (minutes)',
+    en: 'Planned duration for repetition (minutes)',
+  },
+  technicalJournal: {
+    fr: 'Journal d’événements techniques',
+    en: 'Technical event journal',
+  },
+  technicalEventsCount: {
+    fr: '{count} événements techniques',
+    en: '{count} technical events',
+  },
+  outcomeRequired: {
+    fr: 'Choix du résultat requis',
+    en: 'Outcome choice required',
+  },
+  outcomeRequiredExplanation: {
+    fr: 'Aucune étape de cuisson n’a été réalisée. Choisir le résultat de la préparation avant de terminer.',
+    en: 'No cooking step has been completed. Choose preparation outcome before finishing.',
+  },
+  closeAction: {
+    fr: 'Fermer',
+    en: 'Close',
+  },
+  applyAction: {
+    fr: 'Appliquer',
+    en: 'Apply',
+  },
   preheatTitle: {
     fr: 'Préchauffage du four',
     en: 'Oven preheating',
@@ -97,14 +221,40 @@ export const PREPARATION_COPY = {
     fr: 'Paramètres de l’étape',
     en: 'Step parameters',
   },
+  plannedStepEnd: {
+    fr: 'Fin d’étape prévue : {time}',
+    en: 'Planned step end: {time}',
+  },
+  actualStepStart: {
+    fr: 'Début réel : {time}',
+    en: 'Actual start: {time}',
+  },
+  stepNotStarted: {
+    fr: 'Début réel : en attente d’action',
+    en: 'Actual start: pending action',
+  },
+  actualStepProgress: {
+    fr: 'Progression',
+    en: 'Progress',
+  },
 } as const;
 
 export type PreparationCopyKey = keyof typeof PREPARATION_COPY;
 
-export function prepCopy(locale: Locale, key: PreparationCopyKey): string {
+export function prepCopy(
+  locale: Locale,
+  key: PreparationCopyKey,
+  params?: Record<string, string | number>,
+): string {
   const entry = PREPARATION_COPY[key];
   if (!entry) return key;
-  return entry[locale] ?? entry.en;
+  let text: string = entry[locale] ?? entry.en;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replaceAll(`{${k}}`, String(v));
+    }
+  }
+  return text;
 }
 
 export function locationLabel(location: string, locale: Locale): string {

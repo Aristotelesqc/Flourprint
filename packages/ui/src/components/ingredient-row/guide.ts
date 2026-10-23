@@ -10,6 +10,7 @@ export default {
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
 
     'Grams and percentage are text with tabular figures; the checkbox has its own label.',
+    'Editing ingredient rows highlight with container padding and rounded corners, keeping row name and value alignment consistent with read mode without shrinking typography (L123).',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
   ],
   related: ['fp.weighing-checkbox', 'fp.number-field', 'fp.group-card'],

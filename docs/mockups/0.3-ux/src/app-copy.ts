@@ -1,19 +1,20 @@
 import type { Locale } from './messages';
 
 export const appCopy = {
-  // Step design options (Requirement 1 & 2)
+  // Step design & drag activation (L112 settled)
   stepDesignHeading: [
-    'Options de présentation des étapes (sélection propriétaire)',
-    'Step presentation options (owner selection)',
+    'Présentation des étapes & activation (décision L112)',
+    'Step presentation & activation (decision L112)',
   ],
   stepDesignExplanation: [
-    'Trois présentations visuelles des étapes sont proposées au choix du propriétaire : compact, rail ou contour. Aucun choix O n’est arrêté. Chaque lien ouvre un nouveau contexte sur le gabarit Shokupan en modification d’étapes.',
-    'Three visual step presentations are offered for owner selection: compact, rail, or outline. No O-item is settled. Each link opens a fresh context with the Shokupan fixture in step edit.',
+    'La présentation Compact avec activation par maintien de 350 ms est sélectionnée (L112). Les présentations rail et contour restent conservées pour compatibilité et historique. Les points O3 ouverts (glissement inter-groupes, chaîne descendante, mode poignée) restent à évaluer.',
+    'The Compact treatment with 350ms hold activation is selected (L112). Rail and outline presentations are retained for compatibility and history. Open O-items (cross-group drag, downward-chain moves, handle mode) remain under evaluation.',
   ],
   currentStepDesign: ['Présentation active', 'Active design'],
-  stepDesign_compact: ['1. Compact', '1. Compact'],
-  stepDesign_rail: ['2. Rail', '2. Rail'],
-  stepDesign_outline: ['3. Contour', '3. Outline'],
+  stepDesign_compact: ['1. Compact (sélectionné L112)', '1. Compact (selected L112)'],
+  stepDesign_rail: ['2. Rail (archivé)', '2. Rail (archived)'],
+  stepDesign_outline: ['3. Contour (archivé)', '3. Outline (archived)'],
+  selectedOption: ['Sélectionné', 'Selected'],
   activeOption: ['Actif', 'Active'],
 
   // Direct A/B labels (Requirement 2)

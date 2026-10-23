@@ -3,6 +3,11 @@ import path from 'node:path';
 import { stepMenu } from './screen-actions.mjs';
 const require = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = require('@playwright/test');
+const waitForSelectedHold = async (page) => {
+  if (new URL(page.url()).searchParams.get('dragActivation') !== 'move') {
+    await expect(page.locator('.fp-drag-floating-card:visible')).toBeVisible();
+  }
+};
 
 const designs = ['compact', 'rail', 'outline'];
 const route = (extra = {}) =>
@@ -86,6 +91,7 @@ test.describe('Gemini step variants', () => {
         type: 'touchStart',
         touchPoints: [{ x: from.x + from.width / 2, y: from.y + from.height / 2, id: 1 }],
       });
+      await waitForSelectedHold(page);
       await session.send('Input.dispatchTouchEvent', {
         type: 'touchMove',
         touchPoints: [{ x: target.x + target.width / 2, y: target.y + target.height / 4, id: 1 }],
@@ -168,6 +174,7 @@ test.describe('Gemini step variants', () => {
       type: 'touchStart',
       touchPoints: [{ x: from.x + from.width / 2, y: from.y + from.height / 2, id: 1 }],
     });
+    await waitForSelectedHold(page);
     await session.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
       touchPoints: [{ x: box.x + box.width / 2, y: box.y + box.height - 12, id: 1 }],
@@ -194,6 +201,7 @@ test.describe('Gemini step variants', () => {
         type: 'touchStart',
         touchPoints: [{ x: from.x + from.width / 2, y: from.y + from.height / 2, id: 1 }],
       });
+      await waitForSelectedHold(page);
       await session.send('Input.dispatchTouchEvent', {
         type: 'touchMove',
         touchPoints: [
@@ -229,6 +237,7 @@ test.describe('Gemini step variants', () => {
     await expect(page.locator('.fp-drag-floating-card:visible')).toHaveCount(1);
     // Long-press lift may autoscroll: aim at the target's actual on-screen position.
     const liftedTarget = await row(page, 'bulk').boundingBox();
+    await waitForSelectedHold(page);
     await session.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
       touchPoints: [
@@ -251,13 +260,15 @@ test.describe('Gemini step variants', () => {
   test('valid water target stays locked and no absorber offers no lock', async ({ page }) => {
     await page.goto(route({ recipe: 'baguette', section: 'ingredients' }));
     const target = page.getByTestId('hydration-target');
-    await expect(target).toBeEnabled();
+    await expect(target).toBeEditable();
     await target.fill('75');
     await target.press('Enter');
+    await expect(target).not.toBeEditable();
     await expect(target).toBeDisabled();
+    await expect(target).toHaveAttribute('title', /Cible verrouillée/);
     await expect(target).toHaveValue('75');
     await page.getByRole('button', { name: /Déverrouiller/ }).click();
-    await expect(target).toBeEnabled();
+    await expect(target).toBeEditable();
     await page.getByRole('button', { name: 'Annuler', exact: true }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Abandonner', exact: true }).click();
     await page.goto(route({ recipe: 'brioche', section: 'ingredients' }));

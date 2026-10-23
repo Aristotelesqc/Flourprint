@@ -408,9 +408,6 @@ body[data-capture='true'] .component-inspector {
   color: var(--color-ink-muted);
   font-size: var(--type-meta);
 }
-.header-actions {
-  max-width: 62%;
-}
 .header-title {
   flex: 1;
   min-width: 0;

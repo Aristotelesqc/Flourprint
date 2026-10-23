@@ -11,8 +11,8 @@
 }
 [data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input {
   width: 100%;
-  min-height: 2.25rem;
-  padding: 0 var(--fp-space-2);
+  min-height: var(--fp-spacing-touch, 48px);
+  padding: 0 2.25rem 0 var(--fp-space-2);
   background: var(--color-surface-container);
   color: var(--color-ink);
   border: 1.5px solid var(--color-outline);
@@ -55,14 +55,13 @@
   font-size: var(--type-meta);
   color: var(--color-danger);
 }
-[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input {
-  padding-right: 2.25rem;
-}
 [data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact {
-  width: 4.5rem;
+  flex: 0 0 5.25rem;
+  width: 5.25rem;
   min-width: 0;
 }
-[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact .field-label {
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact .field-label,
+[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact .field-hint {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -77,17 +76,6 @@
   color: var(--color-ink-muted);
   font-size: var(--type-meta);
   margin: var(--fp-space-1) 0 0;
-}
-[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact {
-  flex: 0 0 5rem;
-  width: 5rem;
-}
-[data-fp-component='fp.number-field'][data-fp-version='v1'].field-compact .field-hint {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
 }
 
 [data-fp-component='fp.number-field'][data-fp-version='v1'].field-prefix .field-unit {

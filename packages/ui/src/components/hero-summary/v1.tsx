@@ -1,10 +1,17 @@
 import './v1.css';
+import React from 'react';
+import type {
+  IconProps,
+  IconButtonProps,
+  SurfaceProps,
+  RecipeSummaryProps,
+  RecipeSummaryMetric,
+} from '../../props.ts';
+import { library } from '../../index.ts';
+
 const IconButton = (props: IconButtonProps) => (
   <library.Slot component="fp.icon-button" {...props} />
 );
-import React from 'react';
-import type { IconProps, IconButtonProps, SurfaceProps, RecipeSummaryProps } from '../../props.ts';
-import { library } from '../../index.ts';
 const Icon = (props: IconProps) => <library.Slot component="fp.icon" {...props} />;
 const Surface = (props: SurfaceProps) => <library.Slot component="fp.surface" {...props} />;
 
@@ -12,20 +19,50 @@ export const RecipeSummary: React.FC<RecipeSummaryProps> = ({
   editor,
   metrics,
   notice,
+  onNotice,
   onHelp,
   helpLabel,
   onSizeHelp,
   sizeHelpLabel,
 }) => {
-  // Partition metrics into 2-column flour/dough, middle hydration, and secondary fat/sugar
-  const hydrationMetric = metrics.find((m) => m.icon === 'water') ?? metrics[2];
+  // Backwards compatibility mappings for legacy callers
+  const resolvedMetrics: RecipeSummaryMetric[] = metrics.map((m) => {
+    let itemHelp = m.onHelp;
+    let itemHelpLabel = m.helpLabel;
+    if (!itemHelp) {
+      if (m.icon === 'scale' && onSizeHelp) {
+        itemHelp = onSizeHelp;
+        itemHelpLabel = sizeHelpLabel ?? `${m.label} · Info`;
+      } else if (m.icon === 'water' && onHelp) {
+        itemHelp = onHelp;
+        itemHelpLabel = helpLabel ?? `${m.label} · Info`;
+      }
+    }
+    return {
+      ...m,
+      ...(itemHelp ? { onHelp: itemHelp, helpLabel: itemHelpLabel } : {}),
+    };
+  });
 
-  const flourMetric = metrics.find((m) => m.icon === 'flour') ?? metrics[0];
+  const editorMetric = editor ? resolvedMetrics.find((m) => m.icon === 'water') : undefined;
+  const regularMetrics = editorMetric
+    ? resolvedMetrics.filter((m) => m !== editorMetric)
+    : resolvedMetrics;
 
-  const doughMetric = metrics.find((m) => m.icon === 'scale' && m !== flourMetric) ?? metrics[1];
-
-  const secondaryMetrics = metrics.filter(
-    (m) => m !== hydrationMetric && m !== flourMetric && m !== doughMetric,
+  const renderTile = (m: RecipeSummaryMetric, idx: number, isSm = false) => (
+    <div key={idx} className="metric-tile">
+      <div className="metric-header row">
+        <span className="metric-label-group row">
+          {m.icon && <Icon name={m.icon} size="0.95rem" className="semantic-icon" />}
+          <span>{m.label}</span>
+        </span>
+      </div>
+      <div className="metric-value-row row">
+        <div className={`metric-value ${isSm ? 'metric-value-sm ' : ''}tabular`}>{m.value}</div>
+        {m.onHelp && <IconButton icon="info" label={m.helpLabel ?? m.label} onClick={m.onHelp} />}
+      </div>
+      {m.detail && <span className="metric-sub muted tabular">{m.detail}</span>}
+    </div>
   );
 
   return (
@@ -35,97 +72,70 @@ export const RecipeSummary: React.FC<RecipeSummaryProps> = ({
       variant="container"
       className="recipe-summary-box"
     >
-      {/* 2-Column Flour & Dough */}
-      <div className="metric-grid-2">
-        {flourMetric && (
-          <div className="metric-tile">
-            <div className="metric-header row">
-              <span className="metric-label-group row">
-                {flourMetric.icon && (
-                  <Icon name={flourMetric.icon} size="0.95rem" className="semantic-icon" />
+      {editorMetric ? (
+        <>
+          <div className="metric-grid-2">
+            {regularMetrics.slice(0, 2).map((m, idx) => renderTile(m, idx))}
+          </div>
+
+          <div className="hydration-summary-box">
+            <div className="hydration-info stack">
+              <div className="hydration-label-row row">
+                {editorMetric.icon && (
+                  <Icon name={editorMetric.icon} size="1.1rem" className="semantic-icon" />
                 )}
-                <span>{flourMetric.label}</span>
-              </span>
+                <span className="hydration-label">{editorMetric.label}</span>
+                <div className="hydration-editor">{editor}</div>
+              </div>
+              {editorMetric.detail && (
+                <span className="hydration-detail muted tabular">{editorMetric.detail}</span>
+              )}
             </div>
-            <div className="metric-value tabular">{flourMetric.value}</div>
-            {flourMetric.detail && (
-              <span className="metric-sub muted tabular">{flourMetric.detail}</span>
+            {editorMetric.onHelp && (
+              <IconButton
+                icon="info"
+                label={editorMetric.helpLabel ?? `${editorMetric.label} · Info`}
+                onClick={editorMetric.onHelp}
+              />
             )}
           </div>
-        )}
-        {doughMetric && (
+
+          {regularMetrics.length > 2 && (
+            <div className="metric-grid-2">
+              {regularMetrics.slice(2).map((m, idx) => renderTile(m, idx + 2, true))}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="metric-grid-2">
+            {regularMetrics.slice(0, 2).map((m, idx) => renderTile(m, idx))}
+          </div>
+          {regularMetrics.length > 2 && (
+            <div className="metric-grid-2">
+              {regularMetrics.slice(2).map((m, idx) => renderTile(m, idx + 2, true))}
+            </div>
+          )}
+        </>
+      )}
+
+      {notice &&
+        (onNotice ? (
           <button
             type="button"
-            className="metric-tile metric-help"
-            onClick={onSizeHelp}
-            aria-label={sizeHelpLabel}
-            disabled={!onSizeHelp}
+            className="warning-banner warning-banner-actionable"
+            onClick={onNotice}
           >
-            <div className="metric-header row">
-              <span className="metric-label-group row">
-                {doughMetric.icon && (
-                  <Icon name={doughMetric.icon} size="0.95rem" className="semantic-icon" />
-                )}
-                <span>{doughMetric.label}</span>
-                {onSizeHelp && <Icon name="info" size="0.9rem" />}
-              </span>
-            </div>
-            <div className="metric-value tabular">{doughMetric.value}</div>
-            {doughMetric.detail && (
-              <span className="metric-sub muted tabular">{doughMetric.detail}</span>
-            )}
+            <Icon name="warning" size="0.95rem" />
+            <span style={{ flex: 1 }}>{notice}</span>
+            <Icon name="info" size="0.9rem" />
           </button>
-        )}
-      </div>
-
-      {/* Hydration Across Middle with Breakdown Action */}
-      {hydrationMetric && (
-        <div className="hydration-summary-box">
-          <div className="hydration-info stack">
-            <div className="hydration-label-row row">
-              {hydrationMetric.icon && (
-                <Icon name={hydrationMetric.icon} size="1.1rem" className="semantic-icon" />
-              )}
-              <span className="hydration-label">{hydrationMetric.label}</span>
-              {editor ? (
-                <div className="hydration-editor">{editor}</div>
-              ) : (
-                <span className="hydration-value tabular">{hydrationMetric.value}</span>
-              )}
-            </div>
-            {hydrationMetric.detail && (
-              <span className="hydration-detail muted tabular">{hydrationMetric.detail}</span>
-            )}
+        ) : (
+          <div className="warning-banner" role="status">
+            <Icon name="warning" size="0.95rem" />
+            <span>{notice}</span>
           </div>
-          <IconButton icon="info" label={helpLabel} onClick={onHelp} />
-        </div>
-      )}
-
-      {/* Secondary Fat & Sugar Pair */}
-      {secondaryMetrics.length > 0 && (
-        <div className="metric-grid-2">
-          {secondaryMetrics.map((m, idx) => (
-            <div key={idx} className="metric-tile">
-              <div className="metric-header row">
-                <span className="metric-label-group row">
-                  {m.icon && <Icon name={m.icon} size="0.95rem" className="semantic-icon" />}
-                  <span>{m.label}</span>
-                </span>
-              </div>
-              <div className="metric-value metric-value-sm tabular">{m.value}</div>
-              {m.detail && <span className="metric-sub muted tabular">{m.detail}</span>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Small Explicit Unknown/Partial Notice at Bottom */}
-      {notice && (
-        <div className="warning-banner" role="status">
-          <Icon name="warning" size="0.95rem" />
-          <span>{notice}</span>
-        </div>
-      )}
+        ))}
     </Surface>
   );
 };

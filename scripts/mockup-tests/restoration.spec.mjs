@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import { auditMockupStyles } from '../mockup-style-audit.mjs';
 import { attachBrowserDiagnostics } from './browser-diagnostics.mjs';
+import { summaryMetric } from './screen-actions.mjs';
 const requireMobile = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = requireMobile('@playwright/test');
 test.afterEach(async ({ page }, testInfo) => attachBrowserDiagnostics(page, testInfo));
@@ -35,7 +36,7 @@ test('library density retains four complete cards without an extra active-prepar
     await page.locator('.phone-content').evaluate((el) => el.getBoundingClientRect().bottom),
   );
   await page.getByRole('banner').getByRole('button', { name: 'Reprendre', exact: true }).click();
-  await expect(page.getByTestId('prep-complete-btn')).toBeVisible();
+  await expect(page.getByTestId('prep-next-btn')).toBeVisible();
 });
 
 test('every finite component style is defined and screens bind ids instead of implementations', () => {
@@ -73,18 +74,32 @@ for (const theme of ['light', 'dark', 'amoled'])
     await expect(page.locator('[data-fp-component="fp.bottom-bar"]')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Reprendre', exact: true })).toBeVisible();
     expect(
-      await page.locator('.hydration-value').evaluate((el) => {
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        return range.getClientRects().length;
-      }),
+      await summaryMetric(page, 'Détail de l’hydratation')
+        .locator('.metric-value')
+        .evaluate((el) => {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          return range.getClientRects().length;
+        }),
     ).toBe(1);
-    const metricTops = await page
+    const metricLayout = await page
       .locator('.recipe-summary-box .metric-grid-2')
       .first()
-      .locator('.metric-value')
-      .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().top));
-    expect(Math.abs(metricTops[0] - metricTops[1])).toBeLessThan(1);
+      .evaluate((grid) => ({
+        columns: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+        tiles: [...grid.querySelectorAll('.metric-tile')].map((node) => {
+          const box = node.getBoundingClientRect();
+          const value = node.querySelector('.metric-value').getBoundingClientRect();
+          return { x: box.x, y: value.y, bottom: box.bottom };
+        }),
+      }));
+    if (metricLayout.columns === 2) {
+      expect(Math.abs(metricLayout.tiles[0].y - metricLayout.tiles[1].y)).toBeLessThan(1);
+    } else {
+      expect(metricLayout.columns).toBe(1);
+      expect(Math.abs(metricLayout.tiles[0].x - metricLayout.tiles[1].x)).toBeLessThan(1);
+      expect(metricLayout.tiles[1].y).toBeGreaterThanOrEqual(metricLayout.tiles[0].bottom);
+    }
     const checkboxContrast = await page
       .locator('.checkbox-custom')
       .first()
@@ -164,13 +179,16 @@ for (const prep of ['fermentation', 'cooking'])
     await page.goto(
       `/mockup.html?screen=preparation&lang=fr&nav=A&width=360&scale=130&capture=1${prep === 'cooking' ? '&prep=cooking' : ''}`,
     );
-    await expect(page.getByRole('heading', { level: 2 }).first()).toContainText('Révision #1');
+    await expect(page.getByTestId('prep-heading')).toContainText('Préparation');
+    await expect(page.getByTestId('prep-step-line')).toContainText(/\d+ \/ \d+/);
     for (const name of [
       '+15 min',
-      'Durée',
+      '−15 min',
+      'Pause',
+      '← Précédent',
+      'Suivant →',
       'Note',
       ...(prep === 'fermentation' ? ['Prête à façonner'] : []),
-      'Étape terminée',
     ]) {
       const control = page.getByRole('button', { name, exact: true });
       await expect(control).toBeVisible();

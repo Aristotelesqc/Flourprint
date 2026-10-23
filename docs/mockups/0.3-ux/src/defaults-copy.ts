@@ -1,5 +1,5 @@
 import type { Locale } from './messages';
-import type { ComponentPreset, FormulaError } from '@flourprint/core/domain';
+import type { ComponentPreset, ComponentStyle, FormulaError } from '@flourprint/core/domain';
 
 export const defaultsCopyMap = {
   settingsTitle: ['Composants par défaut', 'Component defaults'],
@@ -66,7 +66,7 @@ export function extractFormulaErrorReason(error: FormulaError | undefined): stri
 export function formatEngineReason(
   locale: Locale,
   reason?: string,
-  preset?: ComponentPreset,
+  preset?: ComponentPreset | ComponentStyle,
 ): string {
   if (!reason) {
     return locale === 'fr'
@@ -135,6 +135,24 @@ export function formatEngineReason(
     return locale === 'fr'
       ? `Le ratio ne correspond plus au style ${preset}.`
       : `The ratio no longer qualifies as a ${preset}.`;
+  }
+
+  if (reason.includes('the hydration is below the water the allocated ingredients bring')) {
+    return locale === 'fr'
+      ? 'L’hydratation demandée est inférieure à l’eau apportée par les ingrédients alloués.'
+      : 'The requested hydration is below the water brought by allocated ingredients.';
+  }
+
+  if (reason.includes('an allocated ingredient has an unknown water content')) {
+    return locale === 'fr'
+      ? 'Un ingrédient alloué a une teneur en eau non renseignée.'
+      : 'An allocated ingredient has an unknown water content.';
+  }
+
+  if (reason.includes('the hydration must be a finite number')) {
+    return locale === 'fr'
+      ? 'L’hydratation doit être un nombre valide.'
+      : 'Hydration must be a valid number.';
   }
 
   return locale === 'fr' ? 'Modification refusée par le moteur.' : 'Change refused by the engine.';
