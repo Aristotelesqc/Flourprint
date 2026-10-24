@@ -9,7 +9,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-outline-subtle);
   border-radius: var(--radius-card);
-  padding: var(--fp-space-2);
+  padding: var(--fp-space-1-5) var(--fp-space-2);
   box-sizing: border-box;
 }
 
@@ -142,6 +142,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--fp-space-1);
+}
+
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-metrics .stat-pill,
+[data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-details .stat-pill {
+  min-height: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  gap: var(--fp-space-1, 0.25rem);
 }
 
 [data-fp-component='fp.recipe-card'][data-fp-version='v1'] .recipe-card-actions {

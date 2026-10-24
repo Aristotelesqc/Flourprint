@@ -102,6 +102,7 @@
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-body > button:first-child,
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-body > .menu-item:first-child {
   width: calc(100% - var(--fp-spacing-touch) - var(--fp-space-1));
+  max-width: calc(100% - var(--fp-spacing-touch) - var(--fp-space-1));
   padding-right: 0.625rem;
 }
 
@@ -132,8 +133,19 @@
   text-align: left;
   width: 100%;
   box-sizing: border-box;
+  white-space: normal;
   overflow-wrap: break-word;
   word-break: normal;
+}
+
+[data-fp-component='fp.floating-menu'][data-fp-version='v1']
+  .menu-body
+  button[data-fp-component='fp.button'],
+[data-fp-component='fp.floating-menu'][data-fp-version='v1']
+  .menu-actions
+  > button[data-fp-component='fp.button'] {
+  white-space: normal;
+  min-width: 0;
 }
 
 [data-fp-component='fp.floating-menu'][data-fp-version='v1']
@@ -156,8 +168,13 @@
   > button[data-fp-component='fp.button']
   > .button-content {
   width: 100%;
+  min-width: 0;
   justify-content: flex-start;
   gap: var(--fp-space-2);
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  text-align: left;
 }
 
 [data-fp-component='fp.floating-menu'][data-fp-version='v1'] .menu-body button:hover,

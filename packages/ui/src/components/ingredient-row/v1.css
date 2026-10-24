@@ -63,10 +63,13 @@
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing {
   cursor: default;
   grid-template-columns: 1fr;
-  row-gap: var(--fp-space-2);
+  row-gap: var(--fp-space-1);
   background: var(--color-surface-container-high);
   border-radius: var(--radius-md, 0.5rem);
-  padding: var(--fp-space-2) var(--fp-space-2);
+  padding: var(--fp-space-1) var(--fp-space-2);
+}
+[data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing .ingredient-meta:empty {
+  display: none;
 }
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'].is-editing .ingredient-info {
   grid-column: 1 / -1;
@@ -94,7 +97,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--fp-space-2);
+  gap: var(--fp-space-1) var(--fp-space-2);
   width: 100%;
   min-width: 0;
   flex-wrap: wrap;
@@ -102,7 +105,7 @@
 [data-fp-component='fp.ingredient-row'][data-fp-version='v1'] .field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--fp-space-2);
+  gap: var(--fp-space-1) var(--fp-space-2);
   align-items: center;
   flex: 1 1 12rem;
   min-width: 0;
