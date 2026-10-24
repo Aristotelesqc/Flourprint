@@ -292,7 +292,16 @@ for (const [scenario, status] of diagnosticStates) {
     await expect(content).toHaveAttribute('aria-hidden', 'true');
     await disclosure.click();
     await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
-    await expect(panel).toContainText(status);
+    // The status stays in the visible disclosure headline; the body explains it once.
+    await expect(disclosure).toContainText(status);
+    await expect(panel).not.toContainText(status);
+    await expect(panel).toContainText(
+      scenario === 'noResult'
+        ? 'Aucun ingrédient n’est marqué comme levure.'
+        : scenario === 'recipe' || scenario === 'out'
+          ? 'La dose de levure sort du domaine du modèle'
+          : 'Point final du modèle expérimental',
+    );
     await expect(panel.locator('.status-panel-header')).toHaveCount(0);
     if (scenario === 'noResult') await expect(panel).not.toContainText(/Durée estimée\s*:/);
     await disclosure.click();

@@ -122,10 +122,12 @@ for (const nav of ['A']) {
     await page.getByRole('button', { name: 'Actions sur la préparation', exact: true }).click();
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: 'Cuit · Choisir le résultat', exact: true })
+      .getByRole('button', { name: 'Choisir le résultat', exact: true })
       .click();
     const picker = page.getByRole('dialog', { name: 'Choisir le résultat', exact: true });
     await expect(picker).toBeVisible();
+    await expect(picker.getByRole('combobox', { name: 'Résultat', exact: true })).toHaveValue('');
+    await expect(picker.getByRole('button', { name: 'Appliquer', exact: true })).toBeDisabled();
     await picker.getByRole('combobox', { name: 'Résultat', exact: true }).selectOption('dough');
     await picker
       .getByRole('combobox', { name: 'Destination de la pâte', exact: true })

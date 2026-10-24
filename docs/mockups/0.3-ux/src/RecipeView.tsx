@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
 import {
   sum,
   hydrationForRatio,
@@ -27,7 +27,12 @@ import {
   type Locale,
 } from './messages';
 import { recipeCopy } from './recipe-copy';
-import { defaultsCopy, extractFormulaErrorReason, formatEngineReason } from './defaults-copy';
+import {
+  defaultsCopy,
+  extractFormulaErrorReason,
+  formatEngineReason,
+  formatFormulaError,
+} from './defaults-copy';
 import { loadComponentDefaults } from './component-defaults';
 import { type Prototype, type Content } from './model';
 
@@ -169,6 +174,7 @@ export function Summary({
   onNotice?: () => void;
 }) {
   const partial = resolved.totalWater.completeness === 'incomplete';
+  const hasEstimatedWater = resolved.totalWater.contributions.some((c) => c.status === 'estimated');
   const formula = content.formula;
   const piecesDetail =
     formula.anchor.kind === 'pieces'
@@ -188,7 +194,14 @@ export function Summary({
       label: t(locale, 'hydration'),
       value: `${partial ? '≥ ' : ''}${percent(locale, resolved.totalWaterPct, 0)}`,
       icon: 'water' as const,
-      detail: `${grams(locale, resolved.totalWater.value)} ${t(locale, 'water').toLocaleLowerCase()} ${partial ? `(${t(locale, 'known').toLocaleLowerCase()})` : ''}`,
+      detail:
+        `${grams(locale, resolved.totalWater.value)} ${t(locale, 'water').toLocaleLowerCase()} ${
+          partial
+            ? `(${t(locale, 'known').toLocaleLowerCase()})`
+            : hasEstimatedWater
+              ? `(${t(locale, 'estimated').toLocaleLowerCase()})`
+              : ''
+        }`.trim(),
       onHelp: onHelp,
       helpLabel: t(locale, 'hydrationDetails'),
     },
@@ -294,6 +307,9 @@ export function WaterDetails({
     'var(--color-secondary, #675e47)',
     'var(--color-primary-container, #ffdcc2)',
     'var(--color-tertiary-container, #b3f1d7)',
+    'var(--color-secondary-container, #e8e0d5)',
+    '#9c4174',
+    '#5b631e',
   ];
 
   return (
@@ -536,8 +552,28 @@ export function RecipeIngredients({
   const [addPreset, setAddPreset] = useState('water');
   const [blendOpen, setBlendOpen] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
-  const [componentErrors, setComponentErrors] = useState<Record<string, string | null>>({});
-  const [stageErrors, setStageErrors] = useState<Record<string, string | null>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const lastActiveTriggerRef = useRef<HTMLElement | null>(null);
+
+  const openDetailSheet = (sheet: 'fat' | 'sugar' | 'incomplete' | 'size') => {
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      lastActiveTriggerRef.current = document.activeElement;
+    }
+    setDetailSheet(sheet);
+  };
+
+  const closeDetailSheet = () => {
+    const trigger = lastActiveTriggerRef.current;
+    lastActiveTriggerRef.current = null;
+    setDetailSheet(null);
+    if (trigger && typeof trigger.focus === 'function') {
+      requestAnimationFrame(() => {
+        if (document.activeElement === document.body || !document.activeElement) {
+          trigger.focus();
+        }
+      });
+    }
+  };
   const [detailSheet, setDetailSheet] = useState<'fat' | 'sugar' | 'incomplete' | 'size' | null>(
     null,
   );
@@ -578,14 +614,41 @@ export function RecipeIngredients({
       }
       value={value}
       resetKey={state.resetEpoch}
-      displayDigits={id === 'hydration-target' ? 0 : id.startsWith('ingredient-pct-') ? 1 : 2}
+      displayDigits={
+        id === 'hydration-target'
+          ? 0
+          : id.includes('share') || id.startsWith('ingredient-pct-')
+            ? 1
+            : 2
+      }
       label={label}
       unit={unit}
       unitPosition={unit === '1:' ? 'prefix' : 'suffix'}
       locale={locale}
-      onCommit={commit}
+      onCommit={(val) => {
+        setFieldErrors((prev) => (Object.keys(prev).length ? {} : prev));
+        store.clearFormulaError?.();
+        const ok = commit(val);
+        if (!ok) {
+          const err = store.lastFormulaError;
+          const mapped = err
+            ? formatFormulaError(locale, err, content.names)
+            : store.state.error || t(locale, 'refused');
+          setFieldErrors((current) => ({ [id]: err ? mapped : (current[id] ?? mapped) }));
+          return false;
+        }
+        setFieldErrors((prev) => ({ ...prev, [id]: null }));
+        return true;
+      }}
       disabled={disabled}
       errorMessage={t(locale, 'invalid')}
+      commitErrorMessage={fieldErrors[id] ?? ''}
+      onTextChange={() => {
+        if (fieldErrors[id]) {
+          setFieldErrors((prev) => ({ ...prev, [id]: null }));
+        }
+        store.clearFormulaError?.();
+      }}
       onValidityChange={(invalid) => store.validity(id, invalid)}
       onDirtyChange={(dirty) => store.pendingInput?.(id, dirty)}
       dataTestId={id}
@@ -639,17 +702,15 @@ export function RecipeIngredients({
             (value) => {
               const ratio = hydrationForRatio(component, value);
               if (!ratio.ok) {
-                setComponentErrors((prev) => ({
-                  ...prev,
-                  [component.id]: formatEngineReason(
+                setFieldErrors({
+                  [`component-ratio-${component.id}`]: formatEngineReason(
                     locale,
                     extractFormulaErrorReason(ratio.error),
                     componentStyle(formula, component),
                   ),
-                }));
+                });
                 return false;
               }
-              setComponentErrors((prev) => ({ ...prev, [component.id]: null }));
               return store.apply({
                 type: 'UpdateComponent',
                 component: component.id,
@@ -667,17 +728,15 @@ export function RecipeIngredients({
                 (value) => {
                   const inv = hydrationForLiquidRatio(formula, component, value);
                   if (!inv.ok) {
-                    setComponentErrors((prev) => ({
-                      ...prev,
-                      [component.id]: formatEngineReason(
+                    setFieldErrors({
+                      [`component-hydration-${component.id}`]: formatEngineReason(
                         locale,
                         extractFormulaErrorReason(inv.error),
                         componentStyle(formula, component),
                       ),
-                    }));
+                    });
                     return false;
                   }
-                  setComponentErrors((prev) => ({ ...prev, [component.id]: null }));
                   return store.apply({
                     type: 'UpdateComponent',
                     component: component.id,
@@ -720,15 +779,6 @@ export function RecipeIngredients({
             )
           )}
         </div>
-        {componentErrors[component.id] && (
-          <p
-            role="alert"
-            className="field-error-msg"
-            style={{ color: 'var(--color-error, #b00020)', margin: '0.25rem 0' }}
-          >
-            {componentErrors[component.id]}
-          </p>
-        )}
         <p className="muted">{t(locale, 'ratioHelp')}</p>
       </div>
     );
@@ -741,9 +791,9 @@ export function RecipeIngredients({
         locale={locale}
         onHelp={onHelp}
         onSizeHelp={onSizeHelp}
-        onFatHelp={() => setDetailSheet('fat')}
-        onSugarHelp={() => setDetailSheet('sugar')}
-        onNotice={() => setDetailSheet('incomplete')}
+        onFatHelp={() => openDetailSheet('fat')}
+        onSugarHelp={() => openDetailSheet('sugar')}
+        onNotice={() => openDetailSheet('incomplete')}
         editor={
           state.draft && canLockHydration ? (
             <>
@@ -758,7 +808,8 @@ export function RecipeIngredients({
                 isLocked ? recipeCopy(locale, 'lockedHint') : undefined,
               )}
               <IconButton
-                icon={isLocked ? 'unlock' : 'lock'}
+                icon={isLocked ? 'lock' : 'unlock'}
+                pressed={isLocked}
                 label={t(locale, isLocked ? 'unlock' : 'lock')}
                 onClick={() =>
                   isLocked
@@ -776,10 +827,12 @@ export function RecipeIngredients({
         }
       />
       <div className="detail-row">
-        <span>
-          {t(locale, 'ingredientsWeighing')}
-          <small className="baker-scope">{t(locale, 'bakerPct')}</small>
-        </span>
+        <h2>
+          {t(locale, 'ingredients')}
+          {!state.draft && (
+            <small className="baker-scope">{recipeCopy(locale, 'stagePctLabel')}</small>
+          )}
+        </h2>
         <span className="weigh-count" data-testid="weigh-count">
           {checks.length} / {groups.flatMap((g) => g.rows).length}
         </span>
@@ -803,6 +856,7 @@ export function RecipeIngredients({
           <label className="field-label">
             {t(locale, 'type')}
             <select
+              className="fp-input-control"
               aria-label={t(locale, 'size')}
               disabled={Object.values(state.invalid).some(Boolean)}
               value={formula.anchor.kind === 'flourTotal' ? '' : formula.anchor.kind}
@@ -990,7 +1044,6 @@ export function RecipeIngredients({
                     const stage: StageRef = { kind: 'component', id: c.id };
                     const isAbsorbing = formula.waterTarget?.absorbInto === row.id;
                     const fieldId = `ingredient-grams-${c.id}-${row.id}`;
-                    const stageLabel = `${row.name} (${compTitle})`;
 
                     return (
                       <IngredientRow
@@ -998,7 +1051,7 @@ export function RecipeIngredients({
                         id={row.key}
                         name={row.name}
                         gramsText={grams(locale, row.grams)}
-                        pctText={percent(locale, row.pct)}
+                        pctText={state.draft ? '' : percent(locale, row.pct)}
                         note={row.note}
                         checked={checks.includes(row.key)}
                         onToggle={() => store.weigh(row.key)}
@@ -1010,44 +1063,30 @@ export function RecipeIngredients({
                             {field(
                               fieldId,
                               row.grams,
-                              stageLabel,
+                              recipeCopy(locale, 'weight'),
                               'g',
-                              (value) => {
-                                const ok = store.apply({
+                              (value) =>
+                                store.apply({
                                   type: 'SetStageIngredientGrams',
                                   ingredient: row.id,
                                   stage,
                                   grams: value,
-                                });
-                                if (!ok) {
-                                  setStageErrors((prev) => ({
-                                    ...prev,
-                                    [c.id]: store.state.error || t(locale, 'invalid'),
-                                  }));
-                                  return false;
-                                }
-                                setStageErrors((prev) => ({ ...prev, [c.id]: null }));
-                                return true;
-                              },
+                                }),
                               isAbsorbing,
                               false,
                               isAbsorbing ? recipeCopy(locale, 'absorbingWaterLocked') : undefined,
                             )}
+                            <div>
+                              <span className="field-label">
+                                {recipeCopy(locale, 'stagePctLabel')}
+                              </span>
+                              <span className="tabular">{percent(locale, row.pct)}</span>
+                            </div>
                           </div>
                         )}
                       </IngredientRow>
                     );
                   })}
-
-                  {stageErrors[c.id] && (
-                    <p
-                      role="alert"
-                      className="field-error-msg"
-                      style={{ color: 'var(--color-error, #b00020)', margin: '0.25rem 0' }}
-                    >
-                      {stageErrors[c.id]}
-                    </p>
-                  )}
                 </div>
               );
             })
@@ -1064,17 +1103,15 @@ export function RecipeIngredients({
                     const stored = loadComponentDefaults();
                     const created = newComponent(formula, 'poolish', id, stored);
                     if (!created.ok) {
-                      setComponentErrors((prev) => ({
-                        ...prev,
-                        new: formatEngineReason(
+                      setFieldErrors({
+                        newComponent: formatEngineReason(
                           locale,
                           extractFormulaErrorReason(created.error),
                           'poolish',
                         ),
-                      }));
+                      });
                       return;
                     }
-                    setComponentErrors((prev) => ({ ...prev, new: null }));
                     store.apply({ type: 'AddComponent', component: created.value });
                   }}
                 >
@@ -1088,17 +1125,15 @@ export function RecipeIngredients({
                     const stored = loadComponentDefaults();
                     const created = newComponent(formula, 'tangzhong', id, stored);
                     if (!created.ok) {
-                      setComponentErrors((prev) => ({
-                        ...prev,
-                        new: formatEngineReason(
+                      setFieldErrors({
+                        newComponent: formatEngineReason(
                           locale,
                           extractFormulaErrorReason(created.error),
                           'tangzhong',
                         ),
-                      }));
+                      });
                       return;
                     }
-                    setComponentErrors((prev) => ({ ...prev, new: null }));
                     store.apply({ type: 'AddComponent', component: created.value });
                   }}
                 >
@@ -1112,26 +1147,24 @@ export function RecipeIngredients({
                     const stored = loadComponentDefaults();
                     const created = newComponent(formula, 'yudane', id, stored);
                     if (!created.ok) {
-                      setComponentErrors((prev) => ({
-                        ...prev,
-                        new: formatEngineReason(
+                      setFieldErrors({
+                        newComponent: formatEngineReason(
                           locale,
                           extractFormulaErrorReason(created.error),
                           'yudane',
                         ),
-                      }));
+                      });
                       return;
                     }
-                    setComponentErrors((prev) => ({ ...prev, new: null }));
                     store.apply({ type: 'AddComponent', component: created.value });
                   }}
                 >
                   {defaultsCopy(locale, 'addYudane')}
                 </Button>
               </div>
-              {componentErrors['new'] && (
+              {fieldErrors['newComponent'] && (
                 <p role="alert" className="field-error-msg" style={{ color: 'var(--color-error)' }}>
-                  {componentErrors['new']}
+                  {fieldErrors['newComponent']}
                 </p>
               )}
             </div>
@@ -1159,7 +1192,6 @@ export function RecipeIngredients({
             const stage: StageRef = { kind: 'final' };
             const isAbsorbing = formula.waterTarget?.absorbInto === row.id;
             const fieldId = `ingredient-grams-${row.id}`;
-            const stageLabel = `${row.name} (${finalGroup.title})`;
             const ingredient = formula.ingredients.find((i) => i.id === row.id);
 
             return (
@@ -1168,7 +1200,7 @@ export function RecipeIngredients({
                 id={row.key}
                 name={row.name}
                 gramsText={grams(locale, row.grams)}
-                pctText={state.draft && ingredient ? '' : percent(locale, row.pct)}
+                pctText={state.draft ? '' : percent(locale, row.pct)}
                 note={row.note}
                 checked={checks.includes(row.key)}
                 onToggle={() => store.weigh(row.key)}
@@ -1176,87 +1208,48 @@ export function RecipeIngredients({
                 editing={Boolean(state.draft)}
               >
                 {state.draft && (
-                  <div
-                    className="field-grid"
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                      gap: '0.5rem',
-                      alignItems: 'end',
-                    }}
-                  >
+                  <div className="field-grid">
                     {field(
                       fieldId,
                       row.grams,
-                      stageLabel,
+                      recipeCopy(locale, 'weight'),
                       'g',
-                      (value) => {
-                        const ok = store.apply({
+                      (value) =>
+                        store.apply({
                           type: 'SetStageIngredientGrams',
                           ingredient: row.id,
                           stage,
                           grams: value,
-                        });
-                        if (!ok) {
-                          setStageErrors((prev) => ({
-                            ...prev,
-                            final: store.state.error || t(locale, 'invalid'),
-                          }));
-                          return false;
-                        }
-                        setStageErrors((prev) => ({ ...prev, final: null }));
-                        return true;
-                      },
+                        }),
                       isAbsorbing,
                       false,
                       isAbsorbing ? recipeCopy(locale, 'absorbingWaterLocked') : undefined,
                     )}
 
-                    {ingredient &&
-                      field(
-                        `ingredient-pct-${row.id}`,
-                        ingredient.bakerPct,
-                        `${row.name} · ${t(locale, 'bakerPct')}`,
-                        '%',
-                        (value) =>
-                          store.apply({
-                            type: 'SetBakerPct',
-                            ingredient: row.id,
-                            pct: value,
-                          }),
-                        false,
-                        false,
-                      )}
+                    <div>
+                      <span className="field-label">{recipeCopy(locale, 'stagePctLabel')}</span>
+                      <span className="tabular">{percent(locale, row.pct)}</span>
+                    </div>
 
                     {ingredient && (
-                      <IconButton
-                        icon="info"
-                        label={`${t(locale, 'help')} · ${row.name}`}
-                        onClick={() => setSelectedIngredientId(row.id)}
-                      />
-                    )}
-                    {ingredient && (
-                      <IconButton
-                        icon="trash"
-                        label={`${recipeCopy(locale, 'removeAction')} · ${row.name}`}
-                        onClick={() => setConfirm(`ingredient:${row.id}`)}
-                      />
+                      <div className="ingredient-row-actions">
+                        <IconButton
+                          icon="info"
+                          label={`${t(locale, 'help')} · ${row.name}`}
+                          onClick={() => setSelectedIngredientId(row.id)}
+                        />
+                        <IconButton
+                          icon="trash"
+                          label={`${recipeCopy(locale, 'removeAction')} · ${row.name}`}
+                          onClick={() => setConfirm(`ingredient:${row.id}`)}
+                        />
+                      </div>
                     )}
                   </div>
                 )}
               </IngredientRow>
             );
           })}
-
-          {stageErrors['final'] && (
-            <p
-              role="alert"
-              className="field-error-msg"
-              style={{ color: 'var(--color-error, #b00020)', margin: '0.25rem 0' }}
-            >
-              {stageErrors['final']}
-            </p>
-          )}
 
           {state.draft && (
             <div style={{ marginTop: '0.75rem' }}>
@@ -1277,7 +1270,11 @@ export function RecipeIngredients({
                     </label>
                     <label className="field-label">
                       {t(locale, 'type')}
-                      <select value={addPreset} onChange={(e) => setAddPreset(e.target.value)}>
+                      <select
+                        className="fp-input-control"
+                        value={addPreset}
+                        onChange={(e) => setAddPreset(e.target.value)}
+                      >
                         {INGREDIENT_PRESETS.map((p) => (
                           <option key={p.id} value={p.id}>
                             {ingredientName(locale, p.id)}
@@ -1332,6 +1329,20 @@ export function RecipeIngredients({
           closeLabel={t(locale, 'close')}
           onClose={() => setSelectedIngredientId(null)}
         >
+          {field(
+            `ingredient-pct-${selectedIngredient.id}`,
+            selectedIngredient.bakerPct,
+            recipeCopy(locale, 'wholeRecipePctLabel'),
+            '%',
+            (value) =>
+              store.apply({
+                type: 'SetBakerPct',
+                ingredient: selectedIngredient.id,
+                pct: value,
+              }),
+            false,
+            false,
+          )}
           <p>
             {t(locale, 'waterContent')} ·{' '}
             {t(
@@ -1420,7 +1431,7 @@ export function RecipeIngredients({
       {detailSheet === 'incomplete' && (
         <Modal
           open
-          onClose={() => setDetailSheet(null)}
+          onClose={closeDetailSheet}
           title={recipeCopy(locale, 'incompleteProfileTitle')}
           closeLabel={t(locale, 'close')}
         >
@@ -1457,7 +1468,7 @@ export function RecipeIngredients({
       {detailSheet === 'fat' && (
         <Modal
           open
-          onClose={() => setDetailSheet(null)}
+          onClose={closeDetailSheet}
           title={recipeCopy(locale, 'fatContributions')}
           closeLabel={t(locale, 'close')}
         >
@@ -1489,7 +1500,7 @@ export function RecipeIngredients({
       {detailSheet === 'sugar' && (
         <Modal
           open
-          onClose={() => setDetailSheet(null)}
+          onClose={closeDetailSheet}
           title={recipeCopy(locale, 'sugarContributions')}
           closeLabel={t(locale, 'close')}
         >
@@ -1517,11 +1528,6 @@ export function RecipeIngredients({
           </div>
         </Modal>
       )}
-
-      <p className="muted">
-        {t(locale, 'ingredientsWeighing')}
-        <small className="baker-scope">{t(locale, 'bakerPct')}</small> · {t(locale, 'totalRecipe')}
-      </p>
     </div>
   );
 }
@@ -1539,7 +1545,7 @@ function FlourBlendEditor({
   const defaultName = ingredientName(locale, 'whole-wheat', store.content.names);
   const [inputName, setInputName] = useState(defaultName);
   const [invalid, setInvalid] = useState<Record<string, boolean>>({});
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   return (
     <Modal
       open
@@ -1551,8 +1557,17 @@ function FlourBlendEditor({
           variant="primary"
           disabled={Object.values(invalid).some(Boolean)}
           onClick={() => {
-            if (store.apply({ type: 'SetFlourBlend', flours })) onClose();
-            else setError(true);
+            store.clearFormulaError?.();
+            if (store.apply({ type: 'SetFlourBlend', flours })) {
+              onClose();
+            } else {
+              const err = store.lastFormulaError;
+              setError(
+                err
+                  ? formatFormulaError(locale, err, store.content.names)
+                  : store.state.error || t(locale, 'refused'),
+              );
+            }
           }}
         >
           {t(locale, 'apply')}
@@ -1572,7 +1587,12 @@ function FlourBlendEditor({
                 setInvalid((s) => (s[flour.id] === bad ? s : { ...s, [flour.id]: bad }))
               }
               onDirtyChange={(dirty) => store.pendingInput?.(`flour-blend-${flour.id}`, dirty)}
+              onTextChange={() => {
+                if (error) setError(null);
+                store.clearFormulaError?.();
+              }}
               onCommit={(value) => {
+                setError(null);
                 setFlours((rows) =>
                   rows.map((row) => (row.id === flour.id ? { ...row, sharePct: value } : row)),
                 );
@@ -1612,7 +1632,7 @@ function FlourBlendEditor({
           {t(locale, 'addIngredient')}
         </Button>
         <p>{t(locale, 'blendHelp')}</p>
-        {error && <p role="alert">{t(locale, 'refused')}</p>}
+        {error && <p role="alert">{error}</p>}
       </div>
     </Modal>
   );

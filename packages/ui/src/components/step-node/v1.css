@@ -46,6 +46,10 @@
   font-weight: 700;
 }
 
+[data-fp-component='fp.step-node'][data-fp-version='v1'] .step-number-badge:empty {
+  display: none;
+}
+
 [data-fp-component='fp.step-node'][data-fp-version='v1'] .step-body {
   display: contents;
 }

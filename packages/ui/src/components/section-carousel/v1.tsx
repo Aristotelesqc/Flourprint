@@ -97,9 +97,10 @@ export const SectionCarousel: React.FC<SectionCarouselProps> = ({
     }
     const container = containerRef.current;
     const landmark = container
-      ? (container.closest(
-          '[data-fp-overlay-boundary], [data-navigation], [data-tabs-scope], [data-fp-container], [role="application"], body',
-        ) ?? container.parentElement?.parentElement)
+      ? (container.closest('[data-tabs-scope], [data-navigation], [role="application"]') ??
+        container.closest('[data-fp-container]') ??
+        container.closest('body') ??
+        container.parentElement?.parentElement)
       : null;
     const tabs =
       targetTabsElement ??

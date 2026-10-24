@@ -178,18 +178,16 @@ test('diagnostic states never invent a duration on failure', async ({ page }) =>
   const selector = page.getByRole('combobox', { name: 'Cas de référence du modèle', exact: true });
   await selector.selectOption('noResult');
   await expect(
-    page.locator('.status-panel:visible').getByText('Aucun résultat exploitable', { exact: true }),
+    page.getByRole('button', { name: /^Fermentation.*Aucun résultat exploitable/ }),
   ).toBeVisible();
   await expect(page.getByText(/Durée estimée :/)).toHaveCount(0);
   await selector.selectOption('out');
   await expect(
-    page
-      .locator('.status-panel:visible')
-      .getByText('Dose actuelle hors du domaine', { exact: true }),
+    page.getByRole('button', { name: /^Fermentation.*Dose actuelle hors du domaine/ }),
   ).toBeVisible();
   await selector.selectOption('valid');
   await expect(
-    page.locator('.status-panel:visible').getByText('Dans le domaine du modèle', { exact: true }),
+    page.getByRole('button', { name: /^Fermentation.*Dans le domaine du modèle/ }),
   ).toBeVisible();
 });
 for (const theme of ['light', 'dark', 'amoled'])

@@ -276,7 +276,7 @@ test('step editor cancels local changes and applies manual conditions, dependenc
   await expect(plan.getByLabel('Départ prévu', { exact: true })).toBeVisible();
 });
 
-test('settings change actual theme and clear weighing checks without discarding recipe quantities', async ({
+test('settings preserve weighing checks across visits and clear them only explicitly', async ({
   page,
 }) => {
   await page.goto(recipe);
@@ -291,19 +291,25 @@ test('settings change actual theme and clear weighing checks without discarding 
     await page.getByRole('button', { name: label, exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', value);
   }
+  // L111: no setting may opt into clearing the recipe's checks on navigation.
   await expect(
     page.getByRole('checkbox', { name: 'Conserver pendant la visite', exact: true }),
-  ).toBeChecked();
+  ).toHaveCount(0);
+  await expect(page.getByText('Effacer au changement', { exact: true })).toHaveCount(0);
+  await openGlobalDestination(page, 'Recettes');
+  await page.getByRole('button', { name: 'Shokupan', exact: true }).click();
+  await expect(salt).toBeChecked();
+  await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
+  await openGlobalDestination(page, 'Réglages');
   await page.getByRole('button', { name: 'Effacer les coches', exact: true }).click();
   await openGlobalDestination(page, 'Recettes');
   await page.getByRole('button', { name: 'Shokupan', exact: true }).click();
   await expect(salt).not.toBeChecked();
   await salt.check();
   await openGlobalDestination(page, 'Réglages');
-  await page.getByRole('checkbox', { name: 'Conserver pendant la visite', exact: true }).uncheck();
   await openGlobalDestination(page, 'Recettes');
   await page.getByRole('button', { name: 'Shokupan', exact: true }).click();
-  await expect(salt).not.toBeChecked();
+  await expect(salt).toBeChecked();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'amoled');
   await expect(page.getByTestId('formula-dough-weight')).toHaveText('699');
 });

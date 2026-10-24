@@ -58,6 +58,7 @@ export interface IconButtonProps {
   disabled?: boolean;
   dataTestId?: string;
   variant?: 'default' | 'primary' | 'danger';
+  pressed?: boolean;
 }
 
 export interface SurfaceProps {
@@ -88,6 +89,8 @@ export interface NumberFieldProps {
   disabled?: boolean;
   dataTestId?: string;
   errorMessage: string;
+  commitErrorMessage?: string;
+  onTextChange?: (raw: string) => void;
   resetKey?: number;
   displayDigits?: number;
 }
@@ -322,6 +325,7 @@ export interface SortableListProps {
   readonly disabled?: boolean;
   readonly onDragStart?: (id: string) => void;
   readonly onDropIntent?: (intent: SortableDropIntent | null) => SortableDropOutcome;
+  readonly getDropFeedback?: (intent: SortableDropIntent) => string | undefined;
   readonly renderOverlay?: (id: string) => React.ReactNode;
   readonly className?: string;
   readonly children?: React.ReactNode;

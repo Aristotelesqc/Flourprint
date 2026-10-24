@@ -1,4 +1,4 @@
-import type { Locale } from './messages';
+import { ingredientName, type Locale } from './messages';
 import type { ComponentPreset, ComponentStyle, FormulaError } from '@flourprint/core/domain';
 
 export const defaultsCopyMap = {
@@ -155,6 +155,12 @@ export function formatEngineReason(
       : 'Hydration must be a valid number.';
   }
 
+  if (reason.includes('must sum to 100') || reason.includes('shares must sum to 100')) {
+    return locale === 'fr'
+      ? 'La somme des parts de farine doit être égale à 100 %.'
+      : 'Flour shares must sum to 100%.';
+  }
+
   return locale === 'fr' ? 'Modification refusée par le moteur.' : 'Change refused by the engine.';
 }
 
@@ -162,31 +168,71 @@ export function formatEngineReason(
  * Localized formatter for any structured FormulaError.
  * Maps stable error codes and structured details to meaningful user explanations (ADR 0009).
  */
-export function formatFormulaError(locale: Locale, error: FormulaError): string {
+export function formatFormulaError(
+  locale: Locale,
+  error: FormulaError,
+  names?: Record<string, string>,
+): string {
+  if (!error.details) return formatEngineReason(locale);
+  if (error.code === 'InvalidFormula') {
+    const details = error.details;
+    if (
+      details.path === 'flours' &&
+      (details.reason.includes('must sum to 100') ||
+        details.reason.includes('shares must sum to 100'))
+    ) {
+      return locale === 'fr'
+        ? 'La somme des parts de farine doit être égale à 100 %.'
+        : 'Flour shares must sum to 100%.';
+    }
+    if (details.reason) {
+      return formatEngineReason(locale, details.reason);
+    }
+    return locale === 'fr' ? 'Formule non valide.' : 'Invalid formula.';
+  }
+
+  if (error.code === 'FlourAllocationExceeded') {
+    const flourName = ingredientName(locale, error.details.flour, names ?? {});
+    return locale === 'fr'
+      ? `La farine « ${flourName} » requise dépasse la quantité disponible.`
+      : `Required flour "${flourName}" exceeds available flour.`;
+  }
+
   if (error.code === 'WaterAllocationExceeded') {
     return locale === 'fr'
       ? 'La quantité d’eau requise dépasse l’eau disponible.'
       : 'Required water exceeds available water.';
   }
 
-  if (error.code === 'FlourAllocationExceeded') {
-    return locale === 'fr'
-      ? 'La quantité de farine requise dépasse la farine disponible.'
-      : 'Required flour exceeds available flour.';
-  }
-
   if (error.code === 'IngredientAllocationExceeded') {
+    const ingName = ingredientName(locale, error.details.ingredient, names ?? {});
     return locale === 'fr'
-      ? 'La quantité requise dépasse l’ingrédient disponible.'
-      : 'Required quantity exceeds available ingredient.';
-  }
-
-  const reason = extractFormulaErrorReason(error);
-  if (reason) {
-    return formatEngineReason(locale, reason);
+      ? `La quantité de « ${ingName} » requise dépasse la quantité disponible.`
+      : `Required quantity for "${ingName}" exceeds available quantity.`;
   }
 
   if (error.code === 'IncompatibleConstraint') {
+    if (error.details.field === 'waterTarget.locked') {
+      return locale === 'fr'
+        ? 'Cible d’hydratation verrouillée : déverrouiller pour modifier.'
+        : 'Locked target: unlock to modify.';
+    }
+    if (error.details.field === 'waterTarget.tooLow') {
+      return locale === 'fr'
+        ? 'L’eau apportée par les autres ingrédients dépasse la cible d’hydratation. Augmenter la cible ou ajuster les ingrédients.'
+        : 'Other ingredients bring more water than the target. Raise target or adjust ingredients.';
+    }
+    if (error.details.field === 'waterTarget.unknown' && error.details.ingredients?.length) {
+      const ingList = error.details.ingredients
+        .map((id) => ingredientName(locale, id, names ?? {}))
+        .join(', ');
+      return locale === 'fr'
+        ? `Teneur en eau non renseignée pour ${ingList}. Profil requis pour verrouiller l’hydratation.`
+        : `Unknown water content for ${ingList}. Composition required to lock hydration.`;
+    }
+    if (error.details?.reason) {
+      return formatEngineReason(locale, error.details.reason);
+    }
     return locale === 'fr'
       ? 'Contrainte incompatible dans la formule.'
       : 'Incompatible constraint in formula.';
@@ -196,6 +242,11 @@ export function formatFormulaError(locale: Locale, error: FormulaError): string 
     return locale === 'fr'
       ? 'Référence introuvable dans la formule.'
       : 'Unknown reference in formula.';
+  }
+
+  const reason = extractFormulaErrorReason(error);
+  if (reason) {
+    return formatEngineReason(locale, reason);
   }
 
   return locale === 'fr' ? 'Modification refusée par le moteur.' : 'Change refused by the engine.';

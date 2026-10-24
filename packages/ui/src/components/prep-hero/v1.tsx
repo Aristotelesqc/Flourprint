@@ -28,7 +28,8 @@ export const PreparationTimer: React.FC<PreparationTimerProps> = ({
   pausedBadge,
   overdueBadge,
 }) => {
-  const clampedProgress = Math.max(0, Math.min(1, progress));
+  const safeProgress = Number.isFinite(progress) ? progress : 0;
+  const clampedProgress = Math.max(0, Math.min(1, safeProgress));
   const percentProgress = Math.round(clampedProgress * 100);
   const stepKey = stepLine ?? title;
   const stepRef = React.useRef<HTMLDivElement>(null);
@@ -169,21 +170,16 @@ export const PreparationTimer: React.FC<PreparationTimerProps> = ({
 
       {instruction && <p className="preparation-instruction">{instruction}</p>}
 
-      {!countdownControls && (
-        <div
-          className="preparation-timer-progress-track"
-          role="progressbar"
-          aria-valuenow={percentProgress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label={labels.progress}
-        >
-          <div
-            className="preparation-timer-progress-fill"
-            style={{ width: `${percentProgress}%` }}
-          />
-        </div>
-      )}
+      <div
+        className="preparation-timer-progress-track"
+        role="progressbar"
+        aria-valuenow={percentProgress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={labels.progress}
+      >
+        <div className="preparation-timer-progress-fill" style={{ width: `${percentProgress}%` }} />
+      </div>
 
       {conditions && conditions.length > 0 && (
         <div className="prep-conditions">

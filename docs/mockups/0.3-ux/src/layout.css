@@ -370,7 +370,7 @@ body[data-capture='true'] .component-inspector {
 }
 .phone-content > input[type='search'] {
   margin: 0;
-  min-height: 2.625rem;
+  min-height: max(48px, 3rem);
   border-radius: var(--radius-pill);
   padding-inline: 0.875rem;
 }
@@ -379,7 +379,7 @@ body[data-capture='true'] .component-inspector {
   flex: 1;
   border-radius: var(--radius-pill);
   font-size: var(--type-label);
-  min-height: 2.625rem;
+  min-height: max(48px, 3rem);
 }
 .water-detail-summary {
   display: grid;
@@ -491,6 +491,7 @@ body[data-capture='true'] .component-inspector {
   background: transparent;
   border: 0;
   border-bottom: 1px solid var(--color-outline);
+  min-height: max(48px, 3rem);
   border-radius: 0;
   line-height: 1.25;
 }
@@ -500,21 +501,25 @@ body[data-capture='true'] .component-inspector {
   line-height: 1.35;
 }
 
-.header-name-input {
-  min-height: 0;
-  height: 1.25em;
-}
-
 .phone-frame > .build-label {
   grid-column: auto;
-  margin: 0;
-  padding: 3px 12px;
+  margin: 4px;
+  padding: 0 12px;
+  min-height: max(48px, 3rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   font-size: var(--type-meta);
   background: var(--color-surface);
   line-height: 1.25;
   border-top: 1px solid var(--color-outline-subtle);
+  border-radius: var(--radius-sm);
   flex-shrink: 0;
+}
+.phone-frame > .build-label:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .process-result {

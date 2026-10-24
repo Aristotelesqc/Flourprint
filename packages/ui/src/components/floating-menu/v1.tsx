@@ -3,9 +3,11 @@ import React, { useId, useState } from 'react';
 import type { IconButtonProps, MenuProps } from '../../props.ts';
 import { library } from '../../index.ts';
 import { useDialog } from '../use-dialog.ts';
+
 const IconButton = (props: IconButtonProps) => (
   <library.Slot component="fp.icon-button" {...props} />
 );
+
 export const Menu: React.FC<MenuProps> = ({
   open,
   previewTrigger,
@@ -23,6 +25,7 @@ export const Menu: React.FC<MenuProps> = ({
   };
   const dialogRef = useDialog(open || previewOpen, true, anchor);
   const titleId = useId();
+
   return (
     <>
       {previewTrigger && (
@@ -49,12 +52,12 @@ export const Menu: React.FC<MenuProps> = ({
         }}
       >
         <div className="menu-popup">
-          <header className="menu-header">
-            <h2 id={titleId} className="menu-title sr-only">
-              {title}
-            </h2>
+          <h2 id={titleId} className="menu-title sr-only">
+            {title}
+          </h2>
+          <div className="menu-close-action">
             <IconButton icon="close" label={closeLabel} onClick={close} />
-          </header>
+          </div>
           <div className="menu-body">
             {React.Children.count(children) === 1 &&
             React.isValidElement(children) &&
@@ -70,6 +73,7 @@ export const Menu: React.FC<MenuProps> = ({
     </>
   );
 };
+
 export default library.version({
   id: 'fp.floating-menu',
   version: 'v1',

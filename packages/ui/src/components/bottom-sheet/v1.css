@@ -123,3 +123,26 @@
   .sheet-handle {
   display: none;
 }
+
+/* Scoped bottom sheet raw input/select/textarea controls >= 48px (L123) */
+[data-fp-component='fp.bottom-sheet'][data-fp-version='v1']
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+    select,
+    textarea
+  ) {
+  min-height: var(--fp-spacing-touch, 48px);
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+[data-fp-component='fp.bottom-sheet'][data-fp-version='v1']
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+    select,
+    textarea
+  ):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

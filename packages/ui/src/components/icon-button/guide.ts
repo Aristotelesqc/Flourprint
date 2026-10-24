@@ -44,5 +44,7 @@ export default {
     disabled: 'Disables the button; renders visually dimmed (opacity 0.35) and inert.',
     dataTestId: 'Test id for browser suites.',
     variant: "'default' (ink text/icon), 'primary', or 'danger'.",
+    pressed:
+      'Optional toggle pressed state (aria-pressed) for actual toggle buttons; omitted on momentary action buttons.',
   },
 } satisfies ComponentGuide<IconButtonProps>;

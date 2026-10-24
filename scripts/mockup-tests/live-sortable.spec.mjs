@@ -174,10 +174,13 @@ test.describe('owner-selected Compact: travelling insertion space', () => {
     context,
   }) => {
     await page.goto(url({ dragActivation: 'hold' }));
-    const { cdp, original, target, start } = await lift(context, page, 'hold');
+    const { cdp, original } = await lift(context, page, 'hold');
+    // L104: the lift enters editing. Aim at the actual row after that layout change.
+    await expect(page.getByTestId('recipe-name')).toBeVisible();
+    const target = await row(page, 'bulk').boundingBox();
     await cdp.send('Input.dispatchTouchEvent', {
       type: 'touchMove',
-      touchPoints: [{ x: start.x - 25, y: target.y + target.height * 0.2, id: 1 }],
+      touchPoints: [{ x: target.x + target.width / 2, y: target.y + target.height * 0.2, id: 1 }],
     });
     await expect.poll(async () => titles(page).allTextContents()).not.toEqual(original);
     await cdp.send('Input.dispatchTouchEvent', {

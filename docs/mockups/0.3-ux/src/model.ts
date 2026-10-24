@@ -1,5 +1,5 @@
 import { catalogText } from './template-presentation';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   applyFormulaEdit,
   resolveFormula,
@@ -9,9 +9,12 @@ import {
   estimateFermentation,
   intendedOutcome,
   outcomeProblem,
+  implicitStartOf,
+  liveProjection,
   type PreparationOutcome,
   type Formula,
   type FormulaEdit,
+  type FormulaError,
   type Process,
   type ProcessStep,
   type StepFact,
@@ -348,19 +351,24 @@ export function getRunningSession(state: DemoState, recipeId: string): Session |
 }
 
 /**
- * Residual UI arithmetic for an active session's step remaining seconds.
+ * Returns display seconds remaining from the active step's core live projection.
  */
 export function getSessionRemainingSeconds(session: Session, clockNow: number): number | undefined {
-  const currentStep = session.effective.steps.find((s) => s.id === session.activeId);
-  const plannedDurationS = currentStep?.plannedDurationS;
-  if (plannedDurationS === undefined) return undefined;
-  const startedAt = session.facts[session.activeId]?.startedAt ?? session.startedAt;
-  const elapsed = (clockNow - Date.parse(startedAt)) / 1000 + session.elapsedOffsetS;
-  return Math.max(0, plannedDurationS - elapsed);
+  if (!session.engineRuntime) return undefined;
+  const projection = liveProjection(session.engineRuntime.state, instant(clockNow));
+  if (!projection?.ok) return undefined;
+  const end = projection.value.steps[session.activeId]?.end;
+  if (!end) return undefined;
+  return Math.max(0, (Date.parse(end) - clockNow) / 1000);
 }
 
 export function usePrototype(locale: Locale) {
   const [state, setState] = useState<DemoState>(() => initialState(locale));
+  const lastFormulaErrorRef = useRef<FormulaError | undefined>(undefined);
+  const clearFormulaError = useCallback((): void => {
+    lastFormulaErrorRef.current = undefined;
+    setState((s) => (s.error ? { ...s, error: '' } : s));
+  }, []);
   const content = currentContent(state);
   const recipe = state.recipes.find((r) => r.id === state.selected) ?? state.recipes[0];
   const resolved = resolveFormula(content.formula);
@@ -369,7 +377,8 @@ export function usePrototype(locale: Locale) {
     ...content.formula,
     anchor: { kind: 'flourTotal', grams: 100 },
   });
-  const push = (next: Content) =>
+  const push = (next: Content) => {
+    lastFormulaErrorRef.current = undefined;
     setState((s) =>
       s.draft
         ? {
@@ -384,7 +393,9 @@ export function usePrototype(locale: Locale) {
           }
         : s,
     );
-  const edit = (targetRecipeId?: string) =>
+  };
+  const edit = (targetRecipeId?: string) => {
+    lastFormulaErrorRef.current = undefined;
     setState((s) => {
       const id = targetRecipeId ?? s.selected;
       if (s.draft && s.draft.recipeId === id) {
@@ -406,7 +417,9 @@ export function usePrototype(locale: Locale) {
         },
       };
     });
-  const cancel = () =>
+  };
+  const cancel = () => {
+    lastFormulaErrorRef.current = undefined;
     setState((s) => ({
       ...s,
       error: '',
@@ -415,13 +428,16 @@ export function usePrototype(locale: Locale) {
       pendingInputs: {},
       draft: null,
     }));
+  };
   const apply = (command: FormulaEdit, names?: Record<string, string>): boolean => {
     if (!state.draft) return false;
     const result = applyFormulaEdit(content.formula, command);
     if (!result.ok) {
+      lastFormulaErrorRef.current = result.error;
       setState((s) => ({ ...s, error: formatFormulaError(locale, result.error) }));
       return false;
     }
+    lastFormulaErrorRef.current = undefined;
     push({
       ...content,
       formula: result.value,
@@ -472,6 +488,7 @@ export function usePrototype(locale: Locale) {
     }
     const isNewRecipe = targetRecipe.version === 0;
     if (!isNewRecipe && isContentEqual(content, targetRecipe)) {
+      lastFormulaErrorRef.current = undefined;
       setState((s) => ({
         ...s,
         draft: null,
@@ -497,6 +514,7 @@ export function usePrototype(locale: Locale) {
           },
         ];
     const nextVersion = isNewRecipe ? 1 : targetRecipe.version + 1;
+    lastFormulaErrorRef.current = undefined;
     setState((s) => ({
       ...s,
       draft: null,
@@ -557,17 +575,21 @@ export function usePrototype(locale: Locale) {
       water,
     });
     if (!locked.ok) {
+      lastFormulaErrorRef.current = locked.error;
       setState((s) => ({ ...s, error: formatFormulaError(locale, locked.error) }));
       return false;
     }
+    lastFormulaErrorRef.current = undefined;
     push({ ...content, formula: locked.value });
     return true;
   };
-  const undo = () =>
+  const undo = () => {
+    lastFormulaErrorRef.current = undefined;
     setState((s) =>
       s.draft && s.draft.index > 0
         ? {
             ...s,
+            error: '',
             invalid: {},
             pendingInputs: {},
             resetEpoch: s.resetEpoch + 1,
@@ -575,11 +597,14 @@ export function usePrototype(locale: Locale) {
           }
         : s,
     );
-  const redo = () =>
+  };
+  const redo = () => {
+    lastFormulaErrorRef.current = undefined;
     setState((s) =>
       s.draft && s.draft.index < s.draft.history.length - 1
         ? {
             ...s,
+            error: '',
             invalid: {},
             pendingInputs: {},
             resetEpoch: s.resetEpoch + 1,
@@ -587,7 +612,9 @@ export function usePrototype(locale: Locale) {
           }
         : s,
     );
-  const reset = () =>
+  };
+  const reset = () => {
+    lastFormulaErrorRef.current = undefined;
     setState((s) => {
       if (!s.draft) return s;
       const target = s.recipes.find((r) => r.id === s.selected) ?? s.recipes[0];
@@ -606,6 +633,7 @@ export function usePrototype(locale: Locale) {
         },
       };
     });
+  };
   const select = (id: string) =>
     setState((s) => ({
       ...s,
@@ -846,25 +874,10 @@ export function usePrototype(locale: Locale) {
     let trialEng = eng;
 
     if (targetStepId && trialEng.state.steps[targetStepId]?.startedAt === undefined) {
-      const targetStep = sess.effective.steps.find((st) => st.id === targetStepId);
-      let latestDepEnd: string | undefined;
-      if (targetStep && targetStep.dependsOn.length > 0) {
-        for (const depId of targetStep.dependsOn) {
-          const depEndedAt = sess.facts[depId]?.endedAt ?? trialEng.state.steps[depId]?.endedAt;
-          if (depEndedAt) {
-            if (!latestDepEnd || Date.parse(depEndedAt) > Date.parse(latestDepEnd)) {
-              latestDepEnd = depEndedAt;
-            }
-          }
-        }
-      }
-      const priorEnd = latestDepEnd
-        ? instant(latestDepEnd)
-        : (trialEng.state.startedAt ?? sess.startedAt);
-
+      const stepStart = implicitStartOf(trialEng.state, targetStepId) ?? now;
       const startRes = dispatchEngineCommand(
         trialEng,
-        { type: 'StartStep', stepId: targetStepId, at: priorEnd },
+        { type: 'StartStep', stepId: targetStepId, at: stepStart },
         now,
       );
       if (!startRes.ok) {
@@ -1114,6 +1127,10 @@ export function usePrototype(locale: Locale) {
     promoteReferenceVersion,
     getActiveSessions: () => getActiveSessions(state),
     getRunningSession: (recipeId: string) => getRunningSession(state, recipeId),
+    get lastFormulaError(): FormulaError | undefined {
+      return lastFormulaErrorRef.current;
+    },
+    clearFormulaError,
   };
 }
 export type Prototype = ReturnType<typeof usePrototype>;

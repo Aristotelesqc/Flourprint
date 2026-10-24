@@ -1,6 +1,6 @@
 import { Ui } from './library';
 import { catalogText, curatedText } from './template-presentation';
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   duplicateStep,
@@ -57,6 +57,7 @@ import {
 import { componentDisplayName } from './RecipeView';
 import { stepCopy } from './steps-copy';
 import { editingCopyT } from './editing-copy';
+import { planningCopy } from './planning-copy';
 import { DragHandle, useStepDrag, SortableItem } from './StepDrag';
 import { DependencyEditor } from './DependencyEditor';
 import {
@@ -70,13 +71,15 @@ import {
 import './step-drag.css';
 
 export const operationIcon = (operation: string): import('./ui').IconName =>
-  ['bake', 'scald', 'boil', 'preheat'].includes(operation)
+  ['bake', 'boil', 'preheat'].includes(operation)
     ? 'oven'
-    : ['bulk', 'proof', 'retard', 'preferment'].includes(operation)
-      ? 'clock'
-      : ['mix', 'knead', 'fold', 'shape'].includes(operation)
-        ? 'ingredient'
-        : 'temperature';
+    : operation === 'scald'
+      ? 'temperature'
+      : ['bulk', 'proof', 'retard', 'preferment', 'cool', 'rest'].includes(operation)
+        ? 'clock'
+        : ['mix', 'knead', 'fold', 'shape', 'divide'].includes(operation)
+          ? 'ingredient'
+          : 'clock';
 
 export const titleOf = (step: ProcessStep, locale: Locale) =>
   curatedText(locale, step.label) ?? step.label ?? operationName(locale, step.operation);
@@ -452,6 +455,10 @@ export function Diagnostics({
         ? 'outOfDomain'
         : 'noResult',
   );
+  const specificReason =
+    direct.status !== 'ok'
+      ? catalogText(locale, `fermentation.reason.${direct.reason}`)
+      : undefined;
   return (
     <Disclosure
       title={t(locale, 'diagnostics')}
@@ -472,7 +479,7 @@ export function Diagnostics({
                 ? 'warning'
                 : 'unavailable'
           }
-          message={validity}
+          message={specificReason ?? t(locale, 'readyTarget')}
         >
           {direct.status === 'ok' && (
             <div className="stack">
@@ -502,15 +509,7 @@ export function Diagnostics({
               )}
             </div>
           )}
-          {direct.status !== 'ok' && (
-            <p>
-              {catalogText(locale, `fermentation.reason.${direct.reason}`) ??
-                (direct.status === 'out_of_domain'
-                  ? t(locale, 'outOfDomain')
-                  : t(locale, 'noResult'))}
-            </p>
-          )}
-          <p>{t(locale, 'readyTarget')}</p>
+          {specificReason && <p>{t(locale, 'readyTarget')}</p>}
           <p>{t(locale, 'modelLimits')}</p>
           {diagnosticInput.formula.ingredients
             .filter((i) => i.yeast)
@@ -519,7 +518,7 @@ export function Diagnostics({
                 {t(locale, 'currentDose')} ·{' '}
                 {catalogText(locale, `fermentation.form.${i.yeast?.form}`) ?? i.yeast?.form}
                 {colon(locale)}
-                {num(locale, i.bakerPct, 3)} {t(locale, 'bakerPct')}
+                {num(locale, i.bakerPct, 1)} {t(locale, 'bakerPct')}
               </p>
             ))}
           <p className="muted">{t(locale, 'freshBasis')}</p>
@@ -528,7 +527,7 @@ export function Diagnostics({
               <strong>
                 {t(locale, 'candidate')}
                 {colon(locale)}
-                {num(locale, candidate[1].value, 3)} {t(locale, 'bakerPct')}
+                {num(locale, candidate[1].value, 1)} {t(locale, 'bakerPct')}
               </strong>
               {scenario === 'recipe' && (
                 <p>
@@ -538,7 +537,7 @@ export function Diagnostics({
                     locale,
                     store.content.formula.ingredients.find((i) => i.id === candidate[0])
                       ?.bakerPct ?? 0,
-                    3,
+                    1,
                   )}{' '}
                   {t(locale, 'bakerPct')}
                 </p>
@@ -566,9 +565,10 @@ export function Diagnostics({
             </Surface>
           )}
           <Disclosure title={t(locale, 'assumptions')}>
-            <code>
-              {direct.model?.id} {direct.model?.version}
-            </code>
+            <p>
+              {planningCopy(locale, 'commercialYeastModel')}
+              {direct.model?.version ? ` (${direct.model.version})` : ''}
+            </p>
             <p>{t(locale, 'modelLimits')}</p>
             {direct.status === 'ok' && (
               <ul>
@@ -842,6 +842,14 @@ export function ProcessView({
       },
       onAnnounce: (msg: string) => setAnnouncement(msg),
     });
+
+  const handleDropFeedback = useCallback(
+    (intent: { id: string; afterId: string | null }): string | undefined => {
+      const result = moveStep(process, intent.id as StepId, (intent.afterId as StepId) ?? null);
+      return !result.ok ? t(locale, refusalKey(result.error)) : undefined;
+    },
+    [process, locale],
+  );
 
   const previewOf = (candidate: Process) => {
     if (!at || at.trim() === '') return undefined;
@@ -1243,137 +1251,181 @@ export function ProcessView({
         </Surface>
       )}
 
-      <div className="process-view-toolbar row">
-        <Tabs
-          variant="pills"
-          label={t(locale, 'steps')}
-          tabs={[
-            { id: 'grouped', label: t(locale, 'grouped') },
-            { id: 'timeline', label: t(locale, 'timeline') },
-          ]}
-          activeId={view}
-          onChange={(id) => setView(id)}
-        />
-      </div>
+      {!planning && <h2>{t(locale, 'steps')}</h2>}
 
-      <Ui
-        component="fp.sortable-list"
-        items={sortableItems}
-        activationMode={activationMode}
-        disabled={planning}
-        onDragStart={handleDragStart}
-        onDropIntent={handleDropIntent}
-        renderOverlay={renderFloatingOverlay}
-      >
-        {view === 'timeline' ? (
-          <div className="timeline-lanes stack">
-            {relative?.total.status === 'complete' &&
-              (() => {
-                const totalElapsed = relative.total.elapsedS;
-                const span = Math.max(1, totalElapsed);
-                return (
-                  <Ui
-                    component="fp.timeline"
-                    startLabel={
-                      anchored?.total.status === 'complete'
-                        ? time(locale, anchored.total.start)
-                        : '+0:00'
-                    }
-                    endLabel={
-                      anchored?.total.status === 'complete'
-                        ? time(locale, anchored.total.end)
-                        : `+${duration(locale, totalElapsed)}`
-                    }
-                    lanes={relative.groups.map((group) => {
-                      const isComponent = group.id.startsWith('component:');
-                      const compId = isComponent ? group.id.slice('component:'.length) : null;
-                      const component = compId
-                        ? store.content.formula.components.find((c) => c.id === compId)
-                        : null;
-                      const label = component
-                        ? componentDisplayName(
-                            locale,
-                            store.content.formula,
-                            component,
-                            store.content.names,
-                          )
-                        : group.id === 'cooking'
-                          ? stepCopy(locale, 'cookingGroup')
-                          : t(locale, 'dough');
-                      const steps = process.steps.filter((s) => group.stepIds.includes(s.id));
-                      return {
-                        id: group.id,
-                        label,
-                        events: steps.flatMap((step) => {
-                          const relStep = relative.steps.find((s) => s.stepId === step.id);
-                          if (!relStep || relStep.timing.status !== 'known') return [];
-                          const anchStep = anchored?.steps.find((s) => s.stepId === step.id);
-                          const range =
-                            anchStep?.start && anchStep.end
-                              ? `${time(locale, anchStep.start)} – ${time(locale, anchStep.end)}`
-                              : `+${duration(locale, relStep.timing.startS)} – +${duration(locale, relStep.timing.endS)}`;
-                          return [
-                            {
-                              id: step.id,
-                              label: titleOf(step, locale),
-                              range,
-                              startPct: (relStep.timing.startS / span) * 100,
-                              endPct: (relStep.timing.endS / span) * 100,
-                            },
-                          ];
-                        }),
-                      };
-                    })}
-                  />
-                );
-              })()}
-            {process.steps.map(renderStep)}
-          </div>
-        ) : (
-          <>
-            {relative?.groups.map((group, groupIndex) => {
-              const groupSteps = process.steps.filter((s) => group.stepIds.includes(s.id));
+      {!planning && (
+        <div className="process-view-toolbar row">
+          <Tabs
+            variant="pills"
+            label={t(locale, 'steps')}
+            tabs={[
+              { id: 'grouped', label: t(locale, 'grouped') },
+              { id: 'timeline', label: t(locale, 'timeline') },
+            ]}
+            activeId={view}
+            onChange={(id) => setView(id)}
+          />
+        </div>
+      )}
+
+      {planning ? (
+        <Surface>
+          <div className="stack">
+            {relative?.groups.map((group) => {
               const isComponent = group.id.startsWith('component:');
               const compId = isComponent ? group.id.slice('component:'.length) : null;
               const component = compId
                 ? store.content.formula.components.find((c) => c.id === compId)
                 : null;
-
-              const title = component
-                ? `${groupIndex + 1}. ${componentDisplayName(locale, store.content.formula, component, store.content.names)}`
+              const label = component
+                ? componentDisplayName(
+                    locale,
+                    store.content.formula,
+                    component,
+                    store.content.names,
+                  )
                 : group.id === 'cooking'
-                  ? `${groupIndex + 1}. ${stepCopy(locale, 'cookingGroup')}`
-                  : `${groupIndex + 1}. ${t(locale, 'dough')}`;
-
-              const collapseKey = compId ?? (group.id === 'cooking' ? 'cooking' : 'dough');
-              const isCollapsed = Boolean(
-                collapsedGroups[collapseKey] ??
-                (group.id === 'cooking' ? false : collapsedGroups['dough']),
-              );
-
-              const groupWin = anchored
+                  ? stepCopy(locale, 'cookingGroup')
+                  : t(locale, 'dough');
+              const win = anchored
                 ? anchored.groups.find((g) => g.id === group.id)?.window
                 : group.window;
-
-              const nonPreheatCount = groupSteps.filter((s) => s.operation !== 'preheat').length;
-
-              const subtitle = formatWindow(groupWin, nonPreheatCount);
-
+              const timing =
+                win && win.status === 'complete'
+                  ? 'start' in win
+                    ? `${time(locale, win.start)} → ${time(locale, win.end)} (${duration(locale, win.elapsedS)})`
+                    : `+${duration(locale, win.startS)} → +${duration(locale, win.endS)} (${duration(locale, win.elapsedS)})`
+                  : t(locale, 'unknownDuration');
               return (
-                <Disclosure
-                  key={group.id}
-                  title={title}
-                  subtitle={subtitle}
-                  open={!isCollapsed}
-                  onOpenChange={(open) => onToggleGroup?.(collapseKey, open)}
-                >
-                  {groupSteps.map((step) => renderStep(step, process.steps.indexOf(step)))}
-                </Disclosure>
+                <div key={group.id} className="row">
+                  <strong>{label}</strong>
+                  <span className="muted">{timing}</span>
+                </div>
               );
             })}
-          </>
-        )}
-      </Ui>
+          </div>
+        </Surface>
+      ) : (
+        <Ui
+          component="fp.sortable-list"
+          items={sortableItems}
+          activationMode={activationMode}
+          disabled={planning}
+          onDragStart={handleDragStart}
+          onDropIntent={handleDropIntent}
+          getDropFeedback={handleDropFeedback}
+          renderOverlay={renderFloatingOverlay}
+        >
+          {view === 'timeline' ? (
+            <div className="timeline-lanes stack">
+              {relative?.total.status === 'complete' &&
+                (() => {
+                  const totalElapsed = relative.total.elapsedS;
+                  const span = Math.max(1, totalElapsed);
+                  return (
+                    <Ui
+                      component="fp.timeline"
+                      startLabel={
+                        anchored?.total.status === 'complete'
+                          ? time(locale, anchored.total.start)
+                          : '+0:00'
+                      }
+                      endLabel={
+                        anchored?.total.status === 'complete'
+                          ? time(locale, anchored.total.end)
+                          : `+${duration(locale, totalElapsed)}`
+                      }
+                      lanes={relative.groups.map((group) => {
+                        const isComponent = group.id.startsWith('component:');
+                        const compId = isComponent ? group.id.slice('component:'.length) : null;
+                        const component = compId
+                          ? store.content.formula.components.find((c) => c.id === compId)
+                          : null;
+                        const label = component
+                          ? componentDisplayName(
+                              locale,
+                              store.content.formula,
+                              component,
+                              store.content.names,
+                            )
+                          : group.id === 'cooking'
+                            ? stepCopy(locale, 'cookingGroup')
+                            : t(locale, 'dough');
+                        const steps = process.steps.filter((s) => group.stepIds.includes(s.id));
+                        return {
+                          id: group.id,
+                          label,
+                          events: steps.flatMap((step) => {
+                            const relStep = relative.steps.find((s) => s.stepId === step.id);
+                            if (!relStep || relStep.timing.status !== 'known') return [];
+                            const anchStep = anchored?.steps.find((s) => s.stepId === step.id);
+                            const range =
+                              anchStep?.start && anchStep.end
+                                ? `${time(locale, anchStep.start)} – ${time(locale, anchStep.end)}`
+                                : `+${duration(locale, relStep.timing.startS)} – +${duration(locale, relStep.timing.endS)}`;
+                            return [
+                              {
+                                id: step.id,
+                                label: titleOf(step, locale),
+                                range,
+                                startPct: (relStep.timing.startS / span) * 100,
+                                endPct: (relStep.timing.endS / span) * 100,
+                              },
+                            ];
+                          }),
+                        };
+                      })}
+                    />
+                  );
+                })()}
+              {process.steps.map(renderStep)}
+            </div>
+          ) : (
+            <>
+              {relative?.groups.map((group, groupIndex) => {
+                const groupSteps = process.steps.filter((s) => group.stepIds.includes(s.id));
+                const isComponent = group.id.startsWith('component:');
+                const compId = isComponent ? group.id.slice('component:'.length) : null;
+                const component = compId
+                  ? store.content.formula.components.find((c) => c.id === compId)
+                  : null;
+
+                const title = component
+                  ? `${groupIndex + 1}. ${componentDisplayName(locale, store.content.formula, component, store.content.names)}`
+                  : group.id === 'cooking'
+                    ? `${groupIndex + 1}. ${stepCopy(locale, 'cookingGroup')}`
+                    : `${groupIndex + 1}. ${t(locale, 'dough')}`;
+
+                const collapseKey = compId ?? (group.id === 'cooking' ? 'cooking' : 'dough');
+                const isCollapsed = Boolean(
+                  collapsedGroups[collapseKey] ??
+                  (group.id === 'cooking' ? false : collapsedGroups['dough']),
+                );
+
+                const groupWin = anchored
+                  ? anchored.groups.find((g) => g.id === group.id)?.window
+                  : group.window;
+
+                const nonPreheatCount = groupSteps.filter((s) => s.operation !== 'preheat').length;
+
+                const subtitle = formatWindow(groupWin, nonPreheatCount);
+
+                return (
+                  <Disclosure
+                    key={group.id}
+                    title={title}
+                    subtitle={subtitle}
+                    open={!isCollapsed}
+                    onOpenChange={(open) => onToggleGroup?.(collapseKey, open)}
+                  >
+                    {groupSteps.map((step) => renderStep(step, process.steps.indexOf(step)))}
+                  </Disclosure>
+                );
+              })}
+            </>
+          )}
+        </Ui>
+      )}
 
       {!planning && store.state.draft && (
         <Button
@@ -1627,14 +1679,17 @@ export function ProcessView({
       {typeof document !== 'undefined' &&
         touchRefusal &&
         createPortal(
-          <div data-process-refusal={touchRefusal.error.code} className="fp-touch-refusal-toast">
-            <span>{t(locale, refusalKey(touchRefusal.error))}</span>
-            <IconButton
-              icon="close"
-              label={t(locale, 'close')}
-              onClick={() => setTouchRefusal(null)}
-            />
-          </div>,
+          <>
+            <div className="fp-touch-refusal-scrim" aria-hidden="true" />
+            <div data-process-refusal={touchRefusal.error.code} className="fp-touch-refusal-toast">
+              <span>{t(locale, refusalKey(touchRefusal.error))}</span>
+              <IconButton
+                icon="close"
+                label={t(locale, 'close')}
+                onClick={() => setTouchRefusal(null)}
+              />
+            </div>
+          </>,
           document.body,
         )}
     </div>
@@ -1642,12 +1697,10 @@ export function ProcessView({
 }
 
 const dateTime = (locale: Locale, value: string) =>
-  new Intl.DateTimeFormat(locale === 'fr' ? 'fr-CA' : 'en-CA', {
+  `${new Intl.DateTimeFormat(locale === 'fr' ? 'fr-CA' : 'en-CA', {
     day: 'numeric',
     month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
+  }).format(new Date(value))} ${time(locale, value)}`;
 
 export function processDuration(content: Content): number | undefined {
   const rel = relativeTimeline(content.process, {

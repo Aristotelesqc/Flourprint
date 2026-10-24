@@ -255,8 +255,8 @@ A small menu anchored to the button that opened it, for secondary actions.
 
 **Accessibility**
 
-- Native modal dialog anchored to its trigger; Escape and outside taps close it; focus returns to the trigger.
-- Close is an independent 48 px non-overlapping target; action layout is owned by the component even when .menu-actions wrapper is omitted.
+- Native modal dialog anchored to its trigger; Escape and outside taps close it; focus restored for controlled close and conditional unmount.
+- Compact close inline first action row; action layout is owned by the component even when .menu-actions wrapper is omitted.
 - Floating layer: may be translucent (elevation rule).
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
@@ -423,15 +423,16 @@ A button showing only a pictogram (or an image), with its label as accessible na
 
 **Props**
 
-| Prop         | Meaning                                                                     |
-| ------------ | --------------------------------------------------------------------------- |
-| `icon`       | Pictogram name (IconName). Rendered when imageSrc is omitted.               |
-| `imageSrc`   | Optional image shown instead of the pictogram (decorative, rounded square). |
-| `label`      | Required accessible name and tooltip (aria-label and title).                |
-| `onClick`    | Callback invoked on button click/activation.                                |
-| `disabled`   | Disables the button; renders visually dimmed (opacity 0.35) and inert.      |
-| `dataTestId` | Test id for browser suites.                                                 |
-| `variant`    | 'default' (ink text/icon), 'primary', or 'danger'.                          |
+| Prop         | Meaning                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------ |
+| `icon`       | Pictogram name (IconName). Rendered when imageSrc is omitted.                                                |
+| `imageSrc`   | Optional image shown instead of the pictogram (decorative, rounded square).                                  |
+| `label`      | Required accessible name and tooltip (aria-label and title).                                                 |
+| `onClick`    | Callback invoked on button click/activation.                                                                 |
+| `disabled`   | Disables the button; renders visually dimmed (opacity 0.35) and inert.                                       |
+| `dataTestId` | Test id for browser suites.                                                                                  |
+| `variant`    | 'default' (ink text/icon), 'primary', or 'danger'.                                                           |
+| `pressed`    | Optional toggle pressed state (aria-pressed) for actual toggle buttons; omitted on momentary action buttons. |
 
 **Accessibility**
 
@@ -472,24 +473,25 @@ One ingredient of a step: name, grams, baker's percentage, optional note and its
 
 **Props**
 
-| Prop         | Meaning                                                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `id`         | Ingredient id, for keys and tests.                                                                                 |
-| `name`       | Ingredient name.                                                                                                   |
-| `gramsText`  | Formatted grams.                                                                                                   |
-| `pctText`    | Formatted percentage with its explicit basis (baker percentage or share of flour); the component computes neither. |
-| `note`       | Optional note such as the share in a component.                                                                    |
-| `checked`    | Weighed state.                                                                                                     |
-| `onToggle`   | Called by the checkbox or the non-editing row body; the quantity/end cell stops propagation.                       |
-| `checkLabel` | Label of the weighing checkbox.                                                                                    |
-| `editing`    | Shows the edit controls passed as children.                                                                        |
-| `children`   | Edit controls while editing.                                                                                       |
+| Prop         | Meaning                                                                                                                                                                                 |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`         | Ingredient id, for keys and tests.                                                                                                                                                      |
+| `name`       | Ingredient name.                                                                                                                                                                        |
+| `gramsText`  | Formatted grams.                                                                                                                                                                        |
+| `pctText`    | Formatted percentage with its explicit basis (baker percentage or share of flour); the component computes neither.                                                                      |
+| `note`       | Optional note such as the share in a component.                                                                                                                                         |
+| `checked`    | Weighed state.                                                                                                                                                                          |
+| `onToggle`   | Called by the checkbox or the non-editing row body; the quantity/end cell stops propagation.                                                                                            |
+| `checkLabel` | Label of the weighing checkbox.                                                                                                                                                         |
+| `editing`    | Shows the edit controls passed as children.                                                                                                                                             |
+| `children`   | Edit controls while editing: arranged inside .ingredient-edit-wrap containing .field-grid (stagegram NumberField and readonly stagebakerpct) and .ingredient-row-actions (info, trash). |
 
 **Accessibility**
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - Grams and percentage are text with tabular figures; the checkbox has its own label.
 - Editing ingredient rows highlight with container padding and rounded corners, keeping row name and value alignment consistent with read mode without shrinking typography (L123).
+- In editing mode, the ingredient name spans the full-width first row without mid-word breaking, with editable controls below in full width. The controls arrange a two-column flexible field grid (.field-grid for quantity and percentage) alongside an action cluster (.ingredient-row-actions) that wraps to the edge if space is constrained at small widths or high zoom (L122).
 - Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).
 
 **Related**
@@ -565,29 +567,31 @@ A numeric input that keeps the raw text while typing and commits a parsed number
 
 **Props**
 
-| Prop               | Meaning                                                                                                                          |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| `compact`          | Smaller layout for rows.                                                                                                         |
-| `hint`             | Optional help text under the field.                                                                                              |
-| `value`            | Committed number shown when not editing.                                                                                         |
-| `label`            | Accessible label.                                                                                                                |
-| `unit`             | Unit text such as g or %.                                                                                                        |
-| `unitPosition`     | 'prefix' or 'suffix' (default) for the unit.                                                                                     |
-| `locale`           | 'fr' or 'en' decimal separator.                                                                                                  |
-| `onCommit`         | Called with the parsed value; returning false keeps the raw text and shows the error.                                            |
-| `onClear`          | Optional callback when clearing a finite value in an optional field; returning false keeps the field in error.                   |
-| `onValidityChange` | Receives true for an invalid or refused value and false after valid input/reset; it reports invalidity, despite its name.        |
-| `onDirtyChange`    | Receives true when uncommitted raw text differs from the committed value, and false after commit, reset, or unmount.             |
-| `disabled`         | Disables editing.                                                                                                                |
-| `dataTestId`       | Test id for browser suites.                                                                                                      |
-| `errorMessage`     | Message shown when a value is refused.                                                                                           |
-| `resetKey`         | Changing it discards the raw text and shows value again.                                                                         |
-| `displayDigits`    | Maximum fraction digits for formatted display (default 2); accepted values keep their precision until the consumer changes them. |
+| Prop                 | Meaning                                                                                                                          |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `compact`            | Smaller layout for rows.                                                                                                         |
+| `hint`               | Optional help text under the field.                                                                                              |
+| `value`              | Committed number shown when not editing.                                                                                         |
+| `label`              | Accessible label.                                                                                                                |
+| `unit`               | Unit text such as g or %.                                                                                                        |
+| `unitPosition`       | 'prefix' or 'suffix' (default) for the unit.                                                                                     |
+| `locale`             | 'fr' or 'en' decimal separator.                                                                                                  |
+| `onCommit`           | Called with the parsed value; returning false keeps the raw text and shows the error.                                            |
+| `onClear`            | Optional callback when clearing a finite value in an optional field; returning false keeps the field in error.                   |
+| `onValidityChange`   | Receives true for an invalid or refused value and false after valid input/reset; it reports invalidity, despite its name.        |
+| `onDirtyChange`      | Receives true when uncommitted raw text differs from the committed value, and false after commit, reset, or unmount.             |
+| `disabled`           | Disables editing.                                                                                                                |
+| `dataTestId`         | Test id for browser suites.                                                                                                      |
+| `errorMessage`       | Message shown for syntax or parse errors, or as fallback for refused values.                                                     |
+| `commitErrorMessage` | Optional engine refusal reason shown when onCommit or onClear returns false (L121). An empty string clears stale domain errors.  |
+| `onTextChange`       | Optional callback invoked with the raw text on every change.                                                                     |
+| `resetKey`           | Changing it discards the raw text and shows value again.                                                                         |
+| `displayDigits`      | Maximum fraction digits for formatted display (default 2); accepted values keep their precision until the consumer changes them. |
 
 **Accessibility**
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
-- Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value.
+- Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value or syntax error across distinct parse and refusal error paths.
 - The unit adornment is always aria-hidden; include the unit in label or hint so its meaning remains accessible.
 - The input preserves a real 48 px touch target (var(--fp-spacing-touch)) without reducing typography, even in compact row layouts (L123).
 
@@ -643,7 +647,7 @@ The dominant block of a running preparation: current step, time remaining, start
 **Accessibility**
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
-- Remaining time is text; progress also has a label.
+- Remaining time is text; progress bar is always rendered with label even when countdown controls are present.
 - No rolling numbers and no action delayed behind an animation (DESIGN.md).
 - Step change triggers tonal highlight via fp.motion.highlight; disabled under reduced motion.
 
@@ -785,16 +789,17 @@ Generic reusable sortable container adapter providing modern @dnd-kit/react 0.5.
 
 **Props**
 
-| Prop             | Meaning                                                                                                                                                                                                               |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `items`          | Optional ordered list of item descriptors { id, group } for relative placement computation.                                                                                                                           |
-| `activationMode` | 'move' (drag after movement threshold) or 'hold' (press and hold).                                                                                                                                                    |
-| `disabled`       | Disables all drag and drop interactions.                                                                                                                                                                              |
-| `onDragStart`    | Called when an actual lift starts with the active item id.                                                                                                                                                            |
-| `onDropIntent`   | Called on drop completion with the computed drop intent (or null on cancellation); returns a synchronous SortableDropOutcome to accept, keep pending, or roll back optimistic ordering on refused/unchanged outcomes. |
-| `renderOverlay`  | Optional custom renderer for the lifted drag overlay row.                                                                                                                                                             |
-| `className`      | Optional CSS class for the sortable container.                                                                                                                                                                        |
-| `children`       | Items, accordions, and group wrappers composing the sortable list.                                                                                                                                                    |
+| Prop              | Meaning                                                                                                                                                                                                               |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`           | Optional ordered list of item descriptors { id, group } for relative placement computation.                                                                                                                           |
+| `activationMode`  | 'move' (drag after movement threshold) or 'hold' (press and hold).                                                                                                                                                    |
+| `disabled`        | Disables all drag and drop interactions.                                                                                                                                                                              |
+| `onDragStart`     | Called when an actual lift starts with the active item id.                                                                                                                                                            |
+| `onDropIntent`    | Called on drop completion with the computed drop intent (or null on cancellation); returns a synchronous SortableDropOutcome to accept, keep pending, or roll back optimistic ordering on refused/unchanged outcomes. |
+| `getDropFeedback` | Optional preview callback returning a localized refusal string when hovering an invalid drop slot.                                                                                                                    |
+| `renderOverlay`   | Optional custom renderer for the lifted drag overlay row.                                                                                                                                                             |
+| `className`       | Optional CSS class for the sortable container.                                                                                                                                                                        |
+| `children`        | Items, accordions, and group wrappers composing the sortable list.                                                                                                                                                    |
 
 **Accessibility**
 

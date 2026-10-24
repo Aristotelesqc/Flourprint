@@ -21,7 +21,7 @@ import {
   type KeyframesMotion,
 } from '../../motion.ts';
 import { playStepDragSettle } from '../../motions/step-drag/index.ts';
-import type { SortableListProps, SortableDropOutcome } from '../../props.ts';
+import type { SortableListProps, SortableDropOutcome, SortableDropIntent } from '../../props.ts';
 import { library } from '../../index.ts';
 
 type DropAnimation = React.ComponentProps<typeof DragOverlay>['dropAnimation'];
@@ -324,12 +324,123 @@ function isPointWithinVisibleContainer(
   return true;
 }
 
+function computeDropIntent(
+  containerEl: HTMLElement | null,
+  source: Parameters<
+    NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragEnd']>
+  >[0]['operation']['source'],
+  sourceId: string,
+  point: { x: number; y: number } | null,
+  snapshot: SortableDomSnapshotEntry[],
+  items?: readonly { id: string; group?: string }[],
+): { intent: SortableDropIntent; isUnchanged: boolean } | null {
+  if (!containerEl || !point || !isPointWithinVisibleContainer(containerEl, point)) {
+    return null;
+  }
+
+  const ownedRows = Array.from(containerEl.querySelectorAll<HTMLElement>('[data-sortable-id]'));
+  let ownsRowHit = ownedRows.some((row) => {
+    const rect = row.getBoundingClientRect();
+    return (
+      point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom
+    );
+  });
+  if (!ownsRowHit) {
+    for (let i = 0; i < ownedRows.length - 1; i++) {
+      const curr = ownedRows[i];
+      const next = ownedRows[i + 1];
+      if (!curr || !next || curr.parentElement !== next.parentElement) continue;
+      const r1 = curr.getBoundingClientRect();
+      const r2 = next.getBoundingClientRect();
+      const gutterTop = r1.bottom;
+      const gutterBottom = r2.top;
+      if (gutterBottom <= gutterTop) continue;
+      const gutterLeft = Math.max(r1.left, r2.left);
+      const gutterRight = Math.min(r1.right, r2.right);
+      if (gutterRight <= gutterLeft) continue;
+      if (
+        point.x >= gutterLeft &&
+        point.x <= gutterRight &&
+        point.y >= gutterTop &&
+        point.y <= gutterBottom
+      ) {
+        ownsRowHit = true;
+        break;
+      }
+    }
+  }
+  if (!ownsRowHit) {
+    return null;
+  }
+
+  const snapshotEntry = snapshot.find((entry) => entry.id === sourceId);
+  const sourceEl =
+    snapshotEntry?.element instanceof HTMLElement
+      ? snapshotEntry.element
+      : containerEl.querySelector<HTMLElement>(`[data-sortable-id="${sourceId}"]`);
+
+  const isUnchanged =
+    snapshotEntry && sourceEl
+      ? sourceEl.parentNode === snapshotEntry.parent &&
+        sourceEl.nextSibling === snapshotEntry.nextSibling
+      : (isSortable(source) ? source.index : 0) ===
+        (snapshotEntry?.index ?? (isSortable(source) ? source.initialIndex : 0));
+
+  const sourceIndexInDom = ownedRows.findIndex(
+    (el) => el.getAttribute('data-sortable-id') === sourceId,
+  );
+
+  let afterId: string | null = null;
+  if (sourceIndexInDom >= 0) {
+    const domRemaining = ownedRows.filter((el) => el.getAttribute('data-sortable-id') !== sourceId);
+    afterId =
+      sourceIndexInDom > 0
+        ? (domRemaining[sourceIndexInDom - 1]?.getAttribute('data-sortable-id') ?? null)
+        : null;
+  } else if (items && items.length > 0) {
+    const sortableTargetIdx = isSortable(source) ? source.index : 0;
+    const remaining = items.filter((it) => it.id !== sourceId);
+    afterId = sortableTargetIdx > 0 ? (remaining[sortableTargetIdx - 1]?.id ?? null) : null;
+  } else if (containerEl) {
+    const sortableTargetIdx = isSortable(source) ? source.index : 0;
+    const domRows = Array.from(
+      containerEl.querySelectorAll<HTMLElement>('[data-sortable-id]'),
+    ).filter((el) => el.getAttribute('data-sortable-id') !== sourceId);
+    afterId =
+      sortableTargetIdx > 0
+        ? (domRows[sortableTargetIdx - 1]?.getAttribute('data-sortable-id') ?? null)
+        : null;
+  }
+
+  const initialIndex = snapshotEntry?.index ?? (isSortable(source) ? source.initialIndex : 0);
+  let targetIndex = isSortable(source) ? source.index : 0;
+  if (items && items.length > 0) {
+    const remaining = items.filter((it) => it.id !== sourceId);
+    if (afterId === null) {
+      targetIndex = 0;
+    } else {
+      const idxInRemaining = remaining.findIndex((it) => it.id === afterId);
+      if (idxInRemaining >= 0) {
+        targetIndex = idxInRemaining + 1;
+      }
+    }
+  } else if (sourceIndexInDom >= 0) {
+    targetIndex = sourceIndexInDom;
+  }
+
+  return {
+    intent: { id: sourceId, afterId, targetIndex, initialIndex },
+    isUnchanged,
+  };
+}
+
 export const SortableList: React.FC<SortableListProps> = ({
   items,
   activationMode = 'move',
   disabled = false,
   onDragStart,
   onDropIntent,
+  getDropFeedback,
   renderOverlay,
   className,
   children,
@@ -343,6 +454,8 @@ export const SortableList: React.FC<SortableListProps> = ({
   const pendingFocusIdRef = useRef<string | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusRafRef = useRef<number | null>(null);
+  const hoverRafRef = useRef<number | null>(null);
+  const [dropFeedback, setDropFeedback] = useState<string | undefined>(undefined);
 
   const isOsReduced = useReducedMotion();
   const stepDragMotion = useMotion('fp.motion.step-drag') as KeyframesMotion | undefined;
@@ -428,8 +541,17 @@ export const SortableList: React.FC<SortableListProps> = ({
     [cancelFocusRestore],
   );
 
+  const cancelHoverRead = useCallback(() => {
+    if (hoverRafRef.current !== null) {
+      cancelAnimationFrame(hoverRafRef.current);
+      hoverRafRef.current = null;
+    }
+  }, []);
+
   const settleOverlay = useCallback(
     (idToFocus: string | null) => {
+      cancelHoverRead();
+      setDropFeedback(undefined);
       const targetId = idToFocus ?? pendingFocusIdRef.current;
       clearSettleTimer();
       pendingFocusIdRef.current = null;
@@ -437,7 +559,7 @@ export const SortableList: React.FC<SortableListProps> = ({
       setOriginSize(null);
       if (targetId) focusHandleForId(targetId);
     },
-    [clearSettleTimer, focusHandleForId],
+    [cancelHoverRead, clearSettleTimer, focusHandleForId],
   );
 
   const dropAnimation: DropAnimation = useMemo(() => {
@@ -519,6 +641,7 @@ export const SortableList: React.FC<SortableListProps> = ({
 
   useEffect(() => {
     return () => {
+      cancelHoverRead();
       clearSettleTimer();
       cancelFocusRestore();
       if (gestureActiveRef.current) {
@@ -528,12 +651,14 @@ export const SortableList: React.FC<SortableListProps> = ({
         snapshotRef.current = [];
       }
     };
-  }, [clearSettleTimer, cancelFocusRestore]);
+  }, [cancelHoverRead, clearSettleTimer, cancelFocusRestore]);
 
   const handleDragStart: NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragStart']> =
     useCallback(
       (event, manager) => {
         if (!event.operation.source) return;
+        cancelHoverRead();
+        setDropFeedback(undefined);
         clearSettleTimer();
         cancelFocusRestore();
 
@@ -578,27 +703,65 @@ export const SortableList: React.FC<SortableListProps> = ({
 
         onDragStart?.(id);
       },
-      [clearSettleTimer, cancelFocusRestore, onDragStart],
+      [cancelHoverRead, clearSettleTimer, cancelFocusRestore, onDragStart],
     );
 
   const handleDragMove: NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragMove']> =
-    useCallback((event) => {
-      const currentCoords = event.operation.position?.current;
-      const pt = extractEventPoint(
-        event.nativeEvent,
-        currentCoords && Number.isFinite(currentCoords.x) && Number.isFinite(currentCoords.y)
-          ? { x: currentCoords.x, y: currentCoords.y }
-          : lastPointerRef.current,
-      );
-      if (pt) {
-        lastPointerRef.current = pt;
-      }
-    }, []);
+    useCallback(
+      (event) => {
+        const currentCoords = event.operation.position?.current;
+        const pt = extractEventPoint(
+          event.nativeEvent,
+          currentCoords && Number.isFinite(currentCoords.x) && Number.isFinite(currentCoords.y)
+            ? { x: currentCoords.x, y: currentCoords.y }
+            : lastPointerRef.current,
+        );
+        if (pt) {
+          lastPointerRef.current = pt;
+        }
+
+        if (!getDropFeedback || !gestureActiveRef.current) {
+          return;
+        }
+
+        cancelHoverRead();
+        const tick = () => {
+          hoverRafRef.current = null;
+          if (!gestureActiveRef.current) return;
+          const source = event.operation.source;
+          const sourceId = source ? String(source.id) : null;
+          if (!source || !sourceId) {
+            setDropFeedback(undefined);
+            return;
+          }
+          const computed = computeDropIntent(
+            containerRef.current,
+            source,
+            sourceId,
+            lastPointerRef.current,
+            snapshotRef.current,
+            items,
+          );
+          if (!computed || computed.isUnchanged) {
+            setDropFeedback(undefined);
+          } else {
+            setDropFeedback(getDropFeedback(computed.intent));
+          }
+          if (gestureActiveRef.current) {
+            hoverRafRef.current = requestAnimationFrame(tick);
+          }
+        };
+        hoverRafRef.current = requestAnimationFrame(tick);
+      },
+      [cancelHoverRead, getDropFeedback, items],
+    );
 
   const handleDragEnd: NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragEnd']> =
     useCallback(
       (event, manager) => {
         if (!gestureActiveRef.current) return;
+        cancelHoverRead();
+        setDropFeedback(undefined);
         gestureActiveRef.current = false;
         activeGlobalCancelFn = null;
         setActiveId(null);
@@ -640,125 +803,21 @@ export const SortableList: React.FC<SortableListProps> = ({
             : lastPointerRef.current,
         );
 
-        const containerEl = containerRef.current;
-        if (
-          !containerEl ||
-          !releasePoint ||
-          !isPointWithinVisibleContainer(containerEl, releasePoint)
-        ) {
-          abortAndRollback();
-          return;
-        }
-
-        const ownedRows = Array.from(
-          containerEl.querySelectorAll<HTMLElement>('[data-sortable-id]'),
-        );
-        let ownsRowHit = ownedRows.some((row) => {
-          const rect = row.getBoundingClientRect();
-          return (
-            releasePoint.x >= rect.left &&
-            releasePoint.x <= rect.right &&
-            releasePoint.y >= rect.top &&
-            releasePoint.y <= rect.bottom
-          );
-        });
-        if (!ownsRowHit) {
-          for (let i = 0; i < ownedRows.length - 1; i++) {
-            const curr = ownedRows[i];
-            const next = ownedRows[i + 1];
-            if (!curr || !next || curr.parentElement !== next.parentElement) continue;
-            const r1 = curr.getBoundingClientRect();
-            const r2 = next.getBoundingClientRect();
-            const gutterTop = r1.bottom;
-            const gutterBottom = r2.top;
-            if (gutterBottom <= gutterTop) continue;
-            const gutterLeft = Math.max(r1.left, r2.left);
-            const gutterRight = Math.min(r1.right, r2.right);
-            if (gutterRight <= gutterLeft) continue;
-            if (
-              releasePoint.x >= gutterLeft &&
-              releasePoint.x <= gutterRight &&
-              releasePoint.y >= gutterTop &&
-              releasePoint.y <= gutterBottom
-            ) {
-              ownsRowHit = true;
-              break;
-            }
-          }
-        }
-        if (!ownsRowHit) {
-          abortAndRollback();
-          return;
-        }
-
-        const snapshotEntry = snapshot.find((entry) => entry.id === sourceId);
-        const sourceEl =
-          snapshotEntry?.element instanceof HTMLElement
-            ? snapshotEntry.element
-            : containerEl.querySelector<HTMLElement>(`[data-sortable-id="${sourceId}"]`);
-
-        const isUnchanged =
-          snapshotEntry && sourceEl
-            ? sourceEl.parentNode === snapshotEntry.parent &&
-              sourceEl.nextSibling === snapshotEntry.nextSibling
-            : (isSortable(source) ? source.index : 0) ===
-              (snapshotEntry?.index ?? (isSortable(source) ? source.initialIndex : 0));
-
-        if (isUnchanged) {
-          abortAndRollback();
-          return;
-        }
-
-        const sourceIndexInDom = ownedRows.findIndex(
-          (el) => el.getAttribute('data-sortable-id') === sourceId,
+        const computed = computeDropIntent(
+          containerRef.current,
+          source,
+          sourceId,
+          releasePoint,
+          snapshot,
+          items,
         );
 
-        let afterId: string | null = null;
-        if (sourceIndexInDom >= 0) {
-          const domRemaining = ownedRows.filter(
-            (el) => el.getAttribute('data-sortable-id') !== sourceId,
-          );
-          afterId =
-            sourceIndexInDom > 0
-              ? (domRemaining[sourceIndexInDom - 1]?.getAttribute('data-sortable-id') ?? null)
-              : null;
-        } else if (items && items.length > 0) {
-          const sortableTargetIdx = isSortable(source) ? source.index : 0;
-          const remaining = items.filter((it) => it.id !== sourceId);
-          afterId = sortableTargetIdx > 0 ? (remaining[sortableTargetIdx - 1]?.id ?? null) : null;
-        } else if (containerEl) {
-          const sortableTargetIdx = isSortable(source) ? source.index : 0;
-          const domRows = Array.from(
-            containerEl.querySelectorAll<HTMLElement>('[data-sortable-id]'),
-          ).filter((el) => el.getAttribute('data-sortable-id') !== sourceId);
-          afterId =
-            sortableTargetIdx > 0
-              ? (domRows[sortableTargetIdx - 1]?.getAttribute('data-sortable-id') ?? null)
-              : null;
+        if (!computed || computed.isUnchanged) {
+          abortAndRollback();
+          return;
         }
 
-        const initialIndex = snapshotEntry?.index ?? (isSortable(source) ? source.initialIndex : 0);
-        let targetIndex = isSortable(source) ? source.index : 0;
-        if (items && items.length > 0) {
-          const remaining = items.filter((it) => it.id !== sourceId);
-          if (afterId === null) {
-            targetIndex = 0;
-          } else {
-            const idxInRemaining = remaining.findIndex((it) => it.id === afterId);
-            if (idxInRemaining >= 0) {
-              targetIndex = idxInRemaining + 1;
-            }
-          }
-        } else if (sourceIndexInDom >= 0) {
-          targetIndex = sourceIndexInDom;
-        }
-
-        const outcome: SortableDropOutcome = onDropIntent?.({
-          id: sourceId,
-          afterId,
-          targetIndex,
-          initialIndex,
-        });
+        const outcome: SortableDropOutcome = onDropIntent?.(computed.intent);
 
         // Any outcome other than accepted (including pending/refused/unchanged) restores exact pre-gesture DOM
         if (outcome !== 'accepted') {
@@ -768,6 +827,7 @@ export const SortableList: React.FC<SortableListProps> = ({
         finishOverlayAndFocus(sourceId);
       },
       [
+        cancelHoverRead,
         clearSettleTimer,
         duration,
         isReduced,
@@ -795,11 +855,23 @@ export const SortableList: React.FC<SortableListProps> = ({
         }
       >
         {overlayId ? (
-          <div inert className="fp-sortable-overlay-card-host">
+          <div
+            inert
+            className={
+              dropFeedback
+                ? 'fp-sortable-overlay-card-host is-drop-refused'
+                : 'fp-sortable-overlay-card-host'
+            }
+          >
             {renderOverlay(overlayId)}
           </div>
         ) : null}
       </DragOverlay>
+      {overlayId && dropFeedback ? (
+        <div className="fp-sortable-drop-refusal-cue">
+          <span>{dropFeedback}</span>
+        </div>
+      ) : null}
     </div>
   );
 
@@ -808,8 +880,14 @@ export const SortableList: React.FC<SortableListProps> = ({
       ref={containerRef}
       data-fp-component="fp.sortable-list"
       data-fp-version="v1"
+      data-drop-refused={dropFeedback ? 'true' : undefined}
       className={className}
     >
+      {dropFeedback ? (
+        <div className="sr-only" role="status" aria-live="polite">
+          {dropFeedback}
+        </div>
+      ) : null}
       <DragDropProvider
         sensors={sensors}
         plugins={pluginsWithoutAccessibility}

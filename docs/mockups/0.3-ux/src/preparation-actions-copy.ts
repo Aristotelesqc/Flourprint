@@ -46,8 +46,13 @@ export function prepActionsCopy(locale: Locale, key: PreparationActionsCopyKey):
 export function formatEarlyFinishPrompt(
   locale: Locale,
   recipeName: string,
-  outcomeLabel: string,
+  outcomeLabel?: string,
 ): string {
+  if (!outcomeLabel) {
+    return locale === 'fr'
+      ? `Terminer la préparation « ${recipeName} » de façon anticipée ?`
+      : `Finish preparation “${recipeName}” early?`;
+  }
   return locale === 'fr'
     ? `Terminer la préparation « ${recipeName} » avec le résultat : ${outcomeLabel} ?`
     : `Finish preparation “${recipeName}” with outcome: ${outcomeLabel}?`;

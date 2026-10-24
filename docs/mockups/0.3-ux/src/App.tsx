@@ -3,7 +3,7 @@ import { Catalogue } from '../../../../packages/ui/src/catalogue/Catalogue';
 import { catalogue, guides } from '../../../../packages/ui/src/catalogue/registry';
 
 import { manifest } from './ui.manifest';
-import { motionManifest } from './library';
+import { motionManifest, versionOf } from './library';
 import { motionCatalogue, motionGuides } from '../../../../packages/ui/src/catalogue/motions';
 
 import { useEffect, useLayoutEffect, useState } from 'react';
@@ -20,7 +20,6 @@ import {
   Modal,
   CompactDialog,
   Menu,
-  Checkbox,
   Disclosure,
   type IconName,
 } from './ui';
@@ -174,9 +173,6 @@ export default function App() {
 
   const [clockNow, setClockNow] = useState(Date.now());
   const [copy, setCopy] = useState('');
-
-  const [keepChecks, setKeepChecks] = useState(true);
-
   const [inspecting, setInspecting] = useState(false);
   const [inspected, setInspected] = useState<{ id: string; version: string }[]>([]);
   useEffect(() => {
@@ -390,8 +386,6 @@ export default function App() {
 
   const openRecipe = (id: string) =>
     guard(() => {
-      if (!keepChecks) store.setState((s) => ({ ...s, checks: {} }));
-
       store.select(id);
 
       setRoute({ screen: 'recipe', section: 'ingredients' });
@@ -520,7 +514,7 @@ export default function App() {
 
           {route.screen === 'library' && (
             <input
-              className="toolbar-search"
+              className="toolbar-search fp-input-control"
               type="search"
               aria-label={t(locale, 'search')}
               placeholder={t(locale, 'search')}
@@ -616,8 +610,8 @@ export default function App() {
 
         <label>
           {t(locale, 'appearance')}
-
           <select
+            className="fp-input-control"
             aria-label={t(locale, 'appearance')}
             value={themePreference}
             onChange={(e) => {
@@ -640,6 +634,7 @@ export default function App() {
         <label>
           FR / EN
           <select
+            className="fp-input-control"
             aria-label="FR / EN"
 
             value={locale}
@@ -654,16 +649,25 @@ export default function App() {
 
         <label>
           px
-          <select aria-label="Viewport" value={width} onChange={(e) => setWidth(e.target.value)}>
+          <select
+            className="fp-input-control"
+            aria-label="Viewport"
+            value={width}
+            onChange={(e) => setWidth(e.target.value)}
+          >
             {['320', '360', '393'].map((value) => (
               <option key={value}>{value}</option>
             ))}
           </select>
         </label>
-
         <label>
           %
-          <select aria-label="Text scale" value={scale} onChange={(e) => setScale(e.target.value)}>
+          <select
+            className="fp-input-control"
+            aria-label="Text scale"
+            value={scale}
+            onChange={(e) => setScale(e.target.value)}
+          >
             {['100', '130', '200'].map((value) => (
               <option key={value}>{value}</option>
             ))}
@@ -672,8 +676,8 @@ export default function App() {
 
         <label>
           {t(locale, 'motionChoice')}
-
           <select
+            className="fp-input-control"
             aria-label={t(locale, 'motionChoice')}
 
             value={motion}
@@ -688,8 +692,8 @@ export default function App() {
 
         <label>
           {t(locale, 'targetChoice')}
-
           <select
+            className="fp-input-control"
             aria-label={t(locale, 'targetChoice')}
 
             value={targets}
@@ -705,6 +709,7 @@ export default function App() {
         <label>
           {t(locale, 'modelReferenceCase')}
           <select
+            className="fp-input-control"
             aria-label={t(locale, 'modelReferenceCase')}
             value={params.get('scenario') ?? 'recipe'}
             onChange={(e) => {
@@ -776,6 +781,7 @@ export default function App() {
         <label>
           {t(locale, 'orderMode')}{' '}
           <select
+            className="fp-input-control"
             value={orderStyle}
             onChange={(e) => {
               setOrderStyle(e.target.value);
@@ -798,7 +804,8 @@ export default function App() {
           className="phone-frame"
           data-testid="phone"
           data-navigation="A"
-          data-fp-overlay-boundary
+          data-fp-container="fp.surface"
+          data-fp-container-version={versionOf('fp.surface')}
         >
           <header className="phone-header">
             <div className="header-title">
@@ -837,7 +844,7 @@ export default function App() {
                 <h1 className="header-heading">
                   {route.screen === 'recipe' && state.draft ? (
                     <input
-                      className="header-name-input"
+                      className="header-name-input fp-input-control"
                       aria-label={t(locale, 'name')}
                       data-testid="recipe-name"
                       value={name}
@@ -920,6 +927,7 @@ export default function App() {
           )}
 
           <main
+            data-fp-overlay-boundary
             className={`phone-content ${route.screen === 'recipe' ? 'has-carousel' : ''}`}
             data-scene={`${route.screen}-${section}`}
           >
@@ -1155,7 +1163,18 @@ export default function App() {
             )}
 
             {route.screen === 'preparation' && (
-              <PreparationView store={store} locale={locale} footerHost={prepHost} />
+              <PreparationView
+                store={store}
+                locale={locale}
+                footerHost={prepHost}
+                onExit={() => {
+                  const targetId = store.state.session?.recipeId;
+                  if (targetId) {
+                    store.select(targetId);
+                    navigate({ screen: 'recipe', recipeId: targetId, section: 'ingredients' });
+                  }
+                }}
+              />
             )}
 
             {route.screen === 'registry' && (
@@ -1193,14 +1212,6 @@ export default function App() {
                   </Disclosure>
 
                   <Disclosure title={t(locale, 'checkScope')} defaultOpen>
-                    <Checkbox
-                      checked={keepChecks}
-
-                      onChange={setKeepChecks}
-
-                      label={t(locale, 'keepChecks')}
-                    />
-
                     <Button onClick={() => store.setState((s) => ({ ...s, checks: {} }))}>
                       {t(locale, 'clearChecks')}
                     </Button>
@@ -1462,13 +1473,6 @@ export default function App() {
                   <details className="template-details">
                     <summary>{t(locale, 'templateDetails')}</summary>
                     <p>{templateBasis(locale, template.id, template.basis)}</p>
-                    {template.guide && (
-                      <p>
-                        {t(locale, 'source')}
-                        {colon(locale)}
-                        {template.guide.reference}
-                      </p>
-                    )}
                   </details>
                 </div>
               );

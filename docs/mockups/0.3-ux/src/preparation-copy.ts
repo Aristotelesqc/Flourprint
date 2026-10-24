@@ -49,6 +49,14 @@ export const PREPARATION_COPY = {
     fr: '+15 min',
     en: '+15 min',
   },
+  actionUndo: {
+    fr: 'Annuler',
+    en: 'Undo',
+  },
+  nextStepCompletedNotice: {
+    fr: 'Étape terminée',
+    en: 'Step completed',
+  },
   actionPause: {
     fr: 'Pause',
     en: 'Pause',
@@ -109,6 +117,14 @@ export const PREPARATION_COPY = {
     fr: 'Durée prévue pour la répétition (minutes)',
     en: 'Planned duration for repetition (minutes)',
   },
+  retractCompletion: {
+    fr: 'Annulation de fin d’étape',
+    en: 'Step completion retraction',
+  },
+  technicalEventGeneric: {
+    fr: 'Événement technique',
+    en: 'Technical event',
+  },
   technicalJournal: {
     fr: 'Journal d’événements techniques',
     en: 'Technical event journal',
@@ -124,6 +140,46 @@ export const PREPARATION_COPY = {
   outcomeRequiredExplanation: {
     fr: 'Aucune étape de cuisson n’a été réalisée. Choisir le résultat de la préparation avant de terminer.',
     en: 'No cooking step has been completed. Choose preparation outcome before finishing.',
+  },
+  errorPendingDependencies: {
+    fr: 'Impossible de continuer : terminer d’abord {steps}.',
+    en: 'Cannot proceed: complete {steps} first.',
+  },
+  pendingPrecedingStep: {
+    fr: 'étape précédente',
+    en: 'preceding step',
+  },
+  errorStepNotRunning: {
+    fr: 'L’étape n’est pas en cours.',
+    en: 'Step is not running.',
+  },
+  errorStepAlreadyCompleted: {
+    fr: 'L’étape est déjà terminée.',
+    en: 'Step is already completed.',
+  },
+  errorInvalidTime: {
+    fr: 'Horaire invalide.',
+    en: 'Invalid time.',
+  },
+  errorBakeNotActive: {
+    fr: 'La préparation n’est pas active.',
+    en: 'Preparation is not active.',
+  },
+  errorGenericCommand: {
+    fr: 'Impossible d’exécuter la commande.',
+    en: 'Cannot execute command.',
+  },
+  backToRecipe: {
+    fr: 'Retour à la recette',
+    en: 'Back to recipe',
+  },
+  ovenTemperature: {
+    fr: 'Température du four',
+    en: 'Oven temperature',
+  },
+  roomTemperature: {
+    fr: 'Température ambiante',
+    en: 'Room temperature',
   },
   closeAction: {
     fr: 'Fermer',
@@ -144,6 +200,10 @@ export const PREPARATION_COPY = {
   preheatHeating: {
     fr: 'Chauffe en cours',
     en: 'Heating in progress',
+  },
+  preheatMissedWindow: {
+    fr: 'Créneau préchauffage dépassé',
+    en: 'Missed preheat window',
   },
   preheatReady: {
     fr: 'Four prêt',
@@ -224,6 +284,14 @@ export const PREPARATION_COPY = {
   plannedStepEnd: {
     fr: 'Fin d’étape prévue : {time}',
     en: 'Planned step end: {time}',
+  },
+  actualStepEnd: {
+    fr: 'Fin réelle : {time}',
+    en: 'Actual end: {time}',
+  },
+  projectedStepStart: {
+    fr: 'Début projeté : {time}',
+    en: 'Projected start: {time}',
   },
   actualStepStart: {
     fr: 'Début réel : {time}',

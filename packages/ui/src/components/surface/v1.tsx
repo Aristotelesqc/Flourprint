@@ -1,3 +1,4 @@
+import './v1.css';
 import React from 'react';
 import type { SurfaceProps } from '../../props.ts';
 import { library } from '../../index.ts';

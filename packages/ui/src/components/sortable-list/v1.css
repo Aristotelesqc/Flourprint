@@ -66,6 +66,55 @@
   border-radius: var(--radius-card);
 }
 
+[data-fp-container='fp.sortable-list'][data-fp-container-version='v1']
+  .fp-sortable-overlay-card-host.is-drop-refused
+  .fp-drag-floating-card {
+  border-color: var(--color-error, #ba1a1a) !important;
+}
+
+[data-fp-container='fp.sortable-list'][data-fp-container-version='v1']
+  .fp-sortable-drop-refusal-cue {
+  position: fixed;
+  bottom: var(--fp-space-4, 1rem);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fp-space-1, 0.25rem);
+  padding: var(--fp-space-1, 0.25rem) var(--fp-space-2, 0.5rem);
+  background: var(--color-surface, #fff);
+  color: var(--color-error, #ba1a1a);
+  border: 1px solid var(--color-error, #ba1a1a);
+  border-radius: var(--radius-card, 12px);
+  font-size: var(--type-label, 0.8125rem);
+  font-weight: 500;
+  white-space: normal;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: var(--shadow-high, 0 4px 14px rgba(0, 0, 0, 0.18));
+  z-index: 10001;
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1'][data-drop-refused='true']
+  .fp-sortable-placeholder.is-origin-placeholder {
+  outline-color: var(--color-error, #ba1a1a);
+  background: var(--color-surface-container-high, rgba(186, 26, 26, 0.08));
+}
+
+[data-fp-component='fp.sortable-list'][data-fp-version='v1'] .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 [data-fp-component='fp.sortable-list'][data-fp-version='v1'] .fp-sortable-catalogue-list {
   display: flex;
   flex-direction: column;

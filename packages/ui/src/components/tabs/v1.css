@@ -5,6 +5,20 @@
   max-width: 100%;
   display: flex;
   min-width: 0;
+  box-sizing: border-box;
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1']:has(.tabs-chips) {
+  padding-inline: 12px;
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'][data-overflow-start='true']:not(
+    :has(.tabs-chips)
+  ) {
+  padding-left: 12px;
+}
+[data-fp-component='fp.tabs'][data-fp-version='v1'][data-overflow-end='true']:not(
+    :has(.tabs-chips)
+  ) {
+  padding-right: 12px;
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1']::before,
 [data-fp-component='fp.tabs'][data-fp-version='v1']::after {
@@ -41,12 +55,13 @@
   scrollbar-color: var(--color-outline) transparent;
   -webkit-overflow-scrolling: touch;
   min-height: var(--fp-spacing-touch);
-  padding: 0 var(--fp-space-3);
+  padding: 0 4px;
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-outline-subtle);
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
+  box-sizing: border-box;
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .section-tabs::-webkit-scrollbar,
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips::-webkit-scrollbar {
@@ -70,8 +85,10 @@
   font-weight: 600;
   min-height: var(--fp-spacing-touch);
   min-width: var(--fp-spacing-touch);
-  flex: 0 0 auto;
-  padding: 0 var(--fp-space-3);
+  flex: 1 1 auto;
+  padding: 0 4px;
+  margin: 0;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -79,10 +96,12 @@
   isolation: isolate;
   cursor: pointer;
   white-space: nowrap;
+  border-radius: 8px;
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .tab-btn:focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
+  outline-offset: 0;
+  border-radius: 8px;
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .tab-btn.active {
   color: var(--color-primary);
@@ -92,8 +111,8 @@
   content: '';
   position: absolute;
   bottom: 0;
-  left: var(--fp-space-3);
-  right: var(--fp-space-3);
+  left: 4px;
+  right: 4px;
   height: 3px;
   border-radius: 3px 3px 0 0;
   background: var(--color-primary);
@@ -163,6 +182,7 @@
   scrollbar-color: var(--color-outline) transparent;
 }
 [data-fp-component='fp.tabs'][data-fp-version='v1'] .tabs-chips .tab-btn {
+  flex: 0 0 auto;
   padding: 0 var(--fp-space-2);
   font-size: var(--type-meta);
 }

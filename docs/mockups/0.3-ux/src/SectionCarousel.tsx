@@ -29,7 +29,7 @@ export function SectionCarousel({
     const el = wrapperRef.current;
     if (!el) return;
     const landmark =
-      el.closest('[data-fp-overlay-boundary], [data-navigation], [role="application"], body') ??
+      el.closest('[data-tabs-scope], [data-navigation], [role="application"], body') ??
       el.parentElement?.parentElement;
     const found = landmark?.querySelector<HTMLElement>(
       '[data-fp-component="fp.tabs"], .section-tabs, [role="tablist"]',

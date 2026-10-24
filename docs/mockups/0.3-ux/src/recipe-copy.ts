@@ -14,6 +14,12 @@ export const recipeCopyMap = {
     'Cible verrouillée : déverrouiller pour modifier.',
     'Locked target: unlock to modify.',
   ],
+  weight: ['Poids', 'Weight'],
+  stagePctLabel: ['% de la farine totale · cette étape', '% of total flour · this stage'],
+  wholeRecipePctLabel: [
+    '% de la farine totale · recette entière',
+    '% of total flour · whole recipe',
+  ],
   stageGramsLabel: ['Grammes à cette étape', 'Stage grams'],
   absorbingWaterLocked: [
     'Eau absorbante verrouillée par la cible d’hydratation',

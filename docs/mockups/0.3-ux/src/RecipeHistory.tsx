@@ -8,7 +8,7 @@ import {
   type HistoryError,
 } from './history-copy';
 import { editingCopyT } from './editing-copy';
-import { t, grams, num, colon, duration, type Locale } from './messages';
+import { t, grams, num, colon, duration, time, type Locale } from './messages';
 import type { Recipe, Prototype, SavedRevision } from './model';
 import './recipe-history.css';
 
@@ -103,7 +103,16 @@ export function RecipeHistory({ recipe, store, locale, isDraftDirty }: RecipeHis
     );
   };
 
-  const recipeSessions = state.sessionHistory.filter((session) => session.recipeId === recipe.id);
+  const activeSessions = store.getActiveSessions();
+  const activeIds = new Set(activeSessions.map((s) => s.id));
+  const seenSessionIds = new Set<string>();
+  const recipeSessions = [...activeSessions, ...state.sessionHistory]
+    .filter((session) => session.recipeId === recipe.id)
+    .filter((session) => {
+      if (seenSessionIds.has(session.id)) return false;
+      seenSessionIds.add(session.id);
+      return true;
+    });
 
   return (
     <div className="recipe-history" data-testid="recipe-history-view">
@@ -250,44 +259,61 @@ export function RecipeHistory({ recipe, store, locale, isDraftDirty }: RecipeHis
 
         {recipeSessions.length > 0 ? (
           <div className="history-list">
-            {recipeSessions.map((session) => (
-              <Surface key={session.id} className="history-item">
-                <h3>
-                  {historyCopyT(locale, 'revisionBaseline', {
-                    version: session.recipeVersion,
-                  })}{' '}
-                  ·{' '}
-                  {session.abandoned
-                    ? editingCopyT(locale, 'statusAbandoned')
-                    : session.outcome
-                      ? t(
-                          locale,
-                          session.outcome.result === 'cooked'
-                            ? 'resultCooked'
-                            : session.outcome.result === 'dough'
-                              ? 'resultDough'
-                              : session.outcome.result === 'cookedAndDough'
-                                ? 'resultMixed'
-                                : 'unknown',
-                        )
-                      : t(locale, 'unknown')}
-                </h3>
-                {!session.abandoned && session.outcome?.dough && (
-                  <p>{t(locale, session.outcome.dough)}</p>
-                )}
-                <p className="history-item-date">
-                  {t(locale, 'actualDuration')}
-                  {colon(locale)}
-                  {session.endedAt
-                    ? duration(
-                        locale,
-                        (Date.parse(session.endedAt) - Date.parse(session.startedAt)) / 1000,
-                      )
-                    : t(locale, 'unknownDuration')}
-                </p>
-                <p className="history-item-date">{historyCopyT(locale, 'noRating')}</p>
-              </Surface>
-            ))}
+            {recipeSessions.map((session) => {
+              const isActive = activeIds.has(session.id) || !session.finished;
+              return (
+                <Surface key={session.id} className="history-item">
+                  <h3>
+                    {historyCopyT(locale, 'revisionBaseline', {
+                      version: session.recipeVersion,
+                    })}{' '}
+                    ·{' '}
+                    {isActive
+                      ? t(locale, 'running')
+                      : session.abandoned
+                        ? editingCopyT(locale, 'statusAbandoned')
+                        : session.outcome
+                          ? t(
+                              locale,
+                              session.outcome.result === 'cooked'
+                                ? 'resultCooked'
+                                : session.outcome.result === 'dough'
+                                  ? 'resultDough'
+                                  : session.outcome.result === 'cookedAndDough'
+                                    ? 'resultMixed'
+                                    : 'unknown',
+                            )
+                          : t(locale, 'unknown')}
+                  </h3>
+                  {!isActive && !session.abandoned && session.outcome?.dough && (
+                    <p>{t(locale, session.outcome.dough)}</p>
+                  )}
+                  {isActive ? (
+                    session.startedAt ? (
+                      <p className="history-item-date">
+                        {t(locale, 'started')}
+                        {colon(locale)}
+                        {time(locale, session.startedAt)}
+                      </p>
+                    ) : null
+                  ) : (
+                    <>
+                      <p className="history-item-date">
+                        {t(locale, 'actualDuration')}
+                        {colon(locale)}
+                        {session.endedAt
+                          ? duration(
+                              locale,
+                              (Date.parse(session.endedAt) - Date.parse(session.startedAt)) / 1000,
+                            )
+                          : t(locale, 'unknownDuration')}
+                      </p>
+                      <p className="history-item-date">{historyCopyT(locale, 'noRating')}</p>
+                    </>
+                  )}
+                </Surface>
+              );
+            })}
           </div>
         ) : (
           <p className="history-empty-text">{historyCopyT(locale, 'emptyPreparations')}</p>

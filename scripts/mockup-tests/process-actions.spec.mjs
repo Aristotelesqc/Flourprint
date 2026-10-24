@@ -147,8 +147,8 @@ test.describe('core-backed process actions', () => {
     await expect(dialog.getByTestId('affected-step-divide')).toContainText('+3 h 49');
     await dialog.getByRole('button', { name: 'Fenêtres de préparation', exact: true }).click();
     const windows = dialog.getByTestId('process-change-windows');
-    await expect(windows).toContainText('5 h 12');
-    await expect(windows).toContainText('6 h 27');
+    await expect(windows).toContainText('5 h 11 min 30 s');
+    await expect(windows).toContainText('6 h 26 min 30 s');
     await capture(page, 'process-duplicate-cancel');
     await page.keyboard.press('Escape');
     await expect(rows(page)).toHaveCount(10);

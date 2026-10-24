@@ -37,6 +37,8 @@ export default {
     onDragStart: 'Called when an actual lift starts with the active item id.',
     onDropIntent:
       'Called on drop completion with the computed drop intent (or null on cancellation); returns a synchronous SortableDropOutcome to accept, keep pending, or roll back optimistic ordering on refused/unchanged outcomes.',
+    getDropFeedback:
+      'Optional preview callback returning a localized refusal string when hovering an invalid drop slot.',
     renderOverlay: 'Optional custom renderer for the lifted drag overlay row.',
     className: 'Optional CSS class for the sortable container.',
     children: 'Items, accordions, and group wrappers composing the sortable list.',

@@ -14,6 +14,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   disabled = false,
   dataTestId,
   variant = 'default',
+  pressed,
 }) => {
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const motionStyle = useTransitionMotionStyle('fp.motion.press-icon', buttonRef);
@@ -27,6 +28,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
       data-fp-version="v1"
       type="button"
       aria-label={label}
+      aria-pressed={pressed}
       title={label}
       disabled={disabled}
       onClick={onClick}

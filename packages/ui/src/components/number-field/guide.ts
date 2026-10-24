@@ -9,7 +9,7 @@ export default {
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
 
-    'Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value.',
+    'Decimal keyboard; aria-invalid and the error message (role alert) describe a refused value or syntax error across distinct parse and refusal error paths.',
     'The unit adornment is always aria-hidden; include the unit in label or hint so its meaning remains accessible.',
     'The input preserves a real 48 px touch target (var(--fp-spacing-touch)) without reducing typography, even in compact row layouts (L123).',
   ],
@@ -42,7 +42,10 @@ export default {
       'Receives true when uncommitted raw text differs from the committed value, and false after commit, reset, or unmount.',
     disabled: 'Disables editing.',
     dataTestId: 'Test id for browser suites.',
-    errorMessage: 'Message shown when a value is refused.',
+    errorMessage: 'Message shown for syntax or parse errors, or as fallback for refused values.',
+    commitErrorMessage:
+      'Optional engine refusal reason shown when onCommit or onClear returns false (L121). An empty string clears stale domain errors.',
+    onTextChange: 'Optional callback invoked with the raw text on every change.',
     resetKey: 'Changing it discards the raw text and shows value again.',
     displayDigits:
       'Maximum fraction digits for formatted display (default 2); accepted values keep their precision until the consumer changes them.',

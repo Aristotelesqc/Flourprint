@@ -170,6 +170,15 @@
   border-color: var(--color-outline, #3b3631);
 }
 
+.fp-touch-refusal-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--color-backdrop, rgba(0, 0, 0, 0.25));
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: 9999;
+}
+
 .process-step-title {
   hyphens: none;
 }

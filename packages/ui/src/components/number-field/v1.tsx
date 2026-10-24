@@ -38,6 +38,8 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   disabled = false,
   dataTestId,
   errorMessage,
+  commitErrorMessage,
+  onTextChange,
   resetKey,
   displayDigits = 2,
 }) => {
@@ -49,7 +51,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   const [rawText, setRawText] = useState<string>(() =>
     formatDisplayValue(value, locale, displayDigits),
   );
-  const [showError, setShowError] = useState<boolean>(false);
+  const [errorKind, setErrorKind] = useState<'parse' | 'refusal' | null>(null);
   const lastCommittedRef = useRef<number>(value);
   const isDirtyRef = useRef<boolean>(false);
   const previousResetRef = useRef(resetKey);
@@ -67,6 +69,9 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   const onCommitRef = useRef(onCommit);
   onCommitRef.current = onCommit;
 
+  const onTextChangeRef = useRef(onTextChange);
+  onTextChangeRef.current = onTextChange;
+
   const setDirty = (dirty: boolean) => {
     if (isDirtyRef.current !== dirty) {
       isDirtyRef.current = dirty;
@@ -80,6 +85,13 @@ export const NumberField: React.FC<NumberFieldProps> = ({
       onValidityChangeRef.current?.(false);
     };
   }, []);
+
+  useEffect(() => {
+    if (errorKind === 'refusal' && commitErrorMessage === '') {
+      setErrorKind(null);
+      onValidityChangeRef.current?.(false);
+    }
+  }, [commitErrorMessage, errorKind]);
 
   useEffect(() => {
     const forcedReset = previousResetRef.current !== resetKey;
@@ -96,12 +108,13 @@ export const NumberField: React.FC<NumberFieldProps> = ({
     setDirty(false);
     const nextFormatted = formatDisplayValue(value, locale, displayDigits);
     setRawText(nextFormatted);
-    setShowError(false);
+    setErrorKind(null);
     onValidityChangeRef.current?.(false);
   }, [value, locale, resetKey, disabled, displayDigits]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
+    onTextChangeRef.current?.(text);
     const currentFormatted = formatDisplayValue(lastCommittedRef.current, locale, displayDigits);
     setDirty(text !== currentFormatted);
     setRawText(text);
@@ -111,7 +124,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
     const valid = isOptionalEmpty || parsed.valid;
 
     if (valid) {
-      setShowError(false);
+      setErrorKind(null);
       onValidityChangeRef.current?.(false);
     } else {
       onValidityChangeRef.current?.(true);
@@ -129,29 +142,29 @@ export const NumberField: React.FC<NumberFieldProps> = ({
             lastCommittedRef.current = NaN;
             setDirty(false);
             setRawText('');
-            setShowError(false);
+            setErrorKind(null);
             onValidityChangeRef.current?.(false);
           } else {
-            setShowError(true);
+            setErrorKind('refusal');
             onValidityChangeRef.current?.(true);
           }
         } else {
           setDirty(false);
           setRawText('');
-          setShowError(false);
+          setErrorKind(null);
           onValidityChangeRef.current?.(false);
         }
         return;
       }
 
-      setShowError(true);
+      setErrorKind('parse');
       onValidityChangeRef.current?.(true);
       return;
     }
 
     const parsed = parseInputNumber(rawText);
     if (!parsed.valid) {
-      setShowError(true);
+      setErrorKind('parse');
       onValidityChangeRef.current?.(true);
       return;
     }
@@ -164,7 +177,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
     ) {
       setDirty(false);
       setRawText(currentFormatted);
-      setShowError(false);
+      setErrorKind(null);
       onValidityChangeRef.current?.(false);
       return;
     }
@@ -174,10 +187,10 @@ export const NumberField: React.FC<NumberFieldProps> = ({
       setDirty(false);
       lastCommittedRef.current = parsed.value;
       setRawText(formatDisplayValue(parsed.value, locale, displayDigits));
-      setShowError(false);
+      setErrorKind(null);
       onValidityChangeRef.current?.(false);
     } else {
-      setShowError(true);
+      setErrorKind('refusal');
       onValidityChangeRef.current?.(true);
     }
   };
@@ -192,6 +205,10 @@ export const NumberField: React.FC<NumberFieldProps> = ({
       commitValue();
     }
   };
+
+  const showError = errorKind !== null;
+  const activeErrorMessage =
+    errorKind === 'refusal' ? (commitErrorMessage ?? errorMessage) : errorMessage;
 
   return (
     <div
@@ -236,7 +253,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
       )}
       {showError && (
         <span id={errorId} className="field-error-msg" role="alert">
-          {errorMessage}
+          {activeErrorMessage}
         </span>
       )}
     </div>

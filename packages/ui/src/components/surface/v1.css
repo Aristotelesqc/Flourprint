@@ -1,0 +1,54 @@
+/* Presentation owned by fp.surface v1. */
+[data-fp-component='fp.surface'][data-fp-version='v1'].surface {
+  box-sizing: border-box;
+}
+
+[data-fp-component='fp.surface'][data-fp-version='v1'].surface-default {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+[data-fp-component='fp.surface'][data-fp-version='v1'].surface-container {
+  background: var(--color-surface-container);
+  color: var(--color-ink);
+}
+
+[data-fp-component='fp.surface'][data-fp-version='v1'].surface-high {
+  background: var(--color-surface-container-high);
+  color: var(--color-ink);
+}
+
+/* Scoped form fields: 48px touch target and rounded padded focus (L123) */
+[data-fp-component='fp.surface'][data-fp-version='v1']
+  :where(input:not([type='checkbox']):not([type='radio']), select) {
+  min-height: var(--fp-spacing-touch, 48px);
+  box-sizing: border-box;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+[data-fp-component='fp.surface'][data-fp-version='v1']
+  :where(input:not([type='checkbox']):not([type='radio']), select):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Reusable bare-control class for raw header/search/settings inputs in surface containers (L123) */
+[data-fp-container='fp.surface'][data-fp-container-version='v1']
+  input.fp-input-control:not([type='checkbox']),
+[data-fp-container='fp.surface'][data-fp-container-version='v1'] select.fp-input-control,
+[data-fp-container='fp.surface'][data-fp-container-version='v1'] textarea.fp-input-control {
+  min-height: var(--fp-spacing-touch, 48px);
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+[data-fp-container='fp.surface'][data-fp-container-version='v1']
+  input.fp-input-control:focus-visible,
+[data-fp-container='fp.surface'][data-fp-container-version='v1']
+  select.fp-input-control:focus-visible,
+[data-fp-container='fp.surface'][data-fp-container-version='v1']
+  textarea.fp-input-control:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

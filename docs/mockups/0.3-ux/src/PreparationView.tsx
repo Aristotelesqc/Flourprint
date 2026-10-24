@@ -10,6 +10,7 @@ import {
   DOUGH_DISPOSITIONS,
   type PreparationOutcome,
   subjectOf,
+  temperatureContext,
 } from '@flourprint/core/domain';
 import { StepRow, IngredientRow, ContextTiles, PreparationTimer } from './components';
 import {
@@ -45,16 +46,77 @@ import {
   previousAction,
   visibleEvents,
   type ProcessStep,
+  type BakeEvent,
 } from './preparation-runtime';
+
+function formatTechnicalEvent(
+  ev: BakeEvent,
+  steps: readonly ProcessStep[],
+  locale: Locale,
+): string {
+  const stepId =
+    'stepId' in ev.payload && ev.payload.stepId
+      ? (ev.payload as { stepId: string }).stepId
+      : 'target' in ev.payload && ev.payload.target && 'stepId' in ev.payload.target
+        ? (ev.payload.target as { stepId: string }).stepId
+        : undefined;
+  const step = stepId ? steps.find((s) => s.id === stepId) : undefined;
+  const stepName = step ? titleOf(step, locale) : undefined;
+
+  let desc: string;
+  switch (ev.payload.type) {
+    case 'BakeStarted':
+      desc = t(locale, 'startRecorded');
+      break;
+    case 'BakeFinished':
+      desc = t(locale, 'completeSession');
+      break;
+    case 'BakeAbandoned':
+      desc = prepActionsCopy(locale, 'journalAbandonment');
+      break;
+    case 'StepStarted':
+      desc = t(locale, 'started');
+      break;
+    case 'StepCompleted':
+      desc = t(locale, 'done');
+      break;
+    case 'StepCountdownHeld':
+      desc = prepCopy(locale, 'pauseActive');
+      break;
+    case 'StepCountdownReleased':
+      desc = prepCopy(locale, 'actionResume');
+      break;
+    case 'StepCompletionRetracted':
+      desc = prepCopy(locale, 'retractCompletion');
+      break;
+    case 'StepTimeCorrected':
+      desc = prepCopy(locale, 'correctTimeTitle');
+      break;
+    case 'StepInserted':
+      desc = prepCopy(locale, 'repeatStepTitle');
+      break;
+    case 'OverrideApplied':
+      desc = t(locale, 'timeChanged');
+      break;
+    case 'ObservationAdded':
+      desc = 'text' in ev.payload && ev.payload.text ? ev.payload.text : t(locale, 'note');
+      break;
+    default:
+      desc = prepCopy(locale, 'technicalEventGeneric');
+  }
+  return stepName ? `${stepName} · ${desc}` : desc;
+}
 
 export function PreparationView({
   store,
   locale,
   footerHost,
+  onExit,
 }: {
   store: Prototype;
   locale: Locale;
   footerHost?: HTMLElement | null;
+  onExit?: () => void;
 }) {
   const [now, setNow] = useState(Date.now());
   const [sheet, setSheet] = useState<'note' | 'photo' | null>(null);
@@ -64,6 +126,8 @@ export function PreparationView({
   const [confirmEarlyFinishOpen, setConfirmEarlyFinishOpen] = useState(false);
   const [confirmAbandonOpen, setConfirmAbandonOpen] = useState(false);
   const [chosenOutcome, setChosenOutcome] = useState<PreparationOutcome | undefined>();
+  const [commandError, setCommandError] = useState<string | null>(null);
+  const [recentlyCompletedStepId, setRecentlyCompletedStepId] = useState<string | null>(null);
   const [pendingFinish, setPendingFinish] = useState(false);
   const [outcomeDraft, setOutcomeDraft] = useState<PreparationOutcome | undefined>();
   const [durationOpen, setDurationOpen] = useState(false);
@@ -101,6 +165,8 @@ export function PreparationView({
   useEffect(() => {
     setChosenOutcome(undefined);
     setPendingFinish(false);
+    setCommandError(null);
+    setRecentlyCompletedStepId(null);
     setOutcomeDraft(undefined);
     setOutcomeInvalid(false);
     setOutcomeOpen(false);
@@ -120,6 +186,10 @@ export function PreparationView({
     setPredecessorToRepeat(null);
   }, [session?.id]);
 
+  useEffect(() => {
+    setCommandError(null);
+  }, [session?.activeId]);
+
   if (!session) return <p>{t(locale, 'noSession')}</p>;
   const allSessions = syncSessions(store.state.sessions, store.state.session);
   const sequentialSteps = session.effective.steps.filter((s) => s.operation !== 'preheat');
@@ -127,21 +197,6 @@ export function PreparationView({
   const current = sequentialSteps.find((s) => s.id === session.activeId) ?? sequentialSteps[0];
   const currentIndex = sequentialSteps.findIndex((s) => s.id === current.id);
   const fact = session.facts[current.id];
-
-  // Calculate prior dependency end for countdown
-  let latestDepEnd: string | undefined;
-  if (current.dependsOn.length > 0) {
-    for (const depId of current.dependsOn) {
-      const depEndedAt = session.facts[depId]?.endedAt;
-      if (depEndedAt) {
-        if (!latestDepEnd || Date.parse(depEndedAt) > Date.parse(latestDepEnd)) {
-          latestDepEnd = depEndedAt;
-        }
-      }
-    }
-  }
-  const priorEnd = latestDepEnd ?? session.startedAt;
-  const effectiveStepStart = fact?.startedAt ?? priorEnd;
   const nowInstant = instant(now);
 
   // Native hold state and countdown freeze
@@ -150,18 +205,6 @@ export function PreparationView({
     ? isStepHeld(session.engineRuntime.state, current.id)
     : false;
   const heldS = session.engineRuntime ? heldSeconds(stepRecord, nowInstant) : 0;
-  const elapsed = Math.max(
-    0,
-    (now - Date.parse(effectiveStepStart)) / 1000 - heldS + session.elapsedOffsetS,
-  );
-  const remaining =
-    current.plannedDurationS === undefined
-      ? undefined
-      : Math.max(0, current.plannedDurationS - elapsed);
-
-  const baselineDurationS = session.snapshot.process.steps.find(
-    (s) => s.id === current.id,
-  )?.plannedDurationS;
 
   // Native live projection
   const liveProj = session.engineRuntime
@@ -173,13 +216,47 @@ export function PreparationView({
       : project(session.effective, session.startedAt, session.facts);
   const stepProj = projection.ok ? projection.value.steps[current.id] : undefined;
 
+  const isRecordedRunning = Boolean(fact?.startedAt && !fact?.endedAt);
+  const isImplicitlyRunning = Boolean(!fact?.startedAt && stepProj?.implicit === true);
+  const isRunning = isRecordedRunning || isImplicitlyRunning;
+
+  const effectiveStart = fact?.startedAt ?? (isImplicitlyRunning ? stepProj?.start : undefined);
+  const elapsed =
+    isRunning && effectiveStart
+      ? Math.max(0, (now - Date.parse(effectiveStart)) / 1000 - heldS + session.elapsedOffsetS)
+      : 0;
+  const isCurrentStepEnded = Boolean(fact?.endedAt);
+  const remaining = isCurrentStepEnded
+    ? 0
+    : current.plannedDurationS === undefined
+      ? undefined
+      : isRunning && stepProj?.end
+        ? Math.max(0, (Date.parse(stepProj.end) - now) / 1000)
+        : current.plannedDurationS;
+
+  const progress = isCurrentStepEnded
+    ? 1
+    : isRunning && current.plannedDurationS && current.plannedDurationS > 0
+      ? Math.min(1, Math.max(0, elapsed / current.plannedDurationS))
+      : 0;
+
+  const isOverdue = Boolean(
+    !isHeld && !isCurrentStepEnded && isRunning && stepProj?.end && now > Date.parse(stepProj.end),
+  );
+
+  const baselineDurationS = session.snapshot.process.steps.find(
+    (s) => s.id === current.id,
+  )?.plannedDurationS;
+
   const isLastSequentialStep = currentIndex === sequentialSteps.length - 1;
-  const isCurrentStepEnded = Boolean(session.facts[current.id]?.endedAt);
   const isReadyToFinish =
     sequentialSteps.length > 0 && sequentialSteps.every((step) => session.facts[step.id]?.endedAt);
 
+  const needsChoice = outcomeChoiceRequired(session.effective, (id) =>
+    Boolean(session.facts[id]?.endedAt),
+  );
   const defaultOutcome = intendedOutcome(session.effective);
-  const outcome = chosenOutcome ?? defaultOutcome;
+  const outcome = chosenOutcome ?? (needsChoice ? undefined : defaultOutcome);
 
   const resultLabel = (value: PreparationOutcome | undefined) => {
     if (!value) return t(locale, 'unknown');
@@ -226,15 +303,49 @@ export function PreparationView({
 
   // Progression: Next
   const handleNext = () => {
-    store.executeBakeCommand({ type: 'CompleteStep', stepId: current.id, at: nowInstant });
+    const res = store.executeBakeCommand({
+      type: 'CompleteStep',
+      stepId: current.id,
+      at: nowInstant,
+    });
+    if (!res.ok) {
+      if (res.bakeError?.code === 'DependenciesNotCompleted') {
+        const details = res.bakeError.details as { stepId: string; pending: string[] } | undefined;
+        const pendingIds = details?.pending ?? [];
+        const pendingNames = pendingIds
+          .map((id) => {
+            const step = session.effective.steps.find((s) => s.id === id);
+            return step ? titleOf(step, locale) : prepCopy(locale, 'pendingPrecedingStep');
+          })
+          .join(', ');
+        setCommandError(
+          prepCopy(locale, 'errorPendingDependencies', {
+            steps: pendingNames || prepCopy(locale, 'preheatTitle'),
+          }),
+        );
+      } else if (res.bakeError?.code === 'StepNotRunning') {
+        setCommandError(prepCopy(locale, 'errorStepNotRunning'));
+      } else if (res.bakeError?.code === 'StepAlreadyCompleted') {
+        setCommandError(prepCopy(locale, 'errorStepAlreadyCompleted'));
+      } else if (res.bakeError?.code === 'InvalidTime') {
+        setCommandError(prepCopy(locale, 'errorInvalidTime'));
+      } else if (res.bakeError?.code === 'BakeNotActive') {
+        setCommandError(prepCopy(locale, 'errorBakeNotActive'));
+      } else {
+        setCommandError(prepCopy(locale, 'errorGenericCommand'));
+      }
+      return;
+    }
+    setCommandError(null);
+    setRecentlyCompletedStepId(current.id);
   };
 
-  // Progression: Previous
-  const handlePrev = () => {
-    if (!predecessorStep) return;
+  const handleRetractStep = (targetStep: ProcessStep) => {
     if (!session.engineRuntime) return;
+    setCommandError(null);
+    setRecentlyCompletedStepId(null);
 
-    const action = previousAction(session.engineRuntime.state, predecessorStep.id);
+    const action = previousAction(session.engineRuntime.state, targetStep.id);
     if (action.kind === 'retract') {
       store.executeBakeCommand(
         { type: 'RetractCompletion', targetEventId: action.targetEventId },
@@ -246,12 +357,26 @@ export function PreparationView({
           ? prepCopy(locale, 'retractRefusalExplanation')
           : prepCopy(locale, 'retractBlockedNotCompleted');
       setRefusalExplanation(explanation);
-      const targetEventId =
-        session.engineRuntime.state.steps[predecessorStep.id]?.endEventId ?? null;
+      const targetEventId = session.engineRuntime.state.steps[targetStep.id]?.endEventId ?? null;
       setCorrectTargetEventId(targetEventId);
-      setPredecessorToRepeat(predecessorStep);
+      setPredecessorToRepeat(targetStep);
       setRefusalDialogOpen(true);
     }
+  };
+
+  // Progression: Previous
+  const handlePrev = () => {
+    if (!predecessorStep) return;
+    handleRetractStep(predecessorStep);
+  };
+
+  const completedStepForUndo = recentlyCompletedStepId
+    ? session.effective.steps.find((s) => s.id === recentlyCompletedStepId)
+    : undefined;
+
+  const handleUndo = () => {
+    if (!completedStepForUndo) return;
+    handleRetractStep(completedStepForUndo);
   };
 
   // Pause / Resume toggle
@@ -284,10 +409,6 @@ export function PreparationView({
 
   // Finishing
   const handleFinishClick = () => {
-    const needsChoice = outcomeChoiceRequired(
-      session.effective,
-      (id) => session.facts[id]?.endedAt !== undefined,
-    );
     if (needsChoice && !chosenOutcome) {
       setPendingFinish(true);
       setOutcomeDraft(undefined);
@@ -353,7 +474,10 @@ export function PreparationView({
       ? [
           {
             id: 'temperature',
-            label: t(locale, 'temperature'),
+            label:
+              current.equipment.appliance === 'proofer'
+                ? prepCopy(locale, 'roomTemperature')
+                : prepCopy(locale, 'ovenTemperature'),
             value: formatTemperature(
               current.equipment.setpointC,
               current.equipment.appliance === 'proofer' ? 'ambient' : 'oven',
@@ -365,7 +489,10 @@ export function PreparationView({
         ? [
             {
               id: 'temperature',
-              label: t(locale, 'temperature'),
+              label:
+                temperatureContext(current) === 'oven'
+                  ? prepCopy(locale, 'ovenTemperature')
+                  : prepCopy(locale, 'roomTemperature'),
               value: formatTemperatureForStep(current, current.conditions.temperatureC, locale),
               detail: current.conditions.location
                 ? locationLabel(current.conditions.location, locale)
@@ -549,30 +676,36 @@ export function PreparationView({
               remaining={formatCountdownHHMMSS(remaining)}
               remainingLabel={prepCopy(locale, 'estimatedRemainingTime')}
               start={
-                fact?.startedAt ? time(locale, fact.startedAt) : prepCopy(locale, 'stepNotStarted')
+                fact?.startedAt
+                  ? time(locale, fact.startedAt)
+                  : isImplicitlyRunning && stepProj?.start
+                    ? time(locale, stepProj.start)
+                    : prepCopy(locale, 'stepNotStarted')
               }
-              end={stepProj?.end ? time(locale, stepProj.end) : ''}
-              progress={
-                current.plannedDurationS && current.plannedDurationS > 0
-                  ? Math.min(1, elapsed / current.plannedDurationS)
-                  : 0
+              end={
+                fact?.endedAt
+                  ? time(locale, fact.endedAt)
+                  : stepProj?.end
+                    ? time(locale, stepProj.end)
+                    : ''
               }
+              progress={progress}
               labels={{
                 start: fact?.startedAt
                   ? `${prepCopy(locale, 'actualStepStart', { time: '' }).trim()} `
-                  : '',
-                end: stepProj?.end
-                  ? `${prepCopy(locale, 'plannedStepEnd', { time: '' }).trim()} `
-                  : '',
+                  : isImplicitlyRunning && stepProj?.start
+                    ? `${prepCopy(locale, 'projectedStepStart', { time: '' }).trim()} `
+                    : '',
+                end: fact?.endedAt
+                  ? `${prepCopy(locale, 'actualStepEnd', { time: '' }).trim()} `
+                  : stepProj?.end
+                    ? `${prepCopy(locale, 'plannedStepEnd', { time: '' }).trim()} `
+                    : '',
                 progress: prepCopy(locale, 'actualStepProgress'),
               }}
               adjustment={formatStepAdjustment(current.plannedDurationS, baselineDurationS, locale)}
               pausedBadge={isHeld ? prepCopy(locale, 'pauseActive') : undefined}
-              overdueBadge={
-                !isHeld && remaining === 0 && current.plannedDurationS !== undefined
-                  ? prepCopy(locale, 'overdue')
-                  : undefined
-              }
+              overdueBadge={isOverdue ? prepCopy(locale, 'overdue') : undefined}
               countdownLabel={prepCopy(locale, 'countdownRow')}
               progressLabel={prepCopy(locale, 'progressionRow')}
               countdownControls={
@@ -581,6 +714,7 @@ export function PreparationView({
                     variant="secondary"
                     className="touch-target-48"
                     dataTestId="prep-adjust-minus"
+                    disabled={(current.plannedDurationS ?? 0) <= 0}
                     onClick={() => handleAdjust(-15)}
                   >
                     {prepCopy(locale, 'actionMinus15')}
@@ -638,6 +772,38 @@ export function PreparationView({
             />
           </div>
 
+          {commandError && (
+            <p
+              role="alert"
+              data-testid="prep-command-error"
+              className="danger"
+              style={{ color: 'var(--fp-color-error, #ba1a1a)', margin: '8px 0' }}
+            >
+              {commandError}
+            </p>
+          )}
+
+          {completedStepForUndo && (
+            <div
+              role="status"
+              data-testid="prep-next-status"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                borderRadius: 'var(--fp-radius-sm, 6px)',
+                background: 'var(--fp-color-surface-container, #f0ede6)',
+                margin: '8px 0',
+              }}
+            >
+              <span>{prepCopy(locale, 'nextStepCompletedNotice')}</span>
+              <Button variant="quiet" dataTestId="prep-undo-next" onClick={handleUndo}>
+                {prepCopy(locale, 'actionUndo')}
+              </Button>
+            </div>
+          )}
+
           {/* Current step instructions compactly below main controls */}
           {stepInstruction && (
             <p className="muted" data-testid="prep-step-instruction">
@@ -694,6 +860,7 @@ export function PreparationView({
             const preheatFact = session.facts[preheat.id];
             const isStarted = Boolean(preheatFact?.startedAt);
             const isReady = Boolean(preheatFact?.endedAt);
+            const isMissedWindow = !isStarted && !isReady && Boolean(preheatProj?.overdue?.dueAt);
             return (
               <Surface
                 key={preheat.id}
@@ -710,12 +877,13 @@ export function PreparationView({
                       ? prepCopy(locale, 'preheatReady')
                       : isStarted
                         ? prepCopy(locale, 'preheatHeating')
-                        : prepCopy(locale, 'preheatProjected')}
+                        : isMissedWindow
+                          ? prepCopy(locale, 'preheatMissedWindow')
+                          : prepCopy(locale, 'preheatProjected')}
                   </span>
                 </div>
                 <p className="muted" style={{ margin: 0 }}>
-                  {prepCopy(locale, 'preheatProjected')}: {time(locale, preheatProj?.start)} →{' '}
-                  {time(locale, preheatProj?.end)}
+                  {time(locale, preheatProj?.start)} → {time(locale, preheatProj?.end)}
                   {preheatFact?.startedAt &&
                     ` · ${prepCopy(locale, 'heatingStartedAt')} ${time(locale, preheatFact.startedAt)}`}
                   {preheatFact?.endedAt &&
@@ -779,6 +947,14 @@ export function PreparationView({
         )
       )}
 
+      {(session.abandoned || session.finished) && onExit && (
+        <div className="actions">
+          <Button variant="primary" dataTestId="prep-exit-btn" onClick={onExit}>
+            {prepCopy(locale, 'backToRecipe')}
+          </Button>
+        </div>
+      )}
+
       {/* More menu */}
       <Menu
         open={moreOpen}
@@ -803,11 +979,13 @@ export function PreparationView({
             setMoreOpen(false);
             setOutcomeInvalid(false);
             setPendingFinish(false);
-            setOutcomeDraft(outcome);
+            setOutcomeDraft(chosenOutcome ?? outcome);
             setOutcomeOpen(true);
           }}
         >
-          {resultLabel(outcome)} · {t(locale, 'outcomeChoice')}
+          {outcome
+            ? `${resultLabel(outcome)} · ${t(locale, 'outcomeChoice')}`
+            : t(locale, 'outcomeChoice')}
         </Button>
         <Button
           variant="quiet"
@@ -978,7 +1156,13 @@ export function PreparationView({
           </div>
         }
       >
-        <p>{formatEarlyFinishPrompt(locale, session.recipeName, resultLabel(outcome))}</p>
+        <p>
+          {formatEarlyFinishPrompt(
+            locale,
+            session.recipeName,
+            outcome ? resultLabel(outcome) : undefined,
+          )}
+        </p>
       </CompactDialog>
 
       {/* Confirm Abandon */}
@@ -1034,7 +1218,11 @@ export function PreparationView({
           </Button>
         }
       >
-        <p>{t(locale, 'defaultOutcome')}</p>
+        <p>
+          {needsChoice
+            ? prepCopy(locale, 'outcomeRequiredExplanation')
+            : t(locale, 'defaultOutcome')}
+        </p>
         <label className="field-label">
           {t(locale, 'outcome')}
           <select
@@ -1051,7 +1239,7 @@ export function PreparationView({
               )
             }
           >
-            {!outcomeDraft && <option value="">-- {t(locale, 'outcomeChoice')} --</option>}
+            <option value="">-- {t(locale, 'outcomeChoice')} --</option>
             {OUTCOME_RESULTS.map((result) => (
               <option key={result} value={result}>
                 {resultLabel({ result })}
@@ -1139,20 +1327,22 @@ export function PreparationView({
       </div>
 
       {/* Upcoming steps */}
-      <Disclosure title={t(locale, 'upcoming')} defaultOpen>
-        {upcoming.map((step) => (
-          <StepRow
-            key={step.id}
-            icon={operationIcon(step.operation)}
-            number={sequentialSteps.indexOf(step) + 1}
-            title={titleOf(step, locale)}
-            details={[
-              time(locale, projection.ok ? projection.value.steps[step.id]?.start : undefined),
-              ...stepDetails(step, locale),
-            ]}
-          />
-        ))}
-      </Disclosure>
+      {!session.finished && !session.abandoned && upcoming.length > 0 && (
+        <Disclosure title={t(locale, 'upcoming')} defaultOpen>
+          {upcoming.map((step) => (
+            <StepRow
+              key={step.id}
+              icon={operationIcon(step.operation)}
+              number={sequentialSteps.indexOf(step) + 1}
+              title={titleOf(step, locale)}
+              details={[
+                time(locale, projection.ok ? projection.value.steps[step.id]?.start : undefined),
+                ...stepDetails(step, locale),
+              ]}
+            />
+          ))}
+        </Disclosure>
+      )}
 
       {/* User Journal: uses domain visibleEvents, keeps all notes/photos, hides retracted completions */}
       <Disclosure title={t(locale, 'journal')} defaultOpen>
@@ -1174,14 +1364,8 @@ export function PreparationView({
           <ol className="journal">
             {engineEvents.map((ev) => (
               <li key={ev.eventId}>
-                <time>{time(locale, ev.occurredAt)}</time> <code>{ev.payload.type}</code>
-                {'stepId' in ev.payload && ev.payload.stepId ? ` · ${ev.payload.stepId}` : ''}
-                {ev.payload.type === 'OverrideApplied' && 'field' in ev.payload.target
-                  ? ` · ${ev.payload.target.field}`
-                  : ''}
-                {ev.payload.type === 'StepCompletionRetracted'
-                  ? ` · (retracted: ${(ev.payload as { targetEventId: string }).targetEventId})`
-                  : ''}
+                <time>{time(locale, ev.occurredAt)}</time>{' '}
+                <span>{formatTechnicalEvent(ev, session.effective.steps, locale)}</span>
               </li>
             ))}
           </ol>

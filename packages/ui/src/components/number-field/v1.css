@@ -11,6 +11,8 @@
 }
 [data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   min-height: var(--fp-spacing-touch, 48px);
   padding: 0 2.25rem 0 var(--fp-space-2);
   background: var(--color-surface-container);
@@ -25,6 +27,11 @@
   outline: none;
   border-color: var(--color-primary);
   background-color: var(--color-surface);
+}
+[data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 [data-fp-component='fp.number-field'][data-fp-version='v1'] .field-input:disabled {
   opacity: 0.55;

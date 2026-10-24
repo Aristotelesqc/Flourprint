@@ -109,7 +109,7 @@ test.describe('external audit hardening', () => {
     await expect(page.getByTestId('save-recipe')).toBeVisible();
   });
 
-  test('component groups share their collapsed state between Recipe steps and Planning', async ({
+  test('Recipe groups retain their collapsed state across the timing-only Planning tab', async ({
     page,
   }) => {
     await page.goto(address({ recipe: 'shokupan', section: 'steps' }));
@@ -122,9 +122,14 @@ test.describe('external audit hardening', () => {
     await group().click();
     await expect(group()).toHaveAttribute('aria-expanded', 'false');
     await page.getByRole('tab', { name: 'Planning', exact: true }).click();
+    // L108: Planning presents strand windows, not a duplicate collapsible step list.
+    const timing = active.locator('[data-process-root="planning"]');
+    await expect(timing.locator('[data-fp-component="fp.sortable-list"]')).toHaveCount(0);
+    await expect(timing.locator('[data-fp-component="fp.step-node"]')).toHaveCount(0);
+    await expect(timing).toContainText('Tangzhong');
+    await openRecipeSteps(page, 'en');
     await expect(group()).toHaveAttribute('aria-expanded', 'false');
     await group().click();
-    await openRecipeSteps(page, 'en');
     await expect(group()).toHaveAttribute('aria-expanded', 'true');
   });
 
@@ -265,7 +270,9 @@ test.describe('external audit hardening', () => {
       .selectOption('frozen');
     await outcome.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(modal(page)).toHaveCount(0);
-    await expect(page.getByText('Preparation complete', { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Preparation complete', exact: true }),
+    ).toBeVisible();
     await expect(page.getByTestId('recorded-outcome')).toHaveText('Prepared dough · Frozen');
   });
 

@@ -609,19 +609,39 @@ export const num = (locale: Locale, value: number, digits = 1): string =>
     maximumFractionDigits: digits,
   }).format(value);
 export const grams = (locale: Locale, value: number): string => `${num(locale, value)} g`;
-export const time = (locale: Locale, instant?: string): string =>
-  instant
-    ? new Intl.DateTimeFormat(locale === 'fr' ? 'fr-CA' : 'en-CA', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(new Date(instant))
-    : t(locale, 'unknown');
+export const time = (locale: Locale, instant?: string): string => {
+  if (!instant) return t(locale, 'unknown');
+  const raw = new Date(instant);
+  if (!Number.isFinite(raw.getTime())) return t(locale, 'unknown');
+  const d = new Date(Math.round(raw.getTime() / 1000) * 1000);
+  if (d.getSeconds() === 0) {
+    return new Intl.DateTimeFormat(locale === 'fr' ? 'fr-CA' : 'en-CA', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(d);
+  }
+  const parts = new Intl.DateTimeFormat(locale === 'fr' ? 'fr-CA' : 'en-CA', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(d);
+  const h = parts.find((p) => p.type === 'hour')?.value ?? '00';
+  const m = parts.find((p) => p.type === 'minute')?.value ?? '00';
+  const s = parts.find((p) => p.type === 'second')?.value ?? '00';
+  return `${h}:${m}:${s}`;
+};
 export const duration = (locale: Locale, seconds?: number): string => {
-  if (seconds === undefined) return t(locale, 'unknownDuration');
-  const minutes = Math.max(0, Math.ceil(seconds / 60));
-  return minutes >= 60
-    ? `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')}`
-    : `${minutes} min`;
+  if (seconds === undefined || !Number.isFinite(seconds)) return t(locale, 'unknownDuration');
+  const sec = Math.max(0, Math.round(seconds));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) {
+    const base = `${h} h ${String(m).padStart(2, '0')}`;
+    return s > 0 ? `${base} min ${s} s` : base;
+  }
+  return s > 0 ? (m > 0 ? `${m} min ${s} s` : `${s} s`) : `${m} min`;
 };
 
 const styleKeys: Record<string, MessageKey> = {

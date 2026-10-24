@@ -9,7 +9,7 @@ export default {
   accessibility: [
     'Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).',
 
-    'Remaining time is text; progress also has a label.',
+    'Remaining time is text; progress bar is always rendered with label even when countdown controls are present.',
     'No rolling numbers and no action delayed behind an animation (DESIGN.md).',
     'Step change triggers tonal highlight via fp.motion.highlight; disabled under reduced motion.',
   ],

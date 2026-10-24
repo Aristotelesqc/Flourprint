@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import { recipeCard } from './screen-actions.mjs';
 const require = createRequire(new URL('../../apps/mobile/package.json', import.meta.url));
 const { test, expect } = require('@playwright/test');
 const epoch = Date.parse('2026-10-23T12:00:00Z');
@@ -45,26 +46,48 @@ test('L127 a real adjustment blocks retraction and offers correction or a delibe
 test('L127 pause freezes the countdown across navigation and resume uses the same recorded step', async ({
   page,
 }) => {
-  await page.clock.setFixedTime(new Date(epoch));
-  await page.goto(address);
-  await page.clock.setFixedTime(new Date(epoch + 60_000));
+  await page.clock.install({ time: new Date(epoch) });
+  await page.clock.pauseAt(new Date(epoch));
+  await page.goto(
+    address
+      .replace('screen=preparation', 'screen=recipe')
+      .replace('recipe=shokupan', 'recipe=baguette'),
+  );
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(current(page)).toHaveAttribute('data-step', 'poolish');
+  await page.clock.runFor(60_000);
   const timer = page.getByTestId('prep-countdown-digits');
   const pause = page.getByTestId('prep-pause-btn');
-  await expect(timer).toHaveText('00:03:00');
+  await expect(timer).toHaveText('13:59:00');
   await pause.click();
   await expect(pause).toHaveText('Resume');
   const frozen = await timer.textContent();
-  await page.clock.setFixedTime(new Date(epoch + 360_000));
+  await page.clock.runFor(300_000);
   // Trigger a render with a real app navigation, not a timing delay.
   await page.getByRole('banner').getByRole('button', { name: 'Navigation', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Recipes', exact: true }).click();
-  await page.getByRole('main').getByRole('button', { name: 'Resume', exact: true }).click();
+  await recipeCard(page, 'Baguette').getByRole('button', { name: 'Resume', exact: true }).click();
   await expect(timer).toHaveText(frozen);
   await expect(pause).toHaveText('Resume');
   await pause.click();
   await expect(pause).toHaveText('Pause');
   await expect(timer).toHaveText(frozen);
+  await expect(current(page)).toHaveAttribute('data-step', 'poolish');
+});
+
+test('PR165 does not treat an unstarted ALAP scald as implicitly running', async ({ page }) => {
+  await page.clock.install({ time: new Date(epoch) });
+  await page.clock.pauseAt(new Date(epoch));
+  await page.goto(address);
   await expect(current(page)).toHaveAttribute('data-step', 'tangzhong');
+  await expect(page.getByTestId('prep-countdown-digits')).toHaveText('00:04:00');
+  await page.clock.runFor(60_000);
+  await expect(page.getByTestId('prep-countdown-digits')).toHaveText('00:04:00');
+  await expect(page.getByTestId('prep-step-times')).toContainText('Actual start: pending action');
+  await page.getByTestId('prep-pause-btn').click();
+  await expect(page.getByTestId('prep-pause-btn')).toHaveText('Resume');
+  await expect(page.getByTestId('prep-step-times')).not.toContainText('pending action');
+  await expect(page.getByTestId('prep-countdown-digits')).toHaveText('00:04:00');
 });
 
 test('L127 recording the first real action keeps an ASAP step’s implicit projected end', async ({
@@ -104,7 +127,8 @@ test('a seeded preparation shows its actual recorded start once in the visible j
   const recorded = page
     .getByTestId('prep-technical-journal')
     .locator('li')
-    .filter({ hasText: /BakeStarted$/ });
+    .filter({ hasText: /Préparation lancée$/ });
   await expect(recorded).toHaveCount(1);
+  await expect(recorded).not.toContainText('BakeStarted');
   await expect(start.locator('time')).toHaveText(await recorded.locator('time').innerText());
 });

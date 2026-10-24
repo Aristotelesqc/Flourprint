@@ -11,6 +11,7 @@ export default {
 
     'Grams and percentage are text with tabular figures; the checkbox has its own label.',
     'Editing ingredient rows highlight with container padding and rounded corners, keeping row name and value alignment consistent with read mode without shrinking typography (L123).',
+    'In editing mode, the ingredient name spans the full-width first row without mid-word breaking, with editable controls below in full width. The controls arrange a two-column flexible field grid (.field-grid for quantity and percentage) alongside an action cluster (.ingredient-row-actions) that wraps to the edge if space is constrained at small widths or high zoom (L122).',
     'Touch target at least 48 px; the visible size may be smaller (ADR 0021, #142).',
   ],
   related: ['fp.weighing-checkbox', 'fp.number-field', 'fp.group-card'],
@@ -36,6 +37,7 @@ export default {
       'Called by the checkbox or the non-editing row body; the quantity/end cell stops propagation.',
     checkLabel: 'Label of the weighing checkbox.',
     editing: 'Shows the edit controls passed as children.',
-    children: 'Edit controls while editing.',
+    children:
+      'Edit controls while editing: arranged inside .ingredient-edit-wrap containing .field-grid (stagegram NumberField and readonly stagebakerpct) and .ingredient-row-actions (info, trash).',
   },
 } satisfies ComponentGuide<IngredientRowProps>;
