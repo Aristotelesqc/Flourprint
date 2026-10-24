@@ -57,3 +57,62 @@ test('stage edits retain full labels and 48px inputs with wide metrics at 360/13
   await expect(milk).toContainText('36 %');
   await expect(milk.getByTestId('ingredient-grams-milk')).toHaveValue('113');
 });
+
+for (const [locale, width, scale] of [
+  ['fr', 360, 130],
+  ['en', 393, 100],
+]) {
+  test(`paused countdown retains three full labels in one row with wide metrics: ${locale}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 852 });
+    await page.clock.setFixedTime(new Date('2026-10-16T12:00:00Z'));
+    await page.goto(
+      `/mockup.html?screen=recipe&recipe=baguette&prep=fresh&nav=A&lang=${locale}&width=${width}&scale=${scale}&capture=1&motion=reduce`,
+    );
+    await page
+      .getByRole('button', { name: locale === 'fr' ? 'Lancer' : 'Start', exact: true })
+      .click();
+    await page.getByTestId('prep-pause-btn').click();
+    await widenMetrics(page);
+    const hero = await page.locator('[data-fp-container="fp.prep-hero"]').boundingBox();
+    const buttons = page.getByTestId('prep-countdown-row').getByRole('button');
+    await expect(buttons).toHaveCount(3);
+    let previous;
+    for (const button of await buttons.all()) {
+      const box = await button.boundingBox();
+      expect(box.width).toBeGreaterThanOrEqual(48);
+      expect(box.height).toBeGreaterThanOrEqual(48);
+      expect(box.x).toBeGreaterThanOrEqual(hero.x);
+      expect(box.x + box.width).toBeLessThanOrEqual(hero.x + hero.width);
+      if (previous) {
+        expect(Math.abs(box.y - previous.y)).toBeLessThan(1);
+        expect(box.x).toBeGreaterThanOrEqual(previous.x + previous.width - 0.5);
+      }
+      const ink = await button.evaluate((node) => {
+        const walker = document.createTreeWalker(
+          node.querySelector('.button-content'),
+          NodeFilter.SHOW_TEXT,
+        );
+        const result = [];
+        while (walker.nextNode()) {
+          if (!walker.currentNode.textContent.trim()) continue;
+          const range = document.createRange();
+          range.selectNodeContents(walker.currentNode);
+          result.push(
+            ...[...range.getClientRects()].map((rect) => ({ left: rect.left, right: rect.right })),
+          );
+        }
+        return result;
+      });
+      for (const rect of ink) {
+        expect(rect.left).toBeGreaterThanOrEqual(box.x - 0.5);
+        expect(rect.right).toBeLessThanOrEqual(box.x + box.width + 0.5);
+      }
+      previous = box;
+    }
+    await expect(page.getByTestId('prep-pause-btn')).toContainText(
+      locale === 'fr' ? 'Reprendre' : 'Resume',
+    );
+  });
+}

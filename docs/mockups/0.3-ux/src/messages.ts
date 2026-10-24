@@ -248,6 +248,8 @@ const messages = {
   after: ['Après', 'After'],
   relative: ['Heures relatives au départ', 'Times relative to start'],
   startAt: ['Départ prévu', 'Planned start'],
+  startDateTime: ['Date et heure de départ', 'Start date and time'],
+  targetDateTime: ['Date et heure de fin ciblée', 'Target completion date and time'],
   setpoint: ['Température de consigne', 'Setpoint temperature'],
   instructionBoil: [
     'Pocher la pâte selon les consignes de la recette.',

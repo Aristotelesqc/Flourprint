@@ -1209,7 +1209,7 @@ export function ProcessView({
             </label>
           )}
           <label className="field-label">
-            {t(locale, planDirection === 'startAt' ? 'startAt' : 'finish')}
+            {t(locale, planDirection === 'startAt' ? 'startDateTime' : 'targetDateTime')}
             <input
               type="datetime-local"
               value={at}

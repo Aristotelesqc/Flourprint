@@ -54,6 +54,15 @@ for (const locale of ['fr', 'en']) {
     await expect(planning).toContainText('→');
     await expect(planning.locator('input[type="datetime-local"]')).toBeVisible();
     await expect(planning.locator('select').first()).toBeEnabled();
+    const timeField = planning.locator('input[type="datetime-local"]');
+    await expect(timeField).toHaveAccessibleName(
+      locale === 'fr' ? 'Date et heure de départ' : 'Start date and time',
+    );
+    await planning.locator('select').first().selectOption('readyBy');
+    await expect(timeField).toHaveAccessibleName(
+      locale === 'fr' ? 'Date et heure de fin ciblée' : 'Target completion date and time',
+    );
+    await planning.locator('select').first().selectOption('startAt');
     await expect(planning).toContainText(locale === 'fr' ? 'Tangzhong' : 'Tangzhong');
     await expect(planning).not.toContainText('flourprint.commercial-yeast');
     const diagnostics = planning.getByRole('button', { name: /Fermentation/ });

@@ -265,7 +265,7 @@ test('step editor cancels local changes and applies manual conditions, dependenc
     .getByRole('combobox', { name: 'Fixer l’horaire', exact: true })
     .selectOption('readyBy');
   await plan.getByRole('combobox', { name: 'Étape cible', exact: true }).selectOption('bake');
-  await plan.getByLabel('Fin prévue', { exact: true }).fill('2026-10-17T13:30');
+  await plan.getByLabel('Date et heure de fin ciblée', { exact: true }).fill('2026-10-17T13:30');
   // Cooling lasts 60 minutes after the targeted bake, so the complete plan ends later.
   await expect(plan.locator('strong')).toContainText(/14\s*(?:h|:)\s*30/);
   await plan.getByRole('combobox', { name: 'Étape cible', exact: true }).selectOption('cool');
@@ -273,7 +273,7 @@ test('step editor cancels local changes and applies manual conditions, dependenc
   await plan
     .getByRole('combobox', { name: 'Fixer l’horaire', exact: true })
     .selectOption('startAt');
-  await expect(plan.getByLabel('Départ prévu', { exact: true })).toBeVisible();
+  await expect(plan.getByLabel('Date et heure de départ', { exact: true })).toBeVisible();
 });
 
 test('settings preserve weighing checks across visits and clear them only explicitly', async ({
@@ -367,7 +367,7 @@ test('ready-by target falls back to the current final stage after the selected s
     .getByRole('combobox', { name: 'Fixer l’horaire', exact: true })
     .selectOption('readyBy');
   await plan.getByRole('combobox', { name: 'Étape cible', exact: true }).selectOption('cool');
-  await plan.getByLabel('Fin prévue', { exact: true }).fill('2026-10-17T13:30');
+  await plan.getByLabel('Date et heure de fin ciblée', { exact: true }).fill('2026-10-17T13:30');
   await expect(plan.locator('strong')).toContainText(/13\s*(?:h|:)\s*30/);
   await edit(page);
   await openRecipeSteps(page);
