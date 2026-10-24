@@ -1,0 +1,12 @@
+{
+  "revision": "086cc9638652e8c2fd274b26ab3ffcee47877249",
+  "sourceSha256": "cfc94de94091642badcf66adaec67cd471307d0de7df37b0b9b1d488ee7ed675",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · lucky-bagel · local"
+}

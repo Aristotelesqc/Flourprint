@@ -1,0 +1,17 @@
+{
+  "sourceRevision": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+  "sourceSha256": "3b0d70cf4ebde2617d6d6a205c58b05e1f80b97be38830330a5226d6761ac10a",
+  "baselineRevision": "086cc9638652e8c2fd274b26ab3ffcee47877249",
+  "ci": {
+    "ciUrl": "https://github.com/Aristotelesqc/Flourprint/actions/runs/40139159992",
+    "ciConclusion": "success",
+    "ciHead": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee"
+  },
+  "screenPNGs": 359,
+  "comparisonPairs": 61,
+  "limits": [
+    "Mockup and packages/ui only",
+    "Owner visual/phone acceptance pending",
+    "No production app or durable-storage certification"
+  ]
+}

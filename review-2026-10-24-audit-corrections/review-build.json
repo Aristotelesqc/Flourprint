@@ -1,0 +1,12 @@
+{
+  "revision": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+  "sourceSha256": "3b0d70cf4ebde2617d6d6a205c58b05e1f80b97be38830330a5226d6761ac10a",
+  "build": {
+    "version": "0.3.0",
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local",
+    "versionCode": 3000
+  },
+  "label": "v0.3.0 · velvet-maple · local"
+}
