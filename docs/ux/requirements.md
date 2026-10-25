@@ -766,6 +766,15 @@ Acceptance criteria for the defects still open at #133 head `e7aaad3` that are p
 
 **L144.** Equivalent actions use the same shared button variant: Pause, Previous, Cancel, "Switch the oven on" and Weigh are not text-only where −15, +15 and Next are pills (extends L123). Screens: preparation, global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m3; frontend quality review of #133 at e7aaad3 (2026-10-25), M9. Kind: CL.
 
+**L145.** Every fermentation forecast is presented as an estimate, and the baker's own judgement comes first:
+
+- forecast end times, remaining times, progress, dough temperature and self-heating are labelled as estimates wherever they appear. They are never phrased as the dough being ready. The information on demand says what they rest on: model, assumed temperatures, container;
+- on a fermentation step, the baker's sensory readiness criteria lead and the estimate follows. The criteria are rise against the baker's own reference (for example a mark on the container), the poke test, bubbles on the surface and sides, jiggle and feel;
+- a recorded "dough ready" (or "not ready yet") observation decides for that step and overrides the model. The interface then follows the observation, not the computed end;
+- extends L20 and L21: L21's ban on a model-computed volume or "doubled" target still holds, while a rise the baker observes against their own reference is a criterion, not a forecast.
+
+Screens: preparation, planning, recipe, library. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
+
 ---
 
 ## 13. OPEN owner choices (do not decide silently)
