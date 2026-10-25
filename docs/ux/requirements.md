@@ -784,6 +784,7 @@ Screens: preparation, planning, recipe, library. Source: Owner, 2026-10-25 (#176
 - a volume cue such as "about doubled" applies only when the dough has not been degassed since the step started. It does not apply after folds, a pre-shape or reshaping;
 - after any degassing, the step offers cues that remain valid: a domed or slightly rounded surface, bubbles on the surface and sides, jiggle, poke test and feel;
 - the cues come from the step's position in the process and the operations recorded so far, so they change if the baker adds or skips a fold;
+- transitional steps with a fixed duration (for example 1 h on the counter, then 24 h in the fridge) stay fixed. Their readiness cues and time range are optional: available on demand or enabled per recipe, never prompted or shown as due. The step that follows the model (`durationMode: 'model'` in process.md, usually the final proof) absorbs the variation. On that step, the cues and the range are shown by default (L145);
 - when the baker moves on to the next step, the engine recomputes every following step from the actual times and conditions recorded so far: the real fermentation already done, actual temperatures and container changes. It never keeps the original plan. The new estimates and ranges replace the old ones at once, and reminders follow.
 
 Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
