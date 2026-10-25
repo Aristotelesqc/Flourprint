@@ -47,8 +47,9 @@ consultation required tapping Edit in both native suites).
 
 ## Pull request
 
-- Body follows `.github/pull_request_template.md`; `Refs #<issue>` unless every acceptance
-  criterion is met. List exactly what ran and what did not (device, emulator).
+- Body follows `.github/pull_request_template.md`. Before opening, link the issues per AGENTS.md
+  "Development order" (`Closes`/`Refs #N`, or `No issue:` and a reason); the `PR issue link` check
+  fails otherwise. List exactly what ran and what did not (device, emulator).
 - Commit trailers and PR footer as the host's attribution rules require; English only.
 - Set the issue to `status:review` when the PR opens.
 
@@ -71,6 +72,7 @@ consultation required tapping Edit in both native suites).
 - The issue goes to `status:verified` with one evidence line per acceptance criterion, or back
   to `status:in-progress` with what remains. Never close it unless every criterion is shown.
 - Mention device checks still owed (migrations, reminders) in the issue, not as done.
+- Comment on each linked issue with the merge and its status change (AGENTS.md "Development order").
 - Update the referenced issues' `status:*` labels per the `flourprint-backlog-steward` rules,
   so routine label upkeep happens at merge time.
 - Remove your worktree and local branches.

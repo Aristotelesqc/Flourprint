@@ -1,7 +1,12 @@
 ## Summary
 
-What changes and why. Issues: `Refs #…` for a slice, `Closes #…` only when this pull request
-completes every acceptance criterion of the issue.
+What changes and why.
+
+## Issues
+
+`Refs #…` for a slice, `Closes #…` only when this pull request completes every acceptance
+criterion of the issue. If it advances no issue, write `No issue:` and a one-line reason. CI fails
+a pull request with neither.
 
 ## Contracts and decisions
 

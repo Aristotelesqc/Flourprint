@@ -141,6 +141,10 @@ the decision history remains editorial. See [docs/governance/generated-backlog.m
   sets `status:review`. A merged pull request does not finish an issue: it goes back to
   `status:in-progress` while acceptance remains open, or to `status:verified` with the evidence in a
   comment. Only the owner, or an agent with every criterion shown, closes an issue.
+- **Pull request linkage**: every pull request names the issues it advances or closes in its body
+  (`Closes #N` only when it meets the issue's full acceptance, otherwise `Refs #N`) and comments on
+  each such issue when it opens and when it merges if the issue's status changes. A pull request
+  that advances no issue says `No issue:` with a one-line reason. A CI check enforces the presence.
 - **Generated view**: update the individual issue and its labels, never #30's generated tables.
   The Backlog view workflow maintains one bot-owned comment linked from #30. It reports missing
   or conflicting classifications, without correcting labels, setting priorities or closing issues.
