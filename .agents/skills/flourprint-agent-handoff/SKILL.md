@@ -28,6 +28,24 @@ Write it in the owner's language unless asked otherwise, in one copyable block:
 - Unanswered questions stay questions; do not answer them for the owner.
 - Keep it under a screen; link documents instead of pasting them.
 
+## Links for recipients without repository access
+
+Some recipients cannot read the repository: chat assistants, AI Studio, any tool without a
+GitHub connector. Given a bare path such as `docs/contracts/fermentation.md`, they fall back to
+web search, and the repository may not be indexed. They then work from nothing or invent the
+file's content.
+
+- Give every repository file as a complete `https` URL on `raw.githubusercontent.com`, pinned
+  to the branch (or commit) the recipient must read, for example
+  `https://raw.githubusercontent.com/Aristotelesqc/Flourprint/dev/docs/contracts/fermentation.md`.
+- Give issues and pull requests as complete `https://github.com/Aristotelesqc/Flourprint/...`
+  URLs, not `#N`.
+- List the URLs together near the top of the message so the recipient fetches them first.
+- Ask the recipient to say which URLs it could not open, and never to describe a file it did
+  not read.
+- When the recipient does have repository access (Codex, Claude Code, Antigravity), repository
+  paths are enough.
+
 ## Discover the task's sources before handing it off
 
 For a future implementation, open the **assigned issue or sub-issue** first. Read its current
