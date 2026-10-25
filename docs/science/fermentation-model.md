@@ -104,6 +104,46 @@ Against Izzreen Table I (contract equations; the shipped model predicts hours to
 - The exponent `k` is not constant in the primary data (section 6): 1.294 at 8 °C, 0.842 at 16 °C,
   0.466 at 32 °C (script).
 
+### The table above ignores dough lag (2026-10-25)
+
+The table above compares times at constant chamber temperature. The engine itself applies a first-order
+dough lag (`τ` 0 to 3 h, contract), and Izzreen reports chamber, not dough, temperatures. With a mix
+temperature `T0` of 25 °C and `τ` = 1.5 h (both ASSUMED: Izzreen reports neither), a plain separable
+Arrhenius with constant `k` fits Table I at log RMSE 0.101 and worst cell ×1.19, against 0.170 and
+×1.34 with no lag (DERIVED / FITTED; Sonnet research run, reproduced independently by the
+coordinating agent with a separate integrator):
+
+| Fit on Izzreen Table I             | `A` (h) | `k`   | `Ea` (kJ/mol) | log RMSE | worst cell |
+| ---------------------------------- | ------- | ----- | ------------- | -------- | ---------- |
+| Arrhenius, `τ` = 0                 | 10.13   | 0.867 | 52.8          | 0.170    | ×1.34      |
+| Arrhenius, `τ` = 1.5 h, `T0` 25 °C | 8.78    | 0.728 | 79.8          | 0.101    | ×1.19      |
+
+- The fitted `k` under lag equals the shipped `k`. The temperature-dose interaction of M5 shrinks
+  from −0.284 ± 0.044 to −0.163 ± 0.064. Part of the apparent non-separability is lag.
+- `Ea` depends on the assumed lag: 61 kJ/mol at `τ` = 0.5 h to 108 kJ/mol at 3 h. A refit on
+  chamber temperatures with no lag (`Ea` about 53) would therefore double count lag once the engine
+  applies its own (gate 6). Counting `τ` as a fitted parameter, the lag fit no longer beats M1 on
+  AICc: the evidence for lag is real but not decisive.
+- With lag credited, 0.1.0's warm over-speed against Izzreen falls from ×4–5.6 to about ×2.1–2.7,
+  most of it the end-point unit (pre-collapse `A` about 8.8 h against Craig's 3.43 h, section 3),
+  not the temperature shape.
+
+### Options examined and rejected (2026-10-25)
+
+Two research runs (Claude Sonnet and Gemini, reports on issue #9) examined saturating temperature
+forms and a progressive blend between the shipped model and a warm-compatible one:
+
+- **Cardinal-temperature forms (CTMI, extended Ratkowsky).** They fit Izzreen worse (CTMI with
+  literature cardinals: log RMSE about 0.44). They predict 900 h or more at 4 °C at 1 % with the
+  literature `Tmin` of about 2.8 °C, which also sits above the contract's 1.7 °C floor. They slow
+  down above the 32.3 °C optimum. `Topt` cannot be identified from three chamber temperatures, all
+  at or below 32 °C. Saturation stays a domain gate (35 °C), not a fitted shape. Between 32.3 and
+  35 °C a cardinal shape would change times by about 5 %.
+- **Progressive blend.** A smooth log-time blend can stay monotone, but its midpoint and width have
+  no data or provenance and add parameters to three temperatures. A single smooth form is preferred.
+- No contract change followed. Gates 1, 3, 6 and 8 below remain unmet, and the decisive missing
+  evidence is dough-temperature histories at low dose in the cold.
+
 ### What 0.1.0 does not model
 
 - Yeast growth in a preferment before the mix (the final dose counts all yeast over all flour).
@@ -456,5 +496,6 @@ details match the paper; measure the dough temperature during the owner's cold r
 | science doc     | 2026-10-10        | This document: provenance of 0.1.0, Izzreen Table I and fits M1/M2/M5/M6 (M5 research-only), sugar and salt datasets flagged unverified, bibliography corrected, promotion gates. No model change.                                                                                                                                                                                                                                                                   |
 | contract 0.10.0 | 2026-10-11        | Dough steps end at the first heat step (`bake` or `boil`); one dough step may follow the model (`durationMode: 'model'`), its time solved on the same forward model given the other planned durations. Once the dough is within 0.01 °C of its ambient, the rest of a segment is integrated in closed form (rate linearized around the ambient, error about 1e-6): same equations, fixtures unchanged, long cold retards 2–5× faster. No change of model parameters. |
 | contract 0.11.0 | 2026-10-12        | The heat steps are the cooking operations (process.md): `bake`, `boil`, `steam`, `fry`, `panCook`, `grill`. A fried or pan-cooked dough no longer counts its cooking step as a dough step. Same equations and parameters, fixtures unchanged.                                                                                                                                                                                                                        |
+| science doc     | 2026-10-25        | Lag-aware comparison on Izzreen Table I, and cardinal-temperature forms and progressive blending examined and rejected (section 2; reports on issue #9). No model change.                                                                                                                                                                                                                                                                                            |
 
 Any future model version adds a row here with the evidence it rests on.
