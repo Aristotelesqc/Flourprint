@@ -54,12 +54,27 @@ component names and class names harder to follow.
   Tailwind v4 defines the palette; it is not a compatibility layer over the old CSS.
   `tokens.ts` remains the source of values (ADR 0020, ADR 0021), and its generator emits the
   `@theme` block.
-- Remaining CSS is limited to what Tailwind cannot express (for example certain keyframes, and
-  Ionic part or shadow overrides). Each such rule carries a comment justifying it.
+- Styling follows this order, and each step is used only when the previous one cannot express
+  the need:
+  1. Tailwind utility classes.
+  2. An arbitrary value (for example `grid-cols-[1fr_auto]`) or a small custom utility declared
+     with `@utility`.
+  3. A React component with its variants: the component is the abstraction that groups its
+     utilities (a `<Button variant="primary">`, not a `.btn-primary` class).
+  4. A shared meta-class that composes Tailwind utilities, only for a cross-cutting pattern that
+     belongs to no single component (for example `touch-target`, `focus-ring`), or for markup
+     the code does not render itself (Ionic parts, rich text). Meta-classes live in one library
+     file, are named after the pattern, and are never specific to one screen.
+  5. Hand-written CSS, only when Tailwind does not offer exactly the property needed (for
+     example certain keyframes, Ionic part or shadow overrides). Each such rule carries a
+     comment naming the missing Tailwind capability and the Tailwind version checked.
+- Hand-written CSS and meta-classes are temporary by design. Every later revision of the code
+  that touches them, and every Tailwind upgrade, checks whether Tailwind now covers the need
+  and, if so, replaces them with utilities.
 - The library emits no global element selectors and redefines no `:root` variables outside the
   generated theme.
 - An automated check in `pnpm check` refuses new component or screen CSS files outside an
-  allowlist.
+  allowlist: the generated theme, the meta-class file and the file of justified exceptions.
 
 ### 3. Binding rules for the port
 
