@@ -720,6 +720,52 @@ Screens: global. Source: GH/issues/134#issuecomment-6228731936 ("Owner clarifica
 
 Technical fixes (dead controls, bad sums, localization, overflow) need no new product debate. Screens: global. Source: GH/issues/134 body, "Do not silently settle unresolved owner decisions"; GH/issues/134#issuecomment-6226169253 P0-2. Kind: CL.
 
+### Port to the app (2026-10-25)
+
+**L128.** The 0.3 mockups (`docs/mockups/0.3-ux`) are stopped: the proof of concept is done. PR #133 is frozen as the visual and behavioural reference and is closed without merging; its branch and the hosted review gallery (`https://aristotelesqc.github.io/Flourprint/review-2026-10-24-audit-corrections/`) remain the reference. The interface is ported into `apps/mobile` on `dev`, screen by screen, and the remaining defects are fixed there in production code, not in a disposable mockup. This supersedes L94's "freeze the mockup for implementation" step as the next action and ends further mockup rounds (L91, L92). Screens: global. Source: Owner, 2026-10-25; ADR 0022. Kind: OD.
+
+**L129.** Binding rules for the port (owner, 2026-10-25; details and rationale in ADR 0022):
+
+- Styling is Tailwind CSS v4 (ADR 0002) utility classes in `packages/ui` and `apps/mobile` screens, with the design tokens declared in Tailwind's theme (light, dark and AMOLED). No hand-written component or screen CSS class system. Order of use: utilities; an arbitrary value or `@utility`; a React component with variants; a shared meta-class composing utilities, only for a cross-cutting pattern or markup the code does not render; hand-written CSS only when Tailwind does not offer exactly the property needed, each rule commented with the missing capability and the Tailwind version checked. No global element selectors or `:root` redefinitions from the library. Every later revision touching such CSS or meta-classes, and every Tailwind upgrade, replaces them with utilities once Tailwind covers the need. An automated check refuses new component or screen CSS files outside an allowlist.
+- UI text goes through `react-intl` with ICU plurals and no string concatenation.
+- Sheets, menus, popovers and selects use Ionic components, following ADR 0021's sourcing order (no native `<dialog>` re-implementation).
+- All domain math, projections and bake or formula commands go through `packages/core`: no local arithmetic, no parallel session state, and engine refusals shown with the engine's reason.
+- Screens are split into small components. Tests assert behaviour through roles and labels; geometry thresholds come only from DESIGN.md values. ESLint gains `react-hooks` and `jsx-a11y`.
+
+Screens: global. Source: Owner, 2026-10-25; ADR 0022. Kind: OD.
+
+Acceptance criteria for the defects still open at #133 head `e7aaad3` that are product behaviour (not mockup plumbing). The reference audits are posted on issue #167, "Audits of the last mockups before the port to the app", for #133 at `e7aaad3`. Criteria already in L101 to L127 are referenced, not repeated.
+
+**L130.** The step `⋯` menu exposes every action, including Delete, without scrolling or hidden content, at 393 px / 100 % and at 360 px / 130 %; if it ever exceeds the viewport it scrolls with a visible cue, and the close control never covers a row. Screens: steps, edit. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), N1. Kind: CL.
+
+**L131.** A running-recipe card in the Library never covers the recipe name with its status pill: at 360 px / 130 % the full name stays readable, wrapping or truncating with an ellipsis only after the pill has moved to its own line. Screens: library. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), N2. Kind: CL.
+
+**L132.** The Library "in progress" status shows the preparation's own remaining time, labelled as such, never the active step's remaining time beside the total duration (extends L43). Screens: library. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), N3. Kind: CL.
+
+**L133.** The active-step countdown runs from the implicit start (`implicitStartOf` in `packages/core`) on every ready step, including the first step of a fresh preparation and the cooking step gated by the oven, so the remaining time and the projected end never disagree (extends L127). Screens: preparation. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), caller check and m13. Kind: CL.
+
+**L134.** +15 and −15 min never invent a duration: when a step has no planned duration, the adjustment controls are disabled or say why (extends L15 and L127). Screens: preparation. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m12; engine review of #133 at e7aaad3 (2026-10-25). Kind: CL.
+
+**L135.** Notes and photos are recorded through the engine (`AddObservation`), during the preparation and after it ends, so they appear in the event log, in exports and on replay, and the visible journal has a single source. Screens: preparation, history. Source: engine and contract wiring review of #133 at e7aaad3 (2026-10-25), M1. Kind: CL.
+
+**L136.** Every engine refusal is shown with the engine's own reason, including Pause, step removal and process edits (dependency changes, step edits, moves); none is swallowed, replaced by a generic message or left without feedback (extends L121). Screens: preparation, steps, edit. Source: engine and contract wiring review of #133 at e7aaad3 (2026-10-25), M2 and M5. Kind: CL.
+
+**L137.** One rule formats clocks and durations everywhere: a figure does not switch between "00:17:26" and "00 h 18" depending on zero seconds, and the Library rounds durations honestly per L43 instead of showing seconds. Screens: global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m1. Kind: CL.
+
+**L138.** The undo bar shown after Next dismisses itself after a short delay or on the next action, does not shift the controls below it, and is not left on screen after a refused Next. The refusal names the action the card actually offers. Screens: preparation. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m2. Kind: CL.
+
+**L139.** A refusal is shown once, at the field or control concerned, never as a full-width banner plus an inline duplicate (extends L121). Screens: recipe, edit. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m7. Kind: CL.
+
+**L140.** The early-finish outcome list is consistent with L113: when no cooking step was completed it does not offer "Cooked" variants, it offers the non-cooked outcomes (dough kept, frozen, given, abandoned), and its placeholder is plain language. Screens: preparation. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m8. Kind: CL.
+
+**L141.** A finished Preparation shows the outcome label, the total duration and an action to correct the outcome; the step controls (−15, Pause, +15, Previous, Next) are disabled, and the journal numbering stays aligned past ten entries. Screens: preparation, history. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m12. Kind: CL.
+
+**L142.** English text follows English typography: no space before a colon, semicolon or question mark ("Weighed: Bread flour"), and endpoint labels read as English phrases. Screens: global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m9; frontend quality review of #133 at e7aaad3 (2026-10-25), M3. Kind: CL.
+
+**L143.** Product UI contains no developer jargon, internal identifiers or version strings (for example engine function names, model ids with versions, "candidate" or "conversion by the engine" wording); technical detail stays in the technical log (extends L13). Screens: global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m10. Kind: CL.
+
+**L144.** Equivalent actions use the same shared button variant: Pause, Previous, Cancel, "Switch the oven on" and Weigh are not text-only where −15, +15 and Next are pills (extends L123). Screens: preparation, global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m3; frontend quality review of #133 at e7aaad3 (2026-10-25), M9. Kind: CL.
+
 ---
 
 ## 13. OPEN owner choices (do not decide silently)

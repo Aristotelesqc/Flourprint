@@ -86,7 +86,10 @@ Use bounding boxes and computed styles, and quote the numbers:
 
 ## Report (English)
 
-Write it in the scratch directory; give the path to the caller.
+Write it in the scratch directory; give the path to the caller. Never commit it to the
+repository (AGENTS.md, Development order): the caller posts it as a comment on the issue or pull
+request concerned, naming the exact revision audited. Binding outcomes go into
+`docs/ux/requirements.md` through a pull request.
 
 1. **Summary**: target, revision, date, coverage, counts per severity, overall verdict.
 2. **Caller-supplied issues**: for each, verdict (reproduced / not reproduced / partly) with
