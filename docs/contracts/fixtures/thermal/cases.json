@@ -45,7 +45,7 @@
         "temperatureC": 0.01,
         "ratio": 0.001
       },
-      "note": "Constants of fermentation.md (cp 2800, rho 1100, k 0.38, h 8, glass 0.004, plastic 0.008, lid 0.14, shelf 0.025 W/K). Mean: single exponential; core: gamma_core, clamped between the start and ambient temperatures. tauBandH: min and max over the corners of h 4-10, shelf 0-0.25 W/K, lid 0.04-0.39, cp 2700-2930."
+      "note": "Isolated cooling (dT_ad 0). Constants of fermentation.md (cp 2800, rho 1100, k 0.38, h 8, glass 0.004, plastic 0.008, lid 0.14, shelf 0.025 W/K). Mean: single exponential; core: gamma_core, clamped between the start and ambient temperatures. tauBandH: min and max over the corners of h 4-10, shelf 0-0.25 W/K, lid 0.04-0.39, cp 2700-2930."
     },
     {
       "name": "b: 2 kg bulk, lidded glass bowl, static fridge",
@@ -86,7 +86,7 @@
         "temperatureC": 0.01,
         "ratio": 0.001
       },
-      "note": "Constants of fermentation.md (cp 2800, rho 1100, k 0.38, h 8, glass 0.004, plastic 0.008, lid 0.14, shelf 0.025 W/K). Mean: single exponential; core: gamma_core, clamped between the start and ambient temperatures. tauBandH: min and max over the corners of h 4-10, shelf 0-0.25 W/K, lid 0.04-0.39, cp 2700-2930."
+      "note": "Isolated cooling (dT_ad 0). Constants of fermentation.md (cp 2800, rho 1100, k 0.38, h 8, glass 0.004, plastic 0.008, lid 0.14, shelf 0.025 W/K). Mean: single exponential; core: gamma_core, clamped between the start and ambient temperatures. tauBandH: min and max over the corners of h 4-10, shelf 0-0.25 W/K, lid 0.04-0.39, cp 2700-2930."
     },
     {
       "name": "cross-check: GPT A, B, D of the #176 collation (not contract inputs)",
@@ -268,7 +268,7 @@
         "tauH": 0.002,
         "temperatureC": 0.01
       },
-      "note": "Argon F4 readings (1, 2.5, 4 h: 19.20, 12.20, 8.42) give tau 2.434 h and T_inf 3.98 C as in the collation; its factor 1.176 used Argon's tau_eff 2.07 h, here the factor divides by the contract's own tau_eff of this case. The exact readings are generated from tau 2.5 h, T_inf 5 C and rounded to 4 decimals."
+      "note": "Two-point estimator: the first (1 h) and the last (4 h) reading, T_amb 4 C. Argon F4 readings (1, 2.5, 4 h: 19.20, 12.20, 8.42) give tau 2.434 h and T_inf 3.98 C as in the collation; its factor 1.176 used Argon's tau_eff 2.07 h, here the factor divides by the contract's own tau_eff of this case. The exact readings are generated from tau 2.5 h, T_inf 5 C and rounded to 4 decimals."
     },
     {
       "name": "e: step without thermal inputs keeps tau 1.5 h, band 0-3 h",

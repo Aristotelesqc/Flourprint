@@ -193,7 +193,15 @@ interface ThermalProfile {
   Absent profile = every factor 1. A factor belongs to the owner's device and probe: it is not a
   property of the recipe and never travels in a recipes file.
 - A full backup may carry `thermalProfiles` (every version), optional, so older backups restore.
-  An older app refuses a backup holding it as an unknown field, never misreading it.
+- **Version bump** (the 0.17.0 precedent, Recipe history): `thermal` on a process step and
+  `thermalProfiles` are new persisted fields that an older reader would reject only as a generic
+  unknown field, or drop. So the recipe export and the full backup `schemaVersion` go from 2 to 3
+  (`EXPORT_SCHEMA_VERSION`; revision documents stay at 1), and an older reader refuses a version-3
+  document with `UnsupportedDocumentVersion` instead. Upcasting: documents of version 1 and 2 are
+  read unchanged, as steps with no `thermal` (fixed lag) and no profile (every factor 1); no stored
+  value is rewritten. A version-3 writer may write a document with no thermal field; it is still
+  version 3. Downgrades are not supported. The new event type is refused by an older app on its
+  unknown event type (bake-session.md); the log schema is unchanged.
 - A bake snapshot does not store the profile. The factor used by a committed estimate appears in
   that estimate's assumptions (`thermal_factor:<key>=<value>`, history.md), so
   replay never recomputes it with a later factor.

@@ -214,14 +214,15 @@ the fermentation go on, and no rest step is created or classified.
   log is JSON).
 
 **Thermal change on a running step (0.21.0 target, #176).** The baker moved the dough: into a
-bowl with a lid, out of the fridge, onto a tray. `SetStepThermal { stepId, at?, thermal? }` records
+bowl with a lid, out of the fridge, onto a tray. `SetStepThermal { stepId, at?, thermal? }` (`at` defaults to now; omitted or ignored on a step not yet started) records
 `StepThermalChanged { stepId, at, thermal }`; `thermal` absent means "no thermal inputs from now
 on" (back to the fixed lag).
 
 - **Refusals.** Unknown step; a step that is not a dough step (`InvalidCommand`); a completed step
   (`StepAlreadyCompleted`); an invalid `thermal` (`InvalidProcess`, process.md); `at` before the
   step's start or before the previous thermal change of that step (`InvalidTime`). A step not yet
-  started accepts it, and then it only edits what will be in force at the start.
+  started accepts it with `at` omitted: the event is recorded at the command time, but the new
+  `thermal` applies **from the step's start** (there is no earlier part to keep).
 - **Effect.** Replaces the step's `thermal` from `at` on; the earlier part of the step keeps the
   inputs in force before. The effective thermal inputs of a step are therefore a list of
   `(from, thermal)` segments: the snapshot's `thermal` from the step's start, then the changes in
@@ -259,8 +260,9 @@ with the probe position.
 and `kind: 'doughTemperature'` with `position`. `CONTRACT_VERSION` goes from `0.20.0` to `0.21.0`
 (minor, additive vocabulary) in the implementing pull request. Stored events are untouched: no
 upcaster is needed, an old session has no thermal segment and replays with the fixed lag of its
-snapshot. The backup `schemaVersion`, the event envelope version and the SQL schema are unchanged
-(the log is JSON). As for the countdown hold, an app that does not know `StepThermalChanged`
+snapshot. The event envelope version and the log are unchanged (JSON). The backup `schemaVersion` goes from
+2 to 3 for the `thermal` inputs in the snapshot's process and for `thermalProfiles`
+(persistence.md); old backups restore unchanged, read as no thermal. As for the countdown hold, an app that does not know `StepThermalChanged`
 refuses a backup holding it on its unknown event type (`persistence.md`), never misreading it;
 old backups restore unchanged in a new app. Downgrades are not supported.
 

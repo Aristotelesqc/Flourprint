@@ -173,7 +173,7 @@ def main():
         cases.append(fx(nm, dict(massG=m, thermal=dict(geometry=cls, container=dict(material=mat, cover=cover), environment=env, porosity="unproofed"),
                                  startC=T0, ambientC=TF, evaluatedAtHours=list(ts)), exp,
                         dict(hours=0.005, temperatureC=0.01, ratio=0.001),
-                        "Constants of fermentation.md (cp 2800, rho 1100, k 0.38, h 8, glass 0.004, plastic 0.008, lid 0.14, shelf 0.025 W/K). Mean: single exponential; core: gamma_core, clamped between the start and ambient temperatures. tauBandH: min and max over the corners of h 4-10, shelf 0-0.25 W/K, lid 0.04-0.39, cp 2700-2930."))
+                        "Isolated cooling (dT_ad 0). Constants of fermentation.md (cp 2800, rho 1100, k 0.38, h 8, glass 0.004, plastic 0.008, lid 0.14, shelf 0.025 W/K). Mean: single exponential; core: gamma_core, clamped between the start and ambient temperatures. tauBandH: min and max over the corners of h 4-10, shelf 0-0.25 W/K, lid 0.04-0.39, cp 2700-2930."))
     # cross-check with GPT A, B, D (collation): same inputs, direct h, exact eigenvalue
     g = {k_: gpt(m_) for k_, m_ in (("A", 250), ("B", 2000), ("D", 500))}
     cases.append(fx("cross-check: GPT A, B, D of the #176 collation (not contract inputs)",
@@ -219,7 +219,7 @@ def main():
                          guggenheimExact=dict(tauH=rnd(ta2, 4), tInfC=rnd(tinf2, 3), factor=rnd(ta2 / tm, 4)),
                          exactInputs=dict(tauH=tau_true, tInfC=tinf_true)),
                     dict(tauH=0.002, temperatureC=0.01),
-                    "Argon F4 readings (1, 2.5, 4 h: 19.20, 12.20, 8.42) give tau 2.434 h and T_inf 3.98 C as in the collation; its factor 1.176 used Argon's tau_eff 2.07 h, here the factor divides by the contract's own tau_eff of this case. The exact readings are generated from tau 2.5 h, T_inf 5 C and rounded to 4 decimals."))
+                    "Two-point estimator: the first (1 h) and the last (4 h) reading, T_amb 4 C. Argon F4 readings (1, 2.5, 4 h: 19.20, 12.20, 8.42) give tau 2.434 h and T_inf 3.98 C as in the collation; its factor 1.176 used Argon's tau_eff 2.07 h, here the factor divides by the contract's own tau_eff of this case. The exact readings are generated from tau 2.5 h, T_inf 5 C and rounded to 4 decimals."))
     # (e) legacy
     leg = {"tau0.0h": TF, "tau1.5h": mean(24, 4, 1.0, 1.5), "tau3.0h": mean(24, 4, 1.0, 3.0)}
     cases.append(fx("e: step without thermal inputs keeps tau 1.5 h, band 0-3 h",

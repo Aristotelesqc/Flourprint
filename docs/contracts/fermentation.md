@@ -154,14 +154,26 @@ or secondary, not validated on dough: the model is a first-principles estimate w
 factor (below) is calibrated on the owner's own readings. Issue #176 stays open until those
 readings exist.
 
+### Units
+
+`R` = 8.314462618 J/(mol·K); `Ea` in J/mol (98 300); temperatures in the formulas of this section are
+in K where they enter `Ea/(R T²)` and in °C elsewhere (differences are the same). The formulas of
+this section are written in SI: `τ`, `t` in **seconds**, `rate` in 1/s (the per-hour `dF/dt` of the
+kinetic law divided by 3600), `ΔT_ad` in K per unit `F`, so `ΔT_ad · rate` is in K/s. Hours and
+K/h appear only in prose and tables, for reading; the dimensionless `ψ`, `Bi_R` and `γ_core` do not
+depend on the unit. The persisted values are unchanged (grams, °C, seconds, process.md).
+
 ### Scope and default
 
 - A step **carries thermal inputs** when it has a `thermal` object (process.md, Thermal inputs).
   Only such a step uses the model below.
 - **Default behaviour, guaranteed.** A step with no `thermal` object keeps today's lag: `τ` =
   1.5 h, band 0 to 3 h, no self-heating (`ΔT_ad` = 0), no new flag. A process with no `thermal`
-  anywhere simulates exactly as in contract `0.20.0`: every case of `fixtures/fermentation/cases.json`
-  stays valid unchanged. The thermal model is never switched on by a default, by an environment
+  anywhere simulates exactly as in contract `0.20.0`: every value of every case of
+  `fixtures/fermentation/cases.json` stays valid unchanged. The only addition to the dough result
+  is the optional per-step list `steps` (The band and the envelope): it is present for every dough
+  estimate, thermal or not, as a purely additive, non-breaking output; the existing keys and their
+  values are unchanged and a consumer may ignore it. The thermal model is never switched on by a default, by an environment
   class derived from `conditions.location`, or by a stored personal factor alone.
 - Steps mix freely: `T̄` is one state carried over every step (the state is never reset between
   steps); each step's lag is the one of the step whose ambient the dough approaches.
@@ -190,7 +202,8 @@ representative piece. Steps before the division use the whole mass. The applicat
 
 `cp` = 2800 J/(kg·K), range 2700 – 2930. When `thermal.porosity` is absent the class is chosen
 from the progress `f = F / F*` at the start of the step: `f < 1/3` unproofed, `f < 2/3` mid,
-otherwise proofed (`F*` the target of the mass).
+otherwise proofed. `F*` is the end-point target of the step's mass under the recipe's readiness
+profile (Readiness profiles: `readyProgress`), not the preferment's 1.
 
 ### Geometry classes
 
@@ -265,17 +278,23 @@ carries `thermal_biot_high`. The mean temperature follows one exponential,
 which is within 0.2 to 0.6 % of GPT's exact `τ₁` here). Examples with the constants above and an
 unproofed dough:
 
-| Case                                                           | `τ_eff` |
-| -------------------------------------------------------------- | ------- |
-| 250 g ball, lidded plastic box, static fridge                  | 1.75 h  |
-| 500 g bulk, lidded glass bowl, static fridge                   | 1.84 h  |
-| 2 kg bulk, lidded glass bowl, static fridge                    | 3.31 h  |
-| 900 g boule, banneton with liner, static fridge                | 2.87 h  |
-| 800 g tin, aluminium, still room                               | 1.59 h  |
-| 250 g sheet, aluminium tray, static fridge (bare metal, `h` 5) | 0.49 h  |
+| Case                                                           | Cover assumed | `τ_eff` |
+| -------------------------------------------------------------- | ------------- | ------- |
+| 250 g ball, plastic box, static fridge                         | `lid`         | 1.75 h  |
+| 500 g bulk, glass bowl, static fridge                          | `lid`         | 1.84 h  |
+| 2 kg bulk, glass bowl, static fridge                           | `lid`         | 3.31 h  |
+| 900 g boule, banneton with liner, static fridge                | `none` (open) | 2.87 h  |
+| 800 g tin, aluminium, still room                               | `none` (open) | 1.59 h  |
+| 250 g sheet, aluminium tray, static fridge (bare metal, `h` 5) | `none` (open) | 0.49 h  |
 
-They sit inside the ranges of the five reports (2 kg: 3.5 – 7.3 h; 250 g: 1.3 – 3.4 h) and differ
-by the geometry and the fridge `h` chosen, which is why the band below is wide.
+They sit at the **fast end** of the reports' spread (2 kg bulk: 3.31 h against 3.5 – 7.3 h; 900 g
+boule: 2.87 h against 3.0 – 6.7 h; 800 g tin: 1.59 h against 1.7 – 2.1 h; the 250 g ball, 1.75 h,
+is inside 1.3 – 3.4 h). Three choices push them there: `h_ext` 8 includes radiation (the
+convection-only reports use 2.5 – 4 and give the slow end), the hemisphere and sphere expose more
+surface than a compact shape, and the cover resistances are central values (the lid band reaches
+0.39). The thermal band below reaches the slow end (2 kg: 6.67 h), and the personal factor is what
+corrects the central value on the owner's own containers; neither is a claim that the central
+value is the most likely one.
 
 ### Core temperature (probe comparison)
 
@@ -285,8 +304,13 @@ A probe in the centre reads further from the ambient than the mean:
 T_core − T∞ = γ_core (T̄ − T∞),    γ_core = (1 + Bi_R/2) / (1 + Bi_R/(p + 2))
 ```
 
-The result is clamped between the temperature at the start of the transition and `T∞`: a core
-never lies beyond where the dough started. The factor is a first-mode result: it is exact late
+With self-heating (`ΔT_ad` > 0) the reference is the moving equilibrium instead of the bare
+ambient: `T∞` in the formula is `T_eq = T_amb + ΔT_ad · rate(T̄, d) · τ_eff`, so the core is the
+mean's deviation from where the dough is heading, amplified by `γ_core`. The result is clamped
+between the temperature at the start of the transition and `T∞` (`T_eq` with self-heating): a core
+never lies beyond where the dough started or is heading, and when `T̄` itself lies beyond both ends
+(heating above a warmer start) the core is the mean. The fixtures a and b are the isolated
+cooling case, `ΔT_ad` = 0. The factor is a first-mode result: it is exact late
 (after about 0.5 `τ_eff`) and optimistic early. Self-heating adds a source distributed over the
 mass; its extra core excess is neglected (a flagged approximation). Fitting a mean model to core
 readings biases `τ` upward (GPT: 15.2 h instead of 6.78 h for 2 kg), which is why the model
@@ -313,7 +337,9 @@ about 0.5 K in 2 h and reaches 1.2 to 1.4 K above ambient (fixture c).
   `x(t) = S τ_c (1 − e^(−t/τ_c))`, with `x = T̄ − T_amb`. The simulation integrates the full
   equation; the closed forms are the reference cases.
 - **Bound (Semenov).** At each step the engine evaluates `ψ = (Ea / (R T_amb²)) · τ_eff · ΔT_ad ·
-rate(T_amb, d)` with the central `ΔT_ad` and central `τ_eff`. An equilibrium exists only if
+rate(T_amb, d)` with the central `ΔT_ad` and the **effective** lag, `τ_eff` after the personal factor
+  (`f · τ_eff`, Personal correction; `f` = 1 without one), since a slower dough is the riskier one.
+  The calibration estimator uses the same `ψ`. An equilibrium exists only if
   `ψ ≤ 1/e`. If `ψ > 1/e`, or if `T̄` exceeds 35 °C during the integration, the estimate is
   `out_of_domain` with `reason: 'self_heating_unbounded'` (Semenov) or the existing temperature
   gate (the 35 °C rule of the Domain table): the forecast **never integrates a runaway** and never
@@ -340,7 +366,11 @@ rate(T_amb, d)` with the central `ΔT_ad` and central `τ_eff`. An equilibrium e
   envelope, not from a point, and the last fermentation step before the bake carries the widest
   band. This section adds only the thermal ranges to that corner set. Earlier transitional
   fermentation steps may be planned on fixed durations; the model-driven step
-  (`durationMode: 'model'`) is normally the last one.
+  (`durationMode: 'model'`) is normally the last one. Thermal inputs on a **fixed-duration** step
+  still determine the dough temperature, and therefore the progress `F`, during that step, and
+  through them the estimate and the band of the final model-driven step. The fixed step keeps its
+  duration (the model never changes it), its own readiness cues and ranges are optional for
+  display (ledger L146), and only the model-driven step absorbs the variation.
 - **Per-step envelope exposed.** The dough result lists, for every dough step, `steps: Array<{
 stepId; endProgressPct: Estimate; endTemperatureC: Estimate }>`, each with its `range` over the
   same corners, so the interface can show "likely time + range" at each step (ledger L145). These
@@ -352,12 +382,17 @@ stepId; endProgressPct: Estimate; endTemperatureC: Estimate }>`, each with its `
 ### Personal correction
 
 A personal factor `f` multiplies `τ_eff` (and its band) for a **key** `(material, cover,
-environment)` of the step: `τ_personal = f · τ_eff`. Default `f` = 1; a key without a factor uses
+environment)` of the step: `τ_personal = f · τ_eff`. Default `f` = 1; a key with no stored factor (an unmatched key) uses `f` = 1, silently, with no
+warning and no assumption code. The factor is stored in a versioned personal thermal profile
+(persistence.md), not in the recipe, and changes no kinetic constant (section 11 of the science doc). A factor outside 0.25 – 4 is refused
+(`thermal_factor_implausible`; the bounds are an ASSUMED guard against a wrong probe position).
+An estimate that used a stored factor names it in its assumptions: `thermal_factor:<key>=<value>`.
 
-1. It is stored in a versioned personal thermal profile (persistence.md), not in the recipe, and
-   changes no kinetic constant (section 11 of the science doc). A factor outside 0.25 – 4 is refused
-   (`thermal_factor_implausible`; the bounds are an ASSUMED guard against a wrong probe position).
-   The estimate names the factor used in its assumptions: `thermal_factor:<key>=<value>`.
+The key is `(material, cover, environment)` and nothing else, to stay simple: the liner (a 0.02
+m²K/W term inside the banneton's) and the geometry class are not in it. The factor is therefore
+assumed to transfer between masses and geometries of the same key; whether it does is not known
+(GPT) and the owner's readings in two masses are the test. Divergence between masses is a reason
+to refine the key later, not a licence to widen it now.
 
 **Informal measurements.** The owner's readings come from a home probe, not a laboratory protocol:
 probe position, shelf temperature, container and fill vary between bakes. They calibrate **a
@@ -366,7 +401,8 @@ constant of this contract or be presented as such.
 
 Estimators from readings `(t_i, T_i)` taken after a step to a stable ambient `T_amb`:
 
-- **Two points** after the initial transient: `τ_obs = (t₂ − t₁) / ln((T₁ − T_amb)/(T₂ − T_amb))`.
+- **Two points**, the **first and the last** reading taken after the initial transient (at least
+  0.5 `τ_eff` after the step), with `T_amb` known: `τ_obs = (t₂ − t₁) / ln((T₁ − T_amb)/(T₂ − T_amb))`.
   The late-time slope is the same at the core and on average, so it does not depend on the probe
   position.
 - **Three equally spaced points** (Guggenheim, `Δt` apart): `τ_obs = Δt / ln((T₁ − T₂)/(T₂ − T₃))`,
@@ -572,7 +608,10 @@ Version `0.21.0` (target) adds the **dough thermal model** (#176): the optional 
 on process steps (process.md), the `StepThermalChanged` event and the `doughTemperature`
 observation (bake-session.md), the personal thermal profile (persistence.md) and the per-step
 envelope in the dough result. All additions are optional; a step without `thermal` behaves as in
-`0.20.0` and documents of `0.20.0` stay readable unchanged. The kinetic model keeps its version
+`0.20.0` and documents of `0.20.0` stay readable unchanged (read as no `thermal`, so the fixed
+lag). The recipe export and the full backup `schemaVersion` go from 2 to 3, so that an older
+reader refuses a document holding `thermal` or `thermalProfiles` with `UnsupportedDocumentVersion`
+(persistence.md). The kinetic model keeps its version
 `0.1.0`; the thermal sub-model is `flourprint.dough-thermal` `0.1.0`, named in the estimate's
 assumptions as `thermal_model:0.1.0`. `CONTRACT_VERSION` and `ENGINE_VERSION` are bumped by the
 implementing pull request, following the precedent of `0.18.0` (process.md, Steps before a target).

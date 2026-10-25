@@ -157,7 +157,9 @@ interface StepThermal {
   that compares the estimate shown with the current one (fermentation.md) sees the difference as
   for any other input change.
 - **Compatibility.** Existing recipes have no `thermal` and mean what they meant. An older app
-  refuses a document holding `thermal` as an unknown field (`persistence.md`), never misreads it.
+  refuses a document holding `thermal` through the recipe export and backup `schemaVersion` 3
+  (`UnsupportedDocumentVersion`, persistence.md, Personal thermal profile), never misreads it.
+  Older documents are read as no `thermal`.
   `StartBake` copies `thermal` with the rest of the step into the snapshot (history.md); a change
   during a Preparation is an event (bake-session.md), never an edit of the snapshot.
 - **Scheduler.** The scheduler ignores `thermal` (time arithmetic only); only the fermentation
