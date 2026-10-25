@@ -15,7 +15,7 @@ Relation to earlier ADRs:
 ## Context
 
 The 0.3 interface was explored in mockups (`docs/mockups/0.3-ux`, PR #133) over several rounds and
-audited independently at 0d63eb4, 0dac703 and e7aaad3 (see [docs/ux/audits/](../ux/audits/README.md)).
+audited independently at 0d63eb4, 0dac703 and e7aaad3 (reports on issue #167, for #133 at head `e7aaad3`).
 The proof of concept is done: the mockup is the visual and behavioural reference, and the audits
 list what remains to fix.
 

@@ -118,6 +118,12 @@ GitHub issues are the only tracking system (owner decision of 2026-10-12: no Pro
 tracking file). Its operational view is generated from individual issues and their labels;
 the decision history remains editorial. See [docs/governance/generated-backlog.md](docs/governance/generated-backlog.md).
 
+- **Reports** (owner decision of 2026-10-25): audit, review and verification reports are never
+  committed to the repository. Post each one as a comment on the issue or pull request concerned,
+  naming the exact revision (commit SHA) it examined; a report that must outlive a pull request goes
+  on an issue. Only binding outcomes enter the repository, through the requirements ledger,
+  contracts or ADRs. The two reports in `docs/audits/` (2026-10-11) predate this rule and stay as a
+  historical record; add nothing there.
 - **New issues** follow `.github/ISSUE_TEMPLATE/` (work item or bug), also when opened through the
   API, and start with `status:backlog`. Pull requests follow `.github/pull_request_template.md`.
 - **Status labels**: every open issue has exactly one. `status:backlog` (accepted, not planned),

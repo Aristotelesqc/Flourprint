@@ -734,7 +734,7 @@ Technical fixes (dead controls, bad sums, localization, overflow) need no new pr
 
 Screens: global. Source: Owner, 2026-10-25; ADR 0022. Kind: OD.
 
-Acceptance criteria for the defects still open at #133 head `e7aaad3` that are product behaviour (not mockup plumbing). The reference audits are in [docs/ux/audits/](audits/README.md). Criteria already in L101 to L127 are referenced, not repeated.
+Acceptance criteria for the defects still open at #133 head `e7aaad3` that are product behaviour (not mockup plumbing). The reference audits are posted on issue #167, "Audits of the last mockups before the port to the app", for #133 at `e7aaad3`. Criteria already in L101 to L127 are referenced, not repeated.
 
 **L130.** The step `⋯` menu exposes every action, including Delete, without scrolling or hidden content, at 393 px / 100 % and at 360 px / 130 %; if it ever exceeds the viewport it scrolls with a visible cue, and the close control never covers a row. Screens: steps, edit. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), N1. Kind: CL.
 
