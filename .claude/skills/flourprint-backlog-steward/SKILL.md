@@ -1,6 +1,6 @@
 ---
 name: flourprint-backlog-steward
-description: Keep the Flourprint issue backlog honest since a cutoff - fix status labels from merged and open PRs, file evidenced follow-ups, report stale or forgotten work and suggest next work. Use on demand when the owner asks for a backlog pass; never on a schedule.
+description: Keep the Flourprint issue backlog honest since a cutoff - fix status, area and milestone labels from the repository and its PRs, link unlinked PRs, file evidenced follow-ups, report close candidates, stale work and suggest next work, incrementally or as a full sweep. Use on demand when the owner asks for a backlog pass; never on a schedule.
 ---
 
 Read the canonical [.agents/skills/flourprint-backlog-steward/SKILL.md](../../../.agents/skills/flourprint-backlog-steward/SKILL.md)
