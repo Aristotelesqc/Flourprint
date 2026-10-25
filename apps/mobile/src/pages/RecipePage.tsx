@@ -11,7 +11,7 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   applyModelDurations,
@@ -174,7 +174,7 @@ const RecipePageContent = () => {
     });
   }, []);
 
-  useEffect(() => {
+  const hydrateOnRoute = useEffectEvent(() => {
     void (async () => {
       try {
         if (draftId !== undefined) {
@@ -241,7 +241,8 @@ const RecipePageContent = () => {
         setLoading('failed');
       }
     })();
-  }, [recipeId, draftId, services]);
+  });
+  useEffect(() => hydrateOnRoute(), [recipeId, draftId, services]);
 
   const loadFamily = async (recipe: Recipe) => {
     if (recipe.familyId === undefined || recipe.trashedAt !== undefined) {

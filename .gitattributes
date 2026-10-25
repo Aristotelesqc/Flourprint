@@ -1,0 +1,5 @@
+# Match the formatter and preserve the LF-sensitive importer fixtures on every host.
+* text=auto eol=lf
+# External source/reference artifacts retain their exact committed bytes.
+dogfood/*/source/** -text
+docs/mockups/references/** -text

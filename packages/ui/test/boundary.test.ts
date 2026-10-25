@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * ADR 0020: the library holds no baking math and no product data, so it never imports
- * @flourprint/core or @flourprint/adapters; it depends on React only. Backs up the ESLint rule.
+ * @flourprint/core or @flourprint/adapters; it depends on React and Ionic only. Backs up the ESLint rule.
  */
 const srcDir = fileURLToPath(new URL('../src', import.meta.url));
 
@@ -23,11 +23,11 @@ describe('packages/ui dependency boundary', () => {
   const files = sourceFiles(srcDir).filter((file) => /\.(ts|tsx)$/.test(file));
 
   it.each(files.map((file) => relative(srcDir, file)))(
-    '%s imports React or the library only',
+    '%s imports React, Ionic or the library only',
     (file) => {
       for (const specifier of importsOf(join(srcDir, file))) {
         expect(specifier, `${file} imports ${specifier}`).toMatch(
-          /^(\.\.?\/|react(\/|$)|react-dom(\/|$))/,
+          /^(\.\.?\/|react(\/|$)|react-dom(\/|$)|@ionic\/react(\/|$))/,
         );
       }
     },

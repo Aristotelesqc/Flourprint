@@ -1,8 +1,22 @@
-/**
- * Every component id of Flourprint's library, with the props that all its versions implement
- * (ADR 0020). Adding a component adds one entry here, for example
- * `'fp.recipe-card': RecipeCardProps`, then its versions in `components/<name>/v<N>.tsx`, its
- * line in the catalogue and its line in each consumer's manifest.
- */
-// Empty until the interface writers add the first components (#133).
-export type FlourprintComponents = Record<never, never>;
+import type { ButtonProps } from './components/button/props.ts';
+import type { SurfaceProps } from './components/surface/props.ts';
+import type { NumberFieldProps } from './components/number-field/props.ts';
+import type { DisclosureProps } from './components/disclosure/props.ts';
+import type { TabsProps } from './components/tabs/props.ts';
+import type { FloatingMenuProps } from './components/floating-menu/props.ts';
+import type { BottomSheetProps } from './components/bottom-sheet/props.ts';
+import type { DialogProps } from './components/dialog/props.ts';
+import type { SelectProps } from './components/select/props.ts';
+
+/** Display-ready foundation props; screens own i18n, domain state and commands. */
+export type FlourprintComponents = {
+  readonly 'fp.button': ButtonProps;
+  readonly 'fp.surface': SurfaceProps;
+  readonly 'fp.number-field': NumberFieldProps;
+  readonly 'fp.disclosure': DisclosureProps;
+  readonly 'fp.tabs': TabsProps;
+  readonly 'fp.floating-menu': FloatingMenuProps;
+  readonly 'fp.bottom-sheet': BottomSheetProps;
+  readonly 'fp.dialog': DialogProps;
+  readonly 'fp.select': SelectProps;
+};

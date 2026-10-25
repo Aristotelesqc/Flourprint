@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import {
   builtInEquipment,
   temperatureContext,
@@ -39,7 +39,7 @@ const useEquipmentEntry = (ref: EquipmentRef | undefined): EntryState => {
     return { key: currentKey, status: 'loading' };
   });
 
-  useEffect(() => {
+  const loadOnEquipmentRef = useEffectEvent(() => {
     if (!ref) {
       setState({ key: undefined, status: 'none' });
       return;
@@ -73,7 +73,8 @@ const useEquipmentEntry = (ref: EquipmentRef | undefined): EntryState => {
     return () => {
       cancelled = true;
     };
-  }, [ref?.id, ref?.version, services]);
+  });
+  useEffect(() => loadOnEquipmentRef(), [ref?.id, ref?.version, services]);
 
   if (!ref) return { status: 'none' };
 

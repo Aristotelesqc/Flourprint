@@ -8,6 +8,7 @@ colors:
   background: '#f8f7f4'
   surface: '#ffffff'
   surface-container: '#f2efe9'
+  surface-container-high: '#eae5dc'
   on-surface: '#1c1b19'
   muted: '#69645c'
   outline: '#e4e0d8'
@@ -23,6 +24,7 @@ colors:
   dark-background: '#201d1a'
   dark-surface: '#2a2622'
   dark-surface-container: '#332e29'
+  dark-surface-container-high: '#3d3731'
   dark-on-surface: '#e9e4dc'
   dark-muted: '#b1aa9f'
   dark-outline: '#3b3631'
@@ -51,12 +53,14 @@ colors:
   amoled-error: '#f28b82'
 rounded:
   card: 1rem
+  pill: 9999px
   segmented-option: 0.75rem
 spacing:
   scale: [0.25rem, 0.5rem, 0.75rem, 1rem, 1.5rem, 2rem]
   page-gutter: 1rem
   touch: 3rem
   card-padding: 1rem
+  button-paint: 2.5rem
 typography:
   page: { size: 1.5rem, line: 2rem, weight: 700 }
   title: { size: 1.375rem, line: 1.75rem, weight: 700 }

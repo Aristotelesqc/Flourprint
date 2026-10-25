@@ -1,5 +1,5 @@
 // Generates packages/ui/src/tokens.css and the token sections of DESIGN.md's front matter from
-// packages/ui/src/tokens.ts, the only source of token values (ADR 0020).
+// packages/ui/src/tokens.ts, the only source of token values (ADR 0020, ADR 0022).
 //   node scripts/ui-tokens.mjs          write both files
 //   node scripts/ui-tokens.mjs --check  fail if either differs (run by pnpm check)
 import { readFile, writeFile } from 'node:fs/promises';
@@ -20,7 +20,7 @@ const withTokens = (design) => {
   const from = lines.indexOf('colors:');
   const to = lines.indexOf('components:');
   if (lines[0] !== '---' || end < 0 || from < 0 || to < from || to > end) {
-    throw new Error('DESIGN.md front matter must hold colors: … before components:');
+    throw new Error('DESIGN.md front matter must hold colors: â€¦ before components:');
   }
   return [...lines.slice(0, from), tokensYaml(), ...lines.slice(to)].join('\n');
 };

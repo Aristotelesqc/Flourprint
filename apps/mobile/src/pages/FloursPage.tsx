@@ -15,7 +15,7 @@ import {
   IonToolbar,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useId, useState, type ReactNode } from 'react';
 import { archiveFlour, saveFlourEntry, type SaveFlourError } from '@flourprint/core/application';
 import {
   builtInFlour,
@@ -204,12 +204,13 @@ const FlourSheet = ({
   const [problem, setProblem] = useState<string>();
   const [invalid, setInvalid] = useState<readonly string[]>([]);
 
-  useEffect(() => {
+  const resetOnTarget = useEffectEvent(() => {
     setProblem(undefined);
     setInvalid([]);
     setForm(target && flourForm(target.entry, flourName(target.entry), locale));
     // Reset only when another entry is opened: the names refresh while the sheet is open.
-  }, [target]);
+  });
+  useEffect(() => resetOnTarget(), [target]);
 
   const now = (): Instant => services.realClock.now();
 
