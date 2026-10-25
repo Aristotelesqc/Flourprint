@@ -138,7 +138,9 @@ type ReadinessRef = { id: string; version: string };
   `dT/dt = (T_condition − T) / τ`, τ within its range (0 = it follows at once). A step without a
   condition temperature keeps the previous one; with none at all, the estimate is
   `insufficient_data`. For a step that carries thermal inputs, `τ` and its band come from the
-  Dough thermal model below; for any other step `τ` is 1.5 h, band 0 to 3 h, exactly as before.
+  Dough thermal model below; for any other step `τ` is 1.5 h, band 0 to 3 h. The band of `τ` enters
+  the envelope instant by instant and step by step, never as one value shared by the whole path
+  (The band and the envelope).
 - A measured dough temperature (an observation during a bake) replaces the estimate from that
   instant (bake-session.md, `doughTemperature`); planning uses the plan. A core-probe reading
   replaces the **mean** state through `γ_core` (below).
@@ -169,8 +171,13 @@ depend on the unit. The persisted values are unchanged (grams, °C, seconds, pro
   Only such a step uses the model below.
 - **Default behaviour, guaranteed.** A step with no `thermal` object keeps today's lag: `τ` =
   1.5 h, band 0 to 3 h, no self-heating (`ΔT_ad` = 0), no new flag. A process with no `thermal`
-  anywhere simulates exactly as in contract `0.20.0`: every value of every case of
-  `fixtures/fermentation/cases.json` stays valid unchanged. The only addition to the dough result
+  anywhere has the same **central** values as in contract `0.20.0`, and every value of every case
+  of `fixtures/fermentation/cases.json` stays valid unchanged. One correction applies to every
+  process: `0.20.0` took the band corners `τ` = 0 and `τ` = 3 h for the whole path at once, which
+  understates the envelope when the dough both cools and warms (and can leave the central value
+  outside its own band, fixture `thermal/cases.json` case g). From `0.21.0` the band follows the
+  envelope rule below. Only the `range` of a path with such a reversal changes, and only by
+  widening. The only addition to the dough result
   is the optional per-step list `steps` (The band and the envelope): it is present for every dough
   estimate, thermal or not, as a purely additive, non-breaking output; the existing keys and their
   values are unchanged and a consumer may ignore it. The thermal model is never switched on by a default, by an environment
@@ -356,15 +363,40 @@ rate(T_amb, d)` with the central `ΔT_ad` and the **effective** lag, `τ_eff` af
 - **Thermal band.** For a step with thermal inputs, the band of `τ_eff` is the minimum and
   maximum over every combination of the ranges in the tables above that apply to that step:
   `h_ext`, `R_cover`, `G_shelf` and `cp`; the band of the source is the `ΔT_ad` range. The band is
-  not a confidence interval and is not narrowed by a personal factor (below).
-- **It replaces the 0 – 3 h range for that step** and is alongside the existing parameter ranges
-  (`A`, `k`, `Ea`, conversions, readiness band): the envelope of an estimate is the minimum and
-  maximum over every combination of all of them. Steps without thermal inputs keep 0 – 3 h.
+  not a confidence interval. A personal factor scales it, and narrows it only under the rule of
+  Personal correction (below).
+- **It replaces the 0 – 3 h range for that step**. Steps without thermal inputs keep 0 – 3 h.
+- **The lag enters the envelope per instant, not as a shared corner.** A slow dough (high `τ`)
+  ferments more while it cools (it stays warm) and less while it warms (it stays cold). On a path
+  that both cools and warms (room, fridge, room; a container change), the extremes of the progress
+  therefore need the slow end of the band on some steps and the fast end on others: taking the low
+  or the high end of every band at once understates the envelope (fixtures g and h). The contract
+  bounds the dough temperature by two paths instead:
+  - the **upper path** takes, at every instant, `τ` at the top of the step's band while
+    `T̄ > T_amb` and at the bottom while `T̄ < T_amb`, and `ΔT_ad` at the top of its range;
+  - the **lower path** takes the opposite ends, and `ΔT_ad` at the bottom.
+
+  For a scalar first-order equation this is the comparison principle: every path whose `τ` and
+  `ΔT_ad` stay inside their bands, varying freely from step to step and within a step, stays
+  between the two. The rate rises with the temperature for every kinetic corner, so the upper path
+  gives the most progress at every instant (the earliest end), and the lower path the least (the
+  latest). Without self-heating the dough never crosses the ambient within a step, so each path
+  holds one `τ` per step. The bands of different steps are treated as **independent**, although
+  the same fridge or the same bowl correlates them: the envelope is therefore conservative. It
+  never leaves out a path the bands allow, and may be wider than any single physical path. It is
+  not a confidence interval.
+
+- **The envelope of an estimate** is the minimum and maximum over every combination of the
+  kinetic ranges (`A`, `k`, `Ea`, conversions), the two ends of the readiness band, and the two
+  thermal paths. The two paths replace the two shared corners of `τ` of `0.20.0`, so the count is unchanged (64 per dose) and does not grow with the number of steps.
+  Every combination is computed: none is sampled or dropped. A combination that fails (Semenov
+  bound, temperature gate, horizon) follows the existing rule: the central estimate stands and the
+  estimate has no `range` and the assumption `band_unbounded`. The Semenov test of the upper path
+  uses its `τ` and its `ΔT_ad`.
 - **Propagation along the process.** The contract already simulates the whole dough path with the
-  state carried from step to step and takes the corners of the ranges end to end (State and
-  equations, Dough temperature, Results). Each step therefore starts from the earlier steps'
-  envelope, not from a point, and the last fermentation step before the bake carries the widest
-  band. This section adds only the thermal ranges to that corner set. Earlier transitional
+  state carried from step to step and takes the combinations end to end (State and equations,
+  Dough temperature, Results). Each step therefore starts from the earlier steps' envelope, not
+  from a point, and the last fermentation step before the bake carries the widest band. Earlier transitional
   fermentation steps may be planned on fixed durations; the model-driven step
   (`durationMode: 'model'`) is normally the last one. Thermal inputs on a **fixed-duration** step
   still determine the dough temperature, and therefore the progress `F`, during that step, and
@@ -381,8 +413,10 @@ stepId; endProgressPct: Estimate; endTemperatureC: Estimate }>`, each with its `
 
 ### Personal correction
 
-A personal factor `f` multiplies `τ_eff` (and its band) for a **key** `(material, cover,
-environment)` of the step: `τ_personal = f · τ_eff`. Default `f` = 1; a key with no stored factor (an unmatched key) uses `f` = 1, silently, with no
+A personal factor `f` multiplies `τ_eff` for a **key** `(material, cover,
+environment)` of the step: `τ_personal = f · τ_eff`. Each calibration **set** (the readings of one
+step of one bake, below) gives its own factor `f_i`, stored with the mass and the geometry of
+that step. The key's factor is the geometric mean of its sets. Default `f` = 1; a key with no stored factor (an unmatched key) uses `f` = 1, silently, with no
 warning and no assumption code. The factor is stored in a versioned personal thermal profile
 (persistence.md), not in the recipe, and changes no kinetic constant (section 11 of the science doc). A factor outside 0.25 – 4 is refused
 (`thermal_factor_implausible`; the bounds are an ASSUMED guard against a wrong probe position).
@@ -393,6 +427,26 @@ m²K/W term inside the banneton's) and the geometry class are not in it. The fac
 assumed to transfer between masses and geometries of the same key; whether it does is not known
 (GPT) and the owner's readings in two masses are the test. Divergence between masses is a reason
 to refine the key later, not a licence to widen it now.
+
+The model already computes mass and geometry; the factor corrects mostly the air side and the
+cover (69 – 77 % of the resistance of a covered glass bowl in a fridge, Argon report on #176), which
+scale alike across masses. That is why the key leaves geometry out. Whether this holds is tested,
+not assumed:
+
+| Sets stored for the key                | Factor             | Band of `τ` for the step                                                                                | Assumption                              |
+| -------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| none                                   | 1                  | the thermal band                                                                                        | none                                    |
+| one                                    | `f_1`              | the thermal band times `f_1`: one set shows no reproducibility, so it moves the estimate, not the width | `thermal_factor:<key>=<f>`              |
+| two or more, `max f_i / min f_i` ≤ 1.5 | geometric mean `f` | `[min f_i, max f_i] · τ_eff` (central `τ_eff`), widened to at least `f · τ_eff · [0.85, 1.15]`          | `thermal_band_calibrated:<key>:<count>` |
+| two or more, `max f_i / min f_i` > 1.5 | geometric mean `f` | no narrowing: the union of the thermal band times `f` and `[min f_i, max f_i] · τ_eff`                  | `thermal_factor_inconsistent:<key>`     |
+
+The ±15 % floor and the ×1.5 threshold are ASSUMED (an informal home probe, fill and shelf that
+vary). A narrowed band says the owner's readings agree with each other; it is **not** a
+statistically validated interval and is never presented as one (ledger L145: narrower once the
+baker's readings have calibrated the factor). Only the thermal band narrows: the kinetic and
+readiness ranges stay as they are, so the whole envelope narrows in part. An inconsistent key is
+the signal that the key is too coarse: the sets' masses and geometries show where it breaks.
+Worked cases: `fixtures/thermal/cases.json`, case i.
 
 **Informal measurements.** The owner's readings come from a home probe, not a laboratory protocol:
 probe position, shelf temperature, container and fill vary between bakes. They calibrate **a
@@ -409,7 +463,7 @@ Estimators from readings `(t_i, T_i)` taken after a step to a stable ambient `T_
   `T∞ = (T₁T₃ − T₂²)/(T₁ − 2T₂ + T₃)`. It also gives `T∞`, which captures a shelf offset or
   self-heating without knowing the shelf temperature. A reading set with `(T₁ − T₂)/(T₂ − T₃) ≤ 1`
   or a non-finite result is rejected (`readings_invalid`).
-- **Factor** `f = τ_obs · (1 − ψ) / τ_eff`, with `ψ` of the reading's ambient (so the coupled
+- **Factor of the set** `f_i = τ_obs · (1 − ψ) / τ_eff`, with `ψ` of the reading's ambient (so the coupled
   stretch of self-heating is removed); readings with `ψ > 0.1` are rejected
   (`self_heating_confounds`).
 - Readings before 0.5 `τ_eff` after the step are kept in the journal but not used (core lag).

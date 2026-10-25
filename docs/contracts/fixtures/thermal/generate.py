@@ -133,18 +133,46 @@ def rnd(x, n=4):
     return round(x, n)
 
 
-BAND = {"h": {"fridgeStatic": (4.0, 10.0)}, "gs": (0.0, 0.25), "rc": (0.04, 0.39), "cp": (2700.0, 2930.0)}
+BAND = {"h": {"fridgeStatic": (4.0, 10.0), "roomStill": (6.0, 12.0)}, "gs": (0.0, 0.25), "rc": (0.04, 0.39), "cp": (2700.0, 2930.0)}
 
 
 def band(m, cls, material, cover, env, porosity):
     """Min and max tau_eff over every corner of the thermal ranges (contract band rule)."""
     vals = []
     for h in BAND["h"][env]:
-        for gs in BAND["gs"]:
+        for gs in (BAND["gs"] if env in G_SHELF else (0.0,)):
             for rc in ((BAND["rc"] if cover == "lid" else (COVER[cover],))):
                 for cp in BAND["cp"]:
                     vals.append(tau(m, cls, material, cover, env, porosity, h=h, gs=gs, r_cover=rc, cp=cp)["tau_eff_h"])
     return min(vals), max(vals)
+
+
+def path_progress(start_c, segs, upper, n=20000):
+    """Progress F over fixed segments (hours, ambient, tau_lo, tau_hi), central kinetics, 1 % fresh.
+
+    The lag of each instant is chosen inside its step's band: the upper path keeps the dough as warm
+    as the band allows (tau_hi while cooling, tau_lo while warming), the lower path the reverse.
+    Without self-heating the dough never crosses the ambient within a step, so the choice is made
+    once per step and the temperature is a closed-form exponential. F is integrated by Simpson's
+    rule on n intervals per step.
+    """
+    t0, f = start_c, 0.0
+    for hours, amb, lo, hi in segs:
+        cooling = t0 > amb
+        tau_h = (hi if cooling else lo) if upper else (lo if cooling else hi)
+        temp = (lambda t: amb) if tau_h == 0 else (lambda t, a=amb, s=t0, c=tau_h: a + (s - a) * math.exp(-t / c))
+        dt = hours / n
+        acc = rate(temp(0)) + rate(temp(hours))
+        for i in range(1, n):
+            acc += (4 if i % 2 else 2) * rate(temp(i * dt))
+        f += acc * dt / 3
+        t0 = temp(hours)
+    return f
+
+
+def path_fixed(start_c, segs, pick):
+    """Same as path_progress with one tau per step given by pick(index, lo, hi)."""
+    return path_progress(start_c, [(h, a, pick(i, lo, hi), pick(i, lo, hi)) for i, (h, a, lo, hi) in enumerate(segs)], True)
 
 
 def fx(name, inp, exp, tol, note):
@@ -241,6 +269,61 @@ def main():
                          contrastPsiCaseC=rnd(sf_ok["psi"], 4)),
                     dict(psi=0.0005),
                     "psi > 1/e: no equilibrium exists for the linearised coupling, the forecast is not integrated. Case c has psi 0.155 and is in domain."))
+    # (g) mixed path, default lag band: shared corners understate the envelope
+    segs_g = [(2.0, 4.0, 0.0, 3.0), (2.0, 24.0, 0.0, 3.0)]
+    shared = [path_fixed(24.0, segs_g, lambda i, lo, hi, v=v: v) for v in (0.0, 3.0)]
+    cases.append(fx("g: default lag band on a mixed path, 2 h fridge then 2 h room, 1 % fresh",
+                    dict(thermal=None, startC=24.0, freshDosePct=1.0,
+                         steps=[dict(hours=2.0, ambientC=4.0), dict(hours=2.0, ambientC=24.0)]),
+                    dict(progressCentral=rnd(path_fixed(24.0, segs_g, lambda i, lo, hi: 1.5), 5),
+                         progressBand=[rnd(path_progress(24.0, segs_g, False), 5), rnd(path_progress(24.0, segs_g, True), 5)],
+                         sharedCornersBandWrong=[rnd(min(shared), 5), rnd(max(shared), 5)]),
+                    dict(progress=0.0005),
+                    "Progress F (not percent) at the end of the path, central kinetic parameters. A high lag speeds fermentation while the dough cools and slows it while it warms, so the band is the per-instant envelope (upper path: lag 3 h in the fridge, 0 h at room; lower path the reverse), not the two shared corners tau 0 and tau 3 h for the whole path, which give the narrower sharedCornersBandWrong and must not be returned."))
+    # (h) container change and room return, thermal bands
+    bulk = band(2000, "bulk", "glass", "lid", "fridgeStatic", "unproofed")
+    balls = band(250, "ball", "plastic", "lid", "fridgeStatic", "mid")
+    room = band(250, "ball", "plastic", "lid", "roomStill", "mid")
+    cen = [tau(2000, "bulk", "glass", "lid", "fridgeStatic", "unproofed")["tau_eff_h"],
+           tau(250, "ball", "plastic", "lid", "fridgeStatic", "mid")["tau_eff_h"],
+           tau(250, "ball", "plastic", "lid", "roomStill", "mid")["tau_eff_h"]]
+    segs_h = [(4.0, 4.0) + bulk, (10.0, 4.0) + balls, (3.0, 24.0) + room]
+    shared_h = [path_fixed(25.0, segs_h, lambda i, lo, hi, v=v: hi if v else lo) for v in (0, 1)]
+    cases.append(fx("h: 2 kg bulk in the fridge 4 h, divided into 250 g balls in the fridge 10 h, then 3 h at room",
+                    dict(startC=25.0, freshDosePct=1.0, steps=[
+                        dict(hours=4.0, ambientC=4.0, massG=2000, thermal=dict(geometry="bulk", container=dict(material="glass", cover="lid"), environment="fridgeStatic", porosity="unproofed")),
+                        dict(hours=10.0, ambientC=4.0, massG=2000, thermal=dict(geometry="ball", pieces=8, container=dict(material="plastic", cover="lid"), environment="fridgeStatic", porosity="mid")),
+                        dict(hours=3.0, ambientC=24.0, massG=2000, thermal=dict(geometry="ball", pieces=8, container=dict(material="plastic", cover="lid"), environment="roomStill", porosity="mid"))]),
+                    dict(tauEffBandH=[[rnd(x, 4) for x in b] for b in (bulk, balls, room)],
+                         progressCentral=rnd(path_fixed(25.0, segs_h, lambda i, lo, hi: cen[i]), 5),
+                         progressBand=[rnd(path_progress(25.0, segs_h, False), 5), rnd(path_progress(25.0, segs_h, True), 5)],
+                         sharedCornersBandWrong=[rnd(min(shared_h), 5), rnd(max(shared_h), 5)]),
+                    dict(progress=0.0005, tauEffH=0.0005),
+                    "A container change starts a new step with its own band; the dough temperature carries over. The two fridge steps cool and the room step warms, so the envelope takes each step's lag at the end that keeps the dough warmest (upper) or coldest (lower), independently per step. Using the low or the high end of every band at once gives sharedCornersBandWrong, narrower, and must not be returned."))
+    # (i) personal factor: narrowing from two calibration sets, and inconsistency
+    t_c = tau(500, "bulk", "glass", "lid", "fridgeStatic", "unproofed")["tau_eff_h"]
+    b_c = band(500, "bulk", "glass", "lid", "fridgeStatic", "unproofed")
+    def personal(sets):
+        f = math.exp(sum(math.log(x) for x in sets) / len(sets))
+        full = (f * b_c[0], f * b_c[1])
+        if len(sets) < 2:
+            return f, full, False
+        spread = (min(sets) * t_c, max(sets) * t_c)
+        if max(sets) / min(sets) > 1.5:
+            return f, (min(full[0], spread[0]), max(full[1], spread[1])), True
+        return f, (min(spread[0], 0.85 * f * t_c), max(spread[1], 1.15 * f * t_c)), False
+    rows = {}
+    for label, sets in (("none", []), ("one", [1.2]), ("two", [1.1, 1.25]), ("inconsistent", [0.8, 1.4])):
+        if not sets:
+            rows[label] = dict(factor=1.0, tauBandH=[rnd(b_c[0], 4), rnd(b_c[1], 4)], inconsistent=False)
+            continue
+        f, bnd, bad = personal(sets)
+        rows[label] = dict(sets=sets, factor=rnd(f, 4), tauBandH=[rnd(bnd[0], 4), rnd(bnd[1], 4)], inconsistent=bad)
+    cases.append(fx("i: personal factor, 500 g bulk, lidded glass bowl, static fridge",
+                    dict(massG=500, thermal=dict(geometry="bulk", container=dict(material="glass", cover="lid"), environment="fridgeStatic", porosity="unproofed")),
+                    dict(tauEffH=rnd(t_c, 4), **rows),
+                    dict(tauEffH=0.0005),
+                    "One set scales the full band. Two consistent sets narrow it to their spread times the central tau_eff, never inside +/-15 % of the calibrated value (ASSUMED floor for an informal home probe; not a confidence interval). Sets whose factors differ by more than x1.5 are inconsistent: the band is the union of the scaled full band and the spread, and the estimate says thermal_factor_inconsistent."))
     json.dump(dict(format="flourprint-fixture/0", contract="fermentation.md", model=dict(id="flourprint.dough-thermal", version="0.1.0"),
                    cases=cases), __import__("sys").stdout, indent=2, ensure_ascii=False)
     print()

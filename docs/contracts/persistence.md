@@ -181,9 +181,15 @@ interface ThermalProfile {
     material: ContainerMaterial; // process.md, Thermal inputs
     cover: 'lid' | 'film' | 'cloth' | 'none';
     environment: 'fridgeStatic' | 'fridgeVentilated' | 'roomStill' | 'provingBox';
-    factor: number; // multiplies tau_eff, in 0.25 – 4; absent key = 1
-    readings: number; // count of readings behind it
-    basis: { bakeId: string; stepId: string; eventIds: string[] }[]; // the doughTemperature observations used
+    // One set per calibrated step of one bake; the key's factor is their geometric mean and its
+    // band follows fermentation.md (Personal correction). Absent key = factor 1.
+    sets: Array<{
+      factor: number; // f_i, multiplies tau_eff, in 0.25 – 4
+      massG: number; // fermenting mass of the step (per piece when divided)
+      geometry: 'sheet' | 'tin' | 'ball' | 'bulk'; // process.md, Thermal inputs
+      readings: number; // count of readings behind it
+      basis: { bakeId: string; stepId: string; eventIds: string[] }; // the doughTemperature observations used
+    }>;
   }>;
   updatedAt: Instant;
 }

@@ -117,9 +117,13 @@ constants, with no import from `packages/`. Cases: (a) a 250 g ball and (b) a 2 
 at 24 °C (uncoupled and coupled-linearised, with the low, central and high `ΔT_ad`), (d)
 calibration from three readings (Guggenheim, two points, a factor and `T∞`), (e) a step without
 thermal inputs reproducing `τ` 1.5 h and its 0 to 3 h band, (f) `ψ > 1/e`: `out_of_domain`,
-`self_heating_unbounded`. Two cross-check cases reproduce the verified values of the #176
+`self_heating_unbounded`, (g) the default 0 to 3 h band on a fridge-then-room path, (h) a 2 kg
+bulk in the fridge, divided into balls, then at room, with thermal bands: both give the progress
+envelope of the upper and lower thermal paths and, labelled `sharedCornersBandWrong`, the narrower
+band that shared corners would give and that an engine must not return, (i) the personal factor
+with none, one, two consistent and two inconsistent calibration sets. Two cross-check cases reproduce the verified values of the #176
 collation (GPT A, B, D with their own inputs and the exact sphere eigenvalue; Argon F3, F4) so that
 the arithmetic is checked against sources outside the repository; they are labelled and are not
 contract inputs. `tolerance` is absolute in the unit of each key. The cases ship no engine
 expectation of their own beyond these values, and `fermentation/cases.json` is unchanged: it has no
-thermal input.
+thermal input, and its one band case keeps a constant temperature, where the lag plays no part.

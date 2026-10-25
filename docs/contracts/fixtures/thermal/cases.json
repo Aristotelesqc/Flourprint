@@ -320,6 +320,146 @@
         "psi": 0.0005
       },
       "note": "psi > 1/e: no equilibrium exists for the linearised coupling, the forecast is not integrated. Case c has psi 0.155 and is in domain."
+    },
+    {
+      "name": "g: default lag band on a mixed path, 2 h fridge then 2 h room, 1 % fresh",
+      "input": {
+        "thermal": null,
+        "startC": 24.0,
+        "freshDosePct": 1.0,
+        "steps": [
+          {
+            "hours": 2.0,
+            "ambientC": 4.0
+          },
+          {
+            "hours": 2.0,
+            "ambientC": 24.0
+          }
+        ]
+      },
+      "expected": {
+        "progressCentral": 0.60507,
+        "progressBand": [0.16833, 1.30718],
+        "sharedCornersBandWrong": [0.7755, 0.91192]
+      },
+      "tolerance": {
+        "progress": 0.0005
+      },
+      "note": "Progress F (not percent) at the end of the path, central kinetic parameters. A high lag speeds fermentation while the dough cools and slows it while it warms, so the band is the per-instant envelope (upper path: lag 3 h in the fridge, 0 h at room; lower path the reverse), not the two shared corners tau 0 and tau 3 h for the whole path, which give the narrower sharedCornersBandWrong and must not be returned."
+    },
+    {
+      "name": "h: 2 kg bulk in the fridge 4 h, divided into 250 g balls in the fridge 10 h, then 3 h at room",
+      "input": {
+        "startC": 25.0,
+        "freshDosePct": 1.0,
+        "steps": [
+          {
+            "hours": 4.0,
+            "ambientC": 4.0,
+            "massG": 2000,
+            "thermal": {
+              "geometry": "bulk",
+              "container": {
+                "material": "glass",
+                "cover": "lid"
+              },
+              "environment": "fridgeStatic",
+              "porosity": "unproofed"
+            }
+          },
+          {
+            "hours": 10.0,
+            "ambientC": 4.0,
+            "massG": 2000,
+            "thermal": {
+              "geometry": "ball",
+              "pieces": 8,
+              "container": {
+                "material": "plastic",
+                "cover": "lid"
+              },
+              "environment": "fridgeStatic",
+              "porosity": "mid"
+            }
+          },
+          {
+            "hours": 3.0,
+            "ambientC": 24.0,
+            "massG": 2000,
+            "thermal": {
+              "geometry": "ball",
+              "pieces": 8,
+              "container": {
+                "material": "plastic",
+                "cover": "lid"
+              },
+              "environment": "roomStill",
+              "porosity": "mid"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "tauEffBandH": [
+          [2.0794, 6.6689],
+          [0.6733, 3.4874],
+          [1.0942, 2.596]
+        ],
+        "progressCentral": 1.43504,
+        "progressBand": [1.05006, 2.15393],
+        "sharedCornersBandWrong": [1.38237, 1.82307]
+      },
+      "tolerance": {
+        "progress": 0.0005,
+        "tauEffH": 0.0005
+      },
+      "note": "A container change starts a new step with its own band; the dough temperature carries over. The two fridge steps cool and the room step warms, so the envelope takes each step's lag at the end that keeps the dough warmest (upper) or coldest (lower), independently per step. Using the low or the high end of every band at once gives sharedCornersBandWrong, narrower, and must not be returned."
+    },
+    {
+      "name": "i: personal factor, 500 g bulk, lidded glass bowl, static fridge",
+      "input": {
+        "massG": 500,
+        "thermal": {
+          "geometry": "bulk",
+          "container": {
+            "material": "glass",
+            "cover": "lid"
+          },
+          "environment": "fridgeStatic",
+          "porosity": "unproofed"
+        }
+      },
+      "expected": {
+        "tauEffH": 1.8366,
+        "none": {
+          "factor": 1.0,
+          "tauBandH": [0.9151, 4.0531],
+          "inconsistent": false
+        },
+        "one": {
+          "sets": [1.2],
+          "factor": 1.2,
+          "tauBandH": [1.0981, 4.8637],
+          "inconsistent": false
+        },
+        "two": {
+          "sets": [1.1, 1.25],
+          "factor": 1.1726,
+          "tauBandH": [1.8306, 2.4766],
+          "inconsistent": false
+        },
+        "inconsistent": {
+          "sets": [0.8, 1.4],
+          "factor": 1.0583,
+          "tauBandH": [0.9684, 4.2894],
+          "inconsistent": true
+        }
+      },
+      "tolerance": {
+        "tauEffH": 0.0005
+      },
+      "note": "One set scales the full band. Two consistent sets narrow it to their spread times the central tau_eff, never inside +/-15 % of the calibrated value (ASSUMED floor for an informal home probe; not a confidence interval). Sets whose factors differ by more than x1.5 are inconsistent: the band is the union of the scaled full band and the spread, and the estimate says thermal_factor_inconsistent."
     }
   ]
 }
