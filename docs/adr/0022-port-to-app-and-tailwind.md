@@ -1,7 +1,6 @@
 # ADR 0022: Port the interface into the app, styled with Tailwind CSS v4
 
-Status: Proposed — awaiting owner approval. Decisions taken by the owner on 2026-10-25, to be
-confirmed by acceptance of this pull request.
+Status: Accepted (owner, 2026-10-25).
 
 Relation to earlier ADRs:
 
