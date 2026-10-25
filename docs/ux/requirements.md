@@ -766,6 +766,29 @@ Acceptance criteria for the defects still open at #133 head `e7aaad3` that are p
 
 **L144.** Equivalent actions use the same shared button variant: Pause, Previous, Cancel, "Switch the oven on" and Weigh are not text-only where −15, +15 and Next are pills (extends L123). Screens: preparation, global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m3; frontend quality review of #133 at e7aaad3 (2026-10-25), M9. Kind: CL.
 
+**L145.** Every fermentation forecast is presented as an estimate, and the baker's own judgement comes first:
+
+- forecast end times, remaining times, progress, dough temperature and self-heating are labelled as estimates wherever they appear. They are never phrased as the dough being ready. The information on demand says what they rest on: model, assumed temperatures, container;
+- on a fermentation step, the baker's sensory readiness criteria lead and the estimate follows. The criteria are rise against the baker's own reference (for example a mark on the container), the poke test, bubbles on the surface and sides, jiggle and feel;
+- a recorded "dough ready" (or "not ready yet") observation decides for that step and overrides the model. The interface then follows the observation, not the computed end;
+- like a weather forecast, a forecast time is shown as a likely time with a range (for example "ready around 14:30, between 14:00 and 15:15"), never as a single to-the-minute time. The range comes from the model's envelope. It is wider when the container or conditions are unknown, and narrower once the baker's own readings have calibrated the personal factor;
+- as the forecast end approaches, the interface invites the baker to check the dough physically, before any reminder presents the step as due;
+- uncertainty accumulates along the process. Earlier transitional fermentation steps (for example a bulk ferment at room temperature or in the fridge) may run on fixed planned durations. The last fermentation step before baking carries the accumulated uncertainty of all earlier steps and is the least certain. That step shows the widest range and puts the physical checks (poke test first) ahead of the estimate. When they disagree with the model, the physical cues prevail;
+- extends L20 and L21: L21's ban on a model-computed volume or "doubled" target still holds, while a rise the baker observes against their own reference is a criterion, not a forecast.
+
+Screens: preparation, planning, recipe, library. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
+
+**L146.** Each fermentation step says how to decide that it is done, with cues that fit what has happened to the dough so far:
+
+- alongside the estimated range (L145), the step names the readiness cues to watch for, not only a time;
+- a volume cue such as "about doubled" applies only when the dough has not been degassed since the step started. It does not apply after folds, a pre-shape or reshaping;
+- after any degassing, the step offers cues that remain valid: a domed or slightly rounded surface, bubbles on the surface and sides, jiggle, poke test and feel;
+- the cues come from the step's position in the process and the operations recorded so far, so they change if the baker adds or skips a fold;
+- transitional steps with a fixed duration (for example 1 h on the counter, then 24 h in the fridge) stay fixed. Their readiness cues and time range are optional: available on demand or enabled per recipe, never prompted or shown as due. The step that follows the model (`durationMode: 'model'` in process.md, usually the final proof) absorbs the variation. On that step, the cues and the range are shown by default (L145);
+- when the baker moves on to the next step, the engine recomputes every following step from the actual times and conditions recorded so far: the real fermentation already done, actual temperatures and container changes. It never keeps the original plan. The new estimates and ranges replace the old ones at once, and reminders follow.
+
+Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
+
 ---
 
 ## 13. OPEN owner choices (do not decide silently)
