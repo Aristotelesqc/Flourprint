@@ -168,6 +168,38 @@ is never rewritten, and a version that is not the next one for its id is refused
 Built-in entries are code and are not stored; a customization of a built-in is a personal entry
 stored under the built-in's id (`ingredients.md`).
 
+## Personal thermal profile (#176, 0.21.0 target)
+
+The personal correction of the dough thermal model (`fermentation.md`, Personal correction) is a
+versioned personal object, like the readiness profile and personal entries, never part of a recipe:
+
+```ts
+interface ThermalProfile {
+  id: string; // 'personal'
+  version: number; // 1, 2, 3...: a version is never rewritten
+  factors: Array<{
+    material: ContainerMaterial; // process.md, Thermal inputs
+    cover: 'lid' | 'film' | 'cloth' | 'none';
+    environment: 'fridgeStatic' | 'fridgeVentilated' | 'roomStill' | 'provingBox';
+    factor: number; // multiplies tau_eff, in 0.25 – 4; absent key = 1
+    readings: number; // count of readings behind it
+    basis: { bakeId: string; stepId: string; eventIds: string[] }[]; // the doughTemperature observations used
+  }>;
+  updatedAt: Instant;
+}
+```
+
+- Stored by `(id, version)`; writing a version that is not the next one is refused (`HeadConflict`).
+  Absent profile = every factor 1. A factor belongs to the owner's device and probe: it is not a
+  property of the recipe and never travels in a recipes file.
+- A full backup may carry `thermalProfiles` (every version), optional, so older backups restore.
+  An older app refuses a backup holding it as an unknown field, never misreading it.
+- A bake snapshot does not store the profile. The factor used by a committed estimate appears in
+  that estimate's assumptions (`thermal_factor:<key>=<value>`, history.md), so
+  replay never recomputes it with a later factor.
+- Storage is an additional table in the SQLite adapter (a database migration step) in the
+  implementing pull request; this contract fixes the document, not the SQL.
+
 ## SQLite schema (version 7)
 
 ```sql

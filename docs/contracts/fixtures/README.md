@@ -107,3 +107,19 @@ absolute, in the unit of the value (seconds, percent, °C).
 A `range` expected value lists the two finite bounds (seconds). The dough cases use the provisional
 personal calibration `readyProgress` 2.0, band 1.5–2.5 (fermentation.md, recorded in the file's
 `calibration` field); the preferment case keeps its end point at 1.
+
+## Dough thermal model (`thermal/`)
+
+`thermal/cases.json` holds the reference cases of the dough thermal model (fermentation.md, Dough
+thermal model, #176), produced by `thermal/generate.py` from the contract's equations and
+constants, with no import from `packages/`. Cases: (a) a 250 g ball and (b) a 2 kg bulk entering a
+4 °C fridge from 24 °C (mean and core, with the band of `τ_eff`), (c) self-heating of a 2 kg bulk
+at 24 °C (uncoupled and coupled-linearised, with the low, central and high `ΔT_ad`), (d)
+calibration from three readings (Guggenheim, two points, a factor and `T∞`), (e) a step without
+thermal inputs reproducing `τ` 1.5 h and its 0 to 3 h band, (f) `ψ > 1/e`: `out_of_domain`,
+`self_heating_unbounded`. Two cross-check cases reproduce the verified values of the #176
+collation (GPT A, B, D with their own inputs and the exact sphere eigenvalue; Argon F3, F4) so that
+the arithmetic is checked against sources outside the repository; they are labelled and are not
+contract inputs. `tolerance` is absolute in the unit of each key. The cases ship no engine
+expectation of their own beyond these values, and `fermentation/cases.json` is unchanged: it has no
+thermal input.

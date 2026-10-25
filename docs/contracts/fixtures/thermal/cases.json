@@ -1,0 +1,325 @@
+{
+  "format": "flourprint-fixture/0",
+  "contract": "fermentation.md",
+  "model": {
+    "id": "flourprint.dough-thermal",
+    "version": "0.1.0"
+  },
+  "cases": [
+    {
+      "name": "a: 250 g ball, lidded plastic box, static fridge",
+      "input": {
+        "massG": 250,
+        "thermal": {
+          "geometry": "ball",
+          "container": {
+            "material": "plastic",
+            "cover": "lid"
+          },
+          "environment": "fridgeStatic",
+          "porosity": "unproofed"
+        },
+        "startC": 24.0,
+        "ambientC": 4.0,
+        "evaluatedAtHours": [1.0, 2.0]
+      },
+      "expected": {
+        "ua": 0.12669,
+        "ueff": 7.0343,
+        "r0": 0.03786,
+        "bi": 0.70079,
+        "tau_lumped_h": 1.53482,
+        "tau_eff_h": 1.74994,
+        "gamma_core": 1.18439,
+        "v_m3": 0.00022727,
+        "aw_m2": 0.009005,
+        "at_m2": 0.009005,
+        "meanC@1h": 15.294,
+        "coreC@1h": 17.377,
+        "meanC@2h": 10.378,
+        "coreC@2h": 11.554,
+        "tauBandH": [0.679, 4.38]
+      },
+      "tolerance": {
+        "hours": 0.005,
+        "temperatureC": 0.01,
+        "ratio": 0.001
+      },
+      "note": "Constants of fermentation.md (cp 2800, rho 1100, k 0.38, h 8, glass 0.004, plastic 0.008, lid 0.14, shelf 0.025 W/K). Mean: single exponential; core: gamma_core, clamped between the start and ambient temperatures. tauBandH: min and max over the corners of h 4-10, shelf 0-0.25 W/K, lid 0.04-0.39, cp 2700-2930."
+    },
+    {
+      "name": "b: 2 kg bulk, lidded glass bowl, static fridge",
+      "input": {
+        "massG": 2000,
+        "thermal": {
+          "geometry": "bulk",
+          "container": {
+            "material": "glass",
+            "cover": "lid"
+          },
+          "environment": "fridgeStatic",
+          "porosity": "unproofed"
+        },
+        "startC": 24.0,
+        "ambientC": 4.0,
+        "evaluatedAtHours": [2.0, 4.0]
+      },
+      "expected": {
+        "ua": 0.57613,
+        "ueff": 6.71731,
+        "r0": 0.0636,
+        "bi": 1.12421,
+        "tau_lumped_h": 2.70002,
+        "tau_eff_h": 3.3071,
+        "gamma_core": 1.27535,
+        "v_m3": 0.00181818,
+        "aw_m2": 0.057178,
+        "at_m2": 0.028589,
+        "meanC@2h": 14.924,
+        "coreC@2h": 17.932,
+        "meanC@4h": 9.967,
+        "coreC@4h": 11.61,
+        "tauBandH": [2.079, 6.669]
+      },
+      "tolerance": {
+        "hours": 0.005,
+        "temperatureC": 0.01,
+        "ratio": 0.001
+      },
+      "note": "Constants of fermentation.md (cp 2800, rho 1100, k 0.38, h 8, glass 0.004, plastic 0.008, lid 0.14, shelf 0.025 W/K). Mean: single exponential; core: gamma_core, clamped between the start and ambient temperatures. tauBandH: min and max over the corners of h 4-10, shelf 0-0.25 W/K, lid 0.04-0.39, cp 2700-2930."
+    },
+    {
+      "name": "cross-check: GPT A, B, D of the #176 collation (not contract inputs)",
+      "input": {
+        "note": "sphere, h 3.5 W/m2K only, rho 1100, cp 2700, k 0.40, no container; first-order closure on the exact first eigenvalue"
+      },
+      "expected": {
+        "A": {
+          "Bi": 0.33125,
+          "tauLumpedH": 2.9745,
+          "tauContractH": 3.1716,
+          "tauExactH": 3.1771,
+          "mean2hC": 14.657,
+          "mean2hContractC": 14.645
+        },
+        "B": {
+          "Bi": 0.66251,
+          "tauLumpedH": 5.949,
+          "tauContractH": 6.7373,
+          "tauExactH": 6.7799,
+          "mean2hC": 18.891,
+          "mean2hContractC": 18.863
+        },
+        "D": {
+          "Bi": 0.41735,
+          "tauLumpedH": 3.7477,
+          "tauContractH": 4.0605,
+          "tauExactH": 4.0713,
+          "mean2hC": 16.237,
+          "mean2hContractC": 16.221
+        }
+      },
+      "tolerance": {
+        "tauH": 0.001,
+        "temperatureC": 0.001
+      },
+      "note": "Reproduces the collation (tau1 3.1771, 6.7799, 4.0713 h; 14.657, 18.891, 16.237 C at 2 h). The contract's 1 + Bi/5 closure stays within 0.7 % of the exact tau1 here."
+    },
+    {
+      "name": "c: 2 kg self-heating at 24 C, lidded glass bowl, still room, 1 % fresh yeast",
+      "input": {
+        "massG": 2000,
+        "thermal": {
+          "geometry": "bulk",
+          "container": {
+            "material": "glass",
+            "cover": "lid"
+          },
+          "environment": "roomStill",
+          "porosity": "unproofed"
+        },
+        "ambientC": 24.0,
+        "startC": 24.0,
+        "freshDosePct": 1.0
+      },
+      "expected": {
+        "tauEffH": 3.15477,
+        "rate24PerH": 0.431523,
+        "betaPerK": 0.133896,
+        "low0.6": {
+          "S_K_per_h": 0.2589,
+          "beta": 0.1339,
+          "psi": 0.1094,
+          "x_inf_unc": 0.8168,
+          "x_t_unc": 0.3835,
+          "tau_coupled_h": 3.5422,
+          "x_inf_cpl": 0.9171,
+          "x_t_cpl": 0.3957
+        },
+        "central0.85": {
+          "S_K_per_h": 0.3668,
+          "beta": 0.1339,
+          "psi": 0.1549,
+          "x_inf_unc": 1.1572,
+          "x_t_unc": 0.5433,
+          "tau_coupled_h": 3.7332,
+          "x_inf_cpl": 1.3693,
+          "x_t_cpl": 0.5679
+        },
+        "high1.2": {
+          "S_K_per_h": 0.5178,
+          "beta": 0.1339,
+          "psi": 0.2187,
+          "x_inf_unc": 1.6336,
+          "x_t_unc": 0.767,
+          "tau_coupled_h": 4.038,
+          "x_inf_cpl": 2.091,
+          "x_t_cpl": 0.8168
+        }
+      },
+      "tolerance": {
+        "temperatureC": 0.005,
+        "hours": 0.005
+      },
+      "note": "Uncoupled: x(t) = S tau (1 - e^-t/tau), S = dT_ad rate(T_amb). Coupled-linearised: beta = Ea/(R T_amb^2), psi = beta S tau, tau_c = tau/(1 - psi), x(t) = S tau_c (1 - e^-t/tau_c). x_t_* at 2 h, excess over ambient in K."
+    },
+    {
+      "name": "cross-check: Argon F3 of the #176 collation (not contract inputs)",
+      "input": {
+        "S0KPerH": 0.4925,
+        "tauH": 3.5198,
+        "EaJPerMol": 68000,
+        "ambientC": 24.0,
+        "hours": 2.0
+      },
+      "expected": {
+        "psi": 0.1606,
+        "xInfUncoupledK": 1.7335,
+        "xInfCoupledK": 2.0651,
+        "tauCoupledH": 4.1931,
+        "meanAt2hC": 24.783
+      },
+      "tolerance": {
+        "temperatureC": 0.01
+      },
+      "note": "Reproduces Argon F3: psi 0.1605, 1.7336 K, 2.0651 K, 4.1931 h, 24.78 C."
+    },
+    {
+      "name": "d: calibration, 500 g bulk, lidded glass bowl, static fridge",
+      "input": {
+        "key": {
+          "material": "glass",
+          "cover": "lid",
+          "environment": "fridgeStatic"
+        },
+        "tauModelH": 1.83659,
+        "readings_argon": [
+          {
+            "tH": 1.0,
+            "C": 19.2
+          },
+          {
+            "tH": 2.5,
+            "C": 12.2
+          },
+          {
+            "tH": 4.0,
+            "C": 8.42
+          }
+        ],
+        "readings_exact": [
+          {
+            "tH": 1.0,
+            "C": 17.7361
+          },
+          {
+            "tH": 2.5,
+            "C": 11.9897
+          },
+          {
+            "tH": 4.0,
+            "C": 8.836
+          }
+        ],
+        "ambientC": 4.0,
+        "startC": 24.0
+      },
+      "expected": {
+        "guggenheimArgon": {
+          "tauH": 2.4343,
+          "tInfC": 3.983,
+          "factor": 1.3255
+        },
+        "twoPointArgonKnownAmbient4C": {
+          "tauH": 2.4288,
+          "factor": 1.3225
+        },
+        "guggenheimExact": {
+          "tauH": 2.5,
+          "tInfC": 5.0,
+          "factor": 1.3612
+        },
+        "exactInputs": {
+          "tauH": 2.5,
+          "tInfC": 5.0
+        }
+      },
+      "tolerance": {
+        "tauH": 0.002,
+        "temperatureC": 0.01
+      },
+      "note": "Argon F4 readings (1, 2.5, 4 h: 19.20, 12.20, 8.42) give tau 2.434 h and T_inf 3.98 C as in the collation; its factor 1.176 used Argon's tau_eff 2.07 h, here the factor divides by the contract's own tau_eff of this case. The exact readings are generated from tau 2.5 h, T_inf 5 C and rounded to 4 decimals."
+    },
+    {
+      "name": "e: step without thermal inputs keeps tau 1.5 h, band 0-3 h",
+      "input": {
+        "thermal": null,
+        "startC": 24.0,
+        "ambientC": 4.0,
+        "hours": 1.0
+      },
+      "expected": {
+        "meanAt1hC": 14.2683,
+        "bandAt1hC": [4.0, 18.3306],
+        "tauCentralH": 1.5,
+        "tauBandH": [0.0, 3.0]
+      },
+      "tolerance": {
+        "temperatureC": 0.001
+      },
+      "note": "Today's behaviour (fermentation.md, Dough temperature). Every case of fermentation/cases.json has no thermal input and stays valid unchanged."
+    },
+    {
+      "name": "f: self-heating unbounded, 3 kg bulk at 30 C, 2 % fresh yeast",
+      "input": {
+        "massG": 3000,
+        "thermal": {
+          "geometry": "bulk",
+          "container": {
+            "material": "glass",
+            "cover": "lid"
+          },
+          "environment": "roomStill",
+          "porosity": "unproofed"
+        },
+        "ambientC": 30.0,
+        "freshDosePct": 2.0
+      },
+      "expected": {
+        "tauEffH": 3.7119,
+        "rate30PerH": 1.57199,
+        "SKPerH": 1.3362,
+        "betaPerK": 0.12865,
+        "psi": 0.6381,
+        "limit": 0.36788,
+        "status": "out_of_domain",
+        "reason": "self_heating_unbounded",
+        "contrastPsiCaseC": 0.1549
+      },
+      "tolerance": {
+        "psi": 0.0005
+      },
+      "note": "psi > 1/e: no equilibrium exists for the linearised coupling, the forecast is not integrated. Case c has psi 0.155 and is in domain."
+    }
+  ]
+}
