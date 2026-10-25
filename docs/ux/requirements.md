@@ -778,6 +778,16 @@ Acceptance criteria for the defects still open at #133 head `e7aaad3` that are p
 
 Screens: preparation, planning, recipe, library. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
 
+**L146.** Each fermentation step says how to decide that it is done, with cues that fit what has happened to the dough so far:
+
+- alongside the estimated range (L145), the step names the readiness cues to watch for, not only a time;
+- a volume cue such as "about doubled" applies only when the dough has not been degassed since the step started. It does not apply after folds, a pre-shape or reshaping;
+- after any degassing, the step offers cues that remain valid: a domed or slightly rounded surface, bubbles on the surface and sides, jiggle, poke test and feel;
+- the cues come from the step's position in the process and the operations recorded so far, so they change if the baker adds or skips a fold;
+- when the baker moves on to the next step, the engine recomputes every following step from the actual times and conditions recorded so far: the real fermentation already done, actual temperatures and container changes. It never keeps the original plan. The new estimates and ranges replace the old ones at once, and reminders follow.
+
+Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
+
 ---
 
 ## 13. OPEN owner choices (do not decide silently)
