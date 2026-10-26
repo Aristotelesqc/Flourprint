@@ -19,6 +19,7 @@ import {
   type Result,
   type ReferenceVersion,
   type Revision,
+  type ThermalProfile,
 } from '../domain/index.js';
 import { checkBakeLog } from './backup-events.js';
 import { decodeFormula, decodeProcess } from './documents.js';
@@ -27,6 +28,7 @@ import { decodeDraft } from './drafts.js';
 import { decodeEquipmentEntry } from './equipment.js';
 import { decodeFlourEntry } from './flours.js';
 import { decodeIngredientEntry } from './ingredients.js';
+import { decodeThermalProfiles } from './thermal-profiles.js';
 import type {
   AppendInput,
   Draft,
@@ -38,6 +40,7 @@ import type {
   RecordedRecipe,
   RestorePlan,
   RestoreTarget,
+  ThermalProfileStore,
 } from './ports.js';
 
 /** Full backup document (docs/contracts/history.md, persistence.md). */
@@ -60,6 +63,11 @@ export interface Backup {
    * so older backups restore.
    */
   readonly ingredients?: readonly IngredientEntry[];
+  /**
+   * Every version of the personal thermal profile (persistence.md); optional, so older backups
+   * still restore. Present from schema version 3.
+   */
+  readonly thermalProfiles?: readonly ThermalProfile[];
 }
 
 export interface BackupStores {
@@ -68,6 +76,8 @@ export interface BackupStores {
   readonly flours: FlourRegistry;
   readonly equipment: EquipmentRegistry;
   readonly ingredients: IngredientRegistry;
+  /** The personal thermal profile; a store without one exports none. */
+  readonly thermalProfiles?: ThermalProfileStore;
 }
 
 export type BackupError =
@@ -136,6 +146,9 @@ export const exportBackup = async (
     flours: await stores.flours.listFlourVersions(),
     equipment: await stores.equipment.listEquipmentVersions(),
     ingredients: await stores.ingredients.listIngredientVersions(),
+    ...(stores.thermalProfiles === undefined
+      ? {}
+      : { thermalProfiles: await stores.thermalProfiles.listThermalProfileVersions() }),
   });
 };
 
@@ -389,6 +402,7 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     }
     const equipment = decodeEquipment((input.equipment ?? []) as unknown[]);
     const ingredients = decodeIngredients(input.ingredients, 'ingredients');
+    const thermalProfiles = decodeThermalProfiles(input.thermalProfiles, 'thermalProfiles');
 
     const bakes: AppendInput[] = [];
     const bakeIds = new Set<string>();
@@ -451,7 +465,16 @@ export const decodeBackup = (input: unknown): Result<RestorePlan, BackupError> =
     if (new Set(drafts.map((d) => d.id)).size !== drafts.length) {
       return err(invalid('duplicate draft'));
     }
-    return ok({ recipes, families, bakes, drafts, flours, equipment, ingredients });
+    return ok({
+      recipes,
+      families,
+      bakes,
+      drafts,
+      flours,
+      equipment,
+      ingredients,
+      ...(thermalProfiles.length === 0 ? {} : { thermalProfiles }),
+    });
   } catch (error) {
     if (error instanceof RefusedWith) return err(error.error);
     if (error instanceof Refused) return err(invalid(error.reason));

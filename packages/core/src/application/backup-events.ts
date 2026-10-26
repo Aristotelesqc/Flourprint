@@ -3,16 +3,20 @@ import {
   equipmentUses,
   evolve,
   initialBakeState,
+  doughSteps,
   openHold,
   outcomeProblem,
   stepEquipmentProblem,
+  thermalProblem,
   type BakeEvent,
   type BakeState,
   type EquipmentEntry,
   type EquipmentUse,
   type PreparationOutcome,
+  type Process,
   type ProcessStep,
   type StepEquipment,
+  type StepThermal,
 } from '../domain/index.js';
 import {
   expect,
@@ -26,7 +30,13 @@ import {
   refuse,
   type Json,
 } from './decode.js';
-import { decodeFormula, decodeProcess, estimateRange, stepEquipment } from './documents.js';
+import {
+  decodeFormula,
+  decodeProcess,
+  estimateRange,
+  stepEquipment,
+  stepThermal,
+} from './documents.js';
 import { decodeEquipmentEntry } from './equipment.js';
 
 /**
@@ -250,6 +260,31 @@ const isFoldSet = (state: BakeState, stepId: unknown, set: unknown): boolean => 
   );
 };
 
+/**
+ * A dough temperature observation (bake-session.md): on a running dough step, a reading in °C
+ * within 0 to 60 taken once the step had started, with the probe position.
+ */
+const isDoughTemperature = (state: BakeState, payload: Json): boolean => {
+  const record = typeof payload.stepId === 'string' ? state.steps[payload.stepId] : undefined;
+  const reading = payload.measurement;
+  return (
+    record?.startedAt !== undefined &&
+    record.endedAt === undefined &&
+    (doughSteps(state.process as Process) ?? []).some((s) => s.id === payload.stepId) &&
+    payload.category === 'fermentation' &&
+    (payload.position === 'core' ||
+      payload.position === 'surface' ||
+      payload.position === 'unknown') &&
+    isObject(reading) &&
+    reading.unit === 'degC' &&
+    isNumber(reading.value) &&
+    reading.value >= 0 &&
+    reading.value <= 60 &&
+    isInstant(reading.observedAt) &&
+    Date.parse(reading.observedAt) >= Date.parse(record.startedAt)
+  );
+};
+
 /** A preparation outcome (bake-session.md), checked by the domain's own rule. */
 const isOutcome = (value: unknown): boolean => {
   if (!isObject(value)) return false;
@@ -369,11 +404,36 @@ const checkPayload = (
     case 'ProjectionAccepted':
       expect(isProjection(payload.projection), `${where}: malformed projection`);
       return;
+    case 'StepThermalChanged': {
+      const record = knownStep(payload.stepId) ? state.steps[payload.stepId as string] : undefined;
+      const thermal = payload.thermal as StepThermal | undefined;
+      const floor = [record?.startedAt, ...(record?.thermalChanges ?? []).map((c) => c.at)].flatMap(
+        (at) => (at === undefined ? [] : [Date.parse(at)]),
+      );
+      expect(
+        record !== undefined &&
+          record.endedAt === undefined &&
+          (doughSteps(state.process as Process) ?? []).some((s) => s.id === payload.stepId) &&
+          isInstant(payload.at) &&
+          (record.startedAt === undefined ||
+            floor.every((at) => Date.parse(payload.at as string) >= at)) &&
+          (thermal === undefined ||
+            (accepts(stepThermal)(thermal) && thermalProblem(thermal, 'thermal') === undefined)),
+        `${where}: malformed thermal change`,
+      );
+      return;
+    }
     case 'ObservationAdded':
       expect(
         (payload.stepId === undefined || knownStep(payload.stepId)) &&
           OBSERVATION_CATEGORIES.has(payload.category as string) &&
-          isOptional(payload.kind, (v): v is string => v === 'doughReady' || v === 'fold') &&
+          isOptional(
+            payload.kind,
+            (v): v is string => v === 'doughReady' || v === 'fold' || v === 'doughTemperature',
+          ) &&
+          (payload.kind === 'doughTemperature'
+            ? isDoughTemperature(state, payload)
+            : payload.position === undefined) &&
           isOptional(payload.criterion, (v): v is string => typeof v === 'string') &&
           (payload.kind !== 'doughReady' ||
             (payload.stepId !== undefined && payload.category === 'fermentation')) &&

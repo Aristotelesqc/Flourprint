@@ -10,9 +10,11 @@ export const DOCUMENT_SCHEMA_VERSION = 1;
 
 /**
  * Schema version of the full backup and the recipe export. 2 adds `referenceVersions` per recipe
- * (persistence.md, Recipe history); older readers must refuse it rather than drop the field.
+ * (persistence.md, Recipe history); 3 adds `thermal` on process steps and `thermalProfiles`
+ * (persistence.md, Personal thermal profile, #176). Older readers must refuse a newer document
+ * rather than drop a field; documents of version 1 and 2 are read unchanged, as no thermal data.
  */
-export const EXPORT_SCHEMA_VERSION = 2;
+export const EXPORT_SCHEMA_VERSION = 3;
 
 /** The explicit promotion of one saved revision (persistence.md, Recipe history). */
 export interface ReferenceVersion {
