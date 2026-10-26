@@ -501,6 +501,45 @@ describe.each([
     ).toBe(true);
   });
 
+  it('calibrates after the bake: from a finished session', async () => {
+    const stores = await makeTarget();
+    await seed(stores);
+    const loaded = await loadBake(stores.bakes, 'bake-1');
+    if (!loaded.ok) throw new Error('load failed');
+    let version = loaded.value.version;
+    const run = async (payload: BakeCommandPayload, now: Instant) => {
+      const result = await executeBakeCommand(
+        { store: stores.bakes, clock: { now: () => now }, ids: { next: () => `f${++version}` } },
+        {
+          commandId: `after-${now}-${payload.type}`,
+          bakeId: 'bake-1',
+          expectedVersion: version,
+          issuedAt: now,
+          payload,
+        },
+      );
+      if (!result.ok) throw new Error(JSON.stringify(result.error));
+      version = result.value.state.version;
+    };
+    await run({ type: 'CompleteStep', stepId: 'retard' }, at('13:00'));
+    await run(
+      { type: 'FinishBake', outcome: { result: 'dough', dough: 'refrigerated' } },
+      at('13:00'),
+    );
+    const fresh = (await makeTarget()).thermalProfiles;
+    const events = await stores.bakes.loadEvents('bake-1');
+    const result = await recordThermalCalibration(
+      fresh,
+      events,
+      'retard',
+      { method: 'twoPoint' },
+      at('13:30'),
+    );
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    expect(result.value.profile.version).toBe(1);
+    expect(result.value.calibration.tauObsH).toBeCloseTo(2.5, 2);
+  });
+
   it('stores nothing when the estimators refuse the readings', async () => {
     const stores = await makeTarget();
     await seed(stores);

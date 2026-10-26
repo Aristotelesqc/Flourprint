@@ -40,6 +40,11 @@ import type { BakeState, ProbePosition } from './types.js';
 export interface LiveForecastOptions extends EstimateOptions {
   /** Overrides the readiness profile of the process (tests, comparisons). */
   readonly profile?: ReadinessProfile;
+  /**
+   * Also rebuild the path of a finished or abandoned session (calibration reads one). The live
+   * forecast itself stays restricted to active sessions.
+   */
+  readonly includeEnded?: boolean;
 }
 
 export interface LiveDoughForecast {
@@ -69,6 +74,8 @@ export interface Reading {
   readonly sinceTransitionH: number;
   /** Index of the stretch where those inputs began. */
   readonly transition: number;
+  /** Stretch whose lag and ambient the reading was taken in, when it applies to a later one. */
+  readonly lagUnit?: number;
 }
 
 /** One stretch of the dough's path with the facts that bear on it. */
@@ -139,7 +146,9 @@ export const liveContext = (
   options: LiveForecastOptions = {},
 ): LiveContext | undefined => {
   const { formula, process } = state;
-  if (state.status !== 'active' || !formula || !process) return undefined;
+  const live =
+    state.status === 'active' || (options.includeEnded === true && state.status !== 'notStarted');
+  if (!live || !formula || !process) return undefined;
   const steps = doughSteps(process) ?? [];
   if (steps.length === 0) return undefined;
   const nowMs = Date.parse(now);
@@ -149,6 +158,7 @@ export const liveContext = (
 
   const stretches: Stretch[] = [];
   const unplanned: StepId[] = [];
+  const afterEnd: { after: number; reading: Reading }[] = [];
   let carried: number | undefined = process.steps.find((s) => s.operation === 'mix')?.conditions
     ?.temperatureC;
   // The end of the step before, if it ended, and where its last stretch is.
@@ -284,6 +294,20 @@ export const liveContext = (
       if (endMs !== undefined && endMs <= nowMs) {
         const last = stretches.pop() as Stretch;
         stretches.push({ ...last, endsStep: true });
+        // A reading taken at the very end of the step applies from the next stretch (below).
+        const closing = inForce(stopMs);
+        const closingMs = closing === undefined ? startMs : clamp(Date.parse(closing.from));
+        const atEnd = readingAt(
+          stopMs,
+          closingMs,
+          stretchAt.get(closingMs) ?? stretches.length - 1,
+        );
+        if (atEnd !== undefined) {
+          afterEnd.push({
+            after: stretches.length - 1,
+            reading: { ...atEnd, lagUnit: stretches.length - 1 },
+          });
+        }
       } else {
         // What remains of a running step's countdown, holds included.
         const elapsedS = (stopMs - startMs) / 1000;
@@ -322,6 +346,12 @@ export const liveContext = (
       endMs !== undefined && endMs <= nowMs ? { endMs, index: stretches.length - 1 } : undefined;
   }
 
+  for (const { after, reading } of afterEnd) {
+    const next = stretches[after + 1];
+    if (next !== undefined && next.reading === undefined)
+      stretches[after + 1] = { ...next, reading };
+  }
+
   // The stretch the model solves: the remainder of the target step, or, when that step ended,
   // the last one (its answer is replaced below).
   const openIndex = targetDone
@@ -349,7 +379,7 @@ export const liveDoughForecast = (
   now: Instant,
   options: LiveForecastOptions = {},
 ): LiveDoughForecast | undefined => {
-  const context = liveContext(state, now, options);
+  const context = liveContext(state, now, { ...options, includeEnded: false });
   if (context === undefined) return undefined;
   const { steps, target, targetDone, stretches, openIndex, mass } = context;
   if ('status' in mass) {
@@ -427,10 +457,12 @@ const withReadings = (mass: DoughMass, stretches: readonly Stretch[]): DoughMass
   let doughC = mass.startC;
   const segments = mass.segments.map((segment, index) => {
     const reading = stretches[index]?.reading;
-    starts.push(doughC);
     let reset: number | undefined;
     if (reading !== undefined) {
-      const lag = lagOf.get(index);
+      // A reading taken at a step's end applies from the next stretch, with the lag it was taken in.
+      const unit = reading.lagUnit ?? index;
+      const lag = lagOf.get(unit);
+      const ambientC = mass.segments[unit]?.ambientC ?? segment.ambientC;
       if (
         reading.position === 'core' &&
         lag !== undefined &&
@@ -438,7 +470,7 @@ const withReadings = (mass: DoughMass, stretches: readonly Stretch[]): DoughMass
       ) {
         // The core is further from where the dough is heading than the mean (Core temperature).
         const equilibriumC =
-          segment.ambientC +
+          ambientC +
           SELF_HEATING_K.central *
             progressPerHour(CENTRAL, dose, doughC) *
             lag.effectiveTauH.central;
@@ -458,6 +490,8 @@ const withReadings = (mass: DoughMass, stretches: readonly Stretch[]): DoughMass
       }
       doughC = reset;
     }
+    // The state a transition starts from is the one after any reading taken at its start.
+    starts.push(doughC);
     const run = simulate(CENTRAL, {
       freshPct: dose,
       startC: doughC,

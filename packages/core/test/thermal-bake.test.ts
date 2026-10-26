@@ -768,3 +768,135 @@ describe('the volume cue is derived from the recorded facts', () => {
     expect(volumeCueValid(now(), 'proof')).toBe(true);
   });
 });
+
+describe('review fixes: ended bakes, readings at an edge, transition start, segments', () => {
+  const fridgeProcess: Process = {
+    steps: [
+      step('mix', { operation: 'mix', plannedDurationS: 600, conditions: { temperatureC: 24 } }),
+      step('retard', {
+        dependsOn: ['mix'],
+        plannedDurationS: 6 * H,
+        conditions: { temperatureC: 4, location: 'fridge' },
+        thermal: fridgeBowl,
+      }),
+      step('bake', { operation: 'bake', dependsOn: ['retard'], plannedDurationS: 2400 }),
+    ],
+  };
+  const after = (minutes: number) =>
+    new Date(Date.parse(t('08:00')) + minutes * 60_000).toISOString() as Instant;
+  const retard = (minutes: number[], tau = 2.5) => {
+    const log = started(0.05, fridgeProcess, 500);
+    log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'retard' });
+    for (const m of minutes) {
+      log.now = after(m);
+      const c = Math.round((4 + 20 * Math.exp(-m / 60 / tau)) * 1e4) / 1e4;
+      const r = log.reading('retard', c, 'core', after(m));
+      if (!r.ok) throw new Error(JSON.stringify(r.error));
+    }
+    return log;
+  };
+
+  it('calibrates from a finished or an abandoned bake, while the live forecast stays active-only', () => {
+    const finished = retard([70, 160, 250]);
+    finished.at('12:30').ok({ type: 'CompleteStep', stepId: 'retard' });
+    finished.ok({ type: 'FinishBake', outcome: { result: 'dough', dough: 'refrigerated' } });
+    expect(finished.state.status).toBe('finished');
+    const result = calibrateStepThermal(finished.state, 'retard', t('12:30'), {
+      method: 'guggenheim',
+    });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    expect(result.value.tauObsH).toBeCloseTo(2.5, 2);
+    expect(liveDoughForecast(finished.state, t('12:30'))).toBeUndefined();
+
+    const abandoned = retard([70, 160, 250]);
+    abandoned.at('12:30').ok({ type: 'AbandonBake' });
+    const again = calibrateStepThermal(abandoned.state, 'retard', t('12:30'), {
+      method: 'twoPoint',
+    });
+    expect(again.ok).toBe(true);
+  });
+
+  it('applies a reading taken exactly when the step is completed, and one taken at now with nothing left', () => {
+    const run = (reading: boolean, complete: boolean) => {
+      const log = started();
+      log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+      log.at('08:00').ok({ type: 'StartStep', stepId: 'bulk' });
+      if (reading) log.at('10:00').reading('bulk', 27, 'surface', t('10:00'));
+      if (complete) log.at('10:00').ok({ type: 'CompleteStep', stepId: 'bulk' });
+      const forecast = liveDoughForecast(log.state, t('10:00'));
+      if (!forecast) throw new Error('no forecast');
+      return forecast;
+    };
+    const notes = (f: ReturnType<typeof run>) =>
+      f.remaining.status === 'ok' ? f.remaining.assumptions : [];
+    // Completed at the reading instant: the next step starts from the measured temperature.
+    const plain = run(false, true);
+    const ended = run(true, true);
+    expect(notes(ended)).toContain('probe_position_unmodelled');
+    expect(notes(plain)).not.toContain('probe_position_unmodelled');
+    expect(value(ended.remaining)).toBeLessThan(value(plain.remaining));
+    // Planned time all elapsed, step still running: the remaining stretch has no time left.
+    const running = run(true, false);
+    expect(notes(running)).toContain('probe_position_unmodelled');
+    expect(value(running.remaining)).toBeLessThan(value(run(false, false).remaining));
+  });
+
+  it('clamps a core reading by the transition start as a reading reset it', () => {
+    const cold: Process = {
+      steps: [
+        step('mix', { operation: 'mix', plannedDurationS: 600, conditions: { temperatureC: 18 } }),
+        step('cold', {
+          dependsOn: ['mix'],
+          conditions: { temperatureC: 4, location: 'fridge' },
+          thermal: fridgeBowl,
+        }),
+        step('bake', { operation: 'bake', dependsOn: ['cold'], plannedDurationS: 2400 }),
+      ],
+    };
+    const remainingWith = (later: { c: number; position: 'core' | 'surface' }) => {
+      const log = started(0.05, cold, 2000);
+      log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+      log.at('08:00').ok({ type: 'StartStep', stepId: 'cold' });
+      log.at('08:00').reading('cold', 24, 'surface', t('08:00'));
+      log.at('10:00').reading('cold', later.c, later.position, t('10:00'));
+      const forecast = liveDoughForecast(log.state, t('10:00'));
+      if (!forecast) throw new Error('no forecast');
+      return value(forecast.remaining);
+    };
+    const core = remainingWith({ c: 20, position: 'core' });
+    // The reading at the start made 24 C the start of the transition, so a core reading of 20 C
+    // lies inside [4, 24] and is the mean 4 + 16 / gamma_core (about 16.6), not 20 C.
+    const asMean = remainingWith({ c: 16.6, position: 'surface' });
+    const wrong = remainingWith({ c: 20, position: 'surface' });
+    expect(Math.abs(core - asMean)).toBeLessThan(0.05 * Math.abs(wrong - asMean));
+  });
+
+  it('keeps the inputs a change set before the start, even if the start is corrected earlier', () => {
+    const log = started();
+    log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+    log.at('08:05').ok({ type: 'SetStepThermal', stepId: 'bulk', thermal: fridgeBowl });
+    log.at('08:15').ok({ type: 'StartStep', stepId: 'bulk' });
+    const startEvent = log.events.find(
+      (e) => e.payload.type === 'StepStarted' && e.payload.stepId === 'bulk',
+    );
+    log.at('08:20').ok({
+      type: 'CorrectStepTime',
+      targetEventId: startEvent?.eventId as string,
+      newOccurredAt: t('08:02'),
+    });
+    expect(thermalSegments(log.state, 'bulk')).toEqual([{ from: t('08:02'), thermal: fridgeBowl }]);
+  });
+
+  it('records only the three readings that gave the factor, and finds an equally spaced triple', () => {
+    const log = retard([60, 120, 180, 210]);
+    const result = calibrateStepThermal(log.state, 'retard', after(240), { method: 'guggenheim' });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    expect(result.value.set.readings).toBe(3);
+    expect(result.value.set.basis.eventIds).toHaveLength(3);
+    expect(result.value.tauObsH).toBeCloseTo(2.5, 2);
+    // The reading at 210 min is not one of them.
+    const last = log.events.filter((e) => e.payload.type === 'ObservationAdded').at(-1)?.eventId;
+    expect(result.value.set.basis.eventIds).not.toContain(last);
+  });
+});

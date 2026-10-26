@@ -76,7 +76,9 @@ export const calibrateStepThermal = (
       ? Math.min(Date.parse(state.steps[stepId]?.endedAt ?? now), Date.parse(now))
       : Date.parse((segments[index + 1] as { from: Instant }).from);
 
+  // A calibration is read after the bake as well: readings are facts of an ended session too.
   const context = liveContext(state, now, {
+    includeEnded: true,
     ...(options.thermalProfile === undefined ? {} : { thermalProfile: options.thermalProfile }),
     ...(options.massG === undefined ? {} : { massG: options.massG }),
   });
@@ -127,32 +129,29 @@ export const calibrateStepThermal = (
     used = [a, b];
     tauObsH = tau.value;
   } else {
-    const a = usable[0];
-    const c = usable.at(-1);
-    const middle = usable
-      .slice(1, -1)
-      .sort(
-        (x, y) =>
-          Math.abs(x.tH - ((a?.tH ?? 0) + (c?.tH ?? 0)) / 2) -
-          Math.abs(y.tH - ((a?.tH ?? 0) + (c?.tH ?? 0)) / 2),
-      )[0];
-    if (a === undefined || c === undefined || middle === undefined) {
+    // The widest triple of readings that is equally spaced (Guggenheim needs equal gaps).
+    let best:
+      [(typeof usable)[number], (typeof usable)[number], (typeof usable)[number]] | undefined;
+    for (const [i, x] of usable.entries()) {
+      for (const [j, y] of usable.entries()) {
+        if (j <= i) continue;
+        for (const z of usable.slice(j + 1)) {
+          const gap1 = y.tH - x.tH;
+          const gap2 = z.tH - y.tH;
+          if (Math.abs(gap1 - gap2) > SPACING_TOLERANCE * ((gap1 + gap2) / 2)) continue;
+          if (best === undefined || z.tH - x.tH > best[2].tH - best[0].tH) best = [x, y, z];
+        }
+      }
+    }
+    if (best === undefined) {
       return err(
-        domainError('readings_invalid', 'readings_invalid: three readings are needed', {
-          reason: 'fewer than three readings after the transient',
+        domainError('readings_invalid', 'readings_invalid: no three equally spaced readings', {
+          reason: 'no three readings after the transient are equally spaced',
         }),
       );
     }
-    const gap1 = middle.tH - a.tH;
-    const gap2 = c.tH - middle.tH;
-    if (Math.abs(gap1 - gap2) > SPACING_TOLERANCE * ((gap1 + gap2) / 2)) {
-      return err(
-        domainError('readings_invalid', 'readings_invalid: not equally spaced', {
-          reason: 'the readings are not equally spaced',
-        }),
-      );
-    }
-    const g = guggenheim(a.c, middle.c, c.c, (gap1 + gap2) / 2);
+    const [a, middle, c] = best;
+    const g = guggenheim(a.c, middle.c, c.c, (c.tH - a.tH) / 2);
     if (!g.ok) return g;
     used = [a, middle, c];
     tauObsH = g.value.tauH;
