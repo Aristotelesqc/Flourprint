@@ -9,6 +9,7 @@ import { stepEquipmentProblem } from '../equipment/step.js';
 import { isReservedId } from '../ids.js';
 import { err, ok, type Result } from '../result.js';
 import { isCookingStep, outcomeProblem } from './cooking.js';
+import { thermalProblem } from './thermal.js';
 import { ancestors as ancestorsOf, doughSteps } from './dough.js';
 import type { Process, ProcessStep } from './types.js';
 
@@ -117,6 +118,7 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
   }
 
   const hasSuccessor = new Set(process.steps.flatMap((step) => step.dependsOn));
+  const doughIds = new Set((doughSteps(process) ?? []).map((s) => s.id));
   for (const [index, step] of process.steps.entries()) {
     const path = `steps[${index}]`;
     if (step.schedule !== 'asap' && step.schedule !== 'alap' && step.schedule !== 'beforeTarget') {
@@ -155,6 +157,14 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
     }
     const technique = validateTechnique(step.technique, `${path}.technique`);
     if (technique !== undefined) return err(technique);
+    if (step.thermal !== undefined) {
+      // Thermal inputs (process.md): a dough step only, then the values that cannot be meant.
+      if (!doughIds.has(step.id)) {
+        return err(invalid(`${path}.thermal`, 'thermal inputs are for dough steps only'));
+      }
+      const bad = thermalProblem(step.thermal, `${path}.thermal`);
+      if (bad) return err(invalid(bad.path, bad.reason));
+    }
     if (
       step.durationMode !== undefined &&
       step.durationMode !== 'manual' &&

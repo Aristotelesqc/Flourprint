@@ -79,6 +79,7 @@ export interface StepChanges {
   readonly plannedDurationS?: number | undefined;
   readonly technique?: ProcessStep['technique'] | undefined;
   readonly durationMode?: ProcessStep['durationMode'] | undefined;
+  readonly thermal?: ProcessStep['thermal'] | undefined;
   readonly target?: ProcessStep['target'] | undefined;
   readonly requiredWarmupS?: number | undefined;
   readonly startRule?: ProcessStep['startRule'] | undefined;
