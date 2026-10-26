@@ -527,7 +527,9 @@ const withThermal = (
       return at < 0 ? s : { ...s, lag: (lags[at] as ThermalStepLag).lag };
     });
   let porosities: DoughPorosity[] = steps.map(() => 'unproofed');
-  for (let pass = 0; pass < 3; pass++) {
+  // Only a step that names no class needs the progress at its start.
+  const derived = indexes.some((i) => steps[i]?.thermal?.porosity === undefined);
+  for (let pass = 0; derived && pass < 3; pass++) {
     const starts = progressAtStarts(base, withLags(lagsFor(porosities)));
     if (starts === undefined) break;
     const next = steps.map(
@@ -539,17 +541,14 @@ const withThermal = (
     porosities = next;
   }
   const lags = lagsFor(porosities);
+  const inFridge = lags.some(
+    (l) => l.key.environment === 'fridgeStatic' || l.key.environment === 'fridgeVentilated',
+  );
   const assumptions = [
     `thermal_model:${THERMAL_MODEL.version}`,
     ...lags.flatMap((l) => l.assumptions),
-    ...(steps.some(
-      (s) =>
-        s.thermal !== undefined &&
-        (resolveThermal(s.thermal, s.conditions?.location).environment === 'fridgeStatic' ||
-          resolveThermal(s.thermal, s.conditions?.location).environment === 'fridgeVentilated'),
-    )
-      ? ['thermal_fridge_cycling']
-      : []),
+    // The ambient of a fridge step is the declared one (Flags and limits).
+    ...(inFridge ? ['thermal_fridge_cycling'] : []),
   ];
   const extrapolations = [
     ...(lags.some((l) => l.biot > BIOT_HIGH) ? ['thermal_biot_high'] : []),

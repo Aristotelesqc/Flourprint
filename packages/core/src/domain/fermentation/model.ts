@@ -55,7 +55,8 @@ export const CORNERS: readonly FermentationParameters[] = (() => {
 /** Gas constant, J/(mol·K). */
 export const GAS_CONSTANT = 8.314_462_618;
 const R = GAS_CONSTANT;
-const T_REF_K = 294.25;
+/** Reference temperature of the kinetic law, K (21.1 °C). */
+export const T_REF_K = 294.25;
 
 /** Relative rate, 1 at 21.1 °C. */
 export const rate = (p: FermentationParameters, temperatureC: number): number =>

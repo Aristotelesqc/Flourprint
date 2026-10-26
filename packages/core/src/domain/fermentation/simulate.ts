@@ -1,5 +1,11 @@
 import { DEFAULT_LAG, type SegmentLag } from './lag.js';
-import { DOMAIN, GAS_CONSTANT, progressPerHour, type FermentationParameters } from './model.js';
+import {
+  DOMAIN,
+  GAS_CONSTANT,
+  progressPerHour,
+  T_REF_K,
+  type FermentationParameters,
+} from './model.js';
 import { SEMENOV_LIMIT, semenovPsi } from './thermal.js';
 
 /**
@@ -221,7 +227,7 @@ const heatedSegment = (
   const heating = heatingFor(p.path, lag);
   const scale = freshPct > 0 ? freshPct ** p.k / p.aH : 0;
   const rateAt = (c: number) =>
-    scale * Math.exp((p.eaJ / GAS_CONSTANT) * (1 / 294.25 - 1 / (c + 273.15)));
+    scale * Math.exp((p.eaJ / GAS_CONSTANT) * (1 / T_REF_K - 1 / (c + 273.15)));
   const tauAt = (c: number) => Math.max(tauFor(p.path, lag, c, ambientC), 1e-6);
 
   // The Semenov bound, in the regime where the equilibrium lies (above the ambient): an

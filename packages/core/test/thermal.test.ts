@@ -603,6 +603,8 @@ describe('thermal fixtures: the personal factor (case i)', () => {
 describe('the band corners of the envelope', () => {
   it('keeps 64 combinations per dose: 16 kinetic, 2 paths, 2 ends of the readiness band', () => {
     expect(CORNERS.length).toBe(32);
+    // No corner carries a lag of its own: the lag is read from the step at every instant.
+    expect(CORNERS.every((p) => !('tauH' in p))).toBe(true);
     expect(CORNERS.filter((p) => p.path === 'upper').length).toBe(16);
     expect(CORNERS.filter((p) => p.path === 'lower').length).toBe(16);
     expect(
