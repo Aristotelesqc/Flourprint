@@ -22,6 +22,16 @@ recognise familiar situations, compare them and adjust. A model can learn the sa
   processes it has not seen: durations and doses against published schedules and recorded bakes,
   with whole sources held out, never variants of one recipe split between fit and test. "Is there a
   published equation for each effect?" is not the question.
+- **Two measures, reported separately, never pooled.**
+  - **Agreement with published practice**: does Flourprint propose durations comparable to an
+    independent set of credible recipes? This measures conformity to what bakers do.
+  - **Accuracy on observed bakes**: does the dough actually reach the intended stage (a recorded
+    `doughReady`, a poke test, a measured rise) when the forecast says? This measures the truth
+    of the forecast and is the stronger test.
+
+  A model can match published practice and still miss observed bakes, or the reverse: each
+  candidate reports both, and the second outranks the first when they disagree.
+
 - **Three kinds of knowledge, complementary.**
   - **Collective practice**: the published recipe corpus. It encodes the judgement of its authors
     (dose for a formulation, time at a temperature, when to retard), and is the natural source for
@@ -513,9 +523,10 @@ Gates before a candidate (M5 or another) enters the shipped model:
 7. The inverse (dose from schedule) uses the same forward implementation and reports "not reached
    within the horizon" as unresolved, never as an invented duration.
 8. A dedicated contract pull request, then code.
-9. Its error on the held-out schedule benchmark (Goal and acceptance criterion) is reported next to
-   the shipped model's, and is lower; or the candidate covers a situation the benchmark cannot
-   test, and says so.
+9. Its errors on the two measures of Goal and acceptance criterion (agreement with held-out
+   published schedules; accuracy on observed bakes, once recorded bakes exist) are reported next to
+   the shipped model's, separately, and are lower; or the candidate covers a situation the
+   benchmark cannot test, and says so.
 
 Other open items: obtain the Timmermans time courses; verify the Boudrag tables and percentage
 denominators; confirm the bibliography titles marked unverified; check whether the Izzreen formula
