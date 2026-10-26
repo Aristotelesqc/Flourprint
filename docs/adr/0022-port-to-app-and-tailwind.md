@@ -1,9 +1,12 @@
 # ADR 0022: Port the interface into the app, styled with Tailwind CSS v4
 
-Status: Accepted (owner, 2026-10-25).
+Status: Accepted (owner, 2026-10-25; amended 2026-10-26).
 
 Relation to earlier ADRs:
 
+- **Amended 2026-10-26 (owner decision).** Workflow amendment: release 0.3 UI PRs target the
+  temporary integration branch `ui/0.3-integration` instead of `dev` directly, rolled up into
+  `dev` through a single draft aggregate PR; see Decision §1 and §4.
 - **Amends ADR 0021.** It replaces 0021's migration plan ("Migration") and applies the sourcing
   order to the port. The four layers, the theme builder's role set, the elevation rule, motion
   items and guides stand.
@@ -39,9 +42,10 @@ component names and class names harder to follow.
   closed without merging. Its branch and the hosted review gallery
   (`https://aristotelesqc.github.io/Flourprint/review-2026-10-24-audit-corrections/`) remain the
   reference.
-- The interface is ported into `apps/mobile` on `dev`, screen by screen. Remaining defects are
-  fixed there, in production code (acceptance criteria L128 to L144 in
-  [docs/ux/requirements.md](../ux/requirements.md)).
+- The interface is ported into `apps/mobile` screen by screen via the temporary integration
+  branch `ui/0.3-integration` (owner decision of 2026-10-26, rolled up to `dev` in a single draft
+  aggregate PR). Remaining defects are fixed there, in production code (acceptance criteria L128
+  to L144 in [docs/ux/requirements.md](../ux/requirements.md)).
 
 ### 2. Tailwind CSS v4 is the styling approach
 
@@ -98,10 +102,19 @@ component names and class names harder to follow.
 | d    | Preparation         | The active-step screen and journal (L127)                                                                                                       |
 | e    | History and Library | History, then Library with its cards and search                                                                                                 |
 
-Each slice is a reviewed pull request into `dev`, tracked as a sub-issue of #35 with its own
-acceptance, checked against the ledger in `docs/ux/requirements.md`. The owner sets the release
-for each slice. The manifest and catalogue mechanisms of ADR 0020 and ADR 0021 keep working
-throughout.
+Per owner decision (2026-10-26 amendment), individual release 0.3 UI slices target the temporary
+integration branch `ui/0.3-integration` rather than `dev`: foundation #180 (issue #168), dependency
+#153 (issue #169), then screen slices (#169–#172). Individual slices merge into `ui/0.3-integration`
+only when green and reviewed; foundation must land in integration before any screen slice starts.
+Release 0.3 work rolls up to `dev` in a single draft aggregate PR (using existing pull_request CI
+for the app preview), merged into `dev` only after owner integrated visual and behavioural approval.
+Individual slice merges do not imply complete acceptance or close issues; issue labels and evidence
+rules are preserved (avoid `Closes` while acceptance is pending). Fresh `dev` is merged into
+integration regularly via normal merge commits (no rebase, force-push, reset, canary promotion,
+new channel or APK), and dev engine and unrelated work flow normally. Slices remain tracked as
+sub-issues of #35 with their own acceptance checked against `docs/ux/requirements.md`. The owner
+sets the release for each slice. The manifest and catalogue mechanisms of ADR 0020 and ADR 0021 keep
+working throughout.
 
 ## Consequences
 
