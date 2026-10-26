@@ -321,8 +321,8 @@ test('discard abandons raw invalid text and a later edit can be saved', async ({
     if (await overflow.isVisible()) {
       await overflow.click();
       await page
-        .locator('ion-action-sheet')
-        .getByRole('button', { name: 'Abandonner les modifications', exact: true })
+        .getByRole('menu')
+        .getByRole('menuitem', { name: 'Abandonner les modifications', exact: true })
         .click();
     } else {
       await page.locator('ion-header:visible ion-button[aria-label="Abandonner"]').click();

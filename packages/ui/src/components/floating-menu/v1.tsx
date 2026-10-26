@@ -156,6 +156,10 @@ export function FloatingMenu({
         {triggerContent ?? triggerLabel}
       </Button>
 
+      {/* Retain native Ionic popover animation: generic ionicAnimation lacks dynamic anchor
+          and viewport boundary placement (top/left/origin), causing content to render offscreen.
+          The pinned Ionic 9.0.6 patch makes its wrapper fade respect animated={false}
+          alongside the native backdrop/content animations (patches/README.md). */}
       <IonPopover
         ref={popoverRef}
         isOpen={isOpen}
@@ -165,14 +169,14 @@ export function FloatingMenu({
         onWillPresent={handleWillPresent}
         onDidDismiss={handleDidDismiss}
         onDidPresent={handleDidPresent}
-        className="fp-ionic [--background:var(--color-surface)] [&::part(content)]:rounded-card [--width:min(var(--container-xs),calc(100vw-var(--spacing)*4))] [--max-width:min(var(--container-xs),calc(100vw-var(--spacing)*4))] [--max-height:calc(100dvh-var(--spacing)*8)]"
+        className="fp-ionic [--background:var(--color-surface)] [&::part(content)]:rounded-card [--width:min(var(--container-xs),calc(100vw-var(--spacing)*4))] [--max-width:min(var(--container-xs),calc(100vw-var(--spacing)*4))] [--max-height:calc(100dvh-var(--spacing)*8)] [&>.ion-delegate-host]:flex [&>.ion-delegate-host]:flex-col [&>.ion-delegate-host]:min-h-0 [&>.ion-delegate-host]:max-h-[calc(100dvh-var(--spacing)*8)] [&>.ion-delegate-host]:overflow-hidden"
       >
         <div
           role="menu"
           tabIndex={-1}
           aria-labelledby={titleId}
           onKeyDown={handleKeyDown}
-          className="w-full min-w-0 bg-surface text-on-surface rounded-card flex flex-col max-h-[calc(100dvh-var(--spacing)*8)]"
+          className="w-full min-w-0 min-h-0 max-h-[calc(100dvh-var(--spacing)*8)] overflow-hidden bg-surface text-on-surface rounded-card flex flex-col"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-outline/20 gap-3 shrink-0">
             <h2

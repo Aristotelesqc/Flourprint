@@ -15,6 +15,9 @@ const guide: ComponentGuide<FloatingMenuProps> = {
     'Provides roving keyboard arrow navigation (Up/Down) with a single tabstop (tabindex 0), Home, and End support.',
     'Menu items use native semantic button elements with role="menuitem" and keep disabled actions visible.',
     'All touch targets adhere to minimum 48px touch guidelines without arbitrary sizing.',
+    'Retains native Ionic popover animation to preserve dynamic anchor coordinate placement and viewport boundary clamping.',
+    'Under reduced motion, animated={false} eliminates animation; the pinned Ionic 9.0.6 patch also clears the native wrapper fade while preserving native placement. See patches/README.md.',
+    'Escape dismissal and focus restoration are verified in browser environments; hardware back dismissal is delegated to Ionic Layer 2 and requires native device evidence.',
   ],
   props: {
     title: 'Accessible header title for the menu container and aria-labelledby reference.',

@@ -30,6 +30,12 @@ height, scroll offset and target bounds at the same point before and after the a
 Playwright's automatic scrolling can change the observation; do not mistake that for app reflow.
 Capture after layout/finite transitions settle, and read the resulting image.
 
+With Ionic 9.0.6 breakpoint modals, Playwright `animations: 'disabled'` can fast-forward a
+constructed, paused swipe animation and move an open sheet offscreen. Capture after presentation
+with OS/manual reduced motion and the default `animations: 'allow'`; verify that the controls
+still work after capture. For duration checks, distinguish constructed gesture animations from
+animations actually played (`Animation.play` and the effect timing).
+
 ## Native/desktop route
 
 - `apps/mobile/playwright.android.config.ts` and `apps/mobile/android-e2e/` drive an installed

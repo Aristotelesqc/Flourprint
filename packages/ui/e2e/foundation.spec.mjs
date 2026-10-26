@@ -1,4 +1,4 @@
-/* global window, document, getComputedStyle, Element */
+/* global window, document, getComputedStyle, Element, Animation */
 import { createRequire } from 'node:module';
 import { tokens } from '../src/tokens.ts';
 
@@ -330,6 +330,57 @@ test('scoped reduced motion suppresses the first Ionic opening animation', async
   );
   const durations = await page.evaluate(() => window.__foundationDurations);
   expect(durations.every((duration) => duration === 0)).toBe(true);
+});
+
+test('native menu and sheet retain placement and reduced motion across reopening', async ({
+  page,
+}, testInfo) => {
+  await page.addInitScript(() => {
+    window.__foundationDurations = [];
+    // Ionic also constructs a paused 500 ms swipe animation; measure actual playback.
+    const original = Animation.prototype.play;
+    Animation.prototype.play = function () {
+      const duration = this.effect?.getComputedTiming().duration;
+      if (typeof duration === 'number') window.__foundationDurations.push(duration);
+      return original.call(this);
+    };
+  });
+  await openFixture(page, testInfo, { motion: 'standard', scopeMotion: 'reduced' });
+  for (const motion of ['reduced', 'standard', 'reduced', 'standard']) {
+    await page
+      .getByRole('main')
+      .and(page.locator('[data-motion]'))
+      .evaluate((node, value) => {
+        node.setAttribute('data-motion', value);
+        window.__foundationDurations = [];
+      }, motion);
+    const opener = page.getByRole('button', { name: 'Open actions', exact: true });
+    await opener.click();
+    const menu = page.getByRole('menu', { name: 'Fixture actions', exact: true });
+    await expect(menu.getByRole('menuitem').first()).toBeFocused();
+    await expect(menu).toBeInViewport({ ratio: 1 });
+    const menuDurations = await page.evaluate(() => window.__foundationDurations);
+    expect(menuDurations.length).toBeGreaterThan(0);
+    expect(menuDurations.every((duration) => duration === 0)).toBe(motion === 'reduced');
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(opener).toBeFocused();
+    await page.evaluate(() => {
+      window.__foundationDurations = [];
+    });
+    const sheetOpener = page.getByRole('button', { name: 'Open editor sheet', exact: true });
+    await sheetOpener.click();
+    const dialog = page.getByRole('dialog', { name: 'Edit fixture details', exact: true });
+    const sheet = overlayContent(page, 'Edit fixture details');
+    await expect(sheet.getByRole('button', { name: 'Cancel sheet', exact: true })).toBeFocused();
+    await expect(dialog).toBeInViewport({ ratio: 1 });
+    const sheetDurations = await page.evaluate(() => window.__foundationDurations);
+    expect(sheetDurations.length).toBeGreaterThan(0);
+    expect(sheetDurations.every((duration) => duration === 0)).toBe(motion === 'reduced');
+    await sheet.getByRole('button', { name: 'Cancel sheet', exact: true }).click();
+    await expect(sheet).toBeHidden();
+    await expect(sheetOpener).toBeFocused();
+  }
 });
 
 test('catalogue exposes generated component examples with labelled theme and size choices', async ({

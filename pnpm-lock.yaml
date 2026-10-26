@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@ionic/core@9.0.6':
+    hash: e64c8783948368c0171c7fe04df44e2079eae0b80eeadd7e2b59326e11867be5
+    path: patches/@ionic__core@9.0.6.patch
+
 importers:
 
   .:
@@ -2747,7 +2752,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@ionic/core@9.0.6':
+  '@ionic/core@9.0.6(patch_hash=e64c8783948368c0171c7fe04df44e2079eae0b80eeadd7e2b59326e11867be5)':
     dependencies:
       '@stencil/core': 4.45.2
       ionicons: 8.1.0
@@ -2755,7 +2760,7 @@ snapshots:
 
   '@ionic/react-router@9.0.6(@stencil/core@4.45.2)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react-router-dom@6.30.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-router@6.30.6(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@ionic/core': 9.0.6
+      '@ionic/core': 9.0.6(patch_hash=e64c8783948368c0171c7fe04df44e2079eae0b80eeadd7e2b59326e11867be5)
       '@ionic/react': 9.0.6(@stencil/core@4.45.2)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
@@ -2768,7 +2773,7 @@ snapshots:
 
   '@ionic/react@9.0.6(@stencil/core@4.45.2)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
-      '@ionic/core': 9.0.6
+      '@ionic/core': 9.0.6(patch_hash=e64c8783948368c0171c7fe04df44e2079eae0b80eeadd7e2b59326e11867be5)
       '@stencil/react-output-target': 1.6.3(@stencil/core@4.45.2)(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       ionicons: 8.1.0
       react: 19.3.0

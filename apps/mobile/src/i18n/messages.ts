@@ -6,6 +6,7 @@
 import { helpEn, helpFr } from './help';
 
 export const en = {
+  'ui.menu.scrollHint': 'Scroll for more actions',
   'equipment.preheat.unknown': 'preheat unspecified',
   'equipment.fan.unknown': 'unknown',
   'equipment.steam.none': 'none',
@@ -1172,6 +1173,7 @@ export type MessageKey = keyof typeof en;
 export type Catalog = Record<MessageKey, string>;
 
 export const fr: Catalog = {
+  'ui.menu.scrollHint': 'Faire défiler pour voir les autres actions',
   'equipment.preheat.unknown': 'préchauffage non précisé',
   'equipment.fan.unknown': 'inconnue',
   'equipment.steam.none': 'aucune',

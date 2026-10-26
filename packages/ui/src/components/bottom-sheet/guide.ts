@@ -16,7 +16,8 @@ const guide: ComponentGuide<BottomSheetProps> = {
     'Floating modal host sets accessible name via aria-labelledby and traps focus while presented.',
     'Preserves autofocus behavior on child inputs without prematurely stealing focus to close control.',
     'Provides a minimum 48px touch target for the close button.',
-    'Supports keyboard Escape dismissal and hardware back navigation.',
+    'Supports keyboard Escape dismissal in browser environments; hardware back navigation is delegated to Ionic Layer 2 and requires native device evidence.',
+    'Retains native Ionic sheet transition for breakpoint positioning and gesture tracking; reduced motion disables animation via animated prop without claiming fp.motion ownership.',
   ],
   props: {
     isOpen: 'Controlled boolean determining whether the bottom sheet is presented.',
@@ -28,7 +29,7 @@ const guide: ComponentGuide<BottomSheetProps> = {
     canDismiss: 'Optional boolean or promise-returning predicate guarding against dismissal.',
     reducedMotion: 'Optional explicit override for reduced motion animations.',
   },
-  related: ['fp.dialog', 'fp.button', 'fp.motion.sheet-enter', 'fp.motion.sheet-exit'],
+  related: ['fp.dialog', 'fp.button'],
   decisions: [
     {
       label: 'ADR 0021: Theme builder and component sourcing',

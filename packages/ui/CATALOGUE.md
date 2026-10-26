@@ -40,14 +40,13 @@ Floating sheet overlay docked to the viewport bottom for workflows, long forms, 
 - Floating modal host sets accessible name via aria-labelledby and traps focus while presented.
 - Preserves autofocus behavior on child inputs without prematurely stealing focus to close control.
 - Provides a minimum 48px touch target for the close button.
-- Supports keyboard Escape dismissal and hardware back navigation.
+- Supports keyboard Escape dismissal in browser environments; hardware back navigation is delegated to Ionic Layer 2 and requires native device evidence.
+- Retains native Ionic sheet transition for breakpoint positioning and gesture tracking; reduced motion disables animation via animated prop without claiming fp.motion ownership.
 
 **Related**
 
 - `fp.dialog`
 - `fp.button`
-- `fp.motion.sheet-enter`
-- `fp.motion.sheet-exit`
 
 **Decisions**
 
@@ -236,6 +235,9 @@ Floating overlay anchored to an opener button providing a list of contextual act
 - Provides roving keyboard arrow navigation (Up/Down) with a single tabstop (tabindex 0), Home, and End support.
 - Menu items use native semantic button elements with role="menuitem" and keep disabled actions visible.
 - All touch targets adhere to minimum 48px touch guidelines without arbitrary sizing.
+- Retains native Ionic popover animation to preserve dynamic anchor coordinate placement and viewport boundary clamping.
+- Under reduced motion, animated={false} eliminates animation; the pinned Ionic 9.0.6 patch also clears the native wrapper fade while preserving native placement. See patches/README.md.
+- Escape dismissal and focus restoration are verified in browser environments; hardware back dismissal is delegated to Ionic Layer 2 and requires native device evidence.
 
 **Related**
 

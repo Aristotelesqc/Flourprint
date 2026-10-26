@@ -87,6 +87,9 @@ export function BottomSheet({
     setInferredReduced(isRed);
   };
 
+  // Retain native Ionic sheet animation: generic ionicAnimation lacks breakpoint awareness
+  // (currentBreakpoint translateY) and breaks drag gestures. Reduced motion is respected
+  // via the animated property without overriding placement.
   return (
     <IonModal
       ref={modalRef}
