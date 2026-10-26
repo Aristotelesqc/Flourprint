@@ -6,6 +6,7 @@ import type {
   FlourRegistry,
   IngredientRegistry,
   RecipeRepository,
+  ThermalProfileStore,
 } from '@flourprint/core/application';
 import {
   defaultVariant,
@@ -18,6 +19,7 @@ import {
   type Instant,
   type Process,
   type Revision,
+  type ThermalProfile,
 } from '@flourprint/core/domain';
 
 /**
@@ -1168,6 +1170,72 @@ export const ingredientRegistryChecks: readonly StoreCheck<IngredientRegistry>[]
         head.map((e) => [e.id, e.version, e.archived, e.customizes]),
         [['butter', 2, true, { id: 'butter', version: 1 }]],
         'head',
+      );
+    },
+  },
+];
+
+const thermalProfile = (version: number, factor = 1.2): ThermalProfile => ({
+  id: 'personal',
+  version,
+  factors: [
+    {
+      material: 'glass',
+      cover: 'lid',
+      environment: 'fridgeStatic',
+      sets: [
+        {
+          factor,
+          massG: 500,
+          geometry: 'bulk',
+          readings: 3,
+          basis: { bakeId: 'bake-1', stepId: 'retard', eventIds: ['e1', 'e2', 'e3'] },
+        },
+      ],
+    },
+  ],
+  updatedAt: `2026-10-0${version}T08:00:00.000Z` as Instant,
+});
+
+/** The personal thermal profile (persistence.md, Personal thermal profile). */
+export const thermalProfileStoreChecks: readonly StoreCheck<ThermalProfileStore>[] = [
+  {
+    name: 'writes profile versions in order and keeps every one',
+    run: async (makeStore) => {
+      const store = await makeStore();
+      equal(await store.listThermalProfileVersions(), [], 'nothing stored yet');
+      equal(code(await store.saveThermalProfile(thermalProfile(1))), 'ok', 'v1');
+      equal(code(await store.saveThermalProfile(thermalProfile(2, 1.4))), 'ok', 'v2');
+      equal(
+        (await store.listThermalProfileVersions()).map((p) => `${p.id}@${p.version}`),
+        ['personal@1', 'personal@2'],
+        'every version',
+      );
+      equal(
+        await store.getThermalProfile('personal', 1),
+        { ok: true, value: thermalProfile(1) },
+        'v1 kept as written',
+      );
+      equal(await store.getThermalProfile('personal', 3), { ok: true }, 'absent version');
+    },
+  },
+  {
+    name: 'refuses a profile version that is not the next one and writes nothing',
+    run: async (makeStore) => {
+      const store = await makeStore();
+      await store.saveThermalProfile(thermalProfile(1));
+      const again = await store.saveThermalProfile(thermalProfile(1, 2));
+      equal(code(again), 'HeadConflict', 'rewrite');
+      equal(
+        again.ok ? undefined : again.error.details,
+        { profileId: 'personal', currentHead: 1 },
+        'head',
+      );
+      equal(code(await store.saveThermalProfile(thermalProfile(3))), 'HeadConflict', 'skip');
+      equal(
+        (await store.listThermalProfileVersions()).map((p) => p.version),
+        [1],
+        'nothing written',
       );
     },
   },

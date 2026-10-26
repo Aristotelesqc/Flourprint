@@ -167,7 +167,7 @@ describe('sqlite-node durability', () => {
     expect(await registry.listFlours()).toEqual([]);
     expect(
       v4.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 8 });
+    ).toEqual({ value: 9 });
     v4.close();
   });
 
@@ -184,7 +184,7 @@ describe('sqlite-node durability', () => {
     expect(await new SqlEquipmentRegistry(v5.driver).listEquipment()).toEqual([]);
     expect(
       v5.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 8 });
+    ).toEqual({ value: 9 });
     v5.close();
   });
 
@@ -215,7 +215,7 @@ describe('sqlite-node durability', () => {
     expect((await repository.listTrash()).map((r) => r.id)).toEqual(['r']);
     expect(
       v6.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 8 });
+    ).toEqual({ value: 9 });
     v6.close();
   });
 
@@ -236,7 +236,7 @@ describe('sqlite-node durability', () => {
     expect(await new SqlIngredientRegistry(v7.driver).listIngredients()).toEqual([]);
     expect(
       v7.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 8 });
+    ).toEqual({ value: 9 });
     v7.close();
   });
 
@@ -255,7 +255,7 @@ describe('sqlite-node durability', () => {
     expect(await repository.listReferenceVersions('r')).toEqual([]);
     expect(
       v8.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
-    ).toEqual({ value: 8 });
+    ).toEqual({ value: 9 });
     v8.close();
   });
 
