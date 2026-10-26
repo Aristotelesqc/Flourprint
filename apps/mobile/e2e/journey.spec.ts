@@ -339,12 +339,25 @@ test('speaks English on an English device @en', async ({ page }) => {
 test('pulling the recipe list down checks for a newer dev build', async ({ page }) => {
   await page.goto('/recipes');
   await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  // Native gesture setup dynamically imports its module after the custom element is defined.
+  await page.evaluate(() => customElements.whenDefined('ion-refresher').then(() => undefined));
+  await page.waitForLoadState('networkidle');
   // A non-release build (this one is local): the same check as in Advanced.
   const box = await page.getByRole('heading', { name: 'Recettes' }).boundingBox();
   if (!box) throw new Error('no heading');
   await page.mouse.move(box.x + 20, box.y + 5);
   await page.mouse.down();
   for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  // Let Ionic process the drag before releasing; its native MD refresh boundary is 0.4.
+  await expect
+    .poll(() =>
+      routed(page)
+        .locator('ion-refresher')
+        .evaluate((element) =>
+          (element as HTMLElement & { getProgress: () => Promise<number> }).getProgress(),
+        ),
+    )
+    .toBeGreaterThan(0.4);
   await page.mouse.up();
   await expect(page.getByText(/est déjà la dernière version/)).toBeVisible();
 });

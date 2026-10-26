@@ -65,6 +65,37 @@ test('accepted draft data survives reload but the undo stack does not', async ({
   // Navigate through the app before reload, as required for asynchronous draft persistence.
   await routed(page).getByRole('button', { name: 'Lire la recette', exact: true }).click();
   await enterEditor(page);
+  // The preview saves periodically (ADR 0015); faster menus are not a persistence barrier.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((resolve, reject) => {
+              const request = indexedDB.open('flourprint-preview', 1);
+              request.onerror = () => reject(request.error);
+              request.onsuccess = () => {
+                const db = request.result;
+                const tx = db.transaction('snapshots', 'readonly');
+                const saved = tx.objectStore('snapshots').get('backup');
+                tx.oncomplete = () => {
+                  db.close();
+                  const snapshot =
+                    typeof saved.result === 'string'
+                      ? (JSON.parse(saved.result) as { drafts?: unknown[] })
+                      : undefined;
+                  resolve(Array.isArray(snapshot?.drafts) && snapshot.drafts.length > 0);
+                };
+                tx.onabort = () => {
+                  db.close();
+                  reject(tx.error);
+                };
+              };
+            }),
+        ),
+      { timeout: 10_000 },
+    )
+    .toBe(true);
   await page.reload();
   await expect(routed(page).getByLabel('Eau (g)', { exact: true })).toHaveValue('720');
   await expect(footer(page).getByRole('button', { name: 'Annuler', exact: true })).toBeDisabled();

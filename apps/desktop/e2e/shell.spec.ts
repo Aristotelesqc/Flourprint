@@ -30,9 +30,9 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
     app.page,
     app.page.getByRole('button', { name: 'Actions sur la recette', exact: true }),
   );
-  const actions = app.page.locator('ion-action-sheet');
-  await tap(app.page, actions.getByRole('button', { name: 'Modifier la recette', exact: true }));
-  await expect(actions).toHaveCount(0);
+  const actions = app.page.getByRole('menu');
+  await tap(app.page, actions.getByRole('menuitem', { name: 'Modifier la recette', exact: true }));
+  await expect(actions).toBeHidden();
   await expect(salt).toBeVisible();
   await salt.fill('25');
   await salt.press('Enter');
