@@ -29,6 +29,7 @@ interface ProcessStep {
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
   durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one dough step (fermentation.md)
   subject?: Subject; // the mass the step works on; absent = derived (Subjects and component phases)
+  thermal?: StepThermal; // thermal inputs of a dough step (Thermal inputs); absent = fixed lag of fermentation.md
   // `beforeTarget` only (Steps before a target): target, requiredWarmupS, startRule
 }
 ```
@@ -101,6 +102,68 @@ interface StepConditions {
   (`InvalidProcess`). Their use is defined in
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
+
+## Thermal inputs (#176)
+
+**Proposal of 2026-10-25, contract `0.21.0` target** (the model is `fermentation.md`, Dough thermal
+model). A fermentation step may say in what the dough sits, so that the forecast computes its lag
+from mass and container instead of the fixed 1.5 h:
+
+```ts
+interface StepThermal {
+  geometry: 'sheet' | 'tin' | 'ball' | 'bulk'; // required: its presence turns the model on
+  container?: {
+    material: 'glass' | 'plastic' | 'ceramic' | 'steel' | 'aluminium' | 'banneton';
+    cover: 'lid' | 'film' | 'cloth' | 'none';
+    liner?: boolean; // banneton only: a cloth liner
+  };
+  environment?: 'fridgeStatic' | 'fridgeVentilated' | 'roomStill' | 'provingBox';
+  porosity?: 'unproofed' | 'mid' | 'proofed';
+  pieces?: number; // integer ≥ 1: equal pieces the dough is divided into (default 1)
+  containerMassG?: number; // grams, > 0: the container that changes ambient with the dough
+}
+```
+
+- **Presence.** A step with no `thermal` is unchanged: `τ` 1.5 h, band 0 to 3 h, no
+  self-heating (fermentation.md). `geometry` is required: there is no `thermal` without it.
+  No default is ever written into a stored recipe by a reader: absent stays absent.
+- **Defaults inside a `thermal` object** (read-time, never stored):
+  - `container`: `bulk` glass with `film`; `ball` plastic with `lid`; `tin` steel with `none`;
+    `sheet` aluminium with `none`;
+  - `environment`: from `conditions.location` of the step: `fridge` is `fridgeStatic`, `proofer` is
+    `provingBox`, anything else or absent is `roomStill`. The ventilated fridge is always explicit;
+  - `porosity`: derived from the progress at the start of the step (fermentation.md);
+  - `pieces`: 1; `containerMassG`: absent, container heat capacity 0.
+- **Where it applies.** On a **dough step** (fermentation.md): an `asap` fermentation step between the
+  reference mixing step and the first heat step. On any other step (a preferment's, a `beforeTarget`
+  step, a cooking step) `thermal` is refused (`InvalidProcess`, step as `path`): this model does not
+  cover a preferment, whose phases are already `component_phases_unmodelled`.
+- **Divided pieces.** `pieces` states how many equal pieces the dough is cut into at or before this
+  step: the model uses the per-piece mass `m / pieces` (a `divide` step carries no mass itself). A
+  step after the division carries the same `pieces` as the step that follows the `divide`; the
+  steps are independent records and the editor copies the value, the domain never infers it from a
+  `divide` step. A different `pieces` between consecutive steps with no `divide` between them is
+  allowed (the recipe says what it says) and produces the check `thermal_pieces_changed`
+  (nonblocking, drafts.md).
+- **Validation.** Unknown discriminants, `pieces` not an integer ≥ 1, `containerMassG` ≤ 0 or not
+  finite, `liner` with a material other than `banneton`, a `banneton` with `geometry` other than
+  `ball` or `bulk`, a `tin` or `sheet` with material `glass`, `ceramic` or `banneton`: each is
+  `InvalidProcess`. A material whose resistance is metal (`steel`, `aluminium`) in a
+  `fridgeStatic` takes the bare-metal `h` (fermentation.md).
+- **Units.** Persisted units follow AGENTS.md: grams (`containerMassG`), a count (`pieces`), no
+  length is stored: shapes and wall thicknesses are constants of the model.
+- **Accepted suggestions.** Editing `thermal` removes no `accepted` provenance of a duration by
+  itself, but an accepted suggestion computed on the previous thermal inputs is stale: a consumer
+  that compares the estimate shown with the current one (fermentation.md) sees the difference as
+  for any other input change.
+- **Compatibility.** Existing recipes have no `thermal` and mean what they meant. An older app
+  refuses a document holding `thermal` through the recipe export and backup `schemaVersion` 3
+  (`UnsupportedDocumentVersion`, persistence.md, Personal thermal profile), never misreads it.
+  Older documents are read as no `thermal`.
+  `StartBake` copies `thermal` with the rest of the step into the snapshot (history.md); a change
+  during a Preparation is an event (bake-session.md), never an edit of the snapshot.
+- **Scheduler.** The scheduler ignores `thermal` (time arithmetic only); only the fermentation
+  model reads it.
 
 ## Steps before a target (preheating)
 
