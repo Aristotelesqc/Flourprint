@@ -168,6 +168,7 @@ interface BakeEvent<P> {
 | `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                              |
 | `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                             |
 | `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                      |
+| `SetStepThermal`             | `StepThermalChanged`                                                         | running or not-yet-started dough step; a replacement of the step's whole `thermal` (process.md, Thermal inputs), effective from `at`; (below, 0.21.0 target)        |
 | `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start         |
 | `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                            |
 | `HoldStepCountdown`          | `StepCountdownHeld`                                                          | step running (started, not ended, with a planned duration, not `beforeTarget`); not already held (`StepAlreadyHeld`); `at` not before the start or the last release |
@@ -211,6 +212,59 @@ the fermentation go on, and no rest step is created or classified.
   event type, never misreading it. `CONTRACT_VERSION` is `0.20.0` (minor, additive vocabulary);
   the backup `schemaVersion`, the event envelope version and the SQL schema are unchanged (the
   log is JSON).
+
+**Thermal change on a running step (0.21.0 target, #176).** The baker moved the dough: into a
+bowl with a lid, out of the fridge, onto a tray. `SetStepThermal { stepId, at?, thermal? }` (`at` defaults to now; omitted or ignored on a step not yet started) records
+`StepThermalChanged { stepId, at, thermal }`; `thermal` absent means "no thermal inputs from now
+on" (back to the fixed lag).
+
+- **Refusals.** Unknown step; a step that is not a dough step (`InvalidCommand`); a completed step
+  (`StepAlreadyCompleted`); an invalid `thermal` (`InvalidProcess`, process.md); `at` before the
+  step's start or before the previous thermal change of that step (`InvalidTime`). A step not yet
+  started accepts it with `at` omitted: the event is recorded at the command time, but the new
+  `thermal` applies **from the step's start** (there is no earlier part to keep).
+- **Effect.** Replaces the step's `thermal` from `at` on; the earlier part of the step keeps the
+  inputs in force before. The effective thermal inputs of a step are therefore a list of
+  `(from, thermal)` segments: the snapshot's `thermal` from the step's start, then the changes in
+  order. `liveProjection` and the model's forecast recompute from the recorded facts: the dough
+  temperature state at `at` is that of the segment before, then the new `τ_eff` applies. Planned
+  steps downstream, reminders and the end times that depend on the model follow the new
+  projection like those of any other change. Nothing is stored for the recomputed values.
+- **Not an `AdjustStep`.** The step's duration, conditions and equipment are untouched; a change of
+  the ambient temperature is `AdjustStep`, a change of container, cover, geometry or environment
+  class is `SetStepThermal`. A move from the counter to the fridge is both, recorded at the same
+  `at`, in one command batch.
+- **Replay.** `evolve` is structural: it stores the segments and never calls the engine.
+  A stored session replays with the values it committed (history.md); the forecast of the past is
+  never recomputed with a new thermal model.
+
+`AddObservation` accepts `kind: 'doughTemperature'` (0.21.0 target): a measured dough temperature
+with the probe position.
+
+- It needs a `stepId` that is running and is a dough step, and a numeric `Observation` in °C
+  (finite, within 0 – 60 °C, as for the other temperatures); anything else is `InvalidCommand`,
+  and on an ended bake `BakeNotActive`. Category `fermentation`, `position`: `core` (probe in the
+  centre), `surface` or `unknown`, optional `note`.
+- The reading is kept in the journal and exported. It replaces the model's **mean** state from its
+  instant (fermentation.md, Dough temperature): `core` through `γ_core` when the step has thermal
+  inputs and the reading is at least 0.5 `τ_eff` after the later of the step start and the last
+  thermal change; otherwise (earlier, no thermal, `surface`, `unknown`) it is taken as the mean
+  and the estimate says `probe_position_unmodelled` or `reading_in_transient`.
+- Readings of one step after one thermal setting are the data of the personal factor
+  (fermentation.md, Personal correction): they are kept with the active `thermal` segment, so a
+  calibration reads the container and environment that were in force at each reading.
+- It never completes the step nor changes the plan. A not-ready or ready judgement stays
+  `doughReady`; the model's forecast is an estimate that never overrides it.
+
+**Versioning and upcasting.** Two new event/observation vocabulary items, additive: `StepThermalChanged`
+and `kind: 'doughTemperature'` with `position`. `CONTRACT_VERSION` goes from `0.20.0` to `0.21.0`
+(minor, additive vocabulary) in the implementing pull request. Stored events are untouched: no
+upcaster is needed, an old session has no thermal segment and replays with the fixed lag of its
+snapshot. The event envelope version and the log are unchanged (JSON). The backup `schemaVersion` goes from
+2 to 3 for the `thermal` inputs in the snapshot's process and for `thermalProfiles`
+(persistence.md); old backups restore unchanged, read as no thermal. As for the countdown hold, an app that does not know `StepThermalChanged`
+refuses a backup holding it on its unknown event type (`persistence.md`), never misreading it;
+old backups restore unchanged in a new app. Downgrades are not supported.
 
 **Implicitly running steps (live projection).** The baker's first real action on a step records
 its `StepStarted`; until then the step has no recorded start, but it must not be shown as waiting

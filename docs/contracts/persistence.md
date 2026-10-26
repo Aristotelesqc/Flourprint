@@ -168,6 +168,52 @@ is never rewritten, and a version that is not the next one for its id is refused
 Built-in entries are code and are not stored; a customization of a built-in is a personal entry
 stored under the built-in's id (`ingredients.md`).
 
+## Personal thermal profile (#176, 0.21.0 target)
+
+The personal correction of the dough thermal model (`fermentation.md`, Personal correction) is a
+versioned personal object, like the readiness profile and personal entries, never part of a recipe:
+
+```ts
+interface ThermalProfile {
+  id: string; // 'personal'
+  version: number; // 1, 2, 3...: a version is never rewritten
+  factors: Array<{
+    material: ContainerMaterial; // process.md, Thermal inputs
+    cover: 'lid' | 'film' | 'cloth' | 'none';
+    environment: 'fridgeStatic' | 'fridgeVentilated' | 'roomStill' | 'provingBox';
+    // One set per calibrated step of one bake; the key's factor is their geometric mean and its
+    // band follows fermentation.md (Personal correction). Absent key = factor 1.
+    sets: Array<{
+      factor: number; // f_i, multiplies tau_eff, in 0.25 – 4
+      massG: number; // fermenting mass of the step (per piece when divided)
+      geometry: 'sheet' | 'tin' | 'ball' | 'bulk'; // process.md, Thermal inputs
+      readings: number; // count of readings behind it
+      basis: { bakeId: string; stepId: string; eventIds: string[] }; // the doughTemperature observations used
+    }>;
+  }>;
+  updatedAt: Instant;
+}
+```
+
+- Stored by `(id, version)`; writing a version that is not the next one is refused (`HeadConflict`).
+  Absent profile = every factor 1. A factor belongs to the owner's device and probe: it is not a
+  property of the recipe and never travels in a recipes file.
+- A full backup may carry `thermalProfiles` (every version), optional, so older backups restore.
+- **Version bump** (the 0.17.0 precedent, Recipe history): `thermal` on a process step and
+  `thermalProfiles` are new persisted fields that an older reader would reject only as a generic
+  unknown field, or drop. So the recipe export and the full backup `schemaVersion` go from 2 to 3
+  (`EXPORT_SCHEMA_VERSION`; revision documents stay at 1), and an older reader refuses a version-3
+  document with `UnsupportedDocumentVersion` instead. Upcasting: documents of version 1 and 2 are
+  read unchanged, as steps with no `thermal` (fixed lag) and no profile (every factor 1); no stored
+  value is rewritten. A version-3 writer may write a document with no thermal field; it is still
+  version 3. Downgrades are not supported. The new event type is refused by an older app on its
+  unknown event type (bake-session.md); the log schema is unchanged.
+- A bake snapshot does not store the profile. The factor used by a committed estimate appears in
+  that estimate's assumptions (`thermal_factor:<key>=<value>`, history.md), so
+  replay never recomputes it with a later factor.
+- Storage is an additional table in the SQLite adapter (a database migration step) in the
+  implementing pull request; this contract fixes the document, not the SQL.
+
 ## SQLite schema (version 7)
 
 ```sql
