@@ -320,7 +320,7 @@ const seed = async (stores: BackupStores) => {
     },
     at('10:00'),
   );
-  await run({ type: 'FinishBake' }, at('11:00'));
+  await run({ type: 'FinishBake', outcome: { result: 'cooked' } }, at('11:00'));
   await run({ type: 'AddObservation', category: 'crumb', text: 'tight' }, at('11:30'));
 };
 
@@ -478,7 +478,7 @@ describe.each([
   it('restores a finish written before outcomes as an unknown result', async () => {
     const backup = await backupOf();
     const finish = backup.bakes[0].events.find((e: Loose) => e.payload.type === 'BakeFinished');
-    expect(finish.payload).toMatchObject({ outcomeSource: 'recipe' });
+    expect(finish.payload).toMatchObject({ outcomeSource: 'baker' });
     finish.payload = { type: 'BakeFinished' };
     const target = await makeTarget();
     expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
@@ -962,10 +962,9 @@ describe('feedback export (history.md)', () => {
       flours: [{ id: 'bread', version: 2 }],
       startedAt: at('08:00'),
       endedAt: at('11:00'),
-      // Finished with one tap: the recipe's intended outcome (no cooking step: the raw dough),
-      // recorded with its source.
+      // No cooking step was completed: finished with the outcome the baker chose.
       outcome: { result: 'cooked' },
-      outcomeSource: 'recipe',
+      outcomeSource: 'baker',
     });
     expect(result.value.schemaVersion).toBe(3);
     expect(digest?.steps.find((s) => s.id === 'mix')).toMatchObject({
@@ -1013,5 +1012,101 @@ describe('feedback export (history.md)', () => {
         },
       },
     ]);
+  });
+});
+
+describe.each([
+  ['memory', async () => memoryStores()],
+  ['sqlite-node', () => sqliteStores()],
+])('reference versions in backups and recipe files into %s', (_name, makeTarget) => {
+  const withReference = async () => {
+    const source = memoryStores();
+    await seed(source);
+    const promoted = await source.recipes.promoteReferenceVersion(
+      'lean',
+      1,
+      'First loaf',
+      (await source.recipes.getRecipe('lean'))?.headVersion ?? 0,
+      at('13:00'),
+    );
+    if (!promoted.ok) throw new Error('promote failed');
+    return source;
+  };
+
+  it('round-trips reference versions in a full backup of schema 2', async () => {
+    const source = await withReference();
+    const exported = await exportBackup(source, at('14:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    expect(backup.schemaVersion).toBe(2);
+    expect(backup.recipes.find((r: Loose) => r.id === 'lean').referenceVersions).toEqual([
+      { recipeId: 'lean', number: 1, version: 1, name: 'First loaf', createdAt: at('13:00') },
+    ]);
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect(await target.recipes.listReferenceVersions('lean')).toEqual(
+      backup.recipes.find((r: Loose) => r.id === 'lean').referenceVersions,
+    );
+    expect(await target.recipes.listReferenceVersions('lean-cold')).toEqual([]);
+  });
+
+  it('history 7: an older backup without referenceVersions restores with none', async () => {
+    const backup = await backupOf();
+    backup.schemaVersion = 1;
+    for (const recipe of backup.recipes) expect(recipe.referenceVersions).toBeUndefined();
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    expect((await target.recipes.getRecipe('lean'))?.headVersion).toBeGreaterThan(0);
+    expect(await target.recipes.listReferenceVersions('lean')).toEqual([]);
+  });
+
+  it('refuses a backup or a recipe file of a newer schema', async () => {
+    const backup = await backupOf();
+    backup.schemaVersion = 3;
+    const target = await makeTarget();
+    const result = await importBackup(target.restore, backup);
+    expect(result.ok).toBe(false);
+    expect(await isEmpty(target)).toBe(true);
+    const file = await exportRecipes((await withReference()).recipes, at('14:00'));
+    if (!file.ok) throw new Error('export failed');
+    const newer = { ...JSON.parse(JSON.stringify(file.value)), schemaVersion: 3 };
+    expect((await importRecipes(target.recipes, newer)).ok).toBe(false);
+  });
+
+  it('carries reference versions in a recipe file; a present recipe is skipped whole', async () => {
+    const source = await withReference();
+    const exported = await exportRecipes(source.recipes, at('14:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const file = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    expect(file.schemaVersion).toBe(2);
+    const target = await makeTarget();
+    await saveRevision(target.recipes, {
+      recipeId: 'lean',
+      name: 'Mine',
+      expectedHead: 0,
+      formula,
+      process,
+      createdAt: at('05:00'),
+    });
+    expect((await importRecipes(target.recipes, file)).ok).toBe(true);
+    expect(await target.recipes.listReferenceVersions('lean')).toEqual([]);
+    expect((await target.recipes.listReferenceVersions('lean-cold')).length).toBe(0);
+    const fresh = await makeTarget();
+    expect((await importRecipes(fresh.recipes, file)).ok).toBe(true);
+    expect((await fresh.recipes.listReferenceVersions('lean')).map((r) => r.version)).toEqual([1]);
+  });
+
+  it.each<[string, (reference: Loose) => void]>([
+    ['a misnumbered reference version', (r) => (r.number = 2)],
+    ['a missing revision', (r) => (r.version = 99)],
+    ['an invalid createdAt', (r) => (r.createdAt = 'yesterday')],
+  ])('refuses %s and writes nothing', async (_case, corrupt) => {
+    const exported = await exportBackup(await withReference(), at('14:00'));
+    if (!exported.ok) throw new Error('export failed');
+    const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
+    corrupt(backup.recipes.find((r: Loose) => r.id === 'lean').referenceVersions[0]);
+    const target = await makeTarget();
+    expect((await importBackup(target.restore, backup)).ok).toBe(false);
+    expect(await isEmpty(target)).toBe(true);
   });
 });

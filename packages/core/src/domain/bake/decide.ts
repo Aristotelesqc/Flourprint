@@ -12,9 +12,9 @@ import { doughReadyStage } from '../fermentation/estimate.js';
 import { applyFormulaEdit } from '../formula/edit.js';
 import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
-import { intendedOutcome, outcomeProblem } from '../process/cooking.js';
+import { intendedOutcome, outcomeChoiceRequired, outcomeProblem } from '../process/cooking.js';
 import { projectProcess } from '../process/project.js';
-import type { Process, Projection, StepFact } from '../process/types.js';
+import type { Process, ProcessStep, Projection, StepFact } from '../process/types.js';
 import type { Formula } from '../formula/types.js';
 import type { ProcessError } from '../process/validate.js';
 import { approxEqual } from '../numeric.js';
@@ -23,6 +23,8 @@ import { validateRecipe } from '../recipe/validate.js';
 import { ingredientUsedProperties } from '../ingredient/mapping.js';
 import { CONTRACT_VERSION, ENGINE_VERSION } from '../version.js';
 import type { AcceptedSuggestion, Estimate, ModelRef } from '../values.js';
+import { heldSeconds, openHold } from './hold.js';
+import { startedDependents } from './previous.js';
 import type { BakeCommandPayload, BakeState, EventDraft } from './types.js';
 
 export type BakeError =
@@ -31,11 +33,15 @@ export type BakeError =
   | DomainError<'BakeAlreadyStarted'>
   | DomainError<'BakeNotActive', { status: BakeState['status'] }>
   | DomainError<'NotFinished', { status: BakeState['status'] }>
+  | DomainError<'OutcomeRequired', { reason: string }>
   | DomainError<'BakeActive', { status: BakeState['status'] }>
   | DomainError<'UnknownStep', { stepId: string }>
   | DomainError<'DuplicateStepId', { stepId: string }>
   | DomainError<'StepAlreadyStarted', { stepId: string }>
   | DomainError<'StepAlreadyCompleted', { stepId: string }>
+  | DomainError<'StepNotRunning', { stepId: string }>
+  | DomainError<'StepAlreadyHeld', { stepId: string }>
+  | DomainError<'StepNotHeld', { stepId: string }>
   | DomainError<'DependenciesNotCompleted', { stepId: string; pending: string[] }>
   | DomainError<'DependentStepStarted', { stepId: string; dependents: string[] }>
   | DomainError<'InvalidTime', { reason: string }>
@@ -104,6 +110,30 @@ const planOrigin = (projection: Projection): Instant | undefined =>
     return min === undefined || seconds(step.start) < seconds(min) ? step.start : min;
   }, undefined);
 
+/**
+ * Where a step with all its dependencies ended implicitly starts (bake-session.md): the latest
+ * recorded dependency end, or the bake start when it has none. Pure arithmetic on recorded facts.
+ */
+const placedStart = (state: BakeState, step: ProcessStep): Instant | undefined => {
+  if (step.dependsOn.some((dep) => state.steps[dep]?.endedAt === undefined)) return undefined;
+  return (
+    latest(step.dependsOn.flatMap((dep) => state.steps[dep]?.endedAt ?? [])) ?? state.startedAt
+  );
+};
+
+/**
+ * The implicit start of a step the baker has not started: an `asap` step whose dependencies are all
+ * ended (or that has none), at its latest dependency end or the bake start. `undefined` for a step
+ * recorded as started or completed, an `alap` or `beforeTarget` step, or one still waiting.
+ */
+export const implicitStartOf = (state: BakeState, stepId: string): Instant | undefined => {
+  const step = state.process?.steps.find((s) => s.id === stepId);
+  const record = state.steps[stepId];
+  if (!step || record?.startedAt !== undefined || record?.endedAt !== undefined) return undefined;
+  if (step.schedule !== 'asap') return undefined;
+  return placedStart(state, step);
+};
+
 /** Live plan of an active bake at `now`; recomputed from facts, never stored (history.md). */
 export const liveProjection = (
   state: BakeState,
@@ -111,12 +141,47 @@ export const liveProjection = (
 ): Result<Projection, ProcessError> | undefined => {
   if (!state.snapshot || !state.process) return undefined;
   const origin = planOrigin(state.snapshot.initialProjection) ?? state.startedAt ?? now;
-  return projectProcess(state.process, {
-    mode: { kind: 'startAt', at: origin },
-    facts: stepFacts(state),
-    now,
+  // Projected duration = planned (with overrides) + countdown holds, an open hold growing with the
+  // clock so that the remaining time stays frozen (bake-session.md, Step countdown hold).
+  const process: Process = {
+    ...state.process,
+    steps: state.process.steps.map((step) => {
+      const held = heldSeconds(state.steps[step.id], now);
+      return held > 0 && step.plannedDurationS !== undefined
+        ? { ...step, plannedDurationS: step.plannedDurationS + held }
+        : step;
+    }),
+  };
+  // Implicitly running steps (bake-session.md): read-model only, nothing is recorded.
+  const facts = stepFacts(state);
+  const implicit = new Set<string>();
+  for (const step of process.steps) {
+    const at = implicitStartOf(state, step.id);
+    if (at === undefined) continue;
+    facts[step.id] = { startedAt: at };
+    implicit.add(step.id);
+  }
+  const projection = projectProcess(process, { mode: { kind: 'startAt', at: origin }, facts, now });
+  if (!projection.ok || implicit.size === 0) return projection;
+  return ok({
+    ...projection.value,
+    steps: Object.fromEntries(
+      Object.entries(projection.value.steps).map(([id, step]) => [
+        id,
+        implicit.has(id) ? { ...step, implicit: true as const } : step,
+      ]),
+    ),
   });
 };
+
+/** Releases for every open hold, so that ending the session leaves none open. */
+const closeHolds = (state: BakeState, at: Instant): EventDraft[] =>
+  Object.entries(state.steps).flatMap(([stepId, record]) => {
+    const hold = openHold(record);
+    if (hold === undefined) return [];
+    const when = seconds(at) < seconds(hold.from) ? hold.from : at;
+    return [{ occurredAt: when, payload: { type: 'StepCountdownReleased' as const, stepId } }];
+  });
 
 const error = <C extends string, D>(code: C, message: string, details: D) =>
   err(domainError(code, message, details));
@@ -425,6 +490,12 @@ export const decide = (
         });
       }
       const at = command.at ?? now;
+      const hold = openHold(record);
+      if (hold !== undefined && seconds(at) < seconds(hold.from)) {
+        return error('InvalidTime', 'A step cannot end before its hold began', {
+          reason: 'end before hold',
+        });
+      }
       const completed: EventDraft = {
         occurredAt: at,
         payload: {
@@ -439,7 +510,18 @@ export const decide = (
             reason: 'end before start',
           });
         }
-        return ok([completed]);
+        // Completing a held step closes the hold at the completion time (bake-session.md).
+        return ok(
+          hold === undefined
+            ? [completed]
+            : [
+                {
+                  occurredAt: at,
+                  payload: { type: 'StepCountdownReleased', stepId: command.stepId },
+                },
+                completed,
+              ],
+        );
       }
       const pending = pendingDependencies(state, process, command.stepId);
       if (pending.length > 0) {
@@ -453,7 +535,8 @@ export const decide = (
         );
       }
       // The implicit start sits at the latest dependency end, or the bake start (bake-session.md).
-      const start = dependencyEnd(state, process, command.stepId) ?? state.startedAt ?? at;
+      const step = process.steps.find((s) => s.id === command.stepId);
+      const start = (step && placedStart(state, step)) ?? at;
       if (seconds(at) < seconds(start)) return beforeDependencies(command.stepId);
       return ok([
         { occurredAt: start, payload: { type: 'StepStarted', stepId: command.stepId } },
@@ -499,6 +582,12 @@ export const decide = (
         return error('InvalidCommand', `Invalid ${field}`, {
           field,
           reason: 'must be a finite value, durations ≥ 0',
+        });
+      }
+      if (field === 'plannedDurationS' && step?.schedule === 'beforeTarget') {
+        return error('InvalidCommand', 'A beforeTarget step has no duration', {
+          field,
+          reason: 'beforeTarget steps are scheduled from their target (process.md)',
         });
       }
       const baseline =
@@ -585,8 +674,18 @@ export const decide = (
       if (!projection)
         return error('BakeNotActive', 'The bake has no plan', { status: state.status });
       if (!projection.ok) return projection;
+      // The computed `implicit` flag is never persisted; the interval and status stay as computed.
+      const steps = Object.fromEntries(
+        Object.entries(projection.value.steps).map(([id, { implicit: _implicit, ...step }]) => [
+          id,
+          step,
+        ]),
+      );
       return ok([
-        { occurredAt: now, payload: { type: 'ProjectionAccepted', projection: projection.value } },
+        {
+          occurredAt: now,
+          payload: { type: 'ProjectionAccepted', projection: { ...projection.value, steps } },
+        },
       ]);
     }
 
@@ -670,11 +769,7 @@ export const decide = (
           },
         );
       }
-      const dependents = process.steps
-        .filter(
-          (s) => s.dependsOn.includes(target.stepId) && state.steps[s.id]?.startedAt !== undefined,
-        )
-        .map((s) => s.id);
+      const dependents = startedDependents(state, target.stepId);
       if (dependents.length > 0) {
         return error('DependentStepStarted', `Steps after ${target.stepId} have started`, {
           stepId: target.stepId,
@@ -689,14 +784,85 @@ export const decide = (
       ]);
     }
 
+    case 'HoldStepCountdown':
+    case 'ReleaseStepCountdown': {
+      const known = requireStep(state, command.stepId);
+      if (!known.ok) return known;
+      const record = state.steps[command.stepId];
+      if (record?.endedAt !== undefined) {
+        return error('StepAlreadyCompleted', `${command.stepId} is already completed`, {
+          stepId: command.stepId,
+        });
+      }
+      if (record?.startedAt === undefined) {
+        return error('StepNotRunning', `${command.stepId} is not running`, {
+          stepId: command.stepId,
+        });
+      }
+      const step = process.steps.find((s) => s.id === command.stepId);
+      if (step?.schedule === 'beforeTarget' || step?.plannedDurationS === undefined) {
+        return error('InvalidCommand', 'Only a step with a planned duration has a countdown', {
+          field: 'stepId',
+          reason: 'no countdown',
+        });
+      }
+      const at = command.at ?? now;
+      const hold = openHold(record);
+      const holds = record.holds ?? [];
+      const previous = holds[holds.length - 1];
+      if (command.type === 'HoldStepCountdown') {
+        if (hold !== undefined) {
+          return error('StepAlreadyHeld', `${command.stepId} is already held`, {
+            stepId: command.stepId,
+          });
+        }
+        const floor = previous?.to ?? record.startedAt;
+        if (seconds(at) < seconds(floor)) {
+          return error(
+            'InvalidTime',
+            'A hold cannot begin before the step started or the last hold ended',
+            {
+              reason: 'hold before start',
+            },
+          );
+        }
+        return ok([
+          { occurredAt: at, payload: { type: 'StepCountdownHeld', stepId: command.stepId } },
+        ]);
+      }
+      if (hold === undefined) {
+        return error('StepNotHeld', `${command.stepId} is not held`, { stepId: command.stepId });
+      }
+      if (seconds(at) < seconds(hold.from)) {
+        return error('InvalidTime', 'A hold cannot end before it began', {
+          reason: 'release before hold',
+        });
+      }
+      return ok([
+        { occurredAt: at, payload: { type: 'StepCountdownReleased', stepId: command.stepId } },
+      ]);
+    }
+
     case 'FinishBake': {
       if (command.outcome !== undefined) {
         const problem = outcomeProblem(command.outcome);
         if (problem) return error('InvalidCommand', `Invalid outcome: ${problem.reason}`, problem);
       }
       // Without a choice, the recipe's intended outcome, from the effective process (inserted
-      // steps included): finishing never asks a question (bake-session.md).
+      // steps included), but a cooked intended outcome needs a completed cooking step
+      // (bake-session.md): before that, nothing says it was reached, so the baker must choose.
+      if (
+        command.outcome === undefined &&
+        outcomeChoiceRequired(process, (id) => state.steps[id]?.endedAt !== undefined)
+      ) {
+        return error(
+          'OutcomeRequired',
+          'No cooking step is completed: choose the outcome (AbandonBake for a failed preparation)',
+          { reason: 'no_cooking_step_completed' },
+        );
+      }
       return ok([
+        ...closeHolds(state, command.at ?? now),
         {
           occurredAt: command.at ?? now,
           payload: {
@@ -710,6 +876,7 @@ export const decide = (
 
     case 'AbandonBake':
       return ok([
+        ...closeHolds(state, now),
         {
           occurredAt: now,
           payload: {

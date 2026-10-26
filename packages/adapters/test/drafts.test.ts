@@ -82,7 +82,16 @@ describe('saving a draft', () => {
     const repository = new MemoryRecipeRepository();
     const first = await saveDraft(repository, draft(), { newRecipeId: 'r1', createdAt: at });
     expect(first.ok).toBe(true);
-    const edit = draft({ id: 'd2', origin: { kind: 'revision', recipeId: 'r1', baseVersion: 1 } });
+    // An edit identical to the head is a no-op (persistence.md, Recipe history): change something.
+    const formula = {
+      ...blank.formula,
+      anchor: { kind: 'flourTotal', grams: 1234 },
+    } as Draft['formula'];
+    const edit = draft({
+      id: 'd2',
+      formula,
+      origin: { kind: 'revision', recipeId: 'r1', baseVersion: 1 },
+    });
     await repository.saveDraft(edit);
     const second = await saveDraft(repository, edit, { newRecipeId: 'unused', createdAt: at });
     expect(second).toMatchObject({ ok: true, value: { recipeId: 'r1', version: 2 } });
@@ -93,6 +102,19 @@ describe('saving a draft', () => {
       await saveDraft(repository, stale, { newRecipeId: 'unused', createdAt: at }),
     ).toMatchObject({ ok: false, error: { code: 'HeadConflict' } });
     expect((await repository.listDrafts()).map((d) => d.id)).toEqual(['d3']);
+  });
+
+  it('saving an unchanged draft is a no-op: no revision, the head returned, the draft deleted', async () => {
+    const repository = new MemoryRecipeRepository();
+    await saveDraft(repository, draft(), { newRecipeId: 'r1', createdAt: at });
+    const same = draft({ id: 'd2', origin: { kind: 'revision', recipeId: 'r1', baseVersion: 1 } });
+    await repository.saveDraft(same);
+    expect(await saveDraft(repository, same, { newRecipeId: 'x', createdAt: at })).toMatchObject({
+      ok: true,
+      value: { recipeId: 'r1', version: 1 },
+    });
+    expect((await repository.getRecipe('r1'))?.headVersion).toBe(1);
+    expect(await repository.listDrafts()).toEqual([]);
   });
 
   it('keeps the edits of a deleted recipe: refused as a version, saved as a new recipe', async () => {

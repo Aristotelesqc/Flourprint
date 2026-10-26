@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { brioche, burgerBuns, pullman, shokupan } from '../src/application/templates/enriched.js';
 import {
+  applyFormulaEdit,
   blockingIssues,
   checkRecipe,
   resolveFormula,
@@ -139,6 +140,32 @@ describe('Sourced enriched bread presets (#34)', () => {
     expect(bakeVented?.dependsOn).toEqual(['bake']);
     expect(bakeVented?.conditions?.temperatureC).toBe(200);
     expect(bakeVented?.plannedDurationS).toBe(600); // 10 min
+  });
+
+  it('shokupan: locking total water at 75 % succeeds now that milk powder has a water content', () => {
+    // Water brought by the ingredients, per 314 g of flour (estimated contents, presets.ts and
+    // milk-powder in enriched.ts):
+    //   milk 156 g x 89 %          = 138.84 g
+    //   milk powder 14 g x 3.5 %   =   0.49 g
+    //   butter 57 g x 16 %         =   9.12 g
+    //   egg 50 g x 76 %            =  38.00 g
+    //   instant yeast 9 g x 5 %    =   0.45 g
+    //   sugar and salt             =   0 g
+    //   total                      = 186.90 g  (59.5223 % of the flour)
+    // A total of 75 % is 0.75 x 314 = 235.5 g, so the added water is 235.5 - 186.9 = 48.6 g,
+    // i.e. 48.6 / 314 x 100 = 15.4777 % (it was 43 g, 13.6943 %, in the source recipe).
+    const locked = applyFormulaEdit(shokupan.formula, {
+      type: 'LockTotalWater',
+      totalWaterPct: 75,
+      water: 'water',
+    });
+    expect(locked.ok).toBe(true);
+    if (!locked.ok) return;
+    expect(locked.value.ingredients.find((i) => i.id === 'water')?.bakerPct).toBeCloseTo(
+      (48.6 / 314) * 100,
+      9,
+    );
+    expect(resolve(locked.value).totalWaterPct).toBeCloseTo(75, 9);
   });
 
   it('shokupan: draws tangzhong scald accurately with pure water and milk allocation', () => {

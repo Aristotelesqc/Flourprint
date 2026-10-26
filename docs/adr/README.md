@@ -27,4 +27,5 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0018](0018-canary-channel.md)                       | Canary branch and web channel for the release after next   | Accepted                                        |
 | [0019](0019-material3-presentation.md)               | Material 3 presentation through shared components          | Accepted; Ionic shell retained; amended by 0021 |
 | [0020](0020-versioned-component-library.md)          | Versioned component library called by the layout engine    | Accepted, amended by 0021                       |
-| [0021](0021-theme-builder-and-component-sourcing.md) | Theme builder, component sourcing, motion items and guides | Accepted                                        |
+| [0021](0021-theme-builder-and-component-sourcing.md) | Theme builder, component sourcing, motion items and guides | Accepted; amended by 0022                       |
+| [0022](0022-port-to-app-and-tailwind.md)             | Port the interface into the app, styled with Tailwind v4   | Accepted                                        |

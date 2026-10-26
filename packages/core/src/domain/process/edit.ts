@@ -1,3 +1,5 @@
+import { domainError, type DomainError } from '../errors.js';
+import { err, ok, type Result } from '../result.js';
 import type { Process, ProcessStep, StepId } from './types.js';
 
 /**
@@ -22,6 +24,29 @@ export const removeStep = (process: Process, stepId: StepId): Process => {
           : s,
       ),
   };
+};
+
+export type TargetInUse = DomainError<'TargetInUse', { stepId: StepId; preheats: StepId[] }>;
+
+/**
+ * `removeStep` that refuses (`TargetInUse`) while a `beforeTarget` step names the step as its
+ * target (process.md, Steps before a target): remove or retarget the preheat first.
+ */
+export const removeStepChecked = (
+  process: Process,
+  stepId: StepId,
+): Result<Process, TargetInUse> => {
+  const preheats = process.steps
+    .filter((s) => s.schedule === 'beforeTarget' && s.target === stepId)
+    .map((s) => s.id);
+  return preheats.length > 0
+    ? err(
+        domainError('TargetInUse', `${stepId} is the target of ${preheats.join(', ')}`, {
+          stepId,
+          preheats,
+        }),
+      )
+    : ok(removeStep(process, stepId));
 };
 
 /**
@@ -54,6 +79,9 @@ export interface StepChanges {
   readonly plannedDurationS?: number | undefined;
   readonly technique?: ProcessStep['technique'] | undefined;
   readonly durationMode?: ProcessStep['durationMode'] | undefined;
+  readonly target?: ProcessStep['target'] | undefined;
+  readonly requiredWarmupS?: number | undefined;
+  readonly startRule?: ProcessStep['startRule'] | undefined;
 }
 
 /**

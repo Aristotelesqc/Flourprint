@@ -36,6 +36,10 @@ a dedicated pull request, before the code that depends on it.
   contract change or reviewed implementation slice, never back into #31. They target `dev`, the
   integration branch of the open major pull request (`dev` → `main`), and are merged into it once
   green and reviewed; the dev channel (dev APK, `dev` preview address) follows `dev` (ADR 0013).
+  Temporary exception (owner decision of 2026-10-26, ADR 0022): release 0.3 UI PRs target
+  the temporary integration branch `ui/0.3-integration` instead of `dev`, rolled up to `dev` in a
+  single draft aggregate PR; individual slice merge does not close issues or complete acceptance.
+  Engine and unrelated work continue targeting `dev` normally.
   Only the owner decides when the major pull request is merged into `main`.
 - Work for the **release after next** targets `canary` instead (ADR 0018), whose web address is
   `https://canary.flourprint-aristotelesqc.pages.dev` (no APK). Say in each PR which release it is
@@ -67,6 +71,8 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
   publishing, permission changes or overlapping writers.
 - **UI verification**: [.agents/skills/flourprint-ui-check/SKILL.md](.agents/skills/flourprint-ui-check/SKILL.md).
   Use for browser/visual acceptance and selecting the native evidence needed for a UI change.
+- **UI audit**: [.agents/skills/flourprint-ui-audit/SKILL.md](.agents/skills/flourprint-ui-audit/SKILL.md).
+  Use for an on-demand independent, read-only UI/UX audit by an agent that did not build the interface.
 - **UI mockups**: [.agents/skills/flourprint-ui-mockups/SKILL.md](.agents/skills/flourprint-ui-mockups/SKILL.md).
   Use for Gemini-generated visual proposals, Codex verification, hosted galleries and the
   owner's requested approval before redesign implementation; not as a gate for routine fixes.
@@ -83,6 +89,8 @@ sources of truth. Read a skill's entrypoint before using its procedure or helper
 - **Agent handoff**: [.agents/skills/flourprint-agent-handoff/SKILL.md](.agents/skills/flourprint-agent-handoff/SKILL.md).
   Use to write a message the owner relays to another agent, or when work crosses an ownership
   boundary.
+- **Backlog steward**: [.agents/skills/flourprint-backlog-steward/SKILL.md](.agents/skills/flourprint-backlog-steward/SKILL.md).
+  Use on the owner's request for a label/stale-work/next-work pass since a cutoff; bounded writes.
 
 These skills also have thin Claude Code routing entrypoints. They reuse current contracts,
 ADRs and tools rather than introducing another source of product decisions or a tracking system.
@@ -114,6 +122,12 @@ GitHub issues are the only tracking system (owner decision of 2026-10-12: no Pro
 tracking file). Its operational view is generated from individual issues and their labels;
 the decision history remains editorial. See [docs/governance/generated-backlog.md](docs/governance/generated-backlog.md).
 
+- **Reports** (owner decision of 2026-10-25): audit, review and verification reports are never
+  committed to the repository. Post each one as a comment on the issue or pull request concerned,
+  naming the exact revision (commit SHA) it examined; a report that must outlive a pull request goes
+  on an issue. Only binding outcomes enter the repository, through the requirements ledger,
+  contracts or ADRs. The two reports in `docs/audits/` (2026-10-11) predate this rule and stay as a
+  historical record; add nothing there.
 - **New issues** follow `.github/ISSUE_TEMPLATE/` (work item or bug), also when opened through the
   API, and start with `status:backlog`. Pull requests follow `.github/pull_request_template.md`.
 - **Status labels**: every open issue has exactly one. `status:backlog` (accepted, not planned),
@@ -131,6 +145,10 @@ the decision history remains editorial. See [docs/governance/generated-backlog.m
   sets `status:review`. A merged pull request does not finish an issue: it goes back to
   `status:in-progress` while acceptance remains open, or to `status:verified` with the evidence in a
   comment. Only the owner, or an agent with every criterion shown, closes an issue.
+- **Pull request linkage**: every pull request names the issues it advances or closes in its body
+  (`Closes #N` only when it meets the issue's full acceptance, otherwise `Refs #N`) and comments on
+  each such issue when it opens and when it merges if the issue's status changes. A pull request
+  that advances no issue says `No issue:` with a one-line reason. A CI check enforces the presence.
 - **Generated view**: update the individual issue and its labels, never #30's generated tables.
   The Backlog view workflow maintains one bot-owned comment linked from #30. It reports missing
   or conflicting classifications, without correcting labels, setting priorities or closing issues.

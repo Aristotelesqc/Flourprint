@@ -69,3 +69,15 @@ export const outcomeProblem = (
 export const intendedOutcome = (process: Process): PreparationOutcome =>
   process.intendedOutcome ??
   (process.steps.some(isCookingStep) ? { result: 'cooked' } : { result: 'dough' });
+
+/**
+ * Whether finishing must be told its outcome (bake-session.md, Finishing): the process intends a
+ * cooked result (`cooked` or `cookedAndDough`) but no cooking step is completed, so the intended outcome cannot be assumed.
+ * A recipe whose intended outcome is a dough finishes with it at once.
+ */
+export const outcomeChoiceRequired = (
+  process: Process,
+  isCompleted: (stepId: string) => boolean,
+): boolean =>
+  intendedOutcome(process).result !== 'dough' &&
+  !process.steps.some((step) => isCookingStep(step) && isCompleted(step.id));

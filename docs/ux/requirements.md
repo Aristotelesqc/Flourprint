@@ -264,6 +264,45 @@ fluid. Polishing the other animations is deferred, possibly to 0.4; L28 still ap
 global, recipe. Source: owner, 2026-10-19 ("je veux A avec les tabs au haut", "on devrait aussi
 pouvoir swiper à gauche ou à droite", "un petit flick rapide horizontal du doigt"). Kind: OD.
 
+_Amended: scope narrowed by L105 (style only)._
+
+**L105.** L101 chooses a navigation **style** only (top tabs, tap or swipe). It does not decide what the tabs contain or how the recipe is split (see L108). A regression introduced while applying navigation A is not covered by L101. Screens: global. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L106.** Tab carousel motion follows the finger 1:1. On release it continues with the release velocity (momentum or spring) and never jumps to the final position. Screens: global. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L107.** Summary and status icons come first from the app's open icon set. A custom SVG icon in the same style is added only where none fits, and the owner validates it before it enters `packages/ui`. No emoji. Screens: global. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**Audit acceptance criteria (independent audit of #133, 2026-10-22).** Each item below is an acceptance criterion in the grid, checked at 393 px / 100 % and 360 px / 130 %. Shared-component fixes are made in `packages/ui`, not per screen.
+
+**L115.** Blocker: at 360 px / 130 % the bottom bar must not overflow. `⋯` (Duplicate, Trash, Reset) stays reachable, Save is not clipped, and the tabs do not overflow. Screens: global, recipe, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
+
+**L116.** Step drop: the drop hit-test matches the drawn slot, so releasing in the visibly opened slot above "Pointage" is accepted. Every refusal shows a visible reason (extends L104). Screens: steps, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
+
+**L117.** A tab-carousel commit animates to its final position (see L106). Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
+
+**L118.** Numbers agree everywhere (L18): durations and clock times (no 5 h 12 versus 5 h 11), one rounding of baker's percentages (no 2,9 / 2,87 / 2,866), no "36 %" beside "49,68 %" on one row. Baker's percentage is shown once in edit mode. Screens: recipe, edit, steps, planning. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
+
+**L119.** Steps show relative times until Planning sets a start or ready-by time. No fixture date is presented as a plan. Screens: steps, recipe. Source: GPT audit pass 2, code-verified. Kind: CL.
+
+**L120.** Library: search matches what the cards show (including pre-dough names). The "· cooling" label comes from the actual last step. Card durations are rounded per L43. Every card shows "Never prepared" or "Ready" (L44). Screens: library. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+
+**L121.** An engine refusal shows the engine's own reason (e.g. hydration lock refused because the milk powder's water content is unknown), never a generic or contradictory message. Screens: recipe, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
+
+**L122.** Edit-mode stage rows edit the stage quantity, not the recipe total. Screens: edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
+
+**L123.** Shared-component consistency in `packages/ui`:
+
+- dialogs: one action row, consistent styles, alignment and radius; centred dialogs rounded on all corners;
+- active tab bold without shifting its neighbours;
+- focus highlight with padding and radius;
+- input height at least 48 px touch target;
+- card padding and radius per `DESIGN.md`;
+- step `⋯` menu anchored to its button.
+
+Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
+
+**L124.** Preparation: "Step done" needs confirmation or undo (met by undo via Previous, see L127). "Fin prévue" says whether it is the step's end or the preparation's end. The temperature label distinguishes dough or room from oven. The step count is consistent with the editor (preheat counted or explained). Screens: preparation. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22); GPT audit pass 2, code-verified. Kind: CL.
+
 ## 4. Library (incl. template chooser)
 
 **L40.** Recipe search is required, not a later nice-to-have. It works in FR and EN, with a clear query, results and empty state, keyboard behaviour and long-name handling. Screens: library. Source: GH/issues/111#issuecomment-6189853293 item 2; GH/issues/127 acceptance 1; GH/issues/120 "Library: search is required". Kind: OI (owner statement recorded in audit).
@@ -309,7 +348,7 @@ Screens: library. Source: GH/issues/128; GH/issues/111#issuecomment-6205813397 �
 
 ## 5. Recipe (reading)
 
-**L49.** One Recipe destination. Reading and editing share the same page, layout and section structure. Editing is a **state in place**, not a separate screen, and the separate Composition/Components/Steps/Result tab set is never reintroduced. Leaving edit mode returns to the same page, scroll position and focus. Screens: recipe, edit. Source: GH/issues/111#issuecomment-6190006177 and GH/issues/112#issuecomment-6190005920 ("Owner clarification (2026-10-15)"); GH/issues/121; GH/issues/120 direction 1. Kind: OD-R.
+**L49.** One Recipe destination. Reading and editing share the same page, layout and section structure. Editing is a **state in place**, not a separate screen, and the separate Composition/Components/Steps/Result tab set is never reintroduced. Leaving edit mode returns to the same page, scroll position and focus. Screens: recipe, edit. Source: GH/issues/111#issuecomment-6190006177 and GH/issues/112#issuecomment-6190005920 ("Owner clarification (2026-10-15)"); GH/issues/121; GH/issues/120 direction 1. Kind: OD-R. Superseded in part by L108 (steps sit under the ingredients in the Recipe tab).
 
 **L50.** Edit is discoverable from reading. Under A it sits in the bar (Edit · Plan · ▶ Start · ⋯), not hidden in ⋮. Start follows the #112 hierarchy. Screens: recipe. Source: GH/issues/121 acceptance 2; GH/issues/112 option A; GH/issues/111 body, finding 1. Kind: OI. (DESIGN.md's older "Edit in overflow" (#67) conflicts: see O18. An actual step drag may also enter editing: L104.)
 
@@ -374,6 +413,39 @@ conditions and estimates have separate roles. Screens: recipe, edit. Source: GH/
 
 **L59.** At 360 px the ingredient rows keep names readable (no squeezed columns). The percentage scope stays explicit, and readable names, grams and percentages take priority. Screens: recipe, edit. Source: GH/issues/134 body, "Ingredient rows"; GH/issues/134#issuecomment-6244840434. Kind: CL.
 
+**L108.** The recipe is one document. Ingredients, per-stage weighing and steps belong to the Recipe tab, with the steps below the ingredients. There is no separate Steps destination or tab. Planning (L75) is a generated, time-focused view of the recipe (dates, start or ready-by, constraints, availability); it does not edit steps and does not repeat the Steps list one-for-one. Screens: recipe, steps, planning. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L109.** The Recipe page is organised around what the baker does, not around engine objects: data the engine needs, information useful to the baker, and controls to show are three different things.
+
+- Top summary: total dough weight, number of pieces and weight per piece first, with sugar and fat totals (as in Argon's v2 mockup). Total flour is not the first figure.
+- Sizing is by dough weight or by pieces. Total flour weight is not offered as a sizing choice; a recipe anchored on `flourTotal` still displays correctly, and the total flour may stay visible discreetly (e.g. in the Flour(s) accordion).
+- One "Flour(s)" accordion where flours are added; there is no separate "flour blend" concept.
+- The "Assembled formula totals" and "Composition" accordions are removed; their useful figures move to the summary or an info sheet.
+- No "Add ingredient" or "Add component" accordions at the bottom. In edit mode the Ingredients accordion ends with an Add button. Pre-doughs (poolish, tangzhong, yudane…) have their own accordion, hidden in reading when empty, always present in edit mode, with its own Add button. Delete is on the ingredient row.
+
+Screens: recipe, edit. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L110.** Per-stage weighing stays in the Recipe and is the same list as the ingredients. Check counts are per group (a tangzhong with 2 ingredients shows 1/2), plus an overall total. Screens: recipe. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L111.** Weighing checks (resolves O2 for now; the owner will judge in the interface): Recipe and Planning share the same check state 1:1. Starting a Preparation carries the checked items into it; they then belong to the Preparation and the recipe's checks reset. Screens: recipe, planning, preparation. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L114.** **0.4 scope, not 0.3** (may be developed on canary while 0.3 finishes on dev): dough inventory. A recipe may only make a dough; a recipe may only proof and bake from an inventory dough; a full recipe may skip dough-making and use an inventory dough, with a prompt to re-weigh; an inventory dough may be divided into portions used by different recipes. Status: planned, not a 0.3 acceptance item. Screens: recipe, library, preparation. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L125.** Argon's round 2 Recipe mockup is the reference for these parts of the Recipe page, adjusted by L105–L124: three top tabs (Recipe, Planning, History; see L108); the incomplete-profile warning worded as what is missing and for which ingredient ("Profil incomplet : teneur en eau, gras et sucres non renseignée pour …"), not "Sommes partielles"; the dough shown as pieces ("1 pièce × 699 g"), not as engine split ("100 g comp. · 599 g ajouts"). The current "≥" for lower-bound values is kept (more honest than "≈" when a composition is unknown). Screens: recipe. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L126.** Summary figures stay as plain numbers with a small ⓘ that opens the detail sheet: no "Detail" button and no segmented bar in the summary (segments are too small to touch on a phone and have no hover). No pie charts for baker's percentages: they are ratios to flour, not parts of a whole. The hydration detail sheet shows the split of total water by source as a ring or stacked bar with a legend of colour chips (one row per source: chip, name, grams, share of total water); interaction is on the legend rows, not the chart segments; an unknown share (ingredient without composition) is shown hatched and explains the "≥". Fat and sugar sheets may reuse the same pattern later. Screens: recipe. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
+**L127.** The active step of a Preparation is one focused screen, top to bottom: the header "Preparation · <recipe>"; the step line "n / N · <step name>"; the estimated remaining time as the largest element (e.g. "00:10:00") with its label "Estimated remaining time"; the accumulated adjustment ("Adjustment: +0 min"); then two visually separate, labelled control groups — **Countdown**: three buttons in one row, −15 min, Pause/Resume, +15 min; **Progression**: two buttons in one row, ← Previous and Next →. No other primary actions compete with these five; secondary information (parallel steps, quick notes) stays below and compact. Rendered with the shared components and visual system. Semantics:
+
+- **Next** records only the end of the current step (`CompleteStep`), without confirmation; the following step shows as running from that time, and its start is recorded only at the baker's first real action in it (fold, dough-ready observation, adjustment). This satisfies L124's "or undo".
+- **Previous** has three cases: (a) nothing real happened in the following step → the completion is retracted (`RetractCompletion`) and the step resumes; (b) the following step already has a recorded fact → nothing is rewritten; Previous explains why and offers "correct the end time" (`CorrectStepTime`) or "do the step again" (`InsertStepAfter`); (c) a real repetition is always "do the step again", never a retraction. Previous follows the same strand, never a parallel branch.
+- A retracted completion is hidden from the visible Preparation timeline and kept in the technical log and exports.
+- **−15 / +15 min** adjust the active step's projected duration for this Preparation only (`AdjustStep`); they never complete a step. The duration never goes below zero: the step then shows as overdue.
+- **Pause / Resume** freezes the countdown of the active step, not the Preparation or the dough: the remaining time stays, the deadline and dependent steps move by the pause length, the step-end reminder is suspended, and the pause survives closing the app. It is recorded by the engine (contract change pending in `bake-session.md`), never as a suspended Preparation; a pause never creates or classifies a rest step.
+- Planned, projected (adjustments and pauses) and actual durations stay distinct. Parallel steps keep their own controls (preheat: "switch the oven on"); Next never advances a parallel branch. Ending the last step then offers "Finish the Preparation" with the outcome choice (L113); the Preparation never finishes by itself.
+- Deferred: offering to record a pause as a rest step; coalescing repeated ±15 taps.
+  Screens: preparation. Source: Owner, coordinating session 2026-10-23. Kind: OD.
+
 ## 6. Edit (in-place state of Recipe)
 
 **L60.** The edit toolbar (undo · redo · **Save** · ⋯) replaces the Recipe toolbar while editing. **Cancel / Annuler** is visible in both navigation options. The recipe name is shown in full and is not truncated by the toolbar. Screens: edit. Source: GH/issues/111#issuecomment-6190006177; GH/issues/112 (Edit mode row); GH/issues/134 body, "Option B edit state". Kind: OD-R + CL.
@@ -429,7 +501,7 @@ Screens: steps. Source: docs/contracts/process.md ("owner decision of 2026-10-13
 
 **L69.** A just-in-time preheat (`beforeTarget`, owner option C) shows as an overlapping branch inside the proof. The proof stays **one** step and is never split, and the preheat never lengthens the total. Required warm-up, projected heating interval and the _observed_ "ready" stay separate. Preheat is never listed as sequential after proof. Screens: steps, planning, preparation. Source: docs/contracts/process.md "Relative timeline and groups – Preheating"; recipe-groups mockup ("The owner chose this (option C, 2026-10-13)"); GH/issues/111 body, finding 5. Kind: C (owner decision).
 
-**L70.** Steps live inside the unified Recipe destination, with Recipe/Planning/History context and Back. A detached "Shokupan · Étapes" screen is not acceptable. Screens: steps. Source: GH/issues/134 body, "Steps screen has no place in the unified Recipe". Kind: CL.
+**L70.** Steps live inside the unified Recipe destination, with Recipe/Planning/History context and Back. A detached "Shokupan · Étapes" screen is not acceptable. Screens: steps. Source: GH/issues/134 body, "Steps screen has no place in the unified Recipe". Kind: CL. Superseded in part by L108 (steps are a section of the Recipe tab, not a destination).
 
 **L71.** Complete step authoring at the step, in FR and EN, without redirecting to an unrelated Fermentation or Result tab:
 
@@ -493,6 +565,8 @@ Source: owner review, 2026-10-19 ("une checklist pour déplacer l'étape, wtf?")
 consistent row edge with the edit control, or in the anchored menu of the row. Screens: steps.
 Source: owner review, 2026-10-19. Kind: OD.
 
+**L112.** Drag activation is a **350 ms hold** (a 5 px movement threshold conflicts with the tab-carousel swipe, L106). The compact treatment is chosen. This closes the activation and compact parts of O3. Screens: steps, edit. Source: Owner, coordinating session 2026-10-22. Kind: OD.
+
 ## 8. Planning
 
 **L75.** Planning is a reachable, **generated** view of the same projection, anchored to a start time or a ready-by time with a target. It holds the projection controls only:
@@ -501,7 +575,7 @@ Source: owner review, 2026-10-19. Kind: OD.
 - no hidden edits of a saved recipe;
 - no second scheduler in the UI.
 
-Screens: planning. Source: GH/issues/100 scope; DESIGN.md "Layout", "Planning"; GH/issues/35#issuecomment-6110744754 ("Recipe as the single authoring workspace, Planning as a generated timeline"). Kind: OI + C + OD-R.
+Screens: planning. Source: GH/issues/100 scope; DESIGN.md "Layout", "Planning"; GH/issues/35#issuecomment-6110744754 ("Recipe as the single authoring workspace, Planning as a generated timeline"). Kind: OI + C + OD-R. _Amended: narrowed by L108; Planning is time-focused and does not edit steps, so the per-step pencil shortcut no longer applies._
 
 **L76.** Each Planning row keeps its time range together on one line, with duration and conditions on a separate readable line. No fragmented three-column inline layout, even at 360 px / 100 %. Screens: planning. Source: GH/issues/134#issuecomment-6226169253 P1-4; GH/issues/134#issuecomment-6227963370 (Planning row). Kind: CL.
 
@@ -544,6 +618,8 @@ A readiness observation never completes a step. Frequent controls are not hidden
 Abandon is separated in the menu. Screens: preparation. Source: docs/contracts/bake-session.md "Outcome"; GH/issues/129 acceptance 4; GH/issues/111#issuecomment-6205731046 §5.3; GH/issues/134#issuecomment-6227770682; GH/issues/134#issuecomment-6244840434; GH/issues/35#issuecomment-6134493225. Kind: C + OI + CL + OD-R.
 
 **L82.** Several preparations may run at once. Each keeps its own identity, snapshot and check state, with no leaks between them. Closing and reopening keeps every fact. Screens: preparation. Source: GH/issues/122 acceptance 5; GH/issues/124 acceptance 5; docs/contracts/bake-session.md "Lifecycle". Kind: OI + C.
+
+**L113.** Early-finish outcome: when no cooking step is completed, no outcome is preselected and the baker chooses (dough kept, frozen, given…, or abandoned when the preparation failed). Contract change pending in `docs/contracts/bake-session.md`; this amends the default in L7 for that case. Screens: preparation, history. Source: Owner, coordinating session 2026-10-22. Kind: OD.
 
 ## 10. History
 
@@ -644,6 +720,75 @@ Screens: global. Source: GH/issues/134#issuecomment-6228731936 ("Owner clarifica
 
 Technical fixes (dead controls, bad sums, localization, overflow) need no new product debate. Screens: global. Source: GH/issues/134 body, "Do not silently settle unresolved owner decisions"; GH/issues/134#issuecomment-6226169253 P0-2. Kind: CL.
 
+### Port to the app (2026-10-25)
+
+**L128.** The 0.3 mockups (`docs/mockups/0.3-ux`) are stopped: the proof of concept is done. PR #133 is frozen as the visual and behavioural reference and is closed without merging; its branch and the hosted review gallery (`https://aristotelesqc.github.io/Flourprint/review-2026-10-24-audit-corrections/`) remain the reference. The interface is ported into `apps/mobile` on `dev`, screen by screen, and the remaining defects are fixed there in production code, not in a disposable mockup. This supersedes L94's "freeze the mockup for implementation" step as the next action and ends further mockup rounds (L91, L92). Screens: global. Source: Owner, 2026-10-25; ADR 0022. Kind: OD.
+
+**L129.** Binding rules for the port (owner, 2026-10-25; details and rationale in ADR 0022):
+
+- Styling is Tailwind CSS v4 (ADR 0002) utility classes in `packages/ui` and `apps/mobile` screens, with the design tokens declared in Tailwind's theme (light, dark and AMOLED). No hand-written component or screen CSS class system. Order of use: utilities; an arbitrary value or `@utility`; a React component with variants; a shared meta-class composing utilities, only for a cross-cutting pattern or markup the code does not render; hand-written CSS only when Tailwind does not offer exactly the property needed, each rule commented with the missing capability and the Tailwind version checked. No global element selectors or `:root` redefinitions from the library. Every later revision touching such CSS or meta-classes, and every Tailwind upgrade, replaces them with utilities once Tailwind covers the need. An automated check refuses new component or screen CSS files outside an allowlist.
+- UI text goes through `react-intl` with ICU plurals and no string concatenation.
+- Sheets, menus, popovers and selects use Ionic components, following ADR 0021's sourcing order (no native `<dialog>` re-implementation).
+- All domain math, projections and bake or formula commands go through `packages/core`: no local arithmetic, no parallel session state, and engine refusals shown with the engine's reason.
+- Screens are split into small components. Tests assert behaviour through roles and labels; geometry thresholds come only from DESIGN.md values. ESLint gains `react-hooks` and `jsx-a11y`.
+
+Screens: global. Source: Owner, 2026-10-25; ADR 0022. Kind: OD.
+
+Acceptance criteria for the defects still open at #133 head `e7aaad3` that are product behaviour (not mockup plumbing). The reference audits are posted on issue #167, "Audits of the last mockups before the port to the app", for #133 at `e7aaad3`. Criteria already in L101 to L127 are referenced, not repeated.
+
+**L130.** The step `⋯` menu exposes every action, including Delete, without scrolling or hidden content, at 393 px / 100 % and at 360 px / 130 %; if it ever exceeds the viewport it scrolls with a visible cue, and the close control never covers a row. Screens: steps, edit. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), N1. Kind: CL.
+
+**L131.** A running-recipe card in the Library never covers the recipe name with its status pill: at 360 px / 130 % the full name stays readable, wrapping or truncating with an ellipsis only after the pill has moved to its own line. Screens: library. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), N2. Kind: CL.
+
+**L132.** The Library "in progress" status shows the preparation's own remaining time, labelled as such, never the active step's remaining time beside the total duration (extends L43). Screens: library. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), N3. Kind: CL.
+
+**L133.** The active-step countdown runs from the implicit start (`implicitStartOf` in `packages/core`) on every ready step, including the first step of a fresh preparation and the cooking step gated by the oven, so the remaining time and the projected end never disagree (extends L127). Screens: preparation. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), caller check and m13. Kind: CL.
+
+**L134.** +15 and −15 min never invent a duration: when a step has no planned duration, the adjustment controls are disabled or say why (extends L15 and L127). Screens: preparation. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m12; engine review of #133 at e7aaad3 (2026-10-25). Kind: CL.
+
+**L135.** Notes and photos are recorded through the engine (`AddObservation`), during the preparation and after it ends, so they appear in the event log, in exports and on replay, and the visible journal has a single source. Screens: preparation, history. Source: engine and contract wiring review of #133 at e7aaad3 (2026-10-25), M1. Kind: CL.
+
+**L136.** Every engine refusal is shown with the engine's own reason, including Pause, step removal and process edits (dependency changes, step edits, moves); none is swallowed, replaced by a generic message or left without feedback (extends L121). Screens: preparation, steps, edit. Source: engine and contract wiring review of #133 at e7aaad3 (2026-10-25), M2 and M5. Kind: CL.
+
+**L137.** One rule formats clocks and durations everywhere: a figure does not switch between "00:17:26" and "00 h 18" depending on zero seconds, and the Library rounds durations honestly per L43 instead of showing seconds. Screens: global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m1. Kind: CL.
+
+**L138.** The undo bar shown after Next dismisses itself after a short delay or on the next action, does not shift the controls below it, and is not left on screen after a refused Next. The refusal names the action the card actually offers. Screens: preparation. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m2. Kind: CL.
+
+**L139.** A refusal is shown once, at the field or control concerned, never as a full-width banner plus an inline duplicate (extends L121). Screens: recipe, edit. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m7. Kind: CL.
+
+**L140.** The early-finish outcome list is consistent with L113: when no cooking step was completed it does not offer "Cooked" variants, it offers the non-cooked outcomes (dough kept, frozen, given, abandoned), and its placeholder is plain language. Screens: preparation. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m8. Kind: CL.
+
+**L141.** A finished Preparation shows the outcome label, the total duration and an action to correct the outcome; the step controls (−15, Pause, +15, Previous, Next) are disabled, and the journal numbering stays aligned past ten entries. Screens: preparation, history. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m12. Kind: CL.
+
+**L142.** English text follows English typography: no space before a colon, semicolon or question mark ("Weighed: Bread flour"), and endpoint labels read as English phrases. Screens: global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m9; frontend quality review of #133 at e7aaad3 (2026-10-25), M3. Kind: CL.
+
+**L143.** Product UI contains no developer jargon, internal identifiers or version strings (for example engine function names, model ids with versions, "candidate" or "conversion by the engine" wording); technical detail stays in the technical log (extends L13). Screens: global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m10. Kind: CL.
+
+**L144.** Equivalent actions use the same shared button variant: Pause, Previous, Cancel, "Switch the oven on" and Weigh are not text-only where −15, +15 and Next are pills (extends L123). Screens: preparation, global. Source: independent UI audit of #133 at e7aaad3 (2026-10-25), m3; frontend quality review of #133 at e7aaad3 (2026-10-25), M9. Kind: CL.
+
+**L145.** Every fermentation forecast is presented as an estimate, and the baker's own judgement comes first:
+
+- forecast end times, remaining times, progress, dough temperature and self-heating are labelled as estimates wherever they appear. They are never phrased as the dough being ready. The information on demand says what they rest on: model, assumed temperatures, container;
+- on a fermentation step, the baker's sensory readiness criteria lead and the estimate follows. The criteria are rise against the baker's own reference (for example a mark on the container), the poke test, bubbles on the surface and sides, jiggle and feel;
+- a recorded "dough ready" (or "not ready yet") observation decides for that step and overrides the model. The interface then follows the observation, not the computed end;
+- like a weather forecast, a forecast time is shown as a likely time with a range (for example "ready around 14:30, between 14:00 and 15:15"), never as a single to-the-minute time. The range comes from the model's envelope. It is wider when the container or conditions are unknown, and narrower once the baker's own readings have calibrated the personal factor;
+- as the forecast end approaches, the interface invites the baker to check the dough physically, before any reminder presents the step as due;
+- uncertainty accumulates along the process. Earlier transitional fermentation steps (for example a bulk ferment at room temperature or in the fridge) may run on fixed planned durations. The last fermentation step before baking carries the accumulated uncertainty of all earlier steps and is the least certain. That step shows the widest range and puts the physical checks (poke test first) ahead of the estimate. When they disagree with the model, the physical cues prevail;
+- extends L20 and L21: L21's ban on a model-computed volume or "doubled" target still holds, while a rise the baker observes against their own reference is a criterion, not a forecast.
+
+Screens: preparation, planning, recipe, library. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
+
+**L146.** Each fermentation step says how to decide that it is done, with cues that fit what has happened to the dough so far:
+
+- alongside the estimated range (L145), the step names the readiness cues to watch for, not only a time;
+- a volume cue such as "about doubled" applies only when the dough has not been degassed since the step started. It does not apply after folds, a pre-shape or reshaping;
+- after any degassing, the step offers cues that remain valid: a domed or slightly rounded surface, bubbles on the surface and sides, jiggle, poke test and feel;
+- the cues come from the step's position in the process and the operations recorded so far, so they change if the baker adds or skips a fold;
+- transitional steps with a fixed duration (for example 1 h on the counter, then 24 h in the fridge) stay fixed. Their readiness cues and time range are optional: available on demand or enabled per recipe, never prompted or shown as due. The step that follows the model (`durationMode: 'model'` in process.md, usually the final proof) absorbs the variation. On that step, the cues and the range are shown by default (L145);
+- when the baker moves on to the next step, the engine recomputes every following step from the actual times and conditions recorded so far: the real fermentation already done, actual temperatures and container changes. It never keeps the original plan. The new estimates and ranges replace the old ones at once, and reminders follow.
+
+Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
+
 ---
 
 ## 13. OPEN owner choices (do not decide silently)
@@ -651,7 +796,7 @@ Technical fixes (dead controls, bad sums, localization, overflow) need no new pr
 **O1. #112 navigation: resolved by the owner on 2026-10-19.** L101 applies: navigation A with
 the section tabs at the top, swipeable. Navigation B is no longer developed.
 
-**O2. Weighing-check lifetime and scope.** The owner chooses before any persistence code:
+**O2. Weighing-check lifetime and scope.** The owner chooses before any persistence code: **Resolved provisionally by L111**; the owner will judge in the interface. Parts not covered by L111 (two concurrent sessions, reload and reopen, invalidation after scaling edits) stay open.
 
 - pre-start versus during the session;
 - two concurrent sessions;
@@ -661,7 +806,7 @@ the section tabs at the top, swipeable. Navigation B is no longer developed.
 
 _Owner: to refine._ Source: GH/issues/122; GH/issues/120; GH/issues/134 body, "Weighing".
 
-**O3. Reorder interaction.**
+**O3. Reorder interaction.** **Closed in part by L112**: activation is a 350 ms hold and Compact is chosen. The always-visible-handles versus Reorder-submode, cross-group and downward-chain parts stay open.
 
 - Always-visible handles versus an explicit Reorder submode.
 - Collapsed and cross-group behaviour.

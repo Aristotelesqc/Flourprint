@@ -108,8 +108,8 @@ const problem = (entry: IngredientEntry) => {
 };
 
 describe('contract version', () => {
-  it('is 0.16.0 with step subjects (process.md)', () => {
-    expect(CONTRACT_VERSION).toBe('0.16.0');
+  it('is 0.20.0 with step countdown holds (bake-session.md)', () => {
+    expect(CONTRACT_VERSION).toBe('0.20.0');
   });
 });
 

@@ -181,6 +181,45 @@ describe('bake alerts', () => {
     ]);
   });
 
+  it('calls at implicit start plus duration for a step the baker never started', async () => {
+    // Nothing started at 19:30: the poolish runs implicitly from the bake start (19:00, 12 h), so
+    // its end is 07:00, not clamped to now; its start alert is not repeated.
+    const alerts = bakeAlerts(await bake([]), at('19:30'));
+    expect(alerts.filter((a) => a.stepId === 'poolish').map((a) => [a.kind, a.at])).toEqual([
+      ['end', '2026-10-08T07:00:00.000Z'],
+    ]);
+  });
+
+  it('suspends the end alert of a held step and moves it on release', async () => {
+    const held = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      ['19:31', { type: 'HoldStepCountdown', stepId: 'poolish' }],
+    ]);
+    expect(bakeAlerts(held, at('20:00')).some((a) => a.kind === 'end')).toBe(false);
+    const released = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      ['19:31', { type: 'HoldStepCountdown', stepId: 'poolish' }],
+      ['20:01', { type: 'ReleaseStepCountdown', stepId: 'poolish' }],
+    ]);
+    const end = bakeAlerts(released, at('20:30')).find((a) => a.kind === 'end');
+    expect(end?.at.slice(11, 16)).toBe('07:31');
+  });
+
+  it('gives no start alert to a preheat resting on a held step, until released', async () => {
+    const held = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      ['19:31', { type: 'HoldStepCountdown', stepId: 'poolish' }],
+    ]);
+    expect(bakeAlerts(held, at('20:00')).filter((a) => a.kind === 'start')).toEqual([]);
+    const released = await bake([
+      ['19:01', { type: 'StartStep', stepId: 'poolish' }],
+      ['19:31', { type: 'HoldStepCountdown', stepId: 'poolish' }],
+      ['20:01', { type: 'ReleaseStepCountdown', stepId: 'poolish' }],
+    ]);
+    const starts = bakeAlerts(released, at('20:30')).filter((a) => a.kind === 'start');
+    expect(starts.map((a) => a.stepId)).toContain('preheat');
+  });
+
   it('is empty once the bake has ended', async () => {
     expect(bakeAlerts(await bake([['19:05', { type: 'AbandonBake' }]]), at('19:30'))).toEqual([]);
   });

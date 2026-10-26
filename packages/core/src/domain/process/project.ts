@@ -8,6 +8,7 @@ import type {
   Projection,
   ProjectionInput,
   StepId,
+  Warmup,
 } from './types.js';
 import { validateProcess, type ProcessError } from './validate.js';
 
@@ -30,6 +31,8 @@ interface Slot {
   start: Time;
   end: Time;
   status: ProjectedStep['status'];
+  warmup?: Warmup;
+  overdue?: { dueAt: number };
 }
 
 /**
@@ -102,6 +105,8 @@ const schedule = (
 
   // Forward pass in list order, which is a topological order.
   for (const step of process.steps) {
+    // Steps before a target are placed after everything else: nothing depends on them.
+    if (step.schedule === 'beforeTarget') continue;
     const fact = facts[step.id];
     if (fact?.endedAt !== undefined) {
       const end = toSeconds(fact.endedAt);
@@ -121,6 +126,8 @@ const schedule = (
   // Backward pass: alap steps not started end at the earliest start of their successors.
   const successors = new Map<StepId, StepId[]>();
   for (const step of process.steps) {
+    // A step before a target never constrains another step (process.md).
+    if (step.schedule === 'beforeTarget') continue;
     for (const dep of step.dependsOn)
       successors.set(dep, [...(successors.get(dep) ?? []), step.id]);
   }
@@ -143,7 +150,76 @@ const schedule = (
       status: 'planned',
     });
   }
+
+  for (const step of process.steps) {
+    if (step.schedule === 'beforeTarget') {
+      slots.set(step.id, preheatSlot(step, slots, facts[step.id], origin, now));
+    }
+  }
   return slots;
+};
+
+/**
+ * Steps before a target (process.md): the span is `[start, targetStart]`, off the critical path.
+ * Recorded facts stay fixed; an unknown time is never replaced by a number.
+ */
+const preheatSlot = (
+  step: ProcessStep,
+  slots: Map<StepId, Slot>,
+  fact: NonNullable<ProjectionInput['facts']>[StepId] | undefined,
+  origin: number,
+  now: number | undefined,
+): Slot => {
+  const target = slots.get(step.target as StepId) as Slot;
+  const targetStart = target.start;
+  const required = step.requiredWarmupS;
+  const earliest = earliestStart(step, slots, origin);
+  let start: Time;
+  let overdue: Slot['overdue'];
+  if (fact?.startedAt !== undefined) {
+    start = known(toSeconds(fact.startedAt));
+  } else if (!earliest.known) {
+    start = earliest;
+  } else if ((step.startRule ?? 'fromTarget') === 'afterDependencies') {
+    start = known(Math.max(earliest.at, now ?? -Infinity));
+  } else if (!targetStart.known) {
+    start = blocked(targetStart.blockers);
+  } else {
+    const trigger = targetStart.at - (required ?? 0);
+    start = known(Math.max(earliest.at, trigger, now ?? -Infinity));
+    if (now !== undefined && trigger < now) overdue = { dueAt: trigger };
+  }
+  const blockers = [
+    ...(start.known ? [] : start.blockers),
+    ...(targetStart.known ? [] : targetStart.blockers),
+  ];
+  let warmup: Warmup;
+  let windowS: number | undefined;
+  if (start.known && targetStart.known) windowS = targetStart.at - start.at;
+  if (windowS !== undefined && windowS < 0) {
+    warmup = { kind: 'unavailable', reason: 'startsAfterTarget' };
+  } else if (required === undefined) {
+    warmup = { kind: 'notApplicable' };
+  } else if (windowS === undefined) {
+    warmup = { kind: 'unknown', unknownAfter: [...new Set(blockers)].sort() };
+  } else {
+    warmup = {
+      kind: windowS >= required ? 'sufficient' : 'insufficient',
+      availableS: windowS,
+      requiredS: required,
+    };
+  }
+  const status: Slot['status'] =
+    fact?.endedAt !== undefined ? 'done' : fact?.startedAt !== undefined ? 'inProgress' : 'planned';
+  const end: Time =
+    fact?.endedAt !== undefined
+      ? known(toSeconds(fact.endedAt))
+      : warmup.kind === 'unavailable'
+        ? blocked([])
+        : !start.known
+          ? start
+          : targetStart;
+  return { start, end, status, warmup, ...(overdue === undefined ? {} : { overdue }) };
 };
 
 const earliestStart = (step: ProcessStep, slots: Map<StepId, Slot>, lowerBound: number): Time => {
@@ -171,6 +247,10 @@ const build = (input: ProjectionInput, slots: Map<StepId, Slot>): Projection => 
         ...(slot.start.known ? { start: toInstant(slot.start.at) } : {}),
         ...(slot.end.known ? { end: toInstant(slot.end.at) } : {}),
         unknownAfter: [...new Set(blockers)].sort(),
+        ...(slot.warmup === undefined ? {} : { warmup: slot.warmup }),
+        ...(slot.overdue === undefined
+          ? {}
+          : { overdue: { dueAt: toInstant(slot.overdue.dueAt) } }),
       },
     ]);
   }

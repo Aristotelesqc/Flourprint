@@ -11,6 +11,7 @@ import type {
   Process,
   Recipe,
   RecipeFamily,
+  ReferenceVersion,
   Result,
   Revision,
 } from '../domain/index.js';
@@ -76,6 +77,17 @@ export interface SaveRevisionInput {
   readonly fromDraft?: string;
 }
 
+/** Failures of Restore and Promote (persistence.md, Recipe history). */
+export type RecipeHistoryError =
+  | DomainError<'HeadConflict', { recipeId: string; currentHead: number }>
+  | DomainError<'RecipeTrashed', { recipeId: string }>
+  | DomainError<'NotFound', { recipeId: string }>
+  /** The saved revision to restore or promote does not exist. */
+  | DomainError<'UnknownRevision', { recipeId: string; version: number }>
+  /** The revision is already a reference version; `number` is its own. */
+  | DomainError<'AlreadyReferenced', { recipeId: string; version: number; number: number }>
+  | DomainError<'UnsupportedDocumentVersion', { schemaVersion: number }>;
+
 /** A recipe being built, not yet a revision (docs/contracts/drafts.md); it may fail the checks. */
 export interface Draft {
   readonly id: string;
@@ -120,6 +132,8 @@ export interface RecordedRecipe {
   /** Present when the recipe is in the trash; absent means not trashed. */
   readonly trashedAt?: Instant;
   readonly revisions: readonly Revision[];
+  /** Optional: absent means none; older backups and exports carry none (persistence.md). */
+  readonly referenceVersions?: readonly ReferenceVersion[];
 }
 
 /** Recipes and families to add; checked before any write (persistence.md). */
@@ -140,7 +154,34 @@ export interface RecipeImportOutcome {
 
 /** Recipes, immutable revisions and families (docs/contracts/persistence.md). */
 export interface RecipeRepository {
+  /**
+   * Appends revision `expectedHead + 1`. A save whose formula and process are semantically
+   * identical to the head's writes nothing and returns the current head revision.
+   */
   saveRevision(input: SaveRevisionInput): Promise<Result<Revision, RecipeStoreError>>;
+  /**
+   * Appends revision `expectedHead + 1` copying formula, process and note of revision `version`;
+   * nothing is rewritten. Content identical to the head is a no-op returning the head revision.
+   */
+  restoreRevision(
+    recipeId: string,
+    version: number,
+    expectedHead: number,
+    createdAt: Instant,
+  ): Promise<Result<Revision, RecipeHistoryError>>;
+  /**
+   * Promotes saved revision `version` to the next reference version number. Adds no revision and
+   * changes no head; `expectedHead` must be the current head.
+   */
+  promoteReferenceVersion(
+    recipeId: string,
+    version: number,
+    name: string | undefined,
+    expectedHead: number,
+    createdAt: Instant,
+  ): Promise<Result<ReferenceVersion, RecipeHistoryError>>;
+  /** Reference versions of a recipe, by number. */
+  listReferenceVersions(recipeId: string): Promise<readonly ReferenceVersion[]>;
   /** A recipe by id, in the trash or not (`trashedAt` tells). */
   getRecipe(recipeId: string): Promise<Recipe | undefined>;
   /** Recipes not in the trash, most recently updated first. */

@@ -1,17 +1,22 @@
 ---
 name: flourprint-pr-flow
-description: Take a Flourprint change from branch to merged pull request into dev - local checks on a private port, native suites when they apply, CI, strict-branch updates, combined merges and issue labels afterwards. Use for any code or docs PR; not for deciding contract semantics (flourprint-contract-change) or UI acceptance (flourprint-ui-check).
+description: Take a Flourprint change from branch to merged pull request (into dev, or ui/0.3-integration for release 0.3 UI slices) - local checks on a private port, native suites when they apply, CI, strict-branch updates, combined merges and issue labels afterwards. Use for any code or docs PR; not for deciding contract semantics (flourprint-contract-change) or UI acceptance (flourprint-ui-check).
 ---
 
 # Flourprint pull request flow
 
-Read `AGENTS.md` first: it sets the rules (focused PRs into `dev`, checks before every push,
-one writer per area, labels). This skill is the procedure and the traps already paid for.
+Read `AGENTS.md` first: it sets the rules (focused PRs into `dev`—with the temporary
+`ui/0.3-integration` exception for release 0.3 UI slices—checks before every push, one writer per
+area, labels). This skill is the procedure and the traps already paid for.
 
 ## Branch
 
 - Start from fresh `dev`: `git fetch origin dev && git checkout -B <branch> origin/dev`. Work for
   the release after next starts from `canary` instead and targets it (ADR 0018).
+- Release 0.3 UI exception (ADR 0022): start from fresh `ui/0.3-integration`
+  (`git fetch origin ui/0.3-integration && git checkout -B <branch> origin/ui/0.3-integration`)
+  and target `ui/0.3-integration`. Foundation (#180 / #168) must land in integration before any
+  screen slice (#169–#172) starts.
 - Several agents share one machine: work in your own worktree, never in another agent's
   checkout, and never `pkill` broad patterns (they kill other agents' servers and shells).
 - A contract change goes in its own PR, merged before the code that depends on it.
@@ -47,8 +52,9 @@ consultation required tapping Edit in both native suites).
 
 ## Pull request
 
-- Body follows `.github/pull_request_template.md`; `Refs #<issue>` unless every acceptance
-  criterion is met. List exactly what ran and what did not (device, emulator).
+- Body follows `.github/pull_request_template.md`. Before opening, link the issues per AGENTS.md
+  "Development order" (`Closes`/`Refs #N`, or `No issue:` and a reason); the `PR issue link` check
+  fails otherwise. List exactly what ran and what did not (device, emulator).
 - Commit trailers and PR footer as the host's attribution rules require; English only.
 - Set the issue to `status:review` when the PR opens.
 
@@ -57,6 +63,13 @@ consultation required tapping Edit in both native suites).
 - `dev` requires up-to-date branches. When `dev` moves: merge `origin/dev` into your branch
   (never rebase or force-push a shared branch), re-run the checks, push; or use the GitHub
   "update branch" action when there is no conflict.
+- For release 0.3 UI integration: keep engine and unrelated work flowing normally to `dev`. Merge
+  fresh `dev` into `ui/0.3-integration` regularly via normal merge commits (no rebase, force-push,
+  reset, canary promotion, new channel or APK). Update each UI slice branch from `ui/0.3-integration`
+  when integration moves. Merge individual slices into `ui/0.3-integration` only once green and
+  reviewed.
+- The single draft aggregate PR from `ui/0.3-integration` into `dev` uses existing pull_request CI
+  for the app preview and merges into `dev` only after owner integrated visual/behaviour approval.
 - Several ready PRs that conflict or build on each other: merge them all into the last one,
   resolve once, run the checks once, and merge that PR. GitHub marks the others merged when
   their heads are contained. Say so in each PR.
@@ -70,5 +83,11 @@ consultation required tapping Edit in both native suites).
 
 - The issue goes to `status:verified` with one evidence line per acceptance criterion, or back
   to `status:in-progress` with what remains. Never close it unless every criterion is shown.
+  Merging an individual UI slice into `ui/0.3-integration` does not imply acceptance is complete
+  or close the issue; preserve issue labels and evidence rules, avoid `Closes` while acceptance
+  is pending, and record owner final acceptance explicitly when needed.
 - Mention device checks still owed (migrations, reminders) in the issue, not as done.
+- Comment on each linked issue with the merge and its status change (AGENTS.md "Development order").
+- Update the referenced issues' `status:*` labels per the `flourprint-backlog-steward` rules,
+  so routine label upkeep happens at merge time.
 - Remove your worktree and local branches.

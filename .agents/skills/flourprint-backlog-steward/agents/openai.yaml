@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Flourprint backlog steward'
+  short_description: 'Triage issue labels, report stale work and suggest next work'
+  default_prompt: 'Use $flourprint-backlog-steward since the given cutoff and return the fixed report.'

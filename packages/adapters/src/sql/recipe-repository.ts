@@ -1,6 +1,7 @@
 import type {
   FamilyError,
   RecipeImportOutcome,
+  RecipeHistoryError,
   RecipeImportPlan,
   RecipeRepository,
   RecipeStoreError,
@@ -14,9 +15,11 @@ import {
   domainError,
   err,
   ok,
+  sameRecipeContent,
   type Instant,
   type Recipe,
   type RecipeFamily,
+  type ReferenceVersion,
   type Result,
   type Revision,
 } from '@flourprint/core/domain';
@@ -41,6 +44,30 @@ interface FamilyRow {
 /** Some drivers return a missing value as `undefined` rather than `null`. */
 const inTrash = (trashedAt: string | null | undefined): boolean =>
   trashedAt !== null && trashedAt !== undefined;
+
+interface ReferenceRow {
+  recipe_id: string;
+  number: number;
+  version: number;
+  name: string | null;
+  created_at: string;
+}
+
+const toReference = (row: ReferenceRow): ReferenceVersion => ({
+  recipeId: row.recipe_id,
+  number: Number(row.number),
+  version: Number(row.version),
+  ...(row.name === null || row.name === undefined ? {} : { name: row.name }),
+  createdAt: row.created_at as Instant,
+});
+
+/** Parses a stored revision document; the schema version is checked by the caller. */
+const parseRevision = (document: string): Revision => {
+  const { schemaVersion: _version, ...revision } = JSON.parse(document) as Revision & {
+    schemaVersion: number;
+  };
+  return revision;
+};
 
 const toRecipe = (row: RecipeRow): Recipe => ({
   id: row.id,
@@ -89,6 +116,12 @@ const setFamily = async (
 /** Writes a recorded recipe with its revisions and family; used by restores and imports. */
 export const insertRecipe = async (tx: SqlExecutor, recipe: RecordedRecipe): Promise<void> => {
   for (const revision of recipe.revisions) await insertRevision(tx, recipe.name, revision);
+  for (const reference of recipe.referenceVersions ?? []) {
+    await tx.run(
+      'INSERT INTO reference_versions (recipe_id, number, version, name, created_at) VALUES (?, ?, ?, ?, ?)',
+      [recipe.id, reference.number, reference.version, reference.name ?? null, reference.createdAt],
+    );
+  }
   if (recipe.familyId !== undefined) await setFamily(tx, recipe.id, recipe.familyId);
   if (recipe.trashedAt !== undefined) {
     await tx.run('UPDATE recipes SET trashed_at = ? WHERE id = ?', [recipe.trashedAt, recipe.id]);
@@ -103,6 +136,7 @@ const notTrashed = (recipeId: string): TrashError =>
 /** Deletes a trashed recipe with its revisions; it leaves its family first (pin, empty family). */
 const removeRecipe = async (tx: SqlExecutor, recipeId: string): Promise<void> => {
   await setFamily(tx, recipeId, null);
+  await tx.run('DELETE FROM reference_versions WHERE recipe_id = ?', [recipeId]);
   await tx.run('DELETE FROM revisions WHERE recipe_id = ?', [recipeId]);
   await tx.run('DELETE FROM recipes WHERE id = ?', [recipeId]);
 };
@@ -161,6 +195,60 @@ const toDraft = (document: string): Draft => {
   return draft;
 };
 
+/** Shared checks of Restore and Promote: existence, trash, head, then the revision. */
+const guardHistory = async (
+  tx: SqlExecutor,
+  recipeId: string,
+  version: number,
+  expectedHead: number,
+): Promise<Result<{ name: string; head: Revision; source: Revision }, RecipeHistoryError>> => {
+  const [recipe] = await tx.query<RecipeRow>('SELECT * FROM recipes WHERE id = ?', [recipeId]);
+  if (!recipe) {
+    return err(domainError('NotFound', `Recipe ${recipeId} does not exist`, { recipeId }));
+  }
+  if (inTrash(recipe.trashed_at)) {
+    return err(domainError('RecipeTrashed', `Recipe ${recipeId} is in the trash`, { recipeId }));
+  }
+  const currentHead = Number(recipe.head_version);
+  if (currentHead !== expectedHead) {
+    return err(
+      domainError('HeadConflict', `Recipe ${recipeId} is at version ${currentHead}`, {
+        recipeId,
+        currentHead,
+      }),
+    );
+  }
+  const rows = await tx.query<{ version: number; schema_version: number; document: string }>(
+    'SELECT version, schema_version, document FROM revisions WHERE recipe_id = ? AND version IN (?, ?)',
+    [recipeId, version, currentHead],
+  );
+  const unsupported = rows.find((row) => Number(row.schema_version) > DOCUMENT_SCHEMA_VERSION);
+  if (unsupported) {
+    return err(
+      domainError(
+        'UnsupportedDocumentVersion',
+        `Revision schema ${unsupported.schema_version} is not supported`,
+        { schemaVersion: Number(unsupported.schema_version) },
+      ),
+    );
+  }
+  const source = rows.find((row) => Number(row.version) === version);
+  const head = rows.find((row) => Number(row.version) === currentHead);
+  if (!source || !head) {
+    return err(
+      domainError('UnknownRevision', `Revision ${recipeId}@${version} does not exist`, {
+        recipeId,
+        version,
+      }),
+    );
+  }
+  return ok({
+    name: recipe.name,
+    head: parseRevision(head.document),
+    source: parseRevision(source.document),
+  });
+};
+
 /** Recipes and immutable revisions on any SQLite driver (docs/contracts/persistence.md). */
 export class SqlRecipeRepository implements RecipeRepository {
   constructor(private readonly driver: SqlDriver) {}
@@ -194,6 +282,25 @@ export class SqlRecipeRepository implements RecipeRepository {
           }),
         );
       }
+      if (currentHead > 0) {
+        const [head] = await tx.query<{ schema_version: number; document: string }>(
+          'SELECT schema_version, document FROM revisions WHERE recipe_id = ? AND version = ?',
+          [input.recipeId, currentHead],
+        );
+        // A head written by a newer app is not read here: the Save appends, as before.
+        if (
+          head &&
+          Number(head.schema_version) <= DOCUMENT_SCHEMA_VERSION &&
+          sameRecipeContent(parseRevision(head.document), input)
+        ) {
+          // No-op: no revision, but the rename and the draft's deletion still apply.
+          await tx.run('UPDATE recipes SET name = ? WHERE id = ?', [input.name, input.recipeId]);
+          if (input.fromDraft !== undefined) {
+            await tx.run('DELETE FROM drafts WHERE id = ?', [input.fromDraft]);
+          }
+          return ok(parseRevision(head.document));
+        }
+      }
       const revision: Revision = {
         recipeId: input.recipeId,
         version: currentHead + 1,
@@ -208,6 +315,80 @@ export class SqlRecipeRepository implements RecipeRepository {
       }
       return ok(revision);
     });
+  }
+
+  restoreRevision(
+    recipeId: string,
+    version: number,
+    expectedHead: number,
+    createdAt: Instant,
+  ): Promise<Result<Revision, RecipeHistoryError>> {
+    return this.driver.transaction(async (tx) => {
+      const guard = await guardHistory(tx, recipeId, version, expectedHead);
+      if (!guard.ok) return guard;
+      const { name, head, source } = guard.value;
+      if (sameRecipeContent(head, source)) return ok(head);
+      const revision: Revision = {
+        recipeId,
+        version: head.version + 1,
+        formula: source.formula,
+        process: source.process,
+        createdAt,
+        ...(source.note === undefined ? {} : { note: source.note }),
+      };
+      await insertRevision(tx, name, revision);
+      return ok(revision);
+    });
+  }
+
+  promoteReferenceVersion(
+    recipeId: string,
+    version: number,
+    name: string | undefined,
+    expectedHead: number,
+    createdAt: Instant,
+  ): Promise<Result<ReferenceVersion, RecipeHistoryError>> {
+    return this.driver.transaction(async (tx) => {
+      const guard = await guardHistory(tx, recipeId, version, expectedHead);
+      if (!guard.ok) return guard;
+      const [existing] = await tx.query<{ number: number }>(
+        'SELECT number FROM reference_versions WHERE recipe_id = ? AND version = ?',
+        [recipeId, version],
+      );
+      if (existing) {
+        return err(
+          domainError(
+            'AlreadyReferenced',
+            `Revision ${recipeId}@${version} is already referenced`,
+            { recipeId, version, number: Number(existing.number) },
+          ),
+        );
+      }
+      const [last] = await tx.query<{ n: number | null }>(
+        'SELECT MAX(number) AS n FROM reference_versions WHERE recipe_id = ?',
+        [recipeId],
+      );
+      const reference: ReferenceVersion = {
+        recipeId,
+        number: Number(last?.n ?? 0) + 1,
+        version,
+        ...(name === undefined ? {} : { name }),
+        createdAt,
+      };
+      await tx.run(
+        'INSERT INTO reference_versions (recipe_id, number, version, name, created_at) VALUES (?, ?, ?, ?, ?)',
+        [recipeId, reference.number, version, name ?? null, createdAt],
+      );
+      return ok(reference);
+    });
+  }
+
+  async listReferenceVersions(recipeId: string): Promise<readonly ReferenceVersion[]> {
+    const rows = await this.driver.query<ReferenceRow>(
+      'SELECT * FROM reference_versions WHERE recipe_id = ? ORDER BY number',
+      [recipeId],
+    );
+    return rows.map(toReference);
   }
 
   async getRecipe(recipeId: string): Promise<Recipe | undefined> {

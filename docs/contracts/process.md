@@ -29,6 +29,7 @@ interface ProcessStep {
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
   durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one dough step (fermentation.md)
   subject?: Subject; // the mass the step works on; absent = derived (Subjects and component phases)
+  thermal?: StepThermal; // thermal inputs of a dough step (Thermal inputs); absent = fixed lag of fermentation.md
   // `beforeTarget` only (Steps before a target): target, requiredWarmupS, startRule
 }
 ```
@@ -102,9 +103,71 @@ interface StepConditions {
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
 
+## Thermal inputs (#176)
+
+**Proposal of 2026-10-25, contract `0.21.0` target** (the model is `fermentation.md`, Dough thermal
+model). A fermentation step may say in what the dough sits, so that the forecast computes its lag
+from mass and container instead of the fixed 1.5 h:
+
+```ts
+interface StepThermal {
+  geometry: 'sheet' | 'tin' | 'ball' | 'bulk'; // required: its presence turns the model on
+  container?: {
+    material: 'glass' | 'plastic' | 'ceramic' | 'steel' | 'aluminium' | 'banneton';
+    cover: 'lid' | 'film' | 'cloth' | 'none';
+    liner?: boolean; // banneton only: a cloth liner
+  };
+  environment?: 'fridgeStatic' | 'fridgeVentilated' | 'roomStill' | 'provingBox';
+  porosity?: 'unproofed' | 'mid' | 'proofed';
+  pieces?: number; // integer ≥ 1: equal pieces the dough is divided into (default 1)
+  containerMassG?: number; // grams, > 0: the container that changes ambient with the dough
+}
+```
+
+- **Presence.** A step with no `thermal` is unchanged: `τ` 1.5 h, band 0 to 3 h, no
+  self-heating (fermentation.md). `geometry` is required: there is no `thermal` without it.
+  No default is ever written into a stored recipe by a reader: absent stays absent.
+- **Defaults inside a `thermal` object** (read-time, never stored):
+  - `container`: `bulk` glass with `film`; `ball` plastic with `lid`; `tin` steel with `none`;
+    `sheet` aluminium with `none`;
+  - `environment`: from `conditions.location` of the step: `fridge` is `fridgeStatic`, `proofer` is
+    `provingBox`, anything else or absent is `roomStill`. The ventilated fridge is always explicit;
+  - `porosity`: derived from the progress at the start of the step (fermentation.md);
+  - `pieces`: 1; `containerMassG`: absent, container heat capacity 0.
+- **Where it applies.** On a **dough step** (fermentation.md): an `asap` fermentation step between the
+  reference mixing step and the first heat step. On any other step (a preferment's, a `beforeTarget`
+  step, a cooking step) `thermal` is refused (`InvalidProcess`, step as `path`): this model does not
+  cover a preferment, whose phases are already `component_phases_unmodelled`.
+- **Divided pieces.** `pieces` states how many equal pieces the dough is cut into at or before this
+  step: the model uses the per-piece mass `m / pieces` (a `divide` step carries no mass itself). A
+  step after the division carries the same `pieces` as the step that follows the `divide`; the
+  steps are independent records and the editor copies the value, the domain never infers it from a
+  `divide` step. A different `pieces` between consecutive steps with no `divide` between them is
+  allowed (the recipe says what it says) and produces the check `thermal_pieces_changed`
+  (nonblocking, drafts.md).
+- **Validation.** Unknown discriminants, `pieces` not an integer ≥ 1, `containerMassG` ≤ 0 or not
+  finite, `liner` with a material other than `banneton`, a `banneton` with `geometry` other than
+  `ball` or `bulk`, a `tin` or `sheet` with material `glass`, `ceramic` or `banneton`: each is
+  `InvalidProcess`. A material whose resistance is metal (`steel`, `aluminium`) in a
+  `fridgeStatic` takes the bare-metal `h` (fermentation.md).
+- **Units.** Persisted units follow AGENTS.md: grams (`containerMassG`), a count (`pieces`), no
+  length is stored: shapes and wall thicknesses are constants of the model.
+- **Accepted suggestions.** Editing `thermal` removes no `accepted` provenance of a duration by
+  itself, but an accepted suggestion computed on the previous thermal inputs is stale: a consumer
+  that compares the estimate shown with the current one (fermentation.md) sees the difference as
+  for any other input change.
+- **Compatibility.** Existing recipes have no `thermal` and mean what they meant. An older app
+  refuses a document holding `thermal` through the recipe export and backup `schemaVersion` 3
+  (`UnsupportedDocumentVersion`, persistence.md, Personal thermal profile), never misreads it.
+  Older documents are read as no `thermal`.
+  `StartBake` copies `thermal` with the rest of the step into the snapshot (history.md); a change
+  during a Preparation is an event (bake-session.md), never an edit of the snapshot.
+- **Scheduler.** The scheduler ignores `thermal` (time arithmetic only); only the fermentation
+  model reads it.
+
 ## Steps before a target (preheating)
 
-**0.3.0 specification merged in #94; owner-selected option C on #97; implementation tracked in #106.** A baker preheats the oven
+**0.3.0 specification merged in #94; owner-selected option C on #97; scheduling, validation, document boundary and session effects implemented in #106 slice B (contract 0.18.0).** A baker preheats the oven
 while the dough proofs, and switches it on **a set time before the cooking step it is for**, not at
 the boundary of another step: a 2 h proof stays one step, and the oven does not heat for 2 h when
 30 min are wanted. Four facts stay distinct: the **trigger** (switching the heating on), the
@@ -190,8 +253,18 @@ interface ProcessStep {
 - **Dough steps** (`fermentation.md`): a `beforeTarget` step is not one and holds no dough.
 - **Compatibility.** An older app refuses a recipe holding the new schedule value or fields as a
   document with an unknown discriminant or field (`persistence.md`), never misreads it.
-  `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge, by the
-  implementing pull request.
+  `CONTRACT_VERSION` is bumped by one minor step, from `0.17.0` to `0.18.0`, by the implementing
+  pull request. No event type changes: `StepStarted` and `StepCompleted` carry the record. The projection
+  embedded in `BakeStarted.initialProjection` and `ProjectionAccepted` gains the optional `warmup`
+  and `overdue` of a `beforeTarget` step (absent on every other step); events written before still
+  decode, as `isProjectedStep` ignores unknown fields.
+- **Implementation notes (#106 slice B).** `warmup.sufficient` carries `availableS` and `requiredS`
+  like `insufficient`. A step with no requirement and a known non-negative window, or with unknown
+  times, is `notApplicable`; `unavailable` is decided first when both times are known. A
+  `beforeTarget` step's projected `end` is its target's start (the recorded readiness once
+  completed), and is absent when `unavailable`. `target` must be a cooking
+  step. The domain exposes `removeStepChecked` (`TargetInUse`) and `preheatIssues` (the nonblocking
+  checks read from a projection).
 
 Examples (hand-checked; `+h:mm` from the start of the recipe):
 
@@ -795,7 +868,8 @@ scheduled, not predictions of the biology). A poolish bread with a tangzhong:
    tangzhong `+21:30 → +22:10`; main dough `+22:10 → +27:45`; cooking `+27:15 → +28:25`; total
    28 h 25 min. Recipe and Planning show the same offsets from the same projection.
 3. **An unknown duration.** The fridge phase has no duration: the poolish window and every
-   window after it are `partial` with the blocker as `reasons`, the total is `partial`, and
+   window after it are `partial` with the blocker as `reasons` (`unknown` when no member of the
+   window has a known timing), the total is `partial`, and
    nothing shows a "complete" envelope or a zero.
 4. **Concurrent branch.** Removing the tangzhong from the process does not change the total, and
    adding it back does not lengthen it.
@@ -808,6 +882,34 @@ scheduled, not predictions of the biology). A poolish bread with a tangzhong:
    time is 06:00 plus its relative start, and the relative readings are unchanged.
 7. **Not persisted.** Saving the recipe stores no group, no relative time and no open or closed
    state.
+
+**Implementation notes (#106 slice C, no persisted shape changes: `CONTRACT_VERSION` stays `0.18.0`).**
+API of `@flourprint/core/domain`, for Recipe (#100) and Planning (#133); nothing is computed in React.
+
+- `relativeTimeline(process, { components? }): Result<RelativeTimeline, ProcessError>` runs
+  `projectProcess` once from an internal origin and returns offsets in seconds from the earliest
+  planned start. The result holds no date. `components` is the formula's component ids; absent, the
+  ids the process names (`subjectOf`). Errors are those of `projectProcess` (`InvalidProcess`, ...),
+  unchanged.
+- `anchorTimeline(timeline, { kind: 'startAt', at } | { kind: 'readyBy', at, target }):
+Result<AnchoredTimeline, ProcessError>` adds the anchor: every instant is `at` plus the offset
+  (`readyBy` shifts the origin so `target` ends at `at`). Errors: `UnknownReference` (`mode.target`)
+  and `IncompatibleConstraint` (target timing unknown), as in `projectProcess`. `windowOf(steps)`
+  is the one window rule. Types: `Timing`, `Window`, `StepTiming`, `GroupTiming`,
+  `RelativeTimeline`, `TimelineAnchor`, `AnchoredTimeline`, `AnchoredWindow`.
+- `StepTiming` also carries the projection's `warmup` of a `beforeTarget` step. Its timing is
+  `unknown` when the warm-up is `unknown` (`unknownAfter` = its blockers; its group is then
+  `partial` as for any unknown member). When `unavailable`, its timing is `unknown` with empty
+  `unknownAfter` and it is **not a window member**: it affects only itself, so its group and the
+  total are computed from the other steps (no interval, no envelope, no blocker from it).
+- Groups come in the order: components (first step order), `mainDough`, `cooking`; a step in the
+  cooking set (cooking operations, `preheat`, and steps downstream of a cooking step) is in
+  `cooking` whatever its subject. Empty groups are omitted.
+- A window with no known member is `unknown`, with some known members `partial` (the Window rule;
+  Example 3 above).
+- Supported: a recipe plan (no facts, no `now`). Unsupported: a relative timeline of a Preparation
+  in progress (recorded facts, `overdue`); read `projectProcess` for that. Not provided: open/closed
+  group state (interface only).
 
 Implementation (`@flourprint/core/domain`): `validateProcess`, `projectProcess`,
 `planIncorporations`, and the graph utilities `topologicalSort`, `isTopologicalOrder`,

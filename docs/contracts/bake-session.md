@@ -21,7 +21,7 @@ A session is `active` from `BakeStarted`, then ends, `finished` or `abandoned`:
 - **abandoned** (`AbandonBake`): the preparation stopped without a usable result (a failed dough,
   a step gone wrong). A dough kept, frozen, given or sold is finished, never abandoned.
 
-There is no suspended state. Closing the app, or the device being off, pauses nothing: the
+There is no suspended state (a single step's countdown can be held, below; the session never is). Closing the app, or the device being off, pauses nothing: the
 fermentation goes on, recorded times stay where they are, and the state at any instant is derived
 from the events and the injected clock. No step completes because its planned duration has
 elapsed. Holding the dough (a cold retard, an extra rest) is a step, added with
@@ -76,15 +76,40 @@ interface PreparationOutcome {
   `intendedOutcome`): a dough that is always frozen says `{ result: 'dough', dough: 'frozen' }`
   once, in the recipe. Without one, the intended outcome is `cooked` when the session's effective
   process (inserted steps included) has a cooking step, else `dough` with no disposition.
-- **Finishing.** `FinishBake` takes an optional `outcome`:
-  - without one, the domain records the intended outcome of the session's snapshot in the event,
-    with `outcomeSource: 'recipe'`: finishing never asks a question;
-  - with one, it records that outcome with `outcomeSource: 'baker'`, for a session that ended
-    differently this time.
+- **Finishing.** `FinishBake` takes an optional `outcome`. A **cooking step** is a step of the
+  session's effective process (inserted steps included) whose recorded operation code is in
+  `COOKING_OPERATIONS` (`isCookingStep`, the list above and process.md), and it is **completed**
+  when it has a recorded end (a started or planned one does not count):
+  - with an outcome, the domain records it with `outcomeSource: 'baker'`, whatever the steps
+    done (a dough kept, frozen, given or sold; part cooked, part kept);
+  - without one and **at least one cooking step completed**, the domain records the intended
+    outcome of the session's snapshot with `outcomeSource: 'recipe'`: finishing asks no question;
+  - without one, **no cooking step completed**, and an intended outcome that includes a cooked result (`cooked` or `cookedAndDough`), nothing
+    says the intended product was reached, so the command is refused with `OutcomeRequired { reason:
+'no_cooking_step_completed' }` and nothing is recorded. The baker chooses an outcome, or
+    uses `AbandonBake` for a failed preparation;
+  - without one, no cooking step completed, and an intended outcome that is a dough only (a
+    recipe that is always a frozen dough, or a process with no cooking step and no stated
+    intent): the intended outcome is recorded with `outcomeSource: 'recipe'` as usual.
 
-  The interface shows this as a Finish button with a choice beside it, the intended outcome being
-  the default. The domain neither derives the outcome from completed cooking steps nor refuses it
-  against them (a cooking step may have been done outside the process).
+  The interface shows a Finish button with a choice beside it. The intended outcome is the
+  default, except when `OutcomeRequired` would apply: then the Finish control asks for the
+  outcome, with none preselected. Beyond
+  this, the domain neither derives the outcome from completed cooking steps nor refuses an
+  explicit one against them (a cooking step may have been done outside the process).
+
+  Example (early finish). A bread session with steps `mix` and `bake`, `intendedOutcome` absent
+  (so `cooked`). `mix` is completed, `bake` is not: `FinishBake` alone gives `OutcomeRequired`;
+  `FinishBake { outcome: { result: 'dough', dough: 'frozen' } }` finishes with that outcome and
+  `outcomeSource: 'baker'`. Once `bake` is completed, `FinishBake` alone finishes with `{ result:
+'cooked' }`, `outcomeSource: 'recipe'`, as before. A session whose process has no cooking step
+  at all and no stated intent intends a dough, so it finishes in one tap with `{ result: 'dough'
+}`; so does a recipe whose `intendedOutcome` is `{ result: 'dough', dough: 'frozen' }`.
+
+- **History.** The rule only restricts new commands. A stored `BakeFinished` (with `outcome`
+  and `outcomeSource: 'recipe'` or `'baker'`, or without either, before `0.11.0`) keeps its
+  meaning and replays unchanged, even when no cooking step was completed in that session. The
+  persisted shape is the same, so `CONTRACT_VERSION` is not bumped for this rule.
 
 - Events written before `0.11.0` have no outcome: the result is **unknown**, never read as
   cooked, whatever steps were completed.
@@ -133,21 +158,164 @@ interface BakeEvent<P> {
 
 ## Alpha commands and events
 
-| Command                      | Events                                                                       | Rules                                                                                                                                                           |
-| ---------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; validates the formula, the process and their incorporations together, and projects the process; optional `origin` and `flours` (flours.md)           |
-| `StartStep`                  | `StepStarted`                                                                | dependencies completed, and `at` not before their latest end; not already started                                                                               |
-| `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start); a completion before it is refused (`InvalidTime`) |
-| `AdjustStep`                 | `OverrideApplied` (step duration, temperature or `equipment`, equipment.md)  | step not completed                                                                                                                                              |
-| `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                    |
-| `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                          |
-| `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                         |
-| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                  |
-| `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start     |
-| `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                        |
-| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept; `FinishBake` takes an optional `outcome` (above), recorded in its event                                                         |
-| `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                           |
-| `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                     |
+| Command                      | Events                                                                       | Rules                                                                                                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `StartBake`                  | `BakeStarted` (snapshot, `history.md`)                                       | only once; validates the formula, the process and their incorporations together, and projects the process; optional `origin` and `flours` (flours.md)               |
+| `StartStep`                  | `StepStarted`                                                                | dependencies completed, and `at` not before their latest end; not already started                                                                                   |
+| `CompleteStep`               | `StepStarted` if needed, `StepCompleted`                                     | not already completed; an implicit start is placed at the latest end of its dependencies (or the bake start); a completion before it is refused (`InvalidTime`)     |
+| `AdjustStep`                 | `OverrideApplied` (step duration, temperature or `equipment`, equipment.md)  | step not completed                                                                                                                                                  |
+| `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                        |
+| `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                              |
+| `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                             |
+| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                      |
+| `SetStepThermal`             | `StepThermalChanged`                                                         | running or not-yet-started dough step; a replacement of the step's whole `thermal` (process.md, Thermal inputs), effective from `at`; (below, 0.21.0 target)        |
+| `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start         |
+| `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                            |
+| `HoldStepCountdown`          | `StepCountdownHeld`                                                          | step running (started, not ended, with a planned duration, not `beforeTarget`); not already held (`StepAlreadyHeld`); `at` not before the start or the last release |
+| `ReleaseStepCountdown`       | `StepCountdownReleased`                                                      | step held (`StepNotHeld`); `at` not before the hold                                                                                                                 |
+| `FinishBake` / `AbandonBake` | `BakeFinished` / `BakeAbandoned`                                             | ends the session; data is kept; `FinishBake` takes an optional `outcome` (above, `OutcomeRequired` if none and no cooking step is completed), recorded in its event |
+| `CorrectOutcome`             | `OutcomeCorrected`                                                           | finished session only (`NotFinished` otherwise); the outcome is valid                                                                                               |
+| `ReopenBake`                 | `BakeReopened`                                                               | finished or abandoned session only (`BakeActive` otherwise); the session is active again until its next end                                                         |
+
+**Step countdown hold (0.20.0).** The baker may freeze the countdown of one running step (a
+phone call, a delayed oven), never the Preparation or the dough: the clock, the other steps and
+the fermentation go on, and no rest step is created or classified.
+
+- `HoldStepCountdown` / `ReleaseStepCountdown` take a `stepId` and an optional `at` (default now).
+  Refusals: unknown step; not started (`StepNotRunning`); completed (`StepAlreadyCompleted`); no
+  planned duration or `beforeTarget` (`InvalidCommand`); hold on a held step (`StepAlreadyHeld`, no
+  nesting); release of a step not held (`StepNotHeld`); a time before the step's start, the
+  previous release or the hold (`InvalidTime`). As for other commands, a time in the future is
+  not refused.
+- Durations stay distinct and derivable: **planned** = the snapshot; **projected** = planned with
+  `AdjustStep` overrides **plus the holds**; **actual** = recorded start and end, never touched by
+  a hold. A step's hold total is the sum of its closed holds plus the open one up to the instant
+  asked.
+- Projection (`liveProjection`): while held, the remaining time is frozen, so the projected end is
+  `now + remaining at the hold` and moves with the clock; once released, the end stays where it
+  was and dependents shift by the hold length. Parallel branches are unaffected; a `beforeTarget`
+  step is re-anchored to its target as usual. A hold is recorded in events, so it survives closing
+  the app.
+- **Completion while held closes the hold**: `CompleteStep` on a held step emits
+  `StepCountdownReleased` at the completion time, then `StepCompleted`, in one command. A
+  completion before the hold began is refused. Retracting that completion leaves the hold closed.
+- Reminders (ADR 0012) are derived from the projection: a held step has **no end reminder**, and
+  neither has any step whose projected start rests on it (a dependent, or a `beforeTarget` step
+  whose target is downstream, transitively); the release schedules them again from the new
+  projection. Nothing is stored for reminders. **Fold reminders stay on the actual dough clock**,
+  from the recorded start, unshifted: a hold extends the countdown, not the fermentation.
+- `FinishBake` and `AbandonBake` close any open hold in the same command (`StepCountdownReleased`
+  at the end time, before the end event). A hold counts only for the part inside the step's
+  recorded start and end, so `CorrectStepTime` cannot inflate it.
+- Backups: the two events are checked on restore (known running step, no nested hold, release only
+  when held, times in order). An app that does not know them refuses the backup on its unknown
+  event type, never misreading it. `CONTRACT_VERSION` is `0.20.0` (minor, additive vocabulary);
+  the backup `schemaVersion`, the event envelope version and the SQL schema are unchanged (the
+  log is JSON).
+
+**Thermal change on a running step (0.21.0 target, #176).** The baker moved the dough: into a
+bowl with a lid, out of the fridge, onto a tray. `SetStepThermal { stepId, at?, thermal? }` (`at` defaults to now; omitted or ignored on a step not yet started) records
+`StepThermalChanged { stepId, at, thermal }`; `thermal` absent means "no thermal inputs from now
+on" (back to the fixed lag).
+
+- **Refusals.** Unknown step; a step that is not a dough step (`InvalidCommand`); a completed step
+  (`StepAlreadyCompleted`); an invalid `thermal` (`InvalidProcess`, process.md); `at` before the
+  step's start or before the previous thermal change of that step (`InvalidTime`). A step not yet
+  started accepts it with `at` omitted: the event is recorded at the command time, but the new
+  `thermal` applies **from the step's start** (there is no earlier part to keep).
+- **Effect.** Replaces the step's `thermal` from `at` on; the earlier part of the step keeps the
+  inputs in force before. The effective thermal inputs of a step are therefore a list of
+  `(from, thermal)` segments: the snapshot's `thermal` from the step's start, then the changes in
+  order. `liveProjection` and the model's forecast recompute from the recorded facts: the dough
+  temperature state at `at` is that of the segment before, then the new `τ_eff` applies. Planned
+  steps downstream, reminders and the end times that depend on the model follow the new
+  projection like those of any other change. Nothing is stored for the recomputed values.
+- **Not an `AdjustStep`.** The step's duration, conditions and equipment are untouched; a change of
+  the ambient temperature is `AdjustStep`, a change of container, cover, geometry or environment
+  class is `SetStepThermal`. A move from the counter to the fridge is both, recorded at the same
+  `at`, in one command batch.
+- **Replay.** `evolve` is structural: it stores the segments and never calls the engine.
+  A stored session replays with the values it committed (history.md); the forecast of the past is
+  never recomputed with a new thermal model.
+
+`AddObservation` accepts `kind: 'doughTemperature'` (0.21.0 target): a measured dough temperature
+with the probe position.
+
+- It needs a `stepId` that is running and is a dough step, and a numeric `Observation` in °C
+  (finite, within 0 – 60 °C, as for the other temperatures); anything else is `InvalidCommand`,
+  and on an ended bake `BakeNotActive`. Category `fermentation`, `position`: `core` (probe in the
+  centre), `surface` or `unknown`, optional `note`.
+- The reading is kept in the journal and exported. It replaces the model's **mean** state from its
+  instant (fermentation.md, Dough temperature): `core` through `γ_core` when the step has thermal
+  inputs and the reading is at least 0.5 `τ_eff` after the later of the step start and the last
+  thermal change; otherwise (earlier, no thermal, `surface`, `unknown`) it is taken as the mean
+  and the estimate says `probe_position_unmodelled` or `reading_in_transient`.
+- Readings of one step after one thermal setting are the data of the personal factor
+  (fermentation.md, Personal correction): they are kept with the active `thermal` segment, so a
+  calibration reads the container and environment that were in force at each reading.
+- It never completes the step nor changes the plan. A not-ready or ready judgement stays
+  `doughReady`; the model's forecast is an estimate that never overrides it.
+
+**Versioning and upcasting.** Two new event/observation vocabulary items, additive: `StepThermalChanged`
+and `kind: 'doughTemperature'` with `position`. `CONTRACT_VERSION` goes from `0.20.0` to `0.21.0`
+(minor, additive vocabulary) in the implementing pull request. Stored events are untouched: no
+upcaster is needed, an old session has no thermal segment and replays with the fixed lag of its
+snapshot. The event envelope version and the log are unchanged (JSON). The backup `schemaVersion` goes from
+2 to 3 for the `thermal` inputs in the snapshot's process and for `thermalProfiles`
+(persistence.md); old backups restore unchanged, read as no thermal. As for the countdown hold, an app that does not know `StepThermalChanged`
+refuses a backup holding it on its unknown event type (`persistence.md`), never misreading it;
+old backups restore unchanged in a new app. Downgrades are not supported.
+
+**Implicitly running steps (live projection).** The baker's first real action on a step records
+its `StepStarted`; until then the step has no recorded start, but it must not be shown as waiting
+or "starting now" (docs/ux/requirements.md L127). In `liveProjection(state, now)`, an `asap` step
+that is not started or completed, that is not `alap` or `beforeTarget`, and whose dependencies are
+all ended (or that has none), is projected as **implicitly running** from its **implicit start** =
+the latest recorded end among its dependencies, or the bake start when it has none; its end is that
+start plus its projected duration. It is **not clamped to `now`**, so the same step reads
+12:00 to 12:04 before and after the first action records `StartStep` at 12:00 (a step planned at
+240 s, bake started at 12:00, observed at 12:02).
+
+- This is a read-model interpretation only: no event is recorded and the persisted facts are
+  unchanged. Such a step is flagged `implicit: true` on its `ProjectedStep` (live projection only,
+  absent from the snapshot's initial projection), and `implicitStartOf(state, stepId)` gives its
+  implicit start (`undefined` otherwise). `CompleteStep` places its implicit `StepStarted` at the
+  same instant through the same computation.
+- **Several steps can be implicitly running in parallel** when their dependencies are all ended
+  (parallel branches, or a step without dependency alongside the first).
+- A step with a dependency not yet ended keeps its projection after that dependency; `alap` and
+  `beforeTarget` steps keep their own rules.
+- Holds and adjustments apply as for a running step, but a hold still requires a recorded start
+  (`StepNotRunning` otherwise); the UI records `StartStep` at the implicit start on the first real
+  action. A step the baker never starts is projected like a running one (`inProgress`, its end may
+  be in the past) from its implicit start (owner-approved L127 semantics); only the preheat slot
+  sets `overdue`.
+- Reminders derived from the projection use the same interval: the end reminder of an implicitly
+  running step is at implicit start plus duration; no start reminder is scheduled for it.
+- `liveProjection` is not gated on the bake status: a finished or abandoned bake may show a
+  never-started step as implicitly running in the projection (alerts are gated on the active status).
+- `AcceptProjection` stores the live projection in `ProjectionAccepted`, but without the `implicit`
+  flag: the persisted `ProjectedStep` shape is unchanged, and the accepted snapshot keeps the
+  implicit interval and status as computed.
+- `CONTRACT_VERSION` is unchanged: no persisted shape, event or backup field changes; `implicit` is
+  a computed projection flag.
+
+**AdjustStep floor.** `AdjustStep` takes an absolute `plannedDurationS` ≥ 0, also on a running
+step. A "−15 min" control asks for a delta: `adjustedDurationS(current, deltaS)` =
+`max(0, current + deltaS)`. A duration never goes below zero; a running step whose planned end has
+passed shows as overdue. A negative absolute value is refused.
+
+**Previous.** `previousAction(state, stepId)` gives the UI's three cases for a completed step, by
+the `RetractCompletion` rule: `{ kind: 'retract', targetEventId }` when no dependent has a
+recorded start; `{ kind: 'blocked', reason: 'dependentStarted', dependents }` otherwise (the UI
+offers `CorrectStepTime` or `InsertStepAfter`); `reason: 'notCompleted'` when there is no
+completion. A deliberate repetition is always `InsertStepAfter`. The UI passes the step of the
+strand it shows, never a parallel branch.
+
+**Retracted completions in the visible timeline.** A completion that was retracted, and its
+`StepCompletionRetracted`, are hidden from the business timeline of a Preparation (journal) and
+kept in the technical log and in exports. `visibleEvents(events)` applies the rule to an event
+list; an implicit `StepStarted` recorded with that completion stays visible.
 
 A `beforeTarget` step (process.md, Steps before a target) is never a dependency: no step waits
 for it. `StartStep` on it records `StepStarted` (the baker switched the heating on); `CompleteStep`

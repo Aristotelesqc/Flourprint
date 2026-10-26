@@ -1,0 +1,27 @@
+name: PR issue link
+
+# Every pull request names the issue it advances (AGENTS.md "Development order"). Make this a
+# required status check in the repository settings to enforce it.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  issue-link:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require an issue reference or "No issue:"
+        env:
+          # The body is untrusted text: it reaches the script only through this variable.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if printf '%s\n' "$PR_BODY" | grep -Eiq '(closes|fixes|resolves|refs|part of) +#[0-9]+'; then
+            exit 0
+          fi
+          if printf '%s\n' "$PR_BODY" | grep -Eq '^No issue:'; then
+            exit 0
+          fi
+          echo "::error::Name the issue in the pull request body: Closes #N, Refs #N (Fixes, Resolves and Part of also count), or a line starting with 'No issue:' and a one-line reason."
+          exit 1
