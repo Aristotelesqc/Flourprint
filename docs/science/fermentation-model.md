@@ -12,6 +12,39 @@ corrections). Where they disagree, the audit overrides the report and the synthe
 Numbers marked "script" are produced by `scripts/fit_izzreen.py`; numbers marked "contract
 equations" were computed from the equations of the contract.
 
+## Goal and acceptance criterion (owner decision, 2026-10-26)
+
+The goal is a forecast **at least as good as an expert baker's**, not an exact simulation of the
+physics and biology of dough. An expert does not solve the chemistry of sugar or gluten; they
+recognise familiar situations, compare them and adjust. A model can learn the same regularities.
+
+- **The criterion is predictive.** A model or sub-model is judged by its error on formulations and
+  processes it has not seen: durations and doses against published schedules and recorded bakes,
+  with whole sources held out, never variants of one recipe split between fit and test. "Is there a
+  published equation for each effect?" is not the question.
+- **Three kinds of knowledge, complementary.**
+  - **Collective practice**: the published recipe corpus. It encodes the judgement of its authors
+    (dose for a formulation, time at a temperature, when to retard), and is the natural source for
+    interactions whose mechanism is unknown or unquantified, such as enriched dough.
+  - **Science**: constraints and generalisation where the corpus is silent. The thermal model
+    (section 14) is the example: a recipe says "fridge, 24 h", never the bowl or the mass.
+  - **Individual experience**: the baker's own bakes, which calibrate the personal profile
+    (section 11).
+- **Limits of the corpus.** A published schedule is a **recommended protocol**, not a measured
+  fermentation: temperatures are often "room", ends are "until doubled", conventions are copied.
+  It teaches what bakers do, not what the dough did, and its variables are confounded (enriched
+  doughs also tend to carry more yeast and warmer proofs). Recorded Flourprint bakes are the
+  stronger data.
+- **What enters the model.** A mechanistic sub-model enters when it predicts better on held-out
+  cases, or when it covers a situation the corpus cannot (the container, the mass). An empirical
+  correction learned from comparable recipes is admissible on the same terms as a fitted
+  equation: versioned, with its data, its domain and its measured error. Neither enters without
+  that measurement.
+- **The baseline.** The current model is measured first against the page-read schedules collected
+  on #34; that error is the reference every candidate must beat. The kinetic law of section 2 is
+  already empirical (fitted, not derived) and the readiness profile of section 4 already comes
+  from schedules: the orientation extends what is there.
+
 ## 1. Evidence hierarchy and provenance labels
 
 Labels (defined in the README): MEASURED, DERIVED / FITTED, ASSUMED, EXTRAPOLATED, MODEL OUTPUT.
@@ -480,6 +513,9 @@ Gates before a candidate (M5 or another) enters the shipped model:
 7. The inverse (dose from schedule) uses the same forward implementation and reports "not reached
    within the horizon" as unresolved, never as an invented duration.
 8. A dedicated contract pull request, then code.
+9. Its error on the held-out schedule benchmark (Goal and acceptance criterion) is reported next to
+   the shipped model's, and is lower; or the candidate covers a situation the benchmark cannot
+   test, and says so.
 
 Other open items: obtain the Timmermans time courses; verify the Boudrag tables and percentage
 denominators; confirm the bibliography titles marked unverified; check whether the Izzreen formula
@@ -498,6 +534,7 @@ details match the paper; measure the dough temperature during the owner's cold r
 | contract 0.11.0 | 2026-10-12        | The heat steps are the cooking operations (process.md): `bake`, `boil`, `steam`, `fry`, `panCook`, `grill`. A fried or pan-cooked dough no longer counts its cooking step as a dough step. Same equations and parameters, fixtures unchanged.                                                                                                                                                                                                                        |
 | science doc     | 2026-10-25        | Lag-aware comparison on Izzreen Table I, and cardinal-temperature forms and progressive blending examined and rejected (section 2; reports on issue #9). No model change.                                                                                                                                                                                                                                                                                            |
 | science doc     | 2026-10-25        | Section 14: provenance of every constant of the dough thermal model proposed for contract 0.21.0 (#176). No change of the kinetic model; the thermal sub-model `flourprint.dough-thermal` 0.1.0 is a proposal until its contract merges.                                                                                                                                                                                                                             |
+| science doc     | 2026-10-26        | Goal and acceptance criterion: a forecast at least as good as an expert baker's, judged by held-out predictive error against published schedules and recorded bakes; recipe corpus, science and personal bakes as complementary sources; gate 9. Owner decision. No model change.                                                                                                                                                                                    |
 
 Any future model version adds a row here with the evidence it rests on.
 
