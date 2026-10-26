@@ -41,7 +41,6 @@ import {
 } from './thermal.js';
 import {
   personalCorrection,
-  thermalKeyCode,
   type PersonalCorrection,
   type ThermalKey,
   type ThermalProfile,

@@ -109,7 +109,9 @@ export const recordThermalCalibration = async (
   stepId: string,
   options: Omit<CalibrationOptions, 'thermalProfile'>,
   now: Instant,
-): Promise<Result<{ profile: ThermalProfile; calibration: StepCalibration }, RecordCalibrationError>> => {
+): Promise<
+  Result<{ profile: ThermalProfile; calibration: StepCalibration }, RecordCalibrationError>
+> => {
   const first = events[0];
   if (first === undefined) {
     return err({ code: 'UnknownBake', message: 'No events', details: { bakeId: '' } });

@@ -11,6 +11,7 @@ import {
   SqlFlourRegistry,
   SqlIngredientRegistry,
   SqlRecipeRepository,
+  SqlThermalProfileStore,
 } from '../src/sqlite-node/index.js';
 
 const open = async (path: string, migrations = MIGRATIONS) => {
@@ -257,6 +258,73 @@ describe('sqlite-node durability', () => {
       v8.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
     ).toEqual({ value: 9 });
     v8.close();
+  });
+
+  it('upgrades a version 8 database to the thermal profile, keeping its recipes as written', async () => {
+    const file = path('upgrade-thermal.sqlite');
+    const v8 = await open(file, MIGRATIONS.slice(0, 8));
+    const step = {
+      id: 'bulk',
+      operation: 'bulk',
+      dependsOn: [],
+      schedule: 'asap' as const,
+      plannedDurationS: 3600,
+    };
+    await new SqlRecipeRepository(v8.driver).saveRevision({
+      recipeId: 'r',
+      name: 'R',
+      expectedHead: 0,
+      formula: {
+        flours: [{ id: 'f', sharePct: 100 }],
+        ingredients: [],
+        components: [],
+        anchor: { kind: 'flourTotal', grams: 500 },
+      },
+      process: { steps: [step] },
+      createdAt: '2026-10-07T08:00:00.000Z' as Instant,
+    });
+    const before = v8.database.prepare('SELECT document FROM revisions').all();
+    expect(() => v8.database.prepare('SELECT COUNT(*) FROM thermal_profiles').get()).toThrow();
+    v8.close();
+
+    const v9 = await open(file);
+    // The new table is there and empty; nothing stored was rewritten, and a revision without
+    // thermal inputs still reads as one (no thermal inputs, the fixed lag).
+    expect(v9.database.prepare('SELECT COUNT(*) AS n FROM thermal_profiles').get()).toEqual({
+      n: 0,
+    });
+    expect(v9.database.prepare('SELECT document FROM revisions').all()).toEqual(before);
+    const revision = await new SqlRecipeRepository(v9.driver).getRevision('r', 1);
+    expect(revision.ok && revision.value?.process.steps[0]?.thermal).toBeUndefined();
+    const store = new SqlThermalProfileStore(v9.driver);
+    expect(await store.listThermalProfileVersions()).toEqual([]);
+    const profile = {
+      id: 'personal',
+      version: 1,
+      factors: [],
+      updatedAt: '2026-10-25T08:00:00.000Z' as Instant,
+    };
+    expect(await store.saveThermalProfile(profile)).toMatchObject({ ok: true });
+    expect(await store.getThermalProfile('personal', 1)).toEqual({ ok: true, value: profile });
+    expect(
+      v9.database.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get(),
+    ).toEqual({ value: MIGRATIONS.length });
+    v9.close();
+  });
+
+  it('refuses thermal profiles written with a newer document schema', async () => {
+    const db = await open(':memory:');
+    db.database
+      .prepare(
+        "INSERT INTO thermal_profiles VALUES ('personal', 1, 99, '{}', '2026-10-25T08:00:00.000Z')",
+      )
+      .run();
+    expect(
+      await new SqlThermalProfileStore(db.driver).getThermalProfile('personal', 1),
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'UnsupportedDocumentVersion' },
+    });
   });
 
   it('refuses ingredient entries written with a newer document schema', async () => {
