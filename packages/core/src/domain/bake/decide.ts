@@ -23,6 +23,12 @@ import { approxEqual } from '../numeric.js';
 import { err, ok, type Result } from '../result.js';
 import { validateRecipe } from '../recipe/validate.js';
 import { ingredientUsedProperties } from '../ingredient/mapping.js';
+import {
+  sameWeighingRow,
+  weighingGroups,
+  type StageRef,
+  type WeighingItem,
+} from '../formula/weighing.js';
 import { CONTRACT_VERSION, ENGINE_VERSION } from '../version.js';
 import type { AcceptedSuggestion, Estimate, ModelRef } from '../values.js';
 import { heldSeconds, openHold } from './hold.js';
@@ -453,6 +459,26 @@ export const decide = (
       }
       seen.add(ref.id);
     }
+    if (command.weighed !== undefined) {
+      const validRows = weighingGroups(command.formula, resolved.value).flatMap((g) => g.rows);
+      const seenWeighed: { stage: StageRef; item: WeighingItem }[] = [];
+      for (const entry of command.weighed) {
+        const isRow = validRows.some((r) => sameWeighingRow(r, entry));
+        if (!isRow) {
+          return error('InvalidCommand', 'Unknown weighing row', {
+            field: 'weighed',
+            reason: 'unknown weighing row',
+          });
+        }
+        if (seenWeighed.some((r) => sameWeighingRow(r, entry))) {
+          return error('InvalidCommand', 'Duplicate weighing row', {
+            field: 'weighed',
+            reason: 'duplicate weighing row',
+          });
+        }
+        seenWeighed.push(entry);
+      }
+    }
     return ok([
       {
         occurredAt: now,
@@ -477,6 +503,9 @@ export const decide = (
               : { flours: command.flours.map((f) => ({ id: f.id, version: f.version })) }),
             ...(command.equipment === undefined ? {} : { equipment: equipment.value }),
           },
+          ...(command.weighed !== undefined && command.weighed.length > 0
+            ? { weighed: command.weighed }
+            : {}),
         },
       },
     ]);
@@ -800,6 +829,39 @@ export const decide = (
             stepId: command.stepId,
             at,
             ...(command.thermal === undefined ? {} : { thermal: command.thermal }),
+          },
+        },
+      ]);
+    }
+
+    case 'SetWeighingCheck': {
+      const snapshot = state.snapshot;
+      if (!snapshot) {
+        return error('BakeNotActive', 'The bake has no snapshot', { status: state.status });
+      }
+      const validRows = weighingGroups(snapshot.formula, snapshot.resolvedFormula).flatMap(
+        (g) => g.rows,
+      );
+      const isRow = validRows.some((r) => sameWeighingRow(r, command));
+      if (!isRow) {
+        return error('InvalidCommand', 'Unknown weighing row', {
+          field: 'weighed',
+          reason: 'unknown weighing row',
+        });
+      }
+      const currentWeighed = state.weighed ?? [];
+      const isChecked = currentWeighed.some((r) => sameWeighingRow(r, command));
+      if (command.checked === isChecked) {
+        return ok([]);
+      }
+      return ok([
+        {
+          occurredAt: now,
+          payload: {
+            type: 'WeighingCheckChanged',
+            stage: command.stage,
+            item: command.item,
+            checked: command.checked,
           },
         },
       ]);
