@@ -1,0 +1,810 @@
+{
+  "sourceRevision": "fcd02decca71063951129972363690cefa85fa24",
+  "actualLocalBuild": {
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local"
+  },
+  "sourceFileSha256": {
+    "packages/ui/src/components/floating-menu/v1.tsx": "6f12fe094407f6b9389413b5b3697d00f8cfc114d677c447651c6e0097497ed6",
+    "packages/ui/src/components/bottom-sheet/v1.tsx": "883d4a43874c8c80bad3b2dc07565afb5cbc363b838512f94057bd3b031f00de",
+    "packages/ui/src/overlay-motion.ts": "533a0cb8a7857165378333f8bf8e83ac4607afcb656756e204176e8bf0e3735e",
+    "packages/ui/src/patterns.css": "69c2f6b894f007191d3d6cc5bb5e2e5ca17d72b7b055c4574ba7c6539057ad3a"
+  },
+  "captures": [
+    {
+      "file": "app/fr-light-360-130-library.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "library"
+    },
+    {
+      "file": "app/fr-light-360-130-recipe.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "recipe"
+    },
+    {
+      "file": "app/fr-light-360-130-menu.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "menu"
+    },
+    {
+      "file": "app/fr-light-360-130-help.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help"
+    },
+    {
+      "file": "app/fr-light-360-130-help-expanded.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/fr-light-393-100-library.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "library"
+    },
+    {
+      "file": "app/fr-light-393-100-recipe.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "recipe"
+    },
+    {
+      "file": "app/fr-light-393-100-menu.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "menu"
+    },
+    {
+      "file": "app/fr-light-393-100-help.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help"
+    },
+    {
+      "file": "app/fr-light-393-100-help-expanded.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/fr-dark-360-130-library.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "library"
+    },
+    {
+      "file": "app/fr-dark-360-130-recipe.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "recipe"
+    },
+    {
+      "file": "app/fr-dark-360-130-menu.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "menu"
+    },
+    {
+      "file": "app/fr-dark-360-130-help.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help"
+    },
+    {
+      "file": "app/fr-dark-360-130-help-expanded.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/fr-dark-393-100-library.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "library"
+    },
+    {
+      "file": "app/fr-dark-393-100-recipe.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "recipe"
+    },
+    {
+      "file": "app/fr-dark-393-100-menu.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "menu"
+    },
+    {
+      "file": "app/fr-dark-393-100-help.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help"
+    },
+    {
+      "file": "app/fr-dark-393-100-help-expanded.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/fr-amoled-360-130-library.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "library"
+    },
+    {
+      "file": "app/fr-amoled-360-130-recipe.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "recipe"
+    },
+    {
+      "file": "app/fr-amoled-360-130-menu.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "menu"
+    },
+    {
+      "file": "app/fr-amoled-360-130-help.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help"
+    },
+    {
+      "file": "app/fr-amoled-360-130-help-expanded.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/fr-amoled-393-100-library.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "library"
+    },
+    {
+      "file": "app/fr-amoled-393-100-recipe.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "recipe"
+    },
+    {
+      "file": "app/fr-amoled-393-100-menu.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "menu"
+    },
+    {
+      "file": "app/fr-amoled-393-100-help.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help"
+    },
+    {
+      "file": "app/fr-amoled-393-100-help-expanded.png",
+      "surface": "production app",
+      "locale": "fr",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/en-light-360-130-library.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "library"
+    },
+    {
+      "file": "app/en-light-360-130-recipe.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "recipe"
+    },
+    {
+      "file": "app/en-light-360-130-menu.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "menu"
+    },
+    {
+      "file": "app/en-light-360-130-help.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help"
+    },
+    {
+      "file": "app/en-light-360-130-help-expanded.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/en-light-393-100-library.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "library"
+    },
+    {
+      "file": "app/en-light-393-100-recipe.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "recipe"
+    },
+    {
+      "file": "app/en-light-393-100-menu.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "menu"
+    },
+    {
+      "file": "app/en-light-393-100-help.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help"
+    },
+    {
+      "file": "app/en-light-393-100-help-expanded.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/en-dark-360-130-library.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "library"
+    },
+    {
+      "file": "app/en-dark-360-130-recipe.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "recipe"
+    },
+    {
+      "file": "app/en-dark-360-130-menu.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "menu"
+    },
+    {
+      "file": "app/en-dark-360-130-help.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help"
+    },
+    {
+      "file": "app/en-dark-360-130-help-expanded.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/en-dark-393-100-library.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "library"
+    },
+    {
+      "file": "app/en-dark-393-100-recipe.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "recipe"
+    },
+    {
+      "file": "app/en-dark-393-100-menu.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "menu"
+    },
+    {
+      "file": "app/en-dark-393-100-help.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help"
+    },
+    {
+      "file": "app/en-dark-393-100-help-expanded.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/en-amoled-360-130-library.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "library"
+    },
+    {
+      "file": "app/en-amoled-360-130-recipe.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "recipe"
+    },
+    {
+      "file": "app/en-amoled-360-130-menu.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "menu"
+    },
+    {
+      "file": "app/en-amoled-360-130-help.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help"
+    },
+    {
+      "file": "app/en-amoled-360-130-help-expanded.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScalePct": 130,
+      "state": "help-expanded"
+    },
+    {
+      "file": "app/en-amoled-393-100-library.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "library"
+    },
+    {
+      "file": "app/en-amoled-393-100-recipe.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "recipe"
+    },
+    {
+      "file": "app/en-amoled-393-100-menu.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "menu"
+    },
+    {
+      "file": "app/en-amoled-393-100-help.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help"
+    },
+    {
+      "file": "app/en-amoled-393-100-help-expanded.png",
+      "surface": "production app",
+      "locale": "en",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScalePct": 100,
+      "state": "help-expanded"
+    },
+    {
+      "file": "motion/amoled-360-130-os-reduced-menu.png",
+      "surface": "English shared-component fixture",
+      "state": "amoled-360-130-os-reduced-menu"
+    },
+    {
+      "file": "motion/amoled-360-130-os-reduced-sheet.png",
+      "surface": "English shared-component fixture",
+      "state": "amoled-360-130-os-reduced-sheet"
+    },
+    {
+      "file": "motion/amoled-360-130-standard-menu.png",
+      "surface": "English shared-component fixture",
+      "state": "amoled-360-130-standard-menu"
+    },
+    {
+      "file": "motion/amoled-360-130-standard-sheet.png",
+      "surface": "English shared-component fixture",
+      "state": "amoled-360-130-standard-sheet"
+    },
+    {
+      "file": "motion/amoled-393-100-standard-menu.png",
+      "surface": "English shared-component fixture",
+      "state": "amoled-393-100-standard-menu"
+    },
+    {
+      "file": "motion/amoled-393-100-standard-sheet.png",
+      "surface": "English shared-component fixture",
+      "state": "amoled-393-100-standard-sheet"
+    },
+    {
+      "file": "motion/dark-360-130-standard-menu.png",
+      "surface": "English shared-component fixture",
+      "state": "dark-360-130-standard-menu"
+    },
+    {
+      "file": "motion/dark-360-130-standard-sheet.png",
+      "surface": "English shared-component fixture",
+      "state": "dark-360-130-standard-sheet"
+    },
+    {
+      "file": "motion/dark-393-100-standard-menu.png",
+      "surface": "English shared-component fixture",
+      "state": "dark-393-100-standard-menu"
+    },
+    {
+      "file": "motion/dark-393-100-standard-sheet.png",
+      "surface": "English shared-component fixture",
+      "state": "dark-393-100-standard-sheet"
+    },
+    {
+      "file": "motion/light-360-130-standard-menu.png",
+      "surface": "English shared-component fixture",
+      "state": "light-360-130-standard-menu"
+    },
+    {
+      "file": "motion/light-360-130-standard-sheet.png",
+      "surface": "English shared-component fixture",
+      "state": "light-360-130-standard-sheet"
+    },
+    {
+      "file": "motion/light-393-100-standard-menu.png",
+      "surface": "English shared-component fixture",
+      "state": "light-393-100-standard-menu"
+    },
+    {
+      "file": "motion/light-393-100-standard-sheet.png",
+      "surface": "English shared-component fixture",
+      "state": "light-393-100-standard-sheet"
+    }
+  ],
+  "videos": [
+    "motion/amoled-360-130-standard-component-motion.webm",
+    "motion/amoled-360-130-os-reduced-component-motion.webm"
+  ]
+}
