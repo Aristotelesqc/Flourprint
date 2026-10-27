@@ -37,6 +37,7 @@ const config = {
           ? [
               path.join(root, 'catalogue.html'),
               path.join(root, 'test/fixtures/foundation/index.html'),
+              path.join(root, 'test/fixtures/overlay-motion/index.html'),
             ]
           : path.join(root, 'catalogue.html'),
     },
