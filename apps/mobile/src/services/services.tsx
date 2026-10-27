@@ -8,6 +8,7 @@ import type {
   IdGenerator,
   IngredientRegistry,
   RecipeRepository,
+  ThermalProfileStore,
 } from '@flourprint/core/application';
 import type { Instant } from '@flourprint/core/domain';
 import {
@@ -17,6 +18,7 @@ import {
   MemoryIngredientRegistry,
   MemoryRecipeRepository,
   MemoryRestoreTarget,
+  MemoryThermalProfileStore,
 } from '@flourprint/adapters/memory';
 import type { SqlBridge } from '@flourprint/adapters/sqlite-bridge';
 import {
@@ -47,6 +49,8 @@ export interface Services {
   readonly equipment: EquipmentRegistry;
   /** Personal ingredient entries and customizations (ingredients.md); built-ins are code. */
   readonly ingredients: IngredientRegistry;
+  /** The personal thermal profile of the dough thermal model (persistence.md, #176). */
+  readonly thermalProfiles: ThermalProfileStore;
   /** The clock of the current world: the real one plus the offset in simulation (ADR 0014). */
   readonly clock: Clock;
   /** The real clock, for what both worlds share: recipes, drafts, flours, exports. */
@@ -105,6 +109,7 @@ export const createServices = async (options: {
       SqlFlourRegistry,
       SqlIngredientRegistry,
       SqlRecipeRepository,
+      SqlThermalProfileStore,
     } = await import('@flourprint/adapters/sqlite-capacitor');
     const db = await openCapacitorSqlite('flourprint');
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
@@ -115,6 +120,7 @@ export const createServices = async (options: {
       flours: new SqlFlourRegistry(db.value.driver),
       equipment: new SqlEquipmentRegistry(db.value.driver),
       ingredients: new SqlIngredientRegistry(db.value.driver),
+      thermalProfiles: new SqlThermalProfileStore(db.value.driver),
       ids,
       storage: 'sqlite',
       platform: PLATFORM,
@@ -132,6 +138,7 @@ export const createServices = async (options: {
       SqlFlourRegistry,
       SqlIngredientRegistry,
       SqlRecipeRepository,
+      SqlThermalProfileStore,
     } = await import('@flourprint/adapters/sqlite-bridge');
     const db = await openBridgeSqlite(desktop);
     if (!db.ok) throw new Error(`${db.error.code}: ${db.error.message}`);
@@ -142,6 +149,7 @@ export const createServices = async (options: {
       flours: new SqlFlourRegistry(db.value.driver),
       equipment: new SqlEquipmentRegistry(db.value.driver),
       ingredients: new SqlIngredientRegistry(db.value.driver),
+      thermalProfiles: new SqlThermalProfileStore(db.value.driver),
       ids,
       storage: 'sqlite',
       platform: 'desktop',
@@ -155,13 +163,14 @@ export const createServices = async (options: {
   const bakes = new MemoryBakeEventStore();
   const flours = new MemoryFlourRegistry();
   const equipment = new MemoryEquipmentRegistry();
+  const thermalProfiles = new MemoryThermalProfileStore();
   let browserData: Services['browserData'];
   if (browserSnapshotAvailable()) {
     const loaded = await restoreBrowserSnapshot(
-      new MemoryRestoreTarget(recipes, bakes, flours, equipment, ingredients),
+      new MemoryRestoreTarget(recipes, bakes, flours, equipment, ingredients, thermalProfiles),
     );
     const keeper = keepBrowserSnapshot(
-      { recipes, bakes, flours, equipment, ingredients },
+      { recipes, bakes, flours, equipment, ingredients, thermalProfiles },
       realClock.now,
     );
     browserData = {
@@ -179,6 +188,7 @@ export const createServices = async (options: {
     flours,
     equipment,
     ingredients,
+    thermalProfiles,
     ids,
     storage: 'memory',
     platform: 'web',

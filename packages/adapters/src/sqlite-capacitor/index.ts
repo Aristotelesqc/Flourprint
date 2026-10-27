@@ -16,6 +16,7 @@ export {
   SqlIngredientRegistry,
   SqlRecipeRepository,
   SqlRestoreTarget,
+  SqlThermalProfileStore,
 } from '../sql/index.js';
 
 /**
