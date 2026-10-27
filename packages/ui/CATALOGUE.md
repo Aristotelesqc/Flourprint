@@ -312,7 +312,7 @@ Controlled raw-string text input for localized, editable numeric measurements an
 
 ### `fp.select`
 
-Anchored popover overlay attached to the form field frame for choosing a single value from options.
+Anchored popover overlay attached to the form field frame for choosing a single value from options, committing immediately upon selection.
 
 **Use when**
 
@@ -325,24 +325,26 @@ Anchored popover overlay attached to the form field frame for choosing a single 
 
 **Props**
 
-| Prop            | Meaning                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------- |
-| `value`         | Selected option identifier or undefined when no selection has been made.                    |
-| `options`       | Readonly array of selectable options with id, localized label, and optional disabled state. |
-| `label`         | Localized label describing the select field.                                                |
-| `placeholder`   | Optional localized placeholder text shown when no option is selected.                       |
-| `cancelText`    | Localized text for the popover cancel button.                                               |
-| `okText`        | Localized text for confirming a selection.                                                  |
-| `disabled`      | Whether the select input field is interactive or disabled.                                  |
-| `onValueChange` | Callback fired when the user selects a valid enabled option.                                |
-| `description`   | Optional descriptive help text displayed beneath the field.                                 |
-| `error`         | Optional validation error message displayed with alert styling below the field.             |
+| Prop            | Meaning                                                                                                                          |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `value`         | Selected option identifier or undefined when no selection has been made.                                                         |
+| `options`       | Readonly array of selectable options with id, localized label, and optional disabled state.                                      |
+| `label`         | Localized label describing the select field.                                                                                     |
+| `placeholder`   | Optional localized placeholder text shown when no option is selected.                                                            |
+| `cancelText`    | Forwarded compatibility prop unused by the popover interface (options commit immediately without explicit cancel buttons).       |
+| `okText`        | Forwarded compatibility prop unused by the popover interface (options commit immediately without explicit confirmation buttons). |
+| `disabled`      | Whether the select input field is interactive or disabled.                                                                       |
+| `onValueChange` | Callback fired when the user selects a valid enabled option.                                                                     |
+| `description`   | Optional descriptive help text displayed beneath the field.                                                                      |
+| `error`         | Optional validation error message displayed with alert styling below the field.                                                  |
 
 **Accessibility**
 
 - Stacked label associated with the control with full aria-describedby support for descriptions and errors.
 - Disabled options remain visible but cannot be selected (Ionic popover interface does not support navigating to disabled options).
 - Accessible min-h-touch touch target and aria-invalid on the underlying select control.
+- Visible outer field frame displays canonical 2px outline focus ring via focus-within:fp-focus-ring across shadow DOM when the internal button receives focus.
+- Ionic popover interface commits selection immediately on option tap or keyboard selection, without explicit confirmation buttons.
 
 **Related**
 

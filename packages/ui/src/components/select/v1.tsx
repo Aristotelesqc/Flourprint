@@ -45,7 +45,7 @@ export function Select({
       className="flex flex-col w-full text-on-surface"
     >
       <div
-        className={`w-full min-h-12 bg-field-background border rounded-card px-3 py-2 flex items-center ${
+        className={`w-full min-h-12 bg-field-background border rounded-card px-3 py-2 flex items-center focus-within:fp-focus-ring ${
           error ? 'border-error' : 'border-field-outline focus-within:border-primary'
         } ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
       >

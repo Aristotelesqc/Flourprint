@@ -77,6 +77,44 @@ test('raw strings remain raw, variants retain targets and the selected theme', a
   await buttonFocusRing(primary);
 });
 
+test('numeric and native select fields share the visible keyboard focus ring', async ({
+  page,
+}, testInfo) => {
+  await openFixture(page, testInfo);
+  const amount = page.getByRole('textbox', { name: 'Raw amount', exact: true });
+  const primary = page.getByRole('button', { name: 'Primary action', exact: true });
+  await amount.focus();
+  await page.keyboard.press('Tab');
+  await buttonFocusRing(primary);
+  const ring = await primary.evaluate((node) => {
+    const style = getComputedStyle(node);
+    return {
+      'outline-style': style.outlineStyle,
+      'outline-width': style.outlineWidth,
+      'outline-offset': style.outlineOffset,
+      'outline-color': style.outlineColor,
+    };
+  });
+  await page.keyboard.press('Shift+Tab');
+  await expect(amount).toBeFocused();
+  for (const [property, value] of Object.entries(ring)) {
+    await expect(amount).toHaveCSS(property, value);
+  }
+
+  // Ionic delegates keyboard focus into an invisible shadow button; the visible field
+  // frame must expose the same ring rather than outlining only that hidden button.
+  const select = page.getByRole('button', { name: /^Choose flour,/ });
+  const frame = page.locator('ion-select').locator('..');
+  await select.focus();
+  for (const [property, value] of Object.entries(ring)) {
+    await expect(frame).toHaveCSS(property, value);
+  }
+  await select.press('Space');
+  await page.getByRole('radio', { name: 'Second flour', exact: true }).click();
+  await expect(select).toHaveAccessibleName('Choose flour, Second flour');
+  await expect(select).toBeFocused();
+});
+
 test('disclosure keeps mounted raw input and restores focus when collapsed from inside', async ({
   page,
 }, testInfo) => {
