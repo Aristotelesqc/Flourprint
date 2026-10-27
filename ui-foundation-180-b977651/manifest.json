@@ -1,0 +1,161 @@
+{
+  "sourceRevision": "b97765190c6fe7cc10d1a5a41decfa3aa2611bdc",
+  "captures": [
+    {
+      "file": "captures/before-light-393-100.png",
+      "revision": "e6fea214bf04285aa392cb08e6a25633e74fdfe2",
+      "state": "before: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 915
+      },
+      "textScalePct": 100,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/after-light-393-100.png",
+      "revision": "b97765190c6fe7cc10d1a5a41decfa3aa2611bdc",
+      "state": "after: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "light",
+      "viewport": {
+        "width": 393,
+        "height": 915
+      },
+      "textScalePct": 100,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/before-light-360-130.png",
+      "revision": "e6fea214bf04285aa392cb08e6a25633e74fdfe2",
+      "state": "before: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 915
+      },
+      "textScalePct": 130,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/after-light-360-130.png",
+      "revision": "b97765190c6fe7cc10d1a5a41decfa3aa2611bdc",
+      "state": "after: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "light",
+      "viewport": {
+        "width": 360,
+        "height": 915
+      },
+      "textScalePct": 130,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/before-dark-393-100.png",
+      "revision": "e6fea214bf04285aa392cb08e6a25633e74fdfe2",
+      "state": "before: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 915
+      },
+      "textScalePct": 100,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/after-dark-393-100.png",
+      "revision": "b97765190c6fe7cc10d1a5a41decfa3aa2611bdc",
+      "state": "after: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "dark",
+      "viewport": {
+        "width": 393,
+        "height": 915
+      },
+      "textScalePct": 100,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/before-dark-360-130.png",
+      "revision": "e6fea214bf04285aa392cb08e6a25633e74fdfe2",
+      "state": "before: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 915
+      },
+      "textScalePct": 130,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/after-dark-360-130.png",
+      "revision": "b97765190c6fe7cc10d1a5a41decfa3aa2611bdc",
+      "state": "after: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "dark",
+      "viewport": {
+        "width": 360,
+        "height": 915
+      },
+      "textScalePct": 130,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/before-amoled-393-100.png",
+      "revision": "e6fea214bf04285aa392cb08e6a25633e74fdfe2",
+      "state": "before: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 915
+      },
+      "textScalePct": 100,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/after-amoled-393-100.png",
+      "revision": "b97765190c6fe7cc10d1a5a41decfa3aa2611bdc",
+      "state": "after: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "amoled",
+      "viewport": {
+        "width": 393,
+        "height": 915
+      },
+      "textScalePct": 100,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/before-amoled-360-130.png",
+      "revision": "e6fea214bf04285aa392cb08e6a25633e74fdfe2",
+      "state": "before: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 915
+      },
+      "textScalePct": 130,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    },
+    {
+      "file": "captures/after-amoled-360-130.png",
+      "revision": "b97765190c6fe7cc10d1a5a41decfa3aa2611bdc",
+      "state": "after: Select keyboard focus",
+      "locale": "en-US",
+      "theme": "amoled",
+      "viewport": {
+        "width": 360,
+        "height": 915
+      },
+      "textScalePct": 130,
+      "fixture": "packages/ui/test/fixtures/foundation/main.tsx"
+    }
+  ]
+}
