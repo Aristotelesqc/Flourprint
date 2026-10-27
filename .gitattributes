@@ -1,0 +1,5 @@
+# Store and check out text files with LF on every platform, so Windows clones match the
+# repository instead of showing every file as modified. Binary files are detected automatically.
+* text=auto eol=lf
+# Windows batch scripts must keep CRLF to run.
+*.bat text eol=crlf
