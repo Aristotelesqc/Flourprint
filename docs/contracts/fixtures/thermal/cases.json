@@ -460,6 +460,39 @@
         "tauEffH": 0.0005
       },
       "note": "One set scales the full band. Two consistent sets narrow it to their spread times the central tau_eff, never inside +/-15 % of the calibrated value (ASSUMED floor for an informal home probe; not a confidence interval). Sets whose factors differ by more than x1.5 are inconsistent: the band is the union of the scaled full band and the spread, and the estimate says thermal_factor_inconsistent."
+    },
+    {
+      "name": "j: calibration with self-heating, 500 g bulk, lidded glass bowl, still room, 0.3 % fresh yeast",
+      "input": {
+        "massG": 500,
+        "thermal": {
+          "geometry": "bulk",
+          "container": {
+            "material": "glass",
+            "cover": "lid"
+          },
+          "environment": "roomStill",
+          "porosity": "unproofed"
+        },
+        "ambientC": 24.0,
+        "freshDosePct": 0.3,
+        "tauObsH": 2.30733
+      },
+      "expected": {
+        "tauEffH": 1.84586,
+        "psi1": 0.03769,
+        "r": 1.25,
+        "factor": 1.19376,
+        "psiOfFactor": 0.04499,
+        "consistency": 0.0,
+        "factor021WithStoredFactor1": 1.20289,
+        "factor021WithStoredFactor2": 1.15578
+      },
+      "tolerance": {
+        "factor": 0.0005,
+        "psi": 0.0005
+      },
+      "note": "psi1 is the Semenov number at the ambient with f = 1; the observed lag is the coupled one, tau_obs = f tau_eff / (1 - f psi1), so f = r / (1 + r psi1) with r = tau_obs / tau_eff, whatever was stored before. consistency is r (1 - f psi1) - f and must be 0. The two factor021 values show the 0.21.0 rule, which used the stored factor in psi: they differ, so the order of calibrations changed the result. The engine must never return them."
     }
   ]
 }
