@@ -12,7 +12,7 @@ import { IonPopover } from '@ionic/react';
 import { Button } from '../button/v1.tsx';
 import { isReduced } from '../../motion.ts';
 import { syncOverlayHost } from '../overlay-context.ts';
-import { library } from '../../index.ts';
+import { library, useMotion, useOverlayMotion } from '../../index.ts';
 import type { FloatingMenuAction, FloatingMenuProps } from './props.ts';
 
 export function FloatingMenu({
@@ -34,6 +34,14 @@ export function FloatingMenu({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const titleId = useId();
+
+  const menuEnter = useMotion('fp.motion.menu-enter');
+  const menuExit = useMotion('fp.motion.menu-exit');
+
+  useOverlayMotion(popoverRef, {
+    enter: [{ motion: menuEnter }],
+    leave: [{ motion: menuExit }],
+  });
 
   const firstEnabledIndex = useMemo(() => {
     const idx = actions.findIndex((action) => !action.disabled);
@@ -156,10 +164,11 @@ export function FloatingMenu({
         {triggerContent ?? triggerLabel}
       </Button>
 
-      {/* Retain native Ionic popover animation: generic ionicAnimation lacks dynamic anchor
-          and viewport boundary placement (top/left/origin), causing content to render offscreen.
-          The pinned Ionic 9.0.6 patch makes its wrapper fade respect animated={false}
-          alongside the native backdrop/content animations (patches/README.md). */}
+      {/* Retain native Ionic popover animation: dynamic anchor placement and viewport boundary
+          clamping (top/left/origin) stay native. The overlay motion bridge retimes running
+          native enter/leave animations to the duration and easing of fp.motion.menu-enter and
+          fp.motion.menu-exit; keyframes stay native. The pinned Ionic 9.0.6 patch still clears
+          the native wrapper fade under animated={false} (patches/README.md). */}
       <IonPopover
         ref={popoverRef}
         isOpen={isOpen}

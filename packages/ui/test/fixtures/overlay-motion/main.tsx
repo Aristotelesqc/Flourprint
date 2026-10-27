@@ -22,6 +22,7 @@ const query = new URLSearchParams(location.search);
 const motion = query.get('motion') ?? 'standard';
 document.documentElement.setAttribute('data-theme', query.get('theme') ?? 'light');
 document.documentElement.setAttribute('data-motion', motion);
+document.documentElement.style.fontSize = query.get('scale') === '130' ? '130%' : '100%';
 
 // Test versions that differ from v1 only by their duration token: the comparison a manifest
 // switch makes. Same keyframes, same reduced form.

@@ -17,7 +17,7 @@ const guide: ComponentGuide<BottomSheetProps> = {
     'Preserves autofocus behavior on child inputs without prematurely stealing focus to close control.',
     'Provides a minimum 48px touch target for the close button.',
     'Supports keyboard Escape dismissal in browser environments; hardware back navigation is delegated to Ionic Layer 2 and requires native device evidence.',
-    'Retains native Ionic sheet transition for breakpoint positioning and gesture tracking; reduced motion disables animation via animated prop without claiming fp.motion ownership.',
+    'Retains native Ionic sheet transition for breakpoint positioning and drag gesture tracking. The overlay motion bridge controls duration and easing via fp.motion.sheet-enter, fp.motion.sheet-exit, fp.motion.backdrop-enter, and fp.motion.backdrop-exit while native keyframes carry geometry. Native drag is a paused gesture animation; drag dismissal has no separate sheet-exit animation. Reduced motion sets duration to 0 via animated={false} or motion timing.',
   ],
   props: {
     isOpen: 'Controlled boolean determining whether the bottom sheet is presented.',
@@ -29,7 +29,14 @@ const guide: ComponentGuide<BottomSheetProps> = {
     canDismiss: 'Optional boolean or promise-returning predicate guarding against dismissal.',
     reducedMotion: 'Optional explicit override for reduced motion animations.',
   },
-  related: ['fp.dialog', 'fp.button'],
+  related: [
+    'fp.dialog',
+    'fp.button',
+    'fp.motion.sheet-enter',
+    'fp.motion.sheet-exit',
+    'fp.motion.backdrop-enter',
+    'fp.motion.backdrop-exit',
+  ],
   decisions: [
     {
       label: 'ADR 0021: Theme builder and component sourcing',

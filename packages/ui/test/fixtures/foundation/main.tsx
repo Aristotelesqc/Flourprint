@@ -3,7 +3,17 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { IonApp, IonContent, setupIonicReact } from '@ionic/react';
 import '../../../catalogue.css';
-import { createUi, defaultMotionManifest, library, MotionProvider } from '../../../src/index.ts';
+import {
+  createUi,
+  defaultMotionManifest,
+  library,
+  MotionProvider,
+  type Motion,
+  type FlourprintMotion,
+  type DurationToken,
+  type EasingToken,
+  type MotionManifest,
+} from '../../../src/index.ts';
 import button from '../../../src/components/button/v1.tsx';
 import surface from '../../../src/components/surface/v1.tsx';
 import numberField from '../../../src/components/number-field/v1.tsx';
@@ -37,6 +47,52 @@ document.documentElement.setAttribute('data-theme', theme);
 document.documentElement.setAttribute('data-motion', motion);
 document.documentElement.style.fontSize = query.get('scale') === '130' ? '130%' : '100%';
 
+// Alternate versions are test-only consumer selections; production components remain unchanged.
+function withTiming<I extends FlourprintMotion>(
+  item: Motion<I>,
+  duration: DurationToken,
+  easing: EasingToken,
+): Motion<I> {
+  if (item.kind === 'keyframes') {
+    return { ...item, version: 'v2', standard: { ...item.standard, duration, easing } };
+  }
+  return { ...item, version: 'v2', standard: { ...item.standard, duration, easing } };
+}
+const alternate: MotionManifest<FlourprintMotion> = {
+  ...defaultMotionManifest,
+  'fp.motion.menu-enter': withTiming(
+    defaultMotionManifest['fp.motion.menu-enter'],
+    'spatial',
+    'decelerate',
+  ),
+  'fp.motion.menu-exit': withTiming(
+    defaultMotionManifest['fp.motion.menu-exit'],
+    'spatial',
+    'decelerate',
+  ),
+  'fp.motion.sheet-enter': withTiming(
+    defaultMotionManifest['fp.motion.sheet-enter'],
+    'effect',
+    'standard',
+  ),
+  'fp.motion.sheet-exit': withTiming(
+    defaultMotionManifest['fp.motion.sheet-exit'],
+    'effect',
+    'standard',
+  ),
+  'fp.motion.backdrop-enter': withTiming(
+    defaultMotionManifest['fp.motion.backdrop-enter'],
+    'spatial',
+    'decelerate',
+  ),
+  'fp.motion.backdrop-exit': withTiming(
+    defaultMotionManifest['fp.motion.backdrop-exit'],
+    'spatial',
+    'decelerate',
+  ),
+};
+const manifest = query.get('version') === 'alt' ? alternate : defaultMotionManifest;
+
 function Fixture(): ReactElement {
   const [raw, setRaw] = useState('');
   const [expanded, setExpanded] = useState(true);
@@ -69,7 +125,7 @@ function Fixture(): ReactElement {
     );
   };
   return (
-    <MotionProvider value={defaultMotionManifest}>
+    <MotionProvider value={manifest}>
       <IonApp className="fp-ionic">
         <IonContent>
           <main

@@ -2,7 +2,7 @@ import { useId, useRef, useState, useEffect, type ReactElement } from 'react';
 import { IonModal } from '@ionic/react';
 import { Button } from '../button/v1.tsx';
 import { syncOverlayHost } from '../overlay-context.ts';
-import { library } from '../../index.ts';
+import { library, useMotion, useOverlayMotion } from '../../index.ts';
 import type { BottomSheetProps } from './props.ts';
 
 export function BottomSheet({
@@ -21,6 +21,16 @@ export function BottomSheet({
   const prevOpenRef = useRef(false);
   const [inferredReduced, setInferredReduced] = useState(false);
   const titleId = useId();
+
+  const sheetEnter = useMotion('fp.motion.sheet-enter');
+  const sheetExit = useMotion('fp.motion.sheet-exit');
+  const backdropEnter = useMotion('fp.motion.backdrop-enter');
+  const backdropExit = useMotion('fp.motion.backdrop-exit');
+
+  useOverlayMotion(modalRef, {
+    enter: [{ part: 'ion-backdrop', motion: backdropEnter }, { motion: sheetEnter }],
+    leave: [{ part: 'ion-backdrop', motion: backdropExit }, { motion: sheetExit }],
+  });
 
   useEffect(() => {
     if (isOpen && !prevOpenRef.current) {
@@ -87,9 +97,10 @@ export function BottomSheet({
     setInferredReduced(isRed);
   };
 
-  // Retain native Ionic sheet animation: generic ionicAnimation lacks breakpoint awareness
-  // (currentBreakpoint translateY) and breaks drag gestures. Reduced motion is respected
-  // via the animated property without overriding placement.
+  // Retain native Ionic sheet animation: breakpoint geometry (currentBreakpoint translateY)
+  // and gesture tracking stay native. The overlay motion bridge retimes running native
+  // animations: backdropEnter/Exit claims the ion-backdrop group, while sheetEnter/Exit retimes
+  // remaining elements (including slotted .ion-page). Keyframes stay native; paused drag gestures are untouched.
   return (
     <IonModal
       ref={modalRef}
