@@ -137,6 +137,11 @@ test('production sheet still dismisses through a real drag after motion binding'
   await opener.click();
   const dialog = page.getByRole('dialog', { name: 'Edit fixture details', exact: true });
   await expect(dialog).toBeInViewport({ ratio: 1 });
+  // Wait for native presentation/gesture setup, not just the visible wrapper geometry.
+  await page
+    .locator('ion-modal')
+    .filter({ has: page.getByRole('heading', { name: 'Edit fixture details', exact: true }) })
+    .evaluate((modal) => modal.present());
   const heading = await page
     .getByRole('heading', { name: 'Edit fixture details', exact: true })
     .boundingBox();

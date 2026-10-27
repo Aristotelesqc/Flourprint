@@ -79,6 +79,9 @@ for (const [version, menu, sheet] of [
       )
       .toBe(0);
 
+    // Wrapper timing can finish before the backdrop. Idempotent present() waits for Ionic's
+    // complete presentation lock, including lazy gesture setup, without opening another sheet.
+    await page.locator('ion-modal').evaluate((modal) => modal.present());
     // The sheet's drag gesture still works: drag the sheet down to dismiss it.
     await clearPlayed(page);
     const heading = page.getByRole('heading', { name: 'Bridged sheet' });

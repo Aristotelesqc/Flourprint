@@ -178,7 +178,7 @@ test('menu keeps disabled and destructive actions visible, separates Close and r
   await expect(menu.getByRole('menuitem', { name: 'Unavailable menu action' })).toBeVisible();
   await expect(menu.getByRole('menuitem', { name: 'Unavailable menu action' })).toBeDisabled();
   const deletion = menu.getByRole('menuitem', { name: 'Delete fixture entry', exact: true });
-  await expect(deletion).toBeInViewport();
+  await expect(deletion).toBeInViewport({ ratio: 1 });
   await minTouch(page, deletion);
   const close = menu.getByRole('button', { name: 'Close actions', exact: true });
   const first = menu.getByRole('menuitem', {
@@ -195,7 +195,9 @@ test('menu keeps disabled and destructive actions visible, separates Close and r
   const rootSize = await page.evaluate(() =>
     Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
   );
-  expect(menuBox.y + menuBox.height - deleteBox.y - deleteBox.height).toBeLessThanOrEqual(
+  const bottomMargin = menuBox.y + menuBox.height - deleteBox.y - deleteBox.height;
+  expect(bottomMargin).toBeGreaterThanOrEqual(0);
+  expect(bottomMargin).toBeLessThanOrEqual(
     Number.parseFloat(tokens.spacing['card-padding']) * rootSize,
   );
   await page.keyboard.press('End');
@@ -227,7 +229,7 @@ test('long menus visibly disclose scrolling and retain the final destructive act
   await expect(menu.getByText('More actions below', { exact: true })).toBeVisible();
   const last = menu.getByRole('menuitem', { name: 'Final destructive action', exact: true });
   await last.scrollIntoViewIfNeeded();
-  await expect(last).toBeInViewport();
+  await expect(last).toBeInViewport({ ratio: 1 });
   await last.click();
   await expect(menu).toBeHidden();
   await expect(page.getByRole('status', { name: 'Action result' })).toHaveText(

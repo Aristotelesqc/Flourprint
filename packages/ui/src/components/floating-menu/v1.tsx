@@ -187,7 +187,7 @@ export function FloatingMenu({
           onKeyDown={handleKeyDown}
           className="w-full min-w-0 min-h-0 max-h-[calc(100dvh-var(--spacing)*8)] overflow-hidden bg-surface text-on-surface rounded-card flex flex-col"
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-outline/20 gap-3 shrink-0">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-outline/20 gap-3 shrink-0">
             <h2
               id={titleId}
               className="text-body font-semibold text-on-surface whitespace-normal min-w-0"
