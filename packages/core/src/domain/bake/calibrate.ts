@@ -10,7 +10,6 @@ import {
   twoPointTauH,
   type CalibrationError,
   type ThermalKey,
-  type ThermalProfile,
   type ThermalReading,
   type ThermalSet,
 } from '../fermentation/index.js';
@@ -32,8 +31,6 @@ export interface CalibrationOptions {
   readonly method: 'twoPoint' | 'guggenheim';
   /** Which thermal segment of the step to use (default: the last one). */
   readonly segment?: number;
-  /** The stored profile in force: the factor already applied is part of `ψ`. */
-  readonly thermalProfile?: ThermalProfile;
   /** The fermenting mass in grams, overriding the formula's. */
   readonly massG?: number;
 }
@@ -46,8 +43,10 @@ export interface StepCalibration {
   readonly tauObsH: number;
   /** `τ_eff` of the model for this step, hours. */
   readonly tauEffH: number;
-  /** `ψ` of the reading's ambient. */
+  /** `ψ₁`: the Semenov number at the reading's ambient with the model's lag and factor 1. */
   readonly psi: number;
+  /** `ψ = f · ψ₁` of the fitted factor (the coupled stretch the factor removes). */
+  readonly psiOfFactor: number;
   /** Guggenheim only: the temperature the readings tend to, which captures a shelf offset. */
   readonly infinityC?: number;
 }
@@ -77,9 +76,10 @@ export const calibrateStepThermal = (
       : Date.parse((segments[index + 1] as { from: Instant }).from);
 
   // A calibration is read after the bake as well: readings are facts of an ended session too.
+  // No stored profile is given: the set depends on the readings and the model only, never on
+  // factors stored earlier (fermentation.md, Personal correction).
   const context = liveContext(state, now, {
     includeEnded: true,
-    ...(options.thermalProfile === undefined ? {} : { thermalProfile: options.thermalProfile }),
     ...(options.massG === undefined ? {} : { massG: options.massG }),
   });
   if (context === undefined || 'status' in context.mass) return unavailable('no forecast');
@@ -159,10 +159,11 @@ export const calibrateStepThermal = (
   }
 
   const dose = mass.yeasts.reduce((sum, y) => sum + y.pct * CENTRAL.freshPerGram[y.form], 0);
+  // ψ₁: the model's own lag (never `f · τ_eff` of a stored factor), the central ΔT_ad, factor 1.
   const psi = semenovPsi(
     CENTRAL.eaJ,
     ambientC,
-    lag.effectiveTauH.central,
+    lag.tauEffH,
     SELF_HEATING_K.central,
     progressPerHour(CENTRAL, dose, ambientC),
   );
@@ -180,6 +181,7 @@ export const calibrateStepThermal = (
     tauObsH,
     tauEffH: lag.tauEffH,
     psi,
+    psiOfFactor: factor.value * psi,
     ...(infinityC === undefined ? {} : { infinityC }),
   });
 };

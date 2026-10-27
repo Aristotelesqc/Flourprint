@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { checkBakeLog } from '../src/application/backup-events.js';
+import { recordThermalCalibration, type ThermalProfileStore } from '../src/application/index.js';
 import {
   calibrateStepThermal,
   decide,
@@ -22,6 +23,7 @@ import {
   type Process,
   type ProcessStep,
   type StepThermal,
+  type ThermalProfile,
 } from '../src/domain/index.js';
 
 const H = 3600;
@@ -614,9 +616,11 @@ describe('calibrating the personal factor from a bake', () => {
       cover: 'lid',
       environment: 'fridgeStatic',
     });
-    // f = tau_obs (1 - psi) / tau_eff with the contract's tau_eff of 1.8366 h for 500 g.
+    // f = r / (1 + r psi1), r = tau_obs / tau_eff, with the contract's tau_eff of 1.8366 h for 500 g.
     expect(result.value.tauEffH).toBeCloseTo(1.83659, 4);
-    expect(result.value.set.factor).toBeCloseTo((2.5 * (1 - result.value.psi)) / 1.83659, 4);
+    const r = 2.5 / 1.83659;
+    expect(result.value.set.factor).toBeCloseTo(r / (1 + r * result.value.psi), 4);
+    expect(result.value.psiOfFactor).toBeCloseTo(result.value.set.factor * result.value.psi, 12);
     expect(result.value.set).toMatchObject({
       geometry: 'bulk',
       readings: 2,
@@ -898,5 +902,197 @@ describe('review fixes: ended bakes, readings at an edge, transition start, segm
     // The reading at 210 min is not one of them.
     const last = log.events.filter((e) => e.payload.type === 'ObservationAdded').at(-1)?.eventId;
     expect(result.value.set.basis.eventIds).not.toContain(last);
+  });
+});
+
+describe('calibration with self-heating: order independence and the widest triple (0.22.0)', () => {
+  const room: Process = {
+    steps: [
+      step('mix', { operation: 'mix', plannedDurationS: 600, conditions: { temperatureC: 24 } }),
+      step('bulk', {
+        dependsOn: ['mix'],
+        plannedDurationS: 6 * H,
+        conditions: { temperatureC: 24 },
+        thermal: bowl,
+      }),
+      step('bake', { operation: 'bake', dependsOn: ['bulk'], plannedDurationS: 2400 }),
+    ],
+  };
+  const after = (minutes: number) =>
+    new Date(Date.parse(t('08:00')) + minutes * 60_000).toISOString() as Instant;
+  /** Case j of the thermal fixtures: 500 g, 0.3 % fresh yeast, lidded glass bowl, still room, 24 C. */
+  const caseJ = (minutes: number[], tau = 2.30733) => {
+    const log = started(0.3, room, 500);
+    log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'bulk' });
+    for (const m of minutes) {
+      log.now = after(m);
+      const c = Math.round((24 - 12 * Math.exp(-m / 60 / tau)) * 1e6) / 1e6;
+      const r = log.reading('bulk', c, 'core', after(m));
+      if (!r.ok) throw new Error(JSON.stringify(r.error));
+    }
+    return log;
+  };
+  const observationIds = (log: Log) =>
+    log.events.filter((e) => e.payload.type === 'ObservationAdded').map((e) => e.eventId);
+
+  class MemoryStore implements ThermalProfileStore {
+    versions: ThermalProfile[] = [];
+    getThermalProfile(id: string, version: number) {
+      return Promise.resolve({
+        ok: true as const,
+        value: this.versions.find((p) => p.id === id && p.version === version),
+      });
+    }
+    listThermalProfileVersions() {
+      return Promise.resolve(this.versions);
+    }
+    saveThermalProfile(profile: ThermalProfile) {
+      this.versions.push(profile);
+      return Promise.resolve({ ok: true as const, value: profile });
+    }
+  }
+  const stored = (factor: number): ThermalProfile => ({
+    id: 'personal',
+    version: 1,
+    updatedAt: t('07:00'),
+    factors: [
+      {
+        material: 'glass',
+        cover: 'lid',
+        environment: 'roomStill',
+        sets: [
+          {
+            factor,
+            massG: 500,
+            geometry: 'bulk',
+            readings: 3,
+            basis: { bakeId: 'earlier', stepId: 'bulk', eventIds: ['a', 'b', 'c'] },
+          },
+        ],
+      },
+    ],
+  });
+
+  it('gives the fixture factor of case j (psi1 and f = r / (1 + r psi1))', () => {
+    const log = caseJ([60, 150, 240]);
+    const result = calibrateStepThermal(log.state, 'bulk', log.now, { method: 'twoPoint' });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    expect(result.value.tauObsH).toBeCloseTo(2.30733, 4);
+    expect(result.value.tauEffH).toBeCloseTo(1.84586, 4);
+    expect(Math.abs(result.value.psi - 0.03769)).toBeLessThan(5e-4);
+    expect(Math.abs(result.value.set.factor - 1.19376)).toBeLessThan(5e-4);
+    expect(Math.abs(result.value.psiOfFactor - 0.04499)).toBeLessThan(5e-4);
+    // Neither of the 0.21.0 results, which used the stored factor in psi.
+    expect(Math.abs(result.value.set.factor - 1.20289)).toBeGreaterThan(5e-3);
+    expect(Math.abs(result.value.set.factor - 1.15578)).toBeGreaterThan(5e-3);
+  });
+
+  it('does not depend on a stored factor: the same set with and without one', async () => {
+    const log = caseJ([60, 150, 240]);
+    const calibrations: unknown[] = [];
+    for (const profile of [undefined, stored(1), stored(2), stored(0.5)]) {
+      const store = new MemoryStore();
+      if (profile !== undefined) store.versions.push(profile);
+      const result = await recordThermalCalibration(
+        store,
+        log.events,
+        'bulk',
+        { method: 'twoPoint' },
+        log.now,
+      );
+      if (!result.ok) throw new Error(JSON.stringify(result.error));
+      calibrations.push(result.value.calibration);
+      // The stored sets are untouched and the new one is added beside them.
+      expect(result.value.profile.factors[0]?.sets.length).toBe(profile === undefined ? 1 : 2);
+    }
+    for (const other of calibrations.slice(1)) expect(other).toEqual(calibrations[0]);
+  });
+
+  it('takes the widest equally spaced triple within 10 % and records only its three events', () => {
+    // 60-150-240 spans 180 min; 60-120-180 and 120-180-240 only 120.
+    const log = caseJ([60, 120, 150, 180, 240]);
+    const result = calibrateStepThermal(log.state, 'bulk', log.now, { method: 'guggenheim' });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const ids = observationIds(log);
+    expect(result.value.set.basis.eventIds).toEqual([ids[0], ids[2], ids[4]]);
+    expect(result.value.set.readings).toBe(3);
+
+    // Gaps of 80 and 85 min differ by less than 10 % of their mean: accepted.
+    const near = caseJ([60, 140, 225]);
+    expect(calibrateStepThermal(near.state, 'bulk', near.now, { method: 'guggenheim' }).ok).toBe(
+      true,
+    );
+    // Gaps of 80 and 100 min differ by more than 10 % of their mean: no triple.
+    const far = caseJ([60, 140, 240]);
+    expect(
+      calibrateStepThermal(far.state, 'bulk', far.now, { method: 'guggenheim' }),
+    ).toMatchObject({ ok: false, error: { code: 'readings_invalid' } });
+  });
+
+  it('measures the transient from the later of the step start and the last thermal change', () => {
+    // The step starts at 08:00 and the lid is replaced by a film at 09:30. Readings 10, 70 and
+    // 100 min after the change: the first lies within 0.5 tau_eff (about 55 min) of the change and
+    // is kept out; measured from the step start all three would be used.
+    const log = started(0.3, room, 500);
+    log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'bulk' });
+    log.at('09:30').ok({
+      type: 'SetStepThermal',
+      stepId: 'bulk',
+      thermal: { ...bowl, container: { material: 'glass', cover: 'film' } },
+    });
+    for (const m of [100, 160, 190]) {
+      log.now = after(m);
+      const c = 24 - 8 * Math.exp(-(m - 90) / 60 / 1.5);
+      log.reading('bulk', Math.round(c * 1e4) / 1e4, 'core', after(m));
+    }
+    const result = calibrateStepThermal(log.state, 'bulk', log.now, { method: 'twoPoint' });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const ids = observationIds(log);
+    expect(result.value.set.readings).toBe(2);
+    expect(result.value.set.basis.eventIds).toEqual([ids[1], ids[2]]);
+    expect(result.value.key.cover).toBe('film');
+  });
+
+  it('requires a stable ambient over the segment', () => {
+    const log = started(0.3, room, 500);
+    log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'bulk' });
+    log.at('09:30').ok({
+      type: 'AdjustStep',
+      stepId: 'bulk',
+      adjustment: { field: 'temperatureC', value: 30 },
+    });
+    for (const m of [100, 160, 220]) {
+      log.now = after(m);
+      log.reading(
+        'bulk',
+        Math.round((24 - 12 * Math.exp(-m / 60 / 2.3)) * 1e4) / 1e4,
+        'core',
+        after(m),
+      );
+    }
+    expect(calibrateStepThermal(log.state, 'bulk', log.now, { method: 'twoPoint' })).toMatchObject({
+      ok: false,
+      error: {
+        code: 'CalibrationUnavailable',
+        details: { reason: expect.stringContaining('ambient') },
+      },
+    });
+  });
+
+  it('a reading replaces the temperature, never the progress accumulated', () => {
+    const run = (reading: boolean) => {
+      const log = started();
+      log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+      log.at('08:00').ok({ type: 'StartStep', stepId: 'bulk' });
+      if (reading) log.at('09:00').reading('bulk', 30, 'surface', t('09:00'));
+      const forecast = liveDoughForecast(log.state, t('09:00'));
+      if (!forecast) throw new Error('no forecast');
+      return forecast;
+    };
+    // At the reading's own instant the progress is the same with and without the reading.
+    expect(value(run(true).progressNowPct)).toBeCloseTo(value(run(false).progressNowPct), 9);
   });
 });

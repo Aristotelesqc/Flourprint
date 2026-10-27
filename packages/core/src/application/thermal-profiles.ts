@@ -107,7 +107,7 @@ export const recordThermalCalibration = async (
   store: ThermalProfileStore,
   events: readonly BakeEvent[],
   stepId: string,
-  options: Omit<CalibrationOptions, 'thermalProfile'>,
+  options: CalibrationOptions,
   now: Instant,
 ): Promise<
   Result<{ profile: ThermalProfile; calibration: StepCalibration }, RecordCalibrationError>
@@ -118,10 +118,7 @@ export const recordThermalCalibration = async (
   }
   const current = await currentThermalProfile(store);
   const state = replayBake(first.bakeId, events);
-  const calibration = calibrateStepThermal(state, stepId, now, {
-    ...options,
-    ...(current === undefined ? {} : { thermalProfile: current }),
-  });
+  const calibration = calibrateStepThermal(state, stepId, now, options);
   if (!calibration.ok) return calibration;
   const next = withThermalSet(current, calibration.value.key, calibration.value.set, now);
   if (!next.ok) return next;

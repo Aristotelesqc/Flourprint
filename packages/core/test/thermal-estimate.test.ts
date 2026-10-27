@@ -196,7 +196,7 @@ describe('the dough estimate with thermal inputs', () => {
   it('names the model, the fridge assumption and the thermal extrapolations', () => {
     const { dough: result } = estimateFermentation(dough(2000, 0.4), process, MODEL_END_POINT);
     const list = assumptions(result.progressPct);
-    expect(list).toContain('thermal_model:0.1.0');
+    expect(list).toContain('thermal_model:0.2.0');
     expect(list).toContain('thermal_fridge_cycling');
     // No stored factor: no factor assumption, silently.
     expect(list.some((a) => a.startsWith('thermal_factor'))).toBe(false);

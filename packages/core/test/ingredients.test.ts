@@ -108,8 +108,8 @@ const problem = (entry: IngredientEntry) => {
 };
 
 describe('contract version', () => {
-  it('is 0.21.0 with the dough thermal model (fermentation.md, #176)', () => {
-    expect(CONTRACT_VERSION).toBe('0.21.0');
+  it('is 0.22.0 with the dough thermal model (fermentation.md, #176)', () => {
+    expect(CONTRACT_VERSION).toBe('0.22.0');
   });
 });
 

@@ -10,6 +10,7 @@ import {
   progressPerHour,
   SELF_HEATING_K,
   semenovPsi,
+  setFactor,
   simulate,
   thermalBand,
   thermalLag,
@@ -610,5 +611,68 @@ describe('the band corners of the envelope', () => {
     expect(
       new Set(CORNERS.map((p) => `${p.aH}/${p.k}/${p.eaJ}/${p.freshPerGram.instant}`)).size,
     ).toBe(16);
+  });
+});
+
+describe('thermal fixtures: calibration with self-heating (case j)', () => {
+  const j = letter('j');
+  const input = j.input as {
+    massG: number;
+    thermal: FixtureThermal;
+    ambientC: number;
+    freshDosePct: number;
+    tauObsH: number;
+  };
+  const e = j.expected as {
+    tauEffH: number;
+    psi1: number;
+    r: number;
+    factor: number;
+    psiOfFactor: number;
+    consistency: number;
+    factor021WithStoredFactor1: number;
+    factor021WithStoredFactor2: number;
+  };
+  const tol = j.tolerance as { factor: number; psi: number };
+  const band = thermalBand(kg(input.massG, input.thermal), inputsOf(input.thermal));
+  const tauEffH = band.central.tauEffH;
+  const psi1 = semenovPsi(
+    CENTRAL.eaJ,
+    input.ambientC,
+    tauEffH,
+    SELF_HEATING_K.central,
+    progressPerHour(CENTRAL, input.freshDosePct * CENTRAL.freshPerGram.fresh, input.ambientC),
+  );
+
+  it('the model lag and psi1 at the ambient with the model lag and factor 1', () => {
+    close(tauEffH, e.tauEffH, 1e-4, 'tau eff');
+    close(psi1, e.psi1, tol.psi, 'psi1');
+    close(input.tauObsH / tauEffH, e.r, 1e-4, 'r');
+  });
+
+  it('the factor of the set is r / (1 + r psi1), whatever was stored before', () => {
+    const factor = setFactor(input.tauObsH, tauEffH, psi1);
+    if (!factor.ok) throw new Error(JSON.stringify(factor.error));
+    close(factor.value, e.factor, tol.factor, 'factor');
+    close(factor.value * psi1, e.psiOfFactor, tol.psi, 'psi of the factor');
+    // The coupled lag is recovered: r (1 - f psi1) = f.
+    close((input.tauObsH / tauEffH) * (1 - factor.value * psi1), factor.value, 1e-9, 'consistency');
+    // The 0.21.0 results depended on the stored factor; the engine returns neither.
+    for (const stale of [e.factor021WithStoredFactor1, e.factor021WithStoredFactor2]) {
+      expect(Math.abs(factor.value - stale)).toBeGreaterThan(10 * tol.factor);
+    }
+    expect(e.factor021WithStoredFactor1).not.toBeCloseTo(e.factor021WithStoredFactor2, 2);
+  });
+
+  it('without self-heating the factor is r (case d)', () => {
+    const factor = setFactor(2.5, 2, 0);
+    expect(factor.ok && factor.value).toBeCloseTo(1.25, 12);
+  });
+
+  it('rejects a set whose heat is not removed (f psi1 above 0.1)', () => {
+    expect(setFactor(2.5, 2, 0.2)).toMatchObject({
+      ok: false,
+      error: { code: 'self_heating_confounds' },
+    });
   });
 });
