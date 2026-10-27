@@ -323,4 +323,71 @@ describe('weighing read model (formula.md, Weighing read model)', () => {
     // No finishing group because no toppings
     expect(groups.find((g) => g.stage.kind === 'finishing')).toBeUndefined();
   });
+
+  it('suppresses phantom 0 g rows caused by floating-point residue', () => {
+    // Trigger from review:
+    // flour bread 100 %, water 70 %, anchor flourTotal 1588.3 g,
+    // component a flourPct 26 / hydration 100 / all bread,
+    // component b flourPct 74 / hydration 0 / all bread.
+    // The resolver leaves ~2.27e-13 g of bread in finalMix.flourByFlour.
+    const residueFormula: Formula = {
+      flours: [{ id: 'bread', sharePct: 100 }],
+      ingredients: [{ id: 'water', kind: 'water', bakerPct: 70, role: 'dough' }],
+      components: [
+        {
+          id: 'a',
+          kind: 'preferment',
+          flourPct: 26,
+          hydrationPct: 100,
+          flourBlend: [{ flour: 'bread', sharePct: 100 }],
+        },
+        {
+          id: 'b',
+          kind: 'preferment',
+          flourPct: 74,
+          hydrationPct: 0,
+          flourBlend: [{ flour: 'bread', sharePct: 100 }],
+        },
+      ],
+      anchor: { kind: 'flourTotal', grams: 1588.3 },
+    };
+
+    const res = resolveFormula(residueFormula);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+
+    // Confirm that finalMix.flourByFlour has floating-point residue (> 0 but < tolerance)
+    const residueGrams = res.value.finalMix.flourByFlour.bread ?? 0;
+    expect(residueGrams).toBeGreaterThan(0);
+    expect(residueGrams).toBeLessThan(1e-10);
+
+    const groups = weighingGroups(residueFormula, res.value);
+    const finalGroup = groups.find((g) => g.stage.kind === 'final');
+    if (!finalGroup) throw new Error('Expected final group for remaining water');
+    // Bread row must not appear in the final group
+    expect(finalGroup.rows.some((r) => r.item.kind === 'ingredient' && r.item.id === 'bread')).toBe(
+      false,
+    );
+    // Only water remains in the final group
+    expect(finalGroup.rows).toEqual([
+      {
+        stage: { kind: 'final' },
+        item: { kind: 'water' },
+        grams: expect.any(Number),
+        bakerPct: expect.any(Number),
+      },
+    ]);
+
+    // If water was also fully drawn by preferments (hydration 26% total, drawn 100% by a),
+    // no final additions remain and no final group is created
+    const noFinalFormula: Formula = {
+      ...residueFormula,
+      ingredients: [{ id: 'water', kind: 'water', bakerPct: 26, role: 'dough' }],
+    };
+    const noFinalRes = resolveFormula(noFinalFormula);
+    expect(noFinalRes.ok).toBe(true);
+    if (!noFinalRes.ok) return;
+    const noFinalGroups = weighingGroups(noFinalFormula, noFinalRes.value);
+    expect(noFinalGroups.find((g) => g.stage.kind === 'final')).toBeUndefined();
+  });
 });

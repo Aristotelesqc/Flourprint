@@ -409,6 +409,20 @@ const observeFold = (
   return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);
 };
 
+const normaliseStage = (stage: StageRef): StageRef =>
+  stage.kind === 'component' ? { kind: 'component', id: stage.id } : { kind: stage.kind };
+
+const normaliseItem = (item: WeighingItem): WeighingItem =>
+  item.kind === 'ingredient' ? { kind: 'ingredient', id: item.id } : { kind: 'water' };
+
+const normaliseWeighedEntry = (entry: {
+  readonly stage: StageRef;
+  readonly item: WeighingItem;
+}): { stage: StageRef; item: WeighingItem } => ({
+  stage: normaliseStage(entry.stage),
+  item: normaliseItem(entry.item),
+});
+
 /**
  * Validates a command against the current state and returns the events to record
  * (docs/contracts/bake-session.md). `now` is the injected clock.
@@ -459,9 +473,10 @@ export const decide = (
       }
       seen.add(ref.id);
     }
+    let normalisedWeighed: { stage: StageRef; item: WeighingItem }[] | undefined;
     if (command.weighed !== undefined) {
       const validRows = weighingGroups(command.formula, resolved.value).flatMap((g) => g.rows);
-      const seenWeighed: { stage: StageRef; item: WeighingItem }[] = [];
+      normalisedWeighed = [];
       for (const entry of command.weighed) {
         const isRow = validRows.some((r) => sameWeighingRow(r, entry));
         if (!isRow) {
@@ -470,13 +485,13 @@ export const decide = (
             reason: 'unknown weighing row',
           });
         }
-        if (seenWeighed.some((r) => sameWeighingRow(r, entry))) {
+        if (normalisedWeighed.some((r) => sameWeighingRow(r, entry))) {
           return error('InvalidCommand', 'Duplicate weighing row', {
             field: 'weighed',
             reason: 'duplicate weighing row',
           });
         }
-        seenWeighed.push(entry);
+        normalisedWeighed.push(normaliseWeighedEntry(entry));
       }
     }
     return ok([
@@ -503,8 +518,8 @@ export const decide = (
               : { flours: command.flours.map((f) => ({ id: f.id, version: f.version })) }),
             ...(command.equipment === undefined ? {} : { equipment: equipment.value }),
           },
-          ...(command.weighed !== undefined && command.weighed.length > 0
-            ? { weighed: command.weighed }
+          ...(normalisedWeighed !== undefined && normalisedWeighed.length > 0
+            ? { weighed: normalisedWeighed }
             : {}),
         },
       },
@@ -859,8 +874,8 @@ export const decide = (
           occurredAt: now,
           payload: {
             type: 'WeighingCheckChanged',
-            stage: command.stage,
-            item: command.item,
+            stage: normaliseStage(command.stage),
+            item: normaliseItem(command.item),
             checked: command.checked,
           },
         },

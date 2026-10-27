@@ -6,7 +6,7 @@
  * re-resolves at another anchor or divides two grams.
  */
 
-import { sum } from '../numeric.js';
+import { RELATIVE_TOLERANCE, sum } from '../numeric.js';
 import type { Formula, ResolvedFormula } from './types.js';
 
 export type StageRef =
@@ -83,6 +83,8 @@ export const weighingGroups = (
   resolved: ResolvedFormula,
 ): readonly WeighingGroup[] => {
   const flourTotal = resolved.flourTotal;
+  const threshold = RELATIVE_TOLERANCE * flourTotal;
+  const isCounted = (g: number) => g > threshold;
   const bakerPct = (g: number) => (100 * g) / flourTotal;
   const groups: WeighingGroup[] = [];
 
@@ -96,7 +98,7 @@ export const weighingGroups = (
     // Flours from flourByFlour (in component flourBlend order)
     for (const part of component.flourBlend) {
       const g = rc.flourByFlour[part.flour] ?? 0;
-      if (g > 0) {
+      if (isCounted(g)) {
         rows.push({
           stage,
           item: { kind: 'ingredient', id: part.flour },
@@ -107,7 +109,7 @@ export const weighingGroups = (
     }
 
     // Water
-    if (rc.water > 0) {
+    if (isCounted(rc.water)) {
       rows.push({
         stage,
         item: { kind: 'water' },
@@ -119,7 +121,7 @@ export const weighingGroups = (
     // Allocations in component allocations order
     for (const a of component.allocations ?? []) {
       const g = rc.allocations[a.ingredient] ?? 0;
-      if (g > 0) {
+      if (isCounted(g)) {
         rows.push({
           stage,
           item: { kind: 'ingredient', id: a.ingredient },
@@ -149,7 +151,7 @@ export const weighingGroups = (
     // Flours in formula order
     for (const flour of formula.flours) {
       const g = resolved.finalMix.flourByFlour[flour.id] ?? 0;
-      if (g > 0) {
+      if (isCounted(g)) {
         rows.push({
           stage,
           item: { kind: 'ingredient', id: flour.id },
@@ -160,7 +162,7 @@ export const weighingGroups = (
     }
 
     // Water
-    if (resolved.finalMix.water > 0) {
+    if (isCounted(resolved.finalMix.water)) {
       rows.push({
         stage,
         item: { kind: 'water' },
@@ -173,7 +175,7 @@ export const weighingGroups = (
     for (const ingredient of formula.ingredients) {
       if (ingredient.role === 'dough' && ingredient.kind !== 'water') {
         const g = resolved.finalMix.grams[ingredient.id] ?? 0;
-        if (g > 0) {
+        if (isCounted(g)) {
           rows.push({
             stage,
             item: { kind: 'ingredient', id: ingredient.id },
@@ -204,7 +206,7 @@ export const weighingGroups = (
     for (const ingredient of formula.ingredients) {
       if (ingredient.role === 'topping' || ingredient.role === 'glaze') {
         const g = resolved.grams[ingredient.id] ?? 0;
-        if (g > 0) {
+        if (isCounted(g)) {
           rows.push({
             stage,
             item: { kind: 'ingredient', id: ingredient.id },
@@ -236,8 +238,9 @@ export const weighingGroups = (
  */
 export const waterSources = (resolved: ResolvedFormula): readonly WaterSource[] => {
   const totalWater = resolved.totalWater;
+  const threshold = RELATIVE_TOLERANCE * resolved.flourTotal;
   const activeContributions = totalWater.contributions.filter(
-    (c) => c.kind === 'loss' || c.grams > 0,
+    (c) => c.kind === 'loss' || c.grams > threshold,
   );
   const nonLossSum = sum(activeContributions.filter((c) => c.kind !== 'loss').map((c) => c.grams));
 

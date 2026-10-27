@@ -11,6 +11,8 @@ import {
   type Formula,
   type Instant,
   type Process,
+  type StageRef,
+  type WeighingItem,
 } from '../src/domain/index.js';
 
 describe('weighing checks (bake-session.md, Weighing checks)', () => {
@@ -428,5 +430,84 @@ describe('weighing checks (bake-session.md, Weighing checks)', () => {
       { stage: { kind: 'component', id: 'poolish' }, item: { kind: 'water' } },
       { stage: { kind: 'final' }, item: { kind: 'ingredient', id: 'salt' } },
     ]);
+  });
+
+  it('normalises weighed entries and drops extra properties in StartBake and SetWeighingCheck', () => {
+    const dirtyStartCmd = {
+      type: 'StartBake' as const,
+      revisions: {
+        formula: { id: 'f1', version: 1 },
+        process: { id: 'p1', version: 1 },
+      },
+      formula,
+      process,
+      mode: { kind: 'startAt' as const, at: now },
+      weighed: [
+        {
+          stage: { kind: 'component' as const, id: 'poolish', extraStageProp: 'dropMe' },
+          item: { kind: 'water' as const, extraItemProp: 'dropMe' },
+          extraEntryProp: 42,
+        } as unknown as { stage: StageRef; item: WeighingItem },
+      ],
+    };
+
+    const startRes = decide(initialBakeState('b1'), dirtyStartCmd, now);
+    expect(startRes.ok).toBe(true);
+    if (!startRes.ok) return;
+    const startEvt = startRes.value[0];
+    if (!startEvt) throw new Error('Expected at least one event');
+    const startPayload = startEvt.payload;
+    if (startPayload.type !== 'BakeStarted') throw new Error('Expected BakeStarted');
+
+    const weighedItem = startPayload.weighed?.[0];
+    if (!weighedItem) throw new Error('Expected weighed item');
+    expect(weighedItem).toEqual({
+      stage: { kind: 'component', id: 'poolish' },
+      item: { kind: 'water' },
+    });
+    expect(Object.keys(weighedItem).sort()).toEqual(['item', 'stage']);
+    expect(Object.keys(weighedItem.stage).sort()).toEqual(['id', 'kind']);
+    expect(Object.keys(weighedItem.item)).toEqual(['kind']);
+
+    const state = evolve(initialBakeState('b1'), {
+      eventId: 'e1',
+      bakeId: 'b1',
+      seq: 1,
+      causationId: 'c1',
+      occurredAt: now,
+      recordedAt: now,
+      schemaVersion: 1,
+      payload: startPayload,
+    });
+    const stateItem = state.weighed?.[0];
+    if (!stateItem) throw new Error('Expected state weighed item');
+    expect(Object.keys(stateItem).sort()).toEqual(['item', 'stage']);
+
+    const dirtyCheckCmd = {
+      type: 'SetWeighingCheck' as const,
+      stage: { kind: 'final' as const, extraStageProp: 'dropMe' },
+      item: { kind: 'ingredient' as const, id: 'salt', extraItemProp: 'dropMe' },
+      checked: true,
+      extraCmdProp: 'dropMe',
+    } as unknown as BakeCommandPayload;
+
+    const checkRes = decide(state, dirtyCheckCmd, now);
+    expect(checkRes.ok).toBe(true);
+    if (!checkRes.ok) return;
+    const checkEvt = checkRes.value[0];
+    if (!checkEvt) throw new Error('Expected check event');
+    const checkPayload = checkEvt.payload;
+    if (checkPayload.type !== 'WeighingCheckChanged') {
+      throw new Error('Expected WeighingCheckChanged');
+    }
+
+    expect(checkPayload).toEqual({
+      type: 'WeighingCheckChanged',
+      stage: { kind: 'final' },
+      item: { kind: 'ingredient', id: 'salt' },
+      checked: true,
+    });
+    expect(Object.keys(checkPayload.stage)).toEqual(['kind']);
+    expect(Object.keys(checkPayload.item).sort()).toEqual(['id', 'kind']);
   });
 });
