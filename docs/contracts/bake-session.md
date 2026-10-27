@@ -168,7 +168,7 @@ interface BakeEvent<P> {
 | `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                              |
 | `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                             |
 | `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                      |
-| `SetStepThermal`             | `StepThermalChanged`                                                         | running or not-yet-started dough step; a replacement of the step's whole `thermal` (process.md, Thermal inputs), effective from `at`; (below, 0.21.0 target)        |
+| `SetStepThermal`             | `StepThermalChanged`                                                         | running or not-yet-started dough step; a replacement of the step's whole `thermal` (process.md, Thermal inputs), effective from `at`; (below, 0.21.0)               |
 | `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start         |
 | `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                            |
 | `HoldStepCountdown`          | `StepCountdownHeld`                                                          | step running (started, not ended, with a planned duration, not `beforeTarget`); not already held (`StepAlreadyHeld`); `at` not before the start or the last release |
@@ -213,7 +213,7 @@ the fermentation go on, and no rest step is created or classified.
   the backup `schemaVersion`, the event envelope version and the SQL schema are unchanged (the
   log is JSON).
 
-**Thermal change on a running step (0.21.0 target, #176).** The baker moved the dough: into a
+**Thermal change on a running step (0.21.0, #176).** The baker moved the dough: into a
 bowl with a lid, out of the fridge, onto a tray. `SetStepThermal { stepId, at?, thermal? }` (`at` defaults to now; omitted or ignored on a step not yet started) records
 `StepThermalChanged { stepId, at, thermal }`; `thermal` absent means "no thermal inputs from now
 on" (back to the fixed lag).
@@ -238,7 +238,7 @@ on" (back to the fixed lag).
   A stored session replays with the values it committed (history.md); the forecast of the past is
   never recomputed with a new thermal model.
 
-`AddObservation` accepts `kind: 'doughTemperature'` (0.21.0 target): a measured dough temperature
+`AddObservation` accepts `kind: 'doughTemperature'` (0.21.0): a measured dough temperature
 with the probe position.
 
 - It needs a `stepId` that is running and is a dough step, and a numeric `Observation` in °C
@@ -253,12 +253,20 @@ with the probe position.
 - Readings of one step after one thermal setting are the data of the personal factor
   (fermentation.md, Personal correction): they are kept with the active `thermal` segment, so a
   calibration reads the container and environment that were in force at each reading.
+  Calibration reads recorded facts only, so it is also available once the session has ended,
+  finished or abandoned: the readings were recorded while it was active. The live forecast is
+  for an active session only.
+- A reading replaces the dough **temperature** from its instant, never the progress `F` already
+  accumulated: the progress at the reading's instant is the same before and after it. A reading
+  taken at the instant its step ends (then `CompleteStep` at the same instant) is the step's end
+  state, so it is the start temperature of what follows; it is interpreted with the lag and
+  ambient of the step it was taken in.
 - It never completes the step nor changes the plan. A not-ready or ready judgement stays
   `doughReady`; the model's forecast is an estimate that never overrides it.
 
 **Versioning and upcasting.** Two new event/observation vocabulary items, additive: `StepThermalChanged`
 and `kind: 'doughTemperature'` with `position`. `CONTRACT_VERSION` goes from `0.20.0` to `0.21.0`
-(minor, additive vocabulary) in the implementing pull request. Stored events are untouched: no
+(minor, additive vocabulary), implemented in #184. Stored events are untouched: no
 upcaster is needed, an old session has no thermal segment and replays with the fixed lag of its
 snapshot. The event envelope version and the log are unchanged (JSON). The backup `schemaVersion` goes from
 2 to 3 for the `thermal` inputs in the snapshot's process and for `thermalProfiles`
