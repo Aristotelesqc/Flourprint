@@ -4,7 +4,14 @@ import type { FormulaEdit } from '../formula/edit.js';
 import type { FlourRef } from '../flour/types.js';
 import type { Instant } from '../instant.js';
 import type { PreparationOutcome } from '../process/cooking.js';
-import type { Process, ProcessStep, Projection, ProjectionMode, StepId } from '../process/types.js';
+import type {
+  Process,
+  ProcessStep,
+  Projection,
+  ProjectionMode,
+  StepId,
+  StepThermal,
+} from '../process/types.js';
 import type { Estimate, ModelRef, Observation } from '../values.js';
 
 /** Bake session model (docs/contracts/bake-session.md, history.md). */
@@ -66,9 +73,13 @@ export type ObservationCategory =
 /**
  * Stable kind of an observation (bake-session.md). `doughReady`: the baker judges the dough ready
  * for its next stage; calibration data for the end point of the fermentation model. `fold`: one
- * set of folds done on a running step whose technique has folds.
+ * set of folds done on a running step whose technique has folds. `doughTemperature`: a measured
+ * dough temperature with the probe position (fermentation.md, Dough temperature).
  */
-export type ObservationKind = 'doughReady' | 'fold';
+export type ObservationKind = 'doughReady' | 'fold' | 'doughTemperature';
+
+/** Where a dough temperature was taken (bake-session.md). */
+export type ProbePosition = 'core' | 'surface' | 'unknown';
 
 export type NumericStepAdjustment =
   | { readonly field: 'plannedDurationS'; readonly value: number }
@@ -132,9 +143,21 @@ export type BakeCommandPayload =
       readonly criterion?: string;
       /** fold only: the set done, 1 … `folds.count`. */
       readonly set?: number;
+      /** doughTemperature only: where the probe was. */
+      readonly position?: ProbePosition;
       readonly text?: string;
       readonly rating?: number;
       readonly measurement?: Observation;
+    }
+  /**
+   * Replaces the thermal inputs of a running or not-yet-started dough step from `at`
+   * (bake-session.md, Thermal change on a running step); `thermal` absent = back to the fixed lag.
+   */
+  | {
+      readonly type: 'SetStepThermal';
+      readonly stepId: StepId;
+      readonly at?: Instant;
+      readonly thermal?: StepThermal;
     }
   | {
       readonly type: 'CorrectStepTime';
@@ -229,9 +252,21 @@ export type BakeEventPayload =
       readonly criterion?: string;
       /** fold only: the set done, 1 … `folds.count`. */
       readonly set?: number;
+      /** doughTemperature only: where the probe was. */
+      readonly position?: ProbePosition;
       readonly text?: string;
       readonly rating?: number;
       readonly measurement?: Observation;
+    }
+  /**
+   * The thermal inputs of a dough step changed from `at` (0.21.0); `thermal` absent = no thermal
+   * inputs from then on. On a step not yet started it applies from the step's start.
+   */
+  | {
+      readonly type: 'StepThermalChanged';
+      readonly stepId: StepId;
+      readonly at: Instant;
+      readonly thermal?: StepThermal;
     }
   | {
       readonly type: 'StepTimeCorrected';
@@ -288,7 +323,21 @@ export interface StepHold {
   readonly to?: Instant;
 }
 
+/** One recorded change of the thermal inputs of a step (bake-session.md). */
+export interface ThermalChange {
+  readonly eventId: string;
+  readonly at: Instant;
+  /** Absent = no thermal inputs from `at`. */
+  readonly thermal?: StepThermal;
+  /** Recorded before the step started: it applies from the step's start. */
+  readonly fromStart?: true;
+}
+
 export interface StepRecord {
+  /** The thermal inputs the step had when the session began (or when it was inserted). */
+  readonly baseThermal?: StepThermal;
+  /** Changes of the thermal inputs, in order. */
+  readonly thermalChanges?: readonly ThermalChange[];
   readonly startedAt?: Instant;
   readonly startEventId?: string;
   readonly endedAt?: Instant;

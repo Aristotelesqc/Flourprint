@@ -13,6 +13,8 @@ import { applyFormulaEdit } from '../formula/edit.js';
 import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
 import { intendedOutcome, outcomeChoiceRequired, outcomeProblem } from '../process/cooking.js';
+import { doughSteps } from '../process/dough.js';
+import { thermalProblem } from '../process/thermal.js';
 import { projectProcess } from '../process/project.js';
 import type { Process, ProcessStep, Projection, StepFact } from '../process/types.js';
 import type { Formula } from '../formula/types.js';
@@ -249,6 +251,13 @@ const observe = (
     });
   }
   if (command.kind === 'fold') return observeFold(state, command, now);
+  if (command.kind === 'doughTemperature') return observeDoughTemperature(state, command, now);
+  if (command.position !== undefined) {
+    return error('InvalidCommand', 'Only a dough temperature observation has a position', {
+      field: 'position',
+      reason: 'position without kind doughTemperature',
+    });
+  }
   if (command.set !== undefined) {
     return error('InvalidCommand', 'Only a fold observation has a set', {
       field: 'set',
@@ -286,6 +295,59 @@ const observe = (
     const { type, ...observation } = command;
     return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation, stage } }]);
   }
+  const { type, ...observation } = command;
+  return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);
+};
+
+const PROBE_POSITIONS: readonly string[] = ['core', 'surface', 'unknown'];
+
+/**
+ * A measured dough temperature (bake-session.md): on a running dough step, in °C within 0 to 60,
+ * with the probe position. It never completes the step nor changes the plan; the model reads it
+ * when it recomputes (fermentation.md, Dough temperature).
+ */
+const observeDoughTemperature = (
+  state: BakeState,
+  command: Extract<BakeCommandPayload, { type: 'AddObservation' }>,
+  now: Instant,
+): Result<EventDraft[], BakeError> => {
+  const invalid = (field: string, reason: string) =>
+    error('InvalidCommand', `Invalid dough temperature: ${reason}`, { field, reason });
+  if (command.stepId === undefined) return invalid('stepId', 'required for doughTemperature');
+  if (command.category !== 'fermentation') {
+    return invalid('category', 'must be fermentation for doughTemperature');
+  }
+  const record = state.steps[command.stepId];
+  if (
+    state.status !== 'active' ||
+    record?.startedAt === undefined ||
+    record.endedAt !== undefined
+  ) {
+    return invalid('stepId', 'step not running');
+  }
+  if (!state.process || !(doughSteps(state.process) ?? []).some((s) => s.id === command.stepId)) {
+    return invalid('stepId', 'not a dough step');
+  }
+  const reading = command.measurement;
+  if (
+    reading === undefined ||
+    reading.unit !== 'degC' ||
+    !Number.isFinite(reading.value) ||
+    reading.value < 0 ||
+    reading.value > 60
+  ) {
+    return invalid('measurement', 'a temperature in °C within 0 to 60');
+  }
+  if (
+    Number.isNaN(seconds(reading.observedAt)) ||
+    seconds(reading.observedAt) < seconds(record.startedAt)
+  ) {
+    return invalid('measurement', 'taken before the step started');
+  }
+  if (command.position === undefined || !PROBE_POSITIONS.includes(command.position)) {
+    return invalid('position', 'core, surface or unknown');
+  }
+  if (command.set !== undefined) return invalid('set', 'set without kind fold');
   const { type, ...observation } = command;
   return ok([{ occurredAt: now, payload: { type: 'ObservationAdded', ...observation } }]);
 };
@@ -424,7 +486,8 @@ export const decide = (
     command.type === 'AddObservation' &&
     (state.status === 'finished' || state.status === 'abandoned') &&
     command.kind !== 'doughReady' &&
-    command.kind !== 'fold'
+    command.kind !== 'fold' &&
+    command.kind !== 'doughTemperature'
   ) {
     return observe(state, command, now);
   }
@@ -691,6 +754,56 @@ export const decide = (
 
     case 'AddObservation':
       return observe(state, command, now);
+
+    case 'SetStepThermal': {
+      const known = requireStep(state, command.stepId);
+      if (!known.ok) return known;
+      if (!(doughSteps(process) ?? []).some((s) => s.id === command.stepId)) {
+        return error('InvalidCommand', 'Thermal inputs are for dough steps only', {
+          field: 'stepId',
+          reason: 'not a dough step',
+        });
+      }
+      const record = state.steps[command.stepId];
+      if (record?.endedAt !== undefined) {
+        return error('StepAlreadyCompleted', `${command.stepId} is already completed`, {
+          stepId: command.stepId,
+        });
+      }
+      if (command.thermal !== undefined) {
+        const bad = thermalProblem(command.thermal, 'thermal');
+        if (bad) {
+          return error('InvalidProcess', `${bad.path}: ${bad.reason}`, {
+            path: bad.path,
+            reason: bad.reason,
+          });
+        }
+      }
+      // A step not yet started takes the inputs from its start: `at` is ignored there.
+      let at = now;
+      if (record?.startedAt !== undefined) {
+        at = command.at ?? now;
+        const floor = latest([record.startedAt, ...(record.thermalChanges ?? []).map((c) => c.at)]);
+        if (floor !== undefined && seconds(at) < seconds(floor)) {
+          return error(
+            'InvalidTime',
+            'Thermal inputs cannot change before the step started or the last change',
+            { reason: 'thermal change before start' },
+          );
+        }
+      }
+      return ok([
+        {
+          occurredAt: now,
+          payload: {
+            type: 'StepThermalChanged',
+            stepId: command.stepId,
+            at,
+            ...(command.thermal === undefined ? {} : { thermal: command.thermal }),
+          },
+        },
+      ]);
+    }
 
     case 'CorrectStepTime': {
       const target = state.stepEvents[command.targetEventId];

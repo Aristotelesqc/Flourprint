@@ -13,6 +13,7 @@ export const feedbackJson = async (
     flours: services.flours,
     equipment: services.equipment,
     ingredients: services.ingredients,
+    thermalProfiles: services.thermalProfiles,
   };
   const result = await exportFeedback(stores, now, {
     platform: services.platform,

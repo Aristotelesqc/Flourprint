@@ -242,7 +242,7 @@ export const moveStep = (
   return validated({ kind: 'chain' as const, process: { ...process, steps }, changedEdges });
 };
 
-export type NotDuplicableReason = 'alap' | 'workpieceStep';
+export type NotDuplicableReason = 'alap' | 'beforeTarget' | 'workpieceStep';
 
 export type DuplicateError =
   ProcessError | DomainError<'NotDuplicable', { reason: NotDuplicableReason }>;
@@ -281,6 +281,8 @@ export const duplicateStep = (
   const refuse = (reason: NotDuplicableReason): DuplicateError =>
     domainError('NotDuplicable', `${stepId} cannot be duplicated (${reason})`, { reason });
   if (original.schedule === 'alap') return err(refuse('alap'));
+  // A copy would be a second heating target (process.md, Duplicate).
+  if (original.schedule === 'beforeTarget') return err(refuse('beforeTarget'));
   if (componentIds(process).has(original.id)) return err(refuse('workpieceStep'));
 
   const manualDuration = original.durationMode !== 'model';
@@ -298,6 +300,7 @@ export const duplicateStep = (
     ...(original.technique === undefined ? {} : { technique: original.technique }),
     ...(original.equipment === undefined ? {} : { equipment: original.equipment }),
     ...(original.subject === undefined ? {} : { subject: original.subject }),
+    ...(original.thermal === undefined ? {} : { thermal: original.thermal }),
   };
   const notCarried: NotCarried[] = [
     ...((original.incorporations ?? []).length > 0 ? ['incorporations' as const] : []),

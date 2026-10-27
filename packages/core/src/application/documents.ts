@@ -248,6 +248,34 @@ export const stepEquipment: Check = (v, w) =>
     },
   );
 
+/** Thermal inputs of a dough step (process.md); their rules are checked by validateProcess. */
+export const stepThermal: Check = (v, w) =>
+  fields(
+    v,
+    w,
+    { geometry: oneOf('sheet', 'tin', 'ball', 'bulk') },
+    {
+      container: (c, cw) =>
+        fields(
+          c,
+          cw,
+          {
+            material: oneOf('glass', 'plastic', 'ceramic', 'steel', 'aluminium', 'banneton'),
+            cover: oneOf('lid', 'film', 'cloth', 'none'),
+          },
+          {
+            liner: (l, lw) => {
+              if (typeof l !== 'boolean') refuse(`${lw} is not true or false`);
+            },
+          },
+        ),
+      environment: oneOf('fridgeStatic', 'fridgeVentilated', 'roomStill', 'provingBox'),
+      porosity: oneOf('unproofed', 'mid', 'proofed'),
+      pieces: number,
+      containerMassG: number,
+    },
+  );
+
 const step: Check = (v, w) =>
   fields(
     v,
@@ -275,6 +303,7 @@ const step: Check = (v, w) =>
       durationMode: oneOf('manual', 'model'),
       equipment: stepEquipment,
       subject,
+      thermal: stepThermal,
       target: string,
       requiredWarmupS: number,
       startRule: oneOf('fromTarget', 'afterDependencies'),

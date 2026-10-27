@@ -1,6 +1,12 @@
 import type { EquipmentEntry, StepEquipment } from '../equipment/types.js';
 import type { Process, ProcessStep } from '../process/types.js';
-import type { BakeEvent, BakeState, EquipmentOverride, StepRecord } from './types.js';
+import type {
+  BakeEvent,
+  BakeState,
+  EquipmentOverride,
+  StepRecord,
+  ThermalChange,
+} from './types.js';
 
 export const initialBakeState = (bakeId: string): BakeState => ({
   bakeId,
@@ -24,6 +30,12 @@ const mapSteps = (
   process: Process | undefined,
   map: (step: ProcessStep) => ProcessStep,
 ): Process => ({ ...process, steps: (process?.steps ?? []).map(map) });
+
+/** The record of a step that has not started: its thermal inputs, if any, are the base. */
+const freshRecord = (step: ProcessStep): StepRecord => ({
+  measurements: [],
+  ...(step.thermal === undefined ? {} : { baseThermal: step.thermal }),
+});
 
 const withCopies = (state: BakeState, copies: readonly EquipmentEntry[] | undefined): BakeState =>
   copies === undefined || copies.length === 0
@@ -49,7 +61,7 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
         formula: snapshot.formula,
         resolvedFormula: snapshot.resolvedFormula,
         process: snapshot.process,
-        steps: Object.fromEntries(snapshot.process.steps.map((s) => [s.id, { measurements: [] }])),
+        steps: Object.fromEntries(snapshot.process.steps.map((s) => [s.id, freshRecord(s)])),
       };
     }
     case 'StepStarted':
@@ -131,7 +143,30 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
       return {
         ...withCopies(next, payload.equipment),
         process: { ...next.process, steps },
-        steps: { ...next.steps, [payload.step.id]: { measurements: [] } },
+        steps: { ...next.steps, [payload.step.id]: freshRecord(payload.step) },
+      };
+    }
+    case 'StepThermalChanged': {
+      // Bake-session.md, Thermal change: the segments are kept apart from the process, which
+      // always shows the inputs in force now. A change recorded before the step started applies
+      // from its start.
+      const record = next.steps[payload.stepId] ?? { measurements: [] };
+      const change: ThermalChange = {
+        eventId: event.eventId,
+        at: payload.at,
+        ...(payload.thermal === undefined ? {} : { thermal: payload.thermal }),
+        ...(record.startedAt === undefined ? { fromStart: true as const } : {}),
+      };
+      const withChange = updateStep(next, payload.stepId, {
+        thermalChanges: [...(record.thermalChanges ?? []), change],
+      });
+      return {
+        ...withChange,
+        process: mapSteps(withChange.process, (s) => {
+          if (s.id !== payload.stepId) return s;
+          const { thermal: _previous, ...rest } = s;
+          return payload.thermal === undefined ? rest : { ...rest, thermal: payload.thermal };
+        }),
       };
     }
     case 'ProjectionAccepted':

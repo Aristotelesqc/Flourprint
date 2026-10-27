@@ -623,6 +623,8 @@ export const en = {
   'notify.fold.title': 'Folds: set {set}/{count}',
   'notify.fold.body': '{recipe} · {step}, set {set} due',
   'check.folds_exceed_step': 'The folds of {step} last longer than the step.',
+  'check.thermal_pieces_changed':
+    'The number of pieces of {step} differs from the previous step, with no division between them.',
   'history.empty': 'No preparation yet. Start one with the Start preparation button.',
   'history.item': '{date} · version {version}',
   'history.status.notStarted': 'Not started',
@@ -1815,6 +1817,8 @@ export const fr: Catalog = {
   'notify.fold.title': 'Rabats : série {set}/{count}',
   'notify.fold.body': '{recipe} · {step}, série {set} prévue',
   'check.folds_exceed_step': 'Les rabats de {step} durent plus longtemps que l’étape.',
+  'check.thermal_pieces_changed':
+    'Le nombre de pièces de {step} diffère de celui de l’étape précédente, sans division entre les deux.',
   'history.empty':
     'Aucune préparation pour l’instant. En démarrer une avec le bouton Démarrer la préparation.',
   'history.item': '{date} · version {version}',
