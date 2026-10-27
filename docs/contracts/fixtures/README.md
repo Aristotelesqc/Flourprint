@@ -121,7 +121,9 @@ thermal inputs reproducing `τ` 1.5 h and its 0 to 3 h band, (f) `ψ > 1/e`: `ou
 bulk in the fridge, divided into balls, then at room, with thermal bands: both give the progress
 envelope of the upper and lower thermal paths and, labelled `sharedCornersBandWrong`, the narrower
 band that shared corners would give and that an engine must not return, (i) the personal factor
-with none, one, two consistent and two inconsistent calibration sets. Two cross-check cases reproduce the verified values of the #176
+with none, one, two consistent and two inconsistent calibration sets, (j) a calibration with
+self-heating (0.22.0): the factor `r / (1 + r ψ₁)` and, as values an engine must not return, the
+two factors of the 0.21.0 rule that depended on the factor stored before. Two cross-check cases reproduce the verified values of the #176
 collation (GPT A, B, D with their own inputs and the exact sphere eigenvalue; Argon F3, F4) so that
 the arithmetic is checked against sources outside the repository; they are labelled and are not
 contract inputs. `tolerance` is absolute in the unit of each key. The cases ship no engine

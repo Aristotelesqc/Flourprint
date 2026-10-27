@@ -1,4 +1,5 @@
 import { isCookingStep } from '../process/cooking.js';
+import { doughSteps } from '../process/dough.js';
 import type { Formula } from '../formula/types.js';
 import type { IngredientFamily } from '../ingredient/types.js';
 import type { Process, Projection } from '../process/types.js';
@@ -126,6 +127,35 @@ export const checkRecipe = (
         details: { step: step.id },
       });
     }
+  }
+  issues.push(...thermalPiecesIssues(process));
+  return issues;
+};
+
+/**
+ * `thermal_pieces_changed` (drafts.md, process.md Thermal inputs): two consecutive dough steps
+ * with thermal inputs carry a different `pieces` (default 1) and no `divide` step lies between
+ * them. The recipe says what it says, so this never blocks; it flags a likely forgotten edit.
+ */
+const thermalPiecesIssues = (process: Process): RecipeIssue[] => {
+  const issues: RecipeIssue[] = [];
+  let previous: number | undefined;
+  for (const step of doughSteps(process) ?? []) {
+    if (step.operation === 'divide') {
+      previous = undefined;
+      continue;
+    }
+    if (step.thermal === undefined) continue;
+    const pieces = step.thermal.pieces ?? 1;
+    if (previous !== undefined && pieces !== previous) {
+      issues.push({
+        severity: 'warning',
+        code: 'thermal_pieces_changed',
+        path: `steps.${step.id}.thermal.pieces`,
+        details: { step: step.id, from: previous, to: pieces },
+      });
+    }
+    previous = pieces;
   }
   return issues;
 };

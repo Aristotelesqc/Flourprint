@@ -14,6 +14,7 @@ import type {
   ReferenceVersion,
   Result,
   Revision,
+  ThermalProfile,
 } from '../domain/index.js';
 
 /** Injected clock: the domain never reads the system time itself. */
@@ -243,6 +244,8 @@ export interface RestorePlan {
   readonly equipment?: readonly EquipmentEntry[];
   /** Every personal ingredient entry version (ingredients.md); optional, like flours. */
   readonly ingredients?: readonly IngredientEntry[];
+  /** Every version of the personal thermal profile (persistence.md); optional, like flours. */
+  readonly thermalProfiles?: readonly ThermalProfile[];
   readonly bakes: readonly AppendInput[];
 }
 
@@ -315,4 +318,23 @@ export interface IngredientRegistry {
   listIngredientVersions(): Promise<readonly IngredientEntry[]>;
   /** Writes the entry when its version is the next one for its id, else `HeadConflict`. */
   saveIngredient(entry: IngredientEntry): Promise<Result<IngredientEntry, IngredientStoreError>>;
+}
+
+export type ThermalStoreError =
+  | DomainError<'HeadConflict', { profileId: string; currentHead: number }>
+  | DomainError<'UnsupportedDocumentVersion', { schemaVersion: number }>;
+
+/**
+ * The personal thermal profile (docs/contracts/persistence.md, Personal thermal profile): stored
+ * by (id, version), a version is never rewritten. Absent profile = every factor 1.
+ */
+export interface ThermalProfileStore {
+  getThermalProfile(
+    id: string,
+    version: number,
+  ): Promise<Result<ThermalProfile | undefined, ThermalStoreError>>;
+  /** Every version of every profile, by id then version (backups, and the latest one in force). */
+  listThermalProfileVersions(): Promise<readonly ThermalProfile[]>;
+  /** Writes the profile when its version is the next one for its id, else `HeadConflict`. */
+  saveThermalProfile(profile: ThermalProfile): Promise<Result<ThermalProfile, ThermalStoreError>>;
 }

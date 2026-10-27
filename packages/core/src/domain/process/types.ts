@@ -62,6 +62,34 @@ export interface StepTechnique {
 export type Subject =
   { readonly kind: 'mainDough' } | { readonly kind: 'component'; readonly id: string };
 
+/** Shape class of the dough in its container (process.md, Thermal inputs). */
+export type ThermalGeometry = 'sheet' | 'tin' | 'ball' | 'bulk';
+export type ContainerMaterial =
+  'glass' | 'plastic' | 'ceramic' | 'steel' | 'aluminium' | 'banneton';
+export type ContainerCover = 'lid' | 'film' | 'cloth' | 'none';
+export type ThermalEnvironment = 'fridgeStatic' | 'fridgeVentilated' | 'roomStill' | 'provingBox';
+export type DoughPorosity = 'unproofed' | 'mid' | 'proofed';
+
+/**
+ * Thermal inputs of a dough step (process.md, Thermal inputs, #176): the presence of the object
+ * turns the dough thermal model on for the step (fermentation.md, Dough thermal model).
+ */
+export interface StepThermal {
+  readonly geometry: ThermalGeometry;
+  readonly container?: {
+    readonly material: ContainerMaterial;
+    readonly cover: ContainerCover;
+    /** Banneton only: a cloth liner. */
+    readonly liner?: boolean;
+  };
+  readonly environment?: ThermalEnvironment;
+  readonly porosity?: DoughPorosity;
+  /** Integer ≥ 1: equal pieces the dough is divided into (default 1). */
+  readonly pieces?: number;
+  /** Grams, > 0: the container that changes ambient with the dough. */
+  readonly containerMassG?: number;
+}
+
 export interface ProcessStep {
   readonly id: StepId;
   /** Open operation code (`autolyse`, `mix`, `fold`, `bulk`, `shape`, `bake`, …), see #5. */
@@ -86,6 +114,8 @@ export interface ProcessStep {
   readonly equipment?: StepEquipment;
   /** The mass the step works on; absent = derived (process.md, Subjects and component phases). */
   readonly subject?: Subject;
+  /** Thermal inputs of a dough step; absent = the fixed lag of fermentation.md. */
+  readonly thermal?: StepThermal;
   /** `beforeTarget` only: the cooking step the heat is for (process.md, Steps before a target). */
   readonly target?: StepId;
   /** `beforeTarget` only: the warm-up wanted before the target starts, in seconds (≥ 0). */

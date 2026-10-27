@@ -12,3 +12,4 @@ export { SqlFlourRegistry } from './flour-registry.js';
 export { SqlIngredientRegistry } from './ingredient-registry.js';
 export { SqlRecipeRepository } from './recipe-repository.js';
 export { SqlRestoreTarget } from './restore-target.js';
+export { SqlThermalProfileStore } from './thermal-profile-store.js';
