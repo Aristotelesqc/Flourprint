@@ -676,3 +676,32 @@ describe('thermal fixtures: calibration with self-heating (case j)', () => {
     });
   });
 });
+
+describe('thermal fixtures: Guggenheim selection (case k, 0.22.1)', () => {
+  const k = letter('k');
+  const input = k.input as { readings: { tH: number; C: number }[] };
+  const e = k.expected as {
+    equallySpacedTriples: { timesH: number[]; ratio: number; valid: boolean }[];
+    chosenTimesH: number[];
+    tauH: number;
+    tInfC: number;
+  };
+  const tol = k.tolerance as { tauH: number; temperatureC: number };
+  const at = (tH: number) => (input.readings.find((r) => r.tH === tH) as { C: number }).C;
+
+  it('each equally spaced triple is valid or not as the case says', () => {
+    for (const triple of e.equallySpacedTriples) {
+      const [a, b, c] = triple.timesH as [number, number, number];
+      const r = guggenheim(at(a), at(b), at(c), (c - a) / 2);
+      expect(r.ok).toBe(triple.valid);
+    }
+  });
+
+  it('the chosen triple gives tau and the temperature the readings tend to', () => {
+    const [a, b, c] = e.chosenTimesH as [number, number, number];
+    const r = guggenheim(at(a), at(b), at(c), (c - a) / 2);
+    if (!r.ok) throw new Error('refused');
+    close(r.value.tauH, e.tauH, tol.tauH, 'tau');
+    close(r.value.infinityC, e.tInfC, tol.temperatureC, 'T inf');
+  });
+});
