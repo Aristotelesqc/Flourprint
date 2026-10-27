@@ -10,9 +10,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const repo = fileURLToPath(new URL('../', import.meta.url));
 const root = path.join(repo, 'packages/ui');
 const requireMobile = createRequire(path.join(repo, 'apps/mobile/package.json'));
-const { build, createServer } = await import(pathToFileURL(requireMobile.resolve('vite')).href);
+const { build, createServer, preview } = await import(
+  pathToFileURL(requireMobile.resolve('vite')).href
+);
 const { default: react } = await import(
   pathToFileURL(requireMobile.resolve('@vitejs/plugin-react')).href
+);
+
+const { default: tailwindcss } = await import(
+  pathToFileURL(requireMobile.resolve('@tailwindcss/vite')).href
 );
 
 const mode = process.argv[2] ?? 'build';
@@ -21,11 +27,20 @@ const config = {
   configFile: false,
   root,
   base: './',
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   build: {
     outDir: path.join(root, 'dist/catalogue'),
     emptyOutDir: true,
-    rollupOptions: { input: path.join(root, 'catalogue.html') },
+    rollupOptions: {
+      input:
+        process.env.FLOURPRINT_UI_FIXTURES === 'true'
+          ? [
+              path.join(root, 'catalogue.html'),
+              path.join(root, 'test/fixtures/foundation/index.html'),
+              path.join(root, 'test/fixtures/overlay-motion/index.html'),
+            ]
+          : path.join(root, 'catalogue.html'),
+    },
   },
   server: { host: '127.0.0.1', port, strictPort: true },
 };
@@ -34,8 +49,14 @@ if (mode === 'serve') {
   const server = await createServer(config);
   await server.listen();
   server.printUrls();
+} else if (mode === 'preview') {
+  const server = await preview({
+    ...config,
+    preview: { host: '127.0.0.1', port, strictPort: true },
+  });
+  server.printUrls();
 } else if (mode === 'build') {
   await build(config);
 } else {
-  throw new Error(`Unknown mode ${mode}: use serve or build`);
+  throw new Error(`Unknown mode ${mode}: use serve, preview or build`);
 }

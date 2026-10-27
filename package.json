@@ -14,7 +14,7 @@
     "test": "tsc -b && vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm tokens:check && vitest run && pnpm test:backlog",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm tokens:check && pnpm css:check && vitest run && pnpm test:backlog",
     "test:backlog": "node --test scripts/backlog-view.test.mjs",
     "build:mobile": "pnpm --filter @flourprint/mobile build",
     "build:desktop": "pnpm --filter @flourprint/desktop package",
@@ -22,7 +22,9 @@
     "tokens:check": "node scripts/ui-tokens.mjs --check",
     "catalogue": "node scripts/ui-catalogue.mjs serve",
     "build:catalogue": "node scripts/ui-catalogue.mjs build",
-    "ui:index": "node scripts/ui-index.mjs"
+    "ui:index": "node scripts/ui-index.mjs",
+    "css:check": "node scripts/ui-css.mjs --check",
+    "test:ui": "node scripts/ui-e2e.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -33,6 +35,8 @@
     "prettier": "^3.9.9",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.1",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2"
   }
 }

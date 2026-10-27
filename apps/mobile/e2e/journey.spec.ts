@@ -154,7 +154,7 @@ test('dough ready is recorded on a running fermentation step without ending it',
   await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
   // The bulk is followed by shaping: the dough is ready to shape, not to bake.
   await page.getByRole('button', { name: 'Prête à façonner' }).click();
-  await page.getByText('Test du doigt').click();
+  await page.getByRole('radio', { name: 'Test du doigt', exact: true }).click();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   // Recorded in the journal; the step is still running.
   await expect(page.locator('p:visible', { hasText: / · / }).first()).toContainText(
@@ -191,13 +191,8 @@ test('a note attaches to a step; an ended bake takes a rated review note', async
     .locator('ion-header')
     .getByRole('button', { name: 'Actions de préparation' })
     .click();
-  await expect(
-    page.locator('ion-action-sheet').getByRole('button', { name: /^Abandonner/ }),
-  ).toBeVisible();
-  await page
-    .locator('ion-action-sheet')
-    .getByRole('button', { name: 'Annuler', exact: true })
-    .click();
+  await expect(page.getByRole('menu').getByRole('menuitem', { name: /^Abandonner/ })).toBeVisible();
+  await page.getByRole('menu').getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
 });
 
@@ -344,12 +339,25 @@ test('speaks English on an English device @en', async ({ page }) => {
 test('pulling the recipe list down checks for a newer dev build', async ({ page }) => {
   await page.goto('/recipes');
   await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  // Native gesture setup dynamically imports its module after the custom element is defined.
+  await page.evaluate(() => customElements.whenDefined('ion-refresher').then(() => undefined));
+  await page.waitForLoadState('networkidle');
   // A non-release build (this one is local): the same check as in Advanced.
   const box = await page.getByRole('heading', { name: 'Recettes' }).boundingBox();
   if (!box) throw new Error('no heading');
   await page.mouse.move(box.x + 20, box.y + 5);
   await page.mouse.down();
   for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  // Let Ionic process the drag before releasing; its native MD refresh boundary is 0.4.
+  await expect
+    .poll(() =>
+      routed(page)
+        .locator('ion-refresher')
+        .evaluate((element) =>
+          (element as HTMLElement & { getProgress: () => Promise<number> }).getProgress(),
+        ),
+    )
+    .toBeGreaterThan(0.4);
   await page.mouse.up();
   await expect(page.getByText(/est déjà la dernière version/)).toBeVisible();
 });
@@ -602,7 +610,7 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   // The target and the ranges sit behind "Details", in plain sentences.
   await page.getByRole('button', { name: 'Détails' }).first().click();
   await expect(page.getByText(/le plan atteint entre .* de la cible/).first()).toBeVisible();
-  const readiness = page.getByLabel('Cible « prête à cuire »', { exact: true });
+  const readiness = page.getByRole('combobox', { name: 'Cible « prête à cuire »', exact: true });
   await expect(readiness).toHaveValue('flourprint.model-end-point');
   const before = await progress.textContent();
   await readiness.selectOption({ label: 'Expérimentale (×2)' });
@@ -852,13 +860,10 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await share.press('Enter');
   await routed(page).getByRole('button', { name: 'Menu édition', exact: true }).click();
   await expect(
-    page.locator('ion-action-sheet').getByRole('button', { name: /^Vérifier la recette/ }),
+    page.getByRole('menu').getByRole('menuitem', { name: /^Vérifier la recette/ }),
   ).toBeVisible();
-  await page
-    .locator('ion-action-sheet')
-    .getByRole('button', { name: 'Annuler', exact: true })
-    .click();
-  await expect(page.locator('ion-action-sheet')).toHaveCount(0);
+  await page.getByRole('menu').getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(page.getByRole('menu')).toBeHidden();
   await menuAction(page, /^Abandonner les modifications$/);
   await page.locator('ion-alert').getByRole('button', { name: 'Supprimer le brouillon' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
@@ -875,9 +880,29 @@ test('an info button opens a bottom sheet that explains the term and closes', as
   await expect(sheet).toContainText('pertes déclarées');
   await sheet.getByRole('button', { name: 'Fermer' }).click();
   await expect(page.locator('ion-modal:visible')).toHaveCount(0);
+  const sizeHelp = page.getByRole('button', { name: 'Explication : Taille de la recette' });
+  await expect(sizeHelp).toBeFocused();
+  await sizeHelp.click();
+  await expect(sheet.getByRole('button', { name: 'En savoir plus' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await sheet.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(sheet).toBeHidden();
 
-  await page.getByRole('button', { name: 'Explication : Hydratation', exact: true }).click();
+  const hydrationHelp = page.getByRole('button', {
+    name: 'Explication : Hydratation',
+    exact: true,
+  });
+  await hydrationHelp.click();
   await expect(page.locator('ion-modal:visible')).toContainText('Hydratation et eau ajoutée');
+  await page.locator('ion-modal:visible').getByRole('button', { name: 'Fermer' }).click();
+  await expect(hydrationHelp).toBeFocused();
+  await sizeHelp.click();
+  await expect(sheet.getByRole('button', { name: 'En savoir plus' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
 });
 
 test('the planner can follow now; starting always starts now', async ({ page }) => {
@@ -1160,7 +1185,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   const advance = page.getByRole('region', { name: 'Avancer le temps' });
   await expect(advance).toContainText('Échaudage');
   await advance.getByRole('button', { name: 'Au prochain moment prévu' }).click();
-  await expect(page.getByText('À faire aussi maintenant')).toBeVisible();
+  await expect(page.getByText('À faire aussi maintenant', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Commencer Échaudage' })).toBeVisible();
   await expect(page.getByRole('progressbar', { name: 'Préferment' })).toHaveAttribute(
     'aria-valuetext',

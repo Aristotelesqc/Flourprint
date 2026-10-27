@@ -1,0 +1,8 @@
+/**
+ * Exceptions (ADR 0022): reserved for CSS properties and rules that lack support
+ * in Tailwind CSS v4.3.3.
+ *
+ * All current Flourprint design tokens and patterns are fully expressed via Tailwind v4
+ * native `@theme` and `@utility` directives in `tokens.css` and `patterns.css`.
+ * No workarounds or exceptions are required for Tailwind v4.3.3.
+ */

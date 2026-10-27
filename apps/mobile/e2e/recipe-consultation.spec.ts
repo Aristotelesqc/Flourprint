@@ -103,8 +103,8 @@ test('consultation and editing share weighing state without inventing a saved ob
     if (await overflow.isVisible()) {
       await overflow.click();
       await page
-        .locator('ion-action-sheet')
-        .getByRole('button', { name: 'Abandonner les modifications', exact: true })
+        .getByRole('menu')
+        .getByRole('menuitem', { name: 'Abandonner les modifications', exact: true })
         .click();
     } else {
       await routed(page).locator('ion-header:visible ion-button[aria-label="Abandonner"]').click();

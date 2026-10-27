@@ -1,0 +1,9 @@
+@layer ionic, theme, base, components, utilities;
+@import '@ionic/react/css/core.css' layer(ionic);
+@import '@ionic/react/css/normalize.css' layer(ionic);
+@import '@ionic/react/css/structure.css' layer(ionic);
+@import '@ionic/react/css/typography.css' layer(ionic);
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@import './src/patterns.css';
+@source './src';

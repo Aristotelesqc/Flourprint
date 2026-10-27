@@ -21,6 +21,8 @@ export type ComponentId<C extends ComponentMap> = keyof C & `fp.${string}`;
 export interface Example<P> {
   readonly name: string;
   readonly props: P;
+  /** Optional controlled demo renderer; not part of the product component API. */
+  readonly render?: ComponentType<P>;
 }
 
 /** One version of one component. */

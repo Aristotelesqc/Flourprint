@@ -7,16 +7,20 @@
     ".": "./src/index.ts",
     "./catalogue": "./src/catalogue/index.ts",
     "./components/*": "./src/components/*.tsx",
-    "./tokens.css": "./src/tokens.css"
+    "./tokens.css": "./src/tokens.css",
+    "./styles.css": "./src/patterns.css"
   },
   "peerDependencies": {
-    "react": "^19.3.0"
+    "react": "^19.3.0",
+    "@ionic/react": "^9.0.6"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "@ionic/react": "^9.0.6",
+    "tailwindcss": "^4.3.3"
   },
   "dependencies": {
     "@dnd-kit/dom": "0.5.1",

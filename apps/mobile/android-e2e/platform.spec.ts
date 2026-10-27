@@ -146,9 +146,9 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
   await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
   // A saved recipe opens in consultation (#70): editing is explicit.
   await page.getByRole('button', { name: 'Recipe actions', exact: true }).click();
-  const actions = page.locator('ion-action-sheet');
-  await actions.getByRole('button', { name: 'Edit recipe', exact: true }).click();
-  await expect(actions).toHaveCount(0);
+  const actions = page.getByRole('menu');
+  await actions.getByRole('menuitem', { name: 'Edit recipe', exact: true }).click();
+  await expect(actions).toBeHidden();
   const salt = page.getByLabel('Salt (g)', { exact: true });
   await salt.fill('25');
   await salt.press('Enter');
@@ -208,7 +208,9 @@ test('the Android back button returns to the recipe list', async () => {
         backEvents: (window as unknown as { fpBackEvents: number }).fpBackEvents,
         visibility: document.visibilityState,
         focused: document.hasFocus(),
-        overlays: [...document.querySelectorAll('ion-modal, ion-alert, ion-action-sheet')]
+        overlays: [
+          ...document.querySelectorAll('ion-modal, ion-alert, ion-popover, ion-action-sheet'),
+        ]
           .filter((o) => !o.classList.contains('overlay-hidden'))
           .map((o) => o.tagName.toLowerCase()),
         pages: [...document.querySelectorAll('.ion-page')].map((p) => p.className),
@@ -221,5 +223,34 @@ test('the Android back button returns to the recipe list', async () => {
       cause,
     });
   }
+  await forceStop();
+});
+
+test('Android Back dismisses shared overlays before leaving the recipe', async () => {
+  const page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expect(page.getByText(/^Version \d+$/).first()).toBeVisible();
+  const recipeUrl = page.url();
+  const opener = page.getByRole('button', { name: 'Recipe actions', exact: true });
+  await opener.click();
+  const menu = page.getByRole('menu');
+  await expect(menu.getByRole('menuitem').first()).toBeFocused();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(menu).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(opener).toBeFocused();
+
+  const help = page.getByRole('button', { name: 'Explanation: Hydration', exact: true });
+  await help.click();
+  const sheet = page.getByRole('dialog', { name: 'Hydration and added water', exact: true });
+  await expect(
+    page.locator('ion-modal:visible').getByRole('button', { name: 'Close', exact: true }),
+  ).toBeFocused();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(sheet).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(help).toBeFocused();
   await forceStop();
 });

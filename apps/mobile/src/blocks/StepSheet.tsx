@@ -8,7 +8,7 @@ import {
   IonToolbar,
   useIonAlert,
 } from '@ionic/react';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useId, useState, type ReactNode } from 'react';
 import {
   phasesDurationS,
   removeStep,
@@ -139,14 +139,15 @@ export const StepSheet = ({
   const stepId = step?.id;
   const initialDisplayLabel = step?.label ? stepName(step) : '';
 
-  useEffect(() => {
+  const resetOnStepOpen = useEffectEvent(() => {
     if (!open) return;
     setNewPhase(undefined);
     setFolds({ ...step?.technique?.folds });
     setFoldStyle(step?.technique?.folds?.style);
     setOperationError(undefined);
     // Reset only when the sheet opens or moves to another step.
-  }, [open, stepId]);
+  });
+  useEffect(() => resetOnStepOpen(), [open, stepId]);
 
   useEffect(() => {
     if (!open) return;

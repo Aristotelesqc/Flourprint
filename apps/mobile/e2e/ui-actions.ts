@@ -23,9 +23,9 @@ export const menuAction = async (page: Page, action: RegExp) => {
       name: /^(Actions sur la recette|Recipe actions|Menu édition|Edit actions|Actions de préparation|Preparation actions)$/,
     })
     .click();
-  const sheet = page.locator('ion-action-sheet');
-  await sheet.getByRole('button', { name: action }).click();
-  await expect(sheet).toHaveCount(0);
+  const sheet = page.getByRole('menu');
+  await sheet.getByRole('menuitem', { name: action }).click();
+  await expect(sheet).toBeHidden();
 };
 export const enterEditor = async (page: Page) => {
   await expect(routed(page)).toHaveCount(1);
@@ -42,17 +42,17 @@ export const enterEditor = async (page: Page) => {
   )
     return;
   await entry.click();
-  const sheet = page.locator('ion-action-sheet');
-  const edit = sheet.getByRole('button', { name: /^(Modifier la recette|Edit recipe)$/ });
-  const check = sheet.getByRole('button', {
+  const sheet = page.getByRole('menu');
+  const edit = sheet.getByRole('menuitem', { name: /^(Modifier la recette|Edit recipe)$/ });
+  const check = sheet.getByRole('menuitem', {
     name: /^(Vérifier la recette|Check recipe)(?: \(\d+\))?$/,
   });
   // A restored draft can enter editing while the returning Ionic page settles.
   // In that case this is already the editor's menu; close it and assert the real editor.
   await expect(edit.or(check)).toBeVisible();
   if (await edit.isVisible()) await edit.click();
-  else await sheet.getByRole('button', { name: /^(Annuler|Cancel)$/ }).click();
-  await expect(sheet).toHaveCount(0);
+  else await sheet.getByRole('button', { name: /^(Fermer|Close)$/ }).click();
+  await expect(sheet).toBeHidden();
   await expect(
     routed(page).getByRole('button', { name: 'Composition', exact: true }),
   ).toBeVisible();

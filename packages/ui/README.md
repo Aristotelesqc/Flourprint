@@ -5,7 +5,7 @@ Screens (the layout engine) render components **by id**. A manifest picks the ve
 id, so switching a version is one line in the manifest. The screens and the library are not
 touched.
 
-The library imports React only. Components receive display-ready props: localized text,
+The library imports React and the existing Ionic components (ADR 0022). Components receive display-ready props: localized text,
 formatted quantities, states and callbacks. The layout engine calls `@flourprint/core` and
 maps its results to props. There is no baking math here.
 
@@ -17,7 +17,7 @@ src/components.ts        the component map: each id with the props all its versi
 src/components/<name>/   one file per version: v1.tsx, v2.tsx, …
 src/catalogue/           catalogue page and registry of every version
 src/tokens.ts            design token values, the only source (DESIGN.md + tokens.css are generated)
-src/tokens.css           generated: --fp-* custom properties for Light, Dark, AMOLED, motion
+src/tokens.css           generated: native Tailwind @theme for Light, Dark, AMOLED and motion
 ```
 
 ## Adding a component or a version
@@ -88,7 +88,7 @@ comma-separated) renders another version for comparison. An override is never st
 `test/release-bundle.test.ts` builds the pattern above with Vite to prove that a release bundle
 without the flag holds only the selected versions.
 
-Load `@flourprint/ui/tokens.css` once in the consumer. Themes follow `data-theme`
+Import `@flourprint/ui/styles.css` from the consumer's Tailwind CSS entrypoint, and add an explicit `@source` for `packages/ui/src`. This includes the generated native `@theme`, the shared `fp-focus` utility and the empty justified-exceptions file. Do not import Tailwind Preflight over the Ionic app normalization. Apply `fp-ionic` to library hosts and floating overlay roots to opt into the generated Ionic bridge; importing the library does not globally redefine Ionic variables. Themes follow `data-theme`
 (`light`, `dark`, `amoled`) on any ancestor. Reduced motion follows the system setting or
 `data-motion="reduced"`.
 
@@ -104,11 +104,27 @@ or a lighter form.
   - On finish, the end state is committed to the element's inline style and the animation
     removed.
   - In reduced motion nothing plays, and the caller applies the end state.
-- `ionicAnimation(motion, createAnimation, '.modal-wrapper')` turns an item into an Ionic
+- `ionicAnimation(motion, createAnimation, '.modal-wrapper')` turns an item into an Ionic dialog
   `enterAnimation` or `leaveAnimation`.
   - The target is looked up in the overlay's shadow root.
-  - It is for popovers and modals **without** `breakpoints`. Sheet modals with breakpoints keep
-    Ionic's own animation, which positions them.
+  - Use it for dialogs without `breakpoints`. Sheet modals and popovers retain Ionic's native factories: these also position the overlay. Replacing a popover factory bypasses its anchor placement; animating the positioner transform also displaces it.
+- `useOverlayMotion(ref, { enter, leave })` (or `bindOverlayMotion(element, plan)`) is the bridge
+  for those native factories: an anchored `IonPopover` or an `IonModal` with `breakpoints`.
+  - Ionic keeps building and playing its own animation, so anchor placement, viewport clamping,
+    safe areas, breakpoints and the sheet's drag gesture stay native.
+  - Just after `willPresent` / `willDismiss`, the bridge sets the running native animations'
+    **duration and easing** from the selected item, or duration 0 when its reduced form is
+    `'none'`. The item's keyframes do not apply there: the native keyframes are the geometry.
+  - Each part names a selector in the overlay's shadow root (`ion-backdrop`, `.modal-wrapper`);
+    a part without one takes every other running animation of the overlay.
+  - Keep `animated={!reduced}` on the overlay as before; an overlay with `animated` false stays
+    at duration 0.
+  - Give a part a whole Ionic animation (`ion-backdrop`, or everything else): Ionic completes a
+    group of elements on its first element's end, so two durations inside one group would cut
+    the longer one short.
+  - A sheet dismissed by dragging plays no leave animation: its movement is the gesture's own,
+    not `sheet-exit`.
+  - `e2e/overlay-motion.spec.mjs` shows a manifest change changing the played timing.
 - `transition` items set a CSS `transition` with `transitionCss(motion, reduced)` for changes
   driven by styles: colour, rotation, accordion height.
 - Components read motions with `useMotion('fp.motion.sheet-enter')` under a
@@ -152,9 +168,19 @@ pnpm catalogue        # serve on http://127.0.0.1:4271/catalogue.html (FLOURPRIN
 pnpm build:catalogue  # packages/ui/dist/catalogue
 ```
 
+Examples may provide a typed `render` component to keep demo state local (raw input, disclosure, tabs and overlay open state). This is catalogue metadata, not an additional product prop. Product text is display-ready from the app's react-intl messages; fixed catalogue sample labels are not product defaults.
+
 The catalogue shows every version of every id, with its examples. It renders them in Light,
 Dark and AMOLED, at 393 px or 360 px, at 100 % or 130 % text, and with standard or reduced
 motion.
+
+## Styling boundary during the port
+
+`pnpm css:check` rejects component and screen CSS outside the ADR 0022 allowlist. Components use Tailwind utilities and React variants; `patterns.css` accepts only cross-cutting `@utility` definitions. `exceptions.css` stays empty until a specific missing Tailwind capability and checked version justify a rule. The standalone catalogue CSS imports host assets only.
+
+The existing app stylesheet is an explicit, hash-checked migration allowance, not library output. This foundation imports library styles without rewriting screens. Each later screen slice must remove the corresponding legacy rules and review the remaining allowance. No new rules may be appended there as a workaround. The app's legacy vocabulary is not copied into library classes.
+
+New v1 foundation components are unapproved presentation candidates; catalogue availability does not establish owner visual approval.
 
 ## Ownership
 
