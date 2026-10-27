@@ -168,7 +168,7 @@ is never rewritten, and a version that is not the next one for its id is refused
 Built-in entries are code and are not stored; a customization of a built-in is a personal entry
 stored under the built-in's id (`ingredients.md`).
 
-## Personal thermal profile (#176, 0.21.0 target)
+## Personal thermal profile (#176, 0.21.0)
 
 The personal correction of the dough thermal model (`fermentation.md`, Personal correction) is a
 versioned personal object, like the readiness profile and personal entries, never part of a recipe:
@@ -211,10 +211,11 @@ interface ThermalProfile {
 - A bake snapshot does not store the profile. The factor used by a committed estimate appears in
   that estimate's assumptions (`thermal_factor:<key>=<value>`, history.md), so
   replay never recomputes it with a later factor.
-- Storage is an additional table in the SQLite adapter (a database migration step) in the
-  implementing pull request; this contract fixes the document, not the SQL.
+- Storage is the `thermal_profiles` table, SQL migration 9 (#184; SQLite schema below). A version
+  1 or 2 document that nonetheless carries `thermal` or `thermalProfiles` (no writer produces
+  one) is read as is, not refused.
 
-## SQLite schema (version 7)
+## SQLite schema (version 9)
 
 ```sql
 recipes        (id TEXT PRIMARY KEY, name TEXT NOT NULL, head_version INTEGER NOT NULL,
@@ -244,6 +245,13 @@ equipment      (id TEXT NOT NULL, version INTEGER NOT NULL, kind TEXT NOT NULL,
 ingredients    (id TEXT NOT NULL, version INTEGER NOT NULL, archived INTEGER NOT NULL,
                 schema_version INTEGER NOT NULL, document TEXT NOT NULL,
                 created_at TEXT NOT NULL, PRIMARY KEY (id, version))               -- v7
+reference_versions (recipe_id TEXT NOT NULL, number INTEGER NOT NULL, version INTEGER NOT NULL,
+                name TEXT, created_at TEXT NOT NULL, PRIMARY KEY (recipe_id, number),
+                UNIQUE (recipe_id, version),
+                FOREIGN KEY (recipe_id, version) REFERENCES revisions (recipe_id, version)) -- v8
+thermal_profiles (id TEXT NOT NULL, version INTEGER NOT NULL, schema_version INTEGER NOT NULL,
+                document TEXT NOT NULL, updated_at TEXT NOT NULL,
+                PRIMARY KEY (id, version))                                         -- v9
 ```
 
 The SQL lives once in `@flourprint/adapters` and runs on a small driver interface; Node

@@ -346,7 +346,8 @@ about 0.5 K in 2 h and reaches 1.2 to 1.4 K above ambient (fixture c).
 - **Bound (Semenov).** At each step the engine evaluates `ψ = (Ea / (R T_amb²)) · τ_eff · ΔT_ad ·
 rate(T_amb, d)` with the central `ΔT_ad` and the **effective** lag, `τ_eff` after the personal factor
   (`f · τ_eff`, Personal correction; `f` = 1 without one), since a slower dough is the riskier one.
-  The calibration estimator uses the same `ψ`. An equilibrium exists only if
+  A step of zero duration integrates nothing and is not tested. The calibration estimator uses
+  the same `ψ` with the factor it is fitting (Personal correction). An equilibrium exists only if
   `ψ ≤ 1/e`. If `ψ > 1/e`, or if `T̄` exceeds 35 °C during the integration, the estimate is
   `out_of_domain` with `reason: 'self_heating_unbounded'` (Semenov) or the existing temperature
   gate (the 35 °C rule of the Domain table): the forecast **never integrates a runaway** and never
@@ -462,16 +463,25 @@ Estimators from readings `(t_i, T_i)` taken after a step to a stable ambient `T_
 - **Three equally spaced points** (Guggenheim, `Δt` apart): `τ_obs = Δt / ln((T₁ − T₂)/(T₂ − T₃))`,
   `T∞ = (T₁T₃ − T₂²)/(T₁ − 2T₂ + T₃)`. It also gives `T∞`, which captures a shelf offset or
   self-heating without knowing the shelf temperature. A reading set with `(T₁ − T₂)/(T₂ − T₃) ≤ 1`
-  or a non-finite result is rejected (`readings_invalid`).
-- **Factor of the set** `f_i = τ_obs · (1 − ψ) / τ_eff`, with `ψ` of the reading's ambient (so the coupled
-  stretch of self-heating is removed); readings with `ψ > 0.1` are rejected
-  (`self_heating_confounds`).
-- Readings before 0.5 `τ_eff` after the step are kept in the journal but not used (core lag).
+  or a non-finite result is rejected (`readings_invalid`). Among the usable readings the
+  estimator takes the equally spaced triple that spans the longest time, two gaps being equal
+  when they differ by at most 10 %; with no such triple the set is `readings_invalid`. The set
+  records only those three readings.
+- **Factor of the set.** The observed lag is the coupled one, `τ_obs = f · τ_eff / (1 − ψ)`, and
+  `ψ` grows with the lag being fitted: `ψ = f · ψ₁`, where `ψ₁` is the Semenov number above
+  computed at the reading's ambient with `f` = 1. With `r = τ_obs / τ_eff`, solving
+  `f = r · (1 − f · ψ₁)` gives `f_i = r / (1 + r · ψ₁)`. The result depends on the readings and
+  the model only, never on factors stored earlier, so calibrating in any order gives the same
+  sets. A set with `f_i · ψ₁ > 0.1` is rejected (`self_heating_confounds`). With no self-heating
+  (`ψ₁` = 0, fixture d) `f_i = r`.
+- Readings before 0.5 `τ_eff` after the later of the step start and the last thermal change are
+  kept in the journal but not used (core lag). The ambient must be the same over the readings
+  used; otherwise the set is refused.
 
 **Calibration order**: thermal first, on weakly fermenting dough (cold, low dose or a dummy
 mass); only then the heat term. A constant heat offset cannot be identified from a single cooling
 curve. Automatic learning (N2) is deferred; this contract fixes the estimators and the storage.
-The fixtures give a worked case (`fixtures/thermal/cases.json`, case d).
+The fixtures give worked cases (`fixtures/thermal/cases.json`, case d; with self-heating, case j).
 
 ### Flags and limits
 
@@ -658,7 +668,7 @@ is the model's own end point (`readyProgress` 1), the former 2.0 target is the s
 It also validates profiles, forbids non-finite `ok` values and discloses dose bands outside the
 domain. Documents of `0.5.0` stay readable; a recipe without `readiness` now uses the default.
 
-Version `0.21.0` (target) adds the **dough thermal model** (#176): the optional `thermal` object
+Version `0.21.0` adds the **dough thermal model** (#176): the optional `thermal` object
 on process steps (process.md), the `StepThermalChanged` event and the `doughTemperature`
 observation (bake-session.md), the personal thermal profile (persistence.md) and the per-step
 envelope in the dough result. All additions are optional; a step without `thermal` behaves as in
@@ -667,5 +677,16 @@ lag). The recipe export and the full backup `schemaVersion` go from 2 to 3, so t
 reader refuses a document holding `thermal` or `thermalProfiles` with `UnsupportedDocumentVersion`
 (persistence.md). The kinetic model keeps its version
 `0.1.0`; the thermal sub-model is `flourprint.dough-thermal` `0.1.0`, named in the estimate's
-assumptions as `thermal_model:0.1.0`. `CONTRACT_VERSION` and `ENGINE_VERSION` are bumped by the
-implementing pull request, following the precedent of `0.18.0` (process.md, Steps before a target).
+assumptions as `thermal_model:0.1.0`. Implemented in #184: `CONTRACT_VERSION` `0.21.0`,
+`ENGINE_VERSION` `0.8.0`.
+
+Version `0.22.0` (target) makes the personal thermal factor of a calibration set independent of
+the factors stored before it (`f_i = r / (1 + r · ψ₁)`, Personal correction; in `0.21.0` `ψ`
+used the stored factor, so the order of calibrations changed the sets), and carries `thermal` when
+a step is duplicated (process.md, Duplicate). It also writes down what `0.21.0` left implicit and
+the engine implemented: calibration on an ended session, a reading replacing the temperature but
+not the progress, a reading at a step's end, the Guggenheim triple, no Semenov test on a step of
+zero duration. No persisted shape changes; stored sets keep their factor (a set is never
+rewritten, persistence.md), and a recalibration of the same step replaces it as before. The
+thermal sub-model becomes `flourprint.dough-thermal` `0.2.0`; the implementing pull request bumps
+`CONTRACT_VERSION` to `0.22.0` and `ENGINE_VERSION` to `0.9.0`.
