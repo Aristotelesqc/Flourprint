@@ -129,9 +129,12 @@ export const calibrateStepThermal = (
     used = [a, b];
     tauObsH = tau.value;
   } else {
-    // The widest triple of readings that is equally spaced (Guggenheim needs equal gaps).
-    let best:
-      [(typeof usable)[number], (typeof usable)[number], (typeof usable)[number]] | undefined;
+    // The widest equally spaced triple that gives a valid result (Guggenheim needs equal gaps);
+    // a failed wider triple does not hide a narrower valid one. Ties go to the earliest triple.
+    type Reading = (typeof usable)[number];
+    let best: { triple: [Reading, Reading, Reading]; tauH: number; infinityC: number } | undefined;
+    let firstFailure: Result<never, CalibrationError> | undefined;
+    let spaced = 0;
     for (const [i, x] of usable.entries()) {
       for (const [j, y] of usable.entries()) {
         if (j <= i) continue;
@@ -139,23 +142,29 @@ export const calibrateStepThermal = (
           const gap1 = y.tH - x.tH;
           const gap2 = z.tH - y.tH;
           if (Math.abs(gap1 - gap2) > SPACING_TOLERANCE * ((gap1 + gap2) / 2)) continue;
-          if (best === undefined || z.tH - x.tH > best[2].tH - best[0].tH) best = [x, y, z];
+          spaced += 1;
+          const g = guggenheim(x.c, y.c, z.c, (z.tH - x.tH) / 2);
+          if (!g.ok) {
+            firstFailure ??= g;
+            continue;
+          }
+          if (best === undefined || z.tH - x.tH > best.triple[2].tH - best.triple[0].tH) {
+            best = { triple: [x, y, z], tauH: g.value.tauH, infinityC: g.value.infinityC };
+          }
         }
       }
     }
     if (best === undefined) {
+      if (spaced > 0 && firstFailure !== undefined) return firstFailure;
       return err(
         domainError('readings_invalid', 'readings_invalid: no three equally spaced readings', {
           reason: 'no three readings after the transient are equally spaced',
         }),
       );
     }
-    const [a, middle, c] = best;
-    const g = guggenheim(a.c, middle.c, c.c, (c.tH - a.tH) / 2);
-    if (!g.ok) return g;
-    used = [a, middle, c];
-    tauObsH = g.value.tauH;
-    infinityC = g.value.infinityC;
+    used = best.triple;
+    tauObsH = best.tauH;
+    infinityC = best.infinityC;
   }
 
   const dose = mass.yeasts.reduce((sum, y) => sum + y.pct * CENTRAL.freshPerGram[y.form], 0);
