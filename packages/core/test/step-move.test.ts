@@ -325,7 +325,7 @@ describe('duplicateStep', () => {
     expect(result.value.preview?.steps['shape']?.start).toBeUndefined();
   });
 
-  it('example 10: alap and component steps are not duplicable', () => {
+  it('example 10: alap, beforeTarget and component steps are not duplicable', () => {
     const process: Process = {
       steps: [
         step('poolish'),
@@ -333,11 +333,18 @@ describe('duplicateStep', () => {
           incorporations: [{ item: 'component', id: 'poolish', sharePct: 100 }],
         }),
         step('preheat', [], { schedule: 'alap', plannedDurationS: 1800 }),
+        step('warm', ['mix'], {
+          operation: 'preheat',
+          schedule: 'beforeTarget',
+          target: 'bake',
+          requiredWarmupS: 1800,
+        }),
         step('bake', ['mix', 'preheat']),
       ],
     };
     for (const [id, reason] of [
       ['preheat', 'alap'],
+      ['warm', 'beforeTarget'],
       ['poolish', 'workpieceStep'],
     ] as const) {
       expect(duplicateStep(process, id, `${id}-2`)).toMatchObject({
