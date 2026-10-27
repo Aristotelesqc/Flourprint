@@ -82,22 +82,29 @@ export const guggenheim = (
 };
 
 /**
- * The factor of a calibration set, `f_i = τ_obs (1 − ψ) / τ_eff`, with `ψ` of the reading's
- * ambient so that the coupled stretch of self-heating is removed. Readings with `ψ > 0.1` are
- * rejected (`self_heating_confounds`); a factor outside 0.25 to 4 is refused
- * (`thermal_factor_implausible`, a guard against a wrong probe position).
+ * The factor of a calibration set. The observed lag is the coupled one,
+ * `τ_obs = f · τ_eff / (1 − ψ)` with `ψ = f · ψ₁`, where `ψ₁` is the Semenov number at the
+ * reading's ambient with the model's `τ_eff` and factor 1. With `r = τ_obs / τ_eff`, solving
+ * `f = r · (1 − f · ψ₁)` gives `f = r / (1 + r · ψ₁)`: the readings and the model only, never a
+ * factor stored earlier. A set with `f · ψ₁ > 0.1` is rejected (`self_heating_confounds`); a factor
+ * outside 0.25 to 4 is refused (`thermal_factor_implausible`, a guard against a wrong probe
+ * position). With `ψ₁ = 0` the factor is `r`.
  */
 export const setFactor = (
   tauObsH: number,
   tauEffH: number,
-  psi: number,
+  psi1: number,
 ): Result<number, CalibrationError> => {
-  if (!(psi <= PSI_CONFOUNDS)) {
+  const r = tauObsH / tauEffH;
+  const factor = r / (1 + r * psi1);
+  if (!(factor * psi1 <= PSI_CONFOUNDS)) {
     return err(
-      refused('self_heating_confounds', `ψ = ${psi.toFixed(3)} is above ${PSI_CONFOUNDS}`),
+      refused(
+        'self_heating_confounds',
+        `ψ = ${(factor * psi1).toFixed(3)} is above ${PSI_CONFOUNDS}`,
+      ),
     );
   }
-  const factor = (tauObsH * (1 - psi)) / tauEffH;
   if (!Number.isFinite(factor) || factor < FACTOR_BOUNDS[0] || factor > FACTOR_BOUNDS[1]) {
     return err(
       refused('thermal_factor_implausible', `factor ${factor.toFixed(3)} is outside 0.25 to 4`),

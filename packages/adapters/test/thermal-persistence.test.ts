@@ -340,6 +340,24 @@ describe.each([
     }
   });
 
+  it('reads a document of version 1 or 2 that carries thermal data as is (persistence.md, 0.22.0)', async () => {
+    const source = await makeTarget();
+    await seed(source);
+    for (const schemaVersion of [1, 2]) {
+      const backup = await backupOf(source);
+      backup.schemaVersion = schemaVersion;
+      const target = await makeTarget();
+      expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+      const restored = await target.recipes.getRevision('retard', 1);
+      expect(restored.ok && restored.value?.process.steps[1]?.thermal).toEqual(bowl);
+      expect((await target.thermalProfiles.listThermalProfileVersions()).length).toBeGreaterThan(0);
+      const exported = await exportRecipes(source.recipes, at('12:00'));
+      if (!exported.ok) throw new Error('export failed');
+      const file = JSON.parse(JSON.stringify(exported.value)) as Loose;
+      expect(decodeRecipeFile({ ...file, schemaVersion }).ok).toBe(true);
+    }
+  });
+
   it('refuses a document of a newer schema, which an older reader would have misread', async () => {
     const source = await makeTarget();
     await seed(source);

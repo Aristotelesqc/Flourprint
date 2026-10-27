@@ -298,6 +298,7 @@ export const duplicateStep = (
     ...(original.technique === undefined ? {} : { technique: original.technique }),
     ...(original.equipment === undefined ? {} : { equipment: original.equipment }),
     ...(original.subject === undefined ? {} : { subject: original.subject }),
+    ...(original.thermal === undefined ? {} : { thermal: original.thermal }),
   };
   const notCarried: NotCarried[] = [
     ...((original.incorporations ?? []).length > 0 ? ['incorporations' as const] : []),

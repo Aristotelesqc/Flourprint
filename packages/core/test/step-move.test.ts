@@ -293,6 +293,22 @@ describe('duplicateStep', () => {
     expect(result.value.preview?.steps['shape']?.start).toBe('2026-10-18T14:10:00.000Z');
   });
 
+  it('carries the thermal inputs of the original (process.md, Duplicate, 0.22.0)', () => {
+    const thermal = {
+      geometry: 'bulk' as const,
+      container: { material: 'glass' as const, cover: 'lid' as const },
+      environment: 'roomStill' as const,
+      porosity: 'unproofed' as const,
+    };
+    const result = duplicateStep(bulkChain({ thermal }), 'bulk', 'bulk-2');
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    expect(result.value.copy.thermal).toEqual(thermal);
+    expect(result.value.notCarried).toEqual([]);
+    // No thermal inputs on the original: none on the copy.
+    const plain = duplicateStep(bulkChain({}), 'bulk', 'bulk-2');
+    expect(plain.ok && 'thermal' in plain.value.copy).toBe(false);
+  });
+
   it('example 9: a model-driven copy has no duration and blocks the later steps', () => {
     const process = bulkChain({
       plannedDurationS: 21_600,
