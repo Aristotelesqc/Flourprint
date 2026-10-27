@@ -18,8 +18,8 @@ import { GAS_CONSTANT } from './model.js';
  * boundary of the simulation.
  */
 
-/** Sub-model `flourprint.dough-thermal` 0.2.0, named in the assumptions as `thermal_model:0.2.0`. */
-export const THERMAL_MODEL: ModelRef = { id: 'flourprint.dough-thermal', version: '0.2.0' };
+/** Sub-model `flourprint.dough-thermal` 0.2.1, named in the assumptions as `thermal_model:0.2.1`. */
+export const THERMAL_MODEL: ModelRef = { id: 'flourprint.dough-thermal', version: '0.2.1' };
 
 /** Properties by porosity class: `ρ` kg/m³ and `k` W/(m·K), with the range of `k` (unused by the band). */
 export const POROSITY_PROPERTIES: Readonly<

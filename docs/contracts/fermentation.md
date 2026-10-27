@@ -464,9 +464,13 @@ Estimators from readings `(t_i, T_i)` taken after a step to a stable ambient `T_
   `T∞ = (T₁T₃ − T₂²)/(T₁ − 2T₂ + T₃)`. It also gives `T∞`, which captures a shelf offset or
   self-heating without knowing the shelf temperature. A reading set with `(T₁ − T₂)/(T₂ − T₃) ≤ 1`
   or a non-finite result is rejected (`readings_invalid`). Among the usable readings the
-  estimator takes the equally spaced triple that spans the longest time, two gaps being equal
-  when they differ by at most 10 %; with no such triple the set is `readings_invalid`. The set
-  records only those three readings.
+  estimator considers every equally spaced triple, two gaps `g₁` and `g₂` being equal when
+  `|g₁ − g₂| ≤ 0.10 · (g₁ + g₂) / 2` (10 % of their mean), keeps those that give a valid result
+  (ratio above 1, finite `τ_obs` and `T∞`) and takes the one that spans the longest time; on a
+  tie, the earliest. A triple that fails does not hide a narrower valid one (a probe moved at the
+  last reading still calibrates from the earlier ones). With no equally spaced triple, or none
+  valid, the set is `readings_invalid`. The set records only the three readings it used.
+  Worked case: `fixtures/thermal/cases.json`, case k.
 - **Factor of the set.** The observed lag is the coupled one, `τ_obs = f · τ_eff / (1 − ψ)`, and
   `ψ` grows with the lag being fitted: `ψ = f · ψ₁`, where `ψ₁` is the Semenov number above
   computed at the reading's ambient with `f` = 1. With `r = τ_obs / τ_eff`, solving
@@ -680,7 +684,7 @@ reader refuses a document holding `thermal` or `thermalProfiles` with `Unsupport
 assumptions as `thermal_model:0.1.0`. Implemented in #184: `CONTRACT_VERSION` `0.21.0`,
 `ENGINE_VERSION` `0.8.0`.
 
-Version `0.22.0` (target) makes the personal thermal factor of a calibration set independent of
+Version `0.22.0` makes the personal thermal factor of a calibration set independent of
 the factors stored before it (`f_i = r / (1 + r · ψ₁)`, Personal correction; in `0.21.0` `ψ`
 used the stored factor, so the order of calibrations changed the sets), and carries `thermal` when
 a step is duplicated (process.md, Duplicate). It also writes down what `0.21.0` left implicit and
@@ -688,5 +692,12 @@ the engine implemented: calibration on an ended session, a reading replacing the
 not the progress, a reading at a step's end, the Guggenheim triple, no Semenov test on a step of
 zero duration. No persisted shape changes; stored sets keep their factor (a set is never
 rewritten, persistence.md), and a recalibration of the same step replaces it as before. The
-thermal sub-model becomes `flourprint.dough-thermal` `0.2.0`; the implementing pull request bumps
-`CONTRACT_VERSION` to `0.22.0` and `ENGINE_VERSION` to `0.9.0`.
+thermal sub-model becomes `flourprint.dough-thermal` `0.2.0`. Implemented in #186: `CONTRACT_VERSION`
+`0.22.0`, `ENGINE_VERSION` `0.9.0`.
+
+Version `0.22.1` (target) states the Guggenheim spacing tolerance (10 % of the mean of the two gaps,
+as implemented) and takes the widest **valid** equally spaced triple, so a failed wider triple no
+longer refuses a set that a narrower one calibrates (Personal correction, case k). Sets accepted
+before give the same factor; only sets refused before can now be accepted. No persisted shape
+changes. The implementing pull request bumps `CONTRACT_VERSION` to `0.22.1`, `ENGINE_VERSION` to
+`0.9.1` and `flourprint.dough-thermal` to `0.2.1`.
