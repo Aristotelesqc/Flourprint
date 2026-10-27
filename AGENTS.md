@@ -108,6 +108,11 @@ pnpm vitest run   # tests only (after a build)
 node apps/cli/dist/main.js --version
 ```
 
+On Windows: Node 25 and later ship without corepack, so install the pinned pnpm with
+`npm install -g pnpm@<version in package.json>`. Set `git config core.autocrlf false` in the
+checkout; `.gitattributes` handles line endings. If every file still shows as modified with an
+empty `git diff`, the index is stale: `git add -u` refreshes it without changing content.
+
 The full Playwright run above is the browser suite. Native/emulator/device evidence is selected
 for affected behavior under ADR 0016 and `docs/device-testing.md`, not run on every code push.
 
