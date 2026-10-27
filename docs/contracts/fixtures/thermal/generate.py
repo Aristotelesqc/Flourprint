@@ -339,6 +339,34 @@ def main():
                          factor021WithStoredFactor1=rnd(r_j * (1 - psi1), 5), factor021WithStoredFactor2=rnd(r_j * (1 - 2 * psi1), 5)),
                     dict(factor=0.0005, psi=0.0005),
                     "psi1 is the Semenov number at the ambient with f = 1; the observed lag is the coupled one, tau_obs = f tau_eff / (1 - f psi1), so f = r / (1 + r psi1) with r = tau_obs / tau_eff, whatever was stored before. consistency is r (1 - f psi1) - f and must be 0. The two factor021 values show the 0.21.0 rule, which used the stored factor in psi: they differ, so the order of calibrations changed the result. The engine must never return them."))
+    # (k) Guggenheim selection: the widest equally spaced triple fails, a narrower one is valid (0.22.1)
+    tau_k, tinf_k = 2.5, 4.0
+    exact_k = {t: round(tinf_k + (24 - tinf_k) * math.exp(-t / tau_k), 4) for t in (1.0, 2.0, 3.0)}
+    last_k = round(exact_k[3.0] + 2.0, 4)  # dough taken out of the fridge before the reading: T5 > T3, ratio < 0
+    reads_k = [(1.0, exact_k[1.0]), (2.0, exact_k[2.0]), (3.0, exact_k[3.0]), (5.0, last_k)]
+
+    def spaced(g1, g2):
+        return abs(g1 - g2) <= 0.10 * (g1 + g2) / 2
+
+    triples = []
+    for i in range(len(reads_k)):
+        for j in range(i + 1, len(reads_k)):
+            for l in range(j + 1, len(reads_k)):
+                (ta_, a_), (tb_, b_), (tc_, c_) = reads_k[i], reads_k[j], reads_k[l]
+                if not spaced(tb_ - ta_, tc_ - tb_):
+                    continue
+                ratio = (a_ - b_) / (b_ - c_)
+                triples.append(dict(timesH=[ta_, tb_, tc_], ratio=rnd(ratio, 4), valid=ratio > 1))
+    valid_k = [t for t in triples if t["valid"]]
+    chosen = max(valid_k, key=lambda t: (t["timesH"][2] - t["timesH"][0], -t["timesH"][0]))
+    va = {t: c for t, c in reads_k}
+    ta_k, tinf_k2 = guggenheim(*(va[t] for t in chosen["timesH"]), (chosen["timesH"][2] - chosen["timesH"][0]) / 2)
+    cases.append(fx("k: Guggenheim selection, the widest equally spaced triple fails and a narrower one calibrates",
+                    dict(readings=[dict(tH=t, C=c) for t, c in reads_k], spacingTolerance="10 % of the mean of the two gaps"),
+                    dict(equallySpacedTriples=triples, chosenTimesH=chosen["timesH"], tauH=rnd(ta_k, 4), tInfC=rnd(tinf_k2, 3),
+                         exactInputs=dict(tauH=tau_k, tInfC=tinf_k)),
+                    dict(tauH=0.002, temperatureC=0.01),
+                    "Readings of a 24 C dough cooling to 4 C with tau 2.5 h at 1, 2 and 3 h (rounded to 4 decimals); the 5 h reading is 2 K above the 3 h one, as when the dough was taken out of the fridge before it. The widest equally spaced triple (1, 3, 5 h) has a negative ratio and is invalid; the 0.22.0 rule refused the set. The valid triple (1, 2, 3 h) gives back tau 2.5 h and T_inf 4 C. The set records those three readings."))
     json.dump(dict(format="flourprint-fixture/0", contract="fermentation.md", model=dict(id="flourprint.dough-thermal", version="0.1.0"),
                    cases=cases), __import__("sys").stdout, indent=2, ensure_ascii=False)
     print()

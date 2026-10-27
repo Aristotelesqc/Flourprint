@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { checkBakeLog } from '../src/application/backup-events.js';
 import { recordThermalCalibration, type ThermalProfileStore } from '../src/application/index.js';
@@ -670,6 +672,75 @@ describe('calibrating the personal factor from a bake', () => {
     const uneven = calibrated(2.5, [60, 100, 240]);
     expect(
       calibrateStepThermal(uneven.state, 'retard', uneven.now, { method: 'guggenheim' }),
+    ).toMatchObject({ ok: false, error: { code: 'readings_invalid' } });
+  });
+
+  /** A bake of the fridge process with the given (minutes, degrees) readings. */
+  const withReadings = (readings: readonly (readonly [number, number])[]) => {
+    const log = started(0.05, fridge, 500);
+    log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'retard' });
+    for (const [m, c] of readings) {
+      const at = new Date(Date.parse(t('08:00')) + m * 60_000).toISOString() as Instant;
+      log.now = at;
+      const r = log.reading('retard', c, 'core', at);
+      if (!r.ok) throw new Error(JSON.stringify(r.error));
+    }
+    return log;
+  };
+  const retardIds = (log: Log) =>
+    log.events.filter((e) => e.payload.type === 'ObservationAdded').map((e) => e.eventId);
+
+  it('Guggenheim, case k: a failed widest triple does not hide a narrower valid one (0.22.1)', () => {
+    const k = (
+      JSON.parse(
+        readFileSync(
+          fileURLToPath(
+            new URL('../../../docs/contracts/fixtures/thermal/cases.json', import.meta.url),
+          ),
+          'utf8',
+        ),
+      ) as {
+        cases: {
+          name: string;
+          input: { readings: { tH: number; C: number }[] };
+          expected: { tauH: number; tInfC: number; chosenTimesH: number[] };
+          tolerance: { tauH: number; temperatureC: number };
+        }[];
+      }
+    ).cases.find((c) => c.name.startsWith('k:'));
+    if (k === undefined) throw new Error('no fixture case k');
+    const log = withReadings(k.input.readings.map((r) => [r.tH * 60, r.C] as const));
+    const result = calibrateStepThermal(log.state, 'retard', log.now, { method: 'guggenheim' });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    expect(Math.abs(result.value.tauObsH - k.expected.tauH)).toBeLessThanOrEqual(k.tolerance.tauH);
+    expect(Math.abs((result.value.infinityC ?? NaN) - k.expected.tInfC)).toBeLessThanOrEqual(
+      k.tolerance.temperatureC,
+    );
+    // The set records only the three readings used: 1, 2 and 3 h, not the 5 h one.
+    const ids = retardIds(log);
+    expect(k.expected.chosenTimesH).toEqual([1, 2, 3]);
+    expect(result.value.set.basis.eventIds).toEqual([ids[0], ids[1], ids[2]]);
+    expect(result.value.set.readings).toBe(3);
+  });
+
+  it('Guggenheim: among valid triples of the same span, the earliest wins', () => {
+    const c = (m: number) => Math.round(exact(2.5, m) * 1e4) / 1e4;
+    const log = withReadings([60, 120, 180, 240].map((m) => [m, c(m)] as const));
+    const result = calibrateStepThermal(log.state, 'retard', log.now, { method: 'guggenheim' });
+    if (!result.ok) throw new Error(JSON.stringify(result.error));
+    const ids = retardIds(log);
+    expect(result.value.set.basis.eventIds).toEqual([ids[0], ids[1], ids[2]]);
+  });
+
+  it('Guggenheim: equally spaced readings that are not a decay stay readings_invalid', () => {
+    const log = withReadings([
+      [60, 10],
+      [150, 12],
+      [240, 14],
+    ]);
+    expect(
+      calibrateStepThermal(log.state, 'retard', log.now, { method: 'guggenheim' }),
     ).toMatchObject({ ok: false, error: { code: 'readings_invalid' } });
   });
 

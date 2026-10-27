@@ -364,6 +364,9 @@ test('pulling the recipe list down checks for a newer dev build', async ({ page 
 
 /** Pulls the recipe list down, as a finger would. */
 const pullRecipes = async (page: Page) => {
+  // Definition alone precedes Ionic's lazy native gesture setup.
+  await page.evaluate(() => customElements.whenDefined('ion-refresher').then(() => undefined));
+  await page.waitForLoadState('networkidle');
   const box = await page
     .getByRole('heading', { name: 'Recettes' })
     .locator('visible=true')
@@ -372,6 +375,16 @@ const pullRecipes = async (page: Page) => {
   await page.mouse.move(box.x + 20, box.y + 5);
   await page.mouse.down();
   for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  // Preserve the physical pull and release only after Ionic accepts its refresh threshold.
+  await expect
+    .poll(() =>
+      routed(page)
+        .locator('ion-refresher')
+        .evaluate((element) =>
+          (element as HTMLElement & { getProgress: () => Promise<number> }).getProgress(),
+        ),
+    )
+    .toBeGreaterThan(0.4);
   await page.mouse.up();
 };
 
