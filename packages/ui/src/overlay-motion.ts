@@ -14,7 +14,7 @@
  * animations (the sheet's drag gesture) are never touched. No Ionic internals are imported or
  * patched.
  */
-import { useEffect, type RefObject } from 'react';
+import { useLayoutEffect, type RefObject } from 'react';
 import { durationMs, easingCurve, formOf, isReduced, type Motion, type Timing } from './motion.ts';
 
 export interface OverlayMotionPart {
@@ -33,30 +33,47 @@ export interface OverlayMotionPlan {
   readonly leave: readonly OverlayMotionPart[];
 }
 
-/** The running Web Animations of an element and of its shadow tree. */
+/**
+ * The running native animations on these elements: Ionic's Web Animations only. CSS transitions
+ * and animations, and motions played by `playMotion` (`fp.motion:` ids), are left alone.
+ */
 const runningAnimations = (elements: readonly Element[]): Animation[] =>
   elements.flatMap((element) =>
-    (element.getAnimations?.() ?? []).filter((animation) => animation.playState === 'running'),
+    (element.getAnimations?.() ?? []).filter(
+      (animation) =>
+        animation.playState === 'running' &&
+        !animation.id.startsWith('fp.motion:') &&
+        !(typeof CSSTransition !== 'undefined' && animation instanceof CSSTransition) &&
+        !(typeof CSSAnimation !== 'undefined' && animation instanceof CSSAnimation),
+    ),
   );
 
+/**
+ * The elements of a part: matches in the shadow root and in the overlay's own light DOM (Ionic
+ * animates the slotted `.ion-page` of a sheet that does not expand to scroll). Without a selector:
+ * the overlay, its whole shadow tree and its `.ion-page` child.
+ */
 const partElements = (overlay: HTMLElement, part: string | undefined): Element[] => {
-  const root = overlay.shadowRoot;
-  if (part === undefined) return [overlay, ...(root ? [...root.querySelectorAll('*')] : [])];
-  return [...(root ?? overlay).querySelectorAll(part)];
+  const shadow = overlay.shadowRoot ? [...overlay.shadowRoot.querySelectorAll(part ?? '*')] : [];
+  if (part === undefined)
+    return [overlay, ...shadow, ...overlay.querySelectorAll(':scope > .ion-page')];
+  return [...shadow, ...overlay.querySelectorAll(part)];
 };
 
 /**
  * Sets the timing of the overlay's running native animations from the plan's parts. Parts with
- * a selector go first; a part without one takes what is left. Exported for tests.
+ * a selector go first; a part without one takes what is left. An overlay with `animated` false
+ * stays at duration 0, as Ionic set it. Exported for tests.
  */
 export const retimeOverlay = (overlay: HTMLElement, parts: readonly OverlayMotionPart[]): void => {
   const reduced = isReduced(overlay);
+  const disabled = (overlay as HTMLElement & { animated?: boolean }).animated === false;
   const claimed = new Set<Animation>();
   const ordered = [...parts].sort(
     (a, b) => Number(a.part === undefined) - Number(b.part === undefined),
   );
   for (const { part, motion } of ordered) {
-    const form = formOf<Timing>(motion, reduced);
+    const form = disabled ? 'none' : formOf<Timing>(motion, reduced);
     const timing: OptionalEffectTiming =
       form === 'none'
         ? { duration: 0 }
@@ -93,13 +110,15 @@ export const bindOverlayMotion = (overlay: HTMLElement, plan: OverlayMotionPlan)
 
 /**
  * React form of `bindOverlayMotion`: `useOverlayMotion(popoverRef, { enter, leave })`, with the
- * parts' motions read through `useMotion`, so a manifest change retimes the overlay.
+ * parts' motions read through `useMotion`, so a manifest change retimes the overlay. It binds in
+ * a layout effect, during the commit: an overlay mounted already open emits `willPresent` only
+ * after `present()` has awaited its lock, so the binding is always in place first.
  */
 export const useOverlayMotion = (
   ref: RefObject<HTMLElement | null>,
   plan: OverlayMotionPlan,
 ): void => {
-  useEffect(() => {
+  useLayoutEffect(() => {
     const overlay = ref.current;
     if (!overlay) return undefined;
     return bindOverlayMotion(overlay, plan);

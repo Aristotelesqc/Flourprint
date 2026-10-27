@@ -9,26 +9,36 @@ const { test, expect } = requireMobile('@playwright/test');
 const fixturePath = '/test/fixtures/overlay-motion/index.html';
 const ms = (token) => Number.parseFloat(tokens.motion[`duration-${token}`]);
 
-// After each willPresent / willDismiss, once the bridge's microtask has run, record the running
-// Web Animations of the overlay and its shadow parts: the timing that actually plays.
+// Every Web Animation the page creates is kept (test only). After each willPresent / willDismiss,
+// once the bridge's microtask has run, the animations created since the event on the overlay or
+// its shadow parts are read: the timing that actually plays, even a zero-length one that has
+// already finished.
 const recordPlayedTimings = () => {
   window.__played = [];
+  const created = [];
+  const animate = window.Element.prototype.animate;
+  window.Element.prototype.animate = function (...args) {
+    const animation = animate.apply(this, args);
+    created.push({ element: this, animation });
+    return animation;
+  };
   const record = (event) => {
     const overlay = event.target;
     if (!(overlay instanceof window.HTMLElement) || !overlay.shadowRoot) return;
-    setTimeout(() => {
-      const parts = [overlay, ...overlay.shadowRoot.querySelectorAll('*')];
-      for (const element of parts) {
-        for (const animation of element.getAnimations()) {
-          if (animation.playState !== 'running') continue;
+    const from = created.length;
+    // Queued before the bridge's microtask, so the inner one runs after it.
+    queueMicrotask(() =>
+      queueMicrotask(() => {
+        for (const { element, animation } of created.slice(from)) {
+          if (element !== overlay && element.getRootNode() !== overlay.shadowRoot) continue;
           window.__played.push({
             phase: event.type,
             part: element === overlay ? 'host' : element.localName + '.' + element.className,
             duration: animation.effect.getTiming().duration,
           });
         }
-      }
-    }, 0);
+      }),
+    );
   };
   document.addEventListener('willPresent', record, true);
   document.addEventListener('willDismiss', record, true);
@@ -114,23 +124,47 @@ for (const [version, menu, sheet] of [
   });
 }
 
-test('reduced motion plays no overlay animation, and the sheet still closes', async ({
+for (const [label, params] of [
+  ['with Ionic animated off', { motion: 'reduced' }],
+  [
+    'with Ionic animated left on: the bridge alone stops it',
+    { motion: 'reduced', keepAnimated: '1' },
+  ],
+]) {
+  test(`reduced motion plays every overlay animation at zero, ${label}`, async ({
+    page,
+  }, testInfo) => {
+    await openFixture(page, testInfo, { version: 'alt', ...params });
+    const opener = page.getByRole('button', { name: 'Open bridged menu' });
+    await opener.click();
+    await expect(page.getByRole('menu', { name: 'Bridged menu' })).toBeInViewport({ ratio: 1 });
+    await expect.poll(async () => (await played(page, 'willPresent')).length).toBeGreaterThan(0);
+    for (const entry of await played(page, 'willPresent')) expect(entry.duration).toBe(0);
+    await page.keyboard.press('Escape');
+    await expect(opener).toBeFocused();
+
+    await clearPlayed(page);
+    await page.getByRole('button', { name: 'Open bridged sheet' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Bridged sheet' });
+    await expect(dialog).toBeInViewport({ ratio: 1 });
+    await expect.poll(async () => (await played(page, 'willPresent')).length).toBeGreaterThan(0);
+    for (const entry of await played(page, 'willPresent')) expect(entry.duration).toBe(0);
+    await page.getByRole('button', { name: 'Close bridged sheet' }).click();
+    await expect(dialog).toBeHidden();
+    await expect.poll(async () => (await played(page, 'willDismiss')).length).toBeGreaterThan(0);
+    for (const entry of await played(page, 'willDismiss')) expect(entry.duration).toBe(0);
+  });
+}
+
+test('a sheet mounted already open plays the selected timing from its first opening', async ({
   page,
 }, testInfo) => {
-  await openFixture(page, testInfo, { version: 'alt', motion: 'reduced' });
-  const opener = page.getByRole('button', { name: 'Open bridged menu' });
-  await opener.click();
-  await expect(page.getByRole('menu', { name: 'Bridged menu' })).toBeInViewport({ ratio: 1 });
-  for (const entry of await played(page, 'willPresent')) expect(entry.duration).toBe(0);
-  await page.keyboard.press('Escape');
-  await expect(opener).toBeFocused();
-
-  await clearPlayed(page);
-  await page.getByRole('button', { name: 'Open bridged sheet' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Bridged sheet' });
-  await expect(dialog).toBeInViewport({ ratio: 1 });
-  for (const entry of await played(page, 'willPresent')) expect(entry.duration).toBe(0);
-  await page.getByRole('button', { name: 'Close bridged sheet' }).click();
-  await expect(dialog).toBeHidden();
-  for (const entry of await played(page, 'willDismiss')) expect(entry.duration).toBe(0);
+  await openFixture(page, testInfo, { version: 'alt', open: 'sheet' });
+  await expect(page.getByRole('dialog', { name: 'Bridged sheet' })).toBeInViewport({ ratio: 1 });
+  await expect.poll(async () => (await played(page, 'willPresent')).length).toBeGreaterThan(0);
+  const wrapper = (await played(page, 'willPresent')).filter((entry) =>
+    entry.part.startsWith('div.modal-wrapper'),
+  );
+  expect(wrapper.length).toBeGreaterThan(0);
+  for (const entry of wrapper) expect(entry.duration).toBe(ms('effect'));
 });

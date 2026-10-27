@@ -53,12 +53,16 @@ const alt = {
   } as (typeof defaultMotionManifest)['fp.motion.sheet-exit']),
 };
 const manifest = query.get('version') === 'alt' ? alt : defaultMotionManifest;
+// `?keepAnimated=1`: leave Ionic's `animated` on in reduced motion, so only the bridge can stop it.
+const keepAnimated = query.get('keepAnimated') === '1';
+// `?open=sheet`: the sheet is mounted already open, its first `willPresent` during mounting.
+const openAtMount = query.get('open') === 'sheet';
 
 function Fixture(): ReactElement {
-  const reduced = motion === 'reduced';
+  const reduced = motion === 'reduced' && !keepAnimated;
   const popover = useRef<HTMLIonPopoverElement | null>(null);
   const sheet = useRef<HTMLIonModalElement | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(openAtMount);
   const menuEnter = useMotion('fp.motion.menu-enter');
   const menuExit = useMotion('fp.motion.menu-exit');
   const sheetEnter = useMotion('fp.motion.sheet-enter');

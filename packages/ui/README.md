@@ -117,7 +117,13 @@ or a lighter form.
     `'none'`. The item's keyframes do not apply there: the native keyframes are the geometry.
   - Each part names a selector in the overlay's shadow root (`ion-backdrop`, `.modal-wrapper`);
     a part without one takes every other running animation of the overlay.
-  - Keep `animated={!reduced}` on the overlay as before.
+  - Keep `animated={!reduced}` on the overlay as before; an overlay with `animated` false stays
+    at duration 0.
+  - Give a part a whole Ionic animation (`ion-backdrop`, or everything else): Ionic completes a
+    group of elements on its first element's end, so two durations inside one group would cut
+    the longer one short.
+  - A sheet dismissed by dragging plays no leave animation: its movement is the gesture's own,
+    not `sheet-exit`.
   - `e2e/overlay-motion.spec.mjs` shows a manifest change changing the played timing.
 - `transition` items set a CSS `transition` with `transitionCss(motion, reduced)` for changes
   driven by styles: colour, rotation, accordion height.
