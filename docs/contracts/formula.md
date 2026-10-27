@@ -285,6 +285,84 @@ interface WaterBalance {
 - They describe what the dough contains. How fat or sugar changes the way a dough behaves (an
   "effective hydration") is a model output (#27, N3), never called hydration.
 
+## Weighing read model (0.23.0 target, L109, L110, L125, L126)
+
+The Recipe shows the dough the way the baker weighs it: one group per stage. Every figure on that
+screen comes from these pure functions of `core/domain`, computed from a resolved formula; an
+interface never re-derives a quantity, re-resolves at another anchor or divides two grams.
+
+```ts
+type StageRef = { kind: 'component'; id: string } | { kind: 'final' } | { kind: 'finishing' };
+// The pure-water pool is one item: components draw from it, whatever `water`-kind ingredients
+// make it up (Water quantities).
+type WeighingItem = { kind: 'ingredient'; id: string } | { kind: 'water' };
+
+interface WeighingRow {
+  stage: StageRef;
+  item: WeighingItem;
+  grams: number; // what to weigh at this stage
+  bakerPct: number; // 100 × grams / flourTotal: a baker's percentage, of the total flour
+}
+
+interface WeighingGroup {
+  stage: StageRef;
+  mass: number; // Σ grams of its rows (a component: its `mass`, after its declared loss)
+  massPct: number; // 100 × mass / flourTotal
+  flourPct?: number; // a component only: its `flourPct` input, the share of total flour it uses
+  inDough: boolean; // false for `finishing`
+  rows: WeighingRow[];
+}
+```
+
+`weighingGroups(formula, resolved)` returns, in this order:
+
+- one group per **component**, in the formula's order, whose rows are its flours
+  (`flourByFlour`), its water (the `water` item) and its `allocations`;
+- the **final** group, the final additions: the flours, the water (`finalMix.water`, the `water`
+  item) and the other non-water `dough`-role ingredients of `finalMix`. Its `mass` is the
+  final-additions total;
+- the **finishing** group, only when the formula has `topping` or `glaze` ingredients: their
+  grams, `inDough: false`, outside `doughWeight`.
+
+Rows at 0 g are left out, and a group with no row is left out. Every number is at full precision;
+rounding is presentation (Precision). The masses of the component groups and of the final group
+add up to `doughWeight` (Components invariant).
+
+A row's identity is `(stage, item)`: an ingredient that appears in a component and in the final
+mix is two rows, weighed twice (the weighing checks of `bake-session.md` use this identity).
+
+`waterSources(resolved)` gives the split of total water by source (L126), one entry per
+`totalWater` contribution plus one per unknown contributor:
+
+```ts
+interface WaterSource {
+  source: string; // ingredient id
+  kind: 'pureWater' | 'ingredient' | 'loss';
+  grams: number; // negative for a loss
+  status: 'known' | 'estimated' | 'unknown';
+  sharePct?: number; // 100 × grams / Σ grams of the known and estimated non-loss entries
+}
+```
+
+A loss has no share (it is shown as what it removes); an unknown contributor has neither grams
+nor share (shown hatched, it is why the total says "≥").
+
+`yieldOf(formula, resolved)` gives the pieces the summary shows first (L109, L125):
+`{ count, gramsEach }` from a `pieces` anchor, otherwise `{ count: 1, gramsEach: doughWeight }`.
+
+**Worked example** (given resolved values, so the example tests the read model only). Total flour
+1000 g of flour `bread`; a poolish resolved as `flourByFlour { bread: 300 }`, `water` 300,
+`allocations { yeast: 1 }`, `mass` 601, `flourPct` 30; `finalMix` `flourByFlour { bread: 700 }`,
+`water` 400, `grams { salt: 20, yeast: 4 }`; no topping; `doughWeight` 1725; anchor `flourTotal`.
+
+| Group   | `mass` | `massPct` | Rows (`grams` / `bakerPct`)                                |
+| ------- | -----: | --------: | ---------------------------------------------------------- |
+| poolish |    601 |      60.1 | bread 300 / 30, water 300 / 30, yeast 1 / 0.1              |
+| final   |   1124 |     112.4 | bread 700 / 70, water 400 / 40, salt 20 / 2, yeast 4 / 0.4 |
+
+601 + 1124 = 1725 = `doughWeight`. `yieldOf` = `{ count: 1, gramsEach: 1725 }`. With only pure
+water, `waterSources` = one entry, water 700 g, `sharePct` 100.
+
 ## Component style
 
 The engine names a component from its liquid ratio
