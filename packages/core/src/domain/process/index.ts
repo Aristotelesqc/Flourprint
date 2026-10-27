@@ -25,6 +25,19 @@ export {
   type NotCarried,
   type NotDuplicableReason,
 } from './move.js';
+export {
+  CONTAINER_COVERS,
+  CONTAINER_MATERIALS,
+  DEFAULT_CONTAINER,
+  defaultEnvironment,
+  DOUGH_POROSITIES,
+  resolveThermal,
+  THERMAL_ENVIRONMENTS,
+  THERMAL_GEOMETRIES,
+  thermalProblem,
+  type ResolvedThermal,
+  type ThermalProblem,
+} from './thermal.js';
 export { foldSchedule, phasesDurationS } from './technique.js';
 export {
   doughSteps,

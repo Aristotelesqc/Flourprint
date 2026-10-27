@@ -134,6 +134,22 @@ export const MIGRATIONS: readonly Migration[] = [
       );
     `,
   },
+  {
+    // The personal thermal profile of the dough thermal model (persistence.md, #176): one row per
+    // (id, version), never rewritten. Existing rows are untouched; a process step's `thermal` is
+    // inside the JSON documents, which need no migration.
+    version: 9,
+    sql: `
+      CREATE TABLE thermal_profiles (
+        id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        schema_version INTEGER NOT NULL,
+        document TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (id, version)
+      );
+    `,
+  },
 ];
 
 export type OpenError =

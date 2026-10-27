@@ -1,6 +1,7 @@
 import {
   estimateFermentation,
   modelDrivenStep,
+  type EstimateOptions,
   type Estimate,
   type Formula,
   type Process,
@@ -44,10 +45,11 @@ export const applyModelDurations = (
   formula: Formula,
   process: Process,
   profile?: ReadinessProfile,
+  options?: EstimateOptions,
 ): ModelDurationResult => {
   const step = modelDrivenStep(process);
   if (!step) return { kind: 'none', process };
-  const { dough } = estimateFermentation(formula, process, profile);
+  const { dough } = estimateFermentation(formula, process, profile, options);
   const estimate = dough.duration;
   if (estimate.status !== 'ok' || dough.stepId !== step.id) {
     return {
