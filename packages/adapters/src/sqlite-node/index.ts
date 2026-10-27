@@ -18,6 +18,7 @@ export {
   SqlIngredientRegistry,
   SqlRecipeRepository,
   SqlRestoreTarget,
+  SqlThermalProfileStore,
   MIGRATIONS,
   type Migration,
 } from '../sql/index.js';

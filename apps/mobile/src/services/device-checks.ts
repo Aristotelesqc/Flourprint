@@ -5,6 +5,7 @@ import type {
   FlourRegistry,
   IngredientRegistry,
   RecipeRepository,
+  ThermalProfileStore,
 } from '@flourprint/core/application';
 import {
   MemoryBakeEventStore,
@@ -12,6 +13,7 @@ import {
   MemoryFlourRegistry,
   MemoryIngredientRegistry,
   MemoryRecipeRepository,
+  MemoryThermalProfileStore,
 } from '@flourprint/adapters/memory';
 import {
   bakeEventStoreChecks,
@@ -20,6 +22,7 @@ import {
   ingredientRegistryChecks,
   recipeRepositoryChecks,
   runChecks,
+  thermalProfileStoreChecks,
   type CheckResult,
 } from '@flourprint/adapters/testing';
 
@@ -41,6 +44,11 @@ export const runStoreChecks = async (): Promise<CheckResult[]> => {
       ...(await runChecks(
         ingredientRegistryChecks,
         async () => new MemoryIngredientRegistry(),
+        now,
+      )),
+      ...(await runChecks(
+        thermalProfileStoreChecks,
+        async () => new MemoryThermalProfileStore(),
         now,
       )),
     ];
@@ -94,6 +102,11 @@ export const runStoreChecks = async (): Promise<CheckResult[]> => {
         async () => new sqlite.SqlIngredientRegistry(await freshDriver()),
         now,
       )),
+      ...(await runChecks<ThermalProfileStore>(
+        thermalProfileStoreChecks,
+        async () => new sqlite.SqlThermalProfileStore(await freshDriver()),
+        now,
+      )),
     ];
   } finally {
     await cleanup();
@@ -113,6 +126,7 @@ const assertEmpty = async (
     'flours',
     'equipment',
     'ingredients',
+    'thermal_profiles',
   ]) {
     const [row] = await driver.query<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`);
     if (row?.n !== 0) throw new Error(`Scratch database ${name} is not empty (${table})`);

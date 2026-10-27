@@ -1,5 +1,7 @@
-# Match the formatter and preserve the LF-sensitive importer fixtures on every host.
+# Store and check out text files with LF on every platform.
 * text=auto eol=lf
+# Windows batch scripts must keep CRLF to run.
+*.bat text eol=crlf
 # External source/reference artifacts retain their exact committed bytes.
 dogfood/*/source/** -text
 docs/mockups/references/** -text

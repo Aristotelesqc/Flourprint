@@ -1033,12 +1033,12 @@ describe.each([
     return source;
   };
 
-  it('round-trips reference versions in a full backup of schema 2', async () => {
+  it('round-trips reference versions in a full backup of schema 3', async () => {
     const source = await withReference();
     const exported = await exportBackup(source, at('14:00'));
     if (!exported.ok) throw new Error('export failed');
     const backup = JSON.parse(JSON.stringify(exported.value)) as Loose;
-    expect(backup.schemaVersion).toBe(2);
+    expect(backup.schemaVersion).toBe(3);
     expect(backup.recipes.find((r: Loose) => r.id === 'lean').referenceVersions).toEqual([
       { recipeId: 'lean', number: 1, version: 1, name: 'First loaf', createdAt: at('13:00') },
     ]);
@@ -1062,14 +1062,14 @@ describe.each([
 
   it('refuses a backup or a recipe file of a newer schema', async () => {
     const backup = await backupOf();
-    backup.schemaVersion = 3;
+    backup.schemaVersion = 4;
     const target = await makeTarget();
     const result = await importBackup(target.restore, backup);
     expect(result.ok).toBe(false);
     expect(await isEmpty(target)).toBe(true);
     const file = await exportRecipes((await withReference()).recipes, at('14:00'));
     if (!file.ok) throw new Error('export failed');
-    const newer = { ...JSON.parse(JSON.stringify(file.value)), schemaVersion: 3 };
+    const newer = { ...JSON.parse(JSON.stringify(file.value)), schemaVersion: 4 };
     expect((await importRecipes(target.recipes, newer)).ok).toBe(false);
   });
 
@@ -1078,7 +1078,7 @@ describe.each([
     const exported = await exportRecipes(source.recipes, at('14:00'));
     if (!exported.ok) throw new Error('export failed');
     const file = JSON.parse(JSON.stringify(exported.value)) as Loose;
-    expect(file.schemaVersion).toBe(2);
+    expect(file.schemaVersion).toBe(3);
     const target = await makeTarget();
     await saveRevision(target.recipes, {
       recipeId: 'lean',

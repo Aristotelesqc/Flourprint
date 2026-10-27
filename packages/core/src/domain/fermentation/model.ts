@@ -13,16 +13,22 @@ export interface FermentationParameters {
   readonly eaJ: number;
   /** Fresh-equivalent mass per gram of each form. */
   readonly freshPerGram: Readonly<Record<YeastForm, number>>;
-  /** Dough thermal lag, hours (0: the dough follows the ambient at once). */
-  readonly tauH: number;
+  /**
+   * Which thermal trajectory the lag follows (fermentation.md, The band and the envelope):
+   * `central` the central lag; `upper` the lag that keeps the dough warmest at every instant,
+   * with the largest self-heating; `lower` the opposite ends. Never one lag shared by the path.
+   */
+  readonly path: ThermalPath;
 }
+
+export type ThermalPath = 'central' | 'upper' | 'lower';
 
 export const CENTRAL: FermentationParameters = {
   aH: 3.43,
   k: 0.729,
   eaJ: 98_300,
   freshPerGram: { fresh: 1, 'active-dry': 1 / 0.4, instant: 1 / 0.33 },
-  tauH: 1.5,
+  path: 'central',
 };
 
 /** Every combination of the parameter ranges; the band is their minimum and maximum. */
@@ -35,19 +41,22 @@ export const CORNERS: readonly FermentationParameters[] = (() => {
           [0.32, 0.4],
           [0.42, 0.5],
         ] as const)
-          for (const tauH of [0, 3])
+          for (const path of ['upper', 'lower'] as const)
             corners.push({
               aH,
               k,
               eaJ,
               freshPerGram: { fresh: 1, 'active-dry': 1 / activeDry, instant: 1 / instant },
-              tauH,
+              path,
             });
   return corners;
 })();
 
-const R = 8.314_462_618;
-const T_REF_K = 294.25;
+/** Gas constant, J/(mol·K). */
+export const GAS_CONSTANT = 8.314_462_618;
+const R = GAS_CONSTANT;
+/** Reference temperature of the kinetic law, K (21.1 °C). */
+export const T_REF_K = 294.25;
 
 /** Relative rate, 1 at 21.1 °C. */
 export const rate = (p: FermentationParameters, temperatureC: number): number =>

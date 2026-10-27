@@ -105,7 +105,7 @@ interface StepConditions {
 
 ## Thermal inputs (#176)
 
-**Proposal of 2026-10-25, contract `0.21.0` target** (the model is `fermentation.md`, Dough thermal
+**Accepted 2026-10-25 (#179), contract `0.21.0`, implemented in #184** (the model is `fermentation.md`, Dough thermal
 model). A fermentation step may say in what the dough sits, so that the forecast computes its lag
 from mass and container instead of the fixed 1.5 h:
 
@@ -657,7 +657,8 @@ not an exact clone and the interface does not present it as one: it opens the co
 lists what was not carried.
 
 - Carried: `operation`, `label`, `endCriterion`, `conditions`, `technique`, `equipment` (the
-  same item references, no new copy) and an explicit `subject` (the copy works on the same
+  same item references, no new copy), `thermal` (the same container and environment: an input
+  that describes the setting, not a prediction; 0.22.0) and an explicit `subject` (the copy works on the same
   component and adds no mass: the grams come from the formula's allocation, once).
 - `plannedDurationS` is carried only when the original's duration is the baker's (manual). A
   `durationMode: 'model'` original gives a copy **without a duration** (unknown): a model-driven

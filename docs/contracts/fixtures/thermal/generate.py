@@ -324,6 +324,21 @@ def main():
                     dict(tauEffH=rnd(t_c, 4), **rows),
                     dict(tauEffH=0.0005),
                     "One set scales the full band. Two consistent sets narrow it to their spread times the central tau_eff, never inside +/-15 % of the calibrated value (ASSUMED floor for an informal home probe; not a confidence interval). Sets whose factors differ by more than x1.5 are inconsistent: the band is the union of the scaled full band and the spread, and the estimate says thermal_factor_inconsistent."))
+    # (j) calibration with self-heating: the factor does not depend on factors stored before (0.22.0)
+    t_j = tau(500, "bulk", "glass", "lid", "roomStill", "unproofed")["tau_eff_h"]
+    dose_j, amb_j = 0.3, 24.0
+    psi1 = EA / (R * (amb_j + 273.15) ** 2) * t_j * DT_AD * rate(amb_j, dose_j)
+    tau_obs = 1.25 * t_j
+    r_j = tau_obs / t_j
+    f_j = r_j / (1 + r_j * psi1)
+    cases.append(fx("j: calibration with self-heating, 500 g bulk, lidded glass bowl, still room, 0.3 % fresh yeast",
+                    dict(massG=500, thermal=dict(geometry="bulk", container=dict(material="glass", cover="lid"), environment="roomStill", porosity="unproofed"),
+                         ambientC=amb_j, freshDosePct=dose_j, tauObsH=rnd(tau_obs, 5)),
+                    dict(tauEffH=rnd(t_j, 5), psi1=rnd(psi1, 5), r=rnd(r_j, 5), factor=rnd(f_j, 5), psiOfFactor=rnd(f_j * psi1, 5),
+                         consistency=rnd(r_j * (1 - f_j * psi1) - f_j, 9),
+                         factor021WithStoredFactor1=rnd(r_j * (1 - psi1), 5), factor021WithStoredFactor2=rnd(r_j * (1 - 2 * psi1), 5)),
+                    dict(factor=0.0005, psi=0.0005),
+                    "psi1 is the Semenov number at the ambient with f = 1; the observed lag is the coupled one, tau_obs = f tau_eff / (1 - f psi1), so f = r / (1 + r psi1) with r = tau_obs / tau_eff, whatever was stored before. consistency is r (1 - f psi1) - f and must be 0. The two factor021 values show the 0.21.0 rule, which used the stored factor in psi: they differ, so the order of calibrations changed the result. The engine must never return them."))
     json.dump(dict(format="flourprint-fixture/0", contract="fermentation.md", model=dict(id="flourprint.dough-thermal", version="0.1.0"),
                    cases=cases), __import__("sys").stdout, indent=2, ensure_ascii=False)
     print()
