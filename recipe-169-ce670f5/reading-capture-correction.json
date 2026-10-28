@@ -1,0 +1,656 @@
+{
+  "type": "Reading-only evidence harness correction, not an application fix",
+  "startedAt": "2026-10-28T03:32:11.827Z",
+  "completedAt": "2026-10-28T03:32:27.600Z",
+  "captures": 24,
+  "contextsPerPhase": 12,
+  "nonReadingCapturesUnchanged": 84,
+  "phases": [
+    {
+      "phase": "before",
+      "revision": "9e16b385992941c10d509a219ecf958558fb43cb",
+      "sourceBefore": {
+        "verifiedAt": "2026-10-28T03:32:11.580Z",
+        "sourceRevision": "9e16b385992941c10d509a219ecf958558fb43cb",
+        "sourceDirty": false,
+        "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "servedIndexSha256": "5a2b408351c624d9bb87c60b3d857f680cf3e84854cd538ebdc661b51b047e58",
+        "sourceFingerprintsVerified": 6,
+        "buildAssetsVerified": 58
+      },
+      "sourceAfter": {
+        "verifiedAt": "2026-10-28T03:32:27.390Z",
+        "sourceRevision": "9e16b385992941c10d509a219ecf958558fb43cb",
+        "sourceDirty": false,
+        "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "servedIndexSha256": "5a2b408351c624d9bb87c60b3d857f680cf3e84854cd538ebdc661b51b047e58",
+        "sourceFingerprintsVerified": 6,
+        "buildAssetsVerified": 58
+      }
+    },
+    {
+      "phase": "after",
+      "revision": "ce670f515aaee4fccbf9d6afe8351f2b766f3581",
+      "sourceBefore": {
+        "verifiedAt": "2026-10-28T03:32:11.740Z",
+        "sourceRevision": "ce670f515aaee4fccbf9d6afe8351f2b766f3581",
+        "sourceDirty": false,
+        "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "servedIndexSha256": "de7ab183a432a622552fd51722127ce91756cf61ec1f80b59d17c57c3fe6f97a",
+        "sourceFingerprintsVerified": 6,
+        "buildAssetsVerified": 58
+      },
+      "sourceAfter": {
+        "verifiedAt": "2026-10-28T03:32:27.531Z",
+        "sourceRevision": "ce670f515aaee4fccbf9d6afe8351f2b766f3581",
+        "sourceDirty": false,
+        "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "servedIndexSha256": "de7ab183a432a622552fd51722127ce91756cf61ec1f80b59d17c57c3fe6f97a",
+        "sourceFingerprintsVerified": 6,
+        "buildAssetsVerified": 58
+      }
+    }
+  ],
+  "corrections": [
+    {
+      "phase": "before",
+      "id": "fr-light-393-100",
+      "file": "fr-light-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:12.536Z",
+      "sha256": "8f23ad4e65175e6bb5f383c5d26fab138e20615217c21f6a416a87736e437744",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "light"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "fr-light-360-130",
+      "file": "fr-light-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:13.184Z",
+      "sha256": "445a145cc42cf512b9d1cde428cc1f803e026e15ea35810a8dff5d5401c033ae",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "light"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "fr-dark-393-100",
+      "file": "fr-dark-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:13.802Z",
+      "sha256": "3358b92c3ec647a22019fa8983b71b700d222033b0d60cba666a31bd46fc2dbe",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "dark"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "fr-dark-360-130",
+      "file": "fr-dark-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:14.451Z",
+      "sha256": "b047ac38828c58000b6502c092b59927de9f5b1a07824c55e00373b8b75907d8",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "dark"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "fr-amoled-393-100",
+      "file": "fr-amoled-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:15.087Z",
+      "sha256": "f9b96d77255140af087f7f2257ed7601b9cbffdbc9f12bf0c7b7bc5077ff296b",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "amoled"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "fr-amoled-360-130",
+      "file": "fr-amoled-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:15.735Z",
+      "sha256": "058ded4d2a6916e578949732e14b88b1772bf82637f178478e43df7a89713058",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "amoled"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "en-light-393-100",
+      "file": "en-light-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:16.368Z",
+      "sha256": "a9c1c3ee0d6e423f772851408e5d193ff0df2a204ee9cefb942585cead2f0547",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "light"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "en-light-360-130",
+      "file": "en-light-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:16.984Z",
+      "sha256": "7161a03c616d8dd30a9801402abb8e468f86d8c7e4b0045b7747ea7b88e4a849",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "light"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "en-dark-393-100",
+      "file": "en-dark-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:17.636Z",
+      "sha256": "b1add56a2d23de3933c544d43af747151e9045ad6288bb3ffe71e44465b07578",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "dark"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "en-dark-360-130",
+      "file": "en-dark-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:18.268Z",
+      "sha256": "666c21e0673c9b80afbc1326e5f97afc86b3494035689df3414147bd8fc6ff07",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "dark"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "en-amoled-393-100",
+      "file": "en-amoled-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:18.902Z",
+      "sha256": "f47d22b3d3c9484c4b9df8a74e187f72d8cab726cde3b546d9a290afc1d050dc",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "amoled"
+      }
+    },
+    {
+      "phase": "before",
+      "id": "en-amoled-360-130",
+      "file": "en-amoled-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:19.517Z",
+      "sha256": "3696489658ea345ac2795f8c906ab9fce84df7cf6642484a84772b39b77a9c61",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "amoled"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "fr-light-393-100",
+      "file": "fr-light-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:20.135Z",
+      "sha256": "26a8202797945b9d0e1544f938402b24066b5e46e9f6f41f982149e480a20289",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "light"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "fr-light-360-130",
+      "file": "fr-light-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:20.784Z",
+      "sha256": "eb9d85554ee5a28cc37bd2aab6908bdeebc9d1f7c389f9ed81f014e3fa31b6d1",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "light"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "fr-dark-393-100",
+      "file": "fr-dark-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:21.402Z",
+      "sha256": "e7b448deec4ae585503c4c6fc266a9e9f252ab9624276c39e508dfefab78cb13",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "dark"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "fr-dark-360-130",
+      "file": "fr-dark-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:22.033Z",
+      "sha256": "57cb9cc4bcfdb8e8f6d10bcf91915cbc20d0f89e7aa379c3eb5afe91f199293c",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "dark"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "fr-amoled-393-100",
+      "file": "fr-amoled-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:22.668Z",
+      "sha256": "44261e5423e10b4da51df02f2e6cd70a8307f3fc16a3b7436db7a06388294041",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "amoled"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "fr-amoled-360-130",
+      "file": "fr-amoled-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:23.317Z",
+      "sha256": "2a35a9d0979402fd1f670ff03cc281392d8347557d9e56342a5a8e1bd319d44a",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recettes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "amoled"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "en-light-393-100",
+      "file": "en-light-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:23.951Z",
+      "sha256": "4eaae54eba246540eb679508c2cddce8202c55007a1ece9f8476c958d9d98399",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "light"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "en-light-360-130",
+      "file": "en-light-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:24.666Z",
+      "sha256": "3615aac8cb128f84c50a9f98825b37abaa2f23c7bed2acd889a4ac9c826f962d",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "light"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "en-dark-393-100",
+      "file": "en-dark-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:25.302Z",
+      "sha256": "98032ff6bd8e4e995c081558f52d0326ed52c7e1a233b9b340d6ca1a472fc7f0",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "dark"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "en-dark-360-130",
+      "file": "en-dark-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:25.917Z",
+      "sha256": "e3dc2d92c3f7f9cf9e3c1b1fa5e18e2664acec44d8f9b56da9314aeb857e98b0",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "dark"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "en-amoled-393-100",
+      "file": "en-amoled-393-100-reading.png",
+      "capturedAt": "2026-10-28T03:32:26.535Z",
+      "sha256": "0c04d95906f46e7a54b85702028fae8296d2bb4b2bbf07149f910863df1a2643",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "16px",
+        "theme": "amoled"
+      }
+    },
+    {
+      "phase": "after",
+      "id": "en-amoled-360-130",
+      "file": "en-amoled-360-130-reading.png",
+      "capturedAt": "2026-10-28T03:32:27.166Z",
+      "sha256": "e516269a895ad9ad8f10162cb33aa8be288117288cc337a4669efde9b9e462c1",
+      "readiness": {
+        "url": "/recipes/poolish-tangzhong",
+        "didEnter": true,
+        "pageClasses": [
+          {
+            "className": "ion-page ion-page-hidden",
+            "heading": "Recipes",
+            "opacity": "1"
+          },
+          {
+            "className": "ion-page can-go-back",
+            "heading": "Poolish + tangzhong",
+            "opacity": "1"
+          }
+        ],
+        "fontSize": "20.8px",
+        "theme": "amoled"
+      }
+    }
+  ]
+}

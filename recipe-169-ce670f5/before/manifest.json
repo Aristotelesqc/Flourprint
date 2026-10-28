@@ -1,0 +1,1220 @@
+{
+  "phase": "before",
+  "surface": "actual production app; synthetic shared sampleBackup fixture",
+  "sourceRevision": "9e16b385992941c10d509a219ecf958558fb43cb",
+  "enforcedGuards": null,
+  "sourceDirty": false,
+  "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "build": {
+    "build": "0.3.0-local",
+    "label": "v0.3.0-local",
+    "channel": "local"
+  },
+  "fixtureSha256": "2b608512b499d5cd0187e20809ab277212cc1519de279c6e8764238965d0d373",
+  "sourceFingerprints": {
+    "apps/mobile/src/blocks/WaterExplanation.tsx": "7585796c51698767ad7f5e85e3339d7bc7bbb739cd1a940616871628320bc648",
+    "apps/mobile/src/blocks/DraftActionBar.tsx": "320ab5cccc764f7090fc99ded19724c3ef6a5eb2dddba1dd0d59d49edf048cb0",
+    "apps/mobile/src/blocks/StepSheet.tsx": "943fcbebb07a455919228fd227331f9256e8e7dddb1e2fce55bd1b6c02985147",
+    "apps/mobile/src/pages/RecipePage.tsx": "37ad59824b75c90b5dc5c22124fb1c674cd9a8b0db797c9851a025da7a2b5108",
+    "apps/mobile/src/i18n/messages.ts": "ed48c3e0fa0aa97510c20582036db56d1d2388774bc98afe2477da0adcd4ef3c",
+    "apps/mobile/dist/index.html": "5a2b408351c624d9bb87c60b3d857f680cf3e84854cd538ebdc661b51b047e58"
+  },
+  "buildAssets": [
+    {
+      "name": "append-checks-Z5Pd645K.js",
+      "sha256": "a4c2f92cf6c29521a6dea6211d4e8935a4719b9f161662e5a2162dc7358d2a8a"
+    },
+    {
+      "name": "append-checks-Z5Pd645K.js.map",
+      "sha256": "7bf141f37e217d64b01e2712b6c8cb48e721f1ab6ca95e772c02fb1cea201fdd"
+    },
+    {
+      "name": "dist-Btb5Jv1E.js",
+      "sha256": "006e40d3ce30542d94e68ba1e431ad97518201256aa49e648c66ef170a1419c0"
+    },
+    {
+      "name": "dist-Btb5Jv1E.js.map",
+      "sha256": "e715830b0a5067c64c7ea5f226e78e520bfddde267f5850739972e683339705c"
+    },
+    {
+      "name": "esm-BaRuZz2s.js",
+      "sha256": "164b835d5b9940f480ff21b8e86934932253f400173cfb67c690b3b1c80e9796"
+    },
+    {
+      "name": "esm-BaRuZz2s.js.map",
+      "sha256": "98c1f8fe3a633b93b7df5aa048a721f47238cacf9dd0ef47fd9fe6c4b6239bb5"
+    },
+    {
+      "name": "index-p_si4exh.css",
+      "sha256": "affb0ad77a79517d5ed69bd4832baccd2bd84d47d86f8a221a2bf0d3f69a4270"
+    },
+    {
+      "name": "index-rihf2F48.js",
+      "sha256": "42b9903eb13b04b6c10d8857c298b7c4d468fe36c7aec8bd379ca9aa8a377574"
+    },
+    {
+      "name": "index-rihf2F48.js.map",
+      "sha256": "ad6fb0af149c0ac0847aed87d6a2e112f0eab2811d1ed20e943b5d354b64a6d7"
+    },
+    {
+      "name": "p-B8HBLiYi-CCahrIkr.js",
+      "sha256": "08ed9d862ca5c0281406b186ba601c912ba62b98aed0d8988a9ac1429a0a9584"
+    },
+    {
+      "name": "p-B8HBLiYi-CCahrIkr.js.map",
+      "sha256": "233951a06315c0da3caa1ed344651a224e3604552db93e975a7ff8b8351999c3"
+    },
+    {
+      "name": "p-BKxLivx4-i8WtoqbQ.js",
+      "sha256": "dd2dce6808ffff1d2970a698f66aedb3418889f8f2ec30f8ba798a945a307442"
+    },
+    {
+      "name": "p-BKxLivx4-xQgZq9ZM.js",
+      "sha256": "fe0e287f6a1b21af036a89d4a534acf395e41710f0722b4c829e76bf8ab7090b"
+    },
+    {
+      "name": "p-BKxLivx4-xQgZq9ZM.js.map",
+      "sha256": "6eae61d76272846ebc8ff72882a11e0cc919366d6cffee0a538c5fd75820629c"
+    },
+    {
+      "name": "p-BMPN55of-C0P_qWS_.js",
+      "sha256": "a3cbea9636e6a2506308ca8c30fd1cda4878bb602aefec8a7e4d3c863317e53a"
+    },
+    {
+      "name": "p-BMPN55of-C0P_qWS_.js.map",
+      "sha256": "671cb7337e57afe4a02948a5bc84b82893d65ee5c90601af11f69e03fc656875"
+    },
+    {
+      "name": "p-BmVRXR1y-D74--J7F.js",
+      "sha256": "cb481e6ef4c644aee809cdea9ac34ea813e86674edfadba7985b1b9a0562d436"
+    },
+    {
+      "name": "p-BmVRXR1y-D74--J7F.js.map",
+      "sha256": "055024d1753bd10450efeccbcd52ce3237751de28ed81b20450c23d35940a06d"
+    },
+    {
+      "name": "p-BmVRXR1y-oW4qhQxr.js",
+      "sha256": "605a3226df6a58654399eb5d13a2b70fc51fc9a73ab3c234fb5127f9947f0ac4"
+    },
+    {
+      "name": "p-BriaEJK8-Bxir1Z1P.js",
+      "sha256": "05191f9db18ecd491df34321850f9e6e5a0a7b5cc6735e9be163accb8cd7f6fc"
+    },
+    {
+      "name": "p-BriaEJK8-Bxir1Z1P.js.map",
+      "sha256": "4d02663b9d03064448328bc2674c5852701e42fd2a1352416a13cd8d5331460a"
+    },
+    {
+      "name": "p-BUVGbkSc-DJqQlPCW.js",
+      "sha256": "56a61d50079b585d69792294588e70aa9dcc6144b75c5ca8ac7bc23cd4a8c6db"
+    },
+    {
+      "name": "p-BUVGbkSc-DJqQlPCW.js.map",
+      "sha256": "16db52dd275e69330f468e39115e699f55f41884bea8857f9b6eb0a5eee7c8c4"
+    },
+    {
+      "name": "p-CJgshb3W-ByBTdyOS.js",
+      "sha256": "25b12cc7dd6492b515d044a4f43f6ecd6bebe088d3941455866b2d48f1ad393c"
+    },
+    {
+      "name": "p-CJgshb3W-DCk13rQV.js",
+      "sha256": "422016a8c8c925242291784a6c2d637260eb338d1007a434a4c7568b3acbf026"
+    },
+    {
+      "name": "p-CJgshb3W-DCk13rQV.js.map",
+      "sha256": "f8e4d633ca5f3dc0aa7edd7fa8c3c96fa323c3e67a8b6a877b782570a9df743f"
+    },
+    {
+      "name": "p-CVVUo4J1-B51uAdRw.js",
+      "sha256": "7c91d1c70cbd38e4ad8fce292907d43ae30b26dd093b5ead8cc1e33cb72be9fd"
+    },
+    {
+      "name": "p-CVVUo4J1-B51uAdRw.js.map",
+      "sha256": "958c2115ddc7fa497317d6d7cae3465624beacdbc5ea368004fb4758ad6cf239"
+    },
+    {
+      "name": "p-C_NQIzjP-DfplsXxx.js",
+      "sha256": "557d9286604c37c7005b5737ea8ae9145371c83e22169ef5c28fce85b68fe7ae"
+    },
+    {
+      "name": "p-C_NQIzjP-DfplsXxx.js.map",
+      "sha256": "d580a0e53ad0305a748b81e446b939ed289a3fc5b3cd5e75906109728aab59dc"
+    },
+    {
+      "name": "p-D0YpjgON-BbJo1tfQ.js",
+      "sha256": "7dc18138e0cb4112a63d2521046e28f75a7820ab8966b46691d64cf6037125ae"
+    },
+    {
+      "name": "p-D0YpjgON-BbJo1tfQ.js.map",
+      "sha256": "f92a2228243571f161255f1c64077d51a48851c53ea6077c6ed37e1afbcc66cd"
+    },
+    {
+      "name": "p-D0YpjgON-CGsx-ov9.js",
+      "sha256": "ad7f35c11940d7e1cabf2f945e51d0466e9b3d52021159b9b4425290418e1dbf"
+    },
+    {
+      "name": "p-D4NOsSCE-8jA7VHMG.js",
+      "sha256": "04cd74caa2f4d6b9666b7e8e393c37a8bc008c64e7489f93230b9ffeac88f8bd"
+    },
+    {
+      "name": "p-D4NOsSCE-8jA7VHMG.js.map",
+      "sha256": "afbdac2047df3b2958f96d8ab91e94c84bac15c9dc8476365e76643fa70a03fb"
+    },
+    {
+      "name": "p-D7-vHX0A--3LEo7H_.js",
+      "sha256": "2fb66ec480e25d797e08c6ccf1a249d1e662492da29f920c002517dceb2b9867"
+    },
+    {
+      "name": "p-D7-vHX0A-QIfIrrLr.js",
+      "sha256": "7a27b15dd2c45473b630c3bbdb63913f721332455a5609aabe3704326ccd53c1"
+    },
+    {
+      "name": "p-D7-vHX0A-QIfIrrLr.js.map",
+      "sha256": "3280fc21a238fb291de527148c5594c7a6090ec055e5c7d09c1ba79a6c924e71"
+    },
+    {
+      "name": "p-DlUdjUlf-CUVl2Xbw.js",
+      "sha256": "fa91f862da4cddba9527fd58405453543f018375c4ba9799dffcfe6c1e97f51f"
+    },
+    {
+      "name": "p-DlUdjUlf-CUVl2Xbw.js.map",
+      "sha256": "abbea51427e7eae2bb28ae1fd1acb21e0e4f190c6dc51cbc8983cd9a888ba965"
+    },
+    {
+      "name": "p-q2WJ5Igc-CvdBxStk.js",
+      "sha256": "2514d024a797997e2f69fee2ff7cde45afd4f47a1894edbf19810285cfeed558"
+    },
+    {
+      "name": "p-q2WJ5Igc-CvdBxStk.js.map",
+      "sha256": "0b04e02ba2fb4adfaaaea45e8d340617e3f53d22c648ae5efb07c01868fa7533"
+    },
+    {
+      "name": "p-q2WJ5Igc-Re6eelNX.js",
+      "sha256": "dd57218c28dbcbc05fd012f4945b48c5133df4154f4a218ceb2c056aeb92f4a2"
+    },
+    {
+      "name": "p-yjLe0sN2-CcQfTmX2.js",
+      "sha256": "4174a00cbab58016f2aa6249f135ecc1c3d5aa7ea227ff19afdedf88d66da529"
+    },
+    {
+      "name": "p-yjLe0sN2-CcQfTmX2.js.map",
+      "sha256": "1cd2c2f1be8df6c0d69a1789d4a0e11cf20243d70ee0cfffc98ae6ccc8bb1579"
+    },
+    {
+      "name": "p-ZjP4CjeZ-DJ1DGIsW.js",
+      "sha256": "fb8223951862d85ca908a66f07a394a9aec94e214b0d426342312eb373b446d8"
+    },
+    {
+      "name": "p-ZjP4CjeZ-DJ1DGIsW.js.map",
+      "sha256": "713691acf4a816bbfd3f6473c13e0b693cac0ab91c5592798f4cdd67992c9a6a"
+    },
+    {
+      "name": "preload-helper-DjzSQ1t3.js",
+      "sha256": "66c990b6727d220a346b45d00ee48d433c8d59ef03fbf8b91c6cdadeeadfdf3f"
+    },
+    {
+      "name": "sql-fibQqY1q.js",
+      "sha256": "711f342c55bf9282b49b036414f36731e9c31cfa63c9bcbfcd188e480413541d"
+    },
+    {
+      "name": "sql-fibQqY1q.js.map",
+      "sha256": "0d4425d6eff7b50928c581042cb38efec76d03629f7a0dc02b018a111543ed0c"
+    },
+    {
+      "name": "sqlite-bridge-BZt2bxpY.js",
+      "sha256": "d4e93e257e97ae5dfc0ade0fb05aaaac88bd5db01c6265164e11723254a2b814"
+    },
+    {
+      "name": "sqlite-bridge-BZt2bxpY.js.map",
+      "sha256": "11d9a0c4c16fae140a15ebb402955560cbb5b687020da5e0006f015bf28d14dc"
+    },
+    {
+      "name": "sqlite-capacitor-CkAQx2PV.js",
+      "sha256": "a8283f8395bd23b953b3a978fa40c2489ba15e64bbc6010f1e77ce2a653dc59d"
+    },
+    {
+      "name": "sqlite-capacitor-CkAQx2PV.js.map",
+      "sha256": "6a9b2f643b2128ad3169bcbaf89dfaad1d2b273a9efe18b67643ba786c039aed"
+    },
+    {
+      "name": "web-Dkpn2oyG.js",
+      "sha256": "a5818b2f0e9bed1b22291082a63c5c99a5cad1100425bb7d3090f8d402a2fabc"
+    },
+    {
+      "name": "web-Dkpn2oyG.js.map",
+      "sha256": "705e5c09a965a18ce852e5c279cdce4f9394bc9652f93e0e52716b753119b9a4"
+    },
+    {
+      "name": "web-rDPZiXB4.js",
+      "sha256": "007185f6d0d34a908702434a83e651eee2c28099516ab9679a58538dd8bf5dab"
+    },
+    {
+      "name": "web-rDPZiXB4.js.map",
+      "sha256": "59c4ce74eb6f51572c57eeb222c45e2bc610302b75a1da10eac76b36cb9b4f46"
+    }
+  ],
+  "servedIndexSha256": "5a2b408351c624d9bb87c60b3d857f680cf3e84854cd538ebdc661b51b047e58",
+  "startedAt": "2026-10-27T18:21:57.109Z",
+  "completedAt": "2026-10-27T18:22:35.637Z",
+  "readingCaptureCorrection": {
+    "reason": "Original heading-only readiness also matched the outgoing Library card. Reading-only images recaptured after actual ionViewDidEnter, the level-1 Recipe heading, correct route/context and outgoing-page hiding.",
+    "applicationSourceChanged": false,
+    "contextCount": 12,
+    "startedAt": "2026-10-28T03:32:11.827Z",
+    "completedAt": "2026-10-28T03:32:27.567Z",
+    "originalEvidence": "diagnostics/reading-before-repair/before",
+    "sourceBefore": {
+      "verifiedAt": "2026-10-28T03:32:11.580Z",
+      "sourceRevision": "9e16b385992941c10d509a219ecf958558fb43cb",
+      "sourceDirty": false,
+      "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "servedIndexSha256": "5a2b408351c624d9bb87c60b3d857f680cf3e84854cd538ebdc661b51b047e58",
+      "sourceFingerprintsVerified": 6,
+      "buildAssetsVerified": 58
+    },
+    "sourceAfter": {
+      "verifiedAt": "2026-10-28T03:32:27.390Z",
+      "sourceRevision": "9e16b385992941c10d509a219ecf958558fb43cb",
+      "sourceDirty": false,
+      "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "servedIndexSha256": "5a2b408351c624d9bb87c60b3d857f680cf3e84854cd538ebdc661b51b047e58",
+      "sourceFingerprintsVerified": 6,
+      "buildAssetsVerified": 58
+    }
+  },
+  "summary": {
+    "contexts": 12,
+    "captures": 48,
+    "unavailable": 12,
+    "errors": []
+  },
+  "contexts": [
+    {
+      "id": "fr-light-393-100",
+      "locale": "fr",
+      "theme": "light",
+      "width": 393,
+      "scale": 100,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "fr-light-393-100-reading.png",
+          "capturedAt": "2026-10-28T03:32:12.536Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "8f23ad4e65175e6bb5f383c5d26fab138e20615217c21f6a416a87736e437744"
+        },
+        {
+          "state": "hydration",
+          "file": "fr-light-393-100-hydration.png",
+          "sha256": "382685254724a8adb262dc2c34cb93bfadec89d8ad06d2c6c508c20b1565293d"
+        },
+        {
+          "state": "editor-bar",
+          "file": "fr-light-393-100-editor-bar.png",
+          "sha256": "adf7fb22aab79647b62440cd7bfbc63b82bfbe054807a8401a17fc7068775f10"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "fr-light-393-100-step-delete-confirmation.png",
+          "sha256": "0a8cf074d59e630eba01dbb26903f4ea4c2cb953c85311dd2ddf9610bc492613"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "16px",
+        "theme": "light",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "D’où vient l’eau",
+        "fontSize": "16px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:12.536Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recettes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "16px",
+          "theme": "light"
+        },
+        "sha256": "8f23ad4e65175e6bb5f383c5d26fab138e20615217c21f6a416a87736e437744"
+      }
+    },
+    {
+      "id": "fr-light-360-130",
+      "locale": "fr",
+      "theme": "light",
+      "width": 360,
+      "scale": 130,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "fr-light-360-130-reading.png",
+          "capturedAt": "2026-10-28T03:32:13.184Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "445a145cc42cf512b9d1cde428cc1f803e026e15ea35810a8dff5d5401c033ae"
+        },
+        {
+          "state": "hydration",
+          "file": "fr-light-360-130-hydration.png",
+          "sha256": "7d5447588d2e8b8239045089f3c7c2383508d6f6c1d1a69b94a6fb5f9b02c945"
+        },
+        {
+          "state": "editor-bar",
+          "file": "fr-light-360-130-editor-bar.png",
+          "sha256": "88843a54aef9db329a27df9ae1f2486176f390c2850076f9e19bc8a4e42382c2"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "fr-light-360-130-step-delete-confirmation.png",
+          "sha256": "44d5e7a8f38a870ccaaf709f0af6f40bdcce9bd9aace007d7fa4743971e14388"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "20.8px",
+        "theme": "light",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "D’où vient l’eau",
+        "fontSize": "20.8px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:13.184Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recettes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "20.8px",
+          "theme": "light"
+        },
+        "sha256": "445a145cc42cf512b9d1cde428cc1f803e026e15ea35810a8dff5d5401c033ae"
+      }
+    },
+    {
+      "id": "fr-dark-393-100",
+      "locale": "fr",
+      "theme": "dark",
+      "width": 393,
+      "scale": 100,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "fr-dark-393-100-reading.png",
+          "capturedAt": "2026-10-28T03:32:13.802Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "3358b92c3ec647a22019fa8983b71b700d222033b0d60cba666a31bd46fc2dbe"
+        },
+        {
+          "state": "hydration",
+          "file": "fr-dark-393-100-hydration.png",
+          "sha256": "4c57b0348a43ee0f5ed699ee4d387bebf097def403cf84ba9464aa83fa3c92b4"
+        },
+        {
+          "state": "editor-bar",
+          "file": "fr-dark-393-100-editor-bar.png",
+          "sha256": "36818d3f190e71b1e0a91cb6f9c91291672e1b4ed78d6b1be4038dc281ebe9be"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "fr-dark-393-100-step-delete-confirmation.png",
+          "sha256": "4dde39ddd06724d00e4e0c779211662b5d0a9409d006c74e7763efee8454a47f"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "16px",
+        "theme": "dark",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "D’où vient l’eau",
+        "fontSize": "16px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:13.802Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recettes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "16px",
+          "theme": "dark"
+        },
+        "sha256": "3358b92c3ec647a22019fa8983b71b700d222033b0d60cba666a31bd46fc2dbe"
+      }
+    },
+    {
+      "id": "fr-dark-360-130",
+      "locale": "fr",
+      "theme": "dark",
+      "width": 360,
+      "scale": 130,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "fr-dark-360-130-reading.png",
+          "capturedAt": "2026-10-28T03:32:14.451Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "b047ac38828c58000b6502c092b59927de9f5b1a07824c55e00373b8b75907d8"
+        },
+        {
+          "state": "hydration",
+          "file": "fr-dark-360-130-hydration.png",
+          "sha256": "d8e3631979328a9de4018ff9d069d2e27eccf6bee9ba19567802d55daa39c5c0"
+        },
+        {
+          "state": "editor-bar",
+          "file": "fr-dark-360-130-editor-bar.png",
+          "sha256": "9fecc8251aab4ff7d0c661b964544d4fb91ed06c67620c1329299580a7d674ed"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "fr-dark-360-130-step-delete-confirmation.png",
+          "sha256": "815cc77c3008cbd9511fd711581c230ce146d0ee9470a504976d2965b96827b4"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "20.8px",
+        "theme": "dark",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "D’où vient l’eau",
+        "fontSize": "20.8px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:14.451Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recettes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "20.8px",
+          "theme": "dark"
+        },
+        "sha256": "b047ac38828c58000b6502c092b59927de9f5b1a07824c55e00373b8b75907d8"
+      }
+    },
+    {
+      "id": "fr-amoled-393-100",
+      "locale": "fr",
+      "theme": "amoled",
+      "width": 393,
+      "scale": 100,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "fr-amoled-393-100-reading.png",
+          "capturedAt": "2026-10-28T03:32:15.087Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "f9b96d77255140af087f7f2257ed7601b9cbffdbc9f12bf0c7b7bc5077ff296b"
+        },
+        {
+          "state": "hydration",
+          "file": "fr-amoled-393-100-hydration.png",
+          "sha256": "c77290c6076b77b4b7615ae7448a7fd717974f55398fb2015bdab58b64e017b7"
+        },
+        {
+          "state": "editor-bar",
+          "file": "fr-amoled-393-100-editor-bar.png",
+          "sha256": "83375be149cf1a087dbfa9ef815b9eebdac8a9fa935c9ae99c26de1b90ecd092"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "fr-amoled-393-100-step-delete-confirmation.png",
+          "sha256": "f6199266d175c9759ed2558c25c6c73feb3314080bb79e6b0838dff6ebb96edd"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "16px",
+        "theme": "amoled",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "D’où vient l’eau",
+        "fontSize": "16px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:15.087Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recettes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "16px",
+          "theme": "amoled"
+        },
+        "sha256": "f9b96d77255140af087f7f2257ed7601b9cbffdbc9f12bf0c7b7bc5077ff296b"
+      }
+    },
+    {
+      "id": "fr-amoled-360-130",
+      "locale": "fr",
+      "theme": "amoled",
+      "width": 360,
+      "scale": 130,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "fr-amoled-360-130-reading.png",
+          "capturedAt": "2026-10-28T03:32:15.735Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "058ded4d2a6916e578949732e14b88b1772bf82637f178478e43df7a89713058"
+        },
+        {
+          "state": "hydration",
+          "file": "fr-amoled-360-130-hydration.png",
+          "sha256": "9197a5ac4c1040b18dbea5c0adee21d81ff6c86cab0e0b174d01400ba6c425ae"
+        },
+        {
+          "state": "editor-bar",
+          "file": "fr-amoled-360-130-editor-bar.png",
+          "sha256": "18528ab0295595733186ade30d66a1431fafbf1565d8e7551a722135c5bb9192"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "fr-amoled-360-130-step-delete-confirmation.png",
+          "sha256": "0f4117cd6de85a4ccd5c0a3c1694f59e2ba3e9d33e003114b96dcfbbaded61bc"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "20.8px",
+        "theme": "amoled",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "D’où vient l’eau",
+        "fontSize": "20.8px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:15.735Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recettes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "20.8px",
+          "theme": "amoled"
+        },
+        "sha256": "058ded4d2a6916e578949732e14b88b1772bf82637f178478e43df7a89713058"
+      }
+    },
+    {
+      "id": "en-light-393-100",
+      "locale": "en",
+      "theme": "light",
+      "width": 393,
+      "scale": 100,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "en-light-393-100-reading.png",
+          "capturedAt": "2026-10-28T03:32:16.368Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "a9c1c3ee0d6e423f772851408e5d193ff0df2a204ee9cefb942585cead2f0547"
+        },
+        {
+          "state": "hydration",
+          "file": "en-light-393-100-hydration.png",
+          "sha256": "da77237ea45bd833d0c60e857e6b2319f364de5dec84bfe2b991204fec3e95ba"
+        },
+        {
+          "state": "editor-bar",
+          "file": "en-light-393-100-editor-bar.png",
+          "sha256": "2c0b42d4f84828600bb42fc51df61501424322d8760a10e03912c1e1d3ac9e5c"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "en-light-393-100-step-delete-confirmation.png",
+          "sha256": "d5e75b4d1f2264e69edb0672d32f912b5c9913d1b9de0158e0c7ab7715e28632"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "16px",
+        "theme": "light",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "Where the water comes from",
+        "fontSize": "16px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:16.368Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recipes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "16px",
+          "theme": "light"
+        },
+        "sha256": "a9c1c3ee0d6e423f772851408e5d193ff0df2a204ee9cefb942585cead2f0547"
+      }
+    },
+    {
+      "id": "en-light-360-130",
+      "locale": "en",
+      "theme": "light",
+      "width": 360,
+      "scale": 130,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "en-light-360-130-reading.png",
+          "capturedAt": "2026-10-28T03:32:16.984Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "7161a03c616d8dd30a9801402abb8e468f86d8c7e4b0045b7747ea7b88e4a849"
+        },
+        {
+          "state": "hydration",
+          "file": "en-light-360-130-hydration.png",
+          "sha256": "521ea8f0886916a05311d596e56d47837cf1b21563f8261123d1a6a0a0e3f53c"
+        },
+        {
+          "state": "editor-bar",
+          "file": "en-light-360-130-editor-bar.png",
+          "sha256": "bcd1b654450f96d4106f719ec7d51cdffe88cb5d7e1d88a1563bc5f36d2e2432"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "en-light-360-130-step-delete-confirmation.png",
+          "sha256": "091467eab7c35e3f932da2d8ac7e20b512bae274d818fb78fb2ae0dd352962e6"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "20.8px",
+        "theme": "light",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "Where the water comes from",
+        "fontSize": "20.8px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:16.984Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recipes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "20.8px",
+          "theme": "light"
+        },
+        "sha256": "7161a03c616d8dd30a9801402abb8e468f86d8c7e4b0045b7747ea7b88e4a849"
+      }
+    },
+    {
+      "id": "en-dark-393-100",
+      "locale": "en",
+      "theme": "dark",
+      "width": 393,
+      "scale": 100,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "en-dark-393-100-reading.png",
+          "capturedAt": "2026-10-28T03:32:17.636Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "b1add56a2d23de3933c544d43af747151e9045ad6288bb3ffe71e44465b07578"
+        },
+        {
+          "state": "hydration",
+          "file": "en-dark-393-100-hydration.png",
+          "sha256": "be079852ca6dba863ae340bdfc89637e2b68d5924585cf482a6f9bd53e3d2674"
+        },
+        {
+          "state": "editor-bar",
+          "file": "en-dark-393-100-editor-bar.png",
+          "sha256": "9200c95d16b8cbe2a29bb1fc461932ed95baa199d5d0ec76f36b2ca73a2acfe2"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "en-dark-393-100-step-delete-confirmation.png",
+          "sha256": "be668df80675efc8b75238f9f55386e99a7d6acef27dee7d3afc7da25e9663a0"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "16px",
+        "theme": "dark",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "Where the water comes from",
+        "fontSize": "16px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:17.636Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recipes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "16px",
+          "theme": "dark"
+        },
+        "sha256": "b1add56a2d23de3933c544d43af747151e9045ad6288bb3ffe71e44465b07578"
+      }
+    },
+    {
+      "id": "en-dark-360-130",
+      "locale": "en",
+      "theme": "dark",
+      "width": 360,
+      "scale": 130,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "en-dark-360-130-reading.png",
+          "capturedAt": "2026-10-28T03:32:18.268Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "666c21e0673c9b80afbc1326e5f97afc86b3494035689df3414147bd8fc6ff07"
+        },
+        {
+          "state": "hydration",
+          "file": "en-dark-360-130-hydration.png",
+          "sha256": "6f90cd6855499cd4ba407a2a90392805e33a6a2f2d8a92fdb662793f877c7ec2"
+        },
+        {
+          "state": "editor-bar",
+          "file": "en-dark-360-130-editor-bar.png",
+          "sha256": "390a223075f5d9248aa90cca08ec75bf17b381b113b1c05af30f3efca0c63a3b"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "en-dark-360-130-step-delete-confirmation.png",
+          "sha256": "48e1cfee2604ee9daa20ea3f40179ea7f188c7ad99c69802d56be3d51f0a51fd"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "20.8px",
+        "theme": "dark",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "Where the water comes from",
+        "fontSize": "20.8px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:18.268Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recipes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "20.8px",
+          "theme": "dark"
+        },
+        "sha256": "666c21e0673c9b80afbc1326e5f97afc86b3494035689df3414147bd8fc6ff07"
+      }
+    },
+    {
+      "id": "en-amoled-393-100",
+      "locale": "en",
+      "theme": "amoled",
+      "width": 393,
+      "scale": 100,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "en-amoled-393-100-reading.png",
+          "capturedAt": "2026-10-28T03:32:18.902Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "f47d22b3d3c9484c4b9df8a74e187f72d8cab726cde3b546d9a290afc1d050dc"
+        },
+        {
+          "state": "hydration",
+          "file": "en-amoled-393-100-hydration.png",
+          "sha256": "b457458acd93309633394d9c282fa57d6eb1a48e0b2304ddec3e7633c1e88d69"
+        },
+        {
+          "state": "editor-bar",
+          "file": "en-amoled-393-100-editor-bar.png",
+          "sha256": "552041774a2b8d9ca4590042c1a19b696a532e9fd052aba0b054583ee8f640dd"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "en-amoled-393-100-step-delete-confirmation.png",
+          "sha256": "0f78287609c0e0f2137ae19862e3cf9b04c351fa7338d1f10f5eb60354191e9b"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "16px",
+        "theme": "amoled",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "Where the water comes from",
+        "fontSize": "16px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:18.902Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recipes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "16px",
+          "theme": "amoled"
+        },
+        "sha256": "f47d22b3d3c9484c4b9df8a74e187f72d8cab726cde3b546d9a290afc1d050dc"
+      }
+    },
+    {
+      "id": "en-amoled-360-130",
+      "locale": "en",
+      "theme": "amoled",
+      "width": 360,
+      "scale": 130,
+      "actions": [
+        "Open the seeded saved recipe -> real reading view",
+        "Open hydration explanation -> real production overlay",
+        "Close hydration explanation -> opener focus true",
+        "Enter editing through real action -> clean disabled Save bar",
+        "Open shaping step -> request removal -> real confirmation, without confirming deletion",
+        "Cancel removal and close step editor -> step retained"
+      ],
+      "captures": [
+        {
+          "state": "reading",
+          "file": "en-amoled-360-130-reading.png",
+          "capturedAt": "2026-10-28T03:32:19.517Z",
+          "correction": "Evidence harness navigation readiness correction; application source and build unchanged.",
+          "sha256": "3696489658ea345ac2795f8c906ab9fce84df7cf6642484a84772b39b77a9c61"
+        },
+        {
+          "state": "hydration",
+          "file": "en-amoled-360-130-hydration.png",
+          "sha256": "8b2e42dadada0595cff4c38cd7f00a3eaf919126685ca9451ea091183e81dbca"
+        },
+        {
+          "state": "editor-bar",
+          "file": "en-amoled-360-130-editor-bar.png",
+          "sha256": "ece2d209e062b81a0efc747b0a70b07fe0ddf2a01f9ca80ae25e1167639ec862"
+        },
+        {
+          "state": "step-delete-confirmation",
+          "file": "en-amoled-360-130-step-delete-confirmation.png",
+          "sha256": "d54e605560074ee7a9251e5138e20d840c1dcccee0f05f2972a431507d57b600"
+        }
+      ],
+      "unavailable": [
+        {
+          "state": "source-disclosure",
+          "reason": "Baseline WaterExplanation renders a plain contribution list; no source disclosure exists."
+        }
+      ],
+      "errors": [],
+      "settings": {
+        "fontSize": "20.8px",
+        "theme": "amoled",
+        "osReduced": true
+      },
+      "hydrationSheet": {
+        "title": "Where the water comes from",
+        "fontSize": "20.8px"
+      },
+      "readingCaptureCorrection": {
+        "capturedAt": "2026-10-28T03:32:19.517Z",
+        "readiness": {
+          "url": "/recipes/poolish-tangzhong",
+          "didEnter": true,
+          "pageClasses": [
+            {
+              "className": "ion-page ion-page-hidden",
+              "heading": "Recipes",
+              "opacity": "1"
+            },
+            {
+              "className": "ion-page can-go-back",
+              "heading": "Poolish + tangzhong",
+              "opacity": "1"
+            }
+          ],
+          "fontSize": "20.8px",
+          "theme": "amoled"
+        },
+        "sha256": "3696489658ea345ac2795f8c906ab9fce84df7cf6642484a84772b39b77a9c61"
+      }
+    }
+  ],
+  "limitations": [
+    "Browser production-app evidence; native Android system Back and keyboard were not exercised."
+  ]
+}

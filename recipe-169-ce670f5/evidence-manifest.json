@@ -1,0 +1,57 @@
+{
+  "description": "Actual production-app before and after captures for the Recipe port.",
+  "readingCaptureCorrection": "reading-capture-correction.json",
+  "matrix": {
+    "locales": [
+      "fr",
+      "en"
+    ],
+    "themes": [
+      "light",
+      "dark",
+      "amoled"
+    ],
+    "viewportAndText": [
+      {
+        "width": 393,
+        "scale": 100
+      },
+      {
+        "width": 360,
+        "scale": 130
+      }
+    ]
+  },
+  "baselineDisclosure": {
+    "available": false,
+    "reason": "The baseline WaterExplanation renders a plain contribution list and has no source disclosure. No baseline source-disclosure screenshot is claimed."
+  },
+  "phases": [
+    {
+      "phase": "before",
+      "sourceRevision": "9e16b385992941c10d509a219ecf958558fb43cb",
+      "sourceDirty": false,
+      "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": {
+        "contexts": 12,
+        "captures": 48,
+        "unavailable": 12,
+        "errors": []
+      },
+      "manifest": "before/manifest.sanitized.json"
+    },
+    {
+      "phase": "after",
+      "sourceRevision": "ce670f515aaee4fccbf9d6afe8351f2b766f3581",
+      "sourceDirty": false,
+      "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": {
+        "contexts": 12,
+        "captures": 60,
+        "unavailable": 0,
+        "errors": []
+      },
+      "manifest": "after/manifest.sanitized.json"
+    }
+  ]
+}

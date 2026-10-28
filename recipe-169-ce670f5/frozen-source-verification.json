@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-10-28T03:33:07.744Z",
+  "sourceRevision": "ce670f515aaee4fccbf9d6afe8351f2b766f3581",
+  "sourceDirty": false,
+  "sourceDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "enforcedGuards": {
+    "expectedSourceRevision": "ce670f515aaee4fccbf9d6afe8351f2b766f3581",
+    "cleanWorktreeRequired": true
+  },
+  "sourceAndBuildUnchanged": true,
+  "readingCaptureCorrection": {
+    "file": "reading-capture-correction.json",
+    "captures": 24,
+    "nonReadingCapturesUnchanged": 84,
+    "applicationSourceChanged": false
+  },
+  "sourceFingerprintCount": 6,
+  "buildAssetCount": 58,
+  "servedIndexSha256": "de7ab183a432a622552fd51722127ce91756cf61ec1f80b59d17c57c3fe6f97a",
+  "limitation": "Visual browser evidence only. Earlier focused and repeated deletion logs retain their original candidate provenance in focused-test-provenance.json; they are not relabelled as final-commit runs."
+}
