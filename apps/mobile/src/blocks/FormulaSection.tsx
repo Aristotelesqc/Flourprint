@@ -16,7 +16,7 @@ import { useFlourCatalog } from '../services/flours';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { FermentationCard } from './Fermentation';
-import { WeighingChecklist } from './WeighingChecklist';
+import { WeighingChecklist, type WeighedRow } from './WeighingChecklist';
 import {
   AddFlour,
   AddIngredient,
@@ -39,8 +39,8 @@ interface Props {
   /** A process change (temperatures, an applied duration); false when refused. */
   readonly onProcess: (process: Process) => boolean;
   /** Shared weighing checklist state lifted to page (#67). */
-  readonly weighed: ReadonlyMap<string, number>;
-  readonly onToggleWeighed: (key: string, grams: number) => void;
+  readonly weighed: readonly WeighedRow[];
+  readonly onToggleWeighed: (row: WeighedRow) => void;
   readonly fermentationRef?: React.RefObject<HTMLDivElement | null>;
   readonly hydrationRef?: React.RefObject<HTMLDivElement | null>;
   readonly visibleSection?: 'comp' | 'parts' | 'res' | 'all' | 'none';
