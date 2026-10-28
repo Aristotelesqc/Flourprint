@@ -324,7 +324,9 @@ interface WeighingGroup {
 - the **finishing** group, only when the formula has `topping` or `glaze` ingredients: their
   grams, `inDough: false`, outside `doughWeight`.
 
-Rows at 0 g are left out, and a group with no row is left out. Every number is at full precision;
+Rows at 0 g are left out, and a group with no row is left out. "0 g" means at most `1e-9` of the
+total flour (`RELATIVE_TOLERANCE`), so floating residue from a flour fully drawn by components
+never shows as a row. Every number is at full precision;
 rounding is presentation (Precision). The masses of the component groups and of the final group
 add up to `doughWeight` (Components invariant).
 
@@ -332,7 +334,8 @@ A row's identity is `(stage, item)`: an ingredient that appears in a component a
 mix is two rows, weighed twice (the weighing checks of `bake-session.md` use this identity).
 
 `waterSources(resolved)` gives the split of total water by source (L126), one entry per
-`totalWater` contribution plus one per unknown contributor:
+`totalWater` contribution that is not 0 g (the same threshold as the rows: above `1e-9` of the
+total flour, so salt or yeast bringing no water are left out), plus one per unknown contributor:
 
 ```ts
 interface WaterSource {
