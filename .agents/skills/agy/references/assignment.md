@@ -74,8 +74,10 @@ conventions that made the runs succeed, not permission settings.
 - **The markers are private.** The caller relays the literal values from its own private
   configuration. They never appear in the repository, a commit, a PR, an issue or a published
   page; raw prompts stay in the ignored `.agy-runs/`.
-- **No commands.** Headless runs auto-deny terminal commands, so tests cannot run inside AGY. Say
-  so in the brief ("do not run commands; the caller runs the checks"). The caller runs
+- **No commands, no MCP tools.** Headless runs auto-deny terminal commands and MCP tool calls
+  (CodeGraph included): a run that tries one ends with an empty response and no edit (#194). Say
+  so in the brief ("do not run commands or call MCP tools; use file read, search and edit tools;
+  the caller runs the checks"). The caller runs
   `pnpm check`, the builds and Playwright, then sends the exact failures back through
   `--conversation` with the recorded ID. Budget two or three such rounds.
 - **Read the diff, not the report.** A delegate's "tests pass" or "fixed" is not evidence. Check
