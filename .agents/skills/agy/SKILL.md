@@ -8,6 +8,17 @@ description: Delegate scoped reviews, research or implementation to Gemini throu
 Use the actual `agy` CLI. A native Codex subagent is not an AGY/Gemini reviewer; do not silently
 substitute providers. The caller owns integration, acceptance and the final report.
 
+## Check provider quota
+
+Apply [quota-check](../quota-check/SKILL.md) before assigning another AGY tranche and after
+collecting its result. Keep the coordinator's own reserve separate from AGY capacity.
+Use the native interactive `/usage` (`/quota`) panel to refresh/read the model-group limits;
+see the [verified provider collection procedure](../quota-check/references/providers.md).
+`agy models` and the response's token `usage` are not remaining quota. Check at least every
+five minutes while coordinating long runs, without launching a model turn just for usage.
+If the host cannot read the panel, report UNAVAILABLE and follow the bounded policy.
+Never silently switch models, enable paid overages or consume a reset.
+
 ## Prepare the assignment
 
 - Read repository `AGENTS.md`; select the relevant contracts/ADRs rather than copying the whole
