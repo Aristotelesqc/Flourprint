@@ -1,5 +1,5 @@
 /** Version of the data contracts described in docs/contracts/. */
-export const CONTRACT_VERSION = '0.22.1';
+export const CONTRACT_VERSION = '0.23.0';
 
 /**
  * Version of the calculation engine recorded in bake snapshots (D8). 0.8.0: the dough thermal
