@@ -789,6 +789,11 @@ Screens: preparation, planning, recipe, library. Source: Owner, 2026-10-25 (#176
 
 Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
 
+**L147.** The hydration sheet (L126) groups every water source that would display as less than 1 g into one row "Others (< 1 g)", so its rows still add up to the total water shown. This applies to the water sources of the hydration sheet only: the ingredient list and the per-stage weighing always list every ingredient, however small (instant dry yeast at 0.35 g, spices, malt). The engine keeps every contribution at full precision (formula.md, Precision); the grouping is presentation. Screens: recipe. Source: Owner, 2026-10-27 (#169 thread). Kind: OD.
+
+**L148.** Gram quantities are displayed with a precision that follows their size, one rule for every list (L19): 10 g and above to the gram (flour 1000 g, salt 20 g), from 1 g to under 10 g to a tenth of a gram (salt 8.5 g, yeast 3.2 g), under 1 g to a hundredth (instant yeast 0.35 g). The thresholds are a device preference in Settings, with these defaults. Baker's percentages keep at most one decimal and hydration a whole percent (L19). Display rounding never becomes an edit, and editing keeps the typed value (L19). The engine is unchanged. Screens: recipe, edit, planning, preparation, settings. Source: Owner, 2026-10-27. Kind: OD.
+
+**L149.** Settings is a real options menu: user-configurable preferences grouped by topic (display and precision, units, appearance, data) with their defaults shown and a reset to defaults, everyday options visibly separate from Advanced and from destructive or debug tools (L85). New configurable behaviours land there rather than as scattered toggles. Device preferences stay on the device and are not recipe data. Screens: settings. Source: Owner, 2026-10-27. Kind: OD.
 ---
 
 ## 13. OPEN owner choices (do not decide silently)
