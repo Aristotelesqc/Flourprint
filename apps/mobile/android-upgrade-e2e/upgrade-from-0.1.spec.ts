@@ -284,7 +284,8 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     const salt = page.getByLabel('Salt (g)', { exact: true });
     await salt.fill('25');
     await salt.press('Enter');
-    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    // This phase runs the pinned 0.1.0 APK, whose button keeps its original label.
+    await page.getByRole('button', { name: 'Save v2', exact: true }).click();
     await expect(shown(page, 'Version 2')).toHaveCount(1);
   });
 
