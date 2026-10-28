@@ -10,7 +10,7 @@
     },
     {
       "file": "app-library-fr-light-393-100.png",
-      "sha256": "d78d99c6fb59f5d72afc07e5a5814debe04d716ba9fbd77214a4c342f97e4141"
+      "sha256": "58348c08c5202dbf90ef0c91a789a3f595ddc98d2043cb717a6a687d7f19b34d"
     },
     {
       "file": "reference-audit-current-recipe-fr-light-393-100.png",
@@ -50,7 +50,7 @@
     },
     {
       "file": "app-library-fr-amoled-360-130.png",
-      "sha256": "5f6a48232e7009ab51961814185f02f7e0b429879a6504f68fef7bf67841021a"
+      "sha256": "097334576d57b78274d825ee0e53d645d2beacbb582348f85afe9f79882a5fef"
     },
     {
       "file": "reference-audit-current-recipe-fr-amoled-360-130.png",
@@ -84,5 +84,14 @@
       "file": "app-preparation-fr-amoled-360-130.png",
       "sha256": "90853cf414849ed17b0f8076525949fe65f0d55a7c484b67c10fcdb1bc6d3aa0"
     }
-  ]
+  ],
+  "libraryCaptureRepair": {
+    "correctedFiles": [
+      "app-library-fr-amoled-360-130.png",
+      "app-library-fr-light-393-100.png"
+    ],
+    "readiness": "visible routed Recipes heading awaited after navigation",
+    "reviewerBViewedCorrectedFiles": false,
+    "otherImagesUnchanged": true
+  }
 }
