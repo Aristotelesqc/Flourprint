@@ -6,9 +6,20 @@ export {
   applyFormulaEdit,
   type ComponentChanges,
   type FormulaEdit,
-  type StageRef,
   type IngredientChanges,
 } from './edit.js';
+export {
+  sameWeighingRow,
+  waterSources,
+  weighingGroups,
+  yieldOf,
+  type StageRef,
+  type WaterSource,
+  type WeighingGroup,
+  type WeighingItem,
+  type WeighingRow,
+  type Yield,
+} from './weighing.js';
 export {
   componentStyle,
   hydrationForLiquidRatio,
