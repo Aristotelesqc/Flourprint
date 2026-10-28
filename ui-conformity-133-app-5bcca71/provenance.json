@@ -1,0 +1,88 @@
+{
+  "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+  "application": "5bcca71b3bb067738cd9326ad86c31f4aa52342b",
+  "matchedFixture": false,
+  "matchedPreparationStage": false,
+  "images": [
+    {
+      "file": "reference-audit-current-library-fr-light-393-100.png",
+      "sha256": "4a89e920af33c99b5b2a9b5ca1cffe06d62232c3e36d60fd636eec84f9fad5b9"
+    },
+    {
+      "file": "app-library-fr-light-393-100.png",
+      "sha256": "d78d99c6fb59f5d72afc07e5a5814debe04d716ba9fbd77214a4c342f97e4141"
+    },
+    {
+      "file": "reference-audit-current-recipe-fr-light-393-100.png",
+      "sha256": "e77a85047d1ede821a2d8e330ab85e67bdd3c99f059a238b8b281c933fb84f32"
+    },
+    {
+      "file": "app-recipe-fr-light-393-100.png",
+      "sha256": "196f64e46f986625618130333439540707b9e3c5e1c35cc76e6441b72adf2272"
+    },
+    {
+      "file": "reference-audit-current-edit-fr-light-393-100.png",
+      "sha256": "a692c17026e7d046f9235daaf06adda926977bdc9333e86937640ad422b49da6"
+    },
+    {
+      "file": "app-edit-fr-light-393-100.png",
+      "sha256": "de076dacf8cd0b119d5d9751ff51dc2c38883bc62b1c77e4b80daa893355d38a"
+    },
+    {
+      "file": "reference-audit-current-planning-fr-light-393-100.png",
+      "sha256": "32e6fb9f5a7ea15bf8c0f7a4c9947356297a37c1bf3be62bed99e992c7dd35d7"
+    },
+    {
+      "file": "app-planning-fr-light-393-100.png",
+      "sha256": "587eb057faf9020a44bc19729bd2fe0d5a20337b94083feb632802f7b4221663"
+    },
+    {
+      "file": "reference-audit-current-preparation-fr-light-393-100.png",
+      "sha256": "932a07009969818fc02d83e4350d5a067fabc2c5b37d045c6653ea994413be26"
+    },
+    {
+      "file": "app-preparation-fr-light-393-100.png",
+      "sha256": "0dbb8c6a14c620011beff5d08a386a6a39b359781feca7f64cd2895a5de604e7"
+    },
+    {
+      "file": "reference-audit-current-library-fr-amoled-360-130.png",
+      "sha256": "e118f0fb28cd0ce38907f029f76ce149aac7aa409d599d5a361a16fbe06a1809"
+    },
+    {
+      "file": "app-library-fr-amoled-360-130.png",
+      "sha256": "5f6a48232e7009ab51961814185f02f7e0b429879a6504f68fef7bf67841021a"
+    },
+    {
+      "file": "reference-audit-current-recipe-fr-amoled-360-130.png",
+      "sha256": "7f5e3e1c9fd760cfa2afd483933ee7ded52e1689800a24aa14767cd0d3fd5d7f"
+    },
+    {
+      "file": "app-recipe-fr-amoled-360-130.png",
+      "sha256": "009a2f8b74a61c33f9e6f440afb0373231c9087046f62a1822bd7a8527777c13"
+    },
+    {
+      "file": "reference-audit-current-edit-fr-amoled-360-130.png",
+      "sha256": "e074fd03608680f9593f9ff3b04f47c78329ce4ad5a1fbe39d21e3f6c05bf66c"
+    },
+    {
+      "file": "app-edit-fr-amoled-360-130.png",
+      "sha256": "b07b8eb26b25647a1e43537a3d0d197d58abb93b8658390148272c14fe6315a8"
+    },
+    {
+      "file": "reference-audit-current-planning-fr-amoled-360-130.png",
+      "sha256": "13085998c310254d64777220c7b1679249a409aea8454555b07c3227eac302a2"
+    },
+    {
+      "file": "app-planning-fr-amoled-360-130.png",
+      "sha256": "8481e0202ff6b2defc342e0f0112718df574e3cd9b09ed7e3a10c268eceac53f"
+    },
+    {
+      "file": "reference-audit-current-preparation-fr-amoled-360-130.png",
+      "sha256": "40fc14397eb6be0d249403d0cb68140ba5a49cb282bfbcecbc17bb1db2064ea4"
+    },
+    {
+      "file": "app-preparation-fr-amoled-360-130.png",
+      "sha256": "90853cf414849ed17b0f8076525949fe65f0d55a7c484b67c10fcdb1bc6d3aa0"
+    }
+  ]
+}
