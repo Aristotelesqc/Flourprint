@@ -71,7 +71,7 @@ test('typed decimals commit, and leaving an untouched field changes nothing', as
   await saltGrams.fill('22,22222');
   await saltGrams.press('Enter');
   await expect(page.getByLabel('Sel, % boulanger (%)')).toHaveValue('2,22');
-  await page.getByRole('button', { name: 'Enregistrer v2' }).click();
+  await page.getByRole('button', { name: 'Enregistrer', exact: true }).click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
   await expect(unsaved(page)).toBeHidden();
 
@@ -546,7 +546,7 @@ test('a locked hydration holds while eggs are added; preparations are editable',
   // 100 g of egg at 76 % water: the added water drops by 76 g, total water stays.
   await menuAction(page, /^Examiner les modifications$/);
   await expect(page.getByText('Œuf ajouté')).toBeVisible();
-  await expect(page.getByText(/Eau, % boulanger : 75 % → 67,4 %/)).toBeVisible();
+  await expect(page.getByText(/Eau, % boulanger : 75\u00a0% → 67,4\u00a0%/)).toBeVisible();
   const review = page.locator('ion-modal:not(.overlay-hidden)');
   await review.getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(review).toBeHidden();
@@ -618,7 +618,7 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   await room.press('Enter');
   await expect(page.getByText('provisoire', { exact: true }).first()).toBeVisible();
   // One readable result line: whole percentages of the target, never "100,03 %".
-  const progress = page.getByText(/^Le plan atteint \d+ % de la cible$/).first();
+  const progress = page.getByText(/^Le plan atteint \d+\u00a0% de la cible$/).first();
   await expect(progress).toBeVisible();
   // The target and the ranges sit behind "Details", in plain sentences.
   await page.getByRole('button', { name: 'Détails' }).first().click();
@@ -1050,7 +1050,7 @@ test('a draft takes a new step and a step technique, shown under the step', asyn
 test('bake mode shows the next fold set and records it in the log', async ({ page }) => {
   await openRecipe(page);
   await foldTheBulk(page);
-  await page.getByRole('button', { name: 'Enregistrer v2' }).click();
+  await page.getByRole('button', { name: 'Enregistrer', exact: true }).click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
   await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();

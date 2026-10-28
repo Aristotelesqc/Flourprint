@@ -36,7 +36,7 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
   await expect(salt).toBeVisible();
   await salt.fill('25');
   await salt.press('Enter');
-  await tap(app.page, app.page.getByRole('button', { name: 'Enregistrer v2' }));
+  await tap(app.page, app.page.getByRole('button', { name: 'Enregistrer', exact: true }));
   await expect(app.page.getByText('Version 2', { exact: true })).toBeVisible();
   await quit(app);
 

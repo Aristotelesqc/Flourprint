@@ -152,7 +152,7 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
   const salt = page.getByLabel('Salt (g)', { exact: true });
   await salt.fill('25');
   await salt.press('Enter');
-  await page.getByRole('button', { name: 'Save v2' }).click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
 
   page = await test.step('forced stop, reopen', async () => {

@@ -42,7 +42,7 @@ for (const english of [false, true]) {
       await expect(modal).toHaveCount(0);
       await routed(page)
         .locator('ion-footer')
-        .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
+        .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
         .click();
       await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
       await routed(page)
