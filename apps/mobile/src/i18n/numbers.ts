@@ -16,10 +16,12 @@ export const formatGrams = (grams: number, locale: string): string =>
   `${new Intl.NumberFormat(locale, { maximumFractionDigits: grams < 100 ? 1 : 0 }).format(grams)} g`;
 
 export const formatPct = (pct: number, locale: string): string =>
-  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(pct)} %`;
+  new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 2 }).format(pct / 100);
 
 export const formatWholePct = (pct: number, locale: string): string =>
-  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.round(pct))} %`;
+  new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(
+    Math.round(pct) / 100,
+  );
 
 export const formatNumber = (value: number, locale: string): string =>
   new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);

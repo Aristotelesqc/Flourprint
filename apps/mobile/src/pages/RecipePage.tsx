@@ -123,6 +123,7 @@ const RecipePageContent = () => {
   const [stored, setStored] = useState<Draft>();
   const latestDraft = useRef<Draft | undefined>(undefined);
   const [checking, setChecking] = useState(false);
+  const pendingChecksReturnRef = useRef<HTMLElement | null>(null);
   const saving = useRef(Promise.resolve());
   const [bakes, setBakes] = useState<readonly BakeSummary[]>([]);
   const [failure, setFailure] = useState<DomainError>();
@@ -693,6 +694,10 @@ const RecipePageContent = () => {
     });
 
   const save = async () => {
+    const opener =
+      typeof document !== 'undefined' && document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     blurActiveEditor();
     if (validationActions?.isBlocked()) return;
     await saving.current;
@@ -714,8 +719,12 @@ const RecipePageContent = () => {
     setStorageFailed(false);
     const saved = result.value;
     if (!saved.ok) {
-      if (saved.error.code === 'RecipeHasBlockingIssues') setChecking(true);
-      else setFailure(saved.error);
+      if (saved.error.code === 'RecipeHasBlockingIssues') {
+        pendingChecksReturnRef.current = opener;
+        setChecking(true);
+      } else {
+        setFailure(saved.error);
+      }
       return;
     }
     setStored(undefined);
@@ -988,7 +997,10 @@ const RecipePageContent = () => {
                       issues.length === 0
                         ? t('editor.check')
                         : `${t('editor.check')} (${issues.length})`,
-                    handler: () => setChecking(true),
+                    handler: () => {
+                      pendingChecksReturnRef.current = null;
+                      setChecking(true);
+                    },
                   },
                   {
                     label: t('recipe.tab.process'),
@@ -1219,6 +1231,36 @@ const RecipePageContent = () => {
           issues={issues}
           process={draft.process}
           onClose={() => setChecking(false)}
+          onDismissed={() => {
+            const target = pendingChecksReturnRef.current;
+            pendingChecksReturnRef.current = null;
+            if (!target) return;
+            requestAnimationFrame(() => {
+              if (
+                !target.isConnected ||
+                ('disabled' in target && (target as HTMLButtonElement).disabled) ||
+                target.closest('[inert], [hidden], [aria-hidden="true"], .ion-page-hidden')
+              ) {
+                return;
+              }
+              const isVisible =
+                typeof target.checkVisibility === 'function'
+                  ? target.checkVisibility()
+                  : target.getClientRects().length > 0;
+              if (!isVisible) return;
+              const active = typeof document !== 'undefined' ? document.activeElement : null;
+              if (active && active !== document.body && active !== target) return;
+              if (
+                typeof document !== 'undefined' &&
+                document.querySelector(
+                  'ion-alert:not(.overlay-hidden), ion-action-sheet:not(.overlay-hidden), ion-loading:not(.overlay-hidden), ion-modal:not(.overlay-hidden), ion-popover:not(.overlay-hidden)',
+                )
+              ) {
+                return;
+              }
+              target.focus({ preventScroll: true });
+            });
+          }}
         />
         <ChangeReviewSheet
           open={reviewing}

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { RECIPE_TEMPLATES } from '@flourprint/core/application';
 import { catalogs, en, pickLocale } from '../src/i18n/messages';
-import { editableNumber, formatGrams, parseDecimal } from '../src/i18n/numbers';
+import {
+  editableNumber,
+  formatGrams,
+  formatPct,
+  formatWholePct,
+  parseDecimal,
+} from '../src/i18n/numbers';
 
 describe('message catalogs', () => {
   it('localizes every selected-source guide key and ingredient name', () => {
@@ -51,4 +57,13 @@ describe('decimal input', () => {
     expect(editableNumber(2.25, 'fr')).toBe('2,25');
     expect(parseDecimal(editableNumber(1234.5, 'fr'))).toBe(1234.5);
   });
+});
+
+it('formats percentage points with locale typography and display-only rounding', () => {
+  expect(formatPct(70, 'en')).toBe('70%');
+  expect(formatPct(6.4, 'en')).toBe('6.4%');
+  expect(formatWholePct(75.02, 'en')).toBe('75%');
+  expect(formatPct(6.4, 'fr')).toBe('6,4\u00a0%');
+  expect(formatWholePct(75.02, 'fr')).toBe('75\u00a0%');
+  expect(formatPct(0, 'en')).toBe('0%');
 });

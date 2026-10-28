@@ -6,12 +6,11 @@ import {
   IonModal,
   IonTitle,
   IonToolbar,
-  useIonAlert,
 } from '@ionic/react';
-import { useEffect, useEffectEvent, useId, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useId, useRef, useState, type ReactNode } from 'react';
 import {
   phasesDurationS,
-  removeStep,
+  removeStepChecked,
   updateStep,
   validateProcess,
   type MixPhase,
@@ -33,6 +32,7 @@ import {
 import { DurationField, OptionalNumberField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { SectionTitle } from '../ui/Layout';
+import { Ui } from '../ui/library';
 import { useValidationActions } from '../ui/ValidationContext';
 
 type Translate = ReturnType<typeof useMessages>['t'];
@@ -124,7 +124,6 @@ export const StepSheet = ({
   onDismissed,
 }: Props) => {
   const { t, error, stepName, stepInstructions } = useMessages();
-  const [presentAlert] = useIonAlert();
   const id = useId();
   // A phase being added waits for its duration: nothing is invented.
   const [newPhase, setNewPhase] = useState<MixPhase['speed']>();
@@ -134,6 +133,10 @@ export const StepSheet = ({
   const [label, setLabel] = useState<string>('');
   const [isLabelTouched, setIsLabelTouched] = useState<boolean>(false);
   const [operationError, setOperationError] = useState<string | undefined>();
+  const [deleteError, setDeleteError] = useState<string | undefined>();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const isDeletingRef = useRef(false);
+  const pendingProcessRef = useRef<Process | undefined>(undefined);
   const validationActions = useValidationActions();
 
   const stepId = step?.id;
@@ -145,6 +148,10 @@ export const StepSheet = ({
     setFolds({ ...step?.technique?.folds });
     setFoldStyle(step?.technique?.folds?.style);
     setOperationError(undefined);
+    setDeleteError(undefined);
+    setConfirmDeleteOpen(false);
+    isDeletingRef.current = false;
+    pendingProcessRef.current = undefined;
     // Reset only when the sheet opens or moves to another step.
   });
   useEffect(() => resetOnStepOpen(), [open, stepId]);
@@ -225,29 +232,50 @@ export const StepSheet = ({
   };
 
   const methods = methodsFor(step.operation);
-  const remove = () => {
-    let accepted = false;
-    let confirmed = false;
-    void presentAlert({
-      header: t('technique.removeStep'),
-      message: t('technique.removeConfirm', { step: stepName(step) }),
-      buttons: [
-        { text: t('bake.cancel'), role: 'cancel' },
-        {
-          text: t('technique.removeStep'),
-          role: 'destructive',
-          handler: () => {
-            if (!confirmed) {
-              confirmed = true;
-              accepted = onChange(removeStep(process, step.id));
-            }
-          },
-        },
-      ],
-      onDidDismiss: () => {
-        if (accepted) onClose();
-      },
-    });
+
+  const handleDialogDismiss = () => {
+    setConfirmDeleteOpen(false);
+    const nextProcess = pendingProcessRef.current;
+    if (!nextProcess) {
+      isDeletingRef.current = false;
+      return;
+    }
+    pendingProcessRef.current = undefined;
+    const accepted = onChange(nextProcess);
+    isDeletingRef.current = false;
+    if (accepted) {
+      setDeleteError(undefined);
+      onClose();
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
+
+    const result = removeStepChecked(process, step.id);
+    if (!result.ok) {
+      isDeletingRef.current = false;
+      const targetStep = process.steps.find((s) => s.id === result.error.details?.stepId) ?? step;
+      const preheatNames = (result.error.details?.preheats ?? [])
+        .flatMap((id) => {
+          const actualStep = process.steps.find((s) => s.id === id);
+          return actualStep ? [stepName(actualStep)] : [];
+        })
+        .join(', ');
+
+      setDeleteError(
+        t('error.TargetInUse.retargetPreheat' as MessageKey, {
+          step: stepName(targetStep),
+          preheats: preheatNames,
+        }),
+      );
+      setConfirmDeleteOpen(false);
+      return;
+    }
+
+    pendingProcessRef.current = result.value;
+    setConfirmDeleteOpen(false);
   };
 
   return (
@@ -268,7 +296,10 @@ export const StepSheet = ({
                 className="min-h-12 min-w-12"
                 aria-label={t('step.delete')}
                 title={t('step.delete')}
-                onClick={remove}
+                onClick={() => {
+                  setDeleteError(undefined);
+                  setConfirmDeleteOpen(true);
+                }}
               >
                 <svg
                   width="20"
@@ -299,6 +330,15 @@ export const StepSheet = ({
       </IonHeader>
       <IonContent className="ion-padding">
         <div className="flex flex-col gap-6">
+          {deleteError && (
+            <p
+              role="alert"
+              className="m-0 rounded-lg border border-alert/30 bg-alert-soft/20 p-3 text-sm font-medium text-alert"
+            >
+              {deleteError}
+            </p>
+          )}
+
           <section className="flex flex-col gap-3">
             <span className="flex items-center justify-between gap-3">
               <label htmlFor={`${id}-operation`} className="font-semibold text-ink">
@@ -484,6 +524,38 @@ export const StepSheet = ({
           />
         </div>
       </IonContent>
+
+      <Ui
+        component="fp.dialog"
+        isOpen={confirmDeleteOpen}
+        title={stepName(step)}
+        closeLabel={t('bake.cancel')}
+        onDismiss={handleDialogDismiss}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Ui
+              component="fp.button"
+              variant="secondary"
+              disabled={isDeletingRef.current}
+              onClick={() => setConfirmDeleteOpen(false)}
+            >
+              {t('bake.cancel')}
+            </Ui>
+            <Ui
+              component="fp.button"
+              variant="danger"
+              disabled={isDeletingRef.current}
+              onClick={handleConfirmDelete}
+            >
+              {t('step.delete')}
+            </Ui>
+          </div>
+        }
+      >
+        <p className="m-0 text-sm text-ink">
+          {t('technique.removeConfirm', { step: stepName(step) })}
+        </p>
+      </Ui>
     </IonModal>
   );
 };

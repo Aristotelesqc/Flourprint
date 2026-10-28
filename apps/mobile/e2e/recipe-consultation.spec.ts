@@ -61,7 +61,7 @@ for (const english of [false, true]) {
     await expect(footer(page).getByRole('status')).toHaveText(english ? 'Up to date' : 'À jour');
     await expect(
       footer(page).getByRole('button', {
-        name: english ? 'Save v2' : 'Enregistrer v2',
+        name: english ? 'Save' : 'Enregistrer',
         exact: true,
       }),
     ).toBeDisabled();
@@ -144,7 +144,7 @@ test('valid raw text is committed only from the focused field before a mode comm
   ).toBeDisabled();
   await enterEditor(page);
   await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');
-  await footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }).click();
+  await footer(page).getByRole('button', { name: 'Enregistrer', exact: true }).click();
   await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toBeVisible();
   await edit(page).click();
   await expect(water).toHaveValue('720');
@@ -233,7 +233,9 @@ test('raw-only invalid input cannot disappear into consultation or start an old 
   await expect(alert).toHaveCount(0);
   await expect(water).toHaveValue('abc');
   await expect(footer(page).getByRole('status')).toHaveText('Corriger les champs invalides');
-  await expect(footer(page).getByRole('button', { name: 'Enregistrer v2' })).toBeDisabled();
+  await expect(
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
+  ).toBeDisabled();
   await showPlanning(page);
   await expect(
     footer(page).getByRole('button', { name: 'Démarrer la préparation' }),
