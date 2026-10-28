@@ -46,6 +46,8 @@ const guide: ComponentGuide<TabsProps> = {
       'Required localized accessible label describing the purpose of the tab list (applied as aria-label).',
     items:
       'Readonly list of tab items defining id, label, panel content, and optional disabled state.',
+    renderPanels:
+      'Whether to render panels internally (defaults to true). Set to false when caller mounts panels externally.',
   },
 };
 

@@ -264,7 +264,7 @@ for (const english of [false, true]) {
       checklist(page, english).getByText(progress(english, 3, 9), { exact: true }),
     ).toBeVisible();
     await routed(page)
-      .getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true })
+      .getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true })
       .click();
     await expect(row(page, 'poolish', waterName)).not.toBeChecked();
     await expect(row(page, 'tangzhong', flour)).toBeChecked();

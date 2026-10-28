@@ -45,7 +45,7 @@ for (const english of [false, true]) {
     await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(routed(page).locator('select:visible')).toHaveCount(0);
     await expect(
-      routed(page).getByRole('button', {
+      routed(page).getByRole('tab', {
         name: english ? 'Planning' : 'Planification',
         exact: true,
       }),
@@ -227,7 +227,7 @@ test('planning inputs survive entering and leaving editing without creating a re
   await expect(target).toHaveValue('mix');
   await expect(routed(page).getByLabel('Durée : Pétrissage', { exact: true })).toBeVisible();
   await read(page).click();
-  await routed(page).getByRole('button', { name: 'Planification', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Planification', exact: true }).click();
   await expect(when).toHaveValue('2026-11-05T14:00');
   await expect(target).toHaveValue('mix');
   await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();

@@ -67,6 +67,7 @@ import { SimulationBanner } from '../ui/SimulationBanner';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
 import { Segmented } from '../ui/Segmented';
+import { Ui } from '../ui/library';
 import { ValidationProvider, useValidation, useValidationActions } from '../ui/ValidationContext';
 
 type Tab = 'formula' | 'process' | 'history';
@@ -976,47 +977,33 @@ const RecipePageContent = () => {
             )}
           </IonButtons>
 
-          <div className="min-w-0 px-2 font-bold text-lg">
-            {isEditing ? t('recipe.edit') : t('recipe.tab.formula')}
-            {isEditing && base && (
-              <div className="m3-type-metadata font-medium text-muted">
-                {t('recipe.version', { version: base.revision.version })}
+          {isEditing ? (
+            <div className="min-w-0 px-2 font-bold text-lg">
+              {t('recipe.edit')}
+              {base && (
+                <div className="m3-type-metadata font-medium text-muted">
+                  {t('recipe.version', { version: base.revision.version })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div ref={titleRef} tabIndex={-1} className="min-w-0 px-2 py-1 outline-none">
+              <h1 className="m-0 text-lg font-bold break-words leading-tight">{name}</h1>
+              <div className="text-xs text-muted mt-0.5">
+                {base
+                  ? t('recipe.version', { version: base.revision.version })
+                  : t('draft.newRecipe')}
+                {stored && (
+                  <span className="ml-2" role="status">
+                    {t('draft.unsaved')}
+                  </span>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <IonButtons slot="end">
-            {!isEditing ? (
-              base &&
-              trashedAt === undefined && (
-                <OverflowMenu
-                  ariaLabel={t('recipe.overflowActions')}
-                  title={t('recipe.overflowActions')}
-                  actions={[
-                    {
-                      label: t('recipe.editAction'),
-                      handler: enterEditing,
-                    },
-                    ...(active
-                      ? [
-                          {
-                            label: t('process.startAnother'),
-                            handler: confirmStart,
-                            disabled: dirty || hasInvalid || writes.busy,
-                          },
-                        ]
-                      : []),
-                    'divider',
-                    {
-                      label: t('recipe.trash'),
-                      destructive: true,
-                      disabled: writes.busy,
-                      handler: confirmTrash,
-                    },
-                  ]}
-                />
-              )
-            ) : (
+            {isEditing && (
               <OverflowMenu
                 ariaLabel={t('editor.overflowActions')}
                 title={t('editor.overflowActions')}
@@ -1089,17 +1076,19 @@ const RecipePageContent = () => {
         <IonToolbar>
           <div className="px-4 pb-2">
             {!isEditing ? (
-              <Segmented
-                value={tab}
-                appearance="tabs"
-                options={(base
+              <Ui
+                component="fp.tabs"
+                selected={tab}
+                onSelectedChange={(id) => switchTab(id as Tab)}
+                label={t('recipe.tabsLabel')}
+                renderPanels={false}
+                items={(base
                   ? (['formula', 'process', 'history'] as const)
                   : (['formula', 'process'] as const)
                 ).map((value) => ({
-                  value,
+                  id: value,
                   label: t(`recipe.tab.${value}`),
                 }))}
-                onChange={switchTab}
               />
             ) : (
               <Segmented
@@ -1141,22 +1130,6 @@ const RecipePageContent = () => {
           </p>
         )}
         <SessionOnlyNotice />
-
-        {!isEditing && (
-          <div ref={titleRef} tabIndex={-1} className="mb-4 outline-none">
-            <h1 className="m3-type-page m-0 break-words">{name}</h1>
-            <div className="text-sm text-muted mt-1">
-              {base
-                ? t('recipe.version', { version: base.revision.version })
-                : t('draft.newRecipe')}
-              {stored && (
-                <span className="ml-2" role="status">
-                  {t('draft.unsaved')}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
 
         {!isEditing && hasInvalid && (
           <div className="m3-card-quiet mb-4 flex-row flex-wrap items-center justify-between">
@@ -1316,20 +1289,50 @@ const RecipePageContent = () => {
         />
       </IonContent>
       {!isEditing && base && trashedAt === undefined && (
-        <IonFooter>
-          <IonToolbar>
-            <div className="px-4 py-2">
-              <IonButton
-                expand="block"
-                shape="round"
-                className="btn-pill-primary h-12 font-semibold"
+        <IonFooter className="ion-no-border">
+          <Ui component="fp.bottom-bar" navigationLabel={t('recipe.bottomBarLabel')}>
+            <Ui
+              component="fp.button"
+              variant="quiet"
+              aria-label={t('recipe.editAction')}
+              onClick={enterEditing}
+            >
+              {t('recipe.edit')}
+            </Ui>
+            <div className="flex items-center gap-2 shrink-0">
+              <Ui
+                component="fp.button"
+                variant="primary"
+                aria-label={active ? t('recipe.resumeAction') : t('recipe.startAction')}
                 disabled={!active && (writes.busy || dirty || hasInvalid)}
                 onClick={() => (active ? openBake(active.bakeId) : confirmStart())}
               >
-                {active ? t('recipe.resumeAction') : t('recipe.startAction')}
-              </IonButton>
+                {active ? t('recipe.resumeActionShort') : t('recipe.startActionShort')}
+              </Ui>
+              <OverflowMenu
+                ariaLabel={t('recipe.overflowActions')}
+                title={t('recipe.overflowActions')}
+                actions={[
+                  ...(active
+                    ? [
+                        {
+                          label: t('process.startAnother'),
+                          handler: confirmStart,
+                          disabled: dirty || hasInvalid || writes.busy,
+                        },
+                      ]
+                    : []),
+                  'divider',
+                  {
+                    label: t('recipe.trash'),
+                    destructive: true,
+                    disabled: writes.busy,
+                    handler: confirmTrash,
+                  },
+                ]}
+              />
             </div>
-          </IonToolbar>
+          </Ui>
         </IonFooter>
       )}
       {isEditing && (

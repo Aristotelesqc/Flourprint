@@ -47,7 +47,10 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
     app.page.getByRole('button', { name: 'Actions sur la recette', exact: true }),
   );
   const actions = app.page.getByRole('menu');
-  await tap(app.page, actions.getByRole('menuitem', { name: 'Modifier la recette', exact: true }));
+  await tap(
+    app.page,
+    actions.getByRole('menuitem', { name: 'Mettre à la corbeille', exact: true }),
+  );
   await expect(actions).toBeHidden();
   const menuOrder = await app.page.evaluate(
     () => Reflect.get(window, '__flourprintNativeMenuOrder') as string[],
@@ -57,6 +60,10 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
     contentType: 'application/json',
   });
   expect(menuOrder).toEqual(['presented', 'pressed']);
+  const confirmation = app.page.locator('ion-alert:not(.overlay-hidden)');
+  await tap(app.page, confirmation.getByRole('button', { name: 'Annuler', exact: true }));
+  await expect(confirmation).toBeHidden();
+  await tap(app.page, app.page.getByRole('button', { name: 'Modifier la recette', exact: true }));
   await expect(salt).toBeVisible();
   await salt.fill('25');
   await salt.press('Enter');

@@ -18,6 +18,8 @@ import version7 from '../components/dialog/v1.tsx';
 import guide7 from '../components/dialog/guide.ts';
 import version8 from '../components/select/v1.tsx';
 import guide8 from '../components/select/guide.ts';
+import version9 from '../components/bottom-bar/v1.tsx';
+import guide9 from '../components/bottom-bar/guide.ts';
 
 export const catalogue = library.catalogue({
   'fp.button': [version0],
@@ -29,6 +31,7 @@ export const catalogue = library.catalogue({
   'fp.bottom-sheet': [version6],
   'fp.dialog': [version7],
   'fp.select': [version8],
+  'fp.bottom-bar': [version9],
 });
 
 export const guides = library.guides({
@@ -41,4 +44,5 @@ export const guides = library.guides({
   'fp.bottom-sheet': guide6,
   'fp.dialog': guide7,
   'fp.select': guide8,
+  'fp.bottom-bar': guide9,
 });
