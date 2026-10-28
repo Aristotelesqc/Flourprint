@@ -72,11 +72,15 @@ emulator`; `android emulator create medium_phone` (it fetches the system image).
 - **Pitfalls.** Read `layout` after the screen settles: right after a transition it can return
   the system bar only. `input tap` takes a selector, not coordinates.
 - **Not for us:** Compose previews, Android Studio integration, Crashlytics `signals`.
-- **Optional, when available.** The emulator exists only where it was installed (today the
-  owner's Windows machine); cloud sessions and other environments do not have it. Nothing in the
-  repository may require it: `pnpm check`, the builds, the full Playwright run and the CI
-  native suites stay the required checks everywhere. An agent with the emulator uses it in
-  addition; an agent without it says the emulator check was not run.
+- **Preferred when available, never required.** The emulator exists only where it was installed
+  (today the owner's Windows machine); cloud sessions and other environments do not have it, so
+  nothing in the repository may require it. `pnpm check`, the builds and the full Playwright run
+  stay the required checks on every push, everywhere. When a change needs device evidence
+  (hardware Back, gestures, the soft keyboard, permissions, storage or a migration), an agent
+  that has the emulator prefers it: it is faster than dispatching the CI native suites and costs
+  the owner no time. Choose by need: Playwright for the interface's content and journeys, the
+  emulator for what only Android shows, the CI native suites for the record on the branch. An
+  agent without the emulator says the emulator check was not run.
 - **Who uses what** (owner decision of 2026-10-28). Agents use the emulator as their device
   during development. The owner tests the real app on their own phone. Both are device evidence
   and interchangeable for the app's behaviour; each report names which one ran. Playwright stays
