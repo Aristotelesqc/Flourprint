@@ -20,9 +20,9 @@ const at = '2026-10-11T09:00:00.000Z' as Instant;
 describe('flour summary (Formula tab, Flours screen)', () => {
   it('shows estimated values with ≈ and leaves unknown ones out', () => {
     const bread = builtInFlour('bread-flour') as FlourEntry;
-    expect(flourSummary(bread, translate(fr), 'fr-CA')).toBe('Protéines ≈ 13,5 %');
+    expect(flourSummary(bread, translate(fr), 'fr-CA')).toBe('Protéines ≈ 13,5\u00a0%');
     const tipo = builtInFlour('tipo-00-flour') as FlourEntry;
-    expect(flourSummary(tipo, translate(en), 'en')).toBe('Protein ≈ 12 % · IT 00');
+    expect(flourSummary(tipo, translate(en), 'en')).toBe('Protein ≈ 12% · IT 00');
     expect(flourSummary(builtInFlour('flour') as FlourEntry, translate(fr), 'fr')).toBe('');
     expect(flourSummary(builtInFlour('bread-flour', 1) as FlourEntry, translate(fr), 'fr')).toBe(
       '',
@@ -48,7 +48,7 @@ describe('flour summary (Formula tab, Flours screen)', () => {
       },
     };
     expect(flourSummary(mine, translate(fr), 'fr-CA')).toBe(
-      'Protéines 13,5 % · FR T65 · bio · Indice de chute 320 s',
+      'Protéines 13,5\u00a0% · FR T65 · bio · Indice de chute 320 s',
     );
   });
 

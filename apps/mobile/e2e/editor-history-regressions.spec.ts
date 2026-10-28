@@ -52,7 +52,7 @@ test('undo never silently destroys invalid raw input', async ({ page }) => {
   // A refusal or explicit confirmation can be presented, but unconfirmed text remains.
   await expect(water).toHaveValue('abc');
   await expect(
-    footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeDisabled();
 });
 
@@ -132,7 +132,7 @@ test('reset restores baseline on confirmation and cleans unchanged saved recipe'
   await water.press('Enter');
   await expect(water).toHaveValue('720');
   await expect(
-    footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeEnabled();
 
   // Reset prompts confirmation
@@ -145,7 +145,7 @@ test('reset restores baseline on confirmation and cleans unchanged saved recipe'
   await expect(alert).toBeHidden();
   await expect(water).toHaveValue('720');
   await expect(
-    footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeEnabled();
 
   // Confirming reset restores baseline (750) and clears dirty/save state for unchanged saved recipe
@@ -158,7 +158,7 @@ test('reset restores baseline on confirmation and cleans unchanged saved recipe'
   await expect(footer(page).getByRole('button', { name: 'Annuler', exact: true })).toBeDisabled();
   await expect(footer(page).getByRole('button', { name: 'Rétablir', exact: true })).toBeDisabled();
   await expect(
-    footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeDisabled();
 });
 
@@ -214,7 +214,7 @@ test('undo cap boundary preserves modified draft at oldest retained snapshot wit
   await openEditor(page);
   const water = routed(page).getByLabel('Eau (g)', { exact: true });
   const undoBtn = footer(page).getByRole('button', { name: 'Annuler', exact: true });
-  const saveBtn = footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true });
+  const saveBtn = footer(page).getByRole('button', { name: 'Enregistrer', exact: true });
 
   // Baseline starts at 750. Perform 55 accepted commits (751 through 805).
   for (let grams = 751; grams <= 805; grams++) {

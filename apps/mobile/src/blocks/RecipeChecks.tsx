@@ -25,11 +25,13 @@ export const RecipeChecks = ({
   issues,
   process,
   onClose,
+  onDismissed,
 }: {
   open: boolean;
   issues: readonly RecipeIssue[];
   process: Process;
   onClose: () => void;
+  onDismissed?: () => void;
 }) => {
   const { t, error, stepName, pct } = useMessages();
   const text = (issue: RecipeIssue): string => {
@@ -50,7 +52,13 @@ export const RecipeChecks = ({
   const blocking = issues.filter((i) => i.severity === 'blocking');
   const warnings = issues.filter((i) => i.severity === 'warning');
   return (
-    <IonModal isOpen={open} onDidDismiss={onClose}>
+    <IonModal
+      isOpen={open}
+      onDidDismiss={() => {
+        onClose();
+        onDismissed?.();
+      }}
+    >
       <IonHeader>
         <IonToolbar>
           <IonTitle>{t('check.title')}</IonTitle>
