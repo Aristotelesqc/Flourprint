@@ -218,12 +218,14 @@ const openFlour = async (page: Page, name: string) => {
 };
 
 /**
- * Schema 7 (migrations 5 to 7 applied), and every 0.1.0 revision, bake event, flour, draft and
+ * Schema 9 (migrations 5 to 9 applied), and every 0.1.0 revision, bake event, flour, draft and
  * bake status still there, byte for byte. Revisions may only have been added.
  */
 const expectMigrated = (old: Snapshot, now: Snapshot) => {
-  expect(now.schemaVersion).toBe(7);
-  expect(now.tables).toEqual(expect.arrayContaining(['equipment', 'ingredients']));
+  expect(now.schemaVersion).toBe(9);
+  expect(now.tables).toEqual(
+    expect.arrayContaining(['equipment', 'ingredients', 'reference_versions', 'thermal_profiles']),
+  );
   expect(now.recipeColumns).toContain('trashed_at');
   expect(now.recipes.every((r) => r.trashed_at == null)).toBe(true);
   for (const [key, document] of Object.entries(old.revisions)) {
@@ -399,7 +401,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
 
   page = await open();
 
-  await test.step('candidate: the first launch migrated to 7 and kept every row', async () => {
+  await test.step('candidate: the first launch migrated to 9 and kept every row', async () => {
     // The app has opened its database once: the migrations ran. Read it before any further use.
     await expect(shown(page, RECIPE).first()).toBeVisible();
     const migrated = await readDatabase('candidate-first-launch');
@@ -487,7 +489,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     });
   });
 
-  await test.step('candidate: migrations 5 to 7 ran and no row was lost', async () => {
+  await test.step('candidate: migrations 5 to 9 ran and no row was lost', async () => {
     const now = await readDatabase('candidate');
     await evidence('database-candidate', summary(now));
     expectMigrated(old, now);
