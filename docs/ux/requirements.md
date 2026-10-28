@@ -810,7 +810,7 @@ Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread).
   - **repository rules:** no hard-coded user-facing text (message keys), no baking calculation, guide present, version registered in the manifest.
 - the conformity checks are **modular**. Each check is its own versioned module (id, the rule it enforces, which components it applies to, how it is evaluated) that reports into the sheet; adding a requirement adds a module, without changing the catalogue or the other checks. Checks tied to the current stack (Material 3, Tailwind, Ionic) are grouped in a **stack profile**, separate from stack-independent checks (accessibility, units, text, repository rules), so a future change of stack replaces a profile instead of rewriting the system.
 
-The catalogue reads the library and never changes what the app uses. Screens: settings. Source: Owner, 2026-10-27. Kind: OD.
+Agents use the same catalogue as a quick alternative to reading the code. Everything the catalogue shows (stack page, guides, versions, source, usage status with screens, conformity sheets) is also generated as files in the repository from the same data: the existing `packages/ui/CATALOGUE.md` index, extended, and a structured JSON file, both regenerated and drift-checked in CI so they never disagree with the in-app catalogue. A command answers the same searches and filters from the command line (for example every shelved component, or every component with a Tailwind exception), so an agent does not need a browser. The catalogue reads the library and never changes what the app uses. Screens: settings. Source: Owner, 2026-10-27. Kind: OD.
 ---
 
 ## 13. OPEN owner choices (do not decide silently)
