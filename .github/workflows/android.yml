@@ -35,6 +35,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the merge counter counts the history (ADR 0016)
       # The emulator needs ~7.4 GB for its data partition; the runner's free space varies and once
       # fell short ("Not enough space to create userdata partition"). Drop toolchains unused here.
       - name: Free disk space
@@ -58,6 +60,7 @@ jobs:
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/build-id.mjs
       - run: pnpm build
       - run: pnpm build:mobile
