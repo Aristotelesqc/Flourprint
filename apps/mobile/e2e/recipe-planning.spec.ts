@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { enterEditor, editorSection, showPlanning } from './ui-actions';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
+// L111 adds weighing checkboxes to Planning; assertions below still forbid authoring inputs.
 const modal = (page: Page) => page.locator('ion-modal:not(.overlay-hidden)');
 const footer = (page: Page) => routed(page).locator('ion-footer:visible');
 const scrollTop = (page: Page) =>
@@ -128,7 +129,9 @@ for (const english of [false, true]) {
     await expect.poll(() => scrollTop(page)).toBe(260);
     await expect(when).toHaveValue('2026-11-05T14:00');
     await expect(target).toHaveValue('proof');
-    await expect(routed(page).locator('input:not([type="datetime-local"]):visible')).toHaveCount(0);
+    await expect(
+      routed(page).locator('input:not([type="datetime-local"]):not([type="checkbox"]):visible'),
+    ).toHaveCount(0);
     await shortcut(page).click();
     await expect(modal(page)).toBeVisible();
     await close(page);
@@ -160,7 +163,7 @@ for (const english of [false, true]) {
     await water.fill('abc');
     await water.blur();
     await showPlanning(page);
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
     ).toBeVisible();
@@ -189,7 +192,7 @@ for (const english of [false, true]) {
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
     ).toBeVisible();
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
   });
 
   test(`Method uses the existing fermentation authoring path and preserves Auto${suffix}`, async ({
@@ -223,7 +226,7 @@ for (const english of [false, true]) {
     await expect(routed(page).getByTestId('fermentation-card')).toBeFocused();
     await expect(auto).toHaveAttribute('aria-pressed', 'true');
     await showPlanning(page);
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(routed(page).getByText(/^≈ /).filter({ visible: true })).not.toHaveCount(0);
     await recipe(page).click();
     await enterEditor(page);
@@ -390,5 +393,5 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
   await expect(
     routed(page).getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true }),
   ).toHaveCount(0);
-  await expect(routed(page).locator('input:visible')).toHaveCount(0);
+  await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
 });

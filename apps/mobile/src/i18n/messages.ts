@@ -530,6 +530,10 @@ export const en = {
   'formula.prep.flourPct': '{pct} of the flour',
   'formula.prep.hydration': '{pct} hydration',
   'formula.prep.allocation': '{name} {pct}',
+  'formula.weighing.scopeNotice':
+    'Checks are shared with Planning and carried into Preparation at start.',
+  'formula.stage.final': 'Final mix',
+  'formula.stage.finishing': 'Finishing',
   'formula.finalMix': 'Ingredients',
   'formula.finalMix.progress': '{done} of {total}',
   'explain.title': 'Where the water comes from',
@@ -1741,6 +1745,10 @@ export const fr: Catalog = {
   'formula.prep.flourPct': '{pct} de la farine',
   'formula.prep.hydration': '{pct} d’hydratation',
   'formula.prep.allocation': '{name} {pct}',
+  'formula.weighing.scopeNotice':
+    'Pesées partagées avec la planification et reportées dans la préparation au démarrage.',
+  'formula.stage.final': 'Mélange final',
+  'formula.stage.finishing': 'Finitions',
   'formula.finalMix': 'Ingrédients',
   'formula.finalMix.progress': '{done} sur {total}',
   'explain.title': 'D’où vient l’eau',

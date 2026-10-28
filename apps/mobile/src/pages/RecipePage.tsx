@@ -28,6 +28,8 @@ import {
   defaultVariant,
   doughSteps,
   resolveFormula,
+  sameWeighingRow,
+  weighingGroups,
   type BakeCommandPayload,
   type BakeSummary,
   type Recipe,
@@ -42,7 +44,7 @@ import {
   type Revision,
 } from '@flourprint/core/domain';
 import { FormulaConsultation } from '../blocks/FormulaConsultation';
-import { buildFinalMixItems } from '../blocks/WeighingChecklist';
+import { WeighingChecklist, type WeighedRow } from '../blocks/WeighingChecklist';
 import { FormulaSection } from '../blocks/FormulaSection';
 import { HistorySection } from '../blocks/HistorySection';
 import { ProcessSection } from '../blocks/ProcessSection';
@@ -116,7 +118,7 @@ const RecipePageContent = () => {
   const flourCatalog = useFlourCatalog();
   const router = useIonRouter();
   const [presentAlert] = useIonAlert();
-  const { t, error, name: ingredientName, componentName } = useMessages();
+  const { t, error } = useMessages();
   const [tab, setTab] = useState<Tab>('formula');
   const [editorSection, setEditorSection] = useState<EditorSection>('comp');
   const [base, setBase] = useState<{ name: string; revision: Revision }>();
@@ -161,17 +163,12 @@ const RecipePageContent = () => {
   const [targetedStepId, setTargetedStepId] = useState<string>();
   const [returnToPlanning, setReturnToPlanning] = useState(false);
 
-  // Shared temporary weighing checklist lifted to page level (#67)
-  const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
-  const toggleWeighed = useCallback((key: string, grams: number) => {
+  // Shared temporary weighing checklist lifted to page level (#67, L110, L111)
+  const [weighed, setWeighed] = useState<readonly WeighedRow[]>([]);
+  const toggleWeighed = useCallback((target: WeighedRow) => {
     setWeighed((prev) => {
-      const next = new Map(prev);
-      if (next.get(key) === grams) {
-        next.delete(key);
-      } else {
-        next.set(key, grams);
-      }
-      return next;
+      const exists = prev.some((w) => sameWeighingRow(w, target));
+      return exists ? prev.filter((w) => !sameWeighingRow(w, target)) : [...prev, target];
     });
   }, []);
 
@@ -420,21 +417,39 @@ const RecipePageContent = () => {
 
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
   const issues = useMemo(() => (draft ? checkRecipe(draft.formula, draft.process) : []), [draft]);
+
+  // Reset checks on recipe/draft route switch or when baseline recipe's saved revision changes
+  const activeRecipeKey = draftId ?? recipeId;
+  const savedRevisionKey = base ? `${base.revision.recipeId}@${base.revision.version}` : undefined;
+  const lastBaselineRef = useRef<{
+    recipeKey: string | undefined;
+    revisionKey: string | undefined;
+  }>({
+    recipeKey: undefined,
+    revisionKey: undefined,
+  });
+  useEffect(() => {
+    const prev = lastBaselineRef.current;
+    if (prev.recipeKey !== undefined && prev.recipeKey !== activeRecipeKey) {
+      setWeighed([]);
+    } else if (prev.revisionKey !== undefined && prev.revisionKey !== savedRevisionKey) {
+      setWeighed([]);
+    }
+    lastBaselineRef.current = { recipeKey: activeRecipeKey, revisionKey: savedRevisionKey };
+  }, [activeRecipeKey, savedRevisionKey]);
+
+  // Prune absent rows by identity against core groups, preserving checks across quantity edits
   useEffect(() => {
     if (!draft || !resolved?.ok) return;
-    const quantities = new Map(
-      buildFinalMixItems(draft.formula, resolved.value, ingredientName, componentName).map(
-        (item) => [item.key, item.grams],
-      ),
-    );
+    const groups = weighingGroups(draft.formula, resolved.value);
     setWeighed((previous) => {
-      const next = new Map(previous);
-      for (const [key, grams] of previous) {
-        if (quantities.get(key) !== grams) next.delete(key);
-      }
-      return next.size === previous.size ? previous : next;
+      if (previous.length === 0) return previous;
+      const valid = previous.filter((checked) =>
+        groups.some((group) => group.rows.some((row) => sameWeighingRow(row, checked))),
+      );
+      return valid.length === previous.length ? previous : valid;
     });
-  }, [draft, resolved, ingredientName, componentName]);
+  }, [draft, resolved]);
 
   if ((!base && !newRecipe) || !draft || !resolved) {
     return (
@@ -797,6 +812,22 @@ const RecipePageContent = () => {
     if (pendingStart.current) setNotice(t('recipe.retryStart'));
     // The entry versions the process references, copied into the bake (equipment.md).
     const equipment = await processEquipmentEntries(services.equipment, revision.process);
+    const savedResolved = resolveFormula(revision.formula);
+    const savedGroups = savedResolved.ok
+      ? weighingGroups(revision.formula, savedResolved.value)
+      : [];
+    const validWeighed = weighed
+      .filter((w) => savedGroups.some((g) => g.rows.some((r) => sameWeighingRow(r, w))))
+      .map((w) => ({
+        stage:
+          w.stage.kind === 'component'
+            ? { kind: 'component' as const, id: w.stage.id }
+            : { kind: w.stage.kind },
+        item:
+          w.item.kind === 'ingredient'
+            ? { kind: 'ingredient' as const, id: w.item.id }
+            : { kind: w.item.kind },
+      }));
     const pending = (pendingStart.current ??= {
       bakeId: services.ids.next(),
       commandId: services.ids.next(),
@@ -812,6 +843,7 @@ const RecipePageContent = () => {
           flourCatalog.personal,
         ),
         ...(equipment.length === 0 ? {} : { equipment }),
+        ...(validWeighed.length === 0 ? {} : { weighed: validWeighed }),
       },
     });
     const result = await writes.run(() =>
@@ -832,6 +864,7 @@ const RecipePageContent = () => {
       setFailure(result.value.error);
       return;
     }
+    setWeighed([]);
     await refreshBakes();
     openBake(pending.bakeId);
   };
@@ -1218,6 +1251,16 @@ const RecipePageContent = () => {
             onOpenBake={openBake}
             {...(trashedAt === undefined ? { onEditStepInRecipe: editStepInRecipe } : {})}
           />
+          {resolved.ok && trashedAt === undefined && (
+            <div className="mt-5 pb-6">
+              <WeighingChecklist
+                formula={draft.formula}
+                resolved={resolved.value}
+                weighed={weighed}
+                onToggle={toggleWeighed}
+              />
+            </div>
+          )}
         </div>
 
         {base && (
