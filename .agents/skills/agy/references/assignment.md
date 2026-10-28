@@ -102,3 +102,20 @@ To spend AGY quota rather than Claude quota: Gemini 3.8 Flash high implements th
 coordinating Claude session runs the checks and integrates, and an independent Claude subagent
 reviews adversarially (always for engine or contract mathematics). Gemini 4 Argon is used only for
 heavy cases, on the owner's request.
+
+## Parallel independent audits (owner decision of 2026-10-28)
+
+Use AGY quota generously: an audit runs **three Gemini 3.8 Flash reviewers in parallel** by
+default, because one Flash reviewer can miss or invent findings.
+
+- **Distinct focuses, same sources.** For example contract and calculations; persistence and
+  compatibility; architecture boundaries and tests (or, for the interface, journeys, visual and
+  accessibility, ledger items). Each gets its own output directory and never sees another's
+  report.
+- **Cross-check, then verify.** A finding two reviewers reach independently is likely real; a
+  single one is not dismissed. The caller still verifies every finding in the source before
+  relaying it, and posts each finding's outcome on the PR or issue.
+- **Engine and contract mathematics** keep an independent Claude reviewer in addition.
+- **Writing is not parallel:** implementation keeps one writer per overlapping file set.
+- Small fixes and documentation edits are delegated to AGY too; the coordinating session keeps
+  the brief, the checks and the integration.
