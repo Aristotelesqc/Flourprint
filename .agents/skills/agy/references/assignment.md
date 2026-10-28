@@ -60,3 +60,43 @@ For generated patches, request a unified diff against the supplied source, witho
 adjacent context or placeholder code. Tool-free source-snapshot generation must say no filesystem
 changes/tests were performed. Direct implementation must not commit/push or publish unless those
 actions are explicitly assigned.
+
+## Headless implementation in one pass
+
+Learned on #186, #189 and #190 (2026-10-26/27, Windows, AGY headless). These are prompt
+conventions that made the runs succeed, not permission settings.
+
+- **Give the whole plan.** The owner's Gemini instructions gate edits on a write marker and accept
+  it only for a plan already presented. Put the concrete plan in the prompt: objective, the
+  contract sections that win, exact files allowed, what each change does, the tests to add, the
+  version strings. Relay the owner's read or write marker at the top, then run with
+  `--mode accept-edits`. Without the plan and the marker, the run stops after its plan and asks.
+- **The markers are private.** The caller relays the literal values from its own private
+  configuration. They never appear in the repository, a commit, a PR, an issue or a published
+  page; raw prompts stay in the ignored `.agy-runs/`.
+- **No commands.** Headless runs auto-deny terminal commands, so tests cannot run inside AGY. Say
+  so in the brief ("do not run commands; the caller runs the checks"). The caller runs
+  `pnpm check`, the builds and Playwright, then sends the exact failures back through
+  `--conversation` with the recorded ID. Budget two or three such rounds.
+- **Read the diff, not the report.** A delegate's "tests pass" or "fixed" is not evidence. Check
+  the touched paths, the fixture files (never edited), the domain boundary, and rerun everything.
+
+## Review briefs that hold
+
+- **Quote only what was read.** Require code and contract text quoted with file and line, never
+  reconstructed. One reviewer (Gemini 4 Argon) cited a contract clause and two versions of a
+  function that do not exist, and "recomputed" fixture cases with inputs that were not the
+  fixture's.
+- **Use the fixture's actual inputs** for any hand computation, and name the case.
+- **Verify every finding in the source** before relaying it, and post the review with each
+  finding's outcome (confirmed and fixed, by design, not reproduced, discarded) on the PR before
+  the merge.
+- **Discriminating tests.** When a review questions a test, prove it with a negative control:
+  disable the change and show the test fails.
+
+## Division of work (owner decision of 2026-10-27)
+
+To spend AGY quota rather than Claude quota: Gemini 3.8 Flash high implements through AGY, the
+coordinating Claude session runs the checks and integrates, and an independent Claude subagent
+reviews adversarially (always for engine or contract mathematics). Gemini 4 Argon is used only for
+heavy cases, on the owner's request.
