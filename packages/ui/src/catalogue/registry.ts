@@ -19,6 +19,9 @@ import guide7 from '../components/dialog/guide.ts';
 import version8 from '../components/select/v1.tsx';
 import guide8 from '../components/select/guide.ts';
 
+import sortableList from '../components/sortable-list/v1.tsx';
+import sortableGuide from '../components/sortable-list/guide.ts';
+
 export const catalogue = library.catalogue({
   'fp.button': [version0],
   'fp.surface': [version1],
@@ -29,6 +32,7 @@ export const catalogue = library.catalogue({
   'fp.bottom-sheet': [version6],
   'fp.dialog': [version7],
   'fp.select': [version8],
+  'fp.sortable-list': [sortableList],
 });
 
 export const guides = library.guides({
@@ -41,4 +45,5 @@ export const guides = library.guides({
   'fp.bottom-sheet': guide6,
   'fp.dialog': guide7,
   'fp.select': guide8,
+  'fp.sortable-list': sortableGuide,
 });

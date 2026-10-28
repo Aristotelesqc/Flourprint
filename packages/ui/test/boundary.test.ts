@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * ADR 0020: the library holds no baking math and no product data, so it never imports
- * @flourprint/core or @flourprint/adapters; it depends on React and Ionic only. Backs up the ESLint rule.
+ * @flourprint/core or @flourprint/adapters; it imports only approved UI dependencies. The sortable-list module may also use the pinned
+ * dnd-kit0.5.1 dependencies approved in #153; that exception does not apply to other modules. Backs up the ESLint rule.
  */
 const srcDir = fileURLToPath(new URL('../src', import.meta.url));
 
@@ -23,9 +24,14 @@ describe('packages/ui dependency boundary', () => {
   const files = sourceFiles(srcDir).filter((file) => /\.(ts|tsx)$/.test(file));
 
   it.each(files.map((file) => relative(srcDir, file)))(
-    '%s imports React, Ionic or the library only',
+    '%s imports only its approved UI dependencies',
     (file) => {
       for (const specifier of importsOf(join(srcDir, file))) {
+        if (
+          file.replaceAll('\\', '/').startsWith('components/sortable-list/') &&
+          /^@dnd-kit\/(react|dom)$/.test(specifier)
+        )
+          continue;
         expect(specifier, `${file} imports ${specifier}`).toMatch(
           /^(\.\.?\/|react(\/|$)|react-dom(\/|$)|@ionic\/react(\/|$))/,
         );

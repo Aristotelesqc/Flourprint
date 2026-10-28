@@ -367,6 +367,59 @@ Anchored popover overlay attached to the form field frame for choosing a single 
 
 - `v1`: Production Ionic popover select with stacked label, descriptions, error states, and type-guarded option matching.
 
+### `fp.sortable-list`
+
+Enables reordering of list items through pointer drag-and-drop or accessible keyboard controls with controlled intent dispatch.
+
+**Use when**
+
+- Reordering sequential workflow steps, stages, or timeline items.
+- User-directed prioritization or sorting of document sections.
+
+**Avoid when**
+
+- Static lists with fixed order or read-only presentation; render standard rows instead.
+- Selecting between alternatives or filtering lists; use Select or Tabs instead.
+
+**Props**
+
+| Prop                 | Meaning                                                                                                                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`              | List of draggable item descriptors providing unique stable IDs and accessible display labels.                                                                        |
+| `children`           | Content containing sortable items, slot targets, and optional headers or dividers.                                                                                   |
+| `renderOverlay`      | Render function producing the floating overlay representation of the currently dragged item.                                                                         |
+| `onDropIntent`       | Callback invoked exactly once upon drop completion with the computed intent (source ID and target predecessor afterId), or null if cancelled, outside, or unchanged. |
+| `instructions`       | Localized screen reader instructions explaining keyboard drag and drop operations.                                                                                   |
+| `announcements`      | Localized screen reader announcement functions for drag start, movement over slots, drop completion, and gesture cancellation.                                       |
+| `onDragStart`        | Optional callback invoked upon actual gesture activation, suitable for entering draft editing mode.                                                                  |
+| `onDragActiveChange` | Optional callback notifying when drag interaction begins or ends, used to guard navigation or carousels.                                                             |
+| `getDropFeedback`    | Optional pure text feedback helper reporting assistive status messages for candidate drop locations.                                                                 |
+| `disabled`           | Whether reordering gestures and keyboard interactions are disabled.                                                                                                  |
+| `className`          | Optional CSS class name applied to the container element.                                                                                                            |
+| `ref`                | Optional imperative ref exposing cancelDrag() to cancel any active drag operation programmatically.                                                                  |
+
+**Accessibility**
+
+- Enforces 350ms delay hold on pointer handles with 10px tolerance to differentiate intentional drags from vertical scrolling.
+- Provides full keyboard reordering support with Space/Enter pickup and arrow key positioning.
+- Dispatches live screen reader announcements using item display labels rather than internal IDs.
+- Disables drop animations when reduced motion is requested at system or document level.
+- Maintains minimum 48px touch targets for drag handles.
+
+**Related**
+
+- `fp.surface`
+- `fp.button`
+
+**Decisions**
+
+- [ADR 0020: Versioned component library](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0020-versioned-component-library.md)
+- [ADR 0021: Theme builder and component sourcing](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
+
+**Versions**
+
+- `v1`: Domain-neutral sortable list with 350ms hold activation constraints, post-scroll release hit-testing, and accessible announcements.
+
 ### `fp.surface`
 
 Provides an opaque, flat container for grouping sections, cards and content areas.
@@ -824,3 +877,33 @@ Closes a bottom sheet toward the bottom edge.
 **Versions**
 
 - `v1` (keyframes), default selection: Round 2 (`22db386`) bottom sheet: slides back down.
+
+### `fp.motion.step-drag`
+
+Settle animation for dragged step node cards snapping back to origin or settling into slot (L96, L104).
+
+**Use when**
+
+- Step drag gesture releases outside valid target, dropped on engine refusal, or cancelled by Escape/Back.
+
+**Avoid when**
+
+- Direct active finger tracking (must directly follow finger without lag or transition easing).
+
+**Accessibility**
+
+- Honours prefers-reduced-motion and manual motion reduction (instant settle without duration).
+
+**Related**
+
+- `fp.motion.tab-carousel`
+- `fp.motion.highlight`
+
+**Decisions**
+
+- [L96/L104: Step drag and drop settle motion](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [ADR 0021: motion items](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
+
+**Versions**
+
+- `v1` (keyframes), default selection: Settle animation for step drag and drop from release coordinates to target or origin position (L96, L104).
