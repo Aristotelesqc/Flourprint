@@ -29,19 +29,28 @@ major pull request (ADR 0013).
 
 `scripts/build-id.mjs` derives, for every CI job, from the root version, the branch and the run:
 
-| Build                     | Version name (Advanced, feedback export) | Label (app bar)      |
-| ------------------------- | ---------------------------------------- | -------------------- |
-| `main`                    | `0.2.0`                                  | `v0.2.0`             |
-| `dev`                     | `0.2.0-dev.<run>+<sha7>`                 | `v0.2.0-<code-name>` |
-| pull request `<n>`        | `0.2.0-pr.<n>.<run>+<sha7>`              | `v0.2.0-<code-name>` |
-| local (no CI environment) | `0.2.0-local`                            | `v0.2.0-local`       |
+| Build                     | Version name (Advanced, feedback export) | Label (app bar)                      |
+| ------------------------- | ---------------------------------------- | ------------------------------------ |
+| `main`                    | `0.2.0`                                  | `v0.2.0`                             |
+| `dev`                     | `0.2.0-dev.<merges>+<sha7>`              | `v0.2.0.<merges4>-<code-name>`       |
+| pull request `<n>`        | `0.2.0-pr.<n>.<merges>+<sha7>`           | `v0.2.0.<merges4>-pr<n>-<code-name>` |
+| local (no CI environment) | `0.2.0-local`                            | `v0.2.0-local`                       |
 
 The app bar shows the label under the app name, so the baker sees which build runs, on the
 release APK as on the dev APK and the web previews (explicit owner request of 2026-10-12). The
 **code name** (`crispy-pretzel`, `weird-puffin`…) tells apart the thin slices of commits
 between two versions. It is an adjective and a noun picked from the commit hash
 (`scripts/build-names.mjs`), never drawn at random: the dev APK and the dev site built from one
-commit show the same name. The version name keeps the run and the short hash for exact tracing.
+commit show the same name. The version name keeps the merge counter and the short hash for exact tracing.
+
+The **merge counter** (owner decision of 2026-10-28) is the number of first-parent commits of the
+built branch, so it rises by one with every merge into `dev` and **never resets**, across
+versions: one number names one merge. A pull request shows the counter of its base branch,
+with `pr<n>`, since it is not merged yet. The label pads it to four digits (`v0.3.0.0088-fancy-rye`;
+after 9999 it simply grows to five); the version name keeps it unpadded, as semver requires.
+`canary` counts its own branch. A release has no counter. `scripts/build-id.mjs` computes it from
+the full history (`fetch-depth: 0`) and refuses a shallow checkout. Before this decision the
+version name carried the CI run number, which also rose for pull-request runs.
 
 Every build publishes `build.json` (build, label, channel) next to the app. Builds other than a
 release offer **Load the latest dev build** in Advanced (owner request of 2026-10-12): it reads
