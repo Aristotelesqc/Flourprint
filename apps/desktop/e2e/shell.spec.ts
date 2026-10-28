@@ -26,6 +26,22 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
 
   // A saved recipe opens in consultation (#70): editing is explicit.
   const salt = app.page.getByLabel('Sel (g)', { exact: true });
+  await app.page.evaluate(() => {
+    const order: string[] = [];
+    Reflect.set(window, '__flourprintNativeMenuOrder', order);
+    document.addEventListener('ionPopoverDidPresent', () => order.push('presented'), {
+      once: true,
+    });
+    document.addEventListener(
+      'pointerdown',
+      (event) => {
+        if (event.target instanceof Element && event.target.closest('[role="menuitem"]')) {
+          order.push('pressed');
+        }
+      },
+      true,
+    );
+  });
   await tap(
     app.page,
     app.page.getByRole('button', { name: 'Actions sur la recette', exact: true }),
@@ -33,6 +49,14 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
   const actions = app.page.getByRole('menu');
   await tap(app.page, actions.getByRole('menuitem', { name: 'Modifier la recette', exact: true }));
   await expect(actions).toBeHidden();
+  const menuOrder = await app.page.evaluate(
+    () => Reflect.get(window, '__flourprintNativeMenuOrder') as string[],
+  );
+  await test.info().attach('native-popover-touch-order', {
+    body: JSON.stringify(menuOrder),
+    contentType: 'application/json',
+  });
+  expect(menuOrder).toEqual(['presented', 'pressed']);
   await expect(salt).toBeVisible();
   await salt.fill('25');
   await salt.press('Enter');
