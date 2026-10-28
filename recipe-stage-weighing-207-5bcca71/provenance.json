@@ -1,0 +1,201 @@
+{
+  "source": "5bcca71b3bb067738cd9326ad86c31f4aa52342b",
+  "pr": 207,
+  "kind": "production-browser-captures",
+  "fixture": "independent synthetic stage-weighing recipe",
+  "contexts": 12,
+  "screenshots": [
+    {
+      "file": "en-amoled-360-130-planning-components.png",
+      "sha256": "5ca5c11a4dd3f8ef1b5f510bb05d117ae3764b57c16783af13ac8a41274e8558"
+    },
+    {
+      "file": "en-amoled-360-130-planning-final.png",
+      "sha256": "ef919e8a6a7b2d5594be1b5cc9c0841ac97c3e0a6d5ac3a55d2948b213ab0ad3"
+    },
+    {
+      "file": "en-amoled-360-130-recipe-components.png",
+      "sha256": "4c5638c78e99e10e026cf96cc253ca993d7ef78c2ef7fe976784a3c666e09876"
+    },
+    {
+      "file": "en-amoled-360-130-recipe-final.png",
+      "sha256": "d2a83e3020e12153f1c5efecaa48cc235f44d2c7d6da81b157ee9d1fe80df06e"
+    },
+    {
+      "file": "en-amoled-393-100-planning-components.png",
+      "sha256": "9e73a72432835f877cb7f573cc34cdb453df20305fddebcc21b07e0cc079593e"
+    },
+    {
+      "file": "en-amoled-393-100-planning-final.png",
+      "sha256": "9903e4c4112035813bf2abe6e537ae5195119c68c337171820f68076c039c138"
+    },
+    {
+      "file": "en-amoled-393-100-recipe-components.png",
+      "sha256": "7a6a1f1816b391f6991295dbb9d415e102f5d44981eb5c53fe95f41367589afc"
+    },
+    {
+      "file": "en-amoled-393-100-recipe-final.png",
+      "sha256": "544c41b6392da715ff1e524324c40683706ed4ff1035a3753b63bc9a7b40ad00"
+    },
+    {
+      "file": "en-dark-360-130-planning-components.png",
+      "sha256": "dd0e6d1da132ca3bb25a14534cb306ba67bce3d4ec30b228a2b9e31d4badfc87"
+    },
+    {
+      "file": "en-dark-360-130-planning-final.png",
+      "sha256": "8173f41b7e3a93f9e0eafbadeed54f1b9eea35c165b0b786577672b43e542d0e"
+    },
+    {
+      "file": "en-dark-360-130-recipe-components.png",
+      "sha256": "83224b218ac3be99089e14bf50de27d5c5558f0f688a5f68e0ae200b829cfc95"
+    },
+    {
+      "file": "en-dark-360-130-recipe-final.png",
+      "sha256": "931be8c01a57fbfb44e3bced95fee077e08a0fa6697fe1ad7b7c748c5fa7cedb"
+    },
+    {
+      "file": "en-dark-393-100-planning-components.png",
+      "sha256": "8c148336feeff34843651c824868c2ee9a2445fad1389fd9b084558f1af9c1e3"
+    },
+    {
+      "file": "en-dark-393-100-planning-final.png",
+      "sha256": "a331464ce9dac3ed505a3c55c41d2ce89a92ea8a5618331e463f236b59dc4773"
+    },
+    {
+      "file": "en-dark-393-100-recipe-components.png",
+      "sha256": "af8c091c93e6b2689082e6ac2ff08f9e97f500c39848e1e8808b1286393c31a0"
+    },
+    {
+      "file": "en-dark-393-100-recipe-final.png",
+      "sha256": "a3761189de4f12202df2d03e0abc4ee7b93fb2514281d4545e9e1f1184644b4f"
+    },
+    {
+      "file": "en-light-360-130-planning-components.png",
+      "sha256": "a8fbc88056b2babe41721a4af8056f6e049745cb05d754f6ca245537f247022f"
+    },
+    {
+      "file": "en-light-360-130-planning-final.png",
+      "sha256": "8231290aad4737a77e2e5602b5e6fe786bf27f1321189a4ec288c72a5cd568f2"
+    },
+    {
+      "file": "en-light-360-130-recipe-components.png",
+      "sha256": "dbf041605f388bbd0a08f1d9e3df07014d6acc48f75027f876949d5723807df6"
+    },
+    {
+      "file": "en-light-360-130-recipe-final.png",
+      "sha256": "9908ea4f0c3cd99bcef4f1daee9a17c697abe397b01e861decc8f77b776350ee"
+    },
+    {
+      "file": "en-light-393-100-planning-components.png",
+      "sha256": "560eabd869eee2f88a07067b959aa63db6cc366ffb55fa3dff2801db0b4fc882"
+    },
+    {
+      "file": "en-light-393-100-planning-final.png",
+      "sha256": "982ff2a79a29cea4d27a0f1ec3cfc77244cfba0c7fdc515a852a646aa531259f"
+    },
+    {
+      "file": "en-light-393-100-recipe-components.png",
+      "sha256": "be7f1e22401eb0f49f66ebba2bb1ad0bf8d19529f68f5ed4ccacaeed96875723"
+    },
+    {
+      "file": "en-light-393-100-recipe-final.png",
+      "sha256": "e07303b4420ac67193e6d5899a8ddbe3bbebb130feaccb318ac956e21879117f"
+    },
+    {
+      "file": "fr-amoled-360-130-planning-components.png",
+      "sha256": "2884398b17c45e4da391a8f6c246aac8519e1b5feac94eb342c2d7c55dbd29e1"
+    },
+    {
+      "file": "fr-amoled-360-130-planning-final.png",
+      "sha256": "c93c12efe9b02efc0cf942b05b92ed45b5c249f091b2c90a52730032a21b2ce7"
+    },
+    {
+      "file": "fr-amoled-360-130-recipe-components.png",
+      "sha256": "3089603cab95c3cb56e12b3bab40634ad4f4c0e67b723f13fc71a822393145b3"
+    },
+    {
+      "file": "fr-amoled-360-130-recipe-final.png",
+      "sha256": "3b6920c4160e9f928523bbe5adb330c91d21696612d44e6e46885c56a3926288"
+    },
+    {
+      "file": "fr-amoled-393-100-planning-components.png",
+      "sha256": "4e43a1cc9718f820e67b6fdcb9858baccd783a65f93058bd39a45379f4a61164"
+    },
+    {
+      "file": "fr-amoled-393-100-planning-final.png",
+      "sha256": "a9dc724ccf34b759feff8d4323d8a8d72de849e234f8b3a19d19ea641d754038"
+    },
+    {
+      "file": "fr-amoled-393-100-recipe-components.png",
+      "sha256": "cbdc64d9f0349a9a43c57ec659ae16642c72ff5d8a85024ed595a04cf407800c"
+    },
+    {
+      "file": "fr-amoled-393-100-recipe-final.png",
+      "sha256": "a8e61748960a1e6b188ad5f32a20f7dc6905a174b80efd50031c6c13501fe9d2"
+    },
+    {
+      "file": "fr-dark-360-130-planning-components.png",
+      "sha256": "f7fa331b6da389d2aaf13a7afb4a51d2089b87f0123ee237326faa1b0cbe9eec"
+    },
+    {
+      "file": "fr-dark-360-130-planning-final.png",
+      "sha256": "079f046ecbff3fcd17414f27532dc801075ad51e51ee8bae926e5339f7bb074e"
+    },
+    {
+      "file": "fr-dark-360-130-recipe-components.png",
+      "sha256": "ce341394fbd01dccae32973c27b6c5c2083ccfe7d640dc5b3e7f30d26f6527b6"
+    },
+    {
+      "file": "fr-dark-360-130-recipe-final.png",
+      "sha256": "9dd1d5c9a330e2fd7611688f8587fc2a8e2db0ff1b74d6694681dd1d5d1b437d"
+    },
+    {
+      "file": "fr-dark-393-100-planning-components.png",
+      "sha256": "3aea9f3c7c3cd206cd7089fbed2300662d4d23d9ba9ad31640d4e0983bc025ff"
+    },
+    {
+      "file": "fr-dark-393-100-planning-final.png",
+      "sha256": "f3b06344747c3bd953d2ac4c3684da03e977d5a94c40e030aa0211cde85e2a9f"
+    },
+    {
+      "file": "fr-dark-393-100-recipe-components.png",
+      "sha256": "32a02d79b48bb3425d94b5431893d9f23f50bb511cc31fed504ef8344151b3bb"
+    },
+    {
+      "file": "fr-dark-393-100-recipe-final.png",
+      "sha256": "30afb9536974acceaedf1acd9d8cf2ae211d42451a6d5bf891dd945e80839f82"
+    },
+    {
+      "file": "fr-light-360-130-planning-components.png",
+      "sha256": "3011764969c6532576ab5442882957f0fceaedc81749b6a6aac047624af07846"
+    },
+    {
+      "file": "fr-light-360-130-planning-final.png",
+      "sha256": "d02cd6c6b73d337945a61213a0ff312008bbde6cf3d4974ee895dc4d8bf4ce99"
+    },
+    {
+      "file": "fr-light-360-130-recipe-components.png",
+      "sha256": "a1034f77c6ded830d1e929d93fc9ff4ad5ef94fedc769d9ce9656b9c66f0543f"
+    },
+    {
+      "file": "fr-light-360-130-recipe-final.png",
+      "sha256": "9992907db9fa845d220f426b1469bbbf5e7a160afdae9946a1851457eb973bd5"
+    },
+    {
+      "file": "fr-light-393-100-planning-components.png",
+      "sha256": "a5ad04c6bcb284b8aad6f156f0e73be8f87c7b58133e99b5655d040b17df9144"
+    },
+    {
+      "file": "fr-light-393-100-planning-final.png",
+      "sha256": "2f05023d88e70df081569079ee460324a2b6f9103d4b24fcfff680d8ceedb87b"
+    },
+    {
+      "file": "fr-light-393-100-recipe-components.png",
+      "sha256": "5b21e3ee0a82f90eef204c736b49ba368ad385d2d459f049d736d8e006430610"
+    },
+    {
+      "file": "fr-light-393-100-recipe-final.png",
+      "sha256": "4a244d30b3b881e92f3912b2f1152ae2fd5635543c954a54a12620fc95c1228d"
+    }
+  ]
+}
