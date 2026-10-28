@@ -789,6 +789,15 @@ Screens: preparation, planning, recipe, library. Source: Owner, 2026-10-25 (#176
 
 Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread). Kind: OD.
 
+**L150.** Dev, canary and pull-request preview builds offer the component catalogue inside the app, under Settings → Advanced → Component library. The release build has no entry and does not contain the catalogue's code; it keeps the library itself (the `fp.*` components, motions, tokens and the manifest's selected versions), which the interface always runs on. In the catalogue:
+
+- a first page explains the stack in plain words: the layers (Material 3 language and Flourprint tokens, then behaviour from Ionic, an accepted headless library only for a demonstrated need, or custom code, then the versioned `fp.*` components and `fp.motion.*` items), how the manifest selects one version per id, what a release contains, and how motion and reduced motion work;
+- every component and motion can be browsed and searched by name and by purpose;
+- each one has its own page: what it is for and when to use it (its guide), its versions and maturity, its source (custom, wraps Ionic, or uses an accepted headless library), and the version the manifest selects;
+- each can be tried live: theme, text size, reduced motion and its states (disabled, error, loading, long content), and two versions compared side by side;
+- measurable checks are shown where the catalogue can measure them (contrast, touch target size).
+
+The catalogue reads the library and never changes what the app uses. Screens: settings. Source: Owner, 2026-10-27. Kind: OD.
 ---
 
 ## 13. OPEN owner choices (do not decide silently)
