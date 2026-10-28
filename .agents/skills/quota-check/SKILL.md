@@ -30,7 +30,9 @@ Context compaction does not reset provider usage; reread quota after a resumed/c
 Keep a concise working observation: measured time with timezone, harness/provider, model or quota
 group when exposed, native source, every applicable window, whether its metric is used or
 remaining, percentage at native precision, reset time or the provider's relative reset text,
-and the decision below. Account emails, ids, keys, tokens and raw authentication data do not
+and the decision below. Keep actual account percentages/reset observations local or in the
+current private conversation; public handoffs report the gate and work state only unless the
+user explicitly authorizes sharing the figures. Account emails, ids, keys, tokens and raw authentication data do not
 belong in this record or a public report.
 
 Unknown is **UNAVAILABLE**, never zero usage or unlimited capacity. Token counts, context size,

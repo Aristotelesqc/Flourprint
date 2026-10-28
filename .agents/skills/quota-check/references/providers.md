@@ -53,17 +53,17 @@ Official references: [AGY usage panel](https://antigravity.google/docs/cli/comma
 
 ## Observation example
 
-Only normalized, non-secret facts:
+Synthetic placeholders only; keep real account observations local:
 
 ```text
-Measured: 2026-10-28T17:16:00Z
+Measured: <native ISO timestamp with timezone>
 Coordinator: Codex; source=get_usage_limits; metric=usedPercent
-Windows: five-hour used=8%, weekly used=17%; resets=<native values>
+Windows: five-hour used=<value>, weekly used=<value>; resets=<native values>
 Delegates: AGY Gemini group; source=/usage; metric=remaining
-Windows: five-hour remaining=97.77%, weekly remaining=84.78%; resets=<native text>
+Windows: five-hour remaining=<value>, weekly remaining=<value>; resets=<native text>
 Closure reserve: 20 percentage points (no comparable completed closure yet)
 Decision: CONTINUE for a bounded tranche
-Next quota check: 2026-10-28T17:21:00Z, or an earlier commit/delegation boundary
+Next quota check: <measured time plus five minutes>, or an earlier boundary
 ```
 
-The example is historical, never a reusable current quota reading.
+This is a schema example, never a real or reusable current quota reading.
