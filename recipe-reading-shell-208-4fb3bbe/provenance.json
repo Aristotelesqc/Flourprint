@@ -1,0 +1,202 @@
+{
+  "base": "33796b67f06209a18f83c95de7aa7ea351a46442",
+  "branch": "codex/recipe-reading-shell-169",
+  "fixture": "sample Poolish + tangzhong, renamed via actual UI to a long FR/EN title",
+  "captures": [
+    {
+      "file": "en-amoled-393-100-reading.png",
+      "locale": "en",
+      "theme": "amoled",
+      "size": "393-100",
+      "screen": "reading",
+      "sha256": "c8fe401da75ecc6aa5f73ff34098952b0e80bab86cbb3ef1908511c7e78a36d2"
+    },
+    {
+      "file": "en-amoled-393-100-planning.png",
+      "locale": "en",
+      "theme": "amoled",
+      "size": "393-100",
+      "screen": "planning",
+      "sha256": "06a0e26c39f3b52fa24b514f3abb6236a55c4365a698f1d415907636a7749030"
+    },
+    {
+      "file": "en-dark-360-130-reading.png",
+      "locale": "en",
+      "theme": "dark",
+      "size": "360-130",
+      "screen": "reading",
+      "sha256": "ff974057149315feccd1e791f86e96134c8eff7f3021aec9eec758450094d8de"
+    },
+    {
+      "file": "en-dark-360-130-planning.png",
+      "locale": "en",
+      "theme": "dark",
+      "size": "360-130",
+      "screen": "planning",
+      "sha256": "9fe5ed657d38dea15054b6acfddd2325e787cdb6d5a6db0369a1465a983a358a"
+    },
+    {
+      "file": "en-light-393-100-reading.png",
+      "locale": "en",
+      "theme": "light",
+      "size": "393-100",
+      "screen": "reading",
+      "sha256": "90ffa9e387dfa281f57007e01c3750dafd73874b0a3a5a0c7b4d802224f7a6ba"
+    },
+    {
+      "file": "en-light-393-100-planning.png",
+      "locale": "en",
+      "theme": "light",
+      "size": "393-100",
+      "screen": "planning",
+      "sha256": "9d0e64c48a98c92ab7a44004a679ced43d91117324933f05d4900a451cfb84b1"
+    },
+    {
+      "file": "en-light-360-130-reading.png",
+      "locale": "en",
+      "theme": "light",
+      "size": "360-130",
+      "screen": "reading",
+      "sha256": "3841c28f5d4c777529a01b3d2c281492c3d11c532bf9ad7eb0cfb8c4b4b14062"
+    },
+    {
+      "file": "en-light-360-130-planning.png",
+      "locale": "en",
+      "theme": "light",
+      "size": "360-130",
+      "screen": "planning",
+      "sha256": "0ced138eaa666e2c34be9a1148c94053497513437c3ba408bd51ef330e76810e"
+    },
+    {
+      "file": "fr-amoled-360-130-reading.png",
+      "locale": "fr",
+      "theme": "amoled",
+      "size": "360-130",
+      "screen": "reading",
+      "sha256": "4206f5d11deff858eb637c7d32b2e109805248d9fba6264dbab0d3607537caab"
+    },
+    {
+      "file": "fr-amoled-360-130-planning.png",
+      "locale": "fr",
+      "theme": "amoled",
+      "size": "360-130",
+      "screen": "planning",
+      "sha256": "b1d34316a5147cd71c03dda9e2dd4b3ca6517f22d30a77a4d41ba78929413953"
+    },
+    {
+      "file": "fr-light-360-130-reading.png",
+      "locale": "fr",
+      "theme": "light",
+      "size": "360-130",
+      "screen": "reading",
+      "sha256": "990ca35ba6bb63c138e991c93abfa239f682591188a5dea35dab48ff6e9e0561"
+    },
+    {
+      "file": "fr-light-360-130-planning.png",
+      "locale": "fr",
+      "theme": "light",
+      "size": "360-130",
+      "screen": "planning",
+      "sha256": "6215ef3ac96b540a079050e2c8a29b9891f1f41bcf6cdf68a896d3f874276821"
+    },
+    {
+      "file": "fr-light-393-100-reading.png",
+      "locale": "fr",
+      "theme": "light",
+      "size": "393-100",
+      "screen": "reading",
+      "sha256": "3f0e29518ad7058718c8ec272309eaf2166d732d7f7bca33c7ce14fa11e743c5"
+    },
+    {
+      "file": "fr-light-393-100-planning.png",
+      "locale": "fr",
+      "theme": "light",
+      "size": "393-100",
+      "screen": "planning",
+      "sha256": "858c3ad86712c39786b6d094d9989aeccdfd4834110eec1751ba1d7f7247edb7"
+    },
+    {
+      "file": "fr-dark-360-130-reading.png",
+      "locale": "fr",
+      "theme": "dark",
+      "size": "360-130",
+      "screen": "reading",
+      "sha256": "ff50d518cbfdbb9829e1a32d33f9ff6c8a56398f933df5572e0c6faeb6864806"
+    },
+    {
+      "file": "fr-dark-360-130-planning.png",
+      "locale": "fr",
+      "theme": "dark",
+      "size": "360-130",
+      "screen": "planning",
+      "sha256": "ba8768b6964c4e90e4b04e0c71db8ebc286b4b985101b72d0561b1a23162a309"
+    },
+    {
+      "file": "en-amoled-360-130-reading.png",
+      "locale": "en",
+      "theme": "amoled",
+      "size": "360-130",
+      "screen": "reading",
+      "sha256": "98f10d68bdb8e49f1667622e8a94b533b37dc19e986e0245acc7e57dfe59ad96"
+    },
+    {
+      "file": "en-amoled-360-130-planning.png",
+      "locale": "en",
+      "theme": "amoled",
+      "size": "360-130",
+      "screen": "planning",
+      "sha256": "33b3a7060d0ed008e020c3a4b2752c1fc68103e473ce048f34b9dca3b57b0d37"
+    },
+    {
+      "file": "fr-amoled-393-100-reading.png",
+      "locale": "fr",
+      "theme": "amoled",
+      "size": "393-100",
+      "screen": "reading",
+      "sha256": "1e05943dc2a76ce0debf238f1cc8bd933c2c55018a8fc0644c83ad5b31560794"
+    },
+    {
+      "file": "fr-amoled-393-100-planning.png",
+      "locale": "fr",
+      "theme": "amoled",
+      "size": "393-100",
+      "screen": "planning",
+      "sha256": "2f02ff8274abf3e798b9081d2fad3bc213a9e402361579768fba4e2ca2ba4b2a"
+    },
+    {
+      "file": "en-dark-393-100-reading.png",
+      "locale": "en",
+      "theme": "dark",
+      "size": "393-100",
+      "screen": "reading",
+      "sha256": "acdc4e348bef6d9b1080c39b1c4622687828f01712a41155d0eb16cfd94f431c"
+    },
+    {
+      "file": "en-dark-393-100-planning.png",
+      "locale": "en",
+      "theme": "dark",
+      "size": "393-100",
+      "screen": "planning",
+      "sha256": "faa0b4929c61264e1d22eb826eb8431e2b7247aca47fc17239991bd87c3c0263"
+    },
+    {
+      "file": "fr-dark-393-100-reading.png",
+      "locale": "fr",
+      "theme": "dark",
+      "size": "393-100",
+      "screen": "reading",
+      "sha256": "eb17fdf2a6fa960bcb46170ab47cc2cf3115411be6648797d9e6d4552caaef0f"
+    },
+    {
+      "file": "fr-dark-393-100-planning.png",
+      "locale": "fr",
+      "theme": "dark",
+      "size": "393-100",
+      "screen": "planning",
+      "sha256": "95f02b4d4081dd45d2af335e68dba51b5bb96b90167bfbfaf733b1fa0d738243"
+    }
+  ],
+  "sourceCommit": "4fb3bbe59f234187c2e3cfbf825aa5e6c0f9883b",
+  "pullRequest": 208,
+  "coverage": "production-browser journeys; no current-head native acceptance"
+}
