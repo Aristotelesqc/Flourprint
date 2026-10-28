@@ -40,27 +40,42 @@ When a PR bumps the SQLite schema (`schema_meta`), the owner's existing data is 
    Device checks passes; a full backup exports and the new data (for example the trash) works.
 4. Record model, Android version, build name and results in the issue; a failure is a blocker.
 
-## Agent-driven emulator checks (Android CLI, not yet verified)
+## Agent-driven emulator checks (Android CLI)
 
 Google's [Android CLI](https://developer.android.com/tools/agents/android-cli) lets an agent
 drive an emulator or a connected device from the shell. It is a machine tool, not a project
-dependency. Status on 2026-10-27: installed on the owner's Windows machine (winget
-`Google.AndroidCLI`, 1.1.16717390); no Android SDK or emulator image yet; **no Flourprint check
-has been run with it**. Planned first use: when the 0.3 interface is live on `dev`, to take over
-part of the owner's phone checks. Update this section with what actually works then.
+dependency. Verified on the owner's Windows machine on 2026-10-28 (CLI 1.1.16717390, emulator
+`medium_phone`, Android 16, `x86_64` Google Play image), with the `dev-channel` APK
+(`app.flourprint.dev`, build `v0.3.0-fancy-rye`).
 
-- Setup: put `--no-metrics` in `%USERPROFILE%\.androidrc` (telemetry is on by default).
-  `android sdk install` the platform tools, the emulator and a system image, then
-  `android emulator create` and `start`. `android init` installs its own agent skill; ask the
-  owner before changing agent configuration.
-- Commands that fit our checks: `install` (an APK from CI or the `dev-channel` release),
-  `screen capture`, `layout` (UI tree as JSON), `input` (tap, swipe, text, key: hardware Back,
-  gestures, the soft keyboard) and `device hub` (a mirrored, controllable window).
-- Expected limit: the app is a Capacitor web view. Check how much of the web content `layout`
-  exposes before relying on it; Playwright stays the tool for the interface's content.
-- Not for us: Compose previews, Android Studio integration, Crashlytics `signals`.
+- **Setup.** `winget install Google.AndroidCLI`; put `--no-metrics` in
+  `%USERPROFILE%\.androidrc` (telemetry is on by default); `android sdk install platform-tools
+emulator`; `android emulator create medium_phone` (it fetches the system image). Windows needs
+  the **Windows Hypervisor Platform** feature (admin, then restart):
+  `dism /online /enable-feature /featurename:HypervisorPlatform /all`. Without it the emulator
+  exits with "x86_64 emulation currently requires hardware acceleration". `android init`
+  installs the CLI's own agent skill; ask the owner before changing agent configuration.
+- **Run.** `android emulator start medium_phone` (it may not return once booted: check
+  `adb devices` and `adb shell getprop sys.boot_completed` instead of waiting on it);
+  `android install <apk>`; launch with
+  `adb shell monkey -p app.flourprint.dev -c android.intent.category.LAUNCHER 1`.
+- **What works.**
+  - `android layout` (JSON, `--flat` for a list) **does expose the web view's content**: the app
+    bar title and build label, buttons with their accessible names ("New recipe", "Flours",
+    "Advanced"), headings and body text, with bounds and clickable state. It needs no
+    instrumentation in the app.
+  - `android input tap "text=Advanced" --match=first` taps by visible text; the key
+    `content-desc` is not a valid selector key.
+  - `android input key BACK` exercises hardware Back: from Advanced it returned to Recipes; from
+    the root screen it leaves the app, as Android expects.
+  - `android screen capture -o <file>.png` gives a full-resolution screenshot.
+- **Pitfalls.** Read `layout` after the screen settles: right after a transition it can return
+  the system bar only. `input tap` takes a selector, not coordinates.
+- **Not for us:** Compose previews, Android Studio integration, Crashlytics `signals`.
 - An emulator run is emulator evidence. It never replaces the owner's phone for a migration on
-  real data or a physical-device claim (see Reporting).
+  real data or a physical-device claim (see Reporting). Playwright stays the tool for the
+  interface's content and its journeys; the CLI adds what only Android shows (hardware Back,
+  gestures, the soft keyboard, permissions).
 
 ## Reporting
 
