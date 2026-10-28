@@ -72,12 +72,20 @@ emulator`; `android emulator create medium_phone` (it fetches the system image).
 - **Pitfalls.** Read `layout` after the screen settles: right after a transition it can return
   the system bar only. `input tap` takes a selector, not coordinates.
 - **Not for us:** Compose previews, Android Studio integration, Crashlytics `signals`.
-- An emulator run is emulator evidence. It never replaces the owner's phone for a migration on
-  real data or a physical-device claim (see Reporting). Playwright stays the tool for the
-  interface's content and its journeys; the CLI adds what only Android shows (hardware Back,
-  gestures, the soft keyboard, permissions).
+- **Who uses what** (owner decision of 2026-10-28). Agents use the emulator as their device
+  during development. The owner tests the real app on their own phone. Both are device evidence
+  and interchangeable for the app's behaviour; each report names which one ran. Playwright stays
+  the tool for the interface's content and journeys; the CLI adds what only Android shows
+  (hardware Back, gestures, the soft keyboard, permissions).
+- **Migration on real data, in the emulator:** install the previous APK, restore a full backup
+  the owner exported from the phone, install the new APK over it, then run "After a database
+  migration" below. The owner's phone is never put at risk.
+- **Where the emulator can still differ from the owner's phone** (say so when it matters):
+  reminders with the app closed and the manufacturer's battery management, the phone's exact
+  Android and WebView versions (an emulator at the same versions narrows it), touch feel and
+  smoothness, and the final visual judgement, which is the owner's.
 
 ## Reporting
 
-Write what was checked, on which build and device, and what was not. Browser or emulator runs
-never stand in for a physical-device claim.
+Write what was checked, on which build and device (emulator or the owner's phone, with model and
+Android version), and what was not. A browser run never stands in for a device claim.
