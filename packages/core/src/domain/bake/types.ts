@@ -1,6 +1,7 @@
 import type { EquipmentEntry, StepEquipment } from '../equipment/types.js';
 import type { Formula, ResolvedFormula } from '../formula/types.js';
 import type { FormulaEdit } from '../formula/edit.js';
+import { sameWeighingRow, type StageRef, type WeighingItem } from '../formula/weighing.js';
 import type { FlourRef } from '../flour/types.js';
 import type { Instant } from '../instant.js';
 import type { PreparationOutcome } from '../process/cooking.js';
@@ -109,6 +110,8 @@ export type BakeCommandPayload =
       readonly flours?: readonly FlourRef[];
       /** Every entry version the process references, resolved by the caller (equipment.md). */
       readonly equipment?: readonly EquipmentEntry[];
+      /** Rows ticked at the start (bake-session.md, Weighing checks, 0.23.0). */
+      readonly weighed?: readonly { readonly stage: StageRef; readonly item: WeighingItem }[];
     }
   | { readonly type: 'StartStep'; readonly stepId: StepId; readonly at?: Instant }
   | {
@@ -159,6 +162,13 @@ export type BakeCommandPayload =
       readonly at?: Instant;
       readonly thermal?: StepThermal;
     }
+  /** Ticks or unticks one weighing row of the snapshot's formula (bake-session.md, 0.23.0). */
+  | {
+      readonly type: 'SetWeighingCheck';
+      readonly stage: StageRef;
+      readonly item: WeighingItem;
+      readonly checked: boolean;
+    }
   | {
       readonly type: 'CorrectStepTime';
       readonly targetEventId: string;
@@ -190,7 +200,11 @@ export interface BakeCommand<P extends BakeCommandPayload = BakeCommandPayload> 
 // Events
 
 export type BakeEventPayload =
-  | { readonly type: 'BakeStarted'; readonly snapshot: BakeSnapshot }
+  | {
+      readonly type: 'BakeStarted';
+      readonly snapshot: BakeSnapshot;
+      readonly weighed?: readonly { readonly stage: StageRef; readonly item: WeighingItem }[];
+    }
   | { readonly type: 'StepStarted'; readonly stepId: StepId }
   | {
       readonly type: 'StepCompleted';
@@ -267,6 +281,13 @@ export type BakeEventPayload =
       readonly stepId: StepId;
       readonly at: Instant;
       readonly thermal?: StepThermal;
+    }
+  /** A weighing row was ticked or unticked (bake-session.md, 0.23.0). */
+  | {
+      readonly type: 'WeighingCheckChanged';
+      readonly stage: StageRef;
+      readonly item: WeighingItem;
+      readonly checked: boolean;
     }
   | {
       readonly type: 'StepTimeCorrected';
@@ -387,4 +408,8 @@ export interface BakeState {
   readonly stepEvents: Readonly<
     Record<string, { readonly stepId: StepId; readonly kind: 'start' | 'end' }>
   >;
+  /** Rows currently weighed (bake-session.md, Weighing checks, 0.23.0). */
+  readonly weighed?: readonly { readonly stage: StageRef; readonly item: WeighingItem }[];
 }
+
+export { sameWeighingRow, type StageRef, type WeighingItem };
