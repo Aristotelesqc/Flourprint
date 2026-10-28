@@ -801,7 +801,13 @@ Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread).
 - every component and motion can be browsed and searched by name and by purpose;
 - each one has its own page: what it is for and when to use it (its guide), its versions and maturity, its source (custom, wraps Ionic, or uses an accepted headless library), and the version the manifest selects;
 - each can be tried live: theme, text size, reduced motion and its states (disabled, error, loading, long content), and two versions compared side by side;
-- measurable checks are shown where the catalogue can measure them (contrast, touch target size).
+- each one has a **conformity sheet**, the first place an audit looks. Every line names the rule it checks (ledger item, ADR or contract) and its status: **measured** by a test that runs in CI, **declared** with its evidence or reference, or **exception** with its reason; a missing or failing line is shown, never hidden. The catalogue displays results; it does not compute them. Initial sections:
+  - **Material 3:** measured (colour roles only, shape, type and elevation from tokens, state layers, 48 dp touch target, contrast in the three themes); declared (which M3 component it follows, with a link to the M3 guidance); deliberate deviations with their reason (for example Ionic's native placement, or a Flourprint identity colour);
+  - **Tailwind v4 and styling** (ADR 0022, L129): the order utilities, then arbitrary values or `@utility`, then a variant component, then a shared meta-class; custom CSS only as a documented exception naming the missing capability and the Tailwind version checked; no hard-coded colour, spacing or radius;
+  - **units and scaling:** sizes and spacing in `rem` except named exceptions (hairlines); layout holds at 130 % text size and 360 px width;
+  - **accessibility:** role and accessible name, keyboard use, visible focus, touch target, contrast, reduced motion;
+  - **repository rules:** no hard-coded user-facing text (message keys), no baking calculation, guide present, version registered in the manifest.
+- the conformity checks are **modular**. Each check is its own versioned module (id, the rule it enforces, which components it applies to, how it is evaluated) that reports into the sheet; adding a requirement adds a module, without changing the catalogue or the other checks. Checks tied to the current stack (Material 3, Tailwind, Ionic) are grouped in a **stack profile**, separate from stack-independent checks (accessibility, units, text, repository rules), so a future change of stack replaces a profile instead of rewriting the system.
 
 The catalogue reads the library and never changes what the app uses. Screens: settings. Source: Owner, 2026-10-27. Kind: OD.
 ---
