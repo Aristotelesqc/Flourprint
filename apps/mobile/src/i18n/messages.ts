@@ -6,6 +6,21 @@
 import { helpEn, helpFr } from './help';
 
 export const en = {
+  'explain.partialEstimatedSummary': 'Specified part (estimated): {grams} · {pct}',
+  'formula.stat.totalWaterSpecifiedEstimate': 'Specified part (estimated): {pct}',
+  'formula.stat.totalWaterLowerBound': '≥ {pct}',
+  'explain.detail.estimatedRange': 'Estimated water content between {low} and {high}.',
+  'explain.detail.estimated': 'Estimated water content.',
+  'explain.detail.known': 'Known water content from ingredient composition.',
+  'explain.detail.loss': 'Declared evaporation loss for {name}.',
+  'explain.detail.pureWater': 'Water added directly to the dough or component.',
+  'explain.unknownValue': 'unknown',
+  'explain.incompleteNotice':
+    'Hydration is incomplete: water content not specified for {ingredients}.',
+  'explain.totalSummary': '{grams} · {pct}',
+  'explain.lowerBound': '≥ {value}',
+  'explain.valueWithRange': '{value} {range}',
+  'explain.range': '[{low} – {high}]',
   'ui.menu.scrollHint': 'Scroll for more actions',
   'equipment.preheat.unknown': 'preheat unspecified',
   'equipment.fan.unknown': 'unknown',
@@ -518,7 +533,7 @@ export const en = {
   'formula.finalMix': 'Ingredients',
   'formula.finalMix.progress': '{done} of {total}',
   'explain.title': 'Where the water comes from',
-  'explain.pureWater': '{name} (added water)',
+  'explain.pureWater': '{name}',
   'explain.ingredient': '{name} ({status, select, known {known} estimated {estimated} other {}})',
   'explain.loss': 'Loss in {name}',
   'explain.unknown': '{name}: unknown',
@@ -609,6 +624,8 @@ export const en = {
   'technique.endCheck.time': 'Time',
   'technique.endCheck.other': 'Other',
   'technique.endCheck.summary': 'ends on: {check}',
+  'error.TargetInUse.retargetPreheat':
+    'Cannot delete {step}: it is the target of {preheats}. Retarget or remove {preheats} first.',
   'technique.removeStep': 'Remove this step',
   'technique.removeConfirm': 'Remove {step}? The steps after it then follow the steps before it.',
   'technique.preparationStep':
@@ -833,7 +850,7 @@ export const en = {
   'formula.lock.follows': 'Follows the locked hydration',
   'formula.hydration.lock': 'Lock the hydration at {pct}',
   'formula.hydration.unlock': 'Unlock the hydration',
-  'formula.hydration.breakdown': 'Where the water comes from',
+  'formula.hydration.breakdown': 'Hydration breakdown',
   'formula.removeNamed': 'Remove: {name}',
   'formula.remove': 'Remove',
   'formula.add.ingredient': '+ Add an ingredient',
@@ -1175,6 +1192,21 @@ export type MessageKey = keyof typeof en;
 export type Catalog = Record<MessageKey, string>;
 
 export const fr: Catalog = {
+  'explain.partialEstimatedSummary': 'Partie renseignée (estimée) : {grams} · {pct}',
+  'formula.stat.totalWaterSpecifiedEstimate': 'Partie renseignée (estimée) : {pct}',
+  'formula.stat.totalWaterLowerBound': '≥ {pct}',
+  'explain.detail.estimatedRange': 'Teneur en eau estimée entre {low} et {high}.',
+  'explain.detail.estimated': 'Teneur en eau estimée.',
+  'explain.detail.known': 'Teneur en eau connue selon la composition de l’ingrédient.',
+  'explain.detail.loss': 'Perte par évaporation déclarée pour {name}.',
+  'explain.detail.pureWater': 'Eau ajoutée directement à la pâte ou à la préparation.',
+  'explain.unknownValue': 'inconnue',
+  'explain.incompleteNotice':
+    'Hydratation incomplète : teneur en eau non renseignée pour {ingredients}.',
+  'explain.totalSummary': '{grams} · {pct}',
+  'explain.lowerBound': '≥ {value}',
+  'explain.valueWithRange': '{value} {range}',
+  'explain.range': '[{low} – {high}]',
   'ui.menu.scrollHint': 'Faire défiler pour voir les autres actions',
   'equipment.preheat.unknown': 'préchauffage non précisé',
   'equipment.fan.unknown': 'inconnue',
@@ -1712,7 +1744,7 @@ export const fr: Catalog = {
   'formula.finalMix': 'Ingrédients',
   'formula.finalMix.progress': '{done} sur {total}',
   'explain.title': 'D’où vient l’eau',
-  'explain.pureWater': '{name} (eau ajoutée)',
+  'explain.pureWater': '{name}',
   'explain.ingredient': '{name} ({status, select, known {connue} estimated {estimée} other {}})',
   'explain.loss': 'Perte dans {name}',
   'explain.unknown': '{name} : inconnue',
@@ -1803,6 +1835,8 @@ export const fr: Catalog = {
   'technique.endCheck.time': 'Temps',
   'technique.endCheck.other': 'Autre',
   'technique.endCheck.summary': 'fin : {check}',
+  'error.TargetInUse.retargetPreheat':
+    "Impossible de supprimer {step} : cette étape est la cible de {preheats}. Réassigner la cible ou retirer {preheats} d'abord.",
   'technique.removeStep': 'Retirer cette étape',
   'technique.removeConfirm':
     'Retirer {step} ? Les étapes qui la suivaient suivent alors celles qui la précédaient.',
@@ -2032,7 +2066,7 @@ export const fr: Catalog = {
   'formula.lock.follows': 'Suit l’hydratation verrouillée',
   'formula.hydration.lock': 'Verrouiller l’hydratation à {pct}',
   'formula.hydration.unlock': 'Déverrouiller l’hydratation',
-  'formula.hydration.breakdown': 'D’où vient l’eau',
+  'formula.hydration.breakdown': 'Détail de l’hydratation',
   'formula.removeNamed': 'Retirer : {name}',
   'formula.remove': 'Retirer',
   'formula.add.ingredient': '+ Ajouter un ingrédient',

@@ -125,13 +125,17 @@ test('component ratio commits through the domain; refusal retains text and block
   await expect(ratio).toHaveValue('0');
   await expect(ratio).toHaveAttribute('aria-invalid', 'true');
   await expect(routed(page).getByLabel('tangzhong, Hydratation (%)')).toHaveValue('600');
-  await expect(routed(page).getByRole('button', { name: 'Enregistrer v2' })).toBeDisabled();
+  await expect(
+    routed(page).getByRole('button', { name: 'Enregistrer', exact: true }),
+  ).toBeDisabled();
   await expect(routed(page).getByText(/^Ce ratio ne peut pas être appliqué/)).toBeVisible();
   await ratio.fill('6');
   await ratio.press('Enter');
   await expect(ratio).toHaveAttribute('aria-invalid', 'false');
   await expect(routed(page).getByText(/^Ce ratio ne peut pas être appliqué/)).toHaveCount(0);
-  await expect(routed(page).getByRole('button', { name: 'Enregistrer v2' })).toBeEnabled();
+  await expect(
+    routed(page).getByRole('button', { name: 'Enregistrer', exact: true }),
+  ).toBeEnabled();
 });
 
 for (const english of [false, true]) {
@@ -144,7 +148,7 @@ for (const english of [false, true]) {
     const save = () =>
       routed(page)
         .locator('ion-footer')
-        .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true });
+        .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true });
     await water.fill('abc');
     await menuAction(page, /^(Planification|Planning)$/);
     const alert = page.locator('ion-alert');
@@ -196,7 +200,7 @@ for (const english of [false, true]) {
     await expect(
       routed(page).getByText(
         english
-          ? 'poolish 30 % of the flour · tangzhong 5 % of the flour'
+          ? 'poolish 30% of the flour · tangzhong 5% of the flour'
           : 'poolish 30 % de la farine · tangzhong 5 % de la farine',
         { exact: true },
       ),
@@ -205,7 +209,7 @@ for (const english of [false, true]) {
     await enterEditor(page);
     const save = routed(page)
       .locator('ion-footer')
-      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true });
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true });
     await expect(save).toBeDisabled();
     const bounds = await save.boundingBox();
     expect(bounds?.height).toBeGreaterThanOrEqual(48);
@@ -226,7 +230,7 @@ for (const english of [false, true]) {
         return (linear[0] ?? 0) * 0.2126 + (linear[1] ?? 0) * 0.7152 + (linear[2] ?? 0) * 0.0722;
       };
       const ink = luminance(style.color);
-      const background = luminance(style.backgroundColor);
+      const background = luminance(getComputedStyle(button, '::before').backgroundColor);
       return {
         contrast: (Math.max(ink, background) + 0.05) / (Math.min(ink, background) + 0.05),
         opacity: Number(getComputedStyle(host).opacity),
@@ -268,7 +272,9 @@ test('editor sections preserve one raw field and a page-wide invalid state', asy
   await editorSection(page, 'components');
   await expect(water).toBeHidden();
   await expect(water).toHaveValue('abc');
-  await expect(routed(page).getByRole('button', { name: 'Enregistrer v2' })).toBeDisabled();
+  await expect(
+    routed(page).getByRole('button', { name: 'Enregistrer', exact: true }),
+  ).toBeDisabled();
   await editorSection(page, 'composition');
   await expect(water).toBeVisible();
   await expect(water).toHaveValue('abc');

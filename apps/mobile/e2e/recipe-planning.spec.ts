@@ -175,14 +175,14 @@ for (const english of [false, true]) {
     await expect(duration).toHaveValue('12 min');
     await expect(
       footer(page).getByRole('button', {
-        name: english ? 'Save v2' : 'Enregistrer v2',
+        name: english ? 'Save' : 'Enregistrer',
         exact: true,
       }),
     ).toBeDisabled();
     await water.fill('750');
     await water.press('Enter');
     await footer(page)
-      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
     await expect(footer(page).getByRole('status')).toHaveCount(0);
     await showPlanning(page);
@@ -262,7 +262,7 @@ for (const english of [false, true]) {
     await expect(style).toHaveValue('coilFold');
     await close(page);
     await footer(page)
-      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
     await enterEditor(page);
     await editorSection(page, 'steps');
@@ -299,7 +299,7 @@ for (const english of [false, true]) {
     await expect(footer(page).getByRole('status')).toHaveText(english ? 'Up to date' : 'À jour');
     await expect(
       footer(page).getByRole('button', {
-        name: english ? 'Save v2' : 'Enregistrer v2',
+        name: english ? 'Save' : 'Enregistrer',
         exact: true,
       }),
     ).toBeDisabled();
@@ -320,7 +320,7 @@ for (const english of [false, true]) {
       }),
     ).toContain(english ? 'locked' : 'verrouillée');
     await footer(page)
-      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
     await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
     await expect(hydrationEdit).toHaveCount(0);
@@ -339,7 +339,7 @@ for (const english of [false, true]) {
     await expect(rate).toBeEnabled();
     await expect(rate).not.toHaveAttribute('aria-describedby', /.+/);
     await footer(page)
-      .getByRole('button', { name: english ? 'Save v3' : 'Enregistrer v3', exact: true })
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
     await expect(routed(page).getByText('Version 3', { exact: true })).toBeVisible();
     await expect(hydrationEdit).toHaveCount(0);
@@ -364,15 +364,19 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
     .click();
   await expect(modal(page)).toBeVisible();
   await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
-  await page.locator('ion-alert').getByRole('button', { name: 'Annuler', exact: true }).click();
-  await expect(page.locator('ion-alert')).toHaveCount(0);
+  const confirmation = page
+    .locator('ion-modal:not(.overlay-hidden)')
+    .filter({ has: page.getByRole('heading', { name: 'Façonnage', exact: true }) });
+  await confirmation
+    .getByRole('button', { name: 'Annuler', exact: true })
+    .filter({ hasText: 'Annuler' })
+    .click();
+  await expect(confirmation).toBeHidden();
   await expect(modal(page)).toBeVisible();
   await expect(modal(page).locator('ion-title')).toHaveText('Façonnage');
   await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
-  await page
-    .locator('ion-alert')
-    .getByRole('button', { name: 'Retirer cette étape', exact: true })
-    .dblclick();
+  await confirmation.getByRole('button', { name: 'Supprimer l’étape', exact: true }).dblclick();
+  await expect(confirmation).toBeHidden();
   await expect(modal(page)).toHaveCount(0);
   const back = routed(page).getByRole('button', {
     name: 'Revenir à la planification',

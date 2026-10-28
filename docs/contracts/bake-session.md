@@ -169,6 +169,7 @@ interface BakeEvent<P> {
 | `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                             |
 | `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                      |
 | `SetStepThermal`             | `StepThermalChanged`                                                         | running or not-yet-started dough step; a replacement of the step's whole `thermal` (process.md, Thermal inputs), effective from `at`; (below, 0.21.0)               |
+| `SetWeighingCheck`           | `WeighingCheckChanged`                                                       | a weighing row of the snapshot's formula is ticked or unticked (below, Weighing checks, 0.23.0 target)                                                              |
 | `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start         |
 | `RetractCompletion`          | `StepCompletionRetracted`                                                    | targets the step's completion; no dependent step started                                                                                                            |
 | `HoldStepCountdown`          | `StepCountdownHeld`                                                          | step running (started, not ended, with a planned duration, not `beforeTarget`); not already held (`StepAlreadyHeld`); `at` not before the start or the last release |
@@ -273,6 +274,32 @@ snapshot. The event envelope version and the log are unchanged (JSON). The backu
 (persistence.md); old backups restore unchanged, read as no thermal. As for the countdown hold, an app that does not know `StepThermalChanged`
 refuses a backup holding it on its unknown event type (`persistence.md`), never misreading it;
 old backups restore unchanged in a new app. Downgrades are not supported.
+
+**Weighing checks (0.23.0 target, L110, L111).** A weighing check says that the baker has
+weighed one row of the per-stage weighing list (formula.md, Weighing read model). A row is
+identified by `{ stage, item }` (`StageRef`, `WeighingItem`), never by a position or a gram value.
+
+- **Before a Preparation** (Recipe and Planning): one check state per recipe, shared 1:1 by both
+  screens. It is device-local view state, not recipe data: it is never in a revision, the history,
+  a recipes file, an export or a backup, and losing it loses nothing but ticks. It is cleared when
+  the recipe gets a new version (the quantities may have changed) and when a Preparation starts
+  from the recipe. A tick on a row the current formula no longer has is dropped.
+- **Starting.** `StartBake` accepts an optional `weighed: { stage, item }[]`, the rows ticked at
+  that moment, recorded in `BakeStarted`. Every entry must be a row of the snapshot's resolved
+  formula, without repeats; otherwise `InvalidCommand`. Absent or empty: nothing weighed yet.
+- **During the Preparation** the checks belong to the session. `SetWeighingCheck { stage, item,
+checked }` records `WeighingCheckChanged` with the same fields; ticking a ticked row or
+  unticking an unticked one is a no-op (no event). The current state is `weighed` from
+  `BakeStarted` then each change in order: `evolve` stays structural. Allowed while the session
+  is active; on an ended session `BakeNotActive`. A row unknown to the snapshot is
+  `InvalidCommand`.
+- A check is a fact about the baker's work, not a measurement: it never changes the formula, the
+  plan or a forecast, and a real weighed quantity stays an observation (formula.md, Edit commands).
+- **Versioning.** Additive: an optional `StartBake`/`BakeStarted` field and one command/event
+  pair. Old sessions replay unchanged, with nothing weighed. An app that does not know
+  `WeighingCheckChanged` refuses a backup holding it on its unknown event type
+  (`persistence.md`), never misreading it; the backup `schemaVersion` is unchanged (the log is
+  JSON). `CONTRACT_VERSION` goes to `0.23.0` in the implementing pull request.
 
 **Implicitly running steps (live projection).** The baker's first real action on a step records
 its `StepStarted`; until then the step has no recorded start, but it must not be shown as waiting

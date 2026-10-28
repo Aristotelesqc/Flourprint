@@ -38,7 +38,7 @@ for (const english of [false, true]) {
     await enterEditor(page);
     const save = routed(page)
       .locator('ion-footer')
-      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true });
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true });
     await expect(save).toBeDisabled();
     expect((await save.boundingBox())?.height).toBeGreaterThanOrEqual(48);
     const native = await save.evaluate((button) => {
@@ -47,7 +47,7 @@ for (const english of [false, true]) {
       const host = root instanceof ShadowRoot ? root.host : button;
       return {
         color: style.color,
-        background: style.backgroundColor,
+        background: getComputedStyle(button, '::before').backgroundColor,
         opacity: getComputedStyle(host).opacity,
       };
     });
