@@ -183,6 +183,18 @@ const isMeasurement = (value: unknown): boolean =>
   typeof value.unit === 'string' &&
   isInstant(value.observedAt);
 
+const isStageRef = (value: unknown): boolean =>
+  isObject(value) &&
+  ((value.kind === 'component' && isId(value.id)) ||
+    value.kind === 'final' ||
+    value.kind === 'finishing');
+
+const isWeighingItem = (value: unknown): boolean =>
+  isObject(value) && ((value.kind === 'ingredient' && isId(value.id)) || value.kind === 'water');
+
+const isWeighingRowKey = (value: unknown): boolean =>
+  isObject(value) && isStageRef(value.stage) && isWeighingItem(value.item);
+
 const isEquipmentShape = accepts(stepEquipment);
 
 /** Settings of a step: the structure, then the domain's rules (equipment.md). */
@@ -321,6 +333,11 @@ const checkPayload = (
     case 'BakeStarted':
       expect(state.status === 'notStarted', `${where}: the bake had already started`);
       expect(isSnapshot(payload.snapshot), `${where}: malformed snapshot`);
+      expect(
+        payload.weighed === undefined ||
+          (Array.isArray(payload.weighed) && payload.weighed.every(isWeighingRowKey)),
+        `${where}: malformed weighed`,
+      );
       return;
     case 'StepStarted':
       expect(knownStep(payload.stepId), `${where}: unknown step`);
@@ -423,6 +440,14 @@ const checkPayload = (
       );
       return;
     }
+    case 'WeighingCheckChanged':
+      expect(
+        isStageRef(payload.stage) &&
+          isWeighingItem(payload.item) &&
+          typeof payload.checked === 'boolean',
+        `${where}: malformed weighing check`,
+      );
+      return;
     case 'ObservationAdded':
       expect(
         (payload.stepId === undefined || knownStep(payload.stepId)) &&

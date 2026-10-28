@@ -1,5 +1,6 @@
 import type { EquipmentEntry, StepEquipment } from '../equipment/types.js';
 import type { Process, ProcessStep } from '../process/types.js';
+import { sameWeighingRow } from '../formula/weighing.js';
 import type {
   BakeEvent,
   BakeState,
@@ -16,6 +17,7 @@ export const initialBakeState = (bakeId: string): BakeState => ({
   overrides: [],
   observations: [],
   stepEvents: {},
+  weighed: [],
 });
 
 const updateStep = (state: BakeState, stepId: string, change: Partial<StepRecord>): BakeState => ({
@@ -62,6 +64,7 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
         resolvedFormula: snapshot.resolvedFormula,
         process: snapshot.process,
         steps: Object.fromEntries(snapshot.process.steps.map((s) => [s.id, freshRecord(s)])),
+        weighed: payload.weighed ? [...payload.weighed] : [],
       };
     }
     case 'StepStarted':
@@ -168,6 +171,16 @@ export const evolve = (state: BakeState, event: BakeEvent): BakeState => {
           return payload.thermal === undefined ? rest : { ...rest, thermal: payload.thermal };
         }),
       };
+    }
+    case 'WeighingCheckChanged': {
+      const current = next.weighed ?? [];
+      const target = { stage: payload.stage, item: payload.item };
+      const weighed = payload.checked
+        ? current.some((r) => sameWeighingRow(r, target))
+          ? current
+          : [...current, target]
+        : current.filter((r) => !sameWeighingRow(r, target));
+      return { ...next, weighed };
     }
     case 'ProjectionAccepted':
       return { ...next, acceptedProjection: payload.projection };
