@@ -1,8 +1,8 @@
 {
   "description": "Source-equivalence bridge from the original captured application revision to the later review head. Original image provenance is unchanged; no recapture occurred.",
-  "verifiedAt": "2026-10-28T03:37:33.685Z",
+  "verifiedAt": "2026-10-28T03:49:32.637Z",
   "capturedSourceRevision": "ce670f515aaee4fccbf9d6afe8351f2b766f3581",
-  "reviewSourceRevision": "dd1fdc36e5edc4da22bebbc1e551f8900a814cfc",
+  "reviewSourceRevision": "7ef1d400e6a03b58208196544def1f3583c8c2b7",
   "reviewWorktreeClean": true,
   "reviewWorktreeDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
   "changedPaths": [
