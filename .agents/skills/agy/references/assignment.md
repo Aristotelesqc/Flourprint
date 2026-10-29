@@ -96,26 +96,31 @@ conventions that made the runs succeed, not permission settings.
 - **Discriminating tests.** When a review questions a test, prove it with a negative control:
   disable the change and show the test fails.
 
-## Division of work (owner decision of 2026-10-27)
+## Implementation and ordinary review (owner decision of 2026-10-28)
 
-To spend AGY quota rather than Claude quota: Gemini 3.8 Flash high implements through AGY, the
-coordinating Claude session runs the checks and integrates, and an independent Claude subagent
-reviews adversarially (always for engine or contract mathematics). Gemini 4 Argon is used only for
-heavy cases, on the owner's request.
+Gemini Flash implements substantial interface changes. The coordinator prepares exact tasks,
+allowed files, existing APIs, ledger lines, expected behaviour and implementation approach;
+only necessary, authorized sources/assets belong in the delegate workspace. Request an
+implementation, not an exploration followed by implementation. Apply the headless lessons
+in the entrypoint.
+
+The coordinator may make small, well-understood corrections directly when cheaper than a
+new delegation: a CSS class, handler, import, focus correction, generated-code integration,
+or documentation edit. Never cross domain/contract boundaries.
+
+For a meaningful ordinary change, first check the diff's scope, interfaces and boundaries,
+then send one Gemini Flash reviewer the diff, involved files and acceptance lines before
+coordinator detailed review. Request numbered concrete defects only, each with severity,
+file and line, and a failure scenario. Verify each finding in code/tests: fix confirmed
+ones and dismiss unconfirmed ones in one line each. Use extra reviewers only for clearly
+high-risk or disputed changes, or audits. Small mechanical fixes need no independent review.
+Engine and contract mathematics retain an independent Claude reviewer. Argon is used only
+on the owner's request. Implementation retains one writer per overlapping file set.
 
 ## Parallel independent audits (owner decision of 2026-10-28)
 
-Use AGY quota generously: an audit runs **three Gemini 3.8 Flash reviewers in parallel** by
-default, because one Flash reviewer can miss or invent findings.
-
-- **Distinct focuses, same sources.** For example contract and calculations; persistence and
-  compatibility; architecture boundaries and tests (or, for the interface, journeys, visual and
-  accessibility, ledger items). Each gets its own output directory and never sees another's
-  report.
-- **Cross-check, then verify.** A finding two reviewers reach independently is likely real; a
-  single one is not dismissed. The caller still verifies every finding in the source before
-  relaying it, and posts each finding's outcome on the PR or issue.
-- **Engine and contract mathematics** keep an independent Claude reviewer in addition.
-- **Writing is not parallel:** implementation keeps one writer per overlapping file set.
-- Small fixes and documentation edits are delegated to AGY too; the coordinating session keeps
-  the brief, the checks and the integration.
+Audits keep **three Gemini Flash reviewers in parallel**, with distinct focuses on the same
+primary sources, separate output directories and no access to each other's reports. Cross-check
+independent findings, then verify each in the source; agreement is not proof, and a lone finding
+is not dismissed automatically. Post each finding's disposition on the issue or PR. Engine and
+contract mathematics keep an independent Claude reviewer in addition.
