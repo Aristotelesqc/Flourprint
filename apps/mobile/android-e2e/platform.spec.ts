@@ -268,9 +268,9 @@ test('Android Back dismisses shared overlays before leaving the recipe', async (
   await expect(page).toHaveURL(recipeUrl);
   await expect(opener).toBeFocused();
 
-  const help = page.getByRole('button', { name: 'Explanation: Hydration', exact: true });
+  const help = page.getByRole('button', { name: 'Hydration breakdown', exact: true });
   await help.click();
-  const sheet = page.getByRole('dialog', { name: 'Hydration and added water', exact: true });
+  const sheet = page.getByRole('dialog', { name: 'Hydration breakdown', exact: true });
   await expect(
     page.locator('ion-modal:visible').getByRole('button', { name: 'Close', exact: true }),
   ).toBeFocused();
