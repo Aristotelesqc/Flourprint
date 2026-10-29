@@ -28,6 +28,9 @@ import sheetEnterGuide from '../motions/sheet-enter/guide.ts';
 import sheetExitV1 from '../motions/sheet-exit/v1.ts';
 import sheetExitGuide from '../motions/sheet-exit/guide.ts';
 
+import stepDragV1 from '../motions/step-drag/v1.ts';
+import stepDragGuide from '../motions/step-drag/guide.ts';
+
 export const motionCatalogue = motionLibrary.catalogue({
   'fp.motion.press': [pressV1],
   'fp.motion.press-icon': [pressIconV1],
@@ -41,6 +44,7 @@ export const motionCatalogue = motionLibrary.catalogue({
   'fp.motion.backdrop-exit': [backdropExitV1],
   'fp.motion.sheet-enter': [sheetEnterV1],
   'fp.motion.sheet-exit': [sheetExitV1],
+  'fp.motion.step-drag': [stepDragV1],
 });
 
 export const motionGuides = motionLibrary.guides({
@@ -56,6 +60,7 @@ export const motionGuides = motionLibrary.guides({
   'fp.motion.backdrop-exit': backdropExitGuide,
   'fp.motion.sheet-enter': sheetEnterGuide,
   'fp.motion.sheet-exit': sheetExitGuide,
+  'fp.motion.step-drag': stepDragGuide,
 });
 
 export { defaultMotionManifest } from '../motions/default-manifest.ts';

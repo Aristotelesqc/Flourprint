@@ -171,9 +171,25 @@ test('menu keeps disabled and destructive actions visible, separates Close and r
 }, testInfo) => {
   await openFixture(page, testInfo);
   const opener = page.getByRole('button', { name: 'Open actions', exact: true });
+  // Ionic must not measure an empty React subtree on its first presentation.
+  await page.evaluate(() => {
+    document.addEventListener('ionMount', (event) => {
+      if (event.target?.localName === 'ion-popover') {
+        event.target.setAttribute(
+          'data-items-before-present',
+          String(event.target.querySelectorAll('[role="menuitem"]').length),
+        );
+      }
+    });
+  });
   await opener.click();
   const menu = page.getByRole('menu', { name: 'Fixture actions', exact: true });
   await expect(menu).toBeVisible();
+  expect(
+    await menu.evaluate((node) =>
+      Number(node.closest('ion-popover')?.getAttribute('data-items-before-present')),
+    ),
+  ).toBeGreaterThan(0);
   await expect(menu.getByRole('menuitem').first()).toBeFocused();
   await expect(menu.getByRole('menuitem', { name: 'Unavailable menu action' })).toBeVisible();
   await expect(menu.getByRole('menuitem', { name: 'Unavailable menu action' })).toBeDisabled();

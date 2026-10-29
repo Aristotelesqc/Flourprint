@@ -25,6 +25,8 @@ import dialog from '../../../src/components/dialog/v1.tsx';
 import select from '../../../src/components/select/v1.tsx';
 import bottomBar from '../../../src/components/bottom-bar/v1.tsx';
 
+import sortableList from '../../../src/components/sortable-list/v1.tsx';
+
 setupIonicReact();
 const { Ui } = createUi(
   library.manifest({
@@ -37,6 +39,7 @@ const { Ui } = createUi(
     'fp.bottom-sheet': bottomSheet,
     'fp.dialog': dialog,
     'fp.select': select,
+    'fp.sortable-list': sortableList,
     'fp.bottom-bar': bottomBar,
   }),
 );

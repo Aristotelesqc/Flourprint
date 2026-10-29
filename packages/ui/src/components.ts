@@ -9,6 +9,8 @@ import type { DialogProps } from './components/dialog/props.ts';
 import type { SelectProps } from './components/select/props.ts';
 import type { BottomBarProps } from './components/bottom-bar/props.ts';
 
+import type { SortableListProps } from './components/sortable-list/props.ts';
+
 /** Display-ready foundation props; screens own i18n, domain state and commands. */
 export type FlourprintComponents = {
   readonly 'fp.button': ButtonProps;
@@ -20,5 +22,6 @@ export type FlourprintComponents = {
   readonly 'fp.bottom-sheet': BottomSheetProps;
   readonly 'fp.dialog': DialogProps;
   readonly 'fp.select': SelectProps;
+  readonly 'fp.sortable-list': SortableListProps;
   readonly 'fp.bottom-bar': BottomBarProps;
 };
