@@ -198,7 +198,7 @@ time controls and a shortcut to the single Recipe step editor. Preparation prese
 Follow the contracts for semantics; do not build a second editable recipe inside Planning.
 
 **Consultation/editing composition (#67):** saved recipes open for reading with explicit
-Edit in overflow and a contextual Start/Resume action. Planning is the generated tab, without a
+A visible Edit action, a compact Start/Resume pill and an anchored overflow menu in the shared contextual bottom bar (L31, L50). Planning is the generated tab, without a
 duplicate Plan header button. New or resumed drafts open for editing after hydration. Consultation
 does not reserve an empty 88px draft footer. Once editing starts, first modification and validity
 feedback keep the primary controls stable. A deliberate mode change may rearrange the screen;
@@ -317,10 +317,15 @@ two rows; labels and touch targets stay intact. Native Ionic overlays remain pla
 and require their own checks.
 
 - **Actions:** visible primary-action labels, distinct filled/outlined/quiet roles, clear busy,
-  disabled and destructive states. Primary actions share the full-width pill role (`btn-pill-primary`,
-  > = 3rem / 48px touch target) across consultation Start/Resume and editor Save, with accessible
-  > neutral surface and legible muted ink tokens when disabled. Ephemeral Undo/Redo/Reset actions
-  > in `DraftActionBar` maintain accessible touch targets (>= 48px) and distinct aria-labels.
+  disabled and destructive states. Reading Recipe uses the versioned `fp.bottom-bar` with
+  Edit, a content-sized Start/Resume action and an anchored overflow menu; no persistent full-width
+  reading CTA (L31). Shared buttons retain 48 px touch targets and a 40 px painted shape at the
+  default text scale. Reading section tabs use `fp.tabs` in one horizontal row, scrolling when
+  needed rather than wrapping; the selected tab stays visible. The full recipe title remains
+  in the header. These changes port the approved navigation A reference.
+  The existing editor action layout and segmented editor sections described above are legacy
+  implementation, pending the L49/L60/L108 port; they are not the target design. The narrow
+  summary arrangement remains subject to the owner's existing visual review decision.
 - **Precision fields:** input frames identify actual editing; read-only quantities are text.
   Retain local raw input, parsing/refusal feedback and the page validation registry. Untouched
   formatted numbers never become edits. Disabled fields (e.g. locked hydration target) use distinct

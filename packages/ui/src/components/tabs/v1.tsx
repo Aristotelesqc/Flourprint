@@ -2,7 +2,13 @@ import { useEffect, useId, useRef, useState, type JSX, type KeyboardEvent } from
 import { library } from '../../index.ts';
 import type { TabsProps } from './props.ts';
 
-export const Tabs = ({ selected, onSelectedChange, label, items }: TabsProps): JSX.Element => {
+export const Tabs = ({
+  selected,
+  onSelectedChange,
+  label,
+  items,
+  renderPanels = true,
+}: TabsProps): JSX.Element => {
   const baseId = useId();
   const stripRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
@@ -12,16 +18,21 @@ export const Tabs = ({ selected, onSelectedChange, label, items }: TabsProps): J
   const firstEnabledId = enabledItems[0]?.id;
 
   useEffect(() => {
-    const strip = stripRef.current;
-    const button = tabRefs.current.get(selected);
-    if (!strip || !button) return;
-    const stripRect = strip.getBoundingClientRect();
-    const buttonRect = button.getBoundingClientRect();
-    if (buttonRect.left < stripRect.left) {
-      strip.scrollLeft += buttonRect.left - stripRect.left;
-    } else if (buttonRect.right > stripRect.right) {
-      strip.scrollLeft += buttonRect.right - stripRect.right;
-    }
+    const scrollSelectedIntoView = () => {
+      const strip = stripRef.current;
+      const button = tabRefs.current.get(selected);
+      if (!strip || !button) return;
+      const stripRect = strip.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      if (buttonRect.left < stripRect.left) {
+        strip.scrollLeft += buttonRect.left - stripRect.left;
+      } else if (buttonRect.right > stripRect.right) {
+        strip.scrollLeft += buttonRect.right - stripRect.right;
+      }
+    };
+    scrollSelectedIntoView();
+    const frameId = requestAnimationFrame(scrollSelectedIntoView);
+    return () => cancelAnimationFrame(frameId);
   }, [selected]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentId: string) => {
@@ -77,7 +88,8 @@ export const Tabs = ({ selected, onSelectedChange, label, items }: TabsProps): J
           const isFocusable =
             selectedIndex !== -1 ? item.id === selected : item.id === firstEnabledId;
           const tabId = `${baseId}-tab-${item.id}`;
-          const panelId = `${baseId}-panel-${item.id}`;
+          const panelId =
+            renderPanels && item.panel !== undefined ? `${baseId}-panel-${item.id}` : undefined;
 
           return (
             <button
@@ -114,28 +126,31 @@ export const Tabs = ({ selected, onSelectedChange, label, items }: TabsProps): J
         })}
       </div>
 
-      <div className="mt-4">
-        {items.map((item) => {
-          const isSelected = item.id === selected && item.disabled !== true;
-          const tabId = `${baseId}-tab-${item.id}`;
-          const panelId = `${baseId}-panel-${item.id}`;
+      {renderPanels ? (
+        <div className="mt-4">
+          {items.map((item) => {
+            if (item.panel === undefined) return null;
+            const isSelected = item.id === selected && item.disabled !== true;
+            const tabId = `${baseId}-tab-${item.id}`;
+            const panelId = `${baseId}-panel-${item.id}`;
 
-          return (
-            <div
-              key={item.id}
-              role="tabpanel"
-              id={panelId}
-              aria-labelledby={tabId}
-              tabIndex={0}
-              hidden={!isSelected}
-              inert={!isSelected ? true : undefined}
-              className={`fp-focus text-body text-on-surface ${!isSelected ? 'hidden' : 'block'}`}
-            >
-              {item.panel}
-            </div>
-          );
-        })}
-      </div>
+            return (
+              <div
+                key={item.id}
+                role="tabpanel"
+                id={panelId}
+                aria-labelledby={tabId}
+                tabIndex={0}
+                hidden={!isSelected}
+                inert={!isSelected ? true : undefined}
+                className={`fp-focus text-body text-on-surface ${!isSelected ? 'hidden' : 'block'}`}
+              >
+                {item.panel}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 };

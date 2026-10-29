@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { enterEditor, editorSection, showPlanning } from './ui-actions';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
+// L111 adds weighing checkboxes to Planning; assertions below still forbid authoring inputs.
 const modal = (page: Page) => page.locator('ion-modal:not(.overlay-hidden)');
 const footer = (page: Page) => routed(page).locator('ion-footer:visible');
 const scrollTop = (page: Page) =>
@@ -36,13 +37,9 @@ for (const english of [false, true]) {
     await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
     await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
     await expect(routed(page)).toHaveCount(1);
-    await page.addStyleTag({ content: 'html, body { font-size: 20px !important; }' });
-    const tabs = routed(page)
-      .getByRole('group')
-      .filter({
-        has: page.getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true }),
-      });
-    const bounds = await tabs.getByRole('button').evaluateAll((buttons) =>
+    await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
+    const tabs = routed(page).getByRole('tablist');
+    const bounds = await tabs.getByRole('tab').evaluateAll((buttons) =>
       buttons.map((button) => {
         const range = document.createRange();
         range.selectNodeContents(button);
@@ -65,6 +62,7 @@ for (const english of [false, true]) {
     expect(bounds.map((b) => b.label)).toEqual(
       english ? ['Recipe', 'Planning', 'History'] : ['Recette', 'Planification', 'Historique'],
     );
+    expect(new Set(bounds.map((button) => button.top)).size).toBe(1);
     for (const button of bounds)
       for (const text of button.text) {
         expect(text.left, button.label ?? '').toBeGreaterThanOrEqual(button.left - 1);
@@ -83,7 +81,7 @@ for (const english of [false, true]) {
     await expect(routed(page)).toHaveCount(1);
   };
   const recipe = (page: Page) =>
-    routed(page).getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true });
+    routed(page).getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true });
   const shortcut = (page: Page) =>
     routed(page).getByRole('button', {
       name: english ? 'Edit Bulk fermentation in recipe' : 'Modifier Pointage dans la recette',
@@ -128,7 +126,9 @@ for (const english of [false, true]) {
     await expect.poll(() => scrollTop(page)).toBe(260);
     await expect(when).toHaveValue('2026-11-05T14:00');
     await expect(target).toHaveValue('proof');
-    await expect(routed(page).locator('input:not([type="datetime-local"]):visible')).toHaveCount(0);
+    await expect(
+      routed(page).locator('input:not([type="datetime-local"]):not([type="checkbox"]):visible'),
+    ).toHaveCount(0);
     await shortcut(page).click();
     await expect(modal(page)).toBeVisible();
     await close(page);
@@ -160,7 +160,7 @@ for (const english of [false, true]) {
     await water.fill('abc');
     await water.blur();
     await showPlanning(page);
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
     ).toBeVisible();
@@ -189,7 +189,7 @@ for (const english of [false, true]) {
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
     ).toBeVisible();
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
   });
 
   test(`Method uses the existing fermentation authoring path and preserves Auto${suffix}`, async ({
@@ -223,7 +223,7 @@ for (const english of [false, true]) {
     await expect(routed(page).getByTestId('fermentation-card')).toBeFocused();
     await expect(auto).toHaveAttribute('aria-pressed', 'true');
     await showPlanning(page);
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(routed(page).getByText(/^≈ /).filter({ visible: true })).not.toHaveCount(0);
     await recipe(page).click();
     await enterEditor(page);
@@ -358,7 +358,7 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
   await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
   await expect(routed(page)).toHaveCount(1);
-  await routed(page).getByRole('button', { name: 'Planification', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Planification', exact: true }).click();
   await routed(page)
     .getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true })
     .click();
@@ -390,5 +390,5 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
   await expect(
     routed(page).getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true }),
   ).toHaveCount(0);
-  await expect(routed(page).locator('input:visible')).toHaveCount(0);
+  await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
 });

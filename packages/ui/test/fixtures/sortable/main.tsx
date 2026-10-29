@@ -23,6 +23,12 @@ const initial = [
   { id: '__start__', label: 'Alpha' },
   { id: 'beta', label: 'Beta' },
   { id: 'gamma', label: 'Gamma' },
+  ...(query.get('long') === 'true'
+    ? Array.from({ length: 24 }, (_, index) => ({
+        id: `item-${index + 4}`,
+        label: `Item ${index + 4}`,
+      }))
+    : []),
 ];
 
 function Fixture(): ReactElement {
@@ -64,7 +70,13 @@ function Fixture(): ReactElement {
             >
               Disable sorting
             </button>
-            <button type="button" onClick={() => control.current?.cancelDrag()}>
+            <button
+              type="button"
+              onClick={() => {
+                const cancelResult = control.current?.cancelDrag() ?? false;
+                setEvents((previous) => [...previous, { cancelResult }]);
+              }}
+            >
               Cancel current drag
             </button>
             <section aria-label="Controlled list">

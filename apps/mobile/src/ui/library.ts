@@ -8,6 +8,7 @@ import floatingMenu from '@flourprint/ui/components/floating-menu/v1';
 import bottomSheet from '@flourprint/ui/components/bottom-sheet/v1';
 import dialog from '@flourprint/ui/components/dialog/v1';
 import select from '@flourprint/ui/components/select/v1';
+import bottomBar from '@flourprint/ui/components/bottom-bar/v1';
 
 import sortableList from '@flourprint/ui/components/sortable-list/v1';
 
@@ -25,5 +26,6 @@ export const { Ui, versionOf } = createUi(
     'fp.dialog': dialog,
     'fp.select': select,
     'fp.sortable-list': sortableList,
+    'fp.bottom-bar': bottomBar,
   }),
 );

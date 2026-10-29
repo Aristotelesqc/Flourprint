@@ -45,7 +45,7 @@ for (const english of [false, true]) {
     await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(routed(page).locator('select:visible')).toHaveCount(0);
     await expect(
-      routed(page).getByRole('button', {
+      routed(page).getByRole('tab', {
         name: english ? 'Planning' : 'Planification',
         exact: true,
       }),
@@ -118,7 +118,10 @@ test('consultation and editing share weighing state without inventing a saved ob
   await expect(firstItem).toBeChecked();
   await expect(
     routed(page)
-      .getByText(/Aide temporaire de pesée/)
+      .getByText(
+        'Pesées partagées avec la planification et reportées dans la préparation au démarrage.',
+        { exact: true },
+      )
       .filter({ visible: true }),
   ).toBeVisible();
 });
@@ -150,25 +153,36 @@ test('valid raw text is committed only from the focused field before a mode comm
   await expect(water).toHaveValue('720');
 });
 
-test('a changed weighing quantity stays unchecked when the previous quantity is restored', async ({
+test('weighing identity survives draft quantity edits and undo until a new saved revision', async ({
   page,
 }) => {
+  // docs/contracts/bake-session.md, Weighing checks: identity is stage/item, not grams.
   await openSaved(page);
-  const waterItem = routed(page).getByRole('checkbox', { name: /^Eau / });
+  const waterItem = routed(page)
+    .getByRole('group', { name: 'Mélange final', exact: true })
+    .getByRole('checkbox', { name: /^Eau / });
   await waterItem.check();
   await edit(page).click();
   const water = routed(page).getByLabel('Eau (g)', { exact: true });
   await water.fill('720');
   await water.press('Enter');
   await editorSection(page, 'result');
-  await expect(waterItem).not.toBeChecked();
+  await expect(waterItem).toBeChecked();
+  await footer(page).getByRole('button', { name: 'Annuler', exact: true }).click();
   await editorSection(page, 'composition');
-  await water.fill('750');
-  await water.press('Enter');
+  await expect(water).toHaveValue('750');
   await editorSection(page, 'result');
+  await expect(waterItem).toBeChecked();
+  await editorSection(page, 'composition');
+  await water.fill('720');
+  await water.press('Enter');
+  await expect(
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
+  ).toBeEnabled();
+  await footer(page).getByRole('button', { name: 'Enregistrer', exact: true }).click();
+  await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
   await expect(waterItem).not.toBeChecked();
 });
-
 test('a long build label keeps recipe-list actions reachable at 360px', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 851 });
   await page.goto('/recipes');
@@ -213,7 +227,7 @@ test('planning inputs survive entering and leaving editing without creating a re
   await expect(target).toHaveValue('mix');
   await expect(routed(page).getByLabel('Durée : Pétrissage', { exact: true })).toBeVisible();
   await read(page).click();
-  await routed(page).getByRole('button', { name: 'Planification', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Planification', exact: true }).click();
   await expect(when).toHaveValue('2026-11-05T14:00');
   await expect(target).toHaveValue('mix');
   await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();

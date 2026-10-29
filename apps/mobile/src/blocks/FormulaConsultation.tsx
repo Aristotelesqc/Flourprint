@@ -9,15 +9,15 @@ import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
-import { WeighingChecklist } from './WeighingChecklist';
+import { WeighingChecklist, type WeighedRow } from './WeighingChecklist';
 import { Enrichment, FlourSummary, GroupHeader, ROW } from './FormulaSection';
 
 interface Props {
   readonly formula: Formula;
   readonly resolved?: ResolvedFormula;
   readonly process: Process;
-  readonly weighed: ReadonlyMap<string, number>;
-  readonly onToggleWeighed: (key: string, grams: number) => void;
+  readonly weighed: readonly WeighedRow[];
+  readonly onToggleWeighed: (row: WeighedRow) => void;
 }
 
 /**

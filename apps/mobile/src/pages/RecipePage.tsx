@@ -28,6 +28,8 @@ import {
   defaultVariant,
   doughSteps,
   resolveFormula,
+  sameWeighingRow,
+  weighingGroups,
   type BakeCommandPayload,
   type BakeSummary,
   type Recipe,
@@ -42,7 +44,7 @@ import {
   type Revision,
 } from '@flourprint/core/domain';
 import { FormulaConsultation } from '../blocks/FormulaConsultation';
-import { buildFinalMixItems } from '../blocks/WeighingChecklist';
+import { WeighingChecklist, type WeighedRow } from '../blocks/WeighingChecklist';
 import { FormulaSection } from '../blocks/FormulaSection';
 import { HistorySection } from '../blocks/HistorySection';
 import { ProcessSection } from '../blocks/ProcessSection';
@@ -65,6 +67,7 @@ import { SimulationBanner } from '../ui/SimulationBanner';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
 import { Segmented } from '../ui/Segmented';
+import { Ui } from '../ui/library';
 import { ValidationProvider, useValidation, useValidationActions } from '../ui/ValidationContext';
 
 type Tab = 'formula' | 'process' | 'history';
@@ -116,7 +119,7 @@ const RecipePageContent = () => {
   const flourCatalog = useFlourCatalog();
   const router = useIonRouter();
   const [presentAlert] = useIonAlert();
-  const { t, error, name: ingredientName, componentName } = useMessages();
+  const { t, error } = useMessages();
   const [tab, setTab] = useState<Tab>('formula');
   const [editorSection, setEditorSection] = useState<EditorSection>('comp');
   const [base, setBase] = useState<{ name: string; revision: Revision }>();
@@ -161,17 +164,12 @@ const RecipePageContent = () => {
   const [targetedStepId, setTargetedStepId] = useState<string>();
   const [returnToPlanning, setReturnToPlanning] = useState(false);
 
-  // Shared temporary weighing checklist lifted to page level (#67)
-  const [weighed, setWeighed] = useState<ReadonlyMap<string, number>>(new Map());
-  const toggleWeighed = useCallback((key: string, grams: number) => {
+  // Shared temporary weighing checklist lifted to page level (#67, L110, L111)
+  const [weighed, setWeighed] = useState<readonly WeighedRow[]>([]);
+  const toggleWeighed = useCallback((target: WeighedRow) => {
     setWeighed((prev) => {
-      const next = new Map(prev);
-      if (next.get(key) === grams) {
-        next.delete(key);
-      } else {
-        next.set(key, grams);
-      }
-      return next;
+      const exists = prev.some((w) => sameWeighingRow(w, target));
+      return exists ? prev.filter((w) => !sameWeighingRow(w, target)) : [...prev, target];
     });
   }, []);
 
@@ -420,21 +418,39 @@ const RecipePageContent = () => {
 
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
   const issues = useMemo(() => (draft ? checkRecipe(draft.formula, draft.process) : []), [draft]);
+
+  // Reset checks on recipe/draft route switch or when baseline recipe's saved revision changes
+  const activeRecipeKey = draftId ?? recipeId;
+  const savedRevisionKey = base ? `${base.revision.recipeId}@${base.revision.version}` : undefined;
+  const lastBaselineRef = useRef<{
+    recipeKey: string | undefined;
+    revisionKey: string | undefined;
+  }>({
+    recipeKey: undefined,
+    revisionKey: undefined,
+  });
+  useEffect(() => {
+    const prev = lastBaselineRef.current;
+    if (prev.recipeKey !== undefined && prev.recipeKey !== activeRecipeKey) {
+      setWeighed([]);
+    } else if (prev.revisionKey !== undefined && prev.revisionKey !== savedRevisionKey) {
+      setWeighed([]);
+    }
+    lastBaselineRef.current = { recipeKey: activeRecipeKey, revisionKey: savedRevisionKey };
+  }, [activeRecipeKey, savedRevisionKey]);
+
+  // Prune absent rows by identity against core groups, preserving checks across quantity edits
   useEffect(() => {
     if (!draft || !resolved?.ok) return;
-    const quantities = new Map(
-      buildFinalMixItems(draft.formula, resolved.value, ingredientName, componentName).map(
-        (item) => [item.key, item.grams],
-      ),
-    );
+    const groups = weighingGroups(draft.formula, resolved.value);
     setWeighed((previous) => {
-      const next = new Map(previous);
-      for (const [key, grams] of previous) {
-        if (quantities.get(key) !== grams) next.delete(key);
-      }
-      return next.size === previous.size ? previous : next;
+      if (previous.length === 0) return previous;
+      const valid = previous.filter((checked) =>
+        groups.some((group) => group.rows.some((row) => sameWeighingRow(row, checked))),
+      );
+      return valid.length === previous.length ? previous : valid;
     });
-  }, [draft, resolved, ingredientName, componentName]);
+  }, [draft, resolved]);
 
   if ((!base && !newRecipe) || !draft || !resolved) {
     return (
@@ -797,6 +813,22 @@ const RecipePageContent = () => {
     if (pendingStart.current) setNotice(t('recipe.retryStart'));
     // The entry versions the process references, copied into the bake (equipment.md).
     const equipment = await processEquipmentEntries(services.equipment, revision.process);
+    const savedResolved = resolveFormula(revision.formula);
+    const savedGroups = savedResolved.ok
+      ? weighingGroups(revision.formula, savedResolved.value)
+      : [];
+    const validWeighed = weighed
+      .filter((w) => savedGroups.some((g) => g.rows.some((r) => sameWeighingRow(r, w))))
+      .map((w) => ({
+        stage:
+          w.stage.kind === 'component'
+            ? { kind: 'component' as const, id: w.stage.id }
+            : { kind: w.stage.kind },
+        item:
+          w.item.kind === 'ingredient'
+            ? { kind: 'ingredient' as const, id: w.item.id }
+            : { kind: w.item.kind },
+      }));
     const pending = (pendingStart.current ??= {
       bakeId: services.ids.next(),
       commandId: services.ids.next(),
@@ -812,6 +844,7 @@ const RecipePageContent = () => {
           flourCatalog.personal,
         ),
         ...(equipment.length === 0 ? {} : { equipment }),
+        ...(validWeighed.length === 0 ? {} : { weighed: validWeighed }),
       },
     });
     const result = await writes.run(() =>
@@ -832,6 +865,7 @@ const RecipePageContent = () => {
       setFailure(result.value.error);
       return;
     }
+    setWeighed([]);
     await refreshBakes();
     openBake(pending.bakeId);
   };
@@ -943,47 +977,33 @@ const RecipePageContent = () => {
             )}
           </IonButtons>
 
-          <div className="min-w-0 px-2 font-bold text-lg">
-            {isEditing ? t('recipe.edit') : t('recipe.tab.formula')}
-            {isEditing && base && (
-              <div className="m3-type-metadata font-medium text-muted">
-                {t('recipe.version', { version: base.revision.version })}
+          {isEditing ? (
+            <div className="min-w-0 px-2 font-bold text-lg">
+              {t('recipe.edit')}
+              {base && (
+                <div className="m3-type-metadata font-medium text-muted">
+                  {t('recipe.version', { version: base.revision.version })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div ref={titleRef} tabIndex={-1} className="min-w-0 px-2 py-1 outline-none">
+              <h1 className="m-0 text-lg font-bold break-words leading-tight">{name}</h1>
+              <div className="text-xs text-muted mt-0.5">
+                {base
+                  ? t('recipe.version', { version: base.revision.version })
+                  : t('draft.newRecipe')}
+                {stored && (
+                  <span className="ml-2" role="status">
+                    {t('draft.unsaved')}
+                  </span>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <IonButtons slot="end">
-            {!isEditing ? (
-              base &&
-              trashedAt === undefined && (
-                <OverflowMenu
-                  ariaLabel={t('recipe.overflowActions')}
-                  title={t('recipe.overflowActions')}
-                  actions={[
-                    {
-                      label: t('recipe.editAction'),
-                      handler: enterEditing,
-                    },
-                    ...(active
-                      ? [
-                          {
-                            label: t('process.startAnother'),
-                            handler: confirmStart,
-                            disabled: dirty || hasInvalid || writes.busy,
-                          },
-                        ]
-                      : []),
-                    'divider',
-                    {
-                      label: t('recipe.trash'),
-                      destructive: true,
-                      disabled: writes.busy,
-                      handler: confirmTrash,
-                    },
-                  ]}
-                />
-              )
-            ) : (
+            {isEditing && (
               <OverflowMenu
                 ariaLabel={t('editor.overflowActions')}
                 title={t('editor.overflowActions')}
@@ -1056,17 +1076,19 @@ const RecipePageContent = () => {
         <IonToolbar>
           <div className="px-4 pb-2">
             {!isEditing ? (
-              <Segmented
-                value={tab}
-                appearance="tabs"
-                options={(base
+              <Ui
+                component="fp.tabs"
+                selected={tab}
+                onSelectedChange={(id) => switchTab(id as Tab)}
+                label={t('recipe.tabsLabel')}
+                renderPanels={false}
+                items={(base
                   ? (['formula', 'process', 'history'] as const)
                   : (['formula', 'process'] as const)
                 ).map((value) => ({
-                  value,
+                  id: value,
                   label: t(`recipe.tab.${value}`),
                 }))}
-                onChange={switchTab}
               />
             ) : (
               <Segmented
@@ -1108,22 +1130,6 @@ const RecipePageContent = () => {
           </p>
         )}
         <SessionOnlyNotice />
-
-        {!isEditing && (
-          <div ref={titleRef} tabIndex={-1} className="mb-4 outline-none">
-            <h1 className="m3-type-page m-0 break-words">{name}</h1>
-            <div className="text-sm text-muted mt-1">
-              {base
-                ? t('recipe.version', { version: base.revision.version })
-                : t('draft.newRecipe')}
-              {stored && (
-                <span className="ml-2" role="status">
-                  {t('draft.unsaved')}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
 
         {!isEditing && hasInvalid && (
           <div className="m3-card-quiet mb-4 flex-row flex-wrap items-center justify-between">
@@ -1218,6 +1224,16 @@ const RecipePageContent = () => {
             onOpenBake={openBake}
             {...(trashedAt === undefined ? { onEditStepInRecipe: editStepInRecipe } : {})}
           />
+          {resolved.ok && trashedAt === undefined && (
+            <div className="mt-5 pb-6">
+              <WeighingChecklist
+                formula={draft.formula}
+                resolved={resolved.value}
+                weighed={weighed}
+                onToggle={toggleWeighed}
+              />
+            </div>
+          )}
         </div>
 
         {base && (
@@ -1273,20 +1289,50 @@ const RecipePageContent = () => {
         />
       </IonContent>
       {!isEditing && base && trashedAt === undefined && (
-        <IonFooter>
-          <IonToolbar>
-            <div className="px-4 py-2">
-              <IonButton
-                expand="block"
-                shape="round"
-                className="btn-pill-primary h-12 font-semibold"
+        <IonFooter className="ion-no-border">
+          <Ui component="fp.bottom-bar" navigationLabel={t('recipe.bottomBarLabel')}>
+            <Ui
+              component="fp.button"
+              variant="quiet"
+              aria-label={t('recipe.editAction')}
+              onClick={enterEditing}
+            >
+              {t('recipe.edit')}
+            </Ui>
+            <div className="flex items-center gap-2 shrink-0">
+              <Ui
+                component="fp.button"
+                variant="primary"
+                aria-label={active ? t('recipe.resumeAction') : t('recipe.startAction')}
                 disabled={!active && (writes.busy || dirty || hasInvalid)}
                 onClick={() => (active ? openBake(active.bakeId) : confirmStart())}
               >
-                {active ? t('recipe.resumeAction') : t('recipe.startAction')}
-              </IonButton>
+                {active ? t('recipe.resumeActionShort') : t('recipe.startActionShort')}
+              </Ui>
+              <OverflowMenu
+                ariaLabel={t('recipe.overflowActions')}
+                title={t('recipe.overflowActions')}
+                actions={[
+                  ...(active
+                    ? [
+                        {
+                          label: t('process.startAnother'),
+                          handler: confirmStart,
+                          disabled: dirty || hasInvalid || writes.busy,
+                        },
+                      ]
+                    : []),
+                  'divider',
+                  {
+                    label: t('recipe.trash'),
+                    destructive: true,
+                    disabled: writes.busy,
+                    handler: confirmTrash,
+                  },
+                ]}
+              />
             </div>
-          </IonToolbar>
+          </Ui>
         </IonFooter>
       )}
       {isEditing && (

@@ -10,6 +10,7 @@ import {
   AutoScroller,
   Cursor,
   Feedback,
+  Scroller,
   KeyboardSensor,
   PointerActivationConstraints,
   PointerSensor,
@@ -266,7 +267,7 @@ export function SortableSlot({
     <div
       ref={setRef}
       data-slot-after={afterId ?? 'start'}
-      className={`relative transition-all duration-effect ease-standard ${
+      className={`relative transition-all duration-[var(--duration-effect)] ease-standard ${
         activeId && isValidCandidate ? 'min-h-[24px] py-1' : ''
       } ${className}`}
       data-drop-target={isDropTarget ? 'true' : undefined}
@@ -274,7 +275,7 @@ export function SortableSlot({
       {activeId && isValidCandidate && (
         <div
           aria-hidden="true"
-          className={`h-2 w-full rounded-full transition-all duration-effect ease-standard ${
+          className={`h-2 w-full rounded-full transition-all duration-[var(--duration-effect)] ease-standard ${
             isDropTarget
               ? 'scale-y-125 bg-primary shadow-sm'
               : 'border border-dashed border-outline/50 bg-surface-container/50'
@@ -298,6 +299,69 @@ function SortableListInner({
   children: ReactNode;
 }): ReactElement {
   const manager = useDragDropManager();
+
+  useEffect(() => {
+    if (!manager) return;
+
+    const scroller = manager.registry.plugins.get(Scroller);
+    if (!scroller || typeof scroller.getScrollableElements !== 'function') return;
+
+    const originalGetScrollableElements = scroller.getScrollableElements;
+
+    const wrappedGetScrollableElements = function (this: Scroller): Set<Element> | null {
+      const native = originalGetScrollableElements.call(this);
+      const sourceEl = manager.dragOperation.source?.element;
+      if (!(sourceEl instanceof Element)) return native;
+
+      const composedScrollables: Element[] = [];
+      const visited = new Set<Node>();
+
+      let current: Node | null = sourceEl.assignedSlot ?? sourceEl.parentNode;
+
+      while (current && !visited.has(current)) {
+        visited.add(current);
+
+        if (current instanceof HTMLElement) {
+          const win = current.ownerDocument?.defaultView ?? window;
+          const style = win.getComputedStyle(current);
+          const isScrollable = (val: string) =>
+            val === 'auto' || val === 'scroll' || val === 'overlay';
+          const canScrollY = isScrollable(style.overflowY);
+          const canScrollX = isScrollable(style.overflowX);
+
+          if (
+            (canScrollY &&
+              current.scrollHeight > current.clientHeight &&
+              current.clientHeight > 0) ||
+            (canScrollX && current.scrollWidth > current.clientWidth && current.clientWidth > 0)
+          ) {
+            composedScrollables.push(current);
+          }
+        }
+
+        current =
+          (current instanceof Element && current.assignedSlot) ||
+          current.parentNode ||
+          (current instanceof ShadowRoot ? current.host : null);
+      }
+
+      if (composedScrollables.length === 0) return native;
+
+      const merged = new Set<Element>(composedScrollables);
+      if (native) {
+        for (const el of native) merged.add(el);
+      }
+      return merged;
+    };
+
+    scroller.getScrollableElements = wrappedGetScrollableElements;
+
+    return () => {
+      if (scroller.getScrollableElements === wrappedGetScrollableElements) {
+        scroller.getScrollableElements = originalGetScrollableElements;
+      }
+    };
+  }, [manager]);
 
   useImperativeHandle(
     cancelRef,
@@ -607,7 +671,7 @@ export function SortableList({
   const dragForm = isReduced(containerRef.current) ? dragMotion.reduced : dragMotion.standard;
   const dropAnimation =
     dragForm === 'none'
-      ? null
+      ? { duration: 0, easing: 'linear' }
       : { duration: durationMs(dragForm.duration), easing: easingCurve(dragForm.easing) };
 
   const contextValue: SortableListContextValue = useMemo(

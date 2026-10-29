@@ -34,7 +34,7 @@ const goBack = async (page: Page) => {
     await expect(read).toBeHidden();
     if (page.url() !== before) return;
     await expect(
-      routed(page).getByRole('button', { name: /^(Recette|Recipe)$/, exact: true }),
+      routed(page).getByRole('tab', { name: /^(Recette|Recipe)$/, exact: true }),
     ).toBeVisible();
   }
   await routed(page).locator('ion-back-button').click();
@@ -127,7 +127,7 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await expect(log.nth(2)).toContainText('Échaudage commencé');
 
   await page.locator('ion-back-button:visible').click();
-  await page.getByRole('button', { name: 'Historique' }).click();
+  await page.getByRole('tab', { name: 'Historique' }).click();
   // One bake despite the double tap (the header's "En cours" button is not a history item).
   await expect(page.locator('ion-item:visible')).toHaveCount(1);
   await expect(page.locator('ion-item:visible')).toContainText('En cours');
@@ -1214,7 +1214,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await expect(page.getByText(/Aucune préparation en cours/)).toBeVisible();
   await backToRecipes(page);
   await openShownRecipe(page);
-  await page.getByRole('button', { name: 'Historique' }).click();
+  await page.getByRole('tab', { name: 'Historique' }).click();
   await expect(page.getByText(/Aucune préparation pour l’instant/)).toBeVisible();
 
   // Simulation again: it is back.

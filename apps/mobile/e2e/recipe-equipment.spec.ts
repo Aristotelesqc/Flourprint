@@ -129,7 +129,7 @@ for (const english of [false, true]) {
     await assertNoOverflow();
     const text = await details.innerText();
     await routed(page)
-      .getByRole('button', { name: english ? 'Planning' : 'Planification', exact: true })
+      .getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true })
       .click();
     await details.locator('summary').first().click();
     expect(await details.innerText()).toBe(text);

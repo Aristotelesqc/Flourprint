@@ -5,8 +5,8 @@ export interface TabItem {
   readonly id: string;
   /** Display label for the tab button. */
   readonly label: ReactNode;
-  /** Content rendered inside the associated tab panel. */
-  readonly panel: ReactNode;
+  /** Content rendered inside the associated tab panel. Optional when panels are rendered externally. */
+  readonly panel?: ReactNode | undefined;
   /** Optional disabled state for this tab item. */
   readonly disabled?: boolean | undefined;
 }
@@ -20,4 +20,6 @@ export interface TabsProps {
   readonly label: string;
   /** Readonly list of tab items. */
   readonly items: readonly TabItem[];
+  /** Whether to render tab panels internally. Defaults to true. When false, caller mounts panels externally. */
+  readonly renderPanels?: boolean | undefined;
 }
