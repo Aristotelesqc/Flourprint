@@ -37,13 +37,9 @@ for (const english of [false, true]) {
     await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
     await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
     await expect(routed(page)).toHaveCount(1);
-    await page.addStyleTag({ content: 'html, body { font-size: 20px !important; }' });
-    const tabs = routed(page)
-      .getByRole('group')
-      .filter({
-        has: page.getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true }),
-      });
-    const bounds = await tabs.getByRole('button').evaluateAll((buttons) =>
+    await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
+    const tabs = routed(page).getByRole('tablist');
+    const bounds = await tabs.getByRole('tab').evaluateAll((buttons) =>
       buttons.map((button) => {
         const range = document.createRange();
         range.selectNodeContents(button);
@@ -66,6 +62,7 @@ for (const english of [false, true]) {
     expect(bounds.map((b) => b.label)).toEqual(
       english ? ['Recipe', 'Planning', 'History'] : ['Recette', 'Planification', 'Historique'],
     );
+    expect(new Set(bounds.map((button) => button.top)).size).toBe(1);
     for (const button of bounds)
       for (const text of button.text) {
         expect(text.left, button.label ?? '').toBeGreaterThanOrEqual(button.left - 1);
@@ -84,7 +81,7 @@ for (const english of [false, true]) {
     await expect(routed(page)).toHaveCount(1);
   };
   const recipe = (page: Page) =>
-    routed(page).getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true });
+    routed(page).getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true });
   const shortcut = (page: Page) =>
     routed(page).getByRole('button', {
       name: english ? 'Edit Bulk fermentation in recipe' : 'Modifier Pointage dans la recette',
@@ -361,7 +358,7 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
   await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
   await expect(routed(page)).toHaveCount(1);
-  await routed(page).getByRole('button', { name: 'Planification', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Planification', exact: true }).click();
   await routed(page)
     .getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true })
     .click();

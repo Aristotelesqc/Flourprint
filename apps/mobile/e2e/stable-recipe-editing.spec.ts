@@ -115,9 +115,9 @@ test('panels retain independent positions, incomplete fields and planner control
   await time.fill('2026-11-05T14:00');
   await scrollTo(page, 400);
   await expect.poll(() => scrollTop(page)).toBe(400);
-  await page.getByRole('button', { name: 'Historique', exact: true }).click();
+  await page.getByRole('tab', { name: 'Historique', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(0);
-  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Recette', exact: true }).click();
   await enterEditor(page);
   await expect.poll(() => scrollTop(page)).toBe(450);
   await expect(water).toHaveValue('abc');
@@ -125,7 +125,7 @@ test('panels retain independent positions, incomplete fields and planner control
   await showPlanning(page);
   await expect.poll(() => scrollTop(page)).toBe(400);
   await expect(time).toHaveValue('2026-11-05T14:00');
-  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Recette', exact: true }).click();
   await enterEditor(page);
   await expect.poll(() => scrollTop(page)).toBe(450);
   // Switch again during restoration frames on the generated/read panels.
@@ -210,12 +210,12 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   await expect(footer.getByRole('button', { name: 'Démarrer la préparation' })).toBeDisabled();
   await expect(water).toHaveValue('abc');
 
-  await page.getByRole('button', { name: 'Historique', exact: true }).click();
+  await page.getByRole('tab', { name: 'Historique', exact: true }).click();
   await expect(footer.getByRole('button', { name: 'Démarrer la préparation' })).toBeDisabled();
   await expect(water).toHaveValue('abc');
 
   // 4. Return to Recipe: invalid value preserved, no accidental v2
-  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Recette', exact: true }).click();
   await enterEditor(page);
   await expect(water).toHaveValue('abc');
   await expect(water).toHaveAttribute('aria-invalid', 'true');

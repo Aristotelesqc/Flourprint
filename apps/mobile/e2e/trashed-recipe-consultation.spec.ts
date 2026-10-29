@@ -37,7 +37,7 @@ for (const english of [false, true]) {
       routed.getByRole('button', { name: english ? 'Start' : 'Démarrer', exact: true }),
     ).toHaveCount(0);
     await routed
-      .getByRole('button', { name: english ? 'Planning' : 'Planification', exact: true })
+      .getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true })
       .click();
     await expect(
       routed.getByRole('button', { name: english ? / in recipe$/ : / dans la recette$/ }),
@@ -52,7 +52,7 @@ for (const english of [false, true]) {
         exact: true,
       }),
     ).toBeVisible();
-    await routed.getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true }).click();
+    await routed.getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true }).click();
     await enterEditor(page);
     await expect(routed.getByRole('button', { name: 'Composition', exact: true })).toBeVisible();
     await expect(editHydration).toHaveCount(0);

@@ -8,6 +8,49 @@ write transitions. Every item has a guide; a new item or version ships with its 
 
 ## Components
 
+### `fp.bottom-bar`
+
+The bottom area of a screen: navigation A selects the contextual toolbar as a contextual toolbar (L101).
+
+**Use when**
+
+- Once per screen, at the bottom.
+
+**Avoid when**
+
+- Actions inside a sheet or a menu: put them in that component's footer.
+
+**Props**
+
+| Prop              | Meaning                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `variant`         | 'A' (contextual toolbar; navigation A is selected under L101).                      |
+| `children`        | The screen's contextual actions.                                                    |
+| `navigationLabel` | Accessible name of the toolbar/navigation landmark.                                 |
+| `className`       | Optional classes applied to the toolbar container, without styling child internals. |
+
+**Accessibility**
+
+- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
+- The toolbar/navigation landmark carries navigationLabel.
+- Touch target at least 48 px width and height; visible control rhythm is compact without overlapping adjacent actions.
+- At 360 px and 130% text scaling (L115), contextual toolbar actions fit without horizontal overflow; Edit, Start/Resume, and overflow actions remain reachable with full >=48 px targets without clipped labels or empty padded rows.
+- Labels use single-row ellipsis rather than mid-word wrapping (L25), preserving baseline alignment.
+
+**Related**
+
+- `fp.button`
+- `fp.tabs`
+
+**Decisions**
+
+- [Navigation A selected (L101 / #112)](https://github.com/Aristotelesqc/Flourprint/issues/112)
+- [ADR 0022: Port to app and Tailwind](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0022-port-to-app-and-tailwind.md)
+
+**Versions**
+
+- `v1`: Tailwind 4 contextual bottom toolbar with flat surface, touch-target controls, and compact action rhythm (L101).
+
 ### `fp.bottom-sheet`
 
 Floating sheet overlay docked to the viewport bottom for workflows, long forms, and secondary tasks.
@@ -425,12 +468,13 @@ Accessible tabbed navigation strip that switches between alternate views while k
 
 **Props**
 
-| Prop               | Meaning                                                                                             |
-| ------------------ | --------------------------------------------------------------------------------------------------- |
-| `selected`         | Identifier of the currently active tab item.                                                        |
-| `onSelectedChange` | Callback fired when a tab is selected with the selected tab identifier.                             |
-| `label`            | Required localized accessible label describing the purpose of the tab list (applied as aria-label). |
-| `items`            | Readonly list of tab items defining id, label, panel content, and optional disabled state.          |
+| Prop               | Meaning                                                                                                    |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `selected`         | Identifier of the currently active tab item.                                                               |
+| `onSelectedChange` | Callback fired when a tab is selected with the selected tab identifier.                                    |
+| `label`            | Required localized accessible label describing the purpose of the tab list (applied as aria-label).        |
+| `items`            | Readonly list of tab items defining id, label, panel content, and optional disabled state.                 |
+| `renderPanels`     | Whether to render panels internally (defaults to true). Set to false when caller mounts panels externally. |
 
 **Accessibility**
 
