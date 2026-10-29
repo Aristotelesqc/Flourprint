@@ -1,12 +1,76 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { executable, launch as launchShell, loadSample, quit, tap } from './launch.js';
 
 /** Smoke test of the packaged release shell (ADR 0011). */
-const launch = (userData: string) =>
-  launchShell({ executable: executable('release'), userData, appUrl: 'app://flourprint/' });
+let observedPage: Page | undefined;
+const pageErrors: string[] = [];
+const launch = async (userData: string) => {
+  const app = await launchShell({
+    executable: executable('release'),
+    userData,
+    appUrl: 'app://flourprint/',
+  });
+  observedPage = app.page;
+  app.page.on('pageerror', (error) => pageErrors.push(error.message));
+  await app.page.evaluate(() => {
+    const events: unknown[] = [];
+    Reflect.set(window, '__nativeInputProbe', events);
+    for (const type of [
+      'pointerdown',
+      'pointerup',
+      'pointercancel',
+      'touchstart',
+      'touchend',
+      'touchcancel',
+      'click',
+      'ionNavWillChange',
+      'ionNavDidChange',
+    ]) {
+      document.addEventListener(
+        type,
+        (event) => {
+          const target = event.target instanceof Element ? event.target : undefined;
+          events.push({
+            type,
+            at: performance.now(),
+            path: location.pathname,
+            target: target?.tagName,
+            text: target?.textContent?.trim().slice(0, 80),
+            href: target?.closest('ion-router-link')?.getAttribute('router-link'),
+            focus: document.hasFocus(),
+            visibility: document.visibilityState,
+          });
+          if (events.length > 40) events.shift();
+        },
+        true,
+      );
+    }
+  });
+  return app;
+};
+
+test.afterEach(async () => {
+  const testInfo = test.info();
+  if (testInfo.status === testInfo.expectedStatus || !observedPage || observedPage.isClosed())
+    return;
+  const state = await observedPage.evaluate(() => ({
+    path: location.pathname,
+    focus: document.hasFocus(),
+    visibility: document.visibilityState,
+    events: Reflect.get(window, '__nativeInputProbe'),
+    pages: [...document.querySelectorAll('ion-router-outlet > .ion-page')].map((page) => ({
+      classes: page.className,
+      hidden: page.getAttribute('aria-hidden'),
+      text: page.textContent?.trim().slice(0, 1500),
+    })),
+  }));
+  // CI does not currently retain the desktop trace on a failed job. Keep the failure state
+  // in its log without retrying a tap, changing the assertion, or losing the original error.
+  console.error('NATIVE_RECIPE_FAILURE', JSON.stringify({ ...state, pageErrors }));
+});
 
 test('a phone-sized window, touch from the mouse, and data that survives a restart', async () => {
   const userData = mkdtempSync(join(tmpdir(), 'flourprint-desktop-'));
