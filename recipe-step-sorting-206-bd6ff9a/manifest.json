@@ -1,0 +1,101 @@
+{
+  "commit": "bd6ff9a82a02b038450df63c2a15fe672e4a4246",
+  "captureSurface": "local production web build, synthetic imported recipe",
+  "viewports": [
+    {
+      "theme": "light",
+      "width": "393",
+      "scale": "100",
+      "locale": "en",
+      "stem": "en-light-393-100"
+    },
+    {
+      "theme": "light",
+      "width": "360",
+      "scale": "130",
+      "locale": "en",
+      "stem": "en-light-360-130"
+    },
+    {
+      "theme": "dark",
+      "width": "393",
+      "scale": "100",
+      "locale": "en",
+      "stem": "en-dark-393-100"
+    },
+    {
+      "theme": "dark",
+      "width": "360",
+      "scale": "130",
+      "locale": "en",
+      "stem": "en-dark-360-130"
+    },
+    {
+      "theme": "amoled",
+      "width": "393",
+      "scale": "100",
+      "locale": "en",
+      "stem": "en-amoled-393-100"
+    },
+    {
+      "theme": "amoled",
+      "width": "360",
+      "scale": "130",
+      "locale": "en",
+      "stem": "en-amoled-360-130"
+    },
+    {
+      "theme": "light",
+      "width": "393",
+      "scale": "100",
+      "locale": "fr",
+      "stem": "fr-light-393-100"
+    },
+    {
+      "theme": "light",
+      "width": "360",
+      "scale": "130",
+      "locale": "fr",
+      "stem": "fr-light-360-130"
+    },
+    {
+      "theme": "dark",
+      "width": "393",
+      "scale": "100",
+      "locale": "fr",
+      "stem": "fr-dark-393-100"
+    },
+    {
+      "theme": "dark",
+      "width": "360",
+      "scale": "130",
+      "locale": "fr",
+      "stem": "fr-dark-360-130"
+    },
+    {
+      "theme": "amoled",
+      "width": "393",
+      "scale": "100",
+      "locale": "fr",
+      "stem": "fr-amoled-393-100"
+    },
+    {
+      "theme": "amoled",
+      "width": "360",
+      "scale": "130",
+      "locale": "fr",
+      "stem": "fr-amoled-360-130"
+    }
+  ],
+  "sourcesSha256": {
+    "apps/mobile/src/pages/RecipePage.tsx": "6c5b3119cde054043587f3f7860f526cdec97b29cac5605ef7b3860ed66a80a0",
+    "apps/mobile/src/blocks/RecipeMethod.tsx": "e3d60791917e984b6384f2c2252ee32a2a6eb878540ec8e5d396d4d13f62a54e",
+    "apps/mobile/src/ui/use-step-drag-back.ts": "92700d48e59ea3bc48db11f728080ee5b85588bbba23f06cbf7975cf4881ecad",
+    "apps/mobile/src/i18n/recipe-sort-messages.ts": "dd68986f6b983a6f14126ea6225f8a96eaa7e6b611911852eb373f5e7f5f9fba",
+    "apps/mobile/src/i18n/messages.ts": "6a1378cc54ceaf63605f9e334cbebd4fdc84a280d022cda1fe8f6388b575bd2b",
+    "packages/ui/src/components/sortable-list/v1.tsx": "6c743c669c64c9aae5231d97ab0ff75765d24e1d0709a16d6e377c6cae606fcc"
+  },
+  "builtBeforeCommit": true,
+  "checkoutHeadDuringBuild": "c3d8e948d1390168688db201f17b4a41aa110e2f",
+  "note": "Captures were made before commit; the source fingerprints identify the exact app source committed in the candidate."
+}
