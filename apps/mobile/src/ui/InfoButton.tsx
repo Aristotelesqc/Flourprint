@@ -15,7 +15,7 @@ export const InfoButton = ({ topic, term }: { topic: HelpTopic; term: string }) 
         type="button"
         aria-label={t('help.button', { term })}
         aria-haspopup="dialog"
-        className="fp-reset -m-2.5 inline-flex shrink-0 items-center justify-center p-2.5 align-middle text-accent-text"
+        className="fp-reset -m-3 inline-flex min-h-touch min-w-touch shrink-0 items-center justify-center p-2.5 align-middle text-accent-text"
         onClick={() => setOpen(true)}
       >
         <svg

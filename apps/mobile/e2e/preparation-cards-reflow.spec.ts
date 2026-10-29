@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { editorSection, enterEditor, routed } from './ui-actions';
+import { expectRecipeRevision, editorSection, enterEditor, routed } from './ui-actions';
 
 for (const english of [false, true]) {
   for (const theme of ['light', 'dark', 'amoled'] as const) {
@@ -44,7 +44,7 @@ for (const english of [false, true]) {
         .locator('ion-footer')
         .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
         .click();
-      await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+      await expectRecipeRevision(page, 2);
       await routed(page)
         .getByRole('button', {
           name: english ? 'Start preparation' : 'Démarrer la préparation',
@@ -60,7 +60,7 @@ for (const english of [false, true]) {
       // Return through the app after the write; no reload can race browser snapshot persistence.
       await routed(page).locator('ion-back-button').click();
       await expect(routed(page)).toHaveCount(1);
-      await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+      await expectRecipeRevision(page, 2);
       await routed(page).locator('ion-back-button').click();
       await expect(page).toHaveURL(/\/recipes$/);
       await expect(routed(page)).toHaveCount(1);

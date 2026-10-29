@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { enterEditor, menuAction, routed } from './ui-actions';
+import { expectRecipeRevision, enterEditor, menuAction, routed } from './ui-actions';
 
 for (const english of [false, true]) {
   for (const theme of ['light', 'dark', 'amoled'] as const) {
@@ -28,7 +28,7 @@ for (const english of [false, true]) {
         await routed(page)
           .getByRole('heading', { name: 'Poolish + tangzhong', exact: true })
           .click();
-        await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+        await expectRecipeRevision(page, 1);
         // A normal rename creates the long synthetic title; no product DOM is replaced.
         await enterEditor(page);
         await menuAction(page, /^(Renommer|Rename)$/);
@@ -45,7 +45,7 @@ for (const english of [false, true]) {
           .locator('ion-footer')
           .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
           .click();
-        await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+        await expectRecipeRevision(page, 1);
         await expect(
           routed(page)
             .locator('ion-footer')
@@ -196,7 +196,9 @@ for (const english of [false, true]) {
         await page.screenshot({ path: testInfo.outputPath('planning-shell.png') });
         await edit.click();
         await expect(
-          routed(page).getByRole('button', { name: 'Composition', exact: true }),
+          routed(page)
+            .locator('ion-footer')
+            .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true }),
         ).toBeVisible();
       });
     }

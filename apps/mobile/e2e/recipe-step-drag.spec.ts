@@ -115,7 +115,7 @@ for (const english of [false, true]) {
     await expect(grip).toBeFocused();
     await expect(save(page)).toBeEnabled();
     await footer(page)
-      .getByRole('button', { name: /^(Undo|Annuler)$/ })
+      .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
       .click();
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
     await expect(save(page)).toBeDisabled();
@@ -223,7 +223,7 @@ for (const english of [false, true]) {
     await page.keyboard.press('Space');
     await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
     await footer(page)
-      .getByRole('button', { name: /^(Undo|Annuler)$/ })
+      .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
       .click();
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
     await expect(duration).toHaveValue('6 min');

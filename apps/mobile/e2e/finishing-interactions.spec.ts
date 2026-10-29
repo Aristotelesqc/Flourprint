@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { editorSection, enterEditor, routed } from './ui-actions';
+import { expectRecipeRevision, editorSection, enterEditor, routed } from './ui-actions';
 import type { Page } from '@playwright/test';
 import type { Process } from '@flourprint/core/domain';
 import milkFixture from '../../../docs/contracts/fixtures/enriched-milk-butter.json' with { type: 'json' };
@@ -86,7 +86,7 @@ const importRecipe = async (page: Page, process: Process) => {
   await expect(page.getByText(/1 (recette importée|recipe imported)/)).toBeVisible();
   await routed(page).locator('ion-back-button').click();
   await routed(page).getByText('QA — étapes', { exact: true }).click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
 };
 
 for (const english of [false, true]) {
@@ -123,7 +123,10 @@ for (const english of [false, true]) {
     await expect(changed).toBeVisible();
     await routed(page)
       .locator('ion-footer')
-      .getByRole('button', { name: english ? 'Undo' : 'Annuler', exact: true })
+      .getByRole('button', {
+        name: english ? 'Undo last change' : 'Annuler la dernière modification',
+        exact: true,
+      })
       .click();
     await expect(
       routed(page).getByRole('button', {
@@ -168,7 +171,9 @@ test('operation refusal preserves mix-only conditions and existing phases withou
   await expect(sheet(page)).toBeHidden();
   await expect(routed(page).getByTestId('recipe-method')).toContainText('5 min');
   await expect(
-    routed(page).locator('ion-footer').getByRole('button', { name: 'Annuler', exact: true }),
+    routed(page)
+      .locator('ion-footer')
+      .getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
   ).toBeDisabled();
 });
 
@@ -204,7 +209,9 @@ test('legacy template instructions localize with a short name without becoming a
   await expect(sheet(page)).toBeHidden();
   await expect(routed(page).locator('ion-footer').getByRole('status')).toHaveText('À jour');
   await expect(
-    routed(page).locator('ion-footer').getByRole('button', { name: 'Annuler', exact: true }),
+    routed(page)
+      .locator('ion-footer')
+      .getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
   ).toBeDisabled();
 });
 

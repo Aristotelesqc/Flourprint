@@ -1,12 +1,12 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
-import { enterEditor, editorSection, showPlanning } from './ui-actions';
+import { expectRecipeRevision, enterEditor, editorSection, showPlanning } from './ui-actions';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
 const openSaved = async (page: Page) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
 };
 const edit = (page: Page) => ({ click: () => enterEditor(page) });
 
@@ -65,8 +65,11 @@ for (const english of [false, true]) {
         exact: true,
       }),
     ).toBeDisabled();
-    const water = routed(page).getByLabel(english ? 'Water (g)' : 'Eau (g)', { exact: true });
-    await expect(water).toHaveValue('750');
+    const water = routed(page).getByLabel(
+      english ? 'Water, Final mix (g)' : 'Eau, Mélange final (g)',
+      { exact: true },
+    );
+    await expect(water).toHaveValue('200');
     await water.focus();
     await water.blur();
     await read(page, english).click();
@@ -76,7 +79,7 @@ for (const english of [false, true]) {
         exact: true,
       }),
     ).toBeVisible();
-    await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 1);
   });
 }
 
@@ -91,7 +94,7 @@ test('consultation and editing share weighing state without inventing a saved ob
   await expect(firstItem).toBeChecked();
   await editorSection(page, 'composition');
   await expect(footer(page).getByRole('status')).toHaveText('À jour');
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
   await water.fill('abc');
   const footerDiscard = footer(page).getByRole('button', { name: 'Abandonner les modifications' });
   if (await footerDiscard.isVisible()) {
@@ -131,8 +134,8 @@ test('valid raw text is committed only from the focused field before a mode comm
 }) => {
   await openSaved(page);
   await edit(page).click();
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   // An assistive/programmatic activation may not move browser focus first.
   await routed(page)
     .locator('ion-button')
@@ -140,7 +143,7 @@ test('valid raw text is committed only from the focused field before a mode comm
     .evaluate((host) => {
       (host as HTMLElement).click();
     });
-  await expect(water).toHaveValue('720');
+  await expect(water).toHaveValue('170');
   await expect(routed(page).getByText('Modifications non enregistrées')).toBeVisible();
   await expect(
     footer(page).getByRole('button', { name: 'Démarrer la préparation' }),
@@ -150,7 +153,7 @@ test('valid raw text is committed only from the focused field before a mode comm
   await footer(page).getByRole('button', { name: 'Enregistrer', exact: true }).click();
   await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toBeVisible();
   await edit(page).click();
-  await expect(water).toHaveValue('720');
+  await expect(water).toHaveValue('170');
 });
 
 test('weighing identity survives draft quantity edits and undo until a new saved revision', async ({
@@ -163,24 +166,26 @@ test('weighing identity survives draft quantity edits and undo until a new saved
     .getByRole('checkbox', { name: /^Eau / });
   await waterItem.check();
   await edit(page).click();
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   await water.press('Enter');
   await editorSection(page, 'result');
   await expect(waterItem).toBeChecked();
-  await footer(page).getByRole('button', { name: 'Annuler', exact: true }).click();
+  await footer(page)
+    .getByRole('button', { name: 'Annuler la dernière modification', exact: true })
+    .click();
   await editorSection(page, 'composition');
-  await expect(water).toHaveValue('750');
+  await expect(water).toHaveValue('200');
   await editorSection(page, 'result');
   await expect(waterItem).toBeChecked();
   await editorSection(page, 'composition');
-  await water.fill('720');
+  await water.fill('170');
   await water.press('Enter');
   await expect(
     footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeEnabled();
   await footer(page).getByRole('button', { name: 'Enregistrer', exact: true }).click();
-  await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 2);
   await expect(waterItem).not.toBeChecked();
 });
 test('a long build label keeps recipe-list actions reachable at 360px', async ({ page }) => {
@@ -230,7 +235,7 @@ test('planning inputs survive entering and leaving editing without creating a re
   await routed(page).getByRole('tab', { name: 'Planification', exact: true }).click();
   await expect(when).toHaveValue('2026-11-05T14:00');
   await expect(target).toHaveValue('mix');
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
 });
 
 test('raw-only invalid input cannot disappear into consultation or start an old recipe', async ({
@@ -238,7 +243,7 @@ test('raw-only invalid input cannot disappear into consultation or start an old 
 }) => {
   await openSaved(page);
   await edit(page).click();
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
   await water.fill('abc');
   await read(page).click();
   const alert = page.locator('ion-alert:not(.overlay-hidden)');
@@ -263,7 +268,7 @@ test('a persisted revision draft resumes in editing after a document reload', as
   await openSaved(page);
   await edit(page).click();
   const recipeId = new URL(page.url()).pathname.split('/').at(-1);
-  const salt = routed(page).getByLabel('Sel (g)', { exact: true });
+  const salt = routed(page).getByLabel('Sel, Mélange final (g)', { exact: true });
   await salt.fill('22');
   await salt.press('Enter');
   await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { enterEditor } from './ui-actions';
+import { expectRecipeRevision, enterEditor } from './ui-actions';
 import { sampleBackup } from '../test/fixtures/sample-recipe';
 
 for (const english of [false, true]) {
@@ -26,7 +26,7 @@ for (const english of [false, true]) {
     }, snapshot);
     await page.goto('/recipes/poolish-tangzhong');
     const routed = page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
-    await expect(routed.getByText('Version 1', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 1);
     await expect(routed).toHaveCount(1);
     const editHydration = routed.getByRole('button', {
       name: english ? 'Edit hydration' : 'Modifier l’hydratation',
@@ -54,7 +54,11 @@ for (const english of [false, true]) {
     ).toBeVisible();
     await routed.getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true }).click();
     await enterEditor(page);
-    await expect(routed.getByRole('button', { name: 'Composition', exact: true })).toBeVisible();
+    await expect(
+      routed
+        .locator('ion-footer')
+        .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true }),
+    ).toBeVisible();
     await expect(editHydration).toHaveCount(0);
   });
 }

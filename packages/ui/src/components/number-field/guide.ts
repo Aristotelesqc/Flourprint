@@ -49,6 +49,11 @@ const numberFieldGuide: ComponentGuide<NumberFieldProps> = {
     onBlur: 'Optional focus loss event handler.',
     onKeyDown: 'Optional keyboard interaction event handler.',
     className: 'Optional CSS class overrides applied to the outer field container.',
+    hideLabel: 'Optional boolean to visually hide label while retaining accessible sr-only label.',
+    describedBy:
+      'Optional external element ID(s) merged into aria-describedby alongside help and error IDs.',
+    enterKeyHint: 'Optional virtual keyboard enter key action hint (e.g. done, enter, next).',
+    size: 'Typography and sizing variant for input text: regular (default) or large.',
   },
 };
 

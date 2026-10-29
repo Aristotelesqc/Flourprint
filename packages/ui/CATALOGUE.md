@@ -318,25 +318,29 @@ Controlled raw-string text input for localized, editable numeric measurements an
 
 **Props**
 
-| Prop            | Meaning                                                                                   |
-| --------------- | ----------------------------------------------------------------------------------------- |
-| `label`         | Descriptive ReactNode label associated with the input element.                            |
-| `value`         | Raw string representation of the numeric value in current locale.                         |
-| `onValueChange` | Callback invoked with uncommitted raw string whenever input text changes.                 |
-| `unit`          | Optional trailing unit indicator such as g, %, °C, or min.                                |
-| `help`          | Optional assistive guidance rendered below the input field.                               |
-| `error`         | Optional validation error message rendered below the input field in error styling.        |
-| `invalid`       | Whether the field is in an invalid error state; automatically true when error is present. |
-| `disabled`      | Whether the input is disabled and non-interactive.                                        |
-| `readOnly`      | Whether the input text is selectable but non-editable.                                    |
-| `required`      | Whether completion of this numeric field is mandatory.                                    |
-| `inputMode`     | Virtual keyboard layout hint: decimal (default for measurements) or numeric (integers).   |
-| `id`            | Optional HTML id attribute for the input; falls back to an internal useId identifier.     |
-| `name`          | Optional form field name for submission or form identification.                           |
-| `placeholder`   | Optional hint text displayed when the input value is empty.                               |
-| `onBlur`        | Optional focus loss event handler.                                                        |
-| `onKeyDown`     | Optional keyboard interaction event handler.                                              |
-| `className`     | Optional CSS class overrides applied to the outer field container.                        |
+| Prop            | Meaning                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| `label`         | Descriptive ReactNode label associated with the input element.                             |
+| `value`         | Raw string representation of the numeric value in current locale.                          |
+| `onValueChange` | Callback invoked with uncommitted raw string whenever input text changes.                  |
+| `unit`          | Optional trailing unit indicator such as g, %, °C, or min.                                 |
+| `help`          | Optional assistive guidance rendered below the input field.                                |
+| `error`         | Optional validation error message rendered below the input field in error styling.         |
+| `invalid`       | Whether the field is in an invalid error state; automatically true when error is present.  |
+| `disabled`      | Whether the input is disabled and non-interactive.                                         |
+| `readOnly`      | Whether the input text is selectable but non-editable.                                     |
+| `required`      | Whether completion of this numeric field is mandatory.                                     |
+| `inputMode`     | Virtual keyboard layout hint: decimal (default for measurements) or numeric (integers).    |
+| `id`            | Optional HTML id attribute for the input; falls back to an internal useId identifier.      |
+| `name`          | Optional form field name for submission or form identification.                            |
+| `placeholder`   | Optional hint text displayed when the input value is empty.                                |
+| `onBlur`        | Optional focus loss event handler.                                                         |
+| `onKeyDown`     | Optional keyboard interaction event handler.                                               |
+| `className`     | Optional CSS class overrides applied to the outer field container.                         |
+| `hideLabel`     | Optional boolean to visually hide label while retaining accessible sr-only label.          |
+| `describedBy`   | Optional external element ID(s) merged into aria-describedby alongside help and error IDs. |
+| `enterKeyHint`  | Optional virtual keyboard enter key action hint (e.g. done, enter, next).                  |
+| `size`          | Typography and sizing variant for input text: regular (default) or large.                  |
 
 **Accessibility**
 
