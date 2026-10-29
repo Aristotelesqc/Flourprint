@@ -171,6 +171,7 @@ export function FloatingMenu({
           the native wrapper fade under animated={false} (patches/README.md). */}
       <IonPopover
         ref={popoverRef}
+        keepContentsMounted
         isOpen={isOpen}
         event={popoverEvent}
         animated={!reducedMotionState}

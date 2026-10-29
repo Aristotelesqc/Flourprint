@@ -167,12 +167,12 @@ for (const english of [false, true]) {
             exact: true,
           }),
         ).toHaveCount(0);
-        await menu
-          .getByRole('menuitem', {
-            name: english ? 'Move to trash' : 'Mettre à la corbeille',
-            exact: true,
-          })
-          .click();
+        const moveToTrash = menu.getByRole('menuitem', {
+          name: english ? 'Move to trash' : 'Mettre à la corbeille',
+          exact: true,
+        });
+        await expect(moveToTrash).toBeInViewport({ ratio: 1 });
+        await moveToTrash.click();
         const trash = page.locator('ion-alert:not(.overlay-hidden)');
         await expect(trash).toBeVisible();
         await trash
