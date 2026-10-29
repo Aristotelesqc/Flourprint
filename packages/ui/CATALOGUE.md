@@ -448,6 +448,9 @@ Enables reordering of list items through pointer drag-and-drop or accessible key
 - Dispatches live screen reader announcements using item display labels rather than internal IDs.
 - Disables drop animations when reduced motion is requested at system or document level.
 - Maintains minimum 48px touch targets for drag handles.
+- Opens one source-sized insertion space without changing the caller order until release.
+- Adds composed-tree scroll ancestors for Ionic while the SDK owns autoscroll and pointer tracking.
+- Releases keyboard capture after imperative cancellation so the next gesture can start.
 
 **Related**
 

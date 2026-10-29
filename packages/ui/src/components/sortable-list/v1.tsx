@@ -47,6 +47,19 @@ import type {
   SortableSlotProps,
 } from './props.ts';
 
+// External cancellation must release the native keyboard listener as Escape does.
+class CancelAwareKeyboardSensor extends KeyboardSensor {
+  private readonly unlisten: () => void;
+  constructor(...args: ConstructorParameters<typeof KeyboardSensor>) {
+    super(...args);
+    this.unlisten = this.manager.monitor.addEventListener('dragend', () => this.cleanup());
+  }
+  override destroy(): void {
+    this.unlisten();
+    super.destroy();
+  }
+}
+
 interface SortableListContextValue {
   readonly instanceId: string;
   readonly registerSlot: (afterId: string | null, element: HTMLElement | null) => void;
@@ -54,6 +67,8 @@ interface SortableListContextValue {
   readonly activeId: string | null;
   readonly items: readonly SortableItemDescriptor[];
   readonly candidateFeedback: string | undefined;
+  readonly candidateAfterId: string | null | undefined;
+  readonly activeDimensions: { width: number; height: number } | null;
 }
 
 const SortableListContext = createContext<SortableListContextValue | null>(null);
@@ -122,7 +137,7 @@ function getReleaseCoordinates(nativeEvent?: Event): { x: number; y: number } | 
 export function SortableItem({ id, children, className = '' }: SortableItemProps): ReactElement {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const handleElementRef = useRef<Element | null>(null);
-  const { disabled } = useSortableListContext();
+  const { disabled, candidateAfterId, activeDimensions } = useSortableListContext();
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
   const lastRectRef = useRef<{ width: number; height: number } | null>(null);
 
@@ -189,6 +204,8 @@ export function SortableItem({ id, children, className = '' }: SortableItemProps
     [id, isDragging, setHandleRef],
   );
 
+  const itemDims = activeDimensions ?? dimensions;
+
   return (
     <SortableItemContext.Provider value={contextValue}>
       <div
@@ -196,20 +213,26 @@ export function SortableItem({ id, children, className = '' }: SortableItemProps
         data-sortable-id={id}
         onPointerDown={updateRect}
         style={
-          isDragging && dimensions
-            ? {
-                height: `${dimensions.height}px`,
-                width: `${dimensions.width}px`,
-              }
+          isDragging
+            ? candidateAfterId !== undefined
+              ? { height: 0, overflow: 'hidden' }
+              : itemDims
+                ? {
+                    height: `${itemDims.height}px`,
+                    width: `${itemDims.width}px`,
+                  }
+                : undefined
             : undefined
         }
-        className={`relative ${className}`}
+        className={`relative transition-[height] duration-[var(--duration-effect)] ease-standard motion-reduce:duration-0 ${className}`}
       >
         {isDragging ? (
           <>
             <div
               aria-hidden="true"
-              className="h-full w-full rounded-card border-2 border-dashed border-outline/40 bg-surface-container"
+              className={`h-full w-full rounded-card border-2 border-dashed border-outline/40 bg-surface-container ${
+                candidateAfterId !== undefined ? 'hidden' : ''
+              }`}
             />
             <div
               aria-hidden="true"
@@ -233,8 +256,10 @@ export function SortableSlot({
   children,
   className = '',
 }: SortableSlotProps): ReactElement {
-  const { instanceId, registerSlot, activeId, items } = useSortableListContext();
-  const elementRef = useRef<HTMLDivElement | null>(null);
+  const { instanceId, registerSlot, activeId, items, candidateAfterId, activeDimensions } =
+    useSortableListContext();
+  const drawnElementRef = useRef<HTMLDivElement | null>(null);
+  const boundaryElementRef = useRef<HTMLDivElement | null>(null);
 
   const slotId = useMemo(() => makeSlotId(instanceId, afterId), [instanceId, afterId]);
 
@@ -243,46 +268,69 @@ export function SortableSlot({
     return computeDropIntent(activeId, afterId, 'pointer', items) !== null;
   }, [activeId, afterId, items]);
 
+  const isCandidate =
+    Boolean(activeId) &&
+    isValidCandidate &&
+    candidateAfterId !== undefined &&
+    candidateAfterId === afterId;
+
   const { ref: droppableRef, isDropTarget } = useDroppable({
     id: slotId,
-    element: elementRef,
+    element: boundaryElementRef,
     disabled: !isValidCandidate,
     data: { afterId },
   });
 
-  const setRef = useCallback(
+  const setDrawnRef = useCallback(
     (el: HTMLDivElement | null) => {
-      elementRef.current = el;
-      droppableRef(el);
+      drawnElementRef.current = el;
       registerSlot(afterId, el);
     },
-    [afterId, droppableRef, registerSlot],
+    [afterId, registerSlot],
+  );
+
+  const setBoundaryRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      boundaryElementRef.current = el;
+      droppableRef(el);
+    },
+    [droppableRef],
   );
 
   if (activeId && !isValidCandidate) {
-    return <div ref={setRef} className="h-0 w-0 overflow-hidden" aria-hidden="true" />;
+    return <div ref={setDrawnRef} className="h-0 w-0 overflow-hidden" aria-hidden="true" />;
   }
 
   return (
     <div
-      ref={setRef}
+      ref={setDrawnRef}
       data-slot-after={afterId ?? 'start'}
-      className={`relative transition-all duration-[var(--duration-effect)] ease-standard ${
-        activeId && isValidCandidate ? 'min-h-[24px] py-1' : ''
-      } ${className}`}
+      className={`relative transition-[height] duration-[var(--duration-effect)] ease-standard motion-reduce:duration-0 ${className}`}
+      style={
+        isCandidate && activeDimensions
+          ? { height: `${activeDimensions.height}px` }
+          : activeId
+            ? { height: 0 }
+            : undefined
+      }
       data-drop-target={isDropTarget ? 'true' : undefined}
     >
       {activeId && isValidCandidate && (
         <div
+          ref={setBoundaryRef}
           aria-hidden="true"
-          className={`h-2 w-full rounded-full transition-all duration-[var(--duration-effect)] ease-standard ${
-            isDropTarget
-              ? 'scale-y-125 bg-primary shadow-sm'
-              : 'border border-dashed border-outline/50 bg-surface-container/50'
+          className={`absolute left-0 right-0 pointer-events-none opacity-0 ${
+            isCandidate ? 'inset-0' : 'h-[48px] top-1/2 -translate-y-1/2'
           }`}
         />
       )}
-      {children}
+      {isCandidate && (
+        <div
+          aria-hidden="true"
+          className="h-full w-full rounded-card border-2 border-dashed border-outline/40 bg-surface-container"
+        />
+      )}
+      {activeId ? null : children}
     </div>
   );
 }
@@ -411,6 +459,11 @@ export function SortableList({
   );
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [candidateAfterId, setCandidateAfterId] = useState<string | null | undefined>(undefined);
+  const [activeDimensions, setActiveDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const lastActiveIdRef = useRef<string | null>(null);
   const activatedRef = useRef(false);
   const endedRef = useRef(false);
@@ -528,6 +581,8 @@ export function SortableList({
 
       callbacksRef.current.onDragActiveChange?.(false);
       setActiveId(null);
+      setCandidateAfterId(undefined);
+      setActiveDimensions(null);
       setCandidateFeedback(undefined);
 
       return { intent: resolvedIntent, outcome };
@@ -542,6 +597,9 @@ export function SortableList({
     endedRef.current = false;
     endResolutionRef.current = null;
     lastActiveIdRef.current = sourceId;
+    const rect = event.operation.source?.element?.getBoundingClientRect();
+    setActiveDimensions(rect ? { width: rect.width, height: rect.height } : null);
+    setCandidateAfterId(undefined);
     setActiveId(sourceId);
 
     callbacksRef.current.onDragStart?.(sourceId);
@@ -554,6 +612,7 @@ export function SortableList({
       const sourceId = String(event.operation.source?.id ?? '');
       const targetId = String(event.operation.target?.id ?? '');
       if (!sourceId || !targetId) {
+        setCandidateAfterId(undefined);
         setCandidateFeedback(undefined);
         return;
       }
@@ -573,6 +632,7 @@ export function SortableList({
           'pointer',
           callbacksRef.current.items,
         );
+        setCandidateAfterId(intent ? targetAfterId : undefined);
         if (intent && callbacksRef.current.getDropFeedback) {
           const feedback = callbacksRef.current.getDropFeedback(intent);
           setCandidateFeedback(feedback);
@@ -580,6 +640,7 @@ export function SortableList({
           setCandidateFeedback(undefined);
         }
       } else {
+        setCandidateAfterId(undefined);
         setCandidateFeedback(undefined);
       }
     },
@@ -600,6 +661,8 @@ export function SortableList({
       callbacksRef.current.onDropIntent(null);
       callbacksRef.current.onDragActiveChange?.(false);
       setActiveId(null);
+      setCandidateAfterId(undefined);
+      setActiveDimensions(null);
       setCandidateFeedback(undefined);
     }
   }, []);
@@ -611,7 +674,7 @@ export function SortableList({
           new PointerActivationConstraints.Delay({ value: 350, tolerance: 10 }),
         ],
       }),
-      KeyboardSensor,
+      CancelAwareKeyboardSensor,
     ],
     [],
   );
@@ -682,8 +745,19 @@ export function SortableList({
       activeId,
       items,
       candidateFeedback,
+      candidateAfterId,
+      activeDimensions,
     }),
-    [instanceId, registerSlot, disabled, activeId, items, candidateFeedback],
+    [
+      instanceId,
+      registerSlot,
+      disabled,
+      activeId,
+      items,
+      candidateFeedback,
+      candidateAfterId,
+      activeDimensions,
+    ],
   );
 
   const displayedOverlayId = activeId ?? lastActiveIdRef.current;

@@ -63,6 +63,13 @@ const handleOrder = (example) =>
 const liveAnnouncement = (page, text) =>
   page.locator('[aria-live="polite"]').filter({ hasText: text });
 
+async function expectClosedInsertionBoundary(slot) {
+  await expect(slot).toHaveCSS('height', '0px');
+  const boundary = slot.locator(':scope > [aria-hidden="true"]').first();
+  await expect(boundary).toHaveCSS('position', 'absolute');
+  await expect(boundary).toHaveCSS('height', '48px');
+}
+
 async function record(page, example, testInfo, details = {}) {
   const observations = JSON.stringify(
     {
@@ -116,7 +123,7 @@ test('sortable keyboard pickup, current slot drop, announcement and handle focus
     await page.keyboard.press('Space');
     await expect(liveAnnouncement(page, 'Picked up Autolyse.')).toHaveCount(1);
     const slot = example.locator('[data-slot-after="step-2"]');
-    await expect(slot).toBeVisible();
+    await expectClosedInsertionBoundary(slot);
     // The pinned native KeyboardSensor moves by ten pixels per arrow activation.
     // Stop at its actual owned slot, not at an assumed row index or stale geometry.
     for (let presses = 0; presses < 30; presses += 1) {
@@ -196,7 +203,7 @@ test('sortable pointer hold follows the pointer and drops inside the current dra
       .toBeLessThanOrEqual(1);
     details.overlayAfter = await overlay.boundingBox();
     const slot = example.locator('[data-slot-after="step-2"]');
-    await expect(slot).toBeVisible();
+    await expectClosedInsertionBoundary(slot);
     await slot.evaluate(async (node) => {
       await Promise.all(
         node
@@ -270,7 +277,7 @@ async function liftWithKeyboard(page, list) {
 
 async function chooseBetaSlotWithKeyboard(page, list) {
   const slot = list.locator('[data-slot-after="beta"]');
-  await expect(slot).toBeVisible();
+  await expectClosedInsertionBoundary(slot);
   for (let presses = 0; presses < 40; presses += 1) {
     if ((await slot.getAttribute('data-drop-target')) === 'true') break;
     await page.keyboard.press('ArrowDown');
@@ -306,7 +313,7 @@ test('sortable release outside after a valid hover keeps the controlled order', 
     pressed = true;
     await expect(liveAnnouncement(page, 'Picked up Alpha.')).toHaveCount(1);
     const slot = list.locator('[data-slot-after="beta"]');
-    await expect(slot).toBeVisible();
+    await expectClosedInsertionBoundary(slot);
     await slot.evaluate(async (node) => {
       await Promise.all(
         node
@@ -532,7 +539,7 @@ for (const ending of ['drop', 'cancel']) {
       });
       if (ending === 'drop') {
         const slot = list.locator('[data-slot-after="item-9"]');
-        await expect(slot).toBeVisible();
+        await expectClosedInsertionBoundary(slot);
         await slot.evaluate(async (node) =>
           Promise.all(
             node
@@ -542,6 +549,14 @@ for (const ending of ['drop', 'cancel']) {
         );
         const rect = await slot.boundingBox();
         await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2, { steps: 6 });
+        await expect(slot).toHaveAttribute('data-drop-target', 'true');
+        details.oldRelease = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+        await expect
+          .poll(async () => (await slot.boundingBox())?.height)
+          .toBeCloseTo(details.sourceBefore.height, 0);
+        const drawn = await slot.boundingBox();
+        details.drawnAtRelease = drawn;
+        await page.mouse.move(drawn.x + drawn.width / 2, drawn.y + drawn.height / 2);
         await expect(slot).toHaveAttribute('data-drop-target', 'true');
         await page.mouse.up();
         pressed = false;
@@ -573,6 +588,87 @@ for (const ending of ['drop', 'cancel']) {
         ending,
         fixtureEvents: await fixtureEvents(page),
       });
+    }
+  });
+}
+
+for (const ending of ['drop', 'cancel']) {
+  test(`sortable touch ${ending} follows both axes around one full-height insertion space`, async ({
+    page,
+    context,
+  }, testInfo) => {
+    const list = await openSortableFixture(page, testInfo);
+    const cdp = await context.newCDPSession(page);
+    let pressed = false;
+    const details = {};
+    const sendTouch = async (type, x = 0, y = 0) => {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type,
+        touchPoints: type === 'touchEnd' || type === 'touchCancel' ? [] : [{ x, y, id: 1 }],
+      });
+    };
+    try {
+      const handle = list.getByRole('button', { name: 'Drag Alpha', exact: true });
+      const source = list.locator('[data-sortable-id="__start__"]');
+      const before = await source.boundingBox();
+      const box = await handle.boundingBox();
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await sendTouch('touchStart', x, y);
+      pressed = true;
+      await expect(liveAnnouncement(page, 'Picked up Alpha.')).toHaveCount(1);
+      const overlay = page.locator('[popover]:popover-open');
+      const initialOverlay = await overlay.boundingBox();
+      await sendTouch('touchMove', x - 24, y + 30);
+      await expect
+        .poll(async () => {
+          const rect = await overlay.boundingBox();
+          if (!rect) return Infinity;
+          return Math.max(
+            Math.abs(rect.x - initialOverlay.x + 24),
+            Math.abs(rect.y - initialOverlay.y - 30),
+          );
+        })
+        .toBeLessThanOrEqual(1);
+      const slot = list.locator('[data-slot-after="beta"]');
+      let target = await slot.boundingBox();
+      if (!target) throw new Error('Missing insertion boundary');
+      await sendTouch('touchMove', target.x + target.width / 2, target.y + target.height / 2);
+      await expect(slot).toHaveAttribute('data-drop-target', 'true');
+      await expect
+        .poll(async () => (await slot.boundingBox())?.height)
+        .toBeCloseTo(before.height, 0);
+      await expect.poll(async () => (await source.boundingBox())?.height).toBeLessThanOrEqual(1);
+      const gaps = await list
+        .locator('[data-slot-after]')
+        .evaluateAll((nodes) =>
+          nodes.map((node) => node.getBoundingClientRect().height).filter((height) => height > 1),
+        );
+      expect(gaps).toHaveLength(1);
+      target = await slot.boundingBox();
+      if (!target) throw new Error('Missing drawn insertion space');
+      await sendTouch('touchMove', target.x + target.width / 2, target.y + target.height / 2);
+      const image = testInfo.outputPath('touch-insertion-held.png');
+      await page.screenshot({ path: image });
+      await testInfo.attach('touch-insertion-held', { path: image, contentType: 'image/png' });
+      await sendTouch(ending === 'drop' ? 'touchEnd' : 'touchCancel');
+      pressed = false;
+      await expect
+        .poll(() => handleOrder(list))
+        .toEqual(ending === 'drop' ? fixtureMovedOrder : fixtureOriginalOrder);
+      await expect(
+        liveAnnouncement(
+          page,
+          ending === 'drop' ? 'Dropped Alpha after Beta.' : 'Cancelled Alpha.',
+        ),
+      ).toHaveCount(1);
+      await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+      expect((await fixtureEvents(page)).filter((event) => 'intent' in event)).toHaveLength(1);
+      details.ending = ending;
+    } finally {
+      if (pressed) await sendTouch('touchCancel');
+      await record(page, list, testInfo, details);
+      await cdp.detach();
     }
   });
 }

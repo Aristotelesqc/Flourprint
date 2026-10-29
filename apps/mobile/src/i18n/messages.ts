@@ -4,8 +4,10 @@
  * known ids until the ingredient registry (#26).
  */
 import { helpEn, helpFr } from './help';
+import { recipeSortEn, recipeSortFr } from './recipe-sort-messages';
 
 export const en = {
+  ...recipeSortEn,
   'explain.partialEstimatedSummary': 'Specified part (estimated): {grams} · {pct}',
   'formula.stat.totalWaterSpecifiedEstimate': 'Specified part (estimated): {pct}',
   'formula.stat.totalWaterLowerBound': '≥ {pct}',
@@ -1200,6 +1202,7 @@ export type MessageKey = keyof typeof en;
 export type Catalog = Record<MessageKey, string>;
 
 export const fr: Catalog = {
+  ...recipeSortFr,
   'explain.partialEstimatedSummary': 'Partie renseignée (estimée) : {grams} · {pct}',
   'formula.stat.totalWaterSpecifiedEstimate': 'Partie renseignée (estimée) : {pct}',
   'formula.stat.totalWaterLowerBound': '≥ {pct}',

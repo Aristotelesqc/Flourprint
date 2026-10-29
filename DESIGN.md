@@ -299,6 +299,15 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   Ratio entry uses `liquidMassRatio` and `hydrationForRatio` from the current contract: it counts weighed
   liquid mass (including the whole mass of milk); hydration and component style still count its water content.
   One Save bar has stable reserved feedback space; check/review/discard are occasional actions.
+- **Step reordering in the app:** use `fp.sortable-list` with the selected 350 ms hold,
+  48 px handles and separate opaque, flat Compact rows. One measured insertion space travels
+  with the candidate; the overlay stays opaque above the page and follows both axes.
+  Actual activation opens the recipe draft without marking an unchanged recipe dirty.
+  Freeze the header, footer and reading layout until release; the same method instance stays mounted.
+  Core `moveStep` accepts or refuses the final intent. Accepted moves use the normal whole-draft
+  Undo/Redo/Save path; refusal, outside release and cancellation preserve earlier edits.
+  Hardware, toolbar and browser Back cancel the active gesture before normal navigation resumes.
+  System/manual reduced motion retains focus and final state with zero-duration settling.
 - **Preparation:** large remaining time, planned end, actual start and temporal progress; visible
   quick controls and readiness observations. Upcoming steps with clock times precede completed
   steps. Keep the full journal accessible (all existing notes, observations and step completions)
