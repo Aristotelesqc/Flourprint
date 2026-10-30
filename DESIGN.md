@@ -255,6 +255,10 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   consistent vertical padding when titles wrap, components and authored method ("Étapes de préparation").
   Contextual information buttons stay beside hydration, size and other explained concepts.
   Hydration breakdown uses the shared sheet, with its total visible first, then unknown contributors and compact source disclosures.
+  A decorative stacked bar shows the core-provided shares of specified water before declared losses (L126).
+  Matching colour chips, grams and locale-formatted shares identify the interactive source disclosures.
+  Unknown contributions have a hatched marker without a fabricated quantity or chart width; evaporation
+  losses remain separate negative quantities without a share. Source ranges stay available in the legend.
   Complete estimates, known partial lower bounds, and estimated specified parts have distinct labels; an estimated partial mean is never shown as a certain lower bound.
   Hydration is `totalWaterPct`, shown to the whole percent with uncertainty/incompleteness retained; consultation
   omits any hydration-edit button or lock/unlock glyph. Method steps are automatically numbered (1-based)

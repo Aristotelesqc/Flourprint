@@ -12,7 +12,7 @@ const preheatName = 'Oven warmup fixture';
  * and 50 g egg at 76% water [75–77] give 478 g water, or 95.6% hydration (96% displayed).
  * A further 50 g of butter with unknown composition cannot contribute an invented zero.
  */
-const syntheticRecipe = (unknownWater: boolean, estimatedPartial = false) => ({
+const syntheticRecipe = (unknownWater: boolean, estimatedPartial = false, loss = false) => ({
   id: 'shared-recipe-surface-fixture',
   name: recipeName,
   revisions: [
@@ -58,16 +58,38 @@ const syntheticRecipe = (unknownWater: boolean, estimatedPartial = false) => ({
               ]
             : []),
         ],
-        components: [],
+        components: loss
+          ? [
+              {
+                id: 'scald',
+                kind: 'scald',
+                flourPct: 10,
+                hydrationPct: 100,
+                flourBlend: [{ flour: 'bread-flour', sharePct: 100 }],
+                waterLossPct: 20,
+              },
+            ]
+          : [],
         anchor: { kind: 'flourTotal', grams: 500 },
       },
       process: {
         steps: [
+          ...(loss
+            ? [
+                {
+                  id: 'scald',
+                  operation: 'scald',
+                  dependsOn: [],
+                  schedule: 'asap',
+                  plannedDurationS: 300,
+                },
+              ]
+            : []),
           {
             id: 'mix-fixture',
             label: mixName,
             operation: 'mix',
-            dependsOn: [],
+            dependsOn: loss ? ['scald'] : [],
             schedule: 'asap',
             plannedDurationS: 300,
             technique: {
@@ -116,9 +138,22 @@ const importRecipe = async (
   unknownWater: boolean,
   english: boolean,
   estimatedPartial = false,
+  theme = 'light',
+  large = false,
+  loss = false,
 ) => {
-  await page.setViewportSize({ width: 360, height: 851 });
+  await page.setViewportSize({ width: large ? 360 : 393, height: 900 });
   await page.goto('/advanced');
+  await routed(page)
+    .getByRole('button', {
+      name:
+        theme === 'amoled'
+          ? /^AMOLED$/
+          : theme === 'dark'
+            ? /^(Sombre(?: chaud)?|(?:Warm )?[Dd]ark)$/
+            : /^(Clair|Light)$/,
+    })
+    .click();
   await routed(page)
     .locator('input[type=file]')
     .setInputFiles({
@@ -129,7 +164,7 @@ const importRecipe = async (
           kind: 'flourprint-recipes',
           schemaVersion: 1,
           exportedAt: '2026-10-27T12:00:00.000Z',
-          recipes: [syntheticRecipe(unknownWater, estimatedPartial)],
+          recipes: [syntheticRecipe(unknownWater, estimatedPartial, loss)],
           families: [],
         }),
       ),
@@ -141,6 +176,7 @@ const importRecipe = async (
   await expect(page).toHaveURL(/\/recipes$/);
   await routed(page).getByText(recipeName, { exact: true }).click();
   await expectRecipeRevision(page, 1);
+  if (large) await page.addStyleTag({ content: 'html,body{font-size:20.8px!important}' });
 };
 
 const stepTrigger = (page: Page, english: boolean, name: string) =>
@@ -253,7 +289,7 @@ for (const english of [false, true]) {
     );
     await expect(sheet).not.toContainText(/95[.,]6\s*%/);
 
-    const water = sheet.getByRole('button', { name: english ? /^Water 350 g$/ : /^Eau 350 g$/ });
+    const water = sheet.getByRole('button', { name: english ? /^Water 350 g / : /^Eau 350 g / });
     await expect(water).toHaveAttribute('aria-expanded', 'false');
     await water.click();
     await expect(water).toHaveAttribute('aria-expanded', 'true');
@@ -266,7 +302,7 @@ for (const english of [false, true]) {
       ),
     ).toBeVisible();
 
-    await sheet.getByRole('button', { name: english ? /^Milk 90 g$/ : /^Lait 90 g$/ }).click();
+    await sheet.getByRole('button', { name: english ? /^Milk 90 g / : /^Lait 90 g / }).click();
     await expect(
       sheet.getByText(
         english
@@ -277,7 +313,7 @@ for (const english of [false, true]) {
     ).toBeVisible();
 
     const egg = sheet.getByRole('button', {
-      name: english ? /^Egg 38 g \[37\.5 g – 38\.5 g\]$/ : /^Œuf 38 g \[37,5 g – 38,5 g\]$/,
+      name: english ? /^Egg 38 g \[37\.5 g – 38\.5 g\] / : /^Œuf 38 g \[37,5 g – 38,5 g\] /,
     });
     await egg.click();
     await expect(
@@ -351,7 +387,7 @@ for (const english of [false, true]) {
     await expect(sheet.getByText(english ? 'unknown' : 'inconnue', { exact: true })).toBeVisible();
     await expect(
       sheet.getByRole('button', {
-        name: english ? /^Egg 38 g \[37\.5 g – 38\.5 g\]$/ : /^Œuf 38 g \[37,5 g – 38,5 g\]$/,
+        name: english ? /^Egg 38 g \[37\.5 g – 38\.5 g\] / : /^Œuf 38 g \[37,5 g – 38,5 g\] /,
       }),
     ).toBeVisible();
     await settledOverlay(sheet);
@@ -360,6 +396,95 @@ for (const english of [false, true]) {
     await expect(sheet).toBeHidden();
     await expect(trigger).toBeFocused();
   });
+  for (const theme of ['light', 'dark', 'amoled']) {
+    for (const large of [false, true]) {
+      test(`water source legend fits ${theme} ${large ? '360/130' : '393/100'}${suffix}`, async ({
+        page,
+      }, testInfo) => {
+        await importRecipe(page, true, english, true, theme, large);
+        const trigger = routed(page).getByRole('button', { name: title, exact: true });
+        await trigger.click();
+        const sheet = overlayWithHeading(page, title);
+        await expect(sheet.getByRole('button', { name: close, exact: true })).toBeFocused();
+        const bar = sheet.getByTestId('water-source-bar');
+        await expect(bar).toBeVisible();
+        await expect(bar).toHaveAttribute('aria-hidden', 'true');
+        await expect(bar.getByRole('button')).toHaveCount(0);
+        const segments = sheet.getByTestId('water-source-segment');
+        await expect(segments).toHaveCount(3);
+        // Independent fixture: 350/478, 90/478 and 38/478, before any evaporation.
+        const shares = [73.22, 18.83, 7.95];
+        for (const [index, share] of shares.entries()) {
+          const basis = await segments
+            .nth(index)
+            .evaluate((element) => parseFloat(getComputedStyle(element).flexBasis));
+          expect(basis).toBeCloseTo(share, 2);
+        }
+        await expect(
+          sheet.locator('[data-testid="water-source-segment"][data-source="butter"]'),
+        ).toHaveCount(0);
+        await expect(sheet.getByTestId('water-source-unknown')).toHaveCount(1);
+        const legend = sheet.getByTestId('water-source-legend');
+        await expect(legend).toContainText(english ? '73.22%' : /73,22\s%/);
+        await expect(legend).toContainText(english ? '18.83%' : /18,83\s%/);
+        await expect(legend).toContainText(english ? '7.95%' : /7,95\s%/);
+        const milk = legend.getByRole('button', { name: english ? /^Milk / : /^Lait / });
+        await milk.click();
+        await expect(milk).toHaveAttribute('aria-expanded', 'true');
+        await expect(
+          legend.getByText(
+            english
+              ? 'Known water content from ingredient composition.'
+              : 'Teneur en eau connue selon la composition de l’ingrédient.',
+            { exact: true },
+          ),
+        ).toBeVisible();
+        await milk.click();
+        await settledOverlay(sheet);
+        const bounds = await bar.boundingBox();
+        if (!bounds) throw new Error('Water source bar has no bounds');
+        expect(bounds.x).toBeGreaterThanOrEqual(0);
+        expect(bounds.x + bounds.width).toBeLessThanOrEqual(large ? 360 : 393);
+        expect(await sheet.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+          true,
+        );
+        const capture = testInfo.outputPath('hydration-source-legend.png');
+        await page.screenshot({ path: capture });
+        await testInfo.attach('Hydration source legend', {
+          path: capture,
+          contentType: 'image/png',
+        });
+        await sheet.getByRole('button', { name: close, exact: true }).click();
+        await expect(trigger).toBeFocused();
+      });
+    }
+  }
+
+  test(`water source chart excludes evaporation losses from its denominator${suffix}`, async ({
+    page,
+  }) => {
+    await importRecipe(page, false, english, false, 'light', false, true);
+    await routed(page).getByRole('button', { name: title, exact: true }).click();
+    const sheet = overlayWithHeading(page, title);
+    await expect(sheet.getByText(english ? /^468 g · ≈ 94%$/ : /^468 g · ≈ 94\s%$/)).toBeVisible();
+    await expect(sheet.getByTestId('water-source-segment')).toHaveCount(3);
+    const lossRow = sheet.getByRole('button', { name: /scald/i });
+    await expect(lossRow).toContainText('-10 g');
+    await expect(lossRow).not.toContainText('%');
+    await lossRow.click();
+    await expect(
+      sheet.getByText(
+        english
+          ? 'Declared evaporation loss for scald.'
+          : 'Perte par évaporation déclarée pour scald.',
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(sheet.getByTestId('water-source-legend')).toContainText(
+      english ? '73.22%' : /73,22\s%/,
+    );
+  });
+
   test(`checked step removal explains a preheat target refusal and accepts repeated confirmation once${suffix}`, async ({
     page,
   }) => {
