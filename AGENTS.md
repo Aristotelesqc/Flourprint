@@ -59,6 +59,15 @@ a dedicated pull request, before the code that depends on it.
 - `dogfood/` holds the owner's personal recipes and their importer. Nothing in `packages/` or
   `apps/` may refer to it; never hard-code those recipes in the product.
 
+## Quota continuity for coordinators
+
+At session start, during active work (at least every five minutes), and before another tranche,
+apply [.agents/skills/quota-check/SKILL.md](.agents/skills/quota-check/SKILL.md).
+Every coordinator checks its own provider and the providers used by delegates, including AGY.
+Reserve enough capacity for verification, push and a durable handoff; a delegate's allowance
+cannot replace the coordinator's closure reserve. Record unavailable data honestly and follow
+the skill's CONTINUE / BOUNDED / HANDOFF gate before allocating more work.
+
 ## Repository skills
 
 Reusable agent workflows live in `.agents/skills/`; repository contracts and ADRs remain the

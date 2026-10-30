@@ -9,6 +9,9 @@ Read `AGENTS.md` first: it sets the rules (focused PRs into `dev`—with the tem
 `ui/0.3-integration` exception for release 0.3 UI slices—checks before every push, one writer per
 area, labels). This skill is the procedure and the traps already paid for.
 
+Before a work tranche and after publication, apply [quota-check](../quota-check/SKILL.md).
+Keep its closure reserve for required checks, push and the issue/PR handoff; do not wait for a hard limit.
+
 ## Branch
 
 - Start from fresh `dev`: `git fetch origin dev && git checkout -B <branch> origin/dev`. Work for

@@ -34,6 +34,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the merge counter counts the history (ADR 0016)
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
@@ -54,7 +56,7 @@ jobs:
           RUN_SHA=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${FROM_RUN_ID}" --jq .head_sha)
           echo "Artifact run ${FROM_RUN_ID} built ${RUN_SHA}"
           test "$RUN_SHA" = "$FROM_HEAD_SHA"
-          git fetch --no-tags --depth=1 origin "$FROM_HEAD_SHA" "+refs/tags/v0.1.0:refs/tags/v0.1.0"
+          git fetch --no-tags origin "$FROM_HEAD_SHA" "+refs/tags/v0.1.0:refs/tags/v0.1.0"
           FROM_TREE=$(git rev-parse "${FROM_HEAD_SHA}^{tree}")
           TAG_TREE=$(git rev-parse "v0.1.0^{commit}^{tree}")
           echo "Tree of ${FROM_HEAD_SHA}: ${FROM_TREE}; tree of v0.1.0 ($(git rev-parse 'v0.1.0^{commit}')): ${TAG_TREE}"
@@ -76,6 +78,7 @@ jobs:
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/build-id.mjs
       - run: pnpm build
       - run: pnpm build:mobile

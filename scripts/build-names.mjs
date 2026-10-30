@@ -148,9 +148,12 @@ export const codeName = (sha) => {
 
 /**
  * `version` is the root package.json version; `env` the CI environment (GITHUB_ACTIONS,
- * GITHUB_RUN_NUMBER, GITHUB_REF_NAME, HEAD_SHA or GITHUB_SHA, PR_NUMBER).
- * - `build`: the full name, with the run and the short hash (Advanced, feedback export).
- * - `label`: the short name shown in the app bar.
+ * GITHUB_REF_NAME, HEAD_SHA or GITHUB_SHA, PR_NUMBER) plus FLOURPRINT_MERGES, the merge counter
+ * computed by `build-id.mjs`: the first-parent commit count of the branch (of the base branch
+ * for a pull request). It never resets, so one number names one merge across versions.
+ * - `build`: the full name, with the merge counter and the short hash (Advanced, feedback
+ *   export); semver, so the counter is not zero-padded there.
+ * - `label`: the short name shown in the app bar, with the counter padded to four digits.
  * - `channel`: `release` (main), `dev`, `canary` (ADR 0018), `preview` (pull requests, other
  *   branches) or `local`. Only non-release builds offer to load the latest dev build.
  */
@@ -160,11 +163,18 @@ export const buildNames = (version, env) => {
   const [major, minor, patch] = match.slice(1).map(Number);
   if (minor > 999 || patch > 999) throw new Error(`version ${version} does not fit a versionCode`);
 
-  const run = env.GITHUB_RUN_NUMBER;
   const fullSha = env.HEAD_SHA || env.GITHUB_SHA || '';
   const sha = fullSha.slice(0, 7);
   const pr = env.PR_NUMBER;
   const branch = env.GITHUB_REF_NAME?.replace(/[^0-9A-Za-z-]/g, '-');
+
+  const counted = () => {
+    if (!/^\d+$/.test(env.FLOURPRINT_MERGES ?? '')) {
+      throw new Error(`FLOURPRINT_MERGES is not a merge count: ${env.FLOURPRINT_MERGES}`);
+    }
+    const merges = Number(env.FLOURPRINT_MERGES);
+    return { merges, padded: String(merges).padStart(4, '0') };
+  };
 
   let build;
   let label;
@@ -174,23 +184,27 @@ export const buildNames = (version, env) => {
     label = `v${version}-local`;
     channel = 'local';
   } else if (pr) {
-    build = `${version}-pr.${pr}.${run}+${sha}`;
-    label = `v${version}-${codeName(fullSha)}`;
+    const { merges, padded } = counted();
+    build = `${version}-pr.${pr}.${merges}+${sha}`;
+    label = `v${version}.${padded}-pr${pr}-${codeName(fullSha)}`;
   } else if (env.GITHUB_REF_NAME === 'main') {
     build = version;
     label = `v${version}`;
     channel = 'release';
   } else if (env.GITHUB_REF_NAME === 'dev') {
-    build = `${version}-dev.${run}+${sha}`;
-    label = `v${version}-${codeName(fullSha)}`;
+    const { merges, padded } = counted();
+    build = `${version}-dev.${merges}+${sha}`;
+    label = `v${version}.${padded}-${codeName(fullSha)}`;
     channel = 'dev';
   } else if (env.GITHUB_REF_NAME === 'canary') {
-    build = `${version}-canary.${run}+${sha}`;
-    label = `v${version}-canary-${codeName(fullSha)}`;
+    const { merges, padded } = counted();
+    build = `${version}-canary.${merges}+${sha}`;
+    label = `v${version}.${padded}-canary-${codeName(fullSha)}`;
     channel = 'canary';
   } else {
-    build = `${version}-${branch}.${run}+${sha}`;
-    label = `v${version}-${branch}-${codeName(fullSha)}`;
+    const { merges, padded } = counted();
+    build = `${version}-${branch}.${merges}+${sha}`;
+    label = `v${version}.${padded}-${branch}-${codeName(fullSha)}`;
   }
   return { version, build, label, channel, versionCode: major * 1_000_000 + minor * 1_000 + patch };
 };
