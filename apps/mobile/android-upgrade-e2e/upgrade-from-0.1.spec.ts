@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { enterEditor } from '../e2e/ui-actions';
+import { enterEditor, routed } from '../e2e/ui-actions';
 import { _android as android, expect, test, type AndroidDevice, type Page } from '@playwright/test';
 
 /**
@@ -37,7 +37,9 @@ const shown = (page: Page, text: string | RegExp) =>
 /** L103 keeps revisions in storage; the Recipe header no longer exposes internal versions. */
 const expectCandidateRevision = async (page: Page, version: number) => {
   await expect(
-    page.getByRole('heading', { name: RECIPE, exact: true }).locator('visible=true'),
+    routed(page)
+      .locator('ion-header')
+      .getByRole('heading', { name: RECIPE, level: 1, exact: true }),
   ).toBeVisible();
   await expect
     .poll(() =>
