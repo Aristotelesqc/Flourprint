@@ -1,3 +1,4 @@
+import { expectRecipeRevision } from './ui-actions';
 import { expect, test, type Page } from '@playwright/test';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
@@ -55,7 +56,7 @@ const importFixture = async (page: Page, equipment: Record<string, unknown>, eng
   await routed(page).locator('ion-back-button').click();
   await expect(page).toHaveURL(/\/recipes$/);
   await page.getByText('Equipment display fixture', { exact: true }).click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await expect(routed(page)).toHaveCount(1);
 };
 

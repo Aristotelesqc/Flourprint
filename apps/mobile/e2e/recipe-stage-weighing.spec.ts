@@ -1,7 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { FeedbackExport } from '@flourprint/core/application';
 import type { Formula, Process } from '@flourprint/core/domain';
-import { routed, enterEditor, editorSection, showPlanning } from './ui-actions';
+import {
+  expectRecipeRevision,
+  routed,
+  enterEditor,
+  editorSection,
+  showPlanning,
+} from './ui-actions';
 
 const stageRecipeId = 'stage-weighing-fixture';
 const stageRecipeName = 'Independent stage weighing fixture';
@@ -142,7 +148,7 @@ const importStageRecipe = async (page: Page, english: boolean, withGlaze = false
   ).toBeVisible();
   await routed(page).locator('ion-back-button').click();
   await openStageRecipe(page);
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
 };
 
 /** Exports through the real Advanced action, then returns through app navigation. */
@@ -269,7 +275,7 @@ for (const english of [false, true]) {
     await expect(row(page, 'poolish', waterName)).not.toBeChecked();
     await expect(row(page, 'tangzhong', flour)).toBeChecked();
     await expect(row(page, final, flour)).toBeChecked();
-    await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 1);
     noSavedCheckState(await exportFromStageRecipe(page, english));
   });
 
@@ -360,7 +366,12 @@ for (const english of [false, true]) {
       }),
     ).toHaveCount(0);
     await expect(row(page, final, waterName)).toBeChecked();
-    await expect(row(page, final, waterName)).toHaveAccessibleName(/225 g /);
+    await expect(
+      group(page, final).getByRole('textbox', {
+        name: english ? 'Water, Final mix (g)' : 'Eau, Mélange final (g)',
+        exact: true,
+      }),
+    ).toHaveValue('225');
     await expect(row(page, 'tangzhong', waterName)).toBeChecked();
     await expect(
       checklist(page, english).getByText(progress(english, 2, 7), { exact: true }),
@@ -374,7 +385,7 @@ for (const english of [false, true]) {
     await expect(row(page, 'tangzhong', waterName)).toBeChecked();
     await editorSection(page, 'composition');
     const salt = routed(page).getByRole('textbox', {
-      name: english ? 'Salt (g)' : 'Sel (g)',
+      name: english ? 'Salt, Final mix (g)' : 'Sel, Mélange final (g)',
       exact: true,
     });
     await salt.fill('11');
@@ -382,7 +393,7 @@ for (const english of [false, true]) {
     await footer(page)
       .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
-    await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 2);
     await expect(routed(page).getByRole('checkbox', { checked: true })).toHaveCount(0);
     await expect(
       checklist(page, english).getByText(progress(english, 0, 8), { exact: true }),

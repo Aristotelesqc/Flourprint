@@ -20,6 +20,10 @@ export function NumberField({
   onBlur,
   onKeyDown,
   className,
+  hideLabel = false,
+  describedBy: externalDescribedBy,
+  enterKeyHint,
+  size = 'regular',
 }: NumberFieldProps): ReactElement {
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -28,7 +32,7 @@ export function NumberField({
 
   const isInvalid = invalid || Boolean(error);
 
-  const describedBy = [error ? errorId : undefined, help ? helpId : undefined]
+  const describedBy = [externalDescribedBy, error ? errorId : undefined, help ? helpId : undefined]
     .filter((entry): entry is string => entry !== undefined)
     .join(' ');
 
@@ -44,13 +48,13 @@ export function NumberField({
     ? 'opacity-50 cursor-not-allowed bg-surface-container'
     : 'bg-field-background';
 
+  const inputTypographyClass =
+    size === 'large' ? 'text-xl font-bold min-h-12' : 'text-body min-h-touch';
+
   return (
     <div className={`flex flex-col gap-1 min-w-0 w-full ${className ?? ''}`}>
-      <div className="flex items-baseline justify-between gap-2 min-w-0 flex-wrap">
-        <label
-          htmlFor={inputId}
-          className="text-supporting font-medium text-on-surface min-w-0 break-words"
-        >
+      {hideLabel ? (
+        <label htmlFor={inputId} className="sr-only">
           {label}
           {required ? (
             <span className="ms-1 text-error" aria-hidden="true">
@@ -58,7 +62,21 @@ export function NumberField({
             </span>
           ) : null}
         </label>
-      </div>
+      ) : (
+        <div className="flex items-baseline justify-between gap-2 min-w-0 flex-wrap">
+          <label
+            htmlFor={inputId}
+            className="text-supporting font-medium text-on-surface min-w-0 break-words"
+          >
+            {label}
+            {required ? (
+              <span className="ms-1 text-error" aria-hidden="true">
+                *
+              </span>
+            ) : null}
+          </label>
+        </div>
+      )}
 
       <div
         className={`relative flex items-center min-w-0 w-full rounded-card border ${borderClass} ${stateClass}`}
@@ -76,10 +94,11 @@ export function NumberField({
           required={required}
           inputMode={inputMode}
           placeholder={placeholder}
-          aria-invalid={isInvalid ? true : undefined}
+          aria-invalid={isInvalid}
           aria-describedby={describedBy !== '' ? describedBy : undefined}
           aria-required={required ? true : undefined}
-          className="fp-control-reset w-full min-h-touch min-w-0 rounded-card bg-transparent px-3 py-2 text-body text-on-surface outline-none fp-focus placeholder:text-muted disabled:text-muted disabled:cursor-not-allowed"
+          enterKeyHint={enterKeyHint}
+          className={`fp-control-reset w-full min-w-0 rounded-card bg-transparent px-3 py-2 text-on-surface outline-none fp-focus placeholder:text-muted disabled:text-muted disabled:cursor-not-allowed ${inputTypographyClass}`}
         />
         {unit ? (
           <span className="shrink max-w-[40%] break-words pe-3 text-supporting text-muted select-none min-w-0">

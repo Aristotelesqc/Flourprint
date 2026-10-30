@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { executable, launch as launchShell, loadSample, quit, tap } from './launch.js';
+import { expectRecipeRevision } from '../../mobile/e2e/ui-actions.js';
 
 /**
  * Smoke test of the packaged dev shell (#113): it loads the dev address, here the web build
@@ -65,7 +66,7 @@ test('the dev shell loads the dev address as a phone, without the bridge, and ke
   await loadSample(app.page);
   // Browser-preview storage, kept in this profile (ADR 0015).
   await tap(app.page, app.page.getByText('Pain simple').first());
-  await expect(app.page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(app.page, 1);
   // The snapshot is saved every few seconds: wait for one that holds the recipe.
   await expect
     .poll(

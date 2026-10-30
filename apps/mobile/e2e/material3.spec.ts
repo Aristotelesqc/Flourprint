@@ -1,5 +1,12 @@
 import { expect, test } from './fixtures';
-import { editorSection, enterEditor, menuAction, routed } from './ui-actions';
+import {
+  expectRecipeRevision,
+  editorSection,
+  enterEditor,
+  showPlanning,
+  menuAction,
+  routed,
+} from './ui-actions';
 import type { Page } from '@playwright/test';
 import milkFixture from '../../../docs/contracts/fixtures/enriched-milk-butter.json' with { type: 'json' };
 
@@ -8,7 +15,7 @@ const open = async (page: Page) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong', { exact: true }).click();
   await expect(page).toHaveURL(/\/recipes\/poolish-tangzhong$/);
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await expect(routed(page)).toHaveCount(1);
 };
 
@@ -60,9 +67,11 @@ test('milk-only incomplete hydration offers ingredient editing without inventing
   await expect(routed(page)).toHaveCount(1);
   await routed(page).getByText('QA — pâte au lait', { exact: true }).click();
   await expect(page).toHaveURL(/\/recipes\/qa-milk-only$/);
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await expect(routed(page)).toHaveCount(1);
-  await expect(routed(page).getByText('≈ 53 %', { exact: true })).toBeVisible();
+  await expect(
+    routed(page).getByText('Partie renseignée (estimée) : 53 %', { exact: true }),
+  ).toBeVisible();
   await expect(
     routed(page)
       .getByText(/Inconnu pour :/)
@@ -78,7 +87,7 @@ test('milk-only incomplete hydration offers ingredient editing without inventing
   await expect(
     routed(page).getByRole('region', { name: 'Hydratation', exact: true }),
   ).toContainText('53 %');
-  await expect(routed(page).getByLabel('Eau (g)', { exact: true })).toHaveCount(0);
+  await expect(routed(page).getByLabel('Eau, Mélange final (g)', { exact: true })).toHaveCount(0);
   await expect(
     routed(page).getByRole('button', { name: /Verrouiller l’hydratation à/ }),
   ).toHaveCount(0);
@@ -98,7 +107,9 @@ test('whole-percent hydration presentation never becomes a rounded recipe edit',
   await hydration.focus();
   await hydration.blur();
   await expect(routed(page).locator('ion-footer').getByRole('status')).toHaveText('À jour');
-  await expect(routed(page).getByLabel('Eau (g)', { exact: true })).toHaveValue('750');
+  await expect(routed(page).getByLabel('Eau, Mélange final (g)', { exact: true })).toHaveValue(
+    '200',
+  );
   // Lock the actual resolved value, including 0.2 g of water from the yeast estimate.
   await routed(page)
     .getByRole('button', { name: /Verrouiller l’hydratation à/ })
@@ -144,13 +155,16 @@ for (const english of [false, true]) {
   }) => {
     await open(page);
     await enterEditor(page);
-    const water = routed(page).getByLabel(english ? 'Water (g)' : 'Eau (g)', { exact: true });
+    const water = routed(page).getByLabel(
+      english ? 'Water, Final mix (g)' : 'Eau, Mélange final (g)',
+      { exact: true },
+    );
     const save = () =>
       routed(page)
         .locator('ion-footer')
         .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true });
     await water.fill('abc');
-    await menuAction(page, /^(Planification|Planning)$/);
+    await showPlanning(page);
     const alert = page.locator('ion-alert');
     await expect(alert).toHaveCount(0);
     await expect(
@@ -177,8 +191,8 @@ for (const english of [false, true]) {
       .click();
     await expect(water).toHaveValue('abc');
     await expect(save()).toBeDisabled();
-    await water.fill('720');
-    await menuAction(page, /^(Planification|Planning)$/);
+    await water.fill('170');
+    await showPlanning(page);
     await expect(alert).toHaveCount(0);
     await expect(
       routed(page).getByText(english ? 'Unsaved changes' : 'Modifications non enregistrées', {
@@ -186,9 +200,9 @@ for (const english of [false, true]) {
       }),
     ).toBeVisible();
     await enterEditor(page);
-    await expect(water).toHaveValue('720');
+    await expect(water).toHaveValue('170');
     await save().click();
-    await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 2);
   });
 
   test(`recipe cards name flour percentages once and disabled Save remains a full-size action${english ? ' @en' : ''}`, async ({
@@ -266,11 +280,11 @@ test('active preparation journal keeps more than three notes accessible', async 
 test('editor sections preserve one raw field and a page-wide invalid state', async ({ page }) => {
   await open(page);
   await enterEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
   await expect(water).toHaveCount(1);
   await water.fill('abc');
   await editorSection(page, 'components');
-  await expect(water).toBeHidden();
+  await expect(water).toBeVisible();
   await expect(water).toHaveValue('abc');
   await expect(
     routed(page).getByRole('button', { name: 'Enregistrer', exact: true }),

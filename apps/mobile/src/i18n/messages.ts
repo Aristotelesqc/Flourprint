@@ -5,9 +5,11 @@
  */
 import { helpEn, helpFr } from './help';
 import { recipeSortEn, recipeSortFr } from './recipe-sort-messages';
+import { recipeDocumentEn, recipeDocumentFr } from './recipe-document-messages';
 
 export const en = {
   ...recipeSortEn,
+  ...recipeDocumentEn,
   'explain.partialEstimatedSummary': 'Specified part (estimated): {grams} · {pct}',
   'formula.stat.totalWaterSpecifiedEstimate': 'Specified part (estimated): {pct}',
   'formula.stat.totalWaterLowerBound': '≥ {pct}',
@@ -363,7 +365,7 @@ export const en = {
   'draft.invalidPreview':
     'Displayed values are the last accepted values. Correct invalid fields before starting.',
   'draft.save': 'Save v{version}',
-  'draft.saved': 'Saved as version {version}.',
+  'draft.saved': 'Saved.',
   'draft.discard': 'Discard changes',
   'guide.title': 'About this style',
   'guide.unverified':
@@ -1203,6 +1205,7 @@ export type Catalog = Record<MessageKey, string>;
 
 export const fr: Catalog = {
   ...recipeSortFr,
+  ...recipeDocumentFr,
   'explain.partialEstimatedSummary': 'Partie renseignée (estimée) : {grams} · {pct}',
   'formula.stat.totalWaterSpecifiedEstimate': 'Partie renseignée (estimée) : {pct}',
   'formula.stat.totalWaterLowerBound': '≥ {pct}',
@@ -1581,7 +1584,7 @@ export const fr: Catalog = {
   'draft.invalidPreview':
     'Les valeurs affichées sont celles déjà acceptées. Corriger les champs invalides avant de démarrer.',
   'draft.save': 'Enregistrer v{version}',
-  'draft.saved': 'Version {version} enregistrée.',
+  'draft.saved': 'Recette enregistrée.',
   'draft.discard': 'Abandonner les modifications',
   'guide.title': 'À propos de ce style',
   'guide.unverified':

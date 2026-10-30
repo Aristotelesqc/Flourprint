@@ -4,6 +4,24 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { executable, launch as launchShell, loadSample, quit, tap } from './launch.js';
 
+/** L103: verify the actual native revision, never an internal version badge. */
+const expectNativeRevision = async (page: Page, version: number) => {
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const id = decodeURIComponent(location.pathname.split('/').at(-1) ?? '');
+        const bridge = Reflect.get(window, 'flourprintDesktop') as {
+          sql(op: string, statement: string, values: string[]): Promise<{ head_version: number }[]>;
+        };
+        const rows = await bridge.sql('query', 'SELECT head_version FROM recipes WHERE id = ?', [
+          id,
+        ]);
+        return rows[0]?.head_version;
+      }),
+    )
+    .toBe(version);
+};
+
 /** Smoke test of the packaged release shell (ADR 0011). */
 let observedPage: Page | undefined;
 const pageErrors: string[] = [];
@@ -77,7 +95,7 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
   let app = await launch(userData);
   await loadSample(app.page);
   await tap(app.page, app.page.getByText('Pain simple').first());
-  await expect(app.page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectNativeRevision(app.page, 1);
   // SQLite, not the browser's memory stores.
   await expect(app.page.getByText(/Aperçu navigateur/)).toHaveCount(0);
   expect(
@@ -89,7 +107,7 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
   ).toEqual({ width: 448, touch: true, mobile: true });
 
   // A saved recipe opens in consultation (#70): editing is explicit.
-  const salt = app.page.getByLabel('Sel (g)', { exact: true });
+  const salt = app.page.getByLabel('Sel, Mélange final (g)', { exact: true });
   await app.page.evaluate(() => {
     const order: string[] = [];
     Reflect.set(window, '__flourprintNativeMenuOrder', order);
@@ -132,12 +150,12 @@ test('a phone-sized window, touch from the mouse, and data that survives a resta
   await salt.fill('25');
   await salt.press('Enter');
   await tap(app.page, app.page.getByRole('button', { name: 'Enregistrer', exact: true }));
-  await expect(app.page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectNativeRevision(app.page, 2);
   await quit(app);
 
   app = await launch(userData);
   await loadSample(app.page);
   await tap(app.page, app.page.getByText('Pain simple').first());
-  await expect(app.page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectNativeRevision(app.page, 2);
   await quit(app);
 });

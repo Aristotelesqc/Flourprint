@@ -1,4 +1,9 @@
-import type { FocusEventHandler, KeyboardEventHandler, ReactNode } from 'react';
+import type {
+  FocusEventHandler,
+  InputHTMLAttributes,
+  KeyboardEventHandler,
+  ReactNode,
+} from 'react';
 
 export interface NumberFieldProps {
   readonly label: ReactNode;
@@ -18,4 +23,8 @@ export interface NumberFieldProps {
   readonly onBlur?: FocusEventHandler<HTMLInputElement> | undefined;
   readonly onKeyDown?: KeyboardEventHandler<HTMLInputElement> | undefined;
   readonly className?: string | undefined;
+  readonly hideLabel?: boolean | undefined;
+  readonly describedBy?: string | undefined;
+  readonly enterKeyHint?: InputHTMLAttributes<HTMLInputElement>['enterKeyHint'] | undefined;
+  readonly size?: 'regular' | 'large' | undefined;
 }

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState, type KeyboardEvent } from 'react';
 import type { TemperatureContext } from '@flourprint/core/domain';
+import { Ui } from './library';
 import { editableNumber, parseDecimal } from '../i18n/numbers';
 import { useTemperature } from '../i18n/temperature';
 import { editableDuration, parseDuration } from '../i18n/time';
@@ -39,13 +40,14 @@ interface FieldProps<V> {
   readonly unit?: string;
   readonly parse: (text: string) => { ok: true; value: V } | { ok: false };
   readonly invalidText: string;
+  readonly domainInvalidText?: string | undefined;
   readonly onCommit: Commit<V>;
   readonly size?: 'regular' | 'large';
   readonly width?: string;
   /** Shown while empty: a value that applies without being stored (e.g. an inherited one). */
   readonly placeholder?: string;
   readonly disabled?: boolean;
-  readonly describedBy?: string;
+  readonly describedBy?: string | undefined;
 }
 
 /**
@@ -59,6 +61,7 @@ const Field = <V,>({
   unit,
   parse,
   invalidText,
+  domainInvalidText,
   onCommit,
   size = 'regular',
   width = '100%',
@@ -67,7 +70,6 @@ const Field = <V,>({
   describedBy,
 }: FieldProps<V>) => {
   const id = useId();
-  const errorId = `${id}-error`;
   const [text, setText] = useState(formatted);
   const [invalid, setInvalid] = useState(false);
   const [domainRefused, setDomainRefused] = useState(false);
@@ -128,50 +130,38 @@ const Field = <V,>({
     }
   };
 
+  const accessibleLabel = unit ? `${label} (${unit})` : label;
+
   return (
-    <span className="flex flex-col items-end" style={{ width }}>
-      <span
-        className={`fp-field flex w-full items-center justify-end gap-1 rounded-[10px] border-[1.5px] bg-field-bg px-2.5 ${
-          size === 'large' ? 'h-12 text-xl font-bold' : 'h-11'
-        } ${invalid ? 'border-alert' : 'border-field'}`}
-      >
-        <input
-          id={id}
-          disabled={disabled}
-          aria-label={unit ? `${label} (${unit})` : label}
-          aria-invalid={invalid}
-          aria-describedby={
-            [describedBy, invalid ? errorId : undefined].filter(Boolean).join(' ') || undefined
-          }
-          className={`fp-input w-full ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
-          inputMode="decimal"
-          placeholder={placeholder}
-          enterKeyHint="done"
-          value={text}
-          onChange={(event) => handleChange(event.target.value)}
-          onBlur={commit}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') event.currentTarget.blur();
-          }}
-        />
-        {unit && (
-          <span className="font-normal text-muted" aria-hidden="true">
-            {unit}
-          </span>
-        )}
-      </span>
-      {invalid && (
-        <span id={errorId} className="mt-1 text-xs text-alert">
-          {invalidText}
-        </span>
-      )}
-    </span>
+    <div className="flex flex-col items-end" style={{ width }}>
+      <Ui
+        component="fp.number-field"
+        id={id}
+        label={accessibleLabel}
+        hideLabel={true}
+        value={text}
+        onValueChange={handleChange}
+        unit={unit}
+        error={invalid ? (domainRefused ? domainInvalidText : invalidText) : undefined}
+        invalid={isInvalid}
+        disabled={disabled}
+        inputMode="decimal"
+        placeholder={placeholder}
+        enterKeyHint="done"
+        size={size}
+        describedBy={describedBy}
+        onBlur={commit}
+        onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+          if (event.key === 'Enter') event.currentTarget.blur();
+        }}
+      />
+    </div>
   );
 };
 
 interface NumberFieldProps {
   readonly label: string;
-  readonly value: number;
+  readonly value: number | undefined;
   readonly unit?: string;
   readonly onCommit: Commit<number>;
   readonly size?: 'regular' | 'large';
@@ -180,7 +170,7 @@ interface NumberFieldProps {
   readonly maximumFractionDigits?: number;
   readonly invalidText?: string;
   readonly disabled?: boolean;
-  readonly describedBy?: string;
+  readonly describedBy?: string | undefined;
 }
 
 export const NumberField = ({
@@ -193,14 +183,19 @@ export const NumberField = ({
   return (
     <Field<number>
       {...props}
-      text={new Intl.NumberFormat(locale, { maximumFractionDigits, useGrouping: false }).format(
-        value,
-      )}
+      text={
+        value === undefined
+          ? ''
+          : new Intl.NumberFormat(locale, { maximumFractionDigits, useGrouping: false }).format(
+              value,
+            )
+      }
       parse={(text) => {
         const parsed = parseDecimal(text);
         return parsed === undefined ? { ok: false } : { ok: true, value: parsed };
       }}
       invalidText={invalidText ?? t('field.invalidNumber')}
+      domainInvalidText={invalidText}
     />
   );
 };

@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { editorSection, enterEditor, routed } from './ui-actions';
+import { expectRecipeRevision, editorSection, enterEditor, routed } from './ui-actions';
 
 const recipeName = 'Shared recipe surface fixture';
 const mixName = 'Mixing fixture';
@@ -140,7 +140,7 @@ const importRecipe = async (
   await routed(page).locator('ion-back-button').click();
   await expect(page).toHaveURL(/\/recipes$/);
   await routed(page).getByText(recipeName, { exact: true }).click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
 };
 
 const stepTrigger = (page: Page, english: boolean, name: string) =>
@@ -408,7 +408,7 @@ for (const english of [false, true]) {
     const undo = routed(page)
       .locator('ion-footer')
       .getByRole('button', {
-        name: english ? 'Undo' : 'Annuler',
+        name: english ? 'Undo last change' : 'Annuler la dernière modification',
         exact: true,
       });
     await undo.click();

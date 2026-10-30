@@ -1,6 +1,6 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
-import { enterEditor, editorSection, showPlanning } from './ui-actions';
+import { expectRecipeRevision, enterEditor, editorSection, showPlanning } from './ui-actions';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
 // L111 adds weighing checkboxes to Planning; assertions below still forbid authoring inputs.
@@ -35,7 +35,7 @@ for (const english of [false, true]) {
     await page.setViewportSize({ width: 360, height: 851 });
     await page.goto('/recipes');
     await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-    await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 1);
     await expect(routed(page)).toHaveCount(1);
     await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
     const tabs = routed(page).getByRole('tablist');
@@ -77,7 +77,7 @@ for (const english of [false, true]) {
     await page.emulateMedia({ colorScheme: english ? 'light' : 'dark' });
     await page.goto('/recipes');
     await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-    await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 1);
     await expect(routed(page)).toHaveCount(1);
   };
   const recipe = (page: Page) =>
@@ -156,7 +156,10 @@ for (const english of [false, true]) {
     await duration.fill('12 min');
     await duration.press('Enter');
     await editorSection(page, 'composition');
-    const water = routed(page).getByLabel(english ? 'Water (g)' : 'Eau (g)', { exact: true });
+    const water = routed(page).getByLabel(
+      english ? 'Water, Final mix (g)' : 'Eau, Mélange final (g)',
+      { exact: true },
+    );
     await water.fill('abc');
     await water.blur();
     await showPlanning(page);
@@ -179,7 +182,7 @@ for (const english of [false, true]) {
         exact: true,
       }),
     ).toBeDisabled();
-    await water.fill('750');
+    await water.fill('200');
     await water.press('Enter');
     await footer(page)
       .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
@@ -220,7 +223,12 @@ for (const english of [false, true]) {
         exact: true,
       })
       .click();
-    await expect(routed(page).getByTestId('fermentation-card')).toBeFocused();
+    await expect(
+      routed(page).getByRole('region', {
+        name: english ? 'Fermentation' : 'Fermentation',
+        exact: true,
+      }),
+    ).toBeFocused();
     await expect(auto).toHaveAttribute('aria-pressed', 'true');
     await showPlanning(page);
     await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
@@ -322,7 +330,7 @@ for (const english of [false, true]) {
     await footer(page)
       .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
-    await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 2);
     await expect(hydrationEdit).toHaveCount(0);
     await expect(
       routed(page).getByRole('img', {
@@ -341,7 +349,7 @@ for (const english of [false, true]) {
     await footer(page)
       .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
-    await expect(routed(page).getByText('Version 3', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 3);
     await expect(hydrationEdit).toHaveCount(0);
     await expect(
       routed(page).getByRole('img', {
@@ -356,7 +364,7 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
 }) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await expect(routed(page)).toHaveCount(1);
   await routed(page).getByRole('tab', { name: 'Planification', exact: true }).click();
   await routed(page)
