@@ -316,6 +316,14 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 
 ## Components
 
+Recipe step duplication uses a labelled action in the step editor and a shared review sheet.
+The editor dismisses before the review opens. The review shows the proposed copy, fields the
+core does not carry, changed dependencies and before/after relative timings from the core.
+An unknown duration stays explicit, including on following steps. Cancel or Android Back
+discards the proposal and restores the original step's focus. Keeping the copy applies one
+ordinary draft change after dismissal and opens the copy's editor; Undo, Redo and Save retain
+their existing meaning (L15, L72, L129).
+
 Extend the current `Field`, `Segmented`, `Card`, `Rows`, `InfoSheet` and `DraftActionBar` foundation.
 The target is a reusable Flourprint component layer with consistent behavior and theme roles.
 The implementation shares `OverflowMenu`, the `Segmented` variants (reading tabs, editor

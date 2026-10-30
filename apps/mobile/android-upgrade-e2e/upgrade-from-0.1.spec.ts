@@ -34,6 +34,19 @@ const shown = (page: Page, text: string | RegExp) =>
     .getByText(text, typeof text === 'string' ? { exact: true } : undefined)
     .locator('visible=true');
 
+/** L103 keeps revisions in storage; the Recipe header no longer exposes internal versions. */
+const expectCandidateRevision = async (page: Page, version: number) => {
+  await expect(
+    page.getByRole('heading', { name: RECIPE, exact: true }).locator('visible=true'),
+  ).toBeVisible();
+  await expect
+    .poll(async () => {
+      const snapshot = await readDatabase(`candidate-visible-revision-${version}`);
+      return snapshot.recipes.find((recipe) => recipe.name === RECIPE)?.head_version;
+    })
+    .toBe(version);
+};
+
 /**
  * Starts the app and attaches to the WebView of this process (after a forced stop, the previous
  * process's WebView can still be listed for a moment). Nothing is imported: the recipe must come
@@ -419,11 +432,8 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       await expect(page).toHaveURL(/\/recipes$/);
       await expect(shown(page, 'Recipe 1').first()).toBeVisible();
       await goTo(page, `/recipes/${recipeId}`);
-      await expect(shown(page, 'Version 2').first()).toBeVisible();
-      await page
-        .getByRole('button', { name: 'History', exact: true })
-        .locator('visible=true')
-        .click();
+      await expectCandidateRevision(page, 2);
+      await page.getByRole('tab', { name: 'History', exact: true }).locator('visible=true').click();
       await expect(shown(page, /Abandoned/).first()).toBeVisible();
       await expect(shown(page, /In progress/).first()).toBeVisible();
     });
@@ -446,14 +456,14 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     await explain(page, async () => {
       await goTo(page, '/recipes');
       await goTo(page, `/recipes/${recipeId}`);
-      await expect(shown(page, 'Version 2').first()).toBeVisible();
+      await expectCandidateRevision(page, 2);
       // A saved recipe opens in consultation (#70): editing is explicit (the browser suite's helper).
       await enterEditor(page);
-      const salt = page.getByLabel('Salt (g)', { exact: true }).locator('visible=true');
+      const salt = page.getByLabel('Salt, Final mix (g)', { exact: true }).locator('visible=true');
       await salt.fill('26');
       await salt.press('Enter');
       await page.getByRole('button', { name: 'Save', exact: true }).locator('visible=true').click();
-      await expect(shown(page, 'Version 3').first()).toBeVisible();
+      await expectCandidateRevision(page, 3);
     });
   });
 
@@ -464,7 +474,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       await goTo(page, '/recipes');
       await expect(page).toHaveURL(/\/recipes$/);
       await goTo(page, `/recipes/${recipeId}`);
-      await expect(shown(page, 'Version 3').first()).toBeVisible();
+      await expectCandidateRevision(page, 3);
     });
   });
 

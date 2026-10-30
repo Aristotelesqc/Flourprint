@@ -108,6 +108,8 @@ interface Props {
   readonly onChange: (process: Process) => boolean;
   readonly onClose: () => void;
   readonly onDismissed?: () => void;
+  readonly onDuplicate?: (step: ProcessStep, source: Process) => string | undefined;
+  readonly duplicateDisabled?: boolean;
 }
 
 /**
@@ -122,6 +124,8 @@ export const StepSheet = ({
   onChange,
   onClose,
   onDismissed,
+  onDuplicate,
+  duplicateDisabled = false,
 }: Props) => {
   const { t, error, stepName, stepInstructions } = useMessages();
   const id = useId();
@@ -133,11 +137,14 @@ export const StepSheet = ({
   const [label, setLabel] = useState<string>('');
   const [isLabelTouched, setIsLabelTouched] = useState<boolean>(false);
   const [operationError, setOperationError] = useState<string | undefined>();
+  const [duplicateError, setDuplicateError] = useState<string | undefined>();
   const [deleteError, setDeleteError] = useState<string | undefined>();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const isDeletingRef = useRef(false);
   const pendingProcessRef = useRef<Process | undefined>(undefined);
   const validationActions = useValidationActions();
+  const currentProcessRef = useRef(process);
+  currentProcessRef.current = process;
 
   const stepId = step?.id;
   const initialDisplayLabel = step?.label ? stepName(step) : '';
@@ -148,6 +155,7 @@ export const StepSheet = ({
     setFolds({ ...step?.technique?.folds });
     setFoldStyle(step?.technique?.folds?.style);
     setOperationError(undefined);
+    setDuplicateError(undefined);
     setDeleteError(undefined);
     setConfirmDeleteOpen(false);
     isDeletingRef.current = false;
@@ -174,27 +182,52 @@ export const StepSheet = ({
       setOperationError(t('step.operationBlockedRaw'));
       return false;
     }
-    const next = updateStep(process, step.id, changes);
+    const next = updateStep(currentProcessRef.current, step.id, changes);
     const valid = validateProcess(next);
     if (!valid.ok) {
       setOperationError(error(valid.error));
       return false;
     }
     setOperationError(undefined);
-    return onChange(next);
+    const accepted = onChange(next);
+    if (accepted) currentProcessRef.current = next;
+    return accepted;
   };
 
   const commitLabel = () => {
-    if (!isLabelTouched) return;
+    if (!isLabelTouched) return true;
     const trimmed = label.trim();
     if (trimmed !== initialDisplayLabel) {
-      change({ label: trimmed === '' ? undefined : trimmed });
+      if (!change({ label: trimmed === '' ? undefined : trimmed })) return false;
     }
+    setIsLabelTouched(false);
+    return true;
   };
 
   const handleClose = () => {
     commitLabel();
     onClose();
+  };
+
+  const handleDuplicate = () => {
+    if (duplicateDisabled || !onDuplicate) return;
+    if (!commitLabel()) return;
+    if (
+      validationActions?.isBlocked() ||
+      newPhase !== undefined ||
+      (folds.count !== undefined) !== (folds.intervalS !== undefined)
+    ) {
+      setDuplicateError(t('step.duplicate.error.blocked'));
+      return;
+    }
+    setDuplicateError(undefined);
+    const source = currentProcessRef.current;
+    const sourceStep = source.steps.find((candidate) => candidate.id === step.id);
+    if (!sourceStep) return;
+    const refusal = onDuplicate(sourceStep, source);
+    if (refusal) {
+      setDuplicateError(refusal);
+    }
   };
 
   const setTechnique = (next: TechniqueEdit, withPhases = false): boolean => {
@@ -390,6 +423,25 @@ export const StepSheet = ({
                 <span className="text-xs text-muted">{stepInstructions(step)}</span>
               )}
             </span>
+            {onDuplicate && (
+              <div className="flex flex-col gap-1.5 pt-1">
+                <div className="flex items-center gap-2">
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    disabled={duplicateDisabled}
+                    onClick={handleDuplicate}
+                  >
+                    {t('step.duplicate')}
+                  </Ui>
+                </div>
+                {duplicateError && (
+                  <p role="alert" className="m-0 text-sm font-medium text-alert">
+                    {duplicateError}
+                  </p>
+                )}
+              </div>
+            )}
           </section>
 
           <span className="flex items-center gap-1.5 font-bold">

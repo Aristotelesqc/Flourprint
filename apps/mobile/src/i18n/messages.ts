@@ -6,10 +6,12 @@
 import { helpEn, helpFr } from './help';
 import { recipeSortEn, recipeSortFr } from './recipe-sort-messages';
 import { recipeDocumentEn, recipeDocumentFr } from './recipe-document-messages';
+import { stepDuplicateEn, stepDuplicateFr } from './step-duplicate-messages';
 
 export const en = {
   ...recipeSortEn,
   ...recipeDocumentEn,
+  ...stepDuplicateEn,
   'explain.partialEstimatedSummary': 'Specified part (estimated): {grams} · {pct}',
   'formula.stat.totalWaterSpecifiedEstimate': 'Specified part (estimated): {pct}',
   'formula.stat.totalWaterLowerBound': '≥ {pct}',
@@ -1206,6 +1208,7 @@ export type Catalog = Record<MessageKey, string>;
 export const fr: Catalog = {
   ...recipeSortFr,
   ...recipeDocumentFr,
+  ...stepDuplicateFr,
   'explain.partialEstimatedSummary': 'Partie renseignée (estimée) : {grams} · {pct}',
   'formula.stat.totalWaterSpecifiedEstimate': 'Partie renseignée (estimée) : {pct}',
   'formula.stat.totalWaterLowerBound': '≥ {pct}',
