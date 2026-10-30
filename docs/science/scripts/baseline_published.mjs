@@ -17,6 +17,8 @@
  *     (b) Summary table per style and overall: coverage, geometric mean of progress / 100, SD log ratio,
  *         leave-one-source-out RMS factor exp(RMS) and share within ×1.5.
  *     (c) The same summary table excluding recipes with confidence: "low".
+ *     (d) Status and reason breakdown (all recipes).
+ *     (e) Leave-one-source-out timing prediction comparison against naive rules (all and excluding low confidence).
  *  - Prints to stdout; no file writes.
  */
 
@@ -269,7 +271,11 @@ function buildFormula(recipe, assumptions = []) {
   return { flours, ingredients, components, anchor };
 }
 
-function buildProcess(recipe) {
+function isMixStage(stage) {
+  return Boolean(stage && /mix|knead|broyer|pétrir|petrir|autolyse|autolyze/i.test(stage.name));
+}
+
+function buildProcess(recipe, scale = 1) {
   const steps = [];
   let prevId = null;
 
@@ -296,8 +302,7 @@ function buildProcess(recipe) {
 
   // 2. Mix step
   const firstStage = recipe.stages[0];
-  const isFirstMix =
-    firstStage && /mix|knead|broyer|pétrir|petrir|autolyse|autolyze/i.test(firstStage.name);
+  const isFirstMix = isMixStage(firstStage);
 
   let stageIndexStart = 0;
   let mixDurationS = 180; // 3 min default
@@ -337,7 +342,7 @@ function buildProcess(recipe) {
       operation: op,
       dependsOn: [prevId],
       schedule: 'asap',
-      plannedDurationS: Math.round((h ?? 0) * 3600),
+      plannedDurationS: Math.round((h ?? 0) * scale * 3600),
       conditions: { temperatureC: stageTempC },
     });
     prevId = stageId;
@@ -535,6 +540,224 @@ function computeStats(items) {
   };
 }
 
+function computeFermentationHours(recipe) {
+  if (!recipe.stages || recipe.stages.length === 0) return 0;
+  const isFirstMix = isMixStage(recipe.stages[0]);
+  const stageIndexStart = isFirstMix ? 1 : 0;
+  let totalH = 0;
+  for (let i = stageIndexStart; i < recipe.stages.length; i++) {
+    const h = resolveHours(recipe.stages[i]);
+    if (h !== null) {
+      totalH += h;
+    }
+  }
+  return totalH;
+}
+
+function computeFreshYeastEquivalentDose(recipe) {
+  const totalFlourG = recipe.flour?.total_g > 0 ? recipe.flour.total_g : 500;
+  let yPct = recipe.yeast?.pct ?? 0;
+  if ((yPct === 0 || yPct === null) && recipe.yeast?.g > 0 && totalFlourG > 0) {
+    yPct = (recipe.yeast.g / totalFlourG) * 100;
+  }
+  let form = recipe.yeast?.form;
+
+  if ((!yPct || yPct === 0) && recipe.preferment?.yeast_g > 0 && totalFlourG > 0) {
+    yPct = (recipe.preferment.yeast_g / totalFlourG) * 100;
+    form = 'instant';
+  }
+
+  if (!yPct || yPct <= 0) return 0;
+
+  let factor;
+  if (form === 'fresh') {
+    factor = 1;
+  } else if (form === 'active_dry' || form === 'active-dry') {
+    factor = 1 / 0.4;
+  } else {
+    // instant, unspecified, or other: instant
+    factor = 1 / 0.33;
+  }
+
+  return yPct * factor;
+}
+
+function evaluateDoughProgress(formula, recipe, scale) {
+  try {
+    const process = buildProcess(recipe, scale);
+    const estimates = estimateFermentation(formula, process);
+    const doughProgress = estimates.dough?.progressPct;
+    if (doughProgress && doughProgress.status === 'ok' && typeof doughProgress.value === 'number') {
+      return doughProgress.value;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function findModelScale(formula, recipe, targetPct) {
+  const uMin = Math.log(1 / 64);
+  const uMax = Math.log(64);
+
+  const pMin = evaluateDoughProgress(formula, recipe, Math.exp(uMin));
+  if (pMin === null) return null;
+
+  const pMax = evaluateDoughProgress(formula, recipe, Math.exp(uMax));
+  if (pMax === null) return null;
+
+  if (targetPct < pMin || targetPct > pMax) {
+    return null;
+  }
+
+  let low = uMin;
+  let high = uMax;
+
+  for (let iter = 0; iter < 40; iter++) {
+    const mid = (low + high) / 2;
+    const pMid = evaluateDoughProgress(formula, recipe, Math.exp(mid));
+    if (pMid === null) {
+      return null;
+    }
+    if (pMid < targetPct) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  const finalU = (low + high) / 2;
+  return Math.exp(finalU);
+}
+
+function computeMedian(arr) {
+  if (arr.length === 0) return 0;
+  const sorted = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 1) {
+    return sorted[mid];
+  }
+  return (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function computeGeomSdFactor(arr) {
+  if (arr.length <= 1) return 1;
+  const logVals = arr.map((v) => Math.log(v));
+  const meanLog = logVals.reduce((a, b) => a + b, 0) / logVals.length;
+  const variance = logVals.reduce((acc, v) => acc + (v - meanLog) ** 2, 0) / (logVals.length - 1);
+  return Math.exp(Math.sqrt(variance));
+}
+
+function evaluateTimingPredictors(items) {
+  const keys = [...new Set(items.map((r) => r.independence_key))];
+  const predictors = [
+    { name: 'global mean time', errors: [], failures: 0 },
+    { name: 'style mean time', errors: [], failures: 0 },
+    { name: 'inverse yeast dose', errors: [], failures: 0 },
+    { name: 'inverse yeast dose by style', errors: [], failures: 0 },
+    { name: 'model, global end point', errors: [], failures: 0 },
+    { name: 'model, style end point', errors: [], failures: 0 },
+  ];
+
+  if (keys.length > 1) {
+    for (const key of keys) {
+      const train = items.filter((r) => r.independence_key !== key);
+      const test = items.filter((r) => r.independence_key === key);
+      if (train.length === 0) continue;
+
+      // Fit aggregates on train
+      const trainGeomMeanT = geometricMean(train.map((r) => r.T));
+      const trainGeomMeanC = geometricMean(train.map((r) => r.T * r.dose));
+      const trainGeomMeanE = geometricMean(train.map((r) => r.progressPct / 100));
+
+      const trainStyles = [...new Set(train.map((r) => r.style))];
+      const styleMeanTMap = new Map();
+      const styleCMap = new Map();
+      const styleEMap = new Map();
+
+      for (const style of trainStyles) {
+        const styleItems = train.filter((r) => r.style === style);
+        if (styleItems.length > 0) {
+          styleMeanTMap.set(style, geometricMean(styleItems.map((r) => r.T)));
+          styleCMap.set(style, geometricMean(styleItems.map((r) => r.T * r.dose)));
+          styleEMap.set(style, geometricMean(styleItems.map((r) => r.progressPct / 100)));
+        }
+      }
+
+      for (const t of test) {
+        const { T, dose, style, recipe, formula } = t;
+
+        // 1. global mean time
+        const tHat1 = trainGeomMeanT;
+        predictors[0].errors.push(Math.log(T / tHat1));
+
+        // 2. style mean time (fallback to 1)
+        const tHat2 = styleMeanTMap.has(style) ? styleMeanTMap.get(style) : trainGeomMeanT;
+        predictors[1].errors.push(Math.log(T / tHat2));
+
+        // 3. inverse yeast dose
+        const tHat3 = trainGeomMeanC / dose;
+        predictors[2].errors.push(Math.log(T / tHat3));
+
+        // 4. inverse yeast dose by style (fallback to 3)
+        const C4 = styleCMap.has(style) ? styleCMap.get(style) : trainGeomMeanC;
+        const tHat4 = C4 / dose;
+        predictors[3].errors.push(Math.log(T / tHat4));
+
+        // 5. model, global end point
+        const targetPct5 = 100 * trainGeomMeanE;
+        const s5 = findModelScale(formula, recipe, targetPct5);
+        if (s5 !== null && s5 > 0) {
+          const tHat5 = s5 * T;
+          predictors[4].errors.push(Math.log(T / tHat5));
+        } else {
+          predictors[4].failures++;
+        }
+
+        // 6. model, style end point (fallback to 5)
+        const E6 = styleEMap.has(style) ? styleEMap.get(style) : trainGeomMeanE;
+        const targetPct6 = 100 * E6;
+        const s6 = findModelScale(formula, recipe, targetPct6);
+        if (s6 !== null && s6 > 0) {
+          const tHat6 = s6 * T;
+          predictors[5].errors.push(Math.log(T / tHat6));
+        } else {
+          predictors[5].failures++;
+        }
+      }
+    }
+  }
+
+  return predictors.map((p) => {
+    const scored = p.errors.length;
+    const failures = p.failures;
+    let rmsStr = '—';
+    let within15Str = '—';
+    let within20Str = '—';
+
+    if (scored > 0) {
+      const sumSq = p.errors.reduce((acc, e) => acc + e ** 2, 0);
+      const rms = Math.sqrt(sumSq / scored);
+      rmsStr = Math.exp(rms).toFixed(3);
+
+      const within15Count = p.errors.filter((e) => Math.abs(e) <= Math.log(1.5)).length;
+      within15Str = `${((within15Count / scored) * 100).toFixed(1)}%`;
+
+      const within20Count = p.errors.filter((e) => Math.abs(e) <= Math.log(2.0)).length;
+      within20Str = `${((within20Count / scored) * 100).toFixed(1)}%`;
+    }
+
+    return {
+      name: p.name,
+      scored,
+      failures,
+      rms: rmsStr,
+      within15: within15Str,
+      within20: within20Str,
+    };
+  });
+}
+
 function run() {
   const recipes = dataset.recipes || [];
   const results = recipes.map(evaluateRecipe);
@@ -627,6 +850,68 @@ function run() {
   for (const [status, count] of Object.entries(statusCounts).sort((a, b) => b[1] - a[1])) {
     const share = ((count / results.length) * 100).toFixed(1);
     console.log(`| ${status} | ${count} | ${share}% |`);
+  }
+  console.log('\n');
+
+  // Comparison set for timing evaluation
+  const comparisonSet = [];
+  for (let i = 0; i < recipes.length; i++) {
+    const recipe = recipes[i];
+    const r = results[i];
+    if (r.status === 'ok' && r.progressPct !== null && r.progressPct > 0) {
+      const T = computeFermentationHours(recipe);
+      const dose = computeFreshYeastEquivalentDose(recipe);
+      if (T > 0 && dose > 0) {
+        const formula = buildFormula(recipe);
+        comparisonSet.push({
+          recipe,
+          id: recipe.id,
+          style: recipe.style,
+          independence_key: recipe.independence_key,
+          confidence: recipe.confidence,
+          progressPct: r.progressPct,
+          T,
+          dose,
+          formula,
+        });
+      }
+    }
+  }
+
+  const comparisonSetNoLow = comparisonSet.filter((item) => item.confidence !== 'low');
+
+  // (e) Predicting published fermentation time, leave-one-source-out
+  console.log(
+    `## (e) Predicting published fermentation time, leave-one-source-out (n = ${comparisonSet.length})\n`,
+  );
+  const medianTAll = computeMedian(comparisonSet.map((r) => r.T));
+  const geomSdAll = computeGeomSdFactor(comparisonSet.map((r) => r.T));
+  console.log(
+    `* Published dough-fermentation time T: median = ${medianTAll.toFixed(2)} h, geometric SD factor = ${geomSdAll.toFixed(3)}\n`,
+  );
+  console.log('| Predictor | Scored | Failures | RMS factor | Within ×1.5 | Within ×2 |');
+  console.log('| :--- | :---: | :---: | :---: | :---: | :---: |');
+  const rowsAll = evaluateTimingPredictors(comparisonSet);
+  for (const row of rowsAll) {
+    console.log(
+      `| ${row.name} | ${row.scored} | ${row.failures} | ${row.rms} | ${row.within15} | ${row.within20} |`,
+    );
+  }
+  console.log('\n');
+
+  console.log(`### Excluding low confidence (n = ${comparisonSetNoLow.length})\n`);
+  const medianTNoLow = computeMedian(comparisonSetNoLow.map((r) => r.T));
+  const geomSdNoLow = computeGeomSdFactor(comparisonSetNoLow.map((r) => r.T));
+  console.log(
+    `* Published dough-fermentation time T: median = ${medianTNoLow.toFixed(2)} h, geometric SD factor = ${geomSdNoLow.toFixed(3)}\n`,
+  );
+  console.log('| Predictor | Scored | Failures | RMS factor | Within ×1.5 | Within ×2 |');
+  console.log('| :--- | :---: | :---: | :---: | :---: | :---: |');
+  const rowsNoLow = evaluateTimingPredictors(comparisonSetNoLow);
+  for (const row of rowsNoLow) {
+    console.log(
+      `| ${row.name} | ${row.scored} | ${row.failures} | ${row.rms} | ${row.within15} | ${row.within20} |`,
+    );
   }
 }
 
