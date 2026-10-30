@@ -218,12 +218,14 @@ const openFlour = async (page: Page, name: string) => {
 };
 
 /**
- * Schema 7 (migrations 5 to 7 applied), and every 0.1.0 revision, bake event, flour, draft and
+ * Schema 9 (migrations 5 to 9 applied), and every 0.1.0 revision, bake event, flour, draft and
  * bake status still there, byte for byte. Revisions may only have been added.
  */
 const expectMigrated = (old: Snapshot, now: Snapshot) => {
-  expect(now.schemaVersion).toBe(7);
-  expect(now.tables).toEqual(expect.arrayContaining(['equipment', 'ingredients']));
+  expect(now.schemaVersion).toBe(9);
+  expect(now.tables).toEqual(
+    expect.arrayContaining(['equipment', 'ingredients', 'reference_versions', 'thermal_profiles']),
+  );
   expect(now.recipeColumns).toContain('trashed_at');
   expect(now.recipes.every((r) => r.trashed_at == null)).toBe(true);
   for (const [key, document] of Object.entries(old.revisions)) {
