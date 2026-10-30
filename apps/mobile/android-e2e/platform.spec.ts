@@ -281,3 +281,44 @@ test('Android Back dismisses shared overlays before leaving the recipe', async (
   await expect(help).toBeFocused();
   await forceStop();
 });
+
+test('step duplication reviews before saving and Android Back discards a proposal', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 2);
+  await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+  const method = () => page.getByTestId('recipe-method').filter({ visible: true });
+  const source = () => method().getByRole('button', { name: 'Edit step Mix', exact: true });
+  const originalCount = await method().locator('[data-sortable-id]').count();
+  const recipeUrl = page.url();
+  await source().click();
+  await page.getByRole('button', { name: 'Duplicate step', exact: true }).click();
+  const review = () => page.getByRole('dialog', { name: 'Duplicate step proposal', exact: true });
+  await expect(review()).toBeVisible();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(review()).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(source()).toBeFocused();
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount);
+  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+
+  await source().click();
+  await page.getByRole('button', { name: 'Duplicate step', exact: true }).click();
+  await expect(review()).toBeVisible();
+  await page.getByRole('button', { name: 'Keep copy', exact: true }).click();
+  await expect(review()).toBeHidden();
+  await page
+    .locator('ion-modal:visible')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount + 1);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 3);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 3);
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount + 1);
+  await forceStop();
+});

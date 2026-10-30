@@ -455,7 +455,9 @@ test('opens on the recipes; diagnostics sit behind the advanced menu', async ({ 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
   // ADR 0016: the app bar names the running build (`v0.2.0-local` in this test build).
-  await expect(page.getByTestId('app-build-label').first()).toHaveText(/^v\d+\.\d+\.\d+(-|$)/);
+  await expect(page.getByTestId('app-build-label').first()).toHaveText(
+    /^v\d+\.\d+\.\d+(\.\d{4,})?(-|$)/,
+  );
   await expect(page.getByText('Vérifications de l’appareil')).toBeHidden();
   await page.getByLabel('Avancé').first().click();
   // A non-release build offers to load the latest deployment; this one is already it.

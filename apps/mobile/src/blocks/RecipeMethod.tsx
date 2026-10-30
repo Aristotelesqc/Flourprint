@@ -10,8 +10,10 @@ import {
   useState,
 } from 'react';
 import {
+  duplicateStep,
   insertStepAfter,
   temperatureContext,
+  type DuplicateResult,
   type Process,
   type ProcessStep,
 } from '@flourprint/core/domain';
@@ -23,7 +25,10 @@ import { DurationField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { Rows, SectionTitle } from '../ui/Layout';
 import { Ui } from '../ui/library';
+import { useServices } from '../services/services';
+import { useValidationActions } from '../ui/ValidationContext';
 import { newStepId, STEP_OPERATIONS } from '../services/process-edit';
+import { DuplicateStepReview } from './DuplicateStepReview';
 import { RecipeOutcome } from './RecipeOutcome';
 import { StepEquipmentDetails } from './StepEquipmentDetails';
 import { StepSheet, techniqueSummary } from './StepSheet';
@@ -96,7 +101,9 @@ export const RecipeMethod = ({
   onDragActiveChange,
   disabled = false,
 }: Props) => {
-  const { t, stepName, stepInstructions } = useMessages();
+  const { t, error, stepName, stepInstructions } = useMessages();
+  const { ids } = useServices();
+  const validationActions = useValidationActions();
   const temperature = useTemperature();
   const [selectedStepId, setSelectedStepId] = useState<string>();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -107,6 +114,14 @@ export const RecipeMethod = ({
   const returnBtnRef = useRef<HTMLButtonElement>(null);
   const stepSnapshotRef = useRef<ProcessStep | undefined>(undefined);
   const frameRef = useRef<number | undefined>(undefined);
+  const [pendingProposal, setPendingProposal] = useState<{
+    readonly result: DuplicateResult;
+    readonly originalStep: ProcessStep;
+    readonly originalProcess: Process;
+  }>();
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const dismissActionRef = useRef<'none' | 'openReview'>('none');
+  const keepIntentRef = useRef<{ process: Process; copyId: string } | undefined>(undefined);
 
   const isDragActiveRef = useRef(false);
   const sortableRef = useRef<{ cancelDrag(): boolean } | null>(null);
@@ -211,6 +226,11 @@ export const RecipeMethod = ({
   const handleSheetDismissed = () => {
     setIsSheetOpen(false);
     stepSnapshotRef.current = undefined;
+    if (dismissActionRef.current === 'openReview') {
+      dismissActionRef.current = 'none';
+      setIsReviewOpen(true);
+      return;
+    }
     const targetId = highlightedStepId ?? selectedStepId;
     if (frameRef.current !== undefined) cancelAnimationFrame(frameRef.current);
     frameRef.current = requestAnimationFrame(() => {
@@ -232,6 +252,86 @@ export const RecipeMethod = ({
       }
     });
   };
+
+  const handleRequestDuplicate = useCallback(
+    (step: ProcessStep, source: Process): string | undefined => {
+      if (disabled || !editable || !onProcessChange) return undefined;
+      if (dismissActionRef.current !== 'none' || pendingProposal) return undefined;
+      if (validationActions?.isBlocked()) {
+        return t('step.duplicate.error.blocked');
+      }
+      const newId = `${step.operation}-${ids.next()}`;
+      const result = duplicateStep(source, step.id, newId);
+      if (!result.ok) {
+        if (result.error.code === 'NotDuplicable') {
+          const reason = result.error.details?.reason;
+          if (reason === 'alap') return t('step.duplicate.error.alap');
+          if (reason === 'beforeTarget') return t('step.duplicate.error.beforeTarget');
+          if (reason === 'workpieceStep') return t('step.duplicate.error.workpieceStep');
+        }
+        return error(result.error);
+      }
+      setPendingProposal({
+        result: result.value,
+        originalStep: step,
+        originalProcess: source,
+      });
+      dismissActionRef.current = 'openReview';
+      setIsSheetOpen(false);
+      return undefined;
+    },
+    [disabled, editable, onProcessChange, validationActions, ids, pendingProposal, t, error],
+  );
+
+  const handleKeepProposal = useCallback((candidateProcess: Process, copyId: string): boolean => {
+    keepIntentRef.current = { process: candidateProcess, copyId };
+    setIsReviewOpen(false);
+    return true;
+  }, []);
+
+  const handleCancelReview = useCallback(() => {
+    keepIntentRef.current = undefined;
+    setIsReviewOpen(false);
+  }, []);
+
+  const handleReviewDismissed = useCallback(() => {
+    setIsReviewOpen(false);
+    const kept = keepIntentRef.current;
+    keepIntentRef.current = undefined;
+    const origStepId = pendingProposal?.originalStep.id;
+    setPendingProposal(undefined);
+
+    if (kept && onProcessChange) {
+      const accepted = onProcessChange(kept.process);
+      if (accepted) {
+        setSelectedStepId(kept.copyId);
+        setHighlightedStepId(kept.copyId);
+        setIsSheetOpen(true);
+        return;
+      }
+    }
+
+    const targetId = origStepId ?? highlightedStepId ?? selectedStepId;
+    if (frameRef.current !== undefined) cancelAnimationFrame(frameRef.current);
+    frameRef.current = requestAnimationFrame(() => {
+      if (
+        !containerRef.current ||
+        containerRef.current.closest('[hidden]') ||
+        containerRef.current.closest('.ion-page-hidden')
+      ) {
+        return;
+      }
+      const btn = targetId ? stepButtonRefs.current.get(targetId) : undefined;
+      if (btn && document.contains(btn)) {
+        btn.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+        btn.focus({ preventScroll: true });
+      } else {
+        const fallback = returnBtnRef.current ?? headingRef.current;
+        fallback?.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+        fallback?.focus({ preventScroll: true });
+      }
+    });
+  }, [pendingProposal, onProcessChange, highlightedStepId, selectedStepId]);
 
   const nameOf = (id: string) => {
     const step = process.steps.find((s) => s.id === id);
@@ -574,8 +674,20 @@ export const RecipeMethod = ({
           onChange={onProcessChange}
           onClose={handleSheetClose}
           onDismissed={handleSheetDismissed}
+          onDuplicate={handleRequestDuplicate}
+          duplicateDisabled={disabled}
         />
       )}
+
+      <DuplicateStepReview
+        isOpen={isReviewOpen}
+        proposal={pendingProposal}
+        currentProcess={process}
+        onKeep={handleKeepProposal}
+        onCancel={handleCancelReview}
+        onDismissed={handleReviewDismissed}
+        disabled={disabled}
+      />
     </section>
   );
 };
