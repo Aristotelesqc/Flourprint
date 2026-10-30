@@ -40,10 +40,30 @@ const expectCandidateRevision = async (page: Page, version: number) => {
     page.getByRole('heading', { name: RECIPE, exact: true }).locator('visible=true'),
   ).toBeVisible();
   await expect
-    .poll(async () => {
-      const snapshot = await readDatabase(`candidate-visible-revision-${version}`);
-      return snapshot.recipes.find((recipe) => recipe.name === RECIPE)?.head_version;
-    })
+    .poll(() =>
+      page.evaluate(async () => {
+        const id = decodeURIComponent(location.pathname.split('/').at(-1) ?? '');
+        const capacitor = Reflect.get(window, 'Capacitor') as {
+          Plugins: {
+            CapacitorSQLite: {
+              query(options: {
+                database: string;
+                statement: string;
+                values: string[];
+                readonly: boolean;
+              }): Promise<{ values?: { head_version: number }[] }>;
+            };
+          };
+        };
+        const result = await capacitor.Plugins.CapacitorSQLite.query({
+          database: 'flourprint',
+          statement: 'SELECT head_version FROM recipes WHERE id = ?',
+          values: [id],
+          readonly: false,
+        });
+        return result.values?.[0]?.head_version;
+      }),
+    )
     .toBe(version);
 };
 
