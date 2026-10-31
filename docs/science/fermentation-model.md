@@ -217,10 +217,10 @@ Consequences:
 - Gas produced, gas retained, relative volume, height, pre-collapse height and a readiness decision
   are separate quantities (Codex synthesis). A shaping step can reset the visible-volume baseline
   without resetting biochemical age.
-- Boudrag's white-flour data show why: at 2 % NaCl the total CO2 `Vt` falls (1897 mL against 2175 mL
-  at 0 %) while the retention ratio `R` rises (88.5 % against 84.7 %) and `Hm` is lower than at
-  1 % NaCl. Production, retention and height move differently (section 8; values not independently
-  verified).
+- Boudrag's white-flour data show part of why: at 1.2 % salt (whole recipe) the total CO2 `Vt` falls
+  (1897 mL against 2175 mL without salt) and `Hm` falls (53.6 mm against 63.7 mm), while the retention
+  coefficient stays at 99.6 %. Across flours, `Hm` depends on the matrix and salt level far more than
+  `Vt` does (section 8).
 - If a future model lets height rise and then fall, it must define which crossing is the target.
 - Because the owner does stretch-and-folds, volume is not observable in their practice. Their
   readiness judgement is the practical end point, and the product must not present volume or a
@@ -413,39 +413,37 @@ flavour layer should state relative chemical tendencies only, not sensory scores
 
 ## 8. Salt: Boudrag 2026
 
-Boudrag S., Arendt E. K., Zannini E., _Foods_ 15(13):2343 (exact title unverified; the audit says the
-report's wording differs). Read status: primary metadata checked by the Codex review; **numerical
-tables not independently accessed**. The table below is MEASURED as transcribed by the Gemini report
-and flagged `source_verified=false` (file `data/boudrag-2026-salt.csv`). Rheofermentometer, 3 h, 30 °C,
-300 g. The denominator of the NaCl percentage and the original formula are to be verified; the report
-gives both "% recipe" and a "% flour" conversion.
+Boudrag S., Arendt E. K., Zannini E. 2026, _Foods_ 15(13):2343. Read status: full text, Table 5 extracted
+by script (file `data/boudrag-2026-salt.csv`, `source_verified=true`). MEASURED. Rheofermentometer, 300 g,
+3 h, 30 °C, 2 % instant yeast, 2 % sugar and 3.2 % oil on flour basis. Salt is w/w of the whole recipe; its
+flour-basis equivalents are in the data file.
 
-| Matrix    | NaCl, % flour (% recipe) | `Vt` mL   | `Vr` mL   | `R` %      | `Hm` mm    |
-| --------- | ------------------------ | --------- | --------- | ---------- | ---------- |
-| White     | 0 (0)                    | 2175 ± 16 | 1843 ± 27 | 84.7 ± 1.0 | 53.6 ± 2.9 |
-| White     | 0.5 (0.3)                | 2246 ± 22 | 1855 ± 10 | 82.6 ± 1.2 | 56.0 ± 3.9 |
-| White     | 1.0 (0.6)                | 2246 ± 28 | 1863 ± 23 | 82.9 ± 0.3 | 64.1 ± 2.2 |
-| White     | 2.0 (1.2)                | 1897 ± 67 | 1680 ± 50 | 88.5 ± 0.5 | 56.7 ± 3.9 |
-| Wholemeal | 0 (0)                    | 2447 ± 69 | 1965 ± 43 | 80.3 ± 0.5 | 36.1 ± 0.3 |
-| Wholemeal | 0.5 (0.3)                | 2520 ± 22 | 2011 ± 13 | 79.8 ± 0.3 | 35.1 ± 1.2 |
-| Wholemeal | 1.0 (0.6)                | 2483 ± 22 | 1996 ± 23 | 80.4 ± 0.3 | 35.2 ± 1.3 |
-| Wholemeal | 2.0 (1.2)                | 2392 ± 72 | 1962 ± 39 | 82.1 ± 0.9 | 31.3 ± 1.8 |
-| Fibre     | 0 (0)                    | 1908 ± 34 | 1731 ± 27 | 90.8 ± 0.3 | 31.9 ± 1.4 |
-| Fibre     | 0.5 (0.3)                | 1986 ± 53 | 1786 ± 40 | 89.9 ± 0.4 | 34.4 ± 1.2 |
-| Fibre     | 1.0 (0.6)                | 1989 ± 49 | 1800 ± 39 | 90.5 ± 0.3 | 34.4 ± 2.3 |
-| Fibre     | 2.0 (1.2)                | 1791 ± 29 | 1670 ± 23 | 93.3 ± 0.2 | 28.0 ± 1.9 |
+| Matrix    | Salt, % recipe | `Vt` mL   | `Vr` mL   | `R` %      | `Hm` mm    |
+| --------- | -------------- | --------- | --------- | ---------- | ---------- |
+| White     | 0              | 2175 ± 41 | 2166 ± 41 | 99.6 ± 0.0 | 63.7 ± 0.3 |
+| White     | 0.3            | 2246 ± 77 | 2235 ± 78 | 99.5 ± 0.1 | 64.1 ± 0.9 |
+| White     | 0.6            | 2158 ± 20 | 2152 ± 20 | 99.7 ± 0.1 | 62.8 ± 1.1 |
+| White     | 1.2            | 1897 ± 45 | 1890 ± 44 | 99.6 ± 0.2 | 53.6 ± 1.5 |
+| Fibre     | 0              | 2190 ± 82 | 2184 ± 84 | 99.7 ± 0.0 | 37.1 ± 2.4 |
+| Fibre     | 0.3            | 2290 ± 18 | 2285 ± 17 | 99.8 ± 0.1 | 50.0 ± 1.8 |
+| Fibre     | 0.6            | 2133 ± 51 | 2128 ± 51 | 99.8 ± 0.1 | 52.3 ± 1.5 |
+| Fibre     | 1.2            | 1922 ± 48 | 1915 ± 46 | 99.7 ± 0.2 | 44.3 ± 3.5 |
+| Wholemeal | 0              | 2392 ± 74 | 2388 ± 75 | 99.8 ± 0.1 | 31.3 ± 1.3 |
+| Wholemeal | 0.3            | 2520 ± 33 | 2517 ± 31 | 99.8 ± 0.1 | 35.2 ± 2.0 |
+| Wholemeal | 0.6            | 2396 ± 22 | 2392 ± 22 | 99.8 ± 0.1 | 36.1 ± 1.0 |
+| Wholemeal | 1.2            | 2188 ± 26 | 2185 ± 26 | 99.9 ± 0.1 | 34.8 ± 0.1 |
 
-Internal consistency (our check): `Vr / Vt` reproduces `R` within 0.1 point on all 12 rows, which
-tests the transcription's coherence, not its fidelity to the paper.
+What it supports: in all three matrices `Vt` is highest at 0.3 % and lowest at 1.2 %, where it stands at
+0.87 to 0.91 of the salt-free value (our division). Retention barely moves. `Hm` responds differently per
+matrix: white flour holds until 0.6 % and falls at 1.2 %; fibre-fortified dough gains about 40 % from 0 to
+0.6 %; wholemeal gains about 15 %. One flour of each kind, one yeast, one temperature, one 3 h endpoint:
+this is gas produced at a fixed time, not a rate law.
 
-What it supports: salt acts on gas production and on dough mechanics separately, and the response
-depends on the flour matrix. White flour shows a plateau of `Vt` between 0 and 1 % and a fall at 2 %;
-wholemeal `Vt` varies little; `Hm` is lowest at 2 % in wholemeal and fibre-fortified doughs (31.3 and 28.0 mm), while white flour peaks at 1 % (64.1 mm).
-
-The Gemini piecewise fit `r = 1 + 0.033 C` for `C` ≤ 1 % and `r = 1.033 exp(−0.169 (C − 1))` above
-(DERIVED / FITTED on white flour only) is a convenient interpolation through sparse points. It is
-matrix-specific, and its upper limit of 3 % lies beyond the 2 % maximum measured (EXTRAPOLATED). It
-is not a universal salt factor and must not be applied without flour-matrix qualification. The Gemini fits of Farinograph water absorption against salt are not imported.
+An earlier version of this section used a transcription that did not match the paper: retention of 80 to
+93 %, `Vt` 2246 at 0.6 % for white flour, and values attached to the wrong flours and salt levels. It read a
+white-flour `Hm` peak at 1 % and "wholemeal `Vt` varies little", neither of which the table shows. The
+piecewise Gemini salt factor (`r = 1 + 0.033 C`, then an exponential fall) rested on those values and is
+withdrawn. No contract or engine code used them.
 
 ## 9. Rye against wheat, and matrix caveats
 
@@ -464,7 +462,7 @@ directly by a Flourprint agent.
 | 1   | Nor Qhairul Izzreen M. N., Petersen M. A., Hansen Å. S. 2016. Volatile Compounds in Crumb of Whole-Meal Wheat Bread Fermented with Different Yeast Levels and Fermentation Temperatures. _Cereal Chemistry_ 93(2):209-216. DOI 10.1094/CCHEM-09-14-0196-R                                                                                                         | F by Codex review (PDF from the UMS eprints server). Title agrees with that URL                                                                                                                                                                                                       |
 | 2   | Nor Qhairul Izzreen M. N., Hansen Å. S., Petersen M. A. 2016. Volatile compounds in whole meal bread crust: The effects of yeast level and fermentation temperature. _Food Chemistry_ 210:566-576. DOI 10.1016/j.foodchem.2016.04.110                                                                                                                             | Unverified (Gemini report only)                                                                                                                                                                                                                                                       |
 | 3   | Timmermans E., Bautil A., Brijs K., Scheirlinck I., Van der Meulen R., Courtin C. M. 2022. Sugar Levels Determine Fermentation Dynamics during Yeast Pastry Making and Its Impact on Dough and Product Characteristics. _Foods_ 11(10):1388. DOI 10.3390/foods11101388                                                                                            | F (methods and results) by Codex review; title from Gemini report, unverified                                                                                                                                                                                                         |
-| 4   | Boudrag S., Arendt E. K., Zannini E. 2026. _Foods_ 15(13):2343. DOI 10.3390/foods15132343. PubMed 42450461                                                                                                                                                                                                                                                        | Metadata checked by Codex review, tables not accessed. Exact title unverified (the report's wording differs from the published title, GPT audit)                                                                                                                                      |
+| 4   | Boudrag S., Arendt E. K., Zannini E. 2026. Effect of NaCl Reduction on Dough Rheology and Bread Quality of Fibre-Enriched White Wheat Bread. _Foods_ 15(13):2343. DOI 10.3390/foods15132343. PubMed 42450461                                                                                                                                                      | Metadata checked by Codex review, tables not accessed. Exact title unverified (the report's wording differs from the published title, GPT audit)                                                                                                                                      |
 | 5   | Liu W. et al. 2023. _Scientific Reports_ 13:4534. DOI 10.1038/s41598-023-31591-y. Title given by the GPT audit: "Influence of α-amylase, xylanase and cellulase on the rheological properties of bread dough enriched with oat bran"                                                                                                                              | Journal, volume, article and DOI checked against the publisher by Codex review; title unconfirmed. The Gemini report's `Foods 12(6):1247` (DOI 10.3390/foods12061247) is wrong, and its CSV's 10.3390/foods12061249 is a different wrong DOI. Values match the real table (GPT audit) |
 | 6   | Alpers T., Becker T., Jekle M. 2023. Strain-dependent assessment of dough's polymer structure and functionality during the baking process. _PLOS ONE_ 18(3):e0282670. DOI 10.1371/journal.pone.0282670                                                                                                                                                            | DOI and title checked against the publisher by Codex review. The report's title "Destabilization of the gas phase of wheat dough during the early phase of baking" is wrong. Volume and issue as given by the report, unverified                                                      |
 | 7   | Alpers T., Tauscher V., Steglich T., Becker T., Jekle M. 2020. _Polymers_ 13(1):30. DOI 10.3390/polym13010030                                                                                                                                                                                                                                                     | Title unresolved: the Gemini report lists two different titles for it. Unverified                                                                                                                                                                                                     |
@@ -528,8 +526,7 @@ Gates before a candidate (M5 or another) enters the shipped model:
    the shipped model's, separately, and are lower; or the candidate covers a situation the
    benchmark cannot test, and says so.
 
-Other open items: obtain the Timmermans time courses; verify the Boudrag tables and percentage
-denominators; confirm the bibliography titles marked unverified; check whether the Izzreen formula
+Other open items: obtain the Timmermans time courses; confirm the bibliography titles marked unverified; check whether the Izzreen formula
 details match the paper; measure the dough temperature during the owner's cold retards.
 
 ## 13. Changelog by model version
@@ -546,6 +543,7 @@ details match the paper; measure the dough temperature during the owner's cold r
 | science doc     | 2026-10-25        | Lag-aware comparison on Izzreen Table I, and cardinal-temperature forms and progressive blending examined and rejected (section 2; reports on issue #9). No model change.                                                                                                                                                                                                                                                                                            |
 | science doc     | 2026-10-25        | Section 14: provenance of every constant of the dough thermal model proposed for contract 0.21.0 (#176). No change of the kinetic model; the thermal sub-model `flourprint.dough-thermal` 0.1.0 is a proposal until its contract merges.                                                                                                                                                                                                                             |
 | science doc     | 2026-10-26        | Goal and acceptance criterion: a forecast at least as good as an expert baker's, judged by held-out predictive error against published schedules and recorded bakes; recipe corpus, science and personal bakes as complementary sources; gate 9. Owner decision. No model change.                                                                                                                                                                                    |
+| science doc     | 2026-10-30        | Section 8 and its data file: Boudrag Table 5 re-extracted from the full text; the earlier transcription and the salt factor fitted on it withdrawn. No model change.                                                                                                                                                                                                                                                                                                 |
 
 Any future model version adds a row here with the evidence it rests on.
 
