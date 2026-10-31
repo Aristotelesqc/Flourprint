@@ -350,6 +350,8 @@ and require their own checks.
   implementation, pending the L49/L60/L108 port; they are not the target design. The narrow
   summary arrangement remains subject to the owner's existing visual review decision.
 - **Precision fields:** input frames identify actual editing; read-only quantities are text.
+  Gram display uses the L148 default magnitude bands: whole grams at 10 g and above, tenths
+  from 1 g to below 10 g, hundredths below 1 g, with the same rule for negative losses.
   Retain local raw input, parsing/refusal feedback and the page validation registry. Untouched
   formatted numbers never become edits. Disabled fields (e.g. locked hydration target) use distinct
   dimmed styling (`opacity-60 cursor-not-allowed`) and helper guidance.
