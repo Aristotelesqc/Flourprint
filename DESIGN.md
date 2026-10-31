@@ -259,6 +259,8 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   Matching colour chips, grams and locale-formatted shares identify the interactive source disclosures.
   Unknown contributions have a hatched marker without a fabricated quantity or chart width; evaporation
   losses remain separate negative quantities without a share. Source ranges stay available in the legend.
+  Step equipment details and contextual cooking-mode help use independent shared disclosures with
+  semantic supporting text, consistent touch targets and keyboard activation in Recipe and Planning.
   Complete estimates, known partial lower bounds, and estimated specified parts have distinct labels; an estimated partial mean is never shown as a certain lower bound.
   Hydration is `totalWaterPct`, shown to the whole percent with uncertainty/incompleteness retained; consultation
   omits any hydration-edit button or lock/unlock glyph. Method steps are automatically numbered (1-based)
