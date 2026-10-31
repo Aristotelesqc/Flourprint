@@ -10,6 +10,7 @@ import { useMessages } from '../i18n/use-messages';
 import { useServices } from '../services/services';
 import { useTemperature } from '../i18n/temperature';
 import { en, type MessageKey } from '../i18n/messages';
+import { Ui } from '../ui/library';
 
 type EntryState =
   | { readonly status: 'none' }
@@ -128,6 +129,8 @@ interface DetailRow {
  * Shows explicit known fields only; missing remains unspecified.
  */
 export const StepEquipmentDetails = ({ step }: Props) => {
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const [helpExpanded, setHelpExpanded] = useState(false);
   const eq = step.equipment;
   const { t, grams, locale } = useMessages();
   const temperature = useTemperature();
@@ -290,32 +293,39 @@ export const StepEquipmentDetails = ({ step }: Props) => {
   }
 
   return (
-    <div data-testid="step-equipment" className="flex flex-col gap-1 text-[13px] text-muted">
+    <div
+      data-testid="step-equipment"
+      className="flex min-w-0 flex-col gap-2 text-supporting text-muted"
+    >
       {compactParts.length > 0 && <span>{compactParts.slice(0, 2).join(' · ')}</span>}
       {detailRows.length > 0 && (
-        <details className="text-xs text-muted">
-          <summary className="flex min-h-[48px] cursor-pointer items-center text-muted hover:text-ink hover:underline">
-            {t('equipment.label.details')}
-          </summary>
+        <Ui
+          component="fp.disclosure"
+          label={t('equipment.label.details')}
+          expanded={detailsExpanded}
+          onExpandedChange={setDetailsExpanded}
+        >
           <div className="flex flex-col gap-1 pt-1 pl-2">
             {detailRows.map((row, idx) => (
               <div key={idx} className="flex flex-wrap gap-x-1.5">
-                <span className="font-medium text-ink">{row.label}:</span>
+                <span className="font-medium text-on-surface">{row.label}:</span>
                 <span>{row.value}</span>
               </div>
             ))}
           </div>
-        </details>
+        </Ui>
       )}
       {eq.mode && (
-        <details className="text-xs text-muted">
-          <summary className="flex min-h-[48px] cursor-pointer items-center hover:underline">
-            {modeNameKey && isMessageKey(modeNameKey) ? t(modeNameKey) : eq.mode}
-          </summary>
+        <Ui
+          component="fp.disclosure"
+          label={modeNameKey && isMessageKey(modeNameKey) ? t(modeNameKey) : eq.mode}
+          expanded={helpExpanded}
+          onExpandedChange={setHelpExpanded}
+        >
           <p className="m-0 pt-0.5 pl-2 text-muted">
             {isMessageKey(`mode.${eq.mode}.help`) ? t(`mode.${eq.mode}.help`) : ''}
           </p>
-        </details>
+        </Ui>
       )}
     </div>
   );
