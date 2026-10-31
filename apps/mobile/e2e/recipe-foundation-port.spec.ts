@@ -313,14 +313,14 @@ for (const english of [false, true]) {
     ).toBeVisible();
 
     const egg = sheet.getByRole('button', {
-      name: english ? /^Egg 38 g \[37\.5 g – 38\.5 g\] / : /^Œuf 38 g \[37,5 g – 38,5 g\] /,
+      name: english ? /^Egg 38 g \[38 g – 39 g\] / : /^Œuf 38 g \[38 g – 39 g\] /,
     });
     await egg.click();
     await expect(
       sheet.getByText(
         english
-          ? 'Estimated water content between 37.5 g and 38.5 g.'
-          : 'Teneur en eau estimée entre 37,5 g et 38,5 g.',
+          ? 'Estimated water content between 38 g and 39 g.'
+          : 'Teneur en eau estimée entre 38 g et 39 g.',
         { exact: true },
       ),
     ).toBeVisible();
@@ -387,7 +387,7 @@ for (const english of [false, true]) {
     await expect(sheet.getByText(english ? 'unknown' : 'inconnue', { exact: true })).toBeVisible();
     await expect(
       sheet.getByRole('button', {
-        name: english ? /^Egg 38 g \[37\.5 g – 38\.5 g\] / : /^Œuf 38 g \[37,5 g – 38,5 g\] /,
+        name: english ? /^Egg 38 g \[38 g – 39 g\] / : /^Œuf 38 g \[38 g – 39 g\] /,
       }),
     ).toBeVisible();
     await settledOverlay(sheet);

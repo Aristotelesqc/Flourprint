@@ -240,7 +240,7 @@ for (const english of [false, true]) {
     }
     await expect(row(page, final, yeast)).toBeVisible();
     await expect(row(page, final, yeast)).toHaveAccessibleName(
-      english ? /0\.4 g 0\.07%$/ : /0,4 g 0,07\s%$/,
+      english ? /0\.35 g 0\.07%$/ : /0,35 g 0,07\s%$/,
     );
     await expect(row(page, finishing, english ? 'Egg' : 'Œuf')).toHaveAccessibleName(/20 g 4\s?%$/);
     await counter(page, english, 'poolish', 0, 2);
@@ -277,6 +277,54 @@ for (const english of [false, true]) {
     await expect(row(page, final, flour)).toBeChecked();
     await expectRecipeRevision(page, 1);
     noSavedCheckState(await exportFromStageRecipe(page, english));
+  });
+
+  test(`gram display preserves precise edits and saved tiny ingredients${suffix}`, async ({
+    page,
+  }, testInfo) => {
+    await importStageRecipe(page, english);
+    await enterEditor(page);
+    await editorSection(page, 'composition');
+    const salt = () =>
+      routed(page).getByRole('textbox', {
+        name: english ? 'Salt, Final mix (g)' : 'Sel, Mélange final (g)',
+        exact: true,
+      });
+    const yeastInput = () =>
+      routed(page).getByRole('textbox', {
+        name: english ? 'Instant yeast, Final mix (g)' : 'Levure instantanée, Mélange final (g)',
+        exact: true,
+      });
+    const typed = english ? '22.55' : '22,55';
+    await salt().fill(typed);
+    await expect(salt()).toHaveValue(typed);
+    await salt().press('Enter');
+    await expect(salt()).toHaveValue(typed);
+    await expect(yeastInput()).toHaveValue(english ? '0.35' : '0,35');
+    await yeastInput().focus();
+    await yeastInput().blur();
+    await footer(page)
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
+      .click();
+    await expectRecipeRevision(page, 2);
+    await expect(row(page, final, english ? 'Salt' : 'Sel')).toHaveAccessibleName(/23 g /);
+    await expect(row(page, final, yeast)).toHaveAccessibleName(english ? /0\.35 g / : /0,35 g /);
+    const capture = testInfo.outputPath('gram-display-defaults.png');
+    await row(page, final, yeast).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: capture });
+    await testInfo.attach('Rounded grams and tiny ingredient', {
+      path: capture,
+      contentType: 'image/png',
+    });
+    await page.reload();
+    await expectRecipeRevision(page, 2);
+    await enterEditor(page);
+    await editorSection(page, 'composition');
+    await expect(salt()).toHaveValue(typed);
+    await expect(yeastInput()).toHaveValue(english ? '0.35' : '0,35');
+    await expect(
+      footer(page).getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true }),
+    ).toBeDisabled();
   });
 
   test(`stage weighing transfers only selected row identities after a successful start${suffix}`, async ({
