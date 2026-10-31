@@ -9,6 +9,36 @@ test.describe.configure({ mode: 'serial' });
 
 let device: AndroidDevice;
 
+/** L103: verify the actual native revision, never an internal version badge. */
+const expectNativeRevision = async (page: Page, version: number) => {
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const id = decodeURIComponent(location.pathname.split('/').at(-1) ?? '');
+        const capacitor = Reflect.get(window, 'Capacitor') as {
+          Plugins: {
+            CapacitorSQLite: {
+              query(options: {
+                database: string;
+                statement: string;
+                values: string[];
+                readonly: boolean;
+              }): Promise<{ values?: { head_version: number }[] }>;
+            };
+          };
+        };
+        const result = await capacitor.Plugins.CapacitorSQLite.query({
+          database: 'flourprint',
+          statement: 'SELECT head_version FROM recipes WHERE id = ?',
+          values: [id],
+          readonly: false,
+        });
+        return result.values?.[0]?.head_version;
+      }),
+    )
+    .toBe(version);
+};
+
 /**
  * The app seeds no recipe (persistence.md, Recipe trash): the suite imports the reference recipe
  * through Advanced, the way a baker would, unless the database already holds it. In-app
@@ -143,24 +173,21 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
   // Native SQLite: no browser-preview notice.
   await expect(page.getByText(/Browser preview/)).toHaveCount(0);
   await page.getByText('Poolish + tangzhong').first().click();
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectNativeRevision(page, 1);
   // A saved recipe opens in consultation (#70): editing is explicit.
-  await page.getByRole('button', { name: 'Recipe actions', exact: true }).click();
-  const actions = page.locator('ion-action-sheet');
-  await actions.getByRole('button', { name: 'Edit recipe', exact: true }).click();
-  await expect(actions).toHaveCount(0);
-  const salt = page.getByLabel('Salt (g)', { exact: true });
+  await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+  const salt = page.getByLabel('Salt, Final mix (g)', { exact: true });
   await salt.fill('25');
   await salt.press('Enter');
-  await page.getByRole('button', { name: 'Save v2' }).click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 2);
 
   page = await test.step('forced stop, reopen', async () => {
     await forceStop();
     return open();
   });
   await page.getByText('Poolish + tangzhong').first().click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectNativeRevision(page, 2);
 
   // Reinstalling over the app (as an update does) keeps the database.
   page = await test.step('reinstall over the app, reopen', async () => {
@@ -171,7 +198,7 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
     return open();
   });
   await page.getByText('Poolish + tangzhong').first().click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectNativeRevision(page, 2);
   await forceStop();
 });
 
@@ -182,7 +209,7 @@ test('the Android back button returns to the recipe list', async () => {
   // The URL changes when the page transition starts; a back press during it is dropped by Ionic.
   // Wait for the transition to end: the list page is hidden and the recipe page fully shown.
   // The earlier test saved a second version: any version number will do.
-  await expect(page.getByText(/^Version \d+$/).first()).toBeVisible();
+  await expectNativeRevision(page, 2);
   await expect(page.locator('.ion-page.ion-page-hidden').first()).toBeAttached();
   await expect(page.locator('.ion-page.ion-page-invisible')).toHaveCount(0);
   // Count the back events Ionic receives, to tell a press that never reached the WebView from
@@ -208,7 +235,9 @@ test('the Android back button returns to the recipe list', async () => {
         backEvents: (window as unknown as { fpBackEvents: number }).fpBackEvents,
         visibility: document.visibilityState,
         focused: document.hasFocus(),
-        overlays: [...document.querySelectorAll('ion-modal, ion-alert, ion-action-sheet')]
+        overlays: [
+          ...document.querySelectorAll('ion-modal, ion-alert, ion-popover, ion-action-sheet'),
+        ]
           .filter((o) => !o.classList.contains('overlay-hidden'))
           .map((o) => o.tagName.toLowerCase()),
         pages: [...document.querySelectorAll('.ion-page')].map((p) => p.className),
@@ -221,5 +250,75 @@ test('the Android back button returns to the recipe list', async () => {
       cause,
     });
   }
+  await forceStop();
+});
+
+test('Android Back dismisses shared overlays before leaving the recipe', async () => {
+  const page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 2);
+  const recipeUrl = page.url();
+  const opener = page.getByRole('button', { name: 'Recipe actions', exact: true });
+  await opener.click();
+  const menu = page.getByRole('menu');
+  await expect(menu.getByRole('menuitem').first()).toBeFocused();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(menu).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(opener).toBeFocused();
+
+  const help = page.getByRole('button', { name: 'Hydration breakdown', exact: true });
+  await help.click();
+  const sheet = page.getByRole('dialog', { name: 'Hydration breakdown', exact: true });
+  await expect(
+    page.locator('ion-modal:visible').getByRole('button', { name: 'Close', exact: true }),
+  ).toBeFocused();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(sheet).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(help).toBeFocused();
+  await forceStop();
+});
+
+test('step duplication reviews before saving and Android Back discards a proposal', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 2);
+  await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+  const method = () => page.getByTestId('recipe-method').filter({ visible: true });
+  const source = () => method().getByRole('button', { name: 'Edit step Mix', exact: true });
+  const originalCount = await method().locator('[data-sortable-id]').count();
+  const recipeUrl = page.url();
+  await source().click();
+  await page.getByRole('button', { name: 'Duplicate step', exact: true }).click();
+  const review = () => page.getByRole('dialog', { name: 'Duplicate step proposal', exact: true });
+  await expect(review()).toBeVisible();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(review()).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(source()).toBeFocused();
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount);
+  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+
+  await source().click();
+  await page.getByRole('button', { name: 'Duplicate step', exact: true }).click();
+  await expect(review()).toBeVisible();
+  await page.getByRole('button', { name: 'Keep copy', exact: true }).click();
+  await expect(review()).toBeHidden();
+  await page
+    .locator('ion-modal:visible')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount + 1);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 3);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 3);
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount + 1);
   await forceStop();
 });

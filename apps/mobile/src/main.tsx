@@ -2,6 +2,7 @@ import './theme/app.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { defaultMotionManifest, MotionProvider } from '@flourprint/ui';
 import { catalogs, pickLocale } from './i18n/messages';
 import { createServices } from './services/services';
 import { initializeDocumentTheme } from './theme/device-theme';
@@ -18,7 +19,9 @@ try {
   });
   root.render(
     <StrictMode>
-      <App services={services} locale={locale} />
+      <MotionProvider value={defaultMotionManifest}>
+        <App services={services} locale={locale} />
+      </MotionProvider>
     </StrictMode>,
   );
 } catch (error) {

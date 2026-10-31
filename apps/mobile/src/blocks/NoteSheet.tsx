@@ -7,7 +7,7 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type {
   BakeCommandPayload,
   BakeState,
@@ -50,7 +50,7 @@ export const NoteSheet = ({ open, state, stepId, busy, onSave, onClose }: Props)
   const [problem, setProblem] = useState<string>();
   const ended = state.status !== 'active';
 
-  useEffect(() => {
+  const resetOnOpen = useEffectEvent(() => {
     if (!open) return;
     setText('');
     setStep(stepId);
@@ -58,7 +58,8 @@ export const NoteSheet = ({ open, state, stepId, busy, onSave, onClose }: Props)
     setRating(undefined);
     setProblem(undefined);
     // Reset only when the sheet opens: the state refreshes while it is open.
-  }, [open]);
+  });
+  useEffect(() => resetOnOpen(), [open]);
 
   const pick = (next: StepId | undefined) => {
     setStep(next);

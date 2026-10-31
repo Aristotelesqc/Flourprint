@@ -1,13 +1,20 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
-import { enterEditor, editorSection, menuAction, routed, showPlanning } from './ui-actions';
+import {
+  expectRecipeRevision,
+  enterEditor,
+  editorSection,
+  menuAction,
+  routed,
+  showPlanning,
+} from './ui-actions';
 
 const enterEditing = enterEditor;
 
 const openRecipe = async (page: Page) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong').first().click();
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await enterEditing(page);
 };
 
@@ -34,7 +41,7 @@ const goBack = async (page: Page) => {
     await expect(read).toBeHidden();
     if (page.url() !== before) return;
     await expect(
-      routed(page).getByRole('button', { name: /^(Recette|Recipe)$/, exact: true }),
+      routed(page).getByRole('tab', { name: /^(Recette|Recipe)$/, exact: true }),
     ).toBeVisible();
   }
   await routed(page).locator('ion-back-button').click();
@@ -67,12 +74,20 @@ const startBake = async (page: Page) => {
 
 test('typed decimals commit, and leaving an untouched field changes nothing', async ({ page }) => {
   await openRecipe(page);
-  const saltGrams = page.getByLabel('Sel (g)', { exact: true });
+  const saltRow = page
+    .getByLabel('Sel, Mélange final (g)', { exact: true })
+    .locator('xpath=ancestor::div[div/input[@type="checkbox"]][1]');
+  await saltRow.getByRole('button', { name: 'Modifier l’ingrédient' }).click();
+  const saltSheet = page.locator('ion-modal:not(.overlay-hidden)');
+  await expect(saltSheet).toContainText('Modifier l’ingrédient sur la recette : Sel');
+  const saltGrams = saltSheet.getByLabel('Grammes totaux de la recette (g)', { exact: true });
   await saltGrams.fill('22,22222');
   await saltGrams.press('Enter');
-  await expect(page.getByLabel('Sel, % boulanger (%)')).toHaveValue('2,22');
-  await page.getByRole('button', { name: 'Enregistrer v2' }).click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expect(saltSheet.getByLabel('% du boulanger total (%)')).toHaveValue('2,22');
+  await saltSheet.getByRole('button', { name: 'Terminer', exact: true }).click();
+  await expect(saltSheet).toBeHidden();
+  await page.getByRole('button', { name: 'Enregistrer', exact: true }).click();
+  await expectRecipeRevision(page, 2);
   await expect(unsaved(page)).toBeHidden();
 
   await expect(
@@ -80,18 +95,25 @@ test('typed decimals commit, and leaving an untouched field changes nothing', as
   ).toBeVisible();
   await enterEditing(page);
   // The percentage shows 2,22 for 2,222222: visiting it must not round the recipe.
-  const saltPct = page.getByLabel('Sel, % boulanger (%)');
+  const reopenedSaltRow = page
+    .getByLabel('Sel, Mélange final (g)', { exact: true })
+    .locator('xpath=ancestor::div[div/input[@type="checkbox"]][1]');
+  await reopenedSaltRow.getByRole('button', { name: 'Modifier l’ingrédient' }).click();
+  const reopenedSheet = page.locator('ion-modal:not(.overlay-hidden)');
+  const saltPct = reopenedSheet.getByLabel('% du boulanger total (%)');
   await saltPct.focus();
   await saltPct.blur();
-  await page.getByLabel('Eau (g)', { exact: true }).focus();
-  await page.getByLabel('Eau (g)', { exact: true }).blur();
+  await reopenedSheet.getByRole('button', { name: 'Terminer', exact: true }).click();
+  await expect(reopenedSheet).toBeHidden();
+  await page.getByLabel('Eau, Mélange final (g)', { exact: true }).focus();
+  await page.getByLabel('Eau, Mélange final (g)', { exact: true }).blur();
   await expect(unsaved(page)).toBeHidden();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 2);
 });
 
 test('an invalid entry stays visible and marked', async ({ page }) => {
   await openRecipe(page);
-  const water = page.getByLabel('Eau (g)', { exact: true });
+  const water = page.getByLabel('Eau, Mélange final (g)', { exact: true });
   await water.fill('abc');
   await water.blur();
   await expect(water).toHaveAttribute('aria-invalid', 'true');
@@ -127,7 +149,7 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await expect(log.nth(2)).toContainText('Échaudage commencé');
 
   await page.locator('ion-back-button:visible').click();
-  await page.getByRole('button', { name: 'Historique' }).click();
+  await page.getByRole('tab', { name: 'Historique' }).click();
   // One bake despite the double tap (the header's "En cours" button is not a history item).
   await expect(page.locator('ion-item:visible')).toHaveCount(1);
   await expect(page.locator('ion-item:visible')).toContainText('En cours');
@@ -154,7 +176,7 @@ test('dough ready is recorded on a running fermentation step without ending it',
   await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
   // The bulk is followed by shaping: the dough is ready to shape, not to bake.
   await page.getByRole('button', { name: 'Prête à façonner' }).click();
-  await page.getByText('Test du doigt').click();
+  await page.getByRole('radio', { name: 'Test du doigt', exact: true }).click();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   // Recorded in the journal; the step is still running.
   await expect(page.locator('p:visible', { hasText: / · / }).first()).toContainText(
@@ -191,13 +213,8 @@ test('a note attaches to a step; an ended bake takes a rated review note', async
     .locator('ion-header')
     .getByRole('button', { name: 'Actions de préparation' })
     .click();
-  await expect(
-    page.locator('ion-action-sheet').getByRole('button', { name: /^Abandonner/ }),
-  ).toBeVisible();
-  await page
-    .locator('ion-action-sheet')
-    .getByRole('button', { name: 'Annuler', exact: true })
-    .click();
+  await expect(page.getByRole('menu').getByRole('menuitem', { name: /^Abandonner/ })).toBeVisible();
+  await page.getByRole('menu').getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(page.getByText('★★★★ Mie serrée')).toBeVisible();
 });
 
@@ -337,25 +354,41 @@ test('speaks English on an English device @en', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Recipes' })).toBeVisible();
   await page.getByText('Poolish + tangzhong').first().click();
   await enterEditing(page);
-  await expect(page.getByLabel('Water (g)', { exact: true })).toHaveValue('750');
+  await expect(page.getByLabel('Water, Final mix (g)', { exact: true })).toHaveValue('200');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
 test('pulling the recipe list down checks for a newer dev build', async ({ page }) => {
   await page.goto('/recipes');
   await expect(page.getByRole('heading', { name: 'Recettes' })).toBeVisible();
+  // Native gesture setup dynamically imports its module after the custom element is defined.
+  await page.evaluate(() => customElements.whenDefined('ion-refresher').then(() => undefined));
+  await page.waitForLoadState('networkidle');
   // A non-release build (this one is local): the same check as in Advanced.
   const box = await page.getByRole('heading', { name: 'Recettes' }).boundingBox();
   if (!box) throw new Error('no heading');
   await page.mouse.move(box.x + 20, box.y + 5);
   await page.mouse.down();
   for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  // Let Ionic process the drag before releasing; its native MD refresh boundary is 0.4.
+  await expect
+    .poll(() =>
+      routed(page)
+        .locator('ion-refresher')
+        .evaluate((element) =>
+          (element as HTMLElement & { getProgress: () => Promise<number> }).getProgress(),
+        ),
+    )
+    .toBeGreaterThan(0.4);
   await page.mouse.up();
   await expect(page.getByText(/est déjà la dernière version/)).toBeVisible();
 });
 
 /** Pulls the recipe list down, as a finger would. */
 const pullRecipes = async (page: Page) => {
+  // Definition alone precedes Ionic's lazy native gesture setup.
+  await page.evaluate(() => customElements.whenDefined('ion-refresher').then(() => undefined));
+  await page.waitForLoadState('networkidle');
   const box = await page
     .getByRole('heading', { name: 'Recettes' })
     .locator('visible=true')
@@ -364,6 +397,16 @@ const pullRecipes = async (page: Page) => {
   await page.mouse.move(box.x + 20, box.y + 5);
   await page.mouse.down();
   for (let y = 10; y <= 260; y += 25) await page.mouse.move(box.x + 20, box.y + y);
+  // Preserve the physical pull and release only after Ionic accepts its refresh threshold.
+  await expect
+    .poll(() =>
+      routed(page)
+        .locator('ion-refresher')
+        .evaluate((element) =>
+          (element as HTMLElement & { getProgress: () => Promise<number> }).getProgress(),
+        ),
+    )
+    .toBeGreaterThan(0.4);
   await page.mouse.up();
 };
 
@@ -515,19 +558,37 @@ test('a locked hydration holds while eggs are added; preparations are editable',
   await expect(
     page.getByRole('button', { name: 'Déverrouiller l’hydratation', pressed: true }),
   ).toBeVisible();
-  const water = page.getByText('Suit l’hydratation verrouillée');
-  await expect(water).toBeVisible();
+  await expect(
+    page
+      .locator('[title="Cette quantité d’eau découle de la cible d’hydratation verrouillée."]')
+      .first(),
+  ).toBeVisible();
 
   await page.getByRole('button', { name: '+ Ajouter un ingrédient' }).click();
-  await page.getByLabel('+ Ajouter un ingrédient').selectOption({ label: 'Œuf' });
+  await page
+    .locator('ion-select')
+    .filter({ has: page.getByRole('button', { name: /^\+ Ajouter un ingrédient,/ }) })
+    .click();
+  await page
+    .locator('ion-select-popover ion-item, ion-popover ion-item')
+    .filter({ hasText: 'Œuf' })
+    .click();
   await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
-  const egg = page.getByLabel('Œuf (g)', { exact: true });
-  await egg.fill('100');
-  await egg.press('Enter');
+  await page.getByRole('button', { name: 'Renseigner Œuf', exact: true }).click();
+  const eggSheet = page.locator('ion-modal:not(.overlay-hidden)');
+  const eggGrams = eggSheet.getByRole('textbox', {
+    name: 'Grammes totaux de la recette (g)',
+    exact: true,
+  });
+  await eggGrams.fill('100');
+  await eggGrams.blur();
+  await eggSheet.getByRole('button', { name: 'Terminer', exact: true }).click();
+  await expect(eggSheet).toBeHidden();
+  await expect(page.getByLabel('Œuf, Mélange final (g)', { exact: true })).toHaveValue('100');
   // 100 g of egg at 76 % water: the added water drops by 76 g, total water stays.
   await menuAction(page, /^Examiner les modifications$/);
   await expect(page.getByText('Œuf ajouté')).toBeVisible();
-  await expect(page.getByText(/Eau, % boulanger : 75 % → 67,4 %/)).toBeVisible();
+  await expect(page.getByText(/Eau, % boulanger : 75\u00a0% → 67,4\u00a0%/)).toBeVisible();
   const review = page.locator('ion-modal:not(.overlay-hidden)');
   await review.getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(review).toBeHidden();
@@ -545,7 +606,7 @@ test('a locked hydration holds while eggs are added; preparations are editable',
 
 test('typing a hydration locks it there; an egg then lowers the added water', async ({ page }) => {
   await openRecipe(page);
-  await expect(page.getByText('Poids', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Aperçu de la pâte', { exact: true }).first()).toBeVisible();
   // The flour's registry entry is summarized under its name.
   await expect(page.getByText('Protéines ≈ 13,5 %').first()).toBeVisible();
 
@@ -561,17 +622,30 @@ test('typing a hydration locks it there; an egg then lowers the added water', as
   const review = page.locator('ion-modal:not(.overlay-hidden)');
   await review.getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(review).toBeHidden();
-  // Only the shown page: during a transition Ionic keeps the previous one in the DOM.
-  const added = routed(page).locator('[data-ingredient-id="water"]');
+  const added = routed(page)
+    .getByRole('group', { name: 'Mélange final', exact: true })
+    .getByTitle('Cette quantité d’eau découle de la cible d’hydratation verrouillée.');
   await expect(added).toHaveCount(1);
   const before = await added.textContent();
 
   await page.getByRole('button', { name: '+ Ajouter un ingrédient' }).click();
-  await page.getByLabel('+ Ajouter un ingrédient').selectOption({ label: 'Œuf' });
+  await page
+    .locator('ion-select')
+    .filter({ has: page.getByRole('button', { name: /^\+ Ajouter un ingrédient,/ }) })
+    .click();
+  await page.getByRole('radio', { name: 'Œuf', exact: true }).click();
   await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
-  const egg = page.getByLabel('Œuf (g)', { exact: true });
-  await egg.fill('100');
-  await egg.press('Enter');
+  await page.getByRole('button', { name: 'Renseigner Œuf', exact: true }).click();
+  const eggSheet = page.locator('ion-modal:not(.overlay-hidden)');
+  const eggGrams = eggSheet.getByRole('textbox', {
+    name: 'Grammes totaux de la recette (g)',
+    exact: true,
+  });
+  await eggGrams.fill('100');
+  await eggGrams.blur();
+  await eggSheet.getByRole('button', { name: 'Terminer', exact: true }).click();
+  await expect(eggSheet).toBeHidden();
+  await expect(page.getByLabel('Œuf, Mélange final (g)', { exact: true })).toHaveValue('100');
   await menuAction(page, /^Examiner les modifications$/);
   await expect(review.getByText('Œuf ajouté')).toBeVisible();
   await review.getByRole('button', { name: 'Fermer', exact: true }).click();
@@ -599,12 +673,12 @@ test('fermentation: room temperature gives times, a yeast dose and, in advanced 
   await room.press('Enter');
   await expect(page.getByText('provisoire', { exact: true }).first()).toBeVisible();
   // One readable result line: whole percentages of the target, never "100,03 %".
-  const progress = page.getByText(/^Le plan atteint \d+ % de la cible$/).first();
+  const progress = page.getByText(/^Le plan atteint \d+\u00a0% de la cible$/).first();
   await expect(progress).toBeVisible();
   // The target and the ranges sit behind "Details", in plain sentences.
   await page.getByRole('button', { name: 'Détails' }).first().click();
   await expect(page.getByText(/le plan atteint entre .* de la cible/).first()).toBeVisible();
-  const readiness = page.getByLabel('Cible « prête à cuire »', { exact: true });
+  const readiness = page.getByRole('combobox', { name: 'Cible « prête à cuire »', exact: true });
   await expect(readiness).toHaveValue('flourprint.model-end-point');
   const before = await progress.textContent();
   await readiness.selectOption({ label: 'Expérimentale (×2)' });
@@ -775,7 +849,6 @@ test('the advanced menu tells the state of reminders', async ({ page }) => {
 test('a proof running beside the preheat still takes its ready-to-bake mark', async ({ page }) => {
   await openRecipe(page);
   await editorSection(page, 'result');
-  await editorSection(page, 'result');
   await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
@@ -829,7 +902,7 @@ test('a template starts a named draft that becomes a recipe once saved', async (
   await page.getByRole('button', { name: 'Fermer' }).click();
   await page.getByRole('button', { name: 'Enregistrer comme recette' }).click();
   await expect(page).toHaveURL(/\/recipes\/.+/);
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
 });
 
 test('a blank recipe takes any edit; the check blocks the save and says why', async ({ page }) => {
@@ -839,7 +912,7 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
   await expect(page.locator('ion-modal:not(.overlay-hidden)')).toHaveCount(0);
   // Flours that do not add up to 100 %: accepted in a draft, quantities shown as unknown.
-  const share = page.getByLabel('Farine à pain, Part');
+  const share = page.getByLabel('Farine à pain, % (%)', { exact: true });
   await share.fill('80');
   await share.press('Enter');
   await expect(page.getByText(/Les quantités ne peuvent pas encore être calculées/)).toBeVisible();
@@ -854,13 +927,10 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await share.press('Enter');
   await routed(page).getByRole('button', { name: 'Menu édition', exact: true }).click();
   await expect(
-    page.locator('ion-action-sheet').getByRole('button', { name: /^Vérifier la recette/ }),
+    page.getByRole('menu').getByRole('menuitem', { name: /^Vérifier la recette/ }),
   ).toBeVisible();
-  await page
-    .locator('ion-action-sheet')
-    .getByRole('button', { name: 'Annuler', exact: true })
-    .click();
-  await expect(page.locator('ion-action-sheet')).toHaveCount(0);
+  await page.getByRole('menu').getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(page.getByRole('menu')).toBeHidden();
   await menuAction(page, /^Abandonner les modifications$/);
   await page.locator('ion-alert').getByRole('button', { name: 'Supprimer le brouillon' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
@@ -877,9 +947,29 @@ test('an info button opens a bottom sheet that explains the term and closes', as
   await expect(sheet).toContainText('pertes déclarées');
   await sheet.getByRole('button', { name: 'Fermer' }).click();
   await expect(page.locator('ion-modal:visible')).toHaveCount(0);
+  const sizeHelp = page.getByRole('button', { name: 'Explication : Taille de la recette' });
+  await expect(sizeHelp).toBeFocused();
+  await sizeHelp.click();
+  await expect(sheet.getByRole('button', { name: 'En savoir plus' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+  await sheet.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(sheet).toBeHidden();
 
-  await page.getByRole('button', { name: 'Explication : Hydratation', exact: true }).click();
-  await expect(page.locator('ion-modal:visible')).toContainText('Hydratation et eau ajoutée');
+  const hydrationHelp = page.getByRole('button', {
+    name: 'Détail de l’hydratation',
+    exact: true,
+  });
+  await hydrationHelp.click();
+  await expect(page.locator('ion-modal:visible')).toContainText('Détail de l’hydratation');
+  await page.locator('ion-modal:visible').getByRole('button', { name: 'Fermer' }).click();
+  await expect(hydrationHelp).toBeFocused();
+  await sizeHelp.click();
+  await expect(sheet.getByRole('button', { name: 'En savoir plus' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
 });
 
 test('the planner can follow now; starting always starts now', async ({ page }) => {
@@ -933,12 +1023,17 @@ test('a customized flour keeps its properties and is offered by the flour picker
   await page.getByText('Poolish + tangzhong').first().click();
   await enterEditing(page);
   await page.getByRole('button', { name: '+ Ajouter une farine' }).click();
-  const picker = page.locator('select:visible').filter({ has: page.locator('optgroup') });
-  const personal = picker.locator('optgroup[label="Farines personnelles"] option');
-  await expect(personal).toHaveText(['Farine à pain']);
-  await picker.selectOption((await personal.getAttribute('value')) ?? '');
+  await page
+    .locator('ion-select')
+    .filter({ has: page.getByRole('button', { name: /^\+ Ajouter une farine,/ }) })
+    .click();
+  const personalOption = page
+    .locator('ion-select-popover ion-item, ion-popover ion-item')
+    .filter({ hasText: /Farine à pain.*personnelle/ });
+  await expect(personalOption).toBeVisible();
+  await personalOption.click();
   await page.getByRole('button', { name: 'Ajouter', exact: true }).click();
-  await expect(page.getByLabel('Farine à pain, Part')).toHaveCount(2);
+  await expect(page.getByLabel('Farine à pain, % (%)', { exact: true })).toHaveCount(2);
 
   // The entry, with its source and basis, is in the data copied for review.
   const advanced = page.getByLabel('Avancé').first();
@@ -1014,8 +1109,8 @@ test('a draft takes a new step and a step technique, shown under the step', asyn
 test('bake mode shows the next fold set and records it in the log', async ({ page }) => {
   await openRecipe(page);
   await foldTheBulk(page);
-  await page.getByRole('button', { name: 'Enregistrer v2' }).click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Enregistrer', exact: true }).click();
+  await expectRecipeRevision(page, 2);
   await startBake(page);
   await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
@@ -1162,7 +1257,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   const advance = page.getByRole('region', { name: 'Avancer le temps' });
   await expect(advance).toContainText('Échaudage');
   await advance.getByRole('button', { name: 'Au prochain moment prévu' }).click();
-  await expect(page.getByText('À faire aussi maintenant')).toBeVisible();
+  await expect(page.getByText('À faire aussi maintenant', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Commencer Échaudage' })).toBeVisible();
   await expect(page.getByRole('progressbar', { name: 'Préferment' })).toHaveAttribute(
     'aria-valuetext',
@@ -1178,7 +1273,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await expect(page.getByText(/Aucune préparation en cours/)).toBeVisible();
   await backToRecipes(page);
   await openShownRecipe(page);
-  await page.getByRole('button', { name: 'Historique' }).click();
+  await page.getByRole('tab', { name: 'Historique' }).click();
   await expect(page.getByText(/Aucune préparation pour l’instant/)).toBeVisible();
 
   // Simulation again: it is back.

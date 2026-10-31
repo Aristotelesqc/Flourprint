@@ -1,12 +1,12 @@
 import { expect, test } from './fixtures';
-import { enterEditor, routed, showPlanning } from './ui-actions';
+import { expectRecipeRevision, enterEditor, menuAction, routed, showPlanning } from './ui-actions';
 import type { Page } from '@playwright/test';
 
 const openEditor = async (page: Page) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await page.goto('/recipes');
   await routed(page).getByText('Poolish + tangzhong', { exact: true }).click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await enterEditor(page);
 };
 const footer = (page: Page) => routed(page).locator('ion-footer:visible');
@@ -16,25 +16,25 @@ test('undo handles a focused valid edit committed inside the action before older
   page,
 }) => {
   await openEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   await water.press('Enter');
-  await expect(water).toHaveValue('720');
-  await water.fill('730');
+  await expect(water).toHaveValue('170');
+  await water.fill('180');
   await water.focus();
   // Assistive/programmatic activation does not move focus before the click handler.
   await footer(page)
-    .getByRole('button', { name: 'Annuler', exact: true })
+    .getByRole('button', { name: 'Annuler la dernière modification', exact: true })
     .evaluate((button) => (button as HTMLElement).click());
-  await expect(water).toHaveValue('720');
+  await expect(water).toHaveValue('170');
   await footer(page).getByRole('button', { name: 'Rétablir', exact: true }).click();
-  await expect(water).toHaveValue('730');
+  await expect(water).toHaveValue('180');
 });
 
 test('undo never silently destroys invalid raw input', async ({ page }) => {
   await openEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   await water.press('Enter');
   await water.fill('abc');
   await water.press('Tab');
@@ -47,42 +47,81 @@ test('undo never silently destroys invalid raw input', async ({ page }) => {
     }),
   ).toContain('Entrer un nombre');
   await footer(page)
-    .getByRole('button', { name: 'Annuler', exact: true })
+    .getByRole('button', { name: 'Annuler la dernière modification', exact: true })
     .evaluate((button) => (button as HTMLElement).click());
   // A refusal or explicit confirmation can be presented, but unconfirmed text remains.
   await expect(water).toHaveValue('abc');
   await expect(
-    footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeDisabled();
 });
 
 test('accepted draft data survives reload but the undo stack does not', async ({ page }) => {
   await openEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   await water.press('Enter');
-  await expect(footer(page).getByRole('button', { name: 'Annuler', exact: true })).toBeEnabled();
+  await expect(
+    footer(page).getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
+  ).toBeEnabled();
   // Navigate through the app before reload, as required for asynchronous draft persistence.
   await routed(page).getByRole('button', { name: 'Lire la recette', exact: true }).click();
   await enterEditor(page);
+  // The preview saves periodically (ADR 0015); faster menus are not a persistence barrier.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            new Promise<boolean>((resolve, reject) => {
+              const request = indexedDB.open('flourprint-preview', 1);
+              request.onerror = () => reject(request.error);
+              request.onsuccess = () => {
+                const db = request.result;
+                const tx = db.transaction('snapshots', 'readonly');
+                const saved = tx.objectStore('snapshots').get('backup');
+                tx.oncomplete = () => {
+                  db.close();
+                  const snapshot =
+                    typeof saved.result === 'string'
+                      ? (JSON.parse(saved.result) as { drafts?: unknown[] })
+                      : undefined;
+                  resolve(Array.isArray(snapshot?.drafts) && snapshot.drafts.length > 0);
+                };
+                tx.onabort = () => {
+                  db.close();
+                  reject(tx.error);
+                };
+              };
+            }),
+        ),
+      { timeout: 10_000 },
+    )
+    .toBe(true);
   await page.reload();
-  await expect(routed(page).getByLabel('Eau (g)', { exact: true })).toHaveValue('720');
-  await expect(footer(page).getByRole('button', { name: 'Annuler', exact: true })).toBeDisabled();
+  await expect(routed(page).getByLabel('Eau, Mélange final (g)', { exact: true })).toHaveValue(
+    '170',
+  );
+  await expect(
+    footer(page).getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
+  ).toBeDisabled();
 });
 
 test('newly accepted edit invalidates old redo stack', async ({ page }) => {
   await openEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   await water.press('Enter');
-  await expect(water).toHaveValue('720');
-  await water.fill('730');
+  await expect(water).toHaveValue('170');
+  await water.fill('180');
   await water.press('Enter');
-  await expect(water).toHaveValue('730');
+  await expect(water).toHaveValue('180');
 
   // Undo to 720: Redo becomes enabled
-  await footer(page).getByRole('button', { name: 'Annuler', exact: true }).click();
-  await expect(water).toHaveValue('720');
+  await footer(page)
+    .getByRole('button', { name: 'Annuler la dernière modification', exact: true })
+    .click();
+  await expect(water).toHaveValue('170');
   await expect(footer(page).getByRole('button', { name: 'Rétablir', exact: true })).toBeEnabled();
 
   // New accepted edit (740) branches history and invalidates redo stack
@@ -96,70 +135,83 @@ test('reset restores baseline on confirmation and cleans unchanged saved recipe'
   page,
 }) => {
   await openEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   await water.press('Enter');
-  await expect(water).toHaveValue('720');
+  await expect(water).toHaveValue('170');
   await expect(
-    footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeEnabled();
 
   // Reset prompts confirmation
-  await footer(page).getByRole('button', { name: 'Réinitialiser', exact: true }).click();
+  await menuAction(page, /^Réinitialiser$/);
   const alert = page.locator('ion-alert:not(.overlay-hidden)');
   await expect(alert).toBeVisible();
 
   // Cancel leaves edit intact
   await alert.getByRole('button', { name: 'Annuler' }).click();
   await expect(alert).toBeHidden();
-  await expect(water).toHaveValue('720');
+  await expect(water).toHaveValue('170');
   await expect(
-    footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeEnabled();
 
   // Confirming reset restores baseline (750) and clears dirty/save state for unchanged saved recipe
-  await footer(page).getByRole('button', { name: 'Réinitialiser', exact: true }).click();
+  await menuAction(page, /^Réinitialiser$/);
   await page
     .locator('ion-alert:not(.overlay-hidden)')
     .getByRole('button', { name: 'Réinitialiser' })
     .click();
-  await expect(water).toHaveValue('750');
-  await expect(footer(page).getByRole('button', { name: 'Annuler', exact: true })).toBeDisabled();
+  await expect(water).toHaveValue('200');
+  await expect(
+    footer(page).getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
+  ).toBeDisabled();
   await expect(footer(page).getByRole('button', { name: 'Rétablir', exact: true })).toBeDisabled();
   await expect(
-    footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeDisabled();
 });
 
 test('history scope survives read and planning preview navigation', async ({ page }) => {
   await openEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   await water.press('Enter');
-  await expect(water).toHaveValue('720');
-  await expect(footer(page).getByRole('button', { name: 'Annuler', exact: true })).toBeEnabled();
+  await expect(water).toHaveValue('170');
+  await expect(
+    footer(page).getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
+  ).toBeEnabled();
 
   // Switch to planning preview (process tab)
   await showPlanning(page);
   await enterEditor(page);
-  await expect(footer(page).getByRole('button', { name: 'Annuler', exact: true })).toBeEnabled();
+  await expect(
+    footer(page).getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
+  ).toBeEnabled();
 
   // Switch to read consultation (back to formula consultation)
   await routed(page).getByRole('button', { name: 'Lire la recette', exact: true }).click();
   await enterEditor(page);
-  await expect(footer(page).getByRole('button', { name: 'Annuler', exact: true })).toBeEnabled();
+  await expect(
+    footer(page).getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
+  ).toBeEnabled();
 
   // Undo is still functional after previews
-  await footer(page).getByRole('button', { name: 'Annuler', exact: true }).click();
-  await expect(water).toHaveValue('750');
+  await footer(page)
+    .getByRole('button', { name: 'Annuler la dernière modification', exact: true })
+    .click();
+  await expect(water).toHaveValue('200');
 });
 
-test('footer maintains 48px targets and full-width Save pill at 360px', async ({ page }) => {
+test('footer maintains 48px targets and compact Save pill at 360px', async ({ page }) => {
   await openEditor(page);
   const saveBtn = footer(page).getByRole('button', { name: /Enregistrer/i });
-  const undoBtn = footer(page).getByRole('button', { name: 'Annuler', exact: true });
+  const undoBtn = footer(page).getByRole('button', {
+    name: 'Annuler la dernière modification',
+    exact: true,
+  });
   const redoBtn = footer(page).getByRole('button', { name: 'Rétablir', exact: true });
-  const resetBtn = footer(page).getByRole('button', { name: 'Réinitialiser', exact: true });
+  const resetBtn = footer(page).getByRole('button', { name: 'Annuler', exact: true });
 
   const undoBox = await undoBtn.boundingBox();
   const redoBox = await redoBtn.boundingBox();
@@ -174,23 +226,28 @@ test('footer maintains 48px targets and full-width Save pill at 360px', async ({
   expect(resetBox?.width).toBeGreaterThanOrEqual(48);
   expect(saveBox?.height).toBeGreaterThanOrEqual(48);
   // Full-width Save pill occupies the full width across the 360px viewport
-  expect(saveBox?.width).toBeGreaterThanOrEqual(300);
+  expect(saveBox?.width).toBeGreaterThanOrEqual(48);
+  if (!saveBox) throw new Error('Save control has no visible bounds');
+  expect(saveBox.x + saveBox.width).toBeLessThanOrEqual(360);
 });
 
 test('undo cap boundary preserves modified draft at oldest retained snapshot without clearing to baseline', async ({
   page,
 }) => {
   await openEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  const undoBtn = footer(page).getByRole('button', { name: 'Annuler', exact: true });
-  const saveBtn = footer(page).getByRole('button', { name: 'Enregistrer v2', exact: true });
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  const undoBtn = footer(page).getByRole('button', {
+    name: 'Annuler la dernière modification',
+    exact: true,
+  });
+  const saveBtn = footer(page).getByRole('button', { name: 'Enregistrer', exact: true });
 
   // Baseline starts at 750. Perform 55 accepted commits (751 through 805).
-  for (let grams = 751; grams <= 805; grams++) {
+  for (let grams = 201; grams <= 255; grams++) {
     await water.fill(String(grams));
     await water.press('Enter');
   }
-  await expect(water).toHaveValue('805');
+  await expect(water).toHaveValue('255');
   await expect(saveBtn).toBeEnabled();
 
   // 50 Undo operations exhaust the 50-entry history cap to reach 755.
@@ -199,7 +256,7 @@ test('undo cap boundary preserves modified draft at oldest retained snapshot wit
   }
 
   // The oldest retained snapshot is 755 (not the evicted 750 baseline).
-  await expect(water).toHaveValue('755');
+  await expect(water).toHaveValue('205');
   // Undo is now exhausted, but modified draft and Save remain enabled.
   await expect(undoBtn).toBeDisabled();
   await expect(saveBtn).toBeEnabled();
@@ -209,16 +266,18 @@ test('an equivalent accepted value neither creates an undo state nor invalidates
   page,
 }) => {
   await openEditor(page);
-  const water = routed(page).getByLabel('Eau (g)', { exact: true });
-  await water.fill('720');
+  const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+  await water.fill('170');
   await water.press('Enter');
-  await water.fill('730');
+  await water.fill('180');
   await water.press('Enter');
-  await footer(page).getByRole('button', { name: 'Annuler', exact: true }).click();
-  await expect(water).toHaveValue('720');
-  await water.fill('720,0');
+  await footer(page)
+    .getByRole('button', { name: 'Annuler la dernière modification', exact: true })
+    .click();
+  await expect(water).toHaveValue('170');
+  await water.fill('170,0');
   await water.press('Enter');
   await expect(footer(page).getByRole('button', { name: 'Rétablir', exact: true })).toBeEnabled();
   await footer(page).getByRole('button', { name: 'Rétablir', exact: true }).click();
-  await expect(water).toHaveValue('730');
+  await expect(water).toHaveValue('180');
 });

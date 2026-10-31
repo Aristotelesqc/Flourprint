@@ -8,6 +8,7 @@ colors:
   background: '#f8f7f4'
   surface: '#ffffff'
   surface-container: '#f2efe9'
+  surface-container-high: '#eae5dc'
   on-surface: '#1c1b19'
   muted: '#69645c'
   outline: '#e4e0d8'
@@ -23,6 +24,7 @@ colors:
   dark-background: '#201d1a'
   dark-surface: '#2a2622'
   dark-surface-container: '#332e29'
+  dark-surface-container-high: '#3d3731'
   dark-on-surface: '#e9e4dc'
   dark-muted: '#b1aa9f'
   dark-outline: '#3b3631'
@@ -51,12 +53,14 @@ colors:
   amoled-error: '#f28b82'
 rounded:
   card: 1rem
+  pill: 9999px
   segmented-option: 0.75rem
 spacing:
   scale: [0.25rem, 0.5rem, 0.75rem, 1rem, 1.5rem, 2rem]
   page-gutter: 1rem
   touch: 3rem
   card-padding: 1rem
+  button-paint: 2.5rem
 typography:
   page: { size: 1.5rem, line: 2rem, weight: 700 }
   title: { size: 1.375rem, line: 1.75rem, weight: 700 }
@@ -194,7 +198,7 @@ time controls and a shortcut to the single Recipe step editor. Preparation prese
 Follow the contracts for semantics; do not build a second editable recipe inside Planning.
 
 **Consultation/editing composition (#67):** saved recipes open for reading with explicit
-Edit in overflow and a contextual Start/Resume action. Planning is the generated tab, without a
+A visible Edit action, a compact Start/Resume pill and an anchored overflow menu in the shared contextual bottom bar (L31, L50). Planning is the generated tab, without a
 duplicate Plan header button. New or resumed drafts open for editing after hydration. Consultation
 does not reserve an empty 88px draft footer. Once editing starts, first modification and validity
 feedback keep the primary controls stable. A deliberate mode change may rearrange the screen;
@@ -250,6 +254,14 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 - **Recipe consultation:** summary, clearly named percentage bases, shared `ConsultationRow` items with
   consistent vertical padding when titles wrap, components and authored method ("Étapes de préparation").
   Contextual information buttons stay beside hydration, size and other explained concepts.
+  Hydration breakdown uses the shared sheet, with its total visible first, then unknown contributors and compact source disclosures.
+  A decorative stacked bar shows the core-provided shares of specified water before declared losses (L126).
+  Matching colour chips, grams and locale-formatted shares identify the interactive source disclosures.
+  Unknown contributions have a hatched marker without a fabricated quantity or chart width; evaporation
+  losses remain separate negative quantities without a share. Source ranges stay available in the legend.
+  Step equipment details and contextual cooking-mode help use independent shared disclosures with
+  semantic supporting text, consistent touch targets and keyboard activation in Recipe and Planning.
+  Complete estimates, known partial lower bounds, and estimated specified parts have distinct labels; an estimated partial mean is never shown as a certain lower bound.
   Hydration is `totalWaterPct`, shown to the whole percent with uncertainty/incompleteness retained; consultation
   omits any hydration-edit button or lock/unlock glyph. Method steps are automatically numbered (1-based)
   with cooling presented as "Ressuage". Known built-in template step instructions map to concise localized display names
@@ -281,6 +293,8 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   without editing never overwrites the stored template instruction, and arbitrary user labels remain literal without
   translation guessing.
   Ephemeral Undo, Redo, and Reset controls in `DraftActionBar` accompany one full-width Save action.
+  Save records a revision and has no persisted revision counter in its label; naming a reference version
+  remains a separate explicit action (L103).
   The temporary history retains up to 50 accepted states of the formula, process and name; it survives
   reading/planning previews and resets on save, discard or page reload. Reset confirms restoration to
   the start of this editing session, including a resumed draft, and explains loss of unconfirmed input.
@@ -291,6 +305,15 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   Ratio entry uses `liquidMassRatio` and `hydrationForRatio` from the current contract: it counts weighed
   liquid mass (including the whole mass of milk); hydration and component style still count its water content.
   One Save bar has stable reserved feedback space; check/review/discard are occasional actions.
+- **Step reordering in the app:** use `fp.sortable-list` with the selected 350 ms hold,
+  48 px handles and separate opaque, flat Compact rows. One measured insertion space travels
+  with the candidate; the overlay stays opaque above the page and follows both axes.
+  Actual activation opens the recipe draft without marking an unchanged recipe dirty.
+  Freeze the header, footer and reading layout until release; the same method instance stays mounted.
+  Core `moveStep` accepts or refuses the final intent. Accepted moves use the normal whole-draft
+  Undo/Redo/Save path; refusal, outside release and cancellation preserve earlier edits.
+  Hardware, toolbar and browser Back cancel the active gesture before normal navigation resumes.
+  System/manual reduced motion retains focus and final state with zero-duration settling.
 - **Preparation:** large remaining time, planned end, actual start and temporal progress; visible
   quick controls and readiness observations. Upcoming steps with clock times precede completed
   steps. Keep the full journal accessible (all existing notes, observations and step completions)
@@ -298,6 +321,14 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   establishes a cooked result. Unknown times remain unknown.
 
 ## Components
+
+Recipe step duplication uses a labelled action in the step editor and a shared review sheet.
+The editor dismisses before the review opens. The review shows the proposed copy, fields the
+core does not carry, changed dependencies and before/after relative timings from the core.
+An unknown duration stays explicit, including on following steps. Cancel or Android Back
+discards the proposal and restores the original step's focus. Keeping the copy applies one
+ordinary draft change after dismissal and opens the copy's editor; Undo, Redo and Save retain
+their existing meaning (L15, L72, L129).
 
 Extend the current `Field`, `Segmented`, `Card`, `Rows`, `InfoSheet` and `DraftActionBar` foundation.
 The target is a reusable Flourprint component layer with consistent behavior and theme roles.
@@ -309,11 +340,18 @@ two rows; labels and touch targets stay intact. Native Ionic overlays remain pla
 and require their own checks.
 
 - **Actions:** visible primary-action labels, distinct filled/outlined/quiet roles, clear busy,
-  disabled and destructive states. Primary actions share the full-width pill role (`btn-pill-primary`,
-  > = 3rem / 48px touch target) across consultation Start/Resume and editor Save, with accessible
-  > neutral surface and legible muted ink tokens when disabled. Ephemeral Undo/Redo/Reset actions
-  > in `DraftActionBar` maintain accessible touch targets (>= 48px) and distinct aria-labels.
+  disabled and destructive states. Reading Recipe uses the versioned `fp.bottom-bar` with
+  Edit, a content-sized Start/Resume action and an anchored overflow menu; no persistent full-width
+  reading CTA (L31). Shared buttons retain 48 px touch targets and a 40 px painted shape at the
+  default text scale. Reading section tabs use `fp.tabs` in one horizontal row, scrolling when
+  needed rather than wrapping; the selected tab stays visible. The full recipe title remains
+  in the header. These changes port the approved navigation A reference.
+  The existing editor action layout and segmented editor sections described above are legacy
+  implementation, pending the L49/L60/L108 port; they are not the target design. The narrow
+  summary arrangement remains subject to the owner's existing visual review decision.
 - **Precision fields:** input frames identify actual editing; read-only quantities are text.
+  Gram display uses the L148 default magnitude bands: whole grams at 10 g and above, tenths
+  from 1 g to below 10 g, hundredths below 1 g, with the same rule for negative losses.
   Retain local raw input, parsing/refusal feedback and the page validation registry. Untouched
   formatted numbers never become edits. Disabled fields (e.g. locked hydration target) use distinct
   dimmed styling (`opacity-60 cursor-not-allowed`) and helper guidance.

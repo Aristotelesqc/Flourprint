@@ -139,7 +139,7 @@ describe('motion items (ADR 0021)', () => {
       closest: () => ({ getAttribute: () => 'reduced' }),
     } as unknown as HTMLElement;
     ionicAnimation(sheetEnter, () => builder, '.modal-wrapper')(reducedBase);
-    expect(calls).toEqual(['element:part', 'duration:0']);
+    expect(calls).toEqual(['element:part', 'duration:0', 'keyframes:2']);
   });
 
   it('reads components and motions from one ui parameter and rejects what neither knows', () => {

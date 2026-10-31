@@ -6,12 +6,11 @@ import {
   IonModal,
   IonTitle,
   IonToolbar,
-  useIonAlert,
 } from '@ionic/react';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useId, useRef, useState, type ReactNode } from 'react';
 import {
   phasesDurationS,
-  removeStep,
+  removeStepChecked,
   updateStep,
   validateProcess,
   type MixPhase,
@@ -33,6 +32,7 @@ import {
 import { DurationField, OptionalNumberField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { SectionTitle } from '../ui/Layout';
+import { Ui } from '../ui/library';
 import { useValidationActions } from '../ui/ValidationContext';
 
 type Translate = ReturnType<typeof useMessages>['t'];
@@ -108,6 +108,8 @@ interface Props {
   readonly onChange: (process: Process) => boolean;
   readonly onClose: () => void;
   readonly onDismissed?: () => void;
+  readonly onDuplicate?: (step: ProcessStep, source: Process) => string | undefined;
+  readonly duplicateDisabled?: boolean;
 }
 
 /**
@@ -122,9 +124,10 @@ export const StepSheet = ({
   onChange,
   onClose,
   onDismissed,
+  onDuplicate,
+  duplicateDisabled = false,
 }: Props) => {
   const { t, error, stepName, stepInstructions } = useMessages();
-  const [presentAlert] = useIonAlert();
   const id = useId();
   // A phase being added waits for its duration: nothing is invented.
   const [newPhase, setNewPhase] = useState<MixPhase['speed']>();
@@ -134,19 +137,32 @@ export const StepSheet = ({
   const [label, setLabel] = useState<string>('');
   const [isLabelTouched, setIsLabelTouched] = useState<boolean>(false);
   const [operationError, setOperationError] = useState<string | undefined>();
+  const [duplicateError, setDuplicateError] = useState<string | undefined>();
+  const [deleteError, setDeleteError] = useState<string | undefined>();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const isDeletingRef = useRef(false);
+  const pendingProcessRef = useRef<Process | undefined>(undefined);
   const validationActions = useValidationActions();
+  const currentProcessRef = useRef(process);
+  currentProcessRef.current = process;
 
   const stepId = step?.id;
   const initialDisplayLabel = step?.label ? stepName(step) : '';
 
-  useEffect(() => {
+  const resetOnStepOpen = useEffectEvent(() => {
     if (!open) return;
     setNewPhase(undefined);
     setFolds({ ...step?.technique?.folds });
     setFoldStyle(step?.technique?.folds?.style);
     setOperationError(undefined);
+    setDuplicateError(undefined);
+    setDeleteError(undefined);
+    setConfirmDeleteOpen(false);
+    isDeletingRef.current = false;
+    pendingProcessRef.current = undefined;
     // Reset only when the sheet opens or moves to another step.
-  }, [open, stepId]);
+  });
+  useEffect(() => resetOnStepOpen(), [open, stepId]);
 
   useEffect(() => {
     if (!open) return;
@@ -166,27 +182,52 @@ export const StepSheet = ({
       setOperationError(t('step.operationBlockedRaw'));
       return false;
     }
-    const next = updateStep(process, step.id, changes);
+    const next = updateStep(currentProcessRef.current, step.id, changes);
     const valid = validateProcess(next);
     if (!valid.ok) {
       setOperationError(error(valid.error));
       return false;
     }
     setOperationError(undefined);
-    return onChange(next);
+    const accepted = onChange(next);
+    if (accepted) currentProcessRef.current = next;
+    return accepted;
   };
 
   const commitLabel = () => {
-    if (!isLabelTouched) return;
+    if (!isLabelTouched) return true;
     const trimmed = label.trim();
     if (trimmed !== initialDisplayLabel) {
-      change({ label: trimmed === '' ? undefined : trimmed });
+      if (!change({ label: trimmed === '' ? undefined : trimmed })) return false;
     }
+    setIsLabelTouched(false);
+    return true;
   };
 
   const handleClose = () => {
     commitLabel();
     onClose();
+  };
+
+  const handleDuplicate = () => {
+    if (duplicateDisabled || !onDuplicate) return;
+    if (!commitLabel()) return;
+    if (
+      validationActions?.isBlocked() ||
+      newPhase !== undefined ||
+      (folds.count !== undefined) !== (folds.intervalS !== undefined)
+    ) {
+      setDuplicateError(t('step.duplicate.error.blocked'));
+      return;
+    }
+    setDuplicateError(undefined);
+    const source = currentProcessRef.current;
+    const sourceStep = source.steps.find((candidate) => candidate.id === step.id);
+    if (!sourceStep) return;
+    const refusal = onDuplicate(sourceStep, source);
+    if (refusal) {
+      setDuplicateError(refusal);
+    }
   };
 
   const setTechnique = (next: TechniqueEdit, withPhases = false): boolean => {
@@ -224,29 +265,50 @@ export const StepSheet = ({
   };
 
   const methods = methodsFor(step.operation);
-  const remove = () => {
-    let accepted = false;
-    let confirmed = false;
-    void presentAlert({
-      header: t('technique.removeStep'),
-      message: t('technique.removeConfirm', { step: stepName(step) }),
-      buttons: [
-        { text: t('bake.cancel'), role: 'cancel' },
-        {
-          text: t('technique.removeStep'),
-          role: 'destructive',
-          handler: () => {
-            if (!confirmed) {
-              confirmed = true;
-              accepted = onChange(removeStep(process, step.id));
-            }
-          },
-        },
-      ],
-      onDidDismiss: () => {
-        if (accepted) onClose();
-      },
-    });
+
+  const handleDialogDismiss = () => {
+    setConfirmDeleteOpen(false);
+    const nextProcess = pendingProcessRef.current;
+    if (!nextProcess) {
+      isDeletingRef.current = false;
+      return;
+    }
+    pendingProcessRef.current = undefined;
+    const accepted = onChange(nextProcess);
+    isDeletingRef.current = false;
+    if (accepted) {
+      setDeleteError(undefined);
+      onClose();
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (isDeletingRef.current) return;
+    isDeletingRef.current = true;
+
+    const result = removeStepChecked(process, step.id);
+    if (!result.ok) {
+      isDeletingRef.current = false;
+      const targetStep = process.steps.find((s) => s.id === result.error.details?.stepId) ?? step;
+      const preheatNames = (result.error.details?.preheats ?? [])
+        .flatMap((id) => {
+          const actualStep = process.steps.find((s) => s.id === id);
+          return actualStep ? [stepName(actualStep)] : [];
+        })
+        .join(', ');
+
+      setDeleteError(
+        t('error.TargetInUse.retargetPreheat' as MessageKey, {
+          step: stepName(targetStep),
+          preheats: preheatNames,
+        }),
+      );
+      setConfirmDeleteOpen(false);
+      return;
+    }
+
+    pendingProcessRef.current = result.value;
+    setConfirmDeleteOpen(false);
   };
 
   return (
@@ -267,7 +329,10 @@ export const StepSheet = ({
                 className="min-h-12 min-w-12"
                 aria-label={t('step.delete')}
                 title={t('step.delete')}
-                onClick={remove}
+                onClick={() => {
+                  setDeleteError(undefined);
+                  setConfirmDeleteOpen(true);
+                }}
               >
                 <svg
                   width="20"
@@ -298,6 +363,15 @@ export const StepSheet = ({
       </IonHeader>
       <IonContent className="ion-padding">
         <div className="flex flex-col gap-6">
+          {deleteError && (
+            <p
+              role="alert"
+              className="m-0 rounded-lg border border-alert/30 bg-alert-soft/20 p-3 text-sm font-medium text-alert"
+            >
+              {deleteError}
+            </p>
+          )}
+
           <section className="flex flex-col gap-3">
             <span className="flex items-center justify-between gap-3">
               <label htmlFor={`${id}-operation`} className="font-semibold text-ink">
@@ -349,6 +423,25 @@ export const StepSheet = ({
                 <span className="text-xs text-muted">{stepInstructions(step)}</span>
               )}
             </span>
+            {onDuplicate && (
+              <div className="flex flex-col gap-1.5 pt-1">
+                <div className="flex items-center gap-2">
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    disabled={duplicateDisabled}
+                    onClick={handleDuplicate}
+                  >
+                    {t('step.duplicate')}
+                  </Ui>
+                </div>
+                {duplicateError && (
+                  <p role="alert" className="m-0 text-sm font-medium text-alert">
+                    {duplicateError}
+                  </p>
+                )}
+              </div>
+            )}
           </section>
 
           <span className="flex items-center gap-1.5 font-bold">
@@ -483,6 +576,38 @@ export const StepSheet = ({
           />
         </div>
       </IonContent>
+
+      <Ui
+        component="fp.dialog"
+        isOpen={confirmDeleteOpen}
+        title={stepName(step)}
+        closeLabel={t('bake.cancel')}
+        onDismiss={handleDialogDismiss}
+        footer={
+          <div className="flex justify-end gap-2">
+            <Ui
+              component="fp.button"
+              variant="secondary"
+              disabled={isDeletingRef.current}
+              onClick={() => setConfirmDeleteOpen(false)}
+            >
+              {t('bake.cancel')}
+            </Ui>
+            <Ui
+              component="fp.button"
+              variant="danger"
+              disabled={isDeletingRef.current}
+              onClick={handleConfirmDelete}
+            >
+              {t('step.delete')}
+            </Ui>
+          </div>
+        }
+      >
+        <p className="m-0 text-sm text-ink">
+          {t('technique.removeConfirm', { step: stepName(step) })}
+        </p>
+      </Ui>
     </IonModal>
   );
 };

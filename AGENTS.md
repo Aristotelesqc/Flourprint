@@ -36,6 +36,10 @@ a dedicated pull request, before the code that depends on it.
   contract change or reviewed implementation slice, never back into #31. They target `dev`, the
   integration branch of the open major pull request (`dev` → `main`), and are merged into it once
   green and reviewed; the dev channel (dev APK, `dev` preview address) follows `dev` (ADR 0013).
+  Temporary exception (owner decision of 2026-10-26, ADR 0022): release 0.3 UI PRs target
+  the temporary integration branch `ui/0.3-integration` instead of `dev`, rolled up to `dev` in a
+  single draft aggregate PR; individual slice merge does not close issues or complete acceptance.
+  Engine and unrelated work continue targeting `dev` normally.
   Only the owner decides when the major pull request is merged into `main`.
 - Work for the **release after next** targets `canary` instead (ADR 0018), whose web address is
   `https://canary.flourprint-aristotelesqc.pages.dev` (no APK). Say in each PR which release it is

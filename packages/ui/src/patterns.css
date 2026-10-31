@@ -1,0 +1,15 @@
+@import './tokens.css';
+@import './exceptions.css';
+
+@utility fp-focus-ring {
+  @apply outline-solid outline-2 outline-offset-2 outline-primary;
+}
+
+@utility fp-focus {
+  @apply focus-visible:fp-focus-ring;
+}
+
+/* Scoped native defaults: the Ionic host deliberately does not load Tailwind Preflight. */
+@utility fp-control-reset {
+  @apply appearance-none border-0 bg-transparent;
+}

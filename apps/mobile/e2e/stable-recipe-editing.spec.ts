@@ -1,6 +1,13 @@
 import { expect, test } from './fixtures';
 import type { Locator, Page } from '@playwright/test';
-import { enterEditor, editorSection, menuAction, routed, showPlanning } from './ui-actions';
+import {
+  expectRecipeRevision,
+  enterEditor,
+  editorSection,
+  menuAction,
+  routed,
+  showPlanning,
+} from './ui-actions';
 
 const rectangle = async (locator: Locator) => {
   const box = await locator.boundingBox();
@@ -13,7 +20,7 @@ const enterEditing = enterEditor;
 const openRecipe = async (page: Page) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await enterEditing(page);
   await expect(content(page)).toHaveCount(1);
 };
@@ -51,8 +58,13 @@ for (const english of [false, true]) {
     await page.setViewportSize({ width: 360, height: 800 });
     await page.emulateMedia({ colorScheme: english ? 'light' : 'dark' });
     await openRecipe(page);
-    const dough = page.getByRole('button', { name: english ? 'Dough' : 'Pâte', exact: true });
-    const group = page.getByRole('group').filter({ has: dough });
+    const doughWeight = page.getByRole('button', {
+      name: english ? 'Dough' : 'Pâte',
+      exact: true,
+    });
+    const group = page.getByRole('group', {
+      name: english ? 'Final mix' : 'Mélange final',
+    });
     const footer = page.locator('ion-footer:visible');
     await settled(page);
     const before = {
@@ -60,7 +72,7 @@ for (const english of [false, true]) {
       footer: await rectangle(footer),
       content: await rectangle(content(page)),
     };
-    await dough.click();
+    await doughWeight.click();
     await expect(footer.getByRole('status')).toHaveText(
       english ? 'Unsaved changes' : 'Modifications non enregistrées',
     );
@@ -94,7 +106,7 @@ for (const english of [false, true]) {
     await expect(sheet).toBeHidden();
     await expect(review).toBeFocused();
     await expect(
-      page.getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true }),
+      page.getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true }),
     ).toBeEnabled();
   });
 }
@@ -103,9 +115,9 @@ test('panels retain independent positions, incomplete fields and planner control
   page,
 }) => {
   await openRecipe(page);
-  const water = page.getByLabel('Eau (g)', { exact: true });
-  await water.fill('abc');
-  await water.blur();
+  const waterFinal = page.getByLabel('Eau, Mélange final (g)', { exact: true });
+  await waterFinal.fill('abc');
+  await waterFinal.blur();
   await scrollTo(page, 450);
   await expect.poll(() => scrollTop(page)).toBe(450);
   await showPlanning(page);
@@ -115,17 +127,17 @@ test('panels retain independent positions, incomplete fields and planner control
   await time.fill('2026-11-05T14:00');
   await scrollTo(page, 400);
   await expect.poll(() => scrollTop(page)).toBe(400);
-  await page.getByRole('button', { name: 'Historique', exact: true }).click();
+  await page.getByRole('tab', { name: 'Historique', exact: true }).click();
   await expect.poll(() => scrollTop(page)).toBe(0);
-  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Recette', exact: true }).click();
   await enterEditor(page);
   await expect.poll(() => scrollTop(page)).toBe(450);
-  await expect(water).toHaveValue('abc');
-  await expect(water).toHaveAttribute('aria-invalid', 'true');
+  await expect(waterFinal).toHaveValue('abc');
+  await expect(waterFinal).toHaveAttribute('aria-invalid', 'true');
   await showPlanning(page);
   await expect.poll(() => scrollTop(page)).toBe(400);
   await expect(time).toHaveValue('2026-11-05T14:00');
-  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Recette', exact: true }).click();
   await enterEditor(page);
   await expect.poll(() => scrollTop(page)).toBe(450);
   // Switch again during restoration frames on the generated/read panels.
@@ -185,21 +197,23 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   const footer = page.locator('ion-footer:visible');
   const footerBefore = await rectangle(footer);
 
-  // 1. Valid edit to Salt
-  const salt = page.getByLabel('Sel (g)', { exact: true });
+  // 1. Valid edit to Salt (stage field: Sel, Mélange final (g), originally 20g -> 22g)
+  const salt = page.getByLabel('Sel, Mélange final (g)', { exact: true });
   await salt.fill('22');
   await salt.blur();
   await expect(footer.getByRole('status')).toHaveText('Modifications non enregistrées');
 
-  // 2. Invalid edit to Water
-  const water = page.getByLabel('Eau (g)', { exact: true });
-  await water.fill('abc');
-  await water.blur();
-  await expect(water).toHaveAttribute('aria-invalid', 'true');
+  // 2. Invalid edit to stage Water (originally 200g)
+  const waterFinal = page.getByLabel('Eau, Mélange final (g)', { exact: true });
+  await waterFinal.fill('abc');
+  await waterFinal.blur();
+  await expect(waterFinal).toHaveAttribute('aria-invalid', 'true');
 
-  const saveButton = footer.getByRole('button', { name: 'Enregistrer v2', exact: true });
+  const saveButton = footer.getByRole('button', { name: 'Enregistrer', exact: true });
   await expect(saveButton).toBeDisabled();
-  await expect(footer.getByRole('status')).toHaveText('Corriger les champs invalides');
+  await expect(footer.getByRole('status', { includeHidden: true })).toHaveText(
+    'Corriger les champs invalides',
+  );
 
   // Verify unchanged 88px footer geometry
   const footerInvalid = await rectangle(footer);
@@ -208,34 +222,33 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   // 3. Hidden panel persistence: switch tabs while invalid field is present
   await showPlanning(page);
   await expect(footer.getByRole('button', { name: 'Démarrer la préparation' })).toBeDisabled();
-  await expect(water).toHaveValue('abc');
+  await expect(waterFinal).toHaveValue('abc');
 
-  await page.getByRole('button', { name: 'Historique', exact: true }).click();
+  await page.getByRole('tab', { name: 'Historique', exact: true }).click();
   await expect(footer.getByRole('button', { name: 'Démarrer la préparation' })).toBeDisabled();
-  await expect(water).toHaveValue('abc');
+  await expect(waterFinal).toHaveValue('abc');
 
   // 4. Return to Recipe: invalid value preserved, no accidental v2
-  await routed(page).getByRole('button', { name: 'Recette', exact: true }).click();
+  await routed(page).getByRole('tab', { name: 'Recette', exact: true }).click();
   await enterEditor(page);
-  await expect(water).toHaveValue('abc');
-  await expect(water).toHaveAttribute('aria-invalid', 'true');
+  await expect(waterFinal).toHaveValue('abc');
+  await expect(waterFinal).toHaveAttribute('aria-invalid', 'true');
   await expect(saveButton).toBeDisabled();
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
 
-  // 5. Recovery: enter valid number
-  await water.fill('720');
-  await expect(water).not.toHaveAttribute('aria-invalid', 'true');
+  // 5. Recovery: enter valid stage number (170g brings total water 750g -> 720g)
+  await waterFinal.fill('170');
+  await waterFinal.blur();
+  await expect(waterFinal).not.toHaveAttribute('aria-invalid', 'true');
   await expect(saveButton).toBeEnabled();
   await expect(footer.getByRole('status')).toHaveText('Modifications non enregistrées');
 
   // 6. Save succeeds and creates Version 2
   await saveButton.click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 2);
   await expect(footer.getByRole('status')).toHaveCount(0);
 
   // 7. Route return retains valid saved quantities
-  // The preview snapshots asynchronously (ADR 0015). Wait for the saved revision,
-  // rather than racing a document reload against its three-second persistence timer.
   await expect
     .poll(() =>
       page.evaluate(async () => {
@@ -266,10 +279,10 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
   const savedOrigin = new URL(page.url()).origin;
   await page.goto(`${savedOrigin}/recipes`);
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 2);
   await enterEditing(page);
-  await expect(page.getByLabel('Sel (g)', { exact: true })).toHaveValue('22');
-  await expect(page.getByLabel('Eau (g)', { exact: true })).toHaveValue('720');
+  await expect(page.getByLabel('Sel, Mélange final (g)', { exact: true })).toHaveValue('22');
+  await expect(page.getByLabel('Eau, Mélange final (g)', { exact: true })).toHaveValue('170');
 });
 
 test('FR fermentation card header does not cause horizontal scroll at 360px and 393px', async ({
@@ -306,60 +319,86 @@ test('FR fermentation card header does not cause horizontal scroll at 360px and 
 test('discard abandons raw invalid text and a later edit can be saved', async ({ page }) => {
   await openRecipe(page);
   const footer = page.locator('ion-footer:visible');
-  const water = page.getByLabel('Eau (g)', { exact: true });
-  await water.fill('abc');
-  await water.blur();
-  await expect(footer.getByRole('status')).toHaveText('Corriger les champs invalides');
-  // No domain draft exists yet: discarding raw text must still be available.
-  const footerDiscard = footer.getByRole('button', { name: 'Abandonner les modifications' });
-  if (await footerDiscard.isVisible()) {
-    await footerDiscard.click();
+  const waterFinal = page.getByLabel('Eau, Mélange final (g)', { exact: true });
+  await waterFinal.fill('abc');
+  await waterFinal.blur();
+  await expect(footer.getByRole('status', { includeHidden: true })).toHaveText(
+    'Corriger les champs invalides',
+  );
+
+  const footerCancel = footer.getByRole('button', { name: 'Annuler', exact: true });
+  if (await footerCancel.isVisible()) {
+    await footerCancel.click();
   } else {
-    const overflow = page
-      .locator('ion-header:visible')
-      .getByRole('button', { name: 'Menu édition' });
-    if (await overflow.isVisible()) {
-      await overflow.click();
-      await page
-        .locator('ion-action-sheet')
-        .getByRole('button', { name: 'Abandonner les modifications', exact: true })
-        .click();
+    const footerDiscard = footer.getByRole('button', {
+      name: 'Abandonner les modifications',
+      exact: true,
+    });
+    if (await footerDiscard.isVisible()) {
+      await footerDiscard.click();
     } else {
-      await page.locator('ion-header:visible ion-button[aria-label="Abandonner"]').click();
+      const overflow = page
+        .locator('ion-header:visible')
+        .getByRole('button', { name: 'Menu édition' });
+      if (await overflow.isVisible()) {
+        await overflow.click();
+        await page
+          .getByRole('menu')
+          .getByRole('menuitem', { name: 'Abandonner les modifications', exact: true })
+          .click();
+      } else {
+        await page.locator('ion-header:visible ion-button[aria-label="Abandonner"]').click();
+      }
     }
   }
-  await page
-    .locator('ion-alert')
-    .getByRole('button', { name: 'Abandonner les modifications' })
-    .click();
+
+  const alert = page.locator('ion-alert');
+  if (await alert.isVisible()) {
+    await alert
+      .getByRole('button', {
+        name: /^(Abandonner les modifications|Abandonner|Discard changes|Discard)$/,
+      })
+      .click();
+  }
+
   await expect(footer.getByRole('status')).toHaveCount(0);
   await enterEditing(page);
-  await expect(water).toHaveValue('750');
-  await expect(water).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(waterFinal).toHaveValue('200');
+  await expect(waterFinal).not.toHaveAttribute('aria-invalid', 'true');
   await expect(footer.getByRole('status')).toHaveText('À jour');
-  await page.getByLabel('Sel (g)', { exact: true }).fill('22');
-  await page.getByLabel('Sel (g)', { exact: true }).press('Enter');
-  await footer.getByRole('button', { name: 'Enregistrer v2', exact: true }).click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+
+  const saltFinal = page.getByLabel('Sel, Mélange final (g)', { exact: true });
+  await saltFinal.fill('22');
+  await saltFinal.press('Enter');
+  await footer.getByRole('button', { name: 'Enregistrer', exact: true }).click();
+  await expectRecipeRevision(page, 2);
 });
 
 test('domain-refused quantity blocks save until the stored value is restored', async ({ page }) => {
   await openRecipe(page);
+  await editorSection(page, 'composition');
   const footer = page.locator('ion-footer:visible');
-  const salt = page.getByLabel('Sel (g)', { exact: true });
+  const salt = page.getByLabel('Sel, Mélange final (g)', { exact: true });
   await salt.fill('22');
   await salt.press('Enter');
-  const flour = page.getByLabel('Farine totale (g)', { exact: true });
-  await flour.fill('0');
-  await flour.blur();
-  await expect(flour).toHaveAttribute('aria-invalid', 'true');
-  const save = footer.getByRole('button', { name: 'Enregistrer v2', exact: true });
+
+  // Change flour share to -1 or invalid value through flour % field, or domain-refuse via flours
+  const flourShare = routed(page).getByRole('textbox', {
+    name: 'Farine de blé entier, % (%)',
+    exact: true,
+  });
+  await flourShare.fill('-10');
+  await flourShare.blur();
+  await expect(flourShare).toHaveAttribute('aria-invalid', 'true');
+
+  const save = footer.getByRole('button', { name: 'Enregistrer', exact: true });
   await expect(save).toBeDisabled();
-  await flour.fill('1000');
-  await flour.blur();
+
+  await flourShare.fill('20');
+  await flourShare.blur();
   await expect(save).toBeEnabled();
   await save.click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 2);
   await enterEditing(page);
   await expect(salt).toHaveValue('22');
 });
@@ -367,27 +406,127 @@ test('domain-refused quantity blocks save until the stored value is restored', a
 test('removing an invalid ingredient unregisters its save blocker', async ({ page }) => {
   await openRecipe(page);
   const footer = page.locator('ion-footer:visible');
-  const salt = page.getByLabel('Sel (g)', { exact: true });
-  await salt.fill('abc');
-  await salt.blur();
-  await expect(footer.getByRole('status')).toHaveText('Corriger les champs invalides');
-  await page.getByRole('button', { name: 'Retirer : Sel', exact: true }).click();
-  await expect(salt).toHaveCount(0);
-  const save = footer.getByRole('button', { name: 'Enregistrer v2', exact: true });
+
+  // Target salt row's Edit button to open ingredient detail bottom-sheet
+  const saltRow = page
+    .getByLabel('Sel, Mélange final (g)', { exact: true })
+    .locator('xpath=ancestor::div[input[@type="checkbox"] or div/input[@type="checkbox"]][1]');
+  await saltRow.getByRole('button', { name: 'Modifier l’ingrédient', exact: true }).click();
+
+  const sheet = page.locator('ion-modal:not(.overlay-hidden)').filter({
+    has: page.getByRole('heading', {
+      name: 'Modifier l’ingrédient sur la recette : Sel',
+      exact: true,
+    }),
+  });
+  await expect(sheet).toBeVisible();
+
+  const totalGrams = sheet.getByLabel('Grammes totaux de la recette (g)', { exact: true });
+  await totalGrams.fill('abc');
+  await totalGrams.blur();
+  await expect(footer.getByRole('status', { includeHidden: true })).toHaveText(
+    'Corriger les champs invalides',
+  );
+
+  const removeBtn = sheet.getByRole('button', { name: 'Supprimer l’ingrédient', exact: true });
+  await removeBtn.click();
+  await expect(sheet).toBeHidden();
+
+  await expect(page.getByLabel('Sel, Mélange final (g)', { exact: true })).toHaveCount(0);
+  const save = footer.getByRole('button', { name: 'Enregistrer', exact: true });
   await expect(save).toBeEnabled();
   await save.click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 2);
 });
 
 test('invalid quantity explains disabled save in English @en', async ({ page }) => {
   await openRecipe(page);
-  const salt = page.getByLabel('Salt (g)', { exact: true });
+  const salt = page.getByLabel('Salt, Final mix (g)', { exact: true });
   await salt.fill('22');
   await salt.press('Enter');
-  const water = page.getByLabel('Water (g)', { exact: true });
-  await water.fill('abc');
-  await water.blur();
+  const waterFinal = page.getByLabel('Water, Final mix (g)', { exact: true });
+  await waterFinal.fill('abc');
+  await waterFinal.blur();
   const footer = page.locator('ion-footer:visible');
   await expect(footer.getByRole('status')).toHaveText('Correct invalid fields');
-  await expect(footer.getByRole('button', { name: 'Save v2', exact: true })).toBeDisabled();
+  await expect(footer.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+});
+
+test('ordinary Saves retain their label and revisions without promoting reference versions', async ({
+  page,
+}) => {
+  await openRecipe(page);
+  const recipeId = new URL(page.url()).pathname.split('/').at(-1);
+  const save = routed(page)
+    .locator('ion-footer')
+    .getByRole('button', { name: 'Enregistrer', exact: true });
+  const savedState = () =>
+    page.evaluate(
+      (id) =>
+        new Promise((resolve, reject) => {
+          const open = indexedDB.open('flourprint-preview', 1);
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const db = open.result;
+            const transaction = db.transaction('snapshots', 'readonly');
+            const request = transaction.objectStore('snapshots').get('backup');
+            transaction.onabort = () => {
+              db.close();
+              reject(transaction.error);
+            };
+            transaction.oncomplete = () => {
+              db.close();
+              if (typeof request.result !== 'string') {
+                resolve(undefined);
+                return;
+              }
+              const snapshot = JSON.parse(request.result) as {
+                recipes: readonly {
+                  id: string;
+                  revisions: readonly { version: number }[];
+                  referenceVersions?: readonly unknown[];
+                }[];
+              };
+              const recipe = snapshot.recipes.find((entry) => entry.id === id);
+              resolve(
+                recipe && {
+                  recipes: snapshot.recipes.length,
+                  revisions: recipe.revisions
+                    .map((revision) => revision.version)
+                    .sort((a, b) => a - b),
+                  referenceVersions: recipe.referenceVersions?.length ?? 0,
+                },
+              );
+            };
+          };
+        }),
+      recipeId,
+    );
+
+  // Poolish water is 300g, Tangzhong water is 250g, Final water is 200g (Total = 750g).
+  // Changing Final water from 200g to 170g yields 720g total.
+  // Changing Final water from 170g to 180g yields 730g total.
+  for (const [stageWaterGrams, version] of [
+    ['170', 2],
+    ['180', 3],
+  ] as const) {
+    await expect(save).toHaveAccessibleName('Enregistrer');
+    const water = routed(page).getByLabel('Eau, Mélange final (g)', { exact: true });
+    await water.fill(stageWaterGrams);
+    await water.press('Enter');
+    await expect(save).toBeEnabled();
+    await save.click();
+    await expect(
+      routed(page).getByRole('button', { name: 'Démarrer la préparation', exact: true }),
+    ).toBeVisible();
+    await expect.poll(savedState, { timeout: 10_000 }).toEqual({
+      recipes: 1,
+      revisions: version === 2 ? [1, 2] : [1, 2, 3],
+      referenceVersions: 0,
+    });
+    await enterEditor(page);
+    await expect(water).toHaveValue(stageWaterGrams);
+    await expect(save).toHaveAccessibleName('Enregistrer');
+    await expect(save).toBeDisabled();
+  }
 });

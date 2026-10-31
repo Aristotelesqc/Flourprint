@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { enterEditor } from '../e2e/ui-actions';
+import { enterEditor, routed } from '../e2e/ui-actions';
 import { _android as android, expect, test, type AndroidDevice, type Page } from '@playwright/test';
 
 /**
@@ -33,6 +33,41 @@ const shown = (page: Page, text: string | RegExp) =>
   page
     .getByText(text, typeof text === 'string' ? { exact: true } : undefined)
     .locator('visible=true');
+
+/** L103 keeps revisions in storage; the Recipe header no longer exposes internal versions. */
+const expectCandidateRevision = async (page: Page, version: number) => {
+  await expect(
+    routed(page)
+      .locator('ion-header')
+      .getByRole('heading', { name: RECIPE, level: 1, exact: true }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const id = decodeURIComponent(location.pathname.split('/').at(-1) ?? '');
+        const capacitor = Reflect.get(window, 'Capacitor') as {
+          Plugins: {
+            CapacitorSQLite: {
+              query(options: {
+                database: string;
+                statement: string;
+                values: string[];
+                readonly: boolean;
+              }): Promise<{ values?: { head_version: number }[] }>;
+            };
+          };
+        };
+        const result = await capacitor.Plugins.CapacitorSQLite.query({
+          database: 'flourprint',
+          statement: 'SELECT head_version FROM recipes WHERE id = ?',
+          values: [id],
+          readonly: false,
+        });
+        return result.values?.[0]?.head_version;
+      }),
+    )
+    .toBe(version);
+};
 
 /**
  * Starts the app and attaches to the WebView of this process (after a forced stop, the previous
@@ -286,7 +321,8 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     const salt = page.getByLabel('Salt (g)', { exact: true });
     await salt.fill('25');
     await salt.press('Enter');
-    await page.getByRole('button', { name: 'Save v2' }).click();
+    // This phase runs the pinned 0.1.0 APK, whose button keeps its original label.
+    await page.getByRole('button', { name: 'Save v2', exact: true }).click();
     await expect(shown(page, 'Version 2')).toHaveCount(1);
   });
 
@@ -400,7 +436,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
 
   page = await open();
 
-  await test.step('candidate: the first launch migrated to 7 and kept every row', async () => {
+  await test.step('candidate: the first launch migrated to 9 and kept every row', async () => {
     // The app has opened its database once: the migrations ran. Read it before any further use.
     await expect(shown(page, RECIPE).first()).toBeVisible();
     const migrated = await readDatabase('candidate-first-launch');
@@ -418,11 +454,8 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       await expect(page).toHaveURL(/\/recipes$/);
       await expect(shown(page, 'Recipe 1').first()).toBeVisible();
       await goTo(page, `/recipes/${recipeId}`);
-      await expect(shown(page, 'Version 2').first()).toBeVisible();
-      await page
-        .getByRole('button', { name: 'History', exact: true })
-        .locator('visible=true')
-        .click();
+      await expectCandidateRevision(page, 2);
+      await page.getByRole('tab', { name: 'History', exact: true }).locator('visible=true').click();
       await expect(shown(page, /Abandoned/).first()).toBeVisible();
       await expect(shown(page, /In progress/).first()).toBeVisible();
     });
@@ -445,14 +478,14 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     await explain(page, async () => {
       await goTo(page, '/recipes');
       await goTo(page, `/recipes/${recipeId}`);
-      await expect(shown(page, 'Version 2').first()).toBeVisible();
+      await expectCandidateRevision(page, 2);
       // A saved recipe opens in consultation (#70): editing is explicit (the browser suite's helper).
       await enterEditor(page);
-      const salt = page.getByLabel('Salt (g)', { exact: true }).locator('visible=true');
+      const salt = page.getByLabel('Salt, Final mix (g)', { exact: true }).locator('visible=true');
       await salt.fill('26');
       await salt.press('Enter');
-      await page.getByRole('button', { name: 'Save v3' }).locator('visible=true').click();
-      await expect(shown(page, 'Version 3').first()).toBeVisible();
+      await page.getByRole('button', { name: 'Save', exact: true }).locator('visible=true').click();
+      await expectCandidateRevision(page, 3);
     });
   });
 
@@ -463,7 +496,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       await goTo(page, '/recipes');
       await expect(page).toHaveURL(/\/recipes$/);
       await goTo(page, `/recipes/${recipeId}`);
-      await expect(shown(page, 'Version 3').first()).toBeVisible();
+      await expectCandidateRevision(page, 3);
     });
   });
 
@@ -488,7 +521,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     });
   });
 
-  await test.step('candidate: migrations 5 to 7 ran and no row was lost', async () => {
+  await test.step('candidate: migrations 5 to 9 ran and no row was lost', async () => {
     const now = await readDatabase('candidate');
     await evidence('database-candidate', summary(now));
     expectMigrated(old, now);

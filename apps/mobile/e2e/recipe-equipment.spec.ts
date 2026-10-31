@@ -1,3 +1,4 @@
+import { expectRecipeRevision } from './ui-actions';
 import { expect, test, type Page } from '@playwright/test';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
@@ -31,9 +32,25 @@ const equipmentRecipe = (equipment: Record<string, unknown>) => ({
     },
   ],
 });
-const importFixture = async (page: Page, equipment: Record<string, unknown>, english: boolean) => {
-  await page.setViewportSize({ width: 360, height: 851 });
+const importFixture = async (
+  page: Page,
+  equipment: Record<string, unknown>,
+  english: boolean,
+  theme = 'light',
+  large = false,
+) => {
+  await page.setViewportSize({ width: large ? 360 : 393, height: 900 });
   await page.goto('/advanced');
+  await routed(page)
+    .getByRole('button', {
+      name:
+        theme === 'amoled'
+          ? /^AMOLED$/
+          : theme === 'dark'
+            ? /^(Sombre(?: chaud)?|(?:Warm )?[Dd]ark)$/
+            : /^(Clair|Light)$/,
+    })
+    .click();
   await routed(page)
     .locator('input[type=file]')
     .setInputFiles({
@@ -55,8 +72,9 @@ const importFixture = async (page: Page, equipment: Record<string, unknown>, eng
   await routed(page).locator('ion-back-button').click();
   await expect(page).toHaveURL(/\/recipes$/);
   await page.getByText('Equipment display fixture', { exact: true }).click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await expect(routed(page)).toHaveCount(1);
+  if (large) await page.addStyleTag({ content: 'html,body{font-size:20.8px!important}' });
 };
 
 for (const english of [false, true]) {
@@ -85,7 +103,12 @@ for (const english of [false, true]) {
     const details = routed(page).getByTestId('step-equipment').filter({ visible: true });
     await expect(details).toHaveCount(1);
     await page.addStyleTag({ content: 'html, body { font-size: 20px !important; }' });
-    await details.locator('summary').first().click();
+    await details
+      .getByRole('button', {
+        name: english ? 'Equipment details' : 'Détails de l’équipement',
+        exact: true,
+      })
+      .click();
     await expect(details).toContainText('Home broil');
     await expect(details).toContainText('250');
     await expect(details).toContainText(/3.*5/);
@@ -129,12 +152,95 @@ for (const english of [false, true]) {
     await assertNoOverflow();
     const text = await details.innerText();
     await routed(page)
-      .getByRole('button', { name: english ? 'Planning' : 'Planification', exact: true })
+      .getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true })
       .click();
-    await details.locator('summary').first().click();
+    await details
+      .getByRole('button', {
+        name: english ? 'Equipment details' : 'Détails de l’équipement',
+        exact: true,
+      })
+      .click();
     expect(await details.innerText()).toBe(text);
     await assertNoOverflow();
   });
+
+  for (const theme of ['light', 'dark', 'amoled']) {
+    for (const large of [false, true]) {
+      test(`Shared equipment disclosures support keyboard and touch ${theme} ${large ? '360/130' : '393/100'}${suffix}`, async ({
+        page,
+      }, testInfo) => {
+        await importFixture(
+          page,
+          {
+            appliance: 'oven',
+            mode: 'broil',
+            setpointC: 250,
+            fan: 'unknown',
+            steam: { source: 'none' },
+            rack: 'middle',
+          },
+          english,
+          theme,
+          large,
+        );
+        const equipment = routed(page).getByTestId('step-equipment').filter({ visible: true });
+        const details = equipment.getByRole('button', {
+          name: english ? 'Equipment details' : 'Détails de l’équipement',
+          exact: true,
+        });
+        const help = equipment.getByRole('button', {
+          name: english ? 'Broil' : 'Griller',
+          exact: true,
+        });
+        await expect(details).toHaveAttribute('aria-expanded', 'false');
+        await expect(help).toHaveAttribute('aria-expanded', 'false');
+        await details.focus();
+        await details.press('Enter');
+        await expect(details).toHaveAttribute('aria-expanded', 'true');
+        await expect(help).toHaveAttribute('aria-expanded', 'false');
+        await help.focus();
+        await help.press('Space');
+        await expect(help).toHaveAttribute('aria-expanded', 'true');
+        await expect(
+          equipment.getByText(
+            english
+              ? 'Only the top element runs, with direct radiant heat; distinct from an outdoor barbecue grill.'
+              : 'Seul l’élément du haut chauffe, par rayonnement direct ; distinct d’un gril de barbecue.',
+            { exact: true },
+          ),
+        ).toBeVisible();
+        await expect(details).toHaveAttribute('aria-expanded', 'true');
+        await expect(equipment).toContainText('250');
+        await details.click();
+        await expect(details).toHaveAttribute('aria-expanded', 'false');
+        await expect(help).toHaveAttribute('aria-expanded', 'true');
+        await details.click();
+        for (const trigger of [details, help]) {
+          await trigger.scrollIntoViewIfNeeded();
+          const bounds = await trigger.boundingBox();
+          if (!bounds) throw new Error('Equipment disclosure trigger has no bounds');
+          expect(bounds.height).toBeGreaterThanOrEqual(48 * (large ? 1.3 : 1) - 1);
+          expect(bounds.x).toBeGreaterThanOrEqual(0);
+          expect(bounds.x + bounds.width).toBeLessThanOrEqual(large ? 360 : 393);
+        }
+        const content = routed(page).locator('ion-content');
+        expect(
+          await content.evaluate(async (host) => {
+            const scroll = await (
+              host as HTMLElement & { getScrollElement(): Promise<HTMLElement> }
+            ).getScrollElement();
+            return scroll.scrollWidth <= scroll.clientWidth;
+          }),
+        ).toBe(true);
+        const capture = testInfo.outputPath('equipment-disclosures.png');
+        await page.screenshot({ path: capture });
+        await testInfo.attach('Equipment details and mode help', {
+          path: capture,
+          contentType: 'image/png',
+        });
+      });
+    }
+  }
 
   test(`A missing equipment profile stays unresolved and does not invent an appliance name${suffix}`, async ({
     page,
@@ -150,7 +256,12 @@ for (const english of [false, true]) {
       english,
     );
     const details = routed(page).getByTestId('step-equipment').filter({ visible: true });
-    await details.locator('summary').first().click();
+    await details
+      .getByRole('button', {
+        name: english ? 'Equipment details' : 'Détails de l’équipement',
+        exact: true,
+      })
+      .click();
     await expect(details).toContainText(english ? 'Unresolved item' : 'Élément introuvable');
     await expect(details).not.toContainText('missing-profile');
   });

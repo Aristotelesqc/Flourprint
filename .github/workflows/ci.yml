@@ -63,6 +63,8 @@ jobs:
       - run: pnpm build:mobile
       - run: pnpm --filter @flourprint/mobile exec playwright install --with-deps chromium
       - run: pnpm --filter @flourprint/mobile e2e
+      - name: Shared UI production journeys
+        run: pnpm test:ui
       - name: Failure context in the log
         # Playwright's page snapshot of each failed test, readable without downloading the
         # artifact (agents may not reach the artifact store).
@@ -77,6 +79,7 @@ jobs:
           path: |
             apps/mobile/playwright-report
             apps/mobile/test-results
+            .agy-runs/foundation-168/playwright-results
           if-no-files-found: ignore
 
   android:

@@ -1,11 +1,11 @@
 /**
- * Design tokens (ADR 0020): the only source of token values. `tokens.css` and the token
- * sections of DESIGN.md's front matter are generated from this module by
+ * Design tokens (ADR 0020, ADR 0022): the only source of token values. `tokens.css` and
+ * the token sections of DESIGN.md's front matter are generated from this module by
  * `node scripts/ui-tokens.mjs`; `pnpm check` fails when either differs.
  *
  * Colours keep DESIGN.md's flat names: no prefix for Light, `dark-` and `amoled-` for the other
  * themes. Motion durations and easing are round 2's (`22db386`), kept at the owner's request
- * (#134).
+ * (#134). Native Tailwind v4 @theme declarations replace legacy --fp-* variables.
  */
 export const tokens = {
   colors: {
@@ -14,6 +14,7 @@ export const tokens = {
     background: '#f8f7f4',
     surface: '#ffffff',
     'surface-container': '#f2efe9',
+    'surface-container-high': '#eae5dc',
     'on-surface': '#1c1b19',
     muted: '#69645c',
     outline: '#e4e0d8',
@@ -29,6 +30,7 @@ export const tokens = {
     'dark-background': '#201d1a',
     'dark-surface': '#2a2622',
     'dark-surface-container': '#332e29',
+    'dark-surface-container-high': '#3d3731',
     'dark-on-surface': '#e9e4dc',
     'dark-muted': '#b1aa9f',
     'dark-outline': '#3b3631',
@@ -58,6 +60,7 @@ export const tokens = {
   },
   rounded: {
     card: '1rem',
+    pill: '9999px',
     'segmented-option': '0.75rem',
   },
   spacing: {
@@ -65,6 +68,7 @@ export const tokens = {
     'page-gutter': '1rem',
     touch: '3rem',
     'card-padding': '1rem',
+    'button-paint': '2.5rem',
   },
   typography: {
     page: { size: '1.5rem', line: '2rem', weight: 700 },
@@ -81,13 +85,37 @@ export const tokens = {
     'easing-standard': 'cubic-bezier(0.2, 0, 0, 1)',
     'easing-decelerate': 'cubic-bezier(0.05, 0.7, 0.1, 1)',
   },
+  ionic: {
+    light: {
+      'primary-rgb': '169, 73, 10',
+      'primary-contrast-rgb': '255, 255, 255',
+      'primary-shade': '#95400a',
+      'primary-tint': '#b25b23',
+      'background-rgb': '248, 247, 244',
+      'text-rgb': '28, 27, 25',
+    },
+    dark: {
+      'primary-rgb': '207, 138, 94',
+      'primary-contrast-rgb': '32, 29, 26',
+      'primary-shade': '#b67953',
+      'primary-tint': '#d4966e',
+      'background-rgb': '32, 29, 26',
+      'text-rgb': '233, 228, 220',
+    },
+    amoled: {
+      'primary-rgb': '207, 138, 94',
+      'primary-contrast-rgb': '0, 0, 0',
+      'primary-shade': '#b67953',
+      'primary-tint': '#d4966e',
+      'background-rgb': '0, 0, 0',
+      'text-rgb': '233, 228, 220',
+    },
+  },
 } as const;
 
 export type Tokens = typeof tokens;
 
 const THEMES = ['dark', 'amoled'] as const;
-
-const kebab = (name: string): string => name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 
 /** Light colours: names without a theme prefix. */
 const lightColours = (t: Tokens): [string, string][] =>
@@ -101,40 +129,98 @@ const themeColours = (t: Tokens, theme: (typeof THEMES)[number]): [string, strin
     .map(([name, value]) => [name.slice(theme.length + 1), value]);
 
 const block = (selector: string, declarations: [string, string | number][]): string =>
-  `${selector} {\n${declarations.map(([name, value]) => `  --fp-${name}: ${value};`).join('\n')}\n}\n`;
+  `${selector} {\n${declarations.map(([name, value]) => `  ${name}: ${value};`).join('\n')}\n}\n`;
 
-/** The CSS custom properties of every theme, `--fp-` prefixed. */
+const lightColorDecls = (t: Tokens): [string, string][] =>
+  lightColours(t).map(([name, value]): [string, string] => [`--color-${name}`, value]);
+
+const themeColorDecls = (t: Tokens, theme: (typeof THEMES)[number]): [string, string][] =>
+  themeColours(t, theme).map(([name, value]): [string, string] => [`--color-${name}`, value]);
+
+const ionicHelpers = (t: Tokens, theme: 'light' | 'dark' | 'amoled'): [string, string][] => [
+  ['--ionic-primary-rgb', t.ionic[theme]['primary-rgb']],
+  ['--ionic-primary-contrast-rgb', t.ionic[theme]['primary-contrast-rgb']],
+  ['--ionic-primary-shade', t.ionic[theme]['primary-shade']],
+  ['--ionic-primary-tint', t.ionic[theme]['primary-tint']],
+  ['--ionic-background-rgb', t.ionic[theme]['background-rgb']],
+  ['--ionic-text-rgb', t.ionic[theme]['text-rgb']],
+];
+
+/** The CSS custom properties and utilities of every theme, native Tailwind v4 tokens. */
 export const tokensCss = (t: Tokens = tokens): string => {
-  const motion = Object.entries(t.motion);
-  const instant = motion
-    .filter(([name]) => name.startsWith('duration-'))
-    .map(([name]): [string, string] => [name, '0ms']);
-  const base: [string, string | number][] = [
-    ...lightColours(t).map(([name, value]): [string, string] => [`color-${name}`, value]),
-    ...Object.entries(t.rounded).map(([name, value]): [string, string] => [
-      `rounded-${name}`,
+  const SPACING_SCALE_MAP: Record<number, string> = {
+    0: '1',
+    1: '2',
+    2: '3',
+    3: '4',
+    4: '6',
+    5: '8',
+  };
+
+  const themeDeclarations: [string, string | number][] = [
+    ...lightColorDecls(t),
+    ...t.spacing.scale.map((value, index): [string, string] => [
+      `--spacing-${SPACING_SCALE_MAP[index] ?? index + 1}`,
       value,
     ]),
-    ...t.spacing.scale.map((value, index): [string, string] => [`spacing-${index + 1}`, value]),
     ...Object.entries(t.spacing)
       .filter(([name]) => name !== 'scale')
-      .map(([name, value]): [string, string] => [`spacing-${name}`, String(value)]),
-    ...Object.entries(t.typography).flatMap(([name, role]) =>
-      Object.entries(role).map(([field, value]): [string, string | number] => [
-        `type-${name}-${kebab(field)}`,
-        value,
-      ]),
-    ),
-    ...motion,
+      .map(([name, value]): [string, string] => [`--spacing-${name}`, String(value)]),
+    ...Object.entries(t.rounded).map(([name, value]): [string, string] => [
+      `--radius-${name}`,
+      value,
+    ]),
+    ...Object.entries(t.typography).flatMap(([name, role]) => {
+      const decls: [string, string | number][] = [[`--text-${name}`, role.size]];
+      if ('line' in role) {
+        decls.push([`--text-${name}--line-height`, role.line]);
+      }
+      if ('weight' in role) {
+        decls.push([`--text-${name}--font-weight`, role.weight]);
+      }
+      return decls;
+    }),
+    ...Object.entries(t.motion)
+      .filter(([name]) => name.startsWith('duration-'))
+      .map(([name, value]): [string, string] => [`--${name}`, value]),
+    ...Object.entries(t.motion)
+      .filter(([name]) => name.startsWith('easing-'))
+      .map(([name, value]): [string, string] => [`--ease-${name.slice(7)}`, value]),
   ];
-  const dark = (theme: (typeof THEMES)[number]) =>
-    themeColours(t, theme).map(([name, value]): [string, string] => [`color-${name}`, value]);
+
+  const instant: [string, string][] = Object.keys(t.motion)
+    .filter((name) => name.startsWith('duration-'))
+    .map((name) => [`--${name}`, '0ms']);
+
+  const ionicBridge: [string, string][] = [
+    ['--ion-color-primary', 'var(--color-primary)'],
+    ['--ion-color-primary-rgb', 'var(--ionic-primary-rgb)'],
+    ['--ion-color-primary-contrast', 'var(--color-on-primary)'],
+    ['--ion-color-primary-contrast-rgb', 'var(--ionic-primary-contrast-rgb)'],
+    ['--ion-color-primary-shade', 'var(--ionic-primary-shade)'],
+    ['--ion-color-primary-tint', 'var(--ionic-primary-tint)'],
+    ['--ion-background-color', 'var(--color-background)'],
+    ['--ion-background-color-rgb', 'var(--ionic-background-rgb)'],
+    ['--ion-text-color', 'var(--color-on-surface)'],
+    ['--ion-text-color-rgb', 'var(--ionic-text-rgb)'],
+    ['--ion-toolbar-background', 'var(--color-background)'],
+    ['--ion-toolbar-border-color', 'var(--color-outline)'],
+    ['--ion-item-background', 'transparent'],
+    ['--ion-border-color', 'var(--color-outline)'],
+    ['--ion-card-background', 'var(--color-surface)'],
+    ['--ion-overlay-background-color', 'var(--color-surface)'],
+  ];
+
   return [
     '/* Generated from packages/ui/src/tokens.ts by scripts/ui-tokens.mjs. Do not edit. */\n',
-    block(":root,\n[data-theme='light']", base),
-    block("[data-theme='dark']", dark('dark')),
-    block("[data-theme='amoled']", dark('amoled')),
-    `@media (prefers-color-scheme: dark) {\n${block(':root:not([data-theme])', dark('dark'))
+    block('@theme', themeDeclarations),
+    block(":root,\n[data-theme='light']", [...lightColorDecls(t), ...ionicHelpers(t, 'light')]),
+    block("[data-theme='dark']", [...themeColorDecls(t, 'dark'), ...ionicHelpers(t, 'dark')]),
+    block("[data-theme='amoled']", [...themeColorDecls(t, 'amoled'), ...ionicHelpers(t, 'amoled')]),
+    `@media (prefers-color-scheme: dark) {\n${block(
+      ":root:not([data-theme]),\n[data-theme='system']",
+      [...themeColorDecls(t, 'dark'), ...ionicHelpers(t, 'dark')],
+    )
       .split('\n')
       .map((line) => (line ? `  ${line}` : line))
       .join('\n')}}\n`,
@@ -143,6 +229,7 @@ export const tokensCss = (t: Tokens = tokens): string => {
       .map((line) => (line ? `  ${line}` : line))
       .join('\n')}}\n`,
     block("[data-motion='reduced']", instant),
+    block('@utility fp-ionic', ionicBridge),
   ].join('\n');
 };
 

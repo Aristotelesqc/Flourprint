@@ -1,5 +1,5 @@
-import { IonButton } from '@ionic/react';
 import { forwardRef, useId, useState } from 'react';
+import { Ui } from '../ui/library';
 import {
   OFFERED_BUILT_IN_FLOURS,
   INGREDIENT_PRESETS,
@@ -23,7 +23,6 @@ import {
   type PreparationKind,
 } from '../services/preparations';
 import { NumberField } from '../ui/Field';
-import { InfoButton } from '../ui/InfoButton';
 import { Card } from '../ui/Layout';
 import { totalWaterKey } from './water-label';
 
@@ -69,7 +68,30 @@ export const Hydration = forwardRef<
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="flex items-center gap-1.5 font-semibold">
           {label}
-          <InfoButton topic="hydration" term={label} />
+          <Ui
+            component="fp.button"
+            variant="quiet"
+            aria-label={t('formula.hydration.breakdown')}
+            title={t('formula.hydration.breakdown')}
+            onClick={onExplain}
+            className="!p-1.5 !min-h-touch !min-w-[48px] text-muted hover:text-on-surface"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+          </Ui>
         </span>
         {water ? (
           <div className="flex flex-col items-end gap-1">
@@ -92,8 +114,9 @@ export const Hydration = forwardRef<
                   onEdit({ type: 'LockTotalWater', totalWaterPct: value, water })
                 }
               />
-              <button
-                type="button"
+              <Ui
+                component="fp.button"
+                variant={target ? 'primary' : 'secondary'}
                 aria-pressed={target !== undefined}
                 aria-label={
                   target
@@ -105,11 +128,7 @@ export const Hydration = forwardRef<
                     ? t('formula.hydration.unlock')
                     : t('formula.hydration.lock', { pct: shown })
                 }
-                className={`fp-reset inline-flex size-12 shrink-0 items-center justify-center rounded-full transition-colors motion-reduce:transition-none ${
-                  target
-                    ? 'bg-accent text-on-accent'
-                    : 'border border-line bg-surface text-muted hover:border-field'
-                }`}
+                className="!size-12 !min-h-touch !min-w-[48px] !p-0 shrink-0 !rounded-full"
                 onClick={() =>
                   void onEdit(
                     target
@@ -119,7 +138,7 @@ export const Hydration = forwardRef<
                 }
               >
                 <LockIcon locked={target !== undefined} />
-              </button>
+              </Ui>
             </span>
             {target !== undefined && (
               <span id={lockedHintId} className="text-xs text-muted">
@@ -131,13 +150,6 @@ export const Hydration = forwardRef<
           <span className="text-xl font-bold">{shown}</span>
         )}
       </div>
-      <button
-        type="button"
-        className="fp-reset self-start text-sm text-accent-text underline decoration-dotted underline-offset-4"
-        onClick={onExplain}
-      >
-        {t('formula.hydration.breakdown')}
-      </button>
     </div>
   );
 });
@@ -151,7 +163,6 @@ export const AddIngredient = ({
   onEdit: (edit: FormulaEdit) => boolean;
 }) => {
   const { t, name } = useMessages();
-  const id = useId();
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState('');
   const [custom, setCustom] = useState('');
@@ -199,51 +210,57 @@ export const AddIngredient = ({
     }
   };
 
+  const selectOptions = [
+    { id: '', label: t('formula.add.other') },
+    ...presets.map((p) => ({ id: p.id, label: name(p.id) })),
+  ];
+
   return (
     <div className="flex flex-col gap-2 px-4 py-3">
-      <label htmlFor={`${id}-choice`} className="text-sm font-semibold">
-        {t('formula.add.ingredient')}
-      </label>
-      <select
-        id={`${id}-choice`}
-        className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2"
+      <Ui
+        component="fp.select"
+        label={t('formula.add.ingredient')}
         value={choice}
-        onChange={(event) => setChoice(event.target.value)}
-      >
-        <option value="">{t('formula.add.other')}</option>
-        {presets.map((p) => (
-          <option key={p.id} value={p.id}>
-            {name(p.id)}
-          </option>
-        ))}
-      </select>
+        options={selectOptions}
+        cancelText={t('formula.add.cancel')}
+        okText={t('formula.add.confirm')}
+        onValueChange={setChoice}
+      />
       {choice === '' && (
         <>
           <input
             aria-label={t('formula.add.name')}
             placeholder={t('formula.add.name')}
-            className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2.5"
+            className="fp-field min-h-touch h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2.5"
             value={custom}
             onChange={(event) => setCustom(event.target.value)}
           />
-          <input
+          <Ui
+            component="fp.number-field"
             aria-label={t('formula.add.water')}
+            label={t('formula.add.water')}
+            hideLabel={true}
+            unit="%"
             placeholder={t('formula.add.water')}
             inputMode="decimal"
-            className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2.5"
             value={water}
-            onChange={(event) => setWater(event.target.value)}
+            onValueChange={setWater}
           />
         </>
       )}
       <span className="text-sm text-muted">{t('formula.add.hint')}</span>
       <span className="flex gap-2">
-        <IonButton onClick={add} disabled={choice === '' && custom.trim() === ''}>
+        <Ui
+          component="fp.button"
+          variant="primary"
+          onClick={add}
+          disabled={choice === '' && custom.trim() === ''}
+        >
           {t('formula.add.confirm')}
-        </IonButton>
-        <IonButton fill="outline" onClick={() => setOpen(false)}>
+        </Ui>
+        <Ui component="fp.button" variant="secondary" onClick={() => setOpen(false)}>
           {t('formula.add.cancel')}
-        </IonButton>
+        </Ui>
       </span>
     </div>
   );
@@ -263,7 +280,6 @@ export const AddFlour = ({
 }) => {
   const { t, flourName } = useMessages();
   const catalog = useFlourCatalog();
-  const id = useId();
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState('');
   const [custom, setCustom] = useState('');
@@ -297,52 +313,41 @@ export const AddFlour = ({
       setCustom('');
     }
   };
+
+  const selectOptions = [
+    { id: '', label: t('formula.add.other') },
+    ...personal.map((f) => ({ id: f.id, label: `${flourName(f)} (${t('flours.personal')})` })),
+    ...builtIn.map((f) => ({ id: f.id, label: `${flourName(f)} (${t('flours.builtIn')})` })),
+  ];
+
   return (
     <div className="flex flex-col gap-2 px-4 py-3">
-      <label htmlFor={`${id}-flour`} className="text-sm font-semibold">
-        {t('formula.add.flour')}
-      </label>
-      <select
-        id={`${id}-flour`}
-        className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2"
+      <Ui
+        component="fp.select"
+        label={t('formula.add.flour')}
         value={choice}
-        onChange={(event) => setChoice(event.target.value)}
-      >
-        <option value="">{t('formula.add.other')}</option>
-        {personal.length > 0 && (
-          <optgroup label={t('flours.personal')}>
-            {personal.map((f) => (
-              <option key={f.id} value={f.id}>
-                {flourName(f)}
-              </option>
-            ))}
-          </optgroup>
-        )}
-        <optgroup label={t('flours.builtIn')}>
-          {builtIn.map((f) => (
-            <option key={f.id} value={f.id}>
-              {flourName(f)}
-            </option>
-          ))}
-        </optgroup>
-      </select>
+        options={selectOptions}
+        cancelText={t('formula.add.cancel')}
+        okText={t('formula.add.confirm')}
+        onValueChange={setChoice}
+      />
       {choice === '' && (
         <input
           aria-label={t('formula.add.name')}
           placeholder={t('formula.add.name')}
-          className="fp-field h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2.5"
+          className="fp-field min-h-touch h-11 rounded-[10px] border-[1.5px] border-field bg-field-bg px-2.5"
           value={custom}
           onChange={(event) => setCustom(event.target.value)}
         />
       )}
       <span className="text-sm text-muted">{t('formula.add.flourHint')}</span>
       <span className="flex gap-2">
-        <IonButton onClick={add} disabled={!flourId}>
+        <Ui component="fp.button" variant="primary" onClick={add} disabled={!flourId}>
           {t('formula.add.confirm')}
-        </IonButton>
-        <IonButton fill="outline" onClick={() => setOpen(false)}>
+        </Ui>
+        <Ui component="fp.button" variant="secondary" onClick={() => setOpen(false)}>
           {t('formula.add.cancel')}
-        </IonButton>
+        </Ui>
       </span>
     </div>
   );
@@ -369,12 +374,12 @@ export const AddPreparation = ({
   };
   return (
     <span className="flex flex-wrap gap-2">
-      <IonButton fill="outline" size="small" onClick={() => add('poolish')}>
+      <Ui component="fp.button" variant="secondary" onClick={() => add('poolish')}>
         {t('formula.add.poolish')}
-      </IonButton>
-      <IonButton fill="outline" size="small" onClick={() => add('tangzhong')}>
+      </Ui>
+      <Ui component="fp.button" variant="secondary" onClick={() => add('tangzhong')}>
         {t('formula.add.tangzhong')}
-      </IonButton>
+      </Ui>
     </span>
   );
 };
