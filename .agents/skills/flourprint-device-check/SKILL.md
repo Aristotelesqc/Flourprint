@@ -40,7 +40,61 @@ When a PR bumps the SQLite schema (`schema_meta`), the owner's existing data is 
    Device checks passes; a full backup exports and the new data (for example the trash) works.
 4. Record model, Android version, build name and results in the issue; a failure is a blocker.
 
+## Agent-driven emulator checks (Android CLI)
+
+Google's [Android CLI](https://developer.android.com/tools/agents/android-cli) lets an agent
+drive an emulator or a connected device from the shell. It is a machine tool, not a project
+dependency. Verified on the owner's Windows machine on 2026-10-28 (CLI 1.1.16717390, emulator
+`medium_phone`, Android 16, `x86_64` Google Play image), with the `dev-channel` APK
+(`app.flourprint.dev`, build `v0.3.0-fancy-rye`).
+
+- **Setup.** `winget install Google.AndroidCLI`; put `--no-metrics` in
+  `%USERPROFILE%\.androidrc` (telemetry is on by default); `android sdk install platform-tools
+emulator`; `android emulator create medium_phone` (it fetches the system image). Windows needs
+  the **Windows Hypervisor Platform** feature (admin, then restart):
+  `dism /online /enable-feature /featurename:HypervisorPlatform /all`. Without it the emulator
+  exits with "x86_64 emulation currently requires hardware acceleration". `android init`
+  installs the CLI's own agent skill; ask the owner before changing agent configuration.
+- **Run.** `android emulator start medium_phone` (it may not return once booted: check
+  `adb devices` and `adb shell getprop sys.boot_completed` instead of waiting on it);
+  `android install <apk>`; launch with
+  `adb shell monkey -p app.flourprint.dev -c android.intent.category.LAUNCHER 1`.
+- **What works.**
+  - `android layout` (JSON, `--flat` for a list) **does expose the web view's content**: the app
+    bar title and build label, buttons with their accessible names ("New recipe", "Flours",
+    "Advanced"), headings and body text, with bounds and clickable state. It needs no
+    instrumentation in the app.
+  - `android input tap "text=Advanced" --match=first` taps by visible text; the key
+    `content-desc` is not a valid selector key.
+  - `android input key BACK` exercises hardware Back: from Advanced it returned to Recipes; from
+    the root screen it leaves the app, as Android expects.
+  - `android screen capture -o <file>.png` gives a full-resolution screenshot.
+- **Pitfalls.** Read `layout` after the screen settles: right after a transition it can return
+  the system bar only. `input tap` takes a selector, not coordinates.
+- **Not for us:** Compose previews, Android Studio integration, Crashlytics `signals`.
+- **Preferred when available, never required.** The emulator exists only where it was installed
+  (today the owner's Windows machine); cloud sessions and other environments do not have it, so
+  nothing in the repository may require it. `pnpm check`, the builds and the full Playwright run
+  stay the required checks on every push, everywhere. When a change needs device evidence
+  (hardware Back, gestures, the soft keyboard, permissions, storage or a migration), an agent
+  that has the emulator prefers it: it is faster than dispatching the CI native suites and costs
+  the owner no time. Choose by need: Playwright for the interface's content and journeys, the
+  emulator for what only Android shows, the CI native suites for the record on the branch. An
+  agent without the emulator says the emulator check was not run.
+- **Who uses what** (owner decision of 2026-10-28). Agents use the emulator as their device
+  during development. The owner tests the real app on their own phone. Both are device evidence
+  and interchangeable for the app's behaviour; each report names which one ran. Playwright stays
+  the tool for the interface's content and journeys; the CLI adds what only Android shows
+  (hardware Back, gestures, the soft keyboard, permissions).
+- **Migration on real data, in the emulator:** install the previous APK, restore a full backup
+  the owner exported from the phone, install the new APK over it, then run "After a database
+  migration" below. The owner's phone is never put at risk.
+- **Where the emulator can still differ from the owner's phone** (say so when it matters):
+  reminders with the app closed and the manufacturer's battery management, the phone's exact
+  Android and WebView versions (an emulator at the same versions narrows it), touch feel and
+  smoothness, and the final visual judgement, which is the owner's.
+
 ## Reporting
 
-Write what was checked, on which build and device, and what was not. Browser or emulator runs
-never stand in for a physical-device claim.
+Write what was checked, on which build and device (emulator or the owner's phone, with model and
+Android version), and what was not. A browser run never stands in for a device claim.

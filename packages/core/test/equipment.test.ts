@@ -13,6 +13,7 @@ import {
   newEquipmentEntry,
   nextEquipmentVersion,
   processEquipmentRefs,
+  updateStep,
   validateEquipmentEntry,
   validateProcess,
   type EquipmentEntry,
@@ -507,5 +508,69 @@ describe('equipment entries (equipment.md)', () => {
     const registry = {} as never;
     const result = await saveEquipmentEntry(registry, builtInEquipment('pot') as EquipmentEntry);
     expect(result).toMatchObject({ ok: false, error: { code: 'InvalidEquipmentEntry' } });
+  });
+});
+
+describe('step equipment edits (updateStep)', () => {
+  const process = (): Process => ({
+    steps: [
+      {
+        id: 'mix',
+        operation: 'mix',
+        dependsOn: [],
+        schedule: 'asap',
+        plannedDurationS: 600,
+        label: 'Mix',
+      },
+      {
+        ...stepOf({ appliance: 'oven', mode: 'topBottom', setpointC: 230 }),
+        dependsOn: ['mix'],
+        label: 'Bake',
+        durationMode: 'manual',
+        conditions: { temperatureC: 230 },
+      },
+    ],
+  });
+  const bakeOf = (edited: Process): ProcessStep => edited.steps[1] as ProcessStep;
+
+  it('sets the equipment of one step, replacing the previous value whole', () => {
+    const edited = updateStep(process(), 'bake', { equipment: { appliance: 'grill' } });
+    expect(bakeOf(edited).equipment).toEqual({ appliance: 'grill' });
+    expect(validateProcess(edited).ok).toBe(true);
+  });
+
+  it('clears the equipment with undefined, leaving no key', () => {
+    const edited = updateStep(process(), 'bake', { equipment: undefined });
+    expect('equipment' in bakeOf(edited)).toBe(false);
+    expect(validateProcess(edited).ok).toBe(true);
+  });
+
+  it('preserves every other field and every other step', () => {
+    const before = process();
+    const edited = updateStep(before, 'bake', { equipment: { appliance: 'oven', mode: 'broil' } });
+    const { equipment: _after, ...rest } = bakeOf(edited);
+    const { equipment: _before, ...expected } = bakeOf(before);
+    expect(rest).toEqual(expected);
+    expect(edited.steps[0]).toEqual(before.steps[0]);
+    expect(bakeOf(before).equipment).toEqual({
+      appliance: 'oven',
+      mode: 'topBottom',
+      setpointC: 230,
+    });
+  });
+
+  it('leaves refusals to validateProcess: a mode off the oven, heat off the custom mode', () => {
+    const modeOffOven = updateStep(process(), 'bake', {
+      equipment: { appliance: 'grill', mode: 'broil' },
+    });
+    expect(validateProcess(modeOffOven).ok).toBe(false);
+    const heatOffCustom = updateStep(process(), 'bake', {
+      equipment: { appliance: 'oven', mode: 'broil', heat: ['top'] },
+    });
+    expect(validateProcess(heatOffCustom).ok).toBe(false);
+    const custom = updateStep(process(), 'bake', {
+      equipment: { appliance: 'oven', mode: 'custom', heat: ['top', 'fan'] },
+    });
+    expect(validateProcess(custom).ok).toBe(true);
   });
 });

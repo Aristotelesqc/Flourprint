@@ -83,10 +83,12 @@ export interface StepChanges {
   readonly target?: ProcessStep['target'] | undefined;
   readonly requiredWarmupS?: number | undefined;
   readonly startRule?: ProcessStep['startRule'] | undefined;
+  readonly equipment?: ProcessStep['equipment'] | undefined;
 }
 
 /**
- * Changes a step's operation, label, schedule, planned duration, technique or duration mode. A new
+ * Changes a step's operation, label, schedule, planned duration, technique, duration mode or
+ * equipment (replaced whole; equipment.md). A new
  * planned duration drops the applied-suggestion provenance and, unless the changes set a mode,
  * makes the step manual (fermentation.md): a typed time is the baker's. The caller validates.
  */
