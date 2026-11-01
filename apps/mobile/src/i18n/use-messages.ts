@@ -222,6 +222,20 @@ export const useMessages = () => {
   /** Maps an engine error code to a localized message (engine messages are never shown). */
   const error = (failure: DomainError): string => {
     const details = (failure.details ?? {}) as Record<string, unknown>;
+    if (failure.code === 'InvalidProcess' && typeof details.path === 'string') {
+      if (
+        details.path.endsWith('.equipment.mode') &&
+        details.reason === 'needs the appliance oven'
+      ) {
+        return t('error.InvalidProcess.equipmentModeNeedsOven');
+      }
+      if (
+        details.path.endsWith('.equipment.heat') &&
+        details.reason === 'is only valid with the mode custom'
+      ) {
+        return t('error.InvalidProcess.equipmentHeatNeedsCustom');
+      }
+    }
     // A refusal may name its field for a more precise message (e.g. a locked total water).
     const precise = `error.${failure.code}.${String(details.field)}`;
     const key = precise in en ? precise : `error.${failure.code}`;

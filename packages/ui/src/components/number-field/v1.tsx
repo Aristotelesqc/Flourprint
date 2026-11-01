@@ -101,7 +101,7 @@ export function NumberField({
           className={`fp-control-reset w-full min-w-0 rounded-card bg-transparent px-3 py-2 text-on-surface outline-none fp-focus placeholder:text-muted disabled:text-muted disabled:cursor-not-allowed ${inputTypographyClass}`}
         />
         {unit ? (
-          <span className="shrink max-w-[40%] break-words pe-3 text-supporting text-muted select-none min-w-0">
+          <span className="shrink-0 max-w-[40%] break-words pe-3 text-supporting text-muted select-none min-w-0">
             {unit}
           </span>
         ) : null}
