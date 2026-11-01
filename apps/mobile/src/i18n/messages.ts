@@ -8,12 +8,14 @@ import { recipeSortEn, recipeSortFr } from './recipe-sort-messages';
 import { recipeDocumentEn, recipeDocumentFr } from './recipe-document-messages';
 import { stepDuplicateEn, stepDuplicateFr } from './step-duplicate-messages';
 import { waterSourceEn, waterSourceFr } from './water-source-messages';
+import { cookingEditEn, cookingEditFr } from './cooking-edit-messages';
 
 export const en = {
   ...recipeSortEn,
   ...recipeDocumentEn,
   ...stepDuplicateEn,
   ...waterSourceEn,
+  ...cookingEditEn,
   'explain.partialEstimatedSummary': 'Specified part (estimated): {grams} · {pct}',
   'formula.stat.totalWaterSpecifiedEstimate': 'Specified part (estimated): {pct}',
   'formula.stat.totalWaterLowerBound': '≥ {pct}',
@@ -1209,6 +1211,7 @@ export type Catalog = Record<MessageKey, string>;
 
 export const fr: Catalog = {
   ...waterSourceFr,
+  ...cookingEditFr,
   ...recipeSortFr,
   ...recipeDocumentFr,
   ...stepDuplicateFr,

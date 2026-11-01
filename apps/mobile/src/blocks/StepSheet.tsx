@@ -34,6 +34,7 @@ import { InfoButton } from '../ui/InfoButton';
 import { SectionTitle } from '../ui/Layout';
 import { Ui } from '../ui/library';
 import { useValidationActions } from '../ui/ValidationContext';
+import { StepEquipmentFields } from './StepEquipmentFields';
 
 type Translate = ReturnType<typeof useMessages>['t'];
 
@@ -140,6 +141,7 @@ export const StepSheet = ({
   const [duplicateError, setDuplicateError] = useState<string | undefined>();
   const [deleteError, setDeleteError] = useState<string | undefined>();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [equipmentRawInvalid, setEquipmentRawInvalid] = useState(false);
   const isDeletingRef = useRef(false);
   const pendingProcessRef = useRef<Process | undefined>(undefined);
   const validationActions = useValidationActions();
@@ -158,6 +160,7 @@ export const StepSheet = ({
     setDuplicateError(undefined);
     setDeleteError(undefined);
     setConfirmDeleteOpen(false);
+    setEquipmentRawInvalid(false);
     isDeletingRef.current = false;
     pendingProcessRef.current = undefined;
     // Reset only when the sheet opens or moves to another step.
@@ -173,22 +176,25 @@ export const StepSheet = ({
   if (!step) return <IonModal isOpen={false} />;
   const technique = step.technique ?? {};
 
-  const change = (changes: StepChanges): boolean => {
+  const change = (
+    changes: StepChanges,
+    reportError: (message: string | undefined) => void = setOperationError,
+  ): boolean => {
     if (
       changes.operation !== undefined &&
       changes.operation !== step.operation &&
       validationActions?.isBlocked()
     ) {
-      setOperationError(t('step.operationBlockedRaw'));
+      reportError(t('step.operationBlockedRaw'));
       return false;
     }
     const next = updateStep(currentProcessRef.current, step.id, changes);
     const valid = validateProcess(next);
     if (!valid.ok) {
-      setOperationError(error(valid.error));
+      reportError(error(valid.error));
       return false;
     }
-    setOperationError(undefined);
+    reportError(undefined);
     const accepted = onChange(next);
     if (accepted) currentProcessRef.current = next;
     return accepted;
@@ -205,6 +211,7 @@ export const StepSheet = ({
   };
 
   const handleClose = () => {
+    if (equipmentRawInvalid) return;
     commitLabel();
     onClose();
   };
@@ -314,6 +321,7 @@ export const StepSheet = ({
   return (
     <IonModal
       isOpen={open}
+      canDismiss={!equipmentRawInvalid}
       onDidDismiss={() => {
         handleClose();
         onDismissed?.();
@@ -443,6 +451,13 @@ export const StepSheet = ({
               </div>
             )}
           </section>
+
+          <StepEquipmentFields
+            key={step.id}
+            step={step}
+            onValidityChange={setEquipmentRawInvalid}
+            onChange={(equipment, reportError) => change({ equipment }, reportError)}
+          />
 
           <span className="flex items-center gap-1.5 font-bold">
             {t('technique.title')}

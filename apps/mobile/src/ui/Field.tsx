@@ -48,6 +48,7 @@ interface FieldProps<V> {
   readonly placeholder?: string;
   readonly disabled?: boolean;
   readonly describedBy?: string | undefined;
+  readonly onValidityChange?: (invalid: boolean) => void;
 }
 
 /**
@@ -68,6 +69,7 @@ const Field = <V,>({
   placeholder,
   disabled = false,
   describedBy,
+  onValidityChange,
 }: FieldProps<V>) => {
   const id = useId();
   const [text, setText] = useState(formatted);
@@ -107,6 +109,9 @@ const Field = <V,>({
   // Live validity: raw syntax error (parser-rejected), domain refusal, or blur invalidity.
   // Restoration of formatted text clears the blocker immediately.
   const isInvalid = text === formatted ? false : !parse(text).ok || domainRefused || invalid;
+
+  useEffect(() => onValidityChange?.(isInvalid), [onValidityChange, isInvalid]);
+  useEffect(() => () => onValidityChange?.(false), [onValidityChange]);
 
   useEffect(() => {
     if (!validationActions) return;
@@ -246,6 +251,8 @@ interface TemperatureFieldProps {
   readonly width?: string;
   /** °C shown while empty, such as the inherited ambient. */
   readonly placeholderC?: number;
+  /** Allows an enclosing overlay to retain incomplete raw input on dismissal. */
+  readonly onValidityChange?: (invalid: boolean) => void;
 }
 
 /** A temperature typed and shown in the unit of its context, stored in °C. */

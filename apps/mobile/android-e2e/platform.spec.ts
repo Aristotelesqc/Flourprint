@@ -322,3 +322,48 @@ test('step duplication reviews before saving and Android Back discards a proposa
   await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount + 1);
   await forceStop();
 });
+
+test('equipment setpoint keeps invalid raw input through Android Back and persists a correction', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 3);
+  const editMix = async () => {
+    await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+    await page
+      .getByTestId('recipe-method')
+      .filter({ visible: true })
+      .getByRole('button', { name: 'Edit step Mix', exact: true })
+      .first()
+      .click();
+  };
+  await editMix();
+  const panel = () => page.getByTestId('step-equipment-fields').filter({ visible: true });
+  const setpoint = () => panel().getByRole('textbox', { name: 'Setpoint (°C)', exact: true });
+  const close = () =>
+    page.locator('ion-modal:visible').getByRole('button', { name: 'Close', exact: true });
+  await expect(setpoint()).toHaveValue('');
+  await setpoint().fill('-');
+  await setpoint().blur();
+  await expect(setpoint()).toHaveAttribute('aria-invalid', 'true');
+  await close().click();
+  await expect(panel()).toBeVisible();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(panel()).toBeVisible();
+  await expect(setpoint()).toHaveValue('-');
+  await setpoint().fill('35');
+  await setpoint().press('Enter');
+  await close().click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 4);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 4);
+  await editMix();
+  await expect(setpoint()).toHaveValue('35');
+  await expect(
+    page.locator('ion-modal:visible').getByRole('combobox', { name: 'Operation', exact: true }),
+  ).toHaveValue('mix');
+  await forceStop();
+});

@@ -261,6 +261,11 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   losses remain separate negative quantities without a share. Source ranges stay available in the legend.
   Step equipment details and contextual cooking-mode help use independent shared disclosures with
   semantic supporting text, consistent touch targets and keyboard activation in Recipe and Planning.
+  Step authoring includes optional appliance, oven mode with adjacent help, custom heat sources
+  and temperature setpoint in the existing device unit. Profiles do not gate these fields.
+  Existing unedited equipment settings remain intact. Core refusals appear once at their control;
+  incompatible oven settings must be cleared explicitly. An incomplete setpoint keeps the step
+  sheet open until corrected or cleared, including Android Back.
   Complete estimates, known partial lower bounds, and estimated specified parts have distinct labels; an estimated partial mean is never shown as a certain lower bound.
   Hydration is `totalWaterPct`, shown to the whole percent with uncertainty/incompleteness retained; consultation
   omits any hydration-edit button or lock/unlock glyph. Method steps are automatically numbered (1-based)
