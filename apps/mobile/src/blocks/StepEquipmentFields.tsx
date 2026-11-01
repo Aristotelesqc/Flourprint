@@ -1,19 +1,28 @@
-import { useId, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from 'react';
 import type {
   ApplianceKind,
   HeatSource,
   OvenMode,
   ProcessStep,
+  SteamSource,
   StepEquipment,
 } from '@flourprint/core/domain';
 import {
   APPLIANCE_KINDS,
   HEAT_SOURCES,
   OVEN_MODES,
+  STEAM_SOURCES,
   temperatureContext,
 } from '@flourprint/core/domain';
 import { Ui } from '../ui/library';
-import { TemperatureField } from '../ui/Field';
+import { OptionalNumberField, TemperatureField } from '../ui/Field';
 import { useMessages } from '../i18n/use-messages';
 
 interface Props {
@@ -50,19 +59,77 @@ function cleanEquipment(equipment: {
 
 /**
  * Step equipment & cooking authoring fields (Recipe #169, L71, L89, L129).
- * Renders appliance, oven mode, custom heat sources, and temperature setpoint.
+ * Renders appliance, oven mode, custom heat sources, temperature setpoint,
+ * power level & scale, convection fan, and steam settings.
  * Caller handles validation and atomic error reporting through onChange.
  */
 export function StepEquipmentFields({ step, onChange, onValidityChange }: Props) {
   const { t } = useMessages();
   const id = useId();
+  const scaleHelpId = `${id}-scale-help`;
+  const steamDetailInputId = `${id}-steam-detail`;
+  const steamDetailHelpId = `${id}-steam-detail-help`;
+  const steamDetailErrorId = `${id}-steam-detail-error`;
 
   const [applianceError, setApplianceError] = useState<string | undefined>();
   const [modeError, setModeError] = useState<string | undefined>();
   const [heatError, setHeatError] = useState<string | undefined>();
   const [setpointError, setSetpointError] = useState<string | undefined>();
+  const [levelValueError, setLevelValueError] = useState<string | undefined>();
+  const [levelOfError, setLevelOfError] = useState<string | undefined>();
+  const [fanError, setFanError] = useState<string | undefined>();
+  const [steamSourceError, setSteamSourceError] = useState<string | undefined>();
+  const [steamDetailError, setSteamDetailError] = useState<string | undefined>();
+
+  const [setpointInvalid, setSetpointInvalid] = useState(false);
+  const [levelValueInvalid, setLevelValueInvalid] = useState(false);
+  const [levelOfInvalid, setLevelOfInvalid] = useState(false);
+  const [steamDetailInvalid, setSteamDetailInvalid] = useState(false);
+
+  const currentDetail = step.equipment?.steam?.detail ?? '';
+  const [detailDraft, setDetailDraft] = useState<string | null>(null);
+  const detailText = detailDraft ?? currentDetail;
 
   const isOven = step.equipment?.appliance === 'oven';
+  const hasLevel = step.equipment?.level?.value !== undefined;
+  const hasSteam = step.equipment?.steam !== undefined;
+
+  const handleSetpointValidityChange = useCallback((invalid: boolean) => {
+    setSetpointInvalid(invalid);
+  }, []);
+
+  const handleLevelValueValidityChange = useCallback((invalid: boolean) => {
+    setLevelValueInvalid(invalid);
+  }, []);
+
+  const handleLevelOfValidityChange = useCallback((invalid: boolean) => {
+    setLevelOfInvalid(invalid);
+  }, []);
+
+  const isOverallInvalid =
+    setpointInvalid ||
+    levelValueInvalid ||
+    levelOfInvalid ||
+    steamDetailInvalid ||
+    (detailDraft !== null && detailDraft !== currentDetail);
+
+  useEffect(() => {
+    onValidityChange?.(isOverallInvalid);
+  }, [onValidityChange, isOverallInvalid]);
+
+  useEffect(() => {
+    return () => {
+      onValidityChange?.(false);
+    };
+  }, [onValidityChange]);
+
+  const clearAllErrors = () => {
+    setApplianceError(undefined);
+    setModeError(undefined);
+    setHeatError(undefined);
+    setFanError(undefined);
+    setSteamSourceError(undefined);
+  };
 
   const applianceOptions = [
     { id: '', label: t('cooking.edit.notSpecified') },
@@ -80,11 +147,23 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
     })),
   ];
 
+  const fanOptions = [
+    { id: '', label: t('cooking.edit.notSpecified') },
+    { id: 'on', label: t('cooking.edit.fan.on') },
+    { id: 'off', label: t('cooking.edit.fan.off') },
+    { id: 'unknown', label: t('cooking.edit.fan.unknown') },
+  ];
+
+  const steamSourceOptions = [
+    { id: '', label: t('cooking.edit.notSpecified') },
+    ...STEAM_SOURCES.map((source) => ({
+      id: source,
+      label: t(`cooking.edit.steam.${source}`),
+    })),
+  ];
+
   const handleApplianceChange = (value: string) => {
-    setApplianceError(undefined);
-    setModeError(undefined);
-    setHeatError(undefined);
-    setSetpointError(undefined);
+    clearAllErrors();
 
     const nextAppliance = value === '' ? undefined : (value as ApplianceKind);
     const proposed = cleanEquipment({
@@ -103,10 +182,7 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
   };
 
   const handleModeChange = (value: string) => {
-    setApplianceError(undefined);
-    setModeError(undefined);
-    setHeatError(undefined);
-    setSetpointError(undefined);
+    clearAllErrors();
 
     const nextMode = value === '' ? undefined : (value as OvenMode);
     const proposed = cleanEquipment({
@@ -125,10 +201,7 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
   };
 
   const handleHeatToggle = (source: HeatSource) => {
-    setApplianceError(undefined);
-    setModeError(undefined);
-    setHeatError(undefined);
-    setSetpointError(undefined);
+    clearAllErrors();
 
     const currentHeat = step.equipment?.heat ?? [];
     const nextHeat = currentHeat.includes(source)
@@ -152,9 +225,7 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
   };
 
   const handleSetpointCommit = (setpointC: number | undefined): boolean => {
-    setApplianceError(undefined);
-    setModeError(undefined);
-    setHeatError(undefined);
+    clearAllErrors();
     setSetpointError(undefined);
 
     const proposed = cleanEquipment({
@@ -173,6 +244,188 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
 
     return accepted;
   };
+
+  const handleLevelValueCommit = (value: number | undefined): boolean => {
+    clearAllErrors();
+    setLevelValueError(undefined);
+
+    const proposedLevel =
+      value === undefined
+        ? undefined
+        : {
+            value,
+            ...(step.equipment?.level?.of !== undefined ? { of: step.equipment.level.of } : {}),
+          };
+
+    const proposed = cleanEquipment({
+      ...step.equipment,
+      level: proposedLevel,
+    });
+
+    let reportedError: string | undefined;
+    const accepted = onChange(proposed, (msg) => {
+      reportedError = msg;
+    });
+
+    if (!accepted && reportedError) {
+      setLevelValueError(reportedError);
+    }
+
+    return accepted;
+  };
+
+  const handleLevelOfCommit = (ofValue: number | undefined): boolean => {
+    clearAllErrors();
+    setLevelOfError(undefined);
+
+    if (step.equipment?.level?.value === undefined) {
+      return true;
+    }
+
+    const proposedLevel = {
+      value: step.equipment.level.value,
+      ...(ofValue !== undefined ? { of: ofValue } : {}),
+    };
+
+    const proposed = cleanEquipment({
+      ...step.equipment,
+      level: proposedLevel,
+    });
+
+    let reportedError: string | undefined;
+    const accepted = onChange(proposed, (msg) => {
+      reportedError = msg;
+    });
+
+    if (!accepted && reportedError) {
+      setLevelOfError(reportedError);
+    }
+
+    return accepted;
+  };
+
+  const handleFanChange = (value: string) => {
+    clearAllErrors();
+
+    const nextFan = value === '' ? undefined : (value as 'on' | 'off' | 'unknown');
+    const proposed = cleanEquipment({
+      ...step.equipment,
+      fan: nextFan,
+    });
+
+    let reportedError: string | undefined;
+    const accepted = onChange(proposed, (msg) => {
+      reportedError = msg;
+    });
+
+    if (!accepted && reportedError) {
+      setFanError(reportedError);
+    }
+  };
+
+  const handleSteamSourceChange = (value: string) => {
+    clearAllErrors();
+
+    if (value === '') {
+      const proposed = cleanEquipment({
+        ...step.equipment,
+        steam: undefined,
+      });
+
+      let reportedError: string | undefined;
+      const accepted = onChange(proposed, (msg) => {
+        reportedError = msg;
+      });
+
+      if (accepted) {
+        setDetailDraft(null);
+        setSteamDetailError(undefined);
+        setSteamDetailInvalid(false);
+      } else if (reportedError) {
+        setSteamSourceError(reportedError);
+      }
+      return;
+    }
+
+    const nextSource = value as SteamSource;
+    const existingDetail = detailDraft ?? step.equipment?.steam?.detail;
+    const proposed = cleanEquipment({
+      ...step.equipment,
+      steam: {
+        source: nextSource,
+        ...(existingDetail && existingDetail.trim() !== '' ? { detail: existingDetail } : {}),
+      },
+    });
+
+    let reportedError: string | undefined;
+    const accepted = onChange(proposed, (msg) => {
+      reportedError = msg;
+    });
+
+    if (accepted) {
+      setSteamSourceError(undefined);
+    } else if (reportedError) {
+      setSteamSourceError(reportedError);
+    }
+  };
+
+  const commitDetail = (text: string) => {
+    clearAllErrors();
+    setSteamDetailError(undefined);
+
+    if (!step.equipment?.steam) {
+      return true;
+    }
+
+    const trimmed = text.trim();
+    const nextDetail = trimmed === '' ? undefined : text;
+    const proposed = cleanEquipment({
+      ...step.equipment,
+      steam: {
+        source: step.equipment.steam.source,
+        ...(nextDetail !== undefined ? { detail: nextDetail } : {}),
+      },
+    });
+
+    let reportedError: string | undefined;
+    const accepted = onChange(proposed, (msg) => {
+      reportedError = msg;
+    });
+
+    if (accepted) {
+      setDetailDraft(null);
+      setSteamDetailError(undefined);
+      setSteamDetailInvalid(false);
+    } else {
+      setDetailDraft(text);
+      setSteamDetailError(reportedError);
+      setSteamDetailInvalid(true);
+    }
+
+    return accepted;
+  };
+
+  const handleDetailChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setDetailDraft(val === currentDetail ? null : val);
+  };
+
+  const handleDetailBlur = () => {
+    if (detailDraft !== null) {
+      commitDetail(detailDraft);
+    }
+  };
+
+  const handleDetailKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
+  };
+
+  const steamDetailDescribedBy =
+    [steamDetailError ? steamDetailErrorId : null, !hasSteam ? steamDetailHelpId : null]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   return (
     <section data-testid="step-equipment-fields" className="space-y-4 pt-2">
@@ -262,13 +515,108 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
             value={step.equipment?.setpointC}
             context={temperatureContext(step)}
             onCommit={handleSetpointCommit}
-            {...(onValidityChange ? { onValidityChange } : {})}
+            onValidityChange={handleSetpointValidityChange}
           />
           {setpointError && (
             <p className="text-xs text-error mt-1" role="alert">
               {setpointError}
             </p>
           )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <span className="block text-sm font-medium text-on-surface">
+              {t('cooking.edit.levelValue')}
+            </span>
+            <OptionalNumberField
+              label={t('cooking.edit.levelValue')}
+              value={step.equipment?.level?.value}
+              onCommit={handleLevelValueCommit}
+              domainInvalidText={levelValueError}
+              onValidityChange={handleLevelValueValidityChange}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <span className="block text-sm font-medium text-on-surface">
+              {t('cooking.edit.levelOf')}
+            </span>
+            <OptionalNumberField
+              label={t('cooking.edit.levelOf')}
+              value={step.equipment?.level?.of}
+              disabled={!hasLevel}
+              onCommit={handleLevelOfCommit}
+              domainInvalidText={levelOfError}
+              onValidityChange={handleLevelOfValidityChange}
+              describedBy={!hasLevel ? scaleHelpId : undefined}
+            />
+            {!hasLevel && (
+              <p id={scaleHelpId} className="text-xs text-muted">
+                {t('cooking.edit.scaleHelp')}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <Ui
+          component="fp.select"
+          label={t('cooking.edit.fan')}
+          value={step.equipment?.fan ?? ''}
+          options={fanOptions}
+          cancelText={t('cooking.edit.cancel')}
+          okText={t('cooking.edit.ok')}
+          onValueChange={handleFanChange}
+          {...(fanError ? { error: fanError } : {})}
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Ui
+            component="fp.select"
+            label={t('cooking.edit.steamSource')}
+            value={step.equipment?.steam?.source ?? ''}
+            options={steamSourceOptions}
+            cancelText={t('cooking.edit.cancel')}
+            okText={t('cooking.edit.ok')}
+            onValueChange={handleSteamSourceChange}
+            {...(steamSourceError ? { error: steamSourceError } : {})}
+          />
+
+          <div className="space-y-1">
+            <label
+              htmlFor={steamDetailInputId}
+              className="block text-sm font-medium text-on-surface"
+            >
+              {t('cooking.edit.steamDetail')}
+            </label>
+            <input
+              id={steamDetailInputId}
+              type="text"
+              value={detailText}
+              disabled={!hasSteam}
+              placeholder={t('cooking.edit.steamDetailPlaceholder')}
+              aria-invalid={steamDetailError ? 'true' : undefined}
+              aria-describedby={steamDetailDescribedBy}
+              onChange={handleDetailChange}
+              onBlur={handleDetailBlur}
+              onKeyDown={handleDetailKeyDown}
+              className={`w-full min-h-12 bg-field-background border rounded-card px-3 py-2 text-body text-on-surface focus-visible:fp-focus-ring focus-visible:outline-none ${
+                steamDetailError
+                  ? 'border-error'
+                  : 'border-field-outline focus-visible:border-primary'
+              } ${!hasSteam ? 'opacity-60 cursor-not-allowed' : ''}`}
+            />
+            {!hasSteam && (
+              <p id={steamDetailHelpId} className="text-xs text-muted">
+                {t('cooking.edit.steamDetailHelp')}
+              </p>
+            )}
+            {steamDetailError && (
+              <p id={steamDetailErrorId} role="alert" className="text-xs text-error mt-1">
+                {steamDetailError}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </section>

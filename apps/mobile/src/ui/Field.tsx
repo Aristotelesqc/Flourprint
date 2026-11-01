@@ -214,6 +214,11 @@ interface OptionalNumberFieldProps {
   readonly onCommit: Commit<number | undefined>;
   readonly width?: string;
   readonly placeholder?: string;
+  readonly disabled?: boolean;
+  readonly describedBy?: string | undefined;
+  readonly invalidText?: string;
+  readonly domainInvalidText?: string | undefined;
+  readonly onValidityChange?: (invalid: boolean) => void;
 }
 
 /** An optional signed number: empty is unknown (`undefined`), a leading minus is accepted. */
@@ -226,14 +231,20 @@ const parseOptional = (text: string): { ok: true; value: number | undefined } | 
 };
 
 /** A number that may stay unknown, such as a quantity nobody measured. */
-export const OptionalNumberField = ({ value, ...props }: OptionalNumberFieldProps) => {
+export const OptionalNumberField = ({
+  value,
+  invalidText,
+  domainInvalidText,
+  ...props
+}: OptionalNumberFieldProps) => {
   const { t, locale } = useMessages();
   return (
     <Field<number | undefined>
       {...props}
       text={value === undefined ? '' : editableNumber(value, locale)}
       parse={parseOptional}
-      invalidText={t('field.invalidNumber')}
+      invalidText={invalidText ?? t('field.invalidNumber')}
+      domainInvalidText={domainInvalidText}
     />
   );
 };

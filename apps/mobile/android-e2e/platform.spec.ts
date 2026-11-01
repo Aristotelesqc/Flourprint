@@ -351,8 +351,19 @@ test('equipment setpoint keeps invalid raw input through Android Back and persis
   await device.shell('input keyevent KEYCODE_BACK');
   await expect(panel()).toBeVisible();
   await expect(setpoint()).toHaveValue('-');
+  const level = () => panel().getByRole('textbox', { name: 'Power level', exact: true });
+  await level().fill('-');
+  await level().blur();
   await setpoint().fill('35');
   await setpoint().press('Enter');
+  await close().click();
+  await expect(panel()).toBeVisible();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(panel()).toBeVisible();
+  await expect(level()).toHaveValue('-');
+  await level().fill('3');
+  await level().press('Enter');
   await close().click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expectNativeRevision(page, 4);
@@ -362,6 +373,7 @@ test('equipment setpoint keeps invalid raw input through Android Back and persis
   await expectNativeRevision(page, 4);
   await editMix();
   await expect(setpoint()).toHaveValue('35');
+  await expect(level()).toHaveValue('3');
   await expect(
     page.locator('ion-modal:visible').getByRole('combobox', { name: 'Operation', exact: true }),
   ).toHaveValue('mix');
