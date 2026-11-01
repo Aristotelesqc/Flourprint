@@ -261,6 +261,8 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   losses remain separate negative quantities without a share. Source ranges stay available in the legend.
   Step equipment details and contextual cooking-mode help use independent shared disclosures with
   semantic supporting text, consistent touch targets and keyboard activation in Recipe and Planning.
+  Expanded equipment rows show each label once; power values read "7 of 10" ("7 sur 10" in
+  French), while compact standalone summaries retain the power label.
   Step authoring includes optional appliance, oven mode with adjacent help, custom heat sources
   and temperature setpoint in the existing device unit. Profiles do not gate these fields.
   Optional power level and scale, fan state and steam source/detail are authored in the same

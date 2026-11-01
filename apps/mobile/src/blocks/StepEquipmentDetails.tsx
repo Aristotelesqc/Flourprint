@@ -183,15 +183,17 @@ export const StepEquipmentDetails = ({ step }: Props) => {
 
   if (eq.level !== undefined) {
     const formattedVal = new Intl.NumberFormat(locale).format(eq.level.value);
+    let levelValue = formattedVal;
     let levelStr: string;
     if (eq.level.of !== undefined) {
       const formattedOf = new Intl.NumberFormat(locale).format(eq.level.of);
       levelStr = t('equipment.label.levelOf', { value: formattedVal, of: formattedOf });
+      levelValue = t('equipment.value.levelOf', { value: formattedVal, of: formattedOf });
     } else {
       levelStr = t('equipment.label.level', { value: formattedVal });
     }
     compactParts.push(levelStr);
-    detailRows.push({ label: t('equipment.label.levelLabel'), value: levelStr });
+    detailRows.push({ label: t('equipment.label.levelLabel'), value: levelValue });
   }
 
   // 3. Fan
