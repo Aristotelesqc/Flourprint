@@ -4815,7 +4815,7 @@
         "hours_min": 4.0,
         "hours_max": 4.0,
         "temperature": {
-          "kind": "room_unspecified",
+          "kind": "not_stated",
           "c": null
         }
       },
@@ -6951,7 +6951,7 @@
           "name": "cold",
           "hours_min": 24.0,
           "hours_max": 72.0,
-          "duration": "derived",
+          "duration": "explicit",
           "temperature": {
             "kind": "fridge_unspecified",
             "c": null
@@ -7171,9 +7171,7 @@
         "temp_c": 260,
         "minutes_min": 10,
         "minutes_max": 12,
-        "derived": [
-          "temp_c"
-        ],
+        "derived": ["temp_c"],
         "vessel": "stone (500°F / 260°C)"
       },
       "confidence": "high",
@@ -8190,7 +8188,7 @@
           "name": "rests and fold sets",
           "hours_min": 1.8333,
           "hours_max": 1.8333,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -8554,7 +8552,7 @@
           "name": "cold",
           "hours_min": 24.0,
           "hours_max": 72.0,
-          "duration": "derived",
+          "duration": "explicit",
           "temperature": {
             "kind": "fridge_unspecified",
             "c": null

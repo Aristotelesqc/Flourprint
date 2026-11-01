@@ -612,6 +612,12 @@ function evaluateRecipe(recipe) {
 
   const formula = buildFormula(recipe, assumptions);
   const process = buildProcess(recipe);
+  const pref = recipe.preferment;
+  if (pref && pref.flour_pct > 0 && pref.hours_min === null && pref.hours_max === null) {
+    if (!['tangzhong', 'yudane'].includes(pref.type)) {
+      assumptions.push('preferment_duration_defaulted_12h');
+    }
+  }
 
   try {
     const estimates = estimateFermentation(formula, process);
