@@ -291,16 +291,180 @@ for (const english of [false, true]) {
     expect((await storedProcess(page))?.steps[1]?.equipment).toEqual({ appliance: 'oven' });
   });
 
+  test(`Power fan and steam keep exact edits without a profile through undo and reload${suffix}`, async ({
+    page,
+  }) => {
+    const equipment: StepEquipment = {
+      appliance: 'oven',
+      mode: 'broil',
+      support: { item: { id: 'baking-steel', version: 1 } },
+      vessel: { item: { id: 'cast-iron-skillet', version: 1 }, cover: 'covered' },
+      preheated: { appliance: 'cold', vessel: 'hot' },
+      rack: 'middle',
+    };
+    await open(page, equipment);
+    const level = panel(page).getByRole('textbox', { name: /^(Power level|Niveau de puissance)$/ });
+    const scale = panel(page).getByRole('textbox', {
+      name: /^(Scale maximum|Maximum de l’échelle)$/,
+    });
+    await expect(scale).toBeDisabled();
+    await level.fill(english ? '3.25' : '3,25');
+    await level.press('Enter');
+    await scale.fill('5');
+    await scale.press('Enter');
+    await choose(page, /^(Fan state|Ventilation),/, /^(Off|Désactivée)$/);
+    await choose(page, /^(Steam source|Source de vapeur),/, /^(Manual addition|Ajout manuel)$/);
+    const detail = panel(page).getByRole('textbox', {
+      name: /^(Steam detail|Détail de la vapeur)$/,
+    });
+    await detail.fill('Ice cubes in a tray');
+    await detail.blur();
+    await choose(
+      page,
+      /^(Steam source|Source de vapeur),/,
+      /^(Appliance function|Fonction de l’appareil)$/,
+    );
+    await expect(detail).toHaveValue('Ice cubes in a tray');
+    await close(page).click();
+    await footer(page)
+      .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
+      .click();
+    await editCooking(page);
+    await expect(
+      panel(page).getByRole('button', { name: /^(Steam source|Source de vapeur),/ }),
+    ).toHaveAccessibleName(
+      english ? 'Steam source, Manual addition' : 'Source de vapeur, Ajout manuel',
+    );
+    await close(page).click();
+    await footer(page)
+      .getByRole('button', { name: /^(Redo|Rétablir)$/ })
+      .click();
+    await save(page).click();
+    await expectRecipeRevision(page, 2);
+    expect((await storedProcess(page))?.steps[1]).toMatchObject({
+      operation: 'bake',
+      conditions: { temperatureC: 24 },
+      equipment: {
+        ...equipment,
+        level: { value: 3.25, of: 5 },
+        fan: 'off',
+        steam: { source: 'function', detail: 'Ice cubes in a tray' },
+      },
+    });
+    expect((await storedProcess(page))?.steps[1]?.equipment).not.toHaveProperty('setpointC');
+    expect((await storedProcess(page))?.steps[1]?.equipment).not.toHaveProperty('profile');
+    await page.reload();
+    await expectRecipeRevision(page, 2);
+    await editCooking(page);
+    await expect(level).toHaveValue(english ? '3.25' : '3,25');
+    await expect(scale).toHaveValue('5');
+    await expect(detail).toHaveValue('Ice cubes in a tray');
+  });
+
+  test(`Power refusals keep raw input and multiple invalid fields keep dismissal blocked${suffix}`, async ({
+    page,
+  }) => {
+    await open(page, { level: { value: 3, of: 5 } });
+    const level = panel(page).getByRole('textbox', { name: /^(Power level|Niveau de puissance)$/ });
+    const scale = panel(page).getByRole('textbox', {
+      name: /^(Scale maximum|Maximum de l’échelle)$/,
+    });
+    await level.fill('7');
+    await level.press('Enter');
+    await expect(level).toHaveValue('7');
+    await expect(level).toHaveAttribute('aria-invalid', 'true');
+    await expect(sheet(page).getByRole('status')).toHaveCount(1);
+    await expect(sheet(page).getByRole('status')).toContainText(english ? /scale/ : /échelle/);
+    await close(page).click();
+    await expect(panel(page)).toBeVisible();
+    await level.fill('-1');
+    await level.press('Enter');
+    await expect(sheet(page).getByRole('status')).toHaveCount(1);
+    await expect(sheet(page).getByRole('status')).toContainText(english ? /zero/ : /zéro/);
+    await level.fill('-');
+    await level.blur();
+    await setpoint(page).fill('-');
+    await setpoint(page).blur();
+    await level.fill('3');
+    await level.press('Enter');
+    await close(page).click();
+    await expect(panel(page)).toBeVisible();
+    await expect(setpoint(page)).toHaveValue('-');
+    await setpoint(page).fill('');
+    await setpoint(page).press('Enter');
+    await scale.fill('0');
+    await scale.press('Enter');
+    await expect(scale).toHaveAttribute('aria-invalid', 'true');
+    await expect(sheet(page).getByRole('status')).toHaveCount(1);
+    await expect(sheet(page).getByRole('status')).toContainText(
+      english ? /greater than zero/ : /supérieur à zéro/,
+    );
+    await scale.fill('2');
+    await scale.press('Enter');
+    await expect(sheet(page).getByRole('status')).toContainText(english ? /scale/ : /échelle/);
+    await scale.fill('10');
+    await scale.press('Enter');
+    await close(page).click();
+    await save(page).click();
+    await expectRecipeRevision(page, 2);
+    expect((await storedProcess(page))?.steps[1]?.equipment).toEqual({
+      level: { value: 3, of: 10 },
+    });
+  });
+
+  test(`Explicit unknown fan and no steam differ from clearing equipment${suffix}`, async ({
+    page,
+  }) => {
+    await open(page, { level: { value: 3, of: 5 }, steam: { source: 'manual', detail: 'Tray' } });
+    await choose(page, /^(Fan state|Ventilation),/, /^(Unknown|Inconnue)$/);
+    await choose(page, /^(Steam source|Source de vapeur),/, /^(No steam|Sans vapeur)$/);
+    await close(page).click();
+    await save(page).click();
+    await expectRecipeRevision(page, 2);
+    expect((await storedProcess(page))?.steps[1]?.equipment).toEqual({
+      level: { value: 3, of: 5 },
+      fan: 'unknown',
+      steam: { source: 'none', detail: 'Tray' },
+    });
+    await editCooking(page);
+    const level = panel(page).getByRole('textbox', { name: /^(Power level|Niveau de puissance)$/ });
+    await level.fill('');
+    await level.press('Enter');
+    await choose(page, /^(Fan state|Ventilation),/, unsetOption);
+    await choose(page, /^(Steam source|Source de vapeur),/, unsetOption);
+    await close(page).click();
+    await save(page).click();
+    await expectRecipeRevision(page, 3);
+    expect((await storedProcess(page))?.steps[1]).not.toHaveProperty('equipment');
+  });
+
   for (const theme of ['light', 'dark', 'amoled']) {
     for (const large of [false, true]) {
       test(`Cooking authoring fits ${theme} ${large ? '360/130' : '393/100'}${suffix}`, async ({
         page,
       }, testInfo) => {
-        await open(page, { appliance: 'oven', mode: 'broil', setpointC: 250 }, theme, large);
+        await open(
+          page,
+          {
+            appliance: 'oven',
+            mode: 'broil',
+            setpointC: 250,
+            level: { value: 7, of: 10 },
+            fan: 'unknown',
+            steam: { source: 'manual', detail: 'Ice cubes in a tray / Glaçons dans un plat' },
+          },
+          theme,
+          large,
+        );
         for (const control of [
           panel(page).locator('ion-select').first(),
           panel(page).locator('ion-select').nth(1),
           setpoint(page),
+          panel(page).getByRole('textbox', { name: /^(Power level|Niveau de puissance)$/ }),
+          panel(page).getByRole('textbox', { name: /^(Scale maximum|Maximum de l’échelle)$/ }),
+          panel(page).getByRole('button', { name: /^(Fan state|Ventilation),/ }),
+          panel(page).getByRole('button', { name: /^(Steam source|Source de vapeur),/ }),
+          panel(page).getByRole('textbox', { name: /^(Steam detail|Détail de la vapeur)$/ }),
         ]) {
           await control.scrollIntoViewIfNeeded();
           const bounds = await control.boundingBox();

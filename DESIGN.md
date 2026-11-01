@@ -263,6 +263,10 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   semantic supporting text, consistent touch targets and keyboard activation in Recipe and Planning.
   Step authoring includes optional appliance, oven mode with adjacent help, custom heat sources
   and temperature setpoint in the existing device unit. Profiles do not gate these fields.
+  Optional power level and scale, fan state and steam source/detail are authored in the same
+  sheet. Unknown and explicitly off/none remain distinct; no scale or temperature is inferred.
+  Steam details commit once on leaving the field. Incomplete numeric fields retain their text
+  and independently prevent dismissal, so correcting one never drops another unfinished edit.
   Existing unedited equipment settings remain intact. Core refusals appear once at their control;
   incompatible oven settings must be cleared explicitly. An incomplete setpoint keeps the step
   sheet open until corrected or cleared, including Android Back.

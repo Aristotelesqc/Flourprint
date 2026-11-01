@@ -235,6 +235,18 @@ export const useMessages = () => {
       ) {
         return t('error.InvalidProcess.equipmentHeatNeedsCustom');
       }
+      if (details.path.endsWith('.equipment.level.value') && details.reason === 'must be ≥ 0') {
+        return t('error.InvalidProcess.equipmentLevelValueMin');
+      }
+      if (details.path.endsWith('.equipment.level.of') && details.reason === 'must be > 0') {
+        return t('error.InvalidProcess.equipmentLevelOfMin');
+      }
+      if (
+        details.path.endsWith('.equipment.level.value') &&
+        details.reason === 'must be at most of'
+      ) {
+        return t('error.InvalidProcess.equipmentLevelValueAtMostOf');
+      }
     }
     // A refusal may name its field for a more precise message (e.g. a locked total water).
     const precise = `error.${failure.code}.${String(details.field)}`;
