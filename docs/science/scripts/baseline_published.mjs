@@ -26,6 +26,8 @@
  *  - Real preferments with non-ok status preserve the dough estimate and record the assumption
  *    'preferment_estimate_<status>'.
  *  - Unstated salt defaults to 2% and records assumption 'salt_defaulted_2pct'.
+ *  - A real preferment with no stated duration makes the recipe incomplete_schedule; none is imputed.
+ *  - A rest before a later kneading keeps its place but stays outside the dough clock and T.
  *  - Real source hold-out: sourceGroup built via Union-Find over URL hostname (strip www.) and
  *    independence_key.
  *  - Engine refusals (dose_outside_domain, no_commercial_yeast, etc.) are reported without patching.
@@ -487,6 +489,20 @@ function buildFormula(recipe, assumptions = []) {
   return { flours, ingredients, components, anchor };
 }
 
+/**
+ * The stages of the dough clock: `ferment` stages after the last `mix` stage, which ends the mix
+ * (process.md, reference mixing step). A rest before a later kneading stays in its real place, but
+ * outside the clock and outside T.
+ */
+function doughClockStages(recipe) {
+  const stages = recipe.stages || [];
+  let start = 0;
+  stages.forEach((s, i) => {
+    if (getStageRole(s.name) === 'mix') start = i + 1;
+  });
+  return stages.slice(start).filter((s) => getStageRole(s.name) === 'ferment');
+}
+
 function buildProcess(recipe, scale = 1) {
   const steps = [];
   let prevId = null;
@@ -502,7 +518,7 @@ function buildProcess(recipe, scale = 1) {
     const prefHours =
       pref.hours_min !== null && pref.hours_max !== null
         ? (pref.hours_min + pref.hours_max) / 2
-        : (pref.hours_min ?? pref.hours_max ?? 12);
+        : (pref.hours_min ?? pref.hours_max);
     const prefTempC = resolveTemp(pref.temperature);
     const prefId = 'preferment-step';
     steps.push({
@@ -517,57 +533,50 @@ function buildProcess(recipe, scale = 1) {
     prevId = prefId;
   }
 
-  // 2. Mix step: drop pre_mix stages.
-  // One mix step whose duration is the sum of mix-role stages (3 min if none),
-  // at the temperature of the first non-pre_mix stage.
+  // 2. Everything up to the last mix stage, in its real order; pre_mix stages are dropped. Without
+  // a mix stage, a 3 min mix at the temperature of the first remaining stage.
   const stages = recipe.stages || [];
-  const nonPreMixStages = stages.filter((s) => getStageRole(s.name) !== 'pre_mix');
-  const firstNonPreMix = nonPreMixStages[0];
-  const mixTempC = firstNonPreMix ? resolveTemp(firstNonPreMix.temperature) : 21;
-
-  let totalMixHours = 0;
-  let hasMixRole = false;
-  for (const s of stages) {
-    if (getStageRole(s.name) === 'mix') {
-      hasMixRole = true;
-      const h = resolveHours(s);
-      if (h !== null && h > 0) {
-        totalMixHours += h;
-      }
-    }
+  const clock = doughClockStages(recipe);
+  const kept = stages.filter((s) => getStageRole(s.name) !== 'pre_mix');
+  const beforeClock = kept.filter((s) => !clock.includes(s));
+  if (!beforeClock.some((s) => getStageRole(s.name) === 'mix')) {
+    const mixId = 'mix';
+    steps.push({
+      id: mixId,
+      operation: 'mix',
+      dependsOn: prevId ? [prevId] : [],
+      schedule: 'asap',
+      plannedDurationS: 180,
+      conditions: { temperatureC: kept[0] ? resolveTemp(kept[0].temperature) : 21 },
+    });
+    prevId = mixId;
   }
-
-  const mixDurationS = hasMixRole && totalMixHours > 0 ? Math.round(totalMixHours * 3600) : 180;
-  const mixId = 'mix';
-  steps.push({
-    id: mixId,
-    operation: 'mix',
-    dependsOn: prevId ? [prevId] : [],
-    schedule: 'asap',
-    plannedDurationS: mixDurationS,
-    conditions: { temperatureC: mixTempC },
+  beforeClock.forEach((stage, i) => {
+    const stepId = `before-${i + 1}`;
+    steps.push({
+      id: stepId,
+      operation: getStageRole(stage.name) === 'mix' ? 'mix' : 'rest',
+      dependsOn: prevId ? [prevId] : [],
+      schedule: 'asap',
+      plannedDurationS: Math.round((resolveHours(stage) ?? 0) * 3600),
+      conditions: { temperatureC: resolveTemp(stage.temperature) },
+    });
+    prevId = stepId;
   });
-  prevId = mixId;
 
-  // 3. Ferment stages in order
-  for (let i = 0; i < stages.length; i++) {
-    const stage = stages[i];
-    if (getStageRole(stage.name) === 'ferment') {
-      const h = resolveHours(stage);
-      const stageTempC = resolveTemp(stage.temperature);
-      const stageId = `stage-${stage.order || i + 1}`;
-      const op = /proof|apprêt|appret/i.test(stage.name) ? 'proof' : 'bulk';
-      steps.push({
-        id: stageId,
-        operation: op,
-        dependsOn: [prevId],
-        schedule: 'asap',
-        plannedDurationS: Math.round((h ?? 0) * scale * 3600),
-        conditions: { temperatureC: stageTempC },
-      });
-      prevId = stageId;
-    }
-  }
+  // 3. The dough clock, in order
+  clock.forEach((stage, i) => {
+    const stageId = `stage-${i + 1}`;
+    steps.push({
+      id: stageId,
+      operation: /proof|apprêt|appret/i.test(stage.name) ? 'proof' : 'bulk',
+      dependsOn: [prevId],
+      schedule: 'asap',
+      plannedDurationS: Math.round((resolveHours(stage) ?? 0) * scale * 3600),
+      conditions: { temperatureC: resolveTemp(stage.temperature) },
+    });
+    prevId = stageId;
+  });
 
   // 4. Bake step
   const bakeMin =
@@ -591,10 +600,16 @@ function evaluateRecipe(recipe) {
   const assumptions = [];
 
   // Check for unstated schedule durations or unstated stage temperatures
-  const hasIncompleteSchedule = recipe.stages.some(
-    (s) =>
-      s.duration === 'not_stated' || s.hours_min === null || s.temperature?.kind === 'not_stated',
-  );
+  const realPreferment =
+    recipe.preferment?.flour_pct > 0 && !['tangzhong', 'yudane'].includes(recipe.preferment.type);
+  const hasIncompleteSchedule =
+    recipe.stages.some(
+      (s) =>
+        s.duration === 'not_stated' || s.hours_min === null || s.temperature?.kind === 'not_stated',
+    ) ||
+    (realPreferment &&
+      recipe.preferment.hours_min === null &&
+      recipe.preferment.hours_max === null);
 
   if (hasIncompleteSchedule) {
     return {
@@ -612,12 +627,6 @@ function evaluateRecipe(recipe) {
 
   const formula = buildFormula(recipe, assumptions);
   const process = buildProcess(recipe);
-  const pref = recipe.preferment;
-  if (pref && pref.flour_pct > 0 && pref.hours_min === null && pref.hours_max === null) {
-    if (!['tangzhong', 'yudane'].includes(pref.type)) {
-      assumptions.push('preferment_duration_defaulted_12h');
-    }
-  }
 
   try {
     const estimates = estimateFermentation(formula, process);
@@ -785,12 +794,10 @@ function computeStats(items) {
 function computeFermentationHours(recipe) {
   if (!recipe.stages || recipe.stages.length === 0) return 0;
   let totalH = 0;
-  for (const stage of recipe.stages) {
-    if (getStageRole(stage.name) === 'ferment') {
-      const h = resolveHours(stage);
-      if (h !== null && h > 0) {
-        totalH += h;
-      }
+  for (const stage of doughClockStages(recipe)) {
+    const h = resolveHours(stage);
+    if (h !== null && h > 0) {
+      totalH += h;
     }
   }
   return totalH;
@@ -826,7 +833,7 @@ function computeFreshYeastEquivalentDose(recipe) {
 
 function computeStageWeight(recipe, Q) {
   if (!recipe.stages || recipe.stages.length === 0) return 1;
-  const fermentStages = recipe.stages.filter((s) => getStageRole(s.name) === 'ferment');
+  const fermentStages = doughClockStages(recipe);
   if (fermentStages.length === 0) return 1;
 
   let totalH = 0;

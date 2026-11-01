@@ -15,7 +15,7 @@
     "baseline_script_rules": [
       "Ranges in stage durations and temperatures are evaluated at midpoints.",
       "Unspecified temperatures map to 21 deg C for room_unspecified, 4 deg C for fridge_unspecified, and 27 deg C for warm_unspecified.",
-      "A stage with duration: not_stated or temperature kind: not_stated results in status: incomplete_schedule rather than an estimate.",
+      "A stage with duration: not_stated or temperature kind: not_stated, or a real preferment with no stated duration, results in status: incomplete_schedule rather than an estimate.",
       "Preferment yeast is allocated to the preferment component allocation as in the baguette template.",
       "Commercial yeast with form 'unspecified' is modeled as instant yeast with recorded assumptions; engine refusal reasons (e.g. dose_outside_domain) are preserved without patching."
     ]
