@@ -8,13 +8,14 @@
     "temperatures": {
       "room_unspecified": 21,
       "fridge_unspecified": 4,
-      "warm_unspecified": 27
+      "warm_unspecified": 27,
+      "not_stated": null
     },
     "ranges": "Ranges in durations or temperatures are resolved to midpoints for single-point baseline estimation.",
     "baseline_script_rules": [
       "Ranges in stage durations and temperatures are evaluated at midpoints.",
       "Unspecified temperatures map to 21 deg C for room_unspecified, 4 deg C for fridge_unspecified, and 27 deg C for warm_unspecified.",
-      "A stage with duration: not_stated results in status: incomplete_schedule rather than an estimate.",
+      "A stage with duration: not_stated or temperature kind: not_stated results in status: incomplete_schedule rather than an estimate.",
       "Preferment yeast is allocated to the preferment component allocation as in the baguette template.",
       "Commercial yeast with form 'unspecified' is modeled as instant yeast with recorded assumptions; engine refusal reasons (e.g. dose_outside_domain) are preserved without patching."
     ]
@@ -492,7 +493,7 @@
         "form": "instant",
         "g": 1.73,
         "pct": 0.36,
-        "converted": false
+        "converted": true
       },
       "preferment": {
         "type": "poolish",
@@ -647,6 +648,7 @@
         "temp_c": 246,
         "minutes_min": 15,
         "minutes_max": 17,
+        "derived": ["temp_c"],
         "vessel": null
       },
       "confidence": "low",
@@ -955,6 +957,7 @@
         "temp_c": 232,
         "minutes_min": 40,
         "minutes_max": 40,
+        "derived": ["temp_c", "minutes_min", "minutes_max"],
         "vessel": "covered (Dutch oven per title)"
       },
       "confidence": "low",
@@ -2081,6 +2084,7 @@
         "temp_c": 240,
         "minutes_min": 16,
         "minutes_max": 20,
+        "derived": ["temp_c"],
         "vessel": "poach 30 s per side at 82–88°C, then bake"
       },
       "confidence": "medium",
@@ -2445,6 +2449,7 @@
         "temp_c": 232,
         "minutes_min": 15,
         "minutes_max": 19,
+        "derived": ["temp_c"],
         "vessel": "boil 30 s per side, preheated stone"
       },
       "confidence": "low",
@@ -2761,6 +2766,7 @@
         "temp_c": 218,
         "minutes_min": 25,
         "minutes_max": 30,
+        "derived": ["temp_c"],
         "vessel": "9x13 pan"
       },
       "confidence": "low",
@@ -3075,7 +3081,7 @@
           "name": "mix and knead",
           "hours_min": 0.2083,
           "hours_max": 0.2917,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -3756,7 +3762,7 @@
         },
         "egg": {
           "value": 41.7,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 25.0,
@@ -4246,7 +4252,7 @@
           "name": "mix and knead",
           "hours_min": 0.1667,
           "hours_max": 0.2,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -4368,7 +4374,7 @@
           "name": "knead",
           "hours_min": 0.0667,
           "hours_max": 0.0833,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -4572,7 +4578,7 @@
         },
         "egg": {
           "value": 22.2,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 40.0,
@@ -4926,7 +4932,7 @@
           "name": "mix and knead",
           "hours_min": 0.35,
           "hours_max": 0.4167,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -5007,7 +5013,7 @@
         },
         "egg": {
           "value": 10.1,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 47.8,
@@ -5112,7 +5118,7 @@
         },
         "egg": {
           "value": 6.0,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 52.4,
@@ -5231,7 +5237,7 @@
         },
         "egg": {
           "value": 13.7,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 61.8,
@@ -5356,7 +5362,7 @@
         },
         "egg": {
           "value": 17.9,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 49.5,
@@ -5771,7 +5777,7 @@
           "name": "mix and knead",
           "hours_min": 0.7167,
           "hours_max": 0.8167,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -6023,7 +6029,7 @@
           "name": "knead and rest",
           "hours_min": 0.4333,
           "hours_max": 0.4667,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -6250,7 +6256,7 @@
           "name": "mix and rest",
           "hours_min": 0.4167,
           "hours_max": 0.5,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -6381,8 +6387,8 @@
           "hours_max": 10.5,
           "duration": "derived",
           "temperature": {
-            "kind": "stated",
-            "c": 5
+            "kind": "not_stated",
+            "c": null
           }
         },
         {
@@ -6473,7 +6479,7 @@
           "name": "knead and fold sets",
           "hours_min": 0.6,
           "hours_max": 0.6833,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -7165,6 +7171,9 @@
         "temp_c": 260,
         "minutes_min": 10,
         "minutes_max": 12,
+        "derived": [
+          "temp_c"
+        ],
         "vessel": "stone (500°F / 260°C)"
       },
       "confidence": "high",
@@ -7249,7 +7258,7 @@
           "name": "mix and knead",
           "hours_min": 0.5833,
           "hours_max": 0.5833,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -7354,7 +7363,7 @@
           "name": "mix and rest",
           "hours_min": 0.4167,
           "hours_max": 0.5833,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -7385,7 +7394,7 @@
       ],
       "bake": {
         "temp_c": 250,
-        "minutes_min": 4.0,
+        "minutes_min": 3.0,
         "minutes_max": 5.0,
         "derived": ["minutes_min", "minutes_max"],
         "vessel": "electric oven with stone (parbake 2–3 min then 1–2 min)"
@@ -7568,7 +7577,7 @@
           "name": "mix and rest",
           "hours_min": 0.5667,
           "hours_max": 0.575,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -9502,9 +9511,9 @@
         {
           "order": 1,
           "name": "mix and knead",
-          "hours_min": 0.1833,
-          "hours_max": 0.2,
-          "duration": "explicit",
+          "hours_min": 0.3167,
+          "hours_max": 0.3333,
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -9839,7 +9848,7 @@
           "name": "mix and knead",
           "hours_min": 0.1,
           "hours_max": 0.1667,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -10052,7 +10061,7 @@
           "name": "food processor butter cut-in and mix",
           "hours_min": 0.0167,
           "hours_max": 0.0208,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
