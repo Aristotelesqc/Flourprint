@@ -99,6 +99,94 @@ after 60 seconds when caller input arrived late. Establish needed conversation-s
 before lengthy independent work, and inspect the attached terminal every 15–30 seconds while
 new tools can request confirmation. Retain expired requests as partial setup, not completed use.
 
+## Scope Windows Android access to one session
+
+Verified with CLI **1.4.12**, **Gemini 3.8 Flash high**, and Google's Android CLI
+**1.1.16717390** on Windows, 2026-11-01. Use this when an authorized live emulator review
+stalls on repeated command/file confirmations. The caller prepares the disposable emulator and
+exact APK using [device-check](../../flourprint-device-check/SKILL.md); the delegate operates the
+app. Keep the personal app, phone and unrelated data outside the assignment.
+
+Windows PowerShell commands beginning with `& '.../android.exe'` did not receive reusable
+coverage from a shorter conversation-scoped prefix. The official
+[permission documentation](https://antigravity.google/docs/permissions?tab=cli) explains that
+Windows commands that cannot be split require an exact match; `command(regex:...)` matches the
+raw command. Do not infer a network or login problem from another confirmation.
+
+1. Inspect installed help and `/permissions` without saving changes. Use `--settings <file>`:
+   the documented override is **session-only**, unlike editing global/project settings.
+   Keep `toolPermission: request-review` and terminal isolation enabled. `deny` overrides `ask`,
+   which overrides `allow`; `strict` still asks for allowed tools. Diagnose an overriding rule
+   rather than removing it. Never use an allow-all mode or a generic shell/interpreter grant.
+2. Generate an ignored UTF-8 settings file with anchored rules for the **resolved executable,
+   emulator serial, necessary operations and capture directory**. Escape literal paths before
+   inserting them into regexes, then serialize JSON rather than hand-escaping it. For example:
+
+   ```python
+   import json, re
+   from pathlib import Path
+
+   android = "C:/replace-with-resolved-path/android.exe"
+   captures = "C:/replace-with-approved-capture-directory"
+   serial = "emulator-5554"
+   prefix = rf"^& '{re.escape(android)}' "
+   device = re.escape(serial)
+   patterns = [
+       prefix + rf"layout --device {device} --flat$",
+       prefix + rf"screen capture --device {device} -o '"
+       + re.escape(captures) + r"/[A-Za-z0-9_-]+\.png'$",
+       prefix + rf"input --device {device} tap '[^'\r\n]+' --wait=10000$",
+   ]
+   settings = {
+       "toolPermission": "request-review",
+       "enableTerminalSandbox": True,
+       "permissions": {"allow": [f"command(regex:{p})" for p in patterns]},
+   }
+   Path(".agy-runs/session-settings.json").write_text(
+       json.dumps(settings, indent=2) + "\n", encoding="utf-8"
+   )
+   ```
+
+   Add equally bounded forms for the assigned text, scroll or Back actions when needed.
+   Give the delegate the exact command forms: **one native command per tool call**, literal
+   single-quoted arguments, no shell chains, expansion, helper scripts or redirection.
+   Use the same path spelling and forward slashes in the profile and commands: equivalent
+   backslash paths do not match these literal regexes.
+   These rules authorize matching commands; they do not enforce which app is foreground.
+   The caller must establish the intended test app and retain the assignment's data scope.
+
+3. Launch the native CLI in an attached PTY, adding only the approved artifact directory:
+
+   ```text
+   agy --model gemini-3.8-flash-high --mode plan --settings .agy-runs/session-settings.json --add-dir <capture-directory> --log-file <private-log> --prompt-interactive <bounded-brief>
+   ```
+
+   The current stream-json helper does not forward `--settings`; do not invent that helper flag.
+   `--add-dir` makes captures available as workspace files; it is not an Android command grant
+   and does not restrict access to the original workspace.
+   Inspect the effective permission lists before proceeding: the observed override replaced
+   the allow list while retaining the existing deny rules and empty ask list.
+   Do not supply empty deny/ask lists to clear inherited restrictions. Stop if existing
+   restrictions disappear. Confirm global configuration remains unchanged after the session.
+
+4. Prove access with real layout, screenshot **opened by the delegate's image tool**, a harmless
+   UI action and fresh visual/layout evidence. The verified probe ran layout, capture, image
+   reads and a tap without further confirmation. Check for an open popover before tapping
+   a sheet's Close button: successful command execution alone does not prove sheet closure.
+   A harmless `Write-Output` control outside the allow rules still presented a confirmation;
+   the caller declined it and it did not execute. Keep unexpected requests on the normal
+   inspected confirmation path; never auto-approve them. If Android needs its existing cache
+   outside terminal isolation, request that through normal scoped tool permissions.
+5. Only then resume the exact idle reviewer or start the assigned independent reviewer with
+   the same grants. Recheck actual tool results after a restart. Return the report through the
+   final response or an explicitly permitted artifact writer; do not mine private conversation
+   databases, extract private prompt markers, or treat a queued message as a completed report.
+
+Keep the profile, prompts and raw logs private. Publish the source/build, tested environment,
+observed interactions and remaining cases on the relevant issue/PR. The access probe alone
+does not accept a UI change. See the official [settings reference](https://antigravity.google/docs/settings?tab=cli)
+for `--settings` and the session override semantics; recheck these with a different CLI version.
+
 ## Supply the missing browser capability when authorized
 
 The owner authorized installing the browser capability to unblock Flourprint review. Use normal
