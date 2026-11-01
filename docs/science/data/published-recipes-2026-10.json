@@ -15,7 +15,9 @@
     "baseline_script_rules": [
       "Ranges in stage durations and temperatures are evaluated at midpoints.",
       "Unspecified temperatures map to 21 deg C for room_unspecified, 4 deg C for fridge_unspecified, and 27 deg C for warm_unspecified.",
-      "A stage with duration: not_stated or temperature kind: not_stated, or a real preferment with no stated duration, results in status: incomplete_schedule rather than an estimate.",
+      "The dough clock starts after the reference (last) mechanical mixing stage; stages before it are outside the dough clock.",
+      "A stage with duration: not_stated or temperature kind: not_stated results in status: incomplete_schedule rather than an estimate.",
+      "A real preferment with missing duration or temperature uses a technical placeholder proved not to affect dough progress and records assumptions (preferment_duration_not_stated, preferment_temperature_not_stated) without rejecting the recipe.",
       "Preferment yeast is allocated to the preferment component allocation as in the baguette template.",
       "Commercial yeast with form 'unspecified' is modeled as instant yeast with recorded assumptions; engine refusal reasons (e.g. dose_outside_domain) are preserved without patching."
     ]
@@ -545,6 +547,7 @@
         "temp_c": 238,
         "minutes_min": 25,
         "minutes_max": 25,
+        "derived": ["temp_c"],
         "vessel": "preheated stone, steam"
       },
       "confidence": "high",
@@ -3172,7 +3175,7 @@
         },
         "egg": {
           "value": 45.5,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 0,
@@ -3528,7 +3531,7 @@
         },
         "egg": {
           "value": 35.3,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 28.2,
@@ -3637,7 +3640,7 @@
         },
         "egg": {
           "value": 30.0,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 0,
@@ -3825,7 +3828,7 @@
           "hours_max": 1.0,
           "duration": "explicit",
           "temperature": {
-            "kind": "warm_unspecified",
+            "kind": "room_unspecified",
             "c": null
           }
         }
@@ -3883,7 +3886,7 @@
         },
         "egg": {
           "value": 51.5,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 0,
@@ -4004,7 +4007,7 @@
         },
         "egg": {
           "value": 14.3,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 48.0,
@@ -4126,7 +4129,7 @@
         },
         "egg": {
           "value": 11.8,
-          "converted": false
+          "converted": true
         },
         "milk": {
           "value": 0,
@@ -5774,10 +5777,10 @@
       "stages": [
         {
           "order": 1,
-          "name": "mix and knead",
-          "hours_min": 0.7167,
-          "hours_max": 0.8167,
-          "duration": "derived",
+          "name": "mix",
+          "hours_min": 0.0333,
+          "hours_max": 0.0833,
+          "duration": "explicit",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -5785,6 +5788,39 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.5,
+          "hours_max": 0.5,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
+          "name": "mix",
+          "hours_min": 0.0167,
+          "hours_max": 0.0167,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 4,
+          "name": "knead",
+          "hours_min": 0.1667,
+          "hours_max": 0.2,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 5,
           "name": "bulk",
           "hours_min": 1.0,
           "hours_max": 2.0,
@@ -5795,7 +5831,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 6,
           "name": "fridge",
           "hours_min": 2.0,
           "hours_max": 24.0,
@@ -5806,7 +5842,7 @@
           }
         },
         {
-          "order": 4,
+          "order": 7,
           "name": "bench rest",
           "hours_min": 0.3333,
           "hours_max": 0.3333,
@@ -5817,7 +5853,7 @@
           }
         },
         {
-          "order": 5,
+          "order": 8,
           "name": "final proof",
           "hours_min": 1.0,
           "hours_max": 1.5,
@@ -5900,9 +5936,9 @@
       "stages": [
         {
           "order": 1,
-          "name": "mix and rest",
-          "hours_min": 0.3833,
-          "hours_max": 0.3833,
+          "name": "mix",
+          "hours_min": 0.0333,
+          "hours_max": 0.05,
           "duration": "explicit",
           "temperature": {
             "kind": "room_unspecified",
@@ -5911,6 +5947,17 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.3333,
+          "hours_max": 0.3333,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
           "name": "knead",
           "hours_min": 0.1333,
           "hours_max": 0.1667,
@@ -5921,18 +5968,18 @@
           }
         },
         {
-          "order": 3,
+          "order": 4,
           "name": "rests and folds",
           "hours_min": 1.0,
           "hours_max": 1.25,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
           }
         },
         {
-          "order": 4,
+          "order": 5,
           "name": "bulk",
           "hours_min": 18.0,
           "hours_max": 20.0,
@@ -5943,7 +5990,7 @@
           }
         },
         {
-          "order": 5,
+          "order": 6,
           "name": "balls",
           "hours_min": 4.0,
           "hours_max": 6.0,
@@ -6026,10 +6073,10 @@
       "stages": [
         {
           "order": 1,
-          "name": "knead and rest",
-          "hours_min": 0.4333,
-          "hours_max": 0.4667,
-          "duration": "derived",
+          "name": "knead",
+          "hours_min": 0.0833,
+          "hours_max": 0.1,
+          "duration": "explicit",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -6037,6 +6084,28 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.3333,
+          "hours_max": 0.3333,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
+          "name": "knead",
+          "hours_min": 0.0167,
+          "hours_max": 0.0333,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 4,
           "name": "bulk",
           "hours_min": 16.0,
           "hours_max": 16.0,
@@ -6047,7 +6116,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 5,
           "name": "balls in fridge",
           "hours_min": 4.0,
           "hours_max": 10.0,
@@ -6058,7 +6127,7 @@
           }
         },
         {
-          "order": 4,
+          "order": 6,
           "name": "warm up before bake",
           "hours_min": 3.0,
           "hours_max": 5.0,
@@ -6253,10 +6322,10 @@
       "stages": [
         {
           "order": 1,
-          "name": "mix and rest",
-          "hours_min": 0.4167,
-          "hours_max": 0.5,
-          "duration": "derived",
+          "name": "rest",
+          "hours_min": 0.3333,
+          "hours_max": 0.3333,
+          "duration": "explicit",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -6264,6 +6333,17 @@
         },
         {
           "order": 2,
+          "name": "knead",
+          "hours_min": 0.0833,
+          "hours_max": 0.1667,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
           "name": "bulk",
           "hours_min": 2.0,
           "hours_max": 2.0,
@@ -6274,7 +6354,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 4,
           "name": "fridge overnight",
           "hours_min": 21.0,
           "hours_max": 21.0,
@@ -6285,7 +6365,7 @@
           }
         },
         {
-          "order": 4,
+          "order": 5,
           "name": "rest",
           "hours_min": 3.0,
           "hours_max": 3.0,
@@ -6476,9 +6556,9 @@
       "stages": [
         {
           "order": 1,
-          "name": "knead and fold sets",
-          "hours_min": 0.6,
-          "hours_max": 0.6833,
+          "name": "knead",
+          "hours_min": 0.1,
+          "hours_max": 0.1833,
           "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
@@ -6487,6 +6567,17 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.5,
+          "hours_max": 0.5,
+          "duration": "derived",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
           "name": "fridge",
           "hours_min": 24.0,
           "hours_max": 24.0,
@@ -6497,7 +6588,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 4,
           "name": "out of fridge",
           "hours_min": 1.0,
           "hours_max": 1.0,
@@ -6806,9 +6897,9 @@
         {
           "order": 2,
           "name": "fold and rest",
-          "hours_min": 0.3,
+          "hours_min": 0.2833,
           "hours_max": 0.3,
-          "duration": "explicit",
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -7358,10 +7449,10 @@
       "stages": [
         {
           "order": 1,
-          "name": "mix and rest",
-          "hours_min": 0.4167,
-          "hours_max": 0.5833,
-          "duration": "derived",
+          "name": "mix",
+          "hours_min": 0.0833,
+          "hours_max": 0.0833,
+          "duration": "explicit",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -7369,6 +7460,17 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.3333,
+          "hours_max": 0.5,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
           "name": "ferment",
           "hours_min": 16.0,
           "hours_max": 24.0,
@@ -7379,7 +7481,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 4,
           "name": "balls rest",
           "hours_min": 1.0,
           "hours_max": 1.0,
@@ -7572,10 +7674,10 @@
       "stages": [
         {
           "order": 1,
-          "name": "mix and rest",
-          "hours_min": 0.5667,
-          "hours_max": 0.575,
-          "duration": "derived",
+          "name": "mix",
+          "hours_min": 0.0083,
+          "hours_max": 0.0083,
+          "duration": "explicit",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -7583,6 +7685,28 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.5,
+          "hours_max": 0.5,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
+          "name": "mix",
+          "hours_min": 0.05,
+          "hours_max": 0.0667,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 4,
           "name": "cold proof",
           "hours_min": 24.0,
           "hours_max": 96.0,
@@ -7593,7 +7717,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 5,
           "name": "warm up",
           "hours_min": 2.0,
           "hours_max": 3.0,
@@ -8412,9 +8536,9 @@
       "stages": [
         {
           "order": 1,
-          "name": "mix and rest",
-          "hours_min": 0.3667,
-          "hours_max": 0.3667,
+          "name": "mix",
+          "hours_min": 0.0167,
+          "hours_max": 0.0333,
           "duration": "explicit",
           "temperature": {
             "kind": "room_unspecified",
@@ -8423,6 +8547,17 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.3333,
+          "hours_max": 0.3333,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
           "name": "mix low",
           "hours_min": 0.1667,
           "hours_max": 0.1667,
@@ -8433,7 +8568,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 4,
           "name": "bulk",
           "hours_min": 0.75,
           "hours_max": 1.0,
@@ -8444,7 +8579,7 @@
           }
         },
         {
-          "order": 4,
+          "order": 5,
           "name": "cold",
           "hours_min": 48.0,
           "hours_max": 72.0,
@@ -8455,7 +8590,7 @@
           }
         },
         {
-          "order": 5,
+          "order": 6,
           "name": "out of fridge",
           "hours_min": 4.0,
           "hours_max": 5.0,
@@ -9508,10 +9643,10 @@
       "stages": [
         {
           "order": 1,
-          "name": "mix and knead",
-          "hours_min": 0.3167,
-          "hours_max": 0.3333,
-          "duration": "derived",
+          "name": "mix",
+          "hours_min": 0.0167,
+          "hours_max": 0.0333,
+          "duration": "explicit",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -9519,6 +9654,28 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.1667,
+          "hours_max": 0.1667,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
+          "name": "knead",
+          "hours_min": 0.1333,
+          "hours_max": 0.1333,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 4,
           "name": "fridge",
           "hours_min": 24.0,
           "hours_max": 48.0,
@@ -9529,7 +9686,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 5,
           "name": "pan rise",
           "hours_min": 1.0,
           "hours_max": 1.0,
