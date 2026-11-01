@@ -2299,10 +2299,10 @@
       "stages": [
         {
           "order": 1,
-          "name": "knead and rests",
-          "hours_min": 0.6667,
-          "hours_max": 0.6667,
-          "duration": "explicit",
+          "name": "knead",
+          "hours_min": 0.1667,
+          "hours_max": 0.1667,
+          "duration": "derived",
           "temperature": {
             "kind": "room_unspecified",
             "c": null
@@ -2310,6 +2310,28 @@
         },
         {
           "order": 2,
+          "name": "rest",
+          "hours_min": 0.3333,
+          "hours_max": 0.3333,
+          "duration": "derived",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 3,
+          "name": "shape and proof",
+          "hours_min": 0.3333,
+          "hours_max": 0.3333,
+          "duration": "derived",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 4,
           "name": "fridge retard",
           "hours_min": null,
           "hours_max": null,
@@ -6885,6 +6907,17 @@
       "stages": [
         {
           "order": 1,
+          "name": "mix",
+          "hours_min": 0.05,
+          "hours_max": 0.0833,
+          "duration": "explicit",
+          "temperature": {
+            "kind": "room_unspecified",
+            "c": null
+          }
+        },
+        {
+          "order": 2,
           "name": "autolyse",
           "hours_min": 0.5,
           "hours_max": 1.0,
@@ -6895,7 +6928,7 @@
           }
         },
         {
-          "order": 2,
+          "order": 3,
           "name": "fold and rest",
           "hours_min": 0.2833,
           "hours_max": 0.3,
@@ -6906,7 +6939,7 @@
           }
         },
         {
-          "order": 3,
+          "order": 4,
           "name": "cold ferment",
           "hours_min": 24.0,
           "hours_max": 48.0,
@@ -6917,7 +6950,7 @@
           }
         },
         {
-          "order": 4,
+          "order": 5,
           "name": "second proof",
           "hours_min": 2.0,
           "hours_max": 4.0,
