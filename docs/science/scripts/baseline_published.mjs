@@ -8,17 +8,38 @@
  *
  * Rules:
  *  - Durations / temperatures with ranges resolve to midpoints.
- *  - Temperature defaults: room_unspecified -> 21 °C, fridge_unspecified -> 4 °C, warm_unspecified -> 27 °C.
- *  - Stage with duration: "not_stated" or null hours makes recipe "incomplete schedule" (not simulated).
+ *  - Temperature defaults: room_unspecified -> 21 °C, fridge_unspecified -> 4 °C,
+ *    warm_unspecified -> 27 °C.
+ *  - A stage temperature of kind "not_stated" or duration "not_stated" / null hours makes the
+ *    recipe "incomplete_schedule" (not simulated).
+ *  - Stage roles are looked up in an explicit table:
+ *      * pre_mix: not in dough clock (activate yeast, autolyse, bloom, etc.). Dropped from process.
+ *      * mix: mechanical mixing/kneading stages. Summed into a single initial mix step.
+ *      * ferment: all bulk, proof, fold, and rest stages.
+ *      * Compound stage names (mix and rest, knead and rest, knead and rests, knead and fold sets,
+ *        combine and rest): their whole duration counts toward fermentation, since the source page
+ *        does not split the mechanical and resting sub-phases.
  *  - Yeast in preferment is allocated to preferment component as in baguette template.
+ *  - Tangzhong and yudane are scalds, not fermenting preferments: no preferment component and
+ *    no preferment step. Their flour stays in the total, water stays in the dough, and yeast is
+ *    retained in the formula. Recorded as assumption 'scald_not_modelled_as_preferment'.
+ *  - Real preferments with non-ok status preserve the dough estimate and record the assumption
+ *    'preferment_estimate_<status>'.
+ *  - Unstated salt defaults to 2% and records assumption 'salt_defaulted_2pct'.
+ *  - A real preferment with no stated duration makes the recipe incomplete_schedule; none is imputed.
+ *  - A rest before a later kneading keeps its place but stays outside the dough clock and T.
+ *  - Real source hold-out: sourceGroup built via Union-Find over URL hostname (strip www.) and
+ *    independence_key.
  *  - Engine refusals (dose_outside_domain, no_commercial_yeast, etc.) are reported without patching.
  *  - Outputs:
- *     (a) Markdown table per recipe: id, style, progress % at end of schedule (central & band), status/reason, confidence.
- *     (b) Summary table per style and overall: coverage, geometric mean of progress / 100, SD log ratio,
- *         leave-one-source-out RMS factor exp(RMS) and share within ×1.5.
+ *     (a) Markdown table per recipe: id, style, progress % at end of schedule (central & band),
+ *         status/reason, assumptions, confidence.
+ *     (b) Summary table per style and overall: coverage, geometric mean of progress / 100,
+ *         SD log ratio, leave-one-source-out RMS factor exp(RMS) and share within ×1.5.
  *     (c) The same summary table excluding recipes with confidence: "low".
  *     (d) Status and reason breakdown (all recipes).
- *     (e) Leave-one-source-out timing prediction comparison against naive rules (all and excluding low confidence).
+ *     (e) Leave-one-source-out timing prediction comparison against naive rules (all and excluding
+ *         low confidence), including temperature-weighted rules (Q10 = 2 and fitted Q10 / dose).
  *  - Prints to stdout; no file writes.
  */
 
@@ -33,6 +54,125 @@ const datasetPath = path.resolve(__dirname, '../data/published-recipes-2026-10.j
 
 const dataset = JSON.parse(readFileSync(datasetPath, 'utf8'));
 
+// Stage name to role mapping covering every stage in published-recipes-2026-10.json
+const STAGE_ROLES = {
+  // Outside the dough clock
+  'activate yeast': 'pre_mix',
+  autolyse: 'pre_mix',
+  bloom: 'pre_mix',
+  'bloom and autolyse': 'pre_mix',
+  'bloom yeast': 'pre_mix',
+  'dissolve yeast': 'pre_mix',
+  'foam yeast': 'pre_mix',
+  'proof yeast': 'pre_mix',
+  // Mechanical mixing
+  'food processor butter cut-in and mix': 'mix',
+  knead: 'mix',
+  mix: 'mix',
+  'mix and knead': 'mix',
+  'mix low': 'mix',
+  pulse: 'mix',
+  // In the dough clock, compound names whole
+  acclimate: 'ferment',
+  balls: 'ferment',
+  'balls at room temperature': 'ferment',
+  'balls in fridge': 'ferment',
+  'balls rest': 'ferment',
+  'bench and shape': 'ferment',
+  'bench rest': 'ferment',
+  bulk: 'ferment',
+  'bulk ferment': 'ferment',
+  chill: 'ferment',
+  cold: 'ferment',
+  'cold ferment': 'ferment',
+  'cold proof': 'ferment',
+  'combine and rest': 'ferment',
+  'counter rest': 'ferment',
+  'covered fridge': 'ferment',
+  'divide and pre-shape rest': 'ferment',
+  'dough rest': 'ferment',
+  'dough rests and folds': 'ferment',
+  ferment: 'ferment',
+  'final proof': 'ferment',
+  'final rise': 'ferment',
+  'final shape': 'ferment',
+  'first proof': 'ferment',
+  'first proof and folds': 'ferment',
+  'first rest': 'ferment',
+  'first rest with folds': 'ferment',
+  'first rise': 'ferment',
+  'first rise with folds': 'ferment',
+  'fold and rest': 'ferment',
+  folds: 'ferment',
+  'folds and lifts': 'ferment',
+  'folds and rests': 'ferment',
+  fridge: 'ferment',
+  'fridge bulk': 'ferment',
+  'fridge overnight': 'ferment',
+  'fridge retard': 'ferment',
+  'fridge uncovered': 'ferment',
+  'further fermentation': 'ferment',
+  'knead and fold sets': 'ferment',
+  'knead and rest': 'ferment',
+  'knead and rests': 'ferment',
+  'mix and rest': 'ferment',
+  'out before baking': 'ferment',
+  'out of fridge': 'ferment',
+  'out of fridge before baking': 'ferment',
+  'pan and rise': 'ferment',
+  'pan proof': 'ferment',
+  'pan rest': 'ferment',
+  'pan rise': 'ferment',
+  'pre-shape rest': 'ferment',
+  proof: 'ferment',
+  'proof shaped buns': 'ferment',
+  'refrigerator rise': 'ferment',
+  relax: 'ferment',
+  rest: 'ferment',
+  'rest after shaping': 'ferment',
+  'rest and ball': 'ferment',
+  'rest and fold': 'ferment',
+  'rest before baking': 'ferment',
+  'rest dough balls': 'ferment',
+  'rest in pan': 'ferment',
+  'rest shaped balls': 'ferment',
+  'rests and fold sets': 'ferment',
+  'rests and folds': 'ferment',
+  rise: 'ferment',
+  'rise after shaping': 'ferment',
+  'room bulk': 'ferment',
+  'room rest': 'ferment',
+  'second proof': 'ferment',
+  'second rest': 'ferment',
+  'second rest with folds': 'ferment',
+  'second rise': 'ferment',
+  'second rise in fridge': 'ferment',
+  'shape and proof': 'ferment',
+  'shape and rest': 'ferment',
+  'shaped proof': 'ferment',
+  'shaped rest': 'ferment',
+  'shaped rise': 'ferment',
+  'shaping rest': 'ferment',
+  'stay in container': 'ferment',
+  'stretch and fold': 'ferment',
+  'stretch and fold sets': 'ferment',
+  'stretch-and-fold sessions': 'ferment',
+  'stretch-and-fold sets': 'ferment',
+  tempering: 'ferment',
+  warm: 'ferment',
+  'warm up': 'ferment',
+  'warm up before bake': 'ferment',
+};
+
+function getStageRole(name) {
+  const normalized = (name || '').trim().toLowerCase();
+  const role = STAGE_ROLES[normalized];
+  if (!role) {
+    throw new Error(`Unknown stage name: "${name}"`);
+  }
+  return role;
+}
+
 function resolveTemp(temperature) {
   if (!temperature) return 21;
   if (temperature.kind === 'stated' && temperature.c !== null) return temperature.c;
@@ -46,6 +186,69 @@ function resolveHours(stage) {
   if (stage.duration === 'not_stated' || stage.hours_min === null) return null;
   if (stage.hours_max !== null) return (stage.hours_min + stage.hours_max) / 2;
   return stage.hours_min;
+}
+
+function extractHost(urlStr) {
+  if (!urlStr) return '';
+  try {
+    const u = new URL(urlStr);
+    return u.hostname.replace(/^www\./i, '').toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+function assignSourceGroups(recipes) {
+  const n = recipes.length;
+  const parent = Array.from({ length: n }, (_, i) => i);
+
+  function find(i) {
+    let root = i;
+    while (root !== parent[root]) {
+      root = parent[root];
+    }
+    let curr = i;
+    while (curr !== root) {
+      const next = parent[curr];
+      parent[curr] = root;
+      curr = next;
+    }
+    return root;
+  }
+
+  function union(i, j) {
+    const rootI = find(i);
+    const rootJ = find(j);
+    if (rootI !== rootJ) {
+      parent[rootI] = rootJ;
+    }
+  }
+
+  const hostToIdx = new Map();
+  const keyToIdx = new Map();
+
+  recipes.forEach((recipe, i) => {
+    const host = extractHost(recipe.source?.url);
+    if (host) {
+      if (hostToIdx.has(host)) {
+        union(i, hostToIdx.get(host));
+      } else {
+        hostToIdx.set(host, i);
+      }
+    }
+    const key = recipe.independence_key;
+    if (key) {
+      if (keyToIdx.has(key)) {
+        union(i, keyToIdx.get(key));
+      } else {
+        keyToIdx.set(key, i);
+      }
+    }
+  });
+
+  recipes.forEach((recipe, i) => {
+    recipe.sourceGroup = `src-${find(i)}`;
+  });
 }
 
 function buildFormula(recipe, assumptions = []) {
@@ -64,8 +267,13 @@ function buildFormula(recipe, assumptions = []) {
     bakerPct: waterPct,
   });
 
-  // Salt
-  const saltPct = recipe.dough?.salt?.value ?? 2;
+  // Salt: default 2% if unstated
+  const saltVal = recipe.dough?.salt?.value;
+  const saltDefaulted = saltVal === null || saltVal === undefined;
+  const saltPct = saltDefaulted ? 2 : saltVal;
+  if (saltDefaulted) {
+    assumptions.push('salt_defaulted_2pct');
+  }
   ingredients.push({
     id: 'salt',
     kind: 'other',
@@ -242,9 +450,14 @@ function buildFormula(recipe, assumptions = []) {
     });
   }
 
-  // Preferment Component
+  // Preferment Component: scalds (tangzhong, yudane) are excluded from preferment modeling
   const components = [];
-  if (recipe.preferment && recipe.preferment.flour_pct > 0) {
+  if (
+    recipe.preferment &&
+    recipe.preferment.flour_pct > 0 &&
+    recipe.preferment.type !== 'tangzhong' &&
+    recipe.preferment.type !== 'yudane'
+  ) {
     const pref = recipe.preferment;
     let prefYeastBakerPct = 0;
     if (pref.yeast_g !== null && totalFlourG > 0) {
@@ -266,26 +479,46 @@ function buildFormula(recipe, assumptions = []) {
       allocations:
         allocatedYeastPct > 0 ? [{ ingredient: yeastId, bakerPct: allocatedYeastPct }] : [],
     });
+  } else if (
+    recipe.preferment &&
+    (recipe.preferment.type === 'tangzhong' || recipe.preferment.type === 'yudane')
+  ) {
+    assumptions.push('scald_not_modelled_as_preferment');
   }
 
   return { flours, ingredients, components, anchor };
 }
 
-function isMixStage(stage) {
-  return Boolean(stage && /mix|knead|broyer|pétrir|petrir|autolyse|autolyze/i.test(stage.name));
+/**
+ * The stages of the dough clock: `ferment` stages after the last `mix` stage, which ends the mix
+ * (process.md, reference mixing step). A rest before a later kneading stays in its real place, but
+ * outside the clock and outside T.
+ */
+function doughClockStages(recipe) {
+  const stages = recipe.stages || [];
+  let start = 0;
+  stages.forEach((s, i) => {
+    if (getStageRole(s.name) === 'mix') start = i + 1;
+  });
+  return stages.slice(start).filter((s) => getStageRole(s.name) === 'ferment');
 }
 
 function buildProcess(recipe, scale = 1) {
   const steps = [];
   let prevId = null;
 
-  // 1. Preferment step if present
-  if (recipe.preferment && recipe.preferment.flour_pct > 0) {
+  // 1. Preferment step if present (scalds excluded)
+  if (
+    recipe.preferment &&
+    recipe.preferment.flour_pct > 0 &&
+    recipe.preferment.type !== 'tangzhong' &&
+    recipe.preferment.type !== 'yudane'
+  ) {
     const pref = recipe.preferment;
     const prefHours =
       pref.hours_min !== null && pref.hours_max !== null
         ? (pref.hours_min + pref.hours_max) / 2
-        : (pref.hours_min ?? pref.hours_max ?? 12);
+        : (pref.hours_min ?? pref.hours_max);
     const prefTempC = resolveTemp(pref.temperature);
     const prefId = 'preferment-step';
     steps.push({
@@ -300,53 +533,50 @@ function buildProcess(recipe, scale = 1) {
     prevId = prefId;
   }
 
-  // 2. Mix step
-  const firstStage = recipe.stages[0];
-  const isFirstMix = isMixStage(firstStage);
-
-  let stageIndexStart = 0;
-  let mixDurationS = 180; // 3 min default
-  let mixTempC = 21;
-
-  if (isFirstMix) {
-    const h = resolveHours(firstStage);
-    if (h !== null && h > 0) {
-      mixDurationS = Math.round(h * 3600);
-    }
-    mixTempC = resolveTemp(firstStage.temperature);
-    stageIndexStart = 1;
-  } else if (firstStage) {
-    mixTempC = resolveTemp(firstStage.temperature);
+  // 2. Everything up to the last mix stage, in its real order; pre_mix stages are dropped. Without
+  // a mix stage, a 3 min mix at the temperature of the first remaining stage.
+  const stages = recipe.stages || [];
+  const clock = doughClockStages(recipe);
+  const kept = stages.filter((s) => getStageRole(s.name) !== 'pre_mix');
+  const beforeClock = kept.filter((s) => !clock.includes(s));
+  if (!beforeClock.some((s) => getStageRole(s.name) === 'mix')) {
+    const mixId = 'mix';
+    steps.push({
+      id: mixId,
+      operation: 'mix',
+      dependsOn: prevId ? [prevId] : [],
+      schedule: 'asap',
+      plannedDurationS: 180,
+      conditions: { temperatureC: kept[0] ? resolveTemp(kept[0].temperature) : 21 },
+    });
+    prevId = mixId;
   }
-
-  const mixId = 'mix';
-  steps.push({
-    id: mixId,
-    operation: 'mix',
-    dependsOn: prevId ? [prevId] : [],
-    schedule: 'asap',
-    plannedDurationS: mixDurationS,
-    conditions: { temperatureC: mixTempC },
+  beforeClock.forEach((stage, i) => {
+    const stepId = `before-${i + 1}`;
+    steps.push({
+      id: stepId,
+      operation: getStageRole(stage.name) === 'mix' ? 'mix' : 'rest',
+      dependsOn: prevId ? [prevId] : [],
+      schedule: 'asap',
+      plannedDurationS: Math.round((resolveHours(stage) ?? 0) * 3600),
+      conditions: { temperatureC: resolveTemp(stage.temperature) },
+    });
+    prevId = stepId;
   });
-  prevId = mixId;
 
-  // 3. Fermentation stages
-  for (let i = stageIndexStart; i < recipe.stages.length; i++) {
-    const stage = recipe.stages[i];
-    const h = resolveHours(stage);
-    const stageTempC = resolveTemp(stage.temperature);
-    const stageId = `stage-${stage.order || i + 1}`;
-    const op = /proof|apprêt|appret/i.test(stage.name) ? 'proof' : 'bulk';
+  // 3. The dough clock, in order
+  clock.forEach((stage, i) => {
+    const stageId = `stage-${i + 1}`;
     steps.push({
       id: stageId,
-      operation: op,
+      operation: /proof|apprêt|appret/i.test(stage.name) ? 'proof' : 'bulk',
       dependsOn: [prevId],
       schedule: 'asap',
-      plannedDurationS: Math.round((h ?? 0) * scale * 3600),
-      conditions: { temperatureC: stageTempC },
+      plannedDurationS: Math.round((resolveHours(stage) ?? 0) * scale * 3600),
+      conditions: { temperatureC: resolveTemp(stage.temperature) },
     });
     prevId = stageId;
-  }
+  });
 
   // 4. Bake step
   const bakeMin =
@@ -369,15 +599,23 @@ function buildProcess(recipe, scale = 1) {
 function evaluateRecipe(recipe) {
   const assumptions = [];
 
-  // Check for unstated schedule durations
-  const hasIncompleteSchedule = recipe.stages.some(
-    (s) => s.duration === 'not_stated' || s.hours_min === null,
-  );
+  // Check for unstated schedule durations or unstated stage temperatures
+  const realPreferment =
+    recipe.preferment?.flour_pct > 0 && !['tangzhong', 'yudane'].includes(recipe.preferment.type);
+  const hasIncompleteSchedule =
+    recipe.stages.some(
+      (s) =>
+        s.duration === 'not_stated' || s.hours_min === null || s.temperature?.kind === 'not_stated',
+    ) ||
+    (realPreferment &&
+      recipe.preferment.hours_min === null &&
+      recipe.preferment.hours_max === null);
 
   if (hasIncompleteSchedule) {
     return {
       id: recipe.id,
       style: recipe.style,
+      sourceGroup: recipe.sourceGroup,
       independence_key: recipe.independence_key,
       confidence: recipe.confidence,
       status: 'incomplete_schedule',
@@ -394,10 +632,20 @@ function evaluateRecipe(recipe) {
     const estimates = estimateFermentation(formula, process);
     const doughProgress = estimates.dough?.progressPct;
 
+    // Check if real preferments had non-ok status
+    if (estimates.preferments) {
+      for (const prefEst of Object.values(estimates.preferments)) {
+        if (prefEst?.progressPct?.status && prefEst.progressPct.status !== 'ok') {
+          assumptions.push(`preferment_estimate_${prefEst.progressPct.status}`);
+        }
+      }
+    }
+
     if (!doughProgress) {
       return {
         id: recipe.id,
         style: recipe.style,
+        sourceGroup: recipe.sourceGroup,
         independence_key: recipe.independence_key,
         confidence: recipe.confidence,
         status: 'error: no_dough_estimate',
@@ -424,6 +672,7 @@ function evaluateRecipe(recipe) {
       return {
         id: recipe.id,
         style: recipe.style,
+        sourceGroup: recipe.sourceGroup,
         independence_key: recipe.independence_key,
         confidence: recipe.confidence,
         status: 'ok',
@@ -437,6 +686,7 @@ function evaluateRecipe(recipe) {
     return {
       id: recipe.id,
       style: recipe.style,
+      sourceGroup: recipe.sourceGroup,
       independence_key: recipe.independence_key,
       confidence: recipe.confidence,
       status: `${doughProgress.status}${reason}`,
@@ -448,6 +698,7 @@ function evaluateRecipe(recipe) {
     return {
       id: recipe.id,
       style: recipe.style,
+      sourceGroup: recipe.sourceGroup,
       independence_key: recipe.independence_key,
       confidence: recipe.confidence,
       status: `error: ${err.message}`,
@@ -497,16 +748,16 @@ function computeStats(items) {
     sdLogRatioStr = '0.000';
   }
 
-  // Leave-one-source-out CV by independence_key
-  const keys = [...new Set(estimated.map((r) => r.independence_key))];
+  // Leave-one-source-out CV by sourceGroup
+  const groups = [...new Set(estimated.map((r) => r.sourceGroup))];
   let losoRmsStr = '—';
   let losoShareStr = '—';
 
-  if (keys.length > 1) {
+  if (groups.length > 1) {
     const logErrors = [];
-    for (const key of keys) {
-      const train = estimated.filter((r) => r.independence_key !== key);
-      const test = estimated.filter((r) => r.independence_key === key);
+    for (const group of groups) {
+      const train = estimated.filter((r) => r.sourceGroup !== group);
+      const test = estimated.filter((r) => r.sourceGroup === group);
       if (train.length === 0) continue;
 
       const trainGeomMean = geometricMean(train.map((r) => r.progressPct / 100));
@@ -542,12 +793,10 @@ function computeStats(items) {
 
 function computeFermentationHours(recipe) {
   if (!recipe.stages || recipe.stages.length === 0) return 0;
-  const isFirstMix = isMixStage(recipe.stages[0]);
-  const stageIndexStart = isFirstMix ? 1 : 0;
   let totalH = 0;
-  for (let i = stageIndexStart; i < recipe.stages.length; i++) {
-    const h = resolveHours(recipe.stages[i]);
-    if (h !== null) {
+  for (const stage of doughClockStages(recipe)) {
+    const h = resolveHours(stage);
+    if (h !== null && h > 0) {
       totalH += h;
     }
   }
@@ -580,6 +829,32 @@ function computeFreshYeastEquivalentDose(recipe) {
   }
 
   return yPct * factor;
+}
+
+function computeStageWeight(recipe, Q) {
+  if (!recipe.stages || recipe.stages.length === 0) return 1;
+  const fermentStages = doughClockStages(recipe);
+  if (fermentStages.length === 0) return 1;
+
+  let totalH = 0;
+  const stageHours = [];
+  for (const s of fermentStages) {
+    const h = resolveHours(s);
+    const validH = h !== null && h > 0 ? h : 0;
+    stageHours.push(validH);
+    totalH += validH;
+  }
+
+  if (totalH <= 0) return 1;
+
+  let weight = 0;
+  for (let i = 0; i < fermentStages.length; i++) {
+    const share = stageHours[i] / totalH;
+    const tempC = resolveTemp(fermentStages[i].temperature);
+    weight += share * Math.pow(Q, (tempC - 21) / 10);
+  }
+
+  return weight > 0 ? weight : 1;
 }
 
 function evaluateDoughProgress(formula, recipe, scale) {
@@ -649,20 +924,42 @@ function computeGeomSdFactor(arr) {
 }
 
 function evaluateTimingPredictors(items) {
-  const keys = [...new Set(items.map((r) => r.independence_key))];
+  const groups = [...new Set(items.map((r) => r.sourceGroup))];
   const predictors = [
     { name: 'global mean time', errors: [], failures: 0 },
     { name: 'style mean time', errors: [], failures: 0 },
     { name: 'inverse yeast dose', errors: [], failures: 0 },
     { name: 'inverse yeast dose by style', errors: [], failures: 0 },
-    { name: 'model, global end point', errors: [], failures: 0 },
-    { name: 'model, style end point', errors: [], failures: 0 },
+    {
+      name: "model, global end point (uses the schedule's temperatures and stage shares)",
+      errors: [],
+      failures: 0,
+    },
+    {
+      name: "model, style end point (uses the schedule's temperatures and stage shares)",
+      errors: [],
+      failures: 0,
+    },
+    { name: 'rule: inverse dose, Q10 = 2', errors: [], failures: 0 },
+    { name: 'rule: fitted dose and Q10', errors: [], failures: 0 },
   ];
 
-  if (keys.length > 1) {
-    for (const key of keys) {
-      const train = items.filter((r) => r.independence_key !== key);
-      const test = items.filter((r) => r.independence_key === key);
+  const fittedKs = [];
+  const fittedQs = [];
+
+  const kValues = [];
+  for (let ki = 0; ki <= 24; ki++) {
+    kValues.push(Number((ki * 0.05).toFixed(2)));
+  }
+  const qValues = [];
+  for (let qi = 0; qi <= 28; qi++) {
+    qValues.push(Number((1.2 + qi * 0.1).toFixed(1)));
+  }
+
+  if (groups.length > 1) {
+    for (const group of groups) {
+      const train = items.filter((r) => r.sourceGroup !== group);
+      const test = items.filter((r) => r.sourceGroup === group);
       if (train.length === 0) continue;
 
       // Fit aggregates on train
@@ -683,6 +980,46 @@ function evaluateTimingPredictors(items) {
           styleEMap.set(style, geometricMean(styleItems.map((r) => r.progressPct / 100)));
         }
       }
+
+      // 7. rule: inverse dose, Q10 = 2
+      // w_2 = Σ share_i * 2^((T_i - 21) / 10)
+      const trainW2 = train.map((r) => computeStageWeight(r.recipe, 2.0));
+      const trainC7 = geometricMean(train.map((r, idx) => r.T * r.dose * trainW2[idx]));
+
+      // 8. rule: fitted dose and Q10
+      // Grid search k in [0, 1.2] by 0.05, Q in [1.2, 4.0] by 0.1
+      // minimizing variance of ln(T * dose^k * w(Q))
+      let bestVar = Infinity;
+      let bestK = 1.0;
+      let bestQ = 2.0;
+      let bestM = 0;
+
+      const trainWByQ = qValues.map((q) => train.map((r) => computeStageWeight(r.recipe, q)));
+
+      for (let qi = 0; qi < qValues.length; qi++) {
+        const q = qValues[qi];
+        const wList = trainWByQ[qi];
+        const logTPlusLogW = train.map((r, idx) => Math.log(r.T) + Math.log(wList[idx]));
+        const logDose = train.map((r) => Math.log(r.dose));
+
+        for (let ki = 0; ki < kValues.length; ki++) {
+          const k = kValues[ki];
+          const zList = logTPlusLogW.map((ltw, idx) => ltw + k * logDose[idx]);
+          const m = zList.reduce((acc, v) => acc + v, 0) / zList.length;
+          const variance = zList.reduce((acc, v) => acc + (v - m) ** 2, 0) / (zList.length - 1);
+
+          if (variance < bestVar) {
+            bestVar = variance;
+            bestK = k;
+            bestQ = q;
+            bestM = m;
+          }
+        }
+      }
+
+      fittedKs.push(bestK);
+      fittedQs.push(bestQ);
+      const trainC8 = Math.exp(bestM);
 
       for (const t of test) {
         const { T, dose, style, recipe, formula } = t;
@@ -724,11 +1061,21 @@ function evaluateTimingPredictors(items) {
         } else {
           predictors[5].failures++;
         }
+
+        // 7. rule: inverse dose, Q10 = 2
+        const testW2 = computeStageWeight(recipe, 2.0);
+        const tHat7 = trainC7 / (dose * testW2);
+        predictors[6].errors.push(Math.log(T / tHat7));
+
+        // 8. rule: fitted dose and Q10
+        const testW8 = computeStageWeight(recipe, bestQ);
+        const tHat8 = trainC8 / (Math.pow(dose, bestK) * testW8);
+        predictors[7].errors.push(Math.log(T / tHat8));
       }
     }
   }
 
-  return predictors.map((p) => {
+  const rows = predictors.map((p) => {
     const scored = p.errors.length;
     const failures = p.failures;
     let rmsStr = '—';
@@ -756,10 +1103,19 @@ function evaluateTimingPredictors(items) {
       within20: within20Str,
     };
   });
+
+  return {
+    rows,
+    medianK: computeMedian(fittedKs),
+    medianQ: computeMedian(fittedQs),
+  };
 }
 
 function run() {
   const recipes = dataset.recipes || [];
+  assignSourceGroups(recipes);
+  const totalSourceGroups = new Set(recipes.map((r) => r.sourceGroup)).size;
+
   const results = recipes.map(evaluateRecipe);
 
   // Count recipes relying on unspecified yeast assumption
@@ -781,8 +1137,9 @@ function run() {
   console.log('# Published recipes baseline evaluation (2026-10)\n');
   console.log(`* Status and reason counts: ${statusLine}`);
   console.log(
-    `* Recipes relying on unspecified yeast assumed instant: ${relyingOnUnspecifiedYeast} / ${results.length}\n`,
+    `* Recipes relying on unspecified yeast assumed instant: ${relyingOnUnspecifiedYeast} / ${results.length}`,
   );
+  console.log(`* Distinct source groups: ${totalSourceGroups}\n`);
 
   console.log('## (a) Recipe-level evaluation results\n');
   console.log('| ID | Style | Progress % | Band | Status / Reason | Assumptions | Confidence |');
@@ -804,8 +1161,9 @@ function run() {
   console.log('## (b) Summary by style and overall (all confidence levels)\n');
   console.log(`* Status and reason counts: ${statusLine}`);
   console.log(
-    `* Recipes relying on unspecified yeast assumed instant: ${relyingOnUnspecifiedYeast} / ${results.length}\n`,
+    `* Recipes relying on unspecified yeast assumed instant: ${relyingOnUnspecifiedYeast} / ${results.length}`,
   );
+  console.log(`* Distinct source groups: ${totalSourceGroups}\n`);
   console.log(
     '| Style | Total | Estimated | Coverage | Implied End Point | SD Log Ratio | LOSO RMS Factor | Share within ×1.5 |',
   );
@@ -867,6 +1225,7 @@ function run() {
           recipe,
           id: recipe.id,
           style: recipe.style,
+          sourceGroup: recipe.sourceGroup,
           independence_key: recipe.independence_key,
           confidence: recipe.confidence,
           progressPct: r.progressPct,
@@ -887,32 +1246,47 @@ function run() {
   const medianTAll = computeMedian(comparisonSet.map((r) => r.T));
   const geomSdAll = computeGeomSdFactor(comparisonSet.map((r) => r.T));
   console.log(
-    `* Published dough-fermentation time T: median = ${medianTAll.toFixed(2)} h, geometric SD factor = ${geomSdAll.toFixed(3)}\n`,
+    `* Published dough-fermentation time T: median = ${medianTAll.toFixed(2)} h, geometric SD factor = ${geomSdAll.toFixed(3)}`,
   );
+  console.log(`* Source groups: ${new Set(comparisonSet.map((r) => r.sourceGroup)).size}\n`);
+  console.log('* Note: Predictors 1 to 4 know neither temperature nor stage shares.\n');
   console.log('| Predictor | Scored | Failures | RMS factor | Within ×1.5 | Within ×2 |');
   console.log('| :--- | :---: | :---: | :---: | :---: | :---: |');
-  const rowsAll = evaluateTimingPredictors(comparisonSet);
-  for (const row of rowsAll) {
+  const resAll = evaluateTimingPredictors(comparisonSet);
+  for (const row of resAll.rows) {
     console.log(
       `| ${row.name} | ${row.scored} | ${row.failures} | ${row.rms} | ${row.within15} | ${row.within20} |`,
     );
   }
-  console.log('\n');
+  console.log(
+    `\n* Median fitted rule parameters: k = ${resAll.medianK.toFixed(2)}, Q10 = ${resAll.medianQ.toFixed(1)}`,
+  );
+  console.log(
+    "* Note: Section (e)'s model rows are close to section (b)'s error, since progress is nearly proportional to the scale; and rules were scored only on recipes the engine accepts, with the count excluded.\n",
+  );
 
   console.log(`### Excluding low confidence (n = ${comparisonSetNoLow.length})\n`);
   const medianTNoLow = computeMedian(comparisonSetNoLow.map((r) => r.T));
   const geomSdNoLow = computeGeomSdFactor(comparisonSetNoLow.map((r) => r.T));
   console.log(
-    `* Published dough-fermentation time T: median = ${medianTNoLow.toFixed(2)} h, geometric SD factor = ${geomSdNoLow.toFixed(3)}\n`,
+    `* Published dough-fermentation time T: median = ${medianTNoLow.toFixed(2)} h, geometric SD factor = ${geomSdNoLow.toFixed(3)}`,
   );
+  console.log(`* Source groups: ${new Set(comparisonSetNoLow.map((r) => r.sourceGroup)).size}\n`);
+  console.log('* Note: Predictors 1 to 4 know neither temperature nor stage shares.\n');
   console.log('| Predictor | Scored | Failures | RMS factor | Within ×1.5 | Within ×2 |');
   console.log('| :--- | :---: | :---: | :---: | :---: | :---: |');
-  const rowsNoLow = evaluateTimingPredictors(comparisonSetNoLow);
-  for (const row of rowsNoLow) {
+  const resNoLow = evaluateTimingPredictors(comparisonSetNoLow);
+  for (const row of resNoLow.rows) {
     console.log(
       `| ${row.name} | ${row.scored} | ${row.failures} | ${row.rms} | ${row.within15} | ${row.within20} |`,
     );
   }
+  console.log(
+    `\n* Median fitted rule parameters: k = ${resNoLow.medianK.toFixed(2)}, Q10 = ${resNoLow.medianQ.toFixed(1)}`,
+  );
+  console.log(
+    "* Note: Section (e)'s model rows are close to section (b)'s error, since progress is nearly proportional to the scale; and rules were scored only on recipes the engine accepts, with the count excluded.",
+  );
 }
 
 run();
