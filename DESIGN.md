@@ -272,6 +272,11 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   Existing unedited equipment settings remain intact. Core refusals appear once at their control;
   incompatible oven settings must be cleared explicitly. An incomplete setpoint keeps the step
   sheet open until corrected or cleared, including Android Back.
+  The same sheet selects a support and vessel from built-in and active personal equipment.
+  Saved references retain their exact version, including archived or unavailable entries, until
+  explicitly replaced or cleared. A first vessel starts with unknown cover; replacement preserves
+  the selected cover. Appliance, support and vessel preheat facts are independent optional fields;
+  clearing an item does not erase its preheat fact. No profile or temperature is required.
   Complete estimates, known partial lower bounds, and estimated specified parts have distinct labels; an estimated partial mean is never shown as a certain lower bound.
   Hydration is `totalWaterPct`, shown to the whole percent with uncertainty/incompleteness retained; consultation
   omits any hydration-edit button or lock/unlock glyph. Method steps are automatically numbered (1-based)

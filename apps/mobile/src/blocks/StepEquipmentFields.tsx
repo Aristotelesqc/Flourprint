@@ -24,6 +24,7 @@ import {
 import { Ui } from '../ui/library';
 import { OptionalNumberField, TemperatureField } from '../ui/Field';
 import { useMessages } from '../i18n/use-messages';
+import { StepEquipmentItems } from './StepEquipmentItems';
 
 interface Props {
   readonly step: ProcessStep;
@@ -618,6 +619,7 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
             )}
           </div>
         </div>
+        <StepEquipmentItems step={step} onChange={onChange} />
       </div>
     </section>
   );
