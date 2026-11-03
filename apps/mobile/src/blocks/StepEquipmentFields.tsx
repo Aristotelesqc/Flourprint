@@ -86,6 +86,7 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
   const [levelValueInvalid, setLevelValueInvalid] = useState(false);
   const [levelOfInvalid, setLevelOfInvalid] = useState(false);
   const [steamDetailInvalid, setSteamDetailInvalid] = useState(false);
+  const [itemsInvalid, setItemsInvalid] = useState(false);
 
   const currentDetail = step.equipment?.steam?.detail ?? '';
   const [detailDraft, setDetailDraft] = useState<string | null>(null);
@@ -112,7 +113,8 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
     levelValueInvalid ||
     levelOfInvalid ||
     steamDetailInvalid ||
-    (detailDraft !== null && detailDraft !== currentDetail);
+    (detailDraft !== null && detailDraft !== currentDetail) ||
+    itemsInvalid;
 
   useEffect(() => {
     onValidityChange?.(isOverallInvalid);
@@ -619,7 +621,7 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
             )}
           </div>
         </div>
-        <StepEquipmentItems step={step} onChange={onChange} />
+        <StepEquipmentItems step={step} onChange={onChange} onValidityChange={setItemsInvalid} />
       </div>
     </section>
   );

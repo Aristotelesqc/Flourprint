@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import type {
   Cover,
   EquipmentEntry,
@@ -14,6 +14,7 @@ import { Ui } from '../ui/library';
 import { useServices } from '../services/services';
 import { useMessages } from '../i18n/use-messages';
 import { en, type MessageKey } from '../i18n/messages';
+import { PersonalEquipmentCreate } from './PersonalEquipmentCreate';
 
 interface Props {
   readonly step: ProcessStep;
@@ -21,6 +22,7 @@ interface Props {
     equipment: StepEquipment | undefined,
     reportError: (message: string | undefined) => void,
   ) => boolean;
+  readonly onValidityChange?: (invalid: boolean) => void;
 }
 
 export type StepEquipmentItemsProps = Props;
@@ -187,7 +189,7 @@ function cleanPreheated(
 /**
  * Step support, vessel, cover, and preheat facts (Recipe #169, L71, L89, L115, L129, L143).
  */
-export function StepEquipmentItems({ step, onChange }: Props) {
+export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) {
   const { t } = useMessages();
   const services = useServices();
 
@@ -195,6 +197,66 @@ export function StepEquipmentItems({ step, onChange }: Props) {
     status: 'loading',
     entries: BUILT_IN_EQUIPMENT,
   });
+  const [createKind, setCreateKind] = useState<'support' | 'vessel' | null>(null);
+  const [creationStatus, setCreationStatus] = useState<string | undefined>();
+  const [createInvalid, setCreateInvalid] = useState(false);
+
+  const supportButtonRef = useRef<HTMLButtonElement | null>(null);
+  const vesselButtonRef = useRef<HTMLButtonElement | null>(null);
+  const initiatingKindRef = useRef<'support' | 'vessel' | null>(null);
+
+  const handleCreateValidityChange = useCallback((blocked: boolean) => {
+    setCreateInvalid(blocked);
+  }, []);
+
+  useEffect(() => {
+    onValidityChange?.(createInvalid);
+  }, [onValidityChange, createInvalid]);
+
+  useEffect(() => {
+    return () => {
+      onValidityChange?.(false);
+    };
+  }, [onValidityChange]);
+
+  useEffect(() => {
+    if (createKind !== null) return;
+    const kind = initiatingKindRef.current;
+    initiatingKindRef.current = null;
+    if (kind === 'support') supportButtonRef.current?.focus();
+    else if (kind === 'vessel') vesselButtonRef.current?.focus();
+  }, [createKind]);
+
+  const handleOpenCreateSupport = () => {
+    setCreationStatus(undefined);
+    initiatingKindRef.current = 'support';
+    setCreateKind('support');
+  };
+
+  const handleOpenCreateVessel = () => {
+    setCreationStatus(undefined);
+    initiatingKindRef.current = 'vessel';
+    setCreateKind('vessel');
+  };
+
+  const handleCancelCreate = () => {
+    setCreateKind(null);
+    setCreateInvalid(false);
+  };
+
+  const handleCreated = (entry: EquipmentEntry) => {
+    setCatalogState((prev) => ({
+      ...prev,
+      entries: [...prev.entries, entry],
+    }));
+    setCreationStatus(
+      t('equipment.create.createdStatus', {
+        name: formatEntryName(entry, t),
+      }),
+    );
+    setCreateKind(null);
+    setCreateInvalid(false);
+  };
 
   const loadCatalog = useEffectEvent(() => {
     let cancelled = false;
@@ -480,38 +542,74 @@ export function StepEquipmentItems({ step, onChange }: Props) {
   return (
     <div data-testid="step-equipment-items" className="space-y-3 pt-2">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Ui
-          component="fp.select"
-          label={t('cooking.edit.support')}
-          value={supportValue}
-          options={supportOptions}
-          cancelText={t('cooking.edit.cancel')}
-          okText={t('cooking.edit.ok')}
-          onValueChange={handleSupportChange}
-          {...(supportError ? { error: supportError } : {})}
-          {...(catalogState.status === 'error'
-            ? { description: t('cooking.edit.catalogErrorHelp') }
-            : catalogState.status === 'loading'
-              ? { description: t('cooking.edit.catalogLoadingHelp') }
-              : {})}
-        />
+        <div className="space-y-1">
+          <Ui
+            component="fp.select"
+            label={t('cooking.edit.support')}
+            value={supportValue}
+            options={supportOptions}
+            cancelText={t('cooking.edit.cancel')}
+            okText={t('cooking.edit.ok')}
+            onValueChange={handleSupportChange}
+            {...(supportError ? { error: supportError } : {})}
+            {...(catalogState.status === 'error'
+              ? { description: t('cooking.edit.catalogErrorHelp') }
+              : catalogState.status === 'loading'
+                ? { description: t('cooking.edit.catalogLoadingHelp') }
+                : {})}
+          />
+          <Ui
+            component="fp.button"
+            variant="quiet"
+            ref={supportButtonRef}
+            disabled={createKind !== null || catalogState.status === 'loading'}
+            onClick={handleOpenCreateSupport}
+          >
+            {t('equipment.create.addSupport')}
+          </Ui>
+        </div>
 
-        <Ui
-          component="fp.select"
-          label={t('cooking.edit.vessel')}
-          value={vesselValue}
-          options={vesselOptions}
-          cancelText={t('cooking.edit.cancel')}
-          okText={t('cooking.edit.ok')}
-          onValueChange={handleVesselChange}
-          {...(vesselError ? { error: vesselError } : {})}
-          {...(catalogState.status === 'error'
-            ? { description: t('cooking.edit.catalogErrorHelp') }
-            : catalogState.status === 'loading'
-              ? { description: t('cooking.edit.catalogLoadingHelp') }
-              : {})}
-        />
+        <div className="space-y-1">
+          <Ui
+            component="fp.select"
+            label={t('cooking.edit.vessel')}
+            value={vesselValue}
+            options={vesselOptions}
+            cancelText={t('cooking.edit.cancel')}
+            okText={t('cooking.edit.ok')}
+            onValueChange={handleVesselChange}
+            {...(vesselError ? { error: vesselError } : {})}
+            {...(catalogState.status === 'error'
+              ? { description: t('cooking.edit.catalogErrorHelp') }
+              : catalogState.status === 'loading'
+                ? { description: t('cooking.edit.catalogLoadingHelp') }
+                : {})}
+          />
+          <Ui
+            component="fp.button"
+            variant="quiet"
+            ref={vesselButtonRef}
+            disabled={createKind !== null || catalogState.status === 'loading'}
+            onClick={handleOpenCreateVessel}
+          >
+            {t('equipment.create.addVessel')}
+          </Ui>
+        </div>
       </div>
+
+      {createKind !== null && (
+        <PersonalEquipmentCreate
+          kind={createKind}
+          onCreated={handleCreated}
+          onCancel={handleCancelCreate}
+          onValidityChange={handleCreateValidityChange}
+        />
+      )}
+      {creationStatus && (
+        <p role="status" className="text-xs text-on-surface bg-surface-container rounded-card p-2">
+          {creationStatus}
+        </p>
+      )}
 
       <Ui
         component="fp.select"

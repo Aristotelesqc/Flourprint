@@ -379,3 +379,52 @@ test('equipment setpoint keeps invalid raw input through Android Back and persis
   ).toHaveValue('mix');
   await forceStop();
 });
+
+test('personal equipment creation guards Android Back and persists an explicitly selected vessel', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 4);
+  const editMix = async () => {
+    await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+    await page
+      .getByTestId('recipe-method')
+      .filter({ visible: true })
+      .getByRole('button', { name: 'Edit step Mix', exact: true })
+      .first()
+      .click();
+  };
+  await editMix();
+  const items = () => page.getByTestId('step-equipment-items').filter({ visible: true });
+  const form = () => page.getByRole('region', { name: 'New personal baking vessel', exact: true });
+  await items().getByRole('button', { name: 'Add personal vessel', exact: true }).click();
+  await form().getByRole('textbox', { name: 'Name', exact: true }).fill('Native personal pot');
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(form().getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(
+    'Native personal pot',
+  );
+  await form().getByRole('button', { name: 'Create equipment', exact: true }).click();
+  await expect(form()).toBeHidden();
+  const vessel = () => items().getByRole('button', { name: /^Baking vessel,/ });
+  await expect(vessel()).not.toHaveAccessibleName(/Native personal pot/);
+  await vessel().press('Space');
+  await page.getByRole('radio', { name: 'Native personal pot', exact: true }).click();
+  await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+  await page
+    .locator('ion-modal:visible')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 5);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 5);
+  await editMix();
+  await expect(vessel()).toHaveAccessibleName(/Native personal pot/);
+  await expect(items().getByRole('button', { name: /^Vessel cover,/ })).toHaveAccessibleName(
+    /Unknown/,
+  );
+  await forceStop();
+});
