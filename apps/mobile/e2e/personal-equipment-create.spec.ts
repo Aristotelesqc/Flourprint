@@ -255,6 +255,11 @@ for (const english of [false, true]) {
     await edit(page);
     await expect(items(page).getByRole('button', { name: vessel })).toHaveAccessibleName(/My pot/);
     await items(page).getByRole('button', { name: support }).press('Space');
+    const popover = page.locator('ion-popover:visible');
+    await expect(popover).toBeVisible();
+    await popover.evaluate(async (element) => {
+      await (element as HTMLElement & { present(): Promise<void> }).present();
+    });
     await expect(
       page.getByRole('radio', { name: 'Cocotte personnelle / My pot', exact: true }),
     ).toHaveCount(0);
