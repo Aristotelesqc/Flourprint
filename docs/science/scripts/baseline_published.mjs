@@ -43,6 +43,8 @@
  *     (e) Leave-one-source-out timing prediction comparison against naive rules (all and excluding
  *         low confidence), including temperature-weighted rules (Q10 = 2 and fitted Q10 / dose).
  *  - Prints to stdout; no file writes.
+ *  - Run directly, it prints the report. Imported (uncertainty_published.mjs), it only exports
+ *    the dataset and the helpers below.
  */
 
 import { readFileSync } from 'node:fs';
@@ -1389,4 +1391,23 @@ function run() {
   );
 }
 
-run();
+export {
+  dataset,
+  assignSourceGroups,
+  evaluateRecipe,
+  buildFormula,
+  buildProcess,
+  doughClockStages,
+  resolveHours,
+  resolveTemp,
+  computeFermentationHours,
+  computeFreshYeastEquivalentDose,
+  computeStageWeight,
+  evaluateDoughProgress,
+  findModelScale,
+  geometricMean,
+};
+
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  run();
+}

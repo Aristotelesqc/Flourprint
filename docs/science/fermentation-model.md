@@ -544,6 +544,7 @@ details match the paper; measure the dough temperature during the owner's cold r
 | science doc     | 2026-10-25        | Section 14: provenance of every constant of the dough thermal model proposed for contract 0.21.0 (#176). No change of the kinetic model; the thermal sub-model `flourprint.dough-thermal` 0.1.0 is a proposal until its contract merges.                                                                                                                                                                                                                             |
 | science doc     | 2026-10-26        | Goal and acceptance criterion: a forecast at least as good as an expert baker's, judged by held-out predictive error against published schedules and recorded bakes; recipe corpus, science and personal bakes as complementary sources; gate 9. Owner decision. No model change.                                                                                                                                                                                    |
 | science doc     | 2026-10-30        | Section 8 and its data file: Boudrag Table 5 re-extracted from the full text; the earlier transcription and the salt factor fitted on it withdrawn. No model change.                                                                                                                                                                                                                                                                                                 |
+| science doc     | 2026-11-03        | Section 15: predictive uncertainty measured on published practice (calibrated, 80 % interval about ×5; the corner envelope covers 74 % of held-out recipes). No model change.                                                                                                                                                                                                                                                                                        |
 
 Any future model version adds a row here with the evidence it rests on.
 
@@ -601,3 +602,94 @@ sugar, eggs, milk change `cp`, `k`, `ρ` and fermentation), sourdough heteroferm
 heat per CO₂), uncovered surfaces (evaporation 1–3 °C), fridge stratification and compressor
 cycling. Evidence still expected (#176, N2): probe readings after a fridge transfer in two
 containers and two masses, and one self-heating check on a large bulk at stable room temperature.
+
+## 15. Predictive uncertainty (research, 2026-11-03)
+
+Status: research only. No contract, constant, band or estimate changes. Script:
+`scripts/uncertainty_published.mjs`, on the published-recipe dataset and the dough clock of
+`scripts/baseline_published.mjs` (#33).
+
+### What it is for
+
+A forecast should state how wrong it may be, and that statement must be testable. The model is
+judged by the distribution it gives for held-out cases: its intervals must contain the observed
+time as often as they claim (calibration), and be as narrow as possible (sharpness). Proper scores
+(log score, CRPS) combine both. A candidate is better when its distribution scores better on
+held-out sources, not only its central value. Gate 5 (section 12) asks for exactly this measured
+band.
+
+### Structure
+
+In log time, `ln T_observed = ln T_model + b + ε`. The spread of `ε` has five sources:
+
+- **parameters** (`A`, `k`, `Ea`, yeast conversions): today the corner envelope of the contract;
+- **inputs**: unstated room temperature, yeast form and vitality, dough temperature, the thermal
+  constants of section 14;
+- **end point**: the readiness profile and its band (section 4);
+- **structure**: what the law leaves out (ingredients, temperature shape, the dose exponent's
+  dependence on temperature);
+- **observation**: how a source or a baker reports the time.
+
+Published recipes measure only the total. Separating the sources needs recorded bakes with their
+conditions (section 12). The universal spread then serves as the prior, and each baker's bias `b`
+and spread are updated from their own bakes (section 11), for example with a conjugate
+normal-inverse-gamma update; N = 1 data never change the universal spread.
+
+### First measurement: published practice (n = 50, 39 source groups)
+
+For each held-out source, a predictor's distribution is a normal law in `ln T` whose bias and
+spread come from the training sources only; a split-conformal interval uses the same training
+residuals without assuming a normal law.
+
+| Predictor                | RMS factor | CRPS  | Log score | 80 % interval, total width | Coverage 50/80/95 %, normal | Coverage, conformal |
+| ------------------------ | ---------- | ----- | --------- | -------------------------- | --------------------------- | ------------------- |
+| Global mean time         | ×3.13      | 0.665 | 1.561     | ×18.1                      | 48 / 72 / 98                | 50 / 78 / 96        |
+| Style mean time          | ×2.49      | 0.508 | 1.511     | ×5.9                       | 54 / 72 / 80                | 42 / 70 / 80        |
+| Fitted dose and Q10 rule | ×1.88      | 0.355 | 0.994     | ×4.9                       | 52 / 76 / 96                | 50 / 76 / 96        |
+| Model, global end point  | ×1.89      | 0.348 | 1.015     | ×5.0                       | 56 / 82 / 94                | 50 / 78 / 96        |
+
+Without low-confidence recipes (n = 42): model CRPS 0.313, 80 % width ×4.1; rule 0.317, ×4.0.
+
+- On published practice the model's distribution is **calibrated but wide**: coverage is close to
+  nominal and the PIT deciles are roughly flat, but the 80 % interval spans ×5 (about ×2.2 on each
+  side of the central time).
+- The proper scores confirm the tie with the two-parameter rule fitted on the recipes. They do
+  not separate the two.
+- The **corner envelope** of the contract contains the held-out time for 37 of 50 recipes (74 %;
+  76 % without low confidence), with a median progress band of ×5.2. On this data it behaves like
+  a 75 % interval of published practice. That is a coincidence of assumed ranges, not a property
+  of the envelope, and it holds for published practice only: it is still not a confidence
+  interval.
+- The style mean has heavy tails: its normal 95 % interval contains only 80 %.
+
+By regime (held-out model errors; small groups, indicative only):
+
+- Schedules that are mostly cold (n = 27) are not worse (×1.67) than schedules with no cold stage
+  (n = 22, ×2.12).
+- Low doses (under 0.5 % fresh-equivalent, n = 7) are published shorter than predicted (bias
+  ×0.71). That fits the fitted rule's dose exponent of about 0.55 against the shipped 0.729.
+- Lean boules (n = 4) and neo-Neapolitan pizzas (n = 6) are published longer than predicted
+  (×1.80 and ×1.37).
+- Low-confidence recipes are worse (×2.55 against ×1.75).
+
+Limits:
+
+- These are recommendations, not measurements. The result measures agreement with practice, the
+  first measure of the Goal, not accuracy on bakes.
+- Unstated rooms are assumed to be at 21 °C.
+- The 29 recipes refused as `dose_outside_domain` are not scored.
+- The model's end point is one parameter fitted on the training sources.
+- The dough clock departs from `leaven_before_mixing` (process.md) for six recipes (review of
+  PR #222).
+- The spread is assumed equal across regimes.
+- The progress curve is read from a 49-point grid, checked against bisection to within 1.1e-3 in
+  `ln` scale.
+
+### Next steps (research)
+
+1. Propagate input uncertainty (unstated room temperature, yeast form) through the engine. This
+   shows how much of the ×1.9 the inputs alone explain, and needs no new data.
+2. Let the spread depend on the regime only if held-out scores improve.
+3. A contract proposal for gate 5 comes after these steps: replace the envelope with a measured
+   predictive interval that names its basis ("published practice, n = 50"), plus the personal
+   update from recorded bakes.
