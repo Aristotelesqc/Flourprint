@@ -138,6 +138,7 @@ raw command. Do not infer a network or login problem from another confirmation.
        prefix + rf"input --device {device} tap '[^'\r\n]+' --wait=10000$",
    ]
    settings = {
+       "agentMode": "",
        "toolPermission": "request-review",
        "enableTerminalSandbox": True,
        "permissions": {"allow": [f"command(regex:{p})" for p in patterns]},
@@ -158,8 +159,12 @@ raw command. Do not infer a network or login problem from another confirmation.
 3. Launch the native CLI in an attached PTY, adding only the approved artifact directory:
 
    ```text
-   agy --model gemini-3.8-flash-high --mode plan --settings .agy-runs/session-settings.json --add-dir <capture-directory> --log-file <private-log> --prompt-interactive <bounded-brief>
+   agy --model gemini-3.8-flash-high --settings .agy-runs/session-settings.json --add-dir <capture-directory> --log-file <private-log> --prompt-interactive <bounded-brief>
    ```
+
+   For an already approved live journey, use default request-review mode (`agentMode: ""`
+   in the session override). CLI 1.4.12 prepends `/plan` in plan mode, which returned a plan
+   instead of app use. Keep normal prompts enabled; do not switch to auto or accept-edits.
 
    The current stream-json helper does not forward `--settings`; do not invent that helper flag.
    `--add-dir` makes captures available as workspace files; it is not an Android command grant
@@ -180,7 +185,15 @@ raw command. Do not infer a network or login problem from another confirmation.
 5. Only then resume the exact idle reviewer or start the assigned independent reviewer with
    the same grants. Recheck actual tool results after a restart. Return the report through the
    final response or an explicitly permitted artifact writer; do not mine private conversation
-   databases, extract private prompt markers, or treat a queued message as a completed report.
+   databases or treat a queued message as a completed report.
+
+   An owner configuration may separately require a plan-scoped private READ marker before
+   any tool call. Tool grants do not satisfy that prompt gate. Relay the marker privately only
+   for the approved review; read its exact definition from the owner configuration only with
+   explicit authorization for that targeted read and relay. Otherwise, the owner supplies it.
+   Never extract markers from conversation databases or read unrelated credentials. Keep the
+   value in private prompts/artifacts only; redact surfaced transcripts and never put it in
+   command arguments, committed files or public reports.
 
 Keep the profile, prompts and raw logs private. Publish the source/build, tested environment,
 observed interactions and remaining cases on the relevant issue/PR. The access probe alone
