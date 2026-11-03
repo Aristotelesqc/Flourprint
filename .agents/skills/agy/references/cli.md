@@ -7,9 +7,11 @@ These observations were verified with the installed Antigravity CLI on 2026-10-1
 
 - Launch from the intended checkout. `--project` selects an AGY project identity, not a filesystem
   path; omit it unless an actual project ID/name has been established. Do not invent one.
-- `--mode plan` is the review/default mode. Use `accept-edits` only for an assigned implementation
-  with permitted paths and working permissions. `--sandbox` restricts terminal execution; it is
-  not an assertion that all reads/writes are allowed or that the checkout is read-only.
+- Use `--mode plan` for source analysis and planning. CLI 1.4.12 prepends `/plan` to prompts;
+  for an already approved live UI journey, use default request-review mode with the
+  [session-only profile](permissions-and-browser.md#scope-windows-android-access-to-one-session).
+  Use `accept-edits` only for assigned implementation with permitted paths and working permissions.
+  `--sandbox` restricts terminal execution; it does not grant reads/writes or make a checkout read-only.
 - The installed CLI warned that `--mode` has no effect with `--disable-slash-commands`. The helper
   therefore does not combine them. Do not copy that combination and describe it as enforced plan
   mode. Treat prompts/corpora as input and inspect the initialization event for actual mode.

@@ -353,13 +353,13 @@ test('discard abandons raw invalid text and a later edit can be saved', async ({
   }
 
   const alert = page.locator('ion-alert');
-  if (await alert.isVisible()) {
-    await alert
-      .getByRole('button', {
-        name: /^(Abandonner les modifications|Abandonner|Discard changes|Discard)$/,
-      })
-      .click();
-  }
+  await expect(alert).toBeVisible();
+  await alert
+    .getByRole('button', {
+      name: /^(Abandonner les modifications|Abandonner|Discard changes|Discard)$/,
+    })
+    .click();
+  await expect(alert).toBeHidden();
 
   await expect(footer.getByRole('status')).toHaveCount(0);
   await enterEditing(page);
