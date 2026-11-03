@@ -88,7 +88,9 @@ other agents' processes.
 
 If headless tool access is denied, do not disable permission checks or silently change AGY
 settings. Read [permissions-and-browser.md](references/permissions-and-browser.md) for the
-verified interactive confirmation path only after diagnosing an access/capability problem.
+verified interactive confirmation path or session-only Windows Android grants after diagnosing
+an access/capability problem. The Android procedure retains normal checks and requires a live
+probe before an independent review; it does not grant access to a personal device or its data.
 Permission recovery is an exception path, not a routine design-validation phase. Report what
 failed. When sharing is already authorized, the caller can collect a scoped
 source snapshot and request a report/patch from that input instead. Distinguish supplied-source

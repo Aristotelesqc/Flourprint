@@ -12,13 +12,17 @@
  *    warm_unspecified -> 27 °C.
  *  - A stage temperature of kind "not_stated" or duration "not_stated" / null hours makes the
  *    recipe "incomplete_schedule" (not simulated).
+ *  - The dough clock starts after the reference (last) mechanical mixing stage (process.md).
+ *    Everything before it stays outside the clock and outside T, in its real place.
  *  - Stage roles are looked up in an explicit table:
  *      * pre_mix: not in dough clock (activate yeast, autolyse, bloom, etc.). Dropped from process.
- *      * mix: mechanical mixing/kneading stages. Summed into a single initial mix step.
+ *      * mix: mechanical mixing/kneading stages.
  *      * ferment: all bulk, proof, fold, and rest stages.
- *      * Compound stage names (mix and rest, knead and rest, knead and rests, knead and fold sets,
- *        combine and rest): their whole duration counts toward fermentation, since the source page
- *        does not split the mechanical and resting sub-phases.
+ *      * Unsplit compound stages retain their assigned role in STAGE_ROLES.
+ *  - Preferment gaps: the dough estimate uses the formula's total yeast and the steps after the mix.
+ *    A real preferment's missing duration or temperature uses a technical placeholder proved by
+ *    checkPrefermentSensitivity not to affect the dough result, recording assumptions
+ *    'preferment_duration_not_stated' and 'preferment_temperature_not_stated'.
  *  - Yeast in preferment is allocated to preferment component as in baguette template.
  *  - Tangzhong and yudane are scalds, not fermenting preferments: no preferment component and
  *    no preferment step. Their flour stays in the total, water stays in the dough, and yeast is
@@ -26,10 +30,8 @@
  *  - Real preferments with non-ok status preserve the dough estimate and record the assumption
  *    'preferment_estimate_<status>'.
  *  - Unstated salt defaults to 2% and records assumption 'salt_defaulted_2pct'.
- *  - A real preferment with no stated duration makes the recipe incomplete_schedule; none is imputed.
- *  - A rest before a later kneading keeps its place but stays outside the dough clock and T.
- *  - Real source hold-out: sourceGroup built via Union-Find over URL hostname (strip www.) and
- *    independence_key.
+ *  - Real source hold-out: sourceGroup built via Union-Find over URL hostname (strip www.),
+ *    exact independence_key, and independence_key prefix before ':' (excluding prefix 'lineage').
  *  - Engine refusals (dose_outside_domain, no_commercial_yeast, etc.) are reported without patching.
  *  - Outputs:
  *     (a) Markdown table per recipe: id, style, progress % at end of schedule (central & band),
@@ -112,8 +114,6 @@ const STAGE_ROLES = {
   'fridge retard': 'ferment',
   'fridge uncovered': 'ferment',
   'further fermentation': 'ferment',
-  'knead and fold sets': 'ferment',
-  'knead and rest': 'ferment',
   'knead and rests': 'ferment',
   'mix and rest': 'ferment',
   'out before baking': 'ferment',
@@ -173,13 +173,20 @@ function getStageRole(name) {
   return role;
 }
 
+// Technical placeholder constants for real preferments when duration or temperature is not stated.
+// Proved by checkPrefermentSensitivity not to affect the dough result, because the dough estimate
+// uses the formula's total yeast and the fermentation stages after the reference mix.
+const PREFERMENT_DURATION_PLACEHOLDER_HOURS = 12;
+const PREFERMENT_TEMPERATURE_PLACEHOLDER_C = 21;
+
 function resolveTemp(temperature) {
   if (!temperature) return 21;
   if (temperature.kind === 'stated' && temperature.c !== null) return temperature.c;
   if (temperature.kind === 'fridge_unspecified') return 4;
   if (temperature.kind === 'warm_unspecified') return 27;
   if (temperature.kind === 'room_unspecified') return 21;
-  return 21;
+  if (temperature.kind === 'not_stated') return null;
+  return null;
 }
 
 function resolveHours(stage) {
@@ -226,6 +233,7 @@ function assignSourceGroups(recipes) {
 
   const hostToIdx = new Map();
   const keyToIdx = new Map();
+  const prefixToIdx = new Map();
 
   recipes.forEach((recipe, i) => {
     const host = extractHost(recipe.source?.url);
@@ -242,6 +250,17 @@ function assignSourceGroups(recipes) {
         union(i, keyToIdx.get(key));
       } else {
         keyToIdx.set(key, i);
+      }
+      const colonIdx = key.indexOf(':');
+      if (colonIdx > 0) {
+        const prefix = key.slice(0, colonIdx);
+        if (prefix !== 'lineage') {
+          if (prefixToIdx.has(prefix)) {
+            union(i, prefixToIdx.get(prefix));
+          } else {
+            prefixToIdx.set(prefix, i);
+          }
+        }
       }
     }
   });
@@ -503,7 +522,7 @@ function doughClockStages(recipe) {
   return stages.slice(start).filter((s) => getStageRole(s.name) === 'ferment');
 }
 
-function buildProcess(recipe, scale = 1) {
+function buildProcess(recipe, scale = 1, assumptions = [], options = {}) {
   const steps = [];
   let prevId = null;
 
@@ -515,11 +534,34 @@ function buildProcess(recipe, scale = 1) {
     recipe.preferment.type !== 'yudane'
   ) {
     const pref = recipe.preferment;
-    const prefHours =
-      pref.hours_min !== null && pref.hours_max !== null
-        ? (pref.hours_min + pref.hours_max) / 2
-        : (pref.hours_min ?? pref.hours_max);
-    const prefTempC = resolveTemp(pref.temperature);
+    let prefHours =
+      options.prefermentHours !== undefined
+        ? options.prefermentHours
+        : pref.hours_min !== null && pref.hours_max !== null
+          ? (pref.hours_min + pref.hours_max) / 2
+          : (pref.hours_min ?? pref.hours_max);
+
+    if (prefHours === null || prefHours === undefined) {
+      // Technical placeholder proved by checkPrefermentSensitivity not to affect the dough result.
+      prefHours = PREFERMENT_DURATION_PLACEHOLDER_HOURS;
+      if (!assumptions.includes('preferment_duration_not_stated')) {
+        assumptions.push('preferment_duration_not_stated');
+      }
+    }
+
+    let prefTempC =
+      options.prefermentTempC !== undefined
+        ? options.prefermentTempC
+        : resolveTemp(pref.temperature);
+
+    if (prefTempC === null || prefTempC === undefined) {
+      // Technical placeholder proved by checkPrefermentSensitivity not to affect the dough result.
+      prefTempC = PREFERMENT_TEMPERATURE_PLACEHOLDER_C;
+      if (!assumptions.includes('preferment_temperature_not_stated')) {
+        assumptions.push('preferment_temperature_not_stated');
+      }
+    }
+
     const prefId = 'preferment-step';
     steps.push({
       id: prefId,
@@ -551,11 +593,15 @@ function buildProcess(recipe, scale = 1) {
     });
     prevId = mixId;
   }
+  // The engine starts the clock at the first step whose operation is `mix`, so only the last mix
+  // stage takes that operation; earlier mixing stages are `frasage` (process.md).
+  const lastMix = beforeClock.filter((s) => getStageRole(s.name) === 'mix').at(-1);
   beforeClock.forEach((stage, i) => {
     const stepId = `before-${i + 1}`;
     steps.push({
       id: stepId,
-      operation: getStageRole(stage.name) === 'mix' ? 'mix' : 'rest',
+      operation:
+        stage === lastMix ? 'mix' : getStageRole(stage.name) === 'mix' ? 'frasage' : 'rest',
       dependsOn: prevId ? [prevId] : [],
       schedule: 'asap',
       plannedDurationS: Math.round((resolveHours(stage) ?? 0) * 3600),
@@ -599,17 +645,16 @@ function buildProcess(recipe, scale = 1) {
 function evaluateRecipe(recipe) {
   const assumptions = [];
 
-  // Check for unstated schedule durations or unstated stage temperatures
-  const realPreferment =
-    recipe.preferment?.flour_pct > 0 && !['tangzhong', 'yudane'].includes(recipe.preferment.type);
-  const hasIncompleteSchedule =
-    recipe.stages.some(
-      (s) =>
-        s.duration === 'not_stated' || s.hours_min === null || s.temperature?.kind === 'not_stated',
-    ) ||
-    (realPreferment &&
-      recipe.preferment.hours_min === null &&
-      recipe.preferment.hours_max === null);
+  // Check for unstated schedule durations or unstated stage temperatures.
+  // Missing preferment duration or temperature is handled via technical placeholders proved not
+  // to affect the dough result. Stage temperatures with kind 'not_stated' stay incomplete_schedule.
+  const hasIncompleteSchedule = recipe.stages.some(
+    (s) =>
+      s.duration === 'not_stated' ||
+      s.hours_min === null ||
+      s.temperature?.kind === 'not_stated' ||
+      resolveTemp(s.temperature) === null,
+  );
 
   if (hasIncompleteSchedule) {
     return {
@@ -626,7 +671,7 @@ function evaluateRecipe(recipe) {
   }
 
   const formula = buildFormula(recipe, assumptions);
-  const process = buildProcess(recipe);
+  const process = buildProcess(recipe, 1, assumptions);
 
   try {
     const estimates = estimateFermentation(formula, process);
@@ -888,7 +933,8 @@ function findModelScale(formula, recipe, targetPct) {
   let low = uMin;
   let high = uMax;
 
-  for (let iter = 0; iter < 40; iter++) {
+  // 16 bisection iterations give a log-scale precision of about 2e-4 ((ln(64) - ln(1/64)) / 2^16 ≈ 1.27e-4).
+  for (let iter = 0; iter < 16; iter++) {
     const mid = (low + high) / 2;
     const pMid = evaluateDoughProgress(formula, recipe, Math.exp(mid));
     if (pMid === null) {
@@ -1111,9 +1157,63 @@ function evaluateTimingPredictors(items) {
   };
 }
 
+function checkPrefermentSensitivity(recipes) {
+  const testConditions = [
+    { hours: 4, tempC: 10 },
+    { hours: 4, tempC: 28 },
+    { hours: 24, tempC: 10 },
+    { hours: 24, tempC: 28 },
+  ];
+
+  let testedCount = 0;
+  let maxRelDiff = 0;
+
+  for (const recipe of recipes) {
+    const isRealPref =
+      recipe.preferment?.flour_pct > 0 && !['tangzhong', 'yudane'].includes(recipe.preferment.type);
+    if (!isRealPref) continue;
+
+    const baseEval = evaluateRecipe(recipe);
+    if (baseEval.status !== 'ok' || typeof baseEval.progressPct !== 'number') continue;
+
+    const baseProgress = baseEval.progressPct;
+    const formula = buildFormula(recipe);
+
+    for (const cond of testConditions) {
+      const altProcess = buildProcess(recipe, 1, [], {
+        prefermentHours: cond.hours,
+        prefermentTempC: cond.tempC,
+      });
+      const altEst = estimateFermentation(formula, altProcess);
+      const altProgress = altEst.dough?.progressPct?.value;
+      if (typeof altProgress !== 'number') {
+        throw new Error(
+          `Preferment sensitivity check failed: invalid dough progress for ${recipe.id} under ${cond.hours}h @ ${cond.tempC}°C`,
+        );
+      }
+      const relDiff = Math.abs(altProgress - baseProgress) / baseProgress;
+      if (relDiff > maxRelDiff) {
+        maxRelDiff = relDiff;
+      }
+    }
+    testedCount++;
+  }
+
+  console.log(
+    `* Preferment sensitivity check: tested ${testedCount} recipes, largest relative difference = ${maxRelDiff.toExponential(4)}`,
+  );
+
+  if (maxRelDiff > 1e-9) {
+    throw new Error(
+      `Preferment sensitivity check exceeded tolerance: max relative difference ${maxRelDiff.toExponential(4)} > 1e-9`,
+    );
+  }
+}
+
 function run() {
   const recipes = dataset.recipes || [];
   assignSourceGroups(recipes);
+  checkPrefermentSensitivity(recipes);
   const totalSourceGroups = new Set(recipes.map((r) => r.sourceGroup)).size;
 
   const results = recipes.map(evaluateRecipe);
