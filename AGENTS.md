@@ -57,7 +57,7 @@ a dedicated pull request, before the code that depends on it.
 
 ## Quota continuity for coordinators
 
-At session start, during active work (at least every five minutes), and before another tranche,
+At session start, before an expensive delegation, at major work boundaries, and before a new tranche,
 apply [.agents/skills/quota-check/SKILL.md](.agents/skills/quota-check/SKILL.md).
 Every coordinator checks its own provider and the providers used by delegates, including AGY.
 Reserve enough capacity for verification, push and a durable handoff; a delegate's allowance
