@@ -457,6 +457,7 @@ Enables reordering of list items through pointer drag-and-drop or accessible key
 - Opens one source-sized insertion space without changing the caller order until release.
 - Keeps source children mounted, moves their measured spacing with the live insertion space, and dims the page behind the full floating card.
 - Shows candidate refusal at the floating card without changing list geometry.
+- Includes the preceding measured row gap in the visibly painted insertion space and release hit-test, preserving total flow height.
 - Settles through fp.motion.step-drag and restores the exact handle without scrolling or stealing a newer control focus.
 - Adds composed-tree scroll ancestors for Ionic while the SDK owns autoscroll and pointer tracking.
 - Releases keyboard capture after imperative cancellation so the next gesture can start.

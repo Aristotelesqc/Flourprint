@@ -267,6 +267,17 @@ export function SortableSlot({
   } = useSortableListContext();
   const drawnElementRef = useRef<HTMLDivElement | null>(null);
   const boundaryElementRef = useRef<HTMLDivElement | null>(null);
+  const [leadingSpace, setLeadingSpace] = useState(0);
+
+  useLayoutEffect(() => {
+    const element = drawnElementRef.current;
+    const previous = element?.previousElementSibling;
+    setLeadingSpace(
+      activeId && element && previous
+        ? Math.max(0, element.getBoundingClientRect().top - previous.getBoundingClientRect().bottom)
+        : 0,
+    );
+  }, [activeId]);
 
   const slotId = useMemo(() => makeSlotId(instanceId, afterId), [instanceId, afterId]);
 
@@ -312,12 +323,16 @@ export function SortableSlot({
     <div
       ref={setDrawnRef}
       data-slot-after={afterId ?? 'start'}
-      className={`relative transition-[height] duration-[var(--duration-spatial)] ease-standard motion-reduce:duration-0 ${className}`}
+      className={`relative transition-[height,margin-top,padding-top] duration-[var(--duration-spatial)] ease-standard motion-reduce:duration-0 ${isCandidate ? 'rounded-card bg-surface-container' : ''} ${className}`}
       style={
         isCandidate && activeDimensions
-          ? { height: `${activeDimensions.height + activeSpacing}px` }
+          ? {
+              height: `${activeDimensions.height + activeSpacing + leadingSpace}px`,
+              marginTop: -leadingSpace,
+              paddingTop: leadingSpace,
+            }
           : activeId
-            ? { height: 0 }
+            ? { height: 0, marginTop: 0, paddingTop: 0 }
             : undefined
       }
       data-drop-target={isDropTarget ? 'true' : undefined}

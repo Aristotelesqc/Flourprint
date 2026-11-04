@@ -121,6 +121,39 @@ async function geometry(page: Page) {
 }
 
 for (const english of [false, true]) {
+  test(`dropping in the visible leading slot spacing commits the indicated move${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await open(page);
+    const source = await box(handle(page, 'Gamma'));
+    await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+    await page.mouse.down();
+    try {
+      await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+      const slot = method(page).locator('[data-slot-after="alpha"]');
+      const initial = await box(slot);
+      const release = { x: source.x + source.width / 2, y: initial.y - 5 };
+      await page.mouse.move(release.x, release.y, { steps: 8 });
+      await expect(slot).toHaveAttribute('data-drop-target', 'true');
+      await slot.evaluate(async (node) => {
+        await Promise.all(
+          node.getAnimations().map((animation) => animation.finished.catch(() => {})),
+        );
+      });
+      const drawn = await box(slot);
+      expect(release.y).toBeGreaterThanOrEqual(drawn.y);
+      expect(release.y).toBeLessThanOrEqual(drawn.y + drawn.height);
+      expect(await slot.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe(
+        'rgba(0, 0, 0, 0)',
+      );
+    } finally {
+      await page.mouse.up();
+    }
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+    await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
+    await expect(save(page)).toBeEnabled();
+    await expect(handle(page, 'Gamma')).toBeFocused();
+  });
   test(`long step names retain a right-hand touch handle at 360/130${english ? ' @en' : ''}`, async ({
     page,
   }, testInfo) => {
