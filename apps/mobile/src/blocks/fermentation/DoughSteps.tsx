@@ -55,8 +55,8 @@ interface Props {
 /**
  * The fermentation steps between the reference mixing step and the first heat step, one row each:
  * place, temperature, duration, and the Auto chip on the one step whose time follows the model
- * (fermentation.md). The mixing and kneading steps are dough steps but are not listed here: they
- * keep their authored duration in the method list.
+ * (fermentation.md). The first-contact step does not count and the kneading steps after it are not
+ * listed here: they keep their authored duration in the method list.
  */
 export const DoughSteps = ({
   process,

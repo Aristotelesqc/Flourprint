@@ -53,7 +53,7 @@ export const helpEn = {
 
   'help.fermentation.title': 'Estimated fermentation',
   'help.fermentation.body1':
-    'The app estimates how long the dough needs to ferment from the yeast dose, the temperatures and the planned durations of the dough steps (from the moment the yeast or leaven meets the flour and water, mixing and kneading included, until the bake, or the boil for bagels). They count as one fermentation: the dough’s state is not reset between them.',
+    'The app estimates how long the dough needs to ferment from the yeast dose, the temperatures and the planned durations of the dough steps (from the end of the mixing step where the yeast or leaven first meets the flour and water, any kneading after it included, until the bake, or the boil for bagels). They count as one fermentation: the dough’s state is not reset between them.',
   'help.fermentation.body2':
     'Basic mode takes the dough at room temperature. Advanced mode aims at a dough temperature and gives the water temperature to use. Each step has its own place: room, or fridge at {fridge}.',
   'help.fermentation.body3':
@@ -232,7 +232,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.fermentation.title': 'Fermentation estimée',
   'help.fermentation.body1':
-    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes de la pâte (dès que la levure ou le levain rencontre la farine et l’eau, pétrissage compris, jusqu’à la cuisson, ou l’ébullition pour les bagels). Elles comptent comme une seule fermentation : l’état de la pâte n’est pas remis à zéro entre elles.',
+    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes de la pâte (à partir de la fin de l’étape de mélange où la levure ou le levain rencontre d’abord la farine et l’eau, avec le pétrissage qui suit, jusqu’à la cuisson, ou l’ébullition pour les bagels). Elles comptent comme une seule fermentation : l’état de la pâte n’est pas remis à zéro entre elles.',
   'help.fermentation.body2':
     'Le mode de base prend la pâte à la température ambiante. Le mode avancé vise une température de pâte et donne la température de l’eau à utiliser. Chaque étape a son lieu : ambiante, ou frigo à {fridge}.',
   'help.fermentation.body3':

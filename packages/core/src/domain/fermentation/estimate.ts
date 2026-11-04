@@ -691,7 +691,8 @@ const doughMass = (
 ): Mass | Failure => {
   const context = doughContextOf(formula);
   // The reference mixing step keeps the target dough temperature, the friction and the water
-  // method; the dough clock starts at the first-contact step (process.md, First contact).
+  // method; the dough clock starts at the END of the first-contact step (process.md, First
+  // contact), whose conditions give the starting temperature.
   const reference = referenceMixingStep(process, context);
   if (!reference) return failure('insufficient_data', 'no_mix_step', ['mix']);
   const start = firstContactStep(process, context);
@@ -790,6 +791,11 @@ const prefermentPhase = (
   fermentingPhases(process, component, components).at(-1) ??
   process.steps.find((s) => s.id === component.id);
 
+/**
+ * A preferment's clock starts at the end of its own first-contact (mixing) step (process.md,
+ * Subjects and component phases): the preparatory mix is a step of the component that is not its
+ * fermenting phase, and the estimate is the time of that phase alone, so the mix never counts.
+ */
 const prefermentMass = (
   formula: Formula,
   process: Process,

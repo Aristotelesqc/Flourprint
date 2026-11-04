@@ -395,8 +395,7 @@ describe.each([
     ],
     [
       'thermal inputs on a step that is not a dough step',
-      // The bake: the mix is a dough step since the dough clock starts at the first contact.
-      (b) => (b.recipes[0].revisions[0].process.steps[2].thermal = bowl),
+      (b) => (b.recipes[0].revisions[0].process.steps[0].thermal = bowl),
     ],
   ])('refuses %s and writes nothing', async (_case, corrupt) => {
     const source = await makeTarget();
@@ -408,17 +407,13 @@ describe.each([
     expect(await isEmpty(target)).toBe(true);
   });
 
-  it('restores a dough temperature and a thermal change recorded on the mix, a dough step from the first contact', async () => {
-    const source = await makeTarget();
-    await seed(source);
-    const backup = await backupOf(source);
-    const events: Loose[] = backup.bakes[0].events;
-    // The mix is running from 08:00; a reading and a thermal change are recorded on it.
-    const start = events.findIndex((e) => e.payload.type === 'StepCompleted');
-    const stamp = (e: Loose) => ({ ...e, occurredAt: at('08:00'), recordedAt: at('08:00') });
-    const extra = [
-      { type: 'StepStarted', stepId: 'mix' },
+  it.each([
+    [
+      'a thermal change',
       { type: 'StepThermalChanged', stepId: 'mix', at: at('08:00'), thermal: bowl },
+    ],
+    [
+      'a dough temperature',
       {
         type: 'ObservationAdded',
         stepId: 'mix',
@@ -427,22 +422,30 @@ describe.each([
         position: 'core',
         measurement: { value: 23.5, unit: 'degC', observedAt: at('08:00') },
       },
-    ];
-    events.splice(
-      start,
-      0,
-      ...extra.map((payload, i) =>
-        stamp({ ...events[start], eventId: `mix-${i}`, causationId: `mix-c${i}`, payload }),
-      ),
-    );
-    events.forEach((e, i) => (e.seq = i + 1));
-    const target = await makeTarget();
-    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
-    const restored = await backupOf(target);
-    expect(restored.bakes[0].events.map((e: Loose) => e.payload.stepId)).toEqual(
-      events.map((e) => e.payload.stepId),
-    );
-  });
+    ],
+  ])(
+    'refuses %s recorded on the first-contact step, which is not a dough step (fermentation.md)',
+    async (_case, payload) => {
+      const source = await makeTarget();
+      await seed(source);
+      const backup = await backupOf(source);
+      const events: Loose[] = backup.bakes[0].events;
+      // The mix is running from 08:00; the dough has no clock yet, so no reading or thermal input.
+      const start = events.findIndex((e) => e.payload.type === 'StepCompleted');
+      const stamp = (e: Loose) => ({ ...e, occurredAt: at('08:00'), recordedAt: at('08:00') });
+      events.splice(
+        start,
+        0,
+        ...[{ type: 'StepStarted', stepId: 'mix' }, payload].map((p, i) =>
+          stamp({ ...events[start], eventId: `mix-${i}`, causationId: `mix-c${i}`, payload: p }),
+        ),
+      );
+      events.forEach((e, i) => (e.seq = i + 1));
+      const target = await makeTarget();
+      expect((await importBackup(target.restore, backup)).ok).toBe(false);
+      expect(await isEmpty(target)).toBe(true);
+    },
+  );
 
   it('restores a backup recorded before 0.10.0 with its committed values untouched', async () => {
     const source = await makeTarget();
@@ -450,7 +453,7 @@ describe.each([
     const backup = await backupOf(source);
     const first = backup.bakes[0].events[0].payload;
     expect(first.type).toBe('BakeStarted');
-    // Written by the engine that counted from the end of the mix, with a time that engine gave.
+    // Written by the engine of the end-of-the-mix clock, with a time that engine gave.
     first.snapshot.manifest.engineVersion = '0.9.1';
     first.snapshot.manifest.contractVersion = '0.23.0';
     const stepId = Object.keys(first.snapshot.estimates)[0] as string;

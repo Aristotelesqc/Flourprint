@@ -5,7 +5,7 @@ import type { Process } from '@flourprint/core/domain';
 import fermentation from '../../../docs/contracts/fixtures/fermentation/cases.json' with { type: 'json' };
 
 /**
- * The dough starts at the first-contact step and the water temperature reads the reference mixing
+ * The dough starts from the first-contact step (its clock at the end of it) and the water temperature reads the reference mixing
  * step (fermentation.md, Dough temperature, Water temperature). When the two steps differ, the
  * Fermentation card edits the room on each, where it is read; with one step it keeps one field.
  */

@@ -12,18 +12,18 @@
  *    warm_unspecified -> 27 °C.
  *  - A stage temperature of kind "not_stated" or duration "not_stated" / null hours makes the
  *    recipe "incomplete_schedule" (not simulated).
- *  - The dough clock starts at the START of the first mechanical mixing stage, where the yeast
- *    first meets the flour and water (process.md, First contact; owner decision of 2026-11-04,
- *    #231): the mixing and kneading stages count as fermentation time. Yeast-free `pre_mix`
- *    stages (autolyse, bloom) never start it. A stage ahead of the first mixing stage stays
- *    outside the clock and outside T, in its real place. A recipe with no mixing stage gets a
- *    default 3 min mix, the first contact, which counts.
+ *  - The dough clock starts at the END of the first mechanical mixing stage, where the yeast
+ *    first meets the flour and water (process.md, First contact; owner decisions of 2026-11-04,
+ *    #231): that stage's own duration does not count, and the kneading stages after it do.
+ *    Yeast-free `pre_mix` stages (autolyse, bloom) never start it. A stage ahead of the first
+ *    mixing stage stays outside the clock and outside T, in its real place. A recipe with no
+ *    mixing stage gets a default 3 min mix, the first contact, which does not count.
  *  - Stage roles are looked up in an explicit table:
  *      * pre_mix: not in dough clock (activate yeast, autolyse, bloom, etc.). Dropped from process.
- *      * mix: mechanical mixing/kneading stages; the first one is the first contact.
+ *      * mix: mechanical mixing/kneading stages; the first one is the first contact (not counted).
  *      * ferment: all bulk, proof, fold, and rest stages.
  *      * Unsplit compound stages retain their assigned role in STAGE_ROLES.
- *  - Preferment gaps: the dough estimate uses the formula's total yeast and the steps from the first contact.
+ *  - Preferment gaps: the dough estimate uses the formula's total yeast and the steps after the first contact.
  *    A real preferment's missing duration or temperature uses a technical placeholder proved by
  *    checkPrefermentSensitivity not to affect the dough result, recording assumptions
  *    'preferment_duration_not_stated' and 'preferment_temperature_not_stated'.
@@ -179,7 +179,7 @@ function getStageRole(name) {
 
 // Technical placeholder constants for real preferments when duration or temperature is not stated.
 // Proved by checkPrefermentSensitivity not to affect the dough result, because the dough estimate
-// uses the formula's total yeast and the dough-clock stages from the first contact.
+// uses the formula's total yeast and the dough-clock stages after the first contact.
 const PREFERMENT_DURATION_PLACEHOLDER_HOURS = 12;
 const PREFERMENT_TEMPERATURE_PLACEHOLDER_C = 21;
 
@@ -513,10 +513,11 @@ function buildFormula(recipe, assumptions = []) {
 }
 
 /**
- * The stages of the dough clock (process.md, First contact): from the first `mix` stage on, the
- * mixing and kneading stages included. The yeast-free `pre_mix` stages (autolyse, bloom) are not
- * in it, and a stage ahead of the first mixing stage stays in its real place, outside the clock
- * and outside T. Without a mixing stage the clock covers every stage that is not `pre_mix`.
+ * The stages of the dough clock (process.md, First contact): every stage after the first `mix`
+ * stage, which is the first contact and does not count itself; the kneading stages after it are in
+ * it. The yeast-free `pre_mix` stages (autolyse, bloom) are not in it, and a stage ahead of the
+ * first mixing stage stays in its real place, outside the clock and outside T. Without a mixing
+ * stage the clock covers every stage that is not `pre_mix`, after a default 3 min mix.
  *
  * Limit: the dataset declares no incorporations, so the first `mix`-role stage is taken as the first
  * contact (process.md, no-incorporation rule). A recipe whose first mix held no yeast, with the
@@ -526,7 +527,7 @@ function buildFormula(recipe, assumptions = []) {
 function doughClockStages(recipe) {
   const stages = recipe.stages || [];
   const first = stages.findIndex((s) => getStageRole(s.name) === 'mix');
-  return stages.slice(Math.max(first, 0)).filter((s) => getStageRole(s.name) !== 'pre_mix');
+  return stages.slice(first + 1).filter((s) => getStageRole(s.name) !== 'pre_mix');
 }
 
 function buildProcess(recipe, scale = 1, assumptions = [], options = {}) {
@@ -582,18 +583,22 @@ function buildProcess(recipe, scale = 1, assumptions = [], options = {}) {
     prevId = prefId;
   }
 
-  // 2. The stages ahead of the first contact, in their real order (pre_mix stages are dropped),
-  // then the dough clock. Without a mixing stage, a 3 min mix at the temperature of the first
-  // remaining stage is the first contact.
+  // 2. The stages up to and including the first contact, in their real order (pre_mix stages are
+  // dropped), then the dough clock. Without a mixing stage, a 3 min mix at the temperature of the
+  // first remaining stage is the first contact.
   const stages = recipe.stages || [];
   const clock = doughClockStages(recipe);
   const kept = stages.filter((s) => getStageRole(s.name) !== 'pre_mix');
   const beforeClock = kept.filter((s) => !clock.includes(s));
+  // No incorporation is declared, so the first mixing stage is the first contact; the last one is
+  // the reference mixing step (`mix`), the earlier ones `frasage` (all are mixing steps).
+  const lastMix = kept.filter((s) => getStageRole(s.name) === 'mix').at(-1);
   beforeClock.forEach((stage, i) => {
     const stepId = `before-${i + 1}`;
     steps.push({
       id: stepId,
-      operation: 'rest',
+      operation:
+        getStageRole(stage.name) !== 'mix' ? 'rest' : stage === lastMix ? 'mix' : 'frasage',
       dependsOn: prevId ? [prevId] : [],
       schedule: 'asap',
       plannedDurationS: Math.round((resolveHours(stage) ?? 0) * 3600),
@@ -601,7 +606,7 @@ function buildProcess(recipe, scale = 1, assumptions = [], options = {}) {
     });
     prevId = stepId;
   });
-  if (!clock.some((s) => getStageRole(s.name) === 'mix')) {
+  if (!kept.some((s) => getStageRole(s.name) === 'mix')) {
     steps.push({
       id: 'mix',
       operation: 'mix',
@@ -613,9 +618,7 @@ function buildProcess(recipe, scale = 1, assumptions = [], options = {}) {
     prevId = 'mix';
   }
 
-  // 3. The dough clock, in order. No incorporation is declared, so the first mixing stage is the
-  // first contact; the last one is the reference mixing step (`mix`), the earlier ones `frasage`.
-  const lastMix = clock.filter((s) => getStageRole(s.name) === 'mix').at(-1);
+  // 3. The dough clock, in order: the kneading stages after the first contact count.
   clock.forEach((stage, i) => {
     const stageId = `stage-${i + 1}`;
     const mixing = getStageRole(stage.name) === 'mix';

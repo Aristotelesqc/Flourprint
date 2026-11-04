@@ -409,8 +409,7 @@ describe('dough ready observation', () => {
       [state, 'proof'], // not started
       [state, 'bulk'], // completed
       [at(['poolish']), 'poolish'], // running, but a preferment
-      // Running, but a mixing step: a dough step, never judged ready (bake-session.md).
-      [at(['poolish', 'mix'], ['poolish']), 'mix'],
+      [at(['poolish', 'mix'], ['poolish']), 'mix'], // running, but the mix
     ] as const) {
       expect(ready(s, stepId)).toMatchObject({ ok: false, error: { code: 'InvalidCommand' } });
     }

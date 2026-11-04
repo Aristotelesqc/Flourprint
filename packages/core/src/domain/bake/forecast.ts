@@ -138,6 +138,11 @@ export interface LiveContext {
   readonly mass:
     | DoughMass
     | Extract<Estimate, { status: 'insufficient_data' | 'unsupported' | 'out_of_domain' }>;
+  /**
+   * Seconds until the dough clock starts, from `now`: what remains of the first-contact step,
+   * which is not part of the dough path (0 once it is completed or when it has run past its plan).
+   */
+  readonly beforeClockS: number;
 }
 
 export const liveContext = (
@@ -163,9 +168,43 @@ export const liveContext = (
   const stretches: Stretch[] = [];
   const unplanned: StepId[] = [];
   const afterEnd: { after: number; reading: Reading }[] = [];
-  let carried: number | undefined = firstContactStep(process, context)?.conditions?.temperatureC;
-  // The end of the step before, if it ended, and where its last stretch is.
-  let before: { readonly endMs: number; readonly index: number } | undefined;
+  // The dough clock starts at the END of the first-contact step (process.md, First contact): the
+  // instant the baker completed it, else (never completed) the start of the first dough step
+  // recorded as started. The step is not part of the path; the dough starts in its conditions.
+  const contact = firstContactStep(process, context);
+  const contactRecord = contact === undefined ? undefined : state.steps[contact.id];
+  const firstDoughStart = steps
+    .map((s) => state.steps[s.id]?.startedAt)
+    .find((at): at is Instant => at !== undefined);
+  const contactEndAt = contactRecord?.endedAt ?? firstDoughStart;
+  const contactEndMs = contactEndAt === undefined ? Number.NaN : Date.parse(contactEndAt);
+  const contactDone = contactEndMs <= nowMs;
+  let carried: number | undefined =
+    contact === undefined
+      ? undefined
+      : contactDone
+        ? ambientAt(state, contact, contactEndMs, contact.conditions?.temperatureC)
+        : contact.conditions?.temperatureC;
+  // The end of the step before, if it ended, and where its last stretch is (the first-contact
+  // step has none: the dough stays in its conditions until the first dough step starts).
+  let before:
+    { readonly endMs: number; readonly index?: number; readonly unit?: LiveUnit } | undefined =
+    contact !== undefined && contactDone && carried !== undefined
+      ? { endMs: contactEndMs, unit: { step: carrying(contact, undefined), ambientC: carried } }
+      : undefined;
+  // What remains of the first-contact step before the clock starts.
+  let beforeClockS = 0;
+  if (contact !== undefined && !contactDone) {
+    const planned = contact.plannedDurationS;
+    const startedMs =
+      contactRecord?.startedAt === undefined ? undefined : Date.parse(contactRecord.startedAt);
+    beforeClockS =
+      planned === undefined
+        ? 0
+        : startedMs === undefined
+          ? planned
+          : Math.max(0, planned + heldSeconds(contactRecord, now) - (nowMs - startedMs) / 1000);
+  }
 
   for (const [position, step] of steps.entries()) {
     const record = state.steps[step.id];
@@ -182,10 +221,13 @@ export const liveContext = (
     if (ambient0 === undefined) return undefined;
 
     if (before !== undefined && startMs !== undefined && startMs > before.endMs) {
-      // The dough stays where it was between the end of the previous step and this start.
-      const last = stretches[before.index] as Stretch;
+      // The dough stays where it was between the end of the previous step (the first-contact
+      // step for the first dough step) and this start.
+      const lastUnit = (
+        before.index === undefined ? before.unit : stretches[before.index]?.unit
+      ) as LiveUnit;
       stretches.push({
-        unit: { ...last.unit, hours: (startMs - before.endMs) / MS_PER_H },
+        unit: { ...lastUnit, hours: (startMs - before.endMs) / MS_PER_H },
         fromMs: before.endMs,
         kind: 'gap',
         endsStep: false,
@@ -370,6 +412,7 @@ export const liveContext = (
     stretches,
     openIndex,
     mass: 'status' in built ? built : withReadings(built, stretches),
+    beforeClockS,
   };
 };
 
@@ -384,7 +427,7 @@ export const liveDoughForecast = (
 ): LiveDoughForecast | undefined => {
   const context = liveContext(state, now, { ...options, includeEnded: false });
   if (context === undefined) return undefined;
-  const { steps, target, targetDone, stretches, openIndex, mass } = context;
+  const { steps, target, targetDone, stretches, openIndex, mass, beforeClockS } = context;
   if ('status' in mass) {
     return {
       stepId: target.id,
@@ -419,7 +462,7 @@ export const liveDoughForecast = (
     .reduce((sum, s) => sum + (s.unit.hours ?? 0) * 3600, 0);
   const remaining: Estimate = targetDone
     ? { status: 'insufficient_data', model: FERMENTATION_MODEL, reason: 'target_step_ended' }
-    : later(estimates.duration, beforeOpenS);
+    : later(estimates.duration, beforeOpenS + beforeClockS);
 
   return { stepId: target.id, remaining, progressNowPct, steps: endForecasts };
 };
@@ -438,11 +481,16 @@ const later = (estimate: Estimate, seconds: number): Estimate => {
   };
 };
 
-/** Nothing has fermented yet: zero, with the assumptions of the forecast. */
-const noProgressYet = (like: Estimate): Estimate =>
-  like.status === 'ok'
-    ? { status: 'ok', value: 0, model: like.model, assumptions: like.assumptions }
-    : like;
+/**
+ * Nothing has fermented yet (the clock starts at the end of the first-contact step): zero, with the
+ * assumptions of the forecast when it has any. Zero holds whatever the open step leaves unknown.
+ */
+const noProgressYet = (like: Estimate): Estimate => ({
+  status: 'ok',
+  value: 0,
+  model: like.model ?? FERMENTATION_MODEL,
+  assumptions: like.status === 'ok' ? like.assumptions : [],
+});
 
 /**
  * Applies the measured dough temperatures: from its instant a reading replaces the model's mean

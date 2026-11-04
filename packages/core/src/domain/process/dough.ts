@@ -7,10 +7,11 @@ import type { Process, ProcessStep } from './types.js';
 export { ancestors, descendants };
 
 /**
- * Dough steps (fermentation.md): the first-contact step and every later `asap` step before the
- * first heat step, in process order, mixing and kneading steps included. A heat step is a cooking
- * operation (process.md): baking, boiling bagels or pretzels, frying, pan-cooking or grilling a
- * dough ends the fermentation.
+ * Dough steps (fermentation.md): every `asap` step after the first-contact step and before the
+ * first heat step, in process order, kneading steps included; the first-contact step itself is not
+ * one (the dough clock starts at its end). A heat step is a cooking operation (process.md):
+ * baking, boiling bagels or pretzels, frying, pan-cooking or grilling a dough ends the
+ * fermentation.
  */
 export const HEAT_OPERATIONS: readonly string[] = COOKING_OPERATIONS;
 
@@ -97,7 +98,8 @@ const holdsYeast = (step: ProcessStep, context?: DoughContext): boolean =>
 /**
  * The first-contact step of the main dough (process.md, First contact): in list order, the first
  * main-dough step that holds yeast or, when the process declares no incorporation at all, the
- * first main-dough mixing step. The dough clock starts at its start.
+ * first main-dough mixing step. The dough clock starts at its END (owner decisions of 2026-11-04):
+ * its own duration does not count, and it is not a dough step.
  */
 export const firstContactStep = (
   process: Process,
@@ -129,9 +131,14 @@ export const firstHeatStep = (
 };
 
 /**
- * The dough steps of a process, in process order, or undefined without a first-contact step: the
- * first-contact step and every later `asap` step before the first heat step. Without a heat step,
- * every `asap` step from the first contact counts.
+ * The dough steps of a process, in process order, or undefined without a first-contact step: every
+ * `asap` step after the first-contact step and before the first heat step (the first-contact step
+ * is not one: the dough has no fermentation clock during it, so every gate that asks for a dough
+ * step refuses it). Without a heat step, every `asap` step after the first contact counts.
+ *
+ * Without the formula the first-contact step is the earliest step that could be one, so a step at
+ * or ahead of it is refused and the check stays a permissive superset (process.md, Validation
+ * with and without the formula).
  */
 export const doughSteps = (process: Process, context?: DoughContext): ProcessStep[] | undefined => {
   const start = firstContactStep(process, context);
@@ -140,11 +147,7 @@ export const doughSteps = (process: Process, context?: DoughContext): ProcessSte
   const after = descendants(process, start.id);
   const before = heat ? ancestors(process, heat.id) : undefined;
   return process.steps.filter(
-    (s) =>
-      s.schedule === 'asap' &&
-      (s === start || after.has(s.id)) &&
-      s !== heat &&
-      (!before || before.has(s.id)),
+    (s) => s.schedule === 'asap' && after.has(s.id) && s !== heat && (!before || before.has(s.id)),
   );
 };
 

@@ -14,7 +14,6 @@ import {
   doughSteps,
   estimateFermentation,
   lastDoughStepId,
-  stepsAfterReferenceMix,
   validateProcess,
   type Formula,
   type Process,
@@ -66,13 +65,10 @@ const ok = <T>(result: { ok: true; value: T } | { ok: false; error: unknown }): 
 
 describe('dough steps', () => {
   it('end at the first heat step: a boil ends the dough like a bake', () => {
-    // The mix is the first contact (no incorporations declared): the clock starts there.
-    expect(ids(doughSteps(bagelLike))).toEqual(['mix', 'bulk', 'shape', 'proof']);
+    expect(ids(doughSteps(bagelLike))).toEqual(['bulk', 'shape', 'proof']);
     expect(lastDoughStepId(bagelLike)).toBe('proof');
     expect(doughReadyStage(bagelLike, 'proof')).toBe('bake');
     expect(doughReadyStage(bagelLike, 'bulk')).toBe('shape');
-    // The mix is a dough step from the first contact but never judged ready (bake-session.md).
-    expect(doughReadyStage(bagelLike, 'mix')).toBeUndefined();
     expect(doughReadyStage(bagelLike, 'boil')).toBeUndefined();
     expect(estimateFermentation(formula, bagelLike).dough.stepId).toBe('proof');
   });
@@ -98,14 +94,7 @@ describe('dough step ambients', () => {
         step('bake', 'bake', ['proof'], 1800),
       ],
     };
-    // The mix is a dough step from the first contact: its own ambient is the room temperature.
-    expect(doughStepAmbients(process)).toEqual({
-      mix: 21,
-      bulk: 21,
-      retard: 4,
-      shape: 4,
-      proof: 24,
-    });
+    expect(doughStepAmbients(process)).toEqual({ bulk: 21, retard: 4, shape: 4, proof: 24 });
     expect(doughStepAmbients({ steps: [step('bulk', 'bulk', [])] })).toEqual({});
   });
 });
@@ -249,10 +238,7 @@ describe('fermentation schedules', () => {
     ]);
     for (const schedule of FERMENTATION_SCHEDULES) {
       const process = ok(applySchedule(boule.process, schedule.id));
-      // A schedule replaces the steps after the reference mixing step; the mix stays and is a dough
-      // step too (drafts.md, Fermentation schedules).
-      const dough = stepsAfterReferenceMix(process) ?? [];
-      expect(doughSteps(process)?.map((s) => s.id)).toEqual(['mix', ...dough.map((s) => s.id)]);
+      const dough = doughSteps(process) ?? [];
       expect(dough.map((s) => s.operation)).toEqual(schedule.steps.map((s) => s.operation));
       expect(dough.filter((s) => s.durationMode === 'model').map((s) => s.id)).toEqual([
         dough.at(-1)?.id,
@@ -308,9 +294,8 @@ describe('fermentation schedules', () => {
   it('end the bagels before the boil, with the room temperature of the replaced steps', () => {
     const bagels = template('bagels').process;
     const process = ok(applySchedule(bagels, 'cold-proof'));
-    const dough = stepsAfterReferenceMix(process) ?? [];
+    const dough = doughSteps(process) ?? [];
     expect(dough.map((s) => s.id)).toEqual(['bulk', 'shape', 'cold-proof']);
-    expect(doughSteps(process)?.map((s) => s.id)).toEqual(['mix', 'bulk', 'shape', 'cold-proof']);
     expect(process.steps.find((s) => s.id === 'boil')?.dependsOn).toEqual(['cold-proof']);
     // The replaced bulk was at 21 °C: room steps take it; the cold proof is in the fridge.
     expect(dough[0]?.conditions).toEqual({ temperatureC: 21 });

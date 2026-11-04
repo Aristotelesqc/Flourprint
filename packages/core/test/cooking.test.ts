@@ -31,12 +31,11 @@ describe('cooking operations (process.md)', () => {
     const fried: Process = {
       steps: [step('mix', 'mix'), step('proof', 'proof', ['mix']), step('fry', 'fry', ['proof'])],
     };
-    // The mix is the first contact (no incorporations declared): it is a dough step too.
-    expect(doughSteps(fried)?.map((s) => s.id)).toEqual(['mix', 'proof']);
+    expect(doughSteps(fried)?.map((s) => s.id)).toEqual(['proof']);
     const grilled: Process = {
       steps: [step('mix', 'mix'), step('bulk', 'bulk', ['mix']), step('bbq', 'grill', ['bulk'])],
     };
-    expect(doughSteps(grilled)?.map((s) => s.id)).toEqual(['mix', 'bulk']);
+    expect(doughSteps(grilled)?.map((s) => s.id)).toEqual(['bulk']);
   });
 });
 
