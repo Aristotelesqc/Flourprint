@@ -239,7 +239,7 @@ const fixturePath = '/test/fixtures/sortable/index.html';
 async function openSortableFixture(
   page,
   testInfo,
-  { osReduced = false, manualReduced = false, long = false } = {},
+  { osReduced = false, manualReduced = false, long = false, refuse = false } = {},
 ) {
   await page.emulateMedia({ reducedMotion: osReduced ? 'reduce' : 'no-preference' });
   const query = new URLSearchParams({
@@ -247,6 +247,7 @@ async function openSortableFixture(
     scale: String(testInfo.project.metadata.scale),
     ...(manualReduced ? { motion: 'reduced' } : {}),
     ...(long ? { long: 'true' } : {}),
+    ...(refuse ? { refuse: 'true' } : {}),
   });
   await page.goto(`${fixturePath}?${query}`);
   await expect(page.getByRole('heading', { name: 'Sortable verification fixture' })).toBeVisible();
@@ -296,6 +297,33 @@ async function expectOneCancelledGesture(page, list) {
     .poll(async () => (await fixtureEvents(page)).filter((event) => 'intent' in event))
     .toEqual([{ intent: null }]);
 }
+
+test('sortable refusal is visible beside the floating card before release and restores focus', async ({
+  page,
+}, testInfo) => {
+  const list = await openSortableFixture(page, testInfo, { refuse: true });
+  try {
+    await liftWithKeyboard(page, list);
+    await chooseBetaSlotWithKeyboard(page, list);
+    const overlay = page.locator('[popover]:popover-open');
+    const feedback = page.locator('[data-drop-feedback]');
+    await expect(feedback).toHaveText('This move is refused.');
+    await expect(feedback).toBeVisible();
+    const floating = await overlay.boundingBox();
+    const message = await feedback.boundingBox();
+    expect(message.y).toBeGreaterThanOrEqual(floating.y - 1);
+    expect(message.y).toBeLessThanOrEqual(floating.y + floating.height + 1);
+    expect((await fixtureEvents(page)).filter((event) => 'intent' in event)).toEqual([]);
+    await page.keyboard.press('Space');
+    await expect.poll(() => handleOrder(list)).toEqual(fixtureOriginalOrder);
+    await expect(overlay).toHaveCount(0);
+    await expect(page.locator('[data-sortable-scrim]')).toHaveCount(0);
+    await expect(list.getByRole('button', { name: 'Drag Alpha', exact: true })).toBeFocused();
+    await expect(liveAnnouncement(page, 'Cancelled Alpha.')).toHaveCount(1);
+  } finally {
+    await record(page, list, testInfo, { fixtureEvents: await fixtureEvents(page) });
+  }
+});
 
 test('sortable release outside after a valid hover keeps the controlled order', async ({
   page,

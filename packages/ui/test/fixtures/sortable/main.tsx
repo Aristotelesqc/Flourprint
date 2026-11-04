@@ -40,6 +40,7 @@ function Fixture(): ReactElement {
   const commit = (intent: DropIntent | null): DropOutcome => {
     setEvents((previous) => [...previous, { intent }]);
     if (!intent) return 'unchanged';
+    if (query.get('refuse') === 'true') return 'refused';
     setItems((previous) => {
       const moving = previous.find((item) => item.id === intent.id);
       if (!moving) return previous;
@@ -95,6 +96,9 @@ function Fixture(): ReactElement {
                 }}
                 onDragActiveChange={(active) => setEvents((previous) => [...previous, { active }])}
                 onDropIntent={commit}
+                {...(query.get('refuse') === 'true'
+                  ? { getDropFeedback: () => 'This move is refused.' }
+                  : {})}
                 renderOverlay={(id) => (
                   <div className="rounded-card border bg-surface p-3">
                     {items.find((item) => item.id === id)?.label}

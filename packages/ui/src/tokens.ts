@@ -10,6 +10,7 @@
 export const tokens = {
   colors: {
     primary: '#a9490a',
+    scrim: '#000000',
     'on-primary': '#ffffff',
     background: '#f8f7f4',
     surface: '#ffffff',

@@ -33,7 +33,9 @@ import React, {
   type ReactElement,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { durationMs, easingCurve, isReduced } from '../../motion.ts';
+import { playStepDragSettle } from '../../motions/step-drag/index.ts';
 import { library, useMotion } from '../../index.ts';
 import type {
   DropInput,
@@ -69,6 +71,8 @@ interface SortableListContextValue {
   readonly candidateFeedback: string | undefined;
   readonly candidateAfterId: string | null | undefined;
   readonly activeDimensions: { width: number; height: number } | null;
+  readonly activeSpacing: number;
+  readonly registerHandle: (id: string, element: Element | null) => void;
 }
 
 const SortableListContext = createContext<SortableListContextValue | null>(null);
@@ -137,7 +141,7 @@ function getReleaseCoordinates(nativeEvent?: Event): { x: number; y: number } | 
 export function SortableItem({ id, children, className = '' }: SortableItemProps): ReactElement {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const handleElementRef = useRef<Element | null>(null);
-  const { disabled, candidateAfterId, activeDimensions } = useSortableListContext();
+  const { disabled, candidateAfterId, activeDimensions, registerHandle } = useSortableListContext();
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
   const lastRectRef = useRef<{ width: number; height: number } | null>(null);
 
@@ -190,8 +194,9 @@ export function SortableItem({ id, children, className = '' }: SortableItemProps
     (el: Element | null) => {
       handleElementRef.current = el;
       dndHandleRef(el);
+      registerHandle(id, el);
     },
-    [dndHandleRef],
+    [dndHandleRef, id, registerHandle],
   );
 
   const contextValue: SortableItemContextValue = useMemo(
@@ -215,7 +220,7 @@ export function SortableItem({ id, children, className = '' }: SortableItemProps
         style={
           isDragging
             ? candidateAfterId !== undefined
-              ? { height: 0, overflow: 'hidden' }
+              ? { height: 0, marginBottom: 0, overflow: 'hidden' }
               : itemDims
                 ? {
                     height: `${itemDims.height}px`,
@@ -224,28 +229,23 @@ export function SortableItem({ id, children, className = '' }: SortableItemProps
                 : undefined
             : undefined
         }
-        className={`relative transition-[height] duration-[var(--duration-effect)] ease-standard motion-reduce:duration-0 ${className}`}
+        className={`relative transition-[height,margin-bottom] duration-[var(--duration-spatial)] ease-standard motion-reduce:duration-0 ${className}`}
       >
-        {isDragging ? (
-          <>
-            <div
-              aria-hidden="true"
-              className={`h-full w-full rounded-card border-2 border-dashed border-outline/40 bg-surface-container ${
-                candidateAfterId !== undefined ? 'hidden' : ''
-              }`}
-            />
-            <div
-              aria-hidden="true"
-              className="sr-only pointer-events-none absolute h-0 w-0 overflow-hidden"
-            >
-              {typeof children === 'function' ? children(contextValue) : children}
-            </div>
-          </>
-        ) : typeof children === 'function' ? (
-          children(contextValue)
-        ) : (
-          children
+        {isDragging && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 rounded-card border-2 border-dashed border-outline/40 bg-surface-container ${
+              candidateAfterId !== undefined ? 'hidden' : ''
+            }`}
+          />
         )}
+        <div
+          aria-hidden={isDragging || undefined}
+          inert={isDragging}
+          className={isDragging ? 'pointer-events-none opacity-0' : undefined}
+        >
+          {typeof children === 'function' ? children(contextValue) : children}
+        </div>
       </div>
     </SortableItemContext.Provider>
   );
@@ -256,8 +256,15 @@ export function SortableSlot({
   children,
   className = '',
 }: SortableSlotProps): ReactElement {
-  const { instanceId, registerSlot, activeId, items, candidateAfterId, activeDimensions } =
-    useSortableListContext();
+  const {
+    instanceId,
+    registerSlot,
+    activeId,
+    items,
+    candidateAfterId,
+    activeDimensions,
+    activeSpacing,
+  } = useSortableListContext();
   const drawnElementRef = useRef<HTMLDivElement | null>(null);
   const boundaryElementRef = useRef<HTMLDivElement | null>(null);
 
@@ -305,10 +312,10 @@ export function SortableSlot({
     <div
       ref={setDrawnRef}
       data-slot-after={afterId ?? 'start'}
-      className={`relative transition-[height] duration-[var(--duration-effect)] ease-standard motion-reduce:duration-0 ${className}`}
+      className={`relative transition-[height] duration-[var(--duration-spatial)] ease-standard motion-reduce:duration-0 ${className}`}
       style={
         isCandidate && activeDimensions
-          ? { height: `${activeDimensions.height}px` }
+          ? { height: `${activeDimensions.height + activeSpacing}px` }
           : activeId
             ? { height: 0 }
             : undefined
@@ -328,6 +335,7 @@ export function SortableSlot({
         <div
           aria-hidden="true"
           className="h-full w-full rounded-card border-2 border-dashed border-outline/40 bg-surface-container"
+          style={activeDimensions ? { height: activeDimensions.height } : undefined}
         />
       )}
       {activeId ? null : children}
@@ -464,7 +472,15 @@ export function SortableList({
     width: number;
     height: number;
   } | null>(null);
+  const [activeSpacing, setActiveSpacing] = useState(0);
   const lastActiveIdRef = useRef<string | null>(null);
+  const handlesRef = useRef(new Map<string, HTMLElement>());
+  const [settlingId, setSettlingId] = useState<string | null>(null);
+  const focusFrameRef = useRef<number | null>(null);
+  const animationRef = useRef<Animation | null>(null);
+  const settleGenerationRef = useRef(0);
+  const pendingSettleRef = useRef<{ frame: number; resolve: () => void } | null>(null);
+  const releaseFocusRef = useRef<Element | null>(null);
   const activatedRef = useRef(false);
   const endedRef = useRef(false);
 
@@ -503,6 +519,49 @@ export function SortableList({
     }
   }, []);
 
+  const registerHandle = useCallback((id: string, element: Element | null) => {
+    if (element instanceof HTMLElement) handlesRef.current.set(id, element);
+    else handlesRef.current.delete(id);
+  }, []);
+
+  const restoreHandleFocus = useCallback((id: string) => {
+    if (focusFrameRef.current !== null) cancelAnimationFrame(focusFrameRef.current);
+    focusFrameRef.current = requestAnimationFrame(() => {
+      focusFrameRef.current = null;
+      const handle = handlesRef.current.get(id);
+      if (!handle?.isConnected || activatedRef.current) return;
+      if (handle.closest('[hidden], .ion-page-hidden, [inert]')) return;
+      const currentFocus = document.activeElement;
+      if (
+        currentFocus !== releaseFocusRef.current &&
+        currentFocus !== document.body &&
+        currentFocus !== handle
+      )
+        return;
+      handle.focus({ preventScroll: true });
+    });
+  }, []);
+
+  const cancelSettle = useCallback(() => {
+    settleGenerationRef.current++;
+    animationRef.current?.cancel();
+    animationRef.current = null;
+    const pending = pendingSettleRef.current;
+    if (pending) {
+      cancelAnimationFrame(pending.frame);
+      pending.resolve();
+      pendingSettleRef.current = null;
+    }
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (focusFrameRef.current !== null) cancelAnimationFrame(focusFrameRef.current);
+      cancelSettle();
+    },
+    [cancelSettle],
+  );
+
   const resolveEnd = useCallback(
     (event: DragEndEvent): { intent: DropIntent | null; outcome: DropOutcome } => {
       const operation = event.operation;
@@ -521,6 +580,7 @@ export function SortableList({
 
       const currentItems = callbacksRef.current.items;
       const sourceId = String(operation.source?.id ?? '');
+      releaseFocusRef.current = document.activeElement;
       const isCanceled = event.canceled;
 
       let resolvedIntent: DropIntent | null = null;
@@ -584,27 +644,36 @@ export function SortableList({
       setCandidateAfterId(undefined);
       setActiveDimensions(null);
       setCandidateFeedback(undefined);
+      setSettlingId(sourceId || null);
+      if (sourceId) restoreHandleFocus(sourceId);
 
       return { intent: resolvedIntent, outcome };
     },
-    [instanceId],
+    [instanceId, restoreHandleFocus],
   );
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    const sourceId = String(event.operation.source?.id ?? '');
-    if (!sourceId) return;
-    activatedRef.current = true;
-    endedRef.current = false;
-    endResolutionRef.current = null;
-    lastActiveIdRef.current = sourceId;
-    const rect = event.operation.source?.element?.getBoundingClientRect();
-    setActiveDimensions(rect ? { width: rect.width, height: rect.height } : null);
-    setCandidateAfterId(undefined);
-    setActiveId(sourceId);
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const sourceId = String(event.operation.source?.id ?? '');
+      if (!sourceId) return;
+      activatedRef.current = true;
+      endedRef.current = false;
+      endResolutionRef.current = null;
+      cancelSettle();
+      setSettlingId(null);
+      lastActiveIdRef.current = sourceId;
+      const rect = event.operation.source?.element?.getBoundingClientRect();
+      const source = event.operation.source?.element;
+      setActiveSpacing(source ? Number.parseFloat(getComputedStyle(source).marginBottom) || 0 : 0);
+      setActiveDimensions(rect ? { width: rect.width, height: rect.height } : null);
+      setCandidateAfterId(undefined);
+      setActiveId(sourceId);
 
-    callbacksRef.current.onDragStart?.(sourceId);
-    callbacksRef.current.onDragActiveChange?.(true);
-  }, []);
+      callbacksRef.current.onDragStart?.(sourceId);
+      callbacksRef.current.onDragActiveChange?.(true);
+    },
+    [cancelSettle],
+  );
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
@@ -664,8 +733,10 @@ export function SortableList({
       setCandidateAfterId(undefined);
       setActiveDimensions(null);
       setCandidateFeedback(undefined);
+      const id = lastActiveIdRef.current;
+      if (id) restoreHandleFocus(id);
     }
-  }, []);
+  }, [restoreHandleFocus]);
 
   const sensors = useMemo(
     () => [
@@ -731,11 +802,47 @@ export function SortableList({
   );
 
   const dragMotion = useMotion('fp.motion.step-drag');
-  const dragForm = isReduced(containerRef.current) ? dragMotion.reduced : dragMotion.standard;
-  const dropAnimation =
-    dragForm === 'none'
-      ? { duration: 0, easing: 'linear' }
-      : { duration: durationMs(dragForm.duration), easing: easingCurve(dragForm.easing) };
+  const dropAnimation: React.ComponentProps<typeof DragOverlay>['dropAnimation'] = useCallback(
+    ({ feedbackElement, element, source }) =>
+      new Promise<void>((resolve) => {
+        const id = String(source.id);
+        const generation = settleGenerationRef.current;
+        const frame = requestAnimationFrame(() => {
+          pendingSettleRef.current = null;
+          const finish = () => {
+            if (generation !== settleGenerationRef.current) {
+              resolve();
+              return;
+            }
+            animationRef.current = null;
+            setSettlingId(null);
+            restoreHandleFocus(id);
+            resolve();
+          };
+          if (!(feedbackElement instanceof HTMLElement) || dragMotion.kind !== 'keyframes') {
+            finish();
+            return;
+          }
+          const from = feedbackElement.getBoundingClientRect();
+          const target = handlesRef.current.get(id)?.closest('[data-sortable-id]') ?? element;
+          const to = target.getBoundingClientRect();
+          animationRef.current = playStepDragSettle(
+            feedbackElement,
+            { x: from.left, y: from.top },
+            { x: to.left, y: to.top },
+            dragMotion,
+            {
+              reduced: isReduced(containerRef.current),
+              duration: durationMs(dragMotion.standard.duration),
+              easing: easingCurve(dragMotion.standard.easing),
+              onFinish: finish,
+            },
+          );
+        });
+        pendingSettleRef.current = { frame, resolve };
+      }),
+    [dragMotion, restoreHandleFocus],
+  );
 
   const contextValue: SortableListContextValue = useMemo(
     () => ({
@@ -747,6 +854,8 @@ export function SortableList({
       candidateFeedback,
       candidateAfterId,
       activeDimensions,
+      activeSpacing,
+      registerHandle,
     }),
     [
       instanceId,
@@ -757,6 +866,8 @@ export function SortableList({
       candidateFeedback,
       candidateAfterId,
       activeDimensions,
+      activeSpacing,
+      registerHandle,
     ],
   );
 
@@ -776,16 +887,28 @@ export function SortableList({
             {children}
           </SortableListInner>
 
-          {candidateFeedback && (
-            <div data-drop-feedback className="mt-1 text-xs text-muted" aria-hidden="true">
-              {candidateFeedback}
-            </div>
-          )}
+          {(activeId || settlingId) &&
+            createPortal(
+              <div
+                data-sortable-scrim
+                aria-hidden="true"
+                className="pointer-events-none fixed inset-0 z-[9998] bg-scrim/20"
+              />,
+              document.body,
+            )}
 
           <DragOverlay dropAnimation={dropAnimation} className="pointer-events-none select-none">
             {displayedOverlayId ? (
-              <div aria-hidden="true" className="pointer-events-none select-none">
+              <div aria-hidden="true" className="relative pointer-events-none select-none">
                 {renderOverlay(displayedOverlayId)}
+                {candidateFeedback && (
+                  <div
+                    data-drop-feedback
+                    className="absolute inset-x-1 bottom-1 rounded border border-alert bg-surface px-2 py-0.5 text-xs text-alert shadow-sm"
+                  >
+                    {candidateFeedback}
+                  </div>
+                )}
               </div>
             ) : null}
           </DragOverlay>

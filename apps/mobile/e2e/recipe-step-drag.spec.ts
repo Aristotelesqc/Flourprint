@@ -42,7 +42,7 @@ const order = async (page: Page) =>
 const footer = (page: Page) => routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]');
 const save = (page: Page) => footer(page).getByRole('button', { name: /^(Save|Enregistrer)$/ });
 
-async function open(page: Page, theme = 'light', large = false) {
+async function open(page: Page, theme = 'light', large = false, imported = recipe) {
   await page.setViewportSize({ width: large ? 360 : 393, height: 900 });
   await page.goto('/advanced');
   const themeName =
@@ -63,7 +63,7 @@ async function open(page: Page, theme = 'light', large = false) {
           kind: 'flourprint-recipes',
           schemaVersion: 1,
           exportedAt: '2026-10-29T12:00:00.000Z',
-          recipes: [recipe],
+          recipes: [imported],
           families: [],
         }),
       ),
@@ -121,6 +121,28 @@ async function geometry(page: Page) {
 }
 
 for (const english of [false, true]) {
+  test(`long step names retain a right-hand touch handle at 360/130${english ? ' @en' : ''}`, async ({
+    page,
+  }, testInfo) => {
+    const longRecipe = structuredClone(recipe);
+    const first = longRecipe.revisions[0]?.process.steps[0];
+    if (!first) throw new Error('Missing fixture step');
+    first.label = 'Rest the mixed dough until the surface relaxes completely';
+    await open(page, 'dark', true, longRecipe);
+    const card = method(page).locator('[data-sortable-id="alpha"]');
+    await card.scrollIntoViewIfNeeded();
+    const bounds = await box(card);
+    const grip = await box(handle(page, first.label));
+    const edit = await box(card.getByRole('button', { name: /^(Edit step|Modifier l’étape)/ }));
+    expect(edit.x + edit.width).toBeLessThanOrEqual(grip.x + 1);
+    expect(grip.x + grip.width).toBeLessThanOrEqual(bounds.x + bounds.width + 1);
+    expect(grip.width).toBeGreaterThanOrEqual(48);
+    expect(grip.height).toBeGreaterThanOrEqual(48);
+    expect(await card.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
+    const path = testInfo.outputPath('long-step-right-handle.png');
+    await card.screenshot({ path });
+    await testInfo.attach('long-step-right-handle', { path, contentType: 'image/png' });
+  });
   test(`step hold opens one draft and keyboard drop is undoable until save${english ? ' @en' : ''}`, async ({
     page,
   }) => {
@@ -402,6 +424,14 @@ for (const english of [false, true]) {
         const start = await box(grip);
         const source = method(page).locator('[data-sortable-id="gamma"]');
         const beforeActivation = await box(source);
+        const cardText = await source.textContent();
+        // The handle stays at the right edge, including narrow, enlarged text layouts.
+        expect(start.x).toBeGreaterThan(beforeActivation.x + beforeActivation.width / 2);
+        expect(start.x + start.width).toBeLessThanOrEqual(
+          beforeActivation.x + beforeActivation.width + 1,
+        );
+        expect(start.width).toBeGreaterThanOrEqual(48);
+        expect(start.height).toBeGreaterThanOrEqual(48);
         const readingGeometry = await geometry(page);
         expect(readingGeometry.scrollTop).toBeGreaterThan(0);
         expect(readingGeometry.visibleInputs).toBe(0);
@@ -409,6 +439,12 @@ for (const english of [false, true]) {
         await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
         await page.mouse.down();
         await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+        const overlay = page.locator('[popover]:popover-open');
+        await expect(overlay).toHaveText(cardText ?? '');
+        const floating = await box(overlay);
+        expect(floating.width).toBeCloseTo(beforeActivation.width, 0);
+        expect(floating.height).toBeCloseTo(beforeActivation.height, 0);
+        await expect(page.locator('[data-sortable-scrim]')).toBeVisible();
         const heldSource = await box(source);
         const activatedGeometry = await geometry(page);
         expect(activatedGeometry.visibleInputs).toBe(0);
@@ -430,6 +466,8 @@ for (const english of [false, true]) {
         await testInfo.attach('recipe-step-held', { path: held, contentType: 'image/png' });
         await page.mouse.up();
         await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+        await expect(page.locator('[data-sortable-scrim]')).toHaveCount(0);
+        await expect(grip).toBeFocused();
         await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
         await expect(save(page)).toBeEnabled();
         const actions = footer(page);

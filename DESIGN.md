@@ -4,6 +4,7 @@ name: Flourprint — Warm baking workspace
 description: Owner-approved warm Material 3 presentation through shared Flourprint components, retaining the Ionic shell.
 colors:
   primary: '#a9490a'
+  scrim: '#000000'
   on-primary: '#ffffff'
   background: '#f8f7f4'
   surface: '#ffffff'
@@ -330,6 +331,11 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 - **Step reordering in the app:** use `fp.sortable-list` with the selected 350 ms hold,
   48 px handles and separate opaque, flat Compact rows. One measured insertion space travels
   with the candidate; the overlay stays opaque above the page and follows both axes.
+  Handles stay on the right, including in the floating card (L159). Render the same complete card
+  in the overlay, retaining its content, dimensions and density. A tokenized scrim dims the page;
+  pre-release refusal stays with the floating card. Source children remain mounted while their
+  measured height and spacing travel to the insertion slot. Settle through `fp.motion.step-drag`
+  and return focus to the exact handle without scrolling or overriding a newer control focus.
   Actual activation opens the recipe draft without marking an unchanged recipe dirty.
   Draft state never switches card/editor rendering; the same method instance stays mounted.
   Keep header and card geometry invariant at activation and drop, with explicit scroll anchoring.
