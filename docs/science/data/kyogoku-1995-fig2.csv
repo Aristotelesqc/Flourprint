@@ -1,0 +1,12 @@
+temperature_c,gas_ml_per_g_wet_yeast_2h,read_uncertainty_ml,panel,source_verified
+0,1.0,0.5,left,true
+2.5,2.2,0.5,left,true
+5,3.5,0.5,left,true
+10,24.0,0.5,left,true
+15,43.5,0.5,left,true
+20,109.7,0.5,left,true
+20,110.5,1.5,right,true
+25,153.0,1.5,right,true
+30,243.4,1.5,right,true
+35,318.3,1.5,right,true
+40,352.0,1.5,right,true
