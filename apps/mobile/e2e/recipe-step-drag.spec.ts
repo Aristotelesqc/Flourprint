@@ -78,14 +78,14 @@ async function open(page: Page, theme = 'light', large = false, imported = recip
   await handle(page, 'Gamma').scrollIntoViewIfNeeded();
 }
 
-async function selectSlot(page: Page, source: string, after: string) {
+async function selectSlot(page: Page, source: string, after: string, direction = 'ArrowUp') {
   await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
   await handle(page, source).focus();
   await page.keyboard.press('Space');
   await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
   const slot = method(page).locator(`[data-slot-after="${after}"]`);
   for (let n = 0; n < 40 && (await slot.getAttribute('data-drop-target')) !== 'true'; n++)
-    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press(direction);
   await expect(slot).toHaveAttribute('data-drop-target', 'true');
 }
 
@@ -121,6 +121,28 @@ async function geometry(page: Page) {
 }
 
 for (const english of [false, true]) {
+  test(`Undo and Discard clear a refusal belonging to the previous process${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await open(page);
+    await selectSlot(page, 'Gamma', 'alpha');
+    await page.keyboard.press('Space');
+    await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
+    await selectSlot(page, 'Alpha', 'beta', 'ArrowDown');
+    await page.keyboard.press('Space');
+    await expect(method(page).getByRole('alert')).toBeVisible();
+    await footer(page)
+      .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
+      .click();
+    await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
+    await expect(method(page).getByRole('alert')).toHaveCount(0);
+    await expect(save(page)).toBeDisabled();
+    await footer(page)
+      .getByRole('button', { name: /^(Discard changes|Abandonner les modifications)$/ })
+      .click();
+    await expect(footer(page)).toHaveCount(0);
+    await expect(method(page).getByRole('alert')).toHaveCount(0);
+  });
   test(`dropping in the visible leading slot spacing commits the indicated move${english ? ' @en' : ''}`, async ({
     page,
   }) => {

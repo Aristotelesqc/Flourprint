@@ -127,6 +127,10 @@ export const RecipeMethod = ({
     undefined,
   );
 
+  useEffect(() => {
+    setCardRefusal(undefined);
+  }, [process]);
+
   useImperativeHandle(
     dragControl,
     () => ({ cancelDrag: () => sortableRef.current?.cancelDrag() ?? false }),
