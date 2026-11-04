@@ -13,7 +13,7 @@ import { applyFormulaEdit } from '../formula/edit.js';
 import type { FormulaError } from '../formula/errors.js';
 import type { Instant } from '../instant.js';
 import { intendedOutcome, outcomeChoiceRequired, outcomeProblem } from '../process/cooking.js';
-import { doughSteps } from '../process/dough.js';
+import { doughContextOf, doughSteps } from '../process/dough.js';
 import { thermalProblem } from '../process/thermal.js';
 import { projectProcess } from '../process/project.js';
 import type { Process, ProcessStep, Projection, StepFact } from '../process/types.js';
@@ -291,11 +291,17 @@ const observe = (
         reason: 'step not running',
       });
     }
-    const stage = state.process ? doughReadyStage(state.process, command.stepId) : undefined;
+    const stage = state.process
+      ? doughReadyStage(
+          state.process,
+          command.stepId,
+          state.formula ? doughContextOf(state.formula) : undefined,
+        )
+      : undefined;
     if (stage === undefined) {
-      return error('InvalidCommand', 'A dough ready observation targets a dough step', {
+      return error('InvalidCommand', 'A dough ready observation targets a fermentation step', {
         field: 'stepId',
-        reason: 'not a dough step',
+        reason: 'not a fermentation step',
       });
     }
     const { type, ...observation } = command;
@@ -331,7 +337,12 @@ const observeDoughTemperature = (
   ) {
     return invalid('stepId', 'step not running');
   }
-  if (!state.process || !(doughSteps(state.process) ?? []).some((s) => s.id === command.stepId)) {
+  if (
+    !state.process ||
+    !(
+      doughSteps(state.process, state.formula ? doughContextOf(state.formula) : undefined) ?? []
+    ).some((s) => s.id === command.stepId)
+  ) {
     return invalid('stepId', 'not a dough step');
   }
   const reading = command.measurement;
@@ -802,7 +813,11 @@ export const decide = (
     case 'SetStepThermal': {
       const known = requireStep(state, command.stepId);
       if (!known.ok) return known;
-      if (!(doughSteps(process) ?? []).some((s) => s.id === command.stepId)) {
+      if (
+        !(
+          doughSteps(process, state.formula ? doughContextOf(state.formula) : undefined) ?? []
+        ).some((s) => s.id === command.stepId)
+      ) {
         return error('InvalidCommand', 'Thermal inputs are for dough steps only', {
           field: 'stepId',
           reason: 'not a dough step',

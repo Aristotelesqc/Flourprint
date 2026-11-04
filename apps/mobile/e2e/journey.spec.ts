@@ -150,6 +150,8 @@ test('dough ready is recorded on a running fermentation step without ending it',
   await page.getByRole('button', { name: 'Échaudage terminé' }).click();
   await page.getByRole('button', { name: 'Préferment terminé' }).click();
   await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
+  // The first-contact step is not a dough step, so it is never judged ready (bake-session.md).
+  await expect(page.getByRole('button', { name: /Prête à/ })).toBeHidden();
   await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
   await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
   // The bulk is followed by shaping: the dough is ready to shape, not to bake.
@@ -677,6 +679,11 @@ test('the boil of bagels ends the dough: it is not a fermentation step', async (
   await expect(page.getByRole('button', { name: 'Retirer Façonnage' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Retirer Ébullition' })).toHaveCount(0);
   await expect(page.getByLabel('Ébullition, durée')).toHaveCount(0);
+  // The first-contact mixing is not a dough step and is not edited here: no removal, no Auto.
+  await expect(page.getByRole('button', { name: 'Retirer Pétrissage' })).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Pétrissage : durée selon le modèle' }),
+  ).toHaveCount(0);
 });
 
 test('starts a bake whose recipe file references a built-in vessel', async ({ page }) => {

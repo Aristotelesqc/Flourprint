@@ -774,7 +774,7 @@ before give the same factor; only sets refused before can now be accepted. No pe
 changes. The implementing pull request bumps `CONTRACT_VERSION` to `0.22.1`, `ENGINE_VERSION` to
 `0.9.1` and `flourprint.dough-thermal` to `0.2.1`.
 
-Version `0.24.0` (target) moves the **dough clock to the end of the first contact** (owner
+Version `0.24.0` (implemented in #233) moves the **dough clock to the end of the first contact** (owner
 decisions of 2026-11-04, #231; What it predicts, Dough temperature; process.md, Mixing steps, First
 contact). The progress `F` of the dough starts at the **end** of the step where the yeast or leaven
 first meets the flour and water; that step's own duration does not count, and the kneading, the
@@ -804,8 +804,7 @@ document stays readable, and only the estimates computed from them differ. Compa
   constants are unchanged, and the model version names those, not the process semantics that tell
   it when to start integrating. The thermal sub-model `flourprint.dough-thermal` stays `0.2.1`
   for the same reason. The readiness profiles are untouched.
-- **Contract version.** `CONTRACT_VERSION` takes one minor step from the version current at the
-  merge of the implementing pull request (`0.23.0` to `0.24.0` at the time of writing).
+- **Contract version.** `CONTRACT_VERSION` is `0.24.0`, one minor step from `0.23.0`.
 - **Stored estimates.** An accepted suggestion keeps its `Estimate` as it was, with the model and
   assumptions of the time (Accepted suggestions); it is not recomputed. A recipe edited after the
   change gets new suggestions from the new clock.

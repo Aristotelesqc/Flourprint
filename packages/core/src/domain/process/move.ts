@@ -1,7 +1,8 @@
 import { domainError, type DomainError } from '../errors.js';
 import { isTopologicalOrder } from '../graph.js';
 import { err, ok, type Result } from '../result.js';
-import { descendants } from './dough.js';
+import { descendants } from './reach.js';
+import { componentIds, subjectOf } from './subject.js';
 import { projectProcess } from './project.js';
 import type {
   Process,
@@ -19,31 +20,7 @@ import { validateProcess, type ProcessError } from './validate.js';
  * edges of a single chain, or is refused. A refusal changes nothing.
  */
 
-/**
- * The components a process names without its formula: the ids its steps incorporate and the
- * components of explicit subjects. Every formula component joins the dough exactly once
- * (Incorporations), so with incorporations these are the formula's components.
- */
-export const componentIds = (process: Process): Set<string> =>
-  new Set(
-    process.steps.flatMap((s) => [
-      ...(s.incorporations ?? []).flatMap((i) => (i.item === 'component' ? [i.id] : [])),
-      ...(s.subject?.kind === 'component' ? [s.subject.id] : []),
-    ]),
-  );
-
-/**
- * `subjectOf` (process.md): the step's explicit `subject`, else the component whose id is the
- * step's id, else the main dough. The components are the formula's when given, else the ids the
- * process incorporates.
- */
-export const subjectOf = (
-  process: Process,
-  step: ProcessStep,
-  components: ReadonlySet<string> = componentIds(process),
-): Subject =>
-  step.subject ??
-  (components.has(step.id) ? { kind: 'component', id: step.id } : { kind: 'mainDough' });
+export { componentIds, subjectOf };
 
 /** The steps of component `id` (its phases), in process order. */
 export const phasesOf = (

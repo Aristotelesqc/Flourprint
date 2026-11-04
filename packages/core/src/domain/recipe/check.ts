@@ -1,5 +1,5 @@
 import { isCookingStep } from '../process/cooking.js';
-import { doughSteps } from '../process/dough.js';
+import { doughContextOf, doughSteps, isMixingStep } from '../process/dough.js';
 import type { Formula } from '../formula/types.js';
 import type { IngredientFamily } from '../ingredient/types.js';
 import type { Process, Projection } from '../process/types.js';
@@ -81,7 +81,7 @@ export const checkRecipe = (
     formula.components.some((c) => c.kind === 'preferment');
   if (!leavened) issues.push({ severity: 'warning', code: 'no_leavening', path: 'ingredients' });
   if (process.steps.length > 0) {
-    if (!process.steps.some((s) => s.operation === 'mix')) {
+    if (!process.steps.some(isMixingStep)) {
       issues.push({ severity: 'warning', code: 'no_mix_step', path: 'steps' });
     }
     if (!process.steps.some(isCookingStep)) {
@@ -128,7 +128,7 @@ export const checkRecipe = (
       });
     }
   }
-  issues.push(...thermalPiecesIssues(process));
+  issues.push(...thermalPiecesIssues(process, formula));
   return issues;
 };
 
@@ -137,10 +137,10 @@ export const checkRecipe = (
  * with thermal inputs carry a different `pieces` (default 1) and no `divide` step lies between
  * them. The recipe says what it says, so this never blocks; it flags a likely forgotten edit.
  */
-const thermalPiecesIssues = (process: Process): RecipeIssue[] => {
+const thermalPiecesIssues = (process: Process, formula: Formula): RecipeIssue[] => {
   const issues: RecipeIssue[] = [];
   let previous: number | undefined;
-  for (const step of doughSteps(process) ?? []) {
+  for (const step of doughSteps(process, doughContextOf(formula)) ?? []) {
     if (step.operation === 'divide') {
       previous = undefined;
       continue;

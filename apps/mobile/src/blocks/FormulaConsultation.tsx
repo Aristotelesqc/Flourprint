@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react';
 import type { Formula, Process, ResolvedFormula } from '@flourprint/core/domain';
-import { estimateFermentation, MODEL_END_POINT, EXPERIMENTAL_READY } from '@flourprint/core/domain';
+import {
+  doughContextOf,
+  estimateFermentation,
+  firstContactStep,
+  MODEL_END_POINT,
+  EXPERIMENTAL_READY,
+  referenceMixingStep,
+} from '@flourprint/core/domain';
 import { formatDuration } from '../i18n/time';
 import { useTemperature } from '../i18n/temperature';
 import { useEstimateText } from './fermentation/text';
@@ -37,7 +44,11 @@ export const FormulaConsultation = ({
   const [explaining, setExplaining] = useState(false);
   const anchor = formula.anchor;
   const lockedWater = formula.waterTarget?.absorbInto;
-  const mix = process.steps.find((s) => s.operation === 'mix');
+  // The room temperature is read on the first-contact step, the target dough temperature and the
+  // friction on the reference mixing step (fermentation.md).
+  const context = useMemo(() => doughContextOf(formula), [formula]);
+  const start = useMemo(() => firstContactStep(process, context), [process, context]);
+  const mix = useMemo(() => referenceMixingStep(process, context), [process, context]);
   const estimates = useMemo(() => estimateFermentation(formula, process), [formula, process]);
   const selectedProfile = process.readiness ?? MODEL_END_POINT;
   const profileLabel =
@@ -213,8 +224,8 @@ export const FormulaConsultation = ({
             <div className="flex justify-between gap-3">
               <span className="text-muted">{t('fermentation.room')}</span>
               <span>
-                {mix.conditions?.temperatureC !== undefined
-                  ? temperature.format(mix.conditions.temperatureC, 'ambient')
+                {start?.conditions?.temperatureC !== undefined
+                  ? temperature.format(start.conditions.temperatureC, 'ambient')
                   : '—'}
               </span>
             </div>
