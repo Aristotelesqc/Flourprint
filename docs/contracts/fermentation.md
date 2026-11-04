@@ -40,7 +40,10 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   main-dough mixing step the estimate is `insufficient_data` (`no_mix_step`), without a first-contact
   step it is `insufficient_data` (`no_first_contact_step`, process.md), and when every dough step
   is a mixing step there is no fermentation step to estimate (`no_fermentation_step`); without a
-  heat step, every `asap` step from the first contact counts.
+  heat step, every `asap` step from the first contact counts. A **fermentation step** is a dough
+  step that is not a mixing step (a rest, bulk, proof, retard…): only a fermentation step can be
+  model-driven (Model-driven duration) or judged ready (`doughReady`, bake-session.md); a mixing
+  step always has a planned duration.
 - **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5), at progress 1.
 - **A preferment keeps its own clock**, from its own first contact: it starts at the start of its
   own fermenting step (the step with operation `preferment`, or the legacy step with the
@@ -661,6 +664,11 @@ interface AcceptedSuggestion {
 
 A dough step may be set to follow the model (`ProcessStep.durationMode: 'model'`, process.md):
 
+- Only a **fermentation step** (a dough step that is not a mixing step, Dough steps) can be
+  model-driven. `durationMode: 'model'` on a mixing step (`frasage`, `mix`, a kneading) is
+  `InvalidProcess` (the step as `path`): the model solves the time of a fermentation, never of a
+  mixing, which always keeps its planned duration. Without a model-driven step, the model solves
+  the last fermentation step.
 - At most **one** dough step per dough is model-driven: the model solves one unknown, the time of
   that step given the planned durations of the others (as "use this time" does). A second one is
   `InvalidProcess`.
@@ -755,9 +763,10 @@ the estimates computed from them differ. Compatibility:
   assumptions of the time (Accepted suggestions); it is not recomputed. A recipe edited after the
   change gets new suggestions from the new clock.
 - **Dough steps and recorded events.** The dough steps now start at the first contact. A command
-  that needs a dough step (`doughReady`, a dough-temperature observation, `SetStepThermal`) is
-  checked against the dough steps in force when it is issued, so a baker can now read the dough
-  temperature at the end of the kneading. The only steps that stop being dough steps are those
+  that needs a dough step (a dough-temperature observation, `SetStepThermal`) is checked against
+  the dough steps in force when it is issued, so a baker can now read the dough temperature at the
+  end of the kneading; `doughReady` needs a fermentation step, never a mixing step (bake-session.md).
+  `durationMode: 'model'` is likewise refused on a mixing step (Model-driven duration). The only steps that stop being dough steps are those
   between the end of the reference mixing step and a later first contact, i.e. a recipe whose
   yeast enters only in a step after its last kneading, which is not expected. Restoring a backup re-checks the gate on its
   stored dough-temperature observations and thermal changes, so such an event
