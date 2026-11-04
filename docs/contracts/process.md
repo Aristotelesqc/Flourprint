@@ -143,18 +143,20 @@ interface StepThermal {
   step, a cooking step) `thermal` is refused (`InvalidProcess`, step as `path`): this model does not
   cover a preferment, whose phases are already `component_phases_unmodelled`.
 - **Validation with and without the formula.** Which step is the first contact depends on what an
-  incorporation is: a yeast ingredient or a `preferment` component holds yeast, salt or a scald does
-  not. The exact rule therefore needs the formula, and the recipe validation applies it. A check made
-  on a process alone (the step editor, the projection, a move or a duplication of steps) cannot tell
-  yeast from salt and counts **any** incorporation with a positive `sharePct`. Its rule: a step that
-  is **certainly before the first contact** is refused as above: a step ahead of every main-dough
-  step that incorporates anything (an `autolyse` that incorporates nothing, ahead of the step that
-  brings the ingredients, is one) or, when the process declares no incorporation at all, ahead of
-  the first main-dough mixing step. A step that
-  incorporates something which only the formula shows not to be yeast (salt, a scald) is **accepted**
-  by such a check, and refused later by the recipe validation. This is a stated limit, not a
-  second rule: the process-only check is never stricter than the exact one, so it never refuses
-  thermal inputs that the exact rule accepts.
+  incorporation is: a yeast ingredient or a `preferment` component holds yeast; salt, a scald or a
+  topping does not. The exact rule therefore needs the formula, and the recipe validation applies
+  it. A check made on a process alone (the step editor, the projection, a move or a duplication of
+  steps) cannot tell them apart. It counts as possibly holding yeast **any** incorporation of an
+  ingredient or of a component with a positive `sharePct` (the flour and the water never hold
+  yeast), and a `fermentolyse`. Its rule: a step that is **certainly before the first contact** is
+  refused as above, that is a main-dough step ahead of every main-dough step that incorporates an
+  ingredient or a component (an `autolyse` of flour and water, or one that incorporates nothing,
+  ahead of the step that brings the ingredients, is one) or, when the process declares no
+  incorporation at all, ahead of the first main-dough mixing step. A step that incorporates an
+  ingredient or a component which only the formula shows not to hold yeast (the salt, a scald) is
+  **accepted** by such a check, and refused later by the recipe validation. This is a stated limit,
+  not a second rule: the process-only check never refuses thermal inputs that the exact rule
+  accepts.
 - **Divided pieces.** `pieces` states how many equal pieces the dough is cut into at or before this
   step: the model uses the per-piece mass `m / pieces` (a `divide` step carries no mass itself). A
   step after the division carries the same `pieces` as the step that follows the `divide`; the
