@@ -54,11 +54,17 @@ authentication (60 requests per hour per address).
   the `dev` address on a push to `main` when the `dev` branch is gone or contained in `main`. The
   default is therefore the right place to look at released work too; `main` stays selectable for
   the real `main` address.
-- **Choosing.** The Advanced section lists `dev`, `canary`, `main`, the open pull requests
-  (`GET /repos/Aristotelesqc/Flourprint/pulls?state=open`, without authentication) and a number
-  field (digits, `#` tolerated). Offline, rate-limited or any other failure only empties the list;
-  number entry still works. The choice is kept across restarts (Android: app preferences; Windows:
-  `settings.json`).
+- **Choosing.** The Advanced section has one dropdown listing every version that can be loaded,
+  in this order: `dev`, `canary`, `main`, then each open pull request as "PR #<n> · <title>"
+  (`GET /repos/Aristotelesqc/Flourprint/pulls?state=open`, without authentication), newest first.
+  The loaded version is the selected entry (a pull request that is loaded but no longer listed is
+  added so the selection stays truthful). Choosing an entry loads it. Only versions that really have
+  an address are listed: "branches" means exactly `dev`, `canary` and `main`. CI also deploys a
+  `<branch>` alias for a run started on demand on another branch (`ci.yml`, deploy step); those
+  are ad hoc, cannot be enumerated and are outside the allowlist, so they are not listed. When the
+  list cannot be fetched (offline, rate-limited, any failure) the dropdown holds the three fixed
+  entries and a number field (digits, `#` tolerated) takes over for pull requests. The choice is
+  kept across restarts (Android: app preferences; Windows: `settings.json`).
 - **Always visible.** The section shows "PR #233 · <build label>" (or `Dev · …`), the label being
   the loaded build's own (ADR 0016), and one action returns to `dev`. A version older than this ADR
   has no picker: on Windows View → Version still returns to `dev`; on Android a dynamic launcher
