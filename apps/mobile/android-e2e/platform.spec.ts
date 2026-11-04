@@ -562,7 +562,20 @@ test('native touch drag keeps Recipe geometry and draft/editor states independen
     });
   await expect(page.getByRole('button', { name: 'Edit recipe', exact: true })).toBeVisible();
   await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  await expect(page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)')).toHaveCount(1);
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await dismissSystemDialog();
   await handle().scrollIntoViewIfNeeded();
+  let previousBounds = '';
+  await expect
+    .poll(async () => {
+      const current = await handle().boundingBox();
+      const stamp = JSON.stringify(current);
+      const settled = current !== null && stamp === previousBounds;
+      previousBounds = stamp;
+      return settled;
+    })
+    .toBe(true);
   const before = await layout();
   expect(before.scrollTop).toBeGreaterThan(0);
   await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
@@ -577,10 +590,11 @@ test('native touch drag keeps Recipe geometry and draft/editor states independen
   const source = await handle().boundingBox();
   if (!source) throw new Error('Native touch source missing');
   let finger = point(source);
-  await dismissSystemDialog();
+  console.log('Native drag source', JSON.stringify({ before, source, scale, finger }));
   await device.shell(`input touchscreen motionevent DOWN ${finger.x} ${finger.y}`);
   try {
     await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+    await expect(page.locator('[popover]:popover-open')).toContainText('Gamma');
     await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
     expect((await layout()).height).toBeCloseTo(before.height, 0);
     const slot = method().locator('[data-slot-after="alpha"]');
@@ -599,6 +613,18 @@ test('native touch drag keeps Recipe geometry and draft/editor states independen
   }
   await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
   await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  const safeArea = await page
+    .getByTestId('recipe-draft-bar')
+    .getByRole('toolbar')
+    .evaluate((toolbar) => ({
+      bottom: toolbar.getBoundingClientRect().bottom,
+      allowedBottom:
+        window.innerHeight -
+        (parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue('--ion-safe-area-bottom'),
+        ) || 0),
+    }));
+  expect(safeArea.bottom).toBeLessThanOrEqual(safeArea.allowedBottom + 1);
   const after = await layout();
   expect(after.height).toBeCloseTo(before.height, 0);
   expect(Math.abs(after.scrollTop - before.scrollTop)).toBeLessThanOrEqual(1);

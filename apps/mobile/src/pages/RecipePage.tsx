@@ -1296,7 +1296,10 @@ const RecipePageContent = () => {
         className="ion-padding"
         style={
           (isDraftMode || isEditing || dirty || newRecipe) && effectivePanel === 'formula'
-            ? ({ '--padding-bottom': 'calc(var(--spacing-touch) + 1rem)' } as React.CSSProperties)
+            ? ({
+                '--padding-bottom':
+                  'calc(var(--spacing-touch) + 1rem + var(--ion-safe-area-bottom, 0px))',
+              } as React.CSSProperties)
             : undefined
         }
       >
@@ -1471,6 +1474,7 @@ const RecipePageContent = () => {
             slot="fixed"
             data-testid="recipe-draft-bar"
             data-recipe-draft-bar
+            style={{ paddingBottom: 'var(--ion-safe-area-bottom, 0px)' }}
             className="ion-no-border pointer-events-none absolute bottom-0 left-0 right-0 z-40"
           >
             <div className="pointer-events-auto">
