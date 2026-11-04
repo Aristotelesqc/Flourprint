@@ -580,6 +580,107 @@ describe('live recomputation from the recorded facts', () => {
   });
 });
 
+describe('the dough clock in a bake starts at the actual completion of the first contact', () => {
+  /** Progress in percent of the end point after `minutes` at 24 °C, 0.4 % fresh yeast, F* = 1. */
+  const pctAfter = (minutes: number) => {
+    const r24 = Math.exp((98300 / 8.314462618) * (1 / 294.25 - 1 / 297.15));
+    return ((100 * 0.4 ** 0.729) / 3.43) * r24 * (minutes / 60);
+  };
+  /** A frasage (first contact, no incorporations declared, planned 5 min), then an open bulk. */
+  const frasageBulk: Process = {
+    steps: [
+      step('frasage', {
+        operation: 'frasage',
+        plannedDurationS: 300,
+        conditions: { temperatureC: 24 },
+      }),
+      step('bulk', { dependsOn: ['frasage'], conditions: { temperatureC: 24 } }),
+      step('bake', { operation: 'bake', dependsOn: ['bulk'], plannedDurationS: 2400 }),
+    ],
+  };
+
+  it('counts from the completion of a frasage that overran its plan, not from its planned end', () => {
+    const log = started(0.4, frasageBulk);
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'frasage' });
+    // Planned for 5 min, completed after 9: the baker tapped Next at 08:09.
+    log.at('08:09').ok({ type: 'CompleteStep', stepId: 'frasage' });
+    log.at('08:09').ok({ type: 'StartStep', stepId: 'bulk' });
+    const forecast = liveDoughForecast(log.state, t('09:09'));
+    if (!forecast) throw new Error('no forecast');
+    // One hour of fermentation, not 64 min (counted from the planned end at 08:05).
+    expect(value(forecast.progressNowPct)).toBeCloseTo(pctAfter(60), 6);
+    expect(Math.abs(value(forecast.progressNowPct) - pctAfter(64))).toBeGreaterThan(0.3);
+    // The same hour of bulk after a frasage that took exactly its plan gives the same progress.
+    const onTime = started(0.4, frasageBulk);
+    onTime.at('08:00').ok({ type: 'StartStep', stepId: 'frasage' });
+    onTime.at('08:05').ok({ type: 'CompleteStep', stepId: 'frasage' });
+    onTime.at('08:05').ok({ type: 'StartStep', stepId: 'bulk' });
+    const same = liveDoughForecast(onTime.state, t('09:05'));
+    expect(value(same?.progressNowPct)).toBeCloseTo(value(forecast.progressNowPct), 9);
+    // The whole time the dough needs from the clock start is the same too (constant temperature).
+    expect(value(forecast.remaining)).toBeCloseTo(value(same?.remaining), 6);
+  });
+
+  it('has no progress while the first contact runs, and counts what remains of its plan', () => {
+    const log = started(0.4, frasageBulk);
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'frasage' });
+    const whole = value(
+      estimateFermentation(formula(0.4), frasageBulk, MODEL_END_POINT).dough.duration,
+    );
+    // 2 min into the planned 5: the dough needs the 3 min left of the frasage plus the whole time.
+    const early = liveDoughForecast(log.state, t('08:02'));
+    expect(value(early?.progressNowPct)).toBe(0);
+    expect(value(early?.remaining)).toBeCloseTo(whole + 3 * 60, 6);
+    // 7 min in, past its plan and still running: nothing is left to wait for in the plan, and the
+    // clock has not started, so the whole time is still ahead of it.
+    const overrun = liveDoughForecast(log.state, t('08:07'));
+    expect(value(overrun?.progressNowPct)).toBe(0);
+    expect(value(overrun?.remaining)).toBeCloseTo(whole, 6);
+  });
+
+  it('keeps fermenting between the completion of the first contact and a later start', () => {
+    const log = started(0.4, frasageBulk);
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'frasage' });
+    log.at('08:09').ok({ type: 'CompleteStep', stepId: 'frasage' });
+    // The baker taps Start on the bulk 11 min after the frasage ended: the dough did not wait.
+    log.at('08:20').ok({ type: 'StartStep', stepId: 'bulk' });
+    const forecast = liveDoughForecast(log.state, t('09:20'));
+    expect(value(forecast?.progressNowPct)).toBeCloseTo(pctAfter(71), 6);
+  });
+
+  it('refuses a dough reading and thermal inputs on the first contact, accepts them after it', () => {
+    const kneaded: Process = {
+      steps: [
+        step('frasage', {
+          operation: 'frasage',
+          plannedDurationS: 300,
+          conditions: { temperatureC: 24 },
+        }),
+        step('mix', {
+          operation: 'mix',
+          dependsOn: ['frasage'],
+          plannedDurationS: 600,
+          conditions: { temperatureC: 24 },
+        }),
+        step('bulk', { dependsOn: ['mix'], conditions: { temperatureC: 24 } }),
+        step('bake', { operation: 'bake', dependsOn: ['bulk'], plannedDurationS: 2400 }),
+      ],
+    };
+    const log = started(0.4, kneaded);
+    log.at('08:00').ok({ type: 'StartStep', stepId: 'frasage' });
+    log.at('08:03');
+    expect(codeOf(log.reading('frasage', 24, 'core'))).toBe('InvalidCommand');
+    expect(codeOf(log.run({ type: 'SetStepThermal', stepId: 'frasage', thermal: bowl }))).toBe(
+      'InvalidCommand',
+    );
+    // A dough step that is not started yet takes thermal inputs; the kneading running takes a reading.
+    log.at('08:05').ok({ type: 'CompleteStep', stepId: 'frasage' });
+    log.at('08:05').ok({ type: 'StartStep', stepId: 'mix' });
+    expect(codeOf(log.at('08:08').reading('mix', 24.5, 'core'))).toBe('ok');
+    expect(codeOf(log.run({ type: 'SetStepThermal', stepId: 'mix', thermal: bowl }))).toBe('ok');
+  });
+});
+
 describe('calibrating the personal factor from a bake', () => {
   /** A 500 g dough in a lidded bowl in the static fridge, almost no yeast: weakly fermenting. */
   const fridge: Process = {

@@ -40,11 +40,19 @@ export {
 } from './thermal.js';
 export { foldSchedule, phasesDurationS } from './technique.js';
 export {
+  doughContextOf,
   doughSteps,
+  fermentationSteps,
+  firstContactStep,
   firstHeatStep,
   HEAT_OPERATIONS,
   isHeatStep,
+  isMixingStep,
+  mainDoughMixingSteps,
   modelDrivenStep,
+  referenceMixingStep,
+  stepsAfterReferenceMix,
+  type DoughContext,
 } from './dough.js';
 export {
   COOKING_OPERATIONS,

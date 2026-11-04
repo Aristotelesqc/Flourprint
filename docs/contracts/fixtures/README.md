@@ -136,7 +136,8 @@ change merges before its implementation, so a case written for it is pending for
 an older engine and runs as soon as `ENGINE_VERSION` reaches `since`; nothing is relaxed afterwards.
 A case whose values a change supersedes may keep its former form with `"until": "<engine version>"`:
 it runs while the engine is older, so no existing assertion is skipped or weakened before the
-implementation lands, and the implementing pull request removes it. No case uses `until` at present.
+implementation lands, and the implementing pull request removes it. No case uses `until` at present
+(the harness still honours it).
 
 **Dough clock (contract 0.24.0).** The progress of the dough is 0 at the **end** of the
 first-contact step (process.md, First contact): that step's own duration does not count, and the
