@@ -428,3 +428,66 @@ test('personal equipment creation guards Android Back and persists an explicitly
   );
   await forceStop();
 });
+
+test('optional appliance profile survives native Back and restart without changing step appliance', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 5);
+  const editMix = async () => {
+    await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+    await page
+      .getByTestId('recipe-method')
+      .filter({ visible: true })
+      .getByRole('button', { name: 'Edit step Mix', exact: true })
+      .first()
+      .click();
+  };
+  await editMix();
+  const panel = () => page.getByTestId('step-equipment-fields').filter({ visible: true });
+  const picker = () => panel().getByRole('button', { name: /^Appliance profile,/ });
+  await panel().getByRole('button', { name: 'Add appliance profile', exact: true }).click();
+  const form = () => page.getByRole('region', { name: /^New (personal )?appliance profile$/ });
+  await form().getByRole('textbox', { name: 'Name', exact: true }).fill('Native kitchen profile');
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(form().getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(
+    'Native kitchen profile',
+  );
+  await form()
+    .getByRole('button', { name: /^(Appliance|Type)/ })
+    .press('Space');
+  await page.getByRole('radio', { name: 'Oven', exact: true }).click();
+  await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+  await form()
+    .getByRole('button', { name: /^Create (equipment|profile)$/ })
+    .click();
+  await expect(form()).toBeHidden();
+  await expect(picker()).not.toHaveAccessibleName(/Native kitchen profile/);
+  await picker().press('Space');
+  await page.getByRole('radio', { name: 'Native kitchen profile', exact: true }).click();
+  await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+  await expect(panel().getByRole('button', { name: /^Appliance,/ })).toHaveAccessibleName(
+    /Not specified/,
+  );
+  await page
+    .locator('ion-modal:visible')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 6);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 6);
+  await editMix();
+  await expect(picker()).toHaveAccessibleName(/Native kitchen profile/);
+  await expect(panel().getByRole('button', { name: /^Appliance,/ })).toHaveAccessibleName(
+    /Not specified/,
+  );
+  await expect(panel().getByRole('textbox', { name: 'Setpoint (°C)', exact: true })).toHaveValue(
+    '35',
+  );
+  await expect(panel().getByRole('textbox', { name: 'Power level', exact: true })).toHaveValue('3');
+  await forceStop();
+});

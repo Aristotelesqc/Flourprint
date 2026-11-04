@@ -1,6 +1,19 @@
 import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import type { Coating, EquipmentEntry, EquipmentShape, Material } from '@flourprint/core/domain';
-import { COATINGS, EQUIPMENT_SHAPES, MATERIALS, newEquipmentEntry } from '@flourprint/core/domain';
+import type {
+  ApplianceKind,
+  Coating,
+  EquipmentEntry,
+  EquipmentKind,
+  EquipmentShape,
+  Material,
+} from '@flourprint/core/domain';
+import {
+  APPLIANCE_KINDS,
+  COATINGS,
+  EQUIPMENT_SHAPES,
+  MATERIALS,
+  newEquipmentEntry,
+} from '@flourprint/core/domain';
 import { saveEquipmentEntry } from '@flourprint/core/application';
 import { Ui } from '../ui/library';
 import { useServices } from '../services/services';
@@ -9,7 +22,7 @@ import { useMessages } from '../i18n/use-messages';
 import type { MessageKey } from '../i18n/messages';
 
 export interface PersonalEquipmentCreateProps {
-  readonly kind: 'support' | 'vessel';
+  readonly kind: EquipmentKind;
   readonly onCreated: (entry: EquipmentEntry) => void;
   readonly onCancel: () => void;
   readonly onValidityChange: (blocked: boolean) => void;
@@ -87,6 +100,7 @@ export function PersonalEquipmentCreate({
   }, []);
 
   const [name, setName] = useState('');
+  const [applianceKind, setApplianceKind] = useState<ApplianceKind | ''>('');
   const [shape, setShape] = useState<EquipmentShape | ''>('');
   const [material, setMaterial] = useState<Material | ''>('');
   const [coating, setCoating] = useState<Coating | ''>('');
@@ -96,7 +110,11 @@ export function PersonalEquipmentCreate({
   const [generalError, setGeneralError] = useState<string | undefined>();
 
   const isDirty =
-    name.length > 0 || notes.length > 0 || shape !== '' || material !== '' || coating !== '';
+    name.length > 0 ||
+    notes.length > 0 ||
+    (kind === 'appliance'
+      ? applianceKind !== ''
+      : shape !== '' || material !== '' || coating !== '');
 
   const isBlocked = isDirty || busy;
 
@@ -109,6 +127,16 @@ export function PersonalEquipmentCreate({
       onValidityChange(false);
     };
   }, [onValidityChange]);
+
+  const applianceOptions = useMemo(() => {
+    return [
+      { id: '', label: t('cooking.edit.notSpecified') },
+      ...APPLIANCE_KINDS.map((k) => ({
+        id: k,
+        label: k === 'other' ? t('cooking.edit.otherAppliance') : t(`equipment.appliance.${k}`),
+      })),
+    ];
+  }, [t]);
 
   const shapeOptions = useMemo(() => {
     return [
@@ -168,9 +196,15 @@ export function PersonalEquipmentCreate({
 
     const entry: EquipmentEntry = {
       ...base,
-      ...(shape !== '' ? { shape } : {}),
-      ...(material !== '' ? { material } : {}),
-      ...(coating !== '' ? { coating } : {}),
+      ...(kind === 'appliance'
+        ? {
+            ...(applianceKind !== '' ? { appliance: applianceKind } : {}),
+          }
+        : {
+            ...(shape !== '' ? { shape } : {}),
+            ...(material !== '' ? { material } : {}),
+            ...(coating !== '' ? { coating } : {}),
+          }),
       ...(notes.trim().length > 0 ? { notes } : {}),
     };
 
@@ -209,7 +243,9 @@ export function PersonalEquipmentCreate({
       <h4 id={`${id}-heading`} className="text-sm font-semibold text-on-surface">
         {kind === 'support'
           ? t('equipment.create.supportTitle')
-          : t('equipment.create.vesselTitle')}
+          : kind === 'vessel'
+            ? t('equipment.create.vesselTitle')
+            : t('equipment.create.applianceTitle')}
       </h4>
 
       <p className="text-xs text-muted">{t('equipment.create.explanation')}</p>
@@ -224,7 +260,11 @@ export function PersonalEquipmentCreate({
           type="text"
           value={name}
           disabled={busy}
-          placeholder={t('equipment.create.namePlaceholder')}
+          placeholder={
+            kind === 'appliance'
+              ? t('equipment.create.applianceNamePlaceholder')
+              : t('equipment.create.namePlaceholder')
+          }
           aria-required="true"
           aria-invalid={nameError ? 'true' : undefined}
           aria-describedby={nameError ? nameErrorId : undefined}
@@ -240,49 +280,65 @@ export function PersonalEquipmentCreate({
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {kind === 'appliance' ? (
         <Ui
           component="fp.select"
-          label={t('equipment.create.shape')}
-          value={shape}
-          options={shapeOptions}
+          label={t('cooking.edit.appliance')}
+          value={applianceKind}
+          options={applianceOptions}
           disabled={busy}
           cancelText={t('cooking.edit.cancel')}
           okText={t('cooking.edit.ok')}
           onValueChange={(val) => {
-            setShape(val as EquipmentShape | '');
+            setApplianceKind(val as ApplianceKind | '');
             setGeneralError(undefined);
           }}
         />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Ui
+            component="fp.select"
+            label={t('equipment.create.shape')}
+            value={shape}
+            options={shapeOptions}
+            disabled={busy}
+            cancelText={t('cooking.edit.cancel')}
+            okText={t('cooking.edit.ok')}
+            onValueChange={(val) => {
+              setShape(val as EquipmentShape | '');
+              setGeneralError(undefined);
+            }}
+          />
 
-        <Ui
-          component="fp.select"
-          label={t('equipment.create.material')}
-          value={material}
-          options={materialOptions}
-          disabled={busy}
-          cancelText={t('cooking.edit.cancel')}
-          okText={t('cooking.edit.ok')}
-          onValueChange={(val) => {
-            setMaterial(val as Material | '');
-            setGeneralError(undefined);
-          }}
-        />
+          <Ui
+            component="fp.select"
+            label={t('equipment.create.material')}
+            value={material}
+            options={materialOptions}
+            disabled={busy}
+            cancelText={t('cooking.edit.cancel')}
+            okText={t('cooking.edit.ok')}
+            onValueChange={(val) => {
+              setMaterial(val as Material | '');
+              setGeneralError(undefined);
+            }}
+          />
 
-        <Ui
-          component="fp.select"
-          label={t('equipment.create.coating')}
-          value={coating}
-          options={coatingOptions}
-          disabled={busy}
-          cancelText={t('cooking.edit.cancel')}
-          okText={t('cooking.edit.ok')}
-          onValueChange={(val) => {
-            setCoating(val as Coating | '');
-            setGeneralError(undefined);
-          }}
-        />
-      </div>
+          <Ui
+            component="fp.select"
+            label={t('equipment.create.coating')}
+            value={coating}
+            options={coatingOptions}
+            disabled={busy}
+            cancelText={t('cooking.edit.cancel')}
+            okText={t('cooking.edit.ok')}
+            onValueChange={(val) => {
+              setCoating(val as Coating | '');
+              setGeneralError(undefined);
+            }}
+          />
+        </div>
+      )}
 
       <div className="space-y-1">
         <label htmlFor={notesInputId} className="block text-sm font-medium text-on-surface">
@@ -330,7 +386,7 @@ export function PersonalEquipmentCreate({
           disabled={busy}
           onClick={handleCreate}
         >
-          {t('equipment.create.submit')}
+          {t(kind === 'appliance' ? 'equipment.create.applianceSubmit' : 'equipment.create.submit')}
         </Ui>
       </div>
     </section>
