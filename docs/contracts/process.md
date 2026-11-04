@@ -142,6 +142,19 @@ interface StepThermal {
   heat step. On any other step (a preferment's, a `beforeTarget`
   step, a cooking step) `thermal` is refused (`InvalidProcess`, step as `path`): this model does not
   cover a preferment, whose phases are already `component_phases_unmodelled`.
+- **Validation with and without the formula.** Which step is the first contact depends on what an
+  incorporation is: a yeast ingredient or a `preferment` component holds yeast, salt or a scald does
+  not. The exact rule therefore needs the formula, and the recipe validation applies it. A check made
+  on a process alone (the step editor, the projection, a move or a duplication of steps) cannot tell
+  yeast from salt and counts **any** incorporation with a positive `sharePct`. Its rule: a step that
+  is **certainly before the first contact** is refused as above: a step ahead of every main-dough
+  step that incorporates anything (an `autolyse` that incorporates nothing, ahead of the step that
+  brings the ingredients, is one) or, when the process declares no incorporation at all, ahead of
+  the first main-dough mixing step. A step that
+  incorporates something which only the formula shows not to be yeast (salt, a scald) is **accepted**
+  by such a check, and refused later by the recipe validation. This is a stated limit, not a
+  second rule: the process-only check is never stricter than the exact one, so it never refuses
+  thermal inputs that the exact rule accepts.
 - **Divided pieces.** `pieces` states how many equal pieces the dough is cut into at or before this
   step: the model uses the per-piece mass `m / pieces` (a `divide` step carries no mass itself). A
   step after the division carries the same `pieces` as the step that follows the `divide`; the
@@ -410,8 +423,8 @@ Rules:
   **first-contact step** of the main dough is, in list order, the first main-dough step (Subjects
   and component phases: a step whose subject is the main dough) that
   - **holds yeast**: among its incorporations (with a positive `sharePct`), an ingredient marked as
-    commercial yeast (`yeast`, formula.md) or a component of kind `preferment` (a poolish, a biga,
-    a levain); or whose operation is `fermentolyse` (flour, water and leavening, salt later, by
+    commercial yeast (`yeast`, formula.md) of role `dough` (a yeast in a topping or a glaze never
+    starts the dough) or a component of kind `preferment` (a poolish, a biga, a levain); or whose operation is `fermentolyse` (flour, water and leavening, salt later, by
     definition, whatever the incorporations say);
   - or, **when the process declares no incorporations at all**, so that nothing says what a step
     holds, is a main-dough mixing step (`frasage` or `mix`). An `autolyse` is not a mixing step: a
@@ -419,7 +432,8 @@ Rules:
 
   When incorporations are declared and no main-dough step holds yeast (and none is a
   `fermentolyse`), there is no first-contact step: the dough estimate is `insufficient_data` with
-  the reason `no_first_contact_step`. A formula without a commercial-yeast ingredient is still
+  the reason `no_first_contact_step` and `missing: ['incorporations']` (the incorporation of the
+  yeast or leaven that no step declares). A formula without a commercial-yeast ingredient is still
   `unsupported` (`no_commercial_yeast`, fermentation.md) before any step is looked at, as before; the
   new reason is reachable only when the yeast is held by something that is not a step's
   incorporation of a yeast ingredient or of a `preferment` component. The clock needs a mixing
@@ -496,8 +510,10 @@ Examples (hand-checked against the rules above):
    incorporates the poolish, a `preferment` component, so it holds leaven and is the first-contact
    step as well as the reference mixing step. The poolish keeps its own clock (its own step, 12 h).
 8. **Preliminary frasage.** `frasage` (of the poolish, no incorporations, 10 min), `proof`
-   (12 h), `frasage` (assembly, with incorporations), `mix` (kneading, 8 min), `bulk`. The first
-   `frasage` belongs to the poolish. The reference mixing step is the `mix`.
+   (12 h), `frasage` (assembly, incorporating the poolish, a `preferment` component), `mix`
+   (kneading, 8 min), `bulk`. The first `frasage` belongs to the poolish. The assembly `frasage`
+   holds leaven: it is the first-contact step, and the clock starts at its start; the `mix` is the
+   reference mixing step.
 9. **Fermentolyse before the final kneading.** `fermentolyse` (incorporates flour, water and
    yeast, 45 min), `mix` (incorporates the salt, 8 min), `bulk`. The `fermentolyse` holds yeast:
    it is the first-contact step. The clock starts at its start, and the 45 min, the 8 min of
