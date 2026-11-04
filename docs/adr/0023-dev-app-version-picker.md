@@ -103,7 +103,7 @@ version; it is cleaned at a later start-up once the user is elsewhere.
 
 ### Native changes
 
-When a pull request is selected (and on the list), the app reads `GET …/pulls/<n>/files` (up to
+When a pull request is chosen (before it loads) and under the loaded version, the app reads `GET …/pulls/<n>/files` (up to
 three pages of 100) and, if a changed path starts with `apps/mobile/android/`, `apps/desktop/src/`,
 `apps/desktop/scripts/` or `apps/desktop/package.json`, or is `apps/mobile/capacitor.config.ts`, or
 changes a Capacitor dependency in `apps/mobile/package.json`, shows a notice: loading its web build
