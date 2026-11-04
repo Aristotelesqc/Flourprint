@@ -198,7 +198,10 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
     entries: BUILT_IN_EQUIPMENT,
   });
   const [createKind, setCreateKind] = useState<'support' | 'vessel' | null>(null);
-  const [creationStatus, setCreationStatus] = useState<string | undefined>();
+  const [creationStatus, setCreationStatus] = useState<{
+    readonly kind: EquipmentKind;
+    readonly message: string;
+  }>();
   const [createInvalid, setCreateInvalid] = useState(false);
 
   const supportButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -249,11 +252,12 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
       ...prev,
       entries: [...prev.entries, entry],
     }));
-    setCreationStatus(
-      t('equipment.create.createdStatus', {
+    setCreationStatus({
+      kind: entry.kind,
+      message: t('equipment.create.createdStatus', {
         name: formatEntryName(entry, t),
       }),
-    );
+    });
     setCreateKind(null);
     setCreateInvalid(false);
   };
@@ -542,7 +546,7 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
   return (
     <div data-testid="step-equipment-items" className="space-y-3 pt-2">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1">
+        <div role="group" aria-label={t('cooking.edit.support')} className="space-y-1">
           <Ui
             component="fp.select"
             label={t('cooking.edit.support')}
@@ -567,9 +571,17 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
           >
             {t('equipment.create.addSupport')}
           </Ui>
+          {creationStatus?.kind === 'support' && (
+            <p
+              role="status"
+              className="text-xs text-on-surface bg-surface-container rounded-card p-2"
+            >
+              {creationStatus.message}
+            </p>
+          )}
         </div>
 
-        <div className="space-y-1">
+        <div role="group" aria-label={t('cooking.edit.vessel')} className="space-y-1">
           <Ui
             component="fp.select"
             label={t('cooking.edit.vessel')}
@@ -594,6 +606,14 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
           >
             {t('equipment.create.addVessel')}
           </Ui>
+          {creationStatus?.kind === 'vessel' && (
+            <p
+              role="status"
+              className="text-xs text-on-surface bg-surface-container rounded-card p-2"
+            >
+              {creationStatus.message}
+            </p>
+          )}
         </div>
       </div>
 
@@ -604,11 +624,6 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
           onCancel={handleCancelCreate}
           onValidityChange={handleCreateValidityChange}
         />
-      )}
-      {creationStatus && (
-        <p role="status" className="text-xs text-on-surface bg-surface-container rounded-card p-2">
-          {creationStatus}
-        </p>
       )}
 
       <Ui

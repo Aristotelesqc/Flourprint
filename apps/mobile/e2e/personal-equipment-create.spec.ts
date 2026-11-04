@@ -15,6 +15,34 @@ const vessel = /^(Baking vessel|Récipient de cuisson),/;
 const cover = /^(Vessel cover|Couverture du récipient),/;
 const steelRef = { id: 'baking-steel', version: 1 };
 
+const equipmentGroup = (page: Page, kind: 'support' | 'vessel') =>
+  items(page).getByRole('group', {
+    name:
+      kind === 'support'
+        ? /^(Baking support|Support de cuisson)$/
+        : /^(Baking vessel|Récipient de cuisson)$/,
+  });
+
+async function expectCreationFeedback(page: Page, kind: 'support' | 'vessel', name: string) {
+  const group = equipmentGroup(page, kind);
+  const status = group.getByRole('status');
+  await expect(status).toContainText(name);
+  await expect(
+    equipmentGroup(page, kind === 'support' ? 'vessel' : 'support').getByRole('status'),
+  ).toHaveCount(0);
+  const action = kind === 'support' ? addSupport(page) : addVessel(page);
+  const [actionBox, statusBox, groupBox] = await Promise.all([
+    action.boundingBox(),
+    status.boundingBox(),
+    group.boundingBox(),
+  ]);
+  if (!actionBox || !statusBox || !groupBox) throw new Error('Creation feedback has no layout');
+  expect(statusBox.y).toBeGreaterThanOrEqual(actionBox.y + actionBox.height - 1);
+  expect(statusBox.x).toBeGreaterThanOrEqual(groupBox.x - 1);
+  expect(statusBox.x + statusBox.width).toBeLessThanOrEqual(groupBox.x + groupBox.width + 1);
+  expect(await status.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+}
+
 async function edit(page: Page) {
   await enterEditor(page);
   await routed(page)
@@ -201,6 +229,7 @@ for (const english of [false, true]) {
     await create(page).click();
     await expect(createArea(page)).toBeHidden();
     await expect(addVessel(page)).toBeFocused();
+    await expectCreationFeedback(page, 'vessel', 'Cocotte personnelle / My pot');
     await expect(items(page).getByRole('button', { name: vessel })).not.toHaveAccessibleName(
       /My pot/,
     );
@@ -371,6 +400,7 @@ for (const english of [false, true]) {
     await create(page).click();
     await expect(createArea(page)).toBeHidden();
     await expect.poll(async () => (await storedEquipment(page)).length).toBe(2);
+    await expectCreationFeedback(page, 'support', 'Deuxième support');
     await close(page).click();
     await expect(save(page)).toBeDisabled();
     await page.reload();
@@ -404,6 +434,17 @@ for (const english of [false, true]) {
         await cancelCreate(page).click();
         await expect(form).toBeHidden();
         await expect(addVessel(page)).toBeFocused();
+        for (const kind of ['support', 'vessel'] as const) {
+          await (kind === 'support' ? addSupport(page) : addVessel(page)).click();
+          const name = `${kind === 'support' ? 'Support personnel' : 'Récipient personnel'} — ${theme}`;
+          await itemName(page).fill(name);
+          await create(page).click();
+          await expect(createArea(page)).toBeHidden();
+          await expectCreationFeedback(page, kind, name);
+          await equipmentGroup(page, kind).screenshot({
+            path: `../../.agy-runs/personal-items-169/feedback-fix/${english ? 'en' : 'fr'}-${theme}-${large ? '360-130' : '393-100'}-${kind}.png`,
+          });
+        }
         await close(page).click();
         await expect(sheet(page)).toBeHidden();
       });

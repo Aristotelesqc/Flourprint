@@ -344,6 +344,8 @@ an independent catalogue entry; selecting it and saving the recipe remain separa
 Unfinished creation and pending writes guard step dismissal, duplication and deletion. Cancel
 writes nothing, failures retain input, and completion returns focus to the initiating action.
 Creation actions wrap as whole labelled buttons at larger text sizes.
+Creation confirmation stays with the support or vessel selector that initiated it, including its
+live status announcement; it never appears under the other equipment kind.
 
 Recipe step duplication uses a labelled action in the step editor and a shared review sheet.
 The editor dismisses before the review opens. The review shows the proposed copy, fields the
