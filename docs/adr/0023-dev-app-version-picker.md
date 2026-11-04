@@ -33,7 +33,7 @@ authentication (60 requests per hour per address).
   the release shell, the offline APK) are unchanged: they register no native part of this feature,
   so the web app finds no host and shows nothing (a test proves it). A browser tab shows nothing
   either: the web app offers the picker only when a dev app provides the host.
-- The picker is a section of the Advanced menu. The Windows shell keeps View → Version.
+- The picker is a section of the Advanced menu. The Windows shell keeps View → Version, which lists the same entries (it fetches the open pull requests too).
 
 ### Versions and addresses
 
@@ -58,7 +58,7 @@ authentication (60 requests per hour per address).
   in this order: `dev`, `canary`, `main`, then each open pull request as "PR #<n> · <title>"
   (`GET /repos/Aristotelesqc/Flourprint/pulls?state=open`, without authentication), newest first.
   The loaded version is the selected entry (a pull request that is loaded but no longer listed is
-  added so the selection stays truthful). Choosing an entry loads it. Only versions that really have
+  added so the selection stays truthful). Choosing an entry opens a short sheet: load it, or copy the data there first and load it. Only versions that really have
   an address are listed: "branches" means exactly `dev`, `canary` and `main`. CI also deploys a
   `<branch>` alias for a run started on demand on another branch (`ci.yml`, deploy step); those
   are ad hoc, cannot be enumerated and are outside the allowlist, so they are not listed. When the
