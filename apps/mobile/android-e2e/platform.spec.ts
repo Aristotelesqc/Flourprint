@@ -579,18 +579,34 @@ test('native touch drag keeps Recipe geometry and draft/editor states independen
   const before = await layout();
   expect(before.scrollTop).toBeGreaterThan(0);
   await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
-  const physical = (await device.shell('wm size')).toString();
-  const match = /Physical size: (\d+)x(\d+)/.exec(physical);
-  if (!match) throw new Error('Android display dimensions unavailable');
-  const scale = Number(match[1]) / (await page.evaluate(() => window.innerWidth));
+  // Native input uses screen pixels; API/device insets can move the WebView below screen origin.
+  const boundsPath = '/sdcard/flourprint-touch-bounds.xml';
+  await device.shell(`uiautomator dump ${boundsPath}`);
+  const hierarchy = (await device.shell(`cat ${boundsPath}`)).toString();
+  await device.shell(`rm ${boundsPath}`);
+  const webViewTag = hierarchy.match(/<node\b[^>]*class="android\.webkit\.WebView"[^>]*>/)?.[0];
+  const bounds = webViewTag?.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);
+  if (!bounds) throw new Error('Native WebView screen bounds unavailable');
+  const nativeLeft = Number(bounds[1]);
+  const nativeTop = Number(bounds[2]);
+  const nativeWidth = Number(bounds[3]) - nativeLeft;
+  const viewport = await page.evaluate(() => ({
+    width: window.visualViewport?.width ?? window.innerWidth,
+    left: window.visualViewport?.offsetLeft ?? 0,
+    top: window.visualViewport?.offsetTop ?? 0,
+  }));
+  const scale = nativeWidth / viewport.width;
   const point = (rect: { x: number; y: number; width: number; height: number }) => ({
-    x: Math.round((rect.x + rect.width / 2) * scale),
-    y: Math.round((rect.y + rect.height / 2) * scale),
+    x: Math.round(nativeLeft + (rect.x + rect.width / 2 - viewport.left) * scale),
+    y: Math.round(nativeTop + (rect.y + rect.height / 2 - viewport.top) * scale),
   });
   const source = await handle().boundingBox();
   if (!source) throw new Error('Native touch source missing');
   let finger = point(source);
-  console.log('Native drag source', JSON.stringify({ before, source, scale, finger }));
+  console.log(
+    'Native drag source',
+    JSON.stringify({ before, source, scale, finger, nativeLeft, nativeTop, viewport }),
+  );
   await device.shell(`input touchscreen motionevent DOWN ${finger.x} ${finger.y}`);
   try {
     await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
