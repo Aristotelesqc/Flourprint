@@ -60,8 +60,7 @@ test('the Dev shell answers the version bridge for its own page only', async () 
 
     const bridge = (script: string) =>
       page.evaluate(async (source) => {
-        const shell = (window as unknown as Record<string, Record<string, Function>>)
-          .flourprintDevShell as Record<string, (...a: unknown[]) => Promise<unknown>>;
+        const shell = (window as unknown as { flourprintDevShell: unknown }).flourprintDevShell;
         const run = new Function('shell', `return (async () => { ${source} })();`);
         try {
           return { ok: await run(shell) };

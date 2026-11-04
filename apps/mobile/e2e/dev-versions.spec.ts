@@ -7,8 +7,6 @@ import type { Page } from '@playwright/test';
  * before the app starts and drive the real Advanced section against it. The native parts (APK,
  * Electron) are covered by their own suites and by the device checks.
  */
-const HOST = 'flourprint-aristotelesqc.pages.dev';
-
 const installShell = (page: Page, loaded: string) =>
   page.addInitScript((current: string) => {
     const calls: unknown[][] = [];
