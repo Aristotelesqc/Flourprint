@@ -141,7 +141,8 @@ function getReleaseCoordinates(nativeEvent?: Event): { x: number; y: number } | 
 export function SortableItem({ id, children, className = '' }: SortableItemProps): ReactElement {
   const elementRef = useRef<HTMLDivElement | null>(null);
   const handleElementRef = useRef<Element | null>(null);
-  const { disabled, candidateAfterId, activeDimensions, registerHandle } = useSortableListContext();
+  const { disabled, activeId, candidateAfterId, activeDimensions, registerHandle } =
+    useSortableListContext();
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
   const lastRectRef = useRef<{ width: number; height: number } | null>(null);
 
@@ -229,7 +230,7 @@ export function SortableItem({ id, children, className = '' }: SortableItemProps
                 : undefined
             : undefined
         }
-        className={`relative transition-[height,margin-bottom] duration-[var(--duration-spatial)] ease-standard motion-reduce:duration-0 ${className}`}
+        className={`relative transition-[height,margin-bottom] ${activeId ? 'duration-[var(--duration-spatial)]' : 'duration-0'} ease-standard motion-reduce:duration-0 ${className}`}
       >
         {isDragging && (
           <div
@@ -323,7 +324,7 @@ export function SortableSlot({
     <div
       ref={setDrawnRef}
       data-slot-after={afterId ?? 'start'}
-      className={`relative transition-[height,margin-top,padding-top] duration-[var(--duration-spatial)] ease-standard motion-reduce:duration-0 ${isCandidate ? 'rounded-card bg-surface-container' : ''} ${className}`}
+      className={`relative transition-[height,margin-top,padding-top] ${activeId ? 'duration-[var(--duration-spatial)]' : 'duration-0'} ease-standard motion-reduce:duration-0 ${isCandidate ? 'rounded-card bg-surface-container' : ''} ${className}`}
       style={
         isCandidate && activeDimensions
           ? {

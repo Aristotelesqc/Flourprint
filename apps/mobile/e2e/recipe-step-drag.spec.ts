@@ -125,6 +125,20 @@ for (const english of [false, true]) {
     page,
   }) => {
     await open(page);
+    await selectSlot(page, 'Gamma', 'alpha');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+    await routed(page)
+      .locator('ion-content')
+      .evaluate(async (content) => {
+        const scroll = await (
+          content as HTMLElement & {
+            getScrollElement(): Promise<HTMLElement>;
+          }
+        ).getScrollElement();
+        scroll.scrollTop = scroll.scrollHeight;
+      });
+    const before = await geometry(page);
     const source = await box(handle(page, 'Gamma'));
     await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
     await page.mouse.down();
@@ -153,6 +167,7 @@ for (const english of [false, true]) {
     await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
     await expect(save(page)).toBeEnabled();
     await expect(handle(page, 'Gamma')).toBeFocused();
+    expect(Math.abs((await geometry(page)).scrollTop - before.scrollTop)).toBeLessThanOrEqual(1);
   });
   test(`long step names retain a right-hand touch handle at 360/130${english ? ' @en' : ''}`, async ({
     page,
