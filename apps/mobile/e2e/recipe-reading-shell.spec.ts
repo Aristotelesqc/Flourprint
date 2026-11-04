@@ -42,18 +42,13 @@ for (const english of [false, true]) {
           .click();
         await expect(rename).toHaveCount(0);
         await routed(page)
-          .locator('ion-footer')
+          .locator('ion-footer, [data-testid="recipe-draft-bar"]')
           .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
           .click();
         await expectRecipeRevision(page, 1);
         await expect(
-          routed(page)
-            .locator('ion-footer')
-            .getByRole('button', {
-              name: english ? 'Start preparation' : 'Démarrer la préparation',
-              exact: true,
-            }),
-        ).toBeVisible();
+          routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]'),
+        ).toHaveCount(0);
         await page.addStyleTag({
           content: `html, body { font-size: ${16 * scale}px !important; }`,
         });
@@ -108,54 +103,37 @@ for (const english of [false, true]) {
         expect(visibleTab).toBe(true);
         await history.press('Home');
         await expect(recipe).toHaveAttribute('aria-selected', 'true');
-        const footer = routed(page).locator('ion-footer');
-        const edit = footer.getByRole('button', {
+        const footer = routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]');
+        await expect(footer).toHaveCount(0);
+        const header = routed(page).locator('ion-header');
+        const edit = header.getByRole('button', {
           name: english ? 'Edit recipe' : 'Modifier la recette',
           exact: true,
         });
-        const start = footer.getByRole('button', {
-          name: english ? 'Start preparation' : 'Démarrer la préparation',
-          exact: true,
-        });
-        const overflow = footer.getByRole('button', {
+        const overflow = header.getByRole('button', {
           name: english ? 'Recipe actions' : 'Actions sur la recette',
           exact: true,
         });
-        await expect(footer.getByRole('button')).toHaveCount(3);
-        await expect(start).toHaveText(english ? 'Start' : 'Démarrer');
         await expect(
-          routed(page)
-            .locator('ion-header')
-            .getByRole('button', {
-              name: english ? 'Recipe actions' : 'Actions sur la recette',
-              exact: true,
-            }),
+          routed(page).getByRole('button', {
+            name: english ? 'Start preparation' : 'Démarrer la préparation',
+            exact: true,
+          }),
         ).toHaveCount(0);
         const controls = [];
-        for (const control of [edit, start, overflow]) {
+        for (const control of [edit, overflow]) {
           await expect(control).toBeVisible();
           const box = await control.boundingBox();
-          if (!box) throw new Error('Expected visible reading action bounds');
+          if (!box) throw new Error('Expected visible header action bounds');
           expect(box.width).toBeGreaterThanOrEqual(48 * scale - 1);
           expect(box.height).toBeGreaterThanOrEqual(48 * scale - 1);
           expect(box.x).toBeGreaterThanOrEqual(0);
           expect(box.x + box.width).toBeLessThanOrEqual(width);
           controls.push(box);
         }
-        const [editBox, startBox, overflowBox] = controls;
-        if (!editBox || !startBox || !overflowBox)
-          throw new Error('Expected all three action bounds');
-        expect(editBox.x + editBox.width).toBeLessThanOrEqual(startBox.x + 1);
-        expect(startBox.x + startBox.width).toBeLessThanOrEqual(overflowBox.x + 1);
-        expect(startBox.width).toBeLessThan(width - editBox.width - overflowBox.width + 1);
-        await page.screenshot({ path: testInfo.outputPath('reading-shell.png') });
-        const visualHeight = await start.evaluate((host) => {
-          const pill = getComputedStyle(host, '::before');
-          return (
-            host.getBoundingClientRect().height - parseFloat(pill.top) - parseFloat(pill.bottom)
-          );
-        });
-        expect(visualHeight).toBeCloseTo(40 * scale, 0);
+        const [editBox, overflowBox] = controls;
+        if (!editBox || !overflowBox) throw new Error('Expected two header actions');
+        expect(editBox.x + editBox.width).toBeLessThanOrEqual(overflowBox.x + 1);
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
           width,
         );
@@ -193,11 +171,17 @@ for (const english of [false, true]) {
             exact: true,
           }),
         ).toBeVisible();
+        await expect(
+          footer.getByRole('button', {
+            name: english ? 'Start preparation' : 'Démarrer la préparation',
+            exact: true,
+          }),
+        ).toBeVisible();
         await page.screenshot({ path: testInfo.outputPath('planning-shell.png') });
         await edit.click();
         await expect(
           routed(page)
-            .locator('ion-footer')
+            .locator('ion-footer, [data-testid="recipe-draft-bar"]')
             .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true }),
         ).toBeVisible();
       });

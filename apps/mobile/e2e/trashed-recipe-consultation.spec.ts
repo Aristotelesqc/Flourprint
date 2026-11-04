@@ -56,7 +56,7 @@ for (const english of [false, true]) {
     await enterEditor(page);
     await expect(
       routed
-        .locator('ion-footer')
+        .locator('ion-footer, [data-testid="recipe-draft-bar"]')
         .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true }),
     ).toBeVisible();
     await expect(editHydration).toHaveCount(0);

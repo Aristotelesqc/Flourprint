@@ -304,6 +304,7 @@ interface DurationFieldProps {
   readonly optional?: boolean;
   readonly onCommit: Commit<number | undefined>;
   readonly width?: string;
+  readonly onValidityChange?: (invalid: boolean) => void;
 }
 
 /** Duration in seconds, typed as `45 min`, `1 h 30` or `2,5 h`. */

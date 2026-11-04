@@ -9,7 +9,8 @@ const openEditor = async (page: Page) => {
   await expectRecipeRevision(page, 1);
   await enterEditor(page);
 };
-const footer = (page: Page) => routed(page).locator('ion-footer:visible');
+const footer = (page: Page) =>
+  routed(page).locator('ion-footer:visible, [data-testid="recipe-draft-bar"]:visible');
 
 // Regression coverage for raw-input guards and ephemeral editor history.
 test('undo handles a focused valid edit committed inside the action before older edits', async ({
@@ -99,6 +100,7 @@ test('accepted draft data survives reload but the undo stack does not', async ({
     )
     .toBe(true);
   await page.reload();
+  await enterEditor(page);
   await expect(routed(page).getByLabel('Eau, Mélange final (g)', { exact: true })).toHaveValue(
     '170',
   );
@@ -211,7 +213,10 @@ test('footer maintains 48px targets and compact Save pill at 360px', async ({ pa
     exact: true,
   });
   const redoBtn = footer(page).getByRole('button', { name: 'Rétablir', exact: true });
-  const resetBtn = footer(page).getByRole('button', { name: 'Annuler', exact: true });
+  const resetBtn = footer(page).getByRole('button', {
+    name: 'Abandonner les modifications',
+    exact: true,
+  });
 
   const undoBox = await undoBtn.boundingBox();
   const redoBox = await redoBtn.boundingBox();

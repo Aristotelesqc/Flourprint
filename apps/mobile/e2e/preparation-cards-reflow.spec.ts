@@ -1,5 +1,11 @@
 import { expect, test } from './fixtures';
-import { expectRecipeRevision, editorSection, enterEditor, routed } from './ui-actions';
+import {
+  expectRecipeRevision,
+  editorSection,
+  enterEditor,
+  routed,
+  showPlanning,
+} from './ui-actions';
 
 for (const english of [false, true]) {
   for (const theme of ['light', 'dark', 'amoled'] as const) {
@@ -41,10 +47,11 @@ for (const english of [false, true]) {
       await modal.getByRole('button', { name: english ? 'Close' : 'Fermer', exact: true }).click();
       await expect(modal).toHaveCount(0);
       await routed(page)
-        .locator('ion-footer')
+        .locator('ion-footer, [data-testid="recipe-draft-bar"]')
         .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
         .click();
       await expectRecipeRevision(page, 2);
+      await showPlanning(page);
       await routed(page)
         .getByRole('button', {
           name: english ? 'Start preparation' : 'Démarrer la préparation',
@@ -61,7 +68,11 @@ for (const english of [false, true]) {
       await routed(page).locator('ion-back-button').click();
       await expect(routed(page)).toHaveCount(1);
       await expectRecipeRevision(page, 2);
-      await routed(page).locator('ion-back-button').click();
+      await routed(page)
+        .locator(
+          'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+        )
+        .click();
       await expect(page).toHaveURL(/\/recipes$/);
       await expect(routed(page)).toHaveCount(1);
       await routed(page)

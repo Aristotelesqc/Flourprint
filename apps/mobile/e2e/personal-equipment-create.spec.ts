@@ -7,7 +7,7 @@ const recipeName = 'Personal equipment fixture';
 const panel = (page: Page) => page.getByTestId('step-equipment-fields').filter({ visible: true });
 const items = (page: Page) => page.getByTestId('step-equipment-items').filter({ visible: true });
 const sheet = (page: Page) => page.locator('ion-modal').filter({ visible: true });
-const footer = (page: Page) => routed(page).locator('ion-footer');
+const footer = (page: Page) => routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]');
 const save = (page: Page) => footer(page).getByRole('button', { name: /^(Save|Enregistrer)$/ });
 const close = (page: Page) => sheet(page).getByRole('button', { name: /^(Close|Fermer)$/ });
 const support = /^(Baking support|Support de cuisson),/;

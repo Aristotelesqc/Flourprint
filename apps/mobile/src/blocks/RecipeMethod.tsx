@@ -12,6 +12,7 @@ import {
 import {
   duplicateStep,
   insertStepAfter,
+  moveStep,
   temperatureContext,
   type DuplicateResult,
   type Process,
@@ -19,9 +20,9 @@ import {
 } from '@flourprint/core/domain';
 import { SortableItem, SortableSlot } from '@flourprint/ui/components/sortable-list/v1';
 import { useMessages } from '../i18n/use-messages';
+import { formatMoveError } from '../i18n/recipe-sort-messages';
 import { formatDuration } from '../i18n/time';
 import { useTemperature } from '../i18n/temperature';
-import { DurationField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { Rows, SectionTitle } from '../ui/Layout';
 import { Ui } from '../ui/library';
@@ -36,8 +37,6 @@ import { StepSheet, techniqueSummary } from './StepSheet';
 interface Props {
   readonly dragControl?: React.Ref<{ cancelDrag(): boolean }>;
   readonly process: Process;
-  /** Undefined clears duration (unknown); false when edit refused. */
-  readonly onDurationChange?: (stepId: string, durationS: number | undefined) => boolean;
   /** Process structure and technique edits; false when refused. */
   readonly onProcessChange?: (process: Process) => boolean;
   /** Formula preparation ids: steps removed through preparation, not directly. */
@@ -50,10 +49,6 @@ interface Props {
   readonly onClearTargetedStep?: () => void;
   /** Callback to return to the Planning tab if shortcut was used. */
   readonly onReturnToPlanning?: () => void;
-  /** Step IDs whose duration is managed in FermentationCard. */
-  readonly fermentationStepIds?: ReadonlySet<string>;
-  /** Callback to navigate to FermentationCard for a step. */
-  readonly onEditFermentation?: (stepId: string) => void;
   /** Whether to show RecipeOutcome (defaults to true; false when authored in Result section). */
   readonly showOutcome?: boolean;
   /** Called with the drop intent; returns accepted, refused, or unchanged. */
@@ -66,6 +61,10 @@ interface Props {
   readonly onDragActiveChange?: (active: boolean) => void;
   /** Whether sorting/reordering is disabled (trashed, busy, invalid, etc.). */
   readonly disabled?: boolean;
+  /** Whether recipe is read-only (trashed). */
+  readonly readOnly?: boolean;
+  /** Callback before opening a step editor to activate draft session. */
+  readonly onEnsureDraft?: () => void;
 }
 
 /** Whether a step depends exclusively on the immediately preceding authored step. */
@@ -86,20 +85,19 @@ export const isImmediatelyPreceding = (
 export const RecipeMethod = ({
   dragControl,
   process,
-  onDurationChange,
   onProcessChange,
   preparationIds,
   editable,
   targetedStepId,
   onClearTargetedStep,
   onReturnToPlanning,
-  fermentationStepIds,
-  onEditFermentation,
   showOutcome = true,
   onDropIntent,
   onDragStart,
   onDragActiveChange,
   disabled = false,
+  readOnly = false,
+  onEnsureDraft,
 }: Props) => {
   const { t, error, stepName, stepInstructions } = useMessages();
   const { ids } = useServices();
@@ -125,6 +123,9 @@ export const RecipeMethod = ({
 
   const isDragActiveRef = useRef(false);
   const sortableRef = useRef<{ cancelDrag(): boolean } | null>(null);
+  const [cardRefusal, setCardRefusal] = useState<{ stepId: string; message: string } | undefined>(
+    undefined,
+  );
 
   useImperativeHandle(
     dragControl,
@@ -187,6 +188,7 @@ export const RecipeMethod = ({
 
   const handleDragStart = useCallback(
     (id: string) => {
+      setCardRefusal(undefined);
       onDragStart?.(id);
     },
     [onDragStart],
@@ -197,9 +199,36 @@ export const RecipeMethod = ({
       intent: { id: string; afterId: string | null; input?: unknown } | null,
     ): 'accepted' | 'refused' | 'unchanged' => {
       if (!onDropIntent) return 'unchanged';
-      return onDropIntent(intent ? { id: intent.id, afterId: intent.afterId } : null);
+      if (!intent) {
+        setCardRefusal(undefined);
+        return onDropIntent(null);
+      }
+      const outcome = onDropIntent({ id: intent.id, afterId: intent.afterId });
+      if (outcome === 'refused') {
+        const result = moveStep(process, intent.id, intent.afterId);
+        if (!result.ok) {
+          setCardRefusal({
+            stepId: intent.id,
+            message: formatMoveError(result.error, intent.id, process, t, stepName),
+          });
+        }
+      } else {
+        setCardRefusal(undefined);
+      }
+      return outcome;
     },
-    [onDropIntent],
+    [onDropIntent, process, t, stepName],
+  );
+
+  const getDropFeedback = useCallback(
+    (intent: { id: string; afterId: string | null }) => {
+      const result = moveStep(process, intent.id, intent.afterId);
+      if (!result.ok) {
+        return formatMoveError(result.error, intent.id, process, t, stepName);
+      }
+      return undefined;
+    },
+    [process, t, stepName],
   );
 
   useEffect(() => {
@@ -255,7 +284,7 @@ export const RecipeMethod = ({
 
   const handleRequestDuplicate = useCallback(
     (step: ProcessStep, source: Process): string | undefined => {
-      if (disabled || !editable || !onProcessChange) return undefined;
+      if (disabled || readOnly || !onProcessChange) return undefined;
       if (dismissActionRef.current !== 'none' || pendingProposal) return undefined;
       if (validationActions?.isBlocked()) {
         return t('step.duplicate.error.blocked');
@@ -280,7 +309,7 @@ export const RecipeMethod = ({
       setIsSheetOpen(false);
       return undefined;
     },
-    [disabled, editable, onProcessChange, validationActions, ids, pendingProposal, t, error],
+    [disabled, readOnly, onProcessChange, validationActions, ids, pendingProposal, t, error],
   );
 
   const handleKeepProposal = useCallback((candidateProcess: Process, copyId: string): boolean => {
@@ -442,6 +471,7 @@ export const RecipeMethod = ({
         items={items}
         renderOverlay={renderOverlay}
         onDropIntent={handleDropIntent}
+        getDropFeedback={getDropFeedback}
         instructions={instructions}
         announcements={announcements}
         onDragStart={handleDragStart}
@@ -457,7 +487,6 @@ export const RecipeMethod = ({
               : []),
           ];
           const isHighlighted = step.id === highlightedStepId;
-          const isFermentationManaged = fermentationStepIds?.has(step.id) ?? false;
           return (
             <Fragment key={step.id}>
               <SortableItem id={step.id} className="mb-2">
@@ -497,16 +526,18 @@ export const RecipeMethod = ({
                           <span className="w-5 shrink-0 tabular-nums text-sm font-bold text-muted">
                             {index + 1}.
                           </span>
-                          {editable ? (
+                          {!readOnly ? (
                             <button
                               ref={(el) => {
                                 if (el) stepButtonRefs.current.set(step.id, el);
                                 else stepButtonRefs.current.delete(step.id);
                               }}
                               type="button"
-                              className="fp-reset inline-flex min-h-12 items-center gap-1.5 rounded text-left font-semibold text-accent-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                              disabled={disabled}
+                              className="fp-reset inline-flex min-h-12 items-center gap-1.5 rounded text-left font-semibold text-accent-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
                               aria-label={t('process.editStep', { step: stepName(step) })}
                               onClick={() => {
+                                onEnsureDraft?.();
                                 setHighlightedStepId(step.id);
                                 setSelectedStepId(step.id);
                                 setIsSheetOpen(true);
@@ -583,52 +614,26 @@ export const RecipeMethod = ({
                         )}
                       </div>
                     </div>
-                    {isFermentationManaged ? (
-                      <div className="flex flex-wrap items-center justify-end gap-2 text-right sm:max-w-[65%]">
-                        <div className="flex flex-col items-end">
-                          <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                            {t('prep.duration')}
-                          </span>
-                          <span className="font-medium text-ink">
-                            {step.durationMode === 'model'
-                              ? step.plannedDurationS !== undefined
-                                ? `≈ ${formatDuration(step.plannedDurationS)}`
-                                : t('fermentation.auto')
-                              : step.plannedDurationS !== undefined
-                                ? formatDuration(step.plannedDurationS)
-                                : '—'}
-                          </span>
-                        </div>
-                        {editable && onEditFermentation && (
-                          <button
-                            type="button"
-                            className="fp-reset inline-flex min-h-12 max-w-full items-center justify-center rounded-lg border border-line bg-surface px-3 py-1.5 text-center text-xs font-semibold leading-snug text-accent-text shadow-sm hover:bg-field-bg active:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                            aria-label={t('recipe.editFermentationFor', { step: stepName(step) })}
-                            onClick={() => onEditFermentation(step.id)}
-                          >
-                            {t('recipe.editFermentation')}
-                          </button>
-                        )}
-                      </div>
-                    ) : editable && onDurationChange ? (
-                      <div className="shrink-0">
-                        <DurationField
-                          label={t('process.duration', { step: stepName(step) })}
-                          value={step.plannedDurationS}
-                          optional={step.schedule !== 'alap'}
-                          onCommit={(seconds) => onDurationChange(step.id, seconds)}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex shrink-0 flex-col items-end text-right">
-                        <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-                          {t('prep.duration')}
-                        </span>
-                        <span className="font-medium text-ink">
-                          {step.plannedDurationS !== undefined
+                    <div className="flex shrink-0 flex-col items-end text-right">
+                      <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                        {t('prep.duration')}
+                      </span>
+                      <span className="font-medium text-ink">
+                        {step.durationMode === 'model'
+                          ? step.plannedDurationS !== undefined
+                            ? `≈ ${formatDuration(step.plannedDurationS)}`
+                            : t('fermentation.auto')
+                          : step.plannedDurationS !== undefined
                             ? formatDuration(step.plannedDurationS)
                             : '—'}
-                        </span>
+                      </span>
+                    </div>
+                    {cardRefusal?.stepId === step.id && (
+                      <div
+                        role="alert"
+                        className="absolute bottom-1 right-3 z-20 max-w-[80%] rounded border border-alert bg-surface px-2 py-0.5 text-xs font-medium text-alert shadow-sm pointer-events-none"
+                      >
+                        {cardRefusal.message}
                       </div>
                     )}
                   </div>
@@ -665,7 +670,7 @@ export const RecipeMethod = ({
         </Rows>
       )}
 
-      {editable && onProcessChange && (
+      {!readOnly && onProcessChange && (
         <StepSheet
           open={isSheetOpen}
           step={modalStep}

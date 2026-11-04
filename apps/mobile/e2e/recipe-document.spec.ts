@@ -81,7 +81,7 @@ for (const en of [false, true]) {
       await expect(finalWaterInput).toHaveValue('200');
 
       const saveButton = routed(page)
-        .locator('ion-footer')
+        .locator('ion-footer, [data-testid="recipe-draft-bar"]')
         .getByRole('button', { name: labels.save, exact: true });
       await expect(saveButton).toBeDisabled();
       await finalWaterInput.fill('201');
@@ -150,7 +150,7 @@ for (const en of [false, true]) {
 
       // Save changes
       const saveButton = routed(page)
-        .locator('ion-footer')
+        .locator('ion-footer, [data-testid="recipe-draft-bar"]')
         .getByRole('button', { name: labels.save, exact: true });
       await saveButton.click();
 
@@ -158,7 +158,9 @@ for (const en of [false, true]) {
       await expectRecipeRevision(page, 2);
 
       // Return to Recipes view via ion-back-button
-      const backButton = routed(page).locator('ion-header ion-back-button');
+      const backButton = routed(page)
+        .locator('ion-header')
+        .getByRole('button', { name: /^(Back|Retour)$/, exact: true });
       await backButton.click();
       await expect(page).toHaveURL(/\/recipes$/);
 
@@ -208,7 +210,7 @@ for (const en of [false, true]) {
       });
       await salt.fill('22');
       await salt.blur();
-      const footer = routed(page).locator('ion-footer');
+      const footer = routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]');
       await footer
         .getByRole('button', {
           name: en ? 'Undo last change' : 'Annuler la dernière modification',
@@ -245,7 +247,10 @@ for (const en of [false, true]) {
       );
       expect(words.length).toBeGreaterThan(0);
       expect(words.filter((item) => item.lines > 1)).toEqual([]);
-      for (const button of await routed(page).locator('ion-footer').getByRole('button').all()) {
+      for (const button of await routed(page)
+        .locator('ion-footer, [data-testid="recipe-draft-bar"]')
+        .getByRole('button')
+        .all()) {
         const box = await button.boundingBox();
         if (!box) throw new Error('Editor action has no bounds');
         expect(box.width).toBeGreaterThanOrEqual(48 * 1.3 - 1);
@@ -273,8 +278,8 @@ for (const en of [false, true]) {
       // Cancel button in footer triggers confirmation alert
       await expect(routed(page)).toHaveCount(1);
       const cancelButton = routed(page)
-        .locator('ion-footer')
-        .getByRole('button', { name: labels.cancel, exact: true })
+        .locator('ion-footer, [data-testid="recipe-draft-bar"]')
+        .getByRole('button', { name: labels.discardConfirm, exact: true })
         .locator('visible=true');
       await cancelButton.click();
 

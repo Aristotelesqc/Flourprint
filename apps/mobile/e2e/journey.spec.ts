@@ -44,7 +44,11 @@ const goBack = async (page: Page) => {
       routed(page).getByRole('tab', { name: /^(Recette|Recipe)$/, exact: true }),
     ).toBeVisible();
   }
-  await routed(page).locator('ion-back-button').click();
+  await routed(page)
+    .locator(
+      'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+    )
+    .click();
   await expect(page).not.toHaveURL(before);
   await expect(page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)')).toHaveCount(1);
 };
@@ -64,6 +68,7 @@ const headerStart = (page: Page) =>
 const startBake = async (page: Page) => {
   const read = routed(page).getByRole('button', { name: 'Lire la recette', exact: true });
   if (await read.isVisible()) await read.click();
+  await showPlanning(page);
   await headerStart(page).click();
   const alert = page.locator('ion-alert');
   await expect(alert).toContainText('Démarrer la préparation maintenant ?');
@@ -90,8 +95,11 @@ test('typed decimals commit, and leaving an untouched field changes nothing', as
   await expectRecipeRevision(page, 2);
   await expect(unsaved(page)).toBeHidden();
 
+  await showPlanning(page);
   await expect(
-    page.locator('ion-footer:visible').getByRole('button', { name: 'Démarrer la préparation' }),
+    page
+      .locator('ion-footer:visible, [data-testid="recipe-draft-bar"]:visible')
+      .getByRole('button', { name: 'Démarrer la préparation' }),
   ).toBeVisible();
   await enterEditing(page);
   // The percentage shows 2,22 for 2,222222: visiting it must not round the recipe.
@@ -125,6 +133,7 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await openRecipe(page);
   // A double tap opens one confirmation; a double tap on it starts one bake.
   await routed(page).getByRole('button', { name: 'Lire la recette', exact: true }).click();
+  await showPlanning(page);
   await headerStart(page).dblclick();
   await expect(page.locator('ion-alert')).toHaveCount(1);
   await page.locator('ion-alert').getByRole('button', { name: 'Démarrer' }).dblclick();
@@ -148,7 +157,11 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await expect(log.nth(1)).toContainText('Échaudage terminé');
   await expect(log.nth(2)).toContainText('Échaudage commencé');
 
-  await page.locator('ion-back-button:visible').click();
+  await routed(page)
+    .locator(
+      'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+    )
+    .click();
   await page.getByRole('tab', { name: 'Historique' }).click();
   // One bake despite the double tap (the header's "En cours" button is not a history item).
   await expect(page.locator('ion-item:visible')).toHaveCount(1);
@@ -517,7 +530,11 @@ test('imports a recipes file additively; a family shows one variant, the starred
 
   // Ionic keeps hidden pages in the stack: only visible text counts.
   const shown = (text: string) => page.getByText(text, { exact: true }).locator('visible=true');
-  await page.locator('ion-back-button:visible').click();
+  await routed(page)
+    .locator(
+      'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+    )
+    .click();
   await expect(shown('Pain test 2')).toHaveCount(1);
   await expect(shown('Pain test 1')).toHaveCount(0);
   await expect(shown('2 variantes')).toHaveCount(1);
@@ -529,7 +546,11 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await expect(
     page.getByRole('button', { name: 'Afficher la plus récente par défaut' }),
   ).toBeVisible();
-  await page.locator('ion-back-button:visible').click();
+  await routed(page)
+    .locator(
+      'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+    )
+    .click();
   await expect(shown('Pain test 1')).toHaveCount(1);
   await expect(shown('Pain test 2')).toHaveCount(0);
 
@@ -538,7 +559,9 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await page.getByRole('listitem').filter({ hasText: 'Pain test 2' }).click();
   await expect(shown('Pain test 2').first()).toBeVisible();
   await startBake(page);
-  const back = page.locator('ion-back-button:visible');
+  const back = routed(page).locator(
+    'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+  );
   await expect(back).toHaveCount(1);
   await back.click();
   await expect(page).toHaveURL(/\/recipes\/newer$/);
@@ -790,7 +813,11 @@ test('starts a bake whose recipe file references a built-in vessel', async ({ pa
     ),
   });
   await expect(page.getByText('1 recette importée.')).toBeVisible();
-  await page.locator('ion-back-button:visible').click();
+  await routed(page)
+    .locator(
+      'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+    )
+    .click();
   await page.getByText('Pizza poêle', { exact: true }).locator('visible=true').click();
   await startBake(page);
 });
@@ -931,7 +958,10 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   ).toBeVisible();
   await page.getByRole('menu').getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(page.getByRole('menu')).toBeHidden();
-  await menuAction(page, /^Abandonner les modifications$/);
+  await routed(page)
+    .getByTestId('recipe-draft-bar')
+    .getByRole('button', { name: 'Abandonner les modifications', exact: true })
+    .click();
   await page.locator('ion-alert').getByRole('button', { name: 'Supprimer le brouillon' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
   await expect(page.getByText('Recette 1', { exact: true })).toBeHidden();
@@ -1019,7 +1049,11 @@ test('a customized flour keeps its properties and is offered by the flour picker
   await expect(mine).toContainText('Version 1');
 
   // In a recipe, the picker offers it among the personal flours.
-  await page.locator('ion-back-button:visible').click();
+  await routed(page)
+    .locator(
+      'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+    )
+    .click();
   await page.getByText('Poolish + tangzhong').first().click();
   await enterEditing(page);
   await page.getByRole('button', { name: '+ Ajouter une farine' }).click();
@@ -1246,6 +1280,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await openShownRecipe(page);
   const read = routed(page).getByRole('button', { name: 'Lire la recette', exact: true });
   if (await read.isVisible()) await read.click();
+  await showPlanning(page);
   await headerStart(page).click();
   await expect(page.locator('ion-alert')).toContainText('historique de simulation');
   await page.locator('ion-alert').getByRole('button', { name: 'Démarrer' }).click();

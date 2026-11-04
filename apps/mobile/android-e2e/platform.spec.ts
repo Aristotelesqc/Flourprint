@@ -491,3 +491,154 @@ test('optional appliance profile survives native Back and restart without changi
   await expect(panel().getByRole('textbox', { name: 'Power level', exact: true })).toHaveValue('3');
   await forceStop();
 });
+
+test('native touch drag keeps Recipe geometry and draft/editor states independent', async () => {
+  let page = await open();
+  const recipeName = 'Native foundation touch';
+  await page.getByRole('link', { name: 'Advanced', exact: true }).click();
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'foundation-touch.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        kind: 'flourprint-recipes',
+        schemaVersion: 1,
+        exportedAt: '2026-11-04T00:00:00.000Z',
+        families: [],
+        recipes: [
+          {
+            id: 'native-foundation-touch',
+            name: recipeName,
+            revisions: [
+              {
+                recipeId: 'native-foundation-touch',
+                version: 1,
+                createdAt: '2026-11-04T00:00:00.000Z',
+                formula: {
+                  flours: [{ id: 'bread-flour', sharePct: 100 }],
+                  ingredients: [{ id: 'water', kind: 'water', bakerPct: 70, role: 'dough' }],
+                  components: [],
+                  anchor: { kind: 'flourTotal', grams: 500 },
+                },
+                process: {
+                  steps: ['Alpha', 'Beta', 'Gamma'].map((label, index, names) => ({
+                    id: label.toLowerCase(),
+                    label,
+                    operation: 'rest',
+                    schedule: 'asap',
+                    dependsOn: index === 0 ? [] : [(names[index - 1] ?? '').toLowerCase()],
+                    plannedDurationS: 300,
+                  })),
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    ),
+  });
+  await expect(page.getByText('1 recipe imported.', { exact: true })).toBeVisible();
+  await page.locator('ion-back-button:visible').click();
+  await page.getByRole('heading', { name: recipeName, level: 2, exact: true }).click();
+  const method = () => page.getByTestId('recipe-method').filter({ visible: true });
+  const handle = () => method().getByRole('button', { name: /^(Move|Drag).*Gamma$/ });
+  const order = () =>
+    method()
+      .locator('[data-sortable-id]')
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-sortable-id')));
+  const layout = () =>
+    page.locator('ion-content:visible').evaluate(async (content) => {
+      const scroll = await (
+        content as HTMLElement & { getScrollElement(): Promise<HTMLElement> }
+      ).getScrollElement();
+      return {
+        height: content.getBoundingClientRect().height,
+        scrollTop: scroll.scrollTop,
+        cards: Array.from(content.querySelectorAll('[data-sortable-id]')).map((card) => ({
+          id: card.getAttribute('data-sortable-id'),
+          height: card.getBoundingClientRect().height,
+        })),
+      };
+    });
+  await expect(page.getByRole('button', { name: 'Edit recipe', exact: true })).toBeVisible();
+  await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  await handle().scrollIntoViewIfNeeded();
+  const before = await layout();
+  expect(before.scrollTop).toBeGreaterThan(0);
+  await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
+  const physical = (await device.shell('wm size')).toString();
+  const match = /Physical size: (\d+)x(\d+)/.exec(physical);
+  if (!match) throw new Error('Android display dimensions unavailable');
+  const scale = Number(match[1]) / (await page.evaluate(() => window.innerWidth));
+  const point = (rect: { x: number; y: number; width: number; height: number }) => ({
+    x: Math.round((rect.x + rect.width / 2) * scale),
+    y: Math.round((rect.y + rect.height / 2) * scale),
+  });
+  const source = await handle().boundingBox();
+  if (!source) throw new Error('Native touch source missing');
+  let finger = point(source);
+  await dismissSystemDialog();
+  await device.shell(`input touchscreen motionevent DOWN ${finger.x} ${finger.y}`);
+  try {
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+    await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
+    expect((await layout()).height).toBeCloseTo(before.height, 0);
+    const slot = method().locator('[data-slot-after="alpha"]');
+    const initial = await slot.boundingBox();
+    if (!initial) throw new Error('Native insertion slot missing');
+    finger = point(initial);
+    await device.shell(`input touchscreen motionevent MOVE ${finger.x} ${finger.y}`);
+    await expect(slot).toHaveAttribute('data-drop-target', 'true');
+    await expect.poll(async () => (await slot.boundingBox())?.height ?? 0).toBeGreaterThan(1);
+    const expanded = await slot.boundingBox();
+    if (!expanded) throw new Error('Expanded native insertion slot missing');
+    finger = point(expanded);
+    await device.shell(`input touchscreen motionevent MOVE ${finger.x} ${finger.y}`);
+  } finally {
+    await device.shell(`input touchscreen motionevent UP ${finger.x} ${finger.y}`);
+  }
+  await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+  await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  const after = await layout();
+  expect(after.height).toBeCloseTo(before.height, 0);
+  expect(Math.abs(after.scrollTop - before.scrollTop)).toBeLessThanOrEqual(1);
+  for (const card of before.cards)
+    expect(after.cards.find((item) => item.id === card.id)?.height).toBeCloseTo(card.height, 0);
+  await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo last change', exact: true }).click();
+  await expect.poll(order).toEqual(['alpha', 'beta', 'gamma']);
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 2);
+  await forceStop();
+  page = await open();
+  await page.getByRole('heading', { name: recipeName, level: 2, exact: true }).click();
+  await expectNativeRevision(page, 2);
+  await handle().scrollIntoViewIfNeeded();
+  await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  const restored = await handle().boundingBox();
+  if (!restored) throw new Error('Restored native handle missing');
+  finger = point(restored);
+  await device.shell(
+    `input touchscreen swipe ${finger.x} ${finger.y} ${finger.x} ${finger.y - 150} 120`,
+  );
+  await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+  await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  await handle().scrollIntoViewIfNeeded();
+  const cancelSource = await handle().boundingBox();
+  if (!cancelSource) throw new Error('Native cancellation source missing');
+  finger = point(cancelSource);
+  await device.shell(`input touchscreen motionevent DOWN ${finger.x} ${finger.y}`);
+  try {
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+    await device.shell('input keyevent KEYCODE_BACK');
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+  } finally {
+    await device.shell(`input touchscreen motionevent UP ${finger.x} ${finger.y}`);
+  }
+  await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
+  await forceStop();
+});

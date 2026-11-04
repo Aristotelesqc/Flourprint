@@ -29,7 +29,7 @@ for (const theme of ['light', 'dark', 'amoled'] as const) {
       .locator('ion-router-outlet > .ion-page')
       .filter({ has: page.getByTestId('recipe-method') });
     const content = recipePage.locator('ion-content');
-    const footer = recipePage.locator('ion-footer');
+    await expect(recipePage.locator('ion-footer, [data-testid="recipe-draft-bar"]')).toHaveCount(0);
     for (const fontSize of [16, 20]) {
       await page.addStyleTag({ content: `html, body { font-size: ${fontSize}px !important; }` });
       const gap = async () => {
@@ -39,9 +39,9 @@ for (const theme of ['light', 'dark', 'amoled'] as const) {
           ).getScrollElement();
           scroll.scrollTop = scroll.scrollHeight;
         });
-        const [end, bar] = await Promise.all([result.boundingBox(), footer.boundingBox()]);
-        if (!end || !bar) throw new Error('Result and primary footer must have rendered bounds');
-        return bar.y - (end.y + end.height);
+        const [end, viewport] = await Promise.all([result.boundingBox(), content.boundingBox()]);
+        if (!end || !viewport) throw new Error('Result and content must have rendered bounds');
+        return viewport.y + viewport.height - (end.y + end.height);
       };
       // Re-scroll on every attempt: layout can still settle after the first scroll.
       await expect.poll(gap, { timeout: 10_000 }).toBeGreaterThanOrEqual(16);
@@ -122,7 +122,7 @@ for (const english of [false, true]) {
     });
     await expect(changed).toBeVisible();
     await routed(page)
-      .locator('ion-footer')
+      .locator('ion-footer, [data-testid="recipe-draft-bar"]')
       .getByRole('button', {
         name: english ? 'Undo last change' : 'Annuler la dernière modification',
         exact: true,
@@ -135,7 +135,7 @@ for (const english of [false, true]) {
       }),
     ).toBeVisible();
     await routed(page)
-      .locator('ion-footer')
+      .locator('ion-footer, [data-testid="recipe-draft-bar"]')
       .getByRole('button', { name: english ? 'Redo' : 'Rétablir', exact: true })
       .click();
     await expect(changed).toBeVisible();
@@ -172,7 +172,7 @@ test('operation refusal preserves mix-only conditions and existing phases withou
   await expect(routed(page).getByTestId('recipe-method')).toContainText('5 min');
   await expect(
     routed(page)
-      .locator('ion-footer')
+      .locator('ion-footer, [data-testid="recipe-draft-bar"]')
       .getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
   ).toBeDisabled();
 });
@@ -207,10 +207,12 @@ test('legacy template instructions localize with a short name without becoming a
   await label.blur();
   await sheet(page).getByRole('button', { name: 'Fermer', exact: true }).click();
   await expect(sheet(page)).toBeHidden();
-  await expect(routed(page).locator('ion-footer').getByRole('status')).toHaveText('À jour');
+  await expect(
+    routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]').getByRole('status'),
+  ).toHaveText('À jour');
   await expect(
     routed(page)
-      .locator('ion-footer')
+      .locator('ion-footer, [data-testid="recipe-draft-bar"]')
       .getByRole('button', { name: 'Annuler la dernière modification', exact: true }),
   ).toBeDisabled();
 });
