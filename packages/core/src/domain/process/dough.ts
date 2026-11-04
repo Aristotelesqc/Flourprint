@@ -78,12 +78,10 @@ export const referenceMixingStep = (
 /**
  * Whether a step brings yeast or leaven into the dough: the operation `fermentolyse`, or an
  * incorporation of a yeast-marked ingredient or of a leaven component. Without the formula, any
- * incorporation of an ingredient or a component counts: a process alone cannot tell a yeast from
- * salt or a scald. Process-only callers (`validateProcess(process)` in projection, move and
- * duplicate, and the step sheet) therefore see a superset of the dough steps and stay permissive
- * (a thermal input is not refused on a step that only the formula shows to precede the first
- * contact); the recipe-level validation and every estimate pass the formula's context and apply
- * the exact rule.
+ * incorporation of an ingredient or a component counts, since a process alone cannot tell a yeast
+ * from salt or a scald. The limit this leaves on process-only checks is a stated rule of
+ * process.md (Validation with and without the formula); the recipe validation and every estimate
+ * pass the formula's context and apply the exact rule.
  */
 const holdsYeast = (step: ProcessStep, context?: DoughContext): boolean =>
   step.operation === 'fermentolyse' ||

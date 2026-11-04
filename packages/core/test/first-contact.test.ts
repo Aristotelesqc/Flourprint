@@ -494,3 +494,139 @@ describe('a preferment without a temperature of its own (fermentation.md)', () =
     expect(hours(27)).toBeLessThan(hours(20));
   });
 });
+
+describe('the two room temperatures (fermentation.md, Dough temperature)', () => {
+  /** A frasage that brings the yeast, then a mix that is the reference mixing step. */
+  const twoSteps = (frasageC: number | undefined, mixC: number | undefined): Process => ({
+    steps: [
+      {
+        id: 'frasage',
+        operation: 'frasage',
+        dependsOn: [],
+        schedule: 'asap',
+        plannedDurationS: 5 * MIN,
+        incorporations: [...flourWater, ...saltOnly, ...yeastOnly],
+        ...(frasageC === undefined ? {} : { conditions: { temperatureC: frasageC } }),
+      },
+      {
+        id: 'mix',
+        operation: 'mix',
+        dependsOn: ['frasage'],
+        schedule: 'asap',
+        plannedDurationS: 8 * MIN,
+        conditions: {
+          doughTemperatureC: 26,
+          ...(mixC === undefined ? {} : { temperatureC: mixC }),
+        },
+      },
+      {
+        id: 'bulk',
+        operation: 'bulk',
+        dependsOn: ['mix'],
+        schedule: 'asap',
+        plannedDurationS: 60 * MIN,
+      },
+      { id: 'bake', operation: 'bake', dependsOn: ['bulk'], schedule: 'asap' },
+    ],
+  });
+
+  it('starts the dough at the first-contact step and calculates the water at the reference step', () => {
+    const context = doughContextOf(direct);
+    const process = twoSteps(24, undefined);
+    expect(firstContactStep(process, context)?.id).toBe('frasage');
+    expect(referenceMixingStep(process, context)?.id).toBe('mix');
+    // The room is stated on the first-contact step only: the dough is estimated, but the water,
+    // read on the reference step, is not (the reviewer's case, the interface now edits both).
+    const onlyStart = estimateFermentation(direct, process, profile);
+    expect(onlyStart.dough.duration.status).toBe('ok');
+    expect(onlyStart.waterTemperatureC).toMatchObject({
+      status: 'insufficient_data',
+      reason: 'temperature_unknown',
+      missing: ['mix.temperatureC'],
+    });
+    // Stating the room on the reference step as well gives the water: 3 × 26 − 24 − 24 = 30.
+    const both = estimateFermentation(direct, twoSteps(24, 24), profile);
+    expect(both.dough.duration.status).toBe('ok');
+    expect(both.waterTemperatureC).toMatchObject({ status: 'ok', value: 30 });
+    // The room of the reference step also carries on to the steps after it, so the water follows
+    // it: 3 × 26 − 22 − 22 = 34.
+    const warmer = estimateFermentation(direct, twoSteps(24, 22), profile);
+    expect(warmer.waterTemperatureC).toMatchObject({ status: 'ok', value: 34 });
+  });
+
+  it('needs only one temperature when one step is both (every shipped template)', () => {
+    const process = chain([
+      ['mix', 'mix', 8, [...flourWater, ...saltOnly, ...yeastOnly]],
+      ['bulk', 'bulk', 60, []],
+    ]);
+    const single: Process = {
+      steps: process.steps.map((s) =>
+        s.id === 'mix' ? { ...s, conditions: { temperatureC: 24, doughTemperatureC: 26 } } : s,
+      ),
+    };
+    const estimates = estimateFermentation(direct, single, profile);
+    expect(firstContactId(direct, single)).toBe(referenceMixingStep(single)?.id);
+    expect(estimates.waterTemperatureC).toMatchObject({ status: 'ok', value: 30 });
+  });
+});
+
+describe('thermal inputs on a process alone (process.md, Validation with and without the formula)', () => {
+  const thermal = { geometry: 'bulk' } as const;
+  const withThermal = (process: Process, ...ids: string[]): Process => ({
+    steps: process.steps.map((s) => (ids.includes(s.id) ? { ...s, thermal } : s)),
+  });
+  const path = (process: Process, context?: ReturnType<typeof doughContextOf>) => {
+    const result = validateProcess(process, context);
+    return result.ok ? undefined : (result.error.details as { path?: string }).path;
+  };
+
+  it('refuses a step that is certainly before the first contact, with or without the formula', () => {
+    const context = doughContextOf(direct);
+    // An autolyse of flour and water ahead of the step that brings the ingredients.
+    const flourWaterRest = withThermal(
+      chain([
+        ['autolyse', 'autolyse', 30, flourWater],
+        ['mix', 'mix', 8, [...saltOnly, ...yeastOnly]],
+        ['bulk', 'bulk', 60, []],
+      ]),
+      'autolyse',
+    );
+    expect(path(flourWaterRest)).toBe('steps[0].thermal');
+    expect(path(flourWaterRest, context)).toBe('steps[0].thermal');
+    // An autolyse that incorporates nothing, while the mix declares the ingredients.
+    const empty = withThermal(
+      chain([
+        ['autolyse', 'autolyse', 30],
+        ['mix', 'mix', 8, [...saltOnly, ...yeastOnly]],
+        ['bulk', 'bulk', 60, []],
+      ]),
+      'autolyse',
+    );
+    expect(path(empty)).toBe('steps[0].thermal');
+    // Nothing declared: every step ahead of the first mixing step.
+    const undeclared = withThermal(
+      chain([
+        ['autolyse', 'autolyse', 30],
+        ['mix', 'mix', 8],
+        ['bulk', 'bulk', 60],
+      ]),
+      'autolyse',
+    );
+    expect(path(undeclared)).toBe('steps[0].thermal');
+    expect(path(undeclared, context)).toBe('steps[0].thermal');
+  });
+
+  it('keeps the documented limit: a step that only the formula shows to hold no yeast', () => {
+    const saltFirst = withThermal(
+      chain([
+        ['frasage', 'frasage', 5, [...flourWater, ...saltOnly]],
+        ['mix', 'mix', 8, yeastOnly],
+        ['bulk', 'bulk', 60, []],
+      ]),
+      'frasage',
+    );
+    // On the process alone the salt could be yeast: accepted. The recipe validation knows.
+    expect(path(saltFirst)).toBeUndefined();
+    expect(path(saltFirst, doughContextOf(direct))).toBe('steps[0].thermal');
+  });
+});

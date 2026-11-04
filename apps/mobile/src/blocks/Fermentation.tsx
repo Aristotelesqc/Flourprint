@@ -60,9 +60,11 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
   const estimates = useMemo(() => estimateFermentation(formula, process), [formula, process]);
   const context = useMemo(() => doughContextOf(formula), [formula]);
   // Three roles, three steps (fermentation.md): the room temperature of the start is read on the
-  // first-contact step; the target dough temperature and the friction on the reference mixing
-  // step; the steps the baker edits here as fermentation steps are the dough steps that are not
-  // mixing steps. The kneading steps keep their authored duration in the method list.
+  // first-contact step; the target dough temperature, the friction and the room temperature of
+  // the water on the reference mixing step; the steps the baker edits here as fermentation steps
+  // are the dough steps that are not mixing steps. The kneading steps keep their authored
+  // duration in the method list. When the first-contact step and the reference mixing step are
+  // one (every shipped template), one room field serves both.
   const start = useMemo(() => firstContactStep(process, context), [process, context]);
   const reference = useMemo(() => referenceMixingStep(process, context), [process, context]);
   const fermenting = useMemo(() => fermentationSteps(process, context) ?? [], [process, context]);
@@ -70,6 +72,7 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
     () => stepsAfterReferenceMix(process, context) ?? [],
     [process, context],
   );
+  const sameStep = start !== undefined && start === reference;
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const advanced = advancedOpen || reference?.conditions?.doughTemperatureC !== undefined;
   const preferments = formula.components.filter((c) => c.kind === 'preferment' && c.flourPct > 0);
@@ -129,14 +132,27 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
         <div className="flex flex-col gap-2">
           {/* Without a first-contact step the result line says why (no_first_contact_step). */}
           {start && (
-            <Row label={t('fermentation.room')}>
+            <Row label={sameStep ? t('fermentation.room') : t('fermentation.room.start')}>
               <TemperatureField
-                label={t('fermentation.room')}
+                label={sameStep ? t('fermentation.room') : t('fermentation.room.start')}
                 context="ambient"
                 width="6.5rem"
                 value={start.conditions?.temperatureC}
                 onCommit={(value) =>
                   onProcess(withConditions(process, start.id, { temperatureC: value }))
+                }
+              />
+            </Row>
+          )}
+          {advanced && !sameStep && (
+            <Row label={t('fermentation.room.water')}>
+              <TemperatureField
+                label={t('fermentation.room.water')}
+                context="ambient"
+                width="6.5rem"
+                value={reference.conditions?.temperatureC}
+                onCommit={(value) =>
+                  onProcess(withConditions(process, reference.id, { temperatureC: value }))
                 }
               />
             </Row>
