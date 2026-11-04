@@ -7,7 +7,10 @@ the preferment's end point is 1.
 Dough clock (contract 0.24.0, owner decision of 2026-11-04): the progress of the dough is 0 at the
 START of the first-contact step (process.md, First contact), so mixing and kneading count. Cases
 that depend on it carry "since": "0.10.0", the engine version from which they apply; a harness
-skips them for an older engine.
+skips them for an older engine. The four cases whose values the new clock changed also exist in
+their former form, with "until": "0.10.0" (the engine version from which they no longer apply):
+until the engine moves, its tests keep running the old expectations, none is skipped; the
+implementing pull request removes the superseded entries.
 
 Run: python3 -I generate.py > cases.json (in this directory), then prettier --write cases.json
 Closed forms where the temperature is constant; otherwise a fine trapezoid on the analytic dough
@@ -71,72 +74,89 @@ def lagged_gain(d, t0, ta, hours, n=200000):
 
 cases = []
 
-# 1. 1 % fresh at 21.1 °C: the dough takes READY × A hours; every other corner factor is 1
-#    (d^−k = 1, r = 1), so the band is A × [0.75, 1.25] × READY_BAND.
-#    The 10 min mix counts (first contact = the start of the mix, no incorporations declared); at a
-#    constant temperature the open step only needs what the mix has not done: total − MIX_S.
-MIX_S = 600
-cases.append({
-    "name": "reference point: 1 % fresh yeast at 21.1 °C",
-    "since": "0.10.0",
-    "formula": flour([salt(), yeast("fresh", 1)]),
-    "process": steps({"temperatureC": 21.1}, [{"id": "proof", "operation": "proof"}]),
-    "expected": {
-        "dough.duration.value": READY * A * H - MIX_S,
-        "dough.duration.range": [0.75 * READY_BAND[0] * A * H - MIX_S, 1.25 * READY_BAND[1] * A * H - MIX_S],
-    },
-})
+MIX_S = 600  # the 10 min mix of steps(): first contact (no incorporations declared)
 
-# 2. 0.5 % instant in a fridge at 4 °C from the start: constant temperature, t = A d^−k / r(4).
-d = 0.5 * FRESH["instant"]
-cases.append({
-    "name": "constant 4 °C, 0.5 % instant",
-    "since": "0.10.0",
-    "formula": flour([salt(), yeast("instant", 0.5)]),
-    "process": steps({"temperatureC": 4}, [{"id": "retard", "operation": "bulk"}]),
-    "expected": {"dough.duration.value": READY * A * d ** -K / r(4) * H - MIX_S},
-})
 
-# 3. Inverse: 10 min mix + 2 h + 1 h at 25 °C, active dry. d^k / A × r(25) × (3 + 1/6) = READY.
-T3 = 3 + MIX_S / H
-d = (READY * A / (T3 * r(25))) ** (1 / K)
-cases.append({
-    "name": "inverse dose: 3 h at 25 °C after a 10 min mix, active dry",
-    "since": "0.10.0",
-    "formula": flour([salt(), yeast("active-dry", 0.5)]),
-    "process": steps({"temperatureC": 25}, [
-        {"id": "bulk", "operation": "bulk", "plannedDurationS": 2 * H},
-        {"id": "proof", "operation": "proof", "plannedDurationS": H},
-    ]),
-    "expected": {
-        "dough.yeastPct.yeast.value": d / FRESH["active-dry"],
-        "dough.progressPct.value": 100 * (0.5 * FRESH["active-dry"]) ** K / A * r(25) * T3 / READY,
-    },
-})
+def clock_cases(legacy):
+    """Cases 1 to 4. `legacy`: the end-of-the-mix clock of contract 0.23.0 and engine < 0.10.0 (the
+    mix is not counted; kept so that the engine keeps being tested until it moves, "until");
+    otherwise the first-contact clock (the mix counts, "since")."""
+    m = 0 if legacy else MIX_S  # seconds of mixing that count as fermentation
+    tag = {"until": "0.10.0"} if legacy else {"since": "0.10.0"}
+    sfx = "" if legacy else " (first-contact clock)"
+    out = []
 
-# 4. Lag: 2 h bulk at 24 °C, then the fridge at 4 °C for the rest, 0.2 % fresh. The dough starts
-#    at 24 °C, cools with τ = 1.5 h; the open fridge step needs the time to finish.
-d = 0.2
-g1 = lagged_gain(d, 24, 24, 2 + MIX_S / H)  # the 10 min mix at 24 °C counts, then the 2 h bulk
-t0 = 24.0
-lo, hi = 0.0, 500.0
-for _ in range(60):
-    mid = (lo + hi) / 2
-    if g1 + lagged_gain(d, t0, 4, mid, n=20000) >= READY:
-        hi = mid
-    else:
-        lo = mid
-cases.append({
-    "name": "thermal lag into the fridge, 0.2 % fresh",
-    "since": "0.10.0",
-    "formula": flour([salt(), yeast("fresh", 0.2)]),
-    "process": steps({"temperatureC": 24}, [
-        {"id": "bulk", "operation": "bulk", "plannedDurationS": 2 * H},
-        {"id": "retard", "operation": "proof", "conditions": {"location": "fridge", "temperatureC": 4}},
-    ]),
-    "expected": {"dough.duration.value": (lo + hi) / 2 * H},
-    "tolerance": 60,
-})
+    # 1. 1 % fresh at 21.1 °C: the dough takes READY × A hours; every other corner factor is 1
+    #    (d^−k = 1, r = 1), so the band is A × [0.75, 1.25] × READY_BAND. At a constant temperature
+    #    the open step only needs what the counted mixing has not done: total − m.
+    out.append({
+        "name": "reference point: 1 % fresh yeast at 21.1 °C" + sfx,
+        **tag,
+        "formula": flour([salt(), yeast("fresh", 1)]),
+        "process": steps({"temperatureC": 21.1}, [{"id": "proof", "operation": "proof"}]),
+        "expected": {
+            "dough.duration.value": READY * A * H - m,
+            "dough.duration.range": [0.75 * READY_BAND[0] * A * H - m, 1.25 * READY_BAND[1] * A * H - m],
+        },
+    })
+
+    # 2. 0.5 % instant in a fridge at 4 °C from the start: constant temperature, t = A d^−k / r(4).
+    d = 0.5 * FRESH["instant"]
+    out.append({
+        "name": "constant 4 °C, 0.5 % instant" + sfx,
+        **tag,
+        "formula": flour([salt(), yeast("instant", 0.5)]),
+        "process": steps({"temperatureC": 4}, [{"id": "retard", "operation": "bulk"}]),
+        "expected": {"dough.duration.value": READY * A * d ** -K / r(4) * H - m},
+    })
+
+    # 3. Inverse: (counted mix +) 2 h + 1 h at 25 °C, active dry. d^k / A × r(25) × T3 = READY.
+    T3 = 3 + m / H
+    d = (READY * A / (T3 * r(25))) ** (1 / K)
+    out.append({
+        "name": ("inverse dose: 3 h at 25 °C, active dry" if legacy
+                 else "inverse dose: 3 h at 25 °C after a 10 min mix, active dry"),
+        **tag,
+        "formula": flour([salt(), yeast("active-dry", 0.5)]),
+        "process": steps({"temperatureC": 25}, [
+            {"id": "bulk", "operation": "bulk", "plannedDurationS": 2 * H},
+            {"id": "proof", "operation": "proof", "plannedDurationS": H},
+        ]),
+        "expected": {
+            "dough.yeastPct.yeast.value": d / FRESH["active-dry"],
+            "dough.progressPct.value": 100 * (0.5 * FRESH["active-dry"]) ** K / A * r(25) * T3 / READY,
+        },
+    })
+
+    # 4. Lag: 2 h bulk at 24 °C (after the counted mix at 24 °C), then the fridge at 4 °C for the
+    #    rest, 0.2 % fresh. The dough starts at 24 °C, cools with τ = 1.5 h; the open fridge step
+    #    needs the time to finish.
+    d = 0.2
+    g1 = lagged_gain(d, 24, 24, 2 + m / H)
+    t0 = 24.0
+    lo, hi = 0.0, 500.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if g1 + lagged_gain(d, t0, 4, mid, n=20000) >= READY:
+            hi = mid
+        else:
+            lo = mid
+    out.append({
+        "name": "thermal lag into the fridge, 0.2 % fresh" + sfx,
+        **tag,
+        "formula": flour([salt(), yeast("fresh", 0.2)]),
+        "process": steps({"temperatureC": 24}, [
+            {"id": "bulk", "operation": "bulk", "plannedDurationS": 2 * H},
+            {"id": "retard", "operation": "proof", "conditions": {"location": "fridge", "temperatureC": 4}},
+        ]),
+        "expected": {"dough.duration.value": (lo + hi) / 2 * H},
+        "tolerance": 60,
+    })
+    return out
+
+
+cases.extend(clock_cases(legacy=True))
+cases.extend(clock_cases(legacy=False))
 
 # 5. Water temperature, no preferment: 3 × 26 − 20 − 20 − 5 (friction) = 33.
 cases.append({

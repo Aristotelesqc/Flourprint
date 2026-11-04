@@ -132,8 +132,11 @@ expectation of their own beyond these values, and `fermentation/cases.json` is u
 thermal input, and its one band case keeps a constant temperature, where the lag plays no part.
 
 A case may carry `"since": "<engine version>"`: the engine version from which it applies. A contract
-change merges before its implementation, so a case written for it is skipped by a harness for an
-older engine and runs as soon as `ENGINE_VERSION` reaches `since`; nothing is relaxed afterwards.
+change merges before its implementation, so a case written for it is pending for a harness running
+an older engine and runs as soon as `ENGINE_VERSION` reaches `since`; nothing is relaxed afterwards.
+A case whose values the change supersedes keeps its former form with `"until": "<engine version>"`:
+it runs while the engine is older, so no existing assertion is skipped or weakened before the
+implementation lands, and the implementing pull request removes it.
 
 **Dough clock (contract 0.24.0).** The progress of the dough is 0 at the start of the first-contact
 step (process.md, First contact): the mixing and kneading steps count. The cases whose name starts
@@ -145,4 +148,5 @@ at a constant temperature, where `F = t × (d / 1 %)^k × r(T) / A` is exact (`A
 `Ea` 98.3 kJ/mol, `r` = 1 at 21.1 °C), and with the default lag `τ` 1.5 h, a trapezoid of 200 000
 steps on the analytic temperature. Tolerances: 0.001 (percentage points and seconds) for the closed
 forms, 0.02 for the lagged paths (the engine's integrator is allowed that; the reference is better
-than 1e-6). The four older cases that include the 10 min mixing step were recomputed with it.
+than 1e-6). The four older cases that include the 10 min mixing step exist twice: in their former form (`until`
+0.10.0) and recomputed with the mixing counted (`since` 0.10.0, name suffixed or changed).

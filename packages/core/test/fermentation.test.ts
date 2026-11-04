@@ -22,6 +22,8 @@ interface Case {
   tolerance?: number;
   /** Engine version from which the case applies (contract PRs precede their implementation). */
   since?: string;
+  /** Engine version from which a superseded case no longer applies (it runs until then). */
+  until?: string;
 }
 const file = JSON.parse(
   readFileSync(
@@ -44,18 +46,23 @@ const at = (value: unknown, path: string): unknown =>
     );
 
 const numeric = (version: string) => version.split('.').map(Number);
-const appliesTo = (c: Case): boolean => {
-  if (c.since === undefined) return true;
-  const [have, need] = [numeric(ENGINE_VERSION), numeric(c.since)];
-  for (const [i, n] of need.entries()) {
-    if ((have[i] ?? 0) !== n) return (have[i] ?? 0) > n;
+/** Compares two dotted numeric versions: negative when a < b, 0 when equal, positive when a > b. */
+const compare = (a: string, b: string): number => {
+  const [x, y] = [numeric(a), numeric(b)];
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0);
+    if (d !== 0) return d;
   }
-  return true;
+  return 0;
 };
+const appliesTo = (c: Case): boolean =>
+  (c.since === undefined || compare(ENGINE_VERSION, c.since) >= 0) &&
+  (c.until === undefined || compare(ENGINE_VERSION, c.until) < 0);
 
 describe('fermentation reference cases', () => {
   for (const c of file.cases) {
-    // A case written for a later contract is skipped by an engine older than its `since`.
+    // Pending: a case written for a later contract waits for its `since`; a superseded one runs
+    // until its `until`. Nothing is skipped for an engine that must satisfy it.
     (appliesTo(c) ? it : it.skip)(c.name, () => {
       expect(validateFormula(c.formula).ok).toBe(true);
       expect(validateProcess(c.process).ok).toBe(true);
