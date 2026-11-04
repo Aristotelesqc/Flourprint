@@ -37,7 +37,7 @@ for (const english of [false, true]) {
     await routed(page).getByText('Poolish + tangzhong', { exact: true }).click();
     await enterEditor(page);
     const save = routed(page)
-      .locator('ion-footer')
+      .locator('ion-footer, [data-testid="recipe-draft-bar"]')
       .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true });
     await expect(save).toBeDisabled();
     expect((await save.boundingBox())?.height).toBeGreaterThanOrEqual(48);

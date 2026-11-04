@@ -27,7 +27,8 @@ const read = (page: Page, english = false) => {
     },
   };
 };
-const footer = (page: Page) => routed(page).locator('ion-footer:visible');
+const footer = (page: Page) =>
+  routed(page).locator('ion-footer:visible, [data-testid="recipe-draft-bar"]:visible');
 
 for (const english of [false, true]) {
   test(`saved recipes open for reading; explicit editing creates no draft${english ? ' @en' : ''}`, async ({
@@ -36,12 +37,7 @@ for (const english of [false, true]) {
     await page.setViewportSize({ width: english ? 393 : 360, height: 851 });
     await page.emulateMedia({ colorScheme: english ? 'light' : 'dark' });
     await openSaved(page);
-    await expect(
-      footer(page).getByRole('button', {
-        name: english ? 'Start preparation' : 'Démarrer la préparation',
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(footer(page)).toHaveCount(0);
     await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(routed(page).locator('select:visible')).toHaveCount(0);
     await expect(
@@ -73,12 +69,7 @@ for (const english of [false, true]) {
     await water.focus();
     await water.blur();
     await read(page, english).click();
-    await expect(
-      footer(page).getByRole('button', {
-        name: english ? 'Start preparation' : 'Démarrer la préparation',
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(footer(page)).toHaveCount(0);
     await expectRecipeRevision(page, 1);
   });
 }
@@ -117,7 +108,7 @@ test('consultation and editing share weighing state without inventing a saved ob
     .locator('ion-alert')
     .getByRole('button', { name: 'Abandonner les modifications' })
     .click();
-  await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toBeVisible();
+  await expect(footer(page)).toHaveCount(0);
   await expect(firstItem).toBeChecked();
   await expect(
     routed(page)
@@ -138,20 +129,20 @@ test('valid raw text is committed only from the focused field before a mode comm
   await water.fill('170');
   // An assistive/programmatic activation may not move browser focus first.
   await routed(page)
-    .locator('ion-button')
-    .filter({ has: page.getByRole('button', { name: 'Lire la recette', exact: true }) })
+    .getByRole('button', { name: 'Lire la recette', exact: true })
     .evaluate((host) => {
       (host as HTMLElement).click();
     });
   await expect(water).toHaveValue('170');
-  await expect(routed(page).getByText('Modifications non enregistrées')).toBeVisible();
+  await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');
+  await showPlanning(page);
   await expect(
     footer(page).getByRole('button', { name: 'Démarrer la préparation' }),
   ).toBeDisabled();
   await enterEditor(page);
   await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');
   await footer(page).getByRole('button', { name: 'Enregistrer', exact: true }).click();
-  await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toBeVisible();
+  await expect(footer(page)).toHaveCount(0);
   await edit(page).click();
   await expect(water).toHaveValue('170');
 });
@@ -225,12 +216,25 @@ test('planning inputs survive entering and leaving editing without creating a re
   });
   await target.selectOption('mix');
   await expect(routed(page).getByLabel('Durée : Pétrissage', { exact: true })).toHaveCount(0);
-  await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toBeVisible();
+  await expect(
+    footer(page).getByRole('button', { name: 'Démarrer la préparation', exact: true }),
+  ).toBeVisible();
   await edit(page).click();
   await editorSection(page, 'steps');
   await expect(when).toHaveValue('2026-11-05T14:00');
   await expect(target).toHaveValue('mix');
-  await expect(routed(page).getByLabel('Durée : Pétrissage', { exact: true })).toBeVisible();
+  await routed(page)
+    .getByRole('button', { name: 'Modifier l’étape Pétrissage', exact: true })
+    .click();
+  await expect(
+    page
+      .locator('ion-modal:not(.overlay-hidden)')
+      .getByLabel('Durée : Pétrissage', { exact: true }),
+  ).toBeVisible();
+  await page
+    .locator('ion-modal:not(.overlay-hidden)')
+    .getByRole('button', { name: 'Fermer', exact: true })
+    .click();
   await read(page).click();
   await routed(page).getByRole('tab', { name: 'Planification', exact: true }).click();
   await expect(when).toHaveValue('2026-11-05T14:00');
@@ -255,6 +259,7 @@ test('raw-only invalid input cannot disappear into consultation or start an old 
   await expect(
     footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeDisabled();
+  await showPlanning(page);
   await showPlanning(page);
   await expect(
     footer(page).getByRole('button', { name: 'Démarrer la préparation' }),
@@ -300,6 +305,8 @@ test('a persisted revision draft resumes in editing after a document reload', as
     )
     .toBe(true);
   await page.reload();
+  await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
+  await enterEditor(page);
   await expect(salt).toHaveValue('22');
   await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');
   await expect(

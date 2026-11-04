@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 
 export interface BottomBarProps {
+  /** Compact typography/spacing keeps the same touch targets. */
+  readonly density?: 'normal' | 'compact';
   /** Optional variant indicator; navigation A is the contextual toolbar (L101). */
   readonly variant?: 'A' | 'B' | undefined;
   /** Contextual actions placed in the bottom bar. */

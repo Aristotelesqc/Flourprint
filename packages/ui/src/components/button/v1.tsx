@@ -22,6 +22,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 export function Button({
   ref: forwardedRef,
   variant = 'primary',
+  density = 'normal',
   icon,
   fullWidth = false,
   children,
@@ -75,6 +76,7 @@ export function Button({
     : variantClasses[variant];
   const scaleClass = !reduced && !disabled ? 'active:scale-[0.97]' : '';
   const widthClass = fullWidth ? 'w-full' : '';
+  const densityClass = density === 'compact' ? 'px-1 text-metadata' : 'px-4 text-body';
 
   return (
     <button
@@ -82,10 +84,12 @@ export function Button({
       type={type}
       disabled={disabled}
       style={mergedStyle}
-      className={`fp-control-reset group relative inline-flex min-h-touch min-w-touch items-center justify-center px-4 text-body font-medium select-none fp-focus before:content-[''] before:absolute before:inset-x-0 before:inset-y-1 before:rounded-full before:-z-0 ${visualClass} ${scaleClass} ${widthClass} ${className ?? ''}`}
+      className={`fp-control-reset group relative inline-flex min-h-touch min-w-touch items-center justify-center font-medium select-none fp-focus before:content-[''] before:absolute before:inset-x-0 before:inset-y-1 before:rounded-full before:-z-0 ${visualClass} ${scaleClass} ${widthClass} ${densityClass} ${className ?? ''}`}
       {...rest}
     >
-      <span className="relative z-10 inline-flex min-w-0 items-center justify-center gap-2">
+      <span
+        className={`relative z-10 inline-flex min-w-0 items-center justify-center ${density === 'compact' ? 'gap-1' : 'gap-2'}`}
+      >
         {icon ? (
           <span className="inline-flex shrink-0 items-center justify-center">{icon}</span>
         ) : null}

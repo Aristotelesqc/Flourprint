@@ -34,21 +34,17 @@ export const menuAction = async (page: Page, action: RegExp) => {
 };
 export const enterEditor = async (page: Page) => {
   await expect(routed(page)).toHaveCount(1);
-  const editor = routed(page).getByRole('button', { name: /^(Menu édition|Edit actions)$/ });
   const edit = routed(page)
-    .locator('ion-footer')
-    .getByRole('button', {
-      name: /^(Modifier la recette|Edit recipe|Modifier|Edit)$/,
-    });
-  // A restored draft can enter editing while the returning Ionic page settles.
-  await expect(edit.or(editor)).toBeVisible();
-  if (!(await editor.isVisible())) await edit.click();
+    .locator('ion-header')
+    .getByRole('button', { name: /^(Modifier la recette|Edit recipe|Modifier|Edit)$/ });
+  await expect(edit).toBeVisible();
+  if (await edit.isEnabled()) await edit.click();
   await expect(
     routed(page).getByRole('tab', { name: /^(Recette|Recipe)$/, exact: true }),
   ).toHaveAttribute('aria-selected', 'true');
   await expect(
     routed(page)
-      .locator('ion-footer')
+      .locator('ion-footer, [data-testid="recipe-draft-bar"]')
       .getByRole('button', { name: /^(Enregistrer|Save|Save recipe)$/, exact: true }),
   ).toBeVisible();
 };

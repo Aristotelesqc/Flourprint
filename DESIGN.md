@@ -197,12 +197,18 @@ Recipe presents composition and authored method. Planning presents generated pro
 time controls and a shortcut to the single Recipe step editor. Preparation presents actual work.
 Follow the contracts for semantics; do not build a second editable recipe inside Planning.
 
-**Consultation/editing composition (#67):** saved recipes open for reading with explicit
-A visible Edit action, a compact Start/Resume pill and an anchored overflow menu in the shared contextual bottom bar (L31, L50). Planning is the generated tab, without a
-duplicate Plan header button. New or resumed drafts open for editing after hydration. Consultation
-does not reserve an empty 88px draft footer. Once editing starts, first modification and validity
-feedback keep the primary controls stable. A deliberate mode change may rearrange the screen;
-retain understandable scroll/focus and preserve or guard all pending raw input.
+**Consultation/editing composition (owner, 2026-11-04; L31/L50/L60/L151-L157):**
+Reading Recipe has no permanent bottom bar. Its header always exposes the pencil Edit action
+beside anchored overflow; rare duplicate, export and trash actions belong to overflow. Time
+actions belong only to Planning. The fixed tabs are Recipe, Planning and History; active
+Preparation is a separate screen. Recipe contains ingredients, weighing and authored steps.
+A draft and a detailed editor are separate states sharing one history. Dragging creates or
+resumes the draft without switching ingredients or step cards into editors. Step cards keep
+the same height, density and layout; explicit per-step Edit opens the existing sheet. The
+single constant-height Discard/Undo/Redo/Save bar overlays the screen bottom without moving
+content. Discard confirms changes. Keep pending feedback subtle, refusals at the affected card,
+and notices out of document flow. Preserve scroll and keep the dropped card visible.
+In-place value editing is future work, outside 0.3, and must not compete with drag activation.
 
 The implementation uses `FormulaConsultation`, `FormulaSection` and `RecipeMethod` for the Recipe tab,
 and a read-only projection `ProcessSection` for the Planning tab with shortcuts to the step editor.
@@ -320,12 +326,13 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   changing an operation refuses unresolved raw input before conditional fields can disappear.
   Ratio entry uses `liquidMassRatio` and `hydrationForRatio` from the current contract: it counts weighed
   liquid mass (including the whole mass of milk); hydration and component style still count its water content.
-  One Save bar has stable reserved feedback space; check/review/discard are occasional actions.
+  One constant-height overlay bar holds Discard, Undo, Redo and Save; check/review are occasional actions.
 - **Step reordering in the app:** use `fp.sortable-list` with the selected 350 ms hold,
   48 px handles and separate opaque, flat Compact rows. One measured insertion space travels
   with the candidate; the overlay stays opaque above the page and follows both axes.
   Actual activation opens the recipe draft without marking an unchanged recipe dirty.
-  Freeze the header, footer and reading layout until release; the same method instance stays mounted.
+  Draft state never switches card/editor rendering; the same method instance stays mounted.
+  Keep header and card geometry invariant at activation and drop, with explicit scroll anchoring.
   Core `moveStep` accepts or refuses the final intent. Accepted moves use the normal whole-draft
   Undo/Redo/Save path; refusal, outside release and cancellation preserve earlier edits.
   Hardware, toolbar and browser Back cancel the active gesture before normal navigation resumes.
@@ -371,15 +378,15 @@ two rows; labels and touch targets stay intact. Native Ionic overlays remain pla
 and require their own checks.
 
 - **Actions:** visible primary-action labels, distinct filled/outlined/quiet roles, clear busy,
-  disabled and destructive states. Reading Recipe uses the versioned `fp.bottom-bar` with
-  Edit, a content-sized Start/Resume action and an anchored overflow menu; no persistent full-width
-  reading CTA (L31). Shared buttons retain 48 px touch targets and a 40 px painted shape at the
+  disabled and destructive states. Reading Recipe has no permanent bottom toolbar (L31/L50). Editing uses `fp.bottom-bar` with
+  constant-height Discard/Undo/Redo/Save controls, overlaying rather than resizing content.
+  Pencil Edit and anchored overflow are in the Recipe header; time actions live only in Planning. Shared buttons retain 48 px touch targets and a 40 px painted shape at the
   default text scale. Reading section tabs use `fp.tabs` in one horizontal row, scrolling when
   needed rather than wrapping; the selected tab stays visible. The full recipe title remains
   in the header. These changes port the approved navigation A reference.
   The existing editor action layout and segmented editor sections described above are legacy
-  implementation, pending the L49/L60/L108 port; they are not the target design. The narrow
-  summary arrangement remains subject to the owner's existing visual review decision.
+  implementation, pending the L49/L60/L108 port; they are not the target design. The Recipe summary uses the approved two-column tiles under the owner's 2026-11-04 direction,
+  checked at both required widths/scales and corrected for known ledger defects.
 - **Precision fields:** input frames identify actual editing; read-only quantities are text.
   Gram display uses the L148 default magnitude bands: whole grams at 10 g and above, tenths
   from 1 g to below 10 g, hundredths below 1 g, with the same rule for negative losses.

@@ -1,4 +1,5 @@
 export const recipeDocumentEn = {
+  'recipe.document.back': 'Back',
   'recipe.document.resetRevision': 'Return to saved revision {revision}?',
   'recipe.document.resetTemplate': 'Reset to template proportions?',
   'recipe.document.resetBlank': 'Reset to blank recipe?',
@@ -21,6 +22,7 @@ export const recipeDocumentEn = {
     '{count, plural, one {# piece of {grams}} other {# pieces of {grams}}}',
   'recipe.document.piecesDisplayConvention': '1 piece of {grams}',
   'editor.undoChange': 'Undo last change',
+  'editor.discardShort': 'Discard',
   'recipe.document.flourShare': 'Share: {pct}',
   'recipe.document.selectWaterIngredient': 'Select water ingredient',
   'recipe.document.lockedWaterNotice':
@@ -33,6 +35,7 @@ export const recipeDocumentEn = {
 };
 
 export const recipeDocumentFr = {
+  'recipe.document.back': 'Retour',
   'recipe.document.resetRevision': 'Revenir à la révision {revision} enregistrée ?',
   'recipe.document.resetTemplate': 'Rétablir les proportions du modèle ?',
   'recipe.document.resetBlank': 'Rétablir la recette vierge ?',
@@ -55,6 +58,7 @@ export const recipeDocumentFr = {
     '{count, plural, one {# pièce de {grams}} other {# pièces de {grams}}}',
   'recipe.document.piecesDisplayConvention': '1 pièce de {grams}',
   'editor.undoChange': 'Annuler la dernière modification',
+  'editor.discardShort': 'Abandonner',
   'recipe.document.flourShare': 'Part : {pct}',
   'recipe.document.selectWaterIngredient': 'Sélectionner l’eau',
   'recipe.document.lockedWaterNotice':

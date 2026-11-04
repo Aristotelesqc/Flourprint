@@ -142,6 +142,8 @@ export const StepSheet = ({
   const [deleteError, setDeleteError] = useState<string | undefined>();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [equipmentRawInvalid, setEquipmentRawInvalid] = useState(false);
+  const [durationRawInvalid, setDurationRawInvalid] = useState(false);
+  const detailsRawInvalid = equipmentRawInvalid || durationRawInvalid;
   const isDeletingRef = useRef(false);
   const pendingProcessRef = useRef<Process | undefined>(undefined);
   const validationActions = useValidationActions();
@@ -161,6 +163,7 @@ export const StepSheet = ({
     setDeleteError(undefined);
     setConfirmDeleteOpen(false);
     setEquipmentRawInvalid(false);
+    setDurationRawInvalid(false);
     isDeletingRef.current = false;
     pendingProcessRef.current = undefined;
     // Reset only when the sheet opens or moves to another step.
@@ -211,13 +214,13 @@ export const StepSheet = ({
   };
 
   const handleClose = () => {
-    if (equipmentRawInvalid) return;
+    if (detailsRawInvalid) return;
     commitLabel();
     onClose();
   };
 
   const handleDuplicate = () => {
-    if (duplicateDisabled || equipmentRawInvalid || !onDuplicate) return;
+    if (duplicateDisabled || detailsRawInvalid || !onDuplicate) return;
     if (!commitLabel()) return;
     if (
       validationActions?.isBlocked() ||
@@ -321,7 +324,7 @@ export const StepSheet = ({
   return (
     <IonModal
       isOpen={open}
-      canDismiss={!equipmentRawInvalid}
+      canDismiss={!detailsRawInvalid}
       onDidDismiss={() => {
         handleClose();
         onDismissed?.();
@@ -336,7 +339,7 @@ export const StepSheet = ({
                 color="danger"
                 className="min-h-12 min-w-12"
                 aria-label={t('step.delete')}
-                disabled={equipmentRawInvalid}
+                disabled={detailsRawInvalid}
                 title={t('step.delete')}
                 onClick={() => {
                   setDeleteError(undefined);
@@ -432,13 +435,31 @@ export const StepSheet = ({
                 <span className="text-xs text-muted">{stepInstructions(step)}</span>
               )}
             </span>
+            {step.durationMode === 'model' ? (
+              <p className="m-0 text-sm text-muted">
+                {t('prep.duration')}:{' '}
+                {step.plannedDurationS === undefined
+                  ? t('fermentation.auto')
+                  : formatDuration(step.plannedDurationS)}
+              </p>
+            ) : (
+              <DurationField
+                key={`duration-${step.id}`}
+                label={t('process.duration', { step: stepName(step) })}
+                value={step.plannedDurationS}
+                optional={step.schedule !== 'alap'}
+                onValidityChange={setDurationRawInvalid}
+                hideLabel={false}
+                onCommit={(plannedDurationS) => change({ plannedDurationS })}
+              />
+            )}
             {onDuplicate && (
               <div className="flex flex-col gap-1.5 pt-1">
                 <div className="flex items-center gap-2">
                   <Ui
                     component="fp.button"
                     variant="secondary"
-                    disabled={duplicateDisabled || equipmentRawInvalid}
+                    disabled={duplicateDisabled || detailsRawInvalid}
                     onClick={handleDuplicate}
                   >
                     {t('step.duplicate')}

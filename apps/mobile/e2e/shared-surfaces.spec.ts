@@ -8,7 +8,7 @@ test('shared menus and help keep cancellation and focus in English @en', async (
 
   const actions = routed(page).getByRole('button', { name: 'Recipe actions', exact: true });
   await expect(
-    routed(page).locator('ion-footer').getByRole('button', { name: 'Edit recipe', exact: true }),
+    routed(page).locator('ion-header').getByRole('button', { name: 'Edit recipe', exact: true }),
   ).toBeVisible();
   await actions.click();
   const menu = page.getByRole('menu');

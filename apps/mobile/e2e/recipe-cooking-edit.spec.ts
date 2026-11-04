@@ -6,7 +6,7 @@ const recipeId = 'cooking-authoring-fixture';
 const recipeName = 'Independent cooking authoring';
 const panel = (page: Page) => page.getByTestId('step-equipment-fields').filter({ visible: true });
 const sheet = (page: Page) => page.locator('ion-modal').filter({ visible: true });
-const footer = (page: Page) => routed(page).locator('ion-footer');
+const footer = (page: Page) => routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]');
 const save = (page: Page) =>
   footer(page).getByRole('button', { name: /^(Save|Enregistrer)$/, exact: true });
 const close = (page: Page) =>

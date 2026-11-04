@@ -10,7 +10,7 @@ write transitions. Every item has a guide; a new item or version ships with its 
 
 ### `fp.bottom-bar`
 
-The bottom area of a screen: navigation A selects the contextual toolbar as a contextual toolbar (L101).
+Contextual actions at the screen bottom; Recipe editing uses a constant-height overlay, while reading Recipe has no permanent bottom bar (L31, L60).
 
 **Use when**
 
@@ -22,19 +22,20 @@ The bottom area of a screen: navigation A selects the contextual toolbar as a co
 
 **Props**
 
-| Prop              | Meaning                                                                             |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| `variant`         | 'A' (contextual toolbar; navigation A is selected under L101).                      |
-| `children`        | The screen's contextual actions.                                                    |
-| `navigationLabel` | Accessible name of the toolbar/navigation landmark.                                 |
-| `className`       | Optional classes applied to the toolbar container, without styling child internals. |
+| Prop              | Meaning                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| `density`         | Normal by default; compact reduces typography and spacing while retaining touch targets. |
+| `variant`         | 'A' (contextual toolbar; navigation A is selected under L101).                           |
+| `children`        | The screen's contextual actions.                                                         |
+| `navigationLabel` | Accessible name of the toolbar/navigation landmark.                                      |
+| `className`       | Optional classes applied to the toolbar container, without styling child internals.      |
 
 **Accessibility**
 
 - Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
 - The toolbar/navigation landmark carries navigationLabel.
 - Touch target at least 48 px width and height; visible control rhythm is compact without overlapping adjacent actions.
-- At 360 px and 130% text scaling (L115), contextual toolbar actions fit without horizontal overflow; Edit, Start/Resume, and overflow actions remain reachable with full >=48 px targets without clipped labels or empty padded rows.
+- At 360 px and 130% text scaling (L115), contextual toolbar actions fit without horizontal overflow; Discard, Undo/Redo and Save remain reachable in editing; time actions belong only to Planning with full >=48 px targets without clipped labels or empty padded rows.
 - Labels use single-row ellipsis rather than mid-word wrapping (L25), preserving baseline alignment.
 
 **Related**
@@ -123,6 +124,7 @@ Triggers an immediate action, workflow step or state transition.
 
 | Prop        | Meaning                                                                                                                          |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `density`   | Normal by default; compact reduces typography and spacing while retaining touch targets.                                         |
 | `ref`       | React reference to the native button; supports object and callback refs with cleanup.                                            |
 | `children`  | Action label or inline content displayed inside the button.                                                                      |
 | `variant`   | Visual priority: primary (call to action), secondary (standard action), quiet (borderless tool), or danger (destructive action). |

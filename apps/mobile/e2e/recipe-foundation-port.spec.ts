@@ -531,7 +531,7 @@ for (const english of [false, true]) {
 
     // A single accepted edit creates one undo entry; the refused delete creates none.
     const undo = routed(page)
-      .locator('ion-footer')
+      .locator('ion-footer, [data-testid="recipe-draft-bar"]')
       .getByRole('button', {
         name: english ? 'Undo last change' : 'Annuler la dernière modification',
         exact: true,

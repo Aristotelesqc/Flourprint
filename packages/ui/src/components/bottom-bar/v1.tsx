@@ -4,6 +4,7 @@ import type { BottomBarProps } from './props.ts';
 
 export function BottomBar({
   children,
+  density = 'normal',
   navigationLabel,
   className,
 }: BottomBarProps): ReactElement | null {
@@ -15,7 +16,7 @@ export function BottomBar({
       data-fp-version="v1"
       role="toolbar"
       aria-label={navigationLabel}
-      className={`bg-surface border-t border-outline-subtle min-h-touch px-2 py-1 flex items-center justify-between gap-1 shrink-0 z-40 w-full max-w-full box-border ${className ?? ''}`}
+      className={`bg-surface border-t border-outline-subtle min-h-touch py-1 flex items-center justify-between gap-1 shrink-0 z-40 w-full max-w-full box-border ${density === 'compact' ? 'px-1' : 'px-2'} ${className ?? ''}`}
     >
       <div className="flex items-center justify-between w-full gap-1 flex-nowrap min-w-0">
         {children}

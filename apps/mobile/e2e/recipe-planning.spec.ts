@@ -5,7 +5,8 @@ import { expectRecipeRevision, enterEditor, editorSection, showPlanning } from '
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
 // L111 adds weighing checkboxes to Planning; assertions below still forbid authoring inputs.
 const modal = (page: Page) => page.locator('ion-modal:not(.overlay-hidden)');
-const footer = (page: Page) => routed(page).locator('ion-footer:visible');
+const footer = (page: Page) =>
+  routed(page).locator('ion-footer:visible, [data-testid="recipe-draft-bar"]:visible');
 const scrollTop = (page: Page) =>
   routed(page)
     .locator('ion-content')
@@ -150,11 +151,20 @@ for (const english of [false, true]) {
     await openSaved(page);
     await enterEditor(page);
     await editorSection(page, 'steps');
-    const duration = routed(page).getByLabel(english ? 'Duration of Mix' : 'Durée : Pétrissage', {
+    const openMix = () =>
+      routed(page)
+        .getByRole('button', {
+          name: english ? 'Edit step Mix' : 'Modifier l’étape Pétrissage',
+          exact: true,
+        })
+        .click();
+    await openMix();
+    const duration = modal(page).getByLabel(english ? 'Duration of Mix' : 'Durée : Pétrissage', {
       exact: true,
     });
     await duration.fill('12 min');
     await duration.press('Enter');
+    await close(page);
     await editorSection(page, 'composition');
     const water = routed(page).getByLabel(
       english ? 'Water, Final mix (g)' : 'Eau, Mélange final (g)',
@@ -175,7 +185,6 @@ for (const english of [false, true]) {
     await enterEditor(page);
     await expect(water).toHaveValue('abc');
     await expect(water).toHaveAttribute('aria-invalid', 'true');
-    await expect(duration).toHaveValue('12 min');
     await expect(
       footer(page).getByRole('button', {
         name: english ? 'Save' : 'Enregistrer',
@@ -184,6 +193,10 @@ for (const english of [false, true]) {
     ).toBeDisabled();
     await water.fill('200');
     await water.press('Enter');
+    await editorSection(page, 'steps');
+    await openMix();
+    await expect(duration).toHaveValue('12 min');
+    await close(page);
     await footer(page)
       .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
@@ -217,18 +230,17 @@ for (const english of [false, true]) {
     await editorSection(page, 'steps');
     await routed(page)
       .getByRole('button', {
-        name: english
-          ? 'Edit fermentation settings for Bulk fermentation'
-          : 'Modifier les paramètres de fermentation pour Pointage',
+        name: english ? 'Edit step Bulk fermentation' : 'Modifier l’étape Pointage',
         exact: true,
       })
       .click();
     await expect(
-      routed(page).getByRole('region', {
-        name: english ? 'Fermentation' : 'Fermentation',
+      modal(page).getByLabel(english ? 'Duration of Bulk fermentation' : 'Durée : Pointage', {
         exact: true,
       }),
-    ).toBeFocused();
+    ).toHaveCount(0);
+    await expect(modal(page).getByText(english ? /^Duration:/ : /^Durée:/)).toBeVisible();
+    await close(page);
     await expect(auto).toHaveAttribute('aria-pressed', 'true');
     await showPlanning(page);
     await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);

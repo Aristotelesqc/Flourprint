@@ -155,7 +155,10 @@ const importStageRecipe = async (page: Page, english: boolean, withGlaze = false
 const exportFromStageRecipe = async (page: Page, english: boolean): Promise<FeedbackExport> => {
   await expect(page).toHaveURL(new RegExp(`/recipes/${stageRecipeId}$`));
   await expect(routed(page)).toHaveCount(1);
-  await routed(page).locator('ion-header ion-back-button').click();
+  await routed(page)
+    .locator('ion-header')
+    .getByRole('button', { name: /^(Back|Retour)$/, exact: true })
+    .click();
   await expect(page).toHaveURL(/\/recipes$/);
   await routed(page)
     .getByRole('link', { name: english ? 'Advanced' : 'Avancé', exact: true })
@@ -182,7 +185,8 @@ const exportFromStageRecipe = async (page: Page, english: boolean): Promise<Feed
   return feedback;
 };
 
-const footer = (page: Page) => routed(page).locator('ion-footer:visible');
+const footer = (page: Page) =>
+  routed(page).locator('ion-footer:visible, [data-testid="recipe-draft-bar"]:visible');
 const finalTitle = (english: boolean) => (english ? 'Final mix' : 'Mélange final');
 const group = (page: Page, title: string) =>
   routed(page).getByRole('group', { name: title, exact: true });
@@ -337,6 +341,7 @@ for (const english of [false, true]) {
     await row(page, 'tangzhong', waterName).check();
     await row(page, final, flour).check();
     await row(page, final, yeast).check();
+    await showPlanning(page);
     const start = footer(page).getByRole('button', {
       name: english ? 'Start preparation' : 'Démarrer la préparation',
       exact: true,
@@ -356,7 +361,11 @@ for (const english of [false, true]) {
       .click();
     await expect(page).toHaveURL(/\/bakes\/[^/]+$/);
     await expect(routed(page)).toHaveCount(1);
-    await routed(page).locator('ion-header ion-back-button').click();
+    await routed(page)
+      .locator(
+        'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+      )
+      .click();
     await expect(page).toHaveURL(new RegExp(`/recipes/${stageRecipeId}$`));
     await expect(routed(page).getByRole('checkbox', { checked: true })).toHaveCount(0);
     await expect(

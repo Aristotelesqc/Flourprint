@@ -93,7 +93,9 @@ test('milk-only incomplete hydration offers ingredient editing without inventing
   ).toHaveCount(0);
   await expect(routed(page).getByText('Eau ajoutée', { exact: true })).toHaveCount(0);
   await expect(routed(page).getByText('Eau versée', { exact: true })).toHaveCount(0);
-  await expect(routed(page).locator('ion-footer').getByRole('status')).toHaveText('À jour');
+  await expect(
+    routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]').getByRole('status'),
+  ).toHaveText('À jour');
 });
 
 test('whole-percent hydration presentation never becomes a rounded recipe edit', async ({
@@ -106,7 +108,9 @@ test('whole-percent hydration presentation never becomes a rounded recipe edit',
   await expect(hydration).toHaveValue('75');
   await hydration.focus();
   await hydration.blur();
-  await expect(routed(page).locator('ion-footer').getByRole('status')).toHaveText('À jour');
+  await expect(
+    routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]').getByRole('status'),
+  ).toHaveText('À jour');
   await expect(routed(page).getByLabel('Eau, Mélange final (g)', { exact: true })).toHaveValue(
     '200',
   );
@@ -161,7 +165,7 @@ for (const english of [false, true]) {
     );
     const save = () =>
       routed(page)
-        .locator('ion-footer')
+        .locator('ion-footer, [data-testid="recipe-draft-bar"]')
         .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true });
     await water.fill('abc');
     await showPlanning(page);
@@ -172,7 +176,7 @@ for (const english of [false, true]) {
     ).toBeVisible();
     await expect(
       routed(page)
-        .locator('ion-footer')
+        .locator('ion-footer, [data-testid="recipe-draft-bar"]')
         .getByRole('button', {
           name: english ? 'Start preparation' : 'Démarrer la préparation',
           exact: true,
@@ -222,7 +226,7 @@ for (const english of [false, true]) {
     await page.getByText('Poolish + tangzhong', { exact: true }).click();
     await enterEditor(page);
     const save = routed(page)
-      .locator('ion-footer')
+      .locator('ion-footer, [data-testid="recipe-draft-bar"]')
       .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true });
     await expect(save).toBeDisabled();
     const bounds = await save.boundingBox();
@@ -257,8 +261,9 @@ for (const english of [false, true]) {
 
 test('active preparation journal keeps more than three notes accessible', async ({ page }) => {
   await open(page);
+  await showPlanning(page);
   await routed(page)
-    .locator('ion-footer')
+    .locator('ion-footer, [data-testid="recipe-draft-bar"]')
     .getByRole('button', { name: 'Démarrer la préparation', exact: true })
     .click();
   await page.locator('ion-alert').getByRole('button', { name: 'Démarrer', exact: true }).click();

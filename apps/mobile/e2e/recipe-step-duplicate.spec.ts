@@ -5,7 +5,7 @@ import { enterEditor, expectRecipeRevision, routed } from './ui-actions';
 const recipeName = 'Step duplication fixture';
 const recipeId = 'step-duplication-fixture';
 const method = (page: Page) => routed(page).getByTestId('recipe-method');
-const footer = (page: Page) => routed(page).locator('ion-footer');
+const footer = (page: Page) => routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]');
 const save = (page: Page) => footer(page).getByRole('button', { name: /^(Save|Enregistrer)$/ });
 const sheet = (page: Page) => page.locator('ion-modal').filter({ visible: true });
 const stepCount = (page: Page) => method(page).locator('[data-sortable-id]').count();

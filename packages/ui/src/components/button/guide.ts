@@ -32,6 +32,8 @@ const buttonGuide: ComponentGuide<ButtonProps> = {
     },
   ],
   props: {
+    density:
+      'Normal by default; compact reduces typography and spacing while retaining touch targets.',
     ref: 'React reference to the native button; supports object and callback refs with cleanup.',
     children: 'Action label or inline content displayed inside the button.',
     variant:
