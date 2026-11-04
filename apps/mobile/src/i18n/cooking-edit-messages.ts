@@ -4,6 +4,14 @@
  */
 
 export const cookingEditEn = {
+  'equipment.create.addAppliance': 'Add appliance profile',
+  'equipment.create.applianceTitle': 'New appliance profile',
+  'equipment.create.applianceNamePlaceholder': 'e.g. Kitchen oven',
+  'cooking.edit.profile': 'Appliance profile',
+  'cooking.edit.profileApplianceType': 'Profile appliance type: {type}',
+  'error.InvalidEquipmentEntry.appliance': 'The selected appliance type is invalid.',
+  'equipment.create.applianceSubmit': 'Create profile',
+  'cooking.edit.profileHelp': 'Optional. Selecting a profile keeps the step settings unchanged.',
   'equipment.create.addSupport': 'Add personal support',
   'equipment.create.addVessel': 'Add personal vessel',
   'equipment.create.supportTitle': 'New personal baking support',
@@ -122,6 +130,15 @@ export const cookingEditEn = {
 } as const;
 
 export const cookingEditFr = {
+  'equipment.create.addAppliance': 'Ajouter un profil d’appareil',
+  'equipment.create.applianceTitle': 'Nouveau profil d’appareil',
+  'equipment.create.applianceNamePlaceholder': 'Ex. Four de cuisine',
+  'cooking.edit.profile': 'Profil d’appareil',
+  'cooking.edit.profileApplianceType': 'Type d’appareil du profil : {type}',
+  'error.InvalidEquipmentEntry.appliance': 'Le type d’appareil sélectionné n’est pas valide.',
+  'equipment.create.applianceSubmit': 'Créer le profil',
+  'cooking.edit.profileHelp':
+    'Facultatif. La sélection d’un profil conserve les réglages de l’étape.',
   'equipment.create.addSupport': 'Ajouter un support personnel',
   'equipment.create.addVessel': 'Ajouter un récipient personnel',
   'equipment.create.supportTitle': 'Nouveau support de cuisson personnel',

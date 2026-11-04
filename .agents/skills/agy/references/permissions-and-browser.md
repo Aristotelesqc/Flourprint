@@ -195,6 +195,28 @@ raw command. Do not infer a network or login problem from another confirmation.
    value in private prompts/artifacts only; redact surfaced transcripts and never put it in
    command arguments, committed files or public reports.
 
+Verified with the same CLI on 2026-11-04: the native CLI also accepts this session profile with
+`--input-format stream-json --output-format stream-json`. This is a direct CLI invocation, not
+an extra flag supported by `run_agy.py`. The observed session retained `request-review` and
+performed actual Android layout, capture, image reads and input with the scoped grants. Check
+`step_update.tool_info.output`: a `DONE` tool state alone does not establish successful execution.
+An initial Android cache denial remained an access failure; only subsequent successful results
+established access.
+
+Exact command forms include optional flags: changing `--wait=10000` to `--wait=5000` missed
+the scoped rule. The observed headless turn then ended with `SUCCESS`, an empty response and
+`denied_actions`; this was incomplete review evidence. Stop on that denial. Resume the same
+reviewer only after a new inspected, scoped permission decision, within the remaining budget;
+never infer permission from the final status or retry by rephrasing the command.
+
+For an explicitly authorized private marker relay, keep the value in memory and send it directly
+to that CLI's structured stdin. Authorization to relay does not authorize printing the prompt
+through a host tool result or saving a marker-bearing prompt file. Redact the value before
+retaining any returned events, suppress optional caller-created CLI logs that might echo it, and
+never place it in argv. If host approval rejects an exposure point, remove that exposure rather
+than weakening permissions or repeating the same action. Record the exact scope of approval;
+this procedure grants no access to unrelated configuration or credentials.
+
 Keep the profile, prompts and raw logs private. Publish the source/build, tested environment,
 observed interactions and remaining cases on the relevant issue/PR. The access probe alone
 does not accept a UI change. See the official [settings reference](https://antigravity.google/docs/settings?tab=cli)

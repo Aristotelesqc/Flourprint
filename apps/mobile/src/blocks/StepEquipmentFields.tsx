@@ -24,6 +24,7 @@ import {
 import { Ui } from '../ui/library';
 import { OptionalNumberField, TemperatureField } from '../ui/Field';
 import { useMessages } from '../i18n/use-messages';
+import { StepApplianceProfile } from './StepApplianceProfile';
 import { StepEquipmentItems } from './StepEquipmentItems';
 
 interface Props {
@@ -87,6 +88,9 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
   const [levelOfInvalid, setLevelOfInvalid] = useState(false);
   const [steamDetailInvalid, setSteamDetailInvalid] = useState(false);
   const [itemsInvalid, setItemsInvalid] = useState(false);
+  const [profileInvalid, setProfileInvalid] = useState(false);
+  const [itemsCreating, setItemsCreating] = useState(false);
+  const [profileCreating, setProfileCreating] = useState(false);
 
   const currentDetail = step.equipment?.steam?.detail ?? '';
   const [detailDraft, setDetailDraft] = useState<string | null>(null);
@@ -108,13 +112,22 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
     setLevelOfInvalid(invalid);
   }, []);
 
+  const handleProfileCreationOpenChange = useCallback((open: boolean) => {
+    setProfileCreating(open);
+  }, []);
+
+  const handleItemsCreationOpenChange = useCallback((open: boolean) => {
+    setItemsCreating(open);
+  }, []);
+
   const isOverallInvalid =
     setpointInvalid ||
     levelValueInvalid ||
     levelOfInvalid ||
     steamDetailInvalid ||
     (detailDraft !== null && detailDraft !== currentDetail) ||
-    itemsInvalid;
+    itemsInvalid ||
+    profileInvalid;
 
   useEffect(() => {
     onValidityChange?.(isOverallInvalid);
@@ -446,6 +459,14 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
           {...(applianceError ? { error: applianceError } : {})}
         />
 
+        <StepApplianceProfile
+          step={step}
+          onChange={onChange}
+          onValidityChange={setProfileInvalid}
+          creationDisabled={itemsCreating}
+          onCreationOpenChange={handleProfileCreationOpenChange}
+        />
+
         <div className="space-y-1">
           <Ui
             component="fp.select"
@@ -621,7 +642,13 @@ export function StepEquipmentFields({ step, onChange, onValidityChange }: Props)
             )}
           </div>
         </div>
-        <StepEquipmentItems step={step} onChange={onChange} onValidityChange={setItemsInvalid} />
+        <StepEquipmentItems
+          step={step}
+          onChange={onChange}
+          onValidityChange={setItemsInvalid}
+          creationDisabled={profileCreating}
+          onCreationOpenChange={handleItemsCreationOpenChange}
+        />
       </div>
     </section>
   );

@@ -23,11 +23,13 @@ interface Props {
     reportError: (message: string | undefined) => void,
   ) => boolean;
   readonly onValidityChange?: (invalid: boolean) => void;
+  readonly creationDisabled?: boolean;
+  readonly onCreationOpenChange?: (open: boolean) => void;
 }
 
 export type StepEquipmentItemsProps = Props;
 
-type EntryResolution =
+export type EntryResolution =
   | { readonly status: 'none' }
   | { readonly status: 'loading' }
   | { readonly status: 'ready'; readonly entry: EquipmentEntry }
@@ -42,9 +44,9 @@ interface KeyedResolution {
 
 const isMessageKey = (key: string): key is MessageKey => key in en;
 
-type Translate = ReturnType<typeof useMessages>['t'];
+export type Translate = ReturnType<typeof useMessages>['t'];
 
-function formatEntryName(entry: EquipmentEntry, t: Translate): string {
+export function formatEntryName(entry: EquipmentEntry, t: Translate): string {
   if (entry.builtIn) {
     const key = `equipment.${entry.id}.name`;
     if (isMessageKey(key)) {
@@ -62,7 +64,7 @@ function formatEntryName(entry: EquipmentEntry, t: Translate): string {
  * Loads an equipment reference (built-in or personal registry entry) with cancellation.
  * If the resolved entry does not match the expected kind, it is treated as unresolved ('missing').
  */
-function useEquipmentRef(
+export function useEquipmentRef(
   ref: EquipmentRef | undefined,
   expectedKind: EquipmentKind,
 ): EntryResolution {
@@ -149,7 +151,7 @@ interface CatalogState {
   readonly entries: readonly EquipmentEntry[];
 }
 
-function cleanEquipment(equipment: {
+export function cleanEquipment(equipment: {
   readonly [K in keyof StepEquipment]?: StepEquipment[K] | undefined;
 }): StepEquipment | undefined {
   const cleaned: Record<string, unknown> = {};
@@ -189,7 +191,13 @@ function cleanPreheated(
 /**
  * Step support, vessel, cover, and preheat facts (Recipe #169, L71, L89, L115, L129, L143).
  */
-export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) {
+export function StepEquipmentItems({
+  step,
+  onChange,
+  onValidityChange,
+  creationDisabled,
+  onCreationOpenChange,
+}: Props) {
   const { t } = useMessages();
   const services = useServices();
 
@@ -223,6 +231,12 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
   }, [onValidityChange]);
 
   useEffect(() => {
+    return () => {
+      onCreationOpenChange?.(false);
+    };
+  }, [onCreationOpenChange]);
+
+  useEffect(() => {
     if (createKind !== null) return;
     const kind = initiatingKindRef.current;
     initiatingKindRef.current = null;
@@ -234,17 +248,20 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
     setCreationStatus(undefined);
     initiatingKindRef.current = 'support';
     setCreateKind('support');
+    onCreationOpenChange?.(true);
   };
 
   const handleOpenCreateVessel = () => {
     setCreationStatus(undefined);
     initiatingKindRef.current = 'vessel';
     setCreateKind('vessel');
+    onCreationOpenChange?.(true);
   };
 
   const handleCancelCreate = () => {
     setCreateKind(null);
     setCreateInvalid(false);
+    onCreationOpenChange?.(false);
   };
 
   const handleCreated = (entry: EquipmentEntry) => {
@@ -260,6 +277,7 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
     });
     setCreateKind(null);
     setCreateInvalid(false);
+    onCreationOpenChange?.(false);
   };
 
   const loadCatalog = useEffectEvent(() => {
@@ -566,7 +584,7 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
             component="fp.button"
             variant="quiet"
             ref={supportButtonRef}
-            disabled={createKind !== null || catalogState.status === 'loading'}
+            disabled={creationDisabled || createKind !== null || catalogState.status === 'loading'}
             onClick={handleOpenCreateSupport}
           >
             {t('equipment.create.addSupport')}
@@ -601,7 +619,7 @@ export function StepEquipmentItems({ step, onChange, onValidityChange }: Props) 
             component="fp.button"
             variant="quiet"
             ref={vesselButtonRef}
-            disabled={createKind !== null || catalogState.status === 'loading'}
+            disabled={creationDisabled || createKind !== null || catalogState.status === 'loading'}
             onClick={handleOpenCreateVessel}
           >
             {t('equipment.create.addVessel')}

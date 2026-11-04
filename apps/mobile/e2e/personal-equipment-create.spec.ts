@@ -199,7 +199,8 @@ async function storedEquipment(page: Page): Promise<EquipmentEntry[]> {
   });
 }
 
-const createArea = (page: Page) => sheet(page).getByRole('region', { name: /personal|personnel/i });
+const createArea = (page: Page) =>
+  sheet(page).getByRole('region', { name: /personal|personnel|profile|profil/i });
 const addSupport = (page: Page) =>
   items(page).getByRole('button', {
     name: /^(Add personal support|Ajouter un support personnel)$/,
@@ -209,7 +210,9 @@ const addVessel = (page: Page) =>
     name: /^(Add personal vessel|Ajouter un récipient personnel)$/,
   });
 const create = (page: Page) =>
-  createArea(page).getByRole('button', { name: /^(Create equipment|Créer l’équipement)$/ });
+  createArea(page).getByRole('button', {
+    name: /^(Create equipment|Créer l’équipement|Create profile|Créer le profil)$/,
+  });
 const cancelCreate = (page: Page) =>
   createArea(page).getByRole('button', { name: /^(Cancel|Annuler)$/ });
 const itemName = (page: Page) => createArea(page).getByRole('textbox', { name: /^(Name|Nom)$/ });
@@ -447,6 +450,257 @@ for (const english of [false, true]) {
         }
         await close(page).click();
         await expect(sheet(page)).toBeHidden();
+      });
+    }
+}
+
+const profilePicker = (page: Page) =>
+  panel(page).getByRole('button', { name: /^(Appliance profile|Profil d[’']appareil),/ });
+const addProfile = (page: Page) =>
+  panel(page).getByRole('button', {
+    name: /^(Add appliance profile|Ajouter un profil d[’']appareil)$/,
+  });
+async function chooseProfile(page: Page, name: RegExp) {
+  await profilePicker(page).press('Space');
+  await page.getByRole('radio', { name, exact: true }).click();
+  await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+}
+
+for (const english of [false, true]) {
+  const suffix = english ? ' @en' : '';
+  test(`Appliance profile creation stays independent and selection changes only the exact profile ref${suffix}`, async ({
+    page,
+  }) => {
+    const original = {
+      appliance: 'oven',
+      mode: 'topBottom',
+      nativeMode: 'Literal factory label',
+      setpointC: 232,
+      level: { value: 3, of: 5 },
+      fan: 'on',
+      steam: { source: 'manual', detail: 'Literal steam note' },
+      support: { item: steelRef },
+      preheated: { appliance: 'cold', support: 'hot' },
+      rack: 'middle',
+    } as const;
+    await open(page, original);
+    await addProfile(page).click();
+    await expect(addSupport(page)).toBeDisabled();
+    await expect(addVessel(page)).toBeDisabled();
+    await itemName(page).fill('Profil personnel de cuisine');
+    await create(page).click();
+    await expect(createArea(page)).toBeHidden();
+    await expect(addProfile(page)).toBeFocused();
+    await expect(profilePicker(page)).not.toHaveAccessibleName(/Profil personnel de cuisine/);
+    await expect.poll(async () => (await storedEquipment(page)).length).toBe(1);
+    const entry = (await storedEquipment(page))[0];
+    if (!entry) throw new Error('Profile missing from stored backup');
+    expect(entry).toMatchObject({
+      kind: 'appliance',
+      name: 'Profil personnel de cuisine',
+      version: 1,
+      builtIn: false,
+      archived: false,
+    });
+    for (const key of [
+      'appliance',
+      'modes',
+      'shape',
+      'material',
+      'coating',
+      'interior',
+      'volumeMl',
+    ])
+      expect(entry).not.toHaveProperty(key);
+    await close(page).click();
+    await expect(save(page)).toBeDisabled();
+    await edit(page);
+    await chooseProfile(page, /^Profil personnel de cuisine$/);
+    await close(page).click();
+    await footer(page)
+      .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
+      .click();
+    await edit(page);
+    await expect(profilePicker(page)).not.toHaveAccessibleName(/Profil personnel de cuisine/);
+    await close(page).click();
+    await footer(page)
+      .getByRole('button', { name: /^(Redo|Rétablir)$/ })
+      .click();
+    await save(page).click();
+    await expectRecipeRevision(page, 2);
+    expect((await storedProcess(page))?.steps[1]?.equipment).toEqual({
+      ...original,
+      profile: { id: entry.id, version: 1 },
+    });
+    await page.reload();
+    await expectRecipeRevision(page, 2);
+    await edit(page);
+    await expect(profilePicker(page)).toHaveAccessibleName(/Profil personnel de cuisine/);
+    await chooseProfile(page, /^(Not specified|Non renseigné)$/);
+    await close(page).click();
+    await save(page).click();
+    await expectRecipeRevision(page, 3);
+    expect((await storedProcess(page))?.steps[1]?.equipment).toEqual(original);
+  });
+
+  test(`Profile uses saved old archived versions, and selecting a different appliance type leaves step intent unchanged${suffix}`, async ({
+    page,
+  }) => {
+    const entry = (
+      id: string,
+      version: number,
+      name: string,
+      archived = false,
+    ): EquipmentEntry => ({
+      id,
+      version,
+      name,
+      kind: 'appliance',
+      appliance: 'stovetop',
+      builtIn: false,
+      archived,
+      createdAt: '2026-11-04T00:00:00.000Z' as EquipmentEntry['createdAt'],
+    });
+    await open(
+      page,
+      {
+        appliance: 'oven',
+        mode: 'convection',
+        setpointC: 210,
+        profile: { id: 'personal-oven', version: 1 },
+      },
+      [
+        entry('personal-oven', 1, 'Old profile'),
+        entry('personal-oven', 2, 'New profile'),
+        entry('archived-oven', 1, 'Hidden archived', true),
+      ],
+    );
+    await expect(profilePicker(page)).toHaveAccessibleName(/Old profile/);
+    await close(page).click();
+    await expect(save(page)).toBeDisabled();
+    await edit(page);
+    await profilePicker(page).press('Space');
+    await expect(page.getByRole('radio', { name: 'New profile', exact: true })).toBeVisible();
+    await expect(page.getByRole('radio', { name: 'Hidden archived', exact: true })).toHaveCount(0);
+    await page.getByRole('radio', { name: 'New profile', exact: true }).click();
+    await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+    await close(page).click();
+    await save(page).click();
+    await expectRecipeRevision(page, 2);
+    expect((await storedProcess(page))?.steps[1]?.equipment).toEqual({
+      appliance: 'oven',
+      mode: 'convection',
+      setpointC: 210,
+      profile: { id: 'personal-oven', version: 2 },
+    });
+  });
+
+  test(`Profile creation dirty guards coexist with cooking raw guards and scoped Cancel${suffix}`, async ({
+    page,
+  }) => {
+    await open(page);
+    const power = panel(page).getByRole('textbox', { name: /^(Power level|Niveau de puissance)$/ });
+    await power.fill('-');
+    await addProfile(page).click();
+    await create(page).click();
+    await expect(createArea(page).getByRole('alert')).toHaveCount(1);
+    await itemName(page).fill('Unfinished profile');
+    await close(page).click();
+    await expect(itemName(page)).toHaveValue('Unfinished profile');
+    await page.keyboard.press('Escape');
+    await expect(itemName(page)).toHaveValue('Unfinished profile');
+    await cancelCreate(page).click();
+    await expect(addProfile(page)).toBeFocused();
+    await close(page).click();
+    await expect(power).toHaveValue('-');
+    await power.fill('3');
+    await power.press('Tab');
+    await close(page).click();
+    await expect(sheet(page)).toBeHidden();
+    expect(await storedEquipment(page)).toHaveLength(0);
+  });
+}
+
+for (const english of [false, true]) {
+  const suffix = english ? ' @en' : '';
+  for (const state of ['archived', 'missing', 'wrong-kind'] as const) {
+    test(`Appliance profile ${state} reference stays exact until explicit clearing${suffix}`, async ({
+      page,
+    }) => {
+      const entry: EquipmentEntry = {
+        id: 'archived-profile',
+        version: 1,
+        name: 'Archived kitchen profile',
+        kind: 'appliance',
+        appliance: 'oven',
+        builtIn: false,
+        archived: true,
+        createdAt: '2026-11-04T00:00:00.000Z' as EquipmentEntry['createdAt'],
+      };
+      const ref =
+        state === 'archived'
+          ? { id: entry.id, version: 1 }
+          : state === 'wrong-kind'
+            ? steelRef
+            : { id: 'private-unresolved-profile', version: 7 };
+      await open(page, { profile: ref }, state === 'archived' ? [entry] : []);
+      await expect(profilePicker(page)).toHaveAccessibleName(
+        state === 'archived'
+          ? /Archived kitchen profile/
+          : /Unresolved item|introuvable|indisponible/i,
+      );
+      await expect(panel(page)).not.toContainText('private-unresolved-profile');
+      await close(page).click();
+      await expect(save(page)).toBeDisabled();
+      expect((await storedProcess(page))?.steps[1]?.equipment).toEqual({ profile: ref });
+      await edit(page);
+      await chooseProfile(page, /^(Not specified|Non renseigné)$/);
+      await close(page).click();
+      await save(page).click();
+      await expectRecipeRevision(page, 2);
+      expect((await storedProcess(page))?.steps[1]?.equipment).toBeUndefined();
+    });
+  }
+  for (const theme of ['light', 'dark', 'amoled'])
+    for (const large of [false, true]) {
+      test(`Appliance profile layout and no-default selection ${theme} ${large ? '360-130' : '393-100'}${suffix}`, async ({
+        page,
+      }) => {
+        await open(page, undefined, [], theme, large);
+        await addProfile(page).click();
+        await itemName(page).fill('Profil personnel du grand four de cuisine');
+        await createArea(page)
+          .getByRole('button', { name: /^(Appliance|Appareil|Type|Profile appliance)/ })
+          .press('Space');
+        await page.getByRole('radio', { name: /^(Oven|Four)$/, exact: true }).click();
+        await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+        await create(page).click();
+        await expect(createArea(page)).toBeHidden();
+        await expect(profilePicker(page)).not.toHaveAccessibleName(
+          /Profil personnel du grand four/,
+        );
+        const group = panel(page).getByRole('group', {
+          name: /^(Appliance profile|Profil d[’']appareil)$/,
+        });
+        await expect(group.getByRole('status')).toContainText('Profil personnel du grand four');
+        expect(await group.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+        await group.screenshot({
+          path: `../../.agy-runs/appliance-profiles-169/captures/${english ? 'en' : 'fr'}-${theme}-${large ? '360-130' : '393-100'}-created.png`,
+        });
+        await chooseProfile(page, /^Profil personnel du grand four de cuisine$/);
+        await expect(
+          panel(page).getByRole('button', { name: /^(Appliance|Appareil),/ }),
+        ).toHaveAccessibleName(/Not specified|Non renseigné/);
+        await group.screenshot({
+          path: `../../.agy-runs/appliance-profiles-169/captures/${english ? 'en' : 'fr'}-${theme}-${large ? '360-130' : '393-100'}-selected.png`,
+        });
+        await close(page).click();
+        await save(page).click();
+        await expectRecipeRevision(page, 2);
+        const eq = (await storedProcess(page))?.steps[1]?.equipment;
+        expect(eq).toHaveProperty('profile');
+        for (const key of ['appliance', 'mode', 'nativeMode', 'setpointC', 'heat', 'fan', 'steam'])
+          expect(eq).not.toHaveProperty(key);
       });
     }
 }

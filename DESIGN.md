@@ -347,6 +347,12 @@ Creation actions wrap as whole labelled buttons at larger text sizes.
 Creation confirmation stays with the support or vessel selector that initiated it, including its
 live status announcement; it never appears under the other equipment kind.
 
+Optional appliance profiles use the same inline creation pattern beside the step appliance
+selector. A name is sufficient; appliance type and notes remain optional. Selecting an exact
+profile version preserves every step setting, including an unspecified appliance. The profile
+type is shown separately and is never compared with the step type. Only one personal-equipment
+creation form opens at a time; creation confirmation remains in its own selector group.
+
 Recipe step duplication uses a labelled action in the step editor and a shared review sheet.
 The editor dismisses before the review opens. The review shows the proposed copy, fields the
 core does not carry, changed dependencies and before/after relative timings from the core.

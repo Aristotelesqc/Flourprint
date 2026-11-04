@@ -238,11 +238,19 @@ for (const english of [false, true]) {
     await choose(page, applianceLabel, /^(Stovetop|Plaque de cuisson)$/);
     await expect(sheet(page).getByRole('alert')).toHaveCount(1);
     await expect(sheet(page).getByRole('alert')).toContainText(english ? /oven/ : /four/);
-    await expect(panel(page).locator('ion-select').first()).toHaveJSProperty('value', 'oven');
+    await expect(
+      panel(page)
+        .locator('ion-select')
+        .filter({ has: page.getByRole('button', { name: applianceLabel }) }),
+    ).toHaveJSProperty('value', 'oven');
     await choose(page, modeLabel, broilOption);
     await expect(sheet(page).getByRole('alert')).toHaveCount(1);
     await expect(sheet(page).getByRole('alert')).toContainText(english ? /custom/ : /personnalis/);
-    await expect(panel(page).locator('ion-select').nth(1)).toHaveJSProperty('value', 'custom');
+    await expect(
+      panel(page)
+        .locator('ion-select')
+        .filter({ has: page.getByRole('button', { name: modeLabel }) }),
+    ).toHaveJSProperty('value', 'custom');
     const top = panel(page).getByRole('checkbox', {
       name: /^(Top element|Élément du haut)$/,
       exact: true,
@@ -457,8 +465,12 @@ for (const english of [false, true]) {
           large,
         );
         for (const control of [
-          panel(page).locator('ion-select').first(),
-          panel(page).locator('ion-select').nth(1),
+          panel(page)
+            .locator('ion-select')
+            .filter({ has: page.getByRole('button', { name: applianceLabel }) }),
+          panel(page)
+            .locator('ion-select')
+            .filter({ has: page.getByRole('button', { name: modeLabel }) }),
           setpoint(page),
           panel(page).getByRole('textbox', { name: /^(Power level|Niveau de puissance)$/ }),
           panel(page).getByRole('textbox', { name: /^(Scale maximum|Maximum de l’échelle)$/ }),
