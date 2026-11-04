@@ -43,7 +43,10 @@ const loadSample = async (page: Page): Promise<void> => {
 
 /**
  * Starts the app and attaches to the WebView of this process: after a forced stop, the WebView of
- * the previous process can still be listed for a moment, and attaching to it hangs.
+ * the previous process can still be listed for a moment, and attaching to it hangs. The WebView is
+ * matched by process id only: a WebView listed while the new process is still starting can report
+ * another package name for the right process id (seen in CI and in a local probe), and matching on
+ * the name then timed out intermittently.
  */
 const open = async (): Promise<Page> => {
   await device.shell(`am start -W -n ${PKG}/.MainActivity`);
@@ -52,12 +55,12 @@ const open = async (): Promise<Page> => {
     .poll(
       async () => {
         pid = Number((await device.shell(`pidof ${PKG}`)).toString().trim().split(/\s+/)[0]);
-        return device.webViews().some((w) => w.pkg() === PKG && w.pid() === pid);
+        return pid > 0 && device.webViews().some((w) => w.pid() === pid);
       },
       { timeout: 120_000 },
     )
     .toBe(true);
-  const webView = device.webViews().find((w) => w.pkg() === PKG && w.pid() === pid);
+  const webView = device.webViews().find((w) => w.pid() === pid);
   if (!webView) throw new Error('WebView vanished');
   const page = await webView.page();
   try {
@@ -95,7 +98,9 @@ const dismissSystemDialog = async () => {
 
 const forceStop = async () => {
   await device.shell(`am force-stop ${PKG}`);
-  await expect.poll(() => device.webViews().some((w) => w.pkg() === PKG)).toBe(false);
+  // The process is gone when `pidof` prints nothing; the WebView list may lag, and open() ignores
+  // WebViews of any other process.
+  await expect.poll(async () => (await device.shell(`pidof ${PKG}`)).toString().trim()).toBe('');
 };
 
 test.beforeAll(async () => {
