@@ -15,7 +15,7 @@ import {
   type ThermalStepLag,
 } from '../fermentation/index.js';
 import type { Instant } from '../instant.js';
-import { doughSteps } from '../process/dough.js';
+import { doughContextOf, doughSteps, firstContactStep } from '../process/dough.js';
 import type { ProcessStep, StepId, StepThermal } from '../process/types.js';
 import type { Estimate } from '../values.js';
 import { implicitStartOf } from './decide.js';
@@ -149,7 +149,8 @@ export const liveContext = (
   const live =
     state.status === 'active' || (options.includeEnded === true && state.status !== 'notStarted');
   if (!live || !formula || !process) return undefined;
-  const steps = doughSteps(process) ?? [];
+  const context = doughContextOf(formula);
+  const steps = doughSteps(process, context) ?? [];
   if (steps.length === 0) return undefined;
   const nowMs = Date.parse(now);
   const driven = steps.findIndex((s) => s.durationMode === 'model');
@@ -159,8 +160,7 @@ export const liveContext = (
   const stretches: Stretch[] = [];
   const unplanned: StepId[] = [];
   const afterEnd: { after: number; reading: Reading }[] = [];
-  let carried: number | undefined = process.steps.find((s) => s.operation === 'mix')?.conditions
-    ?.temperatureC;
+  let carried: number | undefined = firstContactStep(process, context)?.conditions?.temperatureC;
   // The end of the step before, if it ended, and where its last stretch is.
   let before: { readonly endMs: number; readonly index: number } | undefined;
 

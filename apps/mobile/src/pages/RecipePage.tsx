@@ -26,6 +26,7 @@ import {
   canonicalJson,
   checkRecipe,
   defaultVariant,
+  doughContextOf,
   doughSteps,
   resolveFormula,
   type BakeCommandPayload,
@@ -409,7 +410,7 @@ const RecipePageContent = () => {
   const fermentationStepIds = useMemo(() => {
     if (!draft) return new Set<string>();
     const ids = new Set<string>();
-    for (const s of doughSteps(draft.process) ?? []) ids.add(s.id);
+    for (const s of doughSteps(draft.process, doughContextOf(draft.formula)) ?? []) ids.add(s.id);
     for (const c of draft.formula.components) {
       if (c.kind === 'preferment' && c.flourPct > 0) ids.add(c.id);
     }

@@ -233,8 +233,9 @@ describe('SetStepThermal and StepThermalChanged', () => {
     expect(codeOf(log.run({ type: 'SetStepThermal', stepId: 'nope', thermal: bowl }))).toBe(
       'UnknownStep',
     );
+    // The mix is a dough step from the first contact, and it is completed: refused as such.
     expect(codeOf(log.run({ type: 'SetStepThermal', stepId: 'mix', thermal: bowl }))).toBe(
-      'InvalidCommand',
+      'StepAlreadyCompleted',
     );
     expect(codeOf(log.run({ type: 'SetStepThermal', stepId: 'bake', thermal: bowl }))).toBe(
       'InvalidCommand',
@@ -449,28 +450,30 @@ describe('live recomputation from the recorded facts', () => {
   });
 
   it('agrees with the plan while the bake follows it', () => {
+    // The 10 min mix is the first contact: it counts, so the bake follows the plan only if the mix
+    // lasts its 10 min (08:00 to 08:10).
     const log = started();
-    log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
-    log.at('08:00').ok({ type: 'StartStep', stepId: 'bulk' });
-    const forecast = liveDoughForecast(log.state, t('09:00'));
+    log.at('08:10').ok({ type: 'CompleteStep', stepId: 'mix' });
+    log.at('08:10').ok({ type: 'StartStep', stepId: 'bulk' });
+    const forecast = liveDoughForecast(log.state, t('09:10'));
     if (!forecast) throw new Error('no forecast');
     expect(forecast.stepId).toBe('cold');
     // One hour of the 2 h bulk is left: the remaining time is that hour plus the cold step's time.
     expect(value(forecast.remaining)).toBeCloseTo(staticDuration(process_) + 1 * H, 0);
-    expect(forecast.steps.map((s) => s.stepId)).toEqual(['bulk', 'cold']);
+    expect(forecast.steps.map((s) => s.stepId)).toEqual(['mix', 'bulk', 'cold']);
     expect(value(forecast.progressNowPct)).toBeGreaterThan(0);
     expect(value(forecast.progressNowPct)).toBeLessThan(100);
     // Nothing is stored: the same facts give the same forecast.
-    expect(liveDoughForecast(log.state, t('09:00'))).toEqual(forecast);
+    expect(liveDoughForecast(log.state, t('09:10'))).toEqual(forecast);
   });
 
   it('uses the recorded times, not the planned duration', () => {
     const log = started();
-    log.at('08:00').ok({ type: 'CompleteStep', stepId: 'mix' });
-    log.at('08:00').ok({ type: 'StartStep', stepId: 'bulk' });
+    log.at('08:10').ok({ type: 'CompleteStep', stepId: 'mix' });
+    log.at('08:10').ok({ type: 'StartStep', stepId: 'bulk' });
     // The bulk lasted 3 h instead of the planned 2 h.
-    log.at('11:00').ok({ type: 'CompleteStep', stepId: 'bulk' });
-    const forecast = liveDoughForecast(log.state, t('11:00'));
+    log.at('11:10').ok({ type: 'CompleteStep', stepId: 'bulk' });
+    const forecast = liveDoughForecast(log.state, t('11:10'));
     if (!forecast) throw new Error('no forecast');
     const longer: Process = {
       steps: process_.steps.map((s) => (s.id === 'bulk' ? { ...s, plannedDurationS: 3 * H } : s)),
@@ -478,8 +481,9 @@ describe('live recomputation from the recorded facts', () => {
     expect(value(forecast.remaining)).toBeCloseTo(staticDuration(longer), 0);
     const planned = estimateFermentation(formula(0.4), process_, MODEL_END_POINT).dough;
     expect(value(forecast.remaining)).not.toBeCloseTo(value(planned.duration), 0);
-    // The end of the completed step is its recorded end.
+    // The end of the completed steps is their recorded end.
     expect(forecast.steps[0]?.endProgressPct.status).toBe('ok');
+    expect(forecast.steps[1]?.endProgressPct.status).toBe('ok');
   });
 
   it('follows a change of the thermal inputs from the moment it is recorded', () => {
@@ -576,7 +580,7 @@ describe('live recomputation from the recorded facts', () => {
       reason: 'target_step_ended',
     });
     // The dough stays in the conditions of the last step between its end and now.
-    expect(forecast?.steps.map((s) => s.endProgressPct.status)).toEqual(['ok', 'ok']);
+    expect(forecast?.steps.map((s) => s.endProgressPct.status)).toEqual(['ok', 'ok', 'ok']);
   });
 });
 

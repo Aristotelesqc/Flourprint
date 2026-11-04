@@ -136,13 +136,23 @@ describe('validating thermal inputs', () => {
 
   it('refuses thermal inputs on a step that is not a dough step, with the step as the path', () => {
     expect(reason(processWith({ geometry: 'bulk' }, 'bake'))?.path).toBe('steps[2].thermal');
+    // A step before the first contact is not a dough step: an autolyse ahead of the mix.
+    const autolyse: Process = {
+      steps: [
+        step('autolyse', { operation: 'autolyse', thermal: { geometry: 'bulk' } }),
+        step('mix', { operation: 'mix', dependsOn: ['autolyse'] }),
+        step('bulk', { dependsOn: ['mix'] }),
+      ],
+    };
+    expect(reason(autolyse)?.path).toBe('steps[0].thermal');
+    // The mix is the first contact (no incorporations declared): a dough step, thermal accepted.
     const mixing: Process = {
       steps: [
         step('mix', { operation: 'mix', thermal: { geometry: 'bulk' } }),
         step('bulk', { dependsOn: ['mix'] }),
       ],
     };
-    expect(reason(mixing)?.path).toBe('steps[0].thermal');
+    expect(validateProcess(mixing).ok).toBe(true);
     // No mix step: there is no dough step at all.
     const noMix: Process = { steps: [step('bulk', { thermal: { geometry: 'bulk' } })] };
     expect(reason(noMix)?.path).toBe('steps[0].thermal');

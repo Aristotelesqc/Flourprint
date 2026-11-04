@@ -1,5 +1,6 @@
 import {
-  doughSteps,
+  referenceMixingStep,
+  stepsAfterReferenceMix,
   domainError,
   err,
   type DomainError,
@@ -106,9 +107,11 @@ export const applySchedule = (
       domainError('UnknownSchedule', `unknown schedule ${scheduleId}`, { id: scheduleId }),
     );
   }
-  const mix = process.steps.find((s) => s.operation === 'mix');
+  // A schedule replaces the steps after the reference mixing step, never the mixing and kneading
+  // steps, although those are dough steps too (drafts.md, Fermentation schedules).
+  const mix = referenceMixingStep(process);
   if (!mix) return err(invalid('steps', 'a schedule needs a mix step'));
-  const replaced = doughSteps(process) ?? [];
+  const replaced = stepsAfterReferenceMix(process) ?? [];
   for (const step of replaced) {
     const path = `steps[${process.steps.indexOf(step)}]`;
     if ((step.incorporations ?? []).length > 0) {

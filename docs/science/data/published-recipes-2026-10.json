@@ -15,7 +15,7 @@
     "baseline_script_rules": [
       "Ranges in stage durations and temperatures are evaluated at midpoints.",
       "Unspecified temperatures map to 21 deg C for room_unspecified, 4 deg C for fridge_unspecified, and 27 deg C for warm_unspecified.",
-      "The dough clock starts after the reference (last) mechanical mixing stage; stages before it are outside the dough clock.",
+      "The dough clock starts at the start of the first mechanical mixing stage (the first contact of yeast and flour, contract 0.24.0); mixing and kneading stages count, and stages before it are outside the dough clock.",
       "A stage with duration: not_stated or temperature kind: not_stated results in status: incomplete_schedule rather than an estimate.",
       "A real preferment with missing duration or temperature uses a technical placeholder proved not to affect dough progress and records assumptions (preferment_duration_not_stated, preferment_temperature_not_stated) without rejecting the recipe.",
       "Preferment yeast is allocated to the preferment component allocation as in the baguette template.",

@@ -85,6 +85,11 @@ const route = (mixC: number, legs: Leg[]): Process => {
   return { steps };
 };
 
+/** The forecast of a dough step by id: the mix (10 min, the first contact) is step 0 of every route. */
+const stepOf = (r: { steps?: readonly { stepId: string }[] }, id: string) =>
+  r.steps?.find((s) => s.stepId === id) as
+    { endProgressPct: Estimate; endTemperatureC: Estimate } | undefined;
+
 const value = (e: Estimate | undefined): number => {
   if (e?.status !== 'ok') throw new Error(`not ok: ${JSON.stringify(e)}`);
   return e.value;
@@ -120,12 +125,16 @@ describe('the dough estimate without thermal inputs', () => {
 
   it('lists the end of every dough step, additive and in process order', () => {
     const { dough: result } = estimateFermentation(dough(1000), process, MODEL_END_POINT);
-    expect(result.steps?.map((s) => s.stepId)).toEqual(['cool', 'warm']);
+    // The mix is the first contact: it is the first dough step, and the dough starts at its 24 °C.
+    expect(result.steps?.map((s) => s.stepId)).toEqual(['mix', 'cool', 'warm']);
     // The last step ends where the progress of the whole schedule ends.
-    expect(value(result.steps?.[1]?.endProgressPct)).toBeCloseTo(value(result.progressPct), 9);
-    expect(bounds(result.steps?.[1]?.endProgressPct)).toEqual(bounds(result.progressPct));
+    expect(value(stepOf(result, 'warm')?.endProgressPct)).toBeCloseTo(value(result.progressPct), 9);
+    expect(bounds(stepOf(result, 'warm')?.endProgressPct)).toEqual(bounds(result.progressPct));
     // After 2 h at 4 C the dough, lagged by 1.5 h, is at 4 + 20 e^(-2/1.5) C.
-    expect(value(result.steps?.[0]?.endTemperatureC)).toBeCloseTo(4 + 20 * Math.exp(-2 / 1.5), 4);
+    expect(value(stepOf(result, 'cool')?.endTemperatureC)).toBeCloseTo(
+      4 + 20 * Math.exp(-2 / 1.5),
+      4,
+    );
     expect(assumptions(result.progressPct).some((a) => a.startsWith('thermal_'))).toBe(false);
   });
 
@@ -134,7 +143,11 @@ describe('the dough estimate without thermal inputs', () => {
     const [low, high] = bounds(result.progressPct);
     expect(value(result.progressPct)).toBeGreaterThan(low);
     expect(value(result.progressPct)).toBeLessThan(high);
-    expect(value(result.progressPct)).toBeCloseTo(60.507, 1);
+    // 60.507 for the two legs, plus the 10 min mix at 24 °C: 100 × r(24) / A / 6 h (F* = 1),
+    // with r(24) = exp(Ea / R × (1 / 294.25 − 1 / 297.15)), computed here from the contract.
+    const r24 = Math.exp((98300 / 8.314462618) * (1 / 294.25 - 1 / 297.15));
+    const mixPct = (100 * r24) / 3.43 / 6;
+    expect(value(result.progressPct)).toBeCloseTo(60.507 + mixPct, 1);
   });
 
   it('is wider than the two shared corners of 0.20.0 on both sides (envelope, not shared lag)', () => {
@@ -200,9 +213,9 @@ describe('the dough estimate with thermal inputs', () => {
     expect(list).toContain('thermal_fridge_cycling');
     // No stored factor: no factor assumption, silently.
     expect(list.some((a) => a.startsWith('thermal_factor'))).toBe(false);
-    expect(result.steps?.map((s) => s.stepId)).toEqual(['bulk', 'retard']);
+    expect(result.steps?.map((s) => s.stepId)).toEqual(['mix', 'bulk', 'retard']);
     // The dough warms by itself in the first step (fermentation.md, Self-heating).
-    expect(value(result.steps?.[0]?.endTemperatureC)).toBeGreaterThan(24);
+    expect(value(stepOf(result, 'bulk')?.endTemperatureC)).toBeGreaterThan(24);
   });
 
   it('flags an uncovered surface, an enriched dough and a high Biot number as extrapolations', () => {
@@ -237,10 +250,21 @@ describe('the dough estimate with thermal inputs', () => {
   });
 
   it('puts thermal inputs on a step whose dough is not a step of the dough in the recipe: refused', () => {
+    // An autolyse ahead of the mix holds no yeast and is not a mixing step: it is no dough step.
     const bad: Process = {
-      steps: route(24, [{ id: 'bulk', hours: 1, temperatureC: 24 }]).steps.map((s) =>
-        s.id === 'mix' ? { ...s, thermal: bowl } : s,
-      ),
+      steps: [
+        {
+          id: 'autolyse',
+          operation: 'autolyse',
+          dependsOn: [],
+          schedule: 'asap',
+          plannedDurationS: 1800,
+          thermal: bowl,
+        },
+        ...route(24, [{ id: 'bulk', hours: 1, temperatureC: 24 }]).steps.map((s) =>
+          s.id === 'mix' ? { ...s, dependsOn: ['autolyse'] } : s,
+        ),
+      ],
     };
     expect(validateRecipe(dough(1000), bad)).toMatchObject({
       ok: false,
@@ -258,7 +282,7 @@ describe('the dough estimate with thermal inputs', () => {
   it('a heavier dough follows the fridge more slowly: less progress lost while it cools', () => {
     const light = estimateFermentation(dough(300, 0.4), process, MODEL_END_POINT).dough;
     const heavy = estimateFermentation(dough(3000, 0.4), process, MODEL_END_POINT).dough;
-    const end = (r: typeof light) => value(r.steps?.[1]?.endTemperatureC);
+    const end = (r: typeof light) => value(stepOf(r, 'retard')?.endTemperatureC);
     // 10 h in the fridge: the light dough is at the ambient, the heavy one still above it.
     expect(end(light)).toBeCloseTo(4, 1);
     expect(end(heavy)).toBeGreaterThan(end(light));
@@ -364,7 +388,7 @@ describe('the personal factor in the estimate', () => {
     estimateFermentation(dough(500, 0.4), process, MODEL_END_POINT, {
       ...(thermalProfile === undefined ? {} : { thermalProfile }),
     }).dough;
-  const endTemperature = (r: ReturnType<typeof run>) => value(r.steps?.[0]?.endTemperatureC);
+  const endTemperature = (r: ReturnType<typeof run>) => value(stepOf(r, 'retard')?.endTemperatureC);
 
   it('a factor above 1 slows the dough down, one below 1 speeds it up, and it is named', () => {
     const plain = run();
@@ -377,7 +401,7 @@ describe('the personal factor in the estimate', () => {
 
   it('one set moves the estimate and keeps the width; two that agree tighten the band', () => {
     const width = (r: ReturnType<typeof run>) => {
-      const [low, high] = bounds(r.steps?.[0]?.endTemperatureC);
+      const [low, high] = bounds(stepOf(r, 'retard')?.endTemperatureC);
       return high - low;
     };
     const none = width(run());
@@ -438,7 +462,7 @@ describe('performance of the envelope', () => {
     const started = performance.now();
     const result = estimateFermentation(formula, process, MODEL_END_POINT).dough;
     const elapsed = performance.now() - started;
-    expect(result.steps?.length).toBe(6);
+    expect(result.steps?.length).toBe(7); // the mix and the six legs
     expect(result.duration.status).toBe('ok');
     expect(result.progressPct.status).toBe('insufficient_data'); // the model-driven step has no duration yet
     // The whole estimate: 64 combinations of the duration, of the end of every step, of the dose.

@@ -395,7 +395,8 @@ describe.each([
     ],
     [
       'thermal inputs on a step that is not a dough step',
-      (b) => (b.recipes[0].revisions[0].process.steps[0].thermal = bowl),
+      // The bake: the mix is a dough step since the dough clock starts at the first contact.
+      (b) => (b.recipes[0].revisions[0].process.steps[2].thermal = bowl),
     ],
   ])('refuses %s and writes nothing', async (_case, corrupt) => {
     const source = await makeTarget();

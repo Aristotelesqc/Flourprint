@@ -9,8 +9,8 @@ START of the first-contact step (process.md, First contact), so mixing and knead
 that depend on it carry "since": "0.10.0", the engine version from which they apply; a harness
 skips them for an older engine. The four cases whose values the new clock changed also exist in
 their former form, with "until": "0.10.0" (the engine version from which they no longer apply):
-until the engine moves, its tests keep running the old expectations, none is skipped; the
-implementing pull request removes the superseded entries.
+until the engine moved, its tests kept running the old expectations, none was skipped; the
+implementing pull request (engine 0.10.0) removed the superseded entries.
 
 Run: python3 -I generate.py > cases.json (in this directory), then prettier --write cases.json
 Closed forms where the temperature is constant; otherwise a fine trapezoid on the analytic dough
@@ -155,7 +155,8 @@ def clock_cases(legacy):
     return out
 
 
-cases.extend(clock_cases(legacy=True))
+# The end-of-the-mix forms (legacy=True, "until": "0.10.0") served the engine until it moved to the
+# first contact (engine 0.10.0); the implementing pull request removed them.
 cases.extend(clock_cases(legacy=False))
 
 # 5. Water temperature, no preferment: 3 × 26 − 20 − 20 − 5 (friction) = 33.

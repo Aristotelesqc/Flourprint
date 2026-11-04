@@ -6,9 +6,11 @@ import {
   roundedDurationS,
 } from '@flourprint/core/application';
 import {
+  doughContextOf,
   doughStepAmbients,
   doughSteps,
   estimateFermentation,
+  stepsAfterReferenceMix,
   temperatureContext,
   updateStep,
   type Estimate,
@@ -53,7 +55,8 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
   const { t, componentName } = useMessages();
   const estimates = useMemo(() => estimateFermentation(formula, process), [formula, process]);
   const mix = process.steps.find((s) => s.operation === 'mix');
-  const dough = useMemo(() => doughSteps(process) ?? [], [process]);
+  const context = useMemo(() => doughContextOf(formula), [formula]);
+  const dough = useMemo(() => doughSteps(process, context) ?? [], [process, context]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const advanced = advancedOpen || mix?.conditions?.doughTemperatureC !== undefined;
   const preferments = formula.components.filter((c) => c.kind === 'preferment' && c.flourPct > 0);
@@ -167,7 +170,7 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
           duration={estimates.dough.duration}
           estimatedStepId={estimates.dough.stepId}
           reservedIds={formula.components.map((c) => c.id)}
-          ambients={doughStepAmbients(process)}
+          ambients={doughStepAmbients(process, context)}
           onProcess={onProcess}
         />
       )}
@@ -293,7 +296,7 @@ const ScheduleRow = ({
     void presentAlert({
       header: t('fermentation.schedule.confirmTitle', { name: nameOf(scheduleId) }),
       message: t('fermentation.schedule.confirmMessage', {
-        steps: (doughSteps(process) ?? []).map(stepName).join(', '),
+        steps: (stepsAfterReferenceMix(process) ?? []).map(stepName).join(', '),
       }),
       buttons: [
         { text: t('fermentation.cancel'), role: 'cancel' },
