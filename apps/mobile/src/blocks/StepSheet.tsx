@@ -449,6 +449,7 @@ export const StepSheet = ({
                 value={step.plannedDurationS}
                 optional={step.schedule !== 'alap'}
                 onValidityChange={setDurationRawInvalid}
+                hideLabel={false}
                 onCommit={(plannedDurationS) => change({ plannedDurationS })}
               />
             )}

@@ -84,7 +84,10 @@ normal captured final event for useful proposed edits, integrate only after sour
 run caller checks. Do not relaunch generation solely because process shutdown stalled or label
 the timed-out invocation a successful run. No private conversation-database access is needed.
 
-Resume with `--conversation ID`, never the global most-recent session. Give resumed reviewers the
+Resume with `--conversation ID` and an explicit `--model`, never the global most-recent session.
+On CLI 1.5.0, an idle attachment without `--model` displayed the global Argon default for a
+conversation originally run with Flash. No turn was started on that attachment. Verify the
+model before sending a recovery prompt; the conversation id alone does not preserve model choice. Give resumed reviewers the
 new HEAD/diff and stale assumptions to discard. Use a fresh session for independent assessment.
 No permission bypass or auto-approval switch is part of this skill. Normal, explicitly authorized
 MCP registration and scoped interactive tool grants are described in

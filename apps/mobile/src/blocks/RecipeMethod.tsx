@@ -261,6 +261,7 @@ export const RecipeMethod = ({
       return;
     }
     const targetId = highlightedStepId ?? selectedStepId;
+    setHighlightedStepId(undefined);
     if (frameRef.current !== undefined) cancelAnimationFrame(frameRef.current);
     frameRef.current = requestAnimationFrame(() => {
       if (

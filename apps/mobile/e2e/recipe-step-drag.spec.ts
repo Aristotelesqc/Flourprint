@@ -326,6 +326,10 @@ for (const english of [false, true]) {
       name: english ? 'Duration of Alpha' : 'Durée : Alpha',
       exact: true,
     });
+    const durationLabel = sheet
+      .locator('label')
+      .filter({ hasText: english ? 'Duration of Alpha' : 'Durée : Alpha' });
+    expect((await box(durationLabel)).height).toBeGreaterThan(10);
     await duration.fill('-');
     await sheet.getByRole('button', { name: /^(Close|Fermer)$/, exact: true }).click();
     await expect(duration).toHaveValue('-');
@@ -335,6 +339,17 @@ for (const english of [false, true]) {
     await duration.press('Tab');
     await sheet.getByRole('button', { name: /^(Close|Fermer)$/, exact: true }).click();
     await expect(sheet).toBeHidden();
+    await expect(
+      method(page).getByRole('button', {
+        name: /^(Edit step|Modifier l’étape) Alpha$/,
+        exact: true,
+      }),
+    ).toBeFocused();
+    expect(
+      await method(page)
+        .locator('[data-sortable-id="alpha"] > div')
+        .evaluate((card) => getComputedStyle(card).boxShadow),
+    ).toBe('none');
     expect((await geometry(page)).visibleInputs).toBe(0);
     await expect(save(page)).toBeEnabled();
     await expect(
