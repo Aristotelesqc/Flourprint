@@ -245,12 +245,17 @@ for (const english of [false, true]) {
     await expect.poll(async () => (await box(target)).height).toBeGreaterThan(1);
     const drawn = await box(target);
     await page.mouse.move(drawn.x + drawn.width / 2, drawn.y + drawn.height / 2);
+    const reason = english
+      ? 'Cannot place the step here: "Beta" must stay after "Alpha".'
+      : 'Placement impossible ici : « Beta » doit rester après « Alpha ».';
+    await expect(page.locator('[data-drop-feedback]')).toHaveText(reason);
     await page.mouse.up();
     await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
     await expect(save(page)).toBeDisabled();
     const refusal = method(page).locator('[data-sortable-id="alpha"]').getByRole('alert');
     await expect(refusal).toHaveCount(1);
+    await expect(refusal).toHaveText(reason);
     await expect(refusal).not.toContainText(
       /AmbiguousMove|MoveBreaksDependencies|crossesWorkpiece/,
     );
