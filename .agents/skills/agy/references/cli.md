@@ -76,6 +76,14 @@ recovery, without relaunching the review cohort.
 | Invalid generated diff                                                 | Keep the original answer; request corrected context or integrate reviewed edits explicitly. Preserve attribution and rerun checks.                                                                                                               |
 | Timeout                                                                | The helper stops its CLI invocation; the backend turn may still exist. Inspect the owned session before another run. No automatic replay.                                                                                                        |
 
+Observed on Windows CLI 1.4.12 (2026-11-03): a complete `result` with `SUCCESS` and a
+nonempty supplied-source proposal arrived before the CLI exited; the process stayed open until
+the helper deadline and the run correctly remained `timeout`. Preserve the original run status
+and distinguish the completed backend response from successful CLI collection. Inspect the
+normal captured final event for useful proposed edits, integrate only after source review, and
+run caller checks. Do not relaunch generation solely because process shutdown stalled or label
+the timed-out invocation a successful run. No private conversation-database access is needed.
+
 Resume with `--conversation ID`, never the global most-recent session. Give resumed reviewers the
 new HEAD/diff and stale assumptions to discard. Use a fresh session for independent assessment.
 No permission bypass or auto-approval switch is part of this skill. Normal, explicitly authorized

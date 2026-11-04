@@ -217,7 +217,7 @@ export const StepSheet = ({
   };
 
   const handleDuplicate = () => {
-    if (duplicateDisabled || !onDuplicate) return;
+    if (duplicateDisabled || equipmentRawInvalid || !onDuplicate) return;
     if (!commitLabel()) return;
     if (
       validationActions?.isBlocked() ||
@@ -336,6 +336,7 @@ export const StepSheet = ({
                 color="danger"
                 className="min-h-12 min-w-12"
                 aria-label={t('step.delete')}
+                disabled={equipmentRawInvalid}
                 title={t('step.delete')}
                 onClick={() => {
                   setDeleteError(undefined);
@@ -437,7 +438,7 @@ export const StepSheet = ({
                   <Ui
                     component="fp.button"
                     variant="secondary"
-                    disabled={duplicateDisabled}
+                    disabled={duplicateDisabled || equipmentRawInvalid}
                     onClick={handleDuplicate}
                   >
                     {t('step.duplicate')}

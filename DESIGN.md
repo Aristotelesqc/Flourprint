@@ -338,6 +338,15 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 
 ## Components
 
+Personal support and vessel creation is available beside the step selectors as one inline form.
+A name is sufficient; shape, material, coating and notes remain optional. Explicit creation saves
+an independent catalogue entry; selecting it and saving the recipe remain separate actions.
+Unfinished creation and pending writes guard step dismissal, duplication and deletion. Cancel
+writes nothing, failures retain input, and completion returns focus to the initiating action.
+Creation actions wrap as whole labelled buttons at larger text sizes.
+Creation confirmation stays with the support or vessel selector that initiated it, including its
+live status announcement; it never appears under the other equipment kind.
+
 Recipe step duplication uses a labelled action in the step editor and a shared review sheet.
 The editor dismisses before the review opens. The review shows the proposed copy, fields the
 core does not carry, changed dependencies and before/after relative timings from the core.

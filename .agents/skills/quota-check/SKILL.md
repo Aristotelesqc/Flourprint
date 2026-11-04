@@ -18,13 +18,12 @@ guess its quota.
 Check:
 
 - at session start or resume, before implementation;
-- at least every **five minutes of active work**; after a long tool returns, check before
-  another batch if the interval elapsed;
-- before a new tranche, fan-out, costly recovery or long verification/publication sequence;
-- after each commit/checkpoint, and after a provider/model switch or a quota reset.
+- before an expensive delegation or costly recovery;
+- at major work boundaries, including integration and verification;
+- before starting a new tranche, and after a provider/model switch or quota reset.
 
 One fresh observation can cover adjacent boundaries. These are active-session checks, not an
-idle scheduled job. Record the next check time so a long conversation does not erase the cadence.
+idle scheduled job or a fixed five-minute timer. Record the next work boundary requiring a check.
 Context compaction does not reset provider usage; reread quota after a resumed/compacted context.
 
 Keep a concise working observation: measured time with timezone, harness/provider, model or quota
@@ -51,7 +50,7 @@ points**. Use the lowest remaining percentage among the applicable coordinator w
 
 | Decision | Condition                                                                                                               | Action                                                                                                                                        |
 | -------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| CONTINUE | All applicable windows have at least 40% remaining, and estimated tranche plus closure reserve fits                     | Start one bounded tranche; retain the next quota-check time.                                                                                  |
+| CONTINUE | All applicable windows have at least 40% remaining, and estimated tranche plus closure reserve fits                     | Start one bounded tranche; retain the next quota-check boundary.                                                                              |
 | BOUNDED  | All applicable windows have at least 25%, but CONTINUE does not apply; one small tranche plus reserve demonstrably fits | No broad fan-out, redesign or speculative follow-up. Publish that atomic result and reassess immediately.                                     |
 | HANDOFF  | Any window is below 25%, a limit is reported, or the tranche plus closure reserve cannot be established                 | Start no new implementation, audit, skill or delegate campaign. Finish only the already-running atomic operation, preserve work and hand off. |
 
