@@ -26,9 +26,11 @@ import { BRIDGE_OPS, type BridgeOp } from '@flourprint/adapters/sqlite-bridge';
 import { nodeSqliteBridge, openNodeDatabase } from '@flourprint/adapters/sqlite-node';
 import {
   createTransferSlot,
-  NAMED_VERSIONS,
+  fetchOpenPulls,
   parseVersionId,
   pullNumber,
+  versionOptions,
+  type OpenPull,
   type VersionId,
 } from '@flourprint/adapters/dev-versions';
 import { addressOf, sameApp, shellChannel } from './channel.js';
@@ -223,6 +225,9 @@ const applyWindowSize = (window: BrowserWindow) => {
   window.webContents.setZoomFactor(stored.zoom);
 };
 
+/** The open pull requests for the Version menu; undefined until fetched, or when that failed. */
+let openPulls: OpenPull[] | undefined;
+
 const buildMenu = (window: BrowserWindow) => {
   const update = (changes: Partial<Settings>, restart: boolean) => {
     stored = { ...stored, ...changes };
@@ -231,10 +236,8 @@ const buildMenu = (window: BrowserWindow) => {
     else applyWindowSize(window);
     buildMenu(window);
   };
-  // The menu offers the named versions, and the pull request being shown (chosen in the app).
-  const menuVersions: readonly VersionId[] = NAMED_VERSIONS.includes(stored.webTarget)
-    ? NAMED_VERSIONS
-    : [...NAMED_VERSIONS, stored.webTarget];
+  // The same entries as the app's dropdown (ADR 0023): dev, canary, main, the open pull requests.
+  const menuVersions = versionOptions(openPulls, stored.webTarget);
   const contents = window.webContents;
   const template: MenuItemConstructorOptions[] = [
     ...(channel.kind === 'dev'
@@ -242,10 +245,12 @@ const buildMenu = (window: BrowserWindow) => {
           {
             label: t('menu.version'),
             submenu: menuVersions.map((target): MenuItemConstructorOptions => ({
-              label: versionName(target),
+              label: target.title
+                ? `${versionName(target.version)} · ${target.title}`
+                : versionName(target.version),
               type: 'radio',
-              checked: stored.webTarget === target,
-              click: () => switchVersion(window, target),
+              checked: stored.webTarget === target.version,
+              click: () => switchVersion(window, target.version),
             })),
           },
         ]
@@ -485,6 +490,12 @@ const createWindow = (database: ReturnType<typeof openNodeDatabase> | undefined)
   window.on('page-title-updated', (event) => event.preventDefault());
   buildMenu(window);
   registerDevBridge(window);
+  if (channel.kind === 'dev') {
+    void fetchOpenPulls().then((pulls) => {
+      openPulls = pulls;
+      if (!window.isDestroyed()) buildMenu(window);
+    });
+  }
   // Emulation needs a live document; set it on a blank page so the app starts as on a phone.
   void window
     .loadURL('about:blank')

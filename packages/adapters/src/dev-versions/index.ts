@@ -77,6 +77,36 @@ const rank = (version: VersionId): number => {
 /** `dev`, `canary`, `main`, then pull requests by number. */
 export const compareVersions = (a: VersionId, b: VersionId): number => rank(a) - rank(b);
 
+// -- The dropdown -------------------------------------------------------------------------------
+
+export interface VersionOption {
+  readonly version: VersionId;
+  /** A pull request's title; the fixed entries have none. */
+  readonly title?: string;
+}
+
+/**
+ * The entries of the version dropdown (ADR 0023): `dev`, `canary`, `main`, then the open pull
+ * requests in the order given (newest first). A loaded pull request that is not in the list (closed
+ * meanwhile, or the list could not be fetched) is added in its place by number, so the selection is
+ * always shown. `pulls` is undefined when the list could not be fetched.
+ */
+export const versionOptions = (
+  pulls: readonly OpenPull[] | undefined,
+  loaded?: VersionId,
+): VersionOption[] => {
+  const options: VersionOption[] = NAMED_VERSIONS.map((version) => ({ version }));
+  const listed = (pulls ?? []).flatMap((pull) => {
+    const version = prVersion(pull.number);
+    return version === undefined ? [] : [{ version, title: pull.title }];
+  });
+  if (loaded !== undefined && isPullVersion(loaded) && !listed.some((o) => o.version === loaded)) {
+    listed.push({ version: loaded, title: '' });
+    listed.sort((a, b) => (pullNumber(b.version) ?? 0) - (pullNumber(a.version) ?? 0));
+  }
+  return [...options, ...listed];
+};
+
 // -- GitHub (unauthenticated REST) ------------------------------------------------------------
 
 export interface OpenPull {

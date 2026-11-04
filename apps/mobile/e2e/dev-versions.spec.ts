@@ -64,34 +64,61 @@ test('shows the loaded version and its native-change notice, and returns to dev'
   await routeGitHub(page);
   await page.goto('/advanced');
   await expect(page.getByTestId('loaded-version').locator('visible=true')).toContainText(
-    /^Chargée : PR n° 5 · v/,
+    /^Chargée : PR #5 · v/,
   );
   await expect(page.getByText(/modifie du code natif/).locator('visible=true')).toBeVisible();
   await page.getByRole('button', { name: 'Revenir à dev' }).locator('visible=true').click();
   await expect.poll(() => calls(page)).toEqual([['select', 'dev']]);
 });
 
-test('lists the open pull requests, loads one, or copies the data there first', async ({
+const dropdown = (page: Page) => page.locator('ion-select').locator('visible=true');
+
+/** Opens the dropdown and returns its option labels, in order. */
+const openOptions = async (page: Page) => {
+  await dropdown(page).click();
+  const alert = page.locator('ion-alert');
+  await expect(alert).toBeVisible();
+  return alert;
+};
+
+test('one dropdown lists dev, canary, main, then the open pull requests, with the loaded one selected', async ({
   page,
 }) => {
   await installShell(page, 'dev');
   await routeGitHub(page);
   await page.goto('/advanced');
-  const pull = page.locator('ion-item').filter({ hasText: 'PR n° 233' }).locator('visible=true');
-  await expect(pull).toBeVisible();
-  await expect(page.getByText('Engine: dough clock').locator('visible=true')).toBeVisible();
-  // The loaded version cannot be chosen again.
-  await expect(
-    page.getByRole('button', { name: /Dev \(chargée\)/ }).locator('visible=true'),
-  ).toBeDisabled();
+  await expect(dropdown(page)).toContainText('Dev');
+  const alert = await openOptions(page);
+  await expect(alert.getByRole('radio')).toHaveText([
+    'Dev',
+    'Canary',
+    'Main',
+    'PR #233 · Engine: dough clock',
+    'PR #5 · Desktop bridge',
+  ]);
+  await expect(alert.getByRole('radio', { name: 'Dev' })).toBeChecked();
+  // No number field while the list is available.
+  await expect(page.locator('ion-input')).toHaveCount(0);
+});
 
-  await pull.click();
+test('selecting a pull request in the dropdown loads it, or copies the data there first', async ({
+  page,
+}) => {
+  await installShell(page, 'dev');
+  await routeGitHub(page);
+  await page.goto('/advanced');
   const sheet = page.locator('ion-action-sheet');
+  const pick = async (name: string) => {
+    const alert = await openOptions(page);
+    await alert.getByRole('radio', { name }).click();
+    await alert.getByRole('button', { name: 'OK' }).click();
+  };
+  await pick('PR #233 · Engine: dough clock');
   await sheet.getByRole('button', { name: 'Charger cette version' }).click();
   await expect.poll(() => calls(page)).toEqual([['select', 'pr-233']]);
 
   await page.goto('/advanced');
-  await page.locator('ion-item').filter({ hasText: 'PR n° 233' }).locator('visible=true').click();
+  await pick('PR #233 · Engine: dough clock');
   await sheet
     .getByRole('button', { name: 'Copier mes données vers cette version, puis la charger' })
     .click();
@@ -103,13 +130,30 @@ test('lists the open pull requests, loads one, or copies the data there first', 
     ]);
 });
 
-test('loads a pull request by number and refuses anything else', async ({ page }) => {
+test('warns before loading a pull request that changes native code', async ({ page }) => {
+  await installShell(page, 'dev');
+  await routeGitHub(page);
+  await page.goto('/advanced');
+  const alert = await openOptions(page);
+  await alert.getByRole('radio', { name: 'PR #5 · Desktop bridge' }).click();
+  await alert.getByRole('button', { name: 'OK' }).click();
+  await expect(page.locator('ion-alert').getByText(/modifie du code natif/)).toBeVisible();
+  expect(await calls(page)).toEqual([]);
+});
+
+test('falls back to number entry when the list cannot be fetched, and refuses bad numbers', async ({
+  page,
+}) => {
   await installShell(page, 'dev');
   await routeGitHub(page, { offline: true });
   await page.goto('/advanced');
   await expect(
     page.getByText(/Liste des pull requests ouvertes indisponible/).locator('visible=true'),
   ).toBeVisible();
+  // The fixed entries remain.
+  const alert = await openOptions(page);
+  await expect(alert.getByRole('radio')).toHaveText(['Dev', 'Canary', 'Main']);
+  await alert.getByRole('button', { name: 'Annuler' }).click();
   const input = page.locator('ion-input input').locator('visible=true');
   const load = page.getByRole('button', { name: 'Charger', exact: true }).locator('visible=true');
   await input.fill('0233');
@@ -119,9 +163,6 @@ test('loads a pull request by number and refuses anything else', async ({ page }
   ).toBeVisible();
   await input.fill('https://evil.example/');
   await load.click();
-  await expect(
-    page.getByText(/Saisir un numéro de pull request/).locator('visible=true'),
-  ).toBeVisible();
   expect(await calls(page)).toEqual([]);
 
   await input.fill('#12');
@@ -137,7 +178,7 @@ test('lists the data each version keeps and deletes one after a confirmation', a
   await installShell(page, 'pr-5');
   await routeGitHub(page);
   await page.goto('/advanced');
-  const row = page.locator('ion-item').filter({ hasText: 'PR n° 9' }).filter({ hasText: /Ko|ko/ });
+  const row = page.locator('ion-item').filter({ hasText: 'PR #9' }).filter({ hasText: /Ko|ko/ });
   await expect(row.locator('visible=true')).toBeVisible();
   await expect(
     page
@@ -150,7 +191,7 @@ test('lists the data each version keeps and deletes one after a confirmation', a
     .locator('visible=true')
     .click();
   const alert = page.locator('ion-alert');
-  await expect(alert).toContainText('Supprimer les données de PR n° 9 ?');
+  await expect(alert).toContainText('Supprimer les données de PR #9 ?');
   await alert.getByRole('button', { name: 'Supprimer', exact: true }).click();
   await expect.poll(() => calls(page)).toEqual([['delete', 'pr-9']]);
 });

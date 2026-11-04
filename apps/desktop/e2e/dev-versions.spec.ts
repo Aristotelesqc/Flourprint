@@ -98,11 +98,16 @@ test('the Dev shell answers the version bridge for its own page only', async () 
         ?.items.find((item) => item.label === 'Version')
         ?.submenu?.items.map((item) => [item.label, item.checked]),
     );
-    expect(menu).toEqual([
+    // The open pull requests follow when the list could be fetched (it may not be, offline).
+    expect(menu?.slice(0, 3)).toEqual([
       ['Dev', true],
       ['Canary', false],
       ['Release (main)', false],
     ]);
+    for (const [label, checked] of menu?.slice(3) ?? []) {
+      expect(label).toMatch(/^Pull request \d+/);
+      expect(checked).toBe(false);
+    }
 
     // Deleting the shown version clears its stored data and starts the page again, empty.
     await expect

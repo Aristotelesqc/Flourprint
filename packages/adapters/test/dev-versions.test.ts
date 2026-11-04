@@ -16,6 +16,7 @@ import {
   touchesNative,
   TRANSFER_TTL_MS,
   versionAddress,
+  versionOptions,
   versionOfAddress,
   type PullState,
   type VersionId,
@@ -265,5 +266,30 @@ describe('copy to a version: the pending hand-off', () => {
     expect(slot.take('pr-6')).toBeUndefined();
     slot.stash('pr-6', 'again');
     expect(slot.take('pr-6')).toBe('again');
+  });
+});
+
+describe('the version dropdown', () => {
+  it('lists dev, canary and main first, then the open pull requests', () => {
+    const options = versionOptions([
+      { number: 233, title: 'Engine' },
+      { number: 5, title: 'Five' },
+    ]);
+    expect(options.map((o) => o.version)).toEqual(['dev', 'canary', 'main', 'pr-233', 'pr-5']);
+    expect(options[3]).toEqual({ version: 'pr-233', title: 'Engine' });
+    expect(options[0]).toEqual({ version: 'dev' });
+  });
+
+  it('holds only the fixed entries when the list could not be fetched', () => {
+    expect(versionOptions(undefined).map((o) => o.version)).toEqual(['dev', 'canary', 'main']);
+    expect(versionOptions([]).map((o) => o.version)).toEqual(['dev', 'canary', 'main']);
+  });
+
+  it('keeps a loaded pull request that is not listed, in number order', () => {
+    const options = versionOptions([{ number: 9, title: 'Nine' }], 'pr-12');
+    expect(options.map((o) => o.version)).toEqual(['dev', 'canary', 'main', 'pr-12', 'pr-9']);
+    expect(versionOptions(undefined, 'pr-12').map((o) => o.version)).toContain('pr-12');
+    // A named loaded version adds nothing.
+    expect(versionOptions([], 'canary')).toHaveLength(3);
   });
 });

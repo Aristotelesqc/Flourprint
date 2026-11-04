@@ -5,13 +5,17 @@ import {
   IonItem,
   IonLabel,
   IonListHeader,
+  IonSelect,
+  IonSelectOption,
   useIonAlert,
 } from '@ionic/react';
 import { useCallback, useEffect, useState } from 'react';
 import {
   fetchOpenPulls,
-  NAMED_VERSIONS,
   parsePrNumber,
+  parseVersionId,
+  versionOptions,
+  type VersionOption,
   pullNeedsApk,
   pullNumber,
   DEFAULT_VERSION,
@@ -47,6 +51,8 @@ export const DevVersions = ({ host }: { host: DevVersionsHost }) => {
   const [number, setNumber] = useState('');
   const [numberError, setNumberError] = useState(false);
   const [choice, setChoice] = useState<VersionId>();
+  // Remounts the dropdown after a cancelled choice, so it shows the loaded version again.
+  const [selectKey, setSelectKey] = useState(0);
   const [status, setStatus] = useState<Say>();
   const [busy, setBusy] = useState(false);
   const copy = devVersionsStart()?.copy;
@@ -190,6 +196,8 @@ export const DevVersions = ({ host }: { host: DevVersionsHost }) => {
     notEmpty: 'advanced.versions.copyNotEmpty',
     failed: 'advanced.versions.copyFailed',
   };
+  const optionText = (option: VersionOption) =>
+    option.title ? `${name(option.version)} · ${option.title}` : name(option.version);
   const versionLabel = (version: VersionId) =>
     version === loaded
       ? t('advanced.versions.loadedMark', { version: name(version) })
@@ -230,94 +238,71 @@ export const DevVersions = ({ host }: { host: DevVersionsHost }) => {
           </IonLabel>
         </IonItem>
       )}
-      <IonListHeader>
-        <IonLabel>{t('advanced.versions.choose')}</IonLabel>
-      </IonListHeader>
-      {NAMED_VERSIONS.map((version) => (
-        <IonItem
-          key={version}
-          button
-          detail={false}
-          disabled={busy || version === loaded}
-          onClick={() => void choose(version)}
+      <IonItem>
+        <IonSelect
+          key={selectKey}
+          label={t('advanced.versions.choose')}
+          labelPlacement="stacked"
+          interface="alert"
+          cancelText={t('bake.cancel')}
+          disabled={busy || loaded === undefined}
+          value={loaded}
+          onIonChange={(event) => {
+            const version = parseVersionId(event.detail.value);
+            if (version !== undefined && version !== loaded) void choose(version);
+          }}
         >
-          <IonLabel>
-            {versionLabel(version)}
-            <p className="whitespace-normal">
-              {t(`advanced.versions.${version}Hint` as 'advanced.versions.devHint')}
-            </p>
-          </IonLabel>
-        </IonItem>
-      ))}
-      <IonListHeader>
-        <IonLabel>{t('advanced.versions.pulls')}</IonLabel>
-      </IonListHeader>
+          {versionOptions(Array.isArray(pulls) ? pulls : undefined, loaded).map((option) => (
+            <IonSelectOption key={option.version} value={option.version}>
+              {optionText(option)}
+            </IonSelectOption>
+          ))}
+        </IonSelect>
+      </IonItem>
       {pulls === 'loading' && (
         <IonItem lines="none">
           <IonLabel role="status">{t('advanced.versions.pullsLoading')}</IonLabel>
         </IonItem>
       )}
       {pulls === 'unavailable' && (
-        <IonItem lines="none">
-          <IonLabel className="whitespace-normal" role="status">
-            {t('advanced.versions.pullsUnavailable')}
-          </IonLabel>
-        </IonItem>
-      )}
-      {Array.isArray(pulls) && pulls.length === 0 && (
-        <IonItem lines="none">
-          <IonLabel>{t('advanced.versions.pullsNone')}</IonLabel>
-        </IonItem>
-      )}
-      {Array.isArray(pulls) &&
-        pulls.map((pull) => {
-          const version = prVersion(pull.number);
-          if (version === undefined) return null;
-          return (
-            <IonItem
-              key={pull.number}
-              button
-              detail={false}
-              disabled={busy || version === loaded}
-              onClick={() => void choose(version)}
+        <>
+          <IonItem lines="none">
+            <IonLabel className="whitespace-normal" role="status">
+              {t('advanced.versions.pullsUnavailable')}
+            </IonLabel>
+          </IonItem>
+          <IonItem>
+            <IonInput
+              label={t('advanced.versions.number')}
+              labelPlacement="stacked"
+              inputmode="numeric"
+              value={number}
+              className={numberError ? 'text-alert' : ''}
+              onIonInput={(event) => {
+                setNumber(String(event.detail.value ?? ''));
+                setNumberError(false);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') submitNumber();
+              }}
+            />
+            <IonButton
+              slot="end"
+              fill="outline"
+              disabled={busy || number.trim() === ''}
+              onClick={submitNumber}
             >
-              <IonLabel className="whitespace-normal">
-                {versionLabel(version)}
-                <p className="whitespace-normal">{pull.title}</p>
+              {t('advanced.versions.numberLoad')}
+            </IonButton>
+          </IonItem>
+          {numberError && (
+            <IonItem lines="none">
+              <IonLabel role="alert" className="whitespace-normal text-alert">
+                {t('advanced.versions.numberInvalid')}
               </IonLabel>
             </IonItem>
-          );
-        })}
-      <IonItem>
-        <IonInput
-          label={t('advanced.versions.number')}
-          labelPlacement="stacked"
-          inputmode="numeric"
-          value={number}
-          className={numberError ? 'text-alert' : ''}
-          onIonInput={(event) => {
-            setNumber(String(event.detail.value ?? ''));
-            setNumberError(false);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') submitNumber();
-          }}
-        />
-        <IonButton
-          slot="end"
-          fill="outline"
-          disabled={busy || number.trim() === ''}
-          onClick={submitNumber}
-        >
-          {t('advanced.versions.numberLoad')}
-        </IonButton>
-      </IonItem>
-      {numberError && (
-        <IonItem lines="none">
-          <IonLabel role="alert" className="whitespace-normal text-alert">
-            {t('advanced.versions.numberInvalid')}
-          </IonLabel>
-        </IonItem>
+          )}
+        </>
       )}
       <IonListHeader>
         <IonLabel>{t('advanced.versions.data')}</IonLabel>
@@ -383,7 +368,10 @@ export const DevVersions = ({ host }: { host: DevVersionsHost }) => {
           },
           { text: t('bake.cancel'), role: 'cancel' },
         ]}
-        onDidDismiss={() => setChoice(undefined)}
+        onDidDismiss={() => {
+          setChoice(undefined);
+          setSelectKey((key) => key + 1);
+        }}
       />
     </>
   );

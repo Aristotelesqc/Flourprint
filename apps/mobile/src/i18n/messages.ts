@@ -817,12 +817,7 @@ export const en = {
   'advanced.versions.canary': 'Canary',
   'advanced.versions.main': 'Main',
   'advanced.versions.pull': 'PR #{number}',
-  'advanced.versions.devHint': 'Default. The integration branch, and main when they do not differ.',
-  'advanced.versions.canaryHint': 'The release after next.',
-  'advanced.versions.mainHint': 'Released work.',
-  'advanced.versions.pulls': 'Open pull requests',
   'advanced.versions.pullsLoading': 'Loading the open pull requests…',
-  'advanced.versions.pullsNone': 'No open pull request.',
   'advanced.versions.pullsUnavailable':
     'The open pull requests cannot be listed now (offline or rate-limited). A number can still be entered.',
   'advanced.versions.number': 'Pull request number',
@@ -2065,14 +2060,8 @@ export const fr: Catalog = {
   'advanced.versions.dev': 'Dev',
   'advanced.versions.canary': 'Canary',
   'advanced.versions.main': 'Main',
-  'advanced.versions.pull': 'PR n° {number}',
-  'advanced.versions.devHint':
-    'Par défaut. La branche d’intégration, et main lorsque les deux ne diffèrent pas.',
-  'advanced.versions.canaryHint': 'La version suivant la prochaine.',
-  'advanced.versions.mainHint': 'Le travail publié.',
-  'advanced.versions.pulls': 'Pull requests ouvertes',
+  'advanced.versions.pull': 'PR #{number}',
   'advanced.versions.pullsLoading': 'Chargement des pull requests ouvertes…',
-  'advanced.versions.pullsNone': 'Aucune pull request ouverte.',
   'advanced.versions.pullsUnavailable':
     'Liste des pull requests ouvertes indisponible (hors ligne ou limite atteinte). Un numéro peut toujours être saisi.',
   'advanced.versions.number': 'Numéro de pull request',
