@@ -38,7 +38,8 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   side) are `insufficient_data` (`non_linear_dough_path`) until split masses are modelled. A step
   with no planned duration contributes zero time (listed in the assumptions, Results). Without a
   main-dough mixing step the estimate is `insufficient_data` (`no_mix_step`), without a first-contact
-  step it is `insufficient_data` (`no_first_contact_step`, process.md), and when every dough step
+  step it is `insufficient_data` (`no_first_contact_step`, `missing: ['incorporations']`,
+  process.md), and when every dough step
   is a mixing step there is no fermentation step to estimate (`no_fermentation_step`); without a
   heat step, every `asap` step from the first contact counts. A **fermentation step** is a dough
   step that is not a mixing step (a rest, bulk, proof, retard…): only a fermentation step can be
@@ -50,7 +51,10 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   component's id), whatever the dough does, and the dough's clock does not wait for it. Nothing
   else about a preferment changes. Time spent on a preparatory step of the same component (a
   `frasage` or `mix` of the poolish ahead of its fermenting phase) is not counted today, as before;
-  whether it should be is an open question for the owner (#231).
+  whether it should be is an open question for the owner (#231). A preferment step with no
+  condition temperature of its own takes the room temperature of the recipe: the first-contact
+  step's, else the reference mixing step's; with neither, its estimate is `insufficient_data`
+  (`temperature_unknown`).
 - A preferment is a `preferment`-kind component; its steps are the steps of the component
   (`process.md`, Subjects and component phases): the step with the component's id, and the steps
   naming it as `subject`. With more than one fermenting (`preferment`) phase its estimate is
@@ -152,7 +156,15 @@ type ReadinessRef = { id: string; version: string };
 The dough has a temperature from the first contact on, since that is when it starts to ferment.
 
 - **Basic mode** (default, nothing measured): the dough starts at the ambient temperature of the
-  first-contact step (its condition temperature, else the first dough step's that has one).
+  first-contact step (its condition temperature, else the first dough step's that has one). With
+  none, the estimate is `insufficient_data` (`temperature_unknown`, `missing` the first-contact
+  step's `temperatureC`).
+- **Two room temperatures.** The room the dough **starts** in is the first-contact step's; the room
+  of the **water** calculation (Water temperature, below) is the reference mixing step's. Two steps
+  of a recipe are often one (a single `mix` that brings the yeast): then one value serves both. When
+  they differ (a `frasage` that brings the yeast, then a `mix`), each is read where it is stated, so
+  both steps need a temperature, and an interface that edits the room shows each one on its own step.
+  The dough's start in advanced mode is the target dough temperature (below), not the room.
 - **Advanced mode**: the reference mixing step (process.md) declares a target dough temperature
   (`conditions.doughTemperatureC`); the dough starts at it, **from the first contact**. ASSUMED:
   the target is the temperature the dough has at the end of the mixing; the model applies it from
@@ -583,7 +595,9 @@ lowers the water temperature (King Arthur Baking, _Dough Temperature_, professio
 Version 0.1.0 of this contract added it instead; that was an error, corrected on 2026-10-09
 (#33).
 
-- `T_room` is the reference mixing step's condition temperature; `T_flour` defaults to `T_room`;
+- `T_room` is the reference mixing step's condition temperature (not the first-contact step's when
+  the two differ: Dough temperature, Two room temperatures); without it the water temperature is
+  `insufficient_data` (`temperature_unknown`, `missing` the reference mixing step's `temperatureC`); `T_flour` defaults to `T_room`;
   `T_preferment` defaults to the preferment step's condition temperature.
 - `friction` defaults to 0 °C and is the user's to set (`conditions.frictionC` on the reference mixing step):
   mixers differ, and a few measured doughs calibrate it (#32). With the default, the result says
@@ -748,6 +762,12 @@ envelope, a preferment's clock, the reference mixing step's other roles (target 
 friction, water temperature). No persisted shape changes; every document stays readable, and only
 the estimates computed from them differ. Compatibility:
 
+- **Frasage-only recipes.** A process whose only mixing step is a `frasage` had no estimate before
+  (`no_mix_step`, because the engine looked for an operation `mix`); a `frasage` is a mixing step
+  (process.md), so it is now the reference mixing step and, when it brings the yeast, the
+  first-contact step: such a recipe gets a dough estimate instead of `no_mix_step`. This follows the
+  older clause (process.md, example 1; drafts.md, `no_mix_step`) and changes the estimate of stored
+  documents of that shape.
 - **Engine version.** `ENGINE_VERSION` goes from `0.9.1` to `0.10.0` (changed calculation
   behaviour: every dough with a mixing step of non-zero duration, and every dough whose yeast
   enters before the last mixing step, now estimates a different time and progress). Bake
