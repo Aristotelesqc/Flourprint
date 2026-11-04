@@ -503,13 +503,15 @@ is calibrated there only through Craig's table (MODEL OUTPUT).
 
 **First dough evidence on the shape of the cold curve (2026-11-04).** Kyogoku and Ouchi 1995
 (`data/kyogoku-1995-fig2.csv`) measured 2-h dough gas of an ordinary baker's yeast from 0 to 40 °C.
-Its 5 °C gas is 3.2 % of its 20 °C gas, against 11.4 % for the shipped Arrhenius law and 31 % for
-53 kJ/mol (DERIVED). The curve bends: the apparent slope is steep below 20 °C and shallow above
-30 °C. This points the same way as the warning about 53 kJ/mol in the #33 review (a warm-range
-slope does not transfer to the fridge), and suggests that the shipped law may run fast in the cold
-rather than slow. It is not a gate-passing dataset: sweet dough (15 % sugar), 3 % wet yeast, a 2-h
-window right after a 30 °C hold, released rather than produced gas, one strain, no replicates
-stated (see the data file). Its 7-day storage results also show substantial fermentation at 5 °C
+Its 5 °C gas is 3.0 % of its 20 °C gas, against 11.4 % for the shipped Arrhenius law and 31 % for
+53 kJ/mol (DERIVED). The ratio at 4 °C to 24 °C is not measured; the second Opus report on #33
+puts it at 0.2–3 % depending on the fit range, against 5.7 % for the shipped law. Between 10 and
+30 °C a constant `Ea` near 85 kJ/mol fits as well as a square-root form; the cold bend rests on the
+5 °C bar, which carries two opposite biases (warm start, CO2 dissolution) of about its own size.
+The data point the same way as the warning about 53 kJ/mol in the #33 review (a warm-range slope
+does not transfer to the fridge) and suggest the shipped law may run fast in the cold rather than
+slow. It is not a gate-passing dataset: sweet dough (15 % sugar), 3 % wet yeast, one strain, no
+replicates stated (see the data file). Its 7-day storage results also show substantial fermentation at 5 °C
 over days. Candidate test once dough-temperature histories exist: compare Arrhenius, a
 square-root form with `T_min` near 0–2 °C, and CTMI against this curve and Izzreen's 8 °C cells,
 with dough lag credited (gate 6).
