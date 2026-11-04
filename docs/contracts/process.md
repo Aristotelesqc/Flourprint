@@ -27,7 +27,7 @@ interface ProcessStep {
   plannedDurationS?: number; // absent = unknown
   endCriterion?: EndCriterion; // observation or user decision
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
-  durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one dough step (fermentation.md)
+  durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one fermentation step, never a mixing step (fermentation.md)
   subject?: Subject; // the mass the step works on; absent = derived (Subjects and component phases)
   thermal?: StepThermal; // thermal inputs of a dough step (Thermal inputs); absent = fixed lag of fermentation.md
   // `beforeTarget` only (Steps before a target): target, requiredWarmupS, startRule
@@ -62,6 +62,9 @@ default outcome when a session finishes (bake-session.md); an invalid one is `In
 - The list order is a **valid topological order**: the mobile list reads top to bottom.
 - A step added to the list gets `dependsOn = [previous step]` by default.
 - `alap` without a successor, or without `plannedDurationS`, is an error.
+- `durationMode: 'model'` is refused on a mixing step (`frasage`, `mix`): it is allowed only on a
+  fermentation step, a dough step that is not a mixing step (`fermentation.md`, Model-driven
+  duration). `InvalidProcess`, the step as `path`.
 - `beforeTarget` is valid only on a `preheat` step, with a `target` that is a cooking step not
   upstream of it, no `plannedDurationS`, no `durationMode`, no incorporations and no step depending
   on it; `requiredWarmupS` ≥ 0, required unless `startRule` is `afterDependencies` (Steps before a
@@ -134,10 +137,31 @@ interface StepThermal {
     `provingBox`, anything else or absent is `roomStill`. The ventilated fridge is always explicit;
   - `porosity`: derived from the progress at the start of the step (fermentation.md);
   - `pieces`: 1; `containerMassG`: absent, container heat capacity 0.
-- **Where it applies.** On a **dough step** (fermentation.md): an `asap` fermentation step between the
-  reference mixing step and the first heat step. On any other step (a preferment's, a `beforeTarget`
-  step, a cooking step) `thermal` is refused (`InvalidProcess`, step as `path`): this model does not
-  cover a preferment, whose phases are already `component_phases_unmodelled`.
+- **Where it applies.** On a **dough step** (fermentation.md): an `asap` step **after** the
+  first-contact step (Mixing steps, First contact) up to the first heat step, so a kneading or a
+  rest after the first contact may carry it. The **first-contact step itself is not a dough step**:
+  the dough has no fermentation clock during it (the clock starts when it ends), so thermal inputs
+  there would be accepted and then ignored; they are refused instead. On any other step (a
+  preferment's, a `beforeTarget` step, a cooking step) `thermal` is refused (`InvalidProcess`,
+  step as `path`): this model does not cover a preferment, whose phases are already
+  `component_phases_unmodelled`.
+- **Validation with and without the formula.** Which step is the first contact depends on what an
+  incorporation is: a yeast ingredient or a `preferment` component holds yeast; salt, a scald or a
+  topping does not. The exact rule therefore needs the formula, and the recipe validation applies
+  it. A check made on a process alone (the step editor, the projection, a move or a duplication of
+  steps) cannot tell them apart. It counts as possibly holding yeast **any** incorporation of an
+  ingredient or of a component with a positive `sharePct` (the flour and the water never hold
+  yeast), and a `fermentolyse`; the first main-dough step that does so is the earliest one that
+  could be the first contact. Its rule: a step that is **certainly not a dough step** is refused
+  as above, that is a main-dough step at or ahead of that earliest candidate (an `autolyse` of
+  flour and water, or one that incorporates nothing, ahead of the step that brings the
+  ingredients, is one; so is the candidate itself, which is either the first-contact step or
+  ahead of it) or, when the process declares no incorporation at all, at or ahead of the first
+  main-dough mixing step. A step after that candidate is **accepted** by such a check even when
+  only the formula shows the candidate not to hold yeast (the salt, a scald), the step after it
+  then being ahead of the real first contact; the recipe validation refuses it later. This is a
+  stated limit, not a second rule: the process-only check never refuses thermal inputs that the
+  exact rule accepts.
 - **Divided pieces.** `pieces` states how many equal pieces the dough is cut into at or before this
   step: the model uses the per-piece mass `m / pieces` (a `divide` step carries no mass itself). A
   step after the division carries the same `pieces` as the step that follows the `divide`; the
@@ -396,18 +420,55 @@ Rules:
   frasage with incomplete incorporation declarations is never reclassified as a component by it. A
   process that declares no incorporations has every mixing step as a main-dough one, as before.
 - The **reference mixing step** is the **last** main-dough mixing step in list order. Wherever
-  `fermentation.md` and `drafts.md` say "the mix step", they mean this step: its end is the end of
-  the mix, and its conditions give the ambient temperature, the target dough temperature and the
-  friction.
-- **Leaven before the reference.** A step ahead of the reference mixing step may already hold
-  yeast: a step with a yeast-marked ingredient or a leaven component among its incorporations,
-  or the operation `fermentolyse`. When a non-mixing step with a planned duration lies between
-  such a step and the reference mixing step (a 45 min fermentolyse before the final kneading),
-  the dough estimate is `insufficient_data` with the reason `leaven_before_mixing`, naming the
-  step. It is never silently started at the reference mixing step. Mixing steps in between (a
-  frasage followed at once by a kneading) do not trigger it. Nothing is inferred when no
-  incorporation is declared and no step is a `fermentolyse`. No biological coefficient is added
-  here: a model that integrates the earlier period replaces this rule only by a contract change.
+  `fermentation.md` and `drafts.md` say "the mix step" or "the reference mixing step", they mean this
+  step: its conditions give the target dough temperature, the friction and the room temperature of
+  the water method. It **does not start the dough clock**: that is the first-contact step (next
+  rule). The fermentation schedules of `drafts.md` still replace the steps that come **after** it.
+- **First contact: where the dough clock starts** (owner decisions of 2026-11-04, #231). The step
+  where the yeast or leaven first meets the flour and water is the **first-contact step**
+  (typically the `frasage`). The dough clock starts at its **end**, not at its start: the mixing of
+  the ingredients is so short that it changes little, and the counter starts after it. When the
+  baker taps Next on that step the time is frozen and fermentation begins, even if a last stroke of
+  the spatula is still being given. The first-contact step's own duration **does not count**;
+  everything after it does: a kneading after the frasage, a fermentolyse, the bulk and so on. A
+  yeast-free autolyse ahead of the first contact does not count either. The first-contact step of
+  the main dough is, in list order, the first main-dough step (Subjects and component phases: a
+  step whose subject is the main dough) that
+  - **holds yeast**: among its incorporations (with a positive `sharePct`), an ingredient marked as
+    commercial yeast (`yeast`, formula.md) of role `dough` (a yeast in a topping or a glaze never
+    starts the dough) or a component of kind `preferment` (a poolish, a biga, a levain); or whose operation is `fermentolyse` (flour, water and leavening, salt later, by
+    definition, whatever the incorporations say);
+  - or, **when the process declares no incorporations at all**, so that nothing says what a step
+    holds, is a main-dough mixing step (`frasage` or `mix`). An `autolyse` is not a mixing step: a
+    flour and water rest ahead of the first mixing step never starts the clock.
+
+  **Which end.** In a plan (an estimate, a projection, a schedule) the clock starts at the
+  **planned end** of the first-contact step: its start plus its planned duration, as the projection
+  places it. During a bake it starts at the **actual completion** of that step, the instant the
+  baker completes it (the recorded `StepCompleted`, fermentation.md, Live recomputation): a
+  frasage planned for 5 min and completed after 9 starts the clock 9 min after its own start. A
+  first-contact step that was never completed ends when the next step starts. A step with no
+  planned duration contributes zero time.
+
+  When incorporations are declared and no main-dough step holds yeast (and none is a
+  `fermentolyse`), there is no first-contact step: the dough estimate is `insufficient_data` with
+  the reason `no_first_contact_step` and `missing: ['incorporations']` (the incorporation of the
+  yeast or leaven that no step declares). A formula without a commercial-yeast ingredient is still
+  `unsupported` (`no_commercial_yeast`, fermentation.md) before any step is looked at, as before; the
+  new reason is reachable only when the yeast is held by something that is not a step's
+  incorporation of a yeast ingredient or of a `preferment` component. The clock needs a mixing
+  step as before: a process with no main-dough mixing step stays `no_mix_step`.
+
+- **Consequences for the dough steps** (`fermentation.md`). The **dough steps** are the `asap`
+  steps **after** the first-contact step, up to the first heat step: the kneading after a
+  frasage, a fermentolyse, the bulk and so on, each with its own duration. The first-contact step
+  is **not** a dough step: it has no fermentation clock yet. That is the single rule behind every
+  gate that asks for a dough step (a dough-temperature reading, thermal inputs, a model-driven
+  duration, the `doughReady` observation, bake-session.md), so none of them accepts the
+  first-contact step. What stays tied to it is its **conditions**: its temperature is the
+  temperature the dough starts from when the clock starts (fermentation.md, Dough temperature).
+  The reason `leaven_before_mixing`, introduced with the end-of-the-mix rule, is **retired**: no
+  step can be "before" the dough any more, and the engine never produced it.
 - A process without a mixing step has no reference mixing step (`no_mix_step`, `drafts.md`;
   `insufficient_data`, `fermentation.md`).
 - `doughTemperatureC` and `frictionC` are accepted on either mixing step and read only on the
@@ -432,23 +493,39 @@ Compatibility: operation codes are open, so no schema changes and no existing do
 upcaster. `CONTRACT_VERSION` is bumped by one minor step, from the version current at merge, by
 the implementing pull request. An older app reads a `frasage` step as an unknown operation: it
 shows the code and keeps the step, but its fermentation estimate and its recipe checks do not
-treat it as a mixing step. The `leaven_before_mixing` rule changes one existing silent behaviour:
-a recipe with a `fermentolyse` ahead of its `mix` used to be estimated from the end of the
-`mix`, and now says `insufficient_data`; this is stated in the engine version notes.
+treat it as a mixing step.
+
+The **first-contact rule** changes what a dough estimate counts (owner decisions of 2026-11-04):
+the clock starts at the end of the first-contact step, so a kneading, a fermentolyse or any step
+between it and the end of the last mixing step is now fermentation time, where it used to be left
+out (the end-of-the-mix rule). For the common recipe whose first-contact step is also its last
+mixing step nothing moves. Documents are unchanged and stay readable (no field is added or
+removed); only the estimates computed from them differ, so the engine version changes
+(`fermentation.md`, Versions). The reason `leaven_before_mixing`, specified here but never
+produced, is retired. An `Estimate` carries its `reason` as an open string and no reader checks it
+against a list, so a document that held it would still be read, and the interface shows an unknown
+reason with its generic text. No engine version ever wrote it, so no stored document is expected
+to hold it.
 
 Examples (hand-checked against the rules above):
 
 1. **No-knead Dutch-oven loaf**: `frasage` (2 min, 21 °C), `bulk`, `shape`, `proof`, an `alap`
-   `preheat`, `bake`, `cool`. Valid, no `no_mix_step`. The reference mixing step is the
-   `frasage`: the dough steps are `bulk`, `shape` and `proof`, and the ambient temperature at the
-   start is 21 °C.
+   `preheat`, `bake`, `cool`. Valid, no `no_mix_step`. No incorporations are declared, so the
+   first-contact step is the `frasage`, which is also the reference mixing step: the clock starts
+   at its end (the 2 min do not count), the dough steps are `bulk`, `shape` and `proof`, and the
+   ambient temperature the dough starts from is 21 °C.
 2. **Stand-mixer loaf**: `frasage` (hand, 3 min), `autolyse` (30 min), `mix` (`standMixer`,
-   phases low 4 min then medium 6 min, `frictionC` 8), `bulk`… The reference mixing step is the
-   `mix`: the dough steps are those after it, and the friction 8 °C is read.
+   phases low 4 min then medium 6 min, `frictionC` 8), `bulk`… No incorporations are declared:
+   the first-contact step is the `frasage` (the `autolyse` is not a mixing step), so the clock
+   starts at its end: the 3 min of frasage do not count, the 30 min of autolyse and the 10 min of
+   kneading do, then the bulk. The reference mixing step is the `mix`: the friction 8 °C is read
+   there. Were the yeast declared as added only at the `mix`, the first contact would be the
+   `mix`, the clock would start at its end, and the `frasage` and `autolyse` would not count.
 3. **Friction on the `frasage` of example 2** in place of the `mix`: kept, ignored, and the
    result says that friction is not counted.
-4. **Existing recipe**: `mix`, `bulk`, `shape`, `proof`, `bake`. Unchanged: the `mix` is the
-   reference mixing step.
+4. **Existing recipe**: `mix`, `bulk`, `shape`, `proof`, `bake`. The `mix` is the first-contact
+   step and the reference mixing step: the clock starts at its end, as it always did for a lone
+   `mix`. Unchanged.
 5. **`frictionC` on a `fold` step**: `InvalidProcess`, as before.
 6. **No-knead loaf without folds**: `frasage`, `bulk`, `shape`, `proof`, `bake`. Valid.
    `no_kneading_or_folds` is raised as a note to confirm the technique, and blocks nothing. A
@@ -457,18 +534,48 @@ Examples (hand-checked against the rules above):
 7. **Poolish first.** `poolish` (the component's step, 12 h, no incorporations), `frasage`
    (incorporates `component` poolish, the flour, the water and the other ingredients), `bulk`,
    `shape`, `proof`, `bake`. The first step is not a `frasage`. The assembly is the `frasage`: it
-   is the reference mixing step, and the dough steps follow it.
+   incorporates the poolish, a `preferment` component, so it holds leaven and is the first-contact
+   step as well as the reference mixing step: the dough's clock starts at its end. The poolish
+   keeps its own clock (its own step, 12 h; it has no mixing step of its own here, so its clock
+   starts at the start of that step).
 8. **Preliminary frasage.** `frasage` (of the poolish, no incorporations, 10 min), `proof`
-   (12 h), `frasage` (assembly, with incorporations), `mix` (kneading, 8 min), `bulk`. The first
-   `frasage` belongs to the poolish. The reference mixing step is the `mix`.
+   (12 h), `frasage` (assembly, incorporating the poolish, a `preferment` component), `mix`
+   (kneading, 8 min), `bulk`. The first `frasage` belongs to the poolish: it is the poolish's
+   first-contact step, so the poolish's clock starts at its end and the 10 min do not count
+   (Subjects and component phases, Fermentation). The assembly `frasage` holds leaven: it is the
+   dough's first-contact step and the dough's clock starts at its end; the 8 min of kneading
+   count, then the bulk. The `mix` is the reference mixing step.
 9. **Fermentolyse before the final kneading.** `fermentolyse` (incorporates flour, water and
-   yeast, 45 min), `mix` (incorporates the salt, 8 min), `bulk`. The `fermentolyse` holds yeast
-   and a non-mixing step with a duration separates it from the reference `mix`: the estimate is
-   `insufficient_data`, reason `leaven_before_mixing`, not an estimate counted from the end of
-   the `mix`.
+   yeast, 45 min), `mix` (incorporates the salt, 8 min), `bulk`. The `fermentolyse` holds yeast:
+   it is the first-contact step. The clock starts at its end: the 45 min do not count, the 8 min of
+   kneading and the bulk do. The reference mixing step is the `mix`: its target dough
+   temperature, if any, is read there. (This case used to be `insufficient_data`,
+   `leaven_before_mixing`.)
 10. **Frasage then kneading at once.** `frasage` (incorporates everything, yeast included, 5 min),
-    `mix` (8 min), `bulk`. Only mixing steps lie between: no `leaven_before_mixing`, and the
-    estimate runs from the end of the `mix`, as it always did for a lone `mix`.
+    `mix` (8 min), `bulk`. The `frasage` is the first-contact step: the clock starts at its end,
+    so the 5 min do not count, the 8 min of kneading do, then the bulk.
+11. **Autolyse without yeast.** `autolyse` (incorporates flour and water, 30 min), `mix`
+    (incorporates the salt and the yeast, 8 min), `bulk`. The `autolyse` holds no yeast: it does
+    not count. The `mix` is the first-contact step and the clock starts at its end: the 8 min do
+    not count either.
+12. **No incorporations declared.** `autolyse` (30 min), `frasage` (5 min), `mix` (10 min), `bulk`.
+    Nothing says what a step holds, and the `autolyse` is not a mixing step: the first-contact
+    step is the `frasage`. The 30 min and the 5 min do not count; the clock starts at the end of
+    the `frasage`, and the 10 min of kneading count.
+13. **Poolish and final dough.** `poolish` (a `preferment` component's step, 12 h), `mix`
+    (incorporates the poolish, the flour, the water, the salt and the remaining yeast, 10 min),
+    `bulk`. The poolish's clock starts at the start of its own step (it has no mixing step of its
+    own); the dough's clock starts at the end of the `mix`, not at the start of the poolish.
+14. **No step holds yeast.** Incorporations are declared, the `mix` incorporates flour, water and
+    salt, a later step incorporates a `custom` component whose allocation carries the yeast, and
+    there is no `fermentolyse`: no first-contact step, `insufficient_data`,
+    `no_first_contact_step`.
+15. **A frasage that overruns, in a bake.** `frasage` (incorporates everything, yeast included,
+    planned 5 min), `mix` (8 min), `bulk`. The baker starts the `frasage` at 09:00 and completes it
+    at 09:09. In the plan the clock started at 09:05; in the bake it starts at 09:09, the recorded
+    completion, and the kneading and the bulk are projected from there. While the `frasage` runs,
+    the dough has no progress, and a dough-temperature reading or thermal inputs on it are refused
+    (it is not a dough step); on the `mix` they are accepted.
 
 ## Subjects and component phases
 
@@ -511,6 +618,16 @@ type Subject = { kind: 'mainDough' } | { kind: 'component'; id: string }; // id:
 - **Validation.** `subject.id` must be a component of the formula (`InvalidProcess` otherwise,
   with the step as `path`). `subject: mainDough` on a step whose id is a component id is
   contradictory and refused.
+- **A preferment's first contact** (owner decisions of 2026-11-04, #231). The same rule holds for
+  a preferment: its clock starts at the **end** of its own first-contact step. That is the first
+  mixing step (`frasage` or `mix`) whose subject is the component, ahead of its fermenting phase
+  (the preparatory mix of the poolish). Its duration **does not count**, and fermentation starts
+  when it ends: the estimate is the time of the fermenting phase, whatever the preparatory mix
+  lasted. A component without a mixing step of its own (the fermenting phase alone, the legacy step
+  with its id) has nothing to exclude and its clock starts at the start of that phase. Any other
+  step of the component between its mixing step and its fermenting phase is not modelled, as for
+  several fermenting phases (below): it is recorded, scheduled and shown, and not counted. The
+  live recomputation of a bake covers the dough only; a preferment's estimate is a plan's.
 - **Fermentation** (`fermentation.md`). A component with one fermenting phase (one step whose
   operation is `preferment`) is estimated as before. With **several** fermenting phases the
   estimate is `insufficient_data` with the reason `component_phases_unmodelled`: this model has no

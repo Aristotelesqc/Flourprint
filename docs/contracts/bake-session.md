@@ -219,7 +219,8 @@ bowl with a lid, out of the fridge, onto a tray. `SetStepThermal { stepId, at?, 
 `StepThermalChanged { stepId, at, thermal }`; `thermal` absent means "no thermal inputs from now
 on" (back to the fixed lag).
 
-- **Refusals.** Unknown step; a step that is not a dough step (`InvalidCommand`); a completed step
+- **Refusals.** Unknown step; a step that is not a dough step (`InvalidCommand`), the
+  first-contact step included (see Dough clock and dough steps, below); a completed step
   (`StepAlreadyCompleted`); an invalid `thermal` (`InvalidProcess`, process.md); `at` before the
   step's start or before the previous thermal change of that step (`InvalidTime`). A step not yet
   started accepts it with `at` omitted: the event is recorded at the command time, but the new
@@ -242,7 +243,8 @@ on" (back to the fixed lag).
 `AddObservation` accepts `kind: 'doughTemperature'` (0.21.0): a measured dough temperature
 with the probe position.
 
-- It needs a `stepId` that is running and is a dough step, and a numeric `Observation` in °C
+- It needs a `stepId` that is running and is a dough step (the first-contact step is not one: see
+  Dough clock and dough steps, below), and a numeric `Observation` in °C
   (finite, within 0 – 60 °C, as for the other temperatures); anything else is `InvalidCommand`,
   and on an ended bake `BakeNotActive`. Category `fermentation`, `position`: `core` (probe in the
   centre), `surface` or `unknown`, optional `note`.
@@ -264,6 +266,20 @@ with the probe position.
   ambient of the step it was taken in.
 - It never completes the step nor changes the plan. A not-ready or ready judgement stays
   `doughReady`; the model's forecast is an estimate that never overrides it.
+
+**Dough clock and dough steps (0.24.0, owner decisions of 2026-11-04, #231).** The dough clock
+starts at the **end of the first-contact step** (process.md, First contact), and in a bake that end
+is the actual completion of the step: the instant `CompleteStep` records, the moment the baker
+taps Next, even if a last stroke of the spatula is still being given. The recorded `StepCompleted`
+is the only fact the clock needs; a plan's duration for that step is irrelevant once it is
+completed (fermentation.md, Live recomputation). The first-contact step is **not a dough step**:
+the dough has no fermentation clock while it runs, so `SetStepThermal`, a `doughTemperature`
+observation and a `doughReady` observation on it are refused (`InvalidCommand`), like on any step
+that is not a dough step. The baker completes it first and records the dough on the next step,
+which starts at that completion. A step after it, kneading included, is a dough step and accepts
+the first two (a `doughReady` needs a fermentation step, below). The rule is deliberately the
+minimal one: a single definition of the dough steps serves every gate, and a thermal input or a
+reading on a step the model does not integrate would be accepted and then ignored.
 
 **Versioning and upcasting.** Two new event/observation vocabulary items, additive: `StepThermalChanged`
 and `kind: 'doughTemperature'` with `position`. `CONTRACT_VERSION` goes from `0.20.0` to `0.21.0`
@@ -361,11 +377,14 @@ never completed is not an open step: finishing the Preparation does not need it.
 `AddObservation` accepts an optional stable `kind`. `kind: 'doughReady'` records that the baker
 judges the dough ready for its next stage:
 
-- It needs a `stepId` that is **running** (started, not ended) and is a **dough step** (the `asap`
-  steps between the mix and the bake, `fermentation.md`). Anything else is refused
-  (`InvalidCommand`), as is a `doughReady` on an ended bake (`BakeNotActive`).
-- The domain records its `stage` in the event: `bake` when the step is the last dough step (ready
-  to bake), `shape` otherwise (ready to shape, e.g. at the end of the bulk). Only `stage: 'bake'`
+- It needs a `stepId` that is **running** (started, not ended) and is a **fermentation step**: a
+  dough step (the `asap` steps after the first-contact step, up to the first heat step,
+  `fermentation.md`) that is not a mixing step. A kneading is a dough step but is never judged
+  ready: the baker judges the dough after the mixing, not during it. Anything else is refused
+  (`InvalidCommand`), the first-contact step included, as is a `doughReady` on an ended bake
+  (`BakeNotActive`).
+- The domain records its `stage` in the event: `bake` when the step is the last fermentation step
+  (ready to bake), `shape` otherwise (ready to shape, e.g. at the end of the bulk). Only `stage: 'bake'`
   observations are data for the readiness profile; `shape` ones are kept for later stage models.
   Events written before `0.6.0` have no `stage`: unknown, never pooled with `bake`.
 - Category `fermentation`, an optional short `criterion` code (`poke`, `feel`, `time`, `other`)
