@@ -28,6 +28,7 @@ import {
   defaultVariant,
   doughContextOf,
   doughSteps,
+  isMixingStep,
   resolveFormula,
   type BakeCommandPayload,
   type BakeSummary,
@@ -410,7 +411,11 @@ const RecipePageContent = () => {
   const fermentationStepIds = useMemo(() => {
     if (!draft) return new Set<string>();
     const ids = new Set<string>();
-    for (const s of doughSteps(draft.process, doughContextOf(draft.formula)) ?? []) ids.add(s.id);
+    // The kneading steps are dough steps (fermentation.md) but their duration stays authored in the
+    // method list; the model only suggests the time of a fermenting step.
+    for (const s of doughSteps(draft.process, doughContextOf(draft.formula)) ?? []) {
+      if (!isMixingStep(s)) ids.add(s.id);
+    }
     for (const c of draft.formula.components) {
       if (c.kind === 'preferment' && c.flourPct > 0) ids.add(c.id);
     }
