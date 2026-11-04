@@ -175,6 +175,10 @@ export const validateProcess = (
     ) {
       return err(invalid(`${path}.durationMode`, 'must be manual or model'));
     }
+    if (step.durationMode === 'model' && isMixingStep(step)) {
+      // A mixing step always keeps its planned duration (fermentation.md, Model-driven duration).
+      return err(invalid(`${path}.durationMode`, 'a mixing step cannot follow the model'));
+    }
     if (step.equipment !== undefined) {
       const bad = stepEquipmentProblem(step.equipment, `${path}.equipment`);
       if (bad) return err(invalid(bad.path, bad.reason));

@@ -467,6 +467,46 @@ describe('live recomputation from the recorded facts', () => {
     expect(liveDoughForecast(log.state, t('09:10'))).toEqual(forecast);
   });
 
+  it('forecasts the whole plan while the first-contact step has not started', () => {
+    // A yeast-free autolyse comes first and is still going: the mix, the first contact, cannot
+    // start, so the dough clock has not begun (fermentation.md, What it predicts). The mix, the
+    // bulk and the cold step the model solves are all still to come, whatever the time spent.
+    const withAutolyse: Process = {
+      steps: [
+        step('autolyse', {
+          operation: 'autolyse',
+          plannedDurationS: 1800,
+          conditions: { temperatureC: 24 },
+          incorporations: [
+            { item: 'flour', id: 'flour', sharePct: 100 },
+            { item: 'water', sharePct: 100 },
+          ],
+        }),
+        ...process_.steps.map((s) =>
+          s.id === 'mix'
+            ? {
+                ...s,
+                dependsOn: ['autolyse'],
+                incorporations: [
+                  { item: 'ingredient' as const, id: 'salt', sharePct: 100 },
+                  { item: 'ingredient' as const, id: 'yeast', sharePct: 100 },
+                ],
+              }
+            : s,
+        ),
+      ],
+    };
+    const log = started(0.4, withAutolyse);
+    const early = liveDoughForecast(log.state, t('08:10'));
+    if (!early) throw new Error('no forecast');
+    expect(early.stepId).toBe('cold');
+    expect(early.steps.map((s) => s.stepId)).toEqual(['mix', 'bulk', 'cold']);
+    expect(value(early.remaining)).toBeCloseTo(staticDuration(withAutolyse) + 600 + 2 * H, 0);
+    // Waiting on the autolyse does not start the dough: the plan is still all ahead.
+    const later = liveDoughForecast(log.state, t('08:50'));
+    expect(later && value(later.remaining)).toBeCloseTo(value(early.remaining), 0);
+  });
+
   it('uses the recorded times, not the planned duration', () => {
     const log = started();
     log.at('08:10').ok({ type: 'CompleteStep', stepId: 'mix' });

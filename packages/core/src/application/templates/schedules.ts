@@ -4,6 +4,7 @@ import {
   domainError,
   err,
   type DomainError,
+  type DoughContext,
   ok,
   validateProcess,
   type Process,
@@ -100,6 +101,7 @@ export const isColdStep = (step: ProcessStep) =>
 export const applySchedule = (
   process: Process,
   scheduleId: string,
+  context?: DoughContext,
 ): Result<Process, ApplyScheduleError> => {
   const schedule = FERMENTATION_SCHEDULES.find((s) => s.id === scheduleId);
   if (!schedule) {
@@ -109,9 +111,9 @@ export const applySchedule = (
   }
   // A schedule replaces the steps after the reference mixing step, never the mixing and kneading
   // steps, although those are dough steps too (drafts.md, Fermentation schedules).
-  const mix = referenceMixingStep(process);
+  const mix = referenceMixingStep(process, context);
   if (!mix) return err(invalid('steps', 'a schedule needs a mix step'));
-  const replaced = stepsAfterReferenceMix(process) ?? [];
+  const replaced = stepsAfterReferenceMix(process, context) ?? [];
   for (const step of replaced) {
     const path = `steps[${process.steps.indexOf(step)}]`;
     if ((step.incorporations ?? []).length > 0) {
@@ -188,6 +190,6 @@ export const applySchedule = (
   steps.splice(at, 0, ...chain);
 
   const next: Process = { ...process, steps };
-  const valid = validateProcess(next);
+  const valid = validateProcess(next, context);
   return valid.ok ? ok(next) : valid;
 };

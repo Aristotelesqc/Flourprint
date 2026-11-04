@@ -148,5 +148,6 @@ at a constant temperature, where `F = t × (d / 1 %)^k × r(T) / A` is exact (`A
 `Ea` 98.3 kJ/mol, `r` = 1 at 21.1 °C), and with the default lag `τ` 1.5 h, a trapezoid of 200 000
 steps on the analytic temperature. Tolerances: 0.001 (percentage points and seconds) for the closed
 forms, 0.02 for the lagged paths (the engine's integrator is allowed that; the reference is better
-than 1e-6). The four older cases that include the 10 min mixing step exist twice: in their former form (`until`
-0.10.0) and recomputed with the mixing counted (`since` 0.10.0, name suffixed or changed).
+than 1e-6). The four older cases that include the 10 min mixing step are recomputed with the mixing counted
+(`since` 0.10.0, name suffixed or changed); their former forms (`until` 0.10.0) served the engine
+until it moved and were removed with the engine change.

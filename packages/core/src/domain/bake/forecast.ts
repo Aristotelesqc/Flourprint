@@ -15,7 +15,7 @@ import {
   type ThermalStepLag,
 } from '../fermentation/index.js';
 import type { Instant } from '../instant.js';
-import { doughContextOf, doughSteps, firstContactStep } from '../process/dough.js';
+import { doughContextOf, doughSteps, firstContactStep, isMixingStep } from '../process/dough.js';
 import type { ProcessStep, StepId, StepThermal } from '../process/types.js';
 import type { Estimate } from '../values.js';
 import { implicitStartOf } from './decide.js';
@@ -153,8 +153,11 @@ export const liveContext = (
   const steps = doughSteps(process, context) ?? [];
   if (steps.length === 0) return undefined;
   const nowMs = Date.parse(now);
-  const driven = steps.findIndex((s) => s.durationMode === 'model');
-  const target = steps[driven < 0 ? steps.length - 1 : driven] as ProcessStep;
+  // The model solves a fermentation step, never a mixing one (fermentation.md).
+  const lastFermenting = steps.findLastIndex((s) => !isMixingStep(s));
+  if (lastFermenting < 0) return undefined;
+  const driven = steps.findIndex((s) => s.durationMode === 'model' && !isMixingStep(s));
+  const target = steps[driven < 0 ? lastFermenting : driven] as ProcessStep;
   const targetDone = state.steps[target.id]?.endedAt !== undefined;
 
   const stretches: Stretch[] = [];

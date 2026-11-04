@@ -403,17 +403,14 @@ describe('dough ready observation', () => {
     expect(onProof.ok && onProof.value[0]?.payload).toMatchObject({ stage: 'bake' });
   });
 
-  it('accepts a running mix: it is a dough step from the first contact (bake-session.md)', () => {
-    const running = ready(at(['poolish', 'mix'], ['poolish']), 'mix');
-    expect(running.ok && running.value[0]?.payload).toMatchObject({ stage: 'shape' });
-  });
-
   it('refuses unstarted, completed and non-dough steps', () => {
     const state = at(['poolish', 'mix', 'bulk'], ['poolish', 'mix', 'bulk']);
     for (const [s, stepId] of [
       [state, 'proof'], // not started
       [state, 'bulk'], // completed
       [at(['poolish']), 'poolish'], // running, but a preferment
+      // Running, but a mixing step: a dough step, never judged ready (bake-session.md).
+      [at(['poolish', 'mix'], ['poolish']), 'mix'],
     ] as const) {
       expect(ready(s, stepId)).toMatchObject({ ok: false, error: { code: 'InvalidCommand' } });
     }

@@ -737,7 +737,7 @@ before give the same factor; only sets refused before can now be accepted. No pe
 changes. The implementing pull request bumps `CONTRACT_VERSION` to `0.22.1`, `ENGINE_VERSION` to
 `0.9.1` and `flourprint.dough-thermal` to `0.2.1`.
 
-Version `0.24.0` (target) moves the **dough clock to the first contact** (owner decision of
+Version `0.24.0` (implemented in #233) moves the **dough clock to the first contact** (owner decision of
 2026-11-04, #231; What it predicts, Dough temperature; process.md, Mixing steps, First contact).
 The progress `F` of the dough starts at the start of the step where the yeast or leaven first meets
 the flour and water, and the mixing and kneading steps after it are dough steps with their own
@@ -757,8 +757,7 @@ the estimates computed from them differ. Compatibility:
   constants are unchanged, and the model version names those, not the process semantics that tell
   it when to start integrating. The thermal sub-model `flourprint.dough-thermal` stays `0.2.1`
   for the same reason. The readiness profiles are untouched.
-- **Contract version.** `CONTRACT_VERSION` takes one minor step from the version current at the
-  merge of the implementing pull request (`0.23.0` to `0.24.0` at the time of writing).
+- **Contract version.** `CONTRACT_VERSION` is `0.24.0`, one minor step from `0.23.0`.
 - **Stored estimates.** An accepted suggestion keeps its `Estimate` as it was, with the model and
   assumptions of the time (Accepted suggestions); it is not recomputed. A recipe edited after the
   change gets new suggestions from the new clock.
@@ -776,6 +775,5 @@ the estimates computed from them differ. Compatibility:
 
 Reference cases: `fixtures/fermentation/cases.json` is produced by `generate.py` with the new
 clock (new cases `first contact: …`; the four existing cases that have a 10 min mixing step now
-count it). Each of those four also stays in its former form, marked `until` 0.10.0, so the engine
-keeps passing its existing assertions until the implementation lands. Nothing in it comes from the
-engine.
+count it, and carry `since` 0.10.0). Their former forms, marked `until` 0.10.0, ran until the engine
+moved and were removed by the implementing pull request. Nothing in it comes from the engine.

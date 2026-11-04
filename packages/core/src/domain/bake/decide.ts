@@ -299,9 +299,9 @@ const observe = (
         )
       : undefined;
     if (stage === undefined) {
-      return error('InvalidCommand', 'A dough ready observation targets a dough step', {
+      return error('InvalidCommand', 'A dough ready observation targets a fermentation step', {
         field: 'stepId',
-        reason: 'not a dough step',
+        reason: 'not a fermentation step',
       });
     }
     const { type, ...observation } = command;

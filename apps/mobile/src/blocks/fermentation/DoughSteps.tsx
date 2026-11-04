@@ -35,7 +35,12 @@ const FRIDGE = { location: 'fridge', temperatureC: 4 } as const;
 
 interface Props {
   readonly process: Process;
-  readonly mix: ProcessStep;
+  /**
+   * Where a step can be added after: the reference mixing step and the fermentation steps, in
+   * process order.
+   */
+  readonly anchors: readonly ProcessStep[];
+  /** The fermentation steps: the dough steps that are not mixing steps (fermentation.md). */
   readonly steps: readonly ProcessStep[];
   /** The dough's duration estimate: for the Auto step when there is one. */
   readonly duration: Estimate;
@@ -48,12 +53,14 @@ interface Props {
 }
 
 /**
- * The dough steps between the mix and the first heat step, one row each: place, temperature,
- * duration, and the Auto chip on the one step whose time follows the model (fermentation.md).
+ * The fermentation steps between the reference mixing step and the first heat step, one row each:
+ * place, temperature, duration, and the Auto chip on the one step whose time follows the model
+ * (fermentation.md). The mixing and kneading steps are dough steps but are not listed here: they
+ * keep their authored duration in the method list.
  */
 export const DoughSteps = ({
   process,
-  mix,
+  anchors,
   steps,
   duration,
   estimatedStepId,
@@ -85,7 +92,7 @@ export const DoughSteps = ({
       </ul>
       <AddDoughStep
         process={process}
-        anchors={[mix, ...steps]}
+        anchors={anchors}
         reservedIds={reservedIds}
         onProcess={onProcess}
       />
@@ -237,7 +244,7 @@ const StepRow = ({
   );
 };
 
-/** Inserts a dough step after the mix or a dough step (the last one by default). */
+/** Inserts a fermentation step after the reference mixing step or one of them (the last by default). */
 const AddDoughStep = ({
   process,
   anchors,

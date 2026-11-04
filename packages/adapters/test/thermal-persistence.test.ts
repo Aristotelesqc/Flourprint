@@ -408,6 +408,62 @@ describe.each([
     expect(await isEmpty(target)).toBe(true);
   });
 
+  it('restores a dough temperature and a thermal change recorded on the mix, a dough step from the first contact', async () => {
+    const source = await makeTarget();
+    await seed(source);
+    const backup = await backupOf(source);
+    const events: Loose[] = backup.bakes[0].events;
+    // The mix is running from 08:00; a reading and a thermal change are recorded on it.
+    const start = events.findIndex((e) => e.payload.type === 'StepCompleted');
+    const stamp = (e: Loose) => ({ ...e, occurredAt: at('08:00'), recordedAt: at('08:00') });
+    const extra = [
+      { type: 'StepStarted', stepId: 'mix' },
+      { type: 'StepThermalChanged', stepId: 'mix', at: at('08:00'), thermal: bowl },
+      {
+        type: 'ObservationAdded',
+        stepId: 'mix',
+        category: 'fermentation',
+        kind: 'doughTemperature',
+        position: 'core',
+        measurement: { value: 23.5, unit: 'degC', observedAt: at('08:00') },
+      },
+    ];
+    events.splice(
+      start,
+      0,
+      ...extra.map((payload, i) =>
+        stamp({ ...events[start], eventId: `mix-${i}`, causationId: `mix-c${i}`, payload }),
+      ),
+    );
+    events.forEach((e, i) => (e.seq = i + 1));
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    const restored = await backupOf(target);
+    expect(restored.bakes[0].events.map((e: Loose) => e.payload.stepId)).toEqual(
+      events.map((e) => e.payload.stepId),
+    );
+  });
+
+  it('restores a backup recorded before 0.10.0 with its committed values untouched', async () => {
+    const source = await makeTarget();
+    await seed(source);
+    const backup = await backupOf(source);
+    const first = backup.bakes[0].events[0].payload;
+    expect(first.type).toBe('BakeStarted');
+    // Written by the engine that counted from the end of the mix, with a time that engine gave.
+    first.snapshot.manifest.engineVersion = '0.9.1';
+    first.snapshot.manifest.contractVersion = '0.23.0';
+    const stepId = Object.keys(first.snapshot.estimates)[0] as string;
+    first.snapshot.estimates[stepId].value = 123_456;
+    const target = await makeTarget();
+    expect(await importBackup(target.restore, backup)).toEqual({ ok: true, value: undefined });
+    const restored = await backupOf(target);
+    const kept = restored.bakes[0].events[0].payload.snapshot;
+    expect(kept.manifest.engineVersion).toBe('0.9.1');
+    expect(kept.estimates[stepId].value).toBe(123_456);
+    expect(restored).toEqual(backup);
+  });
+
   it('refuses a thermal change recorded on a step that already ended', async () => {
     const source = await makeTarget();
     await seed(source);

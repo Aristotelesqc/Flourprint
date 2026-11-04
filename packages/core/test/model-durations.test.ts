@@ -71,8 +71,8 @@ describe('dough steps', () => {
     expect(lastDoughStepId(bagelLike)).toBe('proof');
     expect(doughReadyStage(bagelLike, 'proof')).toBe('bake');
     expect(doughReadyStage(bagelLike, 'bulk')).toBe('shape');
-    // The mix is a dough step from the first contact (bake-session.md): ready to shape, not to bake.
-    expect(doughReadyStage(bagelLike, 'mix')).toBe('shape');
+    // The mix is a dough step from the first contact but never judged ready (bake-session.md).
+    expect(doughReadyStage(bagelLike, 'mix')).toBeUndefined();
     expect(doughReadyStage(bagelLike, 'boil')).toBeUndefined();
     expect(estimateFermentation(formula, bagelLike).dough.stepId).toBe('proof');
   });

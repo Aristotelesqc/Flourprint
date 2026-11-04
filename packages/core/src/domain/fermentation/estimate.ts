@@ -5,6 +5,7 @@ import {
   doughContextOf,
   doughSteps,
   firstContactStep,
+  fermentationSteps,
   isMixingStep,
   referenceMixingStep,
   type DoughContext,
@@ -612,23 +613,23 @@ const unplannedAssumptions = (unplanned: readonly StepId[]) =>
   unplanned.map((id) => `step_without_duration:${id}`);
 
 /**
- * The stage a dough is judged ready for on this step (bake-session.md): `bake` on the last dough
- * step, `shape` on an earlier one, none outside the dough steps. The mixing and kneading steps
- * from the first contact are dough steps (fermentation.md) and are not set apart.
+ * The stage a dough is judged ready for on this step (bake-session.md): `bake` on the last
+ * fermentation step, `shape` on an earlier one, none outside the fermentation steps. A mixing or
+ * kneading step is a dough step (fermentation.md) but is never judged ready.
  */
 export const doughReadyStage = (
   process: Process,
   stepId: StepId,
   context?: DoughContext,
 ): 'shape' | 'bake' | undefined => {
-  const steps = doughSteps(process, context) ?? [];
+  const steps = fermentationSteps(process, context) ?? [];
   if (!steps.some((s) => s.id === stepId)) return undefined;
   return steps.at(-1)?.id === stepId ? 'bake' : 'shape';
 };
 
-/** The last step the dough ferments in before the first heat step, if the process has one. */
+/** The last fermentation step before the first heat step, if the process has one. */
 export const lastDoughStepId = (process: Process, context?: DoughContext): StepId | undefined =>
-  doughSteps(process, context)?.at(-1)?.id;
+  fermentationSteps(process, context)?.at(-1)?.id;
 
 /**
  * The room temperature the dough starts from: the first-contact step's, else the first dough
@@ -698,11 +699,11 @@ const doughMass = (
   const steps = doughSteps(process, context) ?? [];
   const last = steps.at(-1);
   // The model solves the time of a fermentation step, never of a mixing one.
-  if (!last || steps.every(isMixingStep))
-    return failure('insufficient_data', 'no_fermentation_step');
-  // The model solves one unknown: the model-driven step's time, else the last step's.
-  const driven = steps.findIndex((s) => s.durationMode === 'model');
-  const openIndex = driven < 0 ? steps.length - 1 : driven;
+  const lastFermenting = steps.findLastIndex((s) => !isMixingStep(s));
+  if (!last || lastFermenting < 0) return failure('insufficient_data', 'no_fermentation_step');
+  // The model solves one unknown: the model-driven step's time, else the last fermentation step's.
+  const driven = steps.findIndex((s) => s.durationMode === 'model' && !isMixingStep(s));
+  const openIndex = driven < 0 ? lastFermenting : driven;
   const solved = steps[openIndex] as ProcessStep;
   // One dough, one timeline: each dough step must come after the previous one. Parallel dough
   // steps would be counted end to end, more time than really elapses (audit C2 of 15e52e3).
@@ -815,8 +816,13 @@ const prefermentMass = (
   if (yeasts.length === 0) {
     return failure('insufficient_data', 'preferment_yeast_unknown', [`${component.id}.yeast`]);
   }
-  const mix = process.steps.find((s) => s.operation === 'mix');
-  const ambientC = step.conditions?.temperatureC ?? mix?.conditions?.temperatureC;
+  // Without its own temperature, the preferment takes the room temperature of the recipe: the
+  // first-contact step's, else the reference mixing step's.
+  const context = doughContextOf(formula);
+  const room =
+    firstContactStep(process, context)?.conditions?.temperatureC ??
+    referenceMixingStep(process, context)?.conditions?.temperatureC;
+  const ambientC = step.conditions?.temperatureC ?? room;
   if (ambientC === undefined) {
     return failure('insufficient_data', 'temperature_unknown', [`${step.id}.temperatureC`]);
   }

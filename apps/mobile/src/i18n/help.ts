@@ -53,7 +53,7 @@ export const helpEn = {
 
   'help.fermentation.title': 'Estimated fermentation',
   'help.fermentation.body1':
-    'The app estimates how long the dough needs to ferment from the yeast dose, the temperatures and the planned durations of the dough steps (between the mix and the bake, or the boil for bagels). They count as one fermentation: the dough’s state is not reset between them.',
+    'The app estimates how long the dough needs to ferment from the yeast dose, the temperatures and the planned durations of the dough steps (from the moment the yeast or leaven meets the flour and water, mixing and kneading included, until the bake, or the boil for bagels). They count as one fermentation: the dough’s state is not reset between them.',
   'help.fermentation.body2':
     'Basic mode takes the dough at room temperature. Advanced mode aims at a dough temperature and gives the water temperature to use. Each step has its own place: room, or fridge at {fridge}.',
   'help.fermentation.body3':
@@ -91,7 +91,7 @@ export const helpEn = {
 
   'help.schedule.title': 'Fermentation schedules',
   'help.schedule.body1':
-    'A schedule replaces the dough steps, between the mix and the bake, with a usual sequence: bulk and proof; a slow cold bulk (18 h at {fridge}); a cold-retarded proof (14 h at {fridge}, baked from the fridge); or a short same-day plan.',
+    'A schedule replaces the steps between the last mixing step and the bake with a usual sequence: bulk and proof; a slow cold bulk (18 h at {fridge}); a cold-retarded proof (14 h at {fridge}, baked from the fridge); or a short same-day plan.',
   'help.schedule.body2':
     'Steps in the cold are set to the fridge at {fridge}; the others stay at room temperature. The folds of the bulk are kept. Steps that add ingredients or carry another technique are not replaced: the schedule is refused.',
   'help.schedule.body3':
@@ -232,7 +232,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.fermentation.title': 'Fermentation estimée',
   'help.fermentation.body1':
-    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes de la pâte (entre le pétrissage et la cuisson, ou l’ébullition pour les bagels). Elles comptent comme une seule fermentation : l’état de la pâte n’est pas remis à zéro entre elles.',
+    'L’app estime le temps de fermentation de la pâte à partir de la dose de levure, des températures et des durées prévues des étapes de la pâte (dès que la levure ou le levain rencontre la farine et l’eau, pétrissage compris, jusqu’à la cuisson, ou l’ébullition pour les bagels). Elles comptent comme une seule fermentation : l’état de la pâte n’est pas remis à zéro entre elles.',
   'help.fermentation.body2':
     'Le mode de base prend la pâte à la température ambiante. Le mode avancé vise une température de pâte et donne la température de l’eau à utiliser. Chaque étape a son lieu : ambiante, ou frigo à {fridge}.',
   'help.fermentation.body3':
@@ -270,7 +270,7 @@ export const helpFr: Record<keyof typeof helpEn, string> = {
 
   'help.schedule.title': 'Horaires de fermentation',
   'help.schedule.body1':
-    'Un horaire remplace les étapes de la pâte, entre le pétrissage et la cuisson, par une suite habituelle : pointage et apprêt ; pointage lent au froid (18 h à {fridge}) ; apprêt bloqué au froid (14 h à {fridge}, cuit à la sortie du frigo) ; ou un plan court le même jour.',
+    'Un horaire remplace les étapes situées entre le dernier pétrissage et la cuisson par une suite habituelle : pointage et apprêt ; pointage lent au froid (18 h à {fridge}) ; apprêt bloqué au froid (14 h à {fridge}, cuit à la sortie du frigo) ; ou un plan court le même jour.',
   'help.schedule.body2':
     'Les étapes au froid sont placées au frigo à {fridge} ; les autres restent à la température ambiante. Les rabats du pointage sont gardés. Des étapes qui ajoutent des ingrédients ou portent une autre technique ne sont pas remplacées : l’horaire est refusé.',
   'help.schedule.body3':

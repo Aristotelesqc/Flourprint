@@ -8,16 +8,20 @@ import {
 import {
   doughContextOf,
   doughStepAmbients,
-  doughSteps,
   estimateFermentation,
+  fermentationSteps,
+  firstContactStep,
+  referenceMixingStep,
   stepsAfterReferenceMix,
   temperatureContext,
   updateStep,
+  type DoughContext,
   type Estimate,
   type Formula,
   type FormulaEdit,
   type OkEstimate,
   type Process,
+  type ProcessStep,
   type YeastForm,
 } from '@flourprint/core/domain';
 import { en, type MessageKey } from '../i18n/messages';
@@ -54,11 +58,20 @@ interface Props {
 export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props) => {
   const { t, componentName } = useMessages();
   const estimates = useMemo(() => estimateFermentation(formula, process), [formula, process]);
-  const mix = process.steps.find((s) => s.operation === 'mix');
   const context = useMemo(() => doughContextOf(formula), [formula]);
-  const dough = useMemo(() => doughSteps(process, context) ?? [], [process, context]);
+  // Three roles, three steps (fermentation.md): the room temperature of the start is read on the
+  // first-contact step; the target dough temperature and the friction on the reference mixing
+  // step; the steps the baker edits here as fermentation steps are the dough steps that are not
+  // mixing steps. The kneading steps keep their authored duration in the method list.
+  const start = useMemo(() => firstContactStep(process, context), [process, context]);
+  const reference = useMemo(() => referenceMixingStep(process, context), [process, context]);
+  const fermenting = useMemo(() => fermentationSteps(process, context) ?? [], [process, context]);
+  const replaced = useMemo(
+    () => stepsAfterReferenceMix(process, context) ?? [],
+    [process, context],
+  );
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const advanced = advancedOpen || mix?.conditions?.doughTemperatureC !== undefined;
+  const advanced = advancedOpen || reference?.conditions?.doughTemperatureC !== undefined;
   const preferments = formula.components.filter((c) => c.kind === 'preferment' && c.flourPct > 0);
 
   /** Applies a suggested time and records where it came from (fermentation.md). */
@@ -87,7 +100,7 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
           {t('fermentation.title')}
           <InfoButton topic="fermentation" term={t('fermentation.title')} />
         </span>
-        {mix && (
+        {reference && (
           <div className="w-full min-[420px]:w-[11.5rem] shrink-0">
             <Segmented
               size="small"
@@ -100,7 +113,7 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
                 setAdvancedOpen(mode === 'advanced');
                 if (mode === 'basic') {
                   onProcess(
-                    withConditions(process, mix.id, {
+                    withConditions(process, reference.id, {
                       doughTemperatureC: undefined,
                       frictionC: undefined,
                     }),
@@ -112,19 +125,22 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
         )}
       </div>
 
-      {mix && (
+      {reference && (
         <div className="flex flex-col gap-2">
-          <Row label={t('fermentation.room')}>
-            <TemperatureField
-              label={t('fermentation.room')}
-              context="ambient"
-              width="6.5rem"
-              value={mix.conditions?.temperatureC}
-              onCommit={(value) =>
-                onProcess(withConditions(process, mix.id, { temperatureC: value }))
-              }
-            />
-          </Row>
+          {/* Without a first-contact step the result line says why (no_first_contact_step). */}
+          {start && (
+            <Row label={t('fermentation.room')}>
+              <TemperatureField
+                label={t('fermentation.room')}
+                context="ambient"
+                width="6.5rem"
+                value={start.conditions?.temperatureC}
+                onCommit={(value) =>
+                  onProcess(withConditions(process, start.id, { temperatureC: value }))
+                }
+              />
+            </Row>
+          )}
           {advanced && (
             <>
               <Row
@@ -135,9 +151,9 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
                   label={t('fermentation.target')}
                   context="ambient"
                   width="6.5rem"
-                  value={mix.conditions?.doughTemperatureC}
+                  value={reference.conditions?.doughTemperatureC}
                   onCommit={(value) =>
-                    onProcess(withConditions(process, mix.id, { doughTemperatureC: value }))
+                    onProcess(withConditions(process, reference.id, { doughTemperatureC: value }))
                   }
                 />
               </Row>
@@ -147,9 +163,9 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
                   context="ambient"
                   difference
                   width="6.5rem"
-                  value={mix.conditions?.frictionC}
+                  value={reference.conditions?.frictionC}
                   onCommit={(value) =>
-                    onProcess(withConditions(process, mix.id, { frictionC: value }))
+                    onProcess(withConditions(process, reference.id, { frictionC: value }))
                   }
                 />
               </Row>
@@ -158,15 +174,20 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
               )}
             </>
           )}
-          <ScheduleRow process={process} replaced={dough.length} onProcess={onProcess} />
+          <ScheduleRow
+            process={process}
+            context={context}
+            replaced={replaced}
+            onProcess={onProcess}
+          />
         </div>
       )}
 
-      {mix && (
+      {reference && (
         <DoughSteps
           process={process}
-          mix={mix}
-          steps={dough}
+          anchors={process.steps.filter((s) => s === reference || fermenting.includes(s))}
+          steps={fermenting}
           duration={estimates.dough.duration}
           estimatedStepId={estimates.dough.stepId}
           reservedIds={formula.components.map((c) => c.id)}
@@ -257,14 +278,20 @@ export const FermentationCard = ({ formula, process, onEdit, onProcess }: Props)
   );
 };
 
-/** Replaces the dough steps with a fermentation schedule (drafts.md), after a confirmation. */
+/**
+ * Replaces the steps after the reference mixing step with a fermentation schedule (drafts.md),
+ * after a confirmation when there are steps to replace.
+ */
 const ScheduleRow = ({
   process,
+  context,
   replaced,
   onProcess,
 }: {
   process: Process;
-  replaced: number;
+  context: DoughContext;
+  /** What the schedule replaces: the steps after the reference mixing step. */
+  replaced: readonly ProcessStep[];
   onProcess: (process: Process) => boolean;
 }) => {
   const { t, stepName, error } = useMessages();
@@ -276,7 +303,7 @@ const ScheduleRow = ({
     return isKey(key) ? t(key) : scheduleId;
   };
   const apply = (scheduleId: string) => {
-    const result = applySchedule(process, scheduleId);
+    const result = applySchedule(process, scheduleId, context);
     if (!result.ok) {
       setRefusal(
         result.error.code === 'InvalidProcess'
@@ -289,14 +316,14 @@ const ScheduleRow = ({
     onProcess(result.value);
   };
   const choose = (scheduleId: string) => {
-    if (replaced === 0) {
+    if (replaced.length === 0) {
       apply(scheduleId);
       return;
     }
     void presentAlert({
       header: t('fermentation.schedule.confirmTitle', { name: nameOf(scheduleId) }),
       message: t('fermentation.schedule.confirmMessage', {
-        steps: (stepsAfterReferenceMix(process) ?? []).map(stepName).join(', '),
+        steps: replaced.map(stepName).join(', '),
       }),
       buttons: [
         { text: t('fermentation.cancel'), role: 'cancel' },

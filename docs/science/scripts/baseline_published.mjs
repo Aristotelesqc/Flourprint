@@ -517,6 +517,11 @@ function buildFormula(recipe, assumptions = []) {
  * mixing and kneading stages included. The yeast-free `pre_mix` stages (autolyse, bloom) are not
  * in it, and a stage ahead of the first mixing stage stays in its real place, outside the clock
  * and outside T. Without a mixing stage the clock covers every stage that is not `pre_mix`.
+ *
+ * Limit: the dataset declares no incorporations, so the first `mix`-role stage is taken as the first
+ * contact (process.md, no-incorporation rule). A recipe whose first mix held no yeast, with the
+ * yeast added in a later stage, would start the clock too early here; none of the dataset's recipes
+ * is described that way.
  */
 function doughClockStages(recipe) {
   const stages = recipe.stages || [];

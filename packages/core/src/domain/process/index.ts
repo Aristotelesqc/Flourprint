@@ -42,6 +42,7 @@ export { foldSchedule, phasesDurationS } from './technique.js';
 export {
   doughContextOf,
   doughSteps,
+  fermentationSteps,
   firstContactStep,
   firstHeatStep,
   HEAT_OPERATIONS,

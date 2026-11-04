@@ -1,12 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { applySchedule } from '../src/application/index.js';
 import {
   doughContextOf,
+  doughReadyStage,
   doughSteps,
   estimateFermentation,
+  fermentationSteps,
   findReadinessProfile,
   firstContactStep,
+  stepsAfterReferenceMix,
   referenceMixingStep,
   validateProcess,
   type Estimate,
@@ -398,5 +402,95 @@ describe('thermal inputs on the first-contact step (process.md, Where it applies
     const context = doughContextOf(direct);
     expect(validateProcess(withThermal('mix', process), context).ok).toBe(true);
     expect(validateProcess(withThermal('autolyse', process), context).ok).toBe(false);
+  });
+});
+
+describe('a mixing step never follows the model nor is judged ready (fermentation.md, bake-session.md)', () => {
+  const withModel = (process: Process, id: string): Process => ({
+    steps: process.steps.map((s) => (s.id === id ? { ...s, durationMode: 'model' as const } : s)),
+  });
+  const kneadThenBulk = chain([
+    ['frasage', 'frasage', 5],
+    ['mix', 'mix', 10],
+    ['bulk', 'bulk', undefined],
+  ]);
+
+  it('refuses durationMode model on a mixing step, with the step as the path', () => {
+    for (const id of ['frasage', 'mix']) {
+      const refused = validateProcess(withModel(kneadThenBulk, id), doughContextOf(direct));
+      expect(refused).toMatchObject({
+        ok: false,
+        error: {
+          code: 'InvalidProcess',
+          details: { path: `steps[${id === 'mix' ? 1 : 0}].durationMode` },
+        },
+      });
+      // Without the formula too: a mixing step is a mixing step whatever the dough steps are.
+      expect(validateProcess(withModel(kneadThenBulk, id)).ok).toBe(false);
+    }
+    expect(validateProcess(withModel(kneadThenBulk, 'bulk'), doughContextOf(direct)).ok).toBe(true);
+  });
+
+  it('solves the last fermentation step when a kneading comes after it', () => {
+    // An enriched dough: bulk, then the butter is kneaded in. The kneading keeps its 15 min.
+    const enriched = chain([
+      ['mix', 'mix', 10],
+      ['bulk', 'bulk', undefined],
+      ['butter', 'mix', 15],
+    ]);
+    const result = dough(direct, enriched);
+    expect(result.stepId).toBe('bulk');
+    expect(value(result.duration)).toBeGreaterThan(0);
+    expect(fermentationSteps(enriched, doughContextOf(direct))?.map((s) => s.id)).toEqual(['bulk']);
+    // The bulk is the last fermentation step, so a dough judged ready there is ready to bake.
+    expect(doughReadyStage(enriched, 'bulk', doughContextOf(direct))).toBe('bake');
+    expect(doughReadyStage(enriched, 'butter', doughContextOf(direct))).toBeUndefined();
+    expect(doughReadyStage(enriched, 'mix', doughContextOf(direct))).toBeUndefined();
+  });
+});
+
+describe('a schedule on a frasage-only process (drafts.md)', () => {
+  it('replaces the steps after the reference mixing step, which is the frasage', () => {
+    const noKnead = chain([
+      ['frasage', 'frasage', 3],
+      ['bulk', 'bulk', 600],
+    ]);
+    const context = doughContextOf(direct);
+    expect(stepsAfterReferenceMix(noKnead, context)?.map((s) => s.id)).toEqual(['bulk']);
+    const applied = applySchedule(noKnead, 'bulk-proof', context);
+    if (!applied.ok) throw new Error(JSON.stringify(applied.error));
+    expect(applied.value.steps[0]?.id).toBe('frasage');
+    expect(referenceMixingStep(applied.value, context)?.id).toBe('frasage');
+    expect(stepsAfterReferenceMix(applied.value, context)?.length).toBeGreaterThan(0);
+  });
+});
+
+describe('a preferment without a temperature of its own (fermentation.md)', () => {
+  it('takes the room temperature of the first-contact step, else of the reference mixing step', () => {
+    const base = named('first contact: a poolish').process;
+    const stripped: Process = {
+      steps: base.steps.map((s) => {
+        if (s.operation !== 'preferment') return s;
+        const { conditions: _conditions, ...rest } = s;
+        return rest;
+      }),
+    };
+    const at = (celsius: number): Process => ({
+      steps: stripped.steps.map((s) =>
+        s.id === firstContactId(withPoolish, stripped)
+          ? { ...s, conditions: { ...s.conditions, temperatureC: celsius } }
+          : s,
+      ),
+    });
+    const [component] = withPoolish.components;
+    const hours = (celsius: number) => {
+      const mass = estimateFermentation(withPoolish, at(celsius), profile).preferments[
+        component?.id as string
+      ];
+      if (!mass) throw new Error('no preferment estimate');
+      return value(mass.duration);
+    };
+    // A warmer room ripens the poolish sooner.
+    expect(hours(27)).toBeLessThan(hours(20));
   });
 });

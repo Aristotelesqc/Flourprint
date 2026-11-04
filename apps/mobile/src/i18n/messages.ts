@@ -909,7 +909,10 @@ export const en = {
   'fermentation.reason.end_point_not_reached':
     'The dough would not reach its end point within three weeks.',
   'fermentation.reason.no_mix_step': 'The process has no mix step.',
-  'fermentation.reason.no_fermentation_step': 'No fermentation step follows the mix.',
+  'fermentation.reason.no_first_contact_step':
+    'No step brings the yeast or leaven into the dough, so the fermentation has no start: add it to a mixing step.',
+  'fermentation.reason.no_fermentation_step':
+    'No rest or other fermentation step is planned after the mixing.',
   'fermentation.reason.formula_invalid': 'The formula is not valid.',
   'fermentation.reason.preferment_yeast_unknown':
     'The yeast of this preferment is unknown: give it some yeast.',
@@ -953,7 +956,7 @@ export const en = {
   'schedule.cold-proof': 'Cold-retarded proof',
   'schedule.same-day-short': 'Same day, short',
   'fermentation.doughSteps': 'Dough steps',
-  'fermentation.noDoughSteps': 'No fermentation step between the mix and the bake.',
+  'fermentation.noDoughSteps': 'No fermentation step after the mixing and before the bake.',
   'fermentation.location.room': 'room',
   'fermentation.location.fridge': 'fridge',
   'fermentation.stepDuration': '{step}, duration',
@@ -2110,7 +2113,10 @@ export const fr: Catalog = {
   'fermentation.reason.end_point_not_reached':
     'La pâte n’atteindrait pas son point final en trois semaines.',
   'fermentation.reason.no_mix_step': 'Le processus n’a pas d’étape de pétrissage.',
-  'fermentation.reason.no_fermentation_step': 'Aucune étape de fermentation après le pétrissage.',
+  'fermentation.reason.no_first_contact_step':
+    'Aucune étape n’apporte la levure ou le levain à la pâte : le début de la fermentation est inconnu. L’ajouter à une étape de pétrissage.',
+  'fermentation.reason.no_fermentation_step':
+    'Aucun repos ni autre étape de fermentation n’est prévu après le pétrissage.',
   'fermentation.reason.formula_invalid': 'La formule n’est pas valide.',
   'fermentation.reason.preferment_yeast_unknown':
     'La levure de ce préferment est inconnue : lui donner de la levure.',
@@ -2156,7 +2162,8 @@ export const fr: Catalog = {
   'schedule.cold-proof': 'Apprêt bloqué au froid',
   'schedule.same-day-short': 'Même jour, court',
   'fermentation.doughSteps': 'Étapes de la pâte',
-  'fermentation.noDoughSteps': 'Aucune étape de fermentation entre le pétrissage et la cuisson.',
+  'fermentation.noDoughSteps':
+    'Aucune étape de fermentation après le pétrissage et avant la cuisson.',
   'fermentation.location.room': 'ambiante',
   'fermentation.location.fridge': 'frigo',
   'fermentation.stepDuration': '{step}, durée',
