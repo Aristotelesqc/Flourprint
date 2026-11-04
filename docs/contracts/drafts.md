@@ -104,9 +104,11 @@ checkRecipe(formula, process, entryFamilies?: Record<string, IngredientFamily>):
 
 ## Fermentation schedules
 
-A **fermentation schedule** is a preset for the dough steps between the reference mixing step
+A **fermentation schedule** is a preset for the steps between the reference mixing step
 (process.md) and the first heat
-step (fermentation.md). Applying one to a draft replaces those steps with the schedule's steps,
+step (fermentation.md). The mixing and kneading steps are dough steps (the dough clock starts at
+the first contact, fermentation.md) but are never replaced by a schedule: it replaces only the
+steps that come after the reference mixing step. Applying one to a draft replaces those steps with the schedule's steps,
 each with its operation, duration, location and temperature, linked in order after the mixing step and
 before the steps that followed the replaced ones. It refuses (`InvalidProcess`) when a replaced
 step carries incorporations or a technique other than folds. Folds of a replaced bulk are kept on

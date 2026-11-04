@@ -20,18 +20,34 @@ ready.
 The time a dough or a commercial-yeast preferment takes to reach its end point, and the yeast
 needed for a given schedule. One forward `simulate()` serves both directions (#29).
 
-- **Dough end point**: from the end of the mix (the reference mixing step, process.md) to the start of the bake, the dough is "ready to
-  bake" (the baker's readiness decision, see Readiness profiles below). Bulk, cold retard,
-  shaping and proof are counted together: the state is never reset between steps (#9).
-- **Dough steps**: the `asap` steps that come after the reference mixing step (`frasage` or `mix`, the last one) and before the first **heat
-  step** (a cooking operation, process.md: boiling bagels, grilling or frying a dough ends the fermentation
-  as baking does) in the graph, in process order. `alap` steps (preheating) never hold the dough. They must form
-  one sequence, each after the previous one; dough steps in parallel (two rests side by side)
-  are `insufficient_data` (`non_linear_dough_path`) until split masses are modelled. Without a
-  mixing step, the estimate is `insufficient_data`, and so it is when yeast is already in the dough ahead of
-  the reference mixing step with a non-mixing step between (`leaven_before_mixing`, process.md); without a heat step, every `asap` step after
-  the mix counts.
+- **Dough clock** (owner decision of 2026-11-04, #231). Fermentation starts when the yeast or
+  leaven first meets the flour and water: the progress `F` of the dough is 0 at the **start of the
+  first-contact step** (process.md, Mixing steps, First contact). Mixing and kneading time count as
+  fermentation time: nothing in the biology waits for the end of the kneading. The contract used to
+  start the clock at the end of the reference mixing step (the last main-dough mixing step) and
+  to refuse a dough whose yeast was in earlier (`leaven_before_mixing`); both rules are retired.
+- **Dough end point**: from the first contact to the start of the bake, the dough is "ready to
+  bake" (the baker's readiness decision, see Readiness profiles below). Mixing, kneading, bulk, cold
+  retard, shaping and proof are counted together: the state is never reset between steps (#9).
+- **Dough steps**: the first-contact step and every later `asap` step before the first **heat
+  step** (a cooking operation, process.md: boiling bagels, grilling or frying a dough ends the
+  fermentation as baking does) in the graph, in process order; mixing and kneading steps among
+  them, each with its own duration. `alap` steps (preheating) never hold the dough, and a step
+  before the first contact (an `autolyse` without yeast, the weighing) is not a dough step. They
+  must form one sequence, each after the previous one; dough steps in parallel (two rests side by
+  side) are `insufficient_data` (`non_linear_dough_path`) until split masses are modelled. A step
+  with no planned duration contributes zero time (listed in the assumptions, Results). Without a
+  main-dough mixing step the estimate is `insufficient_data` (`no_mix_step`), without a first-contact
+  step it is `insufficient_data` (`no_first_contact_step`, process.md), and when every dough step
+  is a mixing step there is no fermentation step to estimate (`no_fermentation_step`); without a
+  heat step, every `asap` step from the first contact counts.
 - **Preferment end point**: a poolish or biga is "ripe" (#33 objection 5), at progress 1.
+- **A preferment keeps its own clock**, from its own first contact: it starts at the start of its
+  own fermenting step (the step with operation `preferment`, or the legacy step with the
+  component's id), whatever the dough does, and the dough's clock does not wait for it. Nothing
+  else about a preferment changes. Time spent on a preparatory step of the same component (a
+  `frasage` or `mix` of the poolish ahead of its fermenting phase) is not counted today, as before;
+  whether it should be is an open question for the owner (#231).
 - A preferment is a `preferment`-kind component; its steps are the steps of the component
   (`process.md`, Subjects and component phases): the step with the component's id, and the steps
   naming it as `subject`. With more than one fermenting (`preferment`) phase its estimate is
@@ -130,20 +146,28 @@ type ReadinessRef = { id: string; version: string };
 
 ## Dough temperature
 
+The dough has a temperature from the first contact on, since that is when it starts to ferment.
+
 - **Basic mode** (default, nothing measured): the dough starts at the ambient temperature of the
-  reference mixing step (its condition temperature, else the first fermentation step's).
-- **Advanced mode**: the reference mixing step declares a target dough temperature
-  (`conditions.doughTemperatureC`); the dough starts at it.
-- Between steps, the dough follows each step's condition temperature with a first-order lag
-  `dT/dt = (T_condition − T) / τ`, τ within its range (0 = it follows at once). A step without a
-  condition temperature keeps the previous one; with none at all, the estimate is
-  `insufficient_data`. For a step that carries thermal inputs, `τ` and its band come from the
-  Dough thermal model below; for any other step `τ` is 1.5 h, band 0 to 3 h. The band of `τ` enters
-  the envelope instant by instant and step by step, never as one value shared by the whole path
-  (The band and the envelope).
+  first-contact step (its condition temperature, else the first dough step's that has one).
+- **Advanced mode**: the reference mixing step (process.md) declares a target dough temperature
+  (`conditions.doughTemperatureC`); the dough starts at it, **from the first contact**. ASSUMED:
+  the target is the temperature the dough has at the end of the mixing; the model applies it from
+  the start of the first-contact step and lets the lag below carry the dough from there, so a
+  target far from the ambient is followed by a drift during the mixing steps themselves. A
+  measurement of the dough at the start of the first contact would replace this assumption.
+- Between steps, and inside the mixing steps, the dough follows each step's condition temperature
+  with a first-order lag `dT/dt = (T_condition − T) / τ`, τ within its range (0 = it follows at
+  once). A step without a condition temperature keeps the previous one; with none at all, the
+  estimate is `insufficient_data`. For a step that carries thermal inputs, `τ` and its band come
+  from the Dough thermal model below; for any other step `τ` is 1.5 h, band 0 to 3 h. The band of
+  `τ` enters the envelope instant by instant and step by step, never as one value shared by the
+  whole path (The band and the envelope).
 - A measured dough temperature (an observation during a bake) replaces the estimate from that
   instant (bake-session.md, `doughTemperature`); planning uses the plan. A core-probe reading
   replaces the **mean** state through `γ_core` (below).
+- The mixing machine's friction is not a heat source of the model: it enters only the water
+  temperature below and, through the target, the starting temperature.
 
 ## Dough thermal model (#176)
 
@@ -172,7 +196,9 @@ depend on the unit. The persisted values are unchanged (grams, °C, seconds, pro
 - **Default behaviour, guaranteed.** A step with no `thermal` object keeps today's lag: `τ` =
   1.5 h, band 0 to 3 h, no self-heating (`ΔT_ad` = 0), no new flag. A process with no `thermal`
   anywhere has the same **central** values as in contract `0.20.0`, and every value of every case
-  of `fixtures/fermentation/cases.json` stays valid unchanged. One correction applies to every
+  of `fixtures/fermentation/cases.json` stayed valid unchanged, until the dough clock moved to the
+  first contact (`0.24.0`, Versions): the mixing time now counts, the cases that have a mixing
+  step were recomputed, and the thermal model itself is untouched. One correction applies to every
   process: `0.20.0` took the band corners `τ` = 0 and `τ` = 3 h for the whole path at once, which
   understates the envelope when the dough both cools and warms (and can leave the central value
   outside its own band, fixture `thermal/cases.json` case g). From `0.21.0` the band follows the
@@ -514,9 +540,10 @@ ended is computed from what was recorded, never from the original plan: the prog
 accumulated (integrated over the recorded times of the steps and their recorded conditions), the
 dough temperature (a `doughTemperature` observation replaces the mean state from its instant,
 Dough temperature), the recorded temperature and `AdjustStep` of each step, and the thermal inputs
-in force (a `StepThermalChanged` starts a new segment, bake-session.md). Completing a step fixes
-its recorded end, and everything after it is projected from that end and from the state the dough
-had then. This is the replanning rule that already holds for times (process.md, Projection:
+in force (a `StepThermalChanged` starts a new segment, bake-session.md). The dough clock starts at the recorded
+start of the first-contact step (a first-contact step that has not started is projected from the
+plan). Completing a step fixes its recorded end, and everything after it is projected from that
+end and from the state the dough had then. This is the replanning rule that already holds for times (process.md, Projection:
 freeze recorded facts, then forward pass) applied to the biology; `liveProjection` and the
 model use the same recorded facts, and `evolve` stays structural (bake-session.md): the recomputed
 values are derived, and committed estimates keep what they committed (history.md). The model
@@ -701,3 +728,43 @@ longer refuses a set that a narrower one calibrates (Personal correction, case k
 before give the same factor; only sets refused before can now be accepted. No persisted shape
 changes. The implementing pull request bumps `CONTRACT_VERSION` to `0.22.1`, `ENGINE_VERSION` to
 `0.9.1` and `flourprint.dough-thermal` to `0.2.1`.
+
+Version `0.24.0` (target) moves the **dough clock to the first contact** (owner decision of
+2026-11-04, #231; What it predicts, Dough temperature; process.md, Mixing steps, First contact).
+The progress `F` of the dough starts at the start of the step where the yeast or leaven first meets
+the flour and water, and the mixing and kneading steps after it are dough steps with their own
+duration. It retires the end-of-the-mix rule and the reason `leaven_before_mixing` (never
+produced by the engine), and adds the reason `no_first_contact_step`. What does not change: the
+kinetic law and every constant, the readiness profiles, the thermal model, the band and its
+envelope, a preferment's clock, the reference mixing step's other roles (target dough temperature,
+friction, water temperature). No persisted shape changes; every document stays readable, and only
+the estimates computed from them differ. Compatibility:
+
+- **Engine version.** `ENGINE_VERSION` goes from `0.9.1` to `0.10.0` (changed calculation
+  behaviour: every dough with a mixing step of non-zero duration, and every dough whose yeast
+  enters before the last mixing step, now estimates a different time and progress). Bake
+  snapshots record the engine version that computed their committed values and keep them; replay
+  never recomputes them (history.md).
+- **Model versions.** The kinetic model `flourprint.commercial-yeast` stays `0.1.0`: its law and
+  constants are unchanged, and the model version names those, not the process semantics that tell
+  it when to start integrating. The thermal sub-model `flourprint.dough-thermal` stays `0.2.1`
+  for the same reason. The readiness profiles are untouched.
+- **Contract version.** `CONTRACT_VERSION` takes one minor step from the version current at the
+  merge of the implementing pull request (`0.23.0` to `0.24.0` at the time of writing).
+- **Stored estimates.** An accepted suggestion keeps its `Estimate` as it was, with the model and
+  assumptions of the time (Accepted suggestions); it is not recomputed. A recipe edited after the
+  change gets new suggestions from the new clock.
+- **Dough steps and recorded events.** The dough steps now start at the first contact. A command
+  that needs a dough step (`doughReady`, a dough-temperature observation, `SetStepThermal`) is
+  checked against the dough steps in force when it is issued, so a baker can now read the dough
+  temperature at the end of the kneading. The only steps that stop being dough steps are those
+  between the old start (the first `mix`) and a later first contact, i.e. a recipe whose yeast
+  enters only after a `mix`, which is not expected. Restoring a backup re-checks the gate on its
+  stored dough-temperature observations and thermal changes, so such an event
+  recorded on such a step would be refused at restore.
+- **Fermentation schedules** (drafts.md) replace the dough steps **after the reference mixing
+  step**, not the mixing steps: their scope is unchanged.
+
+Reference cases: `fixtures/fermentation/cases.json` was regenerated by `generate.py` with the new
+clock (new cases `first-contact-*`; the existing cases that have a 10 min mixing step now count
+it). Nothing in it comes from the engine.
