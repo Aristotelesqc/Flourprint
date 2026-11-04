@@ -1,4 +1,4 @@
-import { WEB_TARGETS, type WebTarget } from './channel.js';
+import { parseVersionId, type VersionId } from '@flourprint/adapters/dev-versions';
 
 /**
  * Display and window settings of the desktop shell (ADR 0011), kept in `settings.json` in the
@@ -28,8 +28,8 @@ export interface Settings {
   readonly forceSrgb: boolean;
   readonly device: DeviceId;
   readonly zoom: number;
-  /** The dev shell's version (View → Version); the release shell ignores it. */
-  readonly webTarget: WebTarget;
+  /** The dev shell's version (View → Version, ADR 0023); the release shell ignores it. */
+  readonly webTarget: VersionId;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -58,9 +58,10 @@ export const parseSettings = (text: string | undefined): Settings => {
       ? (value.device as DeviceId)
       : DEFAULT_SETTINGS.device,
     zoom: ZOOMS.includes(value.zoom as number) ? (value.zoom as number) : DEFAULT_SETTINGS.zoom,
-    webTarget: WEB_TARGETS.includes(value.webTarget as WebTarget)
-      ? (value.webTarget as WebTarget)
-      : DEFAULT_SETTINGS.webTarget,
+    // Settings written before ADR 0023 named the main address `release`.
+    webTarget:
+      parseVersionId(value.webTarget === 'release' ? 'main' : value.webTarget) ??
+      DEFAULT_SETTINGS.webTarget,
   };
 };
 

@@ -808,6 +808,52 @@ export const en = {
   'advanced.devUpdate.unreachable': 'The site cannot be reached. Check the connection.',
   'advanced.devUpdate.saveFailed':
     'A newer build is available, but the data could not be saved first: nothing was reloaded.',
+  'advanced.versions': 'Web version',
+  'advanced.versions.loaded': 'Loaded: {version} · {label}',
+  'advanced.versions.returnDev': 'Return to dev',
+  'advanced.versions.returning': 'Returning to dev…',
+  'advanced.versions.choose': 'Choose a version',
+  'advanced.versions.dev': 'Dev',
+  'advanced.versions.canary': 'Canary',
+  'advanced.versions.main': 'Main',
+  'advanced.versions.pull': 'PR #{number}',
+  'advanced.versions.devHint': 'Default. The integration branch, and main when they do not differ.',
+  'advanced.versions.canaryHint': 'The release after next.',
+  'advanced.versions.mainHint': 'Released work.',
+  'advanced.versions.pulls': 'Open pull requests',
+  'advanced.versions.pullsLoading': 'Loading the open pull requests…',
+  'advanced.versions.pullsNone': 'No open pull request.',
+  'advanced.versions.pullsUnavailable':
+    'The open pull requests cannot be listed now (offline or rate-limited). A number can still be entered.',
+  'advanced.versions.number': 'Pull request number',
+  'advanced.versions.numberLoad': 'Load',
+  'advanced.versions.numberInvalid': 'Enter a pull request number, for example 233.',
+  'advanced.versions.load': 'Load this version',
+  'advanced.versions.copyLoad': 'Copy my data to this version, then load it',
+  'advanced.versions.native':
+    'This pull request changes native code (Android project, Capacitor or the desktop shell). Its web build cannot show those changes: an APK or a shell build is needed.',
+  'advanced.versions.copyDone': 'Data copied from the previous version.',
+  'advanced.versions.copyNotEmpty':
+    'Data not copied: this version already holds data. Delete its data first to copy.',
+  'advanced.versions.copyFailed': 'The data could not be copied.',
+  'advanced.versions.copyPrepareFailed':
+    'The data could not be prepared for the copy. The version was not changed.',
+  'advanced.versions.switchFailed': 'The version could not be changed.',
+  'advanced.versions.data': 'Data kept on this device',
+  'advanced.versions.dataHint':
+    'Each version keeps its own data. Dev, canary and main are never deleted automatically; the data of a merged or closed pull request is deleted at start-up.',
+  'advanced.versions.dataNone': 'No version holds data yet.',
+  'advanced.versions.loadedMark': '{version} (loaded)',
+  'advanced.versions.deleteData': 'Delete this version’s data',
+  'advanced.versions.deleteDataHint':
+    'Erases the data of {version}. Other versions are not affected.',
+  'advanced.versions.delete': 'Delete',
+  'advanced.versions.deleteTitle': 'Delete the data of {version}?',
+  'advanced.versions.deleteMessage':
+    'Recipes, bakes and settings kept for this version are erased. Other versions are not affected.',
+  'advanced.versions.deleteRestart': 'The app restarts afterwards.',
+  'advanced.versions.deleted': 'Data of {version} deleted.',
+  'advanced.versions.deleteFailed': 'The data could not be deleted.',
   'advanced.sample': 'Load the sample recipes',
   'advanced.sampleHint':
     'Development builds only: adds Poolish + tangzhong for trying the app. A recipe already here is kept.',
@@ -2011,6 +2057,53 @@ export const fr: Catalog = {
   'advanced.devUpdate.unreachable': 'Site injoignable. Vérifier la connexion.',
   'advanced.devUpdate.saveFailed':
     'Une version plus récente est disponible, mais les données n’ont pas pu être enregistrées d’abord : rien n’a été rechargé.',
+  'advanced.versions': 'Version du web',
+  'advanced.versions.loaded': 'Chargée : {version} · {label}',
+  'advanced.versions.returnDev': 'Revenir à dev',
+  'advanced.versions.returning': 'Retour à dev…',
+  'advanced.versions.choose': 'Choisir une version',
+  'advanced.versions.dev': 'Dev',
+  'advanced.versions.canary': 'Canary',
+  'advanced.versions.main': 'Main',
+  'advanced.versions.pull': 'PR n° {number}',
+  'advanced.versions.devHint':
+    'Par défaut. La branche d’intégration, et main lorsque les deux ne diffèrent pas.',
+  'advanced.versions.canaryHint': 'La version suivant la prochaine.',
+  'advanced.versions.mainHint': 'Le travail publié.',
+  'advanced.versions.pulls': 'Pull requests ouvertes',
+  'advanced.versions.pullsLoading': 'Chargement des pull requests ouvertes…',
+  'advanced.versions.pullsNone': 'Aucune pull request ouverte.',
+  'advanced.versions.pullsUnavailable':
+    'Liste des pull requests ouvertes indisponible (hors ligne ou limite atteinte). Un numéro peut toujours être saisi.',
+  'advanced.versions.number': 'Numéro de pull request',
+  'advanced.versions.numberLoad': 'Charger',
+  'advanced.versions.numberInvalid': 'Saisir un numéro de pull request, par exemple 233.',
+  'advanced.versions.load': 'Charger cette version',
+  'advanced.versions.copyLoad': 'Copier mes données vers cette version, puis la charger',
+  'advanced.versions.native':
+    'Cette pull request modifie du code natif (projet Android, Capacitor ou coque de bureau). Sa version web ne peut pas montrer ces changements : un APK ou une version de la coque est nécessaire.',
+  'advanced.versions.copyDone': 'Données copiées depuis la version précédente.',
+  'advanced.versions.copyNotEmpty':
+    'Données non copiées : cette version contient déjà des données. Supprimer d’abord ses données pour copier.',
+  'advanced.versions.copyFailed': 'Copie des données impossible.',
+  'advanced.versions.copyPrepareFailed':
+    'Préparation de la copie impossible. La version n’a pas changé.',
+  'advanced.versions.switchFailed': 'Changement de version impossible.',
+  'advanced.versions.data': 'Données conservées sur cet appareil',
+  'advanced.versions.dataHint':
+    'Chaque version garde ses propres données. Dev, canary et main ne sont jamais supprimées automatiquement ; les données d’une pull request fusionnée ou fermée sont supprimées au démarrage.',
+  'advanced.versions.dataNone': 'Aucune version ne conserve encore de données.',
+  'advanced.versions.loadedMark': '{version} (chargée)',
+  'advanced.versions.deleteData': 'Supprimer les données de cette version',
+  'advanced.versions.deleteDataHint':
+    'Efface les données de {version}. Les autres versions ne sont pas touchées.',
+  'advanced.versions.delete': 'Supprimer',
+  'advanced.versions.deleteTitle': 'Supprimer les données de {version} ?',
+  'advanced.versions.deleteMessage':
+    'Les recettes, cuissons et réglages conservés pour cette version seront effacés. Les autres versions ne sont pas touchées.',
+  'advanced.versions.deleteRestart': 'L’app redémarre ensuite.',
+  'advanced.versions.deleted': 'Données de {version} supprimées.',
+  'advanced.versions.deleteFailed': 'Suppression des données impossible.',
   'advanced.sample': 'Charger les recettes d’exemple',
   'advanced.sampleHint':
     'Versions de développement seulement : ajoute Poolish + tangzhong pour essayer l’app. Une recette déjà présente est conservée.',
