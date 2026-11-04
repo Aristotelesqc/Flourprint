@@ -134,20 +134,25 @@ thermal input, and its one band case keeps a constant temperature, where the lag
 A case may carry `"since": "<engine version>"`: the engine version from which it applies. A contract
 change merges before its implementation, so a case written for it is pending for a harness running
 an older engine and runs as soon as `ENGINE_VERSION` reaches `since`; nothing is relaxed afterwards.
-A case whose values the change supersedes keeps its former form with `"until": "<engine version>"`:
+A case whose values a change supersedes may keep its former form with `"until": "<engine version>"`:
 it runs while the engine is older, so no existing assertion is skipped or weakened before the
-implementation lands, and the implementing pull request removes it.
+implementation lands, and the implementing pull request removes it. No case uses `until` at present
+(the harness still honours it).
 
-**Dough clock (contract 0.24.0).** The progress of the dough is 0 at the start of the first-contact
-step (process.md, First contact): the mixing and kneading steps count. The cases whose name starts
-with `first contact` cover a direct dough, a fermentolyse before the final kneading, an autolyse
-without yeast, a process without incorporations, a poolish with a final dough, the target dough
-temperature applied from the first contact and a basic-mode start at the first-contact step's own
-temperature. They list the progress at the end of each dough step (`dough.steps.<i>.endProgressPct`)
-at a constant temperature, where `F = t × (d / 1 %)^k × r(T) / A` is exact (`A` 3.43 h, `k` 0.729,
-`Ea` 98.3 kJ/mol, `r` = 1 at 21.1 °C), and with the default lag `τ` 1.5 h, a trapezoid of 200 000
-steps on the analytic temperature. Tolerances: 0.001 (percentage points and seconds) for the closed
-forms, 0.02 for the lagged paths (the engine's integrator is allowed that; the reference is better
-than 1e-6). The four older cases that include the 10 min mixing step are recomputed with the mixing counted
-(`since` 0.10.0, name suffixed or changed); their former forms (`until` 0.10.0) served the engine
-until it moved and were removed with the engine change.
+**Dough clock (contract 0.24.0).** The progress of the dough is 0 at the **end** of the
+first-contact step (process.md, First contact): that step's own duration does not count, and the
+kneading, fermentolyse and other steps after it do. The dough steps the engine reports
+(`dough.steps.<i>`) are the steps after the first-contact step. The cases whose name starts with
+`first contact` cover a direct dough, a fermentolyse before the final kneading, an autolyse without
+yeast, a process without incorporations, a poolish with a final dough, a poolish's own preparatory
+mix, the target dough temperature applied from the end of the first contact (the target on the
+first-contact step and on a later kneading), a basic-mode start at the first-contact step's own
+temperature and a fermentolyse after the frasage. They list the progress at the end of each dough
+step at a constant temperature, where `F = t × (d / 1 %)^k × r(T) / A` is exact (`A` 3.43 h,
+`k` 0.729, `Ea` 98.3 kJ/mol, `r` = 1 at 21.1 °C), and with the default lag `τ` 1.5 h, a trapezoid of
+200 000 steps on the analytic temperature. Tolerances: 0.001 (percentage points and seconds) for the
+closed forms, 0.02 for the lagged paths (the engine's integrator is allowed that; the reference is
+better than 1e-6). The four older cases whose recipe has a 10 min `mix` as its only mixing step
+(reference point, constant 4 °C, inverse dose, thermal lag) are unchanged: that `mix` is the
+first-contact step and nothing lies between its end and the end of the last mixing step, so their
+values are those of contract 0.23.0.

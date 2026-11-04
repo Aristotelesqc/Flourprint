@@ -102,11 +102,9 @@ const mix = (conditions: Record<string, unknown>): Process => ({
 });
 
 describe('readiness profiles', () => {
-  // The 10 min mix counts (the clock starts at the first contact), so the proof is A hours less 10 min.
-  const MIX_S = 600;
   const planned: Process = {
     steps: process.steps.map((s) =>
-      s.id === 'proof' ? { ...s, plannedDurationS: 3.43 * 3600 - MIX_S } : s,
+      s.id === 'proof' ? { ...s, plannedDurationS: 3.43 * 3600 } : s,
     ),
   };
   const value = (e: { status: string; value?: number }) => (e.status === 'ok' ? e.value : NaN);
@@ -130,7 +128,7 @@ describe('readiness profiles', () => {
     };
     const result = estimateFermentation(base, selected).dough;
     expect(value(result.progressPct)).toBeCloseTo(50, 6);
-    expect(value(result.duration)).toBeCloseTo(2 * 3.43 * 3600 - MIX_S, 3);
+    expect(value(result.duration)).toBeCloseTo(2 * 3.43 * 3600, 3);
     expect(result.duration).toMatchObject({ calibration: { id: EXPERIMENTAL_READY.id } });
     expect(result.progressPct.status === 'ok' && result.progressPct.assumptions).not.toContain(
       'readiness_default',
