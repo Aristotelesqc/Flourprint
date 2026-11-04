@@ -27,7 +27,7 @@ interface ProcessStep {
   plannedDurationS?: number; // absent = unknown
   endCriterion?: EndCriterion; // observation or user decision
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
-  durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one dough step (fermentation.md)
+  durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one fermentation step, never a mixing step (fermentation.md)
   subject?: Subject; // the mass the step works on; absent = derived (Subjects and component phases)
   thermal?: StepThermal; // thermal inputs of a dough step (Thermal inputs); absent = fixed lag of fermentation.md
   // `beforeTarget` only (Steps before a target): target, requiredWarmupS, startRule
@@ -62,6 +62,9 @@ default outcome when a session finishes (bake-session.md); an invalid one is `In
 - The list order is a **valid topological order**: the mobile list reads top to bottom.
 - A step added to the list gets `dependsOn = [previous step]` by default.
 - `alap` without a successor, or without `plannedDurationS`, is an error.
+- `durationMode: 'model'` is refused on a mixing step (`frasage`, `mix`): it is allowed only on a
+  fermentation step, a dough step that is not a mixing step (`fermentation.md`, Model-driven
+  duration). `InvalidProcess`, the step as `path`.
 - `beforeTarget` is valid only on a `preheat` step, with a `target` that is a cooking step not
   upstream of it, no `plannedDurationS`, no `durationMode`, no incorporations and no step depending
   on it; `requiredWarmupS` ≥ 0, required unless `startRule` is `afterDependencies` (Steps before a

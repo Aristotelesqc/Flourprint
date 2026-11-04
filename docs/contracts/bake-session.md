@@ -361,11 +361,13 @@ never completed is not an open step: finishing the Preparation does not need it.
 `AddObservation` accepts an optional stable `kind`. `kind: 'doughReady'` records that the baker
 judges the dough ready for its next stage:
 
-- It needs a `stepId` that is **running** (started, not ended) and is a **dough step** (the `asap`
-  steps from the first contact to the bake, `fermentation.md`). Anything else is refused
-  (`InvalidCommand`), as is a `doughReady` on an ended bake (`BakeNotActive`).
-- The domain records its `stage` in the event: `bake` when the step is the last dough step (ready
-  to bake), `shape` otherwise (ready to shape, e.g. at the end of the bulk). Only `stage: 'bake'`
+- It needs a `stepId` that is **running** (started, not ended) and is a **fermentation step**: a
+  dough step (the `asap` steps from the first contact to the bake, `fermentation.md`) that is not a
+  mixing step. A mixing or kneading step is a dough step but is never judged ready: the baker
+  judges the dough after the mixing, not during it. Anything else is refused (`InvalidCommand`), as
+  is a `doughReady` on an ended bake (`BakeNotActive`).
+- The domain records its `stage` in the event: `bake` when the step is the last fermentation step
+  (ready to bake), `shape` otherwise (ready to shape, e.g. at the end of the bulk). Only `stage: 'bake'`
   observations are data for the readiness profile; `shape` ones are kept for later stage models.
   Events written before `0.6.0` have no `stage`: unknown, never pooled with `bake`.
 - Category `fermentation`, an optional short `criterion` code (`poke`, `feel`, `time`, `other`)
