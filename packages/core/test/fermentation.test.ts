@@ -11,6 +11,7 @@ import {
   type Formula,
   type Process,
 } from '../src/domain/index.js';
+import { ENGINE_VERSION } from '../src/domain/version.js';
 
 /** Hand-computed cases of docs/contracts/fixtures/fermentation (never engine output). */
 interface Case {
@@ -19,6 +20,8 @@ interface Case {
   process: Process;
   expected: Record<string, number | [number, number]>;
   tolerance?: number;
+  /** Engine version from which the case applies (contract PRs precede their implementation). */
+  since?: string;
 }
 const file = JSON.parse(
   readFileSync(
@@ -40,9 +43,20 @@ const at = (value: unknown, path: string): unknown =>
       value,
     );
 
+const numeric = (version: string) => version.split('.').map(Number);
+const appliesTo = (c: Case): boolean => {
+  if (c.since === undefined) return true;
+  const [have, need] = [numeric(ENGINE_VERSION), numeric(c.since)];
+  for (const [i, n] of need.entries()) {
+    if ((have[i] ?? 0) !== n) return (have[i] ?? 0) > n;
+  }
+  return true;
+};
+
 describe('fermentation reference cases', () => {
   for (const c of file.cases) {
-    it(c.name, () => {
+    // A case written for a later contract is skipped by an engine older than its `since`.
+    (appliesTo(c) ? it : it.skip)(c.name, () => {
       expect(validateFormula(c.formula).ok).toBe(true);
       expect(validateProcess(c.process).ok).toBe(true);
       const result = estimateFermentation(c.formula, c.process, fixtureProfile);
