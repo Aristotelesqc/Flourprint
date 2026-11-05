@@ -365,6 +365,55 @@ Controlled raw-string text input for localized, editable numeric measurements an
 
 - `v1`: Controlled raw-string text input for locale-specific numbers with 48px touch target, accessible labeling and live error announcements.
 
+### `fp.section-carousel`
+
+Finger-tracked peer sections sharing one external vertical scroller and preserved mounted state.
+
+**Use when**
+
+- Recipe, Planning and History top-tab navigation with adjacent-pane previews.
+
+**Avoid when**
+
+- Route navigation or a wizard with gated steps.
+
+**Props**
+
+| Prop                | Meaning                                                           |
+| ------------------- | ----------------------------------------------------------------- |
+| `className`         | Optional container utilities.                                     |
+| `sections`          | Ordered section identifiers.                                      |
+| `activeSection`     | Controlled selected section.                                      |
+| `onChangeSection`   | Commits selection once the slide has settled.                     |
+| `label`             | Localized accessible carousel label.                              |
+| `children`          | One mounted child for each section.                               |
+| `disabled`          | Prevents carousel gestures while another interaction owns them.   |
+| `control`           | Optional imperative section-selection and cancellation handle.    |
+| `scrollElement`     | The existing external vertical scroller.                          |
+| `getScrollPosition` | Reads the remembered scroll position of an incoming section.      |
+| `onGestureProgress` | Links the measured tab indicator to tracking and settling.        |
+| `onBeforeChange`    | Commits the caller’s active input through its existing blur path. |
+
+**Accessibility**
+
+- Inactive panes remain mounted, inert and hidden from assistive technology.
+- Vertical scrolling, editable controls, step handles and Android Back edges keep their gestures.
+- Reduced motion changes the section instantly without sliding.
+- The caller retains independent panel scroll positions in its existing scroller.
+
+**Related**
+
+- `fp.tabs`
+- `fp.motion.tab-carousel`
+
+**Decisions**
+
+- [L101/L106/L117: approved navigation A](https://github.com/Aristotelesqc/Flourprint/issues/133)
+
+**Versions**
+
+- `v1`: Horizontal swipeable carousel holding screens/panes with synchronized tab indicator, animated commit and velocity continuation (L101, L106, L117).
+
 ### `fp.select`
 
 Anchored popover overlay attached to the form field frame for choosing a single value from options, committing immediately upon selection.
@@ -536,6 +585,7 @@ Accessible tabbed navigation strip that switches between alternate views while k
 
 | Prop               | Meaning                                                                                                    |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `gestureProgress`  | Optional carousel progress linking the measured indicator to the finger and settle.                        |
 | `selected`         | Identifier of the currently active tab item.                                                               |
 | `onSelectedChange` | Callback fired when a tab is selected with the selected tab identifier.                                    |
 | `label`            | Required localized accessible label describing the purpose of the tab list (applied as aria-label).        |
@@ -964,3 +1014,41 @@ Settle animation for dragged step node cards snapping back to origin or settling
 **Versions**
 
 - `v1` (keyframes), default selection: Settle animation for step drag and drop from release coordinates to target or origin position (L96, L104).
+
+### `fp.motion.tab-carousel`
+
+Horizontal carousel slide between adjacent section tabs (L101, L106, L117), supporting 1:1 finger-follow gestures, flick velocity, momentum continuation without zero-velocity restart, and animated settle.
+
+**Use when**
+
+- Recipe section tabs at the top of a screen where swiping horizontally moves between tabs.
+- L106/L117 animated commit and velocity-matched settle continuation.
+
+**Avoid when**
+
+- Vertical scrolling content (touch-action: pan-y must preserve native vertical scroll).
+- Starts within 24 px of screen edges (Android Back gesture margin).
+- During active step dragging or within elements with horizontal scrolling.
+
+**Accessibility**
+
+- Panes remain mounted so draft values and form focus are preserved.
+- Reduced motion: instant transition without sliding animation.
+- 48 px minimum touch targets for all tab controls.
+- Starting and adjacent panes remain revealed through settle, committing selection exactly once upon completion.
+
+**Related**
+
+- `fp.motion.highlight`
+- `fp.motion.sheet-enter`
+
+**Decisions**
+
+- [L101: Navigation is A with swipeable section tabs](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [L106: Tab carousel motion follows finger 1:1 and continues with release velocity without jumping](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [L117: A tab-carousel commit animates to final position](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [ADR 0021: motion items](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
+
+**Versions**
+
+- `v1` (keyframes), default selection: Round 2 / L101 tab carousel: horizontal slide between adjacent tabs with finger-follow, flick velocity, and gesture-matched springback.

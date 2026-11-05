@@ -2,6 +2,7 @@ import type { ButtonProps } from './components/button/props.ts';
 import type { SurfaceProps } from './components/surface/props.ts';
 import type { NumberFieldProps } from './components/number-field/props.ts';
 import type { DisclosureProps } from './components/disclosure/props.ts';
+import type { SectionCarouselProps } from './components/section-carousel/props.ts';
 import type { TabsProps } from './components/tabs/props.ts';
 import type { FloatingMenuProps } from './components/floating-menu/props.ts';
 import type { BottomSheetProps } from './components/bottom-sheet/props.ts';
@@ -18,6 +19,7 @@ export type FlourprintComponents = {
   readonly 'fp.number-field': NumberFieldProps;
   readonly 'fp.disclosure': DisclosureProps;
   readonly 'fp.tabs': TabsProps;
+  readonly 'fp.section-carousel': SectionCarouselProps;
   readonly 'fp.floating-menu': FloatingMenuProps;
   readonly 'fp.bottom-sheet': BottomSheetProps;
   readonly 'fp.dialog': DialogProps;

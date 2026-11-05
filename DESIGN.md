@@ -390,6 +390,10 @@ and require their own checks.
   default text scale. Reading section tabs use `fp.tabs` in one horizontal row, scrolling when
   needed rather than wrapping; the selected tab stays visible. The full recipe title remains
   in the header. These changes port the approved navigation A reference.
+  Recipe sections use `fp.section-carousel` and `fp.motion.tab-carousel`: one Ionic vertical scroller,
+  preserved mounted drafts and remembered panel positions, direct finger tracking, a measured tab
+  indicator and velocity-matched settling. Vertical scrolling, step handles, editable controls and
+  the 24 px Android Back edges retain their gestures. Reduced motion changes sections instantly.
   The existing editor action layout and segmented editor sections described above are legacy
   implementation, pending the L49/L60/L108 port; they are not the target design. The Recipe summary uses the approved two-column tiles under the owner's 2026-11-04 direction,
   checked at both required widths/scales and corrected for known ledger defects.

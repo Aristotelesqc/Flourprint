@@ -1,3 +1,4 @@
+import type { SectionCarouselProgressDetail as TabGestureProgress } from '../section-carousel/props.ts';
 import type { ReactNode } from 'react';
 
 export interface TabItem {
@@ -12,6 +13,8 @@ export interface TabItem {
 }
 
 export interface TabsProps {
+  /** Measured carousel tracking and settle progress; null means stationary. */
+  readonly gestureProgress?: TabGestureProgress | null | undefined;
   /** Identifier of the currently selected tab item. */
   readonly selected: string;
   /** Callback fired when a tab is selected. */

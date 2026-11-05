@@ -40,6 +40,8 @@ const guide: ComponentGuide<TabsProps> = {
     },
   ],
   props: {
+    gestureProgress:
+      'Optional carousel progress linking the measured indicator to the finger and settle.',
     selected: 'Identifier of the currently active tab item.',
     onSelectedChange: 'Callback fired when a tab is selected with the selected tab identifier.',
     label:

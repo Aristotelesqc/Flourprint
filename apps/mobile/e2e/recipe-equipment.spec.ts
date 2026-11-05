@@ -154,6 +154,9 @@ for (const english of [false, true]) {
     await routed(page)
       .getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true })
       .click();
+    await expect(
+      routed(page).getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true }),
+    ).toHaveAttribute('aria-selected', 'true');
     await details
       .getByRole('button', {
         name: english ? 'Equipment details' : 'Détails de l’équipement',
