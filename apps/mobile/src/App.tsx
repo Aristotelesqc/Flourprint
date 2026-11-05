@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { IntlProvider } from 'react-intl';
 import { Navigate, Route } from 'react-router-dom';
 import { catalogs, type Locale } from './i18n/messages';
+import type { CopyOutcome } from './services/dev-versions';
+import { CopyNotice } from './ui/CopyNotice';
 import { AdvancedPage } from './pages/AdvancedPage';
 import { BakePage } from './pages/BakePage';
 import { BakesPage } from './pages/BakesPage';
@@ -20,7 +22,16 @@ import { attachThemeSync } from './theme/device-theme';
 
 setupIonicReact();
 
-export const App = ({ services, locale }: { services: Services; locale: Locale }) => {
+export const App = ({
+  services,
+  locale,
+  copyOutcome,
+}: {
+  services: Services;
+  locale: Locale;
+  /** Dev apps: what the pending "copy my data to this version" did at this start (ADR 0023). */
+  copyOutcome?: CopyOutcome | undefined;
+}) => {
   useEffect(() => attachThemeSync(services.preferences), [services.preferences]);
 
   return (
@@ -30,6 +41,7 @@ export const App = ({ services, locale }: { services: Services; locale: Locale }
           <IonApp>
             <IonReactRouter>
               <NotificationSync />
+              {copyOutcome && <CopyNotice outcome={copyOutcome} />}
               <IonRouterOutlet>
                 <Route path="/recipes" element={<RecipesPage />} />
                 <Route path="/recipes/:recipeId" element={<RecipePage />} />

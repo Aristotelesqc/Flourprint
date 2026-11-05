@@ -3,6 +3,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type {
   BakeEventStore,
   Clock,
+  RestoreTarget,
   EquipmentRegistry,
   FlourRegistry,
   IdGenerator,
@@ -58,6 +59,8 @@ export interface Services {
   /** Device preferences: simulation mode, its offset, temperature units. */
   readonly preferences: PreferenceStore;
   readonly ids: IdGenerator;
+  /** Where a backup is restored: an empty target only (persistence.md); used by the dev apps' copy. */
+  readonly restoreTarget: RestoreTarget;
   readonly storage: 'sqlite' | 'memory';
   /** Where the app runs: the phone, the PC shell (ADR 0011) or a plain browser. */
   readonly platform: 'android' | 'desktop' | 'web';
@@ -109,6 +112,7 @@ export const createServices = async (options: {
       SqlFlourRegistry,
       SqlIngredientRegistry,
       SqlRecipeRepository,
+      SqlRestoreTarget,
       SqlThermalProfileStore,
     } = await import('@flourprint/adapters/sqlite-capacitor');
     const db = await openCapacitorSqlite('flourprint');
@@ -121,6 +125,7 @@ export const createServices = async (options: {
       equipment: new SqlEquipmentRegistry(db.value.driver),
       ingredients: new SqlIngredientRegistry(db.value.driver),
       thermalProfiles: new SqlThermalProfileStore(db.value.driver),
+      restoreTarget: new SqlRestoreTarget(db.value.driver),
       ids,
       storage: 'sqlite',
       platform: PLATFORM,
@@ -138,6 +143,7 @@ export const createServices = async (options: {
       SqlFlourRegistry,
       SqlIngredientRegistry,
       SqlRecipeRepository,
+      SqlRestoreTarget,
       SqlThermalProfileStore,
     } = await import('@flourprint/adapters/sqlite-bridge');
     const db = await openBridgeSqlite(desktop);
@@ -150,6 +156,7 @@ export const createServices = async (options: {
       equipment: new SqlEquipmentRegistry(db.value.driver),
       ingredients: new SqlIngredientRegistry(db.value.driver),
       thermalProfiles: new SqlThermalProfileStore(db.value.driver),
+      restoreTarget: new SqlRestoreTarget(db.value.driver),
       ids,
       storage: 'sqlite',
       platform: 'desktop',
@@ -164,11 +171,17 @@ export const createServices = async (options: {
   const flours = new MemoryFlourRegistry();
   const equipment = new MemoryEquipmentRegistry();
   const thermalProfiles = new MemoryThermalProfileStore();
+  const restoreTarget = new MemoryRestoreTarget(
+    recipes,
+    bakes,
+    flours,
+    equipment,
+    ingredients,
+    thermalProfiles,
+  );
   let browserData: Services['browserData'];
   if (browserSnapshotAvailable()) {
-    const loaded = await restoreBrowserSnapshot(
-      new MemoryRestoreTarget(recipes, bakes, flours, equipment, ingredients, thermalProfiles),
-    );
+    const loaded = await restoreBrowserSnapshot(restoreTarget);
     const keeper = keepBrowserSnapshot(
       { recipes, bakes, flours, equipment, ingredients, thermalProfiles },
       realClock.now,
@@ -189,6 +202,7 @@ export const createServices = async (options: {
     equipment,
     ingredients,
     thermalProfiles,
+    restoreTarget,
     ids,
     storage: 'memory',
     platform: 'web',
