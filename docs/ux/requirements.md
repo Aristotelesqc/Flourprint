@@ -284,6 +284,8 @@ _Amended: scope narrowed by L105 (style only)._
 
 **L156.** The accepted drop matches the live slot. Preserve the real card under the finger and scrim, live neighbour reflow, pre-release `getDropFeedback`, settling and focus restoration from the approved reference. Use the 350 ms hold; scrolling must not accidentally drag, and reduced motion preserves final state. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L116. Kind: OD.
 
+**L159.** Step drag handles are on the right of the cards, including the floating card during a drag. Their position and touch target stay stable across draft states and the required narrow/large-text layouts. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04 ("les poignées de déplacement soient à droite des cartes d'étapes"). Kind: OD.
+
 **L117.** A tab-carousel commit animates to its final position (see L106). Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
 **L118.** Numbers agree everywhere (L18): durations and clock times (no 5 h 12 versus 5 h 11), one rounding of baker's percentages (no 2,9 / 2,87 / 2,866), no "36 %" beside "49,68 %" on one row. Baker's percentage is shown once in edit mode. Screens: recipe, edit, steps, planning. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.

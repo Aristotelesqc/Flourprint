@@ -12,7 +12,7 @@ export const recipeSortEn = {
   'recipe.sort.announcement.dragEndedStart': 'Moved step {step} to the beginning.',
   'recipe.sort.announcement.dragCancelled': 'Reordering cancelled for step {step}.',
   'recipe.sort.error.breaksDependencies':
-    'Cannot move "{step}" because it depends on "{dependsOn}".',
+    'Cannot place the step here: "{step}" must stay after "{dependsOn}".',
   'recipe.sort.error.ambiguous.incorporationStep':
     'Cannot move "{step}" because it incorporates a recipe component.',
   'recipe.sort.error.ambiguous.stepDependencies':
@@ -44,7 +44,7 @@ export const recipeSortFr = {
   'recipe.sort.announcement.dragEndedStart': 'Étape {step} placée au début.',
   'recipe.sort.announcement.dragCancelled': 'Réorganisation annulée pour l’étape {step}.',
   'recipe.sort.error.breaksDependencies':
-    'Impossible de déplacer « {step} » car elle dépend de « {dependsOn} ».',
+    'Placement impossible ici : « {step} » doit rester après « {dependsOn} ».',
   'recipe.sort.error.ambiguous.incorporationStep':
     'Impossible de déplacer « {step} » car elle incorpore un composant.',
   'recipe.sort.error.ambiguous.stepDependencies':

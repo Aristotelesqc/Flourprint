@@ -42,7 +42,7 @@ const order = async (page: Page) =>
 const footer = (page: Page) => routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]');
 const save = (page: Page) => footer(page).getByRole('button', { name: /^(Save|Enregistrer)$/ });
 
-async function open(page: Page, theme = 'light', large = false) {
+async function open(page: Page, theme = 'light', large = false, imported = recipe) {
   await page.setViewportSize({ width: large ? 360 : 393, height: 900 });
   await page.goto('/advanced');
   const themeName =
@@ -63,7 +63,7 @@ async function open(page: Page, theme = 'light', large = false) {
           kind: 'flourprint-recipes',
           schemaVersion: 1,
           exportedAt: '2026-10-29T12:00:00.000Z',
-          recipes: [recipe],
+          recipes: [imported],
           families: [],
         }),
       ),
@@ -78,14 +78,14 @@ async function open(page: Page, theme = 'light', large = false) {
   await handle(page, 'Gamma').scrollIntoViewIfNeeded();
 }
 
-async function selectSlot(page: Page, source: string, after: string) {
+async function selectSlot(page: Page, source: string, after: string, direction = 'ArrowUp') {
   await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
   await handle(page, source).focus();
   await page.keyboard.press('Space');
   await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
   const slot = method(page).locator(`[data-slot-after="${after}"]`);
   for (let n = 0; n < 40 && (await slot.getAttribute('data-drop-target')) !== 'true'; n++)
-    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press(direction);
   await expect(slot).toHaveAttribute('data-drop-target', 'true');
 }
 
@@ -121,6 +121,98 @@ async function geometry(page: Page) {
 }
 
 for (const english of [false, true]) {
+  test(`Undo and Discard clear a refusal belonging to the previous process${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await open(page);
+    await selectSlot(page, 'Gamma', 'alpha');
+    await page.keyboard.press('Space');
+    await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
+    await selectSlot(page, 'Alpha', 'beta', 'ArrowDown');
+    await page.keyboard.press('Space');
+    await expect(method(page).getByRole('alert')).toBeVisible();
+    await footer(page)
+      .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
+      .click();
+    await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
+    await expect(method(page).getByRole('alert')).toHaveCount(0);
+    await expect(save(page)).toBeDisabled();
+    await footer(page)
+      .getByRole('button', { name: /^(Discard changes|Abandonner les modifications)$/ })
+      .click();
+    await expect(footer(page)).toHaveCount(0);
+    await expect(method(page).getByRole('alert')).toHaveCount(0);
+  });
+  test(`dropping in the visible leading slot spacing commits the indicated move${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await open(page);
+    await selectSlot(page, 'Gamma', 'alpha');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+    await routed(page)
+      .locator('ion-content')
+      .evaluate(async (content) => {
+        const scroll = await (
+          content as HTMLElement & {
+            getScrollElement(): Promise<HTMLElement>;
+          }
+        ).getScrollElement();
+        scroll.scrollTop = scroll.scrollHeight;
+      });
+    const before = await geometry(page);
+    const source = await box(handle(page, 'Gamma'));
+    await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+    await page.mouse.down();
+    try {
+      await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+      const slot = method(page).locator('[data-slot-after="alpha"]');
+      const initial = await box(slot);
+      const release = { x: source.x + source.width / 2, y: initial.y - 5 };
+      await page.mouse.move(release.x, release.y, { steps: 8 });
+      await expect(slot).toHaveAttribute('data-drop-target', 'true');
+      await slot.evaluate(async (node) => {
+        await Promise.all(
+          node.getAnimations().map((animation) => animation.finished.catch(() => {})),
+        );
+      });
+      const drawn = await box(slot);
+      expect(release.y).toBeGreaterThanOrEqual(drawn.y);
+      expect(release.y).toBeLessThanOrEqual(drawn.y + drawn.height);
+      expect(await slot.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe(
+        'rgba(0, 0, 0, 0)',
+      );
+    } finally {
+      await page.mouse.up();
+    }
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+    await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
+    await expect(save(page)).toBeEnabled();
+    await expect(handle(page, 'Gamma')).toBeFocused();
+    expect(Math.abs((await geometry(page)).scrollTop - before.scrollTop)).toBeLessThanOrEqual(1);
+  });
+  test(`long step names retain a right-hand touch handle at 360/130${english ? ' @en' : ''}`, async ({
+    page,
+  }, testInfo) => {
+    const longRecipe = structuredClone(recipe);
+    const first = longRecipe.revisions[0]?.process.steps[0];
+    if (!first) throw new Error('Missing fixture step');
+    first.label = 'Rest the mixed dough until the surface relaxes completely';
+    await open(page, 'dark', true, longRecipe);
+    const card = method(page).locator('[data-sortable-id="alpha"]');
+    await card.scrollIntoViewIfNeeded();
+    const bounds = await box(card);
+    const grip = await box(handle(page, first.label));
+    const edit = await box(card.getByRole('button', { name: /^(Edit step|Modifier l’étape)/ }));
+    expect(edit.x + edit.width).toBeLessThanOrEqual(grip.x + 1);
+    expect(grip.x + grip.width).toBeLessThanOrEqual(bounds.x + bounds.width + 1);
+    expect(grip.width).toBeGreaterThanOrEqual(48);
+    expect(grip.height).toBeGreaterThanOrEqual(48);
+    expect(await card.evaluate((node) => node.scrollWidth <= node.clientWidth + 1)).toBe(true);
+    const path = testInfo.outputPath('long-step-right-handle.png');
+    await card.screenshot({ path });
+    await testInfo.attach('long-step-right-handle', { path, contentType: 'image/png' });
+  });
   test(`step hold opens one draft and keyboard drop is undoable until save${english ? ' @en' : ''}`, async ({
     page,
   }) => {
@@ -223,12 +315,17 @@ for (const english of [false, true]) {
     await expect.poll(async () => (await box(target)).height).toBeGreaterThan(1);
     const drawn = await box(target);
     await page.mouse.move(drawn.x + drawn.width / 2, drawn.y + drawn.height / 2);
+    const reason = english
+      ? 'Cannot place the step here: "Beta" must stay after "Alpha".'
+      : 'Placement impossible ici : « Beta » doit rester après « Alpha ».';
+    await expect(page.locator('[data-drop-feedback]')).toHaveText(reason);
     await page.mouse.up();
     await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
     await expect(save(page)).toBeDisabled();
     const refusal = method(page).locator('[data-sortable-id="alpha"]').getByRole('alert');
     await expect(refusal).toHaveCount(1);
+    await expect(refusal).toHaveText(reason);
     await expect(refusal).not.toContainText(
       /AmbiguousMove|MoveBreaksDependencies|crossesWorkpiece/,
     );
@@ -402,6 +499,14 @@ for (const english of [false, true]) {
         const start = await box(grip);
         const source = method(page).locator('[data-sortable-id="gamma"]');
         const beforeActivation = await box(source);
+        const cardText = await source.textContent();
+        // The handle stays at the right edge, including narrow, enlarged text layouts.
+        expect(start.x).toBeGreaterThan(beforeActivation.x + beforeActivation.width / 2);
+        expect(start.x + start.width).toBeLessThanOrEqual(
+          beforeActivation.x + beforeActivation.width + 1,
+        );
+        expect(start.width).toBeGreaterThanOrEqual(48);
+        expect(start.height).toBeGreaterThanOrEqual(48);
         const readingGeometry = await geometry(page);
         expect(readingGeometry.scrollTop).toBeGreaterThan(0);
         expect(readingGeometry.visibleInputs).toBe(0);
@@ -409,6 +514,12 @@ for (const english of [false, true]) {
         await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
         await page.mouse.down();
         await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+        const overlay = page.locator('[popover]:popover-open');
+        await expect(overlay).toHaveText(cardText ?? '');
+        const floating = await box(overlay);
+        expect(floating.width).toBeCloseTo(beforeActivation.width, 0);
+        expect(floating.height).toBeCloseTo(beforeActivation.height, 0);
+        await expect(page.locator('[data-sortable-scrim]')).toBeVisible();
         const heldSource = await box(source);
         const activatedGeometry = await geometry(page);
         expect(activatedGeometry.visibleInputs).toBe(0);
@@ -430,6 +541,8 @@ for (const english of [false, true]) {
         await testInfo.attach('recipe-step-held', { path: held, contentType: 'image/png' });
         await page.mouse.up();
         await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+        await expect(page.locator('[data-sortable-scrim]')).toHaveCount(0);
+        await expect(grip).toBeFocused();
         await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
         await expect(save(page)).toBeEnabled();
         const actions = footer(page);
