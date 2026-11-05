@@ -147,7 +147,7 @@ export const Tabs = ({
                 }
               }}
               onKeyDown={(e) => handleKeyDown(e, item.id)}
-              className={`fp-control-reset min-h-touch min-w-touch px-4 py-2 text-supporting font-medium whitespace-nowrap shrink-0 fp-focus border-b-2 ${
+              className={`fp-control-reset min-h-touch min-w-touch px-4 py-2 text-supporting font-medium whitespace-nowrap grow shrink-0 fp-focus border-b-2 ${
                 isSelected
                   ? 'border-transparent text-action-text font-semibold'
                   : 'border-transparent text-muted hover:text-on-surface'

@@ -56,6 +56,26 @@ async function finish(cdp: CDPSession) {
 for (const english of [false, true]) {
   const suffix = english ? ' @en' : '';
 
+  test(`tabs distribute spare width and keep long labels scrollable${suffix}`, async ({ page }) => {
+    await open(page);
+    const strip = routed(page).getByRole('tablist');
+    const a = await bounds(tabs(page).nth(0));
+    const z = await bounds(tabs(page).nth(2));
+    const row = await bounds(strip);
+    expect(Math.abs(a.x - row.x - (row.x + row.width - z.x - z.width))).toBeLessThanOrEqual(1);
+    await page.setViewportSize({ width: 360, height: 900 });
+    await page.addStyleTag({ content: 'html,body { font-size:20.8px !important }' });
+    await tabs(page).nth(2).click();
+    await expect(tabs(page).nth(2)).toHaveAttribute('aria-selected', 'true');
+    await expect
+      .poll(async () => {
+        const tab = await bounds(tabs(page).nth(2));
+        const viewport = await bounds(strip);
+        return tab.x >= viewport.x - 1 && tab.x + tab.width <= viewport.x + viewport.width + 1;
+      })
+      .toBe(true);
+  });
+
   test(`a vertical gesture interrupting a settle restores the selected pane${suffix}`, async ({
     page,
   }) => {

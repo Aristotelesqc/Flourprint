@@ -252,6 +252,7 @@ settles O1; navigation B and its bottom bar of large destination buttons are no 
 - reading and editing actions follow the owner's updated L31, L50 and L60; active preparations remain reachable under L32;
 - the tabs at the top stay tappable, and a horizontal swipe also moves to the next or previous
   tab;
+- tab buttons share available row width with centered labels; when labels do not fit, keep horizontal scrolling rather than squeezing them (owner clarification, 2026-11-05);
 - both gestures change the tab: a slow drag past half the width, or a short quick flick above a
   velocity threshold, whatever the distance;
 - the current screen follows the finger and the next one slides in like a carousel; on release

@@ -388,7 +388,7 @@ and require their own checks.
   constant-height Discard/Undo/Redo/Save controls, overlaying rather than resizing content.
   Pencil Edit and anchored overflow are in the Recipe header; time actions live only in Planning. Shared buttons retain 48 px touch targets and a 40 px painted shape at the
   default text scale. Reading section tabs use `fp.tabs` in one horizontal row, scrolling when
-  needed rather than wrapping; the selected tab stays visible. The full recipe title remains
+  needed rather than wrapping; spare width is shared between centered tab labels, and the selected tab stays visible. The full recipe title remains
   in the header. These changes port the approved navigation A reference.
   Recipe sections use `fp.section-carousel` and `fp.motion.tab-carousel`: one Ionic vertical scroller,
   preserved mounted drafts and remembered panel positions, direct finger tracking, a measured tab

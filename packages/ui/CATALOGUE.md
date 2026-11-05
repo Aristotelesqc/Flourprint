@@ -594,6 +594,7 @@ Accessible tabbed navigation strip that switches between alternate views while k
 
 **Accessibility**
 
+- Tab buttons share spare row width with centered labels; overflowing labels keep horizontal scrolling without shrinking.
 - Full WAI-ARIA tablist, tab, and tabpanel roles with roving tabIndex on tabs.
 - Left and Right arrow keys wrap through enabled tabs with automatic selection and focus management.
 - Home and End keys jump immediately to the first and last enabled tab.
