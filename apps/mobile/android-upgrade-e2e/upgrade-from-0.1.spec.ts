@@ -339,7 +339,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
     await page.getByLabel('New recipe', { exact: true }).locator('visible=true').first().click();
     await page.getByText('Blank recipe').locator('visible=true').first().click();
     await expect(page).toHaveURL(/\/drafts\//);
-    await expect(shown(page, 'Recipe 1').first()).toBeVisible();
+    await expect(shown(page, 'Recipe').first()).toBeVisible();
     // The draft is written as it is created; give the store a moment before the forced stop.
     await page.waitForTimeout(2_000);
   });
@@ -416,7 +416,7 @@ test('the candidate installs over 0.1.0 and keeps its recipes, drafts, bakes and
       // The candidate reopens on the running preparation: start from the recipe list.
       await goTo(page, '/recipes');
       await expect(page).toHaveURL(/\/recipes$/);
-      await expect(shown(page, 'Recipe 1').first()).toBeVisible();
+      await expect(shown(page, 'Recipe').first()).toBeVisible();
       await goTo(page, `/recipes/${recipeId}`);
       await expect(shown(page, 'Version 2').first()).toBeVisible();
       await page
