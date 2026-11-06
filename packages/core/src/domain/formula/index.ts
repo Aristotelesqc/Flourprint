@@ -26,6 +26,7 @@ export {
   waterSheet,
   type WaterSheet,
   type WaterSheetOptions,
+  type WaterSheetMember,
   type WaterSheetRow,
 } from './water-sheet.js';
 export {

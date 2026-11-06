@@ -38,6 +38,18 @@ export interface WaterSheetRow {
   readonly status: 'known' | 'estimated';
   /** Sum of the members' ranges (a member without range counts at its value); estimated only. */
   readonly range?: readonly [number, number];
+  /**
+   * `others` only: each grouped source at full precision, in contribution order, for the optional
+   * detail of the row (owner, 2026-11-06). Never rounded here: the interface formats each value.
+   */
+  readonly members?: readonly WaterSheetMember[];
+}
+
+export interface WaterSheetMember {
+  readonly source: string;
+  readonly grams: number;
+  readonly status: 'known' | 'estimated';
+  readonly range?: readonly [number, number];
 }
 
 export interface WaterSheet {
@@ -157,6 +169,16 @@ export const waterSheet = (
       sharePct: sum(group.map((m) => m.sharePct)),
       status,
       ...(range ? { range } : {}),
+      ...(kind === 'others'
+        ? {
+            members: group.map((m) => ({
+              source: m.id,
+              grams: m.grams,
+              status: m.status,
+              ...(m.range ? { range: m.range } : {}),
+            })),
+          }
+        : {}),
     };
   };
 

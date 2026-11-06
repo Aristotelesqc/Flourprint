@@ -376,6 +376,14 @@ interface WaterSheetRow {
   sharePct?: number; // 100 × grams / Σ grams of the non-loss rows, full precision; no loss
   status: 'known' | 'estimated'; // 'estimated' as soon as one member is
   range?: [number, number]; // estimated rows: sum of the members' ranges
+  members?: WaterSheetMember[]; // 'others' only: each grouped source, contribution order
+}
+
+interface WaterSheetMember {
+  source: string; // ingredient id
+  grams: number; // full precision, never rounded by this read model
+  status: 'known' | 'estimated';
+  range?: [number, number]; // estimated members
 }
 
 interface WaterSheet {
@@ -398,7 +406,10 @@ interface WaterSheet {
   (one source alone is still shown as "Others"; L147 names the group by the threshold, not by a
   count). Its `sources` lists the members in contribution order, its `grams` is their exact sum.
   There is no `others` row when no source is under the threshold. With `thresholdGrams` 0 nothing
-  is grouped.
+  is grouped. Its `members` give each grouped source with its own `grams`, `status` and `range`, at
+  full precision and in the same order, for the row's optional detail: the interface may show it
+  folded under the row (an accordion in the sheet; owner, 2026-11-06), each value formatted by L148
+  and not part of the rounded sum.
 - A **loss** (declared component loss, negative grams) is always its own row of kind `loss`, even
   under the threshold, and is never merged into `others`: it removes water, a source adds it, and
   the sheet shows it as what it removes (no share).
@@ -435,7 +446,9 @@ an estimated 35 % [30, 40] → 0.35 [0.30, 0.40]; salt 2 % → 20 g at 0 % → l
    milk 87, cream 17.3, honey 3.4, syrup 1.0, others 1.35. Floors: 700, 87, 17, 3, 1, 1 (sum 809);
    `T = round(810.05) = 810`; `missing` = 1; remainders .3, .4, 0, .35 for cream, honey, syrup,
    others: honey is the largest. Display: 700, 87, 17, **4**, 1, 1 = 810 = `displayTotalGrams`.
-   Rounding each row alone gives 700, 87, 17, 3, 1, 1 = 809, which is not the total.
+   Rounding each row alone gives 700, 87, 17, 3, 1, 1 = 809, which is not the total. The
+   `others` row's `members`: malt 0.6 (known), spice 0.4 (known), seeds 0.35 (estimated,
+   [0.30, 0.40]).
 2. **Threshold 5 g.** Under 5 g: honey 3.4, syrup 1.0, malt, spice, seeds. `others` = 3.4 + 1.0 +
    1.35 = 5.75 g, members in order honey, syrup, malt, spice, seeds. Rows: water 700, milk 87,
    cream 17.3, others 5.75. Floors 700, 87, 17, 5 (809); `T` = 810; `missing` 1; remainders .3

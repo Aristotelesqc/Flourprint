@@ -66,6 +66,22 @@ describe('waterSheet (formula.md, Hydration sheet read model)', () => {
     expect(others?.status).toBe('estimated');
     expect(others?.range?.[0]).toBeCloseTo(1.3, 9);
     expect(others?.range?.[1]).toBeCloseTo(1.4, 9);
+    // Its detail: each grouped source at full precision, in contribution order (contract example 1).
+    expect(others?.members?.map((m) => [m.source, m.status])).toEqual([
+      ['malt', 'known'],
+      ['spice', 'known'],
+      ['seeds', 'estimated'],
+    ]);
+    expect(others?.members?.[0]?.grams).toBeCloseTo(0.6, 9);
+    expect(others?.members?.[1]?.grams).toBeCloseTo(0.4, 9);
+    expect(others?.members?.[2]?.grams).toBeCloseTo(0.35, 9);
+    expect(others?.members?.[2]?.range?.[0]).toBeCloseTo(0.3, 9);
+    expect(others?.members?.[2]?.range?.[1]).toBeCloseTo(0.4, 9);
+    expect(others?.members?.[0]?.range).toBeUndefined();
+    // Only the others row carries members.
+    expect(sheet.rows.filter((r) => r.members !== undefined).map((r) => r.kind)).toEqual([
+      'others',
+    ]);
     // The engine keeps full precision: rows carry the unrounded grams.
     expect(sheet.rows[3]?.grams).toBeCloseTo(3.4, 9);
     expect(sheet.rows[3]?.sharePct).toBeCloseTo((100 * 3.4) / 810.05, 9);
