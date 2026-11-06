@@ -353,7 +353,7 @@ nor share (shown hatched, it is why the total says "≥").
 `yieldOf(formula, resolved)` gives the pieces the summary shows first (L109, L125):
 `{ count, gramsEach }` from a `pieces` anchor, otherwise `{ count: 1, gramsEach: doughWeight }`.
 
-## Hydration sheet read model (0.24.2, L126, L147)
+## Hydration sheet read model (0.24.3, L126, L147)
 
 The hydration detail sheet (L126) lists the split of total water by source. L147 groups every
 water source that would display as less than 1 g into one row "Others (< 1 g)", so the rows still
@@ -453,7 +453,7 @@ an estimated 35 % [30, 40] → 0.35 [0.30, 0.40]; salt 2 % → 20 g at 0 % → l
    `incomplete`.
 
 **Consumer impact.** An addition only: no persisted shape, event or migration changes, so
-`ENGINE_VERSION` stays and `CONTRACT_VERSION` takes the patch `0.24.2`. The ingredient list, the
+`ENGINE_VERSION` stays and `CONTRACT_VERSION` takes the patch `0.24.3`. The ingredient list, the
 weighing and every other stage read model stay ungrouped and at full precision (L147).
 
 **Worked example** (given resolved values, so the example tests the read model only). Total flour

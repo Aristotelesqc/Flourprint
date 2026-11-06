@@ -1,10 +1,11 @@
 /**
- * Version of the data contracts described in docs/contracts/. 0.24.2: the hydration sheet read
- * model (formula.md, Hydration sheet read model, L147), an addition with no persisted shape or
- * calculation change. 0.24.1: a move down a chain is the same chain move as a move up
- * (process.md, Move).
+ * Version of the data contracts described in docs/contracts/. 0.24.1: a move down a chain is the
+ * same chain move as a move up (process.md, Move). 0.24.2: a generated draft name is the bare base
+ * name when free, else `<base> <n>` with n ≥ 2 (drafts.md, Generated names). 0.24.3: the hydration
+ * sheet read model (formula.md, Hydration sheet read model, L147), an addition. No persisted shape
+ * or calculation changes.
  */
-export const CONTRACT_VERSION = '0.24.2';
+export const CONTRACT_VERSION = '0.24.3';
 
 /**
  * Version of the calculation engine recorded in bake snapshots (D8). 0.8.0: the dough thermal
