@@ -76,33 +76,69 @@ for (const english of [false, true]) {
       .toBe(true);
   });
 
-  test(`a vertical gesture interrupting a settle restores the selected pane${suffix}`, async ({
-    page,
-  }) => {
-    await open(page);
-    await tabs(page).nth(1).click();
-    await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
-    await tabs(page).nth(0).click();
-    await carousel(page).evaluate((node) => {
-      // Slow only this test's running animation so interruption is deterministic.
-      for (const animation of node.getAnimations({ subtree: true })) animation.playbackRate = 0.25;
-    });
-    const { cdp, send } = await finger(page);
-    try {
-      await send('touchStart');
-      await send('touchMove', 304, -70);
-      await send('touchEnd');
+  for (const input of ['touch', 'mouse'] as const) {
+    test(`a vertical ${input} gesture interrupting a settle restores the selected pane${suffix}`, async ({
+      page,
+    }) => {
+      await open(page);
+      await tabs(page).nth(1).click();
       await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
-      const root = await bounds(carousel(page));
+      await carousel(page).evaluate((node) => {
+        // Freeze the next departure beyond halfway before it can finish on a slow runner.
+        const track = node.firstElementChild;
+        if (!(track instanceof HTMLElement)) throw new Error('Missing carousel track');
+        const animate = track.animate;
+        track.animate = function (this: HTMLElement, ...args: Parameters<HTMLElement['animate']>) {
+          this.animate = animate;
+          const animation = animate.apply(this, args);
+          animation.pause();
+          animation.currentTime = 110;
+          return animation;
+        };
+      });
+      await tabs(page).nth(0).click();
+      await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
       await expect
-        .poll(
-          async () => (await bounds(carousel(page).locator('[data-carousel-pane="process"]'))).x,
+        .poll(() =>
+          carousel(page).evaluate((node) =>
+            node
+              .getAnimations({ subtree: true })
+              .some((animation) => animation.playState === 'paused'),
+          ),
         )
-        .toBeCloseTo(root.x, 0);
-    } finally {
-      await finish(cdp);
-    }
-  });
+        .toBe(true);
+      const { cdp, send } = await finger(page);
+      try {
+        if (input === 'touch') {
+          await send('touchStart');
+          await send('touchMove', 304, -70);
+          await send('touchEnd');
+        } else {
+          const content = await bounds(routed(page).locator('ion-content'));
+          await page.mouse.move(310, content.y + 180);
+          await page.mouse.down();
+          await page.mouse.move(304, content.y + 110);
+          await page.mouse.up();
+        }
+        await carousel(page).evaluate(async (node) => {
+          await Promise.all(
+            node
+              .getAnimations({ subtree: true })
+              .map((animation) => animation.finished.catch(() => undefined)),
+          );
+        });
+        await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
+        const root = await bounds(carousel(page));
+        await expect
+          .poll(
+            async () => (await bounds(carousel(page).locator('[data-carousel-pane="process"]'))).x,
+          )
+          .toBeCloseTo(root.x, 0);
+      } finally {
+        await finish(cdp);
+      }
+    });
+  }
 
   test(`a second tab tap cancels an unfinished departure from that tab${suffix}`, async ({
     page,

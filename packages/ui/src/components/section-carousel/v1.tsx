@@ -279,15 +279,16 @@ export function SectionCarousel({
     const state = pointerStateRef.current;
     if (!state || state.pointerId !== e.pointerId || state.isCancelled) return;
 
-    const dx = e.clientX - state.startX + state.baseOffset;
+    const pointerDx = e.clientX - state.startX;
+    const dx = pointerDx + state.baseOffset;
     const dy = e.clientY - state.startY;
     const now = performance.now();
 
     if (!state.isLocked) {
-      const dist = Math.hypot(dx, dy);
+      const dist = Math.hypot(pointerDx, dy);
       if (dist < 8) return; // 8px slop
 
-      if (Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (Math.abs(pointerDx) > Math.abs(dy) * 1.5) {
         state.isLocked = true;
         try {
           containerRef.current?.setPointerCapture(e.pointerId);
