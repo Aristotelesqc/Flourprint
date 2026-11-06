@@ -1,0 +1,1425 @@
+{
+  "revision": "editor-controls-v1-20261106",
+  "baselineSource": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+  "proposalAuthor": "Codex; bounded Flash generation returned no artifact",
+  "approved": false,
+  "implemented": false,
+  "scope": "Bottom editing bar only. Actual FR app body captures; bar navigation/actions are a simulation.",
+  "cornerModel": "40px radius, minimum20px horizontal and24px bottom control insets; not a physical Pixel measurement",
+  "coverage": [
+    {
+      "file": "proposal-light-393-100-formula.png",
+      "theme": "light",
+      "size": "393-100",
+      "tab": "formula",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-light-393-100-process.png",
+      "theme": "light",
+      "size": "393-100",
+      "tab": "process",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-light-393-100-history.png",
+      "theme": "light",
+      "size": "393-100",
+      "tab": "history",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-light-360-130-formula.png",
+      "theme": "light",
+      "size": "360-130",
+      "tab": "formula",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-light-360-130-process.png",
+      "theme": "light",
+      "size": "360-130",
+      "tab": "process",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-light-360-130-history.png",
+      "theme": "light",
+      "size": "360-130",
+      "tab": "history",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-dark-393-100-formula.png",
+      "theme": "dark",
+      "size": "393-100",
+      "tab": "formula",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-dark-393-100-process.png",
+      "theme": "dark",
+      "size": "393-100",
+      "tab": "process",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-dark-393-100-history.png",
+      "theme": "dark",
+      "size": "393-100",
+      "tab": "history",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-dark-360-130-formula.png",
+      "theme": "dark",
+      "size": "360-130",
+      "tab": "formula",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-dark-360-130-process.png",
+      "theme": "dark",
+      "size": "360-130",
+      "tab": "process",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-dark-360-130-history.png",
+      "theme": "dark",
+      "size": "360-130",
+      "tab": "history",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-amoled-393-100-formula.png",
+      "theme": "amoled",
+      "size": "393-100",
+      "tab": "formula",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-amoled-393-100-process.png",
+      "theme": "amoled",
+      "size": "393-100",
+      "tab": "process",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-amoled-393-100-history.png",
+      "theme": "amoled",
+      "size": "393-100",
+      "tab": "history",
+      "width": 393,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 270.21875,
+          "y": 828,
+          "width": 102.78125,
+          "height": 48,
+          "top": 828,
+          "right": 373,
+          "bottom": 876,
+          "left": 270.21875
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 393,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-amoled-360-130-formula.png",
+      "theme": "amoled",
+      "size": "360-130",
+      "tab": "formula",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-amoled-360-130-process.png",
+      "theme": "amoled",
+      "size": "360-130",
+      "tab": "process",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    },
+    {
+      "file": "proposal-amoled-360-130-history.png",
+      "theme": "amoled",
+      "size": "360-130",
+      "tab": "history",
+      "width": 360,
+      "height": 900,
+      "locale": "fr",
+      "boxes": [
+        {
+          "label": "Abandonner les modifications",
+          "x": 20,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 68,
+          "bottom": 876,
+          "left": 20
+        },
+        {
+          "label": "Annuler la derniÃ¨re modification",
+          "x": 87,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 135,
+          "bottom": 876,
+          "left": 87
+        },
+        {
+          "label": "RÃ©tablir",
+          "x": 139,
+          "y": 828,
+          "width": 48,
+          "height": 48,
+          "top": 828,
+          "right": 187,
+          "bottom": 876,
+          "left": 139
+        },
+        {
+          "label": "Enregistrer",
+          "x": 216.578125,
+          "y": 828,
+          "width": 123.421875,
+          "height": 48,
+          "top": 828,
+          "right": 340,
+          "bottom": 876,
+          "left": 216.578125
+        }
+      ],
+      "footprint": {
+        "x": 0,
+        "y": 815,
+        "width": 360,
+        "height": 85
+      },
+      "prototypeOnly": true
+    }
+  ],
+  "english": "Toolbar strings only over FR body at360/130; full app EN acceptance is outside this proposal",
+  "files": [
+    {
+      "path": "assets.json",
+      "sha256": "d92e06ada6e92b66069d57e8100806a5e0644c41044183bbad5b22829e393d5c",
+      "bytes": 20753
+    },
+    {
+      "path": "background-amoled-360-130-formula.png",
+      "sha256": "dd7fbe94ee694b386a98b02f35ce3afc57db0e3714456678c6741e857c0bbb79",
+      "bytes": 54529
+    },
+    {
+      "path": "background-amoled-360-130-history.png",
+      "sha256": "a7e74aa49bead8e6b8762bb85fcdafd1b2c62a83c7d939f9184790c4c361fe29",
+      "bytes": 28819
+    },
+    {
+      "path": "background-amoled-360-130-process.png",
+      "sha256": "db9b3c5f105ddd4817c8525a407fb35cb9bee40026b859524ebc0a2d8381b51f",
+      "bytes": 52811
+    },
+    {
+      "path": "background-amoled-393-100-formula.png",
+      "sha256": "c0a4ebaa7fd22b38f1b0148dbfc37563625273632b3e2a74d192990f9018d1a0",
+      "bytes": 55291
+    },
+    {
+      "path": "background-amoled-393-100-history.png",
+      "sha256": "1aa9c2406bde434fc6c05315458c9e8d1c85da3bdd3153f5704f4de744c1e6a6",
+      "bytes": 24558
+    },
+    {
+      "path": "background-amoled-393-100-process.png",
+      "sha256": "c2daaad38211b9844eb7e35cb6ed2d360e4c6b258aef54845bbb311346eca706",
+      "bytes": 55075
+    },
+    {
+      "path": "background-dark-360-130-formula.png",
+      "sha256": "5eb6284937598a494a89578f3ac16733670e728e89b24fef72ebc184b816b698",
+      "bytes": 54112
+    },
+    {
+      "path": "background-dark-360-130-history.png",
+      "sha256": "b9008c95ca788c9410174f0dd368c97464b0ab5a67076dddbb996bc99f885d13",
+      "bytes": 28731
+    },
+    {
+      "path": "background-dark-360-130-process.png",
+      "sha256": "9673bacdadaf96b6742d1952ef4aa8570eedf10fc91ef5730799e774cc8e63bd",
+      "bytes": 51935
+    },
+    {
+      "path": "background-dark-393-100-formula.png",
+      "sha256": "ba305b4f91b4457203d5a9bd8a2b1c81a175855f9fbb9c560da04d11091f46f9",
+      "bytes": 54963
+    },
+    {
+      "path": "background-dark-393-100-history.png",
+      "sha256": "e148bec67d95c73dc8db9c8c33c3421747329713fa2d2549b8c19cb33f59fe52",
+      "bytes": 24596
+    },
+    {
+      "path": "background-dark-393-100-process.png",
+      "sha256": "2225ccad69ff858629fe13c3ea9ae26908cdee5d191c94922a59fafd8a739ce6",
+      "bytes": 55057
+    },
+    {
+      "path": "background-light-360-130-formula.png",
+      "sha256": "b0ddb270daac7b80dcad0c82b9110521b4e11479f2698103cd4d7ff94019dc62",
+      "bytes": 53579
+    },
+    {
+      "path": "background-light-360-130-history.png",
+      "sha256": "e35ebbe73ed28a51444c08f5c4f9efa5e421bd621d845d4d0260705e4b479bf6",
+      "bytes": 28677
+    },
+    {
+      "path": "background-light-360-130-process.png",
+      "sha256": "0212efb68c46839583382b6967da6d19afd4af6659b2b323f5e9d86d00ed2fcb",
+      "bytes": 51694
+    },
+    {
+      "path": "background-light-393-100-formula.png",
+      "sha256": "c4fd27676221f09a02261cf95e3a6951a3331695cd85da88d9dadc9a1d7ba8d8",
+      "bytes": 54689
+    },
+    {
+      "path": "background-light-393-100-history.png",
+      "sha256": "85e7cd5eb371a851d06c3a979b9d87f92819456b7f56d93bf73ecac57cfc3228",
+      "bytes": 24693
+    },
+    {
+      "path": "background-light-393-100-process.png",
+      "sha256": "e36b880d41ac391cdbc0a937df7b2669e72160670275913f60ad6eb5461b7a25",
+      "bytes": 55074
+    },
+    {
+      "path": "before-amoled-360-130-formula.png",
+      "sha256": "20e8ce59dbf7b17ce17c056439cc02678aa94ca7122c26511d5b40631fc943c5",
+      "bytes": 56038
+    },
+    {
+      "path": "before-amoled-360-130-history.png",
+      "sha256": "a7e74aa49bead8e6b8762bb85fcdafd1b2c62a83c7d939f9184790c4c361fe29",
+      "bytes": 28819
+    },
+    {
+      "path": "before-amoled-360-130-process.png",
+      "sha256": "eaa59c4d1a4a4122d14f134bb5ee8641acb5e62bd89de330c41efc055e17a2ab",
+      "bytes": 55309
+    },
+    {
+      "path": "before-amoled-393-100-formula.png",
+      "sha256": "1f04ae4ef06c1d7d235262212f2e31c070c5b9662f27232588bf0a0f73ca65fd",
+      "bytes": 57531
+    },
+    {
+      "path": "before-amoled-393-100-history.png",
+      "sha256": "1aa9c2406bde434fc6c05315458c9e8d1c85da3bdd3153f5704f4de744c1e6a6",
+      "bytes": 24558
+    },
+    {
+      "path": "before-amoled-393-100-process.png",
+      "sha256": "6394e9641135cd9be8fc9cb04f1244d962c47255cd3f3ae05b83f6b6d66c91df",
+      "bytes": 57036
+    },
+    {
+      "path": "before-dark-360-130-formula.png",
+      "sha256": "7a4a907d24b83a4f24d1d7f36ad86651191a80e14a089247b11253360d1be1fe",
+      "bytes": 55267
+    },
+    {
+      "path": "before-dark-360-130-history.png",
+      "sha256": "b9008c95ca788c9410174f0dd368c97464b0ab5a67076dddbb996bc99f885d13",
+      "bytes": 28731
+    },
+    {
+      "path": "before-dark-360-130-process.png",
+      "sha256": "c6fc52785fd73765f463f3a1a008396d9e826bf6d2c9b8a8c86f3fe0964ebfe1",
+      "bytes": 54250
+    },
+    {
+      "path": "before-dark-393-100-formula.png",
+      "sha256": "d27fb80911ed0d26cfa46e4dcbd5a67916f1585592c82af77aebcfef8179d7a4",
+      "bytes": 57097
+    },
+    {
+      "path": "before-dark-393-100-history.png",
+      "sha256": "e148bec67d95c73dc8db9c8c33c3421747329713fa2d2549b8c19cb33f59fe52",
+      "bytes": 24596
+    },
+    {
+      "path": "before-dark-393-100-process.png",
+      "sha256": "2919d2dd947612e7f4d41881a266053ba35bdbe7fb151b377c6cac2ee67bf6a2",
+      "bytes": 56840
+    },
+    {
+      "path": "before-light-360-130-formula.png",
+      "sha256": "f14e0370f926e78c509bb5adb2477ba3f3acf7297fa99c7c6c58e1670bcd54fb",
+      "bytes": 55051
+    },
+    {
+      "path": "before-light-360-130-history.png",
+      "sha256": "e35ebbe73ed28a51444c08f5c4f9efa5e421bd621d845d4d0260705e4b479bf6",
+      "bytes": 28677
+    },
+    {
+      "path": "before-light-360-130-process.png",
+      "sha256": "32164f39c61258114c092e8c9fd678f2e0aef9903887af1876c67b63fa50fce0",
+      "bytes": 54259
+    },
+    {
+      "path": "before-light-393-100-formula.png",
+      "sha256": "19fce169a53186ad5a7892132a68bccf22d346adfe2ba8e63d5ab4f129afeacf",
+      "bytes": 56858
+    },
+    {
+      "path": "before-light-393-100-history.png",
+      "sha256": "85e7cd5eb371a851d06c3a979b9d87f92819456b7f56d93bf73ecac57cfc3228",
+      "bytes": 24693
+    },
+    {
+      "path": "before-light-393-100-process.png",
+      "sha256": "8aedd5a93d1037228c69b164d0f7d8730a3ca547e781dea476d5e508e3a3917b",
+      "bytes": 56958
+    },
+    {
+      "path": "index.html",
+      "sha256": "6ab2304bb5d90da87c5828379ae728f622c0f5cdd879b89448ea26821a12d3e6",
+      "bytes": 15903
+    },
+    {
+      "path": "mockup.html",
+      "sha256": "020be5f1e98a1f665cd296c7b8551a10a4b81bef7ab39988ae9dc9f265c33b88",
+      "bytes": 11735
+    },
+    {
+      "path": "proposal-amoled-360-130-formula.png",
+      "sha256": "3866533d4b7a4a5a870b21c957c198ef1fe0a1112c9b7267819a15997fb31d13",
+      "bytes": 54249
+    },
+    {
+      "path": "proposal-amoled-360-130-history.png",
+      "sha256": "4d7f4d3f4bbffae50d08666d1ca3364807004ff0e82bcdc32cbb63f10a4920c2",
+      "bytes": 33192
+    },
+    {
+      "path": "proposal-amoled-360-130-process.png",
+      "sha256": "183ad3738ce4038a8ad8dd3c737e186319ad47515637323c0b4d1527962d94f0",
+      "bytes": 57091
+    },
+    {
+      "path": "proposal-amoled-393-100-formula.png",
+      "sha256": "6c64d6f2e9ddf0eba290fe54dfca5cadf2c758f3b69e14e5ef1df89bc3e1c397",
+      "bytes": 55652
+    },
+    {
+      "path": "proposal-amoled-393-100-history.png",
+      "sha256": "4e5af0e75f72b5456590b9851c5afe1f907bb7f09c83c2eece2d00463ab9b610",
+      "bytes": 28624
+    },
+    {
+      "path": "proposal-amoled-393-100-process.png",
+      "sha256": "6b25e5cb7fd89c24f51e6d12318330deea92f1febd75d05497daae85df88c3a7",
+      "bytes": 57817
+    },
+    {
+      "path": "proposal-dark-360-130-formula.png",
+      "sha256": "8dbef40435533b6db5632d231eb39c238d9336c6f70adcb108e52bb565f69637",
+      "bytes": 53762
+    },
+    {
+      "path": "proposal-dark-360-130-history.png",
+      "sha256": "52d2c32fc144c4af2b1673b2d48ed8207ad195c88c2ec01c6a92a9a0497d1388",
+      "bytes": 33051
+    },
+    {
+      "path": "proposal-dark-360-130-process.png",
+      "sha256": "7b86110441ab08d483761589c9dcd23a8e0f9f143a27143464aff49b7a0fa76e",
+      "bytes": 56249
+    },
+    {
+      "path": "proposal-dark-393-100-formula.png",
+      "sha256": "04ef728155e2c08bf69ef5ce83e3923af6d1ac20d0d00d2605f6758703a1c94a",
+      "bytes": 55374
+    },
+    {
+      "path": "proposal-dark-393-100-history.png",
+      "sha256": "1cf9aa529d647eac57b43095061c383d7031b7936b5c8302fb69e2b2b4c64cea",
+      "bytes": 28559
+    },
+    {
+      "path": "proposal-dark-393-100-process.png",
+      "sha256": "d0cb0c6bef000e7cae77fa09bce267d7e4df98661286f57290d18b36bb13fb23",
+      "bytes": 57676
+    },
+    {
+      "path": "proposal-footer.png",
+      "sha256": "bd8b46c42951d7b1bc88ee5aa4e3d9bb95c10bab0d9d25ee71ed89a9c0c0b001",
+      "bytes": 10202
+    },
+    {
+      "path": "proposal-light-360-130-formula-en-controls.png",
+      "sha256": "c0e1164c65d72894ed49820765d494852836bdd823af624d1c169d6ebc9202a7",
+      "bytes": 53057
+    },
+    {
+      "path": "proposal-light-360-130-formula.png",
+      "sha256": "71bd36ef326ea79e4f3a6b890d7d9a6d26b5ecd6c89773fb01a00ce326eb2e12",
+      "bytes": 53553
+    },
+    {
+      "path": "proposal-light-360-130-history.png",
+      "sha256": "858485a5ed51b57f66e90b82010624a14ca616cfb871d8412c20e38296d4a979",
+      "bytes": 33206
+    },
+    {
+      "path": "proposal-light-360-130-process.png",
+      "sha256": "bb75ce2b7f82b089714c81392f989f0a5c96b5ef1f960936b6d494c425fa75e1",
+      "bytes": 56275
+    },
+    {
+      "path": "proposal-light-393-100-formula.png",
+      "sha256": "8284a83f184505b6e760df4a4a52f893f1d73356d5e59bbe41d55b3b9a1bc838",
+      "bytes": 55310
+    },
+    {
+      "path": "proposal-light-393-100-history.png",
+      "sha256": "d151daad9e9fa2d4b90b32d7296fa6fab781300a4b0e0f4fa4be1b48c007e203",
+      "bytes": 28852
+    },
+    {
+      "path": "proposal-light-393-100-process.png",
+      "sha256": "faf0c4eb17bf9e293eb2943d7374b1039f453f4f04a992f70e0daf29abd8dfee",
+      "bytes": 57876
+    }
+  ]
+}

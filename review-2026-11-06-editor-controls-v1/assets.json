@@ -1,0 +1,884 @@
+{
+  "light-393-100-formula": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "light",
+    "size": "393-100",
+    "tab": "formula",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-light-393-100-formula.png",
+    "background": "background-light-393-100-formula.png"
+  },
+  "light-393-100-process": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "light",
+    "size": "393-100",
+    "tab": "process",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-light-393-100-process.png",
+    "background": "background-light-393-100-process.png"
+  },
+  "light-393-100-history": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "light",
+    "size": "393-100",
+    "tab": "history",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-light-393-100-history.png",
+    "background": "background-light-393-100-history.png"
+  },
+  "light-360-130-formula": {
+    "tabs": [
+      {
+        "x": 31.1875,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 134.296875,
+        "bottom": 135.796875,
+        "left": 31.1875
+      },
+      {
+        "x": 144.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 286.78125,
+        "bottom": 135.796875,
+        "left": 144.6875
+      },
+      {
+        "x": 297.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 422.25,
+        "bottom": 135.796875,
+        "left": 297.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "light",
+    "size": "360-130",
+    "tab": "formula",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-light-360-130-formula.png",
+    "background": "background-light-360-130-formula.png"
+  },
+  "light-360-130-process": {
+    "tabs": [
+      {
+        "x": 31.1875,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 134.296875,
+        "bottom": 135.796875,
+        "left": 31.1875
+      },
+      {
+        "x": 144.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 286.78125,
+        "bottom": 135.796875,
+        "left": 144.6875
+      },
+      {
+        "x": 297.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 422.25,
+        "bottom": 135.796875,
+        "left": 297.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "light",
+    "size": "360-130",
+    "tab": "process",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-light-360-130-process.png",
+    "background": "background-light-360-130-process.png"
+  },
+  "light-360-130-history": {
+    "tabs": [
+      {
+        "x": -51.8125,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 51.296875,
+        "bottom": 135.796875,
+        "left": -51.8125
+      },
+      {
+        "x": 61.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 203.78125,
+        "bottom": 135.796875,
+        "left": 61.6875
+      },
+      {
+        "x": 214.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 339.25,
+        "bottom": 135.796875,
+        "left": 214.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "light",
+    "size": "360-130",
+    "tab": "history",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-light-360-130-history.png",
+    "background": "background-light-360-130-history.png"
+  },
+  "dark-393-100-formula": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "dark",
+    "size": "393-100",
+    "tab": "formula",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-dark-393-100-formula.png",
+    "background": "background-dark-393-100-formula.png"
+  },
+  "dark-393-100-process": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "dark",
+    "size": "393-100",
+    "tab": "process",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-dark-393-100-process.png",
+    "background": "background-dark-393-100-process.png"
+  },
+  "dark-393-100-history": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "dark",
+    "size": "393-100",
+    "tab": "history",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-dark-393-100-history.png",
+    "background": "background-dark-393-100-history.png"
+  },
+  "dark-360-130-formula": {
+    "tabs": [
+      {
+        "x": 31.1875,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 134.296875,
+        "bottom": 135.796875,
+        "left": 31.1875
+      },
+      {
+        "x": 144.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 286.78125,
+        "bottom": 135.796875,
+        "left": 144.6875
+      },
+      {
+        "x": 297.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 422.25,
+        "bottom": 135.796875,
+        "left": 297.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "dark",
+    "size": "360-130",
+    "tab": "formula",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-dark-360-130-formula.png",
+    "background": "background-dark-360-130-formula.png"
+  },
+  "dark-360-130-process": {
+    "tabs": [
+      {
+        "x": 31.1875,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 134.296875,
+        "bottom": 135.796875,
+        "left": 31.1875
+      },
+      {
+        "x": 144.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 286.78125,
+        "bottom": 135.796875,
+        "left": 144.6875
+      },
+      {
+        "x": 297.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 422.25,
+        "bottom": 135.796875,
+        "left": 297.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "dark",
+    "size": "360-130",
+    "tab": "process",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-dark-360-130-process.png",
+    "background": "background-dark-360-130-process.png"
+  },
+  "dark-360-130-history": {
+    "tabs": [
+      {
+        "x": -51.8125,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 51.296875,
+        "bottom": 135.796875,
+        "left": -51.8125
+      },
+      {
+        "x": 61.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 203.78125,
+        "bottom": 135.796875,
+        "left": 61.6875
+      },
+      {
+        "x": 214.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 339.25,
+        "bottom": 135.796875,
+        "left": 214.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "dark",
+    "size": "360-130",
+    "tab": "history",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-dark-360-130-history.png",
+    "background": "background-dark-360-130-history.png"
+  },
+  "amoled-393-100-formula": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "amoled",
+    "size": "393-100",
+    "tab": "formula",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-amoled-393-100-formula.png",
+    "background": "background-amoled-393-100-formula.png"
+  },
+  "amoled-393-100-process": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "amoled",
+    "size": "393-100",
+    "tab": "process",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-amoled-393-100-process.png",
+    "background": "background-amoled-393-100-process.png"
+  },
+  "amoled-393-100-history": {
+    "tabs": [
+      {
+        "x": 24,
+        "y": 60,
+        "width": 94.046875,
+        "height": 48,
+        "top": 60,
+        "right": 118.046875,
+        "bottom": 108,
+        "left": 24
+      },
+      {
+        "x": 126.046875,
+        "y": 60,
+        "width": 124.03125,
+        "height": 48,
+        "top": 60,
+        "right": 250.078125,
+        "bottom": 108,
+        "left": 126.046875
+      },
+      {
+        "x": 258.078125,
+        "y": 60,
+        "width": 110.9375,
+        "height": 48,
+        "top": 60,
+        "right": 369.015625,
+        "bottom": 108,
+        "left": 258.078125
+      }
+    ],
+    "width": 393,
+    "height": 900,
+    "theme": "amoled",
+    "size": "393-100",
+    "tab": "history",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-amoled-393-100-history.png",
+    "background": "background-amoled-393-100-history.png"
+  },
+  "amoled-360-130-formula": {
+    "tabs": [
+      {
+        "x": 31.1875,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 134.296875,
+        "bottom": 135.796875,
+        "left": 31.1875
+      },
+      {
+        "x": 144.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 286.78125,
+        "bottom": 135.796875,
+        "left": 144.6875
+      },
+      {
+        "x": 297.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 422.25,
+        "bottom": 135.796875,
+        "left": 297.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "amoled",
+    "size": "360-130",
+    "tab": "formula",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-amoled-360-130-formula.png",
+    "background": "background-amoled-360-130-formula.png"
+  },
+  "amoled-360-130-process": {
+    "tabs": [
+      {
+        "x": 31.1875,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 134.296875,
+        "bottom": 135.796875,
+        "left": 31.1875
+      },
+      {
+        "x": 144.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 286.78125,
+        "bottom": 135.796875,
+        "left": 144.6875
+      },
+      {
+        "x": 297.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 422.25,
+        "bottom": 135.796875,
+        "left": 297.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "amoled",
+    "size": "360-130",
+    "tab": "process",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-amoled-360-130-process.png",
+    "background": "background-amoled-360-130-process.png"
+  },
+  "amoled-360-130-history": {
+    "tabs": [
+      {
+        "x": -51.8125,
+        "y": 73.40625,
+        "width": 103.109375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 51.296875,
+        "bottom": 135.796875,
+        "left": -51.8125
+      },
+      {
+        "x": 61.6875,
+        "y": 73.40625,
+        "width": 142.09375,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 203.78125,
+        "bottom": 135.796875,
+        "left": 61.6875
+      },
+      {
+        "x": 214.171875,
+        "y": 73.40625,
+        "width": 125.078125,
+        "height": 62.390625,
+        "top": 73.40625,
+        "right": 339.25,
+        "bottom": 135.796875,
+        "left": 214.171875
+      }
+    ],
+    "width": 360,
+    "height": 900,
+    "theme": "amoled",
+    "size": "360-130",
+    "tab": "history",
+    "locale": "fr-CA",
+    "source": "ae7b970ae395eee00f763b8bbdc1fc46e5ba16ca",
+    "state": "one pending fixture quantity edit",
+    "fixture": {
+      "id": "qa-editor-controls",
+      "fieldBefore": "850",
+      "fieldAfter": "851"
+    },
+    "before": "before-amoled-360-130-history.png",
+    "background": "background-amoled-360-130-history.png"
+  }
+}
