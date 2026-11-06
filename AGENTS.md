@@ -30,6 +30,9 @@ a dedicated pull request, before the code that depends on it.
 - No new dependency without a demonstrated need.
 - English everywhere: code, comments, docs, commit messages, issues, pull requests.
 - No user-facing text hard-coded in UI components; use message keys (ADR 0009).
+- The interface is phone-only: no tablet or desktop responsive layouts. The phone frame on desktop
+  browsers and shells is intentional, not a defect (ADR 0024; ledger L24). Phone acceptance at 360
+  and 393 px with larger text still applies.
 - French UI text never addresses the user (no "tu", no "vous"): instructions and actions use the
   infinitive ("Pétrir 8 min à basse vitesse"), explanations an impersonal voice.
 - Every commit is pushed. Work lands in focused pull requests (ADR 0008, workflow): one per
