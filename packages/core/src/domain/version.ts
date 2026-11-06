@@ -1,8 +1,10 @@
 /**
- * Version of the data contracts described in docs/contracts/. 0.24.1: a move down a chain is the
- * same chain move as a move up (process.md, Move); no persisted shape or calculation changes.
+ * Version of the data contracts described in docs/contracts/. 0.24.2: the hydration sheet read
+ * model (formula.md, Hydration sheet read model, L147), an addition with no persisted shape or
+ * calculation change. 0.24.1: a move down a chain is the same chain move as a move up
+ * (process.md, Move).
  */
-export const CONTRACT_VERSION = '0.24.1';
+export const CONTRACT_VERSION = '0.24.2';
 
 /**
  * Version of the calculation engine recorded in bake snapshots (D8). 0.8.0: the dough thermal
