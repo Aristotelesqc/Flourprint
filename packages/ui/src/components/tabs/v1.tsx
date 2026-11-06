@@ -21,6 +21,8 @@ export const Tabs = ({
   const baseId = useId();
   const stripRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const touchPress = useRef<{ id: string; pointerId: number; x: number; y: number } | null>(null);
+  const touchClick = useRef<string | null>(null);
 
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
   useLayoutEffect(() => {
@@ -141,7 +143,56 @@ export const Tabs = ({
               aria-controls={panelId}
               tabIndex={isFocusable ? 0 : -1}
               disabled={item.disabled === true}
-              onClick={() => {
+              onPointerDown={(event) => {
+                if (!event.isPrimary) return;
+                touchClick.current = null;
+                touchPress.current =
+                  event.pointerType === 'touch'
+                    ? {
+                        id: item.id,
+                        pointerId: event.pointerId,
+                        x: event.clientX,
+                        y: event.clientY,
+                      }
+                    : null;
+              }}
+              onPointerMove={(event) => {
+                const press = touchPress.current;
+                if (
+                  press?.pointerId === event.pointerId &&
+                  Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8
+                )
+                  touchPress.current = null;
+              }}
+              onPointerCancel={() => {
+                touchPress.current = null;
+                touchClick.current = item.id;
+              }}
+              onPointerUp={(event) => {
+                if (event.pointerType !== 'touch' || !event.isPrimary) return;
+                const press = touchPress.current;
+                touchPress.current = null;
+                touchClick.current = item.id;
+                const bounds = event.currentTarget.getBoundingClientRect();
+                if (
+                  press?.id === item.id &&
+                  press.pointerId === event.pointerId &&
+                  Math.hypot(event.clientX - press.x, event.clientY - press.y) <= 8 &&
+                  event.clientX >= bounds.left &&
+                  event.clientX <= bounds.right &&
+                  event.clientY >= bounds.top &&
+                  event.clientY <= bounds.bottom &&
+                  item.disabled !== true
+                )
+                  onSelectedChange(item.id);
+              }}
+              onClick={(event) => {
+                // WebView can omit the compatibility click after a swipe; touch already committed.
+                if (event.detail > 0 && touchClick.current === item.id) {
+                  touchClick.current = null;
+                  return;
+                }
+                touchClick.current = null;
                 if (item.disabled !== true) {
                   onSelectedChange(item.id);
                 }

@@ -56,6 +56,41 @@ async function finish(cdp: CDPSession) {
 for (const english of [false, true]) {
   const suffix = english ? ' @en' : '';
 
+  test(`a touch tab release works when WebView omits the compatibility click${suffix}`, async ({
+    page,
+  }) => {
+    await open(page);
+    await page.evaluate(() => {
+      document.addEventListener(
+        'click',
+        (event) => {
+          if ((event.target as HTMLElement).closest('[role="tab"]') && event.detail > 0)
+            event.stopImmediatePropagation();
+        },
+        true,
+      );
+    });
+    const cdp = await page.context().newCDPSession(page);
+    const target = await bounds(tabs(page).nth(1));
+    const send = (type: 'touchStart' | 'touchMove' | 'touchEnd', x: number, y: number) =>
+      cdp.send('Input.dispatchTouchEvent', {
+        type,
+        touchPoints: type === 'touchEnd' ? [] : [{ x, y }],
+      });
+    try {
+      await send('touchStart', target.x + target.width / 2, target.y + target.height / 2);
+      await send('touchEnd', 0, 0);
+      await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
+      const other = await bounds(tabs(page).nth(0));
+      await send('touchStart', other.x + other.width / 2, other.y + other.height / 2);
+      await send('touchMove', other.x + other.width / 2 + 20, other.y + other.height / 2);
+      await send('touchEnd', 0, 0);
+      await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
+    } finally {
+      await finish(cdp);
+    }
+  });
+
   test(`tabs distribute spare width and keep long labels scrollable${suffix}`, async ({ page }) => {
     await open(page);
     const strip = routed(page).getByRole('tablist');
