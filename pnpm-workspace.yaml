@@ -3,5 +3,7 @@ packages:
   - apps/*
 
 onlyBuiltDependencies:
-  # Downloads its binary; CI jobs that do not need it set ELECTRON_SKIP_BINARY_DOWNLOAD=1.
   - electron
+
+patchedDependencies:
+  '@ionic/core@9.0.6': patches/@ionic__core@9.0.6.patch

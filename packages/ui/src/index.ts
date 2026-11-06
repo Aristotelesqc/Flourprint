@@ -38,6 +38,13 @@ export {
   type MotionManifest,
   type TransitionMotion,
 } from './motion.ts';
+export {
+  bindOverlayMotion,
+  retimeOverlay,
+  useOverlayMotion,
+  type OverlayMotionPart,
+  type OverlayMotionPlan,
+} from './overlay-motion.ts';
 export { motionLibrary, type FlourprintMotion } from './motions.ts';
 export { defaultMotionManifest } from './motions/default-manifest.ts';
 export { MotionProvider, useMotion } from './motion-context.ts';

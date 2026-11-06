@@ -1,5 +1,5 @@
 import { useIonToast } from '@ionic/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMessages } from '../i18n/use-messages';
 import type { CopyOutcome } from '../services/dev-versions';
 
@@ -13,9 +13,11 @@ const KEYS = {
 export const CopyNotice = ({ outcome }: { outcome: CopyOutcome }) => {
   const { t } = useMessages();
   const [present] = useIonToast();
+  const shown = useRef(false);
   useEffect(() => {
+    if (shown.current) return;
+    shown.current = true;
     void present({ message: t(KEYS[outcome]), duration: 6000 });
-    // Once per start.
-  }, []);
+  }, [outcome, present, t]);
   return null;
 };

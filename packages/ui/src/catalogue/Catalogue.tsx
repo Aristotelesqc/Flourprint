@@ -4,7 +4,7 @@
  * developer and review page generated from a catalogue registry, so its own labels are fixed
  * English; product text reaches components only through their props.
  */
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { Guide } from '../guides.ts';
 import type {
   Catalogue as CatalogueRegistry,
@@ -13,8 +13,14 @@ import type {
   Versioned,
 } from '../library.ts';
 import { MotionProvider } from '../motion-context.ts';
-import { playMotion, transitionCss, type Motion } from '../motion.ts';
-import type { MotionManifest } from '../motion.ts';
+import {
+  playMotion,
+  transitionCss,
+  type KeyframesMotion,
+  type Motion,
+  type MotionManifest,
+  type TransitionMotion,
+} from '../motion.ts';
 import type { FlourprintMotion } from '../motions.ts';
 
 const THEMES = ['light', 'dark', 'amoled'] as const;
@@ -44,8 +50,8 @@ const GuidePanel = ({
   guide: (Guide & { readonly props?: Readonly<Record<string, string>> }) | undefined;
 }) =>
   guide ? (
-    <div data-testid="catalogue-guide" style={styles.guide}>
-      <p style={styles.guidePurpose}>{guide.purpose}</p>
+    <div className="bg-surface-container border border-outline rounded-card p-card-padding mb-3 text-supporting max-w-3xl">
+      <p className="font-semibold mb-2 text-on-surface">{guide.purpose}</p>
       <GuideList title="Use when" items={guide.useWhen} />
       <GuideList title="Avoid when" items={guide.avoidWhen} />
       <GuideList
@@ -55,9 +61,13 @@ const GuidePanel = ({
       <GuideList title="Accessibility" items={guide.accessibility} />
       <GuideList title="Related" items={guide.related} />
       {guide.decisions.length > 0 ? (
-        <p style={styles.muted}>
+        <p className="text-muted text-supporting mt-2 flex flex-wrap gap-3">
           {guide.decisions.map((decision) => (
-            <a key={decision.url} href={decision.url} style={styles.decision}>
+            <a
+              key={decision.url}
+              href={decision.url}
+              className="text-action-text hover:underline fp-focus rounded-pill"
+            >
               {decision.label}
             </a>
           ))}
@@ -65,16 +75,16 @@ const GuidePanel = ({
       ) : null}
     </div>
   ) : (
-    <p data-testid="catalogue-no-guide" style={styles.missing}>
+    <p className="text-error font-semibold text-supporting my-2">
       No guide: every item needs one (ADR 0021).
     </p>
   );
 
 const GuideList = ({ title, items }: { title: string; items: readonly string[] }) =>
   items.length === 0 ? null : (
-    <div style={styles.guideList}>
-      <strong>{title}</strong>
-      <ul style={styles.ul}>
+    <div className="my-1.5">
+      <strong className="text-on-surface">{title}</strong>
+      <ul className="list-disc pl-5 mt-0.5 text-supporting">
         {items.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -82,56 +92,104 @@ const GuideList = ({ title, items }: { title: string; items: readonly string[] }
     </div>
   );
 
-const camel = (property: string): string =>
-  property.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
-
-const cssObject = (declarations: Readonly<Record<string, string>>): CSSProperties =>
-  Object.fromEntries(
-    Object.entries(declarations).map(([property, value]) => [camel(property), value]),
-  ) as CSSProperties;
-
-/** One motion in one frame: a sample element and a Play button. */
-const MotionDemo = ({ motion, reduced }: { motion: Motion; reduced: boolean }) => {
+/** One keyframes motion in one frame: sample element and Play button. */
+const MotionKeyframesDemo = ({
+  motion,
+  reduced,
+}: {
+  motion: KeyframesMotion;
+  reduced: boolean;
+}) => {
   const sample = useRef<HTMLDivElement>(null);
-  const [on, setOn] = useState(false);
-  if (motion.kind === 'keyframes') {
-    return (
-      <div style={styles.demo}>
-        <div ref={sample} data-testid="motion-sample" style={styles.sample}>
-          {motion.id}
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (sample.current) playMotion(motion, sample.current, { reduced });
-          }}
-        >
-          Play
-        </button>
-        {reduced ? <span style={styles.hint}>reduced: no animation</span> : null}
-      </div>
-    );
-  }
-  const state = on ? motion.demo.to : motion.demo.from;
   return (
-    <div style={styles.demo}>
+    <div className="flex items-center gap-3">
       <div
-        data-testid="motion-sample"
-        style={{
-          ...styles.sample,
-          display: 'grid',
-          ...cssObject(state),
-          transition: transitionCss(motion, reduced),
+        ref={sample}
+        role="region"
+        aria-label={motion.id}
+        className="flex-1 p-card-padding rounded-card bg-surface border border-outline font-mono text-metadata text-on-surface"
+      >
+        {motion.id}
+      </div>
+      <button
+        type="button"
+        className="min-h-touch px-4 py-2 rounded-card bg-surface border border-outline text-on-surface font-medium hover:bg-surface-container fp-focus cursor-pointer"
+        onClick={() => {
+          if (sample.current) playMotion(motion, sample.current, { reduced });
         }}
       >
-        <div style={{ overflow: 'hidden', minHeight: 0 }}>{motion.id}</div>
+        Play
+      </button>
+      {reduced ? <span className="text-metadata text-muted">reduced: no animation</span> : null}
+    </div>
+  );
+};
+
+/** One transition motion in one frame: state toggling with properties applied at runtime. */
+const MotionTransitionDemo = ({
+  motion,
+  reduced,
+}: {
+  motion: TransitionMotion;
+  reduced: boolean;
+}) => {
+  const sample = useRef<HTMLDivElement>(null);
+  const prevPropsRef = useRef<readonly string[]>([]);
+  const [on, setOn] = useState(false);
+
+  useEffect(() => {
+    const el = sample.current;
+    if (!el) return;
+
+    for (const prop of prevPropsRef.current) {
+      el.style.removeProperty(prop);
+    }
+
+    const state = on ? motion.demo.to : motion.demo.from;
+    const applied: string[] = [];
+    for (const [prop, value] of Object.entries(state)) {
+      el.style.setProperty(prop, value);
+      applied.push(prop);
+    }
+    el.style.transition = transitionCss(motion, reduced);
+    prevPropsRef.current = applied;
+
+    return () => {
+      for (const prop of applied) {
+        el.style.removeProperty(prop);
+      }
+      el.style.transition = '';
+    };
+  }, [motion, on, reduced]);
+
+  return (
+    <div className="flex items-center gap-3">
+      <div
+        ref={sample}
+        role="region"
+        aria-label={motion.id}
+        className="grid flex-1 p-card-padding rounded-card bg-surface border border-outline font-mono text-metadata text-on-surface"
+      >
+        <div className="overflow-hidden min-h-0">{motion.id}</div>
       </div>
-      <button type="button" aria-pressed={on} onClick={() => setOn(!on)}>
+      <button
+        type="button"
+        aria-pressed={on}
+        className="min-h-touch px-4 py-2 rounded-card bg-surface border border-outline text-on-surface font-medium hover:bg-surface-container fp-focus cursor-pointer"
+        onClick={() => setOn((prev) => !prev)}
+      >
         Toggle
       </button>
     </div>
   );
 };
+
+const MotionDemo = ({ motion, reduced }: { motion: Motion; reduced: boolean }) =>
+  motion.kind === 'keyframes' ? (
+    <MotionKeyframesDemo motion={motion} reduced={reduced} />
+  ) : (
+    <MotionTransitionDemo motion={motion} reduced={reduced} />
+  );
 
 const Choice = <T extends string | number>({
   label,
@@ -145,22 +203,30 @@ const Choice = <T extends string | number>({
   value: T;
   onChange: (value: T) => void;
   format?: (value: T) => string;
-}) => (
-  <fieldset style={styles.choice}>
-    <legend style={styles.legend}>{label}</legend>
-    {options.map((option) => (
-      <label key={String(option)} style={styles.option}>
-        <input
-          type="radio"
-          name={label}
-          checked={option === value}
-          onChange={() => onChange(option)}
-        />{' '}
-        {format(option)}
-      </label>
-    ))}
-  </fieldset>
-);
+}) => {
+  const id = useId();
+  return (
+    <fieldset className="border border-outline rounded-card p-2 flex flex-wrap gap-2 items-center">
+      <legend className="text-metadata font-semibold px-1 text-on-surface">{label}</legend>
+      {options.map((option) => (
+        <label
+          key={String(option)}
+          className="flex items-center gap-1.5 text-supporting cursor-pointer min-h-touch px-2 rounded-segmented-option hover:bg-surface-container"
+        >
+          <input
+            type="radio"
+            name={id}
+            value={String(option)}
+            checked={option === value}
+            onChange={() => onChange(option)}
+            className="fp-focus accent-primary"
+          />
+          <span>{format(option)}</span>
+        </label>
+      ))}
+    </fieldset>
+  );
+};
 
 const Frame = ({
   theme,
@@ -176,8 +242,7 @@ const Frame = ({
   <div
     data-theme={theme}
     data-motion={reduced ? 'reduced' : 'standard'}
-    data-testid={`catalogue-frame-${theme}`}
-    style={{ ...styles.frame, width }}
+    className={`bg-background text-on-surface p-card-padding rounded-card border border-field-outline max-w-full fp-ionic ${width === 360 ? 'w-[360px]' : 'w-[393px]'}`}
   >
     {children}
   </div>
@@ -210,14 +275,14 @@ export const Catalogue = <C extends ComponentMap>({
   const themes = theme === 'all' ? THEMES : [theme];
 
   const page = (
-    <main style={styles.page}>
-      <header style={styles.header}>
-        <h1 style={styles.title}>Flourprint component catalogue</h1>
-        <p style={styles.muted}>
+    <main className="h-dvh overflow-y-auto bg-background text-on-surface p-page-gutter font-sans">
+      <header className="max-w-4xl">
+        <h1 className="text-page font-bold mb-1">Flourprint component catalogue</h1>
+        <p className="text-muted text-supporting my-1">
           Generated from the library registry (ADR 0020). Each version is shown with its examples;
           the selected one is the version the manifest uses.
         </p>
-        <div style={styles.controls}>
+        <div className="flex flex-wrap gap-3 my-3 items-center">
           <Choice
             label="Theme"
             options={['all', ...THEMES] as const}
@@ -247,81 +312,92 @@ export const Catalogue = <C extends ComponentMap>({
         </div>
       </header>
       {ids.length === 0 ? (
-        <p data-testid="catalogue-empty" style={styles.muted}>
+        <p className="text-muted text-supporting my-2">
           No components yet. Components are added in packages/ui/src/components (ADR 0020).
         </p>
       ) : (
-        <nav style={styles.nav}>
+        <nav aria-label="Component index" className="flex flex-wrap gap-2 my-3">
           {ids.map((id) => (
-            <a key={id} href={`#${id}`} style={styles.navLink}>
+            <a
+              key={id}
+              href={`#${id}`}
+              className="text-supporting text-action-text hover:underline fp-focus rounded-pill px-2 py-1 min-h-touch inline-flex items-center"
+            >
               {id}
             </a>
           ))}
         </nav>
       )}
       {ids.map((id) => (
-        <section key={id} id={id} data-testid={`catalogue-${id}`} style={styles.section}>
-          <h2 style={styles.id}>{id}</h2>
+        <section key={id} id={id} className="border-t border-outline py-card-padding">
+          <h2 className="font-mono text-title font-semibold mb-2">{id}</h2>
           {guides ? <GuidePanel guide={guides[id]} /> : null}
           {catalogue[id].map((version) => {
-            const Component = version.component;
             const selected = manifest?.[id] === version;
             return (
-              <article
-                key={version.version}
-                data-testid={`catalogue-${id}-${version.version}`}
-                style={styles.version}
-              >
-                <h3 style={styles.versionTitle}>
-                  {version.version}
-                  {selected ? <span style={styles.selected}>selected</span> : null}
+              <article key={version.version} className="mb-6">
+                <h3 className="text-body font-semibold flex items-center gap-2 mb-1">
+                  <span>{version.version}</span>
+                  {selected ? (
+                    <span className="text-metadata bg-primary text-on-primary rounded-pill px-2 py-0.5 font-medium">
+                      selected
+                    </span>
+                  ) : null}
                 </h3>
-                <p style={styles.muted}>{version.notes}</p>
-                {version.examples.map((example) => (
-                  <div key={example.name} style={styles.example}>
-                    <h4 style={styles.exampleTitle}>{example.name}</h4>
-                    <div style={styles.frames}>
-                      {themes.map((frameTheme) => (
-                        <Frame key={frameTheme} theme={frameTheme} width={width} reduced={reduced}>
-                          <Component {...example.props} />
-                        </Frame>
-                      ))}
+                <p className="text-muted text-supporting mb-3">{version.notes}</p>
+                {version.examples.map((example) => {
+                  const ExampleComponent = example.render ?? version.component;
+                  return (
+                    <div key={example.name} className="my-3">
+                      <h4 className="text-supporting font-semibold mb-1 text-on-surface">
+                        {example.name}
+                      </h4>
+                      <div className="flex flex-wrap gap-3 overflow-x-auto pb-2">
+                        {themes.map((frameTheme) => (
+                          <Frame
+                            key={frameTheme}
+                            theme={frameTheme}
+                            width={width}
+                            reduced={reduced}
+                          >
+                            <ExampleComponent {...example.props} />
+                          </Frame>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </article>
             );
           })}
         </section>
       ))}
-      <h2 style={styles.kindTitle}>Motions</h2>
+      <h2 className="text-title font-bold mt-8 mb-2">Motions</h2>
       {Object.keys(motions).length === 0 ? (
-        <p data-testid="catalogue-motions-empty" style={styles.muted}>
-          No motion items in this catalogue.
-        </p>
+        <p className="text-muted text-supporting my-2">No motion items in this catalogue.</p>
       ) : null}
       {Object.keys(motions)
         .sort()
         .map((id) => (
-          <section key={id} id={id} data-testid={`catalogue-${id}`} style={styles.section}>
-            <h2 style={styles.id}>{id}</h2>
+          <section key={id} id={id} className="border-t border-outline py-card-padding">
+            <h2 className="font-mono text-title font-semibold mb-2">{id}</h2>
             <GuidePanel guide={motionGuides[id]} />
             {(motions[id] ?? []).map((motion) => {
               const selected =
                 (motionManifest as Readonly<Record<string, Versioned>> | undefined)?.[id] ===
                 motion;
               return (
-                <article
-                  key={motion.version}
-                  data-testid={`catalogue-${id}-${motion.version}`}
-                  style={styles.version}
-                >
-                  <h3 style={styles.versionTitle}>
-                    {motion.version}
-                    {selected ? <span style={styles.selected}>selected</span> : null}
+                <article key={motion.version} className="mb-6">
+                  <h3 className="text-body font-semibold flex items-center gap-2 mb-1">
+                    <span>{motion.version}</span>
+                    {selected ? (
+                      <span className="text-metadata bg-primary text-on-primary rounded-pill px-2 py-0.5 font-medium">
+                        selected
+                      </span>
+                    ) : null}
                   </h3>
-                  <p style={styles.muted}>{motion.notes}</p>
-                  <div style={styles.frames}>
+                  <p className="text-muted text-supporting mb-3">{motion.notes}</p>
+                  <div className="flex flex-wrap gap-3 overflow-x-auto pb-2">
                     {themes.map((frameTheme) => (
                       <Frame key={frameTheme} theme={frameTheme} width={width} reduced={reduced}>
                         <MotionDemo motion={motion} reduced={reduced} />
@@ -337,81 +413,3 @@ export const Catalogue = <C extends ComponentMap>({
   );
   return motionManifest ? <MotionProvider value={motionManifest}>{page}</MotionProvider> : page;
 };
-
-const styles = {
-  page: {
-    fontFamily: 'system-ui, sans-serif',
-    padding: '1rem',
-    background: 'var(--fp-color-background)',
-    color: 'var(--fp-color-on-surface)',
-    minHeight: '100vh',
-  },
-  header: { maxWidth: '60rem' },
-  title: { fontSize: '1.4rem', margin: '0 0 0.25rem' },
-  muted: { color: 'var(--fp-color-muted)', margin: '0.25rem 0', fontSize: '0.875rem' },
-  controls: { display: 'flex', flexWrap: 'wrap', gap: '0.75rem', margin: '0.75rem 0' },
-  choice: {
-    border: '1px solid var(--fp-color-outline)',
-    borderRadius: '0.5rem',
-    padding: '0.25rem 0.5rem',
-  },
-  legend: { fontSize: '0.75rem', fontWeight: 600 },
-  option: { marginRight: '0.5rem', fontSize: '0.85rem' },
-  nav: { display: 'flex', flexWrap: 'wrap', gap: '0.4rem', margin: '0.5rem 0 1rem' },
-  navLink: { fontSize: '0.8rem', color: 'var(--fp-color-action-text)' },
-  section: { borderTop: '1px solid var(--fp-color-outline)', padding: '1rem 0' },
-  id: { fontFamily: 'ui-monospace, monospace', fontSize: '1.05rem', margin: '0 0 0.5rem' },
-  version: { margin: '0 0 1.25rem' },
-  versionTitle: {
-    fontSize: '0.95rem',
-    margin: '0',
-    display: 'flex',
-    gap: '0.5rem',
-    alignItems: 'center',
-  },
-  selected: {
-    fontSize: '0.7rem',
-    background: 'var(--fp-color-primary)',
-    color: 'var(--fp-color-on-primary)',
-    borderRadius: '999px',
-    padding: '0.1rem 0.5rem',
-  },
-  example: { margin: '0.5rem 0' },
-  exampleTitle: { fontSize: '0.8rem', fontWeight: 600, margin: '0 0 0.25rem' },
-  frames: { display: 'flex', flexWrap: 'wrap', gap: '0.75rem', overflowX: 'auto' },
-  frame: {
-    background: 'var(--fp-color-background)',
-    color: 'var(--fp-color-on-surface)',
-    padding: '1rem',
-    borderRadius: '0.75rem',
-    border: '1px solid var(--fp-color-field-outline)',
-    maxWidth: '100%',
-    boxSizing: 'border-box',
-  },
-  kindTitle: { fontSize: '1.2rem', margin: '1.5rem 0 0.25rem' },
-  guide: {
-    background: 'var(--fp-color-surface-container)',
-    border: '1px solid var(--fp-color-outline)',
-    borderRadius: '0.5rem',
-    padding: '0.5rem 0.75rem',
-    margin: '0 0 0.75rem',
-    fontSize: '0.85rem',
-    maxWidth: '48rem',
-  },
-  guidePurpose: { margin: '0 0 0.4rem', fontWeight: 600 },
-  guideList: { margin: '0.25rem 0' },
-  ul: { margin: '0.15rem 0 0', paddingLeft: '1.2rem' },
-  decision: { color: 'var(--fp-color-action-text)', marginRight: '0.75rem' },
-  missing: { color: 'var(--fp-color-error)', fontWeight: 600, fontSize: '0.85rem' },
-  demo: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
-  hint: { fontSize: '0.7rem', opacity: 0.7 },
-  sample: {
-    flex: 1,
-    padding: '0.75rem',
-    borderRadius: '0.75rem',
-    background: 'var(--fp-color-surface)',
-    border: '1px solid var(--fp-color-outline)',
-    fontFamily: 'ui-monospace, monospace',
-    fontSize: '0.75rem',
-  },
-} satisfies Record<string, CSSProperties>;

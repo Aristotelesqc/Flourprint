@@ -18,6 +18,8 @@ export type FlourprintMotion =
   | 'fp.motion.backdrop-enter'
   | 'fp.motion.backdrop-exit'
   | 'fp.motion.sheet-enter'
-  | 'fp.motion.sheet-exit';
+  | 'fp.motion.sheet-exit'
+  | 'fp.motion.step-drag'
+  | 'fp.motion.tab-carousel';
 
 export const motionLibrary = createMotionLibrary<FlourprintMotion>();

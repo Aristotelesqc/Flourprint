@@ -1,6 +1,8 @@
 // @ts-check
 import js from '@eslint/js';
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import tseslint from 'typescript-eslint';
 
 /** Imports that would break the purity of core/domain (ADR 0001). */
@@ -25,6 +27,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
+      '.agy-runs/**',
       '**/node_modules/**',
       'pnpm-lock.yaml',
       'apps/mobile/android/**',
@@ -64,7 +67,7 @@ export default tseslint.config(
     },
   },
   {
-    // The component library (ADR 0020): browser code that depends on React only. No baking
+    // The component library (ADR 0022): browser code sourced from React and Ionic. No baking
     // math or product data, so no @flourprint package; no Node in the bundle.
     files: ['packages/ui/src/**/*.{ts,tsx}', 'packages/ui/test/fixtures/**/*.ts'],
     languageOptions: { globals: { ...globals.browser } },
@@ -81,6 +84,15 @@ export default tseslint.config(
           ],
         },
       ],
+    },
+  },
+  {
+    files: ['packages/ui/src/**/*.{ts,tsx}', 'apps/mobile/src/**/*.{ts,tsx}'],
+    plugins: { 'react-hooks': reactHooks, 'jsx-a11y': jsxA11y },
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
+      ...jsxA11y.configs.recommended.rules,
     },
   },
   {
