@@ -61,6 +61,10 @@ for (const english of [false, true]) {
       page,
     }) => {
       await open(page);
+      // Cover font metrics where medium and bold have substantially different advances (CI/Linux).
+      await page.addStyleTag({
+        content: '[role="tab"] { font-family: Arial, sans-serif !important; }',
+      });
       await carousel(page).evaluate((node) => {
         const track = node.firstElementChild;
         if (!(track instanceof HTMLElement)) throw new Error('Missing carousel track');

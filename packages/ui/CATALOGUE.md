@@ -599,6 +599,7 @@ Accessible tabbed navigation strip that switches between alternate views while k
 
 **Accessibility**
 
+- Plain-text labels reserve the semibold footprint so selection never shifts neighbouring tabs (L123); rich React labels retain a single rendered instance.
 - Tab buttons share spare row width with centered labels; overflowing labels keep horizontal scrolling without shrinking.
 - Full WAI-ARIA tablist, tab, and tabpanel roles with roving tabIndex on tabs.
 - Left and Right arrow keys wrap through enabled tabs with automatic selection and focus management.
