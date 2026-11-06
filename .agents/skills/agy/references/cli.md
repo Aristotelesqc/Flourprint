@@ -64,6 +64,8 @@ Verified with CLI 1.5.2 (2026-11-06): `--snapshot` only skips the helper's Git i
 
 A bounded supplied-source implementation on that CLI produced a final `SUCCESS` response after 223 seconds, within its 300-second budget, with no model tool calls. It returned structured exact-match replacements which the caller converted to a two-file patch and checked with `git apply --check` before applying. A quiet event stream before the deadline was not an empty response: distinguish `init`/`user_input`, active response deltas, final backend result and CLI completion. Prefer small replacement hunks to retransmitting whole files when only visual classes or a render condition change; preserve useful deltas if a deadline is reached. Never restart a live turn merely because it has not streamed text yet.
 
+The same CLI returned `SUCCESS` with an empty response, zero duration/usage and `finished_reason: print_timeout` for a 180-second source review. Attaching the exact conversation without a new prompt showed an interrupted turn that had already spent almost three minutes thinking: those zero fields were not proof of no work or no quota consumption. One final-only collection turn recovered concrete partial findings; retain the original failure and the recovered result separately, verify each finding, and do not relabel it an uninterrupted completed review. Size the deadline from observed first-response latency as well as expected output; ask for concise findings/replacements rather than repeated analysis when collecting an interrupted result.
+
 ## Recovery
 
 Apply the [bounded review/recovery policy](../SKILL.md#bound-review-and-recovery-costs) before

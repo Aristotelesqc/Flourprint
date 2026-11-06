@@ -432,11 +432,11 @@ const RecipePageContent = () => {
   }, []);
 
   const leaveEditing = useCallback(
-    async (destination: Tab = 'formula') => {
+    async (destination: Tab = 'formula', options: { readonly keepEditing?: boolean } = {}) => {
       blurActiveEditor();
       await saving.current;
       // Planning is a preview of accepted values: keep mounted raw fields for the return journey.
-      if (destination === 'process') {
+      if (destination === 'process' && options.keepEditing) {
         setReturnToPlanning(false);
         setTargetedStepId(undefined);
         switchTab(destination);
@@ -476,7 +476,7 @@ const RecipePageContent = () => {
   );
 
   const handleReturnToPlanning = useCallback(() => {
-    void leaveEditing('process');
+    void leaveEditing('process', { keepEditing: true });
   }, [leaveEditing]);
 
   const hydrationRef = useRef<HTMLDivElement>(null);
@@ -1529,7 +1529,7 @@ const RecipePageContent = () => {
                 busy={writes.busy}
                 hasInvalid={hasInvalid}
                 onSave={() => void save()}
-                onCancel={() => (dirty || hasInvalid ? discard() : void leaveEditing())}
+                onCancel={() => (dirty || hasInvalid ? discard() : void leaveEditing(tab))}
                 canUndo={past.length > 0 && !hasInvalid}
                 canRedo={future.length > 0 && !hasInvalid}
                 onUndo={undo}

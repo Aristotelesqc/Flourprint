@@ -136,6 +136,18 @@ for (const en of [false, true]) {
           expect(
             await action(page, names.save).evaluate((node) => node.scrollWidth <= node.clientWidth),
           ).toBe(true);
+          const labelBounds = await action(page, names.save).evaluate((node) => {
+            const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+            const text = walker.nextNode();
+            if (!text) throw new Error('Missing visible Save label');
+            const range = document.createRange();
+            range.selectNodeContents(text);
+            const label = range.getBoundingClientRect();
+            const target = node.getBoundingClientRect();
+            return { left: label.left - target.left, right: target.right - label.right };
+          });
+          expect(labelBounds.left).toBeGreaterThanOrEqual(0);
+          expect(labelBounds.right).toBeGreaterThanOrEqual(0);
           if (section === names.recipe) {
             await content.evaluate(async (host) => {
               const scroller = await (
@@ -181,6 +193,37 @@ for (const en of [false, true]) {
       .click();
     await enterEditor(page);
     await expect(field(page, en)).toHaveValue('201');
+  });
+
+  test(`closing a clean draft keeps the current Planning or History tab${suffix}`, async ({
+    page,
+  }) => {
+    await open(page);
+    for (const section of [names.planning, names.history]) {
+      await enterEditor(page);
+      await tab(page, section);
+      await expect(action(page, names.save)).toBeDisabled();
+      await action(page, names.discard).click();
+      await expect(bar(page)).toHaveCount(0);
+      await expect(routed(page).getByRole('tab', { name: section, exact: true })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      await expect(page.locator('ion-alert:not(.overlay-hidden)')).toHaveCount(0);
+      if (section === names.planning) {
+        await expect(
+          routed(page)
+            .locator('ion-footer')
+            .getByRole('button', {
+              name: en ? 'Start preparation' : 'Démarrer la préparation',
+              exact: true,
+            }),
+        ).toBeEnabled();
+      } else {
+        await expect(routed(page).locator('ion-footer')).toHaveCount(0);
+      }
+    }
+    await expectRecipeRevision(page, 1);
   });
 
   test(`invalid raw input stays guarded and discard confirms outside Recipe${suffix}`, async ({
