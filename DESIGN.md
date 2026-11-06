@@ -430,6 +430,8 @@ DESIGN.md does not select a new dependency or migrate routes.
 
 ## Do's and Don'ts
 
+- Keep action hit areas inside the usable display, including system insets and rounded physical
+  corners. Edge-to-edge backgrounds do not justify placing controls in those corners (L25).
 - Preserve the warm identity, approved logo and useful advanced paths.
 - Distinguish observed, planned and estimated information through labels and progressive detail.
 - Verify narrow FR/EN layouts, larger text, focus, contrast, reduced motion and long build labels.

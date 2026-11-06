@@ -164,6 +164,7 @@ Screens: recipe, preparation. Source: docs/contracts/fermentation.md (status: ow
 
 **L25.** Required coverage: 360 and 393 px, FR and EN, larger text (125–130 %) and Light/Dark/AMOLED. At 360 px with 125–130 % text:
 
+- interactive controls remain clear of system insets and the physical rounded corners of modern phone displays; backgrounds may extend to the edges, but action hit areas may not be clipped (owner, 2026-11-06);
 - no mid-word breaks (no `overflow-wrap:anywhere` on labels);
 - titles, including the recipe name in B's edit bar, are not truncated ("Shoku…", "Fournée …");
 - pills ("+00:00 → +00:10", "Étape 7 / 7") do not wrap inside their rounded background;

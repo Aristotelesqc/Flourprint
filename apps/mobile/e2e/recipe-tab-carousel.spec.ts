@@ -56,6 +56,69 @@ async function finish(cdp: CDPSession) {
 for (const english of [false, true]) {
   const suffix = english ? ' @en' : '';
 
+  for (const input of ['tab tap', 'touch swipe'] as const) {
+    test(`finishing a ${input} keeps the underline at its destination before selection commits${suffix}`, async ({
+      page,
+    }) => {
+      await open(page);
+      await carousel(page).evaluate((node) => {
+        const track = node.firstElementChild;
+        if (!(track instanceof HTMLElement)) throw new Error('Missing carousel track');
+        const animate = track.animate;
+        track.animate = function (this: HTMLElement, ...args: Parameters<HTMLElement['animate']>) {
+          this.animate = animate;
+          const animation = animate.apply(this, args);
+          animation.pause();
+          return animation;
+        };
+      });
+      const gesture = input === 'touch swipe' ? await finger(page) : undefined;
+      try {
+        if (gesture) {
+          await gesture.send('touchStart');
+          await gesture.send('touchMove', 70);
+          await gesture.send('touchEnd');
+        } else {
+          await tabs(page).nth(1).click();
+        }
+        await expect
+          .poll(() =>
+            carousel(page).evaluate((node) =>
+              node
+                .getAnimations({ subtree: true })
+                .some((a) => a.id === 'fp.motion:tab-carousel' && a.playState === 'paused'),
+            ),
+          )
+          .toBe(true);
+        const end = await carousel(page).evaluate(async (node) => {
+          const animation = node
+            .getAnimations({ subtree: true })
+            .find((a) => a.id === 'fp.motion:tab-carousel');
+          const host = node.closest('.ion-page');
+          const indicator = host?.querySelector('[data-tab-indicator]');
+          const destination = host?.querySelectorAll('[role="tab"]')[1];
+          if (!animation || !indicator || !destination)
+            throw new Error('Missing transition geometry');
+          // Observe the actual terminal pose in the finish microtask, before React can commit selection.
+          const terminal = animation.finished.then(() => ({
+            indicator: indicator.getBoundingClientRect().toJSON(),
+            destination: destination.getBoundingClientRect().toJSON(),
+          }));
+          animation.finish();
+          return terminal;
+        });
+        expect(end.indicator.x).toBeCloseTo(end.destination.x, 0);
+        expect(end.indicator.width).toBeCloseTo(end.destination.width, 0);
+        await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
+        await expect
+          .poll(async () => (await bounds(routed(page).locator('[data-tab-indicator]'))).x)
+          .toBeCloseTo(end.destination.x, 0);
+      } finally {
+        if (gesture) await finish(gesture.cdp);
+      }
+    });
+  }
+
   for (const large of [false, true]) {
     test(`the tab strip shares finger tracking, springback and section commits${large ? ' at 130%' : ''}${suffix}`, async ({
       page,
