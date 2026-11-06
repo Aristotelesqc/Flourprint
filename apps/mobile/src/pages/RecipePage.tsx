@@ -368,6 +368,7 @@ const RecipePageContent = () => {
         { name: stored.name, formula: stored.formula, process: stored.process },
         { name: base.name, formula: base.revision.formula, process: base.revision.process },
       ));
+  const showDraftActions = isDraftMode || isEditing || dirty || newRecipe;
   const name = stored?.name ?? base?.name ?? '';
   const persist = useCallback(
     (next: Draft) => {
@@ -431,11 +432,11 @@ const RecipePageContent = () => {
   }, []);
 
   const leaveEditing = useCallback(
-    async (destination: Tab = 'formula') => {
+    async (destination: Tab = 'formula', options: { readonly keepEditing?: boolean } = {}) => {
       blurActiveEditor();
       await saving.current;
       // Planning is a preview of accepted values: keep mounted raw fields for the return journey.
-      if (destination === 'process') {
+      if (destination === 'process' && options.keepEditing) {
         setReturnToPlanning(false);
         setTargetedStepId(undefined);
         switchTab(destination);
@@ -475,7 +476,7 @@ const RecipePageContent = () => {
   );
 
   const handleReturnToPlanning = useCallback(() => {
-    void leaveEditing('process');
+    void leaveEditing('process', { keepEditing: true });
   }, [leaveEditing]);
 
   const hydrationRef = useRef<HTMLDivElement>(null);
@@ -1317,10 +1318,10 @@ const RecipePageContent = () => {
         ref={contentRef}
         className="ion-padding"
         style={
-          (isDraftMode || isEditing || dirty || newRecipe) && effectivePanel === 'formula'
+          showDraftActions
             ? ({
                 '--padding-bottom':
-                  'calc(var(--spacing-touch) + 1rem + var(--ion-safe-area-bottom, 0px))',
+                  'calc(var(--spacing-touch) + 0.75rem + max(1.5rem, var(--ion-safe-area-bottom, 0px), env(safe-area-inset-bottom, 0px)) + 1px)',
               } as React.CSSProperties)
             : undefined
         }
@@ -1514,12 +1515,11 @@ const RecipePageContent = () => {
           currentProcess={draft.process}
           onClose={() => setReviewing(false)}
         />
-        {(isEditing || isDraftMode || dirty || newRecipe) && effectivePanel === 'formula' && (
+        {showDraftActions && (
           <div
             slot="fixed"
             data-testid="recipe-draft-bar"
             data-recipe-draft-bar
-            style={{ paddingBottom: 'var(--ion-safe-area-bottom, 0px)' }}
             className="ion-no-border pointer-events-none absolute bottom-0 left-0 right-0 z-40"
           >
             <div className="pointer-events-auto">
@@ -1529,7 +1529,7 @@ const RecipePageContent = () => {
                 busy={writes.busy}
                 hasInvalid={hasInvalid}
                 onSave={() => void save()}
-                onCancel={() => (dirty || hasInvalid ? discard() : void leaveEditing())}
+                onCancel={() => (dirty || hasInvalid ? discard() : void leaveEditing(tab))}
                 canUndo={past.length > 0 && !hasInvalid}
                 canRedo={future.length > 0 && !hasInvalid}
                 onUndo={undo}
@@ -1539,7 +1539,7 @@ const RecipePageContent = () => {
           </div>
         )}
       </IonContent>
-      {tab === 'process' && base && trashedAt === undefined && (
+      {tab === 'process' && base && trashedAt === undefined && !showDraftActions && (
         <IonFooter className="ion-no-border">
           <Ui component="fp.bottom-bar" navigationLabel={t('recipe.bottomBarLabel')}>
             <div className="flex items-center justify-end w-full gap-2">

@@ -230,7 +230,8 @@ test('invalid edit blocks save, persists across hidden panels, and allows clean 
 
   // 3. Hidden panel persistence: switch tabs while invalid field is present
   await showPlanning(page);
-  await expect(footer.getByRole('button', { name: 'Démarrer la préparation' })).toBeDisabled();
+  await expect(footer.getByRole('button', { name: 'Démarrer la préparation' })).toHaveCount(0);
+  await expect(footer.getByRole('button', { name: 'Enregistrer', exact: true })).toBeDisabled();
   await expect(waterFinal).toHaveValue('abc');
 
   await page.getByRole('tab', { name: 'Historique', exact: true }).click();

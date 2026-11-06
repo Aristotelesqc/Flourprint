@@ -10,7 +10,7 @@ write transitions. Every item has a guide; a new item or version ships with its 
 
 ### `fp.bottom-bar`
 
-Contextual actions at the screen bottom; Recipe editing uses a constant-height overlay, while reading Recipe has no permanent bottom bar (L31, L60).
+Contextual actions at the screen bottom; Recipe draft actions stay in one constant-height overlay across Recipe, Planning and History, while reading Recipe has no permanent bottom bar (L31, L60).
 
 **Use when**
 
@@ -32,11 +32,11 @@ Contextual actions at the screen bottom; Recipe editing uses a constant-height o
 
 **Accessibility**
 
-- Page-anchored presentation stays flat; painted surfaces are opaque (ADR 0021 elevation rule).
+- Page-anchored presentation stays flat; painted surfaces are opaque through system insets, with padding inside the paint to keep hit areas clear of physical rounded corners (L25, ADR 0021).
 - The toolbar/navigation landmark carries navigationLabel.
 - Touch target at least 48 px width and height; visible control rhythm is compact without overlapping adjacent actions.
 - At 360 px and 130% text scaling (L115), contextual toolbar actions fit without horizontal overflow; Discard, Undo/Redo and Save remain reachable in editing; time actions belong only to Planning with full >=48 px targets without clipped labels or empty padded rows.
-- Labels use single-row ellipsis rather than mid-word wrapping (L25), preserving baseline alignment.
+- Keep the primary Save label fully readable on one row; approved icon-only Discard and history actions retain localized accessible names (L25, L60).
 
 **Related**
 
@@ -599,6 +599,7 @@ Accessible tabbed navigation strip that switches between alternate views while k
 
 **Accessibility**
 
+- Plain-text labels reserve the semibold footprint so selection never shifts neighbouring tabs (L123); rich React labels retain a single rendered instance.
 - Tab buttons share spare row width with centered labels; overflowing labels keep horizontal scrolling without shrinking.
 - Full WAI-ARIA tablist, tab, and tabpanel roles with roving tabIndex on tabs.
 - Left and Right arrow keys wrap through enabled tabs with automatic selection and focus management.

@@ -277,7 +277,18 @@ export const Tabs = ({
                   : 'border-transparent text-muted hover:text-on-surface'
               } ${item.disabled === true ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
-              {item.label}
+              {typeof item.label === 'string' || typeof item.label === 'number' ? (
+                <span className="inline-grid [grid-template-areas:'label']">
+                  <span
+                    aria-hidden="true"
+                    data-label={item.label}
+                    className="invisible font-semibold [grid-area:label] after:content-[attr(data-label)]"
+                  />
+                  <span className="[grid-area:label]">{item.label}</span>
+                </span>
+              ) : (
+                item.label
+              )}
             </button>
           );
         })}

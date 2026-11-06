@@ -40,6 +40,7 @@ export function SectionCarousel({
   const currentAnimationRef = useRef<Animation | null>(null);
   const [viewportHeight, setViewportHeight] = useState(0);
   const [transitionState, setTransitionState] = useState<TransitionState | null>(null);
+  const previousSectionRef = useRef(activeSection);
 
   const liveDxRef = useRef(0);
   const liveTargetIdxRef = useRef(0);
@@ -62,6 +63,13 @@ export function SectionCarousel({
     if ((!transitionState || reduced) && trackRef.current)
       trackRef.current.style.transform = `translate3d(${-Math.max(0, sections.indexOf(activeSection)) * 100}%, 0, 0)`;
   }, [activeSection, reduced, sections, transitionState]);
+
+  useLayoutEffect(() => {
+    // Keep the completed indicator pose until the controlled selection reaches its destination.
+    if (previousSectionRef.current === activeSection) return;
+    previousSectionRef.current = activeSection;
+    onGestureProgress?.(null);
+  }, [activeSection, onGestureProgress]);
 
   const pointerStateRef = useRef<{
     pointerId: number;
@@ -185,7 +193,7 @@ export function SectionCarousel({
             currentAnimationRef.current = null;
             onBeforeChange?.();
             onChangeSection(id);
-            onGestureProgress?.(null);
+            if (id === activeSection) onGestureProgress?.(null);
             setTransitionState(null);
           },
         });
@@ -490,8 +498,9 @@ export function SectionCarousel({
           if (willCommit) {
             onBeforeChange?.();
             onChangeSection(sections[finalCommitIndex] ?? activeSection);
+          } else {
+            onGestureProgress?.(null);
           }
-          onGestureProgress?.(null);
         },
       });
       currentAnimationRef.current = anim ?? null;

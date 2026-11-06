@@ -164,6 +164,7 @@ Screens: recipe, preparation. Source: docs/contracts/fermentation.md (status: ow
 
 **L25.** Required coverage: 360 and 393 px, FR and EN, larger text (125–130 %) and Light/Dark/AMOLED. At 360 px with 125–130 % text:
 
+- interactive controls remain clear of system insets and the physical rounded corners of modern phone displays; backgrounds may extend to the edges, but action hit areas may not be clipped (owner, 2026-11-06);
 - no mid-word breaks (no `overflow-wrap:anywhere` on labels);
 - titles, including the recipe name in B's edit bar, are not truncated ("Shoku…", "Fournée …");
 - pills ("+00:00 → +00:10", "Étape 7 / 7") do not wrap inside their rounded background;
@@ -463,7 +464,7 @@ Screens: recipe, edit. Source: Owner, coordinating session 2026-10-22. Kind: OD.
 
 ## 6. Edit (in-place state of Recipe)
 
-**L60.** Editing shows one bottom bar of constant height: Discard (cross icon), Undo, Redo, Save. Discard confirms when changes exist. The bar overlays the screen bottom without pushing or resizing the content above, including when a step drag creates the draft. Status and notices must not create a second row or change geometry. The full recipe title stays readable. Screens: recipe, edit. Source: Owner, coordinating session 2026-11-04; supersedes the former replacement toolbar arrangement. Kind: OD.
+**L60.** Editing shows one bottom bar of constant height: icon-only Discard (cross), quiet Undo and Redo, and filled Save at the right. The same bar remains available across Recipe, Planning and History while the recipe draft/editor is active; it replaces the Planning time-action footer during editing rather than stacking another bar. Discard confirms when changes exist. The flat, continuous opaque surface reaches the screen bottom; side and bottom padding protect action hit areas from physical rounded corners and system insets (L25). The bar overlays the screen bottom without pushing or resizing the content above, including when a step drag creates the draft; the final content stays scrollable above it. Status and notices must not create a second row or change geometry. The full recipe title stays readable. Screens: recipe, planning, history, edit. Source: Owner, coordinating sessions 2026-11-04 and 2026-11-06; approved [editor-controls-v1-20261106](https://aristotelesqc.github.io/Flourprint/review-2026-11-06-editor-controls-v1/), superseding the former replacement toolbar arrangement and Recipe-only editing-bar placement. Kind: OD.
 
 **L61.** The recipe name is edited in place, in the page title field. It is not reached through ⋮ → Rename alert, and it does not disappear when a section changes. Screens: edit. Source: GH/issues/121 scope ("in-place name editing"); GH/issues/111#issuecomment-6205731046 §1.2–1.3; GH/issues/128 acceptance 4. Kind: OI.
 

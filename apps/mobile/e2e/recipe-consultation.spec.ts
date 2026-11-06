@@ -136,9 +136,12 @@ test('valid raw text is committed only from the focused field before a mode comm
   await expect(water).toHaveValue('170');
   await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');
   await showPlanning(page);
+  await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toHaveCount(
+    0,
+  );
   await expect(
-    footer(page).getByRole('button', { name: 'Démarrer la préparation' }),
-  ).toBeDisabled();
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
+  ).toBeEnabled();
   await enterEditor(page);
   await expect(footer(page).getByRole('status')).toHaveText('Modifications non enregistrées');
   await footer(page).getByRole('button', { name: 'Enregistrer', exact: true }).click();
@@ -261,8 +264,11 @@ test('raw-only invalid input cannot disappear into consultation or start an old 
   ).toBeDisabled();
   await showPlanning(page);
   await showPlanning(page);
+  await expect(footer(page).getByRole('button', { name: 'Démarrer la préparation' })).toHaveCount(
+    0,
+  );
   await expect(
-    footer(page).getByRole('button', { name: 'Démarrer la préparation' }),
+    footer(page).getByRole('button', { name: 'Enregistrer', exact: true }),
   ).toBeDisabled();
   await enterEditor(page);
   await expect(water).toHaveValue('abc');
