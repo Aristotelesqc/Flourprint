@@ -20,7 +20,8 @@ const sortableListGuide: ComponentGuide<SortableListProps> = {
     'Maintains minimum 48px touch targets for drag handles.',
     'Opens one source-sized insertion space without changing the caller order until release.',
     'Keeps source children mounted, moves their measured spacing with the live insertion space, and dims the page behind the full floating card.',
-    'Shows candidate refusal at the floating card without changing list geometry.',
+    'Latches pointer candidates at stationary row midpoints with directional hysteresis, independent of the animated gap and adjusted for scrolling.',
+    'Delegates candidate refusal to an app-level transient toast; never overlays feedback on cards. Without a feedback callback, provides a screen-reader status.',
     'Includes the preceding measured row gap in the visibly painted insertion space and release hit-test, preserving total flow height.',
     'Settles through fp.motion.step-drag and restores the exact handle without scrolling or stealing a newer control focus.',
     'Adds composed-tree scroll ancestors for Ionic while the SDK owns autoscroll and pointer tracking.',
@@ -55,6 +56,8 @@ const sortableListGuide: ComponentGuide<SortableListProps> = {
       'Optional callback notifying when drag interaction begins or ends, used to guard navigation or carousels.',
     getDropFeedback:
       'Optional pure text feedback helper reporting assistive status messages for candidate drop locations.',
+    onDropFeedbackChange:
+      'Optional callback receiving changed candidate feedback for presentation outside the cards; undefined clears the candidate but need not immediately dismiss a transient toast.',
     disabled: 'Whether reordering gestures and keyboard interactions are disabled.',
     className: 'Optional CSS class name applied to the container element.',
     ref: 'Optional imperative ref exposing cancelDrag() to cancel any active drag operation programmatically.',

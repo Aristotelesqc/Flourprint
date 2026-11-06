@@ -207,8 +207,8 @@ A draft and a detailed editor are separate states sharing one history. Dragging 
 resumes the draft without switching ingredients or step cards into editors. Step cards keep
 the same height, density and layout; explicit per-step Edit opens the existing sheet. The
 single constant-height Discard/Undo/Redo/Save bar overlays the screen bottom without moving
-content. Discard confirms changes. Keep pending feedback subtle, refusals at the affected card,
-and notices out of document flow. Preserve scroll and keep the dropped card visible.
+content. Discard confirms changes. Keep pending feedback subtle and refusals in a transient bottom Ionic toast above the editing bar,
+with readable body tokens and a polite announcement; keep notices out of document flow. Preserve scroll and keep the dropped card visible.
 In-place value editing is future work, outside 0.3, and must not compete with drag activation.
 
 The implementation uses `FormulaConsultation`, `FormulaSection` and `RecipeMethod` for the Recipe tab,
@@ -333,7 +333,9 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   with the candidate; the overlay stays opaque above the page and follows both axes.
   Handles stay on the right, including in the floating card (L159). Render the same complete card
   in the overlay, retaining its content, dimensions and density. A tokenized scrim dims the page;
-  pre-release refusal stays with the floating card. Source children remain mounted while their
+  pre-release and final refusal use the bottom Ionic toast, never a card overlay (L154). Latch
+  pointer candidates at stationary row midpoints with directional hysteresis, adjusted for scroll;
+  the animated gap must not feed back into collision detection. Source children remain mounted while their
   measured height and spacing travel to the insertion slot. Settle through `fp.motion.step-drag`
   and return focus to the exact handle without scrolling or overriding a newer control focus.
   Actual activation opens the recipe draft without marking an unchanged recipe dirty.

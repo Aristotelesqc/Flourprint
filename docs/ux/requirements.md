@@ -283,7 +283,7 @@ _Amended: scope narrowed by L105 (style only)._
 
 **L116.** Step drop: the drop hit-test matches the drawn slot, so releasing in the visibly opened slot above "Pointage" is accepted. Every refusal shows a visible reason (extends L104). Screens: steps, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
-**L156.** The accepted drop matches the live slot. Preserve the real card under the finger and scrim, live neighbour reflow, pre-release `getDropFeedback`, settling and focus restoration from the approved reference. Use the 350 ms hold; scrolling must not accidentally drag, and reduced motion preserves final state. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L116. Kind: OD.
+**L156.** The accepted drop matches the live slot. Preserve the real card under the finger and scrim, live neighbour reflow, pre-release `getDropFeedback`, settling and focus restoration from the approved reference. A neighbour moves once when the dragged card crosses its midpoint; directional hysteresis prevents oscillation around the boundary, including sub-pixel pointer changes and scrolling. Use the 350 ms hold; scrolling must not accidentally drag, and reduced motion preserves final state. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L116. Kind: OD.
 
 **L159.** Step drag handles are on the right of the cards, including the floating card during a drag. Their position and touch target stay stable across draft states and the required narrow/large-text layouts. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04 ("les poignées de déplacement soient à droite des cartes d'étapes"). Kind: OD.
 
@@ -578,7 +578,7 @@ or by move actions (L72, L96). Editing what a step waits for is a separate, expl
 edit that shows only the meaningful choices, never a checkbox list of every step. Screens: steps.
 Source: owner review, 2026-10-19 ("une checklist pour déplacer l'étape, wtf?"). Kind: OD.
 
-**L154.** A cancelled, refused or outside move leaves the prior draft and history unchanged. A refusal is shown at the affected card, including pre-release feedback, rather than in an off-screen page notice. Never substitute another move. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L99. Kind: OD.
+**L154.** A cancelled, refused or outside move leaves the prior draft and history unchanged. Show pre-release and final refusal in a transient Ionic toast at the bottom, above the editing bar when present: readable tokenized body text, polite screen-reader announcement and automatic dismissal. Never overlay feedback on a step card, substitute another move or work around a core refusal. The refused card returns with the normal settle animation. Screens: recipe, steps, edit. Source: Owner test relayed 2026-11-06, superseding the at-card placement of 2026-11-04 and clarifying L99. Kind: OD.
 
 **L100.** No `⋯` menu button floating in the middle of each step row. Per-step actions sit at a
 consistent row edge with the edit control, or in the anchored menu of the row. Screens: steps.

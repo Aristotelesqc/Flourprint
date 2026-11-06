@@ -298,7 +298,7 @@ async function expectOneCancelledGesture(page, list) {
     .toEqual([{ intent: null }]);
 }
 
-test('sortable refusal is visible beside the floating card before release and restores focus', async ({
+test('sortable refusal is announced outside the floating card before release and restores focus', async ({
   page,
 }, testInfo) => {
   const list = await openSortableFixture(page, testInfo, { refuse: true });
@@ -306,13 +306,11 @@ test('sortable refusal is visible beside the floating card before release and re
     await liftWithKeyboard(page, list);
     await chooseBetaSlotWithKeyboard(page, list);
     const overlay = page.locator('[popover]:popover-open');
-    const feedback = page.locator('[data-drop-feedback]');
+    const feedback = page.locator('[data-sortable-feedback]');
     await expect(feedback).toHaveText('This move is refused.');
-    await expect(feedback).toBeVisible();
-    const floating = await overlay.boundingBox();
-    const message = await feedback.boundingBox();
-    expect(message.y).toBeGreaterThanOrEqual(floating.y - 1);
-    expect(message.y).toBeLessThanOrEqual(floating.y + floating.height + 1);
+    await expect(feedback).toHaveAttribute('aria-live', 'polite');
+    await expect(overlay).toBeVisible();
+    await expect(page.locator('[data-drop-feedback]')).toHaveCount(0);
     expect((await fixtureEvents(page)).filter((event) => 'intent' in event)).toEqual([]);
     await page.keyboard.press('Space');
     await expect.poll(() => handleOrder(list)).toEqual(fixtureOriginalOrder);

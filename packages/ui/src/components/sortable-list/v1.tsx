@@ -17,6 +17,7 @@ import {
   PreventSelection,
   type DragEndEvent,
   type DragOverEvent,
+  type DragMoveEvent,
   type DragStartEvent,
 } from '@dnd-kit/dom';
 import React, {
@@ -118,11 +119,44 @@ export function computeDropIntent(
   };
 }
 
+interface DragGeometry {
+  readonly sourceIndex: number;
+  readonly sourceFootprint: number;
+  readonly containerTop: number;
+  readonly grabOffsetY: number;
+  readonly rows: readonly { id: string; top: number; height: number }[];
+  index: number;
+}
+
+/** Stationary midpoints: never read the animated gap back into collision detection. */
+function stableAfterId(
+  geometry: DragGeometry,
+  clientY: number,
+  containerTop: number,
+): string | null {
+  const { sourceIndex, sourceFootprint, rows } = geometry;
+  const shift = containerTop - geometry.containerTop;
+  const centerY = clientY + geometry.grabOffsetY;
+  const others = rows.filter((_, index) => index !== sourceIndex);
+  const midpoint = (index: number) => {
+    const row = others[index];
+    if (!row) return 0;
+    return row.top + row.height / 2 - (index >= sourceIndex ? sourceFootprint : 0) + shift;
+  };
+  while (geometry.index < others.length && centerY > midpoint(geometry.index) + sourceFootprint) {
+    geometry.index++;
+  }
+  while (geometry.index > 0 && centerY < midpoint(geometry.index - 1)) {
+    geometry.index--;
+  }
+  return geometry.index === 0 ? null : (others[geometry.index - 1]?.id ?? null);
+}
+
 function makeSlotId(instanceId: string, afterId: string | null): string {
   return `fp-slot:${instanceId}:${afterId === null ? 'start' : `item:${encodeURIComponent(afterId)}`}`;
 }
 
-function getReleaseCoordinates(nativeEvent?: Event): { x: number; y: number } | null {
+function getReleaseCoordinates(nativeEvent?: Event | null): { x: number; y: number } | null {
   if (!nativeEvent) return null;
   if ('clientX' in nativeEvent && 'clientY' in nativeEvent) {
     const pe = nativeEvent as PointerEvent | MouseEvent;
@@ -293,7 +327,7 @@ export function SortableSlot({
     candidateAfterId !== undefined &&
     candidateAfterId === afterId;
 
-  const { ref: droppableRef, isDropTarget } = useDroppable({
+  const { ref: droppableRef } = useDroppable({
     id: slotId,
     element: boundaryElementRef,
     disabled: !isValidCandidate,
@@ -336,7 +370,7 @@ export function SortableSlot({
             ? { height: 0, marginTop: 0, paddingTop: 0 }
             : undefined
       }
-      data-drop-target={isDropTarget ? 'true' : undefined}
+      data-drop-target={isCandidate ? 'true' : undefined}
     >
       {activeId && isValidCandidate && (
         <div
@@ -472,6 +506,7 @@ export function SortableList({
   onDragStart,
   onDragActiveChange,
   getDropFeedback,
+  onDropFeedbackChange,
   disabled = false,
   className = '',
   ref,
@@ -499,6 +534,9 @@ export function SortableList({
   const releaseFocusRef = useRef<Element | null>(null);
   const activatedRef = useRef(false);
   const endedRef = useRef(false);
+  const geometryRef = useRef<DragGeometry | null>(null);
+  const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+  const feedbackRef = useRef<string | undefined>(undefined);
 
   const [candidateFeedback, setCandidateFeedback] = useState<string | undefined>(undefined);
   const endResolutionRef = useRef<{
@@ -512,6 +550,7 @@ export function SortableList({
     onDragStart,
     onDragActiveChange,
     getDropFeedback,
+    onDropFeedbackChange,
     announcements,
     instructions,
     items,
@@ -521,10 +560,23 @@ export function SortableList({
     onDragStart,
     onDragActiveChange,
     getDropFeedback,
+    onDropFeedbackChange,
     announcements,
     instructions,
     items,
   };
+
+  const publishFeedback = useCallback((feedback: string | undefined) => {
+    setCandidateFeedback(feedback);
+    if (feedback === feedbackRef.current) return;
+    feedbackRef.current = feedback;
+    callbacksRef.current.onDropFeedbackChange?.(feedback);
+  }, []);
+
+  const resetGeometry = useCallback(() => {
+    geometryRef.current = null;
+    lastPointerRef.current = null;
+  }, []);
 
   const registerSlot = useCallback((afterId: string | null, element: HTMLElement | null) => {
     const key = afterId;
@@ -574,8 +626,9 @@ export function SortableList({
     () => () => {
       if (focusFrameRef.current !== null) cancelAnimationFrame(focusFrameRef.current);
       cancelSettle();
+      resetGeometry();
     },
-    [cancelSettle],
+    [cancelSettle, resetGeometry],
   );
 
   const resolveEnd = useCallback(
@@ -655,17 +708,18 @@ export function SortableList({
         outcome,
       };
 
+      resetGeometry();
       callbacksRef.current.onDragActiveChange?.(false);
       setActiveId(null);
       setCandidateAfterId(undefined);
       setActiveDimensions(null);
-      setCandidateFeedback(undefined);
+      publishFeedback(undefined);
       setSettlingId(sourceId || null);
       if (sourceId) restoreHandleFocus(sourceId);
 
       return { intent: resolvedIntent, outcome };
     },
-    [instanceId, restoreHandleFocus],
+    [instanceId, restoreHandleFocus, publishFeedback, resetGeometry],
   );
 
   const handleDragStart = useCallback(
@@ -680,6 +734,34 @@ export function SortableList({
       lastActiveIdRef.current = sourceId;
       const rect = event.operation.source?.element?.getBoundingClientRect();
       const source = event.operation.source?.element;
+      const container = containerRef.current;
+      const pointer = getReleaseCoordinates(event.operation.activatorEvent);
+      resetGeometry();
+      publishFeedback(undefined);
+      if (container && pointer && rect) {
+        const rows = Array.from(container.querySelectorAll<HTMLElement>('[data-sortable-id]')).map(
+          (row) => {
+            const bounds = row.getBoundingClientRect();
+            return { id: row.dataset.sortableId ?? '', top: bounds.top, height: bounds.height };
+          },
+        );
+        const sourceIndex = rows.findIndex((row) => row.id === sourceId);
+        const next = rows[sourceIndex + 1];
+        if (sourceIndex >= 0) {
+          geometryRef.current = {
+            sourceIndex,
+            index: sourceIndex,
+            sourceFootprint: next
+              ? next.top - rect.top
+              : rect.height +
+                (source ? Number.parseFloat(getComputedStyle(source).marginBottom) || 0 : 0),
+            containerTop: container.getBoundingClientRect().top,
+            grabOffsetY: rect.top + rect.height / 2 - pointer.y,
+            rows,
+          };
+          lastPointerRef.current = pointer;
+        }
+      }
       setActiveSpacing(source ? Number.parseFloat(getComputedStyle(source).marginBottom) || 0 : 0);
       setActiveDimensions(rect ? { width: rect.width, height: rect.height } : null);
       setCandidateAfterId(undefined);
@@ -688,17 +770,43 @@ export function SortableList({
       callbacksRef.current.onDragStart?.(sourceId);
       callbacksRef.current.onDragActiveChange?.(true);
     },
-    [cancelSettle],
+    [cancelSettle, publishFeedback, resetGeometry],
+  );
+
+  const updatePointerCandidate = useCallback(
+    (event: DragMoveEvent | DragOverEvent) => {
+      if (!activatedRef.current || !geometryRef.current || !containerRef.current) return;
+      const coordinates = getReleaseCoordinates(
+        'nativeEvent' in event ? event.nativeEvent : undefined,
+      );
+      if (coordinates) lastPointerRef.current = coordinates;
+      const pointer = lastPointerRef.current;
+      if (!pointer) return;
+      const afterId = stableAfterId(
+        geometryRef.current,
+        pointer.y,
+        containerRef.current.getBoundingClientRect().top,
+      );
+      const sourceId = String(event.operation.source?.id ?? '');
+      const intent = computeDropIntent(sourceId, afterId, 'pointer', callbacksRef.current.items);
+      setCandidateAfterId(intent ? afterId : undefined);
+      publishFeedback(intent ? callbacksRef.current.getDropFeedback?.(intent) : undefined);
+    },
+    [publishFeedback],
   );
 
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
       if (!activatedRef.current) return;
+      if (!(event.operation.activatorEvent instanceof KeyboardEvent)) {
+        updatePointerCandidate(event);
+        return;
+      }
       const sourceId = String(event.operation.source?.id ?? '');
       const targetId = String(event.operation.target?.id ?? '');
       if (!sourceId || !targetId) {
         setCandidateAfterId(undefined);
-        setCandidateFeedback(undefined);
+        publishFeedback(undefined);
         return;
       }
       let targetAfterId: string | null = null;
@@ -720,16 +828,16 @@ export function SortableList({
         setCandidateAfterId(intent ? targetAfterId : undefined);
         if (intent && callbacksRef.current.getDropFeedback) {
           const feedback = callbacksRef.current.getDropFeedback(intent);
-          setCandidateFeedback(feedback);
+          publishFeedback(feedback);
         } else {
-          setCandidateFeedback(undefined);
+          publishFeedback(undefined);
         }
       } else {
         setCandidateAfterId(undefined);
-        setCandidateFeedback(undefined);
+        publishFeedback(undefined);
       }
     },
-    [instanceId],
+    [instanceId, publishFeedback, updatePointerCandidate],
   );
 
   const handleDragEnd = useCallback(
@@ -743,16 +851,17 @@ export function SortableList({
     if (activatedRef.current && !endedRef.current) {
       endedRef.current = true;
       activatedRef.current = false;
+      resetGeometry();
       callbacksRef.current.onDropIntent(null);
       callbacksRef.current.onDragActiveChange?.(false);
       setActiveId(null);
       setCandidateAfterId(undefined);
       setActiveDimensions(null);
-      setCandidateFeedback(undefined);
+      publishFeedback(undefined);
       const id = lastActiveIdRef.current;
       if (id) restoreHandleFocus(id);
     }
-  }, [restoreHandleFocus]);
+  }, [restoreHandleFocus, publishFeedback, resetGeometry]);
 
   const sensors = useMemo(
     () => [
@@ -897,6 +1006,7 @@ export function SortableList({
           plugins={plugins}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
+          onDragMove={updatePointerCandidate}
           onDragEnd={handleDragEnd}
         >
           <SortableListInner cancelRef={ref} onCancel={handleCancel} disabled={disabled}>
@@ -917,19 +1027,20 @@ export function SortableList({
             {displayedOverlayId ? (
               <div aria-hidden="true" className="relative pointer-events-none select-none">
                 {renderOverlay(displayedOverlayId)}
-                {candidateFeedback && (
-                  <div
-                    data-drop-feedback
-                    className="absolute inset-x-1 bottom-1 rounded border border-alert bg-surface px-2 py-0.5 text-xs text-alert shadow-sm"
-                  >
-                    {candidateFeedback}
-                  </div>
-                )}
               </div>
             ) : null}
           </DragOverlay>
         </DragDropProvider>
       </SortableListContext.Provider>
+      <span
+        data-sortable-feedback
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {onDropFeedbackChange ? undefined : candidateFeedback}
+      </span>
     </div>
   );
 }
