@@ -10,7 +10,7 @@ import { isReservedId } from '../ids.js';
 import { err, ok, type Result } from '../result.js';
 import { isCookingStep, outcomeProblem } from './cooking.js';
 import { thermalProblem } from './thermal.js';
-import { ancestors as ancestorsOf, doughSteps } from './dough.js';
+import { ancestors as ancestorsOf, doughSteps, isMixingStep, type DoughContext } from './dough.js';
 import type { Process, ProcessStep } from './types.js';
 
 export type ProcessError =
@@ -103,7 +103,10 @@ const validatePreheat = (
 };
 
 /** Graph and timing rules of docs/contracts/process.md. */
-export const validateProcess = (process: Process): Result<void, ProcessError> => {
+export const validateProcess = (
+  process: Process,
+  context?: DoughContext,
+): Result<void, ProcessError> => {
   for (const [index, step] of process.steps.entries()) {
     if (typeof step.id !== 'string' || step.id.length === 0 || isReservedId(step.id)) {
       return err(invalid(`steps[${index}].id`, `invalid or reserved id ${String(step.id)}`));
@@ -118,7 +121,7 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
   }
 
   const hasSuccessor = new Set(process.steps.flatMap((step) => step.dependsOn));
-  const doughIds = new Set((doughSteps(process) ?? []).map((s) => s.id));
+  const doughIds = new Set((doughSteps(process, context) ?? []).map((s) => s.id));
   for (const [index, step] of process.steps.entries()) {
     const path = `steps[${index}]`;
     if (step.schedule !== 'asap' && step.schedule !== 'alap' && step.schedule !== 'beforeTarget') {
@@ -145,7 +148,7 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
       }
     }
     if (
-      step.operation !== 'mix' &&
+      !isMixingStep(step) &&
       (conditions.doughTemperatureC !== undefined || conditions.frictionC !== undefined)
     ) {
       return err(invalid(`${path}.conditions`, 'dough temperature and friction are mix-step only'));
@@ -172,6 +175,10 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
     ) {
       return err(invalid(`${path}.durationMode`, 'must be manual or model'));
     }
+    if (step.durationMode === 'model' && isMixingStep(step)) {
+      // A mixing step always keeps its planned duration (fermentation.md, Model-driven duration).
+      return err(invalid(`${path}.durationMode`, 'a mixing step cannot follow the model'));
+    }
     if (step.equipment !== undefined) {
       const bad = stepEquipmentProblem(step.equipment, `${path}.equipment`);
       if (bad) return err(invalid(bad.path, bad.reason));
@@ -182,7 +189,7 @@ export const validateProcess = (process: Process): Result<void, ProcessError> =>
     if (problem) return err(invalid(`intendedOutcome.${problem.field}`, problem.reason));
   }
   // The model solves one unknown: at most one dough step follows it (fermentation.md).
-  const driven = (doughSteps(process) ?? []).filter((s) => s.durationMode === 'model');
+  const driven = (doughSteps(process, context) ?? []).filter((s) => s.durationMode === 'model');
   if (driven.length > 1) {
     const index = process.steps.indexOf(driven[1] as ProcessStep);
     return err(invalid(`steps[${index}].durationMode`, 'at most one dough step follows the model'));

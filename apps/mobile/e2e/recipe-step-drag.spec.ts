@@ -23,7 +23,7 @@ const recipe = {
           id: label.toLowerCase(),
           label,
           operation: 'rest',
-          schedule: 'asap',
+          schedule: index === 0 ? 'alap' : 'asap',
           dependsOn: index === 0 ? [] : [original[index - 1]?.toLowerCase()],
           plannedDurationS: 300,
         })),
@@ -121,6 +121,25 @@ async function geometry(page: Page) {
 }
 
 for (const english of [false, true]) {
+  test(`a downward chain move uses the core command and remains undoable${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    const downward = structuredClone(recipe);
+    const first = downward.revisions[0]?.process.steps[0];
+    if (!first) throw new Error('Missing fixture source');
+    first.schedule = 'asap';
+    await open(page, 'light', false, downward);
+    await selectSlot(page, 'Alpha', 'gamma', 'ArrowDown');
+    await page.keyboard.press('Space');
+    await expect.poll(() => order(page)).toEqual(['beta', 'gamma', 'alpha']);
+    await expect(save(page)).toBeEnabled();
+    await footer(page)
+      .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
+      .click();
+    await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
+    await expect(save(page)).toBeDisabled();
+  });
+
   test(`Undo and Discard clear a refusal belonging to the previous process${english ? ' @en' : ''}`, async ({
     page,
   }) => {
@@ -301,7 +320,7 @@ for (const english of [false, true]) {
     await expect(handle(page, 'Gamma')).toBeFocused();
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
     await expect(save(page)).toBeDisabled();
-    // A downward chain move is refused by core, never converted into an upward move.
+    // An alap source cannot be chain-moved (process.md example 6).
     await handle(page, 'Alpha').scrollIntoViewIfNeeded();
     const start = await box(handle(page, 'Alpha'));
     await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);

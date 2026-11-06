@@ -3,7 +3,7 @@ import { resolveFormula } from '../formula/resolve.js';
 import type { Formula, ResolvedFormula } from '../formula/types.js';
 import { planIncorporations, type IncorporatedAmount } from '../process/incorporations.js';
 import { domainError } from '../errors.js';
-import { ancestors } from '../process/dough.js';
+import { ancestors, doughContextOf } from '../process/dough.js';
 import { joinOf, phasesOf } from '../process/move.js';
 import type { Process, StepId } from '../process/types.js';
 import { validateProcess, type ProcessError } from '../process/validate.js';
@@ -76,7 +76,7 @@ export const validateRecipe = (
 ): Result<ValidRecipe, RecipeError> => {
   const resolved = resolveFormula(formula);
   if (!resolved.ok) return resolved;
-  const valid = validateProcess(process);
+  const valid = validateProcess(process, doughContextOf(formula));
   if (!valid.ok) return valid;
   const subjects = validateSubjects(formula, process);
   if (!subjects.ok) return subjects;

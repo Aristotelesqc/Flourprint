@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { loadBake } from '@flourprint/core/application';
 import {
+  doughContextOf,
   doughReadyStage,
   intendedOutcome,
   outcomeChoiceRequired,
@@ -212,7 +213,11 @@ export const BakePage = () => {
   /** The stage a running dough step can be judged ready for (bake-session.md), if any. */
   const readyStage = (target: BakeStepView) =>
     target.startedAt !== undefined && target.endedAt === undefined && state.process
-      ? doughReadyStage(state.process, target.step.id)
+      ? doughReadyStage(
+          state.process,
+          target.step.id,
+          state.formula ? doughContextOf(state.formula) : undefined,
+        )
       : undefined;
   const readyLabel = (stage: 'shape' | 'bake') =>
     t(stage === 'bake' ? 'bake.readyToBake' : 'bake.readyToShape');
