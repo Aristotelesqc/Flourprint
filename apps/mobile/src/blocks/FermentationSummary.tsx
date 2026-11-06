@@ -1,6 +1,13 @@
 import { useMemo } from 'react';
 import type { Formula, Process } from '@flourprint/core/domain';
-import { estimateFermentation, EXPERIMENTAL_READY, MODEL_END_POINT } from '@flourprint/core/domain';
+import {
+  doughContextOf,
+  estimateFermentation,
+  firstContactStep,
+  EXPERIMENTAL_READY,
+  MODEL_END_POINT,
+  referenceMixingStep,
+} from '@flourprint/core/domain';
 import { formatDuration } from '../i18n/time';
 import { useTemperature } from '../i18n/temperature';
 import { useEstimateText } from './fermentation/text';
@@ -16,7 +23,9 @@ export const FermentationSummary = ({ formula, process }: FermentationSummaryPro
   const { t, pct, wholePct, name, stepName } = useMessages();
   const temperature = useTemperature();
   const { reason, extrapolations, ends } = useEstimateText();
-  const mix = process.steps.find((s) => s.operation === 'mix');
+  const context = useMemo(() => doughContextOf(formula), [formula]);
+  const start = useMemo(() => firstContactStep(process, context), [process, context]);
+  const mix = useMemo(() => referenceMixingStep(process, context), [process, context]);
   const estimates = useMemo(() => estimateFermentation(formula, process), [formula, process]);
   const selectedProfile = process.readiness ?? MODEL_END_POINT;
   const profileLabel =
@@ -41,8 +50,8 @@ export const FermentationSummary = ({ formula, process }: FermentationSummaryPro
           <div className="flex justify-between gap-3">
             <span className="text-muted">{t('fermentation.room')}</span>
             <span>
-              {mix.conditions?.temperatureC !== undefined
-                ? temperature.format(mix.conditions.temperatureC, 'ambient')
+              {start?.conditions?.temperatureC !== undefined
+                ? temperature.format(start.conditions.temperatureC, 'ambient')
                 : '—'}
             </span>
           </div>

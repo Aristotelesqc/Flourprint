@@ -3,6 +3,7 @@ import button from '@flourprint/ui/components/button/v1';
 import surface from '@flourprint/ui/components/surface/v1';
 import numberField from '@flourprint/ui/components/number-field/v1';
 import disclosure from '@flourprint/ui/components/disclosure/v1';
+import sectionCarousel from '@flourprint/ui/components/section-carousel/v1';
 import tabs from '@flourprint/ui/components/tabs/v1';
 import floatingMenu from '@flourprint/ui/components/floating-menu/v1';
 import bottomSheet from '@flourprint/ui/components/bottom-sheet/v1';
@@ -21,6 +22,7 @@ export const { Ui, versionOf } = createUi(
     'fp.number-field': numberField,
     'fp.disclosure': disclosure,
     'fp.tabs': tabs,
+    'fp.section-carousel': sectionCarousel,
     'fp.floating-menu': floatingMenu,
     'fp.bottom-sheet': bottomSheet,
     'fp.dialog': dialog,

@@ -9,6 +9,11 @@ No Android Studio is needed: CI builds the APKs and publishes them as GitHub rel
    - the latest release holds `flourprint-<version>.apk`, the normal app built from `main`;
    - the `dev-channel` pre-release holds `flourprint-dev.apk`, the dev app (ADR 0013), which loads
      the `dev` web preview and installs beside the normal app with its own data.
+     The dev app can load another web version from Advanced → "Version du web" / "Web version":
+     `dev` (default), `canary`, `main` or a pull request (ADR 0023). Each version keeps its own data,
+     so a pull request starts empty (use "Copy my data to this version" to carry yours over); the
+     switch restarts the app. A pull request that changes native code needs its own APK. Long-press
+     the dev app icon → "Return to dev" gets back from a version that has no picker.
 2. Open the APK and allow installs from that source when Android asks. Play Protect may warn about
    an unknown app: these builds are signed with the shared debug key; choose to install anyway.
 3. Later APKs install **over** this one without uninstalling: they share the signing key, so the

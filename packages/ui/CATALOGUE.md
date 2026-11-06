@@ -365,6 +365,55 @@ Controlled raw-string text input for localized, editable numeric measurements an
 
 - `v1`: Controlled raw-string text input for locale-specific numbers with 48px touch target, accessible labeling and live error announcements.
 
+### `fp.section-carousel`
+
+Finger-tracked peer sections sharing one external vertical scroller and preserved mounted state.
+
+**Use when**
+
+- Recipe, Planning and History top-tab navigation with adjacent-pane previews.
+
+**Avoid when**
+
+- Route navigation or a wizard with gated steps.
+
+**Props**
+
+| Prop                | Meaning                                                           |
+| ------------------- | ----------------------------------------------------------------- |
+| `className`         | Optional container utilities.                                     |
+| `sections`          | Ordered section identifiers.                                      |
+| `activeSection`     | Controlled selected section.                                      |
+| `onChangeSection`   | Commits selection once the slide has settled.                     |
+| `label`             | Localized accessible carousel label.                              |
+| `children`          | One mounted child for each section.                               |
+| `disabled`          | Prevents carousel gestures while another interaction owns them.   |
+| `control`           | Optional imperative section-selection and cancellation handle.    |
+| `scrollElement`     | The existing external vertical scroller.                          |
+| `getScrollPosition` | Reads the remembered scroll position of an incoming section.      |
+| `onGestureProgress` | Links the measured tab indicator to tracking and settling.        |
+| `onBeforeChange`    | Commits the caller’s active input through its existing blur path. |
+
+**Accessibility**
+
+- Inactive panes remain mounted, inert and hidden from assistive technology.
+- Vertical scrolling, editable controls, step handles and Android Back edges keep their gestures.
+- Reduced motion changes the section instantly without sliding.
+- The caller retains independent panel scroll positions in its existing scroller.
+
+**Related**
+
+- `fp.tabs`
+- `fp.motion.tab-carousel`
+
+**Decisions**
+
+- [L101/L106/L117: approved navigation A](https://github.com/Aristotelesqc/Flourprint/issues/133)
+
+**Versions**
+
+- `v1`: Horizontal swipeable carousel holding screens/panes with synchronized tab indicator, animated commit and velocity continuation (L101, L106, L117).
+
 ### `fp.select`
 
 Anchored popover overlay attached to the form field frame for choosing a single value from options, committing immediately upon selection.
@@ -432,20 +481,21 @@ Enables reordering of list items through pointer drag-and-drop or accessible key
 
 **Props**
 
-| Prop                 | Meaning                                                                                                                                                              |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `items`              | List of draggable item descriptors providing unique stable IDs and accessible display labels.                                                                        |
-| `children`           | Content containing sortable items, slot targets, and optional headers or dividers.                                                                                   |
-| `renderOverlay`      | Render function producing the floating overlay representation of the currently dragged item.                                                                         |
-| `onDropIntent`       | Callback invoked exactly once upon drop completion with the computed intent (source ID and target predecessor afterId), or null if cancelled, outside, or unchanged. |
-| `instructions`       | Localized screen reader instructions explaining keyboard drag and drop operations.                                                                                   |
-| `announcements`      | Localized screen reader announcement functions for drag start, movement over slots, drop completion, and gesture cancellation.                                       |
-| `onDragStart`        | Optional callback invoked upon actual gesture activation, suitable for entering draft editing mode.                                                                  |
-| `onDragActiveChange` | Optional callback notifying when drag interaction begins or ends, used to guard navigation or carousels.                                                             |
-| `getDropFeedback`    | Optional pure text feedback helper reporting assistive status messages for candidate drop locations.                                                                 |
-| `disabled`           | Whether reordering gestures and keyboard interactions are disabled.                                                                                                  |
-| `className`          | Optional CSS class name applied to the container element.                                                                                                            |
-| `ref`                | Optional imperative ref exposing cancelDrag() to cancel any active drag operation programmatically.                                                                  |
+| Prop                   | Meaning                                                                                                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`                | List of draggable item descriptors providing unique stable IDs and accessible display labels.                                                                                 |
+| `children`             | Content containing sortable items, slot targets, and optional headers or dividers.                                                                                            |
+| `renderOverlay`        | Render function producing the floating overlay representation of the currently dragged item.                                                                                  |
+| `onDropIntent`         | Callback invoked exactly once upon drop completion with the computed intent (source ID and target predecessor afterId), or null if cancelled, outside, or unchanged.          |
+| `instructions`         | Localized screen reader instructions explaining keyboard drag and drop operations.                                                                                            |
+| `announcements`        | Localized screen reader announcement functions for drag start, movement over slots, drop completion, and gesture cancellation.                                                |
+| `onDragStart`          | Optional callback invoked upon actual gesture activation, suitable for entering draft editing mode.                                                                           |
+| `onDragActiveChange`   | Optional callback notifying when drag interaction begins or ends, used to guard navigation or carousels.                                                                      |
+| `getDropFeedback`      | Optional pure text feedback helper reporting assistive status messages for candidate drop locations.                                                                          |
+| `onDropFeedbackChange` | Optional callback receiving changed candidate feedback for presentation outside the cards; undefined clears the candidate but need not immediately dismiss a transient toast. |
+| `disabled`             | Whether reordering gestures and keyboard interactions are disabled.                                                                                                           |
+| `className`            | Optional CSS class name applied to the container element.                                                                                                                     |
+| `ref`                  | Optional imperative ref exposing cancelDrag() to cancel any active drag operation programmatically.                                                                           |
 
 **Accessibility**
 
@@ -456,7 +506,8 @@ Enables reordering of list items through pointer drag-and-drop or accessible key
 - Maintains minimum 48px touch targets for drag handles.
 - Opens one source-sized insertion space without changing the caller order until release.
 - Keeps source children mounted, moves their measured spacing with the live insertion space, and dims the page behind the full floating card.
-- Shows candidate refusal at the floating card without changing list geometry.
+- Latches pointer candidates at stationary row midpoints with directional hysteresis, independent of the animated gap and adjusted for scrolling.
+- Delegates candidate refusal to an app-level transient toast; never overlays feedback on cards. Without a feedback callback, provides a screen-reader status.
 - Includes the preceding measured row gap in the visibly painted insertion space and release hit-test, preserving total flow height.
 - Settles through fp.motion.step-drag and restores the exact handle without scrolling or stealing a newer control focus.
 - Adds composed-tree scroll ancestors for Ionic while the SDK owns autoscroll and pointer tracking.
@@ -536,6 +587,7 @@ Accessible tabbed navigation strip that switches between alternate views while k
 
 | Prop               | Meaning                                                                                                    |
 | ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `gestureProgress`  | Optional carousel progress linking the measured indicator to the finger and settle.                        |
 | `selected`         | Identifier of the currently active tab item.                                                               |
 | `onSelectedChange` | Callback fired when a tab is selected with the selected tab identifier.                                    |
 | `label`            | Required localized accessible label describing the purpose of the tab list (applied as aria-label).        |
@@ -544,6 +596,7 @@ Accessible tabbed navigation strip that switches between alternate views while k
 
 **Accessibility**
 
+- Tab buttons share spare row width with centered labels; overflowing labels keep horizontal scrolling without shrinking.
 - Full WAI-ARIA tablist, tab, and tabpanel roles with roving tabIndex on tabs.
 - Left and Right arrow keys wrap through enabled tabs with automatic selection and focus management.
 - Home and End keys jump immediately to the first and last enabled tab.
@@ -964,3 +1017,41 @@ Settle animation for dragged step node cards snapping back to origin or settling
 **Versions**
 
 - `v1` (keyframes), default selection: Settle animation for step drag and drop from release coordinates to target or origin position (L96, L104).
+
+### `fp.motion.tab-carousel`
+
+Horizontal carousel slide between adjacent section tabs (L101, L106, L117), supporting 1:1 finger-follow gestures, flick velocity, momentum continuation without zero-velocity restart, and animated settle.
+
+**Use when**
+
+- Recipe section tabs at the top of a screen where swiping horizontally moves between tabs.
+- L106/L117 animated commit and velocity-matched settle continuation.
+
+**Avoid when**
+
+- Vertical scrolling content (touch-action: pan-y must preserve native vertical scroll).
+- Starts within 24 px of screen edges (Android Back gesture margin).
+- During active step dragging or within elements with horizontal scrolling.
+
+**Accessibility**
+
+- Panes remain mounted so draft values and form focus are preserved.
+- Reduced motion: instant transition without sliding animation.
+- 48 px minimum touch targets for all tab controls.
+- Starting and adjacent panes remain revealed through settle, committing selection exactly once upon completion.
+
+**Related**
+
+- `fp.motion.highlight`
+- `fp.motion.sheet-enter`
+
+**Decisions**
+
+- [L101: Navigation is A with swipeable section tabs](https://github.com/Aristotelesqc/Flourprint/issues/134)
+- [L106: Tab carousel motion follows finger 1:1 and continues with release velocity without jumping](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [L117: A tab-carousel commit animates to final position](https://github.com/Aristotelesqc/Flourprint/issues/133)
+- [ADR 0021: motion items](https://github.com/Aristotelesqc/Flourprint/blob/dev/docs/adr/0021-theme-builder-and-component-sourcing.md)
+
+**Versions**
+
+- `v1` (keyframes), default selection: Round 2 / L101 tab carousel: horizontal slide between adjacent tabs with finger-follow, flick velocity, and gesture-matched springback.

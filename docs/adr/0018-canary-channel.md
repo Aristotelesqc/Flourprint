@@ -1,6 +1,6 @@
 # ADR 0018: A canary branch and web channel for the release after next
 
-Status: Accepted (owner decision of 2026-10-13, #95). Complements ADR 0013 and ADR 0016.
+Status: Accepted (owner decision of 2026-10-13, #95). Complements ADR 0013 and ADR 0016. Amended by ADR 0023 (the dev apps can load the canary address).
 
 ## Context
 

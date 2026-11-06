@@ -23,7 +23,7 @@ const recipe = {
           id: label.toLowerCase(),
           label,
           operation: 'rest',
-          schedule: 'asap',
+          schedule: index === 0 ? 'alap' : 'asap',
           dependsOn: index === 0 ? [] : [original[index - 1]?.toLowerCase()],
           plannedDurationS: 300,
         })),
@@ -32,6 +32,8 @@ const recipe = {
   ],
 };
 
+const refusalToast = (page: Page) =>
+  page.locator('ion-toast.recipe-move-toast').filter({ visible: true });
 const method = (page: Page) => routed(page).getByTestId('recipe-method').filter({ visible: true });
 const handle = (page: Page, name: string) =>
   method(page).getByRole('button', { name: new RegExp(`^(Move|Drag|Déplacer|Glisser).*${name}$`) });
@@ -121,6 +123,66 @@ async function geometry(page: Page) {
 }
 
 for (const english of [false, true]) {
+  test(`a downward chain move uses the core command and remains undoable${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    const downward = structuredClone(recipe);
+    const first = downward.revisions[0]?.process.steps[0];
+    if (!first) throw new Error('Missing fixture source');
+    first.schedule = 'asap';
+    await open(page, 'light', false, downward);
+    await selectSlot(page, 'Alpha', 'gamma', 'ArrowDown');
+    await page.keyboard.press('Space');
+    await expect.poll(() => order(page)).toEqual(['beta', 'gamma', 'alpha']);
+    await expect(save(page)).toBeEnabled();
+    await footer(page)
+      .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
+      .click();
+    await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
+    await expect(save(page)).toBeDisabled();
+  });
+
+  test(`slow pointer motion latches a midpoint without neighbour oscillation${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await open(page);
+    await handle(page, 'Alpha').scrollIntoViewIfNeeded();
+    const beta = method(page).locator('[data-sortable-id="beta"]');
+    const row = await box(beta);
+    const source = await box(method(page).locator('[data-sortable-id="alpha"]'));
+    const grip = await box(handle(page, 'Alpha'));
+    const x = grip.x + grip.width / 2;
+    const y = grip.y + grip.height / 2;
+    const grabOffset = source.y + source.height / 2 - y;
+    const midpoint = row.y + row.height / 2 - grabOffset;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    try {
+      await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+      await page.mouse.move(x, midpoint + 1, { steps: 12 });
+      const slot = method(page).locator('[data-slot-after="beta"]');
+      await expect(slot).toHaveAttribute('data-drop-target', 'true');
+      await expect.poll(async () => (await box(slot)).height).toBeGreaterThan(1);
+      await slot.evaluate(async (node) => {
+        await Promise.all(node.getAnimations().map((a) => a.finished.catch(() => undefined)));
+      });
+      const settledTop = (await box(beta)).y;
+      for (const delta of [0.25, -0.25, 0.75, -0.75, 1, -1, 0.5, -0.5]) {
+        await page.mouse.move(x, midpoint + delta);
+        await page.evaluate(
+          () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())),
+        );
+        await expect(slot).toHaveAttribute('data-drop-target', 'true');
+        expect(Math.abs((await box(beta)).y - settledTop)).toBeLessThanOrEqual(1);
+      }
+      await page.keyboard.press('Escape');
+    } finally {
+      await page.mouse.up();
+    }
+    await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
+    await expect(save(page)).toBeDisabled();
+  });
+
   test(`Undo and Discard clear a refusal belonging to the previous process${english ? ' @en' : ''}`, async ({
     page,
   }) => {
@@ -130,18 +192,18 @@ for (const english of [false, true]) {
     await expect.poll(() => order(page)).toEqual(moved.map((value) => value.toLowerCase()));
     await selectSlot(page, 'Alpha', 'beta', 'ArrowDown');
     await page.keyboard.press('Space');
-    await expect(method(page).getByRole('alert')).toBeVisible();
+    await expect(refusalToast(page)).toBeVisible();
     await footer(page)
       .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
       .click();
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
-    await expect(method(page).getByRole('alert')).toHaveCount(0);
+    await expect(refusalToast(page)).toHaveCount(0);
     await expect(save(page)).toBeDisabled();
     await footer(page)
       .getByRole('button', { name: /^(Discard changes|Abandonner les modifications)$/ })
       .click();
     await expect(footer(page)).toHaveCount(0);
-    await expect(method(page).getByRole('alert')).toHaveCount(0);
+    await expect(refusalToast(page)).toHaveCount(0);
   });
   test(`dropping in the visible leading slot spacing commits the indicated move${english ? ' @en' : ''}`, async ({
     page,
@@ -301,7 +363,7 @@ for (const english of [false, true]) {
     await expect(handle(page, 'Gamma')).toBeFocused();
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
     await expect(save(page)).toBeDisabled();
-    // A downward chain move is refused by core, never converted into an upward move.
+    // An alap source cannot be chain-moved (process.md example 6).
     await handle(page, 'Alpha').scrollIntoViewIfNeeded();
     const start = await box(handle(page, 'Alpha'));
     await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
@@ -318,18 +380,26 @@ for (const english of [false, true]) {
     const reason = english
       ? 'Cannot place the step here: "Beta" must stay after "Alpha".'
       : 'Placement impossible ici : « Beta » doit rester après « Alpha ».';
-    await expect(page.locator('[data-drop-feedback]')).toHaveText(reason);
+    await expect(refusalToast(page).getByRole('status')).toHaveText(reason);
+    await expect(page.locator('[data-drop-feedback]')).toHaveCount(0);
+    await expect(refusalToast(page).getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    const toastBox = await box(refusalToast(page).locator('[part=wrapper]'));
+    const barBox = await box(footer(page));
+    expect(toastBox.y + toastBox.height).toBeLessThanOrEqual(barBox.y + 1);
+    await expect(refusalToast(page).locator('[part=message]')).toHaveCSS('font-size', '16px');
     await page.mouse.up();
     await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
     await expect(save(page)).toBeDisabled();
-    const refusal = method(page).locator('[data-sortable-id="alpha"]').getByRole('alert');
+    const refusal = refusalToast(page).getByRole('status');
     await expect(refusal).toHaveCount(1);
     await expect(refusal).toHaveText(reason);
     await expect(refusal).not.toContainText(
       /AmbiguousMove|MoveBreaksDependencies|crossesWorkpiece/,
     );
     await expect(refusal).not.toBeEmpty();
+    await expect(method(page).getByRole('alert')).toHaveCount(0);
+    await expect(refusalToast(page)).toBeHidden({ timeout: 6000 });
     // An unchanged draft created by activation must not prevent starting the saved recipe.
     await routed(page)
       .getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true })

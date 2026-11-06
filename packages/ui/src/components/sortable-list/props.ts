@@ -48,6 +48,7 @@ export interface SortableListProps {
   readonly onDragStart?: (id: string) => void;
   readonly onDragActiveChange?: (active: boolean) => void;
   readonly getDropFeedback?: (intent: DropIntent) => string | undefined;
+  readonly onDropFeedbackChange?: (feedback: string | undefined) => void;
   readonly disabled?: boolean;
   readonly className?: string;
   readonly ref?: Ref<SortableHandle>;

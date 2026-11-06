@@ -252,6 +252,7 @@ settles O1; navigation B and its bottom bar of large destination buttons are no 
 - reading and editing actions follow the owner's updated L31, L50 and L60; active preparations remain reachable under L32;
 - the tabs at the top stay tappable, and a horizontal swipe also moves to the next or previous
   tab;
+- tab buttons share available row width with centered labels; when labels do not fit, keep horizontal scrolling rather than squeezing them (owner clarification, 2026-11-05);
 - both gestures change the tab: a slow drag past half the width, or a short quick flick above a
   velocity threshold, whatever the distance;
 - the current screen follows the finger and the next one slides in like a carousel; on release
@@ -282,7 +283,7 @@ _Amended: scope narrowed by L105 (style only)._
 
 **L116.** Step drop: the drop hit-test matches the drawn slot, so releasing in the visibly opened slot above "Pointage" is accepted. Every refusal shows a visible reason (extends L104). Screens: steps, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
-**L156.** The accepted drop matches the live slot. Preserve the real card under the finger and scrim, live neighbour reflow, pre-release `getDropFeedback`, settling and focus restoration from the approved reference. Use the 350 ms hold; scrolling must not accidentally drag, and reduced motion preserves final state. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L116. Kind: OD.
+**L156.** The accepted drop matches the live slot. Preserve the real card under the finger and scrim, live neighbour reflow, pre-release `getDropFeedback`, settling and focus restoration from the approved reference. A neighbour moves once when the dragged card crosses its midpoint; directional hysteresis prevents oscillation around the boundary, including sub-pixel pointer changes and scrolling. Use the 350 ms hold; scrolling must not accidentally drag, and reduced motion preserves final state. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L116. Kind: OD.
 
 **L159.** Step drag handles are on the right of the cards, including the floating card during a drag. Their position and touch target stay stable across draft states and the required narrow/large-text layouts. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04 ("les poignées de déplacement soient à droite des cartes d'étapes"). Kind: OD.
 
@@ -577,7 +578,7 @@ or by move actions (L72, L96). Editing what a step waits for is a separate, expl
 edit that shows only the meaningful choices, never a checkbox list of every step. Screens: steps.
 Source: owner review, 2026-10-19 ("une checklist pour déplacer l'étape, wtf?"). Kind: OD.
 
-**L154.** A cancelled, refused or outside move leaves the prior draft and history unchanged. A refusal is shown at the affected card, including pre-release feedback, rather than in an off-screen page notice. Never substitute another move. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L99. Kind: OD.
+**L154.** A cancelled, refused or outside move leaves the prior draft and history unchanged. Show pre-release and final refusal in a transient Ionic toast at the bottom, above the editing bar when present: readable tokenized body text, polite screen-reader announcement and automatic dismissal. Never overlay feedback on a step card, substitute another move or work around a core refusal. The refused card returns with the normal settle animation. Screens: recipe, steps, edit. Source: Owner test relayed 2026-11-06, superseding the at-card placement of 2026-11-04 and clarifying L99. Kind: OD.
 
 **L100.** No `⋯` menu button floating in the middle of each step row. Per-step actions sit at a
 consistent row edge with the edit control, or in the anchored menu of the row. Screens: steps.
@@ -853,7 +854,7 @@ _Owner: to refine._ Source: GH/issues/122; GH/issues/120; GH/issues/134 body, "W
 - Always-visible handles versus an explicit Reorder submode.
 - Collapsed and cross-group behaviour.
 - Activation threshold (movement, hold) and compact / rail / outline treatment: still OPEN; L104 only fixes that a drag enters editing.
-- **Downward drags along a chain** are refused by the engine (`moveStep`, #143). Either the UI turns them into the equivalent upward move, or the contract allows the mirror case: an owner reading is needed.
+- **Downward drags along a chain** were refused by the engine (`moveStep`, #143). The contract now allows the mirror case as the same chain move (`process.md`, Move, contract 0.24.1, examples 17 to 20), pending the owner's approval of that pull request; the UI needs no conversion into an upward move.
 
 Claude's touch values (180 ms lift, 12 px tolerance, 140 px autoscroll…) are starting values, not decisions. Source: GH/issues/123; GH/issues/123#issuecomment-6244918588; GH/pull/143; GH/issues/142 §B; GH/issues/100#issuecomment-6206264377.
 

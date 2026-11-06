@@ -1,6 +1,6 @@
 # ADR 0013: A web preview link and a remote-loaded dev APK
 
-Status: Accepted (owner decision of 2026-10-10).
+Status: Accepted (owner decision of 2026-10-10). Amended by ADR 0023 (version choice in the dev apps).
 
 ## Context
 

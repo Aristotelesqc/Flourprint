@@ -14,6 +14,7 @@ const guide: ComponentGuide<TabsProps> = {
     'Top-level application navigation across distinct screen routes.',
   ],
   accessibility: [
+    'Tab buttons share spare row width with centered labels; overflowing labels keep horizontal scrolling without shrinking.',
     'Full WAI-ARIA tablist, tab, and tabpanel roles with roving tabIndex on tabs.',
     'Left and Right arrow keys wrap through enabled tabs with automatic selection and focus management.',
     'Home and End keys jump immediately to the first and last enabled tab.',
@@ -40,6 +41,8 @@ const guide: ComponentGuide<TabsProps> = {
     },
   ],
   props: {
+    gestureProgress:
+      'Optional carousel progress linking the measured indicator to the finger and settle.',
     selected: 'Identifier of the currently active tab item.',
     onSelectedChange: 'Callback fired when a tab is selected with the selected tab identifier.',
     label:

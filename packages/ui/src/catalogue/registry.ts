@@ -24,12 +24,16 @@ import guide9 from '../components/bottom-bar/guide.ts';
 import sortableList from '../components/sortable-list/v1.tsx';
 import sortableGuide from '../components/sortable-list/guide.ts';
 
+import sectionCarousel from '../components/section-carousel/v1.tsx';
+import sectionCarouselGuide from '../components/section-carousel/guide.ts';
+
 export const catalogue = library.catalogue({
   'fp.button': [version0],
   'fp.surface': [version1],
   'fp.number-field': [version2],
   'fp.disclosure': [version3],
   'fp.tabs': [version4],
+  'fp.section-carousel': [sectionCarousel],
   'fp.floating-menu': [version5],
   'fp.bottom-sheet': [version6],
   'fp.dialog': [version7],
@@ -44,6 +48,7 @@ export const guides = library.guides({
   'fp.number-field': guide2,
   'fp.disclosure': guide3,
   'fp.tabs': guide4,
+  'fp.section-carousel': sectionCarouselGuide,
   'fp.floating-menu': guide5,
   'fp.bottom-sheet': guide6,
   'fp.dialog': guide7,

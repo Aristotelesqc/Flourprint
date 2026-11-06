@@ -16,8 +16,10 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { importRecipes } from '@flourprint/core/application';
 import type { BakeOrigin, TemperatureContext } from '@flourprint/core/domain';
+import { DevVersions } from '../blocks/DevVersions';
 import { useMessages } from '../i18n/use-messages';
 import { offersDevUpdate } from '../services/dev-update';
+import { devVersionsStart } from '../services/dev-versions';
 import { sampleRecipesFile } from '../services/sample-recipes';
 import { useDevUpdate } from '../services/use-dev-update';
 import { feedbackFileName, feedbackJson } from '../services/feedback';
@@ -34,6 +36,7 @@ export const AdvancedPage = () => {
   const { t, error } = useMessages();
   const services = useServices();
   const { storage, recipes, platform, browserData } = services;
+  const devVersions = devVersionsStart();
   const [presentAlert] = useIonAlert();
   const eraseBrowserData = () =>
     void presentAlert({
@@ -414,6 +417,8 @@ export const AdvancedPage = () => {
             <IonLabel>{t('recipes.deviceChecks')}</IonLabel>
           </IonItem>
           {offersDevUpdate(__APP_CHANNEL__) && <DevUpdateItem />}
+          {/* The dev apps only (ADR 0023): their host is absent from release builds and browsers. */}
+          {devVersions && <DevVersions host={devVersions.host} />}
           <IonItem lines="none">
             <IonLabel>
               <p>

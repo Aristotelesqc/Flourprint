@@ -77,6 +77,10 @@ import { SimulationBanner } from '../ui/SimulationBanner';
 import { useGuardedWrite } from '../services/writes';
 import { SessionOnlyNotice } from '../ui/SessionOnlyNotice';
 import { Ui } from '../ui/library';
+import type {
+  SectionCarouselControl,
+  TabGestureProgress,
+} from '@flourprint/ui/components/section-carousel/v1';
 import { ValidationProvider, useValidation, useValidationActions } from '../ui/ValidationContext';
 
 type Tab = 'formula' | 'process' | 'history';
@@ -145,6 +149,8 @@ const RecipePageContent = () => {
   const [family, setFamily] = useState<{ family: RecipeFamily; members: readonly Recipe[] }>();
   const writes = useGuardedWrite();
   const contentRef = useRef<HTMLIonContentElement>(null);
+  const carouselRef = useRef<SectionCarouselControl | null>(null);
+  const [tabGestureProgress, setTabGestureProgress] = useState<TabGestureProgress | null>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const [reviewing, setReviewing] = useState(false);
   const pendingStart = useRef<{
@@ -324,16 +330,25 @@ const RecipePageContent = () => {
   const setPanel = useCallback((next: Panel) => {
     setTab(next);
   }, []);
-  const { switchTab: selectPanel } = usePanelScroll(
+  const {
+    switchTab: selectPanel,
+    scrollElement,
+    getScrollPosition,
+  } = usePanelScroll(
     contentRef,
     effectivePanel,
     setPanel,
     draftId ?? recipeId,
     loading === 'ready',
   );
-  const switchTab = useCallback((next: Tab) => selectPanel(next), [selectPanel]);
+  const switchTab = useCallback(
+    (next: Tab) => {
+      if (carouselRef.current) carouselRef.current.selectSection(next);
+      else selectPanel(next);
+    },
+    [selectPanel],
+  );
 
-  const isMethodVisible = effectivePanel === 'formula';
   const isSortDisabled = trashedAt !== undefined || writes.busy || hasInvalid;
 
   const handleClearTargetedStep = useCallback(() => {
@@ -1280,6 +1295,7 @@ const RecipePageContent = () => {
               }}
               label={t('recipe.tabsLabel')}
               renderPanels={false}
+              gestureProgress={tabGestureProgress}
               items={(base
                 ? (['formula', 'process', 'history'] as const)
                 : (['formula', 'process'] as const)
@@ -1341,88 +1357,110 @@ const RecipePageContent = () => {
           </div>
         )}
 
-        <div
-          key={`document-${editorGeneration}`}
-          hidden={effectivePanel !== 'formula'}
-          className="pb-6"
+        <Ui
+          component="fp.section-carousel"
+          sections={base ? ['formula', 'process', 'history'] : ['formula', 'process']}
+          activeSection={effectivePanel}
+          onChangeSection={(id) => selectPanel(id as Tab)}
+          label={t('recipe.tabsLabel')}
+          disabled={isMethodDragging}
+          control={carouselRef}
+          scrollElement={scrollElement}
+          getScrollPosition={getScrollPosition}
+          onGestureProgress={setTabGestureProgress}
+          onBeforeChange={blurActiveEditor}
         >
-          {template && isEditing && (
-            <div className="mb-4">
-              <StyleGuide template={template} />
-            </div>
-          )}
-          <RecipeDocument
-            formula={draft.formula}
-            {...(resolved.ok ? { resolved: resolved.value } : {})}
-            process={draft.process}
-            now={services.realClock.now()}
-            editable={isEditing}
-            fieldsMounted={hasEnteredEdit}
-            onEdit={editFormula}
-            onStructure={editStructure}
-            onProcess={changeProcess}
-            weighed={weighed}
-            onToggleWeighed={toggleWeighed}
-            fermentationRef={fermentationRef}
-            hydrationRef={hydrationRef}
-            {...(failure !== undefined ? { failureMessage: error(failure) } : {})}
-            onIngredientDetailsChange={setIngredientDetailsOpen}
-            disclosures={disclosures}
-            onDisclosuresChange={setDisclosures}
-          />
-          {isEditing && (
-            <RecipeOutcome process={draft.process} editable={true} onChange={changeProcess} />
-          )}
-        </div>
-        <div hidden={!isMethodVisible} className={!isEditing ? 'mt-5 pb-6' : undefined}>
-          <RecipeMethod
-            key="recipe-method-singleton"
-            dragControl={methodSortRef}
-            process={draft.process}
-            onProcessChange={changeProcess}
-            onDropIntent={handleDropIntent}
-            onDragStart={handleDragStart}
-            onDragActiveChange={handleDragActiveChange}
-            disabled={isSortDisabled}
-            readOnly={trashedAt !== undefined}
-            preparationIds={draft.formula.components.map((c) => c.id)}
-            editable={isEditing}
-            showOutcome={!isEditing}
-            {...(targetedStepId !== undefined ? { targetedStepId } : {})}
-            onClearTargetedStep={handleClearTargetedStep}
-            {...(returnToPlanning ? { onReturnToPlanning: handleReturnToPlanning } : {})}
-            onEnsureDraft={ensureDraft}
-          />
-        </div>
-        <div hidden={tab !== 'process'}>
-          <ProcessSection
-            process={draft.process}
-            canStart={
-              base !== undefined && trashedAt === undefined && !dirty && !hasInvalid && !writes.busy
-            }
-            showActions={false}
-            onStart={confirmStart}
-            {...(active ? { activeBakeId: active.bakeId } : {})}
-            onOpenBake={openBake}
-            {...(trashedAt === undefined ? { onEditStepInRecipe: editStepInRecipe } : {})}
-          />
-          {resolved.ok && trashedAt === undefined && (
-            <div className="mt-5 pb-6">
-              <WeighingChecklist
-                formula={draft.formula}
-                resolved={resolved.value}
-                weighed={weighed}
-                onToggle={toggleWeighed}
+          {[
+            <div key="formula">
+              <div key={`document-${editorGeneration}`} className="pb-6">
+                {template && isEditing && (
+                  <div className="mb-4">
+                    <StyleGuide template={template} />
+                  </div>
+                )}
+                <RecipeDocument
+                  formula={draft.formula}
+                  {...(resolved.ok ? { resolved: resolved.value } : {})}
+                  process={draft.process}
+                  now={services.realClock.now()}
+                  editable={isEditing}
+                  fieldsMounted={hasEnteredEdit}
+                  onEdit={editFormula}
+                  onStructure={editStructure}
+                  onProcess={changeProcess}
+                  weighed={weighed}
+                  onToggleWeighed={toggleWeighed}
+                  fermentationRef={fermentationRef}
+                  hydrationRef={hydrationRef}
+                  {...(failure !== undefined ? { failureMessage: error(failure) } : {})}
+                  onIngredientDetailsChange={setIngredientDetailsOpen}
+                  disclosures={disclosures}
+                  onDisclosuresChange={setDisclosures}
+                />
+                {isEditing && (
+                  <RecipeOutcome process={draft.process} editable={true} onChange={changeProcess} />
+                )}
+              </div>
+              <div className={!isEditing ? 'mt-5 pb-6' : undefined}>
+                <RecipeMethod
+                  key="recipe-method-singleton"
+                  dragControl={methodSortRef}
+                  process={draft.process}
+                  onProcessChange={changeProcess}
+                  onDropIntent={handleDropIntent}
+                  onDragStart={handleDragStart}
+                  onDragActiveChange={handleDragActiveChange}
+                  disabled={isSortDisabled}
+                  readOnly={trashedAt !== undefined}
+                  preparationIds={draft.formula.components.map((c) => c.id)}
+                  editable={isEditing}
+                  showOutcome={!isEditing}
+                  {...(targetedStepId !== undefined && effectivePanel === 'formula'
+                    ? { targetedStepId }
+                    : {})}
+                  onClearTargetedStep={handleClearTargetedStep}
+                  {...(returnToPlanning ? { onReturnToPlanning: handleReturnToPlanning } : {})}
+                  onEnsureDraft={ensureDraft}
+                />
+              </div>
+            </div>,
+            <div key="process">
+              <ProcessSection
+                process={draft.process}
+                canStart={
+                  base !== undefined &&
+                  trashedAt === undefined &&
+                  !dirty &&
+                  !hasInvalid &&
+                  !writes.busy
+                }
+                showActions={false}
+                onStart={confirmStart}
+                {...(active ? { activeBakeId: active.bakeId } : {})}
+                onOpenBake={openBake}
+                {...(trashedAt === undefined ? { onEditStepInRecipe: editStepInRecipe } : {})}
               />
-            </div>
-          )}
-        </div>
+              {resolved.ok && trashedAt === undefined && (
+                <div className="mt-5 pb-6">
+                  <WeighingChecklist
+                    formula={draft.formula}
+                    resolved={resolved.value}
+                    weighed={weighed}
+                    onToggle={toggleWeighed}
+                  />
+                </div>
+              )}
+            </div>,
 
-        {base && (
-          <div hidden={tab !== 'history'}>
-            <HistorySection bakes={bakes} />
-          </div>
-        )}
+            ...(base
+              ? [
+                  <div key="history">
+                    <HistorySection bakes={bakes} />
+                  </div>,
+                ]
+              : []),
+          ]}
+        </Ui>
 
         <RecipeChecks
           open={checking}

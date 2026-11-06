@@ -17,12 +17,16 @@ with the shell. It needs the network. The remote page gets no SQLite bridge: its
 browser-preview storage (ADR 0015) of its own folder, `%APPDATA%\Flourprint Dev`, apart from the
 release shell's.
 
-## Version (dev shell, menu Version)
+## Version (dev shell, menu Version, ADR 0023)
 
-One click switches the dev shell between **Release (main)**, **Dev** and **Canary**: it loads that
-version's web address and remembers the choice. Each address keeps its own data. This is the
-published web build of each branch, in browser storage; the release shell (`Flourprint.exe`) is
-the one with SQLite.
+One click switches the dev shell between **Release (main)**, **Dev** (the default) and **Canary**:
+it loads that version's web address and remembers the choice. The app's **Advanced** menu goes
+further: any open pull request (`https://pr-<n>.flourprint-aristotelesqc.pages.dev`, from the open
+list or by number), "Copy my data to this version", "Delete this version's data", and the list of
+the versions that hold data here with their size. Only the project's own addresses load. Each
+address keeps its own data, in browser storage (the release shell, `Flourprint.exe`, is the one
+with SQLite); the data of a merged or closed pull request is deleted at start-up, and `dev`,
+`canary` and `main` never are.
 
 ## Debug menu
 

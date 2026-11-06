@@ -1,4 +1,4 @@
-import { IonButton } from '@ionic/react';
+import { IonButton, IonToast } from '@ionic/react';
 import {
   Fragment,
   useCallback,
@@ -123,13 +123,26 @@ export const RecipeMethod = ({
 
   const isDragActiveRef = useRef(false);
   const sortableRef = useRef<{ cancelDrag(): boolean } | null>(null);
-  const [cardRefusal, setCardRefusal] = useState<{ stepId: string; message: string } | undefined>(
-    undefined,
-  );
+  const [refusal, setRefusal] = useState<string>();
+  const lastRefusalRef = useRef<string | undefined>(undefined);
+  const [toastAnchor, setToastAnchor] = useState<HTMLElement>();
 
-  useEffect(() => {
-    setCardRefusal(undefined);
-  }, [process]);
+  const clearRefusal = useCallback(() => {
+    lastRefusalRef.current = undefined;
+    setRefusal(undefined);
+  }, []);
+
+  const showRefusal = useCallback((message: string | undefined) => {
+    if (!message || message === lastRefusalRef.current) return;
+    lastRefusalRef.current = message;
+    const bar = containerRef.current
+      ?.closest('.ion-page')
+      ?.querySelector<HTMLElement>('[data-recipe-draft-bar]');
+    setToastAnchor(bar ?? undefined);
+    setRefusal(message);
+  }, []);
+
+  useEffect(clearRefusal, [process, clearRefusal]);
 
   useImperativeHandle(
     dragControl,
@@ -192,7 +205,8 @@ export const RecipeMethod = ({
 
   const handleDragStart = useCallback(
     (id: string) => {
-      setCardRefusal(undefined);
+      // Keep an already-present toast through a new hold; do not race its exit animation.
+      lastRefusalRef.current = undefined;
       onDragStart?.(id);
     },
     [onDragStart],
@@ -204,24 +218,21 @@ export const RecipeMethod = ({
     ): 'accepted' | 'refused' | 'unchanged' => {
       if (!onDropIntent) return 'unchanged';
       if (!intent) {
-        setCardRefusal(undefined);
+        clearRefusal();
         return onDropIntent(null);
       }
       const outcome = onDropIntent({ id: intent.id, afterId: intent.afterId });
       if (outcome === 'refused') {
         const result = moveStep(process, intent.id, intent.afterId);
         if (!result.ok) {
-          setCardRefusal({
-            stepId: intent.id,
-            message: formatMoveError(result.error, intent.id, process, t, stepName),
-          });
+          showRefusal(formatMoveError(result.error, intent.id, process, t, stepName));
         }
       } else {
-        setCardRefusal(undefined);
+        clearRefusal();
       }
       return outcome;
     },
-    [onDropIntent, process, t, stepName],
+    [onDropIntent, process, t, stepName, clearRefusal, showRefusal],
   );
 
   const getDropFeedback = useCallback(
@@ -515,14 +526,6 @@ export const RecipeMethod = ({
             <circle cx="15" cy="18" r="1.5" />
           </svg>
         </button>
-        {!overlay && cardRefusal?.stepId === step.id && (
-          <div
-            role="alert"
-            className="absolute bottom-1 right-3 z-20 max-w-[80%] rounded border border-alert bg-surface px-2 py-0.5 text-xs font-medium text-alert shadow-sm pointer-events-none"
-          >
-            {cardRefusal.message}
-          </div>
-        )}
       </div>
     );
   };
@@ -596,6 +599,7 @@ export const RecipeMethod = ({
         renderOverlay={renderOverlay}
         onDropIntent={handleDropIntent}
         getDropFeedback={getDropFeedback}
+        onDropFeedbackChange={showRefusal}
         instructions={instructions}
         announcements={announcements}
         onDragStart={handleDragStart}
@@ -614,6 +618,16 @@ export const RecipeMethod = ({
           </Fragment>
         ))}
       </Ui>
+
+      <IonToast
+        isOpen={refusal !== undefined}
+        {...(refusal ? { message: refusal } : {})}
+        position="bottom"
+        {...(toastAnchor ? { positionAnchor: toastAnchor } : {})}
+        cssClass="recipe-move-toast [--background:var(--color-surface-container-high)] [--color:var(--color-ink)] [--border-radius:var(--radius-card)] [&::part(message)]:text-body"
+        duration={3500}
+        onDidDismiss={clearRefusal}
+      />
 
       {showOutcome && (
         <RecipeOutcome

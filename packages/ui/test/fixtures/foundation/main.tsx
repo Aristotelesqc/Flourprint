@@ -18,6 +18,7 @@ import button from '../../../src/components/button/v1.tsx';
 import surface from '../../../src/components/surface/v1.tsx';
 import numberField from '../../../src/components/number-field/v1.tsx';
 import disclosure from '../../../src/components/disclosure/v1.tsx';
+import sectionCarousel from '../../../src/components/section-carousel/v1.tsx';
 import tabs from '../../../src/components/tabs/v1.tsx';
 import floatingMenu from '../../../src/components/floating-menu/v1.tsx';
 import bottomSheet from '../../../src/components/bottom-sheet/v1.tsx';
@@ -35,6 +36,7 @@ const { Ui } = createUi(
     'fp.number-field': numberField,
     'fp.disclosure': disclosure,
     'fp.tabs': tabs,
+    'fp.section-carousel': sectionCarousel,
     'fp.floating-menu': floatingMenu,
     'fp.bottom-sheet': bottomSheet,
     'fp.dialog': dialog,

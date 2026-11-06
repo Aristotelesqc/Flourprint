@@ -1,4 +1,12 @@
-import { useEffect, useId, useRef, useState, type JSX, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useId,
+  useRef,
+  useState,
+  type JSX,
+  type KeyboardEvent,
+} from 'react';
 import { library } from '../../index.ts';
 import type { TabsProps } from './props.ts';
 
@@ -8,10 +16,37 @@ export const Tabs = ({
   label,
   items,
   renderPanels = true,
+  gestureProgress,
 }: TabsProps): JSX.Element => {
   const baseId = useId();
   const stripRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const touchPress = useRef<{ id: string; pointerId: number; x: number; y: number } | null>(null);
+  const touchClick = useRef<string | null>(null);
+
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  useLayoutEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const measure = () => {
+      const from = tabRefs.current.get(gestureProgress?.fromId ?? selected);
+      const to = tabRefs.current.get(gestureProgress?.toId ?? selected) ?? from;
+      if (!from || !to) return;
+      const bounds = strip.getBoundingClientRect();
+      const a = from.getBoundingClientRect();
+      const b = to.getBoundingClientRect();
+      const progress = gestureProgress?.progress ?? 0;
+      setIndicator({
+        left: a.left - bounds.left + strip.scrollLeft + (b.left - a.left) * progress,
+        width: a.width + (b.width - a.width) * progress,
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(strip);
+    for (const button of tabRefs.current.values()) observer.observe(button);
+    return () => observer.disconnect();
+  }, [selected, gestureProgress]);
 
   const enabledItems = items.filter((item) => item.disabled !== true);
   const selectedIndex = enabledItems.findIndex((item) => item.id === selected);
@@ -81,7 +116,7 @@ export const Tabs = ({
         role="tablist"
         aria-label={label}
         aria-orientation="horizontal"
-        className="flex flex-row overflow-x-auto border-b border-outline gap-2 px-2 py-1 min-w-0 max-w-full"
+        className="relative flex flex-row overflow-x-auto border-b border-outline gap-2 px-2 py-1 min-w-0 max-w-full"
       >
         {items.map((item) => {
           const isSelected = item.id === selected && item.disabled !== true;
@@ -108,15 +143,64 @@ export const Tabs = ({
               aria-controls={panelId}
               tabIndex={isFocusable ? 0 : -1}
               disabled={item.disabled === true}
-              onClick={() => {
+              onPointerDown={(event) => {
+                if (!event.isPrimary) return;
+                touchClick.current = null;
+                touchPress.current =
+                  event.pointerType === 'touch'
+                    ? {
+                        id: item.id,
+                        pointerId: event.pointerId,
+                        x: event.clientX,
+                        y: event.clientY,
+                      }
+                    : null;
+              }}
+              onPointerMove={(event) => {
+                const press = touchPress.current;
+                if (
+                  press?.pointerId === event.pointerId &&
+                  Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8
+                )
+                  touchPress.current = null;
+              }}
+              onPointerCancel={() => {
+                touchPress.current = null;
+                touchClick.current = item.id;
+              }}
+              onPointerUp={(event) => {
+                if (event.pointerType !== 'touch' || !event.isPrimary) return;
+                const press = touchPress.current;
+                touchPress.current = null;
+                touchClick.current = item.id;
+                const bounds = event.currentTarget.getBoundingClientRect();
+                if (
+                  press?.id === item.id &&
+                  press.pointerId === event.pointerId &&
+                  Math.hypot(event.clientX - press.x, event.clientY - press.y) <= 8 &&
+                  event.clientX >= bounds.left &&
+                  event.clientX <= bounds.right &&
+                  event.clientY >= bounds.top &&
+                  event.clientY <= bounds.bottom &&
+                  item.disabled !== true
+                )
+                  onSelectedChange(item.id);
+              }}
+              onClick={(event) => {
+                // WebView can omit the compatibility click after a swipe; touch already committed.
+                if (event.detail > 0 && touchClick.current === item.id) {
+                  touchClick.current = null;
+                  return;
+                }
+                touchClick.current = null;
                 if (item.disabled !== true) {
                   onSelectedChange(item.id);
                 }
               }}
               onKeyDown={(e) => handleKeyDown(e, item.id)}
-              className={`fp-control-reset min-h-touch min-w-touch px-4 py-2 text-supporting font-medium whitespace-nowrap shrink-0 fp-focus border-b-2 ${
+              className={`fp-control-reset min-h-touch min-w-touch px-4 py-2 text-supporting font-medium whitespace-nowrap grow shrink-0 fp-focus border-b-2 ${
                 isSelected
-                  ? 'border-primary text-action-text font-semibold'
+                  ? 'border-transparent text-action-text font-semibold'
                   : 'border-transparent text-muted hover:text-on-surface'
               } ${item.disabled === true ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
@@ -124,6 +208,12 @@ export const Tabs = ({
             </button>
           );
         })}
+        <span
+          data-tab-indicator
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-0 left-0 border-b-2 border-primary"
+          style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
+        />
       </div>
 
       {renderPanels ? (

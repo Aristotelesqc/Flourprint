@@ -19,13 +19,14 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0010](0010-fermentation-model-in-alpha.md)          | First fermentation model in Dogfood Alpha                  | Accepted                                        |
 | [0011](0011-desktop-simulator.md)                    | A desktop shell to run the app on a PC                     | Accepted                                        |
 | [0012](0012-bake-notifications.md)                   | Notifications for running bakes                            | Accepted                                        |
-| [0013](0013-web-preview-and-dev-channel.md)          | A web preview link and a remote-loaded dev APK             | Accepted                                        |
+| [0013](0013-web-preview-and-dev-channel.md)          | A web preview link and a remote-loaded dev APK             | Accepted; amended by 0023 for the dev apps      |
 | [0014](0014-simulation-mode.md)                      | Simulation mode                                            | Accepted                                        |
 | [0015](0015-browser-persistence.md)                  | Persistent data in the browser preview                     | Accepted                                        |
 | [0016](0016-versions-and-releases.md)                | App versions and releases                                  | Accepted                                        |
 | [0017](0017-design-brief.md)                         | Shared DESIGN.md brief for the interface                   | Accepted; no stack migration                    |
-| [0018](0018-canary-channel.md)                       | Canary branch and web channel for the release after next   | Accepted                                        |
+| [0018](0018-canary-channel.md)                       | Canary branch and web channel for the release after next   | Accepted; amended by 0023 for the dev apps      |
 | [0019](0019-material3-presentation.md)               | Material 3 presentation through shared components          | Accepted; Ionic shell retained; amended by 0021 |
 | [0020](0020-versioned-component-library.md)          | Versioned component library called by the layout engine    | Accepted, amended by 0021                       |
 | [0021](0021-theme-builder-and-component-sourcing.md) | Theme builder, component sourcing, motion items and guides | Accepted; amended by 0022                       |
 | [0022](0022-port-to-app-and-tailwind.md)             | Port the interface into the app, styled with Tailwind v4   | Accepted                                        |
+| [0023](0023-dev-app-version-picker.md)               | Choosing the web version in the dev apps                   | Proposed                                        |

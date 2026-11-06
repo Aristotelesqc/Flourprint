@@ -3,6 +3,7 @@ import {
   equipmentUses,
   evolve,
   initialBakeState,
+  doughContextOf,
   doughSteps,
   openHold,
   outcomeProblem,
@@ -12,6 +13,7 @@ import {
   type BakeState,
   type EquipmentEntry,
   type EquipmentUse,
+  type Formula,
   type PreparationOutcome,
   type Process,
   type ProcessStep,
@@ -272,6 +274,13 @@ const isFoldSet = (state: BakeState, stepId: unknown, set: unknown): boolean => 
   );
 };
 
+/** The dough steps of the started process (fermentation.md): with the formula's yeast when held. */
+const doughStepsOf = (state: BakeState) =>
+  doughSteps(
+    state.process as Process,
+    state.formula ? doughContextOf(state.formula as Formula) : undefined,
+  ) ?? [];
+
 /**
  * A dough temperature observation (bake-session.md): on a running dough step, a reading in °C
  * within 0 to 60 taken once the step had started, with the probe position.
@@ -282,7 +291,7 @@ const isDoughTemperature = (state: BakeState, payload: Json): boolean => {
   return (
     record?.startedAt !== undefined &&
     record.endedAt === undefined &&
-    (doughSteps(state.process as Process) ?? []).some((s) => s.id === payload.stepId) &&
+    doughStepsOf(state).some((s) => s.id === payload.stepId) &&
     payload.category === 'fermentation' &&
     (payload.position === 'core' ||
       payload.position === 'surface' ||
@@ -430,7 +439,7 @@ const checkPayload = (
       expect(
         record !== undefined &&
           record.endedAt === undefined &&
-          (doughSteps(state.process as Process) ?? []).some((s) => s.id === payload.stepId) &&
+          doughStepsOf(state).some((s) => s.id === payload.stepId) &&
           isInstant(payload.at) &&
           (record.startedAt === undefined ||
             floor.every((at) => Date.parse(payload.at as string) >= at)) &&

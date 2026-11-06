@@ -24,6 +24,15 @@
 
         </activity>
 
+        <!-- Version switching in the dev APK only (ADR 0023): inert in the release APK. -->
+        <activity
+            android:name=".devversions.RestartActivity"
+            android:process=":restart"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
