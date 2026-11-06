@@ -203,6 +203,8 @@ Reading Recipe has no permanent bottom bar. Its header always exposes the pencil
 beside anchored overflow; rare duplicate, export and trash actions belong to overflow. Time
 actions belong only to Planning. The fixed tabs are Recipe, Planning and History; active
 Preparation is a separate screen. Recipe contains ingredients, weighing and authored steps.
+The owner-approved `editor-controls-v1-20261106` editing bar (2026-11-06, L25/L60) uses a continuous opaque surface through the bottom safe inset, a subtle top divider, icon-only Discard, quiet Undo/Redo and filled Save at the right. Keep one row with minimum 3rem touch targets, at least 1.25rem side and 1.5rem bottom control insets (or larger system insets), and 0.75rem top padding. The same overlay stays mounted across Recipe, Planning and History; Planning time actions return when editing ends. Do not stack two bars or paint a transparent gap below the controls. Use shared bottom-bar/button components and runtime tokens. Reserve scrollable end padding without resizing the content viewport. The prototype approval concerns this bar, not the remaining screen parity.
+
 A draft and a detailed editor are separate states sharing one history. Dragging creates or
 resumes the draft without switching ingredients or step cards into editors. Step cards keep
 the same height, density and layout; explicit per-step Edit opens the existing sheet. The
@@ -401,8 +403,8 @@ and require their own checks.
   the display's animation-frame cadence, without rerendering the Recipe document or measuring
   tab geometry for each frame. Native refresh-rate and physical-phone smoothness remain device
   evidence, not a frame-rate guarantee inferred from browser tests.
-  The existing editor action layout and segmented editor sections described above are legacy
-  implementation, pending the L49/L60/L108 port; they are not the target design. The Recipe summary uses the approved two-column tiles under the owner's 2026-11-04 direction,
+  The older two-row editor action layout and segmented editor sections described above are legacy
+  implementation; the approved persistent editing overlay follows L60. The Recipe summary uses the approved two-column tiles under the owner's 2026-11-04 direction,
   checked at both required widths/scales and corrected for known ledger defects.
 - **Precision fields:** input frames identify actual editing; read-only quantities are text.
   Gram display uses the L148 default magnitude bands: whole grams at 10 g and above, tenths

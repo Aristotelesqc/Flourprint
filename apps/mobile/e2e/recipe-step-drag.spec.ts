@@ -400,7 +400,15 @@ for (const english of [false, true]) {
     await expect(refusal).not.toBeEmpty();
     await expect(method(page).getByRole('alert')).toHaveCount(0);
     await expect(refusalToast(page)).toBeHidden({ timeout: 6000 });
-    // An unchanged draft created by activation must not prevent starting the saved recipe.
+    // L60 keeps draft actions across tabs. Close the unchanged draft before starting the saved recipe.
+    await footer(page)
+      .getByRole('button', {
+        name: english ? 'Discard changes' : 'Abandonner les modifications',
+        exact: true,
+      })
+      .click();
+    await expect(footer(page)).toHaveCount(0);
+    await expect(page.locator('ion-alert:not(.overlay-hidden)')).toHaveCount(0);
     await routed(page)
       .getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true })
       .click();

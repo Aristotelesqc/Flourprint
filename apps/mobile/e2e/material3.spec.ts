@@ -181,7 +181,8 @@ for (const english of [false, true]) {
           name: english ? 'Start preparation' : 'Démarrer la préparation',
           exact: true,
         }),
-    ).toBeDisabled();
+    ).toHaveCount(0);
+    await expect(save()).toBeDisabled();
     await expect(
       routed(page).getByText(
         english
@@ -195,14 +196,18 @@ for (const english of [false, true]) {
       .click();
     await expect(water).toHaveValue('abc');
     await expect(save()).toBeDisabled();
+    // A revealed carousel destination remains inert until its selection commits.
+    await expect(
+      routed(page).getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true }),
+    ).toHaveAttribute('aria-selected', 'true');
     await water.fill('170');
+    await expect(water).toHaveValue('170');
     await showPlanning(page);
     await expect(alert).toHaveCount(0);
-    await expect(
-      routed(page).getByText(english ? 'Unsaved changes' : 'Modifications non enregistrées', {
-        exact: true,
-      }),
-    ).toBeVisible();
+    await expect(routed(page).getByTestId('recipe-draft-bar').getByRole('status')).toHaveText(
+      english ? 'Unsaved changes' : 'Modifications non enregistrées',
+    );
+    await expect(save()).toBeEnabled();
     await enterEditor(page);
     await expect(water).toHaveValue('170');
     await save().click();
