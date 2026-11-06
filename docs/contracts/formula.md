@@ -353,6 +353,122 @@ nor share (shown hatched, it is why the total says "≥").
 `yieldOf(formula, resolved)` gives the pieces the summary shows first (L109, L125):
 `{ count, gramsEach }` from a `pieces` anchor, otherwise `{ count: 1, gramsEach: doughWeight }`.
 
+## Hydration sheet read model (0.24.3, L126, L147)
+
+The hydration detail sheet (L126) lists the split of total water by source. L147 groups every
+water source that would display as less than 1 g into one row "Others (< 1 g)", so the rows still
+add up to the total water shown. The interface sums, divides and rounds nothing: it formats the
+figures of `waterSheet(resolved, options?)`, a pure function of `core/domain` over the resolved
+formula. `waterSources` and `totalWater` are unchanged and stay at full precision (Precision); the
+sheet is a view.
+
+```ts
+interface WaterSheetOptions {
+  thresholdGrams?: number; // default 1 (L147); L148 makes it a preference
+  stepGrams?: number; // display grid, default 1 (whole grams)
+}
+
+interface WaterSheetRow {
+  kind: 'source' | 'others' | 'loss';
+  sources: string[]; // ingredient ids (a loss: the component id); several only for 'others'
+  grams: number; // full precision, negative for a loss; 'others': exact sum of its members
+  displayGrams: number; // on the grid; the displayed rows add up to displayTotalGrams
+  sharePct?: number; // 100 × grams / Σ grams of the non-loss rows, full precision; no loss
+  status: 'known' | 'estimated'; // 'estimated' as soon as one member is
+  range?: [number, number]; // estimated rows: sum of the members' ranges
+  members?: WaterSheetMember[]; // 'others' only: each grouped source, contribution order
+}
+
+interface WaterSheetMember {
+  source: string; // ingredient id
+  grams: number; // full precision, never rounded by this read model
+  status: 'known' | 'estimated';
+  range?: [number, number]; // estimated members
+}
+
+interface WaterSheet {
+  rows: WaterSheetRow[];
+  unknownSources: string[]; // water content unknown: no grams, hatched, the reason of "≥"
+  totalGrams: number; // totalWater.value, full precision
+  displayTotalGrams: number; // on the grid
+  completeness: 'complete' | 'incomplete';
+  totalRange?: [number, number]; // totalWater.range
+}
+```
+
+**Rows.** Start from the entries of `waterSources` (the same 0 g threshold):
+
+- A known or estimated, non-loss source with `grams` **not under** `thresholdGrams` is a row of
+  kind `source`. A source of exactly the threshold is shown, not grouped: the test is
+  `grams < thresholdGrams`, with a tolerance of `1e-9 × max(1, thresholdGrams)` grams so that a
+  decimal like 1.0 computed as 0.9999999999999999 is not grouped.
+- Every other non-loss source with grams joins one row of kind `others`, whatever their number
+  (one source alone is still shown as "Others"; L147 names the group by the threshold, not by a
+  count). Its `sources` lists the members in contribution order, its `grams` is their exact sum.
+  There is no `others` row when no source is under the threshold. With `thresholdGrams` 0 nothing
+  is grouped. Its `members` give each grouped source with its own `grams`, `status` and `range`, at
+  full precision and in the same order, for the row's optional detail: the interface may show it
+  folded under the row (an accordion in the sheet; owner, 2026-11-06), each value formatted by L148
+  and not part of the rounded sum.
+- A **loss** (declared component loss, negative grams) is always its own row of kind `loss`, even
+  under the threshold, and is never merged into `others`: it removes water, a source adds it, and
+  the sheet shows it as what it removes (no share).
+- An **unknown** contributor has no grams, so it cannot be "under 1 g": it stays out of the rows,
+  in `unknownSources`, and is not part of any sum. `completeness` stays `incomplete` ("≥ total").
+- Order: `source` rows by decreasing `grams` (equal grams: contribution order), then `others`,
+  then the losses in contribution order.
+- `totalGrams` is `totalWater.value`: the sum of the `grams` of the rows (sources, `others` and
+  losses). Estimated sources count at their value, as in `totalWater`.
+
+**Display rounding.** `displayGrams` and `displayTotalGrams` are multiples of `stepGrams`. Rounding
+each row on its own would not add up (below, three rows at .4 each round down while the total
+rounds up). The rule is the largest-remainder rule, on the grid of `stepGrams`:
+
+1. In units of `stepGrams`, take for each row `q = grams / stepGrams` and `floor(q)`.
+2. The total is `T = round(Σ q)`, half rounding up (`displayTotalGrams = T × stepGrams`). Σ q is the
+   total of the rows, which is `totalGrams`.
+3. `missing = T − Σ floor(q)` is a whole number from 0 to the number of rows. Add one unit to each of
+   the `missing` rows with the largest remainder `q − floor(q)`; equal remainders go to the earlier row.
+
+So every displayed row is within one step of its true value, and the displayed rows add up to the
+displayed total exactly. `sharePct` is not rounded here; a share is formatted by the interface
+(L19) and the displayed shares are not made to add up to 100 by this read model.
+
+**Worked examples** (computed by hand; flour 1000 g `bread`, no component unless stated). Ingredients
+(`bakerPct` → grams, water content → water): water 70 % → 700 g (pure water); milk 10 % → 100 g at
+87 % → 87; cream 2 % → 20 g at 86.5 % → 17.3; honey 2 % → 20 g at 17 % → 3.4; syrup 0.5 % → 5 g at
+20 % → 1.0; malt 0.2 % → 2 g at 30 % → 0.6; spice 0.1 % → 1 g at 40 % → 0.4; seeds 0.1 % → 1 g at
+an estimated 35 % [30, 40] → 0.35 [0.30, 0.40]; salt 2 % → 20 g at 0 % → left out. Total water
+= 700 + 87 + 17.3 + 3.4 + 1.0 + 0.6 + 0.4 + 0.35 = 810.05 g, complete, range [810.00, 810.10].
+
+1. **Defaults** (threshold 1 g, step 1 g). Under 1 g: malt, spice, seeds (syrup is exactly 1.0 and
+   stays). `others` = 0.6 + 0.4 + 0.35 = 1.35 g, estimated, range [1.30, 1.40]. Rows: water 700,
+   milk 87, cream 17.3, honey 3.4, syrup 1.0, others 1.35. Floors: 700, 87, 17, 3, 1, 1 (sum 809);
+   `T = round(810.05) = 810`; `missing` = 1; remainders .3, .4, 0, .35 for cream, honey, syrup,
+   others: honey is the largest. Display: 700, 87, 17, **4**, 1, 1 = 810 = `displayTotalGrams`.
+   Rounding each row alone gives 700, 87, 17, 3, 1, 1 = 809, which is not the total. The
+   `others` row's `members`: malt 0.6 (known), spice 0.4 (known), seeds 0.35 (estimated,
+   [0.30, 0.40]).
+2. **Threshold 5 g.** Under 5 g: honey 3.4, syrup 1.0, malt, spice, seeds. `others` = 3.4 + 1.0 +
+   1.35 = 5.75 g, members in order honey, syrup, malt, spice, seeds. Rows: water 700, milk 87,
+   cream 17.3, others 5.75. Floors 700, 87, 17, 5 (809); `T` = 810; `missing` 1; remainders .3
+   (cream) and .75 (others): display 700, 87, 17, **6** = 810.
+3. **Step 0.1 g.** Same rows as example 1. Units of 0.1 g: 7000, 870, 173, 34, 10, 13.5. Floors sum
+   to 8100; `T = round(8100.5) = 8101` (half up); `missing` 1; the only remainder is .5 (others).
+   Display 700, 87, 17.3, 3.4, 1.0, **1.4** = 810.1 = `displayTotalGrams`.
+4. **Loss.** Water 70 % → 700 g; a component `poolish` of 10 g flour at 100 % hydration (10 g of
+   the pool) with a 4 % water loss declares a loss of 0.4 g. Total water 699.6. Rows: water 700,
+   loss `poolish` −0.4 (a loss under 1 g is not grouped, and has no share; water `sharePct` is
+   100). Floors 700 and −1 (699); `T = round(699.6) = 700`; `missing` 1; the loss has the largest
+   remainder (.6). Display 700 and **0** = 700.
+5. **Unknown.** Example 1 with `tahini` at 1 % (10 g) whose water content is unknown: the rows and
+   figures of example 1 are unchanged, `unknownSources` = `['tahini']`, `completeness` =
+   `incomplete`.
+
+**Consumer impact.** An addition only: no persisted shape, event or migration changes, so
+`ENGINE_VERSION` stays and `CONTRACT_VERSION` takes the patch `0.24.3`. The ingredient list, the
+weighing and every other stage read model stay ungrouped and at full precision (L147).
+
 **Worked example** (given resolved values, so the example tests the read model only). Total flour
 1000 g of flour `bread`; a poolish resolved as `flourByFlour { bread: 300 }`, `water` 300,
 `allocations { yeast: 1 }`, `mass` 601, `flourPct` 30; `finalMix` `flourByFlour { bread: 700 }`,
@@ -421,7 +537,9 @@ fails (see `process.md`).
 ## Precision
 
 Calculations use JS `number` with no intermediate rounding. Rounding happens only for display or
-weighing. Fixture comparison tolerance: `1e-9` relative. See ADR 0006.
+weighing. Fixture comparison tolerance: `1e-9` relative. See ADR 0006. The one display rounding
+the engine provides is the hydration sheet's (Hydration sheet read model): rows that add up to
+the displayed total. Everywhere else the interface formats a figure on its own.
 
 ## References
 

@@ -11,6 +11,7 @@ import {
   type Formula,
   type Process,
 } from '../src/domain/index.js';
+import { ENGINE_VERSION } from '../src/domain/version.js';
 
 /** Hand-computed cases of docs/contracts/fixtures/fermentation (never engine output). */
 interface Case {
@@ -19,6 +20,10 @@ interface Case {
   process: Process;
   expected: Record<string, number | [number, number]>;
   tolerance?: number;
+  /** Engine version from which the case applies (contract PRs precede their implementation). */
+  since?: string;
+  /** Engine version from which a superseded case no longer applies (it runs until then). */
+  until?: string;
 }
 const file = JSON.parse(
   readFileSync(
@@ -40,9 +45,25 @@ const at = (value: unknown, path: string): unknown =>
       value,
     );
 
+const numeric = (version: string) => version.split('.').map(Number);
+/** Compares two dotted numeric versions: negative when a < b, 0 when equal, positive when a > b. */
+const compare = (a: string, b: string): number => {
+  const [x, y] = [numeric(a), numeric(b)];
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+};
+const appliesTo = (c: Case): boolean =>
+  (c.since === undefined || compare(ENGINE_VERSION, c.since) >= 0) &&
+  (c.until === undefined || compare(ENGINE_VERSION, c.until) < 0);
+
 describe('fermentation reference cases', () => {
   for (const c of file.cases) {
-    it(c.name, () => {
+    // Pending: a case written for a later contract waits for its `since`; a superseded one runs
+    // until its `until`. Nothing is skipped for an engine that must satisfy it.
+    (appliesTo(c) ? it : it.skip)(c.name, () => {
       expect(validateFormula(c.formula).ok).toBe(true);
       expect(validateProcess(c.process).ok).toBe(true);
       const result = estimateFermentation(c.formula, c.process, fixtureProfile);

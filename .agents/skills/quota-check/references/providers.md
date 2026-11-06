@@ -63,7 +63,7 @@ Delegates: AGY Gemini group; source=/usage; metric=remaining
 Windows: five-hour remaining=<value>, weekly remaining=<value>; resets=<native text>
 Closure reserve: 20 percentage points (no comparable completed closure yet)
 Decision: CONTINUE for a bounded tranche
-Next quota check: <measured time plus five minutes>, or an earlier boundary
+Next quota check: <next expensive delegation, major work boundary, or new tranche>
 ```
 
 This is a schema example, never a real or reusable current quota reading.

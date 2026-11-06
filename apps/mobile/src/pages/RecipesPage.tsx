@@ -163,7 +163,7 @@ export const RecipesPage = () => {
     return () => clearInterval(timer);
   }, [services]);
 
-  /** A new draft named "<base> <n>", stored at once, then opened (drafts.md). */
+  /** A new draft named by nextDraftName (the base name, else "<base> <n>"), stored at once, then opened (drafts.md). */
   const create = async (
     base: string,
     start: { formula: Formula; process: Process },

@@ -21,6 +21,15 @@ export {
   type Yield,
 } from './weighing.js';
 export {
+  DEFAULT_OTHERS_THRESHOLD_GRAMS,
+  DEFAULT_SHEET_STEP_GRAMS,
+  waterSheet,
+  type WaterSheet,
+  type WaterSheetOptions,
+  type WaterSheetMember,
+  type WaterSheetRow,
+} from './water-sheet.js';
+export {
   componentStyle,
   hydrationForLiquidRatio,
   hydrationForRatio,

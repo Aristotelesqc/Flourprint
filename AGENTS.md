@@ -57,7 +57,7 @@ a dedicated pull request, before the code that depends on it.
 
 ## Quota continuity for coordinators
 
-At session start, during active work (at least every five minutes), and before another tranche,
+At session start, before an expensive delegation, at major work boundaries, and before a new tranche,
 apply [.agents/skills/quota-check/SKILL.md](.agents/skills/quota-check/SKILL.md).
 Every coordinator checks its own provider and the providers used by delegates, including AGY.
 Reserve enough capacity for verification, push and a durable handoff; a delegate's allowance
@@ -138,6 +138,13 @@ the decision history remains editorial. See [docs/governance/generated-backlog.m
   on an issue. Only binding outcomes enter the repository, through the requirements ledger,
   contracts or ADRs. The two reports in `docs/audits/` (2026-10-11) predate this rule and stay as a
   historical record; add nothing there.
+- **Superseded comments** (owner decision of 2026-11-03): an issue body states the current
+  position; comments are the history. A comment that corrects or overrides an earlier one says so
+  in its first line (`Supersedes <link>`), and the earlier comment gets a one-line banner at its
+  top (`> **Superseded by <link>. Do not cite.**`) with its text left intact below. Where no marker
+  exists and two comments conflict, the later one prevails. Before citing an issue, read its
+  newest comments first, and never cite a comment that carries the banner. When a thread grows too
+  long to read, the owner may close it in favour of a consolidated issue that links back to it.
 - **New issues** follow `.github/ISSUE_TEMPLATE/` (work item or bug), also when opened through the
   API, and start with `status:backlog`. Pull requests follow `.github/pull_request_template.md`.
 - **Status labels**: every open issue has exactly one. `status:backlog` (accepted, not planned),

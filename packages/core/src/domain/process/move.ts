@@ -1,7 +1,7 @@
 import { domainError, type DomainError } from '../errors.js';
 import { isTopologicalOrder } from '../graph.js';
 import { err, ok, type Result } from '../result.js';
-import { descendants } from './dough.js';
+import { componentIds, subjectOf } from './subject.js';
 import { projectProcess } from './project.js';
 import type {
   Process,
@@ -19,31 +19,7 @@ import { validateProcess, type ProcessError } from './validate.js';
  * edges of a single chain, or is refused. A refusal changes nothing.
  */
 
-/**
- * The components a process names without its formula: the ids its steps incorporate and the
- * components of explicit subjects. Every formula component joins the dough exactly once
- * (Incorporations), so with incorporations these are the formula's components.
- */
-export const componentIds = (process: Process): Set<string> =>
-  new Set(
-    process.steps.flatMap((s) => [
-      ...(s.incorporations ?? []).flatMap((i) => (i.item === 'component' ? [i.id] : [])),
-      ...(s.subject?.kind === 'component' ? [s.subject.id] : []),
-    ]),
-  );
-
-/**
- * `subjectOf` (process.md): the step's explicit `subject`, else the component whose id is the
- * step's id, else the main dough. The components are the formula's when given, else the ids the
- * process incorporates.
- */
-export const subjectOf = (
-  process: Process,
-  step: ProcessStep,
-  components: ReadonlySet<string> = componentIds(process),
-): Subject =>
-  step.subject ??
-  (components.has(step.id) ? { kind: 'component', id: step.id } : { kind: 'mainDough' });
+export { componentIds, subjectOf };
 
 /** The steps of component `id` (its phases), in process order. */
 export const phasesOf = (
@@ -171,13 +147,12 @@ export const moveStep = (
     return validated({ kind: 'orderOnly' as const, process: { ...process, steps: reordered } });
   }
 
-  // An alap step keeps its dependencies and its "as late as possible" meaning, and a step never
-  // moves below a step that depends on it by a drag: both only move by order only (example 6).
-  // A beforeTarget step is scheduled from its target, not from its place (Steps before a target).
+  // An alap step keeps its dependencies and its "as late as possible" meaning: it only moves by
+  // order only (example 6). A beforeTarget step is scheduled from its target, not from its place
+  // (Steps before a target). A downward move, below a step that depends on the moved step, is the
+  // same chain move as an upward one (process.md, Move; contract 0.24.1).
   if (step.schedule === 'beforeTarget') return err(ambiguous('scheduledFromTarget'));
-  if (step.schedule === 'alap' || (after !== null && descendants(process, stepId).has(after))) {
-    return err(firstViolation(reordered));
-  }
+  if (step.schedule === 'alap') return err(firstViolation(reordered));
   if ((step.incorporations ?? []).length > 0) return err(ambiguous('incorporationStep'));
   if (step.dependsOn.length > 1) return err(ambiguous('stepDependencies'));
   const dependents = rest.filter((s) => s.dependsOn.includes(stepId));

@@ -4,4 +4,5 @@
     <string name="title_activity_main">Flourprint</string>
     <string name="package_name">app.flourprint</string>
     <string name="custom_url_scheme">app.flourprint</string>
+    <string name="shortcut_return_dev">Return to dev</string>
 </resources>

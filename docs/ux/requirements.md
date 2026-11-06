@@ -342,7 +342,7 @@ Screens: library. Source: GH/issues/134#issuecomment-6228651482 (owner: round 2 
 
 Screens: library. Source: GH/issues/128; GH/issues/111#issuecomment-6205813397 §3; GH/issues/134#issuecomment-6240756682. Kind: OI + CL.
 
-**L47.** The first recipe made from a template takes the clean base name ("Shokupan"), with no " 1". A collision takes the smallest unused n ≥ 2. Existing names are never renamed. The generated name is shown and can be renamed in place. `docs/contracts/drafts.md` still says "Baguette 1", so a contract change is needed first. Screens: library, edit. Source: GH/issues/111#issuecomment-6205850211 ("Owner direction", recorded by AGY); GH/issues/128; GH/issues/120 direction 5. Kind: OD-R (pending contract).
+**L47.** The first recipe made from a template takes the clean base name ("Shokupan"), with no " 1". A collision takes the smallest unused n ≥ 2. Existing names are never renamed. The generated name is shown and can be renamed in place. `docs/contracts/drafts.md` now specifies it (contract 0.24.2, Generated names). Screens: library, edit. Source: GH/issues/111#issuecomment-6205850211 ("Owner direction", recorded by AGY); GH/issues/128; GH/issues/120 direction 5. Kind: OD-R.
 
 **L48.** Creating from a template then opening yields a usable Recipe. Cancel or dismiss keeps the list position. Screens: library. Source: GH/issues/128 acceptance 1; GH/issues/134 body (journey "Library → new recipe/template → first usable Recipe"). Kind: OI + CL.
 
@@ -833,7 +833,7 @@ _Owner: to refine._ Source: GH/issues/122; GH/issues/120; GH/issues/134 body, "W
 - Always-visible handles versus an explicit Reorder submode.
 - Collapsed and cross-group behaviour.
 - Activation threshold (movement, hold) and compact / rail / outline treatment: still OPEN; L104 only fixes that a drag enters editing.
-- **Downward drags along a chain** are refused by the engine (`moveStep`, #143). Either the UI turns them into the equivalent upward move, or the contract allows the mirror case: an owner reading is needed.
+- **Downward drags along a chain** were refused by the engine (`moveStep`, #143). The contract now allows the mirror case as the same chain move (`process.md`, Move, contract 0.24.1, examples 17 to 20), pending the owner's approval of that pull request; the UI needs no conversion into an upward move.
 
 Claude's touch values (180 ms lift, 12 px tolerance, 140 px autoscroll…) are starting values, not decisions. Source: GH/issues/123; GH/issues/123#issuecomment-6244918588; GH/pull/143; GH/issues/142 §B; GH/issues/100#issuecomment-6206264377.
 
@@ -859,7 +859,7 @@ catalogue only. Source: GH/issues/142; docs/adr/0021-theme-builder-and-component
 
 **O12. Vocabulary for preferments and scalds versus "Préparation".** "Préparation" was chosen for the session (2026-10-12). The component-group term ("Préparations" versus "Pré-pâtes et échaudages", or "Composants") is left to the lifecycle contract and is not recorded as settled. Source: GH/issues/35#issuecomment-6110744754 "Open decision: vocabulary conflict"; #30 body, "Record of 2026-10-11".
 
-**O13. `docs/contracts/drafts.md` still specifies "Baguette 1".** The owner's free-base-name rule (L47) needs its contract PR first. Source: GH/issues/128.
+**O13. Resolved by contract 0.24.2.** `docs/contracts/drafts.md` now specifies the owner's free-base-name rule (L47). Source: GH/issues/128.
 
 **O14. Ownership and milestone of #123.** The comment cites "owner decision of 2026-10-18 on #142": the engine part is 0.3.0. The UI milestone label is the owner's call. Source: GH/issues/123#issuecomment-6244918588.
 

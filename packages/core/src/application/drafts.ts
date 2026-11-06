@@ -15,12 +15,13 @@ import type { Draft, RecipeRepository } from './ports.js';
 import { saveRevision, type SaveRevisionError } from './recipes.js';
 
 /**
- * The first free generated name `<base> <n>` (drafts.md): the smallest n ≥ 1 that no recipe or
- * draft name uses.
+ * The generated name (drafts.md, Generated names): `base` itself when no recipe or draft name
+ * (trimmed, exact match) equals it, else `<base> <n>` with the smallest n ≥ 2 that none uses.
  */
 export const nextDraftName = (base: string, taken: readonly string[]): string => {
   const used = new Set(taken.map((name) => name.trim()));
-  let n = 1;
+  if (!used.has(base)) return base;
+  let n = 2;
   while (used.has(`${base} ${n}`)) n++;
   return `${base} ${n}`;
 };
