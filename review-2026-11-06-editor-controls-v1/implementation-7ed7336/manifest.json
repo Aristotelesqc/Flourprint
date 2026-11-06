@@ -1,0 +1,58 @@
+{
+  "scope": "Rendered production candidate evidence; approved layout is a separate artifact. Other screen regions retain their existing port status.",
+  "fixture": "Repository Poolish + tangzhong sample, disposable browser contexts",
+  "captures": [
+    {
+      "file": "light-393-planning-fr.png",
+      "source": "7ed73367ef3b9629d6d6de645c8603fff95476bb",
+      "captureBuildLabel": "v0.3.0-local",
+      "theme": "light",
+      "locale": "fr-CA",
+      "viewport": {
+        "width": 393,
+        "height": 900
+      },
+      "textScale": 1,
+      "screen": "Planification",
+      "state": "accepted unsaved sample final-mix water edit 200 to201",
+      "simulatedInsets": null,
+      "sha256": "5d43acd5f89f58e705db5e83f031f751a4443cbd982165f6d6d45fbc43cd8350"
+    },
+    {
+      "file": "warm-dark-360-recipe-fr.png",
+      "source": "7ed73367ef3b9629d6d6de645c8603fff95476bb",
+      "captureBuildLabel": "v0.3.0-local",
+      "theme": "dark",
+      "locale": "fr-CA",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScale": 1.3,
+      "screen": "Recette",
+      "state": "accepted unsaved sample final-mix water edit 200 to201",
+      "simulatedInsets": null,
+      "sha256": "3e42180ea37a98f13805bc1d78d0200392cfe6c7ada6fe2ea228a8810a07100e"
+    },
+    {
+      "file": "amoled-360-large-insets-planning-fr.png",
+      "source": "7ed73367ef3b9629d6d6de645c8603fff95476bb",
+      "captureBuildLabel": "v0.3.0-local",
+      "theme": "amoled",
+      "locale": "fr-CA",
+      "viewport": {
+        "width": 360,
+        "height": 900
+      },
+      "textScale": 1.3,
+      "screen": "Planification",
+      "state": "accepted unsaved sample final-mix water edit 200 to201",
+      "simulatedInsets": {
+        "left": 32,
+        "right": 34,
+        "bottom": 40
+      },
+      "sha256": "3ba7edfe948a1bcc4b8852e5fd698650808b4eb4c3d1560f3a03632074bf8da8"
+    }
+  ]
+}
