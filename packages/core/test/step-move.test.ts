@@ -177,8 +177,121 @@ describe('moveStep', () => {
     ]);
   });
 
-  it('never moves a step below a step that depends on it', () => {
-    expect(refusal(chain, 'bulk', 'shape')).toMatchObject({ code: 'MoveBreaksDependencies' });
+  // Contract 0.24.1 (process.md, Move, examples 17 to 20): a move down a chain is the same chain
+  // move as a move up. These tests replace the former "never moves a step below a step that
+  // depends on it" refusal; their edges are worked by hand in the contract.
+  it('example 17: a chain move down by one step', () => {
+    const result = moved(chain, 'bulk', 'shape');
+    if (result.kind !== 'chain') throw new Error(result.kind);
+    expect(edges(result.process)).toEqual([
+      ['mix', []],
+      ['shape', ['mix']],
+      ['bulk', ['shape']],
+      ['proof', ['bulk']],
+      ['bake', ['proof']],
+    ]);
+    expect(result.changedEdges).toEqual([
+      { step: 'shape', before: ['bulk'], after: ['mix'] },
+      { step: 'bulk', before: ['mix'], after: ['shape'] },
+      { step: 'proof', before: ['shape'], after: ['bulk'] },
+    ]);
+  });
+
+  it('example 18: a chain move down over several steps (the owner chain)', () => {
+    const owner: Process = {
+      steps: [
+        step('preferment'),
+        step('kneading', ['preferment']),
+        step('shaping', ['kneading']),
+        step('rest', ['shaping']),
+        step('bulk', ['rest']),
+        step('division', ['bulk']),
+        step('final-proof', ['division']),
+      ],
+    };
+    const result = moved(owner, 'rest', 'division');
+    if (result.kind !== 'chain') throw new Error(result.kind);
+    expect(edges(result.process)).toEqual([
+      ['preferment', []],
+      ['kneading', ['preferment']],
+      ['shaping', ['kneading']],
+      ['bulk', ['shaping']],
+      ['division', ['bulk']],
+      ['rest', ['division']],
+      ['final-proof', ['rest']],
+    ]);
+    expect(result.changedEdges).toEqual([
+      { step: 'bulk', before: ['rest'], after: ['shaping'] },
+      { step: 'rest', before: ['shaping'], after: ['division'] },
+      { step: 'final-proof', before: ['division'], after: ['rest'] },
+    ]);
+  });
+
+  it('example 19: a chain move down from the first position, and to the end', () => {
+    const first = moved(chain, 'mix', 'bulk');
+    if (first.kind !== 'chain') throw new Error(first.kind);
+    expect(edges(first.process)).toEqual([
+      ['bulk', []],
+      ['mix', ['bulk']],
+      ['shape', ['mix']],
+      ['proof', ['shape']],
+      ['bake', ['proof']],
+    ]);
+    const last = moved(chain, 'bulk', 'bake');
+    if (last.kind !== 'chain') throw new Error(last.kind);
+    expect(edges(last.process)).toEqual([
+      ['mix', []],
+      ['shape', ['mix']],
+      ['proof', ['shape']],
+      ['bake', ['proof']],
+      ['bulk', ['bake']],
+    ]);
+  });
+
+  it('example 20: a chain move down is still refused where an upward one would be', () => {
+    // (a) a step that carries incorporations.
+    const incorporating: Process = {
+      steps: chain.steps.map((s) =>
+        s.id === 'bulk'
+          ? { ...s, incorporations: [{ item: 'ingredient', id: 'salt', sharePct: 100 }] }
+          : s,
+      ),
+    };
+    expect(refusal(incorporating, 'bulk', 'shape')).toMatchObject({
+      code: 'AmbiguousMove',
+      details: { reason: 'incorporationStep' },
+    });
+    // (b) a target with two dependents; after `c` the same step moves, the branch `x` untouched.
+    const branched: Process = {
+      steps: [
+        step('mix'),
+        step('a', ['mix']),
+        step('b', ['a']),
+        step('c', ['b']),
+        step('x', ['b']),
+      ],
+    };
+    expect(refusal(branched, 'a', 'b')).toMatchObject({
+      code: 'AmbiguousMove',
+      details: { reason: 'targetDependents' },
+    });
+    const past = moved(branched, 'a', 'c');
+    if (past.kind !== 'chain') throw new Error(past.kind);
+    expect(edges(past.process)).toEqual([
+      ['mix', []],
+      ['b', ['mix']],
+      ['c', ['b']],
+      ['a', ['c']],
+      ['x', ['b']],
+    ]);
+    // (c) a step with two dependents.
+    const forkedStep: Process = {
+      steps: [step('mix'), step('a', ['mix']), step('b', ['a']), step('x', ['a'])],
+    };
+    expect(refusal(forkedStep, 'a', 'b')).toMatchObject({
+      code: 'AmbiguousMove',
+      details: { reason: 'stepDependents' },
+    });
   });
 
   it('refuses a step with several dependencies or dependents', () => {
@@ -254,7 +367,7 @@ describe('moveStep', () => {
     const snapshot = JSON.stringify(process);
     const result = moved(process, 'shape', 'mix');
     expect(result.process.steps.find((s) => s.id === 'shape')?.technique).toEqual(technique);
-    refusal(process, 'bulk', 'shape');
+    refusal(process, 'bulk', 'missing');
     expect(JSON.stringify(process)).toBe(snapshot);
   });
 });

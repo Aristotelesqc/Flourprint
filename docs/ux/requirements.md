@@ -833,7 +833,7 @@ _Owner: to refine._ Source: GH/issues/122; GH/issues/120; GH/issues/134 body, "W
 - Always-visible handles versus an explicit Reorder submode.
 - Collapsed and cross-group behaviour.
 - Activation threshold (movement, hold) and compact / rail / outline treatment: still OPEN; L104 only fixes that a drag enters editing.
-- **Downward drags along a chain** are refused by the engine (`moveStep`, #143). Either the UI turns them into the equivalent upward move, or the contract allows the mirror case: an owner reading is needed.
+- **Downward drags along a chain** were refused by the engine (`moveStep`, #143). The contract now allows the mirror case as the same chain move (`process.md`, Move, contract 0.24.1, examples 17 to 20), pending the owner's approval of that pull request; the UI needs no conversion into an upward move.
 
 Claude's touch values (180 ms lift, 12 px tolerance, 140 px autoscroll…) are starting values, not decisions. Source: GH/issues/123; GH/issues/123#issuecomment-6244918588; GH/pull/143; GH/issues/142 §B; GH/issues/100#issuecomment-6206264377.
 
