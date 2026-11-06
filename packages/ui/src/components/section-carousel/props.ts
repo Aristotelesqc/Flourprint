@@ -26,6 +26,8 @@ export interface SectionCarouselProps {
   readonly disabled?: boolean | undefined;
   /** Imperative control ref for programmatic selection and cancellation. */
   readonly control?: Ref<SectionCarouselControl> | undefined;
+  /** Optional external pointer surface (e.g. tabs header) to attach carousel swipe gestures. */
+  readonly gestureElement?: HTMLElement | null | undefined;
   /** Optional external scroller element (IonContent scrollElement). */
   readonly scrollElement?: HTMLElement | null | undefined;
   /** Function to read remembered scrollTop for any section identifier. */

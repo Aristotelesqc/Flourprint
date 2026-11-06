@@ -379,20 +379,21 @@ Finger-tracked peer sections sharing one external vertical scroller and preserve
 
 **Props**
 
-| Prop                | Meaning                                                           |
-| ------------------- | ----------------------------------------------------------------- |
-| `className`         | Optional container utilities.                                     |
-| `sections`          | Ordered section identifiers.                                      |
-| `activeSection`     | Controlled selected section.                                      |
-| `onChangeSection`   | Commits selection once the slide has settled.                     |
-| `label`             | Localized accessible carousel label.                              |
-| `children`          | One mounted child for each section.                               |
-| `disabled`          | Prevents carousel gestures while another interaction owns them.   |
-| `control`           | Optional imperative section-selection and cancellation handle.    |
-| `scrollElement`     | The existing external vertical scroller.                          |
-| `getScrollPosition` | Reads the remembered scroll position of an incoming section.      |
-| `onGestureProgress` | Links the measured tab indicator to tracking and settling.        |
-| `onBeforeChange`    | Commits the caller’s active input through its existing blur path. |
+| Prop                | Meaning                                                            |
+| ------------------- | ------------------------------------------------------------------ |
+| `className`         | Optional container utilities.                                      |
+| `gestureElement`    | Optional external pointer surface sharing carousel swipe gestures. |
+| `sections`          | Ordered section identifiers.                                       |
+| `activeSection`     | Controlled selected section.                                       |
+| `onChangeSection`   | Commits selection once the slide has settled.                      |
+| `label`             | Localized accessible carousel label.                               |
+| `children`          | One mounted child for each section.                                |
+| `disabled`          | Prevents carousel gestures while another interaction owns them.    |
+| `control`           | Optional imperative section-selection and cancellation handle.     |
+| `scrollElement`     | The existing external vertical scroller.                           |
+| `getScrollPosition` | Reads the remembered scroll position of an incoming section.       |
+| `onGestureProgress` | Links the measured tab indicator to tracking and settling.         |
+| `onBeforeChange`    | Commits the caller’s active input through its existing blur path.  |
 
 **Accessibility**
 
@@ -585,14 +586,16 @@ Accessible tabbed navigation strip that switches between alternate views while k
 
 **Props**
 
-| Prop               | Meaning                                                                                                    |
-| ------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `gestureProgress`  | Optional carousel progress linking the measured indicator to the finger and settle.                        |
-| `selected`         | Identifier of the currently active tab item.                                                               |
-| `onSelectedChange` | Callback fired when a tab is selected with the selected tab identifier.                                    |
-| `label`            | Required localized accessible label describing the purpose of the tab list (applied as aria-label).        |
-| `items`            | Readonly list of tab items defining id, label, panel content, and optional disabled state.                 |
-| `renderPanels`     | Whether to render panels internally (defaults to true). Set to false when caller mounts panels externally. |
+| Prop                | Meaning                                                                                                                                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gestureSurfaceRef` | Optional ref exposing the strip as a carousel gesture surface. Its horizontal swipes navigate sections; selection keeps overflowing labels visible. Without it, native horizontal strip scrolling is retained. |
+| `control`           | Optional imperative handle exporting setGestureProgress for zero-commit indicator tracking.                                                                                                                    |
+| `gestureProgress`   | Optional carousel progress linking the measured indicator to the finger and settle.                                                                                                                            |
+| `selected`          | Identifier of the currently active tab item.                                                                                                                                                                   |
+| `onSelectedChange`  | Callback fired when a tab is selected with the selected tab identifier.                                                                                                                                        |
+| `label`             | Required localized accessible label describing the purpose of the tab list (applied as aria-label).                                                                                                            |
+| `items`             | Readonly list of tab items defining id, label, panel content, and optional disabled state.                                                                                                                     |
+| `renderPanels`      | Whether to render panels internally (defaults to true). Set to false when caller mounts panels externally.                                                                                                     |
 
 **Accessibility**
 

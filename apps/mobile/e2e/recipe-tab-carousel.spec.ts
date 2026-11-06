@@ -56,6 +56,148 @@ async function finish(cdp: CDPSession) {
 for (const english of [false, true]) {
   const suffix = english ? ' @en' : '';
 
+  for (const large of [false, true]) {
+    test(`the tab strip shares finger tracking, springback and section commits${large ? ' at 130%' : ''}${suffix}`, async ({
+      page,
+    }) => {
+      await open(page);
+      if (large) {
+        await page.setViewportSize({ width: 360, height: 900 });
+        await page.addStyleTag({ content: 'html,body { font-size:20.8px !important }' });
+      }
+      const strip = routed(page).getByRole('tablist');
+      const row = await bounds(strip);
+      const root = await bounds(carousel(page));
+      const track = carousel(page).locator(':scope > div');
+      const indicator = strip.locator('[data-tab-indicator]');
+      const initialIndicator = await bounds(indicator);
+      const startX = row.x + row.width - 12;
+      const y = row.y + row.height / 2;
+      const cdp = await page.context().newCDPSession(page);
+      const send = (type: 'touchStart' | 'touchMove' | 'touchEnd' | 'touchCancel', x: number) =>
+        cdp.send('Input.dispatchTouchEvent', {
+          type,
+          touchPoints: type === 'touchEnd' || type === 'touchCancel' ? [] : [{ x, y }],
+        });
+      const offset = () =>
+        track.evaluate((node) => new DOMMatrixReadOnly(getComputedStyle(node).transform).m41);
+      try {
+        await send('touchStart', startX);
+        await send('touchMove', startX - 60);
+        await expect.poll(offset).toBeCloseTo(-60, 0);
+        await expect
+          .poll(async () => (await bounds(indicator)).x)
+          .toBeGreaterThan(initialIndicator.x);
+        // Expire the release-velocity window while holding below halfway.
+        await page.evaluate(async () => {
+          const end = performance.now() + 160;
+          await new Promise<void>((resolve) => {
+            const frame = () =>
+              performance.now() < end ? requestAnimationFrame(frame) : resolve();
+            requestAnimationFrame(frame);
+          });
+        });
+        await send('touchEnd', 0);
+        await expect(tabs(page).nth(0)).toHaveAttribute('aria-selected', 'true');
+        await expect.poll(offset).toBeCloseTo(0, 0);
+        await send('touchStart', startX);
+        await send('touchMove', startX - root.width * 0.65);
+        await send('touchEnd', 0);
+        await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
+        await expect.poll(offset).toBeCloseTo(-root.width, 0);
+        const selected = await bounds(tabs(page).nth(1));
+        expect(selected.x).toBeGreaterThanOrEqual(row.x - 1);
+        expect(selected.x + selected.width).toBeLessThanOrEqual(row.x + row.width + 1);
+        await send('touchStart', row.x + 12);
+        await send('touchMove', row.x + 12 + root.width * 0.65);
+        await send('touchEnd', 0);
+        await expect(tabs(page).nth(0)).toHaveAttribute('aria-selected', 'true');
+        await expect.poll(offset).toBeCloseTo(0, 0);
+      } finally {
+        await finish(cdp);
+      }
+    });
+  }
+
+  test(`a held swipe does not rerender React or remeasure tabs for each pointer sample${suffix}`, async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const probe = { armed: false, commits: 0, tabRects: 0, injected: false };
+      Object.assign(window, {
+        __swipeProbe: probe,
+        __REACT_DEVTOOLS_GLOBAL_HOOK__: {
+          supportsFiber: true,
+          inject() {
+            probe.injected = true;
+            return 1;
+          },
+          onCommitFiberRoot() {
+            if (probe.armed) probe.commits++;
+          },
+          onCommitFiberUnmount() {},
+        },
+      });
+      const original = Element.prototype.getBoundingClientRect;
+      Element.prototype.getBoundingClientRect = function () {
+        if (probe.armed && this.getAttribute('role') === 'tab') probe.tabRects++;
+        return original.call(this);
+      };
+    });
+    await open(page);
+    const { cdp, send } = await finger(page);
+    const probe = () =>
+      page.evaluate(
+        () =>
+          (
+            window as unknown as {
+              __swipeProbe: {
+                armed: boolean;
+                commits: number;
+                tabRects: number;
+                injected: boolean;
+              };
+            }
+          ).__swipeProbe,
+      );
+    try {
+      await send('touchStart');
+      await send('touchMove', 290);
+      await expect
+        .poll(() =>
+          carousel(page)
+            .locator(':scope > div')
+            .evaluate((node) => new DOMMatrixReadOnly(getComputedStyle(node).transform).m41),
+        )
+        .toBeCloseTo(-20, 0);
+      await page.evaluate(() => {
+        const cost = (
+          window as unknown as {
+            __swipeProbe: { armed: boolean; commits: number; tabRects: number };
+          }
+        ).__swipeProbe;
+        cost.armed = true;
+        cost.commits = 0;
+        cost.tabRects = 0;
+      });
+      for (let i = 1; i <= 20; i++) await send('touchMove', 290 - i * 4);
+      await expect
+        .poll(() =>
+          carousel(page)
+            .locator(':scope > div')
+            .evaluate((node) => new DOMMatrixReadOnly(getComputedStyle(node).transform).m41),
+        )
+        .toBeCloseTo(-100, 0);
+      const held = await probe();
+      expect(held.injected).toBe(true);
+      expect(held.commits).toBe(0);
+      expect(held.tabRects).toBe(0);
+    } finally {
+      await send('touchCancel');
+      await finish(cdp);
+    }
+  });
+
   test(`a touch tab release works when WebView omits the compatibility click${suffix}`, async ({
     page,
   }) => {
