@@ -21,6 +21,7 @@ export default {
   ],
   props: {
     className: 'Optional container utilities.',
+    gestureElement: 'Optional external pointer surface sharing carousel swipe gestures.',
     sections: 'Ordered section identifiers.',
     activeSection: 'Controlled selected section.',
     onChangeSection: 'Commits selection once the slide has settled.',

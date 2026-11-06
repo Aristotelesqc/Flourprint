@@ -41,6 +41,10 @@ const guide: ComponentGuide<TabsProps> = {
     },
   ],
   props: {
+    gestureSurfaceRef:
+      'Optional ref exposing the strip as a carousel gesture surface. Its horizontal swipes navigate sections; selection keeps overflowing labels visible. Without it, native horizontal strip scrolling is retained.',
+    control:
+      'Optional imperative handle exporting setGestureProgress for zero-commit indicator tracking.',
     gestureProgress:
       'Optional carousel progress linking the measured indicator to the finger and settle.',
     selected: 'Identifier of the currently active tab item.',

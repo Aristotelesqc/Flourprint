@@ -251,7 +251,7 @@ settles O1; navigation B and its bottom bar of large destination buttons are no 
 - Recipe contains the whole authored recipe (ingredients, weighing, steps); Planning contains the generated schedule and its controls, not another editable step list;
 - reading and editing actions follow the owner's updated L31, L50 and L60; active preparations remain reachable under L32;
 - the tabs at the top stay tappable, and a horizontal swipe also moves to the next or previous
-  tab;
+  tab, including a swipe that starts on the tab strip itself (owner, 2026-11-06);
 - tab buttons share available row width with centered labels; when labels do not fit, keep horizontal scrolling rather than squeezing them (owner clarification, 2026-11-05);
 - both gestures change the tab: a slow drag past half the width, or a short quick flick above a
   velocity threshold, whatever the distance;
@@ -260,7 +260,9 @@ settles O1; navigation B and its bottom bar of large destination buttons are no 
   moves with it;
 - a swipe starts only on a clearly horizontal gesture; vertical scrolling wins otherwise;
 - no swipe starts near the screen edges (Android Back gesture), during a step drag (L96), or
-  inside an area that already scrolls horizontally;
+  inside an area that already scrolls horizontally, except the carousel-linked tab strip: its
+  horizontal gesture changes sections and keeps the selected label visible even with overflowing
+  labels (owner, 2026-11-06);
 - with reduced motion the tab changes at once, without the slide;
 - switching tabs while editing keeps the same draft (L33).
 

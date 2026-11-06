@@ -81,6 +81,7 @@ import type {
   SectionCarouselControl,
   TabGestureProgress,
 } from '@flourprint/ui/components/section-carousel/v1';
+import type { TabsControl } from '@flourprint/ui/components/tabs/v1';
 import { ValidationProvider, useValidation, useValidationActions } from '../ui/ValidationContext';
 
 type Tab = 'formula' | 'process' | 'history';
@@ -150,7 +151,11 @@ const RecipePageContent = () => {
   const writes = useGuardedWrite();
   const contentRef = useRef<HTMLIonContentElement>(null);
   const carouselRef = useRef<SectionCarouselControl | null>(null);
-  const [tabGestureProgress, setTabGestureProgress] = useState<TabGestureProgress | null>(null);
+  const tabsRef = useRef<TabsControl | null>(null);
+  const [tabGestureElement, setTabGestureElement] = useState<HTMLDivElement | null>(null);
+  const updateTabGestureProgress = useCallback((detail: TabGestureProgress | null) => {
+    tabsRef.current?.setGestureProgress(detail);
+  }, []);
   const titleRef = useRef<HTMLDivElement>(null);
   const [reviewing, setReviewing] = useState(false);
   const pendingStart = useRef<{
@@ -1295,7 +1300,8 @@ const RecipePageContent = () => {
               }}
               label={t('recipe.tabsLabel')}
               renderPanels={false}
-              gestureProgress={tabGestureProgress}
+              control={tabsRef}
+              gestureSurfaceRef={setTabGestureElement}
               items={(base
                 ? (['formula', 'process', 'history'] as const)
                 : (['formula', 'process'] as const)
@@ -1367,7 +1373,8 @@ const RecipePageContent = () => {
           control={carouselRef}
           scrollElement={scrollElement}
           getScrollPosition={getScrollPosition}
-          onGestureProgress={setTabGestureProgress}
+          gestureElement={tabGestureElement}
+          onGestureProgress={updateTabGestureProgress}
           onBeforeChange={blurActiveEditor}
         >
           {[

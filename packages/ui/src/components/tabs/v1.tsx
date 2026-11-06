@@ -1,14 +1,17 @@
 import {
+  useCallback,
   useEffect,
-  useLayoutEffect,
   useId,
+  useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
   type JSX,
   type KeyboardEvent,
 } from 'react';
 import { library } from '../../index.ts';
-import type { TabsProps } from './props.ts';
+import type { TabsControl, TabsProps } from './props.ts';
+import type { SectionCarouselProgressDetail as TabGestureProgress } from '../section-carousel/props.ts';
 
 export const Tabs = ({
   selected,
@@ -17,36 +20,106 @@ export const Tabs = ({
   items,
   renderPanels = true,
   gestureProgress,
+  control,
+  gestureSurfaceRef,
 }: TabsProps): JSX.Element => {
   const baseId = useId();
   const stripRef = useRef<HTMLDivElement | null>(null);
+  const setStrip = useCallback(
+    (element: HTMLDivElement | null) => {
+      stripRef.current = element;
+      if (typeof gestureSurfaceRef === 'function') gestureSurfaceRef(element);
+      else if (gestureSurfaceRef) gestureSurfaceRef.current = element;
+    },
+    [gestureSurfaceRef],
+  );
+  const indicatorRef = useRef<HTMLSpanElement | null>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const tabGeometryRef = useRef<Map<string, { left: number; width: number }>>(new Map());
   const touchPress = useRef<{ id: string; pointerId: number; x: number; y: number } | null>(null);
   const touchClick = useRef<string | null>(null);
+  const latestProgressRef = useRef<TabGestureProgress | null>(gestureProgress ?? null);
 
-  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  const paintIndicator = useCallback(
+    (fromId: string, toId: string, progress: number) => {
+      const indicator = indicatorRef.current;
+      if (!indicator) return;
+      const geom = tabGeometryRef.current;
+      const a = geom.get(fromId) ?? geom.get(selected);
+      if (!a) return;
+      const b = geom.get(toId) ?? a;
+      const left = a.left + (b.left - a.left) * progress;
+      const width = a.width + (b.width - a.width) * progress;
+      indicator.style.transform = `translate3d(${left}px, 0, 0) scaleX(${width})`;
+    },
+    [selected],
+  );
+
+  const paintCurrent = useCallback(() => {
+    const p = latestProgressRef.current;
+    if (p) {
+      paintIndicator(p.fromId, p.toId, p.progress);
+    } else {
+      paintIndicator(selected, selected, 0);
+    }
+  }, [paintIndicator, selected]);
+
+  const measureGeometry = useCallback(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const stripRect = strip.getBoundingClientRect();
+    const map = new Map<string, { left: number; width: number }>();
+    for (const [id, button] of tabRefs.current.entries()) {
+      const r = button.getBoundingClientRect();
+      map.set(id, {
+        left: r.left - stripRect.left + strip.scrollLeft,
+        width: r.width,
+      });
+    }
+    tabGeometryRef.current = map;
+  }, []);
+
   useLayoutEffect(() => {
     const strip = stripRef.current;
     if (!strip) return;
-    const measure = () => {
-      const from = tabRefs.current.get(gestureProgress?.fromId ?? selected);
-      const to = tabRefs.current.get(gestureProgress?.toId ?? selected) ?? from;
-      if (!from || !to) return;
-      const bounds = strip.getBoundingClientRect();
-      const a = from.getBoundingClientRect();
-      const b = to.getBoundingClientRect();
-      const progress = gestureProgress?.progress ?? 0;
-      setIndicator({
-        left: a.left - bounds.left + strip.scrollLeft + (b.left - a.left) * progress,
-        width: a.width + (b.width - a.width) * progress,
-      });
+
+    measureGeometry();
+    paintCurrent();
+
+    const handleResize = () => {
+      measureGeometry();
+      paintCurrent();
     };
-    measure();
-    const observer = new ResizeObserver(measure);
+
+    const observer = new ResizeObserver(handleResize);
     observer.observe(strip);
-    for (const button of tabRefs.current.values()) observer.observe(button);
-    return () => observer.disconnect();
-  }, [selected, gestureProgress]);
+    for (const button of tabRefs.current.values()) {
+      observer.observe(button);
+    }
+
+    strip.addEventListener('scroll', handleResize, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      strip.removeEventListener('scroll', handleResize);
+    };
+  }, [items, measureGeometry, paintCurrent]);
+
+  useLayoutEffect(() => {
+    latestProgressRef.current = gestureProgress ?? null;
+    paintCurrent();
+  }, [gestureProgress, paintCurrent]);
+
+  useImperativeHandle(
+    control,
+    (): TabsControl => ({
+      setGestureProgress(detail: TabGestureProgress | null) {
+        latestProgressRef.current = detail;
+        paintCurrent();
+      },
+    }),
+    [paintCurrent],
+  );
 
   const enabledItems = items.filter((item) => item.disabled !== true);
   const selectedIndex = enabledItems.findIndex((item) => item.id === selected);
@@ -112,11 +185,11 @@ export const Tabs = ({
   return (
     <div className="flex flex-col w-full">
       <div
-        ref={stripRef}
+        ref={setStrip}
         role="tablist"
         aria-label={label}
         aria-orientation="horizontal"
-        className="relative flex flex-row overflow-x-auto border-b border-outline gap-2 px-2 py-1 min-w-0 max-w-full"
+        className={`relative flex flex-row overflow-x-auto border-b border-outline gap-2 px-2 py-1 min-w-0 max-w-full ${gestureSurfaceRef ? 'touch-pan-y' : ''}`}
       >
         {items.map((item) => {
           const isSelected = item.id === selected && item.disabled !== true;
@@ -209,10 +282,11 @@ export const Tabs = ({
           );
         })}
         <span
+          ref={indicatorRef}
           data-tab-indicator
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 left-0 border-b-2 border-primary"
-          style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
+          className="pointer-events-none absolute bottom-0 left-0 border-b-2 border-primary origin-left"
+          style={{ width: '1px' }}
         />
       </div>
 
@@ -320,3 +394,5 @@ export default library.version({
     },
   ],
 });
+
+export type { TabItem, TabsControl, TabsProps } from './props.ts';

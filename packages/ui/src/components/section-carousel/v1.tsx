@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
   type JSX,
@@ -17,9 +18,6 @@ import type { SectionCarouselControl, SectionCarouselProps } from './props.ts';
 interface TransitionState {
   readonly fromIndex: number;
   readonly toIndex: number;
-  readonly dx: number;
-  readonly offsetY: number;
-  readonly isAnimating: boolean;
 }
 
 export function SectionCarousel({
@@ -30,6 +28,7 @@ export function SectionCarousel({
   children,
   disabled = false,
   control,
+  gestureElement,
   scrollElement,
   getScrollPosition,
   onGestureProgress,
@@ -42,6 +41,12 @@ export function SectionCarousel({
   const [viewportHeight, setViewportHeight] = useState(0);
   const [transitionState, setTransitionState] = useState<TransitionState | null>(null);
 
+  const liveDxRef = useRef(0);
+  const liveTargetIdxRef = useRef(0);
+  const gestureTargetIdxRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const preventClickRef = useRef(false);
+
   const motion = useMotion('fp.motion.tab-carousel') as KeyframesMotion;
 
   const [reduced, setReduced] = useState(false);
@@ -52,16 +57,31 @@ export function SectionCarousel({
     );
   }, []);
 
+  useLayoutEffect(() => {
+    // Reset imperative tracking at rest, including cancellation with an unchanged selection.
+    if ((!transitionState || reduced) && trackRef.current)
+      trackRef.current.style.transform = `translate3d(${-Math.max(0, sections.indexOf(activeSection)) * 100}%, 0, 0)`;
+  }, [activeSection, reduced, sections, transitionState]);
+
   const pointerStateRef = useRef<{
     pointerId: number;
     startX: number;
     startY: number;
-    startTime: number;
     baseOffset: number;
     isLocked: boolean;
     isCancelled: boolean;
+    width: number;
+    fromIndex: number;
     history: Array<{ x: number; time: number }>;
+    originatingElement: HTMLElement;
   } | null>(null);
+
+  const cancelQueuedFrame = useCallback(() => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const update = () => {
@@ -70,6 +90,7 @@ export function SectionCarousel({
       if (next) {
         currentAnimationRef.current?.cancel();
         currentAnimationRef.current = null;
+        cancelQueuedFrame();
         pointerStateRef.current = null;
         setTransitionState(null);
         onGestureProgress?.(null);
@@ -88,7 +109,7 @@ export function SectionCarousel({
       media.removeEventListener('change', update);
       observer.disconnect();
     };
-  }, [checkReduced, onGestureProgress]);
+  }, [cancelQueuedFrame, checkReduced, onGestureProgress]);
 
   useEffect(() => {
     if (!scrollElement) return;
@@ -115,6 +136,7 @@ export function SectionCarousel({
         if (id === activeSection && !currentAnimationRef.current && !pointerStateRef.current)
           return;
         const targetIdx = sections.indexOf(id);
+        cancelQueuedFrame();
         if (targetIdx === -1) return;
         const currentIdx = Math.max(0, sections.indexOf(activeSection));
 
@@ -140,16 +162,9 @@ export function SectionCarousel({
         }
 
         const width = container.clientWidth;
-        const currentScrollTop = scrollElement?.scrollTop ?? 0;
-        const targetSavedScroll = getScrollPosition?.(id) ?? 0;
-        const offsetY = currentScrollTop - targetSavedScroll;
-
         setTransitionState({
           fromIndex: currentIdx,
           toIndex: targetIdx,
-          dx: visualOffset + currentIdx * width,
-          offsetY,
-          isAnimating: true,
         });
 
         const fromX = visualOffset;
@@ -177,6 +192,7 @@ export function SectionCarousel({
         currentAnimationRef.current = anim ?? null;
       },
       cancel() {
+        cancelQueuedFrame();
         if (currentAnimationRef.current) {
           currentAnimationRef.current.cancel();
           currentAnimationRef.current = null;
@@ -187,15 +203,14 @@ export function SectionCarousel({
     }),
     [
       activeSection,
+      cancelQueuedFrame,
       currentOffset,
       checkReduced,
       disabled,
-      getScrollPosition,
       motion,
       onBeforeChange,
       onChangeSection,
       onGestureProgress,
-      scrollElement,
       sections,
     ],
   );
@@ -203,6 +218,7 @@ export function SectionCarousel({
   // Cleanup on disabled or unmount
   useEffect(() => {
     if (disabled) {
+      cancelQueuedFrame();
       if (currentAnimationRef.current) {
         currentAnimationRef.current.cancel();
         currentAnimationRef.current = null;
@@ -211,268 +227,365 @@ export function SectionCarousel({
       setTransitionState(null);
       onGestureProgress?.(null);
     }
-  }, [disabled, onGestureProgress]);
+  }, [cancelQueuedFrame, disabled, onGestureProgress]);
 
   useEffect(() => {
     return () => {
+      cancelQueuedFrame();
       if (currentAnimationRef.current) {
         currentAnimationRef.current.cancel();
         currentAnimationRef.current = null;
       }
     };
-  }, []);
+  }, [cancelQueuedFrame]);
 
-  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (disabled || !e.isPrimary) return;
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const handlePointerDownInternal = useCallback(
+    (
+      e: PointerEvent | ReactPointerEvent,
+      originatingElement: HTMLElement,
+      isFromGestureElement: boolean,
+    ) => {
+      if (disabled || !e.isPrimary) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      preventClickRef.current = false;
 
-    // 24px viewport edge exclusion (Android Back margin)
-    if (e.clientX < 24 || e.clientX > window.innerWidth - 24) return;
+      // 24px viewport edge exclusion (Android Back margin)
+      if (e.clientX < 24 || e.clientX > window.innerWidth - 24) return;
 
-    // Target exclusions
-    const target = e.target as HTMLElement | null;
-    if (!target) return;
-    if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
-    if (target.closest('button') && target.closest('[data-sortable-id]')) return;
-    if (target.closest('ion-modal, ion-popover, ion-alert, [role="dialog"]')) return;
+      // Target exclusions
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (target.closest('button') && target.closest('[data-sortable-id]')) return;
+      if (target.closest('ion-modal, ion-popover, ion-alert, [role="dialog"]')) return;
 
-    // Horizontal scroll ancestor exclusion
-    let curr: HTMLElement | null = target;
-    let isHScroll = false;
-    while (curr && curr !== containerRef.current) {
-      const style = window.getComputedStyle(curr);
-      if (
-        (style.overflowX === 'auto' || style.overflowX === 'scroll') &&
-        curr.scrollWidth > curr.clientWidth
-      ) {
-        isHScroll = true;
-        break;
-      }
-      curr = curr.parentElement;
-    }
-    if (isHScroll) return;
-
-    const width = containerRef.current?.clientWidth ?? 0;
-    const baseOffset = currentOffset() + Math.max(0, sections.indexOf(activeSection)) * width;
-    if (currentAnimationRef.current) {
-      currentAnimationRef.current.cancel();
-      currentAnimationRef.current = null;
-      setTransitionState((previous) =>
-        previous ? { ...previous, dx: baseOffset, isAnimating: false } : null,
-      );
-    }
-
-    const now = performance.now();
-    pointerStateRef.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      startTime: now,
-      baseOffset,
-      isLocked: false,
-      isCancelled: false,
-      history: [{ x: e.clientX, time: now }],
-    };
-  };
-
-  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const state = pointerStateRef.current;
-    if (!state || state.pointerId !== e.pointerId || state.isCancelled) return;
-
-    const pointerDx = e.clientX - state.startX;
-    const dx = pointerDx + state.baseOffset;
-    const dy = e.clientY - state.startY;
-    const now = performance.now();
-
-    if (!state.isLocked) {
-      const dist = Math.hypot(pointerDx, dy);
-      if (dist < 8) return; // 8px slop
-
-      if (Math.abs(pointerDx) > Math.abs(dy) * 1.5) {
-        state.isLocked = true;
-        try {
-          containerRef.current?.setPointerCapture(e.pointerId);
-        } catch {
-          // ignore
+      // Horizontal scroll ancestor exclusion (content pane only; external tab strip must still swipe)
+      if (!isFromGestureElement) {
+        let curr: HTMLElement | null = target;
+        let isHScroll = false;
+        while (curr && curr !== containerRef.current) {
+          const style = window.getComputedStyle(curr);
+          if (
+            (style.overflowX === 'auto' || style.overflowX === 'scroll') &&
+            curr.scrollWidth > curr.clientWidth
+          ) {
+            isHScroll = true;
+            break;
+          }
+          curr = curr.parentElement;
         }
-        onBeforeChange?.();
-      } else {
-        state.isCancelled = true;
-        return;
+        if (isHScroll) return;
       }
-    }
 
-    if (state.isLocked) {
-      state.history.push({ x: e.clientX, time: now });
-      state.history = state.history.filter((h) => now - h.time <= 120);
-
-      const fromIndex = Math.max(0, sections.indexOf(activeSection));
+      cancelQueuedFrame();
       const width = containerRef.current?.clientWidth ?? 0;
-      const currentScrollTop = scrollElement?.scrollTop ?? 0;
+      const currentIdx = Math.max(0, sections.indexOf(activeSection));
+      const baseOffset = currentOffset() + currentIdx * width;
+      if (currentAnimationRef.current) {
+        currentAnimationRef.current.cancel();
+        currentAnimationRef.current = null;
+        if (trackRef.current)
+          trackRef.current.style.transform = `translate3d(${-currentIdx * width + baseOffset}px, 0, 0)`;
+      }
 
-      let targetIdx = fromIndex;
-      let effectiveDx = dx;
-      let offsetY = 0;
+      const now = performance.now();
+      liveDxRef.current = baseOffset;
+      liveTargetIdxRef.current = currentIdx;
+      gestureTargetIdxRef.current = null;
+      pointerStateRef.current = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        baseOffset,
+        isLocked: false,
+        isCancelled: false,
+        width,
+        fromIndex: currentIdx,
+        history: [{ x: e.clientX, time: now }],
+        originatingElement,
+      };
+    },
+    [activeSection, cancelQueuedFrame, currentOffset, disabled, sections],
+  );
 
-      if (dx < 0) {
-        if (fromIndex < sections.length - 1) {
-          targetIdx = fromIndex + 1;
-          offsetY =
-            currentScrollTop - (getScrollPosition?.(sections[targetIdx] ?? activeSection) ?? 0);
+  const handlePointerMoveInternal = useCallback(
+    (e: PointerEvent | ReactPointerEvent) => {
+      const state = pointerStateRef.current;
+      if (!state || state.pointerId !== e.pointerId || state.isCancelled) return;
+
+      const pointerDx = e.clientX - state.startX;
+      const dx = pointerDx + state.baseOffset;
+      const dy = e.clientY - state.startY;
+      const now = performance.now();
+
+      if (!state.isLocked) {
+        const dist = Math.hypot(pointerDx, dy);
+        if (dist < 8) return; // 8px slop
+
+        if (Math.abs(pointerDx) > Math.abs(dy) * 1.5) {
+          state.isLocked = true;
+          try {
+            state.originatingElement.setPointerCapture(e.pointerId);
+          } catch {
+            // ignore
+          }
+          onBeforeChange?.();
         } else {
-          effectiveDx = dx * 0.3; // Spring resistance beyond edge
-        }
-      } else if (dx > 0) {
-        if (fromIndex > 0) {
-          targetIdx = fromIndex - 1;
-          offsetY =
-            currentScrollTop - (getScrollPosition?.(sections[targetIdx] ?? activeSection) ?? 0);
-        } else {
-          effectiveDx = dx * 0.3; // Spring resistance beyond edge
+          state.isCancelled = true;
+          return;
         }
       }
 
-      setTransitionState({
-        fromIndex,
-        toIndex: targetIdx,
-        dx: effectiveDx,
-        offsetY,
-        isAnimating: false,
-      });
+      if (state.isLocked) {
+        state.history.push({ x: e.clientX, time: now });
+        state.history = state.history.filter((h) => now - h.time <= 120);
 
-      if (targetIdx !== fromIndex) {
-        const progress = Math.min(1, Math.max(0, Math.abs(effectiveDx) / width));
-        onGestureProgress?.({
-          fromId: activeSection,
-          toId: sections[targetIdx] ?? activeSection,
-          progress,
-        });
-      }
-    }
-  };
+        const fromIndex = state.fromIndex;
+        const width = state.width;
 
-  const handlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const state = pointerStateRef.current;
-    if (!state || state.pointerId !== e.pointerId) return;
-    pointerStateRef.current = null;
-    if (!state.isLocked || state.isCancelled) {
-      setTransitionState(null);
-      onGestureProgress?.(null);
-      return;
-    }
+        let targetIdx = fromIndex;
+        let effectiveDx = dx;
 
-    try {
-      containerRef.current?.releasePointerCapture(e.pointerId);
-    } catch {
-      // ignore
-    }
+        if (dx < 0) {
+          if (fromIndex < sections.length - 1) {
+            targetIdx = fromIndex + 1;
+          } else {
+            effectiveDx = dx * 0.3; // Spring resistance beyond edge
+          }
+        } else if (dx > 0) {
+          if (fromIndex > 0) {
+            targetIdx = fromIndex - 1;
+          } else {
+            effectiveDx = dx * 0.3; // Spring resistance beyond edge
+          }
+        }
 
-    const now = performance.now();
-    const recent = state.history.filter((h) => now - h.time <= 120);
-    const lastPoint = recent[recent.length - 1];
-    const firstPoint = recent[0];
-    let velocity = 0;
-    if (
-      lastPoint &&
-      firstPoint &&
-      now - lastPoint.time <= 120 &&
-      lastPoint.time !== firstPoint.time
-    ) {
-      velocity = (lastPoint.x - firstPoint.x) / (lastPoint.time - firstPoint.time);
-    }
+        liveDxRef.current = effectiveDx;
+        liveTargetIdxRef.current = targetIdx;
 
-    const width = containerRef.current?.clientWidth ?? 0;
-    const fromIndex = Math.max(0, sections.indexOf(activeSection));
-    const dx = transitionState?.dx ?? 0;
-    const targetIdx = transitionState?.toIndex ?? fromIndex;
+        if (gestureTargetIdxRef.current !== targetIdx) {
+          gestureTargetIdxRef.current = targetIdx;
+          setTransitionState({ fromIndex, toIndex: targetIdx });
+        }
 
-    const isFlick =
-      Math.abs(dx) >= 20 && Math.abs(velocity) > 0.3 && Math.sign(velocity) === Math.sign(dx);
-    const passedHalf = Math.abs(dx) > width * 0.5;
-    const willCommit = targetIdx !== fromIndex && (isFlick || passedHalf);
-    const finalCommitIndex = willCommit ? targetIdx : fromIndex;
-
-    if (checkReduced()) {
-      setTransitionState(null);
-      if (willCommit) {
-        onBeforeChange?.();
-        onChangeSection(sections[finalCommitIndex] ?? activeSection);
-      }
-      onGestureProgress?.(null);
-      return;
-    }
-
-    const track = trackRef.current;
-    if (!track) {
-      setTransitionState(null);
-      if (willCommit) {
-        onBeforeChange?.();
-        onChangeSection(sections[finalCommitIndex] ?? activeSection);
-      }
-      onGestureProgress?.(null);
-      return;
-    }
-
-    const currentTx = -fromIndex * width + dx;
-    const targetTx = -finalCommitIndex * width;
-    const distancePx = targetTx - currentTx;
-
-    setTransitionState((prev) => (prev ? { ...prev, isAnimating: true } : null));
-
-    const anim = playTabCarouselSlide(track, `${currentTx}px`, `${targetTx}px`, {
-      motion,
-      velocity,
-      distancePx,
-      onProgress: (p) => {
-        if (targetIdx !== fromIndex) {
-          const fromProgress = Math.abs(dx) / width;
-          const currentP = willCommit
-            ? fromProgress + (1 - fromProgress) * p
-            : fromProgress * (1 - p);
-          onGestureProgress?.({
-            fromId: activeSection,
-            toId: sections[targetIdx] ?? activeSection,
-            progress: Math.min(1, Math.max(0, currentP)),
+        if (rafIdRef.current === null) {
+          rafIdRef.current = requestAnimationFrame(() => {
+            rafIdRef.current = null;
+            if (checkReduced()) return;
+            const track = trackRef.current;
+            const curDx = liveDxRef.current;
+            const curTargetIdx = liveTargetIdxRef.current;
+            if (track) {
+              track.style.transform = `translate3d(calc(${-fromIndex * 100}% + ${curDx}px), 0, 0)`;
+            }
+            if (curTargetIdx !== fromIndex && width > 0) {
+              const progress = Math.min(1, Math.max(0, Math.abs(curDx) / width));
+              onGestureProgress?.({
+                fromId: activeSection,
+                toId: sections[curTargetIdx] ?? activeSection,
+                progress,
+              });
+            } else {
+              onGestureProgress?.(null);
+            }
           });
         }
-      },
-      onFinish: () => {
-        currentAnimationRef.current = null;
+      }
+    },
+    [activeSection, checkReduced, onBeforeChange, onGestureProgress, sections],
+  );
+
+  const handlePointerUpInternal = useCallback(
+    (e: PointerEvent | ReactPointerEvent) => {
+      const state = pointerStateRef.current;
+      if (!state || state.pointerId !== e.pointerId) return;
+      if (state.isLocked && !state.isCancelled) handlePointerMoveInternal(e);
+      pointerStateRef.current = null;
+      cancelQueuedFrame();
+
+      if (!state.isLocked || state.isCancelled) {
+        setTransitionState(null);
+        onGestureProgress?.(null);
+        return;
+      }
+
+      preventClickRef.current = true;
+
+      try {
+        state.originatingElement.releasePointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
+
+      const now = performance.now();
+      const recent = state.history.filter((h) => now - h.time <= 120);
+      const lastPoint = recent[recent.length - 1];
+      const firstPoint = recent[0];
+      let velocity = 0;
+      if (
+        lastPoint &&
+        firstPoint &&
+        now - lastPoint.time <= 120 &&
+        lastPoint.time !== firstPoint.time
+      ) {
+        velocity = (lastPoint.x - firstPoint.x) / (lastPoint.time - firstPoint.time);
+      }
+
+      const width = containerRef.current?.clientWidth ?? 0;
+      const fromIndex = Math.max(0, sections.indexOf(activeSection));
+      const dx = liveDxRef.current;
+      const targetIdx = liveTargetIdxRef.current;
+
+      const isFlick =
+        Math.abs(dx) >= 20 && Math.abs(velocity) > 0.3 && Math.sign(velocity) === Math.sign(dx);
+      const passedHalf = Math.abs(dx) > width * 0.5;
+      const willCommit = targetIdx !== fromIndex && (isFlick || passedHalf);
+      const finalCommitIndex = willCommit ? targetIdx : fromIndex;
+
+      if (checkReduced()) {
         setTransitionState(null);
         if (willCommit) {
           onBeforeChange?.();
           onChangeSection(sections[finalCommitIndex] ?? activeSection);
         }
         onGestureProgress?.(null);
-      },
-    });
-    currentAnimationRef.current = anim ?? null;
+        return;
+      }
+
+      const track = trackRef.current;
+      if (!track) {
+        setTransitionState(null);
+        if (willCommit) {
+          onBeforeChange?.();
+          onChangeSection(sections[finalCommitIndex] ?? activeSection);
+        }
+        onGestureProgress?.(null);
+        return;
+      }
+
+      const currentTx = -fromIndex * width + dx;
+      const targetTx = -finalCommitIndex * width;
+      const distancePx = targetTx - currentTx;
+
+      const anim = playTabCarouselSlide(track, `${currentTx}px`, `${targetTx}px`, {
+        motion,
+        velocity,
+        distancePx,
+        onProgress: (p) => {
+          if (targetIdx !== fromIndex && width > 0) {
+            const fromProgress = Math.abs(dx) / width;
+            const currentP = willCommit
+              ? fromProgress + (1 - fromProgress) * p
+              : fromProgress * (1 - p);
+            onGestureProgress?.({
+              fromId: activeSection,
+              toId: sections[targetIdx] ?? activeSection,
+              progress: Math.min(1, Math.max(0, currentP)),
+            });
+          }
+        },
+        onFinish: () => {
+          currentAnimationRef.current = null;
+          setTransitionState(null);
+          if (willCommit) {
+            onBeforeChange?.();
+            onChangeSection(sections[finalCommitIndex] ?? activeSection);
+          }
+          onGestureProgress?.(null);
+        },
+      });
+      currentAnimationRef.current = anim ?? null;
+    },
+    [
+      activeSection,
+      cancelQueuedFrame,
+      checkReduced,
+      handlePointerMoveInternal,
+      motion,
+      onBeforeChange,
+      onChangeSection,
+      onGestureProgress,
+      sections,
+    ],
+  );
+
+  const handlePointerCancelInternal = useCallback(
+    (e: PointerEvent | ReactPointerEvent) => {
+      const state = pointerStateRef.current;
+      pointerStateRef.current = null;
+      cancelQueuedFrame();
+      if (!state) return;
+
+      try {
+        state.originatingElement.releasePointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
+
+      if (currentAnimationRef.current) {
+        currentAnimationRef.current.cancel();
+        currentAnimationRef.current = null;
+      }
+      setTransitionState(null);
+      onGestureProgress?.(null);
+    },
+    [cancelQueuedFrame, onGestureProgress],
+  );
+
+  const handlersRef = useRef({
+    onPointerDown: handlePointerDownInternal,
+    onPointerMove: handlePointerMoveInternal,
+    onPointerUp: handlePointerUpInternal,
+    onPointerCancel: handlePointerCancelInternal,
+  });
+  handlersRef.current = {
+    onPointerDown: handlePointerDownInternal,
+    onPointerMove: handlePointerMoveInternal,
+    onPointerUp: handlePointerUpInternal,
+    onPointerCancel: handlePointerCancelInternal,
   };
 
-  const handlePointerCancel = (e: ReactPointerEvent<HTMLDivElement>) => {
-    const state = pointerStateRef.current;
-    pointerStateRef.current = null;
-    if (!state) return;
+  useEffect(() => {
+    if (!gestureElement) return;
+    const onDown = (e: PointerEvent) => handlersRef.current.onPointerDown(e, gestureElement, true);
+    const onMove = (e: PointerEvent) => handlersRef.current.onPointerMove(e);
+    const onUp = (e: PointerEvent) => handlersRef.current.onPointerUp(e);
+    const onCancel = (e: PointerEvent) => handlersRef.current.onPointerCancel(e);
+    const onLostCapture = (e: PointerEvent) => {
+      if (e.target === gestureElement) {
+        handlersRef.current.onPointerCancel(e);
+      }
+    };
+    const onClickCapture = (e: MouseEvent) => {
+      if (preventClickRef.current && e.detail > 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        preventClickRef.current = false;
+      }
+    };
 
-    try {
-      containerRef.current?.releasePointerCapture(e.pointerId);
-    } catch {
-      // ignore
-    }
+    gestureElement.addEventListener('pointerdown', onDown);
+    gestureElement.addEventListener('pointermove', onMove);
+    gestureElement.addEventListener('pointerup', onUp);
+    gestureElement.addEventListener('pointercancel', onCancel);
+    gestureElement.addEventListener('lostpointercapture', onLostCapture);
+    gestureElement.addEventListener('click', onClickCapture, true);
 
-    if (currentAnimationRef.current) {
-      currentAnimationRef.current.cancel();
-      currentAnimationRef.current = null;
-    }
-    setTransitionState(null);
-    onGestureProgress?.(null);
-  };
+    return () => {
+      gestureElement.removeEventListener('pointerdown', onDown);
+      gestureElement.removeEventListener('pointermove', onMove);
+      gestureElement.removeEventListener('pointerup', onUp);
+      gestureElement.removeEventListener('pointercancel', onCancel);
+      gestureElement.removeEventListener('lostpointercapture', onLostCapture);
+      gestureElement.removeEventListener('click', onClickCapture, true);
+    };
+  }, [gestureElement]);
 
   const activeIndex = Math.max(0, sections.indexOf(activeSection));
   const isTransitioning = transitionState !== null && !reduced;
   const fromIndex = transitionState?.fromIndex ?? activeIndex;
   const toIndex = transitionState?.toIndex ?? activeIndex;
-  const dx = transitionState?.dx ?? 0;
 
   const childPanes = Children.toArray(children);
 
@@ -485,24 +598,23 @@ export function SectionCarousel({
       aria-label={label}
       className={`relative w-full max-w-full overflow-x-clip touch-pan-y select-none ${className ?? ''}`}
       style={{ touchAction: 'pan-y', minHeight: viewportHeight || undefined }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
+      onPointerDown={(e) => handlePointerDownInternal(e, e.currentTarget, false)}
+      onPointerMove={handlePointerMoveInternal}
+      onPointerUp={handlePointerUpInternal}
+      onPointerCancel={handlePointerCancelInternal}
+      onClickCapture={(e) => {
+        if (preventClickRef.current && e.detail > 0) {
+          e.preventDefault();
+          e.stopPropagation();
+          preventClickRef.current = false;
+        }
+      }}
       onLostPointerCapture={(event) => {
         // Capturing after horizontal lock transfers the child's implicit touch capture.
-        if (event.target === event.currentTarget) handlePointerCancel(event);
+        if (event.target === event.currentTarget) handlePointerCancelInternal(event);
       }}
     >
-      <div
-        ref={trackRef}
-        className="relative flex flex-row flex-nowrap w-full"
-        style={
-          isTransitioning
-            ? { transform: `translateX(calc(${-fromIndex * 100}% + ${dx}px))` }
-            : { transform: `translateX(${-activeIndex * 100}%)` }
-        }
-      >
+      <div ref={trackRef} className="relative flex flex-row flex-nowrap w-full">
         {sections.map((sectionId, index) => {
           const isActive = index === activeIndex;
           const isFrom = isTransitioning && index === fromIndex;

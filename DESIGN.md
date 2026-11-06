@@ -396,6 +396,11 @@ and require their own checks.
   preserved mounted drafts and remembered panel positions, direct finger tracking, a measured tab
   indicator and velocity-matched settling. Vertical scrolling, step handles, editable controls and
   the 24 px Android Back edges retain their gestures. Reduced motion changes sections instantly.
+  The same horizontal gesture starts on the tab strip, including when labels overflow; selection
+  keeps the active label visible. Tracking paints the track and cached indicator transforms at
+  the display's animation-frame cadence, without rerendering the Recipe document or measuring
+  tab geometry for each frame. Native refresh-rate and physical-phone smoothness remain device
+  evidence, not a frame-rate guarantee inferred from browser tests.
   The existing editor action layout and segmented editor sections described above are legacy
   implementation, pending the L49/L60/L108 port; they are not the target design. The Recipe summary uses the approved two-column tiles under the owner's 2026-11-04 direction,
   checked at both required widths/scales and corrected for known ledger defects.
