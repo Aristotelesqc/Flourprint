@@ -665,10 +665,11 @@ function evaluateRecipe(recipe) {
   // Check for unstated schedule durations or unstated stage temperatures.
   // Missing preferment duration or temperature is handled via technical placeholders proved not
   // to affect the dough result. Stage temperatures with kind 'not_stated' stay incomplete_schedule.
+  // The first mixing stage is the first contact and does not count, so its duration may be unstated.
+  const firstContact = recipe.stages.find((s) => getStageRole(s.name) === 'mix');
   const hasIncompleteSchedule = recipe.stages.some(
     (s) =>
-      s.duration === 'not_stated' ||
-      s.hours_min === null ||
+      (s !== firstContact && (s.duration === 'not_stated' || s.hours_min === null)) ||
       s.temperature?.kind === 'not_stated' ||
       resolveTemp(s.temperature) === null,
   );
