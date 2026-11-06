@@ -54,5 +54,33 @@
       },
       "sha256": "3ba7edfe948a1bcc4b8852e5fd698650808b4eb4c3d1560f3a03632074bf8da8"
     }
+  ],
+  "nativeCaptures": [
+    {
+      "file": "native-flash-planning-edit.png",
+      "source": "7ed73367ef3b9629d6d6de645c8603fff95476bb",
+      "buildLabel": "v0.3.0.0105-codex-editor-controls-169-nimble-mill",
+      "platform": "Android16/API36 emulator-5554",
+      "viewportCssWidth": 411.4285583496094,
+      "locale": "fr",
+      "theme": "light",
+      "actor": "Gemini 3.8 Flash",
+      "state": "Planning with accepted unsaved QA edit to852",
+      "fixture": "QA DND stability 0952989",
+      "sha256": "d5bc9dada009742b53375bd66ebd185571c553af78b435cba0503b73637f51e4"
+    },
+    {
+      "file": "native-saved-toast.png",
+      "source": "7ed73367ef3b9629d6d6de645c8603fff95476bb",
+      "buildLabel": "v0.3.0.0105-codex-editor-controls-169-nimble-mill",
+      "platform": "Android16/API36 emulator-5554",
+      "viewportCssWidth": 411.4285583496094,
+      "locale": "fr",
+      "theme": "light",
+      "actor": "Codex",
+      "state": "History after save, transient success toast",
+      "fixture": "QA DND stability 0952989",
+      "sha256": "e42fc6e81a54b512ff11dd08608a563b4e0928c5ff89e2a830334cba713a2342"
+    }
   ]
 }
