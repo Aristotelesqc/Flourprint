@@ -736,7 +736,10 @@ The chain move applies only when all of these hold; any other case is `Ambiguous
 
 - The step has at most one dependency `P` and at most one dependent `T`.
 - The target `after` has at most one dependent `B`, counted after the step is taken out. The
-  target is not a descendant of the step.
+  target may lie before or after the step in the chain: a move down, below a step that depends on
+  the moved step, is the same chain move as a move up, not a different operation (0.24.1, owner
+  report of 2026-11-06). When the target is `T` itself or a later step, `B` is counted in the
+  graph where `T` has already taken the step's dependency.
 - **Same subject.** `P`, `T`, `after` and `B`, where present, have the step's subject; otherwise
   `reason: 'crossesWorkpiece'`. One exception: for a component's step, `T` or `B` may be the step
   where that component joins the main dough (the step incorporating it, else, without declared
@@ -748,7 +751,8 @@ The chain move applies only when all of these hold; any other case is `Ambiguous
   moving the step where a component or ingredient joins the dough changes what the dough holds
   when. It is moved by order only, or its dependencies are edited explicitly.
 - The step is not an `alap` step (it can only be moved by order only; its dependencies and its
-  "as late as possible" meaning are never rewritten by a drag).
+  "as late as possible" meaning are never rewritten by a drag). A move down that order only cannot
+  express is refused for an `alap` step with `MoveBreaksDependencies` (example 6).
 - The step is not a `beforeTarget` step (Steps before a target). Nothing depends on it and its
   start comes from its target, not from its list position, so a drag only moves it by order only;
   when order only is invalid the move is refused (`reason: 'scheduledFromTarget'`). Its
@@ -766,6 +770,10 @@ The chain move then does exactly this, and nothing else:
   list; other steps without a dependency keep none.
 - Every other step keeps its dependencies, its fields, its `schedule`, its incorporations and its
   id. A branch that does not run through the step or the target is untouched.
+
+The two rewrites are the same in both directions; only the list position of the step differs. A
+branch that leaves the chain between the step and the target (a step with a second dependent that
+is neither the target nor `T`) is untouched and keeps depending on the same steps.
 
 ### Duplicate
 
@@ -861,6 +869,38 @@ preheat]`. In: `shape` `[bulk]`, `proof` → `[shape]`. `preheat` untouched.
     formula and process, each undo saved; a new edit then clears the redo.
 16. **Reset.** A `revision` draft at revision 3 with edits: reset offers "back to revision 3" with
     a confirmation, and revision 3 itself is untouched.
+17. **Chain move down, one step.** `mix`, `bulk` `[mix]`, `shape` `[bulk]`, `proof` `[shape]`,
+    `bake` `[proof]` (example 3's chain). Move `bulk` after `shape`. Order only is invalid
+    (`shape` would come before `bulk`, its dependency). `P` = `mix`, `T` = `shape`; the target
+    `shape` has one dependent, `proof`, so `B` = `proof`. Out: `shape` → `[mix]`. In: `bulk`
+    `[shape]`, `proof` → `[bulk]`. `changedEdges`: `shape`, `bulk`, `proof`. Result: `mix` `[]`,
+    `shape` `[mix]`, `bulk` `[shape]`, `proof` `[bulk]`, `bake` `[proof]`. It is the result of
+    moving `shape` after `mix`, as example 3 does: the two drags are the same operation.
+18. **Chain move down, several steps.** The owner's chain, each step depending on the previous
+    one: `preferment`, `kneading` `[preferment]`, `shaping` `[kneading]`, `rest` `[shaping]`,
+    `bulk` `[rest]`, `division` `[bulk]`, `final-proof` `[division]`. Move `rest` after
+    `division`. `P` = `shaping`, `T` = `bulk`; the target `division` has one dependent,
+    `final-proof`, so `B` = `final-proof`. Out: `bulk` → `[shaping]`. In: `rest` `[division]`,
+    `final-proof` → `[rest]`. `changedEdges`: `bulk`, `rest`, `final-proof`. Result:
+    `preferment` `[]`, `kneading` `[preferment]`, `shaping` `[kneading]`, `bulk` `[shaping]`,
+    `division` `[bulk]`, `rest` `[division]`, `final-proof` `[rest]`. In the interface: Détente
+    dragged below Division gives Pointage `[Façonnage]`, Division `[Pointage]`, Détente
+    `[Division]`, Apprêt `[Détente]`.
+19. **Chain move down from the first position, or to the end.** In example 17's chain, move
+    `mix` after `bulk`: `P` absent, `T` = `bulk`, `B` = `shape`. Out: `bulk` → `[]`. In: `mix`
+    `[bulk]`, `shape` → `[mix]`. Result: `bulk` `[]`, `mix` `[bulk]`, `shape` `[mix]`, `proof`
+    `[shape]`, `bake` `[proof]`. Move `bulk` after `bake` instead: `T` = `shape`, no `B`. Out:
+    `shape` → `[mix]`. In: `bulk` `[bake]`. Result: `mix` `[]`, `shape` `[mix]`, `proof`
+    `[shape]`, `bake` `[proof]`, `bulk` `[bake]`.
+20. **Chain move down, still refused.** (a) A step that carries incorporations: in example 17's
+    chain, `bulk` incorporating an ingredient and dragged after `shape`: `AmbiguousMove`,
+    `incorporationStep`. (b) A target with two dependents: `mix`, `a` `[mix]`, `b` `[a]`, `c`
+    `[b]`, `x` `[b]` (a branch). Move `a` after `b`: order only is invalid; `T` = `b`; out: `b`
+    → `[mix]`; the target `b` still has two dependents, `c` and `x`: `AmbiguousMove`,
+    `targetDependents`, nothing changes. Moved after `c` instead, the move is valid: `B` = none,
+    `a` `[c]`, `b` `[mix]`, `x` `[b]` untouched (the branch is not rewired). (c) A step with two
+    dependents: `mix`, `a` `[mix]`, `b` `[a]`, `x` `[a]`. Move `a` after `b`: order only is
+    invalid, and `a` has two dependents, `b` and `x`: `AmbiguousMove`, `stepDependents`.
 
 ## Projection
 

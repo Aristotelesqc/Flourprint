@@ -1,5 +1,8 @@
-/** Version of the data contracts described in docs/contracts/. */
-export const CONTRACT_VERSION = '0.24.0';
+/**
+ * Version of the data contracts described in docs/contracts/. 0.24.1: a move down a chain is the
+ * same chain move as a move up (process.md, Move); no persisted shape or calculation changes.
+ */
+export const CONTRACT_VERSION = '0.24.1';
 
 /**
  * Version of the calculation engine recorded in bake snapshots (D8). 0.8.0: the dough thermal
