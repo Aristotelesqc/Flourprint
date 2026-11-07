@@ -1417,28 +1417,26 @@ const RecipePageContent = () => {
                   <RecipeOutcome process={draft.process} editable={true} onChange={changeProcess} />
                 )}
               </div>
-              <div className={!isEditing ? 'mt-5 pb-6' : undefined}>
-                <RecipeMethod
-                  key="recipe-method-singleton"
-                  dragControl={methodSortRef}
-                  process={draft.process}
-                  onProcessChange={changeProcess}
-                  onDropIntent={handleDropIntent}
-                  onDragStart={handleDragStart}
-                  onDragActiveChange={handleDragActiveChange}
-                  disabled={isSortDisabled}
-                  readOnly={trashedAt !== undefined}
-                  preparationIds={draft.formula.components.map((c) => c.id)}
-                  editable={isEditing}
-                  showOutcome={!isEditing}
-                  {...(targetedStepId !== undefined && effectivePanel === 'formula'
-                    ? { targetedStepId }
-                    : {})}
-                  onClearTargetedStep={handleClearTargetedStep}
-                  {...(returnToPlanning ? { onReturnToPlanning: handleReturnToPlanning } : {})}
-                  onEnsureDraft={ensureDraft}
-                />
-              </div>
+              <RecipeMethod
+                key="recipe-method-singleton"
+                dragControl={methodSortRef}
+                process={draft.process}
+                onProcessChange={changeProcess}
+                onDropIntent={handleDropIntent}
+                onDragStart={handleDragStart}
+                onDragActiveChange={handleDragActiveChange}
+                disabled={isSortDisabled}
+                readOnly={trashedAt !== undefined}
+                preparationIds={draft.formula.components.map((c) => c.id)}
+                editable={isEditing}
+                showOutcome={!isEditing}
+                {...(targetedStepId !== undefined && effectivePanel === 'formula'
+                  ? { targetedStepId }
+                  : {})}
+                onClearTargetedStep={handleClearTargetedStep}
+                {...(returnToPlanning ? { onReturnToPlanning: handleReturnToPlanning } : {})}
+                onEnsureDraft={ensureDraft}
+              />
             </div>,
             <div key="process">
               <ProcessSection

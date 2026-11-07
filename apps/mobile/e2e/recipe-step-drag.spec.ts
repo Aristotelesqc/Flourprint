@@ -564,6 +564,57 @@ for (const english of [false, true]) {
     expect((await geometry(page)).visibleInputs).toBe(0);
   });
 
+  test(`a complete step title fits beside the badge at 360px with enlarged text${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    const longTitle = english ? 'Preheating' : 'Pr\u00e9chauffage';
+    const imported = structuredClone(recipe);
+    const first = imported.revisions[0]?.process.steps[0];
+    if (!first) throw new Error('Missing fixture source');
+    first.label = longTitle;
+    await open(page, 'light', true, imported);
+    const card = method(page).locator(
+      '[data-sortable-id="alpha"] [data-fp-component="fp.step-node"]',
+    );
+    await card.scrollIntoViewIfNeeded();
+    const word = await card.evaluate((node, title) => {
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+      for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+        const start = text.textContent?.indexOf(title) ?? -1;
+        if (start < 0) continue;
+        const range = document.createRange();
+        range.setStart(text, start);
+        range.setEnd(text, start + title.length);
+        return Array.from(range.getClientRects(), ({ left, right, bottom }) => ({
+          left,
+          right,
+          bottom,
+        }));
+      }
+      return [];
+    }, longTitle);
+    expect(word).toHaveLength(1);
+    const bounds = await box(card);
+    expect(word[0]?.left).toBeGreaterThanOrEqual(bounds.x);
+    expect(word[0]?.right).toBeLessThanOrEqual(bounds.x + bounds.width);
+    const edit = card.getByRole('button', {
+      name: english ? `Edit step ${longTitle}` : `Modifier l’\u00e9tape ${longTitle}`,
+      exact: true,
+    });
+    const editBox = await box(edit);
+    const grip = await box(handle(page, longTitle));
+    expect(editBox.width).toBeGreaterThanOrEqual(48);
+    expect(editBox.height).toBeGreaterThanOrEqual(48);
+    expect(editBox.y).toBeGreaterThanOrEqual(word[0]?.bottom ?? 0);
+    expect(editBox.x + editBox.width).toBeLessThanOrEqual(grip.x);
+    await edit.click();
+    const sheet = page.locator('ion-modal:visible');
+    await expect(sheet).toBeVisible();
+    await sheet.getByRole('button', { name: /^(Close|Fermer)$/, exact: true }).click();
+    await expect(edit).toBeFocused();
+    expect((await box(card)).height).toBeCloseTo(bounds.height, 0);
+  });
+
   for (const theme of ['light', 'dark', 'amoled'])
     for (const large of [false, true]) {
       test(`compact step rows and actual pointer drop ${theme} ${large ? '360/130' : '393/100'}${english ? ' @en' : ''}`, async ({
@@ -576,6 +627,7 @@ for (const english of [false, true]) {
         const grip = handle(page, 'Gamma');
         const start = await box(grip);
         const source = method(page).locator('[data-sortable-id="gamma"]');
+        await expect(source.locator('[data-fp-component="fp.step-node"]')).toBeVisible();
         const beforeActivation = await box(source);
         const cardText = await source.textContent();
         // The handle stays at the right edge, including narrow, enlarged text layouts.

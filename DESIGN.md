@@ -213,6 +213,9 @@ content. Discard confirms changes. Keep pending feedback subtle and refusals in 
 with readable body tokens and a polite announcement. Preserve scroll and keep the dropped card
 visible. Keep notices out of document flow. Anchor the transient save confirmation below the
 Recipe header so the pencil and tabs stay usable while it is announced.
+Recipe step rows use `fp.step-node` with a tonal operation badge, a wrapping title and full-width
+details. Narrow rows place the pencil and right-hand grip below the title. The same node renders
+under the pointer and in the list so dragging preserves its presentation.
 In-place value editing is future work, outside 0.3, and must not compete with drag activation.
 
 The implementation uses `FormulaConsultation`, `FormulaSection` and `RecipeMethod` for the Recipe tab,

@@ -8,6 +8,7 @@ import type { FloatingMenuProps } from './components/floating-menu/props.ts';
 import type { BottomSheetProps } from './components/bottom-sheet/props.ts';
 import type { DialogProps } from './components/dialog/props.ts';
 import type { SelectProps } from './components/select/props.ts';
+import type { StepNodeProps } from './components/step-node/props.ts';
 import type { BottomBarProps } from './components/bottom-bar/props.ts';
 
 import type { SortableListProps } from './components/sortable-list/props.ts';
@@ -26,4 +27,5 @@ export type FlourprintComponents = {
   readonly 'fp.select': SelectProps;
   readonly 'fp.sortable-list': SortableListProps;
   readonly 'fp.bottom-bar': BottomBarProps;
+  readonly 'fp.step-node': StepNodeProps;
 };

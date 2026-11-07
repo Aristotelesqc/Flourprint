@@ -20,6 +20,8 @@ import version8 from '../components/select/v1.tsx';
 import guide8 from '../components/select/guide.ts';
 import version9 from '../components/bottom-bar/v1.tsx';
 import guide9 from '../components/bottom-bar/guide.ts';
+import stepNode from '../components/step-node/v1.tsx';
+import stepNodeGuide from '../components/step-node/guide.ts';
 
 import sortableList from '../components/sortable-list/v1.tsx';
 import sortableGuide from '../components/sortable-list/guide.ts';
@@ -40,6 +42,7 @@ export const catalogue = library.catalogue({
   'fp.select': [version8],
   'fp.sortable-list': [sortableList],
   'fp.bottom-bar': [version9],
+  'fp.step-node': [stepNode],
 });
 
 export const guides = library.guides({
@@ -55,4 +58,5 @@ export const guides = library.guides({
   'fp.select': guide8,
   'fp.sortable-list': sortableGuide,
   'fp.bottom-bar': guide9,
+  'fp.step-node': stepNodeGuide,
 });

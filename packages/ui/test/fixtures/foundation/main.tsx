@@ -25,6 +25,7 @@ import bottomSheet from '../../../src/components/bottom-sheet/v1.tsx';
 import dialog from '../../../src/components/dialog/v1.tsx';
 import select from '../../../src/components/select/v1.tsx';
 import bottomBar from '../../../src/components/bottom-bar/v1.tsx';
+import stepNode from '../../../src/components/step-node/v1.tsx';
 
 import sortableList from '../../../src/components/sortable-list/v1.tsx';
 
@@ -43,6 +44,7 @@ const { Ui } = createUi(
     'fp.select': select,
     'fp.sortable-list': sortableList,
     'fp.bottom-bar': bottomBar,
+    'fp.step-node': stepNode,
   }),
 );
 const query = new URLSearchParams(location.search);
