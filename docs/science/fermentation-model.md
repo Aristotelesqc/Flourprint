@@ -603,7 +603,7 @@ heat per CO₂), uncovered surfaces (evaporation 1–3 °C), fridge stratificati
 cycling. Evidence still expected (#176, N2): probe readings after a fridge transfer in two
 containers and two masses, and one self-heating check on a large bulk at stable room temperature.
 
-## 15. Predictive uncertainty (research, 2026-11-03)
+## 15. Predictive uncertainty (research, 2026-11-03, rerun 2026-11-06)
 
 Status: research only. No contract, constant, band or estimate changes. Script:
 `scripts/uncertainty_published.mjs`, on the published-recipe dataset and the dough clock of
@@ -638,25 +638,29 @@ normal-inverse-gamma update; N = 1 data never change the universal spread.
 ### First measurement: published practice (n = 50, 39 source groups)
 
 For each held-out source, a predictor's distribution is a normal law in `ln T` whose bias and
-spread come from the training sources only; a split-conformal interval uses the same training
-residuals without assuming a normal law.
+spread come from the training sources only; an empirical-quantile interval uses the same training
+residuals without assuming a normal law. It is conformal in form only: those residuals also fitted
+the predictor and are not exchangeable with a new source, so it carries no coverage guarantee and
+its held-out coverage is the check.
 
-| Predictor                | RMS factor | CRPS  | Log score | 80 % interval, total width | Coverage 50/80/95 %, normal | Coverage, conformal |
-| ------------------------ | ---------- | ----- | --------- | -------------------------- | --------------------------- | ------------------- |
-| Global mean time         | ×3.14      | 0.665 | 1.562     | ×18.2                      | 48 / 72 / 98                | 50 / 78 / 96        |
-| Style mean time          | ×2.49      | 0.508 | 1.513     | ×5.9                       | 54 / 72 / 80                | 42 / 70 / 80        |
-| Fitted dose and Q10 rule | ×1.89      | 0.358 | 0.998     | ×4.9                       | 52 / 76 / 96                | 50 / 76 / 96        |
-| Model, global end point  | ×1.89      | 0.350 | 1.017     | ×5.0                       | 56 / 80 / 94                | 50 / 80 / 96        |
+| Predictor                | RMS factor | CRPS  | Log score | 80 % interval, total width | Coverage 50/80/95 %, normal | Coverage, quantile |
+| ------------------------ | ---------- | ----- | --------- | -------------------------- | --------------------------- | ------------------ |
+| Global mean time         | ×3.14      | 0.665 | 1.562     | ×18.2                      | 48 / 72 / 98                | 50 / 78 / 96       |
+| Style mean time          | ×2.49      | 0.508 | 1.513     | ×5.9                       | 54 / 72 / 80                | 42 / 70 / 80       |
+| Fitted dose and Q10 rule | ×1.89      | 0.358 | 0.998     | ×4.9                       | 52 / 76 / 96                | 50 / 76 / 96       |
+| Model, global end point  | ×1.89      | 0.350 | 1.017     | ×5.0                       | 56 / 80 / 94                | 50 / 80 / 96       |
 
 Without low-confidence recipes (n = 42): model CRPS 0.313, 80 % width ×4.1; rule 0.318, ×4.0.
 
 - On published practice the model's distribution is **calibrated but wide**: coverage is close to
   nominal and the PIT deciles are roughly flat, but the 80 % interval spans ×5 (about ×2.2 on each
-  side of the central time).
-- The proper scores confirm the tie with the two-parameter rule fitted on the recipes. They do
-  not separate the two.
+  side of the central time). With 50 recipes an 80 % coverage is known to about ±6 points, and the
+  spread is fitted on the training sources, so coverage near nominal is partly by construction.
+- The proper scores do not separate the model from the two-parameter rule fitted on the recipes:
+  the model's CRPS is lower and the rule's log score is lower, both within noise.
 - The **corner envelope** of the contract contains the held-out time for 36 of 50 recipes (72 %;
-  76 % without low confidence), with a median progress band of ×5.2. On this data it behaves like
+  76 % without low confidence), with a median progress band of ×5.2 (the ratio of engine progress at the high and low corners,
+  not a time ratio). On this data it behaves like
   a 70–75 % interval of published practice. That is a coincidence of assumed ranges, not a property
   of the envelope, and it holds for published practice only: it is still not a confidence
   interval.
@@ -674,8 +678,10 @@ By regime (held-out model errors; small groups, indicative only):
 
 Limits:
 
-- These are recommendations, not measurements. The result measures agreement with practice, the
-  first measure of the Goal, not accuracy on bakes.
+- These are published recipes, not recorded bakes: the result measures agreement with practice,
+  the first measure of the Goal, not accuracy on bakes.
+- The normal law omits the (1 + 1/n) parameter inflation and heavier tails; at n ≈ 45 to 49 this
+  is negligible.
 - Unstated rooms are assumed to be at 21 °C.
 - The 29 recipes refused as `dose_outside_domain` are not scored.
 - The model's end point is one parameter fitted on the training sources.

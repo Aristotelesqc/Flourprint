@@ -16,8 +16,10 @@
  *  - Errors are e = ln(T_published / T_predicted). A predictor's distribution for a held-out source
  *    is Normal(ln T_hat + b, s), where b and s come from the residuals of the training sources only:
  *    b their mean, s^2 their sum of squares about b over (n - p), p the predictor's fitted
- *    parameters. A distribution-free (split conformal) interval uses the quantiles of |r - b| on the
- *    same training residuals.
+ *    parameters. An empirical-quantile interval uses the quantiles of |r - b| on the same training
+ *    residuals without assuming a normal law. It is conformal in form only: those residuals also
+ *    fitted the predictor and are not exchangeable with a new source, so it has no finite-sample
+ *    coverage guarantee; its held-out coverage is the check.
  *  - The model's time for an end point E is the schedule scale s at which the engine reaches E,
  *    read from a 49-point grid of the progress curve (ln progress interpolated linearly in ln s).
  *    The grid is checked once against the bisection of baseline_published.mjs.
@@ -77,7 +79,7 @@ function mean(arr) {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
-/** The ceil((n + 1) level)-th smallest absolute residual: the split conformal half-width. */
+/** The ceil((n + 1) level)-th smallest absolute residual: the empirical-quantile half-width. */
 function conformalHalfWidth(absResiduals, level) {
   const sorted = [...absResiduals].sort((a, b) => a - b);
   const rank = Math.ceil((sorted.length + 1) * level);
@@ -322,7 +324,7 @@ function printScores(title, items) {
     `## ${title} (n = ${items.length}, ${new Set(items.map((r) => r.sourceGroup)).size} source groups)\n`,
   );
   console.log(
-    '| Predictor | Scored | Failures | RMS factor | Bias factor | Log score | CRPS | 80 % width (factor) | Gaussian 50/80/95 % | Conformal 50/80/95 % |',
+    '| Predictor | Scored | Failures | RMS factor | Bias factor | Log score | CRPS | 80 % width (factor) | Gaussian 50/80/95 % | Empirical quantile 50/80/95 % |',
   );
   console.log('| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |');
   const rows = [];
