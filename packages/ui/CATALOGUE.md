@@ -528,6 +528,50 @@ Enables reordering of list items through pointer drag-and-drop or accessible key
 
 - `v1`: Domain-neutral sortable list with 350ms hold activation constraints, post-scroll release hit-testing, and accessible announcements.
 
+### `fp.step-node`
+
+Presents an authored step as a compact tonal card with an operation badge, details and actions.
+
+**Use when**
+
+- Showing the steps of a Recipe in reading or editing mode.
+
+**Avoid when**
+
+- Showing time placement across parallel lanes.
+
+**Props**
+
+| Prop          | Meaning                                                    |
+| ------------- | ---------------------------------------------------------- |
+| `number`      | Optional authored ordinal.                                 |
+| `icon`        | Optional decorative operation glyph.                       |
+| `label`       | Localized step name.                                       |
+| `details`     | Compact metadata such as duration.                         |
+| `actions`     | Separate edit and reorder controls supplied by the caller. |
+| `highlighted` | Emphasizes the step selected by the caller.                |
+| `children`    | Optional detail content below the metadata.                |
+
+**Accessibility**
+
+- The operation glyph is decorative. Supply a complete localized title.
+- Narrow cards give the title the full width beside the badge. Actions move below it and details span the card.
+- Give each action a localized accessible name and an independent 48 px touch target. Provide a keyboard path to reorder.
+- Use the same component for the row and its inert drag overlay to keep their geometry equal.
+
+**Related**
+
+- `fp.sortable-list`
+- `fp.bottom-sheet`
+
+**Decisions**
+
+- [Owner-selected compact step presentation (#133)](https://github.com/Aristotelesqc/Flourprint/pull/133)
+
+**Versions**
+
+- `v1`: Compact tonal step node port with container queries.
+
 ### `fp.surface`
 
 Provides an opaque, flat container for grouping sections, cards and content areas.

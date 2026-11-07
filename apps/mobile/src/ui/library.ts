@@ -10,6 +10,7 @@ import bottomSheet from '@flourprint/ui/components/bottom-sheet/v1';
 import dialog from '@flourprint/ui/components/dialog/v1';
 import select from '@flourprint/ui/components/select/v1';
 import bottomBar from '@flourprint/ui/components/bottom-bar/v1';
+import stepNode from '@flourprint/ui/components/step-node/v1';
 
 import sortableList from '@flourprint/ui/components/sortable-list/v1';
 
@@ -29,5 +30,6 @@ export const { Ui, versionOf } = createUi(
     'fp.select': select,
     'fp.sortable-list': sortableList,
     'fp.bottom-bar': bottomBar,
+    'fp.step-node': stepNode,
   }),
 );

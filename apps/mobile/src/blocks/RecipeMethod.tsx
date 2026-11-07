@@ -25,6 +25,7 @@ import { formatDuration } from '../i18n/time';
 import { useTemperature } from '../i18n/temperature';
 import { InfoButton } from '../ui/InfoButton';
 import { Rows, SectionTitle } from '../ui/Layout';
+import { StepOperationIcon } from '../ui/StepOperationIcon';
 import { Ui } from '../ui/library';
 import { useServices } from '../services/services';
 import { useValidationActions } from '../ui/ValidationContext';
@@ -397,136 +398,136 @@ export const RecipeMethod = ({
     ];
     const isHighlighted = step.id === highlightedStepId;
     return (
-      <div
+      <Ui
+        component="fp.step-node"
+        number={index + 1}
+        icon={<StepOperationIcon operation={step.operation} />}
+        label={stepName(step)}
+        highlighted={isHighlighted}
         inert={overlay}
         aria-hidden={overlay || undefined}
-        className={`flex items-center justify-between gap-2 rounded-xl border border-line bg-surface p-3 ${
-          isHighlighted ? 'bg-accent-soft/30 ring-2 ring-accent' : ''
-        }`}
-      >
-        <div className="flex min-w-0 flex-1 items-start gap-2">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <div className="flex items-center gap-2">
-              <span className="w-5 shrink-0 tabular-nums text-sm font-bold text-muted">
-                {index + 1}.
-              </span>
-              {!readOnly ? (
-                <button
-                  ref={(el) => {
-                    if (overlay) return;
-                    if (el) stepButtonRefs.current.set(step.id, el);
-                    else stepButtonRefs.current.delete(step.id);
-                  }}
-                  type="button"
-                  disabled={disabled}
-                  className="fp-reset inline-flex min-h-12 min-w-0 items-center gap-1.5 rounded text-left font-semibold text-accent-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline"
-                  aria-label={t('process.editStep', { step: stepName(step) })}
-                  onClick={() => {
-                    onEnsureDraft?.();
-                    setHighlightedStepId(step.id);
-                    setSelectedStepId(step.id);
-                    setIsSheetOpen(true);
-                  }}
-                >
-                  <span className="min-w-0 [overflow-wrap:anywhere]">{stepName(step)}</span>
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                    className="shrink-0 opacity-70"
+        details={
+          <span className="inline-flex max-w-full flex-wrap gap-x-1 rounded-pill border border-outline-subtle px-2 py-1 text-metadata">
+            <span className="text-muted">{t('prep.duration')}</span>
+            <span className="font-medium tabular-nums">
+              {step.durationMode === 'model'
+                ? step.plannedDurationS !== undefined
+                  ? `≈ ${formatDuration(step.plannedDurationS)}`
+                  : t('fermentation.auto')
+                : step.plannedDurationS !== undefined
+                  ? formatDuration(step.plannedDurationS)
+                  : '—'}
+            </span>
+          </span>
+        }
+        {...(!readOnly || process.steps.length >= 2
+          ? {
+              actions: (
+                <>
+                  {!readOnly && (
+                    <button
+                      ref={(el) => {
+                        if (overlay) return;
+                        if (el) stepButtonRefs.current.set(step.id, el);
+                        else stepButtonRefs.current.delete(step.id);
+                      }}
+                      type="button"
+                      disabled={disabled}
+                      className="fp-reset flex h-touch w-touch shrink-0 items-center justify-center rounded-segmented-option text-ink hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                      aria-label={t('process.editStep', { step: stepName(step) })}
+                      onClick={() => {
+                        onEnsureDraft?.();
+                        setHighlightedStepId(step.id);
+                        setSelectedStepId(step.id);
+                        setIsSheetOpen(true);
+                      }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                  )}
+                  <button
+                    ref={handleRef}
+                    hidden={process.steps.length < 2}
+                    disabled={!canSort}
+                    type="button"
+                    className="fp-reset flex h-touch w-touch min-h-touch min-w-touch shrink-0 items-center justify-center rounded-segmented-option text-muted hover:text-ink active:text-accent touch-none cursor-grab active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    aria-label={t('recipe.sort.dragHandle', { step: stepName(step) })}
                   >
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
-              ) : (
-                <span className="min-h-12 py-3 font-semibold text-ink">{stepName(step)}</span>
-              )}
-            </div>
-            {step.technique && (
-              <span className="text-[13px] text-ink">{techniqueSummary(t, step.technique)}</span>
-            )}
-            {stepInstructions(step) && (
-              <span className="text-[13px] text-muted">{stepInstructions(step)}</span>
-            )}
-            {step.conditions && (
-              <span className="text-[13px] text-muted">
-                {[
-                  step.conditions.location,
-                  step.conditions.temperatureC !== undefined
-                    ? `${
-                        temperatureContext(step) === 'oven'
-                          ? t('equipment.label.setpoint')
-                          : t('fermentation.room')
-                      } : ${temperature.format(
-                        step.conditions.temperatureC,
-                        temperatureContext(step),
-                      )}`
-                    : undefined,
-                  step.conditions.doughTemperatureC !== undefined
-                    ? `${t('fermentation.target')} : ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
-                    : undefined,
-                  step.conditions.frictionC !== undefined
-                    ? `${t('fermentation.friction')} : ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
-                    : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <circle cx="9" cy="6" r="1.5" />
+                      <circle cx="15" cy="6" r="1.5" />
+                      <circle cx="9" cy="12" r="1.5" />
+                      <circle cx="15" cy="12" r="1.5" />
+                      <circle cx="9" cy="18" r="1.5" />
+                      <circle cx="15" cy="18" r="1.5" />
+                    </svg>
+                  </button>
+                </>
+              ),
+            }
+          : {})}
+      >
+        {step.technique && (
+          <span className="text-supporting text-ink">{techniqueSummary(t, step.technique)}</span>
+        )}
+        {stepInstructions(step) && (
+          <span className="text-supporting text-muted">{stepInstructions(step)}</span>
+        )}
+        {step.conditions && (
+          <span className="text-supporting text-muted">
+            {[
+              step.conditions.location,
+              step.conditions.temperatureC !== undefined
+                ? `${
+                    temperatureContext(step) === 'oven'
+                      ? t('equipment.label.setpoint')
+                      : t('fermentation.room')
+                  } : ${temperature.format(step.conditions.temperatureC, temperatureContext(step))}`
+                : undefined,
+              step.conditions.doughTemperatureC !== undefined
+                ? `${t('fermentation.target')} : ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
+                : undefined,
+              step.conditions.frictionC !== undefined
+                ? `${t('fermentation.friction')} : ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
+                : undefined,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        )}
+        <StepEquipmentDetails step={step} />
+        {(hints.length > 0 || step.schedule === 'alap') && (
+          <span className="text-supporting text-muted">
+            {step.schedule === 'alap' && (
+              <span className="mr-1 inline-flex items-center gap-1 font-semibold">
+                {t('process.alap')}
+                <InfoButton topic="alap" term={t('process.alap')} />
               </span>
             )}
-            <StepEquipmentDetails step={step} />
-            {(hints.length > 0 || step.schedule === 'alap') && (
-              <span className="text-[13px] text-muted">
-                {step.schedule === 'alap' && (
-                  <span className="mr-1 inline-flex items-center gap-1 font-semibold">
-                    {t('process.alap')}
-                    <InfoButton topic="alap" term={t('process.alap')} />
-                  </span>
-                )}
-                {step.schedule === 'alap' && hints.length > 0 && ' · '}
-                {hints.join(' · ')}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="flex shrink-0 flex-col items-end text-right">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-muted">
-            {t('prep.duration')}
+            {step.schedule === 'alap' && hints.length > 0 && ' · '}
+            {hints.join(' · ')}
           </span>
-          <span className="font-medium text-ink">
-            {step.durationMode === 'model'
-              ? step.plannedDurationS !== undefined
-                ? `≈ ${formatDuration(step.plannedDurationS)}`
-                : t('fermentation.auto')
-              : step.plannedDurationS !== undefined
-                ? formatDuration(step.plannedDurationS)
-                : '—'}
-          </span>
-        </div>
-        <button
-          ref={handleRef}
-          hidden={process.steps.length < 2}
-          disabled={!canSort}
-          type="button"
-          className="fp-reset flex h-touch w-touch min-h-touch min-w-touch shrink-0 items-center justify-center rounded-lg text-muted hover:text-ink active:text-accent touch-none cursor-grab active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          aria-label={t('recipe.sort.dragHandle', { step: stepName(step) })}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <circle cx="9" cy="6" r="1.5" />
-            <circle cx="15" cy="6" r="1.5" />
-            <circle cx="9" cy="12" r="1.5" />
-            <circle cx="15" cy="12" r="1.5" />
-            <circle cx="9" cy="18" r="1.5" />
-            <circle cx="15" cy="18" r="1.5" />
-          </svg>
-        </button>
-      </div>
+        )}
+      </Ui>
     );
   };
 
@@ -569,7 +570,7 @@ export const RecipeMethod = ({
   );
 
   return (
-    <section ref={containerRef} data-testid="recipe-method" className="flex flex-col gap-3 pb-6">
+    <section ref={containerRef} data-testid="recipe-method" className="flex flex-col gap-2">
       <div
         ref={headingRef}
         tabIndex={-1}
@@ -609,7 +610,7 @@ export const RecipeMethod = ({
         <SortableSlot afterId={null} />
         {process.steps.map((step, index) => (
           <Fragment key={step.id}>
-            <SortableItem id={step.id} className="mb-2">
+            <SortableItem id={step.id} className="mb-1.5">
               {({ handleRef }: { handleRef?: React.Ref<HTMLButtonElement> }) =>
                 renderStepCard(step, index, handleRef)
               }
