@@ -445,6 +445,17 @@ white-flour `Hm` peak at 1 % and "wholemeal `Vt` varies little", neither of whic
 piecewise Gemini salt factor (`r = 1 + 0.033 C`, then an exponential fall) rested on those values and is
 withdrawn. No contract or engine code used them.
 
+**Second dataset: Belz 2017** (`data/belz-2017-salt.csv`, full text read 2026-11-07, MEASURED).
+Same instrument class at 30 °C with 2 % yeast on flour, but no sugar or oil, and water lowered as salt
+rises. At 1.72 % and 2.87 % of flour total gas is 0.71 and 0.44 of the salt-free value, while retained
+gas is 0.93 and 0.66 (our division); the salt-free dough loses 36 % of its gas, Boudrag's under 1 %.
+Near 2 % of flour the two studies differ about threefold in the fall of total gas. The paper gives
+its duration as 90 min in the methods and 3 h in the Table 2 caption. Candidate reasons for the gap:
+duration, sugar and oil in Boudrag, gas release, flour. Two consequences: no transferable salt
+multiplier follows, and salt's effect on the gas that drives rise can be much smaller than its effect
+on production. The second Opus report on #33 proposes a wide per-baker prior of about 0.45 to 0.9 on
+production at 2 % of flour; it is a candidate (#231), not adopted.
+
 ## 9. Rye against wheat, and matrix caveats
 
 Several sources study rye (Klupsaite 2023, Murniece 2024), pastry (Timmermans), oat-bran wheat (Liu),
@@ -544,6 +555,25 @@ Gates before a candidate (M5 or another) enters the shipped model:
    the shipped model's, separately, and are lower; or the candidate covers a situation the
    benchmark cannot test, and says so.
 
+**Design notes from the external reports (2026-11-07; reasoning, not adopted).** The third Opus report
+on #33 (round 3) keeps its candidate architecture and adds points that any future rise model must
+respect:
+
+- A progress state fitted to heights is a gas-equivalent convention, not a predicted volume of CO2:
+  heights identify only a lumped rate, never the production scale and the expansion scale apart.
+  Store it dimensionless.
+- Early height readings identify only the initial slope `(R_max − 1)·k`; `k` and `R_max` separate
+  only with readings near the plateau or an `R_max` prior. The height when the baker calls the dough
+  ready gives the end point directly. Heights never separate production from retention; only an
+  independent gas measurement does.
+- When doughs, preferments or flour are combined, keep extensive quantities (flour mass, yeast mass,
+  flour-weighted progress, heat content), add them, and derive intensive values afterwards, so that
+  no operation creates or destroys progress. With a dose exponent other than 1, total activity then
+  depends on flour mass, an artefact of the power law.
+- Kyogoku's 7-day storage loss is a measured loss of activity whose cause was not measured. The
+  report's comparison of added sucrose with extrapolated gas (about 21 %) is illustrative only and
+  neither establishes nor excludes sugar exhaustion.
+
 Other open items: transcribe the Timmermans time courses (Figure 4 of the paper); confirm the bibliography titles marked unverified; check whether the Izzreen formula
 details match the paper; measure the dough temperature during the owner's cold retards.
 
@@ -562,6 +592,8 @@ details match the paper; measure the dough temperature during the owner's cold r
 | science doc     | 2026-10-25        | Section 14: provenance of every constant of the dough thermal model proposed for contract 0.21.0 (#176). No change of the kinetic model; the thermal sub-model `flourprint.dough-thermal` 0.1.0 is a proposal until its contract merges.                                                                                                                                                                                                                             |
 | science doc     | 2026-10-26        | Goal and acceptance criterion: a forecast at least as good as an expert baker's, judged by held-out predictive error against published schedules and recorded bakes; recipe corpus, science and personal bakes as complementary sources; gate 9. Owner decision. No model change.                                                                                                                                                                                    |
 | science doc     | 2026-10-30        | Section 8 and its data file: Boudrag Table 5 re-extracted from the full text; the earlier transcription and the salt factor fitted on it withdrawn. No model change.                                                                                                                                                                                                                                                                                                 |
+
+| science doc | 2026-11-07 | Section 8: Belz 2017 salt series read in full text, with its data file; section 12: design notes from the third external report. No model change. |
 
 Any future model version adds a row here with the evidence it rests on.
 
