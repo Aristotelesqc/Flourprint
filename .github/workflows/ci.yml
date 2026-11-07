@@ -281,6 +281,15 @@ jobs:
       - run: pnpm build:desktop
       - run: pnpm build:desktop -- --channel=dev
       - run: pnpm --filter @flourprint/desktop e2e
+      - name: Desktop test traces
+        # The traces of failed tests (retain-on-failure), to read with `playwright show-trace`.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flourprint-desktop-e2e-results
+          path: apps/desktop/test-results
+          if-no-files-found: ignore
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: flourprint-desktop-windows

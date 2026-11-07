@@ -1,8 +1,9 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join, normalize, resolve, sep } from 'node:path';
-import { _electron as electron, expect, test } from '@playwright/test';
+import { _electron as electron, expect, test, type ElectronApplication } from '@playwright/test';
 import { executable } from './launch.js';
 
 /**
@@ -43,6 +44,26 @@ test.afterAll(() => new Promise<void>((done) => server.close(() => done())));
 
 const args = [...(process.platform === 'linux' ? ['--no-sandbox'] : []), '--lang=en-US'];
 
+/**
+ * Closes the shell, or kills it with its child processes if it has not exited within 10 s: a
+ * shell that hangs on close (#168) would otherwise exceed the worker teardown and hide which
+ * step of the test hung.
+ */
+const close = async (app: ElectronApplication) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const closed = app.close().then(() => true);
+  const late = new Promise<false>((done) => (timer = setTimeout(() => done(false), 10_000)));
+  const exited = await Promise.race([closed, late]);
+  clearTimeout(timer);
+  if (exited) return;
+  const pid = app.process().pid;
+  if (process.platform === 'win32' && pid !== undefined) {
+    execFileSync('taskkill', ['/PID', String(pid), '/T', '/F']);
+  } else {
+    app.process().kill('SIGKILL');
+  }
+};
+
 test('the Dev shell answers the version bridge for its own page only', async () => {
   const app = await electron.launch({
     executablePath: executable('dev'),
@@ -69,57 +90,74 @@ test('the Dev shell answers the version bridge for its own page only', async () 
         }
       }, script);
 
-    expect(await page.evaluate(() => 'flourprintDesktop' in window)).toBe(false);
-    expect(await bridge('return shell.current();')).toEqual({ ok: 'dev' });
+    // Named steps: a timeout on the Windows runner (#168) then says which one hung.
+    await test.step('the bridge names the version shown', async () => {
+      expect(await page.evaluate(() => 'flourprintDesktop' in window)).toBe(false);
+      expect(await bridge('return shell.current();')).toEqual({ ok: 'dev' });
+    });
 
-    // A copy is kept for its target only, released once.
-    expect(
-      await bridge("await shell.stashTransfer('pr-5', '{\"a\":1}'); return shell.takeTransfer();"),
-    ).toEqual({});
-    expect(
-      await bridge(
-        "await shell.stashTransfer('dev', '{\"a\":1}'); return [await shell.takeTransfer(), await shell.takeTransfer() ?? null];",
-      ),
-    ).toEqual({ ok: ['{"a":1}', null] });
+    await test.step('a copy is kept for its target only, released once', async () => {
+      expect(
+        await bridge(
+          "await shell.stashTransfer('pr-5', '{\"a\":1}'); return shell.takeTransfer();",
+        ),
+      ).toEqual({});
+      expect(
+        await bridge(
+          "await shell.stashTransfer('dev', '{\"a\":1}'); return [await shell.takeTransfer(), await shell.takeTransfer() ?? null];",
+        ),
+      ).toEqual({ ok: ['{"a":1}', null] });
+    });
 
-    // Anything but an allowlisted version id is refused.
-    for (const bad of ['evil', 'pr-0', '../dev', 'release', '']) {
-      const refused = await bridge(`return shell.select(${JSON.stringify(bad)});`);
-      expect(refused, bad).toHaveProperty('error');
-      expect(await bridge(`return shell.deleteData(${JSON.stringify(bad)});`), bad).toHaveProperty(
-        'error',
+    await test.step('anything but an allowlisted version id is refused', async () => {
+      for (const bad of ['evil', 'pr-0', '../dev', 'release', '']) {
+        const refused = await bridge(`return shell.select(${JSON.stringify(bad)});`);
+        expect(refused, bad).toHaveProperty('error');
+        expect(
+          await bridge(`return shell.deleteData(${JSON.stringify(bad)});`),
+          bad,
+        ).toHaveProperty('error');
+      }
+      expect(await page.evaluate(() => window.location.href)).toContain(address);
+    });
+
+    await test.step('the menu offers the named versions, with the one shown checked', async () => {
+      const menu = await app.evaluate(({ Menu }) =>
+        Menu.getApplicationMenu()
+          ?.items.find((item) => item.label === 'Version')
+          ?.submenu?.items.map((item) => [item.label, item.checked]),
       );
-    }
-    expect(await page.evaluate(() => window.location.href)).toContain(address);
-
-    // The menu offers the named versions, with the one shown checked.
-    const menu = await app.evaluate(({ Menu }) =>
-      Menu.getApplicationMenu()
-        ?.items.find((item) => item.label === 'Version')
-        ?.submenu?.items.map((item) => [item.label, item.checked]),
-    );
-    // The open pull requests follow when the list could be fetched (it may not be, offline).
-    expect(menu?.slice(0, 3)).toEqual([
-      ['Dev', true],
-      ['Canary', false],
-      ['Release (main)', false],
-    ]);
-    for (const [label, checked] of menu?.slice(3) ?? []) {
-      expect(label).toMatch(/^Pull request \d+/);
-      expect(checked).toBe(false);
-    }
+      // The open pull requests follow when the list could be fetched (it may not be, offline).
+      expect(menu?.slice(0, 3)).toEqual([
+        ['Dev', true],
+        ['Canary', false],
+        ['Release (main)', false],
+      ]);
+      for (const [label, checked] of menu?.slice(3) ?? []) {
+        expect(label).toMatch(/^Pull request \d+/);
+        expect(checked).toBe(false);
+      }
+    });
 
     // Deleting the shown version clears its stored data and starts the page again, empty.
-    await expect
-      .poll(async () => ((await bridge('return shell.listData();')) as { ok: unknown[] }).ok)
-      .toEqual(expect.arrayContaining([expect.objectContaining({ version: 'dev' })]));
-    expect(await bridge("return shell.deleteData('dev');")).toEqual({});
-    await expect(page.getByRole('heading', { name: 'Recipes' })).toBeVisible();
-    await expect
-      .poll(async () => ((await bridge('return shell.listData();')) as { ok: unknown[] }).ok)
-      .toEqual([]);
+    await test.step('the shown version has stored data', async () => {
+      await expect
+        .poll(async () => ((await bridge('return shell.listData();')) as { ok: unknown[] }).ok)
+        .toEqual(expect.arrayContaining([expect.objectContaining({ version: 'dev' })]));
+    });
+    await test.step('deleting it answers', async () => {
+      expect(await bridge("return shell.deleteData('dev');")).toEqual({});
+    });
+    await test.step('the page starts again', async () => {
+      await expect(page.getByRole('heading', { name: 'Recipes' })).toBeVisible();
+    });
+    await test.step('no stored data remains', async () => {
+      await expect
+        .poll(async () => ((await bridge('return shell.listData();')) as { ok: unknown[] }).ok)
+        .toEqual([]);
+    });
   } finally {
-    await app.close();
+    await close(app);
   }
 });
 
@@ -143,6 +181,6 @@ test('the release shell has no version bridge and no Version menu', async () => 
     );
     expect(labels).not.toContain('Version');
   } finally {
-    await app.close();
+    await close(app);
   }
 });
