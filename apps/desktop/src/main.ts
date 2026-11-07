@@ -17,13 +17,23 @@ import {
   Menu,
   net,
   protocol,
+  session,
   shell,
   type MenuItemConstructorOptions,
   type WebContents,
 } from 'electron';
 import { BRIDGE_OPS, type BridgeOp } from '@flourprint/adapters/sqlite-bridge';
 import { nodeSqliteBridge, openNodeDatabase } from '@flourprint/adapters/sqlite-node';
-import { sameApp, shellChannel, WEB_TARGETS, type WebTarget } from './channel.js';
+import {
+  createTransferSlot,
+  fetchOpenPulls,
+  parseVersionId,
+  pullNumber,
+  versionOptions,
+  type OpenPull,
+  type VersionId,
+} from '@flourprint/adapters/dev-versions';
+import { addressOf, sameApp, shellChannel } from './channel.js';
 import { OVERLAY_CSS, screenshotName, type Overlay } from './debug.js';
 import { catalogFor, type MessageKey } from './messages.js';
 import {
@@ -34,6 +44,7 @@ import {
   ZOOMS,
   type Settings,
 } from './settings.js';
+import { MAX_TRANSFER_BYTES, versionsWithData } from './versions.js';
 
 /**
  * Desktop shell (ADR 0011): the APK's web build in a phone-sized window, touch simulated by the
@@ -135,10 +146,18 @@ const restartPrompt = async (window: BrowserWindow) => {
 
 /** The address the window shows: the bundled app, or the dev shell's chosen version. */
 const pageUrl = (): string =>
-  channel.kind === 'dev' ? channel.targets[stored.webTarget].url : `${ORIGIN}/`;
+  channel.kind === 'dev' ? addressOf(channel, stored.webTarget).url : `${ORIGIN}/`;
+
+/** "Dev", "Canary", "Release (main)" or "Pull request 233". */
+const versionName = (version: VersionId): string => {
+  const pull = pullNumber(version);
+  return pull === undefined
+    ? t(`version.${version}` as 'version.dev')
+    : t('version.pull').replace('{number}', String(pull));
+};
 
 const windowTitle = (): string =>
-  channel.kind === 'dev' ? `${channel.name} — ${t(`version.${stored.webTarget}`)}` : channel.name;
+  channel.kind === 'dev' ? `${channel.name} — ${versionName(stored.webTarget)}` : channel.name;
 
 /** Debug overlays switched on, and the key of each one's CSS in the current page. */
 const overlays = new Map<Overlay, string | undefined>();
@@ -206,6 +225,9 @@ const applyWindowSize = (window: BrowserWindow) => {
   window.webContents.setZoomFactor(stored.zoom);
 };
 
+/** The open pull requests for the Version menu; undefined until fetched, or when that failed. */
+let openPulls: OpenPull[] | undefined;
+
 const buildMenu = (window: BrowserWindow) => {
   const update = (changes: Partial<Settings>, restart: boolean) => {
     stored = { ...stored, ...changes };
@@ -214,24 +236,21 @@ const buildMenu = (window: BrowserWindow) => {
     else applyWindowSize(window);
     buildMenu(window);
   };
-  // One click loads the other version; its data stays with its own address.
-  const switchTo = (webTarget: WebTarget) => {
-    if (webTarget === stored.webTarget) return;
-    update({ webTarget }, false);
-    window.setTitle(windowTitle());
-    void window.loadURL(pageUrl());
-  };
+  // The same entries as the app's dropdown (ADR 0023): dev, canary, main, the open pull requests.
+  const menuVersions = versionOptions(openPulls, stored.webTarget);
   const contents = window.webContents;
   const template: MenuItemConstructorOptions[] = [
     ...(channel.kind === 'dev'
       ? [
           {
             label: t('menu.version'),
-            submenu: WEB_TARGETS.map((target): MenuItemConstructorOptions => ({
-              label: t(`version.${target}`),
+            submenu: menuVersions.map((target): MenuItemConstructorOptions => ({
+              label: target.title
+                ? `${versionName(target.version)} · ${target.title}`
+                : versionName(target.version),
               type: 'radio',
-              checked: stored.webTarget === target,
-              click: () => switchTo(target),
+              checked: stored.webTarget === target.version,
+              click: () => switchVersion(window, target.version),
             })),
           },
         ]
@@ -323,6 +342,80 @@ const buildMenu = (window: BrowserWindow) => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 };
 
+/** Loads another version; its data stays with its own address (a separate web origin). */
+const switchVersion = (window: BrowserWindow, webTarget: VersionId) => {
+  if (webTarget === stored.webTarget) return;
+  stored = { ...stored, webTarget };
+  store(stored);
+  window.setTitle(windowTitle());
+  buildMenu(window);
+  void window.loadURL(pageUrl());
+};
+
+/**
+ * The version picker's bridge (ADR 0023), Dev shell only. Answered to the main frame of the
+ * version the window shows, whose address is allowlisted (or the test override of `dev`); every
+ * version id is parsed again here.
+ */
+const registerDevBridge = (window: BrowserWindow) => {
+  if (channel.kind !== 'dev') return;
+  const dev = channel;
+  const transfer = createTransferSlot();
+  ipcMain.handle('flourprint:dev', async (event, op: unknown, ...args: unknown[]) => {
+    const frame = event.senderFrame;
+    if (
+      event.sender !== window.webContents ||
+      !frame ||
+      frame !== event.sender.mainFrame ||
+      frame.url === 'about:blank' ||
+      !sameApp(dev, frame.url, ORIGIN, stored.webTarget)
+    ) {
+      throw new Error('refused origin');
+    }
+    const version = (): VersionId => {
+      const parsed = parseVersionId(args[0]);
+      if (parsed === undefined) throw new Error('refused version');
+      return parsed;
+    };
+    switch (op) {
+      case 'current':
+        return stored.webTarget;
+      case 'select':
+        switchVersion(window, version());
+        return;
+      case 'listData':
+        return versionsWithData(app.getPath('userData'), dev.dev.origin);
+      case 'deleteData': {
+        const target = version();
+        await session.defaultSession.clearStorageData({ origin: addressOf(dev, target).origin });
+        // The page shows data that is gone: start it again, empty.
+        // (after the reply, so the page that asked still hears it). The window may be closed by
+        // then: loading into a destroyed window throws in the main process, whose error dialog
+        // keeps the shell from quitting (#168).
+        if (target === stored.webTarget) {
+          setTimeout(() => {
+            if (!window.isDestroyed()) void window.loadURL(pageUrl());
+          }, 50);
+        }
+        return;
+      }
+      case 'stashTransfer': {
+        const target = version();
+        const json = args[1];
+        if (typeof json !== 'string' || json.length > MAX_TRANSFER_BYTES) {
+          throw new Error('refused copy');
+        }
+        transfer.stash(target, json);
+        return;
+      }
+      case 'takeTransfer':
+        return transfer.take(stored.webTarget);
+      default:
+        throw new Error('refused operation');
+    }
+  });
+};
+
 const serveWeb = () => {
   const root = webRoot();
   protocol.handle(SCHEME, (request) => {
@@ -374,8 +467,12 @@ const createWindow = (database: ReturnType<typeof openNodeDatabase> | undefined)
     ...(icon ? { icon } : {}),
     autoHideMenuBar: false,
     webPreferences: {
-      // Only the bundled app gets the SQLite bridge, never a remote page.
-      ...(channel.kind === 'release' ? { preload: join(import.meta.dirname, 'preload.cjs') } : {}),
+      // Only the bundled app gets the SQLite bridge, never a remote page. The Dev shell's remote
+      // pages get the narrow version bridge instead (ADR 0023).
+      preload: join(
+        import.meta.dirname,
+        channel.kind === 'release' ? 'preload.cjs' : 'preload-dev.cjs',
+      ),
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
@@ -398,6 +495,13 @@ const createWindow = (database: ReturnType<typeof openNodeDatabase> | undefined)
   // The page's own title would replace the shell's, which names the version.
   window.on('page-title-updated', (event) => event.preventDefault());
   buildMenu(window);
+  registerDevBridge(window);
+  if (channel.kind === 'dev') {
+    void fetchOpenPulls().then((pulls) => {
+      openPulls = pulls;
+      if (!window.isDestroyed()) buildMenu(window);
+    });
+  }
   // Emulation needs a live document; set it on a blank page so the app starts as on a phone.
   void window
     .loadURL('about:blank')

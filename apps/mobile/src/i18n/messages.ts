@@ -808,6 +808,47 @@ export const en = {
   'advanced.devUpdate.unreachable': 'The site cannot be reached. Check the connection.',
   'advanced.devUpdate.saveFailed':
     'A newer build is available, but the data could not be saved first: nothing was reloaded.',
+  'advanced.versions': 'Web version',
+  'advanced.versions.loaded': 'Loaded: {version} · {label}',
+  'advanced.versions.returnDev': 'Return to dev',
+  'advanced.versions.returning': 'Returning to dev…',
+  'advanced.versions.choose': 'Choose a version',
+  'advanced.versions.dev': 'Dev',
+  'advanced.versions.canary': 'Canary',
+  'advanced.versions.main': 'Main',
+  'advanced.versions.pull': 'PR #{number}',
+  'advanced.versions.pullsLoading': 'Loading the open pull requests…',
+  'advanced.versions.pullsUnavailable':
+    'The open pull requests cannot be listed now (offline or rate-limited). A number can still be entered.',
+  'advanced.versions.number': 'Pull request number',
+  'advanced.versions.numberLoad': 'Load',
+  'advanced.versions.numberInvalid': 'Enter a pull request number, for example 233.',
+  'advanced.versions.load': 'Load this version',
+  'advanced.versions.copyLoad': 'Copy my data to this version, then load it',
+  'advanced.versions.native':
+    'This pull request changes native code (Android project, Capacitor or the desktop shell). Its web build cannot show those changes: an APK or a shell build is needed.',
+  'advanced.versions.copyDone': 'Data copied from the previous version.',
+  'advanced.versions.copyNotEmpty':
+    'Data not copied: this version already holds data. Delete its data first to copy.',
+  'advanced.versions.copyFailed': 'The data could not be copied.',
+  'advanced.versions.copyPrepareFailed':
+    'The data could not be prepared for the copy. The version was not changed.',
+  'advanced.versions.switchFailed': 'The version could not be changed.',
+  'advanced.versions.data': 'Data kept on this device',
+  'advanced.versions.dataHint':
+    'Each version keeps its own data. Dev, canary and main are never deleted automatically; the data of a merged or closed pull request is deleted at start-up.',
+  'advanced.versions.dataNone': 'No version holds data yet.',
+  'advanced.versions.loadedMark': '{version} (loaded)',
+  'advanced.versions.deleteData': 'Delete this version’s data',
+  'advanced.versions.deleteDataHint':
+    'Erases the data of {version}. Other versions are not affected.',
+  'advanced.versions.delete': 'Delete',
+  'advanced.versions.deleteTitle': 'Delete the data of {version}?',
+  'advanced.versions.deleteMessage':
+    'Recipes, bakes and settings kept for this version are erased. Other versions are not affected.',
+  'advanced.versions.deleteRestart': 'The app restarts afterwards.',
+  'advanced.versions.deleted': 'Data of {version} deleted.',
+  'advanced.versions.deleteFailed': 'The data could not be deleted.',
   'advanced.sample': 'Load the sample recipes',
   'advanced.sampleHint':
     'Development builds only: adds Poolish + tangzhong for trying the app. A recipe already here is kept.',
@@ -866,6 +907,8 @@ export const en = {
   'fermentation.mode.basic': 'Basic',
   'fermentation.mode.advanced': 'Advanced',
   'fermentation.room': 'Room temperature',
+  'fermentation.room.start': 'Room temperature at first contact',
+  'fermentation.room.water': 'Room temperature for the water',
   'fermentation.target': 'Target dough temperature',
   'fermentation.friction': 'Mixer friction',
   'fermentation.water': 'Water at {temperature}',
@@ -909,7 +952,10 @@ export const en = {
   'fermentation.reason.end_point_not_reached':
     'The dough would not reach its end point within three weeks.',
   'fermentation.reason.no_mix_step': 'The process has no mix step.',
-  'fermentation.reason.no_fermentation_step': 'No fermentation step follows the mix.',
+  'fermentation.reason.no_first_contact_step':
+    'No step brings the yeast or leaven into the dough, so the fermentation has no start: add it to a mixing step.',
+  'fermentation.reason.no_fermentation_step':
+    'No rest or other fermentation step is planned after the mixing.',
   'fermentation.reason.formula_invalid': 'The formula is not valid.',
   'fermentation.reason.preferment_yeast_unknown':
     'The yeast of this preferment is unknown: give it some yeast.',
@@ -953,7 +999,7 @@ export const en = {
   'schedule.cold-proof': 'Cold-retarded proof',
   'schedule.same-day-short': 'Same day, short',
   'fermentation.doughSteps': 'Dough steps',
-  'fermentation.noDoughSteps': 'No fermentation step between the mix and the bake.',
+  'fermentation.noDoughSteps': 'No fermentation step after the mixing and before the bake.',
   'fermentation.location.room': 'room',
   'fermentation.location.fridge': 'fridge',
   'fermentation.stepDuration': '{step}, duration',
@@ -2006,6 +2052,47 @@ export const fr: Catalog = {
   'advanced.devUpdate.unreachable': 'Site injoignable. Vérifier la connexion.',
   'advanced.devUpdate.saveFailed':
     'Une version plus récente est disponible, mais les données n’ont pas pu être enregistrées d’abord : rien n’a été rechargé.',
+  'advanced.versions': 'Version du web',
+  'advanced.versions.loaded': 'Chargée : {version} · {label}',
+  'advanced.versions.returnDev': 'Revenir à dev',
+  'advanced.versions.returning': 'Retour à dev…',
+  'advanced.versions.choose': 'Choisir une version',
+  'advanced.versions.dev': 'Dev',
+  'advanced.versions.canary': 'Canary',
+  'advanced.versions.main': 'Main',
+  'advanced.versions.pull': 'PR #{number}',
+  'advanced.versions.pullsLoading': 'Chargement des pull requests ouvertes…',
+  'advanced.versions.pullsUnavailable':
+    'Liste des pull requests ouvertes indisponible (hors ligne ou limite atteinte). Un numéro peut toujours être saisi.',
+  'advanced.versions.number': 'Numéro de pull request',
+  'advanced.versions.numberLoad': 'Charger',
+  'advanced.versions.numberInvalid': 'Saisir un numéro de pull request, par exemple 233.',
+  'advanced.versions.load': 'Charger cette version',
+  'advanced.versions.copyLoad': 'Copier mes données vers cette version, puis la charger',
+  'advanced.versions.native':
+    'Cette pull request modifie du code natif (projet Android, Capacitor ou coque de bureau). Sa version web ne peut pas montrer ces changements : un APK ou une version de la coque est nécessaire.',
+  'advanced.versions.copyDone': 'Données copiées depuis la version précédente.',
+  'advanced.versions.copyNotEmpty':
+    'Données non copiées : cette version contient déjà des données. Supprimer d’abord ses données pour copier.',
+  'advanced.versions.copyFailed': 'Copie des données impossible.',
+  'advanced.versions.copyPrepareFailed':
+    'Préparation de la copie impossible. La version n’a pas changé.',
+  'advanced.versions.switchFailed': 'Changement de version impossible.',
+  'advanced.versions.data': 'Données conservées sur cet appareil',
+  'advanced.versions.dataHint':
+    'Chaque version garde ses propres données. Dev, canary et main ne sont jamais supprimées automatiquement ; les données d’une pull request fusionnée ou fermée sont supprimées au démarrage.',
+  'advanced.versions.dataNone': 'Aucune version ne conserve encore de données.',
+  'advanced.versions.loadedMark': '{version} (chargée)',
+  'advanced.versions.deleteData': 'Supprimer les données de cette version',
+  'advanced.versions.deleteDataHint':
+    'Efface les données de {version}. Les autres versions ne sont pas touchées.',
+  'advanced.versions.delete': 'Supprimer',
+  'advanced.versions.deleteTitle': 'Supprimer les données de {version} ?',
+  'advanced.versions.deleteMessage':
+    'Les recettes, cuissons et réglages conservés pour cette version seront effacés. Les autres versions ne sont pas touchées.',
+  'advanced.versions.deleteRestart': 'L’app redémarre ensuite.',
+  'advanced.versions.deleted': 'Données de {version} supprimées.',
+  'advanced.versions.deleteFailed': 'Suppression des données impossible.',
   'advanced.sample': 'Charger les recettes d’exemple',
   'advanced.sampleHint':
     'Versions de développement seulement : ajoute Poolish + tangzhong pour essayer l’app. Une recette déjà présente est conservée.',
@@ -2066,6 +2153,8 @@ export const fr: Catalog = {
   'fermentation.mode.basic': 'De base',
   'fermentation.mode.advanced': 'Avancé',
   'fermentation.room': 'Température ambiante',
+  'fermentation.room.start': 'Température ambiante au premier contact',
+  'fermentation.room.water': 'Température ambiante pour l’eau',
   'fermentation.target': 'Température de pâte visée',
   'fermentation.friction': 'Friction du pétrin',
   'fermentation.water': 'Eau à {temperature}',
@@ -2110,7 +2199,10 @@ export const fr: Catalog = {
   'fermentation.reason.end_point_not_reached':
     'La pâte n’atteindrait pas son point final en trois semaines.',
   'fermentation.reason.no_mix_step': 'Le processus n’a pas d’étape de pétrissage.',
-  'fermentation.reason.no_fermentation_step': 'Aucune étape de fermentation après le pétrissage.',
+  'fermentation.reason.no_first_contact_step':
+    'Aucune étape n’apporte la levure ou le levain à la pâte : le début de la fermentation est inconnu. L’ajouter à une étape de pétrissage.',
+  'fermentation.reason.no_fermentation_step':
+    'Aucun repos ni autre étape de fermentation n’est prévu après le pétrissage.',
   'fermentation.reason.formula_invalid': 'La formule n’est pas valide.',
   'fermentation.reason.preferment_yeast_unknown':
     'La levure de ce préferment est inconnue : lui donner de la levure.',
@@ -2156,7 +2248,8 @@ export const fr: Catalog = {
   'schedule.cold-proof': 'Apprêt bloqué au froid',
   'schedule.same-day-short': 'Même jour, court',
   'fermentation.doughSteps': 'Étapes de la pâte',
-  'fermentation.noDoughSteps': 'Aucune étape de fermentation entre le pétrissage et la cuisson.',
+  'fermentation.noDoughSteps':
+    'Aucune étape de fermentation après le pétrissage et avant la cuisson.',
   'fermentation.location.room': 'ambiante',
   'fermentation.location.fridge': 'frigo',
   'fermentation.stepDuration': '{step}, durée',

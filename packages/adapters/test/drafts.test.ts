@@ -23,10 +23,21 @@ const draft = (patch: Partial<Draft> = {}): Draft => ({
   ...patch,
 });
 
-describe('generated draft names', () => {
-  it('take the smallest free number for the prefix', () => {
-    expect(nextDraftName('Baguette', [])).toBe('Baguette 1');
-    expect(nextDraftName('Baguette', ['Baguette 1', 'Baguette 3', 'Brioche 2'])).toBe('Baguette 2');
+describe('generated draft names (drafts.md, Generated names)', () => {
+  it('is the bare base name when no name equals it', () => {
+    expect(nextDraftName('Baguette', [])).toBe('Baguette');
+    expect(nextDraftName('Baguette', ['Brioche', 'Baguette 2', 'Baguettes'])).toBe('Baguette');
+  });
+
+  it('appends the smallest free number from 2 when the base name is taken', () => {
+    expect(nextDraftName('Baguette', ['Baguette'])).toBe('Baguette 2');
+    expect(nextDraftName('Baguette', ['Baguette', 'Baguette 2'])).toBe('Baguette 3');
+    expect(nextDraftName('Baguette', ['Baguette', 'Baguette 3', 'Brioche 2'])).toBe('Baguette 2');
+  });
+
+  it('is not blocked by a legacy "Baguette 1", and compares trimmed names', () => {
+    expect(nextDraftName('Baguette', ['Baguette 1'])).toBe('Baguette');
+    expect(nextDraftName('Baguette', ['Baguette 1', ' Baguette '])).toBe('Baguette 2');
   });
 });
 

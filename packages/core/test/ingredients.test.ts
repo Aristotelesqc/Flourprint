@@ -108,8 +108,8 @@ const problem = (entry: IngredientEntry) => {
 };
 
 describe('contract version', () => {
-  it('is 0.23.0 with weighing read model and weighing checks (formula.md, bake-session.md)', () => {
-    expect(CONTRACT_VERSION).toBe('0.23.0');
+  it('is 0.24.3 (hydration sheet read model; clean generated draft names since 0.24.2; chain move down since 0.24.1)', () => {
+    expect(CONTRACT_VERSION).toBe('0.24.3');
   });
 });
 

@@ -685,6 +685,1500 @@
       "expected": {
         "preferments.poolish.duration.value": 12348.0
       }
+    },
+    {
+      "name": "first contact: direct dough, mixing 5 min does not count, kneading 10 min, bulk 120 min at 24 \u00b0C",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 1,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "frasage",
+            "operation": "frasage",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 300,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["frasage"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 3.5960240706525384,
+        "dough.steps.1.endProgressPct.value": 46.748312918482995,
+        "dough.progressPct.value": 46.748312918482995,
+        "dough.duration.value": 16085.094098692265
+      },
+      "tolerance": 0.001
+    },
+    {
+      "name": "first contact: 45 min fermentolyse with the yeast does not count, 10 min final kneading, bulk 120 min",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 1,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "fermentolyse",
+            "operation": "fermentolyse",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 2700,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["fermentolyse"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 3.5960240706525384,
+        "dough.steps.1.endProgressPct.value": 46.748312918482995,
+        "dough.progressPct.value": 46.748312918482995
+      },
+      "tolerance": 0.001
+    },
+    {
+      "name": "first contact: autolyse 30 min without yeast and the 8 min mix do not count, bulk 120 min",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 1,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "autolyse",
+            "operation": "autolyse",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 1800,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["autolyse"],
+            "schedule": "asap",
+            "plannedDurationS": 480,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 43.15228884783046,
+        "dough.progressPct.value": 43.15228884783046
+      },
+      "tolerance": 0.001
+    },
+    {
+      "name": "first contact: no incorporations declared, autolyse 30 min and the first frasage do not count",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 1,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "autolyse",
+            "operation": "autolyse",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 1800,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "frasage",
+            "operation": "frasage",
+            "dependsOn": ["autolyse"],
+            "schedule": "asap",
+            "plannedDurationS": 300,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["frasage"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 3.5960240706525384,
+        "dough.steps.1.endProgressPct.value": 46.748312918482995,
+        "dough.progressPct.value": 46.748312918482995
+      },
+      "tolerance": 0.001
+    },
+    {
+      "name": "first contact: a poolish keeps its own clock, the final dough starts at the end of its mix",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 0.3,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [
+          {
+            "id": "poolish",
+            "kind": "preferment",
+            "flourPct": 20,
+            "flourBlend": [
+              {
+                "flour": "flour",
+                "sharePct": 100
+              }
+            ],
+            "hydrationPct": 100,
+            "allocations": [
+              {
+                "ingredient": "yeast",
+                "bakerPct": 0.2
+              }
+            ]
+          }
+        ],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "poolish",
+            "operation": "preferment",
+            "dependsOn": [],
+            "schedule": "asap",
+            "conditions": {
+              "temperatureC": 21.1
+            }
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["poolish"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "component",
+                "id": "poolish",
+                "sharePct": 100
+              },
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "proof",
+            "operation": "proof",
+            "dependsOn": ["bulk"],
+            "schedule": "asap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["proof", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 17.940115338793667,
+        "dough.steps.1.endProgressPct.value": 26.9101730081905,
+        "dough.progressPct.value": 26.9101730081905,
+        "preferments.poolish.duration.value": 12348.0
+      },
+      "tolerance": 0.001
+    },
+    {
+      "name": "first contact: a poolish's preparatory mix 40 min does not count, it ripens A hours after it",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 0.2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [
+          {
+            "id": "poolish",
+            "kind": "preferment",
+            "flourPct": 20,
+            "flourBlend": [
+              {
+                "flour": "flour",
+                "sharePct": 100
+              }
+            ],
+            "hydrationPct": 100,
+            "allocations": [
+              {
+                "ingredient": "yeast",
+                "bakerPct": 0.2
+              }
+            ]
+          }
+        ],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "poolish-mix",
+            "operation": "frasage",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 2400,
+            "conditions": {
+              "temperatureC": 21.1
+            },
+            "subject": {
+              "kind": "component",
+              "id": "poolish"
+            }
+          },
+          {
+            "id": "poolish-ferment",
+            "operation": "preferment",
+            "dependsOn": ["poolish-mix"],
+            "schedule": "asap",
+            "conditions": {
+              "temperatureC": 21.1
+            },
+            "subject": {
+              "kind": "component",
+              "id": "poolish"
+            }
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["poolish-ferment"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "component",
+                "id": "poolish",
+                "sharePct": 100
+              },
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "preferments.poolish.duration.value": 12348.0
+      },
+      "tolerance": 0.001
+    },
+    {
+      "name": "first contact: target dough temperature 26 \u00b0C applied from the end of the mix, room 20 \u00b0C",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 1,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 20,
+              "doughTemperatureC": 26
+            },
+            "incorporations": [
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 20
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 39.904824699657105,
+        "dough.progressPct.value": 39.904824699657105,
+        "dough.steps.0.endTemperatureC.value": 21.581582828694362
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "first contact: target dough temperature on the kneading applies from the end of the frasage",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 1,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "frasage",
+            "operation": "frasage",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 300,
+            "conditions": {
+              "temperatureC": 20
+            },
+            "incorporations": [
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["frasage"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 20,
+              "doughTemperatureC": 26
+            }
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 20
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 4.497899434177563,
+        "dough.steps.1.endProgressPct.value": 42.46953182674552,
+        "dough.progressPct.value": 42.46953182674552,
+        "dough.steps.0.endTemperatureC.value": 25.369035900886217,
+        "dough.steps.1.endTemperatureC.value": 21.4152624979142
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "first contact: basic mode starts at the fermentolyse's 20 \u00b0C, not the later mix's 24 \u00b0C",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 1,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "fermentolyse",
+            "operation": "fermentolyse",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 2700,
+            "conditions": {
+              "temperatureC": 20
+            },
+            "incorporations": [
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["fermentolyse"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 2.152258669223421,
+        "dough.steps.1.endProgressPct.value": 35.370919020234716,
+        "dough.steps.0.endTemperatureC.value": 20.42064273274252,
+        "dough.steps.1.endTemperatureC.value": 23.056491668057202
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "first contact: a fermentolyse and a kneading after the frasage count, the frasage does not",
+      "since": "0.10.0",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 65,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 1,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "frasage",
+            "operation": "frasage",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 300,
+            "conditions": {
+              "temperatureC": 24
+            },
+            "incorporations": [
+              {
+                "item": "flour",
+                "id": "flour",
+                "sharePct": 100
+              },
+              {
+                "item": "water",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "salt",
+                "sharePct": 100
+              },
+              {
+                "item": "ingredient",
+                "id": "yeast",
+                "sharePct": 100
+              }
+            ]
+          },
+          {
+            "id": "fermentolyse",
+            "operation": "fermentolyse",
+            "dependsOn": ["frasage"],
+            "schedule": "asap",
+            "plannedDurationS": 1800,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": ["fermentolyse"],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "bulk",
+            "operation": "bulk",
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "dough.steps.0.endProgressPct.value": 10.788072211957616,
+        "dough.steps.1.endProgressPct.value": 14.384096282610153,
+        "dough.steps.2.endProgressPct.value": 57.536385130440614,
+        "dough.progressPct.value": 57.536385130440614
+      },
+      "tolerance": 0.001
     }
   ]
 }

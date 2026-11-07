@@ -28,6 +28,10 @@ describe('desktop settings', () => {
     });
     expect(parseSettings('{"webTarget":"canary"}').webTarget).toBe('canary');
     expect(parseSettings('{"webTarget":"prod"}').webTarget).toBe('dev');
+    expect(parseSettings('{"webTarget":"pr-233"}').webTarget).toBe('pr-233');
+    expect(parseSettings('{"webTarget":"pr-0233"}').webTarget).toBe('dev');
+    // Settings written before ADR 0023 called the main address `release`.
+    expect(parseSettings('{"webTarget":"release"}').webTarget).toBe('main');
   });
 
   it('lets a switch or a variable turn the GPU off for one launch', () => {

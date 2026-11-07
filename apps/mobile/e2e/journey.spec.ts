@@ -150,6 +150,8 @@ test('dough ready is recorded on a running fermentation step without ending it',
   await page.getByRole('button', { name: 'Échaudage terminé' }).click();
   await page.getByRole('button', { name: 'Préferment terminé' }).click();
   await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
+  // The first-contact step is not a dough step, so it is never judged ready (bake-session.md).
+  await expect(page.getByRole('button', { name: /Prête à/ })).toBeHidden();
   await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
   await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
   // The bulk is followed by shaping: the dough is ready to shape, not to bake.
@@ -380,7 +382,7 @@ test('a newer dev build loads only after the browser data is saved', async ({ pa
   await page.goto('/recipes');
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Recette vierge').first().click();
-  await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Recette', { exact: true })).toBeVisible();
   // At once back to the list, in the app (a navigation would reload the page), and pull: no
   // wait for the periodic snapshot.
   await goBack(page);
@@ -397,7 +399,7 @@ test('a newer dev build loads only after the browser data is saved', async ({ pa
   });
   await reloaded;
   newer = false;
-  await expect(page.getByText('Recette 1').first()).toBeVisible();
+  await expect(page.getByText('Recette', { exact: true }).first()).toBeVisible();
 });
 
 test('an unreachable site reloads nothing', async ({ page }) => {
@@ -677,6 +679,11 @@ test('the boil of bagels ends the dough: it is not a fermentation step', async (
   await expect(page.getByRole('button', { name: 'Retirer Façonnage' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Retirer Ébullition' })).toHaveCount(0);
   await expect(page.getByLabel('Ébullition, durée')).toHaveCount(0);
+  // The first-contact mixing is not a dough step and is not edited here: no removal, no Auto.
+  await expect(page.getByRole('button', { name: 'Retirer Pétrissage' })).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Pétrissage : durée selon le modèle' }),
+  ).toHaveCount(0);
 });
 
 test('starts a bake whose recipe file references a built-in vessel', async ({ page }) => {
@@ -821,7 +828,7 @@ test('a template starts a named draft that becomes a recipe once saved', async (
       .locator('ion-router-outlet .ion-page:not(.ion-page-hidden)')
       .getByRole('region', { name: 'À propos de ce style' }),
   ).toBeVisible();
-  await expect(page.getByText('Pizza néo-napolitaine 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Pizza néo-napolitaine', { exact: true })).toBeVisible();
   await expect(page.getByText('Brouillon, pas encore enregistré').first()).toBeVisible();
   // A template passes the check as is.
   await menuAction(page, /^Vérifier la recette(?: \(\d+\))?$/);
@@ -836,7 +843,7 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await page.goto('/recipes');
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Recette vierge').first().click();
-  await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Recette', { exact: true })).toBeVisible();
   await expect(page.locator('ion-modal:not(.overlay-hidden)')).toHaveCount(0);
   // Flours that do not add up to 100 %: accepted in a draft, quantities shown as unknown.
   const share = page.getByLabel('Farine à pain, Part');
@@ -864,7 +871,7 @@ test('a blank recipe takes any edit; the check blocks the save and says why', as
   await menuAction(page, /^Abandonner les modifications$/);
   await page.locator('ion-alert').getByRole('button', { name: 'Supprimer le brouillon' }).click();
   await expect(page).toHaveURL(/\/recipes$/);
-  await expect(page.getByText('Recette 1', { exact: true })).toBeHidden();
+  await expect(page.getByText('Recette', { exact: true })).toBeHidden();
 });
 
 test('an info button opens a bottom sheet that explains the term and closes', async ({ page }) => {
@@ -1041,7 +1048,7 @@ test('the browser preview keeps its data across a reload, until it is erased', a
   await expect(page.getByText(/gardées dans ce navigateur/)).toBeVisible();
   await page.getByLabel('Nouvelle recette', { exact: true }).first().click();
   await page.getByText('Recette vierge').first().click();
-  await expect(page.getByText('Recette 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Recette', { exact: true })).toBeVisible();
   // The snapshot is saved every few seconds and when the page is hidden: wait for the saved
   // snapshot itself to hold the new recipe, not for a delay.
   await expect
@@ -1063,7 +1070,9 @@ test('the browser preview keeps its data across a reload, until it is erased', a
                   };
                   read.onsuccess = () => {
                     db.close();
-                    resolve(typeof read.result === 'string' && read.result.includes('Recette 1'));
+                    resolve(
+                      typeof read.result === 'string' && /"name":\s*"Recette"/.test(read.result),
+                    );
                   };
                 } catch {
                   db.close();
@@ -1077,7 +1086,7 @@ test('the browser preview keeps its data across a reload, until it is erased', a
     .toBe(true);
   await page.reload();
   await page.goto('/recipes');
-  await expect(page.getByText('Recette 1').first()).toBeVisible();
+  await expect(page.getByText('Recette', { exact: true }).first()).toBeVisible();
 
   await page.goto('/advanced');
   await page.getByText('Effacer les données du navigateur').click();
@@ -1093,7 +1102,7 @@ test('the browser preview keeps its data across a reload, until it is erased', a
   // Nothing is seeded: erasing leaves an empty list, not the reference recipe.
   await expect(page.getByText('Aucune recette', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('Poolish + tangzhong')).toHaveCount(0);
-  await expect(page.getByText('Recette 1')).toHaveCount(0);
+  await expect(page.getByText('Recette', { exact: true })).toHaveCount(0);
 
   // Development builds can load the sample again, for trying the app or reviewing it.
   await page.goto('/advanced');
