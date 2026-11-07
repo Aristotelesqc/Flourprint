@@ -210,7 +210,9 @@ resumes the draft without switching ingredients or step cards into editors. Step
 the same height, density and layout; explicit per-step Edit opens the existing sheet. The
 single constant-height Discard/Undo/Redo/Save bar overlays the screen bottom without moving
 content. Discard confirms changes. Keep pending feedback subtle and refusals in a transient bottom Ionic toast above the editing bar,
-with readable body tokens and a polite announcement; keep notices out of document flow. Preserve scroll and keep the dropped card visible.
+with readable body tokens and a polite announcement. Preserve scroll and keep the dropped card
+visible. Keep notices out of document flow. Anchor the transient save confirmation below the
+Recipe header so the pencil and tabs stay usable while it is announced.
 In-place value editing is future work, outside 0.3, and must not compete with drag activation.
 
 The implementation uses `FormulaConsultation`, `FormulaSection` and `RecipeMethod` for the Recipe tab,

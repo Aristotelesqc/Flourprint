@@ -389,8 +389,14 @@ const registerDevBridge = (window: BrowserWindow) => {
         const target = version();
         await session.defaultSession.clearStorageData({ origin: addressOf(dev, target).origin });
         // The page shows data that is gone: start it again, empty.
-        // (after the reply, so the page that asked still hears it)
-        if (target === stored.webTarget) setTimeout(() => void window.loadURL(pageUrl()), 50);
+        // (after the reply, so the page that asked still hears it). The window may be closed by
+        // then: loading into a destroyed window throws in the main process, whose error dialog
+        // keeps the shell from quitting (#168).
+        if (target === stored.webTarget) {
+          setTimeout(() => {
+            if (!window.isDestroyed()) void window.loadURL(pageUrl());
+          }, 50);
+        }
         return;
       }
       case 'stashTransfer': {

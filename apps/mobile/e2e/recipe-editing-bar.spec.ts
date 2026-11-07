@@ -32,6 +32,7 @@ for (const en of [false, true]) {
         planning: 'Planning',
         history: 'History',
         save: 'Save',
+        saved: 'Saved.',
         undo: 'Undo last change',
         redo: 'Redo',
         discard: 'Discard changes',
@@ -42,6 +43,7 @@ for (const en of [false, true]) {
         planning: 'Planification',
         history: 'Historique',
         save: 'Enregistrer',
+        saved: 'Recette enregistr\u00e9e.',
         undo: 'Annuler la dernière modification',
         redo: 'Rétablir',
         discard: 'Abandonner les modifications',
@@ -166,8 +168,10 @@ for (const en of [false, true]) {
 
   test(`one draft supports undo in Planning, redo and save in History${suffix}`, async ({
     page,
-  }) => {
+  }, info) => {
+    await page.setViewportSize({ width: 360, height: 800 });
     await open(page);
+    await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
     await enterEditor(page);
     await field(page, en).fill('201');
     await field(page, en).blur();
@@ -179,10 +183,19 @@ for (const en of [false, true]) {
     await expect(action(page, names.save)).toBeEnabled();
     await action(page, names.save).click();
     await expect(bar(page)).toHaveCount(0);
-    await expectRecipeRevision(page, 2);
+    const toast = page.locator('ion-toast').getByRole('status').filter({ hasText: names.saved });
+    await expect(toast.getByText(names.saved, { exact: true })).toBeVisible();
+    await expect(toast).toHaveAttribute('aria-live', 'polite');
+    const header = await box(routed(page).locator('ion-header'));
+    await expect
+      .poll(async () => (await box(toast)).y)
+      .toBeGreaterThanOrEqual(header.y + header.height);
     await tab(page, names.recipe);
     await enterEditor(page);
+    await expect(toast).toBeVisible();
     await expect(field(page, en)).toHaveValue('201');
+    await page.screenshot({ path: info.outputPath('reopened-while-save-notice-visible.png') });
+    await expectRecipeRevision(page, 2);
     await action(page, names.discard).click();
     await expect(bar(page)).toHaveCount(0);
     await routed(page)

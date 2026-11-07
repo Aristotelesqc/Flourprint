@@ -25,17 +25,19 @@ for (const english of [false, true]) {
     const routed = page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
     await expect(routed).toHaveCount(1);
     await expect(
-      routed.getByText(english ? 'Recipe 1' : 'Recette 1', { exact: true }),
+      routed.getByRole('heading', { name: english ? 'Recipe' : 'Recette', level: 1, exact: true }),
     ).toBeVisible();
     await routed
       .getByRole('button', { name: english ? 'Read recipe' : 'Lire la recette', exact: true })
       .click();
     await expect(page).toHaveURL(/\/recipes$/);
     await expect(
-      page.getByText(english ? 'Recipe 1' : 'Recette 1', { exact: true }).filter({ visible: true }),
+      routed.locator('ion-router-link').getByText(english ? 'Recipe' : 'Recette', { exact: true }),
     ).toHaveCount(1);
     await expect(
-      page.getByText(english ? 'Recipe 2' : 'Recette 2', { exact: true }).filter({ visible: true }),
+      routed
+        .locator('ion-router-link')
+        .getByText(english ? 'Recipe 2' : 'Recette 2', { exact: true }),
     ).toHaveCount(0);
   });
 }
