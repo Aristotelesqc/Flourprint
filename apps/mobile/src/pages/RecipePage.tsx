@@ -149,6 +149,7 @@ const RecipePageContent = () => {
   const [loading, setLoading] = useState<'loading' | 'missing' | 'failed' | 'ready'>('loading');
   const [family, setFamily] = useState<{ family: RecipeFamily; members: readonly Recipe[] }>();
   const writes = useGuardedWrite();
+  const headerRef = useRef<HTMLIonHeaderElement>(null);
   const contentRef = useRef<HTMLIonContentElement>(null);
   const carouselRef = useRef<SectionCarouselControl | null>(null);
   const tabsRef = useRef<TabsControl | null>(null);
@@ -497,8 +498,15 @@ const RecipePageContent = () => {
   }, [loading, recipeId, draftId]);
 
   useEffect(() => {
-    if (!notice) return;
-    void presentToast({ message: notice, duration: 3500, position: 'top' });
+    if (!notice || !headerRef.current) return;
+    void presentToast({
+      message: notice,
+      duration: 3500,
+      position: 'top',
+      positionAnchor: headerRef.current,
+      cssClass:
+        '[--background:var(--color-surface-container-high)] [--color:var(--color-ink)] [--border-radius:var(--radius-card)] [&::part(message)]:text-body [&::part(wrapper)]:pointer-events-none',
+    });
     setNotice(undefined);
   }, [notice, presentToast]);
 
@@ -1115,7 +1123,7 @@ const RecipePageContent = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
+      <IonHeader ref={headerRef} className="ion-no-border">
         <IonToolbar>
           <IonButtons slot="start">
             <Ui
