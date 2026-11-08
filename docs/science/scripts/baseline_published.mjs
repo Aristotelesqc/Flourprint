@@ -47,6 +47,8 @@
  *     (e) Leave-one-source-out timing prediction comparison against naive rules (all and excluding
  *         low confidence), including temperature-weighted rules (Q10 = 2 and fitted Q10 / dose).
  *  - Prints to stdout; no file writes.
+ *  - Run directly, it prints the report. Imported (uncertainty_published.mjs), it only exports
+ *    the dataset and the helpers below.
  */
 
 import { readFileSync } from 'node:fs';
@@ -663,10 +665,11 @@ function evaluateRecipe(recipe) {
   // Check for unstated schedule durations or unstated stage temperatures.
   // Missing preferment duration or temperature is handled via technical placeholders proved not
   // to affect the dough result. Stage temperatures with kind 'not_stated' stay incomplete_schedule.
+  // The first mixing stage is the first contact and does not count, so its duration may be unstated.
+  const firstContact = recipe.stages.find((s) => getStageRole(s.name) === 'mix');
   const hasIncompleteSchedule = recipe.stages.some(
     (s) =>
-      s.duration === 'not_stated' ||
-      s.hours_min === null ||
+      (s !== firstContact && (s.duration === 'not_stated' || s.hours_min === null)) ||
       s.temperature?.kind === 'not_stated' ||
       resolveTemp(s.temperature) === null,
   );
@@ -1404,4 +1407,23 @@ function run() {
   );
 }
 
-run();
+export {
+  dataset,
+  assignSourceGroups,
+  evaluateRecipe,
+  buildFormula,
+  buildProcess,
+  doughClockStages,
+  resolveHours,
+  resolveTemp,
+  computeFermentationHours,
+  computeFreshYeastEquivalentDose,
+  computeStageWeight,
+  evaluateDoughProgress,
+  findModelScale,
+  geometricMean,
+};
+
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  run();
+}
