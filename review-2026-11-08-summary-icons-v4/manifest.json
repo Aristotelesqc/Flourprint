@@ -1,0 +1,349 @@
+{
+  "prototype": "summary-icons-v4",
+  "scope": "Icon comparison on a matched two-column prototype; not production UI",
+  "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+  "captures": [
+    {
+      "file": "fr-light-100.png",
+      "sha256": "6ade8c74098bc39aff59c6bccf6210ba0f1150793cb15a3fcd6e54eba2dd7d00",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-light-130.png",
+      "sha256": "d6c8b2fe966005542358d84e494b5323507bf0e808b17e8b0b766b005642e91b",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-dark-100.png",
+      "sha256": "a72f5c2296c2dca47af0e212a7efa7cb247e33b9261186572d940f2bdafb50bd",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-dark-130.png",
+      "sha256": "5491a10528117873d1920187346b43b3e0cdb9b5ef570a4eb67890a02b21a4de",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-amoled-100.png",
+      "sha256": "b3481f5944a081922345b3a4d24f00b69f062e083b15895fcce4187483e486a1",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-amoled-130.png",
+      "sha256": "1989de1764bfe8d9b4151a034b931ae83e910021d41ac674f387e95104122def",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-light-100.png",
+      "sha256": "b6aa9be40ed35d7b2cbd6a4e2550faca7ed90115198788b0f151b7ff47da9535",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-light-130.png",
+      "sha256": "8317b6f82480980571e45350fc7748bad7297f89061e7fee67afd67c6295cf0f",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-dark-100.png",
+      "sha256": "9727d5aa6198e4db7a5393af593a02e8872a6d3b4421df7942c52862c88488ed",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-dark-130.png",
+      "sha256": "78c600664885a3c6fc0227c561ddb15b1a7e28371b9cbab7cf0e80d5a3f61cea",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-amoled-100.png",
+      "sha256": "9735f986ace5902af6e70e1c8a0870fa85ddbf1c70807312fd5750e9fcdb684f",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-amoled-130.png",
+      "sha256": "0e9b07c75050889bab2909ad77935f7d881d6d57a327d1c84eab342a97c383f3",
+      "prototype": "summary-icons-v4",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v3 butter and knife",
+        "B: Flourprint v4 butter plate and cut slice"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    }
+  ],
+  "assets": [
+    {
+      "file": "IONICONS-LICENSE.txt",
+      "sha256": "fa8ca5fa0f75eb57e8e1bd436601fae7ea3650f945cddb0f975eaa49f8ceaf5c"
+    },
+    {
+      "file": "en-amoled-100.png",
+      "sha256": "9735f986ace5902af6e70e1c8a0870fa85ddbf1c70807312fd5750e9fcdb684f"
+    },
+    {
+      "file": "en-amoled-130.png",
+      "sha256": "0e9b07c75050889bab2909ad77935f7d881d6d57a327d1c84eab342a97c383f3"
+    },
+    {
+      "file": "en-dark-100.png",
+      "sha256": "9727d5aa6198e4db7a5393af593a02e8872a6d3b4421df7942c52862c88488ed"
+    },
+    {
+      "file": "en-dark-130.png",
+      "sha256": "78c600664885a3c6fc0227c561ddb15b1a7e28371b9cbab7cf0e80d5a3f61cea"
+    },
+    {
+      "file": "en-light-100.png",
+      "sha256": "b6aa9be40ed35d7b2cbd6a4e2550faca7ed90115198788b0f151b7ff47da9535"
+    },
+    {
+      "file": "en-light-130.png",
+      "sha256": "8317b6f82480980571e45350fc7748bad7297f89061e7fee67afd67c6295cf0f"
+    },
+    {
+      "file": "fr-amoled-100.png",
+      "sha256": "b3481f5944a081922345b3a4d24f00b69f062e083b15895fcce4187483e486a1"
+    },
+    {
+      "file": "fr-amoled-130.png",
+      "sha256": "1989de1764bfe8d9b4151a034b931ae83e910021d41ac674f387e95104122def"
+    },
+    {
+      "file": "fr-dark-100.png",
+      "sha256": "a72f5c2296c2dca47af0e212a7efa7cb247e33b9261186572d940f2bdafb50bd"
+    },
+    {
+      "file": "fr-dark-130.png",
+      "sha256": "5491a10528117873d1920187346b43b3e0cdb9b5ef570a4eb67890a02b21a4de"
+    },
+    {
+      "file": "fr-light-100.png",
+      "sha256": "6ade8c74098bc39aff59c6bccf6210ba0f1150793cb15a3fcd6e54eba2dd7d00"
+    },
+    {
+      "file": "fr-light-130.png",
+      "sha256": "d6c8b2fe966005542358d84e494b5323507bf0e808b17e8b0b766b005642e91b"
+    },
+    {
+      "file": "index.html",
+      "sha256": "e40992b50d4d4464c0c9470fcad1af011398e34a0b31ba735e2c41a24dc5f8c5"
+    },
+    {
+      "file": "reference-133-fr.png",
+      "sha256": "24b2ff8259661545032da6a95fa11913fcbaac3fb6971bdacb8668df3ac038f7"
+    },
+    {
+      "file": "svg/dough.svg",
+      "sha256": "ff8830b3f8babdb8f771f920b17410325ec44d2455834a6355b7bb5cc8782db7"
+    },
+    {
+      "file": "svg/fat.svg",
+      "sha256": "2e6356cdb6a96d4e603c1e8715635d3db9437124f046d4fe3a565a14ac2094a2"
+    },
+    {
+      "file": "svg/hydration.svg",
+      "sha256": "24a2886f764cac86fef6efc5f9bce1476e77b94c73f984c004b43cfa977d0c75"
+    },
+    {
+      "file": "svg/sugar.svg",
+      "sha256": "54b2648b5b40cd0eb2153deadc9da45d40c941ef0eddf6cad5f59091a0b44f29"
+    }
+  ]
+}
