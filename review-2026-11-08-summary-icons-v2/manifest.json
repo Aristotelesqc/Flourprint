@@ -1,0 +1,349 @@
+{
+  "prototype": "summary-icons-v2",
+  "scope": "Icon comparison on a matched two-column prototype; not production UI",
+  "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+  "captures": [
+    {
+      "file": "fr-light-100.png",
+      "sha256": "a2581090ad4c6814135705b614c46cc611b43b8ba3d9e487dc9b7ddc8b4a9d1b",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-light-130.png",
+      "sha256": "26feed9fa37206376aed32ac33f047f8889e3673471a60e9288f7d5c152e37ca",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-dark-100.png",
+      "sha256": "6072af073234f9a302b8e1a739afa168fc923c4ed20700dab41a3121595cfe00",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-dark-130.png",
+      "sha256": "b54406ed1c6159f6f09a1c0f6d105af5eb31019ba1c8531ec1df5da9683f025e",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-amoled-100.png",
+      "sha256": "3368a3ef17d6c198160d420a181634b851120c5afa58aba47d949574df837845",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-amoled-130.png",
+      "sha256": "345aa424b255df117d1bc303ed1a70c338e8bda7acea18d363d39f52e795decc",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-light-100.png",
+      "sha256": "35e99544a592a9d5a585095e8827e3e364fa7ecb4b147f75f6ad95b5d1a63cb9",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-light-130.png",
+      "sha256": "6cc73e8e324f3443a8b6383614b78e99b71761ba0407b85d9edf865de4e7c2ec",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-dark-100.png",
+      "sha256": "ffd642593201cf9a9108e38c79df1dfb8b2a9f0b90e9b3b15996784f49cfc117",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-dark-130.png",
+      "sha256": "233a2e2de83a0d435e9c0694915f3db89e9c1b4876ee738ff48bac370e70fefb",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-amoled-100.png",
+      "sha256": "bbc171c9c0c465d3f873963ed061bbc1a3de8319ffdc79b15b6c5bd9abe5672b",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-amoled-130.png",
+      "sha256": "d7787f587959ff5d40764b12fddc2b6fb0a2c0c0b2b2943dc45e52cc141bb59a",
+      "prototype": "summary-icons-v2",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v1 bowl and cruet",
+        "B: Flourprint v2 dough ball and butter pat"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    }
+  ],
+  "assets": [
+    {
+      "file": "IONICONS-LICENSE.txt",
+      "sha256": "fa8ca5fa0f75eb57e8e1bd436601fae7ea3650f945cddb0f975eaa49f8ceaf5c"
+    },
+    {
+      "file": "en-amoled-100.png",
+      "sha256": "bbc171c9c0c465d3f873963ed061bbc1a3de8319ffdc79b15b6c5bd9abe5672b"
+    },
+    {
+      "file": "en-amoled-130.png",
+      "sha256": "d7787f587959ff5d40764b12fddc2b6fb0a2c0c0b2b2943dc45e52cc141bb59a"
+    },
+    {
+      "file": "en-dark-100.png",
+      "sha256": "ffd642593201cf9a9108e38c79df1dfb8b2a9f0b90e9b3b15996784f49cfc117"
+    },
+    {
+      "file": "en-dark-130.png",
+      "sha256": "233a2e2de83a0d435e9c0694915f3db89e9c1b4876ee738ff48bac370e70fefb"
+    },
+    {
+      "file": "en-light-100.png",
+      "sha256": "35e99544a592a9d5a585095e8827e3e364fa7ecb4b147f75f6ad95b5d1a63cb9"
+    },
+    {
+      "file": "en-light-130.png",
+      "sha256": "6cc73e8e324f3443a8b6383614b78e99b71761ba0407b85d9edf865de4e7c2ec"
+    },
+    {
+      "file": "fr-amoled-100.png",
+      "sha256": "3368a3ef17d6c198160d420a181634b851120c5afa58aba47d949574df837845"
+    },
+    {
+      "file": "fr-amoled-130.png",
+      "sha256": "345aa424b255df117d1bc303ed1a70c338e8bda7acea18d363d39f52e795decc"
+    },
+    {
+      "file": "fr-dark-100.png",
+      "sha256": "6072af073234f9a302b8e1a739afa168fc923c4ed20700dab41a3121595cfe00"
+    },
+    {
+      "file": "fr-dark-130.png",
+      "sha256": "b54406ed1c6159f6f09a1c0f6d105af5eb31019ba1c8531ec1df5da9683f025e"
+    },
+    {
+      "file": "fr-light-100.png",
+      "sha256": "a2581090ad4c6814135705b614c46cc611b43b8ba3d9e487dc9b7ddc8b4a9d1b"
+    },
+    {
+      "file": "fr-light-130.png",
+      "sha256": "26feed9fa37206376aed32ac33f047f8889e3673471a60e9288f7d5c152e37ca"
+    },
+    {
+      "file": "index.html",
+      "sha256": "99664262a561abf70d08309b8ad47beefb908f106dbafab959d4c50c738d0339"
+    },
+    {
+      "file": "reference-133-fr.png",
+      "sha256": "24b2ff8259661545032da6a95fa11913fcbaac3fb6971bdacb8668df3ac038f7"
+    },
+    {
+      "file": "svg/dough.svg",
+      "sha256": "ff8830b3f8babdb8f771f920b17410325ec44d2455834a6355b7bb5cc8782db7"
+    },
+    {
+      "file": "svg/fat.svg",
+      "sha256": "f3fb93828af57cf3ffee8e4a21fa44b02bf237101262a0f398a0417c2995c983"
+    },
+    {
+      "file": "svg/hydration.svg",
+      "sha256": "24a2886f764cac86fef6efc5f9bce1476e77b94c73f984c004b43cfa977d0c75"
+    },
+    {
+      "file": "svg/sugar.svg",
+      "sha256": "d3dbf13214e5af1944a172ceb6e90ce4037f16881fa2fca9e29bd6e750cf3728"
+    }
+  ]
+}
