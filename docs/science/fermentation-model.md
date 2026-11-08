@@ -327,13 +327,13 @@ Evidence of non-separability in the measurements themselves (script): the appare
 
 ## 6. Sugar: Timmermans 2022
 
-Timmermans E. et al., _Foods_ 11(10):1388, DOI 10.3390/foods11101388. Read status: methods and
-results checked by the Codex review; numerical tables not re-read by us; title as given by the
-Gemini report. File `data/timmermans-2022-sucrose.csv`, `source_verified=false`.
+Timmermans E. et al., _Foods_ 11(10):1388, DOI 10.3390/foods11101388. Read status: full text read
+by the coordinating agent (2026-11-04); title confirmed. File `data/timmermans-2022-sucrose.csv`,
+`source_verified=true`.
 
-Raw 3-hour cumulative CO2 (MEASURED, as transcribed): unlaminated dough without margarine, 30 °C,
-1.5 % NaCl, yeast labelled about 8 % on dry flour, gas measured with the Risograph over 180 min, mL
-per 10 g flour of dough.
+Raw 3-hour cumulative CO2 (MEASURED, printed in the paper): unlaminated dough without margarine,
+30 °C, NaCl 2.0 % of as-is flour, yeast 7.0 % fresh on as-is flour (8.1 % on dry matter), gas
+measured with the Risograph over 180 min, mL per dough made on a 10 g flour scale, triplicates.
 
 | Sucrose, paper label (% dry flour) | Sucrose, recipe masses (% as-is flour) | 3-h CO2, mL (±SD) | Ratio to 0 % sucrose |
 | ---------------------------------- | -------------------------------------- | ----------------- | -------------------- |
@@ -342,8 +342,8 @@ per 10 g flour of dough.
 | 14                                 | 12                                     | 157.7 ± 0.4       | 1.462                |
 | 21                                 | 18                                     | 94.3 ± 4.8        | 0.874                |
 
-The recipe-mass column and "7 % fresh yeast as-is" are the Codex review's reading of the original
-recipes (DERIVED). The ratios are our division. Robust result: in this experiment 3-h gas is ordered
+The recipe-mass column and "7 % fresh yeast as-is" follow from the printed recipe masses (500 g
+flour, 35 g yeast, 0/30/60/90 g sucrose), which confirms the Codex review's reading. The ratios are our division. Robust result: in this experiment 3-h gas is ordered
 7 % > 14 % > 0 % > 21 %, consistent with a substrate benefit at low sugar and an osmotic penalty at
 high sugar. The paper also gives time courses (not transcribed here) and shows that endogenous
 sugars deplete, so early and late fermentation do not see sugar alike. A static multiplier is
@@ -445,6 +445,18 @@ white-flour `Hm` peak at 1 % and "wholemeal `Vt` varies little", neither of whic
 piecewise Gemini salt factor (`r = 1 + 0.033 C`, then an exponential fall) rested on those values and is
 withdrawn. No contract or engine code used them.
 
+**Second dataset: Belz 2017** (`data/belz-2017-salt.csv`, full text read 2026-11-07, MEASURED).
+Same instrument class at 30 °C with 2 % yeast on flour, but no sugar or oil, and water lowered as salt
+rises. At 1.72 % and 2.87 % of flour total gas is 0.71 and 0.44 of the salt-free value, while retained
+gas is 0.93 and 0.66 (our division); the salt-free dough loses 36 % of its gas, Boudrag's under 1 %.
+The fall of total gas is about 2.2 to 2.4 times larger than Boudrag's at a similar level (0.29 at
+1.72 % of flour against 0.13 and 0.12 for white and fibre-fortified flour at 1.9 and 2.0 %). The paper gives
+its duration as 90 min in the methods and 3 h in the Table 2 caption. Candidate reasons for the gap:
+duration, sugar and oil in Boudrag, gas release, flour. Two consequences: no transferable salt
+multiplier follows, and salt's effect on the gas that drives rise can be much smaller than its effect
+on production. The second Opus report on #33 proposes a wide per-baker prior of about 0.45 to 0.9 on
+production at 2 % of flour; it is a candidate (#231), not adopted.
+
 ## 9. Rye against wheat, and matrix caveats
 
 Several sources study rye (Klupsaite 2023, Murniece 2024), pastry (Timmermans), oat-bran wheat (Liu),
@@ -453,15 +465,18 @@ by matrix in its data file. A result moves across matrices only as an EXTRAPOLAT
 
 ## 10. Corrected bibliography
 
+The full source index, with legal access links, read status and use, is
+[sources.md](sources.md). The table below keeps the arbitration record of the first reports.
+
 Read status: F = full text read by the named reviewer, A = abstract only, S = secondary. "Unverified"
-means this document could not confirm the item beyond the cited review comment. Only item 4 was read
-directly by a Flourprint agent.
+means this document could not confirm the item beyond the cited review comment. Only items 3 and 4 were
+read directly by a Flourprint agent.
 
 | #   | Reference                                                                                                                                                                                                                                                                                                                                                         | Status                                                                                                                                                                                                                                                                                |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Nor Qhairul Izzreen M. N., Petersen M. A., Hansen Å. S. 2016. Volatile Compounds in Crumb of Whole-Meal Wheat Bread Fermented with Different Yeast Levels and Fermentation Temperatures. _Cereal Chemistry_ 93(2):209-216. DOI 10.1094/CCHEM-09-14-0196-R                                                                                                         | F by Codex review (PDF from the UMS eprints server). Title agrees with that URL                                                                                                                                                                                                       |
 | 2   | Nor Qhairul Izzreen M. N., Hansen Å. S., Petersen M. A. 2016. Volatile compounds in whole meal bread crust: The effects of yeast level and fermentation temperature. _Food Chemistry_ 210:566-576. DOI 10.1016/j.foodchem.2016.04.110                                                                                                                             | Unverified (Gemini report only)                                                                                                                                                                                                                                                       |
-| 3   | Timmermans E., Bautil A., Brijs K., Scheirlinck I., Van der Meulen R., Courtin C. M. 2022. Sugar Levels Determine Fermentation Dynamics during Yeast Pastry Making and Its Impact on Dough and Product Characteristics. _Foods_ 11(10):1388. DOI 10.3390/foods11101388                                                                                            | F (methods and results) by Codex review; title from Gemini report, unverified                                                                                                                                                                                                         |
+| 3   | Timmermans E., Bautil A., Brijs K., Scheirlinck I., Van der Meulen R., Courtin C. M. 2022. Sugar Levels Determine Fermentation Dynamics during Yeast Pastry Making and Its Impact on Dough and Product Characteristics. _Foods_ 11(10):1388. DOI 10.3390/foods11101388                                                                                            | F, by the coordinating agent, 2026-11-04 (owner's PDF); title confirmed                                                                                                                                                                                                               |
 | 4   | Boudrag S., Arendt E. K., Zannini E. 2026. Effect of NaCl Reduction on Dough Rheology and Bread Quality of Fibre-Enriched White Wheat Bread. _Foods_ 15(13):2343. DOI 10.3390/foods15132343. PubMed 42450461                                                                                                                                                      | F, by the coordinating agent, 2026-10-30 (Europe PMC XML): sections 2.1 to 2.4, Tables 1, 2, 5 and A1; title confirmed                                                                                                                                                                |
 | 5   | Liu W. et al. 2023. _Scientific Reports_ 13:4534. DOI 10.1038/s41598-023-31591-y. Title given by the GPT audit: "Influence of α-amylase, xylanase and cellulase on the rheological properties of bread dough enriched with oat bran"                                                                                                                              | Journal, volume, article and DOI checked against the publisher by Codex review; title unconfirmed. The Gemini report's `Foods 12(6):1247` (DOI 10.3390/foods12061247) is wrong, and its CSV's 10.3390/foods12061249 is a different wrong DOI. Values match the real table (GPT audit) |
 | 6   | Alpers T., Becker T., Jekle M. 2023. Strain-dependent assessment of dough's polymer structure and functionality during the baking process. _PLOS ONE_ 18(3):e0282670. DOI 10.1371/journal.pone.0282670                                                                                                                                                            | DOI and title checked against the publisher by Codex review. The report's title "Destabilization of the gas phase of wheat dough during the early phase of baking" is wrong. Volume and issue as given by the report, unverified                                                      |
@@ -498,6 +513,21 @@ The Gemini report found no primary factorial dataset there; the published grids 
 more at 5 to 8 °C or above. That regime is that of many home retarded doughs, and the shipped model
 is calibrated there only through Craig's table (MODEL OUTPUT).
 
+**First dough evidence on the shape of the cold curve (2026-11-04).** Kyogoku and Ouchi 1995
+(`data/kyogoku-1995-fig2.csv`) measured 2-h dough gas of an ordinary baker's yeast from 0 to 40 °C.
+Its 5 °C gas is 3.0 % of its 20 °C gas, against 11.4 % for the shipped Arrhenius law and 31 % for
+53 kJ/mol (DERIVED). The ratio at 4 °C to 24 °C is not measured; the second Opus report on #33
+puts it at 0.2–3 % depending on the fit range, against 5.7 % for the shipped law. Between 10 and
+30 °C a constant `Ea` near 85 kJ/mol fits as well as a square-root form; the cold bend rests on the
+5 °C bar, which carries two opposite biases (warm start, CO2 dissolution) of about its own size.
+The data point the same way as the warning about 53 kJ/mol in the #33 review (a warm-range slope
+does not transfer to the fridge) and suggest the shipped law may run fast in the cold rather than
+slow. It is not a gate-passing dataset: sweet dough (15 % sugar), 3 % wet yeast, one strain, no
+replicates stated (see the data file). Its 7-day storage results also show substantial fermentation at 5 °C
+over days. Candidate test once dough-temperature histories exist: compare Arrhenius, a
+square-root form with `T_min` near 0–2 °C, and CTMI against this curve and Izzreen's 8 °C cells,
+with dough lag credited (gate 6).
+
 How dogfood observations can fill it: record actual masses, flour product, yeast form and dose,
 timestamps, ambient or fridge temperature, post-mix dough temperature when feasible, a rise ratio in a
 straight-sided graduated container for some calibration bakes, and the "Dough ready" observation.
@@ -526,7 +556,26 @@ Gates before a candidate (M5 or another) enters the shipped model:
    the shipped model's, separately, and are lower; or the candidate covers a situation the
    benchmark cannot test, and says so.
 
-Other open items: obtain the Timmermans time courses; confirm the bibliography titles marked unverified; check whether the Izzreen formula
+**Design notes from the external reports (2026-11-07; reasoning, not adopted).** The third Opus report
+on #33 (round 3) keeps its candidate architecture and adds points that any future rise model must
+respect:
+
+- A progress state fitted to heights is a gas-equivalent convention, not a predicted volume of CO2:
+  heights identify only a lumped rate, never the production scale and the expansion scale apart.
+  Store it dimensionless.
+- Early height readings identify only the initial slope `(R_max − 1)·k`; `k` and `R_max` separate
+  only with readings near the plateau or an `R_max` prior. The height when the baker calls the dough
+  ready gives the end point directly. Heights never separate production from retention; only an
+  independent gas measurement does.
+- When doughs, preferments or flour are combined, keep extensive quantities (flour mass, yeast mass,
+  flour-weighted progress, heat content), add them, and derive intensive values afterwards, so that
+  no operation creates or destroys progress. With a dose exponent other than 1, total activity then
+  depends on flour mass, an artefact of the power law.
+- Kyogoku's 7-day storage loss is a measured loss of activity whose cause was not measured. The
+  report's comparison of added sucrose with extrapolated gas (about 21 %) is illustrative only and
+  neither establishes nor excludes sugar exhaustion.
+
+Other open items: transcribe the Timmermans time courses (Figure 4 of the paper); confirm the bibliography titles marked unverified; check whether the Izzreen formula
 details match the paper; measure the dough temperature during the owner's cold retards.
 
 ## 13. Changelog by model version
@@ -545,6 +594,7 @@ details match the paper; measure the dough temperature during the owner's cold r
 | science doc     | 2026-10-26        | Goal and acceptance criterion: a forecast at least as good as an expert baker's, judged by held-out predictive error against published schedules and recorded bakes; recipe corpus, science and personal bakes as complementary sources; gate 9. Owner decision. No model change.                                                                                                                                                                                    |
 | science doc     | 2026-10-30        | Section 8 and its data file: Boudrag Table 5 re-extracted from the full text; the earlier transcription and the salt factor fitted on it withdrawn. No model change.                                                                                                                                                                                                                                                                                                 |
 | science doc     | 2026-11-03        | Section 15: predictive uncertainty measured on published practice (calibrated, 80 % interval about ×5; the corner envelope covers 72 % of held-out recipes; first-contact dough clock of contract 0.24.0). No model change.                                                                                                                                                                                                                                          |
+| science doc     | 2026-11-07        | Section 8: Belz 2017 salt series read in full text, with its data file; section 12: design notes from the third external report. No model change.                                                                                                                                                                                                                                                                                                                    |
 
 Any future model version adds a row here with the evidence it rests on.
 
@@ -602,6 +652,20 @@ sugar, eggs, milk change `cp`, `k`, `ρ` and fermentation), sourdough heteroferm
 heat per CO₂), uncovered surfaces (evaporation 1–3 °C), fridge stratification and compressor
 cycling. Evidence still expected (#176, N2): probe readings after a fridge transfer in two
 containers and two masses, and one self-heating check on a large bulk at stable room temperature.
+
+**Fridge convection, first read source (2026-11-04).** Williams, Clausing and Newell 1994 (ACRC
+TR-54, University of Illinois, open access in IDEALS) measured natural convection on the warm
+vertical walls of a closed refrigerator filled with ice containers. Convective-only `h` (radiation
+subtracted) is 1.47–3.13 W/m²·K per wall, 2.27 on average for the enclosure, referred to the
+**wall–contents** temperature difference, not wall–air. Fitted: `Nu = 0.188 Ra^0.275` (R² 0.939)
+for `Ra` (on enclosure height) from 4.8·10⁶ to 6.1·10⁸; more contents raised `h` (2.61 against
+1.60), and `h` was highest near the bottom of the walls. Read status: external reading relayed
+by the owner (abstract, conclusions, Tables 5.2–5.6); not verified here. Consequence: the
+convection-only low end of `h_ext` (2.5–4) is of the right order once its basis is accounted for,
+and radiation, not convection, carries much of the contract's central 8, which nothing here
+measures on a dough. Open question: the contract reads a crowded shelf as the low end, while
+these data show more contents raising wall convection; the geometry differs (cold contents,
+warm walls), so the contract is unchanged.
 
 ## 15. Predictive uncertainty (research, 2026-11-03, rerun 2026-11-06)
 
