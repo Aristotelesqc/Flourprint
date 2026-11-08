@@ -75,6 +75,25 @@ def extract_result(path):
     return result, conversation, ignored
 
 
+def resolve_json_schema(value):
+    if value is None:
+        return None
+    text = value.strip()
+    if not text:
+        raise ValueError("--json-schema must not be empty")
+    if not text.startswith("{"):
+        candidate = Path(text)
+        if candidate.is_file():
+            return str(candidate.resolve(strict=True))
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError as cause:
+        raise ValueError("--json-schema must be valid inline JSON or an existing schema file") from cause
+    if not isinstance(parsed, dict):
+        raise ValueError("--json-schema inline JSON must be a JSON object")
+    return text
+
+
 def run(args):
     repo = Path(args.repo).resolve(strict=True)
     if not repo.is_dir():
@@ -86,6 +105,13 @@ def run(args):
     output = Path(args.out).resolve()
     if output.exists():
         raise ValueError("--out must be a new directory; do not mix or overwrite earlier runs")
+    added_dirs = []
+    for entry in args.add_dir:
+        resolved_dir = Path(entry).resolve(strict=True)
+        if not resolved_dir.is_dir():
+            raise ValueError("--add-dir must be an existing directory")
+        added_dirs.append(str(resolved_dir))
+    json_schema = resolve_json_schema(args.json_schema)
     cli = executable(args.agy)
     before = None if args.snapshot else git_state(repo)
     command = [
@@ -93,11 +119,18 @@ def run(args):
         "--log-file", str(output / "agy.log"), "--print-timeout", f"{args.timeout}s",
         "--input-format", "stream-json", "--output-format", "stream-json",
     ]
+    if args.effort:
+        command.extend(["--effort", args.effort])
+    for directory in added_dirs:
+        command.extend(["--add-dir", directory])
+    if json_schema:
+        command.extend(["--json-schema", json_schema])
     if args.conversation:
         command.extend(["--conversation", args.conversation])
     metadata = {
-        "model": args.model, "mode": args.mode, "inputMode": "snapshot" if args.snapshot else "checkout",
-        "repo": str(repo), "before": before,
+        "model": args.model, "effort": args.effort, "mode": args.mode,
+        "inputMode": "snapshot" if args.snapshot else "checkout",
+        "repo": str(repo), "addedDirs": added_dirs, "jsonSchema": json_schema, "before": before,
         "promptPath": str(prompt_path), "promptSha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
         "requestedConversation": args.conversation, "timeoutSeconds": args.timeout,
         "command": command,
@@ -122,7 +155,8 @@ def run(args):
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
             )
         exit_code = process.returncode
-        status = "cli_failed" if exit_code else "missing_result"
+        # AGY 1.5.0+ exits with code 3 when --print-timeout cuts a turn short.
+        status = "timeout" if exit_code == 3 else ("cli_failed" if exit_code else "missing_result")
     except subprocess.TimeoutExpired:
         status = "timeout"
     except OSError as cause:
@@ -134,10 +168,15 @@ def run(args):
         error = error or str(cause)
         if exit_code == 0:
             status = "capture_failed"
-    if exit_code == 0 and result is not None:
+    finished_reason = result.get("finished_reason") if isinstance(result, dict) else None
+    if finished_reason == "print_timeout":
+        status = "timeout"
+    elif exit_code == 0 and result is not None:
         response = result.get("response")
         if result.get("status") != "SUCCESS":
             status = "agent_failed"
+        elif finished_reason:
+            status = "interrupted" if finished_reason == "interrupted" else "incomplete_result"
         elif not isinstance(response, str) or not response.strip():
             status = "empty_response"
         else:
@@ -150,6 +189,7 @@ def run(args):
     metadata.update({
         "completedAt": utc_now(), "status": status, "exitCode": exit_code,
         "conversationId": conversation, "agentStatus": result.get("status") if result else None,
+        "finishedReason": finished_reason,
         "usage": result.get("usage") if result else None, "nonJsonLines": ignored,
         "after": after, "gitStateChanged": None if args.snapshot else before != after,
     })
@@ -166,7 +206,10 @@ def main(argv=None):
     parser.add_argument("--prompt", required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--model", required=True, help="Explicit model ID verified with agy models")
+    parser.add_argument("--effort", choices=("low", "medium", "high", "xhigh", "max"), help="Optional session-only reasoning effort")
     parser.add_argument("--mode", choices=("plan", "accept-edits"), default="plan")
+    parser.add_argument("--add-dir", action="append", default=[], help="Additional readable workspace directory (repeatable)")
+    parser.add_argument("--json-schema", help="Optional JSON schema object string or schema file path for the final result")
     parser.add_argument("--timeout", type=int, default=600, help="Bounded turn budget in seconds")
     parser.add_argument("--conversation", help="Exact session to resume; never inferred from most recent")
     parser.add_argument("--snapshot", action="store_true", help="Analyze supplied sources from a working directory without Git inspection")
