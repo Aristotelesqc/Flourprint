@@ -21,6 +21,8 @@ pull request.
 
 - [fermentation-model.md](fermentation-model.md): the fermentation model, its evidence, its limits
   and its changelog by model version.
+- [home-measurements.md](home-measurements.md): the measurements the owner's bakes can make to
+  calibrate the weakest points (fridge cooling, cold end, end point), with what to record
 - `data/`: transcribed source tables (CSV) with a metadata file each (source, DOI, formula,
   endpoint, what the temperature means, who transcribed it, read status, `source_verified`).
 - `data/style-guides.md` and `.json`: consensus ranges and starting points per template style,
