@@ -1,0 +1,349 @@
+{
+  "prototype": "summary-icons-v3",
+  "scope": "Icon comparison on a matched two-column prototype; not production UI",
+  "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+  "captures": [
+    {
+      "file": "fr-light-100.png",
+      "sha256": "ab1eef6d8bc3bbe225dd169481f7e7010b972cf1a83abe0aeb475a4fb31a5426",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-light-130.png",
+      "sha256": "2100d2bf9e13683c8b931c5b14fa3aa7a81a314bd2a05d76852db2f5ed6f3141",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-dark-100.png",
+      "sha256": "983f87675f1aab754b70341927182d862510a71232362a29b56522693c13e85e",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-dark-130.png",
+      "sha256": "8ef85397232e80a444d74b98530bfb1956328afd9b50c73b7342ced32d50146f",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-amoled-100.png",
+      "sha256": "5e6f963c896ab51aa4fafe251b395ede733de7e96d5c8ba60ec7b5b66d48ea31",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "fr-amoled-130.png",
+      "sha256": "73950e9ea1732cb0e6c2a5d523a67a94f2325c67c56a4bef427f4c5df33f7e66",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-light-100.png",
+      "sha256": "07c4e651e7e69ac20712f454b36ba51a03d0c50a318c96be2afd0000fcc5e923",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-light-130.png",
+      "sha256": "f90cc5e31b017303632ece3a1b129bcc8eea18bcaf6724d0d6dd225e6daa88e1",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-dark-100.png",
+      "sha256": "95ffd256c015208928f1b1575ff7c7d0b287063a3d68a759d060795477d25c74",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-dark-130.png",
+      "sha256": "11fdf2a65c03d5415a1e6dc52c06e106ff9d9e97579184bae01e743bde93f54a",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    },
+    {
+      "file": "en-amoled-100.png",
+      "sha256": "5a9a90d8e30c1704e043b608821e662dee1db65a119edaa608802629faaa6723",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 18
+    },
+    {
+      "file": "en-amoled-130.png",
+      "sha256": "573ed972dbb9cb6205620f1a1794fbe794fefa06f6a514b137f191269ded7295",
+      "prototype": "summary-icons-v3",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flourprint v2 crystals and butter pat",
+        "B: Flourprint v3 sugar cubes and butter knife"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 18
+    }
+  ],
+  "assets": [
+    {
+      "file": "IONICONS-LICENSE.txt",
+      "sha256": "fa8ca5fa0f75eb57e8e1bd436601fae7ea3650f945cddb0f975eaa49f8ceaf5c"
+    },
+    {
+      "file": "en-amoled-100.png",
+      "sha256": "5a9a90d8e30c1704e043b608821e662dee1db65a119edaa608802629faaa6723"
+    },
+    {
+      "file": "en-amoled-130.png",
+      "sha256": "573ed972dbb9cb6205620f1a1794fbe794fefa06f6a514b137f191269ded7295"
+    },
+    {
+      "file": "en-dark-100.png",
+      "sha256": "95ffd256c015208928f1b1575ff7c7d0b287063a3d68a759d060795477d25c74"
+    },
+    {
+      "file": "en-dark-130.png",
+      "sha256": "11fdf2a65c03d5415a1e6dc52c06e106ff9d9e97579184bae01e743bde93f54a"
+    },
+    {
+      "file": "en-light-100.png",
+      "sha256": "07c4e651e7e69ac20712f454b36ba51a03d0c50a318c96be2afd0000fcc5e923"
+    },
+    {
+      "file": "en-light-130.png",
+      "sha256": "f90cc5e31b017303632ece3a1b129bcc8eea18bcaf6724d0d6dd225e6daa88e1"
+    },
+    {
+      "file": "fr-amoled-100.png",
+      "sha256": "5e6f963c896ab51aa4fafe251b395ede733de7e96d5c8ba60ec7b5b66d48ea31"
+    },
+    {
+      "file": "fr-amoled-130.png",
+      "sha256": "73950e9ea1732cb0e6c2a5d523a67a94f2325c67c56a4bef427f4c5df33f7e66"
+    },
+    {
+      "file": "fr-dark-100.png",
+      "sha256": "983f87675f1aab754b70341927182d862510a71232362a29b56522693c13e85e"
+    },
+    {
+      "file": "fr-dark-130.png",
+      "sha256": "8ef85397232e80a444d74b98530bfb1956328afd9b50c73b7342ced32d50146f"
+    },
+    {
+      "file": "fr-light-100.png",
+      "sha256": "ab1eef6d8bc3bbe225dd169481f7e7010b972cf1a83abe0aeb475a4fb31a5426"
+    },
+    {
+      "file": "fr-light-130.png",
+      "sha256": "2100d2bf9e13683c8b931c5b14fa3aa7a81a314bd2a05d76852db2f5ed6f3141"
+    },
+    {
+      "file": "index.html",
+      "sha256": "fb0054d1c5b142d22dc5d589b17eaa3880c96a6c680bf17d85ba7c6403555ca3"
+    },
+    {
+      "file": "reference-133-fr.png",
+      "sha256": "24b2ff8259661545032da6a95fa11913fcbaac3fb6971bdacb8668df3ac038f7"
+    },
+    {
+      "file": "svg/dough.svg",
+      "sha256": "ff8830b3f8babdb8f771f920b17410325ec44d2455834a6355b7bb5cc8782db7"
+    },
+    {
+      "file": "svg/fat.svg",
+      "sha256": "0afe459630398a0cd61faf7bfbb31b594e001c1dc78e4190b283ad6593a7e4d6"
+    },
+    {
+      "file": "svg/hydration.svg",
+      "sha256": "24a2886f764cac86fef6efc5f9bce1476e77b94c73f984c004b43cfa977d0c75"
+    },
+    {
+      "file": "svg/sugar.svg",
+      "sha256": "54b2648b5b40cd0eb2153deadc9da45d40c941ef0eddf6cad5f59091a0b44f29"
+    }
+  ]
+}
