@@ -10,7 +10,8 @@ It is the reference for checking any report against the primary sources.
   copied anywhere.
 - **Read status** uses the labels of [README.md](README.md): `full` (full text read, by whom),
   `abstract`, `secondary` (known through another text), `external` (read by an agent outside the
-  repository, relayed by the owner, not re-read here).
+  repository, relayed by the owner, not re-read here). "Full text available, skimmed" means the full text was looked through
+  for what it measures, not read in full.
 - **Numbers** go in a `data/` file with its own metadata, only when a table is useful to a fit or a
   test. Values read from a figure say so.
 - A report that cites a source not listed here, or with a different reading, is checked against

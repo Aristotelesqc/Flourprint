@@ -449,7 +449,8 @@ withdrawn. No contract or engine code used them.
 Same instrument class at 30 °C with 2 % yeast on flour, but no sugar or oil, and water lowered as salt
 rises. At 1.72 % and 2.87 % of flour total gas is 0.71 and 0.44 of the salt-free value, while retained
 gas is 0.93 and 0.66 (our division); the salt-free dough loses 36 % of its gas, Boudrag's under 1 %.
-Near 2 % of flour the two studies differ about threefold in the fall of total gas. The paper gives
+The fall of total gas is about 2.2 to 2.4 times larger than Boudrag's at a similar level (0.29 at
+1.72 % of flour against 0.13 and 0.12 for white and fibre-fortified flour at 1.9 and 2.0 %). The paper gives
 its duration as 90 min in the methods and 3 h in the Table 2 caption. Candidate reasons for the gap:
 duration, sugar and oil in Boudrag, gas release, flour. Two consequences: no transferable salt
 multiplier follows, and salt's effect on the gas that drives rise can be much smaller than its effect
@@ -468,8 +469,8 @@ The full source index, with legal access links, read status and use, is
 [sources.md](sources.md). The table below keeps the arbitration record of the first reports.
 
 Read status: F = full text read by the named reviewer, A = abstract only, S = secondary. "Unverified"
-means this document could not confirm the item beyond the cited review comment. Only item 4 was read
-directly by a Flourprint agent.
+means this document could not confirm the item beyond the cited review comment. Only items 3 and 4 were
+read directly by a Flourprint agent.
 
 | #   | Reference                                                                                                                                                                                                                                                                                                                                                         | Status                                                                                                                                                                                                                                                                                |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -592,8 +593,7 @@ details match the paper; measure the dough temperature during the owner's cold r
 | science doc     | 2026-10-25        | Section 14: provenance of every constant of the dough thermal model proposed for contract 0.21.0 (#176). No change of the kinetic model; the thermal sub-model `flourprint.dough-thermal` 0.1.0 is a proposal until its contract merges.                                                                                                                                                                                                                             |
 | science doc     | 2026-10-26        | Goal and acceptance criterion: a forecast at least as good as an expert baker's, judged by held-out predictive error against published schedules and recorded bakes; recipe corpus, science and personal bakes as complementary sources; gate 9. Owner decision. No model change.                                                                                                                                                                                    |
 | science doc     | 2026-10-30        | Section 8 and its data file: Boudrag Table 5 re-extracted from the full text; the earlier transcription and the salt factor fitted on it withdrawn. No model change.                                                                                                                                                                                                                                                                                                 |
-
-| science doc | 2026-11-07 | Section 8: Belz 2017 salt series read in full text, with its data file; section 12: design notes from the third external report. No model change. |
+| science doc     | 2026-11-07        | Section 8: Belz 2017 salt series read in full text, with its data file; section 12: design notes from the third external report. No model change.                                                                                                                                                                                                                                                                                                                    |
 
 Any future model version adds a row here with the evidence it rests on.
 
