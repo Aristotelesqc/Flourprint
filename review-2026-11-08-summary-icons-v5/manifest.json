@@ -1,0 +1,349 @@
+{
+  "prototype": "summary-icons-v5",
+  "scope": "Pictograms traced from the owner reference and elevation comparison; not production UI",
+  "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+  "captures": [
+    {
+      "file": "fr-light-100.png",
+      "sha256": "35be94cc536778a5e0b5fe44c804dca474964dcc6be509f1b7fa76f4a25611c6",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 22
+    },
+    {
+      "file": "fr-light-130.png",
+      "sha256": "74b11f4a0bbb234b8eac29f0da8304bb1ce5ee53b2c1ab5fa8d0eea87fac3c9a",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 22
+    },
+    {
+      "file": "fr-dark-100.png",
+      "sha256": "0a001eab340ec7608b88ffb070554c4e5ad0f0cb3e4594d5eec34181ff4d28a9",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 22
+    },
+    {
+      "file": "fr-dark-130.png",
+      "sha256": "f0ddac91c42cc65058a577cf418cbf51d0b62188c284f4ef3b77d440bab4c07b",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 22
+    },
+    {
+      "file": "fr-amoled-100.png",
+      "sha256": "690094be9d3a1328d058ffb142c43fecf159c599c3d2ac5c7c82fe47d6e861ab",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "fr",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 22
+    },
+    {
+      "file": "fr-amoled-130.png",
+      "sha256": "fe9f0634520460a92a108197c9858a07642b0ff39334dbc38c435615032de57c",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "fr",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 22
+    },
+    {
+      "file": "en-light-100.png",
+      "sha256": "bce51ac49892964e1506832c1b2ab59b4f1370f31e98cf42d2a96fbcd007323e",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 22
+    },
+    {
+      "file": "en-light-130.png",
+      "sha256": "b1e930ac589d2f152329582eb12241cd10167de95f8bcf89942c75914de23e14",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "light",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 22
+    },
+    {
+      "file": "en-dark-100.png",
+      "sha256": "763c816b147728dcac98502cc88ad3169a1739b8f170de0d03a247821ebd9401",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 22
+    },
+    {
+      "file": "en-dark-130.png",
+      "sha256": "3ca74755ca8d8a27fe0e930a681ab4948559a051067d2f5df454ae0017ac16cc",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "dark",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 22
+    },
+    {
+      "file": "en-amoled-100.png",
+      "sha256": "7b2bb924ac163cd9b530e738133e4155f7a4e45c3b6ceac7eebe8b3b15b22a95",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "en",
+      "widthPerSpecimen": 393,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 100,
+      "iconSize": 22
+    },
+    {
+      "file": "en-amoled-130.png",
+      "sha256": "212b93457e1b59df73045e6fd329c6e57c1236e14e0b7aef81d05d480e7d3386",
+      "prototype": "summary-icons-v5",
+      "reference": "e7aaad3d433f64e7c436dfc62ca5320cd5e36fee",
+      "screen": "Recipe summary",
+      "state": "read",
+      "options": [
+        "A: Flat tiles",
+        "B: Raised tiles, same pictograms"
+      ],
+      "fixture": "Shokupan from frozen #133",
+      "theme": "amoled",
+      "locale": "en",
+      "widthPerSpecimen": 360,
+      "outerViewport": {
+        "width": 900,
+        "height": 660
+      },
+      "textScale": 130,
+      "iconSize": 22
+    }
+  ],
+  "assets": [
+    {
+      "file": "IONICONS-LICENSE.txt",
+      "sha256": "fa8ca5fa0f75eb57e8e1bd436601fae7ea3650f945cddb0f975eaa49f8ceaf5c"
+    },
+    {
+      "file": "en-amoled-100.png",
+      "sha256": "7b2bb924ac163cd9b530e738133e4155f7a4e45c3b6ceac7eebe8b3b15b22a95"
+    },
+    {
+      "file": "en-amoled-130.png",
+      "sha256": "212b93457e1b59df73045e6fd329c6e57c1236e14e0b7aef81d05d480e7d3386"
+    },
+    {
+      "file": "en-dark-100.png",
+      "sha256": "763c816b147728dcac98502cc88ad3169a1739b8f170de0d03a247821ebd9401"
+    },
+    {
+      "file": "en-dark-130.png",
+      "sha256": "3ca74755ca8d8a27fe0e930a681ab4948559a051067d2f5df454ae0017ac16cc"
+    },
+    {
+      "file": "en-light-100.png",
+      "sha256": "bce51ac49892964e1506832c1b2ab59b4f1370f31e98cf42d2a96fbcd007323e"
+    },
+    {
+      "file": "en-light-130.png",
+      "sha256": "b1e930ac589d2f152329582eb12241cd10167de95f8bcf89942c75914de23e14"
+    },
+    {
+      "file": "fr-amoled-100.png",
+      "sha256": "690094be9d3a1328d058ffb142c43fecf159c599c3d2ac5c7c82fe47d6e861ab"
+    },
+    {
+      "file": "fr-amoled-130.png",
+      "sha256": "fe9f0634520460a92a108197c9858a07642b0ff39334dbc38c435615032de57c"
+    },
+    {
+      "file": "fr-dark-100.png",
+      "sha256": "0a001eab340ec7608b88ffb070554c4e5ad0f0cb3e4594d5eec34181ff4d28a9"
+    },
+    {
+      "file": "fr-dark-130.png",
+      "sha256": "f0ddac91c42cc65058a577cf418cbf51d0b62188c284f4ef3b77d440bab4c07b"
+    },
+    {
+      "file": "fr-light-100.png",
+      "sha256": "35be94cc536778a5e0b5fe44c804dca474964dcc6be509f1b7fa76f4a25611c6"
+    },
+    {
+      "file": "fr-light-130.png",
+      "sha256": "74b11f4a0bbb234b8eac29f0da8304bb1ce5ee53b2c1ab5fa8d0eea87fac3c9a"
+    },
+    {
+      "file": "index.html",
+      "sha256": "dcf10e30b0f77000357fd83f3d059842eab2709d78ef681e785c52cbdd76b08b"
+    },
+    {
+      "file": "reference-133-fr.png",
+      "sha256": "24b2ff8259661545032da6a95fa11913fcbaac3fb6971bdacb8668df3ac038f7"
+    },
+    {
+      "file": "svg/dough.svg",
+      "sha256": "066e87670b282e59afc0ea4f62c8d2e0096bc64d6c4a3fac93a0e3ceb875ccd5"
+    },
+    {
+      "file": "svg/fat.svg",
+      "sha256": "599d64f37b9c414777bd9eacd5a1cf04817f8c3f2f94bf9aa4c1c5b1bf69d143"
+    },
+    {
+      "file": "svg/hydration.svg",
+      "sha256": "027c1ee3a147dd6c64e77460f149d5c1f631a8d0fd52a57ca04d996c26d13b80"
+    },
+    {
+      "file": "svg/sugar.svg",
+      "sha256": "08db503b83a9bbbe090bada9db257818b16a374e3fd1c2e42b0fdb6aa9d34f95"
+    }
+  ]
+}
