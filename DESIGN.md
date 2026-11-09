@@ -253,6 +253,11 @@ the current workspace; selection and interactive state must remain clear without
 on color. Avoid decorating every value with a raised container. Evaluate new elevation and
 surface consumers side by side across light, warm dark, and AMOLED.
 
+The two-column Recipe summary is an approved exception to the flat default for anchored
+surfaces (L160, ADR 0021). Use the shallow relief from [summary study v5, variant B](https://aristotelesqc.github.io/Flourprint/review-2026-11-08-summary-icons-v5/):
+opaque tonal tiles with a soft, short shadow in Light and Warm Dark, and a fine upper highlight
+in AMOLED. Keep each number prominent and its ⓘ the separate touch target.
+
 ## Shapes
 
 Current shared cards have a 1rem radius; segmented options use 0.75rem. Preserve coherent shapes
@@ -267,6 +272,8 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   slivers. Registry, history and settings remain reachable without competing with the recipe list.
 - **Recipe consultation:** summary, clearly named percentage bases, shared `ConsultationRow` items with
   consistent vertical padding when titles wrap, components and authored method ("Étapes de préparation").
+  The summary uses the v5 monochrome pictograms at 22 px: a dough ball, a water drop,
+  butter on its unfolded wrapper and two sugar cubes (L38, L160).
   Contextual information buttons stay beside hydration, size and other explained concepts.
   Hydration breakdown uses the shared sheet, with its total visible first, then unknown contributors and compact source disclosures.
   A decorative stacked bar shows the core-provided shares of specified water before declared losses (L126).
