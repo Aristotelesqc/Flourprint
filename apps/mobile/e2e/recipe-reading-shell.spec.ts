@@ -29,6 +29,10 @@ for (const english of [false, true]) {
           .getByRole('heading', { name: 'Poolish + tangzhong', exact: true })
           .click();
         await expectRecipeRevision(page, 1);
+        await page.addStyleTag({
+          content: `html, body { font-size: ${16 * scale}px !important; }
+          ${large ? 'html { --ion-safe-area-left: 32px; --ion-safe-area-right: 34px; }' : ''}`,
+        });
         // A normal rename creates the long synthetic title; no product DOM is replaced.
         await enterEditor(page);
         await menuAction(page, /^(Renommer|Rename)$/);
@@ -49,9 +53,6 @@ for (const english of [false, true]) {
         await expect(
           routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]'),
         ).toHaveCount(0);
-        await page.addStyleTag({
-          content: `html, body { font-size: ${16 * scale}px !important; }`,
-        });
         expect(await page.locator('html').evaluate((host) => getComputedStyle(host).fontSize)).toBe(
           large ? '20.8px' : '16px',
         );
@@ -106,6 +107,15 @@ for (const english of [false, true]) {
         const footer = routed(page).locator('ion-footer, [data-testid="recipe-draft-bar"]');
         await expect(footer).toHaveCount(0);
         const header = routed(page).locator('ion-header');
+        await expect(
+          header.getByText(english ? 'Ready in 20 h 10 min' : 'Prêt dans 20 h 10 min', {
+            exact: true,
+          }),
+        ).toBeVisible();
+        const back = header.getByRole('button', {
+          name: english ? 'Back' : 'Retour',
+          exact: true,
+        });
         const edit = header.getByRole('button', {
           name: english ? 'Edit recipe' : 'Modifier la recette',
           exact: true,
@@ -121,19 +131,29 @@ for (const english of [false, true]) {
           }),
         ).toHaveCount(0);
         const controls = [];
-        for (const control of [edit, overflow]) {
+        for (const control of [back, edit, overflow]) {
           await expect(control).toBeVisible();
           const box = await control.boundingBox();
           if (!box) throw new Error('Expected visible header action bounds');
           expect(box.width).toBeGreaterThanOrEqual(48 * scale - 1);
           expect(box.height).toBeGreaterThanOrEqual(48 * scale - 1);
-          expect(box.x).toBeGreaterThanOrEqual(0);
-          expect(box.x + box.width).toBeLessThanOrEqual(width);
+          expect(box.x).toBeGreaterThanOrEqual(large ? 32 : 0);
+          expect(box.x + box.width).toBeLessThanOrEqual(width - (large ? 34 : 0));
           controls.push(box);
         }
-        const [editBox, overflowBox] = controls;
+        const [, editBox, overflowBox] = controls;
         if (!editBox || !overflowBox) throw new Error('Expected two header actions');
         expect(editBox.x + editBox.width).toBeLessThanOrEqual(overflowBox.x + 1);
+        const titleBox = await heading.boundingBox();
+        if (!titleBox) throw new Error('Expected visible title bounds');
+        for (const box of controls) {
+          const overlap =
+            Math.min(box.x + box.width, titleBox.x + titleBox.width) >
+              Math.max(box.x, titleBox.x) &&
+            Math.min(box.y + box.height, titleBox.y + titleBox.height) >
+              Math.max(box.y, titleBox.y);
+          expect(overlap).toBe(false);
+        }
         expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
           width,
         );
@@ -158,7 +178,11 @@ for (const english of [false, true]) {
           .click();
         await expect(trash).toHaveCount(0);
         await expect(heading).toBeVisible();
-        await page.screenshot({ path: testInfo.outputPath('reading-shell.png') });
+        await expect(page.locator('ion-toast:not(.overlay-hidden)')).toHaveCount(0);
+        await page.screenshot({
+          path: testInfo.outputPath('reading-shell.png'),
+          animations: 'disabled',
+        });
         await tabs
           .getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true })
           .click();
@@ -177,7 +201,10 @@ for (const english of [false, true]) {
             exact: true,
           }),
         ).toBeVisible();
-        await page.screenshot({ path: testInfo.outputPath('planning-shell.png') });
+        await page.screenshot({
+          path: testInfo.outputPath('planning-shell.png'),
+          animations: 'disabled',
+        });
         await edit.click();
         await expect(
           routed(page)
