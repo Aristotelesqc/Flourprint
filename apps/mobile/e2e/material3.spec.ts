@@ -69,12 +69,15 @@ test('milk-only incomplete hydration offers ingredient editing without inventing
   await expect(page).toHaveURL(/\/recipes\/qa-milk-only$/);
   await expectRecipeRevision(page, 1);
   await expect(routed(page)).toHaveCount(1);
-  await expect(
-    routed(page).getByText('Partie renseignée (estimée) : 53 %', { exact: true }),
-  ).toBeVisible();
+  const hydrationTile = routed(page)
+    .getByTestId('recipe-summary')
+    .locator(':scope > *')
+    .filter({ has: page.getByText('Hydratation', { exact: true }) });
+  await expect(hydrationTile.getByText('53 %', { exact: true })).toBeVisible();
+  await expect(hydrationTile.getByText(/Part estimée/)).toBeVisible();
   await expect(
     routed(page)
-      .getByText(/Inconnu pour :/)
+      .getByText(/Composition des ingrédients incomplète pour/)
       .first(),
   ).toBeVisible();
   await expect(

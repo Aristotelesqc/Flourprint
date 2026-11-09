@@ -329,6 +329,32 @@ for (const english of [false, true]) {
     await sheet.getByRole('button', { name: close, exact: true }).click();
     await expect(sheet).toBeHidden();
     await expect(trigger).toBeFocused();
+
+    const summary = routed(page).getByTestId('recipe-summary');
+    const metricSheets: readonly (readonly [string, string])[] = english
+      ? [
+          ['Dough', 'Recipe size: flour, dough or pieces'],
+          ['Fat', 'Fat'],
+          ['Sugar', 'Sugar'],
+        ]
+      : [
+          ['Pâte', 'Taille de la recette : farine, pâte ou pâtons'],
+          ['Matières grasses', 'Matières grasses'],
+          ['Sucres', 'Sucres'],
+        ];
+    for (const [label, heading] of metricSheets) {
+      const info = summary.getByRole('button', {
+        name: english ? `Explanation: ${label}` : `Explication : ${label}`,
+        exact: true,
+      });
+      await info.click();
+      const metricSheet = overlayWithHeading(page, heading);
+      const dismiss = metricSheet.getByRole('button', { name: close, exact: true });
+      await expect(dismiss).toBeFocused();
+      await dismiss.click();
+      await expect(metricSheet).toBeHidden();
+      await expect(info).toBeFocused();
+    }
   });
 
   test(`shared hydration sheet keeps an unknown ingredient incomplete and lower-bounded${suffix}`, async ({
@@ -398,10 +424,45 @@ for (const english of [false, true]) {
   });
   for (const theme of ['light', 'dark', 'amoled']) {
     for (const large of [false, true]) {
-      test(`water source legend fits ${theme} ${large ? '360/130' : '393/100'}${suffix}`, async ({
+      test(`Recipe tiles and water source legend fit ${theme} ${large ? '360/130' : '393/100'}${suffix}`, async ({
         page,
       }, testInfo) => {
         await importRecipe(page, true, english, true, theme, large);
+        const summary = routed(page).getByTestId('recipe-summary');
+        const tiles = summary.locator(':scope > *');
+        await expect(tiles).toHaveCount(4);
+        const geometry = await tiles.evaluateAll((elements) =>
+          elements.map((tile) => {
+            const bounds = tile.getBoundingClientRect();
+            const button = tile.querySelector('button')?.getBoundingClientRect();
+            return {
+              x: bounds.x,
+              y: bounds.y,
+              fits: tile.scrollWidth <= tile.clientWidth,
+              relief: getComputedStyle(tile).boxShadow,
+              iconSize: tile.querySelector('svg')?.getBoundingClientRect().width,
+              touchWidth: button?.width,
+              touchHeight: button?.height,
+            };
+          }),
+        );
+        expect(geometry[0]?.y).toBe(geometry[1]?.y);
+        expect(geometry[2]?.y).toBe(geometry[3]?.y);
+        expect(geometry[0]?.x).toBe(geometry[2]?.x);
+        expect(geometry[1]?.x).toBe(geometry[3]?.x);
+        expect(new Set(geometry.map(({ x }) => x)).size).toBe(2);
+        expect(new Set(geometry.map(({ y }) => y)).size).toBe(2);
+        for (const tile of geometry) {
+          expect(tile.fits).toBe(true);
+          expect(tile.relief).not.toBe('none');
+          expect(tile.iconSize).toBe(22);
+          expect(tile.touchWidth).toBeGreaterThanOrEqual(48);
+          expect(tile.touchHeight).toBeGreaterThanOrEqual(48);
+        }
+        const summaryCapture = testInfo.outputPath('recipe-summary.png');
+        await summary.screenshot({ path: summaryCapture });
+        await testInfo.attach('Recipe summary', { path: summaryCapture, contentType: 'image/png' });
+
         const trigger = routed(page).getByRole('button', { name: title, exact: true });
         await trigger.click();
         const sheet = overlayWithHeading(page, title);

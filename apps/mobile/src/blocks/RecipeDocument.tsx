@@ -15,6 +15,7 @@ import { flourSummary } from '../services/flour-summary';
 import { useFlourCatalog } from '../services/flours';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
+import { RecipeSummary } from './RecipeSummary';
 import { WeighingChecklist, type WeighedRow } from './WeighingChecklist';
 import {
   AddFlour,
@@ -114,7 +115,7 @@ export const RecipeDocument = ({
   disclosures,
   onDisclosuresChange,
 }: RecipeDocumentProps) => {
-  const { t, grams, pct, wholePct, name, componentName } = useMessages();
+  const { t, grams, pct, name, componentName } = useMessages();
   const [explaining, setExplaining] = useState(false);
 
   const anchor = formula.anchor;
@@ -138,181 +139,156 @@ export const RecipeDocument = ({
 
   return (
     <div className="flex flex-col gap-5 pb-6">
-      {/* Compact Dough-First Summary Surface */}
-      <Ui
-        component="fp.surface"
-        variant="surface"
-        padding="normal"
-        className="flex flex-col gap-3 rounded-2xl border border-line"
-      >
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 font-bold text-ink">
-            {t('recipe.document.summary')}
-            <InfoButton topic="anchor" term={t('formula.quantity')} />
-          </span>
-
-          {/* Sizing choices in edit mode: doughWeight or pieces */}
-          {fieldsMounted && (
-            <div hidden={!editable} className="flex items-center gap-2">
-              <button
-                type="button"
-                className={`fp-reset min-h-[48px] px-3 text-sm font-semibold rounded-lg ${
-                  anchor.kind === 'doughWeight'
-                    ? 'bg-accent text-on-accent'
-                    : 'bg-muted/10 text-muted'
-                }`}
-                onClick={() =>
-                  onEdit({ type: 'SetAnchor', mode: 'reinterpret', kind: 'doughWeight' })
-                }
-              >
-                {t('formula.anchor.doughWeight')}
-              </button>
-              <button
-                type="button"
-                className={`fp-reset min-h-[48px] px-3 text-sm font-semibold rounded-lg ${
-                  anchor.kind === 'pieces' ? 'bg-accent text-on-accent' : 'bg-muted/10 text-muted'
-                }`}
-                onClick={() =>
-                  onEdit({ type: 'SetAnchor', mode: 'reinterpret', kind: 'pieces', count: 1 })
-                }
-              >
-                {t('formula.anchor.pieces')}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Key Metrics: Compact dough-first layout */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {/* Dough & Pieces */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-              {t('formula.stat.dough')}
-            </span>
-            <span className="text-2xl font-extrabold tabular-nums text-ink">
-              {displayDoughWeight !== undefined
-                ? grams(displayDoughWeight)
-                : t('recipe.document.unresolvedGrams')}
-            </span>
-
-            {/* Pieces convention: pieces anchor uses actual count/gramsEach; non-pieces shows 1 piece */}
-            {anchor.kind === 'pieces' ? (
-              <span className="text-sm font-medium text-muted tabular-nums">
-                {t('recipe.document.piecesSummary', {
-                  count: anchor.count,
-                  grams: grams(anchor.gramsEach),
-                })}
+      {!editable && (
+        <RecipeSummary
+          anchor={anchor}
+          displayDoughWeight={displayDoughWeight}
+          resolved={resolved}
+          onExplainHydration={() => setExplaining(true)}
+        />
+      )}
+      {fieldsMounted && (
+        <div hidden={!editable}>
+          <Ui
+            component="fp.surface"
+            variant="surface"
+            padding="normal"
+            className="flex flex-col gap-3 rounded-2xl border border-line"
+          >
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 font-bold text-ink">
+                {t('recipe.document.summary')}
+                <InfoButton topic="anchor" term={t('formula.quantity')} />
               </span>
-            ) : (
-              displayDoughWeight !== undefined && (
-                <span className="text-sm font-medium text-muted tabular-nums">
-                  {t('recipe.document.piecesDisplayConvention', {
-                    grams: grams(displayDoughWeight),
-                  })}
-                </span>
-              )
-            )}
 
-            {/* Sizing inputs when editable */}
-            {fieldsMounted && (
-              <div hidden={!editable} className="flex flex-col gap-2 pt-1">
+              {/* Sizing choices in edit mode: doughWeight or pieces */}
+              {fieldsMounted && (
+                <div hidden={!editable} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className={`fp-reset min-h-[48px] px-3 text-sm font-semibold rounded-lg ${
+                      anchor.kind === 'doughWeight'
+                        ? 'bg-accent text-on-accent'
+                        : 'bg-muted/10 text-muted'
+                    }`}
+                    onClick={() =>
+                      onEdit({ type: 'SetAnchor', mode: 'reinterpret', kind: 'doughWeight' })
+                    }
+                  >
+                    {t('formula.anchor.doughWeight')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`fp-reset min-h-[48px] px-3 text-sm font-semibold rounded-lg ${
+                      anchor.kind === 'pieces'
+                        ? 'bg-accent text-on-accent'
+                        : 'bg-muted/10 text-muted'
+                    }`}
+                    onClick={() =>
+                      onEdit({ type: 'SetAnchor', mode: 'reinterpret', kind: 'pieces', count: 1 })
+                    }
+                  >
+                    {t('formula.anchor.pieces')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Key Metrics: Compact dough-first layout */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {/* Dough & Pieces */}
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+                  {t('formula.stat.dough')}
+                </span>
+                <span className="text-2xl font-extrabold tabular-nums text-ink">
+                  {displayDoughWeight !== undefined
+                    ? grams(displayDoughWeight)
+                    : t('recipe.document.unresolvedGrams')}
+                </span>
+
+                {/* Pieces convention: pieces anchor uses actual count/gramsEach; non-pieces shows 1 piece */}
                 {anchor.kind === 'pieces' ? (
-                  <>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs">{t('formula.anchorField.count')}</span>
-                      <NumberField
-                        label={t('formula.anchorField.count')}
-                        size="regular"
-                        width="6.5rem"
-                        value={anchor.count}
-                        onCommit={(count) => rescale({ ...anchor, count })}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs">{t('formula.anchorField.gramsEach')}</span>
-                      <NumberField
-                        label={t('formula.anchorField.gramsEach')}
-                        unit="g"
-                        size="regular"
-                        width="6.5rem"
-                        value={anchor.gramsEach}
-                        onCommit={(gramsEach) => rescale({ ...anchor, gramsEach })}
-                      />
-                    </div>
-                  </>
+                  <span className="text-sm font-medium text-muted tabular-nums">
+                    {t('recipe.document.piecesSummary', {
+                      count: anchor.count,
+                      grams: grams(anchor.gramsEach),
+                    })}
+                  </span>
                 ) : (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs">{t('formula.anchorField.doughWeight')}</span>
-                    <NumberField
-                      label={t('formula.anchorField.doughWeight')}
-                      unit="g"
-                      width="6.5rem"
-                      value={displayDoughWeight}
-                      onCommit={(val) => rescale({ kind: 'doughWeight', grams: val })}
+                  displayDoughWeight !== undefined && (
+                    <span className="text-sm font-medium text-muted tabular-nums">
+                      {t('recipe.document.piecesDisplayConvention', {
+                        grams: grams(displayDoughWeight),
+                      })}
+                    </span>
+                  )
+                )}
+
+                {/* Sizing inputs when editable */}
+                {fieldsMounted && (
+                  <div hidden={!editable} className="flex flex-col gap-2 pt-1">
+                    {anchor.kind === 'pieces' ? (
+                      <>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs">{t('formula.anchorField.count')}</span>
+                          <NumberField
+                            label={t('formula.anchorField.count')}
+                            size="regular"
+                            width="6.5rem"
+                            value={anchor.count}
+                            onCommit={(count) => rescale({ ...anchor, count })}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs">{t('formula.anchorField.gramsEach')}</span>
+                          <NumberField
+                            label={t('formula.anchorField.gramsEach')}
+                            unit="g"
+                            size="regular"
+                            width="6.5rem"
+                            value={anchor.gramsEach}
+                            onCommit={(gramsEach) => rescale({ ...anchor, gramsEach })}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs">{t('formula.anchorField.doughWeight')}</span>
+                        <NumberField
+                          label={t('formula.anchorField.doughWeight')}
+                          unit="g"
+                          width="6.5rem"
+                          value={displayDoughWeight}
+                          onCommit={(val) => rescale({ kind: 'doughWeight', grams: val })}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Hydration: single unified section */}
+              <div className="flex flex-col gap-1">
+                {/* Edit view: Hydration control kept mounted once fieldsMounted */}
+                {fieldsMounted && resolved && (
+                  <div hidden={!editable}>
+                    <Hydration
+                      ref={hydrationRef}
+                      formula={formula}
+                      resolved={resolved}
+                      onEdit={onEdit}
+                      onExplain={() => setExplaining(true)}
                     />
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Hydration: single unified section */}
-          <div className="flex flex-col gap-1">
-            {/* Read view: plain text and small info button */}
-            {!editable && resolved && (
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
-                    {t('formula.stat.hydration')}
-                    <button
-                      type="button"
-                      aria-label={t('formula.hydration.breakdown')}
-                      className="fp-reset inline-flex min-h-[48px] min-w-[48px] items-center justify-center text-muted hover:text-ink"
-                      onClick={() => setExplaining(true)}
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="16" x2="12" y2="12" />
-                        <line x1="12" y1="8" x2="12.01" y2="8" />
-                      </svg>
-                    </button>
-                  </span>
-                </div>
-                <span className="text-2xl font-extrabold tabular-nums text-ink">
-                  {t(totalWaterKey(resolved.totalWater), {
-                    pct: wholePct(resolved.totalWaterPct),
-                  })}
-                </span>
-              </div>
-            )}
-
-            {/* Edit view: Hydration control kept mounted once fieldsMounted */}
-            {fieldsMounted && resolved && (
-              <div hidden={!editable}>
-                <Hydration
-                  ref={hydrationRef}
-                  formula={formula}
-                  resolved={resolved}
-                  onEdit={onEdit}
-                  onExplain={() => setExplaining(true)}
-                />
-              </div>
-            )}
-          </div>
+            {resolved && <Enrichment resolved={resolved} />}
+          </Ui>
         </div>
-
-        {resolved && <Enrichment resolved={resolved} />}
-      </Ui>
+      )}
 
       {/* Flours Accordion */}
       <Ui
