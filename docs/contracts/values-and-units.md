@@ -60,7 +60,7 @@ type Estimate<T = number> =
       range?: [RangeBound<T>, RangeBound<T>];
       model: ModelRef;
       assumptions: string[];
-      extrapolations?: string[]; // outside the data the model was fitted on, still given
+      extrapolations?: string[]; // outside the fitted data, or thin evidence; still given
       calibration?: { id: string; version: string }; // readiness profile used (fermentation.md)
     }
   | {
@@ -104,6 +104,7 @@ interface ModelRef {
   `{ kind: 'finite', value }` without changing its value (history.md).
 - Every number of an `ok` estimate (value and finite bounds) is finite.
 - `extrapolations` lists, as stable codes, each reason the estimate lies outside the model's
-  fitted domain; the UI always shows them next to the value.
+  fitted domain or in a regime where its evidence is thin (fermentation.md, Learning flags); the UI
+  always shows them next to the value.
 - `assumptions`, `extrapolations`, `reason` and `missing` hold stable codes or English developer text; the UI
   localizes them (ADR 0009).
