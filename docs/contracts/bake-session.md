@@ -330,7 +330,12 @@ for all of it:
 
 - **Optional, always possible.** Nothing here is ever required. No step, completion, finish or
   reminder waits for a temperature, and a Preparation that records none behaves exactly as before.
-  A measurement may be entered at any time its rule below allows, skipped, or entered late.
+  A measurement may be entered at any time its rule below allows, or skipped. Entering one after
+  the Preparation has ended is not allowed (`BakeNotActive`): a forgotten flour temperature cannot
+  be added later (owner choice to confirm).
+- **A reading never moves a step.** Recording a temperature never starts, completes, reorders or
+  shifts a step and never freezes the clock: only the baker's Next on the first-contact step does
+  (Dough clock and dough steps, above).
 - **A fact, not a plan.** A measurement is a recorded fact: it never changes the recipe, the plan,
   the snapshot or the formula, never completes a step, and stays in the journal after a later one
   supersedes it. Of several readings of one quantity the one **in force** is the latest by
@@ -389,11 +394,23 @@ calibration reading, because its step has no `thermal` and no lag. A reading who
 after the clock start behaves as any reading on a dough step from its instant.
 
 **Between steps.** The dough may be measured between two steps. The reading is recorded on the step
-that follows, whose start the interface records at its implicit start on the first real action
-(Implicitly running steps, below): a reading at the instant the first-contact step ends is therefore
+that follows. If that step has no recorded start, the interface's existing rule for a first real
+action applies (Implicitly running steps, below); the reading itself starts nothing: a reading at the instant the first-contact step ends is therefore
 a reading at progress 0, the start of the clock, and a reading at the end of any other dough step is
 the next step's start state (existing rule, `doughTemperature` above). No command or gate
 is added for it.
+
+**Scope of "any step" (owner choice to confirm).** The owner asked for the dough temperature at
+any step. The gate is narrower: a running dough step or the running first-contact step. It refuses
+a reading on an `autolyse` or another step before the first contact (the dough does not exist yet),
+on a heat step, after the end of the Preparation, and while no step is running (the baker records
+it on the step that follows, above). The alternative is to accept a dough reading on any running
+step and to ignore it in the forecast where the model has no dough.
+
+**The room is per step.** `AdjustStep temperatureC` changes one step. A later step with its own
+planned temperature needs its own adjustment; a step with no temperature of its own keeps the
+previous step's effective one (Dough temperature). The interface may offer to carry a change
+forward; the contract adds no command for it.
 
 **Calibration data.** The measurements are information for three layers, kept apart as in
 fermentation.md, Personal correction and docs/science/fermentation-model.md, section 11: the live
@@ -407,6 +424,14 @@ algorithms, which are a later contract:
   end and identical on replay): the **friction sample** (fermentation.md, Friction samples) and the
   **temperature outcome** of a Preparation (fermentation.md, Temperature outcome), carried by the
   feedback export and the analysis export (history.md).
+- **Scope reduction, to be accepted by the owner (AGENTS.md).** The owner asked that the
+  measurements feed the personal, global and recipe calibrations. This contract only **records and
+  derives data**; no calibration algorithm is defined. Reason: an estimator needs real samples to
+  choose its shape (per mixer, per recipe, thresholds, the weight of assumed flour), and none
+  exist yet; fixing one now would be invented. Alternative: a next contract defining a personal
+  friction from N samples (for instance the median of the last N eligible samples of one mixer,
+  N and its fallback to 0 stated) and storing it as a personal profile. A follow-up issue is
+  needed for that contract; none is created by this pull request.
 - **Not decided here**: how a layer turns samples into a personal `frictionC`, a flour-temperature
   offset or a recipe correction, what is stored as a profile, and when a calibrated value replaces
   the planned one. Until that contract, a sample or an outcome changes nothing: friction stays the
@@ -420,6 +445,16 @@ step, since it was refused there. The event envelope, the log and the backup `sc
 unchanged (the log is JSON). An app that does not know the kinds refuses a backup that holds them
 (persistence.md, Restore), never misreading it. `CONTRACT_VERSION` goes to `0.26.0` and
 `ENGINE_VERSION` by one minor step in the implementing pull request.
+
+**Implementing pull request: places that change** (not exhaustive, so that nothing is forgotten):
+`decide.ts` `observeDoughTemperature` (the first-contact gate) and the kinds allowed after the end
+of a session (the finished or abandoned branch, which must list the new kinds as active-only);
+`backup-events.ts` `isDoughTemperature` (it uses the dough steps and would refuse a restored
+first-contact reading) and the inline whitelist of observation kinds; `forecast.ts` (it reads
+readings on dough steps only, and must read the first-contact reading as the start);
+`packages/core/test/thermal-bake.test.ts` (an existing test asserts that a reading on the frasage is
+`InvalidCommand`, which this contract reverses); `feedback.ts` (digest fields); the water
+temperature in `estimate.ts`.
 
 **Implicitly running steps (live projection).** The baker's first real action on a step records
 its `StepStarted`; until then the step has no recorded start, but it must not be shown as waiting

@@ -469,9 +469,10 @@ Rules:
   steps **after** the first-contact step, up to the first heat step: the kneading after a
   frasage, a fermentolyse, the bulk and so on, each with its own duration. The first-contact step
   is **not** a dough step: it has no fermentation clock yet. That is the single rule behind every
-  gate that asks for a dough step (a dough-temperature reading, thermal inputs, a model-driven
-  duration, the `doughReady` observation, bake-session.md), so none of them accepts the
-  first-contact step. What stays tied to it is its **conditions**: its temperature is the
+  gate that asks for a dough step (thermal inputs, a model-driven duration, the `doughReady`
+  observation, bake-session.md), so none of them accepts the first-contact step. One exception
+  since 0.26.0: a dough-temperature reading is also accepted on it, as the temperature the clock
+  starts from (bake-session.md, Preparation temperatures). What stays tied to it is its **conditions**: its temperature is the
   temperature the dough starts from when the clock starts (fermentation.md, Dough temperature).
   The reason `leaven_before_mixing`, introduced with the end-of-the-mix rule, is **retired**: no
   step can be "before" the dough any more, and the engine never produced it.

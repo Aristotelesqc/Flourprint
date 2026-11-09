@@ -288,15 +288,18 @@ adds one is not complete until all of these hold:
    unit and range, and its references (the step, the component) against the history replayed so
    far, with the same gate the command applies (bake-session.md). A payload the command would have
    refused is refused at restore.
-2. **Refused when unknown.** An app that does not know the kind refuses a backup that holds it, on
-   the unknown kind, and never drops or misreads it (the precedent of `StepThermalChanged` and the
-   weighing checks). The backup `schemaVersion` changes only when a document outside the event log
+2. **Refused when unknown.** An app that does not know the kind refuses a backup that holds it and
+   never drops or misreads it (the precedent of `StepThermalChanged` and the weighing checks). The
+   refusal is the decoder's generic one for an invalid event payload; it does not name the kind. The backup `schemaVersion` changes only when a document outside the event log
    changes shape.
 3. **Exported.** The feedback export lists it in the bake digest (history.md), and the analysis
    export records it with its source (history.md, Preparation analysis export).
 4. **Round-tripped.** A test records one of it, exports a backup, restores into an empty store and
    shows the same replayed state and the same digest.
-5. **Enumerated.** The domain's list of measurement kinds is the one source of truth, and a contract
+5. **Enumerated.** `ObservationKind` is a type today and the whitelist is inline in the decoder, so
+   there is no list to iterate: the implementing pull request creates a runtime list of the
+   measurement kinds in the domain as the one source of truth, which the decoder and the command
+   gate both use. A contract
    test iterates it and fails when a kind has no case in 1 and 4, so that adding a kind without its
    backup case cannot pass.
 
@@ -312,8 +315,9 @@ adds one is not complete until all of these hold:
 A weighing check, a fold set and a `doughReady` judgement are records of the baker's work, not
 measured values, and are not kinds of measurement in this sense (they are in the backup all the
 same). Derived data (the friction sample, the temperature outcome, the forecasts) is never in the
-backup: it is recomputed from the facts. The restore of the temperature kinds re-checks, against the
-state replayed so far, that the step exists and has the type its row of bake-session.md, Temperature
+backup: it is recomputed from the facts. Restore re-runs no command decision (history.md, Reading history): it
+checks the stored payload structurally. For the temperature kinds it checks, against the state
+replayed so far, that the step exists and has the type its row of bake-session.md, Temperature
 observation kinds, requires; that the value is a finite number within 0 – 60 °C in `degC`; and that a
 `componentId` names a `preferment` component of the snapshot's formula.
 

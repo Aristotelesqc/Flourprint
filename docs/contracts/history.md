@@ -313,7 +313,8 @@ interface PreparationAnalysis {
 ```
 
 **Content.** The recipe and plan as the Preparation started them; every recorded fact in order
-(`events`: every event in `seq` order with its payload verbatim, except `BakeStarted`, whose content
+(`events`: every event in `seq` order with its payload as recorded, apart from the identifier
+rewriting of the privacy rule below, except `BakeStarted`, whose content
 is `recipe`, `plan` and `preparation`; the `derived` formula of a formula `OverrideApplied`; and
 `ProjectionAccepted`, moved to `forecasts.recorded`); the actual times and the **plan against actual
 gaps** per step; **every temperature measurement** with its time, step and source
@@ -328,32 +329,51 @@ therefore **recomputes** it with the exporting app's engine from the events up t
 (`forecasts.recomputed.asOf`), says so (`recomputed`, its `engineVersion`, `versions.exporting`), and
 that is the explicit comparison of Reading history, never a replacement of the record. One as-of
 point follows every event that can change a forecast (a step start or end, a time correction, a
-completion retraction, an `AdjustStep`, a temperature or `doughReady` observation, a thermal change,
+completion retraction, an `AdjustStep`, a temperature observation, a thermal change,
 a hold or release, an inserted step), at most 200: past that, the points are an even subset with the
 first and the last kept (`thinned`). The temperature targets are included while the first-contact
 step is not completed.
 
+**Size.** The document is meant to be pasted into an LLM. It is written compact (no indentation),
+omits what the events already say, and aims at **about 40 KB for a Preparation of ten steps, 100 KB
+as a ceiling** before `thinned` applies. To stay there, an as-of point is kept only where the
+forecast differs from the previous kept point (a changed `remaining`, `progressNowPct`,
+`doughStart` or `targets`), at most **60** points by default (not 200), first and last kept;
+the cap and the rule are the exporting app's and are named in `about`.
+
 **Stability.**
 
-- `kind` and `schemaVersion` identify the document. A new optional field, or a new stable code in an
-  existing field, keeps the version; a removed or renamed field, or a changed meaning, raises it.
-  An older reader that ignores unknown fields still reads a newer document of the same version.
-- Deterministic: the same events, snapshot and engine give the same document apart from
-  `exportedAt`. Keys are sorted, arrays are in time order (ties by `seq`), instants are UTC
+- `kind` and `schemaVersion` identify the document. As for the feedback export (schema 2, 3, 4 for
+  additive fields), **any** change of shape raises the version, an added optional field included;
+  a new stable code in an existing field keeps it. Both documents follow the one rule, so that a
+  reader knows exactly which fields a version has.
+- Deterministic: the same events, snapshot, engine version and runtime give the same document
+  apart from `exportedAt` (recomputed floating-point values may differ in the last digits across
+  runtimes). Keys are sorted, arrays are in time order (ties by `seq`), instants are UTC
   (`Z`), numbers are in the persisted units (grams, °C, seconds, points) and are written as
   recorded, never rounded by the export.
 - It is derived from the log by the application and never read back: it is not a backup, cannot be
   restored and is not an input to anything.
 
 **Privacy: only what the baker recorded.** The document holds the Preparation's recipe and the
-facts recorded in it, and the versions of the software. It holds **no device information** (no
+facts recorded in it, and the versions of the software. It plainly **does include**: the exact
+dates and times of everything recorded (`occurredAt`, `recordedAt`, `startedAt`, so the days and
+hours the baker works), the recipe's name, step labels, and the baker's **free text** (notes,
+criteria, reasons), which may identify them. It holds **no device information** (no
 platform, storage kind, build name, locale, time zone or UTC offset, no device or install
 identifier), no other Preparation or recipe, no recipe family, no personal profile (the thermal
 factor a forecast used appears only as its `thermal_factor:<key>=<value>` assumption, as in every
 estimate), and **none of the opaque identifiers of the log**: `bakeId`, `eventId`, `commandId` and
-`causationId` are left out and events are referred to by `seq`, so two exports of two
-Preparations cannot be linked by an identifier. The recipe's own `id` is also omitted; its `name`
-and `version` are what the baker wrote. The baker's free text (notes, ratings, criteria) is
+`causationId` are left out and events are referred to by `seq`. The payloads of correction events
+that name another event (`StepTimeCorrected`, `StepCompletionRetracted`) have their
+`targetEventId` rewritten to the target's `seq` (`targetSeq`). The recipe's own `id` is omitted.
+**Registry references** are treated by origin: an entry that is a built-in of the app (a flour, an
+ingredient, an oven mode, an appliance) keeps its catalogue id, which is public and ships in every
+build; an entry the baker created (a personal flour, ingredient, appliance, support or vessel) has
+its id and name replaced by a per-export label (`personal-1`, `personal-2`…, the same label wherever
+it is referenced) and its free-text notes removed, keeping its numeric characteristics. A built-in
+entry combination can still be distinctive; that remains and is the price of a document a model
+can reason about (owner choice to confirm). The baker's free text (notes, ratings, criteria) is
 included, as it was recorded. A reader may still recognise the baker from what they wrote; the interface
 slice shows the document before it is copied.
 

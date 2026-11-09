@@ -42,7 +42,8 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   fermentation as baking does) in the graph, in process order; kneading steps among them, each
   with its own duration. The **first-contact step is not a dough step**: it has no fermentation
   clock, so it is not listed in the per-step results and no gate that asks for a dough step
-  accepts it (bake-session.md); its conditions give the dough's starting temperature (Dough
+  accepts it (bake-session.md), with one exception since 0.26.0: a `doughTemperature` reading is
+  accepted on it as the start of the clock (Dough temperature); its conditions give the dough's starting temperature (Dough
   temperature). `alap` steps (preheating) never hold the dough, and a step before the first
   contact (an `autolyse` without yeast, the weighing) is not a dough step either. They must form
   one sequence, each after the previous one; dough steps in parallel (two rests side by side) are
@@ -203,7 +204,8 @@ temperature it starts from is set by the conditions of the first-contact step.
   `τ` enters the envelope instant by instant and step by step, never as one value shared by the
   whole path (The band and the envelope).
 - A measured dough temperature (an observation during a bake) replaces the estimate from that
-  instant (bake-session.md, `doughTemperature`); planning uses the plan. A core-probe reading
+  instant (bake-session.md, `doughTemperature`); planning uses the plan. A reading on the
+  first-contact step is the dough's start (Measured start, above). A core-probe reading
   replaces the **mean** state through `γ_core` (below).
 - The mixing machine's friction is not a heat source of the model: it enters only the water
   temperature below and, through the target, the starting temperature.
@@ -586,8 +588,8 @@ and completed after 9 starts the clock 9 min after its own start. A first-contac
 never completed ends when the next step starts. Until it is completed the dough has no progress
 (`progressNowPct` is 0), and the time the dough needs is counted from the end the first-contact
 step is projected to have: its planned remainder, or now when it has already run past its plan.
-The dough then starts from the first-contact step's temperature (or the target dough temperature,
-Dough temperature), and it stays in the first-contact step's conditions if the step after it is
+The dough then starts from the measured first-contact reading, else the target dough temperature,
+else the first-contact step's effective temperature (Dough temperature, Measured start), and it stays in the first-contact step's conditions if the step after it is
 recorded as starting later than it ended, as between any two steps (the dough does not wait
 for a late tap). Completing a step fixes its recorded end, and
 everything after it is projected from that end and from the state the dough had then. This is the replanning rule that already holds for times (process.md, Projection:
@@ -1067,7 +1069,10 @@ document stays readable, and only the estimates computed from them differ. Compa
   (bake-session.md). `durationMode: 'model'` is likewise refused on a mixing step (Model-driven
   duration). **The first-contact step is not a dough step** (Dough steps): the dough has no clock
   during it, so those commands are refused on it, as they were on the lone `mix` of a recipe
-  before; the baker completes it first and reads the dough on the next step. This is the minimal
+  before; the baker completes it first and reads the dough on the next step (**superseded in 0.26.0
+  for `doughTemperature` only**: a reading is now also accepted on the first-contact step as the
+  start of the clock, Dough temperature, Measured start; `SetStepThermal` and `doughReady` stay
+  refused there). This is the minimal
   consistent rule, one definition behind every gate, and it costs nothing a recipe could record
   before: no event can already sit on a step that was never a dough step. The only steps that stop
   being dough steps are those between the end of the reference mixing step and a later first
@@ -1084,17 +1089,21 @@ inverse dose, thermal lag) have the same values as before: the mixing is the fir
 nothing lies between its end and the end of the last mixing step. Nothing in it comes from the
 engine.
 
-Version `0.26.0` (proposal; `0.25.0` is taken by the learning flags of #259, so this is the next free
-minor after checking `origin/dev` and the open pull requests) adds the **Preparation temperatures**
+Version `0.26.0` (proposal; `0.25.0` is proposed by the learning flags of #259, still open when this
+was written: if #259 is not merged first, renumber to the next free minor at merge) adds the **Preparation temperatures**
 (owner decisions of 2026-11-09, #171, #242): the observation kinds `flourTemperature`,
 `liquidTemperature` and `prefermentTemperature`, `doughTemperature` accepted on the first-contact
 step as the start of the clock (bake-session.md, Preparation temperatures), the **liquid target**
 that reads the effective room and the measured temperatures, the **suggested dough target**, the
 **friction sample** and the **temperature outcome** (data only), and `TemperatureSource`
 (values-and-units.md). What does not change: the kinetic law and every constant, the readiness
-profiles, the thermal model and its envelope, the planned `waterTemperatureC`, the dose inverse. A
-forecast changes only for a Preparation that holds a first-contact dough reading, which no earlier
-session can: every earlier session and backup replays and restores unchanged. The suggested target
+profiles, the thermal model and its envelope, the planned `waterTemperatureC`, the dose inverse. Derived
+values do change for existing sessions: the dough start now follows the order reading, else target,
+else ambient, and the forecast carries the `dough_start:*` and `ambient_adjusted:*` assumption codes,
+so a live forecast of an earlier session whose recipe declares a target gains the code but keeps its
+numbers (the target was already the start), and one that holds a first-contact reading cannot
+exist. Stored data and replay do not change: every earlier session and backup replays and restores
+unchanged, and committed estimates keep what they committed. The suggested target
 is advice and starts no forecast. The implementing pull request bumps `CONTRACT_VERSION` to
 `0.26.0` and `ENGINE_VERSION` by one minor step from the version current at its merge (new outputs,
 and a different start temperature when a reading exists); the models stay
