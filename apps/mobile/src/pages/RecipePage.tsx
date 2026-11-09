@@ -65,8 +65,10 @@ import { InfoButton } from '../ui/InfoButton';
 import { usePanelScroll } from '../ui/PanelContext';
 import { useStepDragBack } from '../ui/use-step-drag-back';
 import { useMessages } from '../i18n/use-messages';
+import { formatDuration } from '../i18n/time';
 import { formatChangedEdges } from '../i18n/recipe-sort-messages';
 import { sendBakeCommand } from '../services/bakes';
+import { recipeDuration } from '../services/recipe-duration';
 import { useFlourCatalog } from '../services/flours';
 import { RecipeChecks } from '../blocks/RecipeChecks';
 import { StyleGuide } from '../blocks/StyleGuide';
@@ -543,6 +545,11 @@ const RecipePageContent = () => {
   }, [draft?.process]);
 
   const resolved = useMemo(() => (draft ? resolveFormula(draft.formula) : undefined), [draft]);
+  const savedProcess = base?.revision.process;
+  const savedDuration = useMemo(
+    () => (savedProcess ? recipeDuration(savedProcess, services.realClock.now()) : undefined),
+    [savedProcess, services],
+  );
   const issues = useMemo(() => (draft ? checkRecipe(draft.formula, draft.process) : []), [draft]);
 
   // Reset checks on recipe/draft route switch or when baseline recipe's saved revision changes
@@ -1120,153 +1127,179 @@ const RecipePageContent = () => {
     origin?.kind === 'template'
       ? RECIPE_TEMPLATES.find((tpl) => tpl.id === origin.template.id)
       : undefined;
+  const readySubtitle =
+    savedDuration?.kind === 'complete'
+      ? t('recipe.header.readyIn', { duration: formatDuration(savedDuration.seconds) })
+      : savedDuration?.kind === 'atLeast'
+        ? t('recipe.header.atLeast', { duration: formatDuration(savedDuration.seconds) })
+        : t('recipe.header.durationUnknown');
 
   return (
     <IonPage>
       <IonHeader ref={headerRef} className="ion-no-border">
         <IonToolbar>
-          <IonButtons slot="start">
-            <Ui
-              component="fp.button"
-              variant="quiet"
-              className="min-h-touch min-w-touch"
-              onClick={() => {
-                if (isMethodDragging) {
-                  methodSortRef.current?.cancelDrag();
-                  return;
-                }
-                if (isEditing) {
-                  void leaveEditing();
-                  return;
-                }
-                if (newRecipe) {
-                  router.push('/recipes', 'back');
-                  return;
-                }
-                if (router.canGoBack()) router.goBack();
-                else router.push('/recipes', 'back', 'replace');
-              }}
-              aria-label={t(
-                isMethodDragging
-                  ? 'bake.cancel'
-                  : isEditing
-                    ? 'recipe.consultation'
-                    : 'recipe.document.back',
-              )}
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-            </Ui>
-          </IonButtons>
+          <div className="@container px-1">
+            <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-1">
+              <div className="col-start-1 row-start-1 self-start">
+                <Ui
+                  component="fp.button"
+                  density="compact"
+                  variant="quiet"
+                  className="min-h-touch min-w-touch"
+                  onClick={() => {
+                    if (isMethodDragging) {
+                      methodSortRef.current?.cancelDrag();
+                      return;
+                    }
+                    if (isEditing) {
+                      void leaveEditing();
+                      return;
+                    }
+                    if (newRecipe) {
+                      router.push('/recipes', 'back');
+                      return;
+                    }
+                    if (router.canGoBack()) router.goBack();
+                    else router.push('/recipes', 'back', 'replace');
+                  }}
+                  aria-label={t(
+                    isMethodDragging
+                      ? 'bake.cancel'
+                      : isEditing
+                        ? 'recipe.consultation'
+                        : 'recipe.document.back',
+                  )}
+                >
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                </Ui>
+              </div>
 
-          <div ref={titleRef} tabIndex={-1} className="min-w-0 px-2 py-1 outline-none">
-            <h1 className="m-0 text-lg font-bold break-words leading-tight">{name}</h1>
-            <div className="h-5 text-xs text-muted mt-0.5 flex items-center">
-              {!base ? (
-                t('draft.newRecipe')
-              ) : (
-                <span aria-hidden="true" className={dirty ? 'visible' : 'invisible'}>
-                  {t('draft.unsaved')}
-                </span>
-              )}
+              <div
+                ref={titleRef}
+                tabIndex={-1}
+                className="col-start-2 row-start-1 min-w-0 px-1 py-1 outline-none @max-[20rem]:col-span-3 @max-[20rem]:col-start-1 @max-[20rem]:row-start-2"
+              >
+                <h1 className="m-0 wrap-anywhere text-lg leading-tight font-bold">{name}</h1>
+                <div className="mt-0.5 grid wrap-anywhere text-metadata text-muted">
+                  {!base ? (
+                    t('draft.newRecipe')
+                  ) : (
+                    <>
+                      <span className={`col-start-1 row-start-1 ${dirty ? 'invisible' : ''}`}>
+                        {readySubtitle}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`col-start-1 row-start-1 ${dirty ? '' : 'invisible'}`}
+                      >
+                        {t('draft.unsaved')}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="col-start-3 row-start-1 flex items-center justify-self-end self-start">
+                <Ui
+                  component="fp.button"
+                  density="compact"
+                  variant="quiet"
+                  className="min-h-touch min-w-touch"
+                  aria-label={t('recipe.editAction')}
+                  title={t('recipe.editAction')}
+                  disabled={trashedAt !== undefined || writes.busy}
+                  onClick={enterEditing}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </Ui>
+                <OverflowMenu
+                  ariaLabel={t(
+                    isEditing || dirty ? 'editor.overflowActions' : 'recipe.overflowActions',
+                  )}
+                  title={t(
+                    isEditing || dirty ? 'editor.overflowActions' : 'recipe.overflowActions',
+                  )}
+                  actions={
+                    isEditing || dirty
+                      ? [
+                          {
+                            label: t('draft.rename'),
+                            handler: rename,
+                          },
+                          {
+                            label: t('editor.reset'),
+                            disabled: (!dirty && past.length === 0 && !hasInvalid) || writes.busy,
+                            handler: reset,
+                          },
+                          {
+                            label:
+                              issues.length === 0
+                                ? t('editor.check')
+                                : `${t('editor.check')} (${issues.length})`,
+                            handler: () => {
+                              pendingChecksReturnRef.current = null;
+                              setChecking(true);
+                            },
+                          },
+                          {
+                            label: t('editor.review'),
+                            disabled: !dirty,
+                            handler: () => setReviewing(true),
+                          },
+                          ...(base && trashedAt === undefined
+                            ? [
+                                'divider' as const,
+                                {
+                                  label: t('recipe.trash'),
+                                  destructive: true,
+                                  disabled: writes.busy,
+                                  handler: confirmTrash,
+                                },
+                              ]
+                            : []),
+                        ]
+                      : [
+                          ...(base && trashedAt === undefined
+                            ? [
+                                {
+                                  label: t('recipe.trash'),
+                                  destructive: true,
+                                  disabled: writes.busy,
+                                  handler: confirmTrash,
+                                },
+                              ]
+                            : []),
+                        ]
+                  }
+                />
+              </div>
             </div>
           </div>
-
-          <IonButtons slot="end">
-            <Ui
-              component="fp.button"
-              variant="quiet"
-              className="min-h-touch min-w-touch"
-              aria-label={t('recipe.editAction')}
-              title={t('recipe.editAction')}
-              disabled={trashedAt !== undefined || writes.busy}
-              onClick={enterEditing}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-            </Ui>
-            <OverflowMenu
-              ariaLabel={t(
-                isEditing || dirty ? 'editor.overflowActions' : 'recipe.overflowActions',
-              )}
-              title={t(isEditing || dirty ? 'editor.overflowActions' : 'recipe.overflowActions')}
-              actions={
-                isEditing || dirty
-                  ? [
-                      {
-                        label: t('draft.rename'),
-                        handler: rename,
-                      },
-                      {
-                        label: t('editor.reset'),
-                        disabled: (!dirty && past.length === 0 && !hasInvalid) || writes.busy,
-                        handler: reset,
-                      },
-                      {
-                        label:
-                          issues.length === 0
-                            ? t('editor.check')
-                            : `${t('editor.check')} (${issues.length})`,
-                        handler: () => {
-                          pendingChecksReturnRef.current = null;
-                          setChecking(true);
-                        },
-                      },
-                      {
-                        label: t('editor.review'),
-                        disabled: !dirty,
-                        handler: () => setReviewing(true),
-                      },
-                      ...(base && trashedAt === undefined
-                        ? [
-                            'divider' as const,
-                            {
-                              label: t('recipe.trash'),
-                              destructive: true,
-                              disabled: writes.busy,
-                              handler: confirmTrash,
-                            },
-                          ]
-                        : []),
-                    ]
-                  : [
-                      ...(base && trashedAt === undefined
-                        ? [
-                            {
-                              label: t('recipe.trash'),
-                              destructive: true,
-                              disabled: writes.busy,
-                              handler: confirmTrash,
-                            },
-                          ]
-                        : []),
-                    ]
-              }
-            />
-          </IonButtons>
         </IonToolbar>
         {trashedAt !== undefined && (
           <IonToolbar>

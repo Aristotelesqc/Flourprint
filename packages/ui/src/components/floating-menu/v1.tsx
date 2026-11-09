@@ -179,7 +179,7 @@ export function FloatingMenu({
         onWillPresent={handleWillPresent}
         onDidDismiss={handleDidDismiss}
         onDidPresent={handleDidPresent}
-        className="fp-ionic [--background:var(--color-surface)] [&::part(content)]:rounded-card [--width:min(var(--container-xs),calc(100vw-var(--spacing)*4))] [--max-width:min(var(--container-xs),calc(100vw-var(--spacing)*4))] [--max-height:calc(100dvh-var(--spacing)*8)] [&>.ion-delegate-host]:flex [&>.ion-delegate-host]:flex-col [&>.ion-delegate-host]:min-h-0 [&>.ion-delegate-host]:max-h-[calc(100dvh-var(--spacing)*8)] [&>.ion-delegate-host]:overflow-hidden"
+        className="fp-ionic [--background:var(--color-surface)] [&::part(content)]:rounded-card [--fp-menu-width:min(var(--container-xs),calc(100vw-var(--spacing)*4-max(var(--ion-safe-area-left,0px),env(safe-area-inset-left,0px))-max(var(--ion-safe-area-right,0px),env(safe-area-inset-right,0px))))] [--width:var(--fp-menu-width)] [--max-width:var(--fp-menu-width)] [--max-height:calc(100dvh-var(--spacing)*8)] [&>.ion-delegate-host]:flex [&>.ion-delegate-host]:flex-col [&>.ion-delegate-host]:min-h-0 [&>.ion-delegate-host]:max-h-[calc(100dvh-var(--spacing)*8)] [&>.ion-delegate-host]:overflow-hidden"
       >
         <div
           role="menu"

@@ -1,5 +1,8 @@
 export const recipeDocumentEn = {
   'recipe.document.back': 'Back',
+  'recipe.header.readyIn': 'Ready in {duration}',
+  'recipe.header.atLeast': 'Known duration · at least {duration}',
+  'recipe.header.durationUnknown': 'Duration unknown',
   'recipe.document.resetRevision': 'Return to saved revision {revision}?',
   'recipe.document.resetTemplate': 'Reset to template proportions?',
   'recipe.document.resetBlank': 'Reset to blank recipe?',
@@ -43,6 +46,9 @@ export const recipeDocumentEn = {
 
 export const recipeDocumentFr = {
   'recipe.document.back': 'Retour',
+  'recipe.header.readyIn': 'Prêt dans {duration}',
+  'recipe.header.atLeast': 'Durée connue · au moins {duration}',
+  'recipe.header.durationUnknown': 'Durée indéterminée',
   'recipe.document.resetRevision': 'Revenir à la révision {revision} enregistrée ?',
   'recipe.document.resetTemplate': 'Rétablir les proportions du modèle ?',
   'recipe.document.resetBlank': 'Rétablir la recette vierge ?',

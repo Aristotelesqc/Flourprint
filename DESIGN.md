@@ -272,6 +272,9 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   slivers. Registry, history and settings remain reachable without competing with the recipe list.
 - **Recipe consultation:** summary, clearly named percentage bases, shared `ConsultationRow` items with
   consistent vertical padding when titles wrap, components and authored method ("Étapes de préparation").
+  The header puts the planned duration below the full recipe name. When the safe width is narrow,
+  the title and subtitle share a row below the header actions. Partial durations state a known
+  minimum, and an unavailable duration is labelled explicitly.
   The summary uses the v5 monochrome pictograms at 22 px: a dough ball, a water drop,
   butter on its unfolded wrapper and two sugar cubes (L38, L160).
   Contextual information buttons stay beside hydration, size and other explained concepts.
