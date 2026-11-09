@@ -1,6 +1,6 @@
 # Native quota surfaces
 
-Verified commands and documentation: 2026-10-28. Recheck installed capabilities when they
+Verified commands and documentation: 2026-11-07. Recheck installed capabilities when they
 change. Native account sources win over remembered plan limits.
 
 ## Codex
@@ -28,23 +28,28 @@ Follow [the AGY skill](../../agy/SKILL.md#check-provider-quota) when coordinatin
 The installed CLI's `models` command lists availability, not remaining quota. Per-turn
 `usage` in a generated response is token accounting, not the account's quota.
 
-The native interactive **`/usage`** command, alias **`/quota`**, refreshes backend status and
-opens the Models & Quota panel. Read all windows for each group actually used by the task.
-A group shared by Flash and Pro is one bucket, not two independent budgets. A Claude model
-accessed through AGY consumes the AGY group it reports; do not relabel it as a direct
-Claude Code account.
+Prefer the headless slash-command query with normal host access to AGY's session storage:
 
-On Windows, an approved PTY can open the installed native `agy` executable, send
-`/usage` + Enter, and read the panel. Scroll for additional groups. Exit the panel and the
-owned idle CLI afterward; do not leave a model prompt running. No source prompt or model
-generation is needed. Normal sign-in/workspace trust may be required: reuse existing scoped
-authorization; never disable permission checks or create an auto-approval loop.
+```text
+agy -p "/usage" --output-format json
+```
 
-Verified locally with AGY 1.4.9: the panel reports separate Gemini and Claude/GPT groups, including
-weekly and five-hour **remaining** percentages. Preserve their precision. Opening the panel is
-not a guarantee that every older CLI or headless host can expose it.
+Do not pass `--disable-slash-commands` on this call. Verified locally with AGY 1.5.3: the
+command runs client-side (`num_turns: 0`, zero model tokens, no PTY or scrolling required) and
+returns `command.data.groups`, each with `buckets` carrying `window` (`5h`, `weekly`), exact
+floating-point `remaining_fraction` (`0` to `1`), and UTC `reset_time`. Read all windows for
+every group actually used by the task: `Gemini Models` (shared by Flash and Pro as one bucket,
+not two independent budgets), `Claude and GPT models` (any Claude/GPT model accessed through AGY
+consumes this AGY bucket rather than a direct Claude Code account), and on Pro plans a separate
+`Gemini 4 Argon` weekly bucket.
 
-If a headless/remote harness cannot access the native panel, mark quota UNAVAILABLE and use the
+In an attached interactive TUI session, `/usage` (alias `/quota`) refreshes backend status and
+opens the same Models & Quota panel visually. If using a PTY fallback on an older CLI, scroll
+for additional groups and exit the owned idle CLI afterward without leaving a model prompt open;
+reuse existing scoped authorization and never disable permission checks or build an auto-approval
+loop.
+
+If a restricted or remote harness cannot execute `/usage`, mark quota UNAVAILABLE and use the
 bounded policy. Do not scrape credentials, call guessed private endpoints, install an extension
 or ask a model to infer its quota. Do not change credit-overage settings.
 

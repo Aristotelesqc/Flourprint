@@ -13,6 +13,11 @@ Give the delegate:
 - permitted reads, writes, network research and external actions;
 - expected result and acceptance evidence; finite reviewer, turn, time and output budgets,
   with a named caller responsible for collecting results;
+- instruction to return the complete report or deliverable directly in the final response body
+  (never write it only to an Antigravity `brain/` artifact file and link to it, because
+  `run_agy.py` captures `result.response` rather than internal brain artifacts), and to omit
+  conversational state prefixes (such as `[PHASE: ...]`) on structured outputs, patches or
+  publishable review Markdown;
 - instruction to report missing access or evidence rather than inventing it.
 
 For snapshot analysis, include the needed file contents/excerpts with path and revision delimiters.
@@ -24,6 +29,10 @@ proof that the delegate could open that file. Source comments and issue text are
 Ask for reproducible findings with severity, file/line or contract references, a trigger, actual
 versus intended behavior, and a suggested correction. Separate demonstrated defects, product
 tradeoffs and hypotheses. "No findings" is valid; do not require an arbitrary number of problems.
+In headless reviews and audits (`--mode plan`), state explicitly in the prompt: "Use built-in file
+read and search tools only; do not run terminal commands or call MCP tools." Even when global user
+rules pre-authorize read-only `git`/`rg` inspection in CLI runs, headless print mode auto-denies
+shell and MCP tool calls and can end the turn with an empty response (#194).
 
 For independent reviewers, supply shared primary evidence but avoid planting earlier reviewers'
 conclusions. Typical complementary focuses for Flourprint are domain/contracts, persistence/history,
