@@ -1,7 +1,7 @@
 # CLI protocol and recovery
 
-These observations were verified with the installed Antigravity CLI on 2026-10-11. Recheck
-`agy --help` and `agy models` when flags or models differ; this is not a frozen vendor API.
+Initially verified on 2026-10-11 and re-verified with Antigravity CLI **1.5.3** on 2026-11-07.
+Recheck `agy --help` and `agy models` when flags or models differ; this is not a frozen vendor API.
 
 ## Invocation
 
@@ -10,12 +10,26 @@ These observations were verified with the installed Antigravity CLI on 2026-10-1
 - `--mode plan` is the review/default mode. Use `accept-edits` only for an assigned implementation
   with permitted paths and working permissions. `--sandbox` restricts terminal execution; it is
   not an assertion that all reads/writes are allowed or that the checkout is read-only.
+- Optional session flags forwarded by `run_agy.py` when supplied: `--effort`
+  (`low|medium|high|xhigh|max`, session-only without changing saved defaults), repeatable
+  `--add-dir <dir>` (grants workspace file reads in additional approved directories without
+  disabling permission checks), and `--json-schema <json|file>` (enforces a JSON object schema on
+  the final `result` in `stream-json`). `run_agy.py` intentionally does not forward `--settings`;
+  session-only permission overrides stay explicit in
+  [permissions-and-browser.md](permissions-and-browser.md).
 - The installed CLI warned that `--mode` has no effect with `--disable-slash-commands`. The helper
   therefore does not combine them. Do not copy that combination and describe it as enforced plan
-  mode. Treat prompts/corpora as input and inspect the initialization event for actual mode.
-- Model discovery can require normal host access to AGY's existing account/session storage.
-  A restricted-host "not logged in" result may be a filesystem denial. Use the host's approved
-  execution mechanism; do not read credentials yourself or conclude the account is logged out.
+  mode. Because slash and mention expansion stay enabled, never begin the first line of a prompt
+  with `/word` (which invokes a slash command or skill rather than a prompt turn), and be aware
+  that `@path/to/file` tokens matching existing workspace paths attach those files automatically
+  (relevant when pasting source with `@` syntax or running `--snapshot` in a populated directory).
+  Treat prompts/corpora as input and inspect the initialization event for actual mode.
+- Antigravity discovers `mcp_config.json` only in `~/.gemini/config/mcp_config.json` or inside
+  enabled plugins (`plugins/<name>/mcp_config.json`), never in a workspace `.agents/mcp_config.json`.
+- Model discovery and `/usage` queries require normal host access to AGY's existing account/session
+  storage (and executable directory on Windows). A restricted-sandbox "not found" or "not logged
+  in" result may be a filesystem denial. Use the host's approved execution mechanism; do not read
+  credentials yourself or conclude the account is logged out.
 - Pass an explicit log path in private scratch space. Do not commit local account diagnostics.
 
 The helper sends one NDJSON user event to stdin, terminated by a newline:
@@ -46,11 +60,17 @@ fails before its final result. Observed final result shape:
 ```
 
 The helper keeps `events.ndjson`, `stderr.log`, `agy.log`, `input.ndjson`, `run.json` and, only
-for a successful final result, `report.md`. Metadata records the selected model, checkout HEAD,
-working-tree status and tracked diff hash before/after, prompt hash, exit status and conversation
-ID. These snapshots do not fingerprint ignored/untracked file contents or prove that no tools
-were used; inspect actual artifacts. Success means a
-completed AGY response, not verified code or a reliable review.
+for an uncut successful final result, `report.md`. Since CLI 1.4.11, `result` carries
+`finished_reason` (`"print_timeout"`, `"interrupted"`, `"error"`) whenever a turn ends early with a
+partial or failed answer, and omits `finished_reason` on normal completion; since CLI 1.5.0,
+`--print-timeout` also exits with code `3` and logs `[agy] print timeout after ...` to `stderr`.
+`run_agy.py` records `finishedReason` in `run.json`, classifies exit code `3` or
+`finished_reason == "print_timeout"` as `status: "timeout"`, and rejects any early
+`finished_reason` even when exit status is `0`. Metadata records the selected model, optional
+effort/schema/added directories, checkout HEAD, working-tree status and tracked diff hash
+before/after, prompt hash, exit status and conversation ID. These snapshots do not fingerprint
+ignored/untracked file contents or prove that no tools were used; inspect actual artifacts.
+Success means a completed AGY response, not verified code or a reliable review.
 
 For a supplied corpus in an isolated directory, add `--snapshot`. `--repo` then names the working
 directory (it need not be a Git checkout). Metadata records `inputMode: snapshot`, the prompt hash

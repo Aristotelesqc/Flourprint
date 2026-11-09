@@ -82,9 +82,14 @@ after inspecting its scope; these shortcuts do not justify bulk approval. The fi
 The child panel's one-off approval did not grant later calls: a second console-read request
 expired after 60 seconds awaiting confirmation and was recorded as denied. Check the panel
 frequently while new tools are introduced. Prefer a normal conversation-scoped tool grant
-where the UI offers it and the repeated scope is authorized. After an expiry/denial, record
+where the UI offers it and the repeated scope is authorized (since CLI 1.4.6, choosing _allow for
+this conversation_ in either the main agent or a subagent applies across the main conversation and
+all of its subagents, though callers should still establish expected grants up front and confirm
+actual tool results). After an expiry/denial, record
 the untested case or obtain a fresh scoped permission-state decision before dependent access;
-do not silently retry the failed call.
+do not silently retry the failed call. (CLI 1.4.10+ also downscales attached screenshots to at
+most 2000 px per side automatically, and CLI 1.5.1+ preserves CRLF line endings during Windows
+file edits.)
 
 When the parent terminal was lost, later children returned source/bundle analyses after tool
 confirmation timeouts. A coordinator initially described these as runtime passes; inspection of
@@ -222,11 +227,13 @@ owned captures; screenshots are not app source changes. `--save-session` supplie
 browser interaction record alongside the owned AGY transcript.
 
 Keep browser setup scripts/dependencies and frozen compiled builds in private task tooling
-outside the product checkout when possible. Git-ignored `.agy-runs/` is not automatically ignored
-by every checker: the unchanged `eslint .` scanned this run's helper and minified frozen assets.
-Relocating those owned artifacts and updating the launcher through normal `agy mcp add` preserved
-the same checkout guard, isolated browser and preview origin without weakening lint rules.
-Prompts, reports and screenshots can remain in the documented scratch directory.
+outside the product checkout when possible. Although `eslint.config.js` now ignores `.agy-runs/**`,
+`.claude/worktrees/**` and `.codegraph-local/**`, git-ignored directories are not automatically
+skipped by every tool: an earlier unchanged `eslint .` scanned a run's helper and minified frozen
+assets before those ignores existed. Keeping task-tooling packages outside the product checkout
+and updating the launcher through normal `agy mcp add` preserves the checkout guard, isolated
+browser and preview origin cleanly. Prompts, reports and screenshots can remain in the documented
+scratch directory.
 
 Long `send_message` bodies and transcript fields can be truncated. Keep complete reports
 through structured stdout or an explicitly authorized artifact-writing tool; a completion
