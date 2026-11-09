@@ -167,7 +167,7 @@ interface BakeEvent<P> {
 | `AdjustFormula`              | `OverrideApplied` (formula edit, with the edited formula and its resolution) | edit valid for the current effective formula                                                                                                                        |
 | `InsertStepAfter`            | `StepInserted`                                                               | the new step depends on `after`; steps not started that depended on `after` now depend on the new step                                                              |
 | `AcceptProjection`           | `ProjectionAccepted`                                                         | stores the projection computed at `now`                                                                                                                             |
-| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below); also after the end                                                                      |
+| `AddObservation`             | `ObservationAdded`                                                           | free text, category, rating, `Observation` measurement or a `kind` (below, temperature kinds in Preparation temperatures, 0.26.0); also after the end               |
 | `SetStepThermal`             | `StepThermalChanged`                                                         | running or not-yet-started dough step; a replacement of the step's whole `thermal` (process.md, Thermal inputs), effective from `at`; (below, 0.21.0)               |
 | `SetWeighingCheck`           | `WeighingCheckChanged`                                                       | a weighing row of the snapshot's formula is ticked or unticked (below, Weighing checks, 0.23.0 target)                                                              |
 | `CorrectStepTime`            | `StepTimeCorrected`                                                          | targets a `StepStarted`/`StepCompleted`; a start never ends up after its end, before a dependency's end, and an end never after a started successor's start         |
@@ -243,8 +243,9 @@ on" (back to the fixed lag).
 `AddObservation` accepts `kind: 'doughTemperature'` (0.21.0): a measured dough temperature
 with the probe position.
 
-- It needs a `stepId` that is running and is a dough step (the first-contact step is not one: see
-  Dough clock and dough steps, below), and a numeric `Observation` in °C
+- It needs a `stepId` that is running and is a dough step, or (0.26.0) the first-contact step, where
+  it is the dough's starting temperature (Preparation temperatures, below; the first-contact step is
+  not a dough step: see Dough clock and dough steps, below), and a numeric `Observation` in °C
   (finite, within 0 – 60 °C, as for the other temperatures); anything else is `InvalidCommand`,
   and on an ended bake `BakeNotActive`. Category `fermentation`, `position`: `core` (probe in the
   centre), `surface` or `unknown`, optional `note`.
@@ -273,13 +274,16 @@ is the actual completion of the step: the instant `CompleteStep` records, the mo
 taps Next, even if a last stroke of the spatula is still being given. The recorded `StepCompleted`
 is the only fact the clock needs; a plan's duration for that step is irrelevant once it is
 completed (fermentation.md, Live recomputation). The first-contact step is **not a dough step**:
-the dough has no fermentation clock while it runs, so `SetStepThermal`, a `doughTemperature`
-observation and a `doughReady` observation on it are refused (`InvalidCommand`), like on any step
-that is not a dough step. The baker completes it first and records the dough on the next step,
-which starts at that completion. A step after it, kneading included, is a dough step and accepts
-the first two (a `doughReady` needs a fermentation step, below). The rule is deliberately the
-minimal one: a single definition of the dough steps serves every gate, and a thermal input or a
-reading on a step the model does not integrate would be accepted and then ignored.
+the dough has no fermentation clock while it runs, so `SetStepThermal` and a `doughReady`
+observation on it are refused (`InvalidCommand`), like on any step that is not a dough step. A
+`doughTemperature` observation is the one exception, added in 0.26.0 (owner decisions of
+2026-11-09): on the first-contact step it is not a point of an integrated path but the
+temperature the clock starts from (Preparation temperatures, below). Before 0.26.0 it was
+refused there as well, so no stored event changes meaning. A step after the first-contact step,
+kneading included, is a dough step and accepts `SetStepThermal` and `doughTemperature` (a
+`doughReady` needs a fermentation step, below). The rule stays minimal: a single definition of
+the dough steps serves every gate but one named exception, and a thermal input on a step the
+model does not integrate would be accepted and then ignored.
 
 **Versioning and upcasting.** Two new event/observation vocabulary items, additive: `StepThermalChanged`
 and `kind: 'doughTemperature'` with `position`. `CONTRACT_VERSION` goes from `0.20.0` to `0.21.0`
@@ -316,6 +320,106 @@ checked }` records `WeighingCheckChanged` with the same fields; ticking a ticked
   `WeighingCheckChanged` refuses a backup holding it on its unknown event type
   (`persistence.md`), never misreading it; the backup `schemaVersion` is unchanged (the log is
   JSON). `CONTRACT_VERSION` goes to `0.23.0` in the implementing pull request.
+
+**Preparation temperatures (0.26.0, owner decisions of 2026-11-09, #171, #242).** During a
+Preparation, without saving a recipe variant, the baker may change the room temperature, enter the
+temperature of the dough, and enter the temperature of the flour, of the liquid added and of a
+preferment. The engine reads them (fermentation.md, Liquid target, Suggested dough target, Dough
+temperature) and keeps them as data for the calibrations (Calibration data, below). Four rules hold
+for all of it:
+
+- **Optional, always possible.** Nothing here is ever required. No step, completion, finish or
+  reminder waits for a temperature, and a Preparation that records none behaves exactly as before.
+  A measurement may be entered at any time its rule below allows, skipped, or entered late.
+- **A fact, not a plan.** A measurement is a recorded fact: it never changes the recipe, the plan,
+  the snapshot or the formula, never completes a step, and stays in the journal after a later one
+  supersedes it. Of several readings of one quantity the one **in force** is the latest by
+  `observedAt` (ties by `seq`).
+- **Sources are named.** Every temperature the engine uses is reported with where it came from
+  (values-and-units.md, `TemperatureSource`): `planned` (the recipe), `adjusted` (the baker changed
+  the room for this Preparation), `measured` (a reading recorded here) or `assumed` (stated nowhere:
+  the flour and the preferment taken at the room, a friction of 0). The engine never presents an
+  assumed or planned value as measured.
+- **Events stay append-only.** No existing event, command or error changes meaning (Versioning,
+  below).
+
+**Room temperature.** Changing the room is the existing `AdjustStep { field: 'temperatureC' }`
+(any step not completed; `OverrideApplied`, the snapshot keeps the planned value). It needs no new
+command. The **effective** room of a step is its latest adjustment, else the plan. The fermentation
+forecast already reads it from the adjustment's instant (fermentation.md, Live recomputation); the
+liquid target reads it too (fermentation.md, Liquid target). The room of the water method is the
+reference mixing step's and the dough's starting room the first-contact step's (fermentation.md,
+Dough temperature, Two room temperatures): the baker adjusts each on its own step, and an interface
+that shows one room when the two steps are one offers one control.
+
+**Temperature observation kinds.** `AddObservation` accepts four kinds that carry a temperature,
+each as a numeric `measurement` in `degC` (finite, within 0 – 60 °C, as for every other
+temperature), with `observedAt` not before the step's recorded start. Anything else is
+`InvalidCommand` (`field`, `reason`), and on an ended Preparation `BakeNotActive`. The reading is
+about a quantity, not a position in the plan, and says nothing else about the step.
+
+| `kind`                  | The temperature of                                              | `stepId` must be                                                                                                                                          | Extra field                               | Category       |
+| ----------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- | -------------- |
+| `doughTemperature`      | the dough (0.21.0; widened by 0.26.0)                           | a running dough step, or the running first-contact step                                                                                                   | `position` (`core`, `surface`, `unknown`) | `fermentation` |
+| `flourTemperature`      | the flour (the blend), as it goes into the mix                  | a running main-dough step that is a mixing step (`frasage`, `mix`) or that comes before the first-contact step (an `autolyse`); not a step of a component | none                                      | `handling`     |
+| `liquidTemperature`     | the liquid added to the dough: water, or another liquid (milk…) | the same steps as `flourTemperature`                                                                                                                      | none; the liquid may be named in `note`   | `handling`     |
+| `prefermentTemperature` | a preferment when it joins the dough                            | the same steps as `flourTemperature`, or a running step of that preferment (its fermenting phase, process.md, Subjects and component phases)              | `componentId`, a `preferment` component   | `handling`     |
+
+- `componentId` is required on a `prefermentTemperature` unless the step is itself a step of that
+  component (then it is implied) or the formula has exactly one preferment component with a
+  positive `flourPct` (then it is implied). It names a `preferment` component of the snapshot's
+  formula; otherwise `InvalidCommand` (`field: 'componentId'`).
+- `position` stays required on `doughTemperature` as before and is refused on the other kinds, as is
+  `componentId` outside `prefermentTemperature`.
+- `Observation.method` is `measured` by default. A reading with `method: 'reported'` is kept and
+  exported, but is not a calibration sample (Calibration data, below).
+- The three new kinds read nothing from the thermal model: they are not thermal calibration
+  readings (fermentation.md, Personal correction) and move no forecast of the dough by
+  themselves. They feed the liquid target and the calibration data.
+
+**Dough temperature on the first-contact step.** A `doughTemperature` observation on the running
+first-contact step is the temperature of the dough **when its clock starts** (the end of that
+step, fermentation.md, Dough temperature). The mix is short, so the contract models no drift
+during it: the reading is taken as the starting temperature whatever its instant within the step,
+the latest in force. It is a reading of the mean temperature at the start, whatever its `position`
+(no thermal transient exists yet; `surface` and `unknown` add the assumption
+`probe_position_unmodelled`). It replaces the target dough temperature and the first-contact
+ambient as the start of the forecast and is named `dough_start:reading`. It is not a thermal
+calibration reading, because its step has no `thermal` and no lag. A reading whose `observedAt` lies
+after the clock start behaves as any reading on a dough step from its instant.
+
+**Between steps.** The dough may be measured between two steps. The reading is recorded on the step
+that follows, whose start the interface records at its implicit start on the first real action
+(Implicitly running steps, below): a reading at the instant the first-contact step ends is therefore
+a reading at progress 0, the start of the clock, and a reading at the end of any other dough step is
+the next step's start state (existing rule, `doughTemperature` above). No command or gate
+is added for it.
+
+**Calibration data.** The measurements are information for three layers, kept apart as in
+fermentation.md, Personal correction and docs/science/fermentation-model.md, section 11: the live
+per-recipe personal calibration, the global model calibration and the recipe's own calibration.
+This contract fixes **what is recorded and what is derived from it**, not the calibration
+algorithms, which are a later contract:
+
+- **Recorded**: the four observation kinds above, the room adjustments and the planned values, all
+  in the event log (and so in the backup, persistence.md, Measurements in the backup).
+- **Derived, never stored** (arithmetic on recorded facts, no engine call, so available after the
+  end and identical on replay): the **friction sample** (fermentation.md, Friction samples) and the
+  **temperature outcome** of a Preparation (fermentation.md, Temperature outcome), carried by the
+  feedback export and the analysis export (history.md).
+- **Not decided here**: how a layer turns samples into a personal `frictionC`, a flour-temperature
+  offset or a recipe correction, what is stored as a profile, and when a calibrated value replaces
+  the planned one. Until that contract, a sample or an outcome changes nothing: friction stays the
+  recipe's `conditions.frictionC` (default 0), and no target, estimate or recipe is altered.
+
+**Versioning (0.26.0).** Additive vocabulary: three `AddObservation`/`ObservationAdded` kinds, the
+optional `componentId`, one widened gate (`doughTemperature` on the first-contact step), and derived
+read models. Stored events are untouched and no upcaster is needed: an earlier session holds none of
+the new kinds and replays unchanged; a `doughTemperature` can never already sit on a first-contact
+step, since it was refused there. The event envelope, the log and the backup `schemaVersion` are
+unchanged (the log is JSON). An app that does not know the kinds refuses a backup that holds them
+(persistence.md, Restore), never misreading it. `CONTRACT_VERSION` goes to `0.26.0` and
+`ENGINE_VERSION` by one minor step in the implementing pull request.
 
 **Implicitly running steps (live projection).** The baker's first real action on a step records
 its `StepStarted`; until then the step has no recorded start, but it must not be shown as waiting
@@ -412,7 +516,7 @@ incorporations included (`process.md`).
 Every command except `StartBake`, `AddObservation`, `CorrectOutcome` and `ReopenBake` requires an
 active bake. `AddObservation`
 also applies to a finished or abandoned bake (the review after the bake: crumb, flavor, what went
-wrong); `kind: 'doughReady'` still needs an active bake. It never reopens the bake. Business errors are typed codes
+wrong); `kind: 'doughReady'`, `'fold'` and every temperature kind still need an active bake. It never reopens the bake. Business errors are typed codes
 (`StepAlreadyCompleted`, `DependenciesNotCompleted`, `BakeNotActive`, …).
 
 ## Scaled preparation

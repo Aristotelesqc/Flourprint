@@ -156,3 +156,27 @@ better than 1e-6). The four older cases whose recipe has a 10 min `mix` as its o
 (reference point, constant 4 °C, inverse dose, thermal lag) are unchanged: that `mix` is the
 first-contact step and nothing lies between its end and the end of the last mixing step, so their
 values are those of contract 0.23.0.
+
+## Preparation temperatures (`temperatures/`)
+
+`temperatures/cases.json` holds the reference cases of the Preparation temperatures (bake-session.md,
+Preparation temperatures; fermentation.md, Liquid target, Suggested dough target, Friction samples,
+contract 0.26.0), produced by `temperatures/generate.py` from the contract's equations and constants,
+with no import from `packages/`. Each case has a `kind`:
+
+- `liquidTarget` (W1 to W5) and `liquidDeviation` (W6): the base-temperature method with the room,
+  flour, preferment and friction in force and their sources (`planned`, `adjusted`, `measured`,
+  `assumed`), in exact rational arithmetic (`exact` holds the fraction where it is not an integer).
+- `frictionSample` (F1 to F3): the same relation solved for the friction, from a measured liquid and
+  a measured dough, with the flour and preferment measured or assumed.
+- `suggestedDoughTarget` (E1 to E5): the dough temperature at which the default readiness profile
+  (`F*` = 1) is reached at the end of the planned durations, with the fixed lag of 1.5 h and no
+  thermal inputs: a trapezoid of 20 000 steps on the analytic dough temperature inside a bisection to
+  1e-9 °C over `[1.7, 35] °C`. The range solves the plan with every dough-step duration multiplied,
+  then divided, by 1.9. `expected` keys are paths in the suggestion; `range` is `null` where an end
+  has no solution (then `assumptions` holds `band_unbounded:<ends>`), and the two unreachable cases
+  expect `out_of_domain` with the reason. Tolerance 0.01 °C (the reference is better than 1e-6).
+
+The cases ship with no engine harness: they are contract examples, and the implementing pull request
+adds the harness and a `since` engine version to each case, as for the thermal cases. Nothing in
+them comes from the engine.

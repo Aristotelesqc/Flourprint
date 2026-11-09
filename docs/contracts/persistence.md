@@ -274,6 +274,49 @@ on a connection is serialized, so a transaction never interleaves with another o
 - The restore is atomic: it writes everything in one transaction, into an empty database, or
   nothing. A failed restore leaves the target unchanged and can be retried.
 
+## Measurements in the backup (0.26.0)
+
+**A kind of measurement that the backup does not carry is not finished.** Measurements live in the
+bake event log (an observation's `measurement`, the temperature `AdjustStep` overrides, the
+measurements of a `CompleteStep`), and the full backup carries the complete log of every bake
+(history.md, Export), so a measurement is in the backup as soon as its event is. The rule keeps it
+so: a **kind of measurement** is an observation `kind` that carries a `measurement`, a
+`measurement` without a kind, or any event field that holds a measured value. A pull request that
+adds one is not complete until all of these hold:
+
+1. **Decoded and gated.** The backup decoder accepts the kind and checks its payload for shape,
+   unit and range, and its references (the step, the component) against the history replayed so
+   far, with the same gate the command applies (bake-session.md). A payload the command would have
+   refused is refused at restore.
+2. **Refused when unknown.** An app that does not know the kind refuses a backup that holds it, on
+   the unknown kind, and never drops or misreads it (the precedent of `StepThermalChanged` and the
+   weighing checks). The backup `schemaVersion` changes only when a document outside the event log
+   changes shape.
+3. **Exported.** The feedback export lists it in the bake digest (history.md), and the analysis
+   export records it with its source (history.md, Preparation analysis export).
+4. **Round-tripped.** A test records one of it, exports a backup, restores into an empty store and
+   shows the same replayed state and the same digest.
+5. **Enumerated.** The domain's list of measurement kinds is the one source of truth, and a contract
+   test iterates it and fails when a kind has no case in 1 and 4, so that adding a kind without its
+   backup case cannot pass.
+
+| Measurement                                                  | Carried by                               | Since    |
+| ------------------------------------------------------------ | ---------------------------------------- | -------- |
+| free `Observation` (a weight, a height, a reading) on a note | `ObservationAdded` `measurement`         | existing |
+| `doughTemperature` (and its `position`)                      | `ObservationAdded` `kind`, `position`    | 0.21.0   |
+| `flourTemperature`, `liquidTemperature`                      | `ObservationAdded` `kind`                | 0.26.0   |
+| `prefermentTemperature` (and its `componentId`)              | `ObservationAdded` `kind`, `componentId` | 0.26.0   |
+| the room changed for a Preparation                           | `OverrideApplied` (`temperatureC`)       | existing |
+| measurements given with a completion                         | `StepCompleted` `measurements`           | existing |
+
+A weighing check, a fold set and a `doughReady` judgement are records of the baker's work, not
+measured values, and are not kinds of measurement in this sense (they are in the backup all the
+same). Derived data (the friction sample, the temperature outcome, the forecasts) is never in the
+backup: it is recomputed from the facts. The restore of the temperature kinds re-checks, against the
+state replayed so far, that the step exists and has the type its row of bake-session.md, Temperature
+observation kinds, requires; that the value is a finite number within 0 – 60 °C in `degC`; and that a
+`componentId` names a `preferment` component of the snapshot's formula.
+
 ## Recipe files and additive import
 
 - A **recipes file** holds recipes only, never bakes, and is named distinctly from a full backup:

@@ -170,6 +170,8 @@ interface BakeDigest {
     kind?: ObservationKind;
     stage?: 'shape' | 'bake'; // doughReady only
     set?: number; // fold only: the set done (process.md, techniques)
+    position?: ProbePosition; // doughTemperature only (bake-session.md)
+    componentId?: string; // prefermentTemperature only (bake-session.md, Preparation temperatures)
     criterion?: string;
     text?: string;
     rating?: number;
@@ -182,6 +184,11 @@ interface BakeDigest {
     value: unknown;
     reason?: string;
   }>;
+  // Absent unless the Preparation recorded a temperature fact (a reading or a room adjustment).
+  temperatures?: {
+    outcome: TemperatureOutcome; // fermentation.md, Temperature outcome
+    frictionSample?: FrictionSample; // fermentation.md, Friction samples
+  };
 }
 ```
 
@@ -190,12 +197,165 @@ interface BakeDigest {
 - `status`, `endedAt` and `outcome` follow the session's latest end (a reopened session is
   `active` until it ends again). `outcome` is the latest `OutcomeCorrected` after that end, else
   that `BakeFinished`'s outcome, else `unknown`; it is absent on active and abandoned sessions. The feedback export's `schemaVersion` is 2
-  for `outcome` and `cooking`, and 3 with `ingredients`. `ingredients` is read from the snapshot formula's
+  for `outcome` and `cooking`, 3 with `ingredients`, and 4 (contract 0.26.0) with the observation
+  `position` and `componentId` and the per-bake `temperatures`. `ingredients` is read from the snapshot formula's
   pins and absent when there are none.
+- **Every measurement is in it.** The `backup` part holds every event of every bake, so every
+  recorded measurement is there; the digest lists every observation with its `measurement`, so that
+  a reader does not have to replay the log. A kind of measurement the backup or the digest leaves
+  out is not finished (persistence.md, Measurements in the backup).
 - `device` describes the exporting device only. Whether a bake was real is its own `origin`; an
   `unknown` origin never enters a calibration as a measured bake.
 - The export is offered as one action that copies the document and, where the platform can,
   saves it as a file. Nothing is sent anywhere by the app.
+
+## Preparation analysis export (0.26.0, owner decisions of 2026-11-09)
+
+The feedback export gathers everything the app recorded. The **analysis export** is its small
+sibling: one Preparation, compact and readable by a person or by an LLM, to debug the app or the
+model or to fine-tune with an LLM. It is offered as a second copy action beside the feedback export
+("Copy all my data"), named **"Copy this preparation for analysis"**; the interface is a later
+slice. It is JSON, because one structure cannot drift from itself; any text or Markdown rendering is
+a presentation of this document, never a second format with its own rules.
+
+```ts
+interface PreparationAnalysis {
+  kind: 'flourprint-analysis';
+  schemaVersion: 1;
+  exportedAt: Instant;
+  about: string; // English legend of the structure, for the reader (units, sources, what is recomputed)
+  versions: {
+    recorded: { engineVersion: string; contractVersion: string; models: ModelRef[] }; // the snapshot's manifest
+    exporting: { engineVersion: string; contractVersion: string; models: ModelRef[] }; // the app that exports
+  };
+  preparation: {
+    status: 'active' | 'finished' | 'abandoned';
+    origin: 'physical' | 'simulation' | 'unknown';
+    startedAt?: Instant;
+    endedAt?: Instant;
+    outcome?: PreparationOutcome | 'unknown';
+    outcomeSource?: 'recipe' | 'baker';
+    scaledFrom?: { anchor: Anchor };
+  };
+  recipe: {
+    name?: string;
+    version: number;
+    formula: Formula; // the snapshot's, with its pinned entry contents
+    resolved: ResolvedFormula; // grams, percentages, total water
+    process: Process; // the snapshot's: steps, conditions, thermal inputs, techniques, equipment, readiness
+    equipment?: EquipmentEntry[]; // the copies the process references (equipment.md)
+    flours?: FlourRef[];
+  };
+  plan: {
+    initialProjection: Projection; // planned start and end of each step at the start
+    estimates: Record<StepId, Estimate>; // the accepted suggestions at the start, verbatim
+  };
+  steps: Array<{
+    id: StepId;
+    operation: string;
+    plannedStartAt?: Instant;
+    plannedEndAt?: Instant; // the initial projection
+    baselineDurationS?: number;
+    plannedDurationS?: number; // the snapshot's and the effective plan
+    startedAt?: Instant;
+    endedAt?: Instant;
+    actualDurationS?: number;
+    gap: { startS?: number; endS?: number; durationS?: number }; // actual − planned, signed seconds
+  }>;
+  temperatures: {
+    planned: {
+      rooms: Array<{ stepId: StepId; c: number }>;
+      doughTargetC?: number;
+      frictionC?: number;
+    };
+    records: Array<{
+      quantity: 'room' | 'flour' | 'liquid' | 'preferment' | 'dough';
+      valueC: number;
+      source: 'adjusted' | 'measured'; // planned values are in `planned`; assumed ones are not records
+      at: Instant; // observedAt, or the adjustment's instant
+      seq: number; // the event that carries it
+      stepId?: StepId;
+      componentId?: string;
+      position?: ProbePosition;
+    }>;
+    outcome: TemperatureOutcome;
+    frictionSample?: FrictionSample;
+  };
+  events: Array<{
+    seq: number;
+    type: string;
+    occurredAt: Instant;
+    recordedAt: Instant;
+    payload: unknown;
+  }>;
+  forecasts: {
+    recorded: {
+      acceptedProjections: Array<{ seq: number; projection: Projection }>; // ProjectionAccepted, verbatim
+    };
+    recomputed: {
+      engineVersion: string; // the exporting app's: NOT what the app showed at the time
+      asOf: Array<{
+        seq: number; // the last event taken into account
+        at: Instant; // its occurredAt
+        dough?: {
+          // the live dough forecast read from the events up to seq (fermentation.md, Live recomputation)
+          progressNowPct: Estimate;
+          remaining: Estimate;
+          stepEnds: Record<StepId, Estimate>;
+          doughStart?: TemperatureInput & { basis: 'reading' | 'target' | 'ambient' };
+        };
+        targets?: TemperatureTargets; // fermentation.md, Liquid target; only before the first contact is completed
+      }>;
+      thinned?: true; // more events than the cap: the as-of points are an even subset, first and last kept
+    };
+  };
+}
+```
+
+**Content.** The recipe and plan as the Preparation started them; every recorded fact in order
+(`events`: every event in `seq` order with its payload verbatim, except `BakeStarted`, whose content
+is `recipe`, `plan` and `preparation`; the `derived` formula of a formula `OverrideApplied`; and
+`ProjectionAccepted`, moved to `forecasts.recorded`); the actual times and the **plan against actual
+gaps** per step; **every temperature measurement** with its time, step and source
+(`temperatures.records`; a `planned` value is in `temperatures.planned`, an `assumed` one is a
+default and not a record); and the engine's forecasts over time.
+
+**Forecasts: recorded and recomputed, never confused.** What the engine _showed_ is recorded only
+where the log recorded it: the accepted estimates of the start and the accepted projections
+(`forecasts.recorded`, verbatim, with the models and manifest of their time). The forecast _as of_
+any later instant is not in the log (a live forecast is never logged, Reading history); the analysis
+therefore **recomputes** it with the exporting app's engine from the events up to each instant
+(`forecasts.recomputed.asOf`), says so (`recomputed`, its `engineVersion`, `versions.exporting`), and
+that is the explicit comparison of Reading history, never a replacement of the record. One as-of
+point follows every event that can change a forecast (a step start or end, a time correction, a
+completion retraction, an `AdjustStep`, a temperature or `doughReady` observation, a thermal change,
+a hold or release, an inserted step), at most 200: past that, the points are an even subset with the
+first and the last kept (`thinned`). The temperature targets are included while the first-contact
+step is not completed.
+
+**Stability.**
+
+- `kind` and `schemaVersion` identify the document. A new optional field, or a new stable code in an
+  existing field, keeps the version; a removed or renamed field, or a changed meaning, raises it.
+  An older reader that ignores unknown fields still reads a newer document of the same version.
+- Deterministic: the same events, snapshot and engine give the same document apart from
+  `exportedAt`. Keys are sorted, arrays are in time order (ties by `seq`), instants are UTC
+  (`Z`), numbers are in the persisted units (grams, °C, seconds, points) and are written as
+  recorded, never rounded by the export.
+- It is derived from the log by the application and never read back: it is not a backup, cannot be
+  restored and is not an input to anything.
+
+**Privacy: only what the baker recorded.** The document holds the Preparation's recipe and the
+facts recorded in it, and the versions of the software. It holds **no device information** (no
+platform, storage kind, build name, locale, time zone or UTC offset, no device or install
+identifier), no other Preparation or recipe, no recipe family, no personal profile (the thermal
+factor a forecast used appears only as its `thermal_factor:<key>=<value>` assumption, as in every
+estimate), and **none of the opaque identifiers of the log**: `bakeId`, `eventId`, `commandId` and
+`causationId` are left out and events are referred to by `seq`, so two exports of two
+Preparations cannot be linked by an identifier. The recipe's own `id` is also omitted; its `name`
+and `version` are what the baker wrote. The baker's free text (notes, ratings, criteria) is
+included, as it was recorded. A reader may still recognise the baker from what they wrote; the interface
+slice shows the document before it is copied.
 
 ## Statistics
 

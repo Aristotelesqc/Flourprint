@@ -105,6 +105,12 @@ interface StepConditions {
   (`InvalidProcess`). Their use is defined in
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
+- During a Preparation the baker may change a step's `temperatureC` (`AdjustStep`) and record
+  measured temperatures of the dough, flour, liquid and preferment; the snapshot keeps the plan and
+  the engine reads the effective and measured values with their sources (bake-session.md,
+  Preparation temperatures; fermentation.md, Liquid target). `frictionC` stays the recipe's value;
+  Preparations only produce samples for a later calibration of it (fermentation.md, Friction
+  samples).
 
 ## Thermal inputs (#176)
 
