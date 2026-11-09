@@ -13,6 +13,7 @@ local branch that is strictly behind its upstream:
 | behind, not checked out                                                   | moves the ref (`update-ref`, guarded by its old value)  |
 | behind, checked out in a clean worktree, no operation in progress         | `git merge --ff-only` in that worktree                  |
 | behind, worktree with uncommitted changes or a merge/rebase/bisect        | reported as skipped                                     |
+| behind, being rebased or bisected in a worktree (detached meanwhile)      | reported as skipped                                     |
 | behind, checked out in another agent's worktree (`~/.codex`, `~/.gemini`) | reported as skipped, unless `--include-other-worktrees` |
 | ahead, diverged, or upstream gone                                         | reported; a person decides                              |
 | up to date, or no upstream                                                | nothing                                                 |
@@ -20,6 +21,14 @@ local branch that is strictly behind its upstream:
 It never resets, rebases, stashes, deletes or force-pushes anything, and it never touches the
 remote. Untracked files do not block a fast-forward. If one would be overwritten, git refuses, the
 branch stays where it was and is reported as skipped with git's message.
+
+Before moving a branch it checks again that the new commit descends from the old one. Upstreams
+are read by their full ref name, so a tag that shares a branch's name does not confuse it, and a
+branch whose upstream cannot be read is reported as skipped without stopping the others. Only
+`origin` is fetched: a branch that tracks another remote is compared with that remote's last fetch.
+Clean worktrees of running Claude sessions are fast-forwarded like any other; only Codex and Gemini
+worktrees are left alone. Fetching never waits on a credential prompt (`GIT_TERMINAL_PROMPT=0`).
+If the fetch fails (offline, for example), the script prints git's message and exits with 1.
 
 Options: `--dry-run` (report only), `--no-fetch`, `--quiet` (hide up-to-date branches),
 `--include-other-worktrees`.
@@ -36,7 +45,8 @@ Options: `--dry-run` (report only), `--no-fetch`, `--quiet` (hide up-to-date bra
   ```
 
   Remove it with `schtasks /Delete /TN "Flourprint branch sync" /F`. The task runs with the
-  owner's git credentials, like any fetch.
+  owner's git credentials, like any fetch; `node` must be on that user's `PATH`. The log grows
+  without limit: delete it now and then.
 
 Branches reported as `gone` are usually merged pull request branches. Deleting them is a separate,
 manual decision: `git branch -d <name>` refuses a branch that is not merged.

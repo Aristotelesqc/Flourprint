@@ -147,3 +147,50 @@ test('fast-forwards only what can be fast-forwarded, and reports the rest', () =
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('never moves a branch being rebased, and survives odd upstreams and names', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'sync-branches-'));
+  try {
+    const origin = path.join(root, 'origin.git');
+    const pusher = path.join(root, 'pusher');
+    const clone = path.join(root, 'clone');
+    git(root, 'init', '-q', '--bare', '-b', 'main', origin);
+    git(root, 'clone', '-q', origin, pusher);
+    commit(pusher, 'a.txt', '1');
+    commit(pusher, 'a.txt', '2');
+    git(pusher, 'push', '-q', 'origin', 'HEAD:main', 'HEAD:rb', 'HEAD:feat');
+    commit(pusher, 'c.txt', 'origin');
+    git(pusher, 'push', '-q', 'origin', 'HEAD:rb', 'HEAD:feat');
+    git(root, 'clone', '-q', origin, clone);
+    for (const b of ['rb', 'feat']) git(clone, 'branch', '-q', '-f', b, `origin/${b}~1`);
+    for (const b of ['rb', 'feat'])
+      git(clone, 'branch', '-q', '--set-upstream-to', `origin/${b}`, b);
+    // `tracklocal` follows the local branch `main` (branch.<name>.remote = .).
+    git(clone, 'branch', '-q', '--track', 'tracklocal', 'main');
+    // A tag with the same name as a branch makes `%(refname:short)` read `heads/feat`.
+    git(clone, 'tag', 'feat', 'main');
+
+    // In its own worktree, rebase rb's last commit onto a conflicting base: the worktree is
+    // left detached with the rebase stopped, and rb itself is still strictly behind origin/rb.
+    const wt = path.join(root, 'rbwt');
+    git(clone, 'worktree', 'add', '-q', '-b', 'base', wt, 'rb~1');
+    commit(wt, 'a.txt', 'conflict');
+    assert.throws(() => git(wt, 'rebase', '-q', '--onto', 'base', 'rb~1', 'rb'));
+    const rbBefore = git(clone, 'rev-parse', 'rb');
+
+    const run = syncBranches({ cwd: clone, fetch: false });
+    const byName = Object.fromEntries(run.map((r) => [r.branch, r]));
+    assert.equal(byName.rb.state, 'skipped');
+    assert.equal(byName.rb.why, 'being rebased or bisected');
+    assert.equal(git(clone, 'rev-parse', 'rb'), rbBefore);
+    assert.equal(byName.feat.state, 'updated');
+    assert.equal(
+      git(clone, 'rev-parse', 'refs/heads/feat'),
+      git(clone, 'rev-parse', 'refs/remotes/origin/feat'),
+    );
+    assert.equal(byName.tracklocal.state, 'up-to-date');
+    git(wt, 'rebase', '--abort');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
