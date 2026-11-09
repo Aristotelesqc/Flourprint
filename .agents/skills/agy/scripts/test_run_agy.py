@@ -55,8 +55,11 @@ class LauncherTests(unittest.TestCase):
             code = run_agy.main([*self.options, *options])
         return code, received, call.call_count
 
-    def result(self, status="SUCCESS", response="Completed review"):
-        return {"event": "result", "result": {"status": status, "response": response, "conversation_id": "owned-session"}}
+    def result(self, status="SUCCESS", response="Completed review", finished_reason=None):
+        payload = {"status": status, "response": response, "conversation_id": "owned-session"}
+        if finished_reason is not None:
+            payload["finished_reason"] = finished_reason
+        return {"event": "result", "result": payload}
 
     def metadata(self):
         return json.loads((self.output / "run.json").read_text(encoding="utf-8"))
@@ -116,6 +119,68 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(self.metadata()["status"], "timeout")
         self.assertTrue((self.output / "input.ndjson").exists())
         self.assertFalse((self.output / "report.md").exists())
+
+    def test_cli_print_timeout_exit_code_is_timeout_not_generic_cli_failure(self):
+        code, _, calls = self.invoke(
+            event=self.result(response="Partial answer", finished_reason="print_timeout"),
+            returncode=3,
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(calls, 1)
+        meta = self.metadata()
+        self.assertEqual(meta["status"], "timeout")
+        self.assertEqual(meta["exitCode"], 3)
+        self.assertEqual(meta["finishedReason"], "print_timeout")
+        self.assertEqual(meta["conversationId"], "owned-session")
+        self.assertFalse((self.output / "report.md").exists())
+
+    def test_early_finished_reason_rejects_partial_response_even_on_zero_exit(self):
+        for reason, expected_status in (
+            ("print_timeout", "timeout"),
+            ("interrupted", "interrupted"),
+            ("max_tokens", "incomplete_result"),
+        ):
+            with self.subTest(reason=reason):
+                out = self.root / f"run-{reason}"
+                code, _, _ = self.invoke(
+                    options=["--out", str(out)],
+                    event=self.result(response="Cut-off answer", finished_reason=reason),
+                )
+                self.assertEqual(code, 1)
+                meta = json.loads((out / "run.json").read_text(encoding="utf-8"))
+                self.assertEqual(meta["status"], expected_status)
+                self.assertEqual(meta["finishedReason"], reason)
+                self.assertFalse((out / "report.md").exists())
+
+    def test_optional_effort_add_dir_and_json_schema_flags_are_forwarded(self):
+        extra_one = self.root / "captures"
+        extra_two = self.root / "fixtures"
+        extra_one.mkdir()
+        extra_two.mkdir()
+        schema_file = self.root / "schema.json"
+        schema_file.write_text('{"type":"object"}', encoding="utf-8")
+        code, received, _ = self.invoke(
+            options=[
+                "--effort", "high",
+                "--add-dir", str(extra_one),
+                "--add-dir", str(extra_two),
+                "--json-schema", str(schema_file),
+            ],
+            event=self.result(response='{"ok":true}'),
+        )
+        self.assertEqual(code, 0)
+        command = received["command"]
+        self.assertEqual(command[command.index("--effort") + 1], "high")
+        add_dir_values = [command[i + 1] for i, token in enumerate(command) if token == "--add-dir"]
+        self.assertEqual(add_dir_values, [str(extra_one.resolve()), str(extra_two.resolve())])
+        self.assertEqual(command[command.index("--json-schema") + 1], str(schema_file.resolve()))
+        self.assertNotIn("--settings", command)
+
+    def test_invalid_json_schema_fails_before_launching_cli(self):
+        code, _, calls = self.invoke(options=["--json-schema", "not-json-or-file"], event=self.result())
+        self.assertEqual(code, 1)
+        self.assertEqual(calls, 0)
+        self.assertFalse(self.output.exists())
 
     def test_launch_failure_has_a_terminal_record(self):
         code, _, _ = self.invoke(launch_error=True)
