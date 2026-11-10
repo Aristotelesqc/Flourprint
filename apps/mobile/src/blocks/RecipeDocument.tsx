@@ -462,6 +462,7 @@ export const RecipeDocument = ({
           onEdit={onEdit}
           failureMessage={failureMessage}
           onIngredientDetailsChange={onIngredientDetailsChange}
+          recipePresentation
         />
       ) : (
         <div className="flex flex-col gap-2 rounded-2xl border border-line p-3">
