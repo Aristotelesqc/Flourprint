@@ -42,7 +42,8 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   fermentation as baking does) in the graph, in process order; kneading steps among them, each
   with its own duration. The **first-contact step is not a dough step**: it has no fermentation
   clock, so it is not listed in the per-step results and no gate that asks for a dough step
-  accepts it (bake-session.md); its conditions give the dough's starting temperature (Dough
+  accepts it (bake-session.md), with one exception since 0.26.0: a `doughTemperature` reading is
+  accepted on it as the start of the clock (Dough temperature); its conditions give the dough's starting temperature (Dough
   temperature). `alap` steps (preheating) never hold the dough, and a step before the first
   contact (an `autolyse` without yeast, the weighing) is not a dough step either. They must form
   one sequence, each after the previous one; dough steps in parallel (two rests side by side) are
@@ -176,7 +177,7 @@ temperature it starts from is set by the conditions of the first-contact step.
   of the **water** calculation (Water temperature, below) is the reference mixing step's. Two steps
   of a recipe are often one (a single `mix` that brings the yeast): then one value serves both. When
   they differ (a `frasage` that brings the yeast, then a `mix`), each is read where it is stated, so
-  both steps need a temperature, and an interface that edits the room shows each one on its own step.
+  both steps need a temperature. During a Preparation a room change follows the room line to every room step, up or down (bake-session.md, The room line); an interface that edits a recipe shows each room on its own step.
   The dough's start in advanced mode is the target dough temperature (below), not the room.
 - **Advanced mode**: the reference mixing step (process.md) declares a target dough temperature
   (`conditions.doughTemperatureC`); the dough starts at it, **at the end of the first-contact
@@ -185,7 +186,18 @@ temperature it starts from is set by the conditions of the first-contact step.
   and lets the lag below carry the dough from there, so a target far from the ambient is followed
   by a drift during the kneading steps that remain. With a first-contact step that is also the
   reference mixing step (the common case) this is the temperature of the dough at the end of its
-  mixing. A measurement of the dough at that instant would replace this assumption.
+  mixing. A measurement of the dough at that instant replaces this assumption (next bullet).
+- **Measured start** (0.26.0, owner decisions of 2026-11-09 and 2026-11-10). A `doughTemperature`
+  observation whose effective instant lies within the first-contact step (bake-session.md,
+  Preparation temperatures; a reading has no step gate and is placed by its instant) is the
+  temperature of the dough
+  when its clock starts, whatever the mode. Where the dough starts, in order: the measured reading
+  in force, else the target dough temperature (advanced mode), else the first-contact step's
+  effective ambient (basic mode). The forecast names which one it used as the assumption
+  `dough_start:reading`, `dough_start:target` or `dough_start:ambient`, and names each step whose
+  effective ambient comes from the baker (an `AdjustStep` or a room change) as `ambient_adjusted:<stepId>`. A **suggested**
+  dough target (Suggested dough target, below) is never a start: it guides the baker and feeds the
+  liquid target, and only a target the recipe declares, or a reading, starts the dough.
 - Between steps, and inside each dough step, the dough follows the step's condition temperature
   with a first-order lag `dT/dt = (T_condition − T) / τ`, τ within its range (0 = it follows at
   once). A step without a condition temperature keeps the previous one; with none at all, the
@@ -194,7 +206,8 @@ temperature it starts from is set by the conditions of the first-contact step.
   `τ` enters the envelope instant by instant and step by step, never as one value shared by the
   whole path (The band and the envelope).
 - A measured dough temperature (an observation during a bake) replaces the estimate from that
-  instant (bake-session.md, `doughTemperature`); planning uses the plan. A core-probe reading
+  instant (bake-session.md, `doughTemperature`); planning uses the plan. A reading on the
+  first-contact step is the dough's start (Measured start, above). A core-probe reading
   replaces the **mean** state through `γ_core` (below).
 - The mixing machine's friction is not a heat source of the model: it enters only the water
   temperature below and, through the target, the starting temperature.
@@ -577,8 +590,8 @@ and completed after 9 starts the clock 9 min after its own start. A first-contac
 never completed ends when the next step starts. Until it is completed the dough has no progress
 (`progressNowPct` is 0), and the time the dough needs is counted from the end the first-contact
 step is projected to have: its planned remainder, or now when it has already run past its plan.
-The dough then starts from the first-contact step's temperature (or the target dough temperature,
-Dough temperature), and it stays in the first-contact step's conditions if the step after it is
+The dough then starts from the measured first-contact reading, else the target dough temperature,
+else the first-contact step's effective temperature (Dough temperature, Measured start), and it stays in the first-contact step's conditions if the step after it is
 recorded as starting later than it ended, as between any two steps (the dough does not wait
 for a late tap). Completing a step fixes its recorded end, and
 everything after it is projected from that end and from the state the dough had then. This is the replanning rule that already holds for times (process.md, Projection:
@@ -627,6 +640,266 @@ Version 0.1.0 of this contract added it instead; that was an error, corrected on
   that friction is not counted.
 - A result below 0 °C or above 60 °C is returned with that flag, never clipped.
 
+The formula is the base-temperature method for the **liquid** the dough receives: water, or another
+liquid (milk, beer) taken as the water. The planned result above (`waterTemperatureC`, from the
+recipe's own values) is unchanged. A Preparation reads the formula with the values it knows instead
+(Liquid target, next).
+
+### Liquid target (0.26.0, owner decisions of 2026-11-09)
+
+In planning and during a Preparation the engine gives the **target temperature of the liquid** for a
+**target dough temperature**, with every input named by its source (values-and-units.md,
+`TemperatureSource`). All of it is optional for the baker: a measurement improves the target and a
+missing one never blocks anything.
+
+```ts
+interface TemperatureTargets {
+  asOf: Instant; // the instant whose facts were read (the plan alone in planning)
+  doughTarget: {
+    valueC: number;
+    source: 'recipe' | 'suggested'; // conditions.doughTemperatureC, else the suggestion below
+    suggestion?: Estimate; // the full suggestion with its range, when source is 'suggested'
+  };
+  liquid: Estimate; // the target liquid temperature, °C, with its assumptions
+  inputs: {
+    n: 3 | 4; // 4 with a preferment
+    room: TemperatureInput; // the reference mixing step's effective ambient
+    flour: TemperatureInput; // measured, else assumed at the room
+    preferment?: TemperatureInput; // present with a preferment: measured, else its step's, else the room
+    friction: TemperatureInput; // planned (conditions.frictionC), else assumed 0
+  };
+  liquidMeasured?: TemperatureInput & { deviationC: number }; // measured − target, same instant
+  doughStart: TemperatureInput & { basis: 'reading' | 'target' | 'ambient' }; // Dough temperature
+}
+```
+
+- **Formula.** `T_liquid = n × T_dough_target − T_flour − T_room − T_preferment − friction`, exactly
+  the base-temperature method above, with the values in force:
+  - `T_room` is the **effective** room of the reference mixing step at the instant read (the room
+    line, up or down, and its own `AdjustStep`, whichever is later: bake-session.md, The room
+    line): `adjusted` if either applies, else the plan (`planned`). Without either, the
+    liquid target is `insufficient_data` (`temperature_unknown`) as before.
+  - Readings are placed by their effective instant: only those at or before the end of the
+    first-contact step count here (later ones are `reading_after_mixing`, bake-session.md).
+  - `T_flour` is the `flourTemperature` reading in force (`measured`), else `T_room`
+    (`assumed`, assumption `flour_at_room_temperature` as before): it follows the effective room.
+  - `T_preferment` is the mean of the preferments' temperatures, each the `prefermentTemperature`
+    reading in force for its component (`measured`), else the temperature of its last fermenting
+    phase (effective ambient, `planned` or `adjusted`), else `T_room` (`assumed`,
+    `preferment_at_room_temperature`). Absent without a preferment.
+  - `friction` is the reference mixing step's `conditions.frictionC` (`planned`), else 0
+    (`assumed`, `friction_not_counted`). No measurement changes it in this version (bake-session.md,
+    Calibration data).
+- **Dough target in force.** The recipe's `conditions.doughTemperatureC` (`recipe`, advanced mode),
+  else the suggested dough target (`suggested`) when it is `ok`, else no target and no liquid
+  target. A recipe with no declared target therefore gets both suggestions in basic mode: the dough
+  target the plan implies and the liquid that reaches it. The planned `waterTemperatureC`
+  stays absent without a declared target, as before.
+- **Deviation.** When a `liquidTemperature` reading is in force, `liquidMeasured` carries it and
+  `deviationC = measured − liquid target`. Live, the target is the one just computed; afterwards it
+  is the one **recorded** with the reading (`TemperatureTargetsRecorded`, trigger `liquidMeasured`,
+  bake-session.md, Recorded targets), never recomputed; without a recorded one there is no
+  deviation. The deviation is information, not a correction: nothing is refused because of it.
+- **Lifetime.** The targets are offered from the start of the Preparation until the first-contact
+  step is completed, and in planning. After that the liquid is in the dough: the result is no
+  longer computed live, and what remains is the recorded facts, the friction sample and the
+  temperature outcome (below).
+- **Sources are always reported.** Each input says `planned`, `adjusted`, `measured` or `assumed`.
+  A result built only from planned values carries no `measured` input, so the interface can say
+  that the target rests on the plan.
+- **Out of range.** A target below 0 °C or above 60 °C is returned with `water_below_0C` or
+  `water_above_60C` as above, never clipped.
+
+Worked cases: `fixtures/temperatures/cases.json`, W1 to W6, and the examples below.
+
+**Examples (hand-worked, units °C).** Target dough 24, no preferment, no friction.
+
+1. **Plan alone.** Room 22 (`planned`), flour at the room: `3 × 24 − 22 − 22 = 28`.
+2. **The room is warmer today.** The baker notes the room at 26 (`adjusted`); the flour, assumed
+   at the room, follows: `72 − 26 − 26 = 20`. The target falls by 8 because both the room and the
+   assumed flour rose by 4.
+3. **The flour was measured.** Same room 26, flour measured at 18 (cold from the garage):
+   `72 − 18 − 26 = 28`. The flour is 8 below what case 2 assumed, so the liquid must be 8 warmer.
+4. **With a friction.** Case 3 with `frictionC` 6 declared on the mixing step: `72 − 18 − 26 − 6 = 22`.
+5. **With a poolish.** Target 24, room 22, flour at the room, poolish measured at 20, friction 5,
+   `n = 4`: `96 − 22 − 22 − 20 − 5 = 27`.
+6. **A measured liquid.** In case 3 the baker measures the water at 31: `deviationC = 31 − 28 = +3`.
+   The dough should then come out about `3 / 3 = 1` °C above its target if every other input
+   holds, which the baker confirms or not with the dough reading.
+7. **The room cools.** Planned room 22; the baker notes 19 (`adjusted`), the flour, assumed at the
+   room, follows: `72 − 19 − 19 = 34`. A colder room asks for a warmer liquid, as a warmer one asks
+   for a cooler liquid (case 2).
+
+### Suggested dough target (0.26.0, proposal: owner confirmation requested)
+
+Status: **proposal of 2026-11-09**, requested by the owner (item 3 of the decisions of that date);
+every ASSUMED value below is an owner choice to confirm. When the recipe declares no
+`conditions.doughTemperatureC`, the engine **suggests** the temperature the dough should have when
+its clock starts so that the model reaches the planned fermentation in the planned durations. The
+suggestion is shown with its range. It is advice: it never starts the forecast (Dough temperature),
+is never written into the recipe, and is applied to the recipe only by an explicit edit of
+`doughTemperatureC`.
+
+**Definition.** Let the _dough steps_ be those of What it predicts (after the first-contact step, up
+to the first heat step, in order), `d_i` the planned duration of each and `T_i` its ambient, and
+`F*` the central end point of the recipe's readiness profile (`readyProgress`). Let `F(T₀)` be the
+progress at the **end of the last dough step** when the dough starts at `T₀` at the end of the
+first-contact step and follows the model: the kinetic law, the lag and any thermal inputs and
+self-heating of the steps (central values), the yeast dose of the dough. The suggestion is the `T₀`
+with `F(T₀) = F*`.
+
+**Rule.**
+
+1. **Scope.** The dough only. A preferment keeps its own temperature, the one of its steps.
+2. **Steps and durations.** All the dough steps, mixing steps among them, each at its planned
+   duration as stored. A model-driven step (Model-driven duration) counts at its stored value, the
+   editor's last suggestion: the suggestion is never recomputed from itself. In a Preparation the
+   _effective_ plan is read: a duration or ambient the baker adjusted (`AdjustStep`) counts, a
+   completed step cannot occur (the targets end when the first-contact step is completed). A step
+   with no planned duration contributes zero time, as in Results. The ambient `T_i` is the step's
+   effective ambient; a step without one keeps the previous, the first dough step taking the
+   first-contact step's. The first-contact step's own ambient is not needed.
+3. **Solving.** Bisection on the forward simulation over `[1.7, 35] °C`, the gate of the Domain
+   table, to 0.001 °C: the same method as the inverse dose, never a separate formula. `F(T₀)` does
+   not decrease when `T₀` rises (the rate rises with temperature; the comparison principle of the
+   thermal model), so the bisection is valid. A candidate whose path fails the Semenov bound or
+   leaves the temperature gate counts as above `F*`.
+4. **Preconditions.** A dough estimate that cannot be made for a reason independent of `T₀`
+   gives the same status and reason, with no suggestion: `unsupported` (no commercial yeast…),
+   `insufficient_data` (yeast form, a step temperature unknown: `temperature_unknown`), a dose
+   outside 0.01–3 % (`out_of_domain`). No dough step with a planned duration:
+   `insufficient_data`, `no_planned_fermentation`.
+5. **No solution.** If `F(35 °C) < F*`, the status is `out_of_domain` with reason
+   `plan_unreachable_too_slow`: even the warmest dough in the model's domain is too slow for the
+   plan. If `F(1.7 °C) > F*`: `out_of_domain`, `plan_unreachable_too_fast`. In both the plan, not the
+   temperature, has to change; the interface says so.
+6. **Usual window.** A solution outside **15 – 32 °C** (ASSUMED: the range of doughs that can be
+   mixed with ordinary water) is still `ok`, never clipped, and carries the extrapolation
+   `dough_target_below_15c` or `dough_target_above_32c`.
+7. **Range.** Two more solutions of the same plan, with every dough-step duration **multiplied** by
+   the predictive factor for the lower end (a slower plan needs a colder dough) and **divided** by it
+   for the upper end. The factor is **1.9**, the root-mean-square error factor of the model on
+   published practice (docs/science/fermentation-model.md, section 15: ×1.89), ASSUMED to apply
+   to the planned durations. It is a statement about the model's error on other people's recipes,
+   not a confidence interval and not the corner envelope of the estimates. An end with no solution
+   in `[1.7, 35]` leaves the estimate without `range` and with the assumption
+   `band_unbounded:below`, `band_unbounded:above` or `band_unbounded:below+above`.
+8. **Result.** An `Estimate` in °C: `value`, `range?`, `model` the kinetic model, assumptions
+   `dough_target_solver:bisection`, `ready_target_progress:<F*>` and `predictive_factor:1.9`, plus
+   the thermal assumptions of the dough estimate. The interface rounds for display to 0.5 °C.
+   It is recomputed from the current plan after every edit and is not stored.
+9. **When it applies.** Only when the recipe declares no target dough temperature. With a declared
+   target the recipe's own value is used and nothing is suggested.
+
+**Reading the range.** The lag is 1.5 h by default, so a long step at a steady ambient pulls the
+dough toward it and the starting temperature matters less: the more of the plan is spent at a steady
+ambient, the wider or the more open the range. Cases E2 and E3 show it; this is a property of the
+model, not a defect, and the interface presents the suggestion as a guide.
+
+**Examples** (fixtures `temperatures/cases.json`, E1 to E5, computed outside the engine). Direct
+dough, default readiness profile (`F*` = 1), a 10 min `mix` at 24 °C as the first-contact step, then:
+
+1. **E1.** 0.25 % instant yeast (0.758 % fresh-equivalent); bulk 1 h at 24, fridge 10 h at 4, proof 1 h
+   at 24. Suggestion **27.07 °C**, range **12.82 – 32.13 °C** (the plan stretched ×1.9 needs a 12.8 °C
+   dough, shortened ÷1.9 a 32.1 °C one). Both ends exist.
+2. **E2.** 0.2 % instant, bulk 2 h at 24, fridge 12 h at 4, proof 1 h at 24. Suggestion **23.11 °C**.
+   The plan stretched ×1.9 is too fast even at 1.7 °C: no `range`, `band_unbounded:below`.
+3. **E3.** 0.4 % instant, same schedule as E2. Suggestion **10.14 °C**: `ok`, extrapolation
+   `dough_target_below_15c`, `band_unbounded:below`. In a 22 °C room the liquid target for it is
+   `3 × 10.14 − 22 − 22 ≈ −13.6 °C`, flagged `water_below_0C`: the plan has too much yeast.
+4. **E4.** 0.01 % fresh yeast, bulk 3 h at 22: even a 35 °C dough does not finish in time:
+   `out_of_domain`, `plan_unreachable_too_slow`.
+5. **E5.** 0.9 % instant, 4 h and 1.5 h at 22: even a 1.7 °C dough is ready too early:
+   `out_of_domain`, `plan_unreachable_too_fast`.
+
+### Friction samples (0.26.0, data only)
+
+A **friction sample** is the friction a Preparation implies, derived from its recorded temperatures
+by inverting the base-temperature method. It is the data for a later calibration of
+`conditions.frictionC` (owner decisions of 2026-11-09, #32); **how** a calibration uses samples
+(estimator, per-mixer or per-recipe grouping, storage as a personal profile, when it replaces the
+default of 0) is a later contract and is not decided here.
+
+```ts
+interface FrictionSample {
+  recipe: { id: string; version: number }; // the Preparation's recipe revision (analysis export: version only)
+  stepId: StepId; // the reference mixing step whose frictionC it informs
+  firstContactStepId: StepId;
+  equipment?: EquipmentRef; // the appliance of the reference mixing step, when it names one (equipment.md)
+  n: 3 | 4;
+  frictionC: number; // n × T_dough − T_flour − T_room − T_liquid − T_preferment
+  inputs: {
+    dough: TemperatureInput & { position: ProbePosition };
+    liquid: TemperatureInput;
+    flour: TemperatureInput;
+    room: TemperatureInput;
+    preferment?: TemperatureInput;
+  };
+  plannedFrictionC?: number; // conditions.frictionC at the time; absent = the default 0, not counted
+}
+```
+
+- **Eligibility.** A sample exists when all hold: a `liquidTemperature` reading is in force whose
+  effective instant precedes the dough reading's; a `doughTemperature` reading has its effective
+  instant between the start of the **reference mixing step** and **10 minutes** (ASSUMED) after that
+  step's recorded end (or now, while it runs); when several readings qualify, the **latest in
+  force** (latest effective instant, ties by `seq`) is the one used; late entries count, since
+  only instants matter; the room is known
+  (the effective ambient of the reference mixing step, as the liquid target reads it); neither the
+  liquid nor the dough reading has `method: 'reported'`. The inputs are those **in force at the dough
+  reading's instant**, with the flour and the preferment `measured` or `assumed`, exactly as the
+  liquid target reads them. A Preparation without both readings has no sample.
+- **Meaning of the measured dough.** The water method's friction term stands for all the heat the
+  mixing adds before the dough is at its target, so the dough is read at the end of the **reference
+  mixing step** (Water temperature). When that step is the first-contact step (a lone `mix`, the
+  common case) this is also where the model starts the dough. When the first-contact step comes
+  earlier (a `frasage`, then a `mix`), a reading at the end of the first contact would miss the
+  later mixing and understate the friction, so such a reading is **not** a sample; the reading on
+  the reference step is, and the sample carries the assumption `friction_after_first_contact` (the
+  dough clock had started, and the drift toward the room during the mixing is not corrected).
+- **Quality is the sources.** Flour `assumed` at the room, or a preferment `assumed`, make the
+  sample a coarser estimate: with an assumed flour the error of a sample is that flour's departure
+  from the room. The sample carries the sources so that a calibration can weigh or leave out its
+  samples. Nothing here fixes a threshold.
+- **Derived, not stored, and deterministic.** The sample is arithmetic on recorded facts, with no
+  engine call. The inputs "in force" are a pure function of the log (latest by `observedAt`, ties by
+  `seq`; the planned friction and rooms from the snapshot), so every reader that replays the same log
+  gets the same sample, whatever the engine or the app version. It is available after the end of the
+  Preparation. Unlike the targets, it needs no frozen copy, because nothing in it depends on the
+  engine.
+
+**Examples.** `n = 3`, room 22 (`planned`), liquid measured at 27, dough measured at 25.
+
+1. **F1.** Flour measured at 20: `3 × 25 − 20 − 22 − 27 = 6 °C`. The liquid had been aimed at a
+   dough of 23 °C with no friction (`3 × 23 − 20 − 22 = 27`); the dough came out at 25, so the
+   mixing added `3 × 2 = 6 °C` that the default of 0 ignored.
+2. **F2.** The same readings without a flour measurement (assumed at the room, 22): `75 − 22 − 22 −
+27 = 4 °C`. The 2 °C difference is the flour's departure from the room, which is why the sources
+   travel with the sample.
+3. **F3.** A poolish measured at 20 (`n = 4`), flour assumed at 22, room 22, liquid 27, dough 24.5:
+   `98 − 22 − 22 − 27 − 20 = 7 °C`.
+
+### Temperature outcome (0.26.0, data only)
+
+For recipe-level calibration and for the baker's own review, a Preparation derives, from its
+recorded facts, how its temperatures went against the plan. The targets in it are the **recorded**
+ones (bake-session.md, Recorded targets), read from the `TemperatureTargetsRecorded` events and never
+recomputed; without one the field is absent:
+
+```ts
+interface TemperatureOutcome {
+  doughTarget?: { valueC: number; source: 'recipe' | 'suggested' }; // the recorded one, latest by seq
+  doughStart?: TemperatureInput & { basis: 'reading' | 'target' | 'ambient' }; // what started the clock
+  doughStartErrorC?: number; // measured start − target, when both exist
+  liquid?: { targetC: number; measuredC: number; deviationC: number }; // when a liquid was measured
+  adjustedRooms: Array<{ stepId: StepId; plannedC?: number; effectiveC: number }>;
+}
+```
+
+It is derived data like the friction sample: carried by the exports, never stored itself (its
+targets are stored in the events they come from), and not an input to anything until a calibration
+contract says so.
+
 ## Domain
 
 | Condition                                                                                                                                                                         | Result                                     |
@@ -636,6 +909,7 @@ Version 0.1.0 of this contract added it instead; that was an error, corrected on
 | fresh-equivalent dose outside 0.01–3 %, dough below 1.7 °C or above 35 °C (also reached by self-heating)                                                                          | `out_of_domain`                            |
 | Semenov test of the dough thermal model `ψ > 1/e` (Dough thermal model)                                                                                                           | `out_of_domain` (`self_heating_unbounded`) |
 | a preferment (on the dough and on the preferment's own estimate); added sugar > 5 %; added fat > 3 %; salt outside 1.5–3 %; total water outside 55–75 %; a needed content unknown | `ok` with `extrapolations` listing each    |
+| evidence-limited: above 28 °C up to 35 °C; a cold step; cold steps totalling more than 72 h (Learning flags, below)                                                               | `ok` with `extrapolations` listing each    |
 | otherwise                                                                                                                                                                         | `ok`                                       |
 
 Sugar and fat are the formula's `totalSugarPct` and `totalFatPct`; water is `totalWaterPct`.
@@ -651,6 +925,85 @@ An extrapolated estimate is still given, with its reasons, because the owner's r
 to it. Sugar, salt, fat and water only gate the domain: they do not change the rate (#33
 objection 2).
 
+### Learning flags (0.25.0)
+
+Three extrapolation codes mark the regimes where the evidence says the forecast is least reliable
+(owner approval of 2026-11-07 to the proposal of #231, section 6; evidence in
+`docs/science/fermentation-model.md`, sections 12 and 15, and #231, section 3). They are not an
+exit from the fitted domain: the kinetic fit spans 3.9–30 °C, so most cold steps and a dough at
+28–30 °C are inside it. They are **evidence-limited** flags, carried in `extrapolations` with the
+others of the Domain table (values-and-units.md). The estimate is still given, `ok`, with the same
+value and band; only the reasons change. The interface shows them next to the estimate, as it
+shows every extrapolation, with the meaning "learning": the forecast is outside what the model has
+been checked against. Reconciling that meaning with the existing message prefix of extrapolations
+("Outside the model's data") is the interface's task; the new keys follow the French voice rules
+(infinitive or impersonal, never addressing the baker).
+
+| Code                      | Condition (per fermenting mass, central value)                                                                                                                                |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dough_above_28c`         | its start temperature, the effective ambient of one of its steps, or a measured dough temperature it resets to is above 28 °C (and not above 35 °C, which is `out_of_domain`) |
+| `cold_stage_uncalibrated` | one of its steps of non-zero duration has an effective ambient at or below 10 °C                                                                                              |
+| `cold_hold_over_72h`      | the durations of its steps at or below 10 °C effective ambient add up to more than 72 h                                                                                       |
+
+- **Which steps.** The same set for all three codes: the steps the mass's estimate models, that is
+  the dough steps from the end of the first-contact step (Dough clock) for the dough, and the
+  preferment's own steps for a preferment. Kneading steps after the first contact count like any
+  other. A step of zero duration (planned or estimated) counts for no cold code. A cold preferment
+  does not flag the dough, nor the reverse: growth before the mix is not modelled on the dough
+  (State and equations), and the dough's estimate already carries `preferment`.
+- **Which temperatures.** A step's **effective** ambient: its own condition temperature, or the
+  one it keeps from the previous step when it has none (Dough temperature). For 28 °C, the inputs
+  of the `out_of_domain` temperature gate: the temperature the dough starts from, each step's
+  effective ambient, and any measured dough temperature that replaces the estimate during a bake
+  (bake-session.md, `doughTemperature`). In basic mode the dough starts at the ambient. The
+  thermal model's computed trajectory is not re-tested.
+- **Which durations.** Each step counts with its planned duration, except the mass's last
+  fermentation step, whose duration the estimate solves (Results): it counts with the **central
+  estimated** duration, also when it has a planned one. When the end point is reached before that
+  step (`end_point_before_last_step`), its estimated duration is 0 h. When the duration estimate
+  is not `ok` there is no duration estimate to flag; the mass's other estimates (Results) count
+  that step with its planned duration when it has one, else as 0 h.
+- **Boundaries.** The 28 °C test is strict (28 °C does not flag); the 10 °C boundary is inclusive
+  (a step at 10 °C is cold); the 72 h test is strict (exactly 72 h does not flag).
+- **`cold_stage_uncalibrated` has no exit yet.** It means the cold end of the curve is a wide prior
+  that the baker's own cold bakes with heights have not narrowed (#231). No contract yet defines
+  a personal cold calibration, so every cold step carries it; the contract that defines one says
+  when it stops.
+- **Why these thresholds.** Above 28 °C: dough rise peaked at 25 °C in Birch 2013 (abstract only,
+  `docs/science/sources.md`) while gas production keeps rising to 35–40 °C, and the shipped law is
+  4 to 5.6 times too fast at 32 °C on Izzreen 2016, about 2.1 to 2.7 times once the thermal lag is
+  credited (science document, section 2), so above 28 °C the model has no temperature-dependent
+  retention. Cold: the 4 °C to 24 °C ratio is not measured and the published estimates range from
+  0.2 to 3 % against 5.7 % shipped (section 12). Long holds: after 7 days at 5 °C the 2-h gas
+  activity fell to 10 % of control in a sweet dough (15 % sugar, 3 % yeast) and to 35 % in a white
+  bread dough (5 % sugar, 2 % yeast) (Kyogoku 1995), and a lean dough's rise at 4 °C peaked by
+  day 4, then fell (Liu 2025, figure only, skimmed); no cited data point sits at 3 days. The
+  28 °C and 72 h values come from the external report on #231; the 10 °C boundary is this
+  contract's choice, the temperature below which the science document has only one dataset. All
+  three are owner choices and change only by a contract pull request.
+
+Worked examples. Lean dough, salt 2 %, water 65 %; a 10 min first-contact mix at the room
+temperature of the first fermentation step; "proof estimated" means the last step, whose duration
+the estimate solves. The codes of examples 1 to 6 do not depend on the solved duration; examples 7
+and 8 state the dependence.
+
+1. Fresh yeast 1 %. Bulk 2 h at 30 °C, proof estimated at 30 °C: `dough_above_28c`.
+2. Fresh yeast 1 %. Bulk 2 h at 28 °C, proof estimated at 28 °C: no learning flag.
+3. Fresh yeast 0.3 %. Bulk 1 h at 22 °C, retard 48 h at 4 °C, proof estimated at 22 °C:
+   `cold_stage_uncalibrated` only.
+4. The same with a 96 h retard: `cold_stage_uncalibrated` and `cold_hold_over_72h`.
+5. The same with a 72 h retard: `cold_stage_uncalibrated` only (72 h is not more than 72 h). With
+   a retard of 40 h at 4 °C followed by 32 h 1 min at 10 °C instead: both cold codes (10 °C is
+   cold, and the cold steps add up to more than 72 h).
+6. The same as 3 with the retard at 10.5 °C: no learning flag.
+7. Fresh yeast 0.3 %. Bulk 1 h at 22 °C, retard 70 h at 4 °C, proof estimated at 8 °C:
+   `cold_stage_uncalibrated`, and `cold_hold_over_72h` exactly when the proof's central estimated
+   duration is more than 2 h (0 h if the end point is reached during the retard).
+8. A poolish at 4 °C (its only step, whose duration its estimate solves), then a dough with a 2 h
+   bulk and a proof estimated at 24 °C: the poolish's estimate carries `cold_stage_uncalibrated`
+   and `preferment`, and `cold_hold_over_72h` too when its solved duration is more than 72 h; the
+   dough's carries `preferment` only.
+
 ## Results
 
 - Per fermenting mass: the estimated duration of its last fermentation step (the proof for the
@@ -662,7 +1015,8 @@ objection 2).
 - The yeast for the planned schedule (inverse), in the yeast ingredient's own form, as a baker's
   percentage with its band.
 - Estimates never end a step and never change the recipe by themselves: applying a suggested
-  duration or dose is an explicit edit.
+  duration or dose is an explicit edit. The same holds for the suggested dough target and the
+  liquid target (Liquid target, Suggested dough target).
 - Steps without a duration other than the estimated one count as 0 and are listed in the
   assumptions.
 - A `range` bound is `{ kind: 'finite', value }` or, when a corner of the band never reaches the
@@ -816,7 +1170,10 @@ document stays readable, and only the estimates computed from them differ. Compa
   (bake-session.md). `durationMode: 'model'` is likewise refused on a mixing step (Model-driven
   duration). **The first-contact step is not a dough step** (Dough steps): the dough has no clock
   during it, so those commands are refused on it, as they were on the lone `mix` of a recipe
-  before; the baker completes it first and reads the dough on the next step. This is the minimal
+  before; the baker completes it first and reads the dough on the next step (**superseded in 0.26.0
+  for `doughTemperature` only**: a reading is now also accepted on the first-contact step as the
+  start of the clock, Dough temperature, Measured start; `SetStepThermal` and `doughReady` stay
+  refused there). This is the minimal
   consistent rule, one definition behind every gate, and it costs nothing a recipe could record
   before: no event can already sit on a step that was never a dough step. The only steps that stop
   being dough steps are those between the end of the reference mixing step and a later first
@@ -832,3 +1189,58 @@ cases that have a 10 min mixing step as their only mixing step (reference point,
 inverse dose, thermal lag) have the same values as before: the mixing is the first-contact step and
 nothing lies between its end and the end of the last mixing step. Nothing in it comes from the
 engine.
+
+Version `0.25.0` (proposed) adds the **learning flags** (Learning flags; owner approval of 2026-11-07
+to the proposal of #231, section 6): three extrapolation codes, `dough_above_28c`,
+`cold_stage_uncalibrated` and `cold_hold_over_72h`, under the Domain table. What does not change:
+every value and band, the `out_of_domain` gates (1.7 and 35 °C, dose, self-heating), the kinetic
+law and its constants, the readiness profiles, the thermal model. Compatibility:
+
+- **Persisted shape.** None changes. `extrapolations` is already a list of stable codes
+  (values-and-units.md, whose definition widens to evidence-limited regimes); the three codes are
+  new members. An accepted suggestion stored before
+  keeps its `Estimate` and its codes as they were (Accepted suggestions); it is not recomputed.
+  A reader that meets an unknown code shows it as an extrapolation without a message, never drops
+  it.
+- **Engine version.** The implementing pull request bumps `ENGINE_VERSION` from `0.10.0` to
+  `0.11.0`: estimates of a recipe with a warm or cold step gain codes, with unchanged numbers. The
+  models stay `flourprint.commercial-yeast` `0.1.0` and `flourprint.dough-thermal` `0.2.1`.
+- **Contract version.** `CONTRACT_VERSION` goes to `0.25.0`, one minor step from `0.24.3`.
+- **Interface.** Each code needs a message key `fermentation.extra.<code>` in French and English
+  before or with the engine change, so that no raw code reaches the baker (ADR 0009). The wording
+  says "learning" or "outside what the model has been checked against", never that the dough is
+  ready or not.
+
+Reference cases: the codes depend only on step temperatures and durations, so the worked examples
+of Learning flags are the acceptance cases; `fixtures/fermentation/cases.json` carries numbers
+only and is unchanged. The implementing pull request tests each example and the boundaries
+(28 °C, 10 °C, 72 h) directly; for examples 7 and 8 the test reads the engine's own central
+duration and checks the code against it, since that duration is not a reference value.
+
+Version `0.26.0` (proposal; the next minor after `0.25.0`, the learning flags of #259, now merged) adds the **Preparation temperatures**
+(owner decisions of 2026-11-09 and 2026-11-10, #171, #242): the observation kinds `flourTemperature`,
+`liquidTemperature` and `prefermentTemperature`, `doughTemperature` with no step gate (the start of
+the clock when it falls in the first-contact step), temperature readings placed by their real
+instant, editable and accepted after the end, the room line (`RoomTemperatureChanged`, a room
+change carried to the end, up or down; bake-session.md, Preparation temperatures), the **liquid target**
+that reads the effective room and the measured temperatures, the **suggested dough target**, the
+**friction sample** and the **temperature outcome** (data only), and `TemperatureSource`
+(values-and-units.md). What does not change: the kinetic law and every constant, the readiness
+profiles, the thermal model and its envelope, the planned `waterTemperatureC`, the dose inverse. Derived
+values do change for existing sessions: the dough start now follows the order reading, else target,
+else ambient, and the forecast carries the `dough_start:*` and `ambient_adjusted:*` assumption codes,
+so a live forecast of an earlier session whose recipe declares a target gains the code but keeps its
+numbers (the target was already the start), and one that holds a first-contact reading cannot
+exist. Stored data and replay do not change: every earlier session and backup replays and restores
+unchanged, and committed estimates keep what they committed. The suggested target
+is advice and starts no forecast. The implementing pull request bumps `CONTRACT_VERSION` to
+`0.26.0` (or, if another contract version has landed since, one minor step from the one current at its
+merge; `ENGINE_VERSION` moves the same way, after the learning-flags engine change of #271) (new outputs,
+and a different start temperature when a reading exists); the models stay
+`flourprint.commercial-yeast` `0.1.0` and `flourprint.dough-thermal` `0.2.1`. As for #259, this
+contract pull request does not touch `packages/core/src/domain/version.ts`. Reference cases:
+`fixtures/temperatures/cases.json` (W, F, E and C cases), computed outside the engine by `generate.py`.
+
+The number `0.26.0` is written in `bake-session.md`, `fermentation.md`, `history.md`,
+`persistence.md`, `process.md`, `fixtures/README.md` and `fixtures/temperatures/cases.json`. #259 is merged, so `0.25.0` is taken;
+if a different number is needed, rename it in those files.

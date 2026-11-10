@@ -1,0 +1,1035 @@
+{
+  "format": "flourprint-fixture/0",
+  "contract": "bake-session.md, fermentation.md",
+  "contractVersion": "0.26.0",
+  "model": {
+    "id": "flourprint.commercial-yeast",
+    "version": "0.1.0"
+  },
+  "readiness": {
+    "id": "flourprint.model-end-point",
+    "version": "1",
+    "readyProgress": 1.0
+  },
+  "predictiveFactor": 1.9,
+  "tolerance": 0.02,
+  "cases": [
+    {
+      "name": "W1 planned: dough 24, room 22, flour at room, no friction",
+      "kind": "liquidTarget",
+      "n": 3,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["planned", 22],
+        "flour": ["assumed", 22],
+        "frictionC": ["assumed", 0]
+      },
+      "expected": {
+        "liquidTargetC": 28.0
+      },
+      "exact": {
+        "liquidTargetC": "28"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "W2 the baker raises the room to 26: flour still assumed at room",
+      "kind": "liquidTarget",
+      "n": 3,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["adjusted", 26],
+        "flour": ["assumed", 26],
+        "frictionC": ["assumed", 0]
+      },
+      "expected": {
+        "liquidTargetC": 20.0
+      },
+      "exact": {
+        "liquidTargetC": "20"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "W3 flour measured at 18 with the room at 26",
+      "kind": "liquidTarget",
+      "n": 3,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["adjusted", 26],
+        "flour": ["measured", 18],
+        "frictionC": ["assumed", 0]
+      },
+      "expected": {
+        "liquidTargetC": 28.0
+      },
+      "exact": {
+        "liquidTargetC": "28"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "W4 W3 with a friction of 6 declared on the mixing step",
+      "kind": "liquidTarget",
+      "n": 3,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["adjusted", 26],
+        "flour": ["measured", 18],
+        "frictionC": ["planned", 6]
+      },
+      "expected": {
+        "liquidTargetC": 22.0
+      },
+      "exact": {
+        "liquidTargetC": "22"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "W5 with a poolish measured at 20: n = 4",
+      "kind": "liquidTarget",
+      "n": 4,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["planned", 22],
+        "flour": ["assumed", 22],
+        "prefermentC": ["measured", 20],
+        "frictionC": ["planned", 5]
+      },
+      "expected": {
+        "liquidTargetC": 27.0
+      },
+      "exact": {
+        "liquidTargetC": "27"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "W6 deviation of a measured liquid from its target (W3 inputs, measured 31)",
+      "kind": "liquidDeviation",
+      "expected": {
+        "targetC": 28.0,
+        "measuredC": 31.0,
+        "deviationC": 3.0
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "F1 direct dough, flour and liquid measured",
+      "kind": "frictionSample",
+      "n": 3,
+      "doughMeasuredC": 25.0,
+      "inputs": {
+        "flour": {
+          "source": "measured",
+          "valueC": 20
+        },
+        "roomC": 22,
+        "liquid": {
+          "source": "measured",
+          "valueC": 27
+        }
+      },
+      "expected": {
+        "frictionC": 6.0
+      },
+      "exact": {
+        "frictionC": "6"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "F2 same readings, flour not measured (assumed at the room 22)",
+      "kind": "frictionSample",
+      "n": 3,
+      "doughMeasuredC": 25.0,
+      "inputs": {
+        "flour": {
+          "source": "assumed",
+          "valueC": 22
+        },
+        "roomC": 22,
+        "liquid": {
+          "source": "measured",
+          "valueC": 27
+        }
+      },
+      "expected": {
+        "frictionC": 4.0
+      },
+      "exact": {
+        "frictionC": "4"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "F3 with a poolish measured at 20 (n = 4)",
+      "kind": "frictionSample",
+      "n": 4,
+      "doughMeasuredC": 24.5,
+      "inputs": {
+        "flour": {
+          "source": "assumed",
+          "valueC": 22
+        },
+        "roomC": 22,
+        "liquid": {
+          "source": "measured",
+          "valueC": 27
+        },
+        "preferment": {
+          "source": "measured",
+          "valueC": 20
+        }
+      },
+      "expected": {
+        "frictionC": 7.0
+      },
+      "exact": {
+        "frictionC": "7"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "E1 0.25 % instant: 1 h bulk at 24, 10 h fridge at 4, 1 h proof at 24",
+      "kind": "suggestedDoughTarget",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 70,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 0.25,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "instant"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "id": "bulk",
+            "operation": "bulk",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["bulk"],
+            "schedule": "asap",
+            "id": "retard",
+            "operation": "retard",
+            "plannedDurationS": 36000,
+            "conditions": {
+              "temperatureC": 4,
+              "location": "fridge"
+            }
+          },
+          {
+            "dependsOn": ["retard"],
+            "schedule": "asap",
+            "id": "proof",
+            "operation": "proof",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["proof", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "doughTarget.value": 27.067662911289574,
+        "doughTarget.range": [12.821644724405527, 32.13453637407956]
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "E2 0.2 % instant, 2 h / 12 h / 1 h: the lower end of the range has no solution",
+      "kind": "suggestedDoughTarget",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 70,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 0.2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "instant"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "id": "bulk",
+            "operation": "bulk",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["bulk"],
+            "schedule": "asap",
+            "id": "retard",
+            "operation": "retard",
+            "plannedDurationS": 43200,
+            "conditions": {
+              "temperatureC": 4,
+              "location": "fridge"
+            }
+          },
+          {
+            "dependsOn": ["retard"],
+            "schedule": "asap",
+            "id": "proof",
+            "operation": "proof",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["proof", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "doughTarget.value": 23.10970684360923,
+        "doughTarget.range": null,
+        "doughTarget.assumptions": ["band_unbounded:below"]
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "E3 0.4 % instant, 2 h / 12 h / 1 h: a cold dough, below the usual window",
+      "kind": "suggestedDoughTarget",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 70,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 0.4,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "instant"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "id": "bulk",
+            "operation": "bulk",
+            "plannedDurationS": 7200,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["bulk"],
+            "schedule": "asap",
+            "id": "retard",
+            "operation": "retard",
+            "plannedDurationS": 43200,
+            "conditions": {
+              "temperatureC": 4,
+              "location": "fridge"
+            }
+          },
+          {
+            "dependsOn": ["retard"],
+            "schedule": "asap",
+            "id": "proof",
+            "operation": "proof",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["proof", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "doughTarget.value": 10.136601246122066,
+        "doughTarget.range": null,
+        "doughTarget.assumptions": ["band_unbounded:below"],
+        "doughTarget.extrapolations": ["dough_target_below_15c"]
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "E4 0.01 % fresh, 3 h at 22: even a 35 °C dough is too slow",
+      "kind": "suggestedDoughTarget",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 70,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 0.01,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "fresh"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "id": "bulk",
+            "operation": "bulk",
+            "plannedDurationS": 10800,
+            "conditions": {
+              "temperatureC": 22
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["bulk", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "doughTarget.status": "out_of_domain",
+        "doughTarget.reason": "plan_unreachable_too_slow"
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "E5 0.9 % instant, 4 h + 1.5 h at 22: even a 1.7 °C dough is too fast",
+      "kind": "suggestedDoughTarget",
+      "formula": {
+        "flours": [
+          {
+            "id": "flour",
+            "sharePct": 100
+          }
+        ],
+        "ingredients": [
+          {
+            "id": "water",
+            "kind": "water",
+            "bakerPct": 70,
+            "role": "dough"
+          },
+          {
+            "id": "salt",
+            "kind": "other",
+            "bakerPct": 2,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            }
+          },
+          {
+            "id": "yeast",
+            "kind": "other",
+            "bakerPct": 0.9,
+            "role": "dough",
+            "water": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "fat": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "sugar": {
+              "status": "known",
+              "valuePct": 0
+            },
+            "yeast": {
+              "form": "instant"
+            }
+          }
+        ],
+        "components": [],
+        "anchor": {
+          "kind": "flourTotal",
+          "grams": 1000
+        }
+      },
+      "process": {
+        "steps": [
+          {
+            "id": "mix",
+            "operation": "mix",
+            "dependsOn": [],
+            "schedule": "asap",
+            "plannedDurationS": 600,
+            "conditions": {
+              "temperatureC": 24
+            }
+          },
+          {
+            "dependsOn": ["mix"],
+            "schedule": "asap",
+            "id": "bulk",
+            "operation": "bulk",
+            "plannedDurationS": 14400,
+            "conditions": {
+              "temperatureC": 22
+            }
+          },
+          {
+            "dependsOn": ["bulk"],
+            "schedule": "asap",
+            "id": "proof",
+            "operation": "proof",
+            "plannedDurationS": 5400,
+            "conditions": {
+              "temperatureC": 22
+            }
+          },
+          {
+            "id": "preheat",
+            "operation": "preheat",
+            "dependsOn": [],
+            "schedule": "alap",
+            "plannedDurationS": 3600,
+            "conditions": {
+              "temperatureC": 250
+            }
+          },
+          {
+            "id": "bake",
+            "operation": "bake",
+            "dependsOn": ["proof", "preheat"],
+            "schedule": "asap",
+            "plannedDurationS": 2400
+          }
+        ]
+      },
+      "expected": {
+        "doughTarget.status": "out_of_domain",
+        "doughTarget.reason": "plan_unreachable_too_fast"
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "W7 poolish with no temperature of its own: assumed at the room",
+      "kind": "liquidTarget",
+      "n": 4,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["planned", 22],
+        "flour": ["assumed", 22],
+        "prefermentC": ["assumed", 22],
+        "frictionC": ["planned", 5]
+      },
+      "expected": {
+        "liquidTargetC": 25.0
+      },
+      "exact": {
+        "liquidTargetC": "25"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "C1 chain: suggested dough target (E3) then liquid target, room 22",
+      "kind": "suggestedThenLiquid",
+      "uses": "E3",
+      "n": 3,
+      "inputs": {
+        "room": ["planned", 22],
+        "flour": ["assumed", 22],
+        "frictionC": ["assumed", 0]
+      },
+      "expected": {
+        "doughTarget.source": "suggested",
+        "doughTarget.value": 10.136601246122066,
+        "liquidTargetC": -13.590196261633803,
+        "liquid.assumptions": ["water_below_0C"]
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "F4 dough read 8 min after the end of the mix: eligible",
+      "kind": "frictionWindow",
+      "readingMinutesAfterEnd": 8,
+      "windowMinutes": 10,
+      "expected": {
+        "sample": true
+      }
+    },
+    {
+      "name": "F5 dough read 12 min after the end of the mix: not eligible",
+      "kind": "frictionWindow",
+      "readingMinutesAfterEnd": 12,
+      "windowMinutes": 10,
+      "expected": {
+        "sample": false
+      }
+    },
+    {
+      "name": "F6 frasage then mix: a reading at the end of the frasage is not a sample; one on the mix is, flagged friction_after_first_contact",
+      "kind": "frictionAttribution",
+      "expected": {
+        "readingAtEndOfFirstContact.sample": false,
+        "readingOnReferenceStep.sample": true,
+        "readingOnReferenceStep.assumptions": ["friction_after_first_contact"]
+      }
+    },
+    {
+      "name": "W8 the room cools to 19: a warmer liquid",
+      "kind": "liquidTarget",
+      "n": 3,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["adjusted", 19],
+        "flour": ["assumed", 19],
+        "frictionC": ["assumed", 0]
+      },
+      "expected": {
+        "liquidTargetC": 34.0
+      },
+      "exact": {
+        "liquidTargetC": "34"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "R1 the room cools: 19 noted 1 h into the bulk, carried to the end",
+      "kind": "roomLine",
+      "roomLine": [[1, 19]],
+      "expected": {
+        "bulk": "23 until 1 h, then 19",
+        "retard": "4 (placed in the fridge, unchanged)",
+        "proof": "19 from its start (carried to the end)"
+      }
+    },
+    {
+      "name": "R2 the room warms: 26 noted at the start of the bulk",
+      "kind": "roomLine",
+      "roomLine": [[0, 26]],
+      "expected": {
+        "bulk": "26",
+        "retard": "4",
+        "proof": "26"
+      }
+    },
+    {
+      "name": "R4 a change noted before the step starts: 21 noted during the autolyse, mix and bulk follow it",
+      "kind": "roomLine",
+      "recipe": "autolyse (counter, 23), mix (counter, 23), bulk (counter, 23), retard (fridge, 4)",
+      "roomLine": [["during the autolyse", 21]],
+      "expected": {
+        "mix": "21 from its start (the planned 23 does not win)",
+        "bulk": "21",
+        "retard": "4 (placed in the fridge)"
+      }
+    },
+    {
+      "name": "R3 a second change at the start of the proof, then AdjustStep on the proof",
+      "kind": "roomLine",
+      "roomLine": [
+        [1, 19],
+        [16, 21]
+      ],
+      "adjustStep": {
+        "proof": {
+          "at": 16.5,
+          "temperatureC": 24
+        }
+      },
+      "expected": {
+        "proof": "21 from its start (hour 16), 24 from hour 16.5 (the later instant wins)"
+      }
+    },
+    {
+      "name": "T1 placement of dough readings by effective instant",
+      "kind": "readingPlacement",
+      "steps": {
+        "autolyse": [0, 30],
+        "mix": [30, 40],
+        "bulk": [40, 280],
+        "shape": [280, 300],
+        "bake": [300, null]
+      },
+      "readings": [
+        {
+          "label": "autolyse",
+          "instantMin": 10,
+          "valueC": 24.0,
+          "usedByModel": false,
+          "use": "reading_before_dough"
+        },
+        {
+          "label": "during the mix",
+          "instantMin": 35,
+          "valueC": 25.0,
+          "usedByModel": true,
+          "use": "start of the clock"
+        },
+        {
+          "label": "at the end of the mix",
+          "instantMin": 40,
+          "valueC": 25.0,
+          "usedByModel": true,
+          "use": "start of the clock"
+        },
+        {
+          "label": "during the bulk",
+          "instantMin": 100,
+          "valueC": 27.0,
+          "usedByModel": true,
+          "use": "mean state from its instant"
+        },
+        {
+          "label": "during the bake",
+          "instantMin": 330,
+          "valueC": 96.0,
+          "usedByModel": false,
+          "use": "reading_above_model_range"
+        },
+        {
+          "label": "during the bake, 55 C",
+          "instantMin": 330,
+          "valueC": 55.0,
+          "usedByModel": false,
+          "use": "reading_after_dough"
+        }
+      ],
+      "correction": {
+        "reading": "during the bulk",
+        "newInstantMin": 35,
+        "effect": "moves from the mean state of the bulk to the start of the clock"
+      }
+    },
+    {
+      "name": "O1 oven history: 250 planned, 205 after opening the door, 240 four minutes later",
+      "kind": "applianceReadings",
+      "plannedSetpointC": 250,
+      "readings": [
+        {
+          "appliance": "oven",
+          "instant": "18:12",
+          "valueC": 205.0
+        },
+        {
+          "appliance": "oven",
+          "instant": "18:16",
+          "valueC": 240.0
+        }
+      ],
+      "expected": {
+        "usedByModel": false,
+        "ignoredBy": "appliance_reading_not_modelled",
+        "planChanged": false,
+        "inJournalBackupAndExports": true,
+        "rangeC": [0, 500]
+      }
+    }
+  ]
+}

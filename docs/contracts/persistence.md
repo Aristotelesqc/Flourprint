@@ -274,6 +274,67 @@ on a connection is serialized, so a transaction never interleaves with another o
 - The restore is atomic: it writes everything in one transaction, into an empty database, or
   nothing. A failed restore leaves the target unchanged and can be retried.
 
+## Measurements in the backup (0.26.0)
+
+**A kind of measurement that the backup does not carry is not finished.** Measurements live in the
+bake event log (an observation's `measurement`, the temperature `AdjustStep` overrides, the
+measurements of a `CompleteStep`), and the full backup carries the complete log of every bake
+(history.md, Export), so a measurement is in the backup as soon as its event is. The rule keeps it
+so: a **kind of measurement** is an observation `kind` that carries a `measurement`, a
+`measurement` without a kind, or any event field that holds a measured value. A pull request that
+adds one is not complete until all of these hold:
+
+1. **Decoded and gated.** The backup decoder accepts the kind and checks its payload for shape,
+   unit and range, and its references (the step, the component) against the history replayed so
+   far, with the same gate the command applies (bake-session.md). A payload the command would have
+   refused is refused at restore.
+2. **Refused when unknown.** An app that does not know the kind refuses a backup that holds it and
+   never drops or misreads it (the precedent of `StepThermalChanged` and the weighing checks). The
+   refusal is the decoder's generic one for an invalid event payload; it does not name the kind. The backup `schemaVersion` changes only when a document outside the event log
+   changes shape.
+3. **Exported.** The feedback export lists it in the bake digest (history.md), and the analysis
+   export records it with its source (history.md, Preparation analysis export).
+4. **Round-tripped.** A test records one of it, exports a backup, restores into an empty store and
+   shows the same replayed state and the same digest.
+5. **Enumerated.** `ObservationKind` is a type today and the whitelist is inline in the decoder, so
+   there is no list to iterate: the implementing pull request creates a runtime list of the
+   measurement kinds in the domain as the one source of truth, which the decoder and the command
+   gate both use. A contract
+   test iterates it and fails when a kind has no case in 1 and 4, so that adding a kind without its
+   backup case cannot pass.
+
+| Measurement                                                  | Carried by                               | Since    |
+| ------------------------------------------------------------ | ---------------------------------------- | -------- |
+| free `Observation` (a weight, a height, a reading) on a note | `ObservationAdded` `measurement`         | existing |
+| `doughTemperature` (and its `position`)                      | `ObservationAdded` `kind`, `position`    | 0.21.0   |
+| `flourTemperature`, `liquidTemperature`                      | `ObservationAdded` `kind`                | 0.26.0   |
+| `applianceTemperature` (and its `appliance`)                 | `ObservationAdded` `kind`, `appliance`   | 0.26.0   |
+| `prefermentTemperature` (and its `componentId`)              | `ObservationAdded` `kind`, `componentId` | 0.26.0   |
+| one step's room changed                                      | `OverrideApplied` (`temperatureC`)       | existing |
+| the room changed from an instant to the end                  | `RoomTemperatureChanged`                 | 0.26.0   |
+| the instant of a reading or room change corrected            | `TemperatureTimeCorrected`               | 0.26.0   |
+| measurements given with a completion                         | `StepCompleted` `measurements`           | existing |
+
+The recommendations (`TemperatureTargetsRecorded`, bake-session.md, Recorded targets) are recorded
+engine outputs, not measurements: they are in the backup as events, checked for shape only and kept
+as they are (never recomputed), and an app that does not know the event type refuses the backup on
+it.
+
+A weighing check, a fold set and a `doughReady` judgement are records of the baker's work, not
+measured values, and are not kinds of measurement in this sense (they are in the backup all the
+same). Derived data (the friction sample, the temperature outcome, the forecasts) is never in the
+backup: it is recomputed from the facts. Restore re-runs no command decision (history.md, Reading history): it
+checks the stored payload structurally, against the state replayed so far. For the temperature
+kinds and the room change it checks that the value is a finite number in `degC` within its range
+(0 – 60 °C; 0 – 120 °C for `doughTemperature`; 0 – 500 °C for `applianceTemperature`, whose `appliance`, when present, is an `ApplianceKind`); that the instant (`measurement.observedAt`, `at`,
+`newOccurredAt`) lies within the span of the Preparation at that point of the log (not before
+`BakeStarted`, not after the event's `recordedAt`, and after an end not after that end); that
+`late` is present exactly when the Preparation was ended at that point; that a named `stepId`
+exists (it is informational, with no type or state gate); that a `componentId` names a `preferment`
+component of the snapshot's formula; and that a `TemperatureTimeCorrected` names an earlier
+temperature event. There is no check of the step kind or of a running step: the kinds are accepted
+after the end like the commands.
+
 ## Recipe files and additive import
 
 - A **recipes file** holds recipes only, never bakes, and is named distinctly from a full backup:
