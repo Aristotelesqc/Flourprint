@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  decide,
   estimateFermentation,
+  evolve,
+  initialBakeState,
+  liveDoughForecast,
+  type BakeCommandPayload,
+  type BakeEvent,
+  type Instant,
   validateFormula,
   validateProcess,
   type Estimate,
@@ -240,7 +247,7 @@ describe('learning flags: rules', () => {
       expect(flagsOf(e)).toEqual(['cold_stage_uncalibrated', 'cold_hold_over_72h']);
     }
     for (const step of d.steps ?? []) expect(flagsOf(step.endProgressPct)).toHaveLength(2);
-    // Same numbers as the warm twin: flags change only the reasons.
+    // The twin at 10.5 °C carries no learning flag (its numbers differ: the ambient changed).
     const warm = dough(
       formula(0.3),
       process([
@@ -299,5 +306,124 @@ describe('learning flags: rules', () => {
       ]),
     );
     expect(d.duration).toMatchObject({ status: 'out_of_domain' });
+  });
+});
+
+describe('learning flags: durations of the solved step', () => {
+  it('counts 0 h when the end point is reached before the last step', () => {
+    const d = dough(
+      formula(1),
+      process([
+        { operation: 'bulk', hours: 1, c: 22 },
+        { operation: 'retard', hours: 70, c: 4 },
+        { operation: 'proof', c: 8 },
+      ]),
+    );
+    expect(d.duration).toMatchObject({ status: 'ok', value: 0 });
+    expect(d.duration.status === 'ok' && d.duration.assumptions).toContain(
+      'end_point_before_last_step',
+    );
+    // 70 h of cold plus a 0 h proof is not more than 72 h.
+    expect(flagsOf(d.duration)).toEqual(['cold_stage_uncalibrated']);
+  });
+
+  it('falls back to the planned duration when the duration estimate is not ok', () => {
+    // A tiny dose in the cold never reaches its end point: the duration fails, the progress of
+    // the planned schedule is still given and counts the planned proof.
+    const d = dough(
+      formula(0.01),
+      process([
+        { operation: 'bulk', hours: 1, c: 22 },
+        { operation: 'retard', hours: 70, c: 2 },
+        { operation: 'proof', hours: 3, c: 2 },
+      ]),
+    );
+    expect(d.duration.status).not.toBe('ok');
+    expect(d.progressPct.status).toBe('ok');
+    expect(flagsOf(d.progressPct)).toEqual(['cold_stage_uncalibrated', 'cold_hold_over_72h']);
+  });
+});
+
+describe('learning flags: live forecast', () => {
+  const t = (day: number, hhmm: string) =>
+    `2026-10-${String(10 + day).padStart(2, '0')}T${hhmm}:00.000Z` as Instant;
+  const live = (yeastPct: number, p: Process) => {
+    let state = initialBakeState('b');
+    let seq = 0;
+    const run = (payload: BakeCommandPayload, now: Instant) => {
+      const result = decide(state, payload, now);
+      if (!result.ok) throw new Error(JSON.stringify(result.error));
+      for (const draft of result.value) {
+        seq += 1;
+        const event: BakeEvent = {
+          eventId: `e${seq}`,
+          bakeId: 'b',
+          seq,
+          causationId: `c${seq}`,
+          occurredAt: draft.occurredAt,
+          recordedAt: now,
+          schemaVersion: 1,
+          payload: draft.payload,
+        };
+        state = evolve(state, event);
+      }
+    };
+    run(
+      {
+        type: 'StartBake',
+        revisions: { formula: { id: 'f', version: 1 }, process: { id: 'p', version: 1 } },
+        formula: formula(yeastPct),
+        process: p,
+        mode: { kind: 'startAt', at: t(0, '08:00') },
+      },
+      t(0, '08:00'),
+    );
+    return { run, state: () => state };
+  };
+
+  /** Bulk 2 h at 24 °C (a 29 °C dough reading in it), then a retard at 4 °C whose end is solved. */
+  const intoRetard = (yeastPct: number, now: Instant) => {
+    const bake = live(
+      yeastPct,
+      process([
+        { operation: 'bulk', hours: 2, c: 24 },
+        { operation: 'retard', c: 4 },
+      ]),
+    );
+    bake.run({ type: 'CompleteStep', stepId: 'mix' }, t(0, '08:00'));
+    bake.run({ type: 'StartStep', stepId: 'bulk0' }, t(0, '08:00'));
+    bake.run(
+      {
+        type: 'AddObservation',
+        stepId: 'bulk0',
+        category: 'fermentation',
+        kind: 'doughTemperature',
+        position: 'core',
+        measurement: { value: 29, unit: 'degC', observedAt: t(0, '09:00') },
+      },
+      t(0, '09:00'),
+    );
+    bake.run({ type: 'CompleteStep', stepId: 'bulk0' }, t(0, '10:00'));
+    bake.run({ type: 'StartStep', stepId: 'retard1' }, t(0, '10:00'));
+    const forecast = liveDoughForecast(bake.state(), now);
+    if (!forecast) throw new Error('no forecast');
+    expect(forecast.remaining.status).toBe('ok');
+    return forecast.remaining;
+  };
+
+  it('sums the recorded cold stretch and the remaining one, and reads a warm dough reading', () => {
+    // 36 h of retard recorded; neither part alone is over 72 h.
+    const slow = intoRetard(0.15, t(1, '22:00'));
+    expect(durationH(slow)).toBeGreaterThan(36);
+    expect(durationH(slow)).toBeLessThan(72);
+    expect(flagsOf(slow)).toEqual([
+      'dough_above_28c',
+      'cold_stage_uncalibrated',
+      'cold_hold_over_72h',
+    ]);
+    // A faster dough needs less than 36 h more: under 72 h in all, no hold flag.
+    const fast = intoRetard(0.2, t(1, '22:00'));
+    expect(durationH(fast)).toBeLessThan(36);
+    expect(flagsOf(fast)).toEqual(['dough_above_28c', 'cold_stage_uncalibrated']);
   });
 });
