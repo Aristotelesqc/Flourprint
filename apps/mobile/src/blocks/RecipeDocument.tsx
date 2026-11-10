@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type {
   Anchor,
   Formula,
@@ -16,7 +16,7 @@ import { useFlourCatalog } from '../services/flours';
 import { totalWaterKey } from './water-label';
 import { WaterExplanation } from './WaterExplanation';
 import { RecipeSummary } from './RecipeSummary';
-import { WeighingChecklist, type WeighedRow } from './WeighingChecklist';
+import { WeighingChecklist, weighingProgress, type WeighedRow } from './WeighingChecklist';
 import {
   AddFlour,
   AddIngredient,
@@ -125,8 +125,11 @@ export const RecipeDocument = ({
   const displayDoughWeight =
     resolved?.doughWeight ?? (anchor.kind === 'doughWeight' ? anchor.grams : undefined);
 
+  const ingredientsHeadingId = useId();
+
   // Derive component group stats directly from core weighingGroups
   const groups = resolved ? weighingGroups(formula, resolved) : [];
+  const { doneCount, totalCount } = weighingProgress(groups, weighed);
   const componentStats = new Map<string, { flourPct: number | undefined; massPct: number }>();
   for (const group of groups) {
     if (group.stage.kind === 'component') {
@@ -290,202 +293,74 @@ export const RecipeDocument = ({
         </div>
       )}
 
-      {/* Flours Accordion */}
-      <Ui
-        component="fp.disclosure"
-        expanded={disclosures.flours}
-        onExpandedChange={(expanded) => onDisclosuresChange({ ...disclosures, flours: expanded })}
-        label={
-          <span className="font-bold text-ink">
-            {t('recipe.document.flours')}
-            {resolved && (
-              <span className="ml-2 font-normal text-muted tabular-nums">
-                ({grams(resolved.flourTotal)})
-              </span>
-            )}
-          </span>
-        }
-      >
-        <div className="flex flex-col gap-2 pt-2">
-          {formula.flours.map((flour) => (
-            <div
-              key={flour.id}
-              className="flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line/50 py-2"
-            >
-              <div className="flex min-w-0 flex-1 basis-32 flex-col">
-                <span className="break-words font-semibold text-ink">{name(flour.id)}</span>
-                <FlourSummary id={flour.id} />
-                {fieldsMounted && editable && formula.flours.length > 1 && (
-                  <button
-                    type="button"
-                    className="fp-reset min-h-[48px] self-start text-xs text-alert underline"
-                    onClick={() =>
-                      onEdit({
-                        type: 'SetFlourBlend',
-                        flours: formula.flours.filter((f) => f.id !== flour.id),
-                      })
-                    }
+      <section aria-labelledby={ingredientsHeadingId} className="flex flex-col gap-3">
+        {resolved ? (
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1.5">
+                  <h2
+                    id={ingredientsHeadingId}
+                    className="m-0 text-body font-semibold text-on-surface"
                   >
-                    {t('formula.remove')}
-                  </button>
-                )}
+                    {t('recipe.document.ingredients')}
+                  </h2>
+                  <InfoButton topic="finalMix" term={t('recipe.document.ingredients')} />
+                </div>
+                <span className="text-supporting text-muted">
+                  {t('recipe.document.stageBakerPct')}
+                </span>
               </div>
-
-              {fieldsMounted && (
-                <div hidden={!editable} className="grid w-full grid-cols-2 gap-1.5">
-                  <NumberField
-                    label={`${name(flour.id)}, %`}
-                    unit="%"
-                    value={flour.sharePct}
-                    onCommit={(sharePct) =>
-                      onEdit({
-                        type: 'SetFlourBlend',
-                        flours: formula.flours.map((f) =>
-                          f.id === flour.id ? { ...f, sharePct } : f,
-                        ),
-                      })
-                    }
-                  />
-                  {resolved && (
-                    <NumberField
-                      label={`${name(flour.id)}, g`}
-                      unit="g"
-                      value={resolved.flourByFlour[flour.id] ?? 0}
-                      onCommit={(val) =>
-                        onEdit({
-                          type: 'SetIngredientGrams',
-                          ingredient: flour.id,
-                          grams: val,
-                        })
-                      }
-                    />
-                  )}
-                </div>
-              )}
-
-              {!editable && (
-                <div className="flex shrink-0 items-center gap-2 ml-auto">
-                  <span className="text-right text-xs text-muted tabular-nums">
-                    {pct(flour.sharePct)}
-                  </span>
-                  <span className="min-w-[64px] text-right font-bold tabular-nums">
-                    {resolved ? grams(resolved.flourByFlour[flour.id] ?? 0) : '—'}
-                  </span>
-                </div>
-              )}
+              <span className="text-supporting text-muted tabular-nums">
+                {t('formula.finalMix.progress', {
+                  done: doneCount,
+                  total: totalCount,
+                })}
+              </span>
             </div>
-          ))}
+            <p className="m-0 px-1 text-supporting text-muted">
+              {t('formula.weighing.scopeNotice')}
+            </p>
+          </div>
+        ) : (
+          <h2 id={ingredientsHeadingId} className="m-0 text-body font-semibold text-on-surface">
+            {t('recipe.document.ingredients')}
+          </h2>
+        )}
 
-          {fieldsMounted && (
-            <div hidden={!editable} className="pt-2">
-              <AddFlour formula={formula} onEdit={onEdit} />
-            </div>
-          )}
-        </div>
-      </Ui>
-
-      {/* Pre-doughs Accordion */}
-      {(editable || formula.components.length > 0) && (
+        {/* Flours Accordion */}
         <Ui
           component="fp.disclosure"
-          expanded={disclosures.preparations}
-          onExpandedChange={(expanded) =>
-            onDisclosuresChange({ ...disclosures, preparations: expanded })
+          expanded={disclosures.flours}
+          onExpandedChange={(expanded) => onDisclosuresChange({ ...disclosures, flours: expanded })}
+          label={
+            <span className="font-bold text-ink">
+              {t('recipe.document.flours')}
+              {resolved && (
+                <span className="ml-2 font-normal text-muted tabular-nums">
+                  ({grams(resolved.flourTotal)})
+                </span>
+              )}
+            </span>
           }
-          label={<span className="font-bold text-ink">{t('recipe.document.preparations')}</span>}
         >
-          <div className="flex flex-col gap-3 pt-2">
-            {formula.components.map((component) => {
-              const c = resolved?.components[component.id];
-              const stats = componentStats.get(component.id);
-              return (
-                <div
-                  key={component.id}
-                  className="flex flex-col gap-2 rounded-xl border border-line p-3"
-                >
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="font-semibold text-ink">
-                      {componentName(formula, component)}
-                    </span>
-                    <div className="flex items-baseline gap-2 tabular-nums">
-                      {stats?.flourPct !== undefined && (
-                        <span className="text-xs text-muted">
-                          {t('recipe.document.componentFlourShare', {
-                            pct: pct(stats.flourPct),
-                          })}
-                        </span>
-                      )}
-                      {stats?.massPct !== undefined && (
-                        <span className="text-xs text-muted">
-                          {t('recipe.document.componentMassShare', {
-                            pct: pct(stats.massPct),
-                          })}
-                        </span>
-                      )}
-                      <span className="font-bold">{c ? grams(c.mass) : '—'}</span>
-                    </div>
-                  </div>
-
-                  {fieldsMounted && (
-                    <div hidden={!editable}>
-                      <PreparationFields
-                        formula={formula}
-                        process={process}
-                        componentId={component.id}
-                        onEdit={onEdit}
-                        onStructure={onStructure}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {fieldsMounted && (
-              <div hidden={!editable}>
-                <AddPreparation formula={formula} process={process} onStructure={onStructure} />
-              </div>
-            )}
-          </div>
-        </Ui>
-      )}
-
-      {/* Ingredients: Weighing checklist or unresolvable whole-recipe fallback */}
-      {resolved ? (
-        <WeighingChecklist
-          formula={formula}
-          resolved={resolved}
-          weighed={weighed}
-          onToggle={onToggleWeighed}
-          editable={editable}
-          fieldsMounted={fieldsMounted}
-          onEdit={onEdit}
-          failureMessage={failureMessage}
-          onIngredientDetailsChange={onIngredientDetailsChange}
-          recipePresentation
-        />
-      ) : (
-        <div className="flex flex-col gap-2 rounded-2xl border border-line p-3">
-          <p role="status" className="m-0 text-sm text-muted">
-            {t('formula.unresolved')}
-          </p>
-          <span className="font-bold text-ink">{t('formula.group.ingredients')}</span>
-          <div className="flex flex-col gap-2">
-            {formula.ingredients.map((ingredient) => (
+          <div className="flex flex-col gap-2 pt-2">
+            {formula.flours.map((flour) => (
               <div
-                key={ingredient.id}
+                key={flour.id}
                 className="flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line/50 py-2"
               >
                 <div className="flex min-w-0 flex-1 basis-32 flex-col">
-                  <span className="break-words font-semibold text-ink">{name(ingredient.id)}</span>
-                  {fieldsMounted && editable && (
+                  <span className="break-words font-semibold text-ink">{name(flour.id)}</span>
+                  <FlourSummary id={flour.id} />
+                  {fieldsMounted && editable && formula.flours.length > 1 && (
                     <button
                       type="button"
                       className="fp-reset min-h-[48px] self-start text-xs text-alert underline"
                       onClick={() =>
                         onEdit({
-                          type: 'RemoveIngredient',
-                          ingredient: ingredient.id,
+                          type: 'SetFlourBlend',
+                          flours: formula.flours.filter((f) => f.id !== flour.id),
                         })
                       }
                     >
@@ -494,42 +369,207 @@ export const RecipeDocument = ({
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2 ml-auto">
-                  {fieldsMounted && (
-                    <div hidden={!editable} className="flex items-center gap-1.5">
+                {fieldsMounted && (
+                  <div hidden={!editable} className="grid w-full grid-cols-2 gap-1.5">
+                    <NumberField
+                      label={`${name(flour.id)}, %`}
+                      unit="%"
+                      value={flour.sharePct}
+                      onCommit={(sharePct) =>
+                        onEdit({
+                          type: 'SetFlourBlend',
+                          flours: formula.flours.map((f) =>
+                            f.id === flour.id ? { ...f, sharePct } : f,
+                          ),
+                        })
+                      }
+                    />
+                    {resolved && (
                       <NumberField
-                        label={`${name(ingredient.id)}, %`}
-                        unit="%"
-                        width="4.5rem"
-                        value={ingredient.bakerPct}
-                        onCommit={(bakerPct) =>
+                        label={`${name(flour.id)}, g`}
+                        unit="g"
+                        value={resolved.flourByFlour[flour.id] ?? 0}
+                        onCommit={(val) =>
                           onEdit({
-                            type: 'SetBakerPct',
-                            ingredient: ingredient.id,
-                            pct: bakerPct,
+                            type: 'SetIngredientGrams',
+                            ingredient: flour.id,
+                            grams: val,
                           })
                         }
                       />
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
 
-                  {!editable && (
+                {!editable && (
+                  <div className="flex shrink-0 items-center gap-2 ml-auto">
                     <span className="text-right text-xs text-muted tabular-nums">
-                      {pct(ingredient.bakerPct)}
+                      {pct(flour.sharePct)}
                     </span>
-                  )}
-                </div>
+                    <span className="min-w-[64px] text-right font-bold tabular-nums">
+                      {resolved ? grams(resolved.flourByFlour[flour.id] ?? 0) : '—'}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
-          </div>
-        </div>
-      )}
 
-      {fieldsMounted && !resolved && (
-        <div hidden={!editable}>
-          <AddIngredient formula={formula} onEdit={onEdit} />
-        </div>
-      )}
+            {fieldsMounted && (
+              <div hidden={!editable} className="pt-2">
+                <AddFlour formula={formula} onEdit={onEdit} />
+              </div>
+            )}
+          </div>
+        </Ui>
+
+        {/* Pre-doughs Accordion */}
+        {(editable || formula.components.length > 0) && (
+          <Ui
+            component="fp.disclosure"
+            expanded={disclosures.preparations}
+            onExpandedChange={(expanded) =>
+              onDisclosuresChange({ ...disclosures, preparations: expanded })
+            }
+            label={<span className="font-bold text-ink">{t('recipe.document.preparations')}</span>}
+          >
+            <div className="flex flex-col gap-3 pt-2">
+              {formula.components.map((component) => {
+                const c = resolved?.components[component.id];
+                const stats = componentStats.get(component.id);
+                return (
+                  <div
+                    key={component.id}
+                    className="flex flex-col gap-2 rounded-xl border border-line p-3"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="font-semibold text-ink">
+                        {componentName(formula, component)}
+                      </span>
+                      <div className="flex items-baseline gap-2 tabular-nums">
+                        {stats?.flourPct !== undefined && (
+                          <span className="text-xs text-muted">
+                            {t('recipe.document.componentFlourShare', {
+                              pct: pct(stats.flourPct),
+                            })}
+                          </span>
+                        )}
+                        {stats?.massPct !== undefined && (
+                          <span className="text-xs text-muted">
+                            {t('recipe.document.componentMassShare', {
+                              pct: pct(stats.massPct),
+                            })}
+                          </span>
+                        )}
+                        <span className="font-bold">{c ? grams(c.mass) : '—'}</span>
+                      </div>
+                    </div>
+
+                    {fieldsMounted && (
+                      <div hidden={!editable}>
+                        <PreparationFields
+                          formula={formula}
+                          process={process}
+                          componentId={component.id}
+                          onEdit={onEdit}
+                          onStructure={onStructure}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {fieldsMounted && (
+                <div hidden={!editable}>
+                  <AddPreparation formula={formula} process={process} onStructure={onStructure} />
+                </div>
+              )}
+            </div>
+          </Ui>
+        )}
+
+        {/* Ingredients: Weighing checklist or unresolvable whole-recipe fallback */}
+        {resolved ? (
+          <WeighingChecklist
+            formula={formula}
+            resolved={resolved}
+            weighed={weighed}
+            onToggle={onToggleWeighed}
+            editable={editable}
+            fieldsMounted={fieldsMounted}
+            onEdit={onEdit}
+            failureMessage={failureMessage}
+            onIngredientDetailsChange={onIngredientDetailsChange}
+            recipePresentation
+          />
+        ) : (
+          <div className="flex flex-col gap-2 rounded-2xl border border-line p-3">
+            <p role="status" className="m-0 text-sm text-muted">
+              {t('formula.unresolved')}
+            </p>
+            <div className="flex flex-col gap-2">
+              {formula.ingredients.map((ingredient) => (
+                <div
+                  key={ingredient.id}
+                  className="flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line/50 py-2"
+                >
+                  <div className="flex min-w-0 flex-1 basis-32 flex-col">
+                    <span className="break-words font-semibold text-ink">
+                      {name(ingredient.id)}
+                    </span>
+                    {fieldsMounted && editable && (
+                      <button
+                        type="button"
+                        className="fp-reset min-h-[48px] self-start text-xs text-alert underline"
+                        onClick={() =>
+                          onEdit({
+                            type: 'RemoveIngredient',
+                            ingredient: ingredient.id,
+                          })
+                        }
+                      >
+                        {t('formula.remove')}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2 ml-auto">
+                    {fieldsMounted && (
+                      <div hidden={!editable} className="flex items-center gap-1.5">
+                        <NumberField
+                          label={`${name(ingredient.id)}, %`}
+                          unit="%"
+                          width="4.5rem"
+                          value={ingredient.bakerPct}
+                          onCommit={(bakerPct) =>
+                            onEdit({
+                              type: 'SetBakerPct',
+                              ingredient: ingredient.id,
+                              pct: bakerPct,
+                            })
+                          }
+                        />
+                      </div>
+                    )}
+
+                    {!editable && (
+                      <span className="text-right text-xs text-muted tabular-nums">
+                        {pct(ingredient.bakerPct)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {fieldsMounted && !resolved && (
+          <div hidden={!editable}>
+            <AddIngredient formula={formula} onEdit={onEdit} />
+          </div>
+        )}
+      </section>
 
       {/* Fermentation Section */}
       <div

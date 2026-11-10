@@ -6,6 +6,7 @@ import {
   type FormulaEdit,
   type ResolvedFormula,
   type StageRef,
+  type WeighingGroup,
   type WeighingItem as CoreWeighingItem,
   type WeighingRow,
 } from '@flourprint/core/domain';
@@ -22,6 +23,16 @@ export type WeighedRow = {
 };
 
 export { sameWeighingRow };
+
+export const weighingProgress = (
+  groups: readonly WeighingGroup[],
+  weighed: readonly WeighedRow[],
+): { doneCount: number; totalCount: number } => {
+  const isChecked = (row: WeighingRow) => weighed.some((w) => sameWeighingRow(w, row));
+  const totalCount = groups.reduce((acc, g) => acc + g.rows.length, 0);
+  const doneCount = groups.reduce((acc, g) => acc + g.rows.filter(isChecked).length, 0);
+  return { doneCount, totalCount };
+};
 
 interface Props {
   readonly formula: Formula;
@@ -78,8 +89,7 @@ export const WeighingChecklist = ({
 
   const isChecked = (row: WeighingRow) => weighed.some((w) => sameWeighingRow(w, row));
 
-  const totalCount = groups.reduce((acc, g) => acc + g.rows.length, 0);
-  const doneCount = groups.reduce((acc, g) => acc + g.rows.filter(isChecked).length, 0);
+  const { doneCount, totalCount } = weighingProgress(groups, weighed);
 
   const getStageTitle = (stage: StageRef): string => {
     if (stage.kind === 'component') {
@@ -103,32 +113,11 @@ export const WeighingChecklist = ({
     ? formula.ingredients.find((i) => i.id === sheetIngredientId)
     : undefined;
 
+  const Root = recipePresentation ? 'div' : 'section';
+
   return (
-    <section className="flex flex-col gap-3">
-      {recipePresentation ? (
-        <div className="flex flex-col gap-1">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <h2 className="m-0 text-body font-semibold text-on-surface">
-                  {t('recipe.document.ingredients')}
-                </h2>
-                <InfoButton topic="finalMix" term={t('recipe.document.ingredients')} />
-              </div>
-              <span className="text-supporting text-muted">
-                {t('recipe.document.stageBakerPct')}
-              </span>
-            </div>
-            <span className="text-supporting text-muted tabular-nums">
-              {t('formula.finalMix.progress', {
-                done: doneCount,
-                total: totalCount,
-              })}
-            </span>
-          </div>
-          <p className="m-0 px-1 text-supporting text-muted">{t('formula.weighing.scopeNotice')}</p>
-        </div>
-      ) : (
+    <Root className="flex flex-col gap-3">
+      {!recipePresentation && (
         <>
           <div className="flex items-baseline justify-between">
             <span className="flex items-center gap-1.5">
@@ -522,6 +511,6 @@ export const WeighingChecklist = ({
           </div>
         </Ui>
       )}
-    </section>
+    </Root>
   );
 };
