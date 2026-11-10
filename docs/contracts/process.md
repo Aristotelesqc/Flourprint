@@ -582,8 +582,9 @@ Examples (hand-checked against the rules above):
     planned 5 min), `mix` (8 min), `bulk`. The baker starts the `frasage` at 09:00 and completes it
     at 09:09. In the plan the clock started at 09:05; in the bake it starts at 09:09, the recorded
     completion, and the kneading and the bulk are projected from there. While the `frasage` runs,
-    the dough has no progress, and a dough-temperature reading or thermal inputs on it are refused
-    (it is not a dough step); on the `mix` they are accepted.
+    the dough has no progress, and thermal inputs on it are refused (it is not a dough step) and a
+    dough-temperature reading on it is the start of the clock (bake-session.md, Preparation
+    temperatures); on the `mix` both are accepted.
 
 ## Subjects and component phases
 

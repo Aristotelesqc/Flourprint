@@ -1234,7 +1234,8 @@ numbers (the target was already the start), and one that holds a first-contact r
 exist. Stored data and replay do not change: every earlier session and backup replays and restores
 unchanged, and committed estimates keep what they committed. The suggested target
 is advice and starts no forecast. The implementing pull request bumps `CONTRACT_VERSION` to
-`0.26.0` and `ENGINE_VERSION` by one minor step from the version current at its merge (new outputs,
+`0.26.0` (or, if another contract version has landed since, one minor step from the one current at its
+merge; `ENGINE_VERSION` moves the same way, after the learning-flags engine change of #271) (new outputs,
 and a different start temperature when a reading exists); the models stay
 `flourprint.commercial-yeast` `0.1.0` and `flourprint.dough-thermal` `0.2.1`. As for #259, this
 contract pull request does not touch `packages/core/src/domain/version.ts`. Reference cases:

@@ -261,7 +261,8 @@ with the probe position.
   `thermal` segment, so a
   calibration reads the container and environment that were in force at each reading.
   Calibration reads recorded facts only, so it is also available once the session has ended,
-  finished or abandoned: the readings were recorded while it was active. The live forecast is
+  finished or abandoned: the readings were recorded while it was active, or added late at their real
+  instant (below). The live forecast is
   for an active session only.
 - A reading replaces the dough **temperature** from its instant, never the progress `F` already
   accumulated: the progress at the reading's instant is the same before and after it. A reading
@@ -369,7 +370,8 @@ Preparation's timeline there, not at the moment it was typed:
   therefore moves the reading to whichever step then contains it.
 - **Late entry.** A reading or room change may be added after the Preparation has ended (finished
   or abandoned): "precision is encouraged, even afterwards". It keeps its real instant, inside the
-  span, and the domain marks the event `late: true` when `recordedAt` is after the end it was
+  span, and the domain marks the event `late: true` (a field of the event **payload**, not of the
+  envelope, so the envelope and its version stay unchanged) when `recordedAt` is after the end it was
   entered against. A late event never reopens the Preparation, and feeds the calibration data and
   the exports; the live forecast stays for an active Preparation only.
 - **Correction.** `CorrectTemperatureTime { targetEventId, newOccurredAt }` records
@@ -477,12 +479,18 @@ planned temperatures by this reading (owner decision of 2026-11-10):
 - A **room step** is a step whose `conditions.location` is absent or `counter`. Every other step
   (`fridge`, `freezer`, `proofer`, `oven`…) is **placed elsewhere** and keeps its planned
   temperature: a planned retard at 4 °C stays at 4 °C however the kitchen moves.
-- The **effective ambient of a step at an instant** is the latest, by instant, of: its planned
-  `temperatureC` (from the step's start); the room line, **if it is a room step**, from the
-  change's instant; the step's own `AdjustStep temperatureC`, from its instant. A room step with no
-  planned temperature of its own already carries the previous step's (Dough temperature) and
-  follows the room line the same way. A change affects the step running at its instant from that
-  instant and every later room step in full; steps entirely before it keep what was true.
+- The **effective ambient of a step at an instant `u`** is, in this order:
+  1. on a **room step** (and only there), if a room change exists at or before `u`, the **latest
+     room change** at or before `u`: it overrides the planned temperature, whether the change was
+     noted before the step began (during an autolyse, then the mix and the bulk follow it) or during
+     it; the planned `temperatureC` applies only when no room change precedes `u`;
+  2. but the step's own `AdjustStep temperatureC` wins over the room line when it is later than the
+     latest room change at or before `u`, and from its instant;
+  3. a step **placed elsewhere** has its planned temperature, or its own `AdjustStep`.
+     A room step with no planned temperature of its own carries the previous step's (Dough
+     temperature) and follows the room line the same way. A change affects the step running at its
+     instant from that instant and every later room step in full, from its start; steps entirely
+     before the change keep what was true.
 - `AdjustStep temperatureC` is unchanged and stays the way to set **one** step, for instance a
   proofer at another setting. Between an `AdjustStep` of a step and a room change, the later
   instant wins on that step.
@@ -502,7 +510,11 @@ counter at 23 °C, a 12 h `retard` in the fridge at 4 °C, a 1.5 h `proof` on th
    proof: the line is `(bulk + 1 h, 19)`, `(proof start, 21)`; the proof is at 21 °C. A later
    `AdjustStep temperatureC` of 24 °C on the proof, entered after that, applies to the proof from
    its instant.
-4. **Replay.** A Preparation recorded before 0.26.0 has no room line: every step has its planned
+4. **A change noted before the step.** The same recipe with an `autolyse` on the counter first: 21 °C
+   noted during the autolyse. The `mix` (planned 23) and the `bulk` are at **21 °C** from their
+   start, since the latest room change at or before them overrides the planned value; the fridge
+   `retard` stays 4 °C.
+5. **Replay.** A Preparation recorded before 0.26.0 has no room line: every step has its planned
    temperature and its `AdjustStep` overrides, exactly as before.
 
 Modelled as a **new event**, not an extension of `AdjustStep`: `AdjustStep` is per step and keeps
@@ -576,7 +588,13 @@ must read readings by effective instant, the first-contact reading as the start,
 reasons, and the room line in `ambientAt`/`temperatureChanges`); `calibrate.ts` (readings by the
 step containing their instant); `packages/core/test/thermal-bake.test.ts` (an existing test asserts
 that a reading on the frasage is `InvalidCommand`, which this contract reverses); `feedback.ts`
-(digest fields); the water temperature in `estimate.ts`.
+(digest fields) and `apps/mobile/src/services/feedback.ts` (export wiring); `application/bake.ts`
+(the atomic batch that turns `shown` into `TemperatureTargetsRecorded`); `domain/bake/visible.ts`
+(journal visibility of `TemperatureTimeCorrected`); the adapter round-trip tests
+`packages/adapters/test/backup.test.ts` and `packages/adapters/src/testing/store-checks.ts`; the
+water temperature in `estimate.ts`; and a new runtime list of the measurement kinds in the domain
+(for instance `domain/bake/measurement-kinds.ts`), which the decoder, the gate and the enumerating
+contract test all import.
 
 **Implicitly running steps (live projection).** The baker's first real action on a step records
 its `StepStarted`; until then the step has no recorded start, but it must not be shown as waiting

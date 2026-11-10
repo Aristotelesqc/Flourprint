@@ -178,18 +178,19 @@ with no import from `packages/`. Each case has a `kind`:
   expect `out_of_domain` with the reason. Tolerance 0.02 °C (the contract solves to 0.001 °C; the
   reference is better than 1e-6).
 
-- `liquidTarget` W7 (a preferment with no temperature of its own, taken at the room),
-  `suggestedThenLiquid`
-  C1 (basic mode: the suggestion of E3 feeds the liquid target, flagged `water_below_0C`), and the
-  friction
-  eligibility cases F4 to F6 (the 10 min window; the reference mixing step rule). The generator writes
-  `cases.json` itself, in UTF-8; reproduction holds to about 1e-9.
+- `liquidTarget` W7 (a preferment with no temperature of its own, taken at the room), W8 (the room
+  cools to 19), `suggestedThenLiquid` C1 (basic mode: the suggestion of E3 feeds the liquid target,
+  flagged `water_below_0C`), and the friction eligibility cases F4 to F6 (the 10 min window; the
+  reference mixing step rule). The generator writes `cases.json` itself, in UTF-8; reproduction holds
+  to about 1e-9.
+- `roomLine` R1 to R4: a room change carried to the end, up or down; a fridge step keeps its planned
+  temperature; a later `AdjustStep` wins on its step; a change noted before a step's start (R4)
+  overrides that step's planned temperature.
+- `readingPlacement` T1: where dough readings fall by effective instant, which are ignored and why,
+  and the effect of a time correction.
+- `applianceReadings` O1: an oven history; the readings are journal and export only.
 
-- `liquidTarget` W8 (the room cools to 19), `roomLine` R1 to R3 (a room change carried to the end, up
-  or down; a fridge step keeps its planned temperature; a later `AdjustStep` wins on its step) and
-  `readingPlacement` T1 (where dough readings fall by effective instant, which are ignored and why,
-  and the effect of a time correction). `applianceReadings` O1 (an oven history: the readings are journal and export only). R, T and O cases are tables of expected placements, not numeric
-  integrations.
+R, T and O cases are tables of expected placements, not numeric integrations.
 
 The cases ship with no engine harness: they are contract examples, and the implementing pull request
 adds the harness and a `since` engine version to each case, as for the thermal cases. Nothing in

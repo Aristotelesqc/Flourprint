@@ -254,6 +254,10 @@ cases.append({"name": "R1 the room cools: 19 noted 1 h into the bulk, carried to
 cases.append({"name": "R2 the room warms: 26 noted at the start of the bulk",
               "kind": "roomLine", "roomLine": [[0, 26]],
               "expected": {"bulk": "26", "retard": "4", "proof": "26"}})
+cases.append({"name": "R4 a change noted before the step starts: 21 noted during the autolyse, mix and bulk follow it",
+              "kind": "roomLine", "recipe": "autolyse (counter, 23), mix (counter, 23), bulk (counter, 23), retard (fridge, 4)",
+              "roomLine": [["during the autolyse", 21]],
+              "expected": {"mix": "21 from its start (the planned 23 does not win)", "bulk": "21", "retard": "4 (placed in the fridge)"}})
 cases.append({"name": "R3 a second change at the start of the proof, then AdjustStep on the proof",
               "kind": "roomLine", "roomLine": [[1, 19], [16, 21]],
               "adjustStep": {"proof": {"at": 16.5, "temperatureC": 24}},

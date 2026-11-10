@@ -361,16 +361,19 @@ therefore **recomputes** it with the exporting app's engine from the events up t
 that is the explicit comparison of Reading history, never a replacement of the record. One as-of
 point follows every event that can change a forecast (a step start or end, a time correction, a
 completion retraction, an `AdjustStep`, a temperature observation, a thermal change,
-a hold or release, an inserted step), at most 200: past that, the points are an even subset with the
-first and the last kept (`thinned`). The temperature targets are included while the first-contact
+a hold or release, an inserted step), reduced as stated under Size (`thinned`). The temperature targets are included while the first-contact
 step is not completed.
 
 **Size.** The document is meant to be pasted into an LLM. It is written compact (no indentation),
 omits what the events already say, and aims at **about 40 KB for a Preparation of ten steps, 100 KB
-as a ceiling** before `thinned` applies. To stay there, an as-of point is kept only where the
+as a ceiling for the **whole document** (recipe, process, events and forecasts), a target and not
+a hard cap. To stay there, an as-of point is kept only where the
 forecast differs from the previous kept point (a changed `remaining`, `progressNowPct`,
 `doughStart` or `targets`), at most **60** points by default (not 200), first and last kept;
-the cap and the rule are the exporting app's and are named in `about`.
+the cap and the rule are the exporting app's and are named in `about`. Above the ceiling, the
+as-of points are thinned first (down to the first and the last); after that, the document is still
+produced whole: **recorded measurements, events and the recorded forecasts are never dropped** to
+make it smaller.
 
 **Stability.**
 
@@ -396,7 +399,7 @@ identifier), no other Preparation or recipe, no recipe family, no personal profi
 factor a forecast used appears only as its `thermal_factor:<key>=<value>` assumption, as in every
 estimate), and **none of the opaque identifiers of the log**: `bakeId`, `eventId`, `commandId` and
 `causationId` are left out and events are referred to by `seq`. The payloads of correction events
-that name another event (`StepTimeCorrected`, `StepCompletionRetracted`) have their
+that name another event (`StepTimeCorrected`, `StepCompletionRetracted`, `TemperatureTimeCorrected`) have their
 `targetEventId` rewritten to the target's `seq` (`targetSeq`). The recipe's own `id` is omitted.
 **Registry references** are treated by origin: an entry that is a built-in of the app (a flour, an
 ingredient, an oven mode, an appliance) keeps its catalogue id, which is public and ships in every
