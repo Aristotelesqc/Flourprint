@@ -105,6 +105,13 @@ interface StepConditions {
   (`InvalidProcess`). Their use is defined in
   fermentation.md.
 - All temperatures are in °C and finite; the scheduler ignores them.
+- During a Preparation the baker may change a step's `temperatureC` (`AdjustStep`), note a room
+  change that carries to the end for the steps on the counter (bake-session.md, The room line), and record
+  measured temperatures of the dough, flour, liquid and preferment; the snapshot keeps the plan and
+  the engine reads the effective and measured values with their sources (bake-session.md,
+  Preparation temperatures; fermentation.md, Liquid target). `frictionC` stays the recipe's value;
+  Preparations only produce samples for a later calibration of it (fermentation.md, Friction
+  samples).
 
 ## Thermal inputs (#176)
 
@@ -463,9 +470,10 @@ Rules:
   steps **after** the first-contact step, up to the first heat step: the kneading after a
   frasage, a fermentolyse, the bulk and so on, each with its own duration. The first-contact step
   is **not** a dough step: it has no fermentation clock yet. That is the single rule behind every
-  gate that asks for a dough step (a dough-temperature reading, thermal inputs, a model-driven
-  duration, the `doughReady` observation, bake-session.md), so none of them accepts the
-  first-contact step. What stays tied to it is its **conditions**: its temperature is the
+  gate that asks for a dough step (thermal inputs, a model-driven duration, the `doughReady`
+  observation, bake-session.md), so none of them accepts the first-contact step. One exception
+  since 0.26.0: a dough-temperature reading is also accepted on it, as the temperature the clock
+  starts from (bake-session.md, Preparation temperatures). What stays tied to it is its **conditions**: its temperature is the
   temperature the dough starts from when the clock starts (fermentation.md, Dough temperature).
   The reason `leaven_before_mixing`, introduced with the end-of-the-mix rule, is **retired**: no
   step can be "before" the dough any more, and the engine never produced it.
@@ -574,8 +582,9 @@ Examples (hand-checked against the rules above):
     planned 5 min), `mix` (8 min), `bulk`. The baker starts the `frasage` at 09:00 and completes it
     at 09:09. In the plan the clock started at 09:05; in the bake it starts at 09:09, the recorded
     completion, and the kneading and the bulk are projected from there. While the `frasage` runs,
-    the dough has no progress, and a dough-temperature reading or thermal inputs on it are refused
-    (it is not a dough step); on the `mix` they are accepted.
+    the dough has no progress, and thermal inputs on it are refused (it is not a dough step) and a
+    dough-temperature reading on it is the start of the clock (bake-session.md, Preparation
+    temperatures); on the `mix` both are accepted.
 
 ## Subjects and component phases
 

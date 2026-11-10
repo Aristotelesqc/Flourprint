@@ -60,7 +60,7 @@ type Estimate<T = number> =
       range?: [RangeBound<T>, RangeBound<T>];
       model: ModelRef;
       assumptions: string[];
-      extrapolations?: string[]; // outside the data the model was fitted on, still given
+      extrapolations?: string[]; // outside the fitted data, or thin evidence; still given
       calibration?: { id: string; version: string }; // readiness profile used (fermentation.md)
     }
   | {
@@ -88,6 +88,17 @@ interface ModelRef {
   id: string;
   version: string;
 }
+
+// Where a temperature the engine used came from (bake-session.md, Preparation temperatures).
+type TemperatureSource = 'planned' | 'adjusted' | 'measured' | 'assumed';
+
+interface TemperatureInput {
+  valueC: number;
+  source: TemperatureSource;
+  stepId?: string; // the step it was read on
+  at?: Instant; // adjusted and measured: when
+  seq?: number; // adjusted and measured: the event that carries it
+}
 ```
 
 - Units of a `PropertyValue` are the canonical ones, `%` (points) and the property units named by
@@ -104,6 +115,13 @@ interface ModelRef {
   `{ kind: 'finite', value }` without changing its value (history.md).
 - Every number of an `ok` estimate (value and finite bounds) is finite.
 - `extrapolations` lists, as stable codes, each reason the estimate lies outside the model's
-  fitted domain; the UI always shows them next to the value.
+  fitted domain or in a regime where its evidence is thin (fermentation.md, Learning flags); the UI
+  always shows them next to the value.
 - `assumptions`, `extrapolations`, `reason` and `missing` hold stable codes or English developer text; the UI
   localizes them (ADR 0009).
+- `TemperatureSource` is reported wherever a result depends on a temperature that a Preparation can
+  change or measure (fermentation.md, Liquid target and Dough temperature). `planned` is a value of
+  the recipe or the snapshot, `adjusted` the room the baker changed for this Preparation
+  (`AdjustStep` or a room change, up or down), `measured` an observation recorded in it, `assumed` a value stated nowhere (the
+  flour and a preferment at the room, a friction of 0). A computed `Estimate` is never a
+  `measured` value, and a `measured` value is never presented as planned.

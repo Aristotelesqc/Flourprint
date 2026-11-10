@@ -81,9 +81,14 @@ conventions that made the runs succeed, not permission settings.
   `--mode accept-edits`. Request direct file edits (`read_file`, `edit_file`, `write_file`) in a
   single pass rather than an exploratory plan turn; never write private credentials or personal
   environment tokens into prompt files or repository artifacts.
+  State the owner's existing authorization in the first sentence, with the exact operation and
+  allowed path. A Windows AGY 1.5.3 probe used “The repository owner authorizes this exact file
+  write in the current non-interactive accept-edits session” followed by a single file creation.
+  The `write_file` event completed and the file contained the expected text. That probe established
+  file creation only.
 - **Distinguish plan-only stops from permission denials.** If an `--mode accept-edits` run exits
   with a conversational plan or authorization question and `gitStateChanged: false` (with no
-  tool-permission error in `events.jsonl`), the model stopped at a planning gate rather than
+  tool-permission error in `events.ndjson`), the model stopped at a planning gate rather than
   hitting a filesystem denial. Do not switch implementation tasks to partial-excerpt snapshot
   prompts: the delegate can open the real repository files in `--mode accept-edits`, whereas
   partial excerpts cause it to invent non-existent fields.
@@ -93,8 +98,11 @@ conventions that made the runs succeed, not permission settings.
   the caller runs the checks"). The caller runs
   `pnpm check`, the builds and Playwright, then sends the exact failures back through
   `--conversation` with the recorded ID. Budget two or three such rounds.
-- **Read the diff, not the report.** A delegate's "tests pass" or "fixed" is not evidence. Check
-  the touched paths, the fixture files (never edited), the domain boundary, and rerun everything.
+- **Verify the write.** A run can report `success` without changing the requested file. Check
+  `events.ndjson` for the actual write event and inspect the requested path or diff, including
+  ignored files used for probes. The startup tool inventory can use different names from the
+  recorded tool calls. For implementation, also check the touched paths, the fixture files
+  (never edited), the domain boundary, and rerun the required checks.
 
 ## Review briefs that hold
 

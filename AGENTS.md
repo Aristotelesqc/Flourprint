@@ -30,6 +30,9 @@ a dedicated pull request, before the code that depends on it.
 - No new dependency without a demonstrated need.
 - English everywhere: code, comments, docs, commit messages, issues, pull requests.
 - No user-facing text hard-coded in UI components; use message keys (ADR 0009).
+- The interface is phone-only: no tablet or desktop responsive layouts. The phone frame on desktop
+  browsers and shells is intentional, not a defect (ADR 0024; ledger L24, L25). Phone acceptance at 360
+  and 393 px with larger text still applies.
 - French UI text never addresses the user (no "tu", no "vous"): instructions and actions use the
   infinitive ("Pétrir 8 min à basse vitesse"), explanations an impersonal voice.
 - Every commit is pushed. Work lands in focused pull requests (ADR 0008, workflow): one per
@@ -106,6 +109,9 @@ ADRs and tools rather than introducing another source of product decisions or a 
 
 ## Commands
 
+Local branches do not follow `origin` by themselves: run `pnpm git:sync --quiet` in the main
+checkout at session start (see [docs/tooling/branch-sync.md](docs/tooling/branch-sync.md)).
+
 Optional checkout-local CodeGraph setup and verified client limitations are documented in
 [docs/tooling/codegraph.md](docs/tooling/codegraph.md). It supplements source searches; never
 register it globally or treat graph output as a substitute for contracts or tests.
@@ -118,6 +124,7 @@ pnpm build:mobile
 pnpm --filter @flourprint/mobile e2e  # full browser Playwright suite, FR and EN
                                       # (FLOURPRINT_E2E_PORT=<port> for a private server)
 pnpm vitest run   # tests only (after a build)
+pnpm git:sync     # fast-forward every local branch to origin (never forces; --dry-run to preview)
 node apps/cli/dist/main.js --version
 ```
 

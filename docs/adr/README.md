@@ -30,3 +30,4 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0021](0021-theme-builder-and-component-sourcing.md) | Theme builder, component sourcing, motion items and guides | Accepted; amended by 0022                       |
 | [0022](0022-port-to-app-and-tailwind.md)             | Port the interface into the app, styled with Tailwind v4   | Accepted                                        |
 | [0023](0023-dev-app-version-picker.md)               | Choosing the web version in the dev apps                   | Proposed                                        |
+| [0024](0024-phone-only-ui-desktop-frame.md)          | Phone-only UI and the 1:1 phone frame on desktop           | Accepted (2026-11-09)                           |
