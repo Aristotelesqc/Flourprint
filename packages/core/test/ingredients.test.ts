@@ -108,8 +108,8 @@ const problem = (entry: IngredientEntry) => {
 };
 
 describe('contract version', () => {
-  it('is 0.24.3 (hydration sheet read model; clean generated draft names since 0.24.2; chain move down since 0.24.1)', () => {
-    expect(CONTRACT_VERSION).toBe('0.24.3');
+  it('is 0.25.0 (learning flags; hydration sheet read model since 0.24.3)', () => {
+    expect(CONTRACT_VERSION).toBe('0.25.0');
   });
 });
 

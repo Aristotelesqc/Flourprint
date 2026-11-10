@@ -3,9 +3,10 @@
  * same chain move as a move up (process.md, Move). 0.24.2: a generated draft name is the bare base
  * name when free, else `<base> <n>` with n ≥ 2 (drafts.md, Generated names). 0.24.3: the hydration
  * sheet read model (formula.md, Hydration sheet read model, L147), an addition. No persisted shape
- * or calculation changes.
+ * or calculation changes. 0.25.0: the learning flags, three evidence-limited extrapolation codes
+ * (fermentation.md, Learning flags); no persisted shape change.
  */
-export const CONTRACT_VERSION = '0.24.3';
+export const CONTRACT_VERSION = '0.25.0';
 
 /**
  * Version of the calculation engine recorded in bake snapshots (D8). 0.8.0: the dough thermal
@@ -17,5 +18,8 @@ export const CONTRACT_VERSION = '0.24.3';
  * fermentolyse and other steps between it and the end of the last mixing step count, and a
  * preferment's clock starts at the end of its own mixing step (fermentation.md, process.md, owner
  * decisions of 2026-11-04); the kinetic model `flourprint.commercial-yeast` stays 0.1.0.
+ * 0.11.0: estimates carry the learning flags `dough_above_28c`, `cold_stage_uncalibrated` and
+ * `cold_hold_over_72h` (fermentation.md, Learning flags, contract 0.25.0); every value and band is
+ * unchanged.
  */
-export const ENGINE_VERSION = '0.10.0';
+export const ENGINE_VERSION = '0.11.0';
