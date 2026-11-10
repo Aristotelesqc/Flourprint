@@ -331,52 +331,48 @@ export const RecipeDocument = ({
                 )}
               </div>
 
-              <div className="flex shrink-0 items-center gap-2 ml-auto">
-                {fieldsMounted && (
-                  <div hidden={!editable} className="flex items-center gap-1.5">
+              {fieldsMounted && (
+                <div hidden={!editable} className="grid w-full grid-cols-2 gap-1.5">
+                  <NumberField
+                    label={`${name(flour.id)}, %`}
+                    unit="%"
+                    value={flour.sharePct}
+                    onCommit={(sharePct) =>
+                      onEdit({
+                        type: 'SetFlourBlend',
+                        flours: formula.flours.map((f) =>
+                          f.id === flour.id ? { ...f, sharePct } : f,
+                        ),
+                      })
+                    }
+                  />
+                  {resolved && (
                     <NumberField
-                      label={`${name(flour.id)}, %`}
-                      unit="%"
-                      width="4.5rem"
-                      value={flour.sharePct}
-                      onCommit={(sharePct) =>
+                      label={`${name(flour.id)}, g`}
+                      unit="g"
+                      value={resolved.flourByFlour[flour.id] ?? 0}
+                      onCommit={(val) =>
                         onEdit({
-                          type: 'SetFlourBlend',
-                          flours: formula.flours.map((f) =>
-                            f.id === flour.id ? { ...f, sharePct } : f,
-                          ),
+                          type: 'SetIngredientGrams',
+                          ingredient: flour.id,
+                          grams: val,
                         })
                       }
                     />
-                    {resolved && (
-                      <NumberField
-                        label={`${name(flour.id)}, g`}
-                        unit="g"
-                        width="5.5rem"
-                        value={resolved.flourByFlour[flour.id] ?? 0}
-                        onCommit={(val) =>
-                          onEdit({
-                            type: 'SetIngredientGrams',
-                            ingredient: flour.id,
-                            grams: val,
-                          })
-                        }
-                      />
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
 
-                {!editable && (
-                  <>
-                    <span className="text-right text-xs text-muted tabular-nums">
-                      {pct(flour.sharePct)}
-                    </span>
-                    <span className="min-w-[64px] text-right font-bold tabular-nums">
-                      {resolved ? grams(resolved.flourByFlour[flour.id] ?? 0) : '—'}
-                    </span>
-                  </>
-                )}
-              </div>
+              {!editable && (
+                <div className="flex shrink-0 items-center gap-2 ml-auto">
+                  <span className="text-right text-xs text-muted tabular-nums">
+                    {pct(flour.sharePct)}
+                  </span>
+                  <span className="min-w-[64px] text-right font-bold tabular-nums">
+                    {resolved ? grams(resolved.flourByFlour[flour.id] ?? 0) : '—'}
+                  </span>
+                </div>
+              )}
             </div>
           ))}
 

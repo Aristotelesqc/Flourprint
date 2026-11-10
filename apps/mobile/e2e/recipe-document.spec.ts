@@ -231,6 +231,32 @@ for (const en of [false, true]) {
       await page.setViewportSize({ width: 360, height: 851 });
       await page.addStyleTag({ content: 'html,body{font-size:20.8px!important}' });
       await enterEditor(page);
+      const flourName = en ? 'Bread flour' : 'Farine à pain';
+      for (const [unit, value, sample] of [
+        ['%', '80', en ? '99.99' : '99,99'],
+        ['g', '800', en ? '1234.5' : '1234,5'],
+      ] as const) {
+        const field = routed(page).getByRole('textbox', {
+          name: `${flourName}, ${unit} (${unit})`,
+          exact: true,
+        });
+        await expect(field).toHaveValue(value);
+        await field.scrollIntoViewIfNeeded();
+        await expect(field).toBeInViewport();
+        const { available, needed } = await field.evaluate((input, text) => {
+          const style = getComputedStyle(input);
+          const canvas = document.createElement('canvas').getContext('2d');
+          if (!canvas) throw new Error('No canvas text measurement available');
+          canvas.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+          return {
+            available:
+              input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+            needed: canvas.measureText(text).width,
+          };
+        }, sample);
+        expect(available).toBeGreaterThanOrEqual(needed);
+      }
+
       const final = routed(page).getByRole('group', { name: labels.finalMix, exact: true });
       await final.scrollIntoViewIfNeeded();
       const words = await final.locator('label').evaluateAll((nodes) =>
