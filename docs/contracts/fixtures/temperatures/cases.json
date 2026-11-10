@@ -995,6 +995,30 @@
         "newInstantMin": 35,
         "effect": "moves from the mean state of the bulk to the start of the clock"
       }
+    },
+    {
+      "name": "O1 oven history: 250 planned, 205 after opening the door, 240 four minutes later",
+      "kind": "applianceReadings",
+      "plannedSetpointC": 250,
+      "readings": [
+        {
+          "appliance": "oven",
+          "instant": "18:12",
+          "valueC": 205.0
+        },
+        {
+          "appliance": "oven",
+          "instant": "18:16",
+          "valueC": 240.0
+        }
+      ],
+      "expected": {
+        "usedByModel": false,
+        "ignoredBy": "appliance_reading_not_modelled",
+        "planChanged": false,
+        "inJournalBackupAndExports": true,
+        "rangeC": [0, 500]
+      }
     }
   ]
 }

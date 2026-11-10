@@ -278,6 +278,15 @@ cases.append({"name": "T1 placement of dough readings by effective instant",
               "correction": {"reading": "during the bulk", "newInstantMin": 35,
                              "effect": "moves from the mean state of the bulk to the start of the clock"}})
 
+# O1: appliance readings are journal and export only (bake-session.md, applianceTemperature).
+cases.append({"name": "O1 oven history: 250 planned, 205 after opening the door, 240 four minutes later",
+              "kind": "applianceReadings", "plannedSetpointC": 250,
+              "readings": [{"appliance": "oven", "instant": "18:12", "valueC": 205.0},
+                           {"appliance": "oven", "instant": "18:16", "valueC": 240.0}],
+              "expected": {"usedByModel": False, "ignoredBy": "appliance_reading_not_modelled",
+                           "planChanged": False, "inJournalBackupAndExports": True,
+                           "rangeC": [0, 500]}})
+
 out = json.dumps({
     "format": "flourprint-fixture/0",
     "contract": "bake-session.md, fermentation.md",

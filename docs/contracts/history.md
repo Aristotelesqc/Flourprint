@@ -172,8 +172,9 @@ interface BakeDigest {
     set?: number; // fold only: the set done (process.md, techniques)
     position?: ProbePosition; // doughTemperature only (bake-session.md)
     late?: true; // added after the end of the Preparation, at its real instant (bake-session.md)
-    ignoredBy?: string; // reading_before_dough, reading_after_dough, reading_after_mixing, reading_above_model_range
+    ignoredBy?: string; // reading_before_dough, reading_after_dough, reading_after_mixing, reading_above_model_range, appliance_reading_not_modelled
     componentId?: string; // prefermentTemperature only (bake-session.md, Preparation temperatures)
+    appliance?: ApplianceKind; // applianceTemperature only (bake-session.md)
     criterion?: string;
     text?: string;
     rating?: number;
@@ -286,7 +287,7 @@ interface PreparationAnalysis {
       frictionC?: number;
     };
     records: Array<{
-      quantity: 'room' | 'flour' | 'liquid' | 'preferment' | 'dough';
+      quantity: 'room' | 'flour' | 'liquid' | 'preferment' | 'dough' | 'appliance';
       valueC: number;
       source: 'adjusted' | 'measured'; // planned values are in `planned`; assumed ones are not records
       kind: 'roomChange' | 'reading';

@@ -188,7 +188,7 @@ with no import from `packages/`. Each case has a `kind`:
 - `liquidTarget` W8 (the room cools to 19), `roomLine` R1 to R3 (a room change carried to the end, up
   or down; a fridge step keeps its planned temperature; a later `AdjustStep` wins on its step) and
   `readingPlacement` T1 (where dough readings fall by effective instant, which are ignored and why,
-  and the effect of a time correction). R and T cases are tables of expected placements, not numeric
+  and the effect of a time correction). `applianceReadings` O1 (an oven history: the readings are journal and export only). R, T and O cases are tables of expected placements, not numeric
   integrations.
 
 The cases ship with no engine harness: they are contract examples, and the implementing pull request

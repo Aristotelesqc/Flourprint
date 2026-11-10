@@ -308,6 +308,7 @@ adds one is not complete until all of these hold:
 | free `Observation` (a weight, a height, a reading) on a note | `ObservationAdded` `measurement`         | existing |
 | `doughTemperature` (and its `position`)                      | `ObservationAdded` `kind`, `position`    | 0.21.0   |
 | `flourTemperature`, `liquidTemperature`                      | `ObservationAdded` `kind`                | 0.26.0   |
+| `applianceTemperature` (and its `appliance`)                 | `ObservationAdded` `kind`, `appliance`   | 0.26.0   |
 | `prefermentTemperature` (and its `componentId`)              | `ObservationAdded` `kind`, `componentId` | 0.26.0   |
 | one step's room changed                                      | `OverrideApplied` (`temperatureC`)       | existing |
 | the room changed from an instant to the end                  | `RoomTemperatureChanged`                 | 0.26.0   |
@@ -325,7 +326,7 @@ same). Derived data (the friction sample, the temperature outcome, the forecasts
 backup: it is recomputed from the facts. Restore re-runs no command decision (history.md, Reading history): it
 checks the stored payload structurally, against the state replayed so far. For the temperature
 kinds and the room change it checks that the value is a finite number in `degC` within its range
-(0 – 60 °C; 0 – 120 °C for `doughTemperature`); that the instant (`measurement.observedAt`, `at`,
+(0 – 60 °C; 0 – 120 °C for `doughTemperature`; 0 – 500 °C for `applianceTemperature`, whose `appliance`, when present, is an `ApplianceKind`); that the instant (`measurement.observedAt`, `at`,
 `newOccurredAt`) lies within the span of the Preparation at that point of the log (not before
 `BakeStarted`, not after the event's `recordedAt`, and after an end not after that end); that
 `late` is present exactly when the Preparation was ended at that point; that a named `stepId`
