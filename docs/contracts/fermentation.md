@@ -636,6 +636,7 @@ Version 0.1.0 of this contract added it instead; that was an error, corrected on
 | fresh-equivalent dose outside 0.01–3 %, dough below 1.7 °C or above 35 °C (also reached by self-heating)                                                                          | `out_of_domain`                            |
 | Semenov test of the dough thermal model `ψ > 1/e` (Dough thermal model)                                                                                                           | `out_of_domain` (`self_heating_unbounded`) |
 | a preferment (on the dough and on the preferment's own estimate); added sugar > 5 %; added fat > 3 %; salt outside 1.5–3 %; total water outside 55–75 %; a needed content unknown | `ok` with `extrapolations` listing each    |
+| evidence-limited: above 28 °C up to 35 °C; a cold step; cold steps totalling more than 72 h (Learning flags, below)                                                               | `ok` with `extrapolations` listing each    |
 | otherwise                                                                                                                                                                         | `ok`                                       |
 
 Sugar and fat are the formula's `totalSugarPct` and `totalFatPct`; water is `totalWaterPct`.
@@ -650,6 +651,85 @@ An extrapolated estimate is still given, with its reasons, because the owner's r
 (#33 objection 5); its band does not widen automatically, so the reasons are always shown next
 to it. Sugar, salt, fat and water only gate the domain: they do not change the rate (#33
 objection 2).
+
+### Learning flags (0.25.0)
+
+Three extrapolation codes mark the regimes where the evidence says the forecast is least reliable
+(owner approval of 2026-11-07 to the proposal of #231, section 6; evidence in
+`docs/science/fermentation-model.md`, sections 12 and 15, and #231, section 3). They are not an
+exit from the fitted domain: the kinetic fit spans 3.9–30 °C, so most cold steps and a dough at
+28–30 °C are inside it. They are **evidence-limited** flags, carried in `extrapolations` with the
+others of the Domain table (values-and-units.md). The estimate is still given, `ok`, with the same
+value and band; only the reasons change. The interface shows them next to the estimate, as it
+shows every extrapolation, with the meaning "learning": the forecast is outside what the model has
+been checked against. Reconciling that meaning with the existing message prefix of extrapolations
+("Outside the model's data") is the interface's task; the new keys follow the French voice rules
+(infinitive or impersonal, never addressing the baker).
+
+| Code                      | Condition (per fermenting mass, central value)                                                                                                                                |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dough_above_28c`         | its start temperature, the effective ambient of one of its steps, or a measured dough temperature it resets to is above 28 °C (and not above 35 °C, which is `out_of_domain`) |
+| `cold_stage_uncalibrated` | one of its steps of non-zero duration has an effective ambient at or below 10 °C                                                                                              |
+| `cold_hold_over_72h`      | the durations of its steps at or below 10 °C effective ambient add up to more than 72 h                                                                                       |
+
+- **Which steps.** The same set for all three codes: the steps the mass's estimate models, that is
+  the dough steps from the end of the first-contact step (Dough clock) for the dough, and the
+  preferment's own steps for a preferment. Kneading steps after the first contact count like any
+  other. A step of zero duration (planned or estimated) counts for no cold code. A cold preferment
+  does not flag the dough, nor the reverse: growth before the mix is not modelled on the dough
+  (State and equations), and the dough's estimate already carries `preferment`.
+- **Which temperatures.** A step's **effective** ambient: its own condition temperature, or the
+  one it keeps from the previous step when it has none (Dough temperature). For 28 °C, the inputs
+  of the `out_of_domain` temperature gate: the temperature the dough starts from, each step's
+  effective ambient, and any measured dough temperature that replaces the estimate during a bake
+  (bake-session.md, `doughTemperature`). In basic mode the dough starts at the ambient. The
+  thermal model's computed trajectory is not re-tested.
+- **Which durations.** Each step counts with its planned duration, except the mass's last
+  fermentation step, whose duration the estimate solves (Results): it counts with the **central
+  estimated** duration, also when it has a planned one. When the end point is reached before that
+  step (`end_point_before_last_step`), its estimated duration is 0 h. When the duration estimate
+  is not `ok` there is no duration estimate to flag; the mass's other estimates (Results) count
+  that step with its planned duration when it has one, else as 0 h.
+- **Boundaries.** The 28 °C test is strict (28 °C does not flag); the 10 °C boundary is inclusive
+  (a step at 10 °C is cold); the 72 h test is strict (exactly 72 h does not flag).
+- **`cold_stage_uncalibrated` has no exit yet.** It means the cold end of the curve is a wide prior
+  that the baker's own cold bakes with heights have not narrowed (#231). No contract yet defines
+  a personal cold calibration, so every cold step carries it; the contract that defines one says
+  when it stops.
+- **Why these thresholds.** Above 28 °C: dough rise peaked at 25 °C in Birch 2013 (abstract only,
+  `docs/science/sources.md`) while gas production keeps rising to 35–40 °C, and the shipped law is
+  4 to 5.6 times too fast at 32 °C on Izzreen 2016, about 2.1 to 2.7 times once the thermal lag is
+  credited (science document, section 2), so above 28 °C the model has no temperature-dependent
+  retention. Cold: the 4 °C to 24 °C ratio is not measured and the published estimates range from
+  0.2 to 3 % against 5.7 % shipped (section 12). Long holds: after 7 days at 5 °C the 2-h gas
+  activity fell to 10 % of control in a sweet dough (15 % sugar, 3 % yeast) and to 35 % in a white
+  bread dough (5 % sugar, 2 % yeast) (Kyogoku 1995), and a lean dough's rise at 4 °C peaked by
+  day 4, then fell (Liu 2025, figure only, skimmed); no cited data point sits at 3 days. The
+  28 °C and 72 h values come from the external report on #231; the 10 °C boundary is this
+  contract's choice, the temperature below which the science document has only one dataset. All
+  three are owner choices and change only by a contract pull request.
+
+Worked examples. Lean dough, salt 2 %, water 65 %; a 10 min first-contact mix at the room
+temperature of the first fermentation step; "proof estimated" means the last step, whose duration
+the estimate solves. The codes of examples 1 to 6 do not depend on the solved duration; examples 7
+and 8 state the dependence.
+
+1. Fresh yeast 1 %. Bulk 2 h at 30 °C, proof estimated at 30 °C: `dough_above_28c`.
+2. Fresh yeast 1 %. Bulk 2 h at 28 °C, proof estimated at 28 °C: no learning flag.
+3. Fresh yeast 0.3 %. Bulk 1 h at 22 °C, retard 48 h at 4 °C, proof estimated at 22 °C:
+   `cold_stage_uncalibrated` only.
+4. The same with a 96 h retard: `cold_stage_uncalibrated` and `cold_hold_over_72h`.
+5. The same with a 72 h retard: `cold_stage_uncalibrated` only (72 h is not more than 72 h). With
+   a retard of 40 h at 4 °C followed by 32 h 1 min at 10 °C instead: both cold codes (10 °C is
+   cold, and the cold steps add up to more than 72 h).
+6. The same as 3 with the retard at 10.5 °C: no learning flag.
+7. Fresh yeast 0.3 %. Bulk 1 h at 22 °C, retard 70 h at 4 °C, proof estimated at 8 °C:
+   `cold_stage_uncalibrated`, and `cold_hold_over_72h` exactly when the proof's central estimated
+   duration is more than 2 h (0 h if the end point is reached during the retard).
+8. A poolish at 4 °C (its only step, whose duration its estimate solves), then a dough with a 2 h
+   bulk and a proof estimated at 24 °C: the poolish's estimate carries `cold_stage_uncalibrated`
+   and `preferment`, and `cold_hold_over_72h` too when its solved duration is more than 72 h; the
+   dough's carries `preferment` only.
 
 ## Results
 
@@ -832,3 +912,30 @@ cases that have a 10 min mixing step as their only mixing step (reference point,
 inverse dose, thermal lag) have the same values as before: the mixing is the first-contact step and
 nothing lies between its end and the end of the last mixing step. Nothing in it comes from the
 engine.
+
+Version `0.25.0` (proposed) adds the **learning flags** (Learning flags; owner approval of 2026-11-07
+to the proposal of #231, section 6): three extrapolation codes, `dough_above_28c`,
+`cold_stage_uncalibrated` and `cold_hold_over_72h`, under the Domain table. What does not change:
+every value and band, the `out_of_domain` gates (1.7 and 35 °C, dose, self-heating), the kinetic
+law and its constants, the readiness profiles, the thermal model. Compatibility:
+
+- **Persisted shape.** None changes. `extrapolations` is already a list of stable codes
+  (values-and-units.md, whose definition widens to evidence-limited regimes); the three codes are
+  new members. An accepted suggestion stored before
+  keeps its `Estimate` and its codes as they were (Accepted suggestions); it is not recomputed.
+  A reader that meets an unknown code shows it as an extrapolation without a message, never drops
+  it.
+- **Engine version.** The implementing pull request bumps `ENGINE_VERSION` from `0.10.0` to
+  `0.11.0`: estimates of a recipe with a warm or cold step gain codes, with unchanged numbers. The
+  models stay `flourprint.commercial-yeast` `0.1.0` and `flourprint.dough-thermal` `0.2.1`.
+- **Contract version.** `CONTRACT_VERSION` goes to `0.25.0`, one minor step from `0.24.3`.
+- **Interface.** Each code needs a message key `fermentation.extra.<code>` in French and English
+  before or with the engine change, so that no raw code reaches the baker (ADR 0009). The wording
+  says "learning" or "outside what the model has been checked against", never that the dough is
+  ready or not.
+
+Reference cases: the codes depend only on step temperatures and durations, so the worked examples
+of Learning flags are the acceptance cases; `fixtures/fermentation/cases.json` carries numbers
+only and is unchanged. The implementing pull request tests each example and the boundaries
+(28 °C, 10 °C, 72 h) directly; for examples 7 and 8 the test reads the engine's own central
+duration and checks the code against it, since that duration is not a reference value.
