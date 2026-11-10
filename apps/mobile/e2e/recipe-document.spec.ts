@@ -201,7 +201,7 @@ for (const en of [false, true]) {
 
     test(`Disclosure state survives accepted history and save${suffix}`, async ({ page }) => {
       await enterEditor(page);
-      const flours = routed(page).getByRole('button', { name: /^(Farines|Flours)\(/ });
+      const flours = routed(page).getByRole('button', { name: /^(Farines|Flours)\b/ });
       await flours.click();
       await expect(flours).toHaveAttribute('aria-expanded', 'false');
       const salt = routed(page).getByRole('textbox', {
@@ -256,6 +256,33 @@ for (const en of [false, true]) {
         }, sample);
         expect(available).toBeGreaterThanOrEqual(needed);
       }
+
+      const preDoughs = routed(page).getByRole('button', {
+        name: en ? /^Pre-doughs/ : /^Pré-pâtes/,
+      });
+      if ((await preDoughs.getAttribute('aria-expanded')) === 'false') {
+        await preDoughs.click();
+      }
+      await expect(preDoughs).toHaveAttribute('aria-expanded', 'true');
+      const controlsId = await preDoughs.getAttribute('aria-controls');
+      const preDoughsRegion = controlsId
+        ? routed(page).locator(`#${controlsId}`)
+        : routed(page).getByRole('region', { name: en ? /^Pre-doughs/ : /^Pré-pâtes/ });
+      const poolishAmount = preDoughsRegion.getByText(/601\s*g/).first();
+      await poolishAmount.scrollIntoViewIfNeeded();
+      await expect(poolishAmount).toBeVisible();
+      const lines = await poolishAmount.evaluate((el) => {
+        const range = document.createRange();
+        const textNode = [...el.childNodes].find((n) => n.nodeType === Node.TEXT_NODE);
+        if (textNode && textNode.textContent) {
+          range.setStart(textNode, 0);
+          range.setEnd(textNode, textNode.textContent.length);
+        } else {
+          range.selectNodeContents(el);
+        }
+        return range.getClientRects().length;
+      });
+      expect(lines).toBe(1);
 
       const final = routed(page).getByRole('group', { name: labels.finalMix, exact: true });
       await final.scrollIntoViewIfNeeded();
