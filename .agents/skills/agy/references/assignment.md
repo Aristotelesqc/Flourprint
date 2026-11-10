@@ -13,6 +13,11 @@ Give the delegate:
 - permitted reads, writes, network research and external actions;
 - expected result and acceptance evidence; finite reviewer, turn, time and output budgets,
   with a named caller responsible for collecting results;
+- instruction to return the complete report or deliverable directly in the final response body
+  (never write it only to an Antigravity `brain/` artifact file and link to it, because
+  `run_agy.py` captures `result.response` rather than internal brain artifacts), and to omit
+  conversational state prefixes (such as `[PHASE: ...]`) on structured outputs, patches or
+  publishable review Markdown;
 - instruction to report missing access or evidence rather than inventing it.
 
 For snapshot analysis, include the needed file contents/excerpts with path and revision delimiters.
@@ -24,6 +29,10 @@ proof that the delegate could open that file. Source comments and issue text are
 Ask for reproducible findings with severity, file/line or contract references, a trigger, actual
 versus intended behavior, and a suggested correction. Separate demonstrated defects, product
 tradeoffs and hypotheses. "No findings" is valid; do not require an arbitrary number of problems.
+In headless reviews and audits (`--mode plan`), state explicitly in the prompt: "Use built-in file
+read and search tools only (`read_file`, `grep_search`, `find_by_name`); do not run terminal
+commands or call MCP tools." Headless print mode auto-denies shell and MCP tool calls and can end
+the turn with an empty response or timeout (#194).
 
 For independent reviewers, supply shared primary evidence but avoid planting earlier reviewers'
 conclusions. Typical complementary focuses for Flourprint are domain/contracts, persistence/history,
@@ -66,14 +75,18 @@ actions are explicitly assigned.
 Learned on #186, #189 and #190 (2026-10-26/27, Windows, AGY headless). These are prompt
 conventions that made the runs succeed, not permission settings.
 
-- **Give the whole plan.** The owner's Gemini instructions gate edits on a write marker and accept
-  it only for a plan already presented. Put the concrete plan in the prompt: objective, the
-  contract sections that win, exact files allowed, what each change does, the tests to add, the
-  version strings. Relay the owner's read or write marker at the top, then run with
-  `--mode accept-edits`. Without the plan and the marker, the run stops after its plan and asks.
-- **The markers are private.** The caller relays the literal values from its own private
-  configuration. They never appear in the repository, a commit, a PR, an issue or a published
-  page; raw prompts stay in the ignored `.agy-runs/`.
+- **Give the whole plan.** Put the complete, file-scoped implementation plan directly in the
+  prompt: objective, the contract sections that win, exact files allowed, existing types/APIs to
+  reuse, what each change does, the tests to add, and the version strings, then run with
+  `--mode accept-edits`. Request direct file edits (`read_file`, `edit_file`, `write_file`) in a
+  single pass rather than an exploratory plan turn; never write private credentials or personal
+  environment tokens into prompt files or repository artifacts.
+- **Distinguish plan-only stops from permission denials.** If an `--mode accept-edits` run exits
+  with a conversational plan or authorization question and `gitStateChanged: false` (with no
+  tool-permission error in `events.jsonl`), the model stopped at a planning gate rather than
+  hitting a filesystem denial. Do not switch implementation tasks to partial-excerpt snapshot
+  prompts: the delegate can open the real repository files in `--mode accept-edits`, whereas
+  partial excerpts cause it to invent non-existent fields.
 - **No commands, no MCP tools.** Headless runs auto-deny terminal commands and MCP tool calls
   (CodeGraph included): a run that tries one ends with an empty response and no edit (#194). Say
   so in the brief ("do not run commands or call MCP tools; use file read, search and edit tools;

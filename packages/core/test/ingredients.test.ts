@@ -108,8 +108,8 @@ const problem = (entry: IngredientEntry) => {
 };
 
 describe('contract version', () => {
-  it('is 0.24.1 (chain move down; dough clock from the end of the first contact since 0.24.0)', () => {
-    expect(CONTRACT_VERSION).toBe('0.24.1');
+  it('is 0.24.3 (hydration sheet read model; clean generated draft names since 0.24.2; chain move down since 0.24.1)', () => {
+    expect(CONTRACT_VERSION).toBe('0.24.3');
   });
 });
 
