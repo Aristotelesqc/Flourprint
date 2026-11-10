@@ -100,6 +100,10 @@ The owner confirmed points 1 to 4 of the Decision on 2026-11-09: Flourprint is a
 no tablet and no desktop interface, **for now**. A tablet or desktop interface later needs a new
 ADR that supersedes this one.
 
+The owner added on 2026-11-09 that the current desktop app is a **developer tool**: it exists to
+preview the phone app on a desktop, not as a desktop product for bakers. Its window, frame and
+settings serve that preview.
+
 The owner did not rule on the details below. They are recorded as implementation facts, not owner
 decisions, and change without an ADR:
 
