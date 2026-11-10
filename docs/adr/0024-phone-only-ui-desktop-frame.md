@@ -5,7 +5,7 @@ PC app, for now"). Relates to ADR 0011; amends nothing.
 
 ## Context
 
-Independent UI reviewers and agents keep flagging two things as defects: the fixed phone-sized
+Independent UI reviewers and agents have repeatedly flagged two things as defects: the fixed phone-sized
 frame that desktop browsers show, and the absence of responsive tablet or desktop layouts. Issue
 #118 asks for an ADR so that both are recognised as intentional.
 
@@ -35,7 +35,7 @@ What the record says (every statement below is cited; nothing else is assumed):
   phones with larger text", and L25 fixes the required coverage (360 and 393 px, FR and EN,
   larger text 125 to 130 percent, Light/Dark/AMOLED).
 
-### What the code does today (verified on `origin/dev` at `6cf337d`)
+### What the code does today (verified on `dev` at `da08f76`, 2026-11-09)
 
 Desktop browser, `apps/mobile/src/theme/app.css` (comment and rule at lines 446 to 470):
 
@@ -58,7 +58,7 @@ Desktop shell, `apps/desktop` (`src/settings.ts`, `src/main.ts`, `src/channel.ts
   90, 80 and 67 percent, which shrink the window, not the CSS viewport.
 - It emulates touch from the mouse, a mobile Android user agent and Pixel 9 Pro XL user-agent metadata through the
   DevTools protocol (`emulatePhone`). The dev shell loads a remote address without the SQLite
-  bridge (PR #115, ADR 0023); the release shell loads the bundled build.
+  bridge (PR #115); the release shell loads the bundled build.
 
 ## Decision
 
@@ -109,7 +109,8 @@ decisions, and change without an ADR:
 
 - **Dimensions.** No single reference size. The browser frame is 412 px wide and as tall as the
   window allows, up to 915 px; the shell window defaults to the Pixel 9 Pro XL (ADR 0011), with
-  Pixel 7 (412 x 915) as an option. ADR 0011 is unchanged.
+  Pixel 7 (412 x 915) as an option. ADR 0011 is unchanged. The "412×915" of ledger L24 is the
+  Pixel 7 shorthand; a later pull request to `docs/ux/requirements.md` may align its wording.
 - **Tablets and small windows.** A touch tablet, a touch laptop or a window under 700 x 600 px gets
   the unframed phone layout stretched to the viewport. That is acceptable: no tablet layout is
   promised.

@@ -32,7 +32,7 @@ packages/core     domain (pure calculations), application (use cases, ports), co
 packages/adapters port implementations: memory, and SQLite for Node, Capacitor and the desktop shell
 apps/cli          Commander CLI, a client of the engine
 apps/mobile       Ionic React + Capacitor app (Android, web preview)
-apps/desktop      Electron shell running the same web build on a PC (ADR 0011)
+apps/desktop      Electron shell running the same web build on a PC: a developer preview (ADR 0011, ADR 0024)
 docs/contracts    data semantics and reference fixtures
 docs/adr          architecture decisions
 examples          sample formula files for the CLI
