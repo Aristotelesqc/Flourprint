@@ -34,6 +34,7 @@ interface Props {
   readonly onEditIngredient?: (id: string) => void;
   readonly failureMessage?: string | undefined;
   readonly onIngredientDetailsChange?: ((open: boolean) => void) | undefined;
+  readonly recipePresentation?: boolean;
 }
 
 export const WeighingChecklist = ({
@@ -47,11 +48,15 @@ export const WeighingChecklist = ({
   onEditIngredient,
   failureMessage,
   onIngredientDetailsChange,
+  recipePresentation = false,
 }: Props) => {
   const { t, grams, pct, name, componentName } = useMessages();
   const detailErrorId = useId();
   const checklistId = useId();
   const [sheetIngredientId, setSheetIngredientId] = useState<string | null>(null);
+  const [collapsedStageKeys, setCollapsedStageKeys] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
   const isDetailSheetOpen = sheetIngredientId !== null;
 
   useEffect(() => {
@@ -100,19 +105,46 @@ export const WeighingChecklist = ({
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between">
-        <span className="flex items-center gap-1.5">
-          <SectionTitle>{t('formula.finalMix')}</SectionTitle>
-          <InfoButton topic="finalMix" term={t('formula.finalMix')} />
-        </span>
-        <span className="px-1 text-[13px] text-muted">
-          {t('formula.finalMix.progress', {
-            done: doneCount,
-            total: totalCount,
-          })}
-        </span>
-      </div>
-      <p className="m-0 px-1 text-xs text-muted">{t('formula.weighing.scopeNotice')}</p>
+      {recipePresentation ? (
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <h2 className="m-0 text-body font-semibold text-on-surface">
+                  {t('recipe.document.ingredients')}
+                </h2>
+                <InfoButton topic="finalMix" term={t('recipe.document.ingredients')} />
+              </div>
+              <span className="text-supporting text-muted">
+                {t('recipe.document.stageBakerPct')}
+              </span>
+            </div>
+            <span className="text-supporting text-muted tabular-nums">
+              {t('formula.finalMix.progress', {
+                done: doneCount,
+                total: totalCount,
+              })}
+            </span>
+          </div>
+          <p className="m-0 px-1 text-supporting text-muted">{t('formula.weighing.scopeNotice')}</p>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-baseline justify-between">
+            <span className="flex items-center gap-1.5">
+              <SectionTitle>{t('formula.finalMix')}</SectionTitle>
+              <InfoButton topic="finalMix" term={t('formula.finalMix')} />
+            </span>
+            <span className="px-1 text-[13px] text-muted">
+              {t('formula.finalMix.progress', {
+                done: doneCount,
+                total: totalCount,
+              })}
+            </span>
+          </div>
+          <p className="m-0 px-1 text-xs text-muted">{t('formula.weighing.scopeNotice')}</p>
+        </>
+      )}
 
       <div className="flex flex-col gap-3">
         {groups.map((group) => {
@@ -120,6 +152,168 @@ export const WeighingChecklist = ({
             group.stage.kind === 'component' ? `component:${group.stage.id}` : group.stage.kind;
           const stageTitle = getStageTitle(group.stage);
           const groupDoneCount = group.rows.filter(isChecked).length;
+          const isExpanded = !collapsedStageKeys.has(groupKey);
+
+          const rowSurface = (
+            <Ui
+              component="fp.surface"
+              variant="outlined"
+              padding="none"
+              className="overflow-hidden rounded-2xl divide-y divide-line"
+            >
+              {group.rows.map((row, rowIndex) => {
+                const done = isChecked(row);
+                const itemKey = row.item.kind === 'water' ? 'water' : `ingredient:${row.item.id}`;
+                const rowKey = `${groupKey}:${itemKey}`;
+                const label = getItemLabel(row.item);
+                const isWater = row.item.kind === 'water';
+                const resolvedIngredientId = isWater ? singleDoughWater?.id : row.item.id;
+                const isLockedWater =
+                  resolvedIngredientId && resolvedIngredientId === lockedWaterId;
+
+                // Stage edits: component/final non-finishing only, not locked water, and pooled water is read-only if multiple waters
+                const canEditStageGrams =
+                  Boolean(onEdit) &&
+                  group.stage.kind !== 'finishing' &&
+                  (!isWater || singleDoughWater !== undefined) &&
+                  !isLockedWater &&
+                  Boolean(resolvedIngredientId);
+
+                // Ingredient detail eligibility: dough waters or standard ingredients
+                const hasDetailAction = !isWater || doughWaters.length > 0;
+
+                const labelId = `${checklistId}-label-${groupKey}-${rowIndex}`;
+                const pctId = `${checklistId}-pct-${groupKey}-${rowIndex}`;
+                const gramsId = `${checklistId}-grams-${groupKey}-${rowIndex}`;
+                const labelledBy = !editable
+                  ? `${labelId} ${gramsId} ${pctId}`
+                  : `${labelId} ${pctId}`;
+
+                return (
+                  <div
+                    key={rowKey}
+                    className={`flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2 ${
+                      done ? 'text-muted line-through bg-muted/5' : ''
+                    }`}
+                  >
+                    {/* Separate accessible checkbox hit target; no nested input controls */}
+                    <div className="flex min-h-[48px] min-w-0 flex-1 basis-32 items-center gap-3">
+                      <input
+                        id={`check-${rowKey}`}
+                        type="checkbox"
+                        className="size-[22px] shrink-0 accent-[var(--color-accent)]"
+                        checked={done}
+                        aria-labelledby={labelledBy}
+                        onChange={() => onToggle({ stage: row.stage, item: row.item })}
+                      />
+                      <label
+                        id={labelId}
+                        htmlFor={`check-${rowKey}`}
+                        className="flex-1 min-w-0 cursor-pointer break-words font-medium"
+                      >
+                        {label}
+                      </label>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2 ml-auto">
+                      {/* Stage Baker % */}
+                      <span id={pctId} className="text-xs text-muted tabular-nums">
+                        {pct(row.bakerPct)}
+                      </span>
+
+                      {/* Plain read-only grams */}
+                      {!editable && (
+                        <span
+                          id={gramsId}
+                          className="min-w-[56px] text-right font-semibold tabular-nums"
+                        >
+                          {grams(row.grams)}
+                        </span>
+                      )}
+
+                      {/* Editable controls kept mounted when fieldsMounted */}
+                      {fieldsMounted && (
+                        <div hidden={!editable} className="flex items-center gap-1.5">
+                          {canEditStageGrams && resolvedIngredientId ? (
+                            <NumberField
+                              label={`${label}, ${stageTitle}`}
+                              unit="g"
+                              width="5.5rem"
+                              value={row.grams}
+                              describedBy={
+                                failureMessage !== undefined ? 'recipe-formula-error' : undefined
+                              }
+                              onCommit={(val) => {
+                                if (!onEdit || group.stage.kind === 'finishing') return false;
+                                return onEdit({
+                                  type: 'SetStageIngredientGrams',
+                                  ingredient: resolvedIngredientId,
+                                  stage: group.stage,
+                                  grams: val,
+                                });
+                              }}
+                            />
+                          ) : (
+                            <span
+                              className="min-w-[5.5rem] text-right font-semibold tabular-nums text-muted"
+                              title={
+                                isLockedWater
+                                  ? t('recipe.document.lockedWaterNotice')
+                                  : isWater && doughWaters.length > 1
+                                    ? t('recipe.document.pooledWaterNotice')
+                                    : undefined
+                              }
+                            >
+                              {grams(row.grams)}
+                            </span>
+                          )}
+
+                          {/* Detail button for whole-recipe editing: neutral pencil icon */}
+                          {hasDetailAction && (
+                            <button
+                              type="button"
+                              aria-label={t('recipe.document.editIngredient')}
+                              className="fp-reset inline-flex min-h-[48px] min-w-[48px] items-center justify-center text-muted hover:text-ink"
+                              onClick={() => {
+                                if (isWater) {
+                                  if (singleDoughWater) {
+                                    setSheetIngredientId(singleDoughWater.id);
+                                  } else if (doughWaters.length > 0) {
+                                    setSheetIngredientId(doughWaters[0]?.id ?? null);
+                                  }
+                                  return;
+                                }
+                                if (row.item.kind !== 'ingredient') return;
+                                if (onEditIngredient) {
+                                  onEditIngredient(row.item.id);
+                                } else {
+                                  setSheetIngredientId(row.item.id);
+                                }
+                              }}
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </Ui>
+          );
 
           return (
             <div
@@ -128,180 +322,59 @@ export const WeighingChecklist = ({
               aria-label={stageTitle}
               className="flex flex-col gap-1.5"
             >
-              <div className="flex items-baseline justify-between px-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-                  {stageTitle}
-                </span>
-                <div className="flex items-baseline gap-2 text-xs text-muted">
-                  <span className="text-[11px]">{t('recipe.document.stageBakerPct')}</span>
-                  <span>•</span>
-                  <span>
-                    {t('formula.finalMix.progress', {
-                      done: groupDoneCount,
-                      total: group.rows.length,
-                    })}
-                  </span>
-                </div>
-              </div>
-
-              <Ui
-                component="fp.surface"
-                variant="outlined"
-                padding="none"
-                className="overflow-hidden rounded-2xl divide-y divide-line"
-              >
-                {group.rows.map((row, rowIndex) => {
-                  const done = isChecked(row);
-                  const itemKey = row.item.kind === 'water' ? 'water' : `ingredient:${row.item.id}`;
-                  const rowKey = `${groupKey}:${itemKey}`;
-                  const label = getItemLabel(row.item);
-                  const isWater = row.item.kind === 'water';
-                  const resolvedIngredientId = isWater ? singleDoughWater?.id : row.item.id;
-                  const isLockedWater =
-                    resolvedIngredientId && resolvedIngredientId === lockedWaterId;
-
-                  // Stage edits: component/final non-finishing only, not locked water, and pooled water is read-only if multiple waters
-                  const canEditStageGrams =
-                    Boolean(onEdit) &&
-                    group.stage.kind !== 'finishing' &&
-                    (!isWater || singleDoughWater !== undefined) &&
-                    !isLockedWater &&
-                    Boolean(resolvedIngredientId);
-
-                  // Ingredient detail eligibility: dough waters or standard ingredients
-                  const hasDetailAction = !isWater || doughWaters.length > 0;
-
-                  const labelId = `${checklistId}-label-${groupKey}-${rowIndex}`;
-                  const pctId = `${checklistId}-pct-${groupKey}-${rowIndex}`;
-                  const gramsId = `${checklistId}-grams-${groupKey}-${rowIndex}`;
-                  const labelledBy = !editable
-                    ? `${labelId} ${gramsId} ${pctId}`
-                    : `${labelId} ${pctId}`;
-
-                  return (
-                    <div
-                      key={rowKey}
-                      className={`flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2 ${
-                        done ? 'text-muted line-through bg-muted/5' : ''
-                      }`}
-                    >
-                      {/* Separate accessible checkbox hit target; no nested input controls */}
-                      <div className="flex min-h-[48px] min-w-0 flex-1 basis-32 items-center gap-3">
-                        <input
-                          id={`check-${rowKey}`}
-                          type="checkbox"
-                          className="size-[22px] shrink-0 accent-[var(--color-accent)]"
-                          checked={done}
-                          aria-labelledby={labelledBy}
-                          onChange={() => onToggle({ stage: row.stage, item: row.item })}
-                        />
-                        <label
-                          id={labelId}
-                          htmlFor={`check-${rowKey}`}
-                          className="flex-1 min-w-0 cursor-pointer break-words font-medium"
-                        >
-                          {label}
-                        </label>
-                      </div>
-
-                      <div className="flex shrink-0 items-center gap-2 ml-auto">
-                        {/* Stage Baker % */}
-                        <span id={pctId} className="text-xs text-muted tabular-nums">
-                          {pct(row.bakerPct)}
-                        </span>
-
-                        {/* Plain read-only grams */}
-                        {!editable && (
-                          <span
-                            id={gramsId}
-                            className="min-w-[56px] text-right font-semibold tabular-nums"
-                          >
-                            {grams(row.grams)}
-                          </span>
-                        )}
-
-                        {/* Editable controls kept mounted when fieldsMounted */}
-                        {fieldsMounted && (
-                          <div hidden={!editable} className="flex items-center gap-1.5">
-                            {canEditStageGrams && resolvedIngredientId ? (
-                              <NumberField
-                                label={`${label}, ${stageTitle}`}
-                                unit="g"
-                                width="5.5rem"
-                                value={row.grams}
-                                describedBy={
-                                  failureMessage !== undefined ? 'recipe-formula-error' : undefined
-                                }
-                                onCommit={(val) => {
-                                  if (!onEdit || group.stage.kind === 'finishing') return false;
-                                  return onEdit({
-                                    type: 'SetStageIngredientGrams',
-                                    ingredient: resolvedIngredientId,
-                                    stage: group.stage,
-                                    grams: val,
-                                  });
-                                }}
-                              />
-                            ) : (
-                              <span
-                                className="min-w-[5.5rem] text-right font-semibold tabular-nums text-muted"
-                                title={
-                                  isLockedWater
-                                    ? t('recipe.document.lockedWaterNotice')
-                                    : isWater && doughWaters.length > 1
-                                      ? t('recipe.document.pooledWaterNotice')
-                                      : undefined
-                                }
-                              >
-                                {grams(row.grams)}
-                              </span>
-                            )}
-
-                            {/* Detail button for whole-recipe editing: neutral pencil icon */}
-                            {hasDetailAction && (
-                              <button
-                                type="button"
-                                aria-label={t('recipe.document.editIngredient')}
-                                className="fp-reset inline-flex min-h-[48px] min-w-[48px] items-center justify-center text-muted hover:text-ink"
-                                onClick={() => {
-                                  if (isWater) {
-                                    if (singleDoughWater) {
-                                      setSheetIngredientId(singleDoughWater.id);
-                                    } else if (doughWaters.length > 0) {
-                                      setSheetIngredientId(doughWaters[0]?.id ?? null);
-                                    }
-                                    return;
-                                  }
-                                  if (row.item.kind !== 'ingredient') return;
-                                  if (onEditIngredient) {
-                                    onEditIngredient(row.item.id);
-                                  } else {
-                                    setSheetIngredientId(row.item.id);
-                                  }
-                                }}
-                              >
-                                <svg
-                                  width="16"
-                                  height="16"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  aria-hidden="true"
-                                >
-                                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                </svg>
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
+              {recipePresentation ? (
+                <Ui
+                  component="fp.disclosure"
+                  expanded={isExpanded}
+                  onExpandedChange={(expanded) => {
+                    setCollapsedStageKeys((prev) => {
+                      const next = new Set(prev);
+                      if (expanded) {
+                        next.delete(groupKey);
+                      } else {
+                        next.add(groupKey);
+                      }
+                      return next;
+                    });
+                  }}
+                  label={
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-ink">{stageTitle}</span>
+                      <span className="text-supporting text-muted tabular-nums">
+                        {t('formula.finalMix.progress', {
+                          done: groupDoneCount,
+                          total: group.rows.length,
+                        })}
+                      </span>
+                      <span className="rounded-pill bg-surface-container px-2 py-0.5 text-metadata font-semibold tabular-nums text-on-surface">
+                        {grams(group.mass)}
+                      </span>
+                    </span>
+                  }
+                >
+                  {rowSurface}
+                </Ui>
+              ) : (
+                <>
+                  <div className="flex items-baseline justify-between px-1">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+                      {stageTitle}
+                    </span>
+                    <div className="flex items-baseline gap-2 text-xs text-muted">
+                      <span className="text-[11px]">{t('recipe.document.stageBakerPct')}</span>
+                      <span>•</span>
+                      <span>
+                        {t('formula.finalMix.progress', {
+                          done: groupDoneCount,
+                          total: group.rows.length,
+                        })}
+                      </span>
                     </div>
-                  );
-                })}
-              </Ui>
+                  </div>
+
+                  {rowSurface}
+                </>
+              )}
             </div>
           );
         })}

@@ -253,6 +253,18 @@ for (const english of [false, true]) {
     await counter(page, english, finishing, 0, 1);
     await expect(routed(page).getByRole('checkbox')).toHaveCount(9);
     await row(page, 'poolish', waterName).check();
+    const poolishTrigger = group(page, 'poolish').getByRole('button', { name: /^poolish\b/i });
+    await expect(poolishTrigger).toHaveAttribute('aria-expanded', 'true');
+    await poolishTrigger.click();
+    await expect(poolishTrigger).toHaveAttribute('aria-expanded', 'false');
+    await expect(row(page, 'poolish', waterName)).toHaveCount(0);
+    await expect(poolishTrigger).toContainText(progress(english, 1, 2));
+    await expect(
+      group(page, 'tangzhong').getByRole('button', { name: /^tangzhong\b/i }),
+    ).toHaveAttribute('aria-expanded', 'true');
+    await poolishTrigger.click();
+    await expect(poolishTrigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(row(page, 'poolish', waterName)).toBeChecked();
     await expect(row(page, 'tangzhong', waterName)).not.toBeChecked();
     await expect(row(page, final, waterName)).not.toBeChecked();
     await row(page, final, flour).check();

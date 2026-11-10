@@ -41,7 +41,8 @@ for (const theme of ['light', 'dark', 'amoled'] as const) {
         });
         const [end, viewport] = await Promise.all([result.boundingBox(), content.boundingBox()]);
         if (!end || !viewport) throw new Error('Result and content must have rendered bounds');
-        return viewport.y + viewport.height - (end.y + end.height);
+        // Compare whole CSS pixels; scrollTop and bounding boxes round at different steps.
+        return Math.round(viewport.y + viewport.height - (end.y + end.height));
       };
       // Re-scroll on every attempt: layout can still settle after the first scroll.
       await expect.poll(gap, { timeout: 10_000 }).toBeGreaterThanOrEqual(16);
