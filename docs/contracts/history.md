@@ -188,12 +188,23 @@ interface BakeDigest {
   temperatures?: {
     outcome: TemperatureOutcome; // fermentation.md, Temperature outcome
     frictionSample?: FrictionSample; // fermentation.md, Friction samples
+    // The recommendations as recorded, with the versions that produced them; never recomputed.
+    targets: Array<{
+      seq: number;
+      trigger: 'liquidMeasured' | 'firstContactCompleted';
+      shown: TemperatureTargets;
+      manifest: { engineVersion: string; contractVersion: string; models: ModelRef[] };
+    }>;
   };
 }
 ```
 
-- The digest is derived from the events by the application, never by the current engine, and is
-  never read back: the `backup` part is the record. Durations are differences of recorded instants.
+- The digest is derived from the events by the application, and is never read back. It never calls
+  the current engine: the recommendations it carries (the suggested dough target and the liquid
+  target) are **recorded facts**, read from the `TemperatureTargetsRecorded` events, frozen with the
+  engine and contract versions that produced them (bake-session.md, Recorded targets; owner decision
+  of 2026-11-09), and the measured values sit beside them: the `backup` part is the record.
+  Durations are differences of recorded instants.
 - `status`, `endedAt` and `outcome` follow the session's latest end (a reopened session is
   `active` until it ends again). `outcome` is the latest `OutcomeCorrected` after that end, else
   that `BakeFinished`'s outcome, else `unknown`; it is absent on active and abandoned sessions. The feedback export's `schemaVersion` is 2
@@ -264,7 +275,7 @@ interface PreparationAnalysis {
   }>;
   temperatures: {
     planned: {
-      rooms: Array<{ stepId: StepId; c: number }>;
+      rooms: Array<{ stepId: StepId; valueC: number }>;
       doughTargetC?: number;
       frictionC?: number;
     };
@@ -291,9 +302,16 @@ interface PreparationAnalysis {
   forecasts: {
     recorded: {
       acceptedProjections: Array<{ seq: number; projection: Projection }>; // ProjectionAccepted, verbatim
+      // TemperatureTargetsRecorded, verbatim: what the app recommended then, with its versions
+      shownTargets: Array<{
+        seq: number;
+        trigger: string;
+        shown: TemperatureTargets;
+        manifest: unknown;
+      }>;
     };
     recomputed: {
-      engineVersion: string; // the exporting app's: NOT what the app showed at the time
+      // by the exporting app's engine (versions.exporting): NOT what the app showed at the time
       asOf: Array<{
         seq: number; // the last event taken into account
         at: Instant; // its occurredAt
@@ -316,17 +334,19 @@ interface PreparationAnalysis {
 (`events`: every event in `seq` order with its payload as recorded, apart from the identifier
 rewriting of the privacy rule below, except `BakeStarted`, whose content
 is `recipe`, `plan` and `preparation`; the `derived` formula of a formula `OverrideApplied`; and
-`ProjectionAccepted`, moved to `forecasts.recorded`); the actual times and the **plan against actual
+`ProjectionAccepted` and `TemperatureTargetsRecorded`, moved to `forecasts.recorded`); the actual
+times and the **plan against actual
 gaps** per step; **every temperature measurement** with its time, step and source
 (`temperatures.records`; a `planned` value is in `temperatures.planned`, an `assumed` one is a
 default and not a record); and the engine's forecasts over time.
 
 **Forecasts: recorded and recomputed, never confused.** What the engine _showed_ is recorded only
-where the log recorded it: the accepted estimates of the start and the accepted projections
+where the log recorded it: the accepted estimates of the start, the accepted projections and the
+recorded temperature targets
 (`forecasts.recorded`, verbatim, with the models and manifest of their time). The forecast _as of_
 any later instant is not in the log (a live forecast is never logged, Reading history); the analysis
 therefore **recomputes** it with the exporting app's engine from the events up to each instant
-(`forecasts.recomputed.asOf`), says so (`recomputed`, its `engineVersion`, `versions.exporting`), and
+(`forecasts.recomputed.asOf`), says so (`recomputed`, `versions.exporting`), and
 that is the explicit comparison of Reading history, never a replacement of the record. One as-of
 point follows every event that can change a forecast (a step start or end, a time correction, a
 completion retraction, an `AdjustStep`, a temperature observation, a thermal change,

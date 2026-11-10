@@ -390,8 +390,12 @@ the latest in force. It is a reading of the mean temperature at the start, whate
 (no thermal transient exists yet; `surface` and `unknown` add the assumption
 `probe_position_unmodelled`). It replaces the target dough temperature and the first-contact
 ambient as the start of the forecast and is named `dough_start:reading`. It is not a thermal
-calibration reading, because its step has no `thermal` and no lag. A reading whose `observedAt` lies
-after the clock start behaves as any reading on a dough step from its instant.
+calibration reading, because its step has no `thermal` and no lag. The gate needs the step to be
+**running**: started and not ended. A step that is only implicitly running (no recorded start,
+Implicitly running steps, below) does not count, so the interface records its `StartStep` first, as
+for any first real action; the reading itself starts nothing. Since the step has no recorded end,
+every accepted reading precedes the clock start. A reading taken after the step is completed is a
+reading of the next step (Between steps).
 
 **Between steps.** The dough may be measured between two steps. The reading is recorded on the step
 that follows. If that step has no recorded start, the interface's existing rule for a first real
@@ -412,6 +416,25 @@ planned temperature needs its own adjustment; a step with no temperature of its 
 previous step's effective one (Dough temperature). The interface may offer to carry a change
 forward; the contract adds no command for it.
 
+**Recorded targets (owner decision of 2026-11-09).** What the engine _recommended_ is kept beside
+what the baker measured, as a **recorded fact** and not as something derived later: the suggested
+dough target and the liquid target exactly as the app showed them, frozen with the versions that
+produced them, like an accepted suggestion (fermentation.md, Accepted suggestions).
+
+- **When.** Twice at most, both optional. `AddObservation` of kind `liquidTemperature`, and
+  `CompleteStep` of the first-contact step, accept `shown`, the `TemperatureTargets` (fermentation.md,
+  Liquid target) the interface displayed at that moment, with their sources. The application
+  computes them (the domain never calls the engine) and passes them in the command.
+- **Event.** The domain validates `shown` for shape only and appends, in the same atomic batch after
+  the observation or the completion, `TemperatureTargetsRecorded { stepId, trigger:
+'liquidMeasured' | 'firstContactCompleted', shown, manifest: { engineVersion,
+contractVersion, models } }`. The manifest is the one of the app that computed `shown`.
+- **Frozen.** `evolve` stores it structurally. Replay, restore, the digest and the exports read it
+  and never recompute it, whatever the engine of the day (history.md, Reading history). Without
+  `shown` nothing is recorded and the recommendation of that moment is unknown, never rebuilt.
+- **Append-only.** A later targets event never replaces an earlier one; all stay, in `seq` order.
+  A targets event is not a measurement and changes no forecast.
+
 **Calibration data.** The measurements are information for three layers, kept apart as in
 fermentation.md, Personal correction and docs/science/fermentation-model.md, section 11: the live
 per-recipe personal calibration, the global model calibration and the recipe's own calibration.
@@ -420,6 +443,7 @@ algorithms, which are a later contract:
 
 - **Recorded**: the four observation kinds above, the room adjustments and the planned values, all
   in the event log (and so in the backup, persistence.md, Measurements in the backup).
+- **Recommendations**: the recorded targets above, kept with their versions.
 - **Derived, never stored** (arithmetic on recorded facts, no engine call, so available after the
   end and identical on replay): the **friction sample** (fermentation.md, Friction samples) and the
   **temperature outcome** of a Preparation (fermentation.md, Temperature outcome), carried by the
@@ -438,7 +462,9 @@ algorithms, which are a later contract:
   recipe's `conditions.frictionC` (default 0), and no target, estimate or recipe is altered.
 
 **Versioning (0.26.0).** Additive vocabulary: three `AddObservation`/`ObservationAdded` kinds, the
-optional `componentId`, one widened gate (`doughTemperature` on the first-contact step), and derived
+optional `componentId`, the optional `shown` on two commands and the event
+`TemperatureTargetsRecorded`, one widened gate (`doughTemperature` on the first-contact step), and
+derived
 read models. Stored events are untouched and no upcaster is needed: an earlier session holds none of
 the new kinds and replays unchanged; a `doughTemperature` can never already sit on a first-contact
 step, since it was refused there. The event envelope, the log and the backup `schemaVersion` are

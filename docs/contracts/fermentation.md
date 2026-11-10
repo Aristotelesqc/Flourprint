@@ -691,9 +691,10 @@ interface TemperatureTargets {
   target the plan implies and the liquid that reaches it. The planned `waterTemperatureC`
   stays absent without a declared target, as before.
 - **Deviation.** When a `liquidTemperature` reading is in force, `liquidMeasured` carries it and
-  `deviationC = measured − liquid target`, the target computed from the inputs in force **at the
-  reading's instant** (the inputs recorded up to then). The deviation is information, not a
-  correction: nothing is recomputed or refused because of it.
+  `deviationC = measured − liquid target`. Live, the target is the one just computed; afterwards it
+  is the one **recorded** with the reading (`TemperatureTargetsRecorded`, trigger `liquidMeasured`,
+  bake-session.md, Recorded targets), never recomputed; without a recorded one there is no
+  deviation. The deviation is information, not a correction: nothing is refused because of it.
 - **Lifetime.** The targets are offered from the start of the Preparation until the first-contact
   step is completed, and in planning. After that the liquid is in the dough: the result is no
   longer computed live, and what remains is the recorded facts, the friction sample and the
@@ -751,7 +752,7 @@ with `F(T₀) = F*`.
    effective ambient; a step without one keeps the previous, the first dough step taking the
    first-contact step's. The first-contact step's own ambient is not needed.
 3. **Solving.** Bisection on the forward simulation over `[1.7, 35] °C`, the gate of the Domain
-   table, to 0.01 °C: the same method as the inverse dose, never a separate formula. `F(T₀)` does
+   table, to 0.001 °C: the same method as the inverse dose, never a separate formula. `F(T₀)` does
    not decrease when `T₀` rises (the rate rises with temperature; the comparison principle of the
    thermal model), so the bisection is valid. A candidate whose path fails the Semenov bound or
    leaves the temperature gate counts as above `F*`.
@@ -831,24 +832,32 @@ interface FrictionSample {
 ```
 
 - **Eligibility.** A sample exists when all hold: a `liquidTemperature` reading is in force, observed
-  before the dough reading; a `doughTemperature` reading was observed on the first-contact step, or
-  within **10 minutes** (ASSUMED) after that step's recorded end on the next step; the room is known
+  before the dough reading; a `doughTemperature` reading was observed on the **reference mixing
+  step** (running), or within **10 minutes** (ASSUMED) after that step's recorded end, on the step
+  that follows; when several readings qualify, the **latest in force** (latest `observedAt`, ties by
+  `seq`) is the one used; the room is known
   (the effective ambient of the reference mixing step, as the liquid target reads it); neither the
   liquid nor the dough reading has `method: 'reported'`. The inputs are those **in force at the dough
   reading's instant**, with the flour and the preferment `measured` or `assumed`, exactly as the
   liquid target reads them. A Preparation without both readings has no sample.
-- **Meaning of the measured dough.** The dough temperature is taken at the end of the first contact,
-  where the model starts the dough (Dough temperature); the friction therefore covers the mixing up to
-  that instant, which is what the water method's friction term stands for. When the first-contact
-  step is not the reference mixing step, the sample is attributed to the reference step's
-  `frictionC` all the same, because that is where the water method reads it (Water temperature).
+- **Meaning of the measured dough.** The water method's friction term stands for all the heat the
+  mixing adds before the dough is at its target, so the dough is read at the end of the **reference
+  mixing step** (Water temperature). When that step is the first-contact step (a lone `mix`, the
+  common case) this is also where the model starts the dough. When the first-contact step comes
+  earlier (a `frasage`, then a `mix`), a reading at the end of the first contact would miss the
+  later mixing and understate the friction, so such a reading is **not** a sample; the reading on
+  the reference step is, and the sample carries the assumption `friction_after_first_contact` (the
+  dough clock had started, and the drift toward the room during the mixing is not corrected).
 - **Quality is the sources.** Flour `assumed` at the room, or a preferment `assumed`, make the
   sample a coarser estimate: with an assumed flour the error of a sample is that flour's departure
   from the room. The sample carries the sources so that a calibration can weigh or leave out its
   samples. Nothing here fixes a threshold.
-- **Derived, not stored.** The sample is arithmetic on recorded facts, with no engine call: it is
-  computed from the log wherever it is needed, is available after the end of the Preparation, and is
-  identical on replay.
+- **Derived, not stored, and deterministic.** The sample is arithmetic on recorded facts, with no
+  engine call. The inputs "in force" are a pure function of the log (latest by `observedAt`, ties by
+  `seq`; the planned friction and rooms from the snapshot), so every reader that replays the same log
+  gets the same sample, whatever the engine or the app version. It is available after the end of the
+  Preparation. Unlike the targets, it needs no frozen copy, because nothing in it depends on the
+  engine.
 
 **Examples.** `n = 3`, room 22 (`planned`), liquid measured at 27, dough measured at 25.
 
@@ -864,11 +873,13 @@ interface FrictionSample {
 ### Temperature outcome (0.26.0, data only)
 
 For recipe-level calibration and for the baker's own review, a Preparation derives, from its
-recorded facts and with no engine call beyond the targets, how its temperatures went against the plan:
+recorded facts, how its temperatures went against the plan. The targets in it are the **recorded**
+ones (bake-session.md, Recorded targets), read from the `TemperatureTargetsRecorded` events and never
+recomputed; without one the field is absent:
 
 ```ts
 interface TemperatureOutcome {
-  doughTarget?: { valueC: number; source: 'recipe' | 'suggested' }; // in force when the liquid was added
+  doughTarget?: { valueC: number; source: 'recipe' | 'suggested' }; // the recorded one, latest by seq
   doughStart?: TemperatureInput & { basis: 'reading' | 'target' | 'ambient' }; // what started the clock
   doughStartErrorC?: number; // measured start − target, when both exist
   liquid?: { targetC: number; measuredC: number; deviationC: number }; // when a liquid was measured
@@ -876,8 +887,9 @@ interface TemperatureOutcome {
 }
 ```
 
-It is the same family of derived data as the friction sample: carried by the exports, never stored,
-and not an input to anything until a calibration contract says so.
+It is derived data like the friction sample: carried by the exports, never stored itself (its
+targets are stored in the events they come from), and not an input to anything until a calibration
+contract says so.
 
 ## Domain
 
@@ -1109,4 +1121,9 @@ is advice and starts no forecast. The implementing pull request bumps `CONTRACT_
 and a different start temperature when a reading exists); the models stay
 `flourprint.commercial-yeast` `0.1.0` and `flourprint.dough-thermal` `0.2.1`. As for #259, this
 contract pull request does not touch `packages/core/src/domain/version.ts`. Reference cases:
-`fixtures/temperatures/cases.json` (W, F and E cases), computed outside the engine by `generate.py`.
+`fixtures/temperatures/cases.json` (W, F, E and C cases), computed outside the engine by `generate.py`.
+
+The number `0.26.0` is written in `bake-session.md`, `fermentation.md`, `history.md`,
+`persistence.md`, `process.md`, `fixtures/README.md` and `fixtures/temperatures/cases.json`. If this
+lands before #259 it skips `0.25.0`, which is acceptable (a version is only an increasing label);
+if #259 lands first nothing changes, and if a different number is needed, rename it in those files.

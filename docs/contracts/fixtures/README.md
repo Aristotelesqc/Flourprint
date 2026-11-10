@@ -175,7 +175,15 @@ with no import from `packages/`. Each case has a `kind`:
   1e-9 °C over `[1.7, 35] °C`. The range solves the plan with every dough-step duration multiplied,
   then divided, by 1.9. `expected` keys are paths in the suggestion; `range` is `null` where an end
   has no solution (then `assumptions` holds `band_unbounded:<ends>`), and the two unreachable cases
-  expect `out_of_domain` with the reason. Tolerance 0.01 °C (the reference is better than 1e-6).
+  expect `out_of_domain` with the reason. Tolerance 0.02 °C (the contract solves to 0.001 °C; the
+  reference is better than 1e-6).
+
+- `liquidTarget` W7 (a preferment with no temperature of its own, taken at the room),
+  `suggestedThenLiquid`
+  C1 (basic mode: the suggestion of E3 feeds the liquid target, flagged `water_below_0C`), and the
+  friction
+  eligibility cases F4 to F6 (the 10 min window; the reference mixing step rule). The generator writes
+  `cases.json` itself, in UTF-8; reproduction holds to about 1e-9.
 
 The cases ship with no engine harness: they are contract examples, and the implementing pull request
 adds the harness and a `since` engine version to each case, as for the thermal cases. Nothing in

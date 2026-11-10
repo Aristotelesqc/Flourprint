@@ -312,6 +312,11 @@ adds one is not complete until all of these hold:
 | the room changed for a Preparation                           | `OverrideApplied` (`temperatureC`)       | existing |
 | measurements given with a completion                         | `StepCompleted` `measurements`           | existing |
 
+The recommendations (`TemperatureTargetsRecorded`, bake-session.md, Recorded targets) are recorded
+engine outputs, not measurements: they are in the backup as events, checked for shape only and kept
+as they are (never recomputed), and an app that does not know the event type refuses the backup on
+it.
+
 A weighing check, a fold set and a `doughReady` judgement are records of the baker's work, not
 measured values, and are not kinds of measurement in this sense (they are in the backup all the
 same). Derived data (the friction sample, the temperature outcome, the forecasts) is never in the

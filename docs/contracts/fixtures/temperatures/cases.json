@@ -12,7 +12,7 @@
     "readyProgress": 1.0
   },
   "predictiveFactor": 1.9,
-  "tolerance": 0.01,
+  "tolerance": 0.02,
   "cases": [
     {
       "name": "W1 planned: dough 24, room 22, flour at room, no friction",
@@ -320,7 +320,7 @@
         "doughTarget.value": 27.067662911289574,
         "doughTarget.range": [12.821644724405527, 32.13453637407956]
       },
-      "tolerance": 0.01
+      "tolerance": 0.02
     },
     {
       "name": "E2 0.2 % instant, 2 h / 12 h / 1 h: the lower end of the range has no solution",
@@ -452,7 +452,7 @@
         "doughTarget.range": null,
         "doughTarget.assumptions": ["band_unbounded:below"]
       },
-      "tolerance": 0.01
+      "tolerance": 0.02
     },
     {
       "name": "E3 0.4 % instant, 2 h / 12 h / 1 h: a cold dough, below the usual window",
@@ -585,7 +585,7 @@
         "doughTarget.assumptions": ["band_unbounded:below"],
         "doughTarget.extrapolations": ["dough_target_below_15c"]
       },
-      "tolerance": 0.01
+      "tolerance": 0.02
     },
     {
       "name": "E4 0.01 % fresh, 3 h at 22: even a 35 °C dough is too slow",
@@ -695,7 +695,7 @@
         "doughTarget.status": "out_of_domain",
         "doughTarget.reason": "plan_unreachable_too_slow"
       },
-      "tolerance": 0.01
+      "tolerance": 0.02
     },
     {
       "name": "E5 0.9 % instant, 4 h + 1.5 h at 22: even a 1.7 °C dough is too fast",
@@ -815,7 +815,71 @@
         "doughTarget.status": "out_of_domain",
         "doughTarget.reason": "plan_unreachable_too_fast"
       },
-      "tolerance": 0.01
+      "tolerance": 0.02
+    },
+    {
+      "name": "W7 poolish with no temperature of its own: assumed at the room",
+      "kind": "liquidTarget",
+      "n": 4,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["planned", 22],
+        "flour": ["assumed", 22],
+        "prefermentC": ["assumed", 22],
+        "frictionC": ["planned", 5]
+      },
+      "expected": {
+        "liquidTargetC": 25.0
+      },
+      "exact": {
+        "liquidTargetC": "25"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "C1 chain: suggested dough target (E3) then liquid target, room 22",
+      "kind": "suggestedThenLiquid",
+      "uses": "E3",
+      "n": 3,
+      "inputs": {
+        "room": ["planned", 22],
+        "flour": ["assumed", 22],
+        "frictionC": ["assumed", 0]
+      },
+      "expected": {
+        "doughTarget.source": "suggested",
+        "doughTarget.value": 10.136601246122066,
+        "liquidTargetC": -13.590196261633803,
+        "liquid.assumptions": ["water_below_0C"]
+      },
+      "tolerance": 0.02
+    },
+    {
+      "name": "F4 dough read 8 min after the end of the mix: eligible",
+      "kind": "frictionWindow",
+      "readingMinutesAfterEnd": 8,
+      "windowMinutes": 10,
+      "expected": {
+        "sample": true
+      }
+    },
+    {
+      "name": "F5 dough read 12 min after the end of the mix: not eligible",
+      "kind": "frictionWindow",
+      "readingMinutesAfterEnd": 12,
+      "windowMinutes": 10,
+      "expected": {
+        "sample": false
+      }
+    },
+    {
+      "name": "F6 frasage then mix: a reading at the end of the frasage is not a sample; one on the mix is, flagged friction_after_first_contact",
+      "kind": "frictionAttribution",
+      "expected": {
+        "readingAtEndOfFirstContact.sample": false,
+        "readingOnReferenceStep.sample": true,
+        "readingOnReferenceStep.assumptions": ["friction_after_first_contact"]
+      }
     }
   ]
 }

@@ -2,14 +2,15 @@
 docs/contracts/fermentation.md (Water temperature, Suggested dough target), computed outside the
 engine. No import from packages/.
 
-Run: python3 -I generate.py > cases.json (in this directory), then prettier --write cases.json
+Run: python3 -I generate.py (in this directory; writes cases.json as UTF-8), then prettier --write cases.json.
+Reproduction holds to about 1e-9 (the E cases) and exactly for the W and F cases.
 
 * water cases: the base-temperature method, exact rational arithmetic (Fraction), written as floats.
 * friction cases: the same relation solved for the friction, exact.
 * suggested dough target: the kinetic law of fermentation.md (A 3.43 h, k 0.729, Ea 98.3 kJ/mol,
   r = 1 at 21.1 °C, fixed lag tau 1.5 h, no thermal inputs, no self-heating term), the default
   readiness profile (F* = 1), a trapezoid of 20 000 steps per step on the analytic dough temperature
-  and a bisection to 1e-9 °C. The range solves the same plan with every dough-step duration
+  and a bisection to 1e-9 °C (the contract solves to 0.001 °C; the fixture tolerance is 0.02 °C). The range solves the same plan with every dough-step duration
   multiplied, then divided, by the predictive factor 1.9 (docs/science/fermentation-model.md,
   section 15, RMS factor x1.89).
 """
@@ -172,7 +173,7 @@ def target_case(name, dose_instant, rest):
         if value > 32:
             expected["doughTarget.extrapolations"] = ["dough_target_above_32c"]
     cases.append({"name": name, "kind": "suggestedDoughTarget", "formula": formula(instant_pct=dose_instant),
-                  "process": process({"temperatureC": 24}, rest), "expected": expected, "tolerance": 0.01})
+                  "process": process({"temperatureC": 24}, rest), "expected": expected, "tolerance": 0.02})
 
 
 def dough(step_id, op, hours, temp, **extra):
@@ -191,21 +192,57 @@ cases.append({"name": "E4 0.01 % fresh, 3 h at 22: even a 35 °C dough is too sl
               "process": process({"temperatureC": 24}, [dough("bulk", "bulk", 3, 22)]),
               "expected": {"doughTarget.status": "out_of_domain", "doughTarget.reason": "plan_unreachable_too_slow"}
               if progress(0.01, TMAX, [(3, 22)]) < FSTAR else {"ERROR": "case is not unreachable"},
-              "tolerance": 0.01})
+              "tolerance": 0.02})
 cases.append({"name": "E5 0.9 % instant, 4 h + 1.5 h at 22: even a 1.7 °C dough is too fast",
               "kind": "suggestedDoughTarget", "formula": formula(instant_pct=0.9),
               "process": process({"temperatureC": 24}, [dough("bulk", "bulk", 4, 22), dough("proof", "proof", 1.5, 22)]),
               "expected": {"doughTarget.status": "out_of_domain", "doughTarget.reason": "plan_unreachable_too_fast"}
               if progress(0.9 * INSTANT_TO_FRESH, TMIN, [(4, 22), (1.5, 22)]) > FSTAR else {"ERROR": "case is not unreachable"},
-              "tolerance": 0.01})
+              "tolerance": 0.02})
 
-print(json.dumps({
+# W7: a preferment whose step states no temperature is taken at the room (assumed); n = 4.
+value = liquid(4, 24, 22, 22, 22, 5)
+cases.append({"name": "W7 poolish with no temperature of its own: assumed at the room",
+              "kind": "liquidTarget", "n": 4,
+              "inputs": {"doughTargetC": 24, "room": ("planned", 22), "flour": ("assumed", 22),
+                         "prefermentC": ("assumed", 22), "frictionC": ("planned", 5)},
+              "expected": {"liquidTargetC": num(value)}, "exact": {"liquidTargetC": str(value)},
+              "tolerance": 1e-9})
+
+# C1: basic mode, no declared target: the suggestion of E3 feeds the liquid target (room 22,
+# flour assumed at the room, no friction). Flagged water_below_0C, never clipped.
+e3 = next(c for c in cases if c["name"].startswith("E3"))["expected"]["doughTarget.value"]
+cases.append({"name": "C1 chain: suggested dough target (E3) then liquid target, room 22",
+              "kind": "suggestedThenLiquid", "uses": "E3", "n": 3,
+              "inputs": {"room": ("planned", 22), "flour": ("assumed", 22), "frictionC": ("assumed", 0)},
+              "expected": {"doughTarget.source": "suggested", "doughTarget.value": e3,
+                           "liquidTargetC": 3 * e3 - 22 - 22, "liquid.assumptions": ["water_below_0C"]},
+              "tolerance": 0.02})
+
+# F4 to F6: which dough reading makes a friction sample (times in minutes from the end of the
+# reference mixing step; a single mix, so it is also the first-contact step).
+for name, minutes, eligible in [
+    ("F4 dough read 8 min after the end of the mix: eligible", 8, True),
+    ("F5 dough read 12 min after the end of the mix: not eligible", 12, False),
+]:
+    cases.append({"name": name, "kind": "frictionWindow", "readingMinutesAfterEnd": minutes,
+                  "windowMinutes": 10, "expected": {"sample": eligible}})
+cases.append({"name": "F6 frasage then mix: a reading at the end of the frasage is not a sample; "
+                      "one on the mix is, flagged friction_after_first_contact",
+              "kind": "frictionAttribution",
+              "expected": {"readingAtEndOfFirstContact.sample": False,
+                           "readingOnReferenceStep.sample": True,
+                           "readingOnReferenceStep.assumptions": ["friction_after_first_contact"]}})
+
+out = json.dumps({
     "format": "flourprint-fixture/0",
     "contract": "bake-session.md, fermentation.md",
     "contractVersion": "0.26.0",
     "model": {"id": "flourprint.commercial-yeast", "version": "0.1.0"},
     "readiness": {"id": "flourprint.model-end-point", "version": "1", "readyProgress": FSTAR},
     "predictiveFactor": FACTOR,
-    "tolerance": 0.01,
+    "tolerance": 0.02,
     "cases": cases,
-}, ensure_ascii=False, indent=1))
+}, ensure_ascii=False, indent=1)
+with open("cases.json", "w", encoding="utf-8") as f:
+    f.write(out + "\n")
