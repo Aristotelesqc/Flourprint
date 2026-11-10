@@ -177,7 +177,7 @@ temperature it starts from is set by the conditions of the first-contact step.
   of the **water** calculation (Water temperature, below) is the reference mixing step's. Two steps
   of a recipe are often one (a single `mix` that brings the yeast): then one value serves both. When
   they differ (a `frasage` that brings the yeast, then a `mix`), each is read where it is stated, so
-  both steps need a temperature, and an interface that edits the room shows each one on its own step.
+  both steps need a temperature. During a Preparation a room change follows the room line to every room step, up or down (bake-session.md, The room line); an interface that edits a recipe shows each room on its own step.
   The dough's start in advanced mode is the target dough temperature (below), not the room.
 - **Advanced mode**: the reference mixing step (process.md) declares a target dough temperature
   (`conditions.doughTemperatureC`); the dough starts at it, **at the end of the first-contact
@@ -187,13 +187,15 @@ temperature it starts from is set by the conditions of the first-contact step.
   by a drift during the kneading steps that remain. With a first-contact step that is also the
   reference mixing step (the common case) this is the temperature of the dough at the end of its
   mixing. A measurement of the dough at that instant replaces this assumption (next bullet).
-- **Measured start** (0.26.0, owner decisions of 2026-11-09). A `doughTemperature` observation on
-  the first-contact step (bake-session.md, Preparation temperatures) is the temperature of the dough
+- **Measured start** (0.26.0, owner decisions of 2026-11-09 and 2026-11-10). A `doughTemperature`
+  observation whose effective instant lies within the first-contact step (bake-session.md,
+  Preparation temperatures; a reading has no step gate and is placed by its instant) is the
+  temperature of the dough
   when its clock starts, whatever the mode. Where the dough starts, in order: the measured reading
   in force, else the target dough temperature (advanced mode), else the first-contact step's
   effective ambient (basic mode). The forecast names which one it used as the assumption
   `dough_start:reading`, `dough_start:target` or `dough_start:ambient`, and names each step whose
-  effective ambient is an `AdjustStep` of the baker as `ambient_adjusted:<stepId>`. A **suggested**
+  effective ambient comes from the baker (an `AdjustStep` or a room change) as `ambient_adjusted:<stepId>`. A **suggested**
   dough target (Suggested dough target, below) is never a start: it guides the baker and feeds the
   liquid target, and only a target the recipe declares, or a reading, starts the dough.
 - Between steps, and inside each dough step, the dough follows the step's condition temperature
@@ -673,9 +675,12 @@ interface TemperatureTargets {
 
 - **Formula.** `T_liquid = n × T_dough_target − T_flour − T_room − T_preferment − friction`, exactly
   the base-temperature method above, with the values in force:
-  - `T_room` is the **effective** room of the reference mixing step: the baker's latest
-    `AdjustStep` of its temperature (`adjusted`), else the plan (`planned`). Without either, the
+  - `T_room` is the **effective** room of the reference mixing step at the instant read (the room
+    line, up or down, and its own `AdjustStep`, whichever is later: bake-session.md, The room
+    line): `adjusted` if either applies, else the plan (`planned`). Without either, the
     liquid target is `insufficient_data` (`temperature_unknown`) as before.
+  - Readings are placed by their effective instant: only those at or before the end of the
+    first-contact step count here (later ones are `reading_after_mixing`, bake-session.md).
   - `T_flour` is the `flourTemperature` reading in force (`measured`), else `T_room`
     (`assumed`, assumption `flour_at_room_temperature` as before): it follows the effective room.
   - `T_preferment` is the mean of the preferments' temperatures, each the `prefermentTemperature`
@@ -710,7 +715,7 @@ Worked cases: `fixtures/temperatures/cases.json`, W1 to W6, and the examples bel
 **Examples (hand-worked, units °C).** Target dough 24, no preferment, no friction.
 
 1. **Plan alone.** Room 22 (`planned`), flour at the room: `3 × 24 − 22 − 22 = 28`.
-2. **The room is warmer today.** The baker adjusts the room to 26 (`adjusted`); the flour, assumed
+2. **The room is warmer today.** The baker notes the room at 26 (`adjusted`); the flour, assumed
    at the room, follows: `72 − 26 − 26 = 20`. The target falls by 8 because both the room and the
    assumed flour rose by 4.
 3. **The flour was measured.** Same room 26, flour measured at 18 (cold from the garage):
@@ -721,6 +726,9 @@ Worked cases: `fixtures/temperatures/cases.json`, W1 to W6, and the examples bel
 6. **A measured liquid.** In case 3 the baker measures the water at 31: `deviationC = 31 − 28 = +3`.
    The dough should then come out about `3 / 3 = 1` °C above its target if every other input
    holds, which the baker confirms or not with the dough reading.
+7. **The room cools.** Planned room 22; the baker notes 19 (`adjusted`), the flour, assumed at the
+   room, follows: `72 − 19 − 19 = 34`. A colder room asks for a warmer liquid, as a warmer one asks
+   for a cooler liquid (case 2).
 
 ### Suggested dough target (0.26.0, proposal: owner confirmation requested)
 
@@ -831,11 +839,12 @@ interface FrictionSample {
 }
 ```
 
-- **Eligibility.** A sample exists when all hold: a `liquidTemperature` reading is in force, observed
-  before the dough reading; a `doughTemperature` reading was observed on the **reference mixing
-  step** (running), or within **10 minutes** (ASSUMED) after that step's recorded end, on the step
-  that follows; when several readings qualify, the **latest in force** (latest `observedAt`, ties by
-  `seq`) is the one used; the room is known
+- **Eligibility.** A sample exists when all hold: a `liquidTemperature` reading is in force whose
+  effective instant precedes the dough reading's; a `doughTemperature` reading has its effective
+  instant between the start of the **reference mixing step** and **10 minutes** (ASSUMED) after that
+  step's recorded end (or now, while it runs); when several readings qualify, the **latest in
+  force** (latest effective instant, ties by `seq`) is the one used; late entries count, since
+  only instants matter; the room is known
   (the effective ambient of the reference mixing step, as the liquid target reads it); neither the
   liquid nor the dough reading has `method: 'reported'`. The inputs are those **in force at the dough
   reading's instant**, with the flour and the preferment `measured` or `assumed`, exactly as the
@@ -1209,9 +1218,11 @@ only and is unchanged. The implementing pull request tests each example and the 
 duration and checks the code against it, since that duration is not a reference value.
 
 Version `0.26.0` (proposal; the next minor after `0.25.0`, the learning flags of #259, now merged) adds the **Preparation temperatures**
-(owner decisions of 2026-11-09, #171, #242): the observation kinds `flourTemperature`,
-`liquidTemperature` and `prefermentTemperature`, `doughTemperature` accepted on the first-contact
-step as the start of the clock (bake-session.md, Preparation temperatures), the **liquid target**
+(owner decisions of 2026-11-09 and 2026-11-10, #171, #242): the observation kinds `flourTemperature`,
+`liquidTemperature` and `prefermentTemperature`, `doughTemperature` with no step gate (the start of
+the clock when it falls in the first-contact step), temperature readings placed by their real
+instant, editable and accepted after the end, the room line (`RoomTemperatureChanged`, a room
+change carried to the end, up or down; bake-session.md, Preparation temperatures), the **liquid target**
 that reads the effective room and the measured temperatures, the **suggested dough target**, the
 **friction sample** and the **temperature outcome** (data only), and `TemperatureSource`
 (values-and-units.md). What does not change: the kinetic law and every constant, the readiness

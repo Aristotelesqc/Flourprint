@@ -171,6 +171,8 @@ interface BakeDigest {
     stage?: 'shape' | 'bake'; // doughReady only
     set?: number; // fold only: the set done (process.md, techniques)
     position?: ProbePosition; // doughTemperature only (bake-session.md)
+    late?: true; // added after the end of the Preparation, at its real instant (bake-session.md)
+    ignoredBy?: string; // reading_before_dough, reading_after_dough, reading_after_mixing, reading_above_model_range
     componentId?: string; // prefermentTemperature only (bake-session.md, Preparation temperatures)
     criterion?: string;
     text?: string;
@@ -211,6 +213,10 @@ interface BakeDigest {
   for `outcome` and `cooking`, 3 with `ingredients`, and 4 (contract 0.26.0) with the observation
   `position` and `componentId` and the per-bake `temperatures`. `ingredients` is read from the snapshot formula's
   pins and absent when there are none.
+- In the digest, a temperature observation's `at` is its **effective instant** (the latest
+  `TemperatureTimeCorrected` applied, else its own), `elapsedInStepS` is read from the step that
+  contains that instant, and `recordedAt` is when it was typed; `late` marks an entry made after the
+  end. Room changes appear in `adjustments` (`field: 'room'`) with the same rule.
 - **Every measurement is in it.** The `backup` part holds every event of every bake, so every
   recorded measurement is there; the digest lists every observation with its `measurement`, so that
   a reader does not have to replay the log. A kind of measurement the backup or the digest leaves
@@ -283,9 +289,13 @@ interface PreparationAnalysis {
       quantity: 'room' | 'flour' | 'liquid' | 'preferment' | 'dough';
       valueC: number;
       source: 'adjusted' | 'measured'; // planned values are in `planned`; assumed ones are not records
-      at: Instant; // observedAt, or the adjustment's instant
+      kind: 'roomChange' | 'reading';
+      at: Instant; // the effective instant (a correction applied), not the time of entry
+      recordedAt: Instant;
+      late?: true; // entered after the end of the Preparation
+      ignoredBy?: string; // why the model did not use it (bake-session.md, What the model uses)
       seq: number; // the event that carries it
-      stepId?: StepId;
+      stepId?: StepId; // as given at entry, informational; the step a reading falls in is derived from `at`
       componentId?: string;
       position?: ProbePosition;
     }>;

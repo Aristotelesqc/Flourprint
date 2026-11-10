@@ -122,6 +122,6 @@ interface TemperatureInput {
 - `TemperatureSource` is reported wherever a result depends on a temperature that a Preparation can
   change or measure (fermentation.md, Liquid target and Dough temperature). `planned` is a value of
   the recipe or the snapshot, `adjusted` the room the baker changed for this Preparation
-  (`AdjustStep`), `measured` an observation recorded in it, `assumed` a value stated nowhere (the
+  (`AdjustStep` or a room change, up or down), `measured` an observation recorded in it, `assumed` a value stated nowhere (the
   flour and a preferment at the room, a friction of 0). A computed `Estimate` is never a
   `measured` value, and a `measured` value is never presented as planned.

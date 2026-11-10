@@ -309,7 +309,9 @@ adds one is not complete until all of these hold:
 | `doughTemperature` (and its `position`)                      | `ObservationAdded` `kind`, `position`    | 0.21.0   |
 | `flourTemperature`, `liquidTemperature`                      | `ObservationAdded` `kind`                | 0.26.0   |
 | `prefermentTemperature` (and its `componentId`)              | `ObservationAdded` `kind`, `componentId` | 0.26.0   |
-| the room changed for a Preparation                           | `OverrideApplied` (`temperatureC`)       | existing |
+| one step's room changed                                      | `OverrideApplied` (`temperatureC`)       | existing |
+| the room changed from an instant to the end                  | `RoomTemperatureChanged`                 | 0.26.0   |
+| the instant of a reading or room change corrected            | `TemperatureTimeCorrected`               | 0.26.0   |
 | measurements given with a completion                         | `StepCompleted` `measurements`           | existing |
 
 The recommendations (`TemperatureTargetsRecorded`, bake-session.md, Recorded targets) are recorded
@@ -321,10 +323,16 @@ A weighing check, a fold set and a `doughReady` judgement are records of the bak
 measured values, and are not kinds of measurement in this sense (they are in the backup all the
 same). Derived data (the friction sample, the temperature outcome, the forecasts) is never in the
 backup: it is recomputed from the facts. Restore re-runs no command decision (history.md, Reading history): it
-checks the stored payload structurally. For the temperature kinds it checks, against the state
-replayed so far, that the step exists and has the type its row of bake-session.md, Temperature
-observation kinds, requires; that the value is a finite number within 0 – 60 °C in `degC`; and that a
-`componentId` names a `preferment` component of the snapshot's formula.
+checks the stored payload structurally, against the state replayed so far. For the temperature
+kinds and the room change it checks that the value is a finite number in `degC` within its range
+(0 – 60 °C; 0 – 120 °C for `doughTemperature`); that the instant (`measurement.observedAt`, `at`,
+`newOccurredAt`) lies within the span of the Preparation at that point of the log (not before
+`BakeStarted`, not after the event's `recordedAt`, and after an end not after that end); that
+`late` is present exactly when the Preparation was ended at that point; that a named `stepId`
+exists (it is informational, with no type or state gate); that a `componentId` names a `preferment`
+component of the snapshot's formula; and that a `TemperatureTimeCorrected` names an earlier
+temperature event. There is no check of the step kind or of a running step: the kinds are accepted
+after the end like the commands.
 
 ## Recipe files and additive import
 

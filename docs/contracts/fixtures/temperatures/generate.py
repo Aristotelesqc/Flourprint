@@ -234,6 +234,50 @@ cases.append({"name": "F6 frasage then mix: a reading at the end of the frasage 
                            "readingOnReferenceStep.sample": True,
                            "readingOnReferenceStep.assumptions": ["friction_after_first_contact"]}})
 
+# W8: the room cools. Target dough 24, planned room 22, noted 19; the flour, assumed at the room,
+# follows: 3 x 24 - 19 - 19 = 34.
+value = liquid(3, 24, 19, 19, None, 0)
+cases.append({"name": "W8 the room cools to 19: a warmer liquid",
+              "kind": "liquidTarget", "n": 3,
+              "inputs": {"doughTargetC": 24, "room": ("adjusted", 19), "flour": ("assumed", 19),
+                         "frictionC": ("assumed", 0)},
+              "expected": {"liquidTargetC": num(value)}, "exact": {"liquidTargetC": str(value)},
+              "tolerance": 1e-9})
+
+# R1 to R3: the room line (bake-session.md, The room line). Recipe: mix (counter, 23), bulk 4 h
+# (counter, 23), retard 12 h (fridge, 4), proof 1.5 h (counter, 23); the bulk starts at hour 0, the
+# retard at hour 4, the proof at hour 16. A step is a room step when its location is absent or
+# `counter`.
+cases.append({"name": "R1 the room cools: 19 noted 1 h into the bulk, carried to the end",
+              "kind": "roomLine", "roomLine": [[1, 19]],
+              "expected": {"bulk": "23 until 1 h, then 19", "retard": "4 (placed in the fridge, unchanged)", "proof": "19 from its start (carried to the end)"}})
+cases.append({"name": "R2 the room warms: 26 noted at the start of the bulk",
+              "kind": "roomLine", "roomLine": [[0, 26]],
+              "expected": {"bulk": "26", "retard": "4", "proof": "26"}})
+cases.append({"name": "R3 a second change at the start of the proof, then AdjustStep on the proof",
+              "kind": "roomLine", "roomLine": [[1, 19], [16, 21]],
+              "adjustStep": {"proof": {"at": 16.5, "temperatureC": 24}},
+              "expected": {"proof": "21 from its start (hour 16), 24 from hour 16.5 (the later instant wins)"}})
+
+# T1: where a dough reading falls (bake-session.md, What the model uses). Preparation times in
+# minutes from the start: autolyse 0-30, mix (first contact) 30-40, bulk 40-280, shape 280-300,
+# bake (heat step) from 300.
+placement = [
+    ("autolyse", 10, 24.0, False, "reading_before_dough"),
+    ("during the mix", 35, 25.0, True, "start of the clock"),
+    ("at the end of the mix", 40, 25.0, True, "start of the clock"),
+    ("during the bulk", 100, 27.0, True, "mean state from its instant"),
+    ("during the bake", 330, 96.0, False, "reading_above_model_range"),
+    ("during the bake, 55 C", 330, 55.0, False, "reading_after_dough"),
+]
+cases.append({"name": "T1 placement of dough readings by effective instant",
+              "kind": "readingPlacement",
+              "steps": {"autolyse": [0, 30], "mix": [30, 40], "bulk": [40, 280], "shape": [280, 300], "bake": [300, None]},
+              "readings": [{"label": l, "instantMin": t, "valueC": v, "usedByModel": u, "use": w}
+                           for l, t, v, u, w in placement],
+              "correction": {"reading": "during the bulk", "newInstantMin": 35,
+                             "effect": "moves from the mean state of the bulk to the start of the clock"}})
+
 out = json.dumps({
     "format": "flourprint-fixture/0",
     "contract": "bake-session.md, fermentation.md",

@@ -880,6 +880,121 @@
         "readingOnReferenceStep.sample": true,
         "readingOnReferenceStep.assumptions": ["friction_after_first_contact"]
       }
+    },
+    {
+      "name": "W8 the room cools to 19: a warmer liquid",
+      "kind": "liquidTarget",
+      "n": 3,
+      "inputs": {
+        "doughTargetC": 24,
+        "room": ["adjusted", 19],
+        "flour": ["assumed", 19],
+        "frictionC": ["assumed", 0]
+      },
+      "expected": {
+        "liquidTargetC": 34.0
+      },
+      "exact": {
+        "liquidTargetC": "34"
+      },
+      "tolerance": 1e-9
+    },
+    {
+      "name": "R1 the room cools: 19 noted 1 h into the bulk, carried to the end",
+      "kind": "roomLine",
+      "roomLine": [[1, 19]],
+      "expected": {
+        "bulk": "23 until 1 h, then 19",
+        "retard": "4 (placed in the fridge, unchanged)",
+        "proof": "19 from its start (carried to the end)"
+      }
+    },
+    {
+      "name": "R2 the room warms: 26 noted at the start of the bulk",
+      "kind": "roomLine",
+      "roomLine": [[0, 26]],
+      "expected": {
+        "bulk": "26",
+        "retard": "4",
+        "proof": "26"
+      }
+    },
+    {
+      "name": "R3 a second change at the start of the proof, then AdjustStep on the proof",
+      "kind": "roomLine",
+      "roomLine": [
+        [1, 19],
+        [16, 21]
+      ],
+      "adjustStep": {
+        "proof": {
+          "at": 16.5,
+          "temperatureC": 24
+        }
+      },
+      "expected": {
+        "proof": "21 from its start (hour 16), 24 from hour 16.5 (the later instant wins)"
+      }
+    },
+    {
+      "name": "T1 placement of dough readings by effective instant",
+      "kind": "readingPlacement",
+      "steps": {
+        "autolyse": [0, 30],
+        "mix": [30, 40],
+        "bulk": [40, 280],
+        "shape": [280, 300],
+        "bake": [300, null]
+      },
+      "readings": [
+        {
+          "label": "autolyse",
+          "instantMin": 10,
+          "valueC": 24.0,
+          "usedByModel": false,
+          "use": "reading_before_dough"
+        },
+        {
+          "label": "during the mix",
+          "instantMin": 35,
+          "valueC": 25.0,
+          "usedByModel": true,
+          "use": "start of the clock"
+        },
+        {
+          "label": "at the end of the mix",
+          "instantMin": 40,
+          "valueC": 25.0,
+          "usedByModel": true,
+          "use": "start of the clock"
+        },
+        {
+          "label": "during the bulk",
+          "instantMin": 100,
+          "valueC": 27.0,
+          "usedByModel": true,
+          "use": "mean state from its instant"
+        },
+        {
+          "label": "during the bake",
+          "instantMin": 330,
+          "valueC": 96.0,
+          "usedByModel": false,
+          "use": "reading_above_model_range"
+        },
+        {
+          "label": "during the bake, 55 C",
+          "instantMin": 330,
+          "valueC": 55.0,
+          "usedByModel": false,
+          "use": "reading_after_dough"
+        }
+      ],
+      "correction": {
+        "reading": "during the bulk",
+        "newInstantMin": 35,
+        "effect": "moves from the mean state of the bulk to the start of the clock"
+      }
     }
   ]
 }
