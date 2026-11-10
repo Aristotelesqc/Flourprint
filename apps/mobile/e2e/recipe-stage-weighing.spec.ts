@@ -232,6 +232,24 @@ for (const english of [false, true]) {
     page,
   }) => {
     await importStageRecipe(page, english, true);
+    const ingredients = routed(page).getByRole('region', {
+      name: english ? 'Ingredients' : 'Ingrédients',
+      exact: true,
+    });
+    await expect(ingredients.getByRole('heading')).toHaveCount(1);
+    await expect(
+      ingredients.getByRole('heading', {
+        name: english ? 'Ingredients' : 'Ingrédients',
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      ingredients.getByRole('button', { name: english ? /^Flours/ : /^Farines/ }),
+    ).toBeVisible();
+    await expect(
+      ingredients.getByRole('button', { name: english ? /^Pre-doughs/ : /^Pré-pâtes/ }),
+    ).toBeVisible();
+    await expect(ingredients.getByRole('button', { name: /^poolish/i })).toBeVisible();
     for (const [title, ingredient, grams] of [
       ['poolish', flour, '50 g'],
       ['poolish', waterName, '50 g'],
