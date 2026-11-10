@@ -1,0 +1,17 @@
+table,yeast,incubator_c,yeast_g_per_kg_flour,cfu_per_kg_flour,endpoint_original,endpoint_min,sd_min,height_cm
+paper2_table1,Malteserkors,5,20,,21 h,1260,,8
+paper2_table1,Malteserkors,5,40,,3 h 30 min,210,,8
+paper2_table1,Malteserkors,5,60,,3 h,180,,8
+paper2_table1,Malteserkors,15,20,,3 h,180,,8
+paper2_table1,Malteserkors,15,40,,1 h,60,,8
+paper2_table1,Malteserkors,15,60,,35 min,35,,8
+paper2_table1,Malteserkors,35,20,,50 min,50,,8
+paper2_table1,Malteserkors,35,40,,25 min,25,,8
+paper2_table1,Malteserkors,35,60,,15 min,15,,8
+paper3_table2,Malteserkors,25,20,2.88e11,100 +- 7 min,100,7,10
+paper3_table2,Skaertoftmoelle,25,31,2.88e11,71 +- 5 min,71,5,10
+paper3_table2,Rapunzel,25,40,2.88e11,65 +- 3 min,65,3,10
+paper3_table2,Sema,25,22,2.88e11,60 +- 8 min,60,8,10
+paper3_table2,Zymarom,25,37,2.88e11,46 +- 2 min,46,2,10
+paper3_table2,Bruggeman,25,39,2.88e11,40 +- 5 min,40,5,10
+paper3_table2,l'Hirondelle,25,40,2.88e11,40 +- 6 min,40,6,10

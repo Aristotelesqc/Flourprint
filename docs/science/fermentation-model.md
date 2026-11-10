@@ -86,14 +86,14 @@ dF/dt = (d / 1 %)^k / A × r(T(t))
 r(T)  = exp( (Ea / R) × (1 / 294.25 K − 1 / T) )          r = 1 at 21.1 °C
 ```
 
-| Parameter   | Value        | Label            | Origin                                                                                                                        |
-| ----------- | ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `A`         | 3.43 h       | DERIVED / FITTED | fitted by Flourprint (this project, not a third party) to Craig's table, 1 % fresh yeast at 21.1 °C                           |
-| `k`         | 0.729        | DERIVED / FITTED | Same fit. Finney et al. 1976 (abstract only) gives 0.74, quoted by the contract                                               |
-| `Ea`        | 98.3 kJ/mol  | DERIVED / FITTED | Same fit                                                                                                                      |
-| bands       | see contract | ASSUMED          | `A` ×0.75 to ×1.25, `k` 0.6 to 0.9, `Ea` 50 to 100 kJ/mol. The band is the envelope of the corners, not a confidence interval |
-| `τ`         | 0 to 3 h     | ASSUMED          | No source. The code's central value is 1.5 h                                                                                  |
-| yeast forms | ÷0.33, ÷0.40 | ASSUMED          | Vendor ratios quoted in the contract (King Arthur, Red Star, Craig). Not re-checked here                                      |
+| Parameter   | Value        | Label            | Origin                                                                                                                                                                                                |
+| ----------- | ------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `A`         | 3.43 h       | DERIVED / FITTED | fitted by Flourprint (this project, not a third party) to Craig's table, 1 % fresh yeast at 21.1 °C                                                                                                   |
+| `k`         | 0.729        | DERIVED / FITTED | Same fit. Finney et al. 1976 (primary, read in full 2026-11-10) gives 0.68 to 0.83 by observable, in an enriched dough at 2–12 %: same order of magnitude, not a validation at home doses (section 5) |
+| `Ea`        | 98.3 kJ/mol  | DERIVED / FITTED | Same fit                                                                                                                                                                                              |
+| bands       | see contract | ASSUMED          | `A` ×0.75 to ×1.25, `k` 0.6 to 0.9, `Ea` 50 to 100 kJ/mol. The band is the envelope of the corners, not a confidence interval                                                                         |
+| `τ`         | 0 to 3 h     | ASSUMED          | No source. The code's central value is 1.5 h                                                                                                                                                          |
+| yeast forms | ÷0.33, ÷0.40 | ASSUMED          | Vendor ratios quoted in the contract (King Arthur, Red Star, Craig). Not re-checked here                                                                                                              |
 
 The fit used Craig's pizzamaking.com "Baker's yeast quantity prediction model" table: 952 cells,
 3.9 to 30 °C, 3 h or more; rms 5 %, maximum 32 %. Read status: **secondary**, through the
@@ -144,8 +144,12 @@ Against Izzreen Table I (contract equations; the shipped model predicts hours to
   fit gives `k` about 0.6, `Ea` about 110 kJ/mol and ±50 % scatter (DERIVED / FITTED, session fit on
   TOST output, which is itself MODEL OUTPUT of a planning app). These recipes are examples, not
   calibration data.
-- The exponent `k` is not constant in the primary data (section 6): 1.294 at 8 °C, 0.842 at 16 °C,
-  0.466 at 32 °C (script).
+- The apparent exponent read off the primary data differs between chambers: 1.294 at 8 °C, 0.842 at
+  16 °C, 0.466 at 32 °C (OLS over 2, 4 and 6 %, script). That is an apparent exponent of endpoint times
+  at chamber temperatures. A constant-`k` law with a dough lag reproduces its direction, which is a
+  plausible mechanism of thermal confounding; it does not show that the lag suffices to explain the
+  experiments quantitatively (section 5, "The apparent dose exponent and the dough lag"), so the data
+  do not establish that the dose exponent depends on temperature.
 
 ### The table above ignores dough lag (2026-10-25)
 
@@ -194,7 +198,13 @@ forms and a progressive blend between the shipped model and a warm-compatible on
 - Effects of ingredients on the rate. Sugar, salt, fat and water only gate the domain.
 - The separation of gas production from gas retention, volume and height.
 - Substrate depletion, acidification, enzymatic sugar release, dough rheology.
-- The dependence of the dose exponent on temperature.
+- A dependence of the dose exponent on temperature: not established (a dough lag reproduces the
+  direction of the apparent trend in Izzreen but not its durations, and the Birch matrix disagrees at
+  the warm end; section 5).
+- A slow start at very low dose (Covino 2023, section 5): the shipped progress grows linearly in time
+  at constant dose and temperature, and a constant-rate law cannot produce a slow start. The cause of
+  the slow start is not identified (biomass multiplication, dissolved-CO2 saturation and the evolution
+  of gas retention are unseparated hypotheses). Known limitation, open question (section 12).
 
 ## 3. End-point semantics
 
@@ -304,9 +314,24 @@ Parameters:
 The reference dose of 1 % lies below the measured 2 to 6 % grid. Re-centering at 4 % is useful;
 replacing the intercept with Craig's 3.43 h is not.
 
-Evidence of non-separability in the measurements themselves (script): the apparent dose exponent
-`k` is 1.2940 at 8 °C, 0.8419 at 16 °C and 0.4661 at 32 °C; the apparent activation energy is
-67.79, 48.15 and 42.38 kJ/mol at 2, 4 and 6 %.
+Apparent exponents in the measurements themselves (script): the apparent dose exponent is 1.2940 at
+8 °C, 0.8419 at 16 °C and 0.4661 at 32 °C (OLS over 2, 4 and 6 %); the apparent activation energy is
+67.79, 48.15 and 42.38 kJ/mol at 2, 4 and 6 %. Read them with the next subsections: the exponent is
+that of chamber endpoint times, and the lag of the dough alone moves it in this direction.
+
+Estimators, defined (DERIVED, from the nine times; `scripts/apparent_dose_exponent.mjs`):
+
+| Chamber | Pairwise 2 to 4 %, `ln(t₂/t₄)/ln 2` | Pairwise 4 to 6 %, `ln(t₄/t₆)/ln 1.5` | OLS over 2, 4 and 6 %, minus the slope of `ln t` on `ln dose` |
+| ------- | ----------------------------------- | ------------------------------------- | ------------------------------------------------------------- |
+| 8 °C    | 1.211                               | 1.464                                 | 1.294                                                         |
+| 16 °C   | 0.907                               | 0.710                                 | 0.842                                                         |
+| 32 °C   | 0.263                               | 0.880                                 | 0.466                                                         |
+
+Provenance of the matrix: the same 8, 16 and 32 °C by 2, 4 and 6 % design is the subject of two 2016
+publications of the same group, _Cereal Chem._ 93:209-216 (crumb volatiles, the source of the data
+file) and _Food Chem._ 210:566-576 (crust volatiles; abstract read 2026-11-10, article not read).
+They are treated as **one timing matrix**, not two datasets, unless independent fermentation
+preparations are shown.
 
 ### Status of M5
 
@@ -324,6 +349,189 @@ Evidence of non-separability in the measurements themselves (script): the appare
   not evidence).
 - Rejected: inserting M5 into the rate integration of the engine, arbitrary clamps on `k` or `Ea`,
   and treating the pre-collapse `A` as a bulk target.
+
+### The apparent dose exponent and the dough lag (2026-11-10)
+
+A reviewer on #231 asked whether the change of the exponent with temperature is biology or an
+artefact of reading chamber times. For the separable law of section 2 with a constant `k`, the dough
+at the chamber temperature after a first-order lag from a starting temperature `T0`, the endpoint
+`t*` satisfies `G(t*) = A d^(−k)` with `G(t) = ∫ r(T_d(s)) ds`. The dough temperature does not depend
+on the dose, so differentiating in `ln d` gives `r(T_d(t*)) · dt*/d ln d = −k G(t*)`, that is
+
+```text
+k_app = −d ln t* / d ln d = k × mean( r(T_d) over [0, t*] ) / r( T_d(t*) )
+```
+
+(ANALYTICAL, exact and local.) A dough that warms toward the chamber ends faster than its mean rate
+(ratio below 1) and reads a lower exponent; one that cools reads a higher one, with no change of `k`.
+
+Simulation (`scripts/apparent_dose_exponent.mjs`). `T0` and `τ` are **ASSUMED**: Izzreen reports
+neither. The script prints a sensitivity grid, `T0` 24, 26, 28, 30 °C by `τ` 0.5, 1.0, 2.0 h (12
+scenarios), with for each the apparent OLS exponents at 8, 16, 32 °C **and** the predicted durations
+next to the nine measured times, for two sets of constants, stated each time:
+
+- (a) the **shipped law** at `F*` = 1: `A` 3.43 h, `k` 0.729, `Ea` 98.3 kJ/mol (fitted to Craig's
+  table, not to Izzreen);
+- (b) the **lag fit** of the table above: `A` 8.78 h, `k` 0.728, `Ea` 79.8 kJ/mol, fitted to these same
+  nine cells.
+
+| Result over the 12 scenarios (DERIVED) | Measured | (a) shipped law, `F*` = 1 | (b) lag fit        |
+| -------------------------------------- | -------- | ------------------------- | ------------------ |
+| OLS exponent at 8 °C                   | 1.294    | 1.00 to 2.02              | 0.81 to 1.70       |
+| OLS exponent at 16 °C                  | 0.842    | 0.91 to 1.37              | 0.80 to 1.17       |
+| OLS exponent at 32 °C                  | 0.466    | 0.56 to 0.71              | 0.58 to 0.70       |
+| 2 % at 8 °C                            | 20 h 15  | 1 h 14 to 11 h 04         | 12 h 46 to 22 h 35 |
+| 2 % at 32 °C                           | 2 h      | 34 to 65 min              | 105 to 156 min     |
+
+With the base scenario `T0` 25 °C, `τ` 1.5 h and the lag fit, the simulated OLS exponents are 1.107,
+0.980, 0.600 at 8, 16, 32 °C (identity at 4 %: 1.155, 1.004, 0.602, equal to a numerical derivative to
+three decimals).
+
+**Conclusion.** The simulation shows a **plausible mechanism of thermal confounding**: a dough that
+starts warmer than a cold chamber, or colder than a warm one, reads a different exponent from a constant `k`,
+in the direction of the measured trend (above 1 at 8 °C, below 0.71 at 32 °C in the shipped-law
+scenarios). It does **not** show that thermal inertia suffices to explain the experiments
+quantitatively. At `F*` = 1 the shipped law gives absolute durations systematically too short (for 2 %
+at 8 °C, 1 h 14 min to 11 h 04 min against 20 h 15 min observed); that gap also reflects the
+difference between the `F` = 1 criterion and Izzreen's pre-collapse peak (section 3). The lag fit
+matches durations (12 h 46 min to 22 h 35 min at 2 %, 8 °C) because it was fitted to them. The data
+therefore do not establish that the dose exponent depends on temperature, and they do not exclude it.
+The dependence of the dose exponent on temperature is an open question, not a finding.
+
+### Birch, Petersen and Hansen 2013: the second Copenhagen matrix (2026-11-10)
+
+Read in full through the PhD thesis that reproduces it (data file `data/birch-2013-table.md`: protocol,
+page references, replication). Paper II, _LWT_ 50:480-488, Table 1: time to **8 cm in total height**,
+white wheat flour, 300 g flour, 190 mL water at 30 °C, 4 g sucrose, 4 g NaCl, pressed yeast
+(Malteserkors), **19 min in a baking machine**, two 235 g portions per mix in 1 L beakers sealed with
+foil, incubator at 5, 15 or 35 °C. One time per cell, from preliminary tests with a web camera, no
+spread printed. MEASURED; the exponents are DERIVED (same estimators as above).
+
+| Study and chamber | 2 %     | 4 %    | 6 %    | Pairwise 2→4 % | Pairwise 4→6 % | OLS   |
+| ----------------- | ------- | ------ | ------ | -------------- | -------------- | ----- |
+| Birch, 5 °C       | 21 h    | 3 h 30 | 3 h    | 2.585          | 0.380          | 1.859 |
+| Birch, 15 °C      | 3 h     | 1 h    | 35 min | 1.585          | 1.329          | 1.501 |
+| Birch, 35 °C      | 50 min  | 25 min | 15 min | 1.000          | 1.260          | 1.086 |
+| Izzreen, 8 °C     | 20 h 15 | 8 h 45 | 4 h 50 | 1.211          | 1.464          | 1.294 |
+| Izzreen, 16 °C    | 7 h 30  | 4 h    | 3 h    | 0.907          | 0.710          | 0.842 |
+| Izzreen, 32 °C    | 2 h     | 1 h 40 | 1 h 10 | 0.263          | 0.880          | 0.466 |
+
+The two matrices differ in flour (white, wholemeal), vessel (1 L beaker, baking tin), end point (8 cm
+in total height, the peak just before collapse), chamber temperatures and, for the dose, in being 20,
+40, 60 g per kg of flour against 2, 4, 6 % (the same numbers).
+
+- **The dough starts hot or cold, and that is not reported.** The dough leaves a 19-min machine mix made
+  with 30 °C water; its temperature is **not reported** (nothing is assumed here for it), and it then
+  cools or warms in the incubator. The 5 °C row (21 h, 3.5 h, 3 h) is therefore not a cold-kinetics
+  measurement of a dough at 5 °C: the first part of each run is spent cooling from the mix.
+- **Same check as for Izzreen** (script; scenarios with `T0` 25 or 30 °C and `τ` 0.5 or 1.5 h, all
+  ASSUMED, the lag-fit constants, `k` 0.728, which were fitted to Izzreen, not to Birch): at 35 °C a warming dough can only lower the exponent (simulated OLS
+  0.56 to 0.65) while Birch reads 1.09 (pairwise 1.00 and 1.26): **lag does not reproduce Birch's warm
+  exponent.** At 5 °C the scenarios give 0.82 to 1.50 against 1.86, and at 15 °C 0.82 to 1.26 against
+  1.50; the 5 °C pattern of pairwise 2.59 then 0.38 (steep from 2 to 4 %, nearly flat from 4 to 6 %) is
+  not reproduced by any scenario (pairwise 1.0 to 1.3 and 0.85 to 1.9).
+- **The two Copenhagen matrices disagree on the warm exponent.** At about 35 °C Birch's exponents are
+  1.0 and 1.26 (OLS 1.09); at 32 °C Izzreen's are 0.26 and 0.88 (OLS 0.47). Izzreen's low value is
+  in the direction of the lag mechanism (0.58 to 0.71 simulated); Birch's high value is not. Neither matrix fixes the dose
+  exponent of a dough at a controlled temperature.
+- **Replication.** Paper I (_J. Cereal Sci._ 58:318-323; 84 conditions, 7 yeasts at 2.88, 5.76 and
+  8.64·10¹¹ CFU/kg flour, 5/15/25/35 °C, height fitted by `h = b0 + b1(1 − e^(−kt))`) says its heights
+  were monitored "as duplicates from the same dough that was divided in two samples of 235 g": portions
+  of one mix, not independent mixes. Its rate constants are printed to one or two digits, with a mean
+  coefficient of variation of 17.1 %; the rate constant is a height-fit parameter, not a CO2 constant.
+  Paper II gives no spread for its times; its aroma samples are triplicates whose independence is not
+  stated.
+- **Product spread.** Thesis Table 5 (Paper III, _Food Res. Int._ 52:160-166): seven commercial
+  pressed yeasts at the same 2.88·10¹¹ CFU/kg flour, 25 °C, to 10 cm, take 100 ± 7, 71 ± 5, 65 ± 3, 60 ± 8,
+  46 ± 2, 40 ± 5 and 40 ± 6 min: **a factor 2.5 between products at equal cell count.** That is a
+  measured source of uncertainty (which product, how fresh) that a personal calibration absorbs
+  (section 11). The products need 20 to 40 g per kg of flour for those cells, so the spread a baker
+  meets at equal mass is another number, not measured there.
+- A printing discrepancy: Paper II and Paper III print cell counts a factor 1000 above Paper I and
+  the thesis for the same product (10¹³ against 10¹⁰ cells per g); the mass doses are unaffected.
+  Paper II also says, without data, that the yeast cell density was the same after mixing and at the
+  end of the fermentation.
+
+### Finney et al. 1976: an independent dose response, outside the lean domain (2026-11-10)
+
+Read in full (data file `data/finney-1976.md`, all nine pages, from the publisher's scan).
+**It is an experiment, not a prescribed schedule.** The authors established by baking the yeast
+concentration and fermentation time that give optimum bread (loaf volume and loaf characteristics):
+180 min at 2 %, 120 min at 3.5 %, 70 min at 7.2 %, 45 min at 12 % (text p. 128-130, Fig. 3), with
+optimum proof times of 55, 36.5, 21.5 and 12 min (p. 132, Fig. 6). Gas production at 30 °C on 10 g of flour
+(Fig. 5) is equal, about 350 units, at 188, 78 and 53 min for 2, 7.2 and 12 % (p. 130), and the total
+fermentation times (with proof and 16 min) are 251, 107.5 and 73 min (Fig. 7, p. 133). Formula: 100 g flour,
+6 g sucrose, 1.5 g NaCl, 3 g shortening, 4 g nonfat milk solids, 0.75 g malted wheat flour.
+
+Apparent dose exponents (DERIVED: minus the OLS slope of `ln t` on `ln dose`; `scripts/finney_exponents.mjs`):
+
+| Observable                       | Points                | Exponent |
+| -------------------------------- | --------------------- | -------- |
+| Optimum bulk time                | 4 (2, 3.5, 7.2, 12 %) | 0.770    |
+| Optimum bulk time, 2 to 7.2 %    | 3                     | 0.738    |
+| Optimum proof time               | 4                     | 0.832    |
+| Time to equal gas                | 3 (2, 7.2, 12 %)      | 0.703    |
+| Time to equal total fermentation | 3 (2, 7.2, 12 %)      | 0.684    |
+
+The contract's 0.74 is the two-point value 180/70 min against 2/7.2 % (0.737).
+
+- **The claim that Finney is a prescribed multi-punch schedule, not an observation, does not hold for
+  the 1976 paper.** For traceability, the often-quoted six-row schedule (2.0 to 8.6 %) comes from the
+  later codification by K. F. Finney (1984, _Cereal Chem._ 61:20-27) in AACC Method 10-10B / 10-10.03,
+  **not read** here and not transcribed; its proof times as quoted by the review
+  differ from the paper's, so it is not a copy of these measurements.
+- It is an independent measured dose response, with limits: loaf-quality optima, not a dough-ready or
+  height end point; an enriched dough (6 % sucrose, 3 % shortening, milk); compressed or other yeast
+  form not stated; 2 to 12 % of flour, so three of four doses (3.5, 7.2, 12 %) are above the shipped 3 %
+  gate; 30 °C is stated for the gassing tests, and the temperature of the loaf fermentation is not stated
+  in the paper. It supports the **order of magnitude** of the dose exponent, 0.68 to 0.83 by observable,
+  not the shipped 0.729 at home doses.
+- The 2 % gas curve starts slowly, with a convex early part (Fig. 5); recorded as an observation, no fit.
+
+### Covino et al. 2023: the only low-dose dough dataset (2026-11-10)
+
+Read in full (open access; data file `data/covino-2023.md`). Neapolitan pizza dough, 60.35 % flour,
+37.72 % water, 1.88 % salt and 0.04 % fresh brewer's yeast **of the dough**, that is 0.0663 % of flour
+(salt 3.12 %, water 62.5 % of flour, DERIVED), 250 g balls at 22 °C and 80 % RH, volume index `V/V₀` from
+hourly photographs (oblate semi-spheroid). The text says `V/V₀` "just reaches 1.3 after 8 h", grows "until
+about the 30th h, by tripling its initial value", then plateaus; the conclusions say the volume doubled
+after 16 h, tripled in 24 h and was constant around 30 h. **The paper is inconsistent on when it
+triples** (about 30 h, 24 h); both are recorded.
+
+The shipped law (`A` 3.43 h, `k` 0.729, `Ea` 98.3 kJ/mol, isothermal 22 °C, no lag) gives `F` = 1 at
+**21.94 h** (`scripts/shipped_law_vs_covino.mjs`), against doubling at 16 h and tripling at 24 to 30 h:
+
+| Statement of the paper          | Hours | Model `F` = 1 time / hours |
+| ------------------------------- | ----- | -------------------------- |
+| `V/V₀` 1.3                      | 8     | 2.74                       |
+| doubled                         | 16    | 1.37                       |
+| tripled (conclusions)           | 24    | 0.91                       |
+| tripled (section 3.1), constant | 30    | 0.73                       |
+
+This is an **order-of-magnitude plausibility check at a very low dose, not a predictive error.** `F` = 1
+is not a physical volume (it is "about doubled once" in Craig's unit), and the paper defines no "ready
+to bake" instant. It is not to be set beside the Izzreen gaps as an error of the same kind; the
+direction also differs (the model time falls between the paper's doubling and tripling times, whereas
+against Izzreen it is shorter than the observed times). Caveats: one curve, no spread; salt at 3.12 %
+of flour is above the 3 % gate; a free-standing ball, not a container; volume from photographs with a
+geometric assumption; no dough temperature or mixing time.
+
+**The slow start, separated.**
+
+- MEASURED (paper, one curve): a low initial volume growth, `V/V₀` 1.3 at 8 h; then an acceleration
+  to about three times the initial volume around 24 to 30 h; then a plateau. The authors also report
+  lateral spreading of the unmoulded ball: section 3.1, "in the early stage of leavening, a change in
+  the shape of the dough ball was observed, which was more flattened by gravity and enlarged at the
+  base, but the overall volume remained constant (Figure 1B, images at 4 and 8 h)". That sentence and
+  the 1.3 at 8 h are not reconciled by the paper.
+- NOT SEPARATED, explanatory hypotheses only: multiplication of the yeast biomass (no CFU was
+  measured), dissolved-CO2 saturation dynamics before bubbles grow, and the evolution of gas retention.
+  The curve does not show which, nor that yeast growth is the cause.
+- Consequence: the shipped progress `F` grows linearly in time at constant dose and temperature, and
+  the contract has no volume map, so a constant-rate law cannot produce a slow start. The cause is not
+  identified. Recorded as a **known limitation and an open question** (section 12), with no model change.
+  Paper II of Birch states, without data, an unchanged yeast cell density between mixing and the end of
+  a run at 2 to 6 %.
 
 ## 6. Sugar: Timmermans 2022
 
@@ -469,13 +677,13 @@ The full source index, with legal access links, read status and use, is
 [sources.md](sources.md). The table below keeps the arbitration record of the first reports.
 
 Read status: F = full text read by the named reviewer, A = abstract only, S = secondary. "Unverified"
-means this document could not confirm the item beyond the cited review comment. Only items 3 and 4 were
-read directly by a Flourprint agent.
+means this document could not confirm the item beyond the cited review comment. Items 3 and 4, and on
+2026-11-10 items 13 (the Birch _LWT_ paper only), 15, 18 and 19, were read directly by a Flourprint agent.
 
 | #   | Reference                                                                                                                                                                                                                                                                                                                                                         | Status                                                                                                                                                                                                                                                                                |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Nor Qhairul Izzreen M. N., Petersen M. A., Hansen Å. S. 2016. Volatile Compounds in Crumb of Whole-Meal Wheat Bread Fermented with Different Yeast Levels and Fermentation Temperatures. _Cereal Chemistry_ 93(2):209-216. DOI 10.1094/CCHEM-09-14-0196-R                                                                                                         | F by Codex review (PDF from the UMS eprints server). Title agrees with that URL                                                                                                                                                                                                       |
-| 2   | Nor Qhairul Izzreen M. N., Hansen Å. S., Petersen M. A. 2016. Volatile compounds in whole meal bread crust: The effects of yeast level and fermentation temperature. _Food Chemistry_ 210:566-576. DOI 10.1016/j.foodchem.2016.04.110                                                                                                                             | Unverified (Gemini report only)                                                                                                                                                                                                                                                       |
+| 2   | Nor Qhairul Izzreen M. N., Hansen Å. S., Petersen M. A. 2016. Volatile compounds in whole meal bread crust: The effects of yeast level and fermentation temperature. _Food Chemistry_ 210:566-576. DOI 10.1016/j.foodchem.2016.04.110                                                                                                                             | Abstract read 2026-11-10 (same design as item 1; one timing matrix with it unless independent preparations are shown); article not read                                                                                                                                               |
 | 3   | Timmermans E., Bautil A., Brijs K., Scheirlinck I., Van der Meulen R., Courtin C. M. 2022. Sugar Levels Determine Fermentation Dynamics during Yeast Pastry Making and Its Impact on Dough and Product Characteristics. _Foods_ 11(10):1388. DOI 10.3390/foods11101388                                                                                            | F, by the coordinating agent, 2026-11-04 (owner's PDF); title confirmed                                                                                                                                                                                                               |
 | 4   | Boudrag S., Arendt E. K., Zannini E. 2026. Effect of NaCl Reduction on Dough Rheology and Bread Quality of Fibre-Enriched White Wheat Bread. _Foods_ 15(13):2343. DOI 10.3390/foods15132343. PubMed 42450461                                                                                                                                                      | F, by the coordinating agent, 2026-10-30 (Europe PMC XML): sections 2.1 to 2.4, Tables 1, 2, 5 and A1; title confirmed                                                                                                                                                                |
 | 5   | Liu W. et al. 2023. _Scientific Reports_ 13:4534. DOI 10.1038/s41598-023-31591-y. Title given by the GPT audit: "Influence of α-amylase, xylanase and cellulase on the rheological properties of bread dough enriched with oat bran"                                                                                                                              | Journal, volume, article and DOI checked against the publisher by Codex review; title unconfirmed. The Gemini report's `Foods 12(6):1247` (DOI 10.3390/foods12061247) is wrong, and its CSV's 10.3390/foods12061249 is a different wrong DOI. Values match the real table (GPT audit) |
@@ -486,11 +694,14 @@ read directly by a Flourprint agent.
 | 10  | Zhang L. et al. 2025. _Foods_ 14(9):1649. DOI 10.3390/foods14091649                                                                                                                                                                                                                                                                                               | DOI real, bread heat and mass transfer model; the report's title is inexact (GPT audit). Exact title unverified                                                                                                                                                                       |
 | 11  | Vandenbosch S. et al. 2026. _Food Chemistry: X_ 104362. DOI 10.1016/j.fochx.2026.104362                                                                                                                                                                                                                                                                           | Not audited. Unverified                                                                                                                                                                                                                                                               |
 | 12  | Klupsaite D. et al. 2023. _Foods_ 12(5):937. DOI 10.3390/foods12050937. Murniece R. et al. 2024. _Foods_ 13(13):2077. DOI 10.3390/foods13132077                                                                                                                                                                                                                   | Not audited, rye. Unverified                                                                                                                                                                                                                                                          |
-| 13  | Birch A. N., Petersen M. A., Hansen Å. S. 2013. _LWT - Food Science and Technology_ 50(2):480-488. DOI 10.1016/j.lwt.2012.08.019. Romano A. et al. 2007, _J. Food Eng._ 83(2):142-148. Stanke M. et al. 2014, _J. Food Eng._ 142:40-47. Cruz A. L. B. et al. 2012, _Biotechnol. Bioeng._ 109(7):1735-1744. Rezaei M. N. et al. 2014, _Food Microbiol._ 40:104-110 | A (abstract only, per the Gemini report). Titles not repeated; unverified                                                                                                                                                                                                             |
+| 13  | Birch A. N., Petersen M. A., Hansen Å. S. 2013. _LWT - Food Science and Technology_ 50(2):480-488. DOI 10.1016/j.lwt.2012.08.019. Romano A. et al. 2007, _J. Food Eng._ 83(2):142-148. Stanke M. et al. 2014, _J. Food Eng._ 142:40-47. Cruz A. L. B. et al. 2012, _Biotechnol. Bioeng._ 109(7):1735-1744. Rezaei M. N. et al. 2014, _Food Microbiol._ 40:104-110 | Birch _LWT_: F, through the PhD thesis that reproduces it, 2026-11-10 (section 5). The others: A (abstract only, per the Gemini report), titles not repeated, unverified                                                                                                              |
 | 14  | Walker C. E., Quail K. J., McMaster G. J. 1996. _Cereal Foods World_ 41(3):127-133                                                                                                                                                                                                                                                                                | S (secondary summaries only, per the Gemini report)                                                                                                                                                                                                                                   |
-| 15  | Finney et al. 1976 (dose exponent 0.74)                                                                                                                                                                                                                                                                                                                           | A, as quoted by the contract. Full citation not in the inputs; unverified                                                                                                                                                                                                             |
+| 15  | Finney P. L., Magoffin C. D., Hoseney R. C., Finney K. F. 1976. Short-time baking systems. I. Interdependence of yeast concentration, fermentation time, proof time, and oxidation requirement. _Cereal Chemistry_ 53(1):126-134                                                                                                                                  | F, primary, by the research agent 2026-11-10 (nine pages): exponents 0.68 to 0.83 by observable (section 5)                                                                                                                                                                           |
 | 16  | TXCraig1, "Baker's yeast quantity prediction model", pizzamaking.com; transcription `tysonjf/weatherApp/src/engine/craigTable.ts`. Calvel poolish table (transcription)                                                                                                                                                                                           | S, MODEL OUTPUT                                                                                                                                                                                                                                                                       |
 | 17  | King Arthur Baking, _Dough Temperature_ (professional reference), cited by the contract for friction                                                                                                                                                                                                                                                              | S, as cited by the contract                                                                                                                                                                                                                                                           |
+| 18  | Birch A. N., van den Berg F. W. J., Hansen Å. S. 2013. Expansion profiles of wheat doughs fermented by seven commercial baker's yeasts. _J. Cereal Sci._ 58:318-323. DOI 10.1016/j.jcs.2013.05.009                                                                                                                                                                | F, through the thesis, 2026-11-10; rate-constant cells not transcribed                                                                                                                                                                                                                |
+| 19  | Covino C., Sorrentino A., Di Pierro P., Masi P. 2023. Study of Physico-Chemical Properties of Dough and Wood Oven-Baked Pizza Base: The Effect of Leavening Time. _Foods_ 12(7):1407. DOI 10.3390/foods12071407                                                                                                                                                   | F, open access, 2026-11-10; Fig. 1 not viewed                                                                                                                                                                                                                                         |
+| 20  | Verheyen C. et al. 2015. _Food Res. Int._ 76:860-866. DOI 10.1016/j.foodres.2015.08.013. Gélinas P. 1997. _Food Microbiol._ 14:55-62. DOI 10.1006/fmic.1996.0063                                                                                                                                                                                                  | A (abstracts via Europe PMC, 2026-11-10); claims relayed by an external review, confirmed at abstract level only                                                                                                                                                                      |
 
 ## 11. Personal calibration against the universal model
 
@@ -527,6 +738,18 @@ replicates stated (see the data file). Its 7-day storage results also show subst
 over days. Candidate test once dough-temperature histories exist: compare Arrhenius, a
 square-root form with `T_min` near 0–2 °C, and CTMI against this curve and Izzreen's 8 °C cells,
 with dough lag credited (gate 6).
+
+**Caution on the cold law (2026-11-10).** A Ratkowsky-type `T_min` is a fitted shape parameter, not a
+zero-flux temperature: Kyogoku reports gas at 0 °C, so no hard cutoff below a `T_min` is supported by
+the data. The 0.25.0 learning flags (`cold_stage_uncalibrated`, `cold_hold_over_72h`,
+`dough_above_28c`) are communication flags, not physical thresholds.
+
+**Open question: a slow start at very low dose (2026-11-10).** Covino 2023 (section 5) shows a
+volume index of 1.3 after 8 h and about three times after 24 to 30 h at 0.066 % fresh yeast and 22 °C.
+A constant-rate law cannot produce a slow start and the cause is not identified: biomass
+multiplication, dissolved-CO2 saturation and the evolution of gas retention are unseparated
+hypotheses. Test: viable counts (CFU) at intervals in a low-dose dough, with paired gas or height
+readings and a measured dough temperature (home protocols: #260).
 
 How dogfood observations can fill it: record actual masses, flour product, yeast form and dose,
 timestamps, ambient or fridge temperature, post-mix dough temperature when feasible, a rise ratio in a
@@ -575,6 +798,37 @@ respect:
   report's comparison of added sucrose with extrapolated gas (about 21 %) is illustrative only and
   neither establishes nor excludes sugar exhaustion.
 
+**Candidate hypotheses from the external review of 2026-11-10 (comments on #231; reasoning, not
+adopted, nothing enters the contract).**
+
+- **Height-ceiling penalty.** For a first-order height curve `h = b0 + b1(1 − e^(−kt))` the time to a
+  fixed height is `t* = Δh*/(b1 k) · Φ(u)`, `Φ(u) = −ln(1 − u)/u`, `u = Δh*/b1`. If the ceiling `b1`
+  falls with temperature toward `Δh*`, `t*` can rise with temperature while the initial rate still
+  rises, which would give a time-to-height optimum without a change of metabolic rate (Birch Paper I
+  reports the shortest times at 25 °C at its highest dose). Test: height trajectories recorded to the
+  plateau at several temperatures, with an independent gas measurement (#260).
+- **Spherical first-eigenmode thermal estimator.** For a sphere the core and the mean temperature decay
+  with one time constant after the higher modes die out, with amplitudes `A₁ > 1 > B₁` that depend on the
+  Biot number; for `Bi` about 0.44 (illustrative: `h` 8 W/m²K, `L_c` 0.02 m, `λ` 0.36 W/m K, none of them
+  measured) `A₁` is about 1.35 (our check), so a core probe's decay reads about 30 % long against the mean.
+  Candidate: fit `ln θ_core = ln A₁ − t/τ₁` on probe curves and compare it with a direct fit of the
+  fixed-lag and one- and two-node models; Jensen's inequality makes the volume-averaged rate exceed the
+  rate at the mean temperature. Test: probe-logged cooling of 300 g, 1 kg and 2 kg doughs (#260, #268).
+- **Preferment carry-over factor `γ`.** The preferment's yeast would count `γ M_pref` in the dose of the
+  final dough, with `γ → 1` as its age tends to 0; `γ` is not necessarily at or above 1 (an exhausted or
+  acidified preferment may be below) and no functional form is identified. The contract keeps `γ` = 1.
+  Test: paired fresh against mature preferment doughs with matched post-mix composition and measured
+  internal temperature; the result is a net lumped effect, not yeast multiplication alone.
+- **Extensive progress bookkeeping.** With a rate that does not depend on past progress, resetting the
+  rise reference at the mix cancels any carried progress from the post-mix prediction, and with a dose
+  exponent other than 1 the summed activity depends on the flour mass (an artefact). It is bookkeeping,
+  not conserved biology. Test: the same paired preferment trials.
+
+Follow-ups kept apart: #268 (recording and export of timestamped temperatures, contract 0.26.0), #243
+(saying explicitly what the model predicts, and the baker's sensory readiness criteria and
+observations), #260 (home measurement protocols, including heights and cooling curves) and #275
+(personal calibration, friction first).
+
 Other open items: transcribe the Timmermans time courses (Figure 4 of the paper); confirm the bibliography titles marked unverified; check whether the Izzreen formula
 details match the paper; measure the dough temperature during the owner's cold retards.
 
@@ -595,6 +849,7 @@ details match the paper; measure the dough temperature during the owner's cold r
 | science doc     | 2026-10-30        | Section 8 and its data file: Boudrag Table 5 re-extracted from the full text; the earlier transcription and the salt factor fitted on it withdrawn. No model change.                                                                                                                                                                                                                                                                                                 |
 | science doc     | 2026-11-03        | Section 15: predictive uncertainty measured on published practice (calibrated, 80 % interval about ×5; the corner envelope covers 72 % of held-out recipes; first-contact dough clock of contract 0.24.0). No model change.                                                                                                                                                                                                                                          |
 | science doc     | 2026-11-07        | Section 8: Belz 2017 salt series read in full text, with its data file; section 12: design notes from the third external report. No model change.                                                                                                                                                                                                                                                                                                                    |
+| science doc     | 2026-11-10        | Ledger update after two external reviews of #231: Finney 1976 read in full (an experiment; 0.68 to 0.83 by observable), Birch 2013 papers read through the thesis (second Copenhagen matrix, product spread), Covino 2023 (only low-dose dataset), Izzreen provenance (one timing matrix, two estimators), the thermal-confounding identity and its simulation, cold-law caution, candidate hypotheses (section 12). No model change.                                |
 
 Any future model version adds a row here with the evidence it rests on.
 
@@ -721,7 +976,11 @@ Without low-confidence recipes (n = 42): model CRPS 0.313, 80 % width ×4.1; rul
   side of the central time). With 50 recipes an 80 % coverage is known to about ±6 points, and the
   spread is fitted on the training sources, so coverage near nominal is partly by construction.
 - The proper scores do not separate the model from the two-parameter rule fitted on the recipes:
-  the model's CRPS is lower and the rule's log score is lower, both within noise.
+  the model's CRPS is lower and the rule's log score is lower, both within noise. The shipped law and
+  the fitted dose-plus-Q10 rule tie (RMS ×1.89; CRPS 0.350 against 0.358). The benchmark measures
+  agreement with published plans, not observed readiness; the decisive missing evidence is recorded
+  bakes with dough temperature and height (`home-measurements.md`; contract 0.26.0 preparation
+  temperatures, #268; personal calibration, #275).
 - The **corner envelope** of the contract contains the held-out time for 36 of 50 recipes (72 %;
   76 % without low confidence), with a median progress band of ×5.2 (the ratio of engine progress at the high and low corners,
   not a time ratio). On this data it behaves like
