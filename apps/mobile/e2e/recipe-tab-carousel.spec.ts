@@ -441,6 +441,7 @@ for (const english of [false, true]) {
   test(`a short flick commits while pointer cancellation keeps the section${suffix}`, async ({
     page,
   }) => {
+    await page.clock.install();
     await open(page);
     const { cdp, send } = await finger(page);
     try {
@@ -448,10 +449,19 @@ for (const english of [false, true]) {
       await send('touchMove', 240);
       await send('touchCancel');
       await expect(tabs(page).nth(0)).toHaveAttribute('aria-selected', 'true');
-      await send('touchStart');
-      await send('touchMove', 296);
-      await send('touchMove', 245);
-      await send('touchEnd');
+      // Explicit sample intervals isolate the velocity assertion from CDP scheduling.
+      await page.clock.pauseAt(new Date((await page.evaluate(() => Date.now())) + 1000));
+      try {
+        await send('touchStart');
+        await page.clock.runFor(16);
+        await send('touchMove', 296);
+        await page.clock.runFor(16);
+        await send('touchMove', 245);
+        await page.clock.runFor(16);
+        await send('touchEnd');
+      } finally {
+        await page.clock.resume();
+      }
       await expect(tabs(page).nth(1)).toHaveAttribute('aria-selected', 'true');
     } finally {
       await finish(cdp);
