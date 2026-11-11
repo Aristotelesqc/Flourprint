@@ -99,14 +99,14 @@ r(T)  = exp( (Ea / R) × (1 / 294.25 K − 1 / T) )      (r = 1 at 21.1 °C)
 
 ## Parameters (version 0.1.0)
 
-| Parameter             | Value       | Range used for the band | Basis                                                                                                                                                                                        |
-| --------------------- | ----------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `A`                   | 3.43 h      | ×0.75 to ×1.25          | least-squares fit of Craig's table, 952 cells, 3.9–30 °C, ≥ 3 h (rms 5 %, max 32 % error); Craig's own anchor differs by 15 %, Calvel's poolish by 12 %                                      |
-| `k`                   | 0.729       | 0.6 to 0.9              | same fit; Finney et al. 1976 (primary, read) gives 0.68 to 0.83 by observable, in an enriched dough (gassing at 30 °C, 6 % sugar, 2–12 % yeast): same order of magnitude, outside the domain |
-| `Ea`                  | 98.3 kJ/mol | 50 to 100 kJ/mol        | same fit; other sources are flatter (≈ 50–72) (#29 evidence review)                                                                                                                          |
-| instant → fresh       | ÷ 0.33      | ÷ 0.32 to ÷ 0.42        | King Arthur 0.33, Red Star ≈ 0.42, Craig 0.32                                                                                                                                                |
-| active dry → fresh    | ÷ 0.40      | ÷ 0.40 to ÷ 0.50        | King Arthur 0.40, Red Star ≈ 0.42, others 0.5                                                                                                                                                |
-| dough thermal lag `τ` | 0 to 3 h    | the range itself        | assumption, no source: how long a dough takes to follow a new ambient (e.g. the fridge). **Default** for a step without thermal inputs; see Dough thermal model                              |
+| Parameter             | Value       | Range used for the band | Basis                                                                                                                                                                                                                                    |
+| --------------------- | ----------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `A`                   | 3.43 h      | ×0.75 to ×1.25          | least-squares fit of Craig's table, 952 cells, 3.9–30 °C, ≥ 3 h (rms 5 %, max 32 % error); Craig's own anchor differs by 15 %, Calvel's poolish by 12 %                                                                                  |
+| `k`                   | 0.729       | 0.6 to 0.9              | same fit; Finney et al. 1976 (primary, read) gives 0.68 to 0.83 by observable, in an enriched dough (baking tests, temperature not stated; gassing tests at 30 °C; 6 % sugar, 2–12 % yeast): same order of magnitude, outside the domain |
+| `Ea`                  | 98.3 kJ/mol | 50 to 100 kJ/mol        | same fit; other sources are flatter (≈ 50–72) (#29 evidence review)                                                                                                                                                                      |
+| instant → fresh       | ÷ 0.33      | ÷ 0.32 to ÷ 0.42        | King Arthur 0.33, Red Star ≈ 0.42, Craig 0.32                                                                                                                                                                                            |
+| active dry → fresh    | ÷ 0.40      | ÷ 0.40 to ÷ 0.50        | King Arthur 0.40, Red Star ≈ 0.42, others 0.5                                                                                                                                                                                            |
+| dough thermal lag `τ` | 0 to 3 h    | the range itself        | assumption, no source: how long a dough takes to follow a new ambient (e.g. the fridge). **Default** for a step without thermal inputs; see Dough thermal model                                                                          |
 
 - Craig's table: pizzamaking.com "Baker's yeast quantity prediction model" (TXCraig1), read
   through the open-source transcription `tysonjf/weatherApp/src/engine/craigTable.ts`. It is a
@@ -1073,11 +1073,11 @@ A dough step may be set to follow the model (`ProcessStep.durationMode: 'model'`
 
 ## Validation data (independent of the fit)
 
-| Case                                            | Model (central) | Reference                                                                           | Status                                                                      |
-| ----------------------------------------------- | --------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| poolish, Calvel table at 21 °C, 0.1–3.5 % fresh | within ×1.6     | Calvel/"Juju" table (transcription)                                                 | agrees within the band                                                      |
-| poolish 0.1 % yeast, 21 °C (BBGA)               | 19.5 h          | 12–14 h                                                                             | outside unless the yeast is dry (0.1 % instant ≈ 0.3 % fresh → 9.6 h)       |
-| dose exponent                                   | k = 0.729       | Finney 1976: 0.68 to 0.83 by observable (gassing at 30 °C, 6 % sugar, 2–12 % yeast) | same order of magnitude, outside the domain; not a validation at home doses |
+| Case                                            | Model (central) | Reference                                                                                                                       | Status                                                                      |
+| ----------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| poolish, Calvel table at 21 °C, 0.1–3.5 % fresh | within ×1.6     | Calvel/"Juju" table (transcription)                                                                                             | agrees within the band                                                      |
+| poolish 0.1 % yeast, 21 °C (BBGA)               | 19.5 h          | 12–14 h                                                                                                                         | outside unless the yeast is dry (0.1 % instant ≈ 0.3 % fresh → 9.6 h)       |
+| dose exponent                                   | k = 0.729       | Finney 1976: 0.68 to 0.83 by observable (baking tests, temperature not stated; gassing tests at 30 °C; 6 % sugar, 2–12 % yeast) | same order of magnitude, outside the domain; not a validation at home doses |
 
 Reference cases for tests are computed outside the engine from the equations above.
 
