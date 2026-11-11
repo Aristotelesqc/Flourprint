@@ -658,6 +658,48 @@ dough of Gao 2025's DSC table. Nothing here is adopted.
 8 °C and 3.3 to 17.0 at 32 °C between 2 and 6 % yeast. Peak area is not perceived intensity. A first
 flavour layer should state relative chemical tendencies only, not sensory scores.
 
+### Yeast form: Verheyen 2014 and 2015 (2026-11-11)
+
+Source: the three articles reproduced in C. Verheyen's TUM doctoral thesis (sections 2.2 to 2.4),
+read in full through the thesis by the research agent on 2026-11-11 (UTC); values and thesis pages
+in [data/verheyen-2015.md](data/verheyen-2015.md) and `data/verheyen-2015.csv`. MEASURED, one
+laboratory.
+
+**What is measured.** Rheofermentometer (315 g dough, 30 C, 180 min) with compressed yeast (CY) and
+instant dry yeast (IDY) at **equal dry-matter doses**, 0.25 to 3.0 g per 100 g of flour, flour type
+550, 58.6 g water per 100 g flour less the yeast water (thesis p. 39). At equal dry matter the total
+CO2 over 180 min is the same for both forms within the printed spread (about 1400 to 1500 ml from
+0.75 g on; Table 2, p. 42), while the colony count of IDY is about 1/18 of CY (computed from Table 2) and the maximum gas formation rate is higher for IDY at the top dose (1630 against 1260 ml/h,
+p. 59). For CY, the gas formation rate shortened the time to gas escape and lowered the CO2 held at
+that moment (minimum 372 ml); for IDY the CO2 held stayed at 538 to 564 ml whatever the rate (pp.
+42, 60). Loaves from the same series: maximum specific bread volume about 3.3 ml/g for IDY against
+3.9 ml/g for CY (p. 42; 3.28 and 3.88 on p. 44). The abstract states "the specific bread volume was
+21% below that of the samples leavened with CY" (p. 38); the printed maxima give about 15 %, so
+the 21 % is the abstract's figure and is not reproduced by the body. It compares the best loaf of
+each yeast across doses and fermentation endpoints, not one dose at one time. The same laboratory
+found 27 commercial yeasts differ widely in dead cells and extractable glutathione (fresh 1.77 to
+8.82 % dead cells, 1.16 to 10.51 mg GSH per g dry yeast; dry 7.42 to 75.14 %, 5.37 to 81.22 mg/g),
+with batch-to-batch differences of the same product up to 75 % and 91 % (pp. 47, 48); added at the
+levels of dry yeast, GSH softened unleavened dough (|G*| 8170 to 3550 Pa) and, in a chemically
+leavened dough, raised dough height loss to 20.4 % (pp. 48, 49). The glutathione route is the
+authors' candidate explanation, not a result for yeast-leavened dough.
+
+**Domain.** Controlled 30 C, home-unusual dry-matter doses of 0.25 to 3.0 % (product mass roughly
+0.8 to 10 % for CY if the general 28 to 33 % dry matter of thesis p. 12 is assumed; the moisture of
+these products is not printed), one flour, a closed 315 g chamber, no cold step, no room
+temperature, no readiness endpoint. Salt, sugar and fat are not printed for the CY and IDY
+paper.
+
+**Consequence for the ASSUMED yeast-form conversions (1/0.33 and 1/0.40).** No change is made.
+The evidence does not test the ratios: the design fixes dry matter and prints no product moisture.
+It shows that yeast form can affect more than a mass multiplier: at equal dry matter the form
+changed the maximum gas rate, how much gas the dough held, the loaf volume and the glutathione
+released, and two batches of one product differed by up to 91 % in glutathione. A single mass ratio
+can at best match total gas production in this setup. It is not shown to match rate, retention or
+loaf outcome, nor at home doses, at room temperature or in the cold. The conversions stay ASSUMED
+vendor ratios; the form and batch spread belongs to the uncertainty of the yeast input and to a
+possible later per-form validation, not to a new coefficient.
+
 ## 8. Salt: Boudrag 2026
 
 Boudrag S., Arendt E. K., Zannini E. 2026, _Foods_ 15(13):2343. Read status: full text, Table 5 extracted
@@ -740,7 +782,8 @@ means this document could not confirm the item beyond the cited review comment. 
 | 17  | King Arthur Baking, _Dough Temperature_ (professional reference), cited by the contract for friction                                                                                                                                                                                                                                                              | S, as cited by the contract                                                                                                                                                                                                                                                           |
 | 18  | Birch A. N., van den Berg F. W. J., Hansen Å. S. 2013. Expansion profiles of wheat doughs fermented by seven commercial baker's yeasts. _J. Cereal Sci._ 58:318-323. DOI 10.1016/j.jcs.2013.05.009                                                                                                                                                                | F, through the thesis, 2026-11-10; rate-constant cells not transcribed                                                                                                                                                                                                                |
 | 19  | Covino C., Sorrentino A., Di Pierro P., Masi P. 2023. Study of Physico-Chemical Properties of Dough and Wood Oven-Baked Pizza Base: The Effect of Leavening Time. _Foods_ 12(7):1407. DOI 10.3390/foods12071407                                                                                                                                                   | F, open access, 2026-11-10; Fig. 1 not viewed                                                                                                                                                                                                                                         |
-| 20  | Verheyen C. et al. 2015. _Food Res. Int._ 76:860-866. DOI 10.1016/j.foodres.2015.08.013. Gélinas P. 1997. _Food Microbiol._ 14:55-62. DOI 10.1006/fmic.1996.0063                                                                                                                                                                                                  | A (abstracts via Europe PMC, 2026-11-10); claims relayed by an external review, confirmed at abstract level only                                                                                                                                                                      |
+| 20  | Verheyen C. et al. 2014. _LWT_ 58:194-202. DOI 10.1016/j.lwt.2014.02.050. Verheyen C. et al. 2015. _Food Res. Int._ 76:860-866. DOI 10.1016/j.foodres.2015.08.013. Verheyen C. et al. 2015. _Food Chem._ 173:243-249. DOI 10.1016/j.foodchem.2014.10.021                                                                                                          | F, through the TUM doctoral thesis (sections 2.2 to 2.4), 2026-11-11 (UTC); see "Yeast form: Verheyen" in section 7                                                                                                                                                                   |
+| 21  | Gélinas P. 1997. _Food Microbiol._ 14:55-62. DOI 10.1006/fmic.1996.0063                                                                                                                                                                                                                                                                                           | A (abstract via Europe PMC, 2026-11-10); no full text located                                                                                                                                                                                                                         |
 
 ## 11. Personal calibration against the universal model
 
