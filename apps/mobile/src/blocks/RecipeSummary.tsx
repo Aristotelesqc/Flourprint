@@ -147,11 +147,14 @@ export const RecipeSummary = ({
                   }
                   aria-haspopup="dialog"
                   className="fp-control-reset fp-focus inline-grid size-[48px] place-items-center rounded-pill text-muted hover:text-ink"
-                  onClick={
-                    metric === 'hydration' && resolved
-                      ? onExplainHydration
-                      : () => setDetail(metric)
-                  }
+                  onClick={(event) => {
+                    event.currentTarget.focus({ preventScroll: true });
+                    if (metric === 'hydration' && resolved) {
+                      onExplainHydration();
+                    } else {
+                      setDetail(metric);
+                    }
+                  }}
                 >
                   <svg
                     width="18"

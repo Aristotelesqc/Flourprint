@@ -278,7 +278,7 @@ for (const english of [false, true]) {
   }) => {
     await importRecipe(page, false, english);
     const trigger = routed(page).getByRole('button', { name: title, exact: true });
-    await trigger.click();
+    await trigger.tap();
     await expect(page.getByRole('dialog', { name: title, exact: true })).toBeVisible();
     const sheet = overlayWithHeading(page, title);
     await expect(sheet.getByRole('heading', { name: title, exact: true })).toBeVisible();
@@ -326,7 +326,7 @@ for (const english of [false, true]) {
     ).toBeVisible();
     await settledOverlay(sheet);
     await page.screenshot({ path: test.info().outputPath('hydration-sheet.png') });
-    await sheet.getByRole('button', { name: close, exact: true }).click();
+    await sheet.getByRole('button', { name: close, exact: true }).tap();
     await expect(sheet).toBeHidden();
     await expect(trigger).toBeFocused();
 
@@ -347,14 +347,23 @@ for (const english of [false, true]) {
         name: english ? `Explanation: ${label}` : `Explication : ${label}`,
         exact: true,
       });
-      await info.click();
+      await info.tap();
       const metricSheet = overlayWithHeading(page, heading);
       const dismiss = metricSheet.getByRole('button', { name: close, exact: true });
       await expect(dismiss).toBeFocused();
-      await dismiss.click();
+      await dismiss.tap();
       await expect(metricSheet).toBeHidden();
       await expect(info).toBeFocused();
     }
+
+    await trigger.tap();
+    const reopenedSheet = overlayWithHeading(page, title);
+    const closeButton = reopenedSheet.getByRole('button', { name: close, exact: true });
+    await expect(closeButton).toBeVisible();
+    await expect(closeButton).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(reopenedSheet).toBeHidden();
+    await expect(trigger).toBeFocused();
   });
 
   test(`shared hydration sheet keeps an unknown ingredient incomplete and lower-bounded${suffix}`, async ({
