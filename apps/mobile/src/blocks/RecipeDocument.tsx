@@ -334,11 +334,11 @@ export const RecipeDocument = ({
           expanded={disclosures.flours}
           onExpandedChange={(expanded) => onDisclosuresChange({ ...disclosures, flours: expanded })}
           label={
-            <span className="font-bold text-ink">
-              {t('recipe.document.flours')}
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="font-bold text-ink">{t('recipe.document.flours')}</span>
               {resolved && (
-                <span className="ml-2 font-normal text-muted tabular-nums">
-                  ({grams(resolved.flourTotal)})
+                <span className="rounded-pill bg-surface-container px-2 py-0.5 text-metadata font-semibold tabular-nums text-on-surface whitespace-nowrap">
+                  {grams(resolved.flourTotal)}
                 </span>
               )}
             </span>
@@ -406,7 +406,7 @@ export const RecipeDocument = ({
                     <span className="text-right text-xs text-muted tabular-nums">
                       {pct(flour.sharePct)}
                     </span>
-                    <span className="min-w-[64px] text-right font-bold tabular-nums">
+                    <span className="min-w-[64px] text-right font-bold tabular-nums whitespace-nowrap">
                       {resolved ? grams(resolved.flourByFlour[flour.id] ?? 0) : '—'}
                     </span>
                   </div>
@@ -439,30 +439,35 @@ export const RecipeDocument = ({
                 return (
                   <div
                     key={component.id}
-                    className="flex flex-col gap-2 rounded-xl border border-line p-3"
+                    className="flex flex-col gap-2 rounded-card border border-line p-3"
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="font-semibold text-ink">
+                      <span className="min-w-0 flex-1 break-words font-semibold text-ink">
                         {componentName(formula, component)}
                       </span>
-                      <div className="flex items-baseline gap-2 tabular-nums">
+                      <span className="whitespace-nowrap font-semibold tabular-nums">
+                        {c ? grams(c.mass) : '—'}
+                      </span>
+                    </div>
+
+                    {(stats?.flourPct !== undefined || stats?.massPct !== undefined) && (
+                      <div className="flex flex-wrap items-baseline gap-2 text-supporting text-muted tabular-nums">
                         {stats?.flourPct !== undefined && (
-                          <span className="text-xs text-muted">
+                          <span>
                             {t('recipe.document.componentFlourShare', {
                               pct: pct(stats.flourPct),
                             })}
                           </span>
                         )}
                         {stats?.massPct !== undefined && (
-                          <span className="text-xs text-muted">
+                          <span>
                             {t('recipe.document.componentMassShare', {
                               pct: pct(stats.massPct),
                             })}
                           </span>
                         )}
-                        <span className="font-bold">{c ? grams(c.mass) : '—'}</span>
                       </div>
-                    </div>
+                    )}
 
                     {fieldsMounted && (
                       <div hidden={!editable}>
