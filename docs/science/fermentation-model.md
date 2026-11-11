@@ -5,6 +5,9 @@ Status: working document, created 2026-10-10. It states the evidence behind the 
 a successor, and the limits of both. It does not change the contract. See [README.md](README.md)
 for the provenance labels and the rules.
 
+For the state of each domain in the code, the screens, the pull requests and the project's decisions, see
+[dough-behavior.md](dough-behavior.md).
+
 Sources of this document are the owner's scope comment and three comments on issue #33, cited by
 role: the **Gemini report** (deep research, with transcribed tables and fits M0 to M6), the **GPT
 audit** of that report, and the **Codex synthesis** (verified Izzreen Table I, independent refits,
@@ -478,7 +481,13 @@ The contract's 0.74 is the two-point value 180/70 min against 2/7.2 % (0.737).
 - **The claim that Finney is a prescribed multi-punch schedule, not an observation, does not hold for
   the 1976 paper.** For traceability, the often-quoted six-row schedule (2.0 to 8.6 %) comes from the
   later codification by K. F. Finney (1984, _Cereal Chem._ 61:20-27) in AACC Method 10-10B / 10-10.03,
-  **not read** here and not transcribed; its proof times as quoted by the review
+  **not read** here and not transcribed. Method 10-10.03 is a separate evidence object from the 1976
+  paper (a later standardised baking method, not Finney's experiment). Its official listing
+  (cerealsgrains.org, `10BakingQuality.aspx`) could not be read by this agent on 2026-11-11 (the site
+  answered with a Cloudflare challenge, HTTP 403, and the host is outside the session's allowed network),
+  so what the listing states is **not verified here**; an external review reports a six-row table
+  (yeast 2 to 8.6 %, bulk 180 to 60 min, proof 60 to 24 min), **unverified and not transcribed into
+  `data/`**, whose proof times must not replace the paper's optimum proof times; its proof times as quoted by the review
   differ from the paper's, so it is not a copy of these measurements.
 - It is an independent measured dose response, with limits: loaf-quality optima, not a dough-ready or
   height end point; an enriched dough (6 % sucrose, 3 % shortening, milk); compressed or other yeast
@@ -532,6 +541,16 @@ geometric assumption; no dough temperature or mixing time.
   identified. Recorded as a **known limitation and an open question** (section 12), with no model change.
   Paper II of Birch states, without data, an unchanged yeast cell density between mixing and the end of
   a run at 2 to 6 %.
+
+**Mechanical behaviour runs on its own clock (2026-11-11).** Table 1 of the same paper reports compression
+work `W` after a stress-relaxation test, mean ± SD, n = 8 (`data/covino-2023-table1.csv`): 6.59 ± 0.41 J
+at 0 h, 29.96 ± 2.52 J at 4 h, 16.16 ± 0.69 J at 8 h, 19.72 ± 1.10 J at 16 h, 15.97 ± 1.43 J at 24 h and
+7.65 ± 0.40 J at 48 h. The trajectory is not monotonic (8 to 16 h rebounds), peaks at 4 h, when the
+photographed volume has barely changed, and is back near its initial level at 48 h, when the volume is on
+its plateau. The mechanical state of the dough therefore does not follow the volume curve, which supports
+keeping progress, volume and readiness as separate quantities (sections 3 and 4). It identifies no
+overproof or collapse threshold and gives no readiness criterion; nothing in the shipped model, the
+profiles or the contract follows from it.
 
 ## 6. Sugar: Timmermans 2022
 
@@ -807,6 +826,18 @@ adopted, nothing enters the contract).**
   rises, which would give a time-to-height optimum without a change of metabolic rate (Birch Paper I
   reports the shortest times at 25 °C at its highest dose). Test: height trajectories recorded to the
   plateau at several temperatures, with an independent gas measurement (#260).
+- **Constant gas-loss countermodel (2026-11-11; DERIVED, a toy observable).** Suppose a height-related
+  observable accumulates as `dH/dt = a·Yᵏ − L` with `a` and a positive `L` constant during a segment. For
+  a fixed increment `H*` and `a·Yᵏ > L`, `t* = H*/(a·Yᵏ − L)` and the apparent exponent is
+  `k_app = −d ln t*/d ln Y = k / [1 − L/(a·Yᵏ)]`, which is above `k` and decreases as the dose rises. A
+  dose-independent net loss could thus inflate the apparent exponent at low dose without changing the
+  intrinsic one. **Stated limitation:** `k_app ≥ k` always, so it cannot give an exponent below `k`.
+  Birch's 5 °C row (`data/birch-2013-table.csv`, 1260, 210, 180 min at 20, 40, 60 g/kg) has
+  adjacent-pair exponents 2.585 (20 to 40) and 0.380 (40 to 60; our arithmetic), the second below the
+  shipped `k` = 0.729, which the formula cannot produce; at 35 °C the pair ordering also runs the other
+  way. It is not a Birch fit, not a measured leak rate, not an identified mechanism, and any
+  retained-gas hypothesis would have to be tested jointly against gas evolution, retained height,
+  structure and several conditions before a parameter is added. Candidate only; no parameter, no model change.
 - **Spherical first-eigenmode thermal estimator.** For a sphere the core and the mean temperature decay
   with one time constant after the higher modes die out, with amplitudes `A₁ > 1 > B₁` that depend on the
   Biot number; for `Bi` about 0.44 (illustrative: `h` 8 W/m²K, `L_c` 0.02 m, `λ` 0.36 W/m K, none of them
