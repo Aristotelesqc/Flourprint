@@ -263,11 +263,13 @@ export const WeighingChecklist = ({
                               type="button"
                               aria-label={t('recipe.document.editIngredient')}
                               className="fp-reset inline-flex min-h-[48px] min-w-[48px] items-center justify-center text-muted hover:text-ink"
-                              onClick={() => {
+                              onClick={(event) => {
                                 if (isWater) {
                                   if (singleDoughWater) {
+                                    event.currentTarget.focus({ preventScroll: true });
                                     setSheetIngredientId(singleDoughWater.id);
                                   } else if (doughWaters.length > 0) {
+                                    event.currentTarget.focus({ preventScroll: true });
                                     setSheetIngredientId(doughWaters[0]?.id ?? null);
                                   }
                                   return;
@@ -276,6 +278,7 @@ export const WeighingChecklist = ({
                                 if (onEditIngredient) {
                                   onEditIngredient(row.item.id);
                                 } else {
+                                  event.currentTarget.focus({ preventScroll: true });
                                   setSheetIngredientId(row.item.id);
                                 }
                               }}
@@ -391,10 +394,11 @@ export const WeighingChecklist = ({
                   <Ui
                     component="fp.button"
                     variant="secondary"
-                    onClick={() => {
+                    onClick={(event) => {
                       if (onEditIngredient) {
                         onEditIngredient(ingredient.id);
                       } else {
+                        event.currentTarget.focus({ preventScroll: true });
                         setSheetIngredientId(ingredient.id);
                       }
                     }}
@@ -423,7 +427,7 @@ export const WeighingChecklist = ({
           closeLabel={t('recipe.document.closeDetail')}
           onDismiss={() => setSheetIngredientId(null)}
         >
-          <div className="flex flex-col gap-4 p-4">
+          <div className="flex flex-col gap-4">
             {failureMessage && (
               <p id={detailErrorId} role="alert" className="m-0 text-sm text-alert">
                 {failureMessage}
@@ -449,14 +453,13 @@ export const WeighingChecklist = ({
             )}
 
             {/* Whole-recipe Baker % */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium">
+            <div className="flex flex-col gap-1.5">
+              <span className="font-medium text-supporting">
                 {t('recipe.document.wholeRecipeBakerPct')}
               </span>
               <NumberField
                 label={t('recipe.document.wholeRecipeBakerPct')}
                 unit="%"
-                width="7rem"
                 value={activeSheetIngredient.bakerPct}
                 describedBy={failureMessage !== undefined ? detailErrorId : undefined}
                 onCommit={(val) => {
@@ -471,12 +474,13 @@ export const WeighingChecklist = ({
             </div>
 
             {/* Whole-recipe Grams */}
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm font-medium">{t('recipe.document.wholeRecipeGrams')}</span>
+            <div className="flex flex-col gap-1.5">
+              <span className="font-medium text-supporting">
+                {t('recipe.document.wholeRecipeGrams')}
+              </span>
               <NumberField
                 label={t('recipe.document.wholeRecipeGrams')}
                 unit="g"
-                width="7rem"
                 value={resolved.grams[activeSheetIngredient.id] ?? 0}
                 describedBy={failureMessage !== undefined ? detailErrorId : undefined}
                 onCommit={(val) => {

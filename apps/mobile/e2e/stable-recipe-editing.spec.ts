@@ -449,6 +449,73 @@ test('removing an invalid ingredient unregisters its save blocker', async ({ pag
   await expectRecipeRevision(page, 2);
 });
 
+for (const english of [false, true]) {
+  test(`whole-recipe ingredient detail sheet fits horizontally and restores focus at 360px 130%${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await openRecipe(page);
+    await page.addStyleTag({
+      content: 'html, body { font-size: 20.8px !important; }',
+    });
+    await settled(page);
+
+    const saltRowLabel = english ? 'Salt, Final mix (g)' : 'Sel, Mélange final (g)';
+    const editLabel = english ? 'Edit ingredient' : 'Modifier l’ingrédient';
+    const sheetHeading = english
+      ? 'Edit whole-recipe ingredient: Salt'
+      : 'Modifier l’ingrédient sur la recette : Sel';
+    const bakerPctLabel = english ? 'Total recipe baker’s % (%)' : '% du boulanger total (%)';
+    const gramsLabel = english ? 'Total recipe grams (g)' : 'Grammes totaux de la recette (g)';
+    const closeLabel = english ? 'Done' : 'Terminer';
+
+    const saltRow = page
+      .getByLabel(saltRowLabel, { exact: true })
+      .locator('xpath=ancestor::div[input[@type="checkbox"] or div/input[@type="checkbox"]][1]');
+    const pencil = saltRow.getByRole('button', { name: editLabel, exact: true });
+    await expect(pencil).toBeVisible();
+
+    await pencil.tap();
+
+    const sheet = page.locator('ion-modal:not(.overlay-hidden)').filter({
+      has: page.getByRole('heading', {
+        name: sheetHeading,
+        exact: true,
+      }),
+    });
+    await expect(sheet).toBeVisible();
+    const closeButton = sheet.getByRole('button', { name: closeLabel, exact: true });
+    await expect(closeButton).toBeFocused();
+
+    const bakerPctInput = sheet.getByLabel(bakerPctLabel, { exact: true });
+    const gramsInput = sheet.getByLabel(gramsLabel, { exact: true });
+
+    await expect(bakerPctInput).toBeVisible();
+    await expect(gramsInput).toBeVisible();
+
+    const bakerBox = await rectangle(bakerPctInput);
+    expect(bakerBox.x).toBeGreaterThanOrEqual(0);
+    expect(bakerBox.x + bakerBox.width).toBeLessThanOrEqual(360);
+    expect(bakerBox.width).toBeGreaterThan(216);
+
+    const gramsBox = await rectangle(gramsInput);
+    expect(gramsBox.x).toBeGreaterThanOrEqual(0);
+    expect(gramsBox.x + gramsBox.width).toBeLessThanOrEqual(360);
+    expect(gramsBox.width).toBeGreaterThan(216);
+
+    await closeButton.click();
+    await expect(sheet).toBeHidden();
+    await expect(pencil).toBeFocused();
+
+    await pencil.tap();
+    await expect(sheet).toBeVisible();
+    await expect(closeButton).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden();
+    await expect(pencil).toBeFocused();
+  });
+}
+
 test('invalid quantity explains disabled save in English @en', async ({ page }) => {
   await openRecipe(page);
   const salt = page.getByLabel('Salt, Final mix (g)', { exact: true });
