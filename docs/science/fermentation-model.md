@@ -389,8 +389,8 @@ three decimals).
 
 **Conclusion.** The simulation shows a **plausible mechanism of thermal confounding**: a dough that
 starts warmer than a cold chamber, or colder than a warm one, reads a different exponent from a constant `k`,
-in the direction of the measured trend (above 1 at 8 °C, below 0.71 at 32 °C in the shipped-law
-scenarios). It does **not** show that thermal inertia suffices to explain the experiments
+in the direction of the measured trend (about 1 or more at 8 °C, at most about 0.71 at 32 °C in the
+shipped-law scenarios). It does **not** show that thermal inertia suffices to explain the experiments
 quantitatively. At `F*` = 1 the shipped law gives absolute durations systematically too short (for 2 %
 at 8 °C, 1 h 14 min to 11 h 04 min against 20 h 15 min observed); that gap also reflects the
 difference between the `F` = 1 criterion and Izzreen's pre-collapse peak (section 3). The lag fit
@@ -501,12 +501,12 @@ triples** (about 30 h, 24 h); both are recorded.
 The shipped law (`A` 3.43 h, `k` 0.729, `Ea` 98.3 kJ/mol, isothermal 22 °C, no lag) gives `F` = 1 at
 **21.94 h** (`scripts/shipped_law_vs_covino.mjs`), against doubling at 16 h and tripling at 24 to 30 h:
 
-| Statement of the paper          | Hours | Model `F` = 1 time / hours |
-| ------------------------------- | ----- | -------------------------- |
-| `V/V₀` 1.3                      | 8     | 2.74                       |
-| doubled                         | 16    | 1.37                       |
-| tripled (conclusions)           | 24    | 0.91                       |
-| tripled (section 3.1), constant | 30    | 0.73                       |
+| Statement of the paper          | Hours | Model `F` = 1 time / hours (ratio, not an error) |
+| ------------------------------- | ----- | ------------------------------------------------ |
+| `V/V₀` 1.3                      | 8     | 2.74                                             |
+| doubled                         | 16    | 1.37                                             |
+| tripled (conclusions)           | 24    | 0.91                                             |
+| tripled (section 3.1), constant | 30    | 0.73                                             |
 
 This is an **order-of-magnitude plausibility check at a very low dose, not a predictive error.** `F` = 1
 is not a physical volume (it is "about doubled once" in Craig's unit), and the paper defines no "ready

@@ -44,7 +44,9 @@ const statements = [
   ['"tripled in 24 h" (conclusions)', 24],
   ['"tripling ... until about the 30th h" (section 3.1); "constant around 30 h" (conclusions)', 30],
 ];
-console.log('\n| statement of the paper | hours | model F = 1 time / hours |');
+console.log(
+  '\n| statement of the paper | hours | model F = 1 time / hours (ratio, not an error) |',
+);
 console.log('| --- | --- | --- |');
 for (const [label, h] of statements) {
   console.log(`| ${label} | ${h} | ${(t1 / h).toFixed(2)} |`);
