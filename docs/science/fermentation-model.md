@@ -278,7 +278,22 @@ the primary PDF; file `data/izzreen-2016-table1.csv`, metadata `data/izzreen-201
 
 Conditions: wholemeal wheat dough in a baking tin, fresh compressed yeast as % of flour, endpoint
 "preliminary optimal height immediately before collapse". Formula details (water 64 %, sucrose 1.4 %,
-NaCl 1.4 %, no fat, 400 g) come from the Gemini report only.
+NaCl 1.4 %, no fat, 400 g) came from the Gemini report; the crust paper (below) now confirms them from its own methods section.
+
+One timing matrix, not two (Food Chem. crust paper, read in full 2026-11-11): the companion paper
+_Food Chemistry_ 210:566-576 states that its bread was "made according to" the _Cereal Chem._
+paper (p. 567) and calls the crumb of that paper "the same bread as used in this study" (p. 574; also
+"the crumb of the same whole meal bread as analyzed in this study", p. 573). Its Table 1 repeats
+the nine times above unchanged. The times come from "preliminary tests ... by monitoring the dough
+height by a web-camera" and the fermentations "were terminated when the doughs reached 8 cm in
+height" (p. 567): one time per cell. The replication it reports is of baking and analysis: "Bread
+with the same treatment was made twice (duplicate) on two consecutive days which made up 18 bread
+samples in total. The analysis of volatile compounds was carried out in triplicate with a total of 54
+samples" (p. 567). The two papers are therefore **not independent timing sets**, and the timing
+itself has no replicate. Reported in the crust paper: 300 g whole meal (14 % moisture basis, Øland,
+organic, protein 14 g/100 g), 192 mL water at 30 C, 4.2 g sucrose, 4.2 g NaCl, fresh pressed yeast
+6, 12 or 18 g, bread maker (XBM 5) 19 min, 400 g dough in a baking tin (dimensions not given),
+incubator at 8, 16 or 32 C; dough temperature after mixing not reported; bake 200 C for 17 min.
 
 Meaning of the temperatures: **incubator (chamber) temperatures**, not measured dough temperatures.
 Timing replication and error are not reported; the paper's 54 analytical runs are volatile
@@ -479,16 +494,19 @@ Apparent dose exponents (DERIVED: minus the OLS slope of `ln t` on `ln dose`; `s
 The contract's 0.74 is the two-point value 180/70 min against 2/7.2 % (0.737).
 
 - **The claim that Finney is a prescribed multi-punch schedule, not an observation, does not hold for
-  the 1976 paper.** For traceability, the often-quoted six-row schedule (2.0 to 8.6 %) comes from the
-  later codification by K. F. Finney (1984, _Cereal Chem._ 61:20-27) in AACC Method 10-10B / 10-10.03,
-  **not read** here and not transcribed. Method 10-10.03 is a separate evidence object from the 1976
-  paper (a later standardised baking method, not Finney's experiment). Its official listing
-  (cerealsgrains.org, `10BakingQuality.aspx`) could not be read by this agent on 2026-11-11 (the site
-  answered with a Cloudflare challenge, HTTP 403, and the host is outside the session's allowed network),
-  so what the listing states is **not verified here**; an external review reports a six-row table
-  (yeast 2 to 8.6 %, bulk 180 to 60 min, proof 60 to 24 min), **unverified and not transcribed into
-  `data/`**, whose proof times must not replace the paper's optimum proof times; its proof times as quoted by the review
-  differ from the paper's, so it is not a copy of these measurements.
+  the 1976 paper; it does hold for the six-row schedule.** That schedule (yeast 2.0, 2.5, 3.5, 5.3,
+  7.2, 8.6 % with fermentation 180, 150, 120, 90, 70, 60 min and punch and pan intervals) is
+  **printed as Table V on p. 26 of K. F. Finney (1984, _Cereal Chem._ 61:20-27)**, read in full here
+  on 2026-11-11 (see [data/finney-1984.md](data/finney-1984.md)). It is a prescribed test schedule
+  of a method paper that cites the 1976 pairs, not an experiment and not a replicate. Table V has
+  **no proof column**; the paper prints proof times only for 120 min (47 +/- 1 min at 30 C) and
+  90 min (32 +/- 1 min) (p. 25), and repeats the 1976 optimum proof times (55, 36.5, 21.5, 12 min) at
+  p. 23; the two sets differ and are shown side by side, never substituted. The apparent exponent of
+  the six Table V rows is 0.739 (DERIVED). AACC Method 10-10.03 is the later codification of that
+  paper and a separate evidence object: **its method text was not read and its six-row Table I is
+  not verified and not transcribed**; the official listing could not be read by this agent
+  (Cloudflare challenge, HTTP 403). An external review reports a six-row table with proof times of
+  60 to 24 min; those proof times are not in the 1984 paper.
 - It is an independent measured dose response, with limits: loaf-quality optima, not a dough-ready or
   height end point; an enriched dough (6 % sucrose, 3 % shortening, milk); compressed or other yeast
   form not stated; 2 to 12 % of flour, so three of four doses (3.5, 7.2, 12 %) are above the shipped 3 %
