@@ -91,7 +91,8 @@ read: a MEASURED value known only through a secondary transcription stays marked
 - Where sources disagree, the verified evidence and the explicit, dated supersession decide, not
   a fixed ranking of the agents who wrote them. The first reports on issue #33 (a Gemini research
   report, a GPT audit, a Codex synthesis) are history: where a later primary-source check or audit
-  corrected them, the correction stands and says so. The discussion record is issues #33 and #231.
+  corrected them, the correction stands and says so. The discussion record is issue #33 (closed as superseded, 2026-11-11 UTC, history only) and
+  issue #231 (the active consolidated issue).
 - Fitted values are not measurements. A fit's output is never presented with the authority of its
   inputs.
 - No invented ranges, error bands or multipliers. A domain that was not measured is
