@@ -31,7 +31,7 @@ How much of the source a Flourprint agent actually read. One class per source, c
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `full`          | Every page, table and figure was looked at by a Flourprint agent. A figure need not be digitised: digitising is a separate fact in the data file.          |
 | `partial`       | Some parts were read. The parts read and the parts not read are both named, and each unread part carries a reason (section 2).                             |
-| `abstract only` | The abstract, or a publisher or index record of it, and nothing more.                                                                                      |
+| `abstract only` | The abstract, as printed on the publisher's page or in an index record, and nothing more.                                                                  |
 | `not read`      | Nothing beyond bibliographic data or an index page. A source known only through another text (a review, a transcription, a relayed reading) is `not read`. |
 
 A reading cell names the parts actually read (pages, tables, figures), who read them and the UTC
@@ -39,8 +39,8 @@ date, so that a verifier can retrace it. A reading made outside the repository a
 not a reading here: it is a lead (section 6).
 
 The class is taken from the reader's own record. A part the record names as not read makes the
-source `partial`; a record that says `full` and names only the sections that matter keeps `full`
-until a verifier finds an unread part, and the classification says so.
+source `partial`. A record that names only some sections of a paper makes the source `partial`;
+each unnamed section needs a reason from section 2, or is `not finished`.
 
 Legacy labels in the index tables map as follows: `full` stays `full`; `abstract` is `abstract only`;
 `secondary` is `not read` plus a workaround route (section 6); `external` is `not read` here, the
@@ -87,7 +87,7 @@ concerned is `not assessed`, and the cell says what is missing.
 ## 4. Scope
 
 Where the source stands relative to the model's domain: lean dough, low yeast dose, home
-conditions. Three classes, always with the reason:
+conditions. Three classes, always with the reason (a scope cell without its reason is incomplete):
 
 | Class       | Meaning                                                                                                             |
 | ----------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -96,7 +96,16 @@ conditions. Three classes, always with the reason:
 | `outside`   | Two or more lie outside, or the system is not fermenting dough (a liquid culture, a fridge wall, a model's output). |
 
 The gates themselves are those of [fermentation.md](../contracts/fermentation.md); this file does
-not restate them. For the thermal sub-model, the domain is a domestic fridge or room and a dough
+not restate them.
+
+**Proposal: home conditions.** The conditions of a source lie outside the domain when the dough
+temperature lies outside 1.7 to 35 °C (the contract's temperature gate), or when the dough is fermented in a vessel or at a
+mass that no home baker uses. A closed, weighted instrument chamber (a rheofermentometer or a
+gas-assay jar), a sample of a few grams and an industrial vat are not home vessels; an open bowl, tin, tray,
+beaker or incubator at a temperature inside the gate is. A source whose record does not state the
+vessel, the mass or the dough temperature has its conditions `not recorded`, and the class says so. The
+dose and the formulation are judged against the contract's own gates, so a dose range that crosses a gate counts
+as outside for the part above it. For the thermal sub-model, the domain is a domestic fridge or room and a dough
 mass; a source on heat transfer there is `adjacent` at best.
 
 ## 5. Role for the model
@@ -125,17 +134,19 @@ a finding to list, never a reason to change the model in the same pull request; 
 An alternative route to a source's content. Each is recorded with its link, what it allowed to be
 read, and the routes not tried. Five kinds, in order of trust:
 
-| Route | Kind                                                                           | Trust                                                                                                          |
-| ----- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| 1     | Same author, other medium (thesis, preprint, repository copy)                  | Equivalent to the original if the differences found are noted (for example Birch and Verheyen through theses). |
-| 2     | Another article reproducing the data                                           | Good for the reproduced figures only (for example the AACC schedule printed in Finney 1984).                   |
-| 3     | Publisher abstract                                                             | Conclusions only. No number from it is usable for a coefficient.                                               |
-| 4     | Literature review or third-party citation                                      | A lead to confirm.                                                                                             |
-| 5     | Unauthenticated transcription (for example a forum or a document-sharing copy) | A lead only, never "verified".                                                                                 |
+| Route | Kind                                                                             | Trust                                                                                                          |
+| ----- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 1     | Same author, other medium (thesis, preprint, repository copy)                    | Equivalent to the original if the differences found are noted (for example Birch and Verheyen through theses). |
+| 2     | Another article reproducing the data                                             | Good for the reproduced figures only (for example the AACC schedule printed in Finney 1984).                   |
+| 3     | Publisher abstract obtained through a third-party index (for example Europe PMC) | Conclusions only. No number from it is usable for a coefficient.                                               |
+| 4     | Literature review or third-party citation                                        | A lead to confirm.                                                                                             |
+| 5     | Unauthenticated transcription (for example a forum or a document-sharing copy)   | A lead only, never "verified".                                                                                 |
 
 Rules:
 
 - The original's reading class does not rise because a workaround was read.
+- An abstract read on the publisher's own page is `abstract only` with no route entry; the same
+  abstract obtained through a third-party index is `abstract only` and route 3.
 - A number obtained through a workaround keeps that label until it is compared with the original.
 - Only route 1 may support `fit` or `independent validation`. A route 1 reading whose equivalence
   to the original was not checked says so (`not assessed`) in its record.
@@ -162,3 +173,6 @@ Each waits for the owner's confirmation; none changes a model.
 4. The mapping of the legacy read-status labels (section 1) and the token `not assessed`.
 5. The "Findings" and "Open reading debts" subsections of `sources.md` as the places where the
    coefficient rule and the merge rule are made visible.
+6. The definition of home conditions (section 4), including the treatment of a closed instrument
+   chamber as outside.
+7. The narrowing of route 3 to an abstract obtained through a third-party index (section 6).

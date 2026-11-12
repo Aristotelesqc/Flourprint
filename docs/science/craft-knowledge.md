@@ -18,8 +18,11 @@ or screen changes. The separate scheme for scientific sources is in
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Check the plausibility of a model prediction.                          | Fit or validate a model coefficient. The [coefficient rule](evidence-classification.md#5-role-for-the-model) is the one place that states it. |
 | Give a subjective readiness criterion ("the dough is ready when ..."). | Be given a scientific source role (`fit`, `independent validation`, or any other).                                                            |
-| Suggest a hypothesis to test.                                          | Be presented as a measurement, or averaged with one.                                                                                          |
+| Suggest a hypothesis to test.                                          | Be presented as a measurement, or averaged with one (**Proposal**: the second half).                                                          |
 | Supply a starting value for a recipe.                                  |                                                                                                                                               |
+
+Comparing a forecast with published schedules is a plausibility check of a prediction; it is
+never a validation or a fit of a coefficient.
 
 ## Two separate assessments
 
@@ -40,13 +43,21 @@ Observable facts, not impressions. Each is written with where it was observed, o
 
 ### The claim: what is said
 
-| Criterion           | `strong`                                                                                                                       | `partial`                                                               | `weak`                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Subject             | Always recorded: the domain of [dough-behavior.md](dough-behavior.md#domains) the claim attaches to, by its anchor. Not rated. |                                                                         |                                                                                   |
-| Precision           | The quantities the claim depends on are weighed in grams, measured in degrees, timed.                                          | Some are, others are by volume or approximate.                          | "A pinch", "room temperature", "a warm place": record the vagueness as vagueness. |
-| Observable criteria | Says how to recognise the result in checkable terms: a measured rise in a stated vessel, a described test, step photographs.   | Names a cue without conditions ("until doubled").                       | None given.                                                                       |
-| Justification       | Explains why, with a mechanism or a trade-off the claim depends on.                                                            | A reason in passing.                                                    | Only asserts.                                                                     |
-| Convergence         | Three or more independent voices agree within the stated conditions.                                                           | Two independent voices agree, or more agree only in order of magnitude. | One voice, copies, or independence not recorded.                                  |
+| Criterion           | `strong`                                                                                                                                                             | `partial`                                                                                                               | `weak`                                                                                 |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Subject             | Always recorded: the domain of [dough-behavior.md](dough-behavior.md#domains) the claim attaches to, by its anchor. Not rated.                                       |                                                                                                                         |                                                                                        |
+| Precision           | The quantities the claim depends on are weighed in grams, measured in degrees, timed. (**Proposal:** baker's percentages with a stated flour mass count as weighed.) | Some are, others are by volume or approximate.                                                                          | "A pinch", "room temperature", "a warm place": record the vagueness as vagueness.      |
+| Observable criteria | Says how to recognise the result in checkable terms: a measured rise in a stated vessel, a described test, step photographs.                                         | Names a cue without conditions ("until doubled").                                                                       | None given.                                                                            |
+| Justification       | Explains why, with a mechanism or a trade-off the claim depends on.                                                                                                  | A reason in passing.                                                                                                    | Only asserts.                                                                          |
+| Convergence         | Three or more independent voices agree within the stated conditions.                                                                                                 | At least two independent sources lie within a factor of 1.5 of the claimed value under comparable dose and temperature. | One voice, copies, independence not recorded, or agreement in order of magnitude only. |
+
+**Proposal: convergence.** The `partial` cell of convergence is read as the grid states it:
+at least two independent sources within a factor of 1.5 of the claimed value, under comparable
+dose and temperature ("room" without degrees is not a comparable temperature). Agreement "in
+order of magnitude" alone is `weak`. Convergence is assessed against other independent entries
+of this register or of the survey, and those entries are listed in the entry. Its two statements in
+the grid (the factor of 1.5 and the listing of the other entries) were added after the calibration run
+recorded below.
 
 A field the record does not hold is written `not recorded` and counts as `weak` for the level. The
 level is then marked as resting on an incomplete record, and filling the field can raise it,
@@ -70,7 +81,7 @@ to a baker as guidance.
 
 - **Popularity counts, but less than the rest.** It shows that a method works often enough for
   many people, not that it is exact, and popular errors get copied. It is recorded under reach,
-  never lifts a level by itself, and is a tie-breaker at most.
+  never lifts a level by itself, and is a tie-breaker at most (**Proposal**: the tie-breaker wording).
 - **The source's standing is a starting point, not a verdict.** An obscure blog that gives
   weights, temperatures and step photographs can yield a level A claim; a famous book that says
   "let rise until doubled" without conditions yields level C. The level comes from the claim.
@@ -80,8 +91,8 @@ to a baker as guidance.
 ## Copyright
 
 This repository is public. No long excerpts from books or courses. A short quotation, or better a
-paraphrase, with the page or the URL. No PDFs, no scans, no photographs of pages. A claim is
-recorded by what it says and where to find it, never by reproducing the source.
+paraphrase, with the page or the URL. No PDFs, no scans, no photographs of pages (**Proposal**:
+the last restriction). A claim is recorded by what it says and where to find it, never by reproducing the source.
 
 ## Entry template
 
@@ -98,7 +109,7 @@ recorded by what it says and where to find it, never by reproducing the source.
   (each strong, partial, weak or not recorded, with a reason)
 - Level: A, B or C, with the reason
 - Role: plausibility, readiness criterion, hypothesis or recipe default
-- Checked: UTC date (ISO), and who
+- Checked: UTC date (ISO), and who (an agent is named by its role, not by a model family)
 ```
 
 ## The existing recipe and style-guide survey
@@ -111,9 +122,10 @@ They record formulas, schedules, source kind and a transcription confidence (`hi
 thing from the level of a claim. They do not record observable criteria, justifications,
 recognition, editions or reach, so an entry built from them writes those fields `not recorded`.
 Their own rule applies unchanged: a published schedule is a recommended protocol, not a measured
-fermentation. The survey's read status is recorded two ways, which this register does not settle:
-the data files record full snapshot reads, while [README.md](README.md) describes the style-guide
-data as read through web-search excerpts.
+fermentation. The survey's read status is recorded in its data files: full snapshot reads of the
+style-guide sources (2026-10-10 UTC, with hashes), and a recipe survey transcribed by page-reading
+agents and spot-checked (2026-10-29 UTC). The earlier wording of [README.md](README.md) that the
+style guides were read through web-search excerpts was corrected on 2026-11-12 (UTC).
 
 ## Register: first entries
 
@@ -139,16 +151,20 @@ method, not endorsements of the sources.
   without degrees; duration, 45 to 60 min.
 - Claim assessment: precision `partial` (flour, water and salt weighed and the proof temperature
   in degrees, but yeast by volume and the poolish temperature "room"); observable criteria
-  `not recorded`; justification `not recorded`; convergence `partial` (three other baguette pages
-  of the survey, from two other independent sites, give 25 to 35 min of shaped proof at 0.36 to
-  0.59 % instant yeast and 60 to 90 min at 0.36 %, temperatures "room" without degrees: they agree
-  in order of magnitude only; the two Weekend Bakery pages count as one voice).
-- Level: **B**, on an incomplete record. Precision is partial and convergence is partial; no cue
-  or reason is recorded, so it cannot be A.
-- Role: plausibility check of a proof time at about 20 °C; recipe default for that stage (the
-  survey's preset uses the midpoint, 52.5 min). Not a readiness criterion: no cue is
-  recorded.
-- Checked: 2026-11-12, research agent (Claude).
+  `not recorded`; justification `not recorded`; convergence `weak` (other baguette pages of the
+  survey: `breads/baguette-2` and `-3` of Weekend Bakery, one site, 35 and 25 min of shaped proof
+  at 0.36 and 0.59 % instant yeast; `breads/baguette-4` of The Fresh Loaf, 60 to 90 min at 0.36 %;
+  `breads/baguette-5` of Breadtopia gives no duration; all four give "room" without degrees, and
+  their doses are 0.4 to 0.7 times this recipe's 0.87 %. None meets "comparable dose and temperature"
+  within a factor of 1.5 of 45 to 60 min, so they agree in order of magnitude only).
+- Level: **C**, on an incomplete record (first rated B before the calibration run recorded below).
+  Precision is partial; observable criteria, justification and convergence are not recorded or
+  `weak`.
+- Role: hypothesis to test (a final proof of 45 to 60 min at about 20 °C). At level C the ceiling
+  of use no longer allows a plausibility check or a recipe default (it did at level B). The
+  survey's preset uses the midpoint, 52.5 min: that is the survey's editorial choice, not a use
+  this register grants. Not a readiness criterion: no cue is recorded.
+- Checked: 2026-11-12 (UTC), research agent. Re-rated 2026-11-12 (UTC) under the convergence wording above.
 
 ### Twelve to eighteen hours of room-temperature fermentation at about 0.2 % yeast (no-knead)
 
@@ -169,16 +185,17 @@ method, not endorsements of the sources.
 - Claim assessment: precision `partial` (everything by volume: the survey records that 140 g per
   cup instead of 120 would give 72.063 % hydration instead of 84.074 %, and the same yeast over
   420 g of flour would be 0.179 %, our division; the temperature is in degrees); observable
-  criteria `not recorded`; justification `not recorded`; convergence `weak` (five other no-knead
-  pages of the survey give 14 h at 21 °C, 9 to 12 h, 8 to 18 h in a "warm place", 3 h, and 2 h
-  plus a chill, at 0.17 to 0.21 % instant yeast for three of them and 0.8 % and 1.56 % for the
-  other two, but the survey does not record whether they descend from this recipe, and copies are
-  not convergence).
+  criteria `not recorded`; justification `not recorded`; convergence `weak` (other no-knead pages
+  of the survey: `breads/boule-4`, 14 h at 21 °C and 0.19 % instant yeast, is within a factor
+  of 1.5 of the claim under a comparable dose and temperature, but the survey does not record
+  whether it descends from this recipe, and copies are not convergence; `breads/boule-5`, 9 to
+  12 h at 0.17 % with "room" and no degrees, is not comparable; `-3`, 3 h, and `-2`, 8 to 18 h in
+  a "warm place" at 0.8 %, and `-1`, 1.56 %, are not either).
 - Level: **C**, on an incomplete record. Only the precision reaches `partial`; nothing else stands
   behind the numbers. The standing of the attributed baker cannot lift it: it is a starting point.
 - Role: hypothesis to test (a long ferment near 0.2 % yeast at 22 °C); not a plausibility check
   of the model, not a recipe default.
-- Checked: 2026-11-12, research agent (Claude).
+- Checked: 2026-11-12 (UTC), research agent. Re-rated 2026-11-12 (UTC) under the convergence wording above.
 
 ### Twenty-four hours at 0.05 % dry yeast for a Neapolitan dough (aggregator page)
 
@@ -193,28 +210,48 @@ method, not endorsements of the sources.
   (percentages only: water 60 %, salt 2 %); temperature, "room" for three stages and not stated
   for the 10.5 h stage; duration, 12 + 0.5 + 10.5 + 1 h as derived by the survey; bake time not
   stated.
-- Claim assessment: precision `weak` (flour not stated, yeast subtype unspecified, "room" without
-  degrees, one temperature not stated); observable criteria `not recorded`; justification `not
-recorded`; convergence `weak` (another aggregator page of the survey, RecipeLion, gives 0.05 %
-  instant yeast over 18 to 20 h of bulk plus 4 to 6 h, but the survey records no original author
-  for either page, so independence is not recorded and they may be one voice).
+- Claim assessment: precision `weak` (flour not stated, so the percentages do not count as weighed
+  under the baker's-percentage proposal, which needs a stated flour mass; yeast subtype
+  unspecified, "room" without degrees, one temperature not stated); observable criteria
+  `not recorded`; justification `not recorded`; convergence `weak` (another aggregator page of the
+  survey, `pizzas/neapolitan-1` of RecipeLion, gives 0.05 % instant yeast over 18 to 20 h of
+  bulk plus 4 to 6 h, but "room" without degrees is not a comparable temperature, and the survey
+  records no original author for either page, so independence is not recorded and they may be one
+  voice).
 - Level: **C**. Precision is weak. A normative record in `data/style-guides.json` (the AVPN
   regulations: 0.1 to 3 g of fresh yeast per litre of water, that is about 0.006 to 0.19 % of
   flour, our division, and 12 to 24 h of total fermentation) puts the dose and the duration in
   the same range; it is a professional body's specification, a different kind of voice, and
   belongs in an entry of its own, not as a copy of this page.
 - Role: hypothesis only; not a recipe default.
-- Checked: 2026-11-12, research agent (Claude).
+- Checked: 2026-11-12 (UTC), research agent. Re-rated 2026-11-12 (UTC) under the convergence wording above.
 
-No example reaches A: the survey records no observable criteria, which A requires. That is a gap
-in the survey's fields, not a verdict on the sources.
+No example reaches A or B: the survey records no observable criteria and no justification, which
+A and B need beyond precision. That is a gap in the survey's fields, not a verdict on the
+sources. Levels as re-rated: baguette C (was B), no-knead C, Neapolitan C.
 
 ## Calibration
 
-The grid is to be tried by an independent agent on the same three examples, working only from the
+The grid is tried by an independent agent on the same three examples, working only from the
 survey's records and this file, without the levels above, to see whether it reaches the same
 levels. If it does not, the definitions are revised, not the agent, and the difference is recorded
-here with its UTC date. Status as of 2026-11-12 (UTC): not run.
+here with its UTC date.
+
+**Run of 2026-11-12 (UTC).** An independent agent rated the three examples blind, from the
+file's grid and the survey's records, before reading the author's levels. Agreement on 2 of 3.
+The divergence was the baguette: the author's level was B, the independent rating C. It traces to the
+wording of the `partial` cell of convergence ("more agree only in order of magnitude"), which let
+other baguette pages with proof times 25 to 90 min, a factor of about 3 apart, count as support; the
+grid also did not say whether convergence is judged from the entry's own record or from the whole
+survey. The rule changed, not the agent: convergence `partial` now needs at least two
+independent sources within a factor of 1.5 of the claimed value under comparable dose and
+temperature, "order of magnitude" alone is `weak`, and the other entries used are listed in the
+entry (marked Proposal above). The baguette was re-rated C under it; the no-knead and Neapolitan
+entries stay C. The run also showed that the grid did not say whether baker's percentages count as
+weighed: now, with a stated flour mass, they do (Proposal); the precision of the Neapolitan entry
+stays `weak` because no flour mass is stated. The precision of the Neapolitan entry was rated `partial` or `weak` by the independent agent
+against `weak` here, with the same level. The re-rating has not been repeated by a second
+independent agent.
 
 ## Proposals beyond the owner's decision
 
@@ -225,4 +262,13 @@ Each waits for the owner's confirmation; none changes a model.
    as `weak`.
 3. The rules that map the ratings to level A, B or C.
 4. The ceiling of use by level (A, B, C).
-5. The three worked examples and their levels, as the first entries.
+5. The three worked examples and their levels, as the first entries (as re-rated after the
+   calibration run).
+6. The convergence rule: at least two independent sources within a factor of 1.5 of the claimed
+   value under comparable dose and temperature, "order of magnitude" alone being `weak`, and the
+   listing of the other entries used.
+7. The line that baker's percentages with a stated flour mass count as weighed.
+8. The tie-breaker wording for popularity; the row of the table that a craft claim is never
+   averaged with a measurement; the restriction "no scans or photographs of pages"; the sentence that
+   a comparison of a forecast with published schedules is a plausibility check, never a validation
+   or fit of a coefficient (stated to resolve a tension with the model's acceptance criterion).

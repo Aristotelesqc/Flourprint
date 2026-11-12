@@ -65,8 +65,9 @@ pull request.
 - `data/`: transcribed source tables (CSV) with a metadata file each (source, DOI, formula,
   endpoint, what the temperature means, who transcribed it, read status, `source_verified`).
 - `data/style-guides.md` and `.json`: consensus ranges and starting points per template style,
-  with sources, read through web-search excerpts only (`source_verified: false`): a reference for
-  template versions, not a contract.
+  with sources, each recorded as a complete source snapshot read on 2026-10-10 (UTC)
+  (`full_snapshot_read`, with a hash; the files carry no `source_verified` field): a reference
+  for template versions, not a contract.
 - `scripts/`: small reproducible scripts that recompute fits from `data/`. They import nothing
   from the application and are not engine code.
 
@@ -100,13 +101,9 @@ them and never copy their definitions.
 | Classification of a scientific source     | Every source in the index                     | [evidence-classification.md](evidence-classification.md) | [sources.md](sources.md#classification-of-evidence)             |
 | Craft-knowledge level A, B or C per claim | Practitioner claims (books, courses, recipes) | [craft-knowledge.md](craft-knowledge.md)                 | [craft-knowledge.md](craft-knowledge.md#register-first-entries) |
 
-- **Merge rule.** No source may be left `not finished` in a pull request that is ready to merge:
-  finish it, or establish one of the three other reasons for an incomplete reading. The sources
-  that carry it are listed in [sources.md](sources.md#open-reading-debts).
-- **Coefficient rule.** A model coefficient may rest only on sources whose role is `fit` or
-  `independent validation`. Craft knowledge never is one. Shipped values that rest on something
-  else are listed as findings in [sources.md](sources.md#findings-shipped-coefficients-and-source-roles)
-  and are not changed by the classification.
+The merge rule and the coefficient rule are defined only in
+[evidence-classification.md](evidence-classification.md#2-reason-for-an-incomplete-reading) and
+[evidence-classification.md](evidence-classification.md#5-role-for-the-model).
 
 ## Rules
 
