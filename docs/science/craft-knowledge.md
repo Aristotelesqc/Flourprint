@@ -43,21 +43,17 @@ Observable facts, not impressions. Each is written with where it was observed, o
 
 ### The claim: what is said
 
-| Criterion           | `strong`                                                                                                                                                             | `partial`                                                                                                               | `weak`                                                                                 |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Subject             | Always recorded: the domain of [dough-behavior.md](dough-behavior.md#domains) the claim attaches to, by its anchor. Not rated.                                       |                                                                                                                         |                                                                                        |
-| Precision           | The quantities the claim depends on are weighed in grams, measured in degrees, timed. (**Proposal:** baker's percentages with a stated flour mass count as weighed.) | Some are, others are by volume or approximate.                                                                          | "A pinch", "room temperature", "a warm place": record the vagueness as vagueness.      |
-| Observable criteria | Says how to recognise the result in checkable terms: a measured rise in a stated vessel, a described test, step photographs.                                         | Names a cue without conditions ("until doubled").                                                                       | None given.                                                                            |
-| Justification       | Explains why, with a mechanism or a trade-off the claim depends on.                                                                                                  | A reason in passing.                                                                                                    | Only asserts.                                                                          |
-| Convergence         | Three or more independent voices agree within the stated conditions.                                                                                                 | At least two independent sources lie within a factor of 1.5 of the claimed value under comparable dose and temperature. | One voice, copies, independence not recorded, or agreement in order of magnitude only. |
+| Criterion                                                          | `strong`                                                                                                                                                             | `partial`                                                                                                               | `weak`                                                                                 |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Subject                                                            | Always recorded: the domain of [dough-behavior.md](dough-behavior.md#domains) the claim attaches to, by its anchor. Not rated.                                       |                                                                                                                         |                                                                                        |
+| Precision                                                          | The quantities the claim depends on are weighed in grams, measured in degrees, timed. (**Proposal:** baker's percentages with a stated flour mass count as weighed.) | Some are, others are by volume or approximate.                                                                          | "A pinch", "room temperature", "a warm place": record the vagueness as vagueness.      |
+| Observable criteria                                                | Says how to recognise the result in checkable terms: a measured rise in a stated vessel, a described test, step photographs.                                         | Names a cue without conditions ("until doubled").                                                                       | None given.                                                                            |
+| Justification                                                      | Explains why, with a mechanism or a trade-off the claim depends on.                                                                                                  | A reason in passing.                                                                                                    | Only asserts.                                                                          |
+| Convergence (**Proposal**: the `partial` and `weak` cells, item 6) | Three or more independent voices agree within the stated conditions.                                                                                                 | At least two independent sources lie within a factor of 1.5 of the claimed value under comparable dose and temperature. | One voice, copies, independence not recorded, or agreement in order of magnitude only. |
 
-**Proposal: convergence.** The `partial` cell of convergence is read as the grid states it:
-at least two independent sources within a factor of 1.5 of the claimed value, under comparable
-dose and temperature ("room" without degrees is not a comparable temperature). Agreement "in
-order of magnitude" alone is `weak`. Convergence is assessed against other independent entries
-of this register or of the survey, and those entries are listed in the entry. Its two statements in
-the grid (the factor of 1.5 and the listing of the other entries) were added after the calibration run
-recorded below.
+**Proposal.** The `partial` and `weak` cells of the convergence row (the factor of 1.5, comparable
+dose and temperature, and the listing of the other entries used, which the entry template asks
+for) are a Proposal (item 6); they were added after the calibration run below.
 
 A field the record does not hold is written `not recorded` and counts as `weak` for the level. The
 level is then marked as resting on an incomplete record, and filling the field can raise it,
@@ -106,7 +102,8 @@ the last restriction). A claim is recorded by what it says and where to find it,
 - Subject: link to the domain anchor in dough-behavior.md
 - Conditions as stated: dose; flour; temperature; duration (as printed, vagueness kept)
 - Claim assessment: precision; observable criteria; justification; convergence
-  (each strong, partial, weak or not recorded, with a reason)
+  (each strong, partial, weak or not recorded, with a reason; for convergence, the other entries
+  used are listed)
 - Level: A, B or C, with the reason
 - Role: plausibility, readiness criterion, hypothesis or recipe default
 - Checked: UTC date (ISO), and who (an agent is named by its role, not by a model family)
@@ -161,7 +158,7 @@ method, not endorsements of the sources.
   Precision is partial; observable criteria, justification and convergence are not recorded or
   `weak`.
 - Role: hypothesis to test (a final proof of 45 to 60 min at about 20 °C). At level C the ceiling
-  of use no longer allows a plausibility check or a recipe default (it did at level B). The
+  of use does not allow a plausibility check or a recipe default (level B would). The
   survey's preset uses the midpoint, 52.5 min: that is the survey's editorial choice, not a use
   this register grants. Not a readiness criterion: no cue is recorded.
 - Checked: 2026-11-12 (UTC), research agent. Re-rated 2026-11-12 (UTC) under the convergence wording above.
@@ -237,21 +234,26 @@ survey's records and this file, without the levels above, to see whether it reac
 levels. If it does not, the definitions are revised, not the agent, and the difference is recorded
 here with its UTC date.
 
-**Run of 2026-11-12 (UTC).** An independent agent rated the three examples blind, from the
-file's grid and the survey's records, before reading the author's levels. Agreement on 2 of 3.
-The divergence was the baguette: the author's level was B, the independent rating C. It traces to the
-wording of the `partial` cell of convergence ("more agree only in order of magnitude"), which let
-other baguette pages with proof times 25 to 90 min, a factor of about 3 apart, count as support; the
-grid also did not say whether convergence is judged from the entry's own record or from the whole
-survey. The rule changed, not the agent: convergence `partial` now needs at least two
-independent sources within a factor of 1.5 of the claimed value under comparable dose and
-temperature, "order of magnitude" alone is `weak`, and the other entries used are listed in the
-entry (marked Proposal above). The baguette was re-rated C under it; the no-knead and Neapolitan
-entries stay C. The run also showed that the grid did not say whether baker's percentages count as
-weighed: now, with a stated flour mass, they do (Proposal); the precision of the Neapolitan entry
-stays `weak` because no flour mass is stated. The precision of the Neapolitan entry was rated `partial` or `weak` by the independent agent
-against `weak` here, with the same level. The re-rating has not been repeated by a second
-independent agent.
+**Run of 2026-11-12 (UTC).** An independent agent rated the three examples from the file's grid
+and the survey's records, before reading the entries; it had been told the author's three levels
+in its brief, so the rating was not blind. Agreement on 2 of 3. The divergence was the baguette:
+the author's level was B, the independent rating C. It traces to the wording of the `partial`
+cell of convergence ("more agree only in order of magnitude"), which let other baguette pages
+with proof times 25 to 90 min, a factor of about 3 apart, count as support; the grid also did not
+say whether convergence is judged from the entry's own record or from the whole survey. The rule
+changed, not the agent: the convergence cell was changed (Proposal, item 6) and the entry
+template asks for the other entries used. The baguette was re-rated C under it; the no-knead and
+Neapolitan entries stay C. The run also showed that the grid did not say whether baker's
+percentages count as weighed: with a stated flour mass they do (Proposal, item 7); the precision
+of the Neapolitan entry stays `weak` here because no flour mass is stated, while the independent
+agent rated it `partial` or `weak`, with the same level.
+
+**Second re-rating, 2026-11-12 (UTC).** A second agent re-rated the three examples under the
+tightened grid and reached C, C, C. It had read the author's entries and the first agent's
+report, so this rating is not blind either; it only re-checks the arithmetic against the
+survey's data. **A blind calibration has not been run.** It needs an agent that has seen neither
+the entries nor any level (an open question for the owner in
+[evidence-classification.md](evidence-classification.md#open-questions-for-the-owner)).
 
 ## Proposals beyond the owner's decision
 
@@ -264,11 +266,12 @@ Each waits for the owner's confirmation; none changes a model.
 4. The ceiling of use by level (A, B, C).
 5. The three worked examples and their levels, as the first entries (as re-rated after the
    calibration run).
-6. The convergence rule: at least two independent sources within a factor of 1.5 of the claimed
-   value under comparable dose and temperature, "order of magnitude" alone being `weak`, and the
-   listing of the other entries used.
+6. The convergence row of the grid (its `partial` and `weak` cells) and the listing of the other
+   entries used in the entry template.
 7. The line that baker's percentages with a stated flour mass count as weighed.
 8. The tie-breaker wording for popularity; the row of the table that a craft claim is never
    averaged with a measurement; the restriction "no scans or photographs of pages"; the sentence that
    a comparison of a forecast with published schedules is a plausibility check, never a validation
-   or fit of a coefficient (stated to resolve a tension with the model's acceptance criterion).
+   or fit of a coefficient (stated to resolve a tension with the model's acceptance criterion); the
+   three uses of the "May" column beyond the plausibility check (a readiness criterion, a
+   hypothesis, a starting value); the calibration procedure.

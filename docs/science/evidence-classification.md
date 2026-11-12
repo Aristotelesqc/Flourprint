@@ -40,7 +40,9 @@ not a reading here: it is a lead (section 6).
 
 The class is taken from the reader's own record. A part the record names as not read makes the
 source `partial`. A record that names only some sections of a paper makes the source `partial`;
-each unnamed section needs a reason from section 2, or is `not finished`.
+each unnamed section needs a reason from section 2, or is `not finished`. A `full` reading whose
+record names no pages, tables or figures is written `full`, per the named agent's record of the UTC
+date; pages and tables not recorded (**Proposal**, item 8).
 
 Legacy labels in the index tables map as follows: `full` stays `full`; `abstract` is `abstract only`;
 `secondary` is `not read` plus a workaround route (section 6); `external` is `not read` here, the
@@ -51,15 +53,15 @@ relayed reading being a lead; "full text available, skimmed" is `partial` plus a
 Every unread part of a `partial`, `abstract only` or `not read` source has exactly one reason from
 this closed list, with the parts missing and what would complete the reading.
 
-| Reason                    | Use it when                                                                                                                                    | What completes it                                                 |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `access refused`          | The site blocks automated requests or the text is behind a paywall, and the refusal is recorded.                                               | A legitimately obtained copy, or an allowed host.                 |
-| `out of scope, justified` | The rest was at least skimmed, its content is named, it does not bear on the model, and the reason is written. All four conditions are needed. | Nothing, unless the model's scope changes.                        |
-| `unreadable`              | A poor scan, or a figure without printed values, makes the part unusable as it is.                                                             | A better copy, or the authors' data.                              |
-| `not finished`            | The agent stopped. This is a debt, not a resting state.                                                                                        | Reading the part, or establishing one of the other three reasons. |
+| Reason                    | Use it when                                                                                                                                                                                           | What completes it                                                 |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `access refused`          | The site blocks automated requests, the text is behind a paywall, or the session's network policy refuses the host; the refusal is recorded with its UTC date and HTTP result (**Proposal**, item 8). | A legitimately obtained copy, or an allowed host.                 |
+| `out of scope, justified` | The rest was at least skimmed, its content is named, it does not bear on the model, and the reason is written. All four conditions are needed.                                                        | Nothing, unless the model's scope changes.                        |
+| `unreadable`              | A poor scan, or a figure without printed values, makes the part unusable as it is.                                                                                                                    | A better copy, or the authors' data.                              |
+| `not finished`            | The agent stopped. This is a debt, not a resting state.                                                                                                                                               | Reading the part, or establishing one of the other three reasons. |
 
 A `full` reading may also record that some parts it read are out of scope for the model, with
-the reason: that is a statement about use, not an incomplete reading.
+the reason: that is a statement about use, not an incomplete reading (**Proposal**, item 8).
 
 **Merge rule (owner decision, 2026-11-12 (UTC)).** No source may be left `not finished` in a pull
 request that is ready to merge: finish it, or establish one of the other three reasons.
@@ -99,14 +101,43 @@ The gates themselves are those of [fermentation.md](../contracts/fermentation.md
 not restate them.
 
 **Proposal: home conditions.** The conditions of a source lie outside the domain when the dough
-temperature lies outside 1.7 to 35 °C (the contract's temperature gate), or when the dough is fermented in a vessel or at a
+temperature lies outside the contract's temperature gate, or when the dough is fermented in a vessel or at a
 mass that no home baker uses. A closed, weighted instrument chamber (a rheofermentometer or a
 gas-assay jar), a sample of a few grams and an industrial vat are not home vessels; an open bowl, tin, tray,
 beaker or incubator at a temperature inside the gate is. A source whose record does not state the
 vessel, the mass or the dough temperature has its conditions `not recorded`, and the class says so. The
 dose and the formulation are judged against the contract's own gates, so a dose range that crosses a gate counts
 as outside for the part above it. For the thermal sub-model, the domain is a domestic fridge or room and a dough
-mass; a source on heat transfer there is `adjacent` at best.
+mass; a source on heat transfer there is `adjacent` at best (**Proposal**, item 6; see open question 2 below).
+
+**Open questions on this section (owner decision needed; neither is decided or applied).**
+
+1. **Scope of the role-bearing rows (formulation and dose tolerance).** The rule as written judges
+   the dose and the formulation against the contract's own gates: dose 0.01 to 3 % fresh-equivalent,
+   salt 1.5 to 3 % (values in [fermentation.md](../contracts/fermentation.md), Domain table).
+   Under it, both Izzreen rows (salt 1.4 % of flour; doses 4 and 6 %) and Birch Papers I, II and
+   III (salt 1.3 %; doses 4 and 6 % in II, 20 to 120 g/kg in I, 20 to 40 g/kg in III) have two axes
+   outside, so each is `outside`. Those five rows carry the only `fit` (Izzreen _Food Chem._) and
+   the only `independent validation` (Birch Paper II), and `fit` needs the source in or adjacent
+   to the domain (section 5); section 5 does not say whether `independent validation` needs the same
+   condition, and the verifier's reading is that it does. Applying the rule as written therefore
+   removes both roles.
+   - **Option A.** Apply the rule as written: re-class the five rows `outside`; their roles drop
+     to `none` or `order-of-magnitude check`.
+   - **Option B.** Add a tolerance: a small deviation of salt or water is named in the cell but
+     does not move the class, and each `adjacent` cell names its one outside axis (for example the
+     dose). The verifier suggested 0.5 point of salt and 5 points of water as the sizes; that is a
+     suggestion, not a decision.
+
+   Until the owner decides, the five scope cells in [sources.md](sources.md#classification-of-evidence)
+   name the axes that are outside, with their values, and say "class pending the owner's decision
+   on the formulation tolerance"; the roles of those rows carry the same mark.
+
+2. **Heat-transfer sources.** The `outside` row above lists "a fridge wall", while the last
+   sentence of the Proposal says a source on heat transfer in the thermal domain is `adjacent` at
+   best. The two contradict each other for Williams 1994, Laguerre 2010 and Lança 2025, which are
+   `adjacent` in `sources.md` with the same pending mark. Not chosen here: either a fridge wall is
+   `outside` (the sentence goes), or such a source is `adjacent` (the list entry goes).
 
 ## 5. Role for the model
 
@@ -128,6 +159,10 @@ a finding to list, never a reason to change the model in the same pull request; 
 [sources.md](sources.md#findings-shipped-coefficients-and-source-roles).
 
 **Proposal.** A source whose soundness is `weak` cannot hold `fit` or `independent validation`.
+
+**Proposal.** The conditions on `fit` in the table above: the source is in or adjacent to the
+domain, and was read by route 1 or in the original (item 9). The first condition depends on open
+question 1 of section 4.
 
 ## 6. Workarounds
 
@@ -174,5 +209,31 @@ Each waits for the owner's confirmation; none changes a model.
 5. The "Findings" and "Open reading debts" subsections of `sources.md` as the places where the
    coefficient rule and the merge rule are made visible.
 6. The definition of home conditions (section 4), including the treatment of a closed instrument
-   chamber as outside.
+   chamber as outside and the thermal-domain sentence (heat-transfer sources `adjacent` at best).
 7. The narrowing of route 3 to an abstract obtained through a third-party index (section 6).
+8. Three wordings of the reading rules: the form for a `full` reading whose record names no parts
+   (section 1), the extension of `access refused` to a host the session's network policy refuses
+   (section 2), and the sentence that a `full` reading may record parts read and out of scope
+   (section 2).
+9. The conditions on the role `fit`: in or adjacent to the domain, and read by route 1 or in the
+   original (section 5).
+
+## Open questions for the owner
+
+Nothing below is decided. Each is also recorded where it arises.
+
+1. **Formulation and dose tolerance** (section 4, open question 1): option A (apply the rule as
+   written; five rows `outside`; the only `fit` and the only `independent validation` drop) or
+   option B (a tolerance; small salt or water deviations are named but do not move the class).
+2. **Heat-transfer scope** (section 4, open question 2): is a fridge wall `outside` or `adjacent`
+   for Williams 1994, Laguerre 2010 and Lança 2025?
+3. **The two Gélinas 2010 papers.** Confirm that Europe PMC records 33467828 (patents on baker's
+   yeast manufacture) and 20653548 (baker's yeast storage and activation) are the papers the
+   source-access guide calls 2010a and 2010b. The match is an inference from an index search.
+4. **Lança et al. 2025.** The citation (or a copy) is not recorded anywhere; it is the one
+   `not finished` source (sources.md, open reading debts).
+5. **Blind calibration of the craft-knowledge grid.** The two ratings so far were not blind
+   ([craft-knowledge.md](craft-knowledge.md#calibration)); a blind one needs an agent that has not been
+   shown any level.
+6. **Workaround rules.** Section 6 lists four rules; confirm that they match the owner's decision
+   (the verifier could not match the count).
