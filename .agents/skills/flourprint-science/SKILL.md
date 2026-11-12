@@ -30,8 +30,13 @@ was measured. Do not equate unrelated endpoints or generalize one selected recip
 - Record bibliographic/direct links, exact passage/table location and actual read status. Read
   [evidence.md](references/evidence.md) for the extraction fields and useful failure distinctions.
 - Keep provenance classification separate from read status, following `docs/science/README.md`.
-  Transcription through a secondary source stays secondary. A missing paper/paywall or unreadable
-  graph remains unverified; do not invent measurements, ranges or confidence to fill it.
+  Classify each source with the closed vocabulary of `docs/science/evidence-classification.md`
+  (reading class, reason for an incomplete reading, soundness, scope, role, workarounds); a
+  transcription or a relayed reading is a lead, never `full`. No source stays `not finished` in a
+  PR ready to merge, and a coefficient rests only on a `fit` or `independent validation` source.
+  Practitioner claims go to `docs/science/craft-knowledge.md`, never to a fit. A missing
+  paper/paywall or unreadable graph remains unverified; do not invent measurements, ranges or
+  confidence to fill it.
 - Retain source values and units before conversion, including temperature/dose bases and endpoint
   definitions. State every normalization and assumption; missing protocol fields remain missing.
 

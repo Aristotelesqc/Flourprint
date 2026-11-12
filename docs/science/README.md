@@ -56,7 +56,12 @@ pull request.
 - [home-measurements.md](home-measurements.md): the measurements the owner's bakes can make to
   calibrate the weakest points (fridge cooling, cold end, end point), with what to record.
 - [sources.md](sources.md): the index of every source considered, with legal access links, read
-  status and use. No PDFs are stored in the repository.
+  status and use, and the classification of each source (reading, reason, soundness, scope, role,
+  workarounds). No PDFs are stored in the repository.
+- [evidence-classification.md](evidence-classification.md): the one authoritative vocabulary for
+  classifying a scientific source, with the merge rule and the coefficient rule.
+- [craft-knowledge.md](craft-knowledge.md): a separate register of practitioner claims, graded
+  A, B or C, which can never calibrate or validate a coefficient.
 - `data/`: transcribed source tables (CSV) with a metadata file each (source, DOI, formula,
   endpoint, what the temperature means, who transcribed it, read status, `source_verified`).
 - `data/style-guides.md` and `.json`: consensus ranges and starting points per template style,
@@ -78,10 +83,30 @@ table.
 | EXTRAPOLATED     | A model applied outside the domain where it was calibrated.                                                                                  |
 | MODEL OUTPUT     | The output of a third-party model (for example Craig's yeast table). It is not data about dough, even when it looks like a table of results. |
 
-A second, separate field gives the **read status**: full text read (by whom), abstract only, or
-secondary (a transcription or a citing text). A label is never upgraded by a source we could not
+A second, separate field gives the **read status**, a closed class (`full`, `partial`,
+`abstract only`, `not read`) defined in [evidence-classification.md](evidence-classification.md#1-reading);
+the legacy wording was full text read (by whom), abstract only, or secondary (a transcription or a
+citing text). A label is never upgraded by a source we could not
 read: a MEASURED value known only through a secondary transcription stays marked as such, and
 `source_verified=false` in the data files.
+
+## Classification of evidence
+
+Two schemes, one authoritative place each (owner decision, 2026-11-12 (UTC)). Other files link to
+them and never copy their definitions.
+
+| Scheme                                    | Applies to                                    | Vocabulary lives in                                      | Filled in                                                       |
+| ----------------------------------------- | --------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------- |
+| Classification of a scientific source     | Every source in the index                     | [evidence-classification.md](evidence-classification.md) | [sources.md](sources.md#classification-of-evidence)             |
+| Craft-knowledge level A, B or C per claim | Practitioner claims (books, courses, recipes) | [craft-knowledge.md](craft-knowledge.md)                 | [craft-knowledge.md](craft-knowledge.md#register-first-entries) |
+
+- **Merge rule.** No source may be left `not finished` in a pull request that is ready to merge:
+  finish it, or establish one of the three other reasons for an incomplete reading. The sources
+  that carry it are listed in [sources.md](sources.md#open-reading-debts).
+- **Coefficient rule.** A model coefficient may rest only on sources whose role is `fit` or
+  `independent validation`. Craft knowledge never is one. Shipped values that rest on something
+  else are listed as findings in [sources.md](sources.md#findings-shipped-coefficients-and-source-roles)
+  and are not changed by the classification.
 
 ## Rules
 
