@@ -29,6 +29,13 @@ a dedicated pull request, before the code that depends on it.
 - Persisted units: grams, °C, seconds, UTC instants, percentages in points.
 - No new dependency without a demonstrated need.
 - English everywhere: code, comments, docs, commit messages, issues, pull requests.
+- Dates and times written in the repository or on GitHub (docs, issues, pull requests, commit
+  messages, changelogs, "as of" notes) are in **UTC**, in ISO form (`2026-11-12`,
+  `2026-11-12T03:29Z`), and name no contributor's time zone. Take the current time from the clock
+  (`date -u +%Y-%m-%dT%H:%MZ`), never from memory, and date an event by its recorded UTC timestamp
+  (a GitHub comment, a commit), not by the local day it was written on. In conversation, give
+  times in the person's own time zone and say which; ask when it is unknown. A decision made late
+  in a local evening may carry the next UTC date: that is expected, not an error.
 - No user-facing text hard-coded in UI components; use message keys (ADR 0009).
 - The interface is phone-only: no tablet or desktop responsive layouts. The phone frame on desktop
   browsers and shells is intentional, not a defect (ADR 0024; ledger L24, L25). Phone acceptance at 360
