@@ -148,10 +148,7 @@ for (const english of [false, true]) {
         formatEdge('Alpha', catalog['recipe.sort.start'], 'Gamma'),
       ].join('; '),
     );
-    const chainToast = page
-      .locator('ion-toast:not(.recipe-move-toast)')
-      .filter({ visible: true })
-      .filter({ hasText: chainMessage });
+    const chainToast = page.locator('ion-toast.recipe-chain-notice');
     const chainStatus = chainToast.getByRole('status');
     await expect(chainStatus).toBeVisible();
     await expect(chainStatus).toHaveText(chainMessage);
@@ -166,6 +163,7 @@ for (const english of [false, true]) {
       .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })
       .click();
     await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
+    await expect(chainToast).toBeHidden({ timeout: 1500 });
     await expect(save(page)).toBeDisabled();
   });
 
