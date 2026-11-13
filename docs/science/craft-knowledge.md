@@ -6,25 +6,47 @@ valuable because published science mostly measures gas in high-dose laboratory d
 little about taste, texture and when a dough is ready, especially for long fermentations at a low
 yeast dose.
 
-**Authority.** Owner decision, 2026-11-12 (UTC), recorded by PR #276 (issue #231). The file name,
-the level rules and everything marked **Proposal** go beyond that decision and wait for the
+**Authority.** Owner decision, 2026-11-12 (UTC), recorded by PR #276 (issue #231), amended by
+owner decision, 2026-11-13 (UTC) (uncertainty ranges, below). The file name,
+the level rules and everything marked **Proposal** go beyond those decisions and wait for the
 owner's confirmation. It is documentation only: no model, coefficient, equation, contract, engine
 or screen changes. The separate scheme for scientific sources is in
 [evidence-classification.md](evidence-classification.md); the two never mix.
 
 ## What the register may and may not do
 
-| May                                                                    | May never                                                                                                                                     |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Check the plausibility of a model prediction.                          | Fit or validate a model coefficient. The [coefficient rule](evidence-classification.md#5-role-for-the-model) is the one place that states it. |
-| Give a subjective readiness criterion ("the dough is ready when ..."). | Be given a scientific source role (`fit`, `independent validation`, or any other).                                                            |
-| Suggest a hypothesis to test.                                          | Be presented as a measurement, or averaged with one (**Proposal**: the second half).                                                          |
-| Supply a starting value for a recipe.                                  |                                                                                                                                               |
+| May                                                                                                                                                            | May never                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Check the plausibility of a model prediction.                                                                                                                  | Fit or validate a model coefficient. The [coefficient rule](evidence-classification.md#5-role-for-the-model) is the one place that states it. |
+| Give a subjective readiness criterion ("the dough is ready when ...").                                                                                         | Be given a scientific source role (`fit`, `independent validation`, or any other).                                                            |
+| Suggest a hypothesis to test.                                                                                                                                  | Be presented as a measurement, or averaged with one (**Proposal**: the second half).                                                          |
+| Supply a starting value for a recipe.                                                                                                                          |                                                                                                                                               |
+| Set the direction and the width of an uncertainty range, as a hypothesis (owner decision, 2026-11-13 (UTC); [below](#craft-knowledge-and-uncertainty-ranges)). |                                                                                                                                               |
 
 **Proposal (item 8).** Comparing a forecast with published schedules is a plausibility check of a
 prediction; it is never a validation or a fit of a coefficient. The three uses in the "May" column
 beyond the plausibility check (a readiness criterion, a hypothesis, a starting value) are likewise
 agent-authored and wait for the owner's confirmation.
+
+## Craft knowledge and uncertainty ranges
+
+Owner decision, 2026-11-13 (UTC). Craft knowledge still never fits or validates a coefficient. It
+**may set the direction and the width of an uncertainty range** for an effect that the model does
+not otherwise represent, for example in enriched doughs (fat, milk, eggs, acids). Such a range is
+labelled as a hypothesis; it is not a measurement and is never averaged with one. The level (A, B
+or C) of each claim used is recorded with it. The owner's reason: a broad forecast that owns its
+uncertainty is preferred to a model that is silent about the ingredients it ignores.
+
+**Measurements take precedence.** Where the index holds measurements of the effect, they set the
+range instead, within the conditions they cover:
+
+- **Sugar:** Timmermans et al. 2022 (sucrose 0 to 18 % in a pastry dough at 30 °C) and Gélinas and
+  McKinnon 2018 (sucrose and water, abstract only);
+- **Salt:** Belz et al. 2017 and Boudrag et al. 2026 (NaCl in rheofermentometer doughs at 30 °C).
+
+Their rows in [sources.md](sources.md#classification-of-evidence) say what each covers. How the
+computed uncertainty is built and labelled is in
+[evidence-classification.md](evidence-classification.md#8-computed-uncertainty).
 
 ## Two separate assessments
 

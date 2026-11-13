@@ -10,7 +10,10 @@ scientific document gets a written classification with a fixed vocabulary, in tw
 file for sources, craft-knowledge.md for practitioner knowledge). It is documentation only: it
 changes no model, coefficient, equation, contract, engine or screen. Anything this file adds
 beyond that decision is marked **Proposal** and waits for the owner's confirmation; the list is
-at the end.
+at the end. Three owner decisions of 2026-11-13 (UTC), given in chat, relax the coefficient rule
+(section 5), add the principle of computed uncertainty (section 8) and let craft knowledge set an
+uncertainty range ([craft-knowledge.md](craft-knowledge.md#craft-knowledge-and-uncertainty-ranges));
+they are listed as decided at the end.
 
 **Two schemes, never mixed.**
 
@@ -179,22 +182,40 @@ The highest use the classification supports for a source, from a closed list:
 | `method only`              | Supply a protocol, an assay or an estimator. No number is taken from it.                                                                                  |
 | `none`                     | No use: a lead, a source out of scope, or a model's output.                                                                                               |
 
-**Coefficient rule (owner decision, 2026-11-12 (UTC)).** A model coefficient may rest only on
-sources whose role is `fit` or `independent validation`. Craft knowledge may never be one
-([craft-knowledge.md](craft-knowledge.md)). A shipped coefficient that rests on any other source is
-a finding to list, never a reason to change the model in the same pull request; findings are in
+**Coefficient rule (owner decision, 2026-11-12 (UTC); relaxed by owner decision, 2026-11-13
+(UTC)).** A model coefficient may rest on:
+
+1. sources whose role is `fit` or `independent validation` (measurements); or
+2. failing that, **another recognised model**, when no raw measurements exist for the doughs
+   concerned. All four conditions are needed:
+   - (a) the coefficient carries the visible label `model-derived`, so that it is never confused
+     with a measured one;
+   - (b) the record names which model, how it was reached (for example a third-party
+     transcription) and why no measurements were available;
+   - (c) the borrowed model passed a plausibility check against what the repository holds, and
+     the record says which checks;
+   - (d) measurements replace it as soon as sound ones exist.
+
+Craft knowledge may never be a basis for a coefficient
+([craft-knowledge.md](craft-knowledge.md)). A shipped coefficient that rests on neither basis is a
+finding to list, never a reason to change the model in the same pull request; findings are in
 [sources.md](sources.md#findings-shipped-coefficients-and-source-roles).
 
-**Application to the shipped 0.1.0 coefficients: undecided (open question 7).** The shipped
-`A` 3.43 h, `k` 0.729 and `Ea` 98.3 kJ/mol come from a fit to a third-party model-output table
-(Craig, MODEL OUTPUT; source role `none`), and no source in the index supports 98.3. Whether the
-coefficient rule reaches them is not decided here. Two readings: (i) the rule governs **future
-coefficient promotions**, and 0.1.0 is recorded as provisional and unvalidated (grandfathered),
-its sources' roles listed as findings; (ii) the rule requires a **separate owner action on 0.1.0**
-(a re-derivation, a relabelling or a replacement, each a contract change of its own). **Proposal:**
-reading (i): the contract already carries 0.1.0 as `provisional`, and the findings list makes the
-gap visible without touching a constant. It is a proposal only. No `fit` label is given to the
-Craig table, and no constant changes here.
+**`model-derived` in the vocabulary.** It is a label for the basis of a coefficient, not a source
+role: the roles above say what a source may do, the label says what a coefficient rests on. The
+source behind a `model-derived` coefficient keeps its own role, so the Craig table stays `none`
+(it is a model's output, neither a fit nor a validation). A coefficient without the label rests on
+sources of role `fit` or `independent validation`. The label is given only to a coefficient that
+actually comes from a model; an ASSUMED value or a vendor ratio does not become `model-derived`
+by this rule. The provenance labels of [README.md](README.md#provenance-labels) still describe
+the number (a coefficient fitted by Flourprint to a third-party table is DERIVED / FITTED; the
+table is MODEL OUTPUT).
+
+**Applied to the shipped 0.1.0 coefficients (owner decision, 2026-11-13 (UTC)).** `A` 3.43 h,
+`k` 0.729 and `Ea` 98.3 kJ/mol are `model-derived` (from the Craig table). That is permitted by
+item 2, and they stay provisional and not validated. The record and the plausibility checks found
+are in [sources.md](sources.md#findings-shipped-coefficients-and-source-roles). No `fit` label is
+given to the Craig table, and no constant changes.
 
 **Proposal.** A source whose soundness is `weak` cannot hold `fit` or `independent validation`.
 
@@ -237,8 +258,30 @@ Rules:
 | One classification row per source                        | [sources.md](sources.md#classification-of-evidence), keyed by the source name of the index tables. |
 | Parts read, parts missing, workarounds, routes not tried | The records under that table, in the same file.                                                    |
 | Sources left `not finished`                              | [sources.md](sources.md#open-reading-debts).                                                       |
-| Shipped coefficients resting on a source of another role | [sources.md](sources.md#findings-shipped-coefficients-and-source-roles).                           |
+| The `model-derived` label and the conditions for it      | This file only (section 5).                                                                        |
+| Shipped coefficients, their basis and the checks behind  | [sources.md](sources.md#findings-shipped-coefficients-and-source-roles).                           |
+| Which quantity of a forecast is what kind of thing       | This file only (section 8).                                                                        |
 | Table values and what a temperature means                | The `data/` file of the source, as before.                                                         |
+
+## 8. Computed uncertainty
+
+Owner decision, 2026-11-13 (UTC). **Principle:** everything that can be computed is computed, and
+each computed quantity states what kind of thing it is, so that nothing is presented as more than
+it is. The uncertainty of a forecast has four origins, each computed differently, and they are not
+merged into one number without saying so:
+
+| Origin                                                                   | Computed by                                                                                                                                                                                                                                                                | What it is                                        |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| (i) The baker's inputs (for example room temperature to within a degree) | Propagation through the model                                                                                                                                                                                                                                              | An exact sensitivity of the forecast to the input |
+| (ii) The model's coefficients                                            | Varying them within their bounds                                                                                                                                                                                                                                           | A possible range, not a probability               |
+| (iii) The model's own error                                              | Comparing forecasts with records: the root-mean-square error factor on the 89 published recipes (×1.89, [fermentation-model.md, section 15](fermentation-model.md#15-predictive-uncertainty-research-2026-11-03-rerun-2026-11-06)), and the user's own bakes once recorded | An observed error margin                          |
+| (iv) The definition of "ready"                                           | Per definition: each readiness profile gives its own end point                                                                                                                                                                                                             | The difference between definitions, not an error  |
+
+A probability is shown only when it rests on real observations, that is, for origin (iii) and
+only as far as its records go. The 89 recipes are craft-knowledge data
+([craft-knowledge.md](craft-knowledge.md)): used to observe the model's error, they neither fit
+nor validate a coefficient. This section is a documentation principle; the engine and interface
+work is tracked in a separate issue.
 
 ## Proposals beyond the owner's decision
 
@@ -264,8 +307,21 @@ Each waits for the owner's confirmation; none changes a model.
 10. The rules for taking the reading class from the reader's record (section 1: the class follows
     the record, a part named as not read makes a source `partial`, an unnamed section needs a
     reason).
-11. The reading of the coefficient rule as governing future coefficient promotions only, with the
-    shipped 0.1.0 coefficients recorded as provisional and unvalidated (section 5; open question 7).
+
+## Decided
+
+Owner decisions of 2026-11-13 (UTC), given in chat. Each is written once, where it is linked.
+
+1. **The coefficient rule is relaxed** (section 5): a coefficient may rest on `fit` or
+   `independent validation` sources, or, when no raw measurements exist, on another recognised
+   model under four conditions, with the label `model-derived`. This settles the former open
+   question on the shipped model: `A`, `k` and `Ea` of 0.1.0 are `model-derived`, permitted,
+   provisional and not validated. The Proposal to read the rule as governing promotions
+   only (grandfathering 0.1.0) is settled by this decision.
+2. **Computed uncertainty** (section 8): four origins, each computed and labelled for what it is;
+   a probability only on real observations.
+3. **Craft knowledge may set an uncertainty range**, never fit or validate a coefficient
+   ([craft-knowledge.md](craft-knowledge.md#craft-knowledge-and-uncertainty-ranges)).
 
 ## Open questions for the owner
 
@@ -290,9 +346,6 @@ Nothing below is decided. Each is also recorded where it arises.
    shown any level.
 6. **Workaround rules.** Section 6 lists four rules; confirm that they match the owner's decision
    (the verifier could not match the count).
-7. **Application of the coefficient rule to the shipped model** (section 5): (i) the rule governs
-   future coefficient promotions and 0.1.0 is recorded as provisional and unvalidated
-   (grandfathered; the agent's proposal), or (ii) it requires a separate owner action on 0.1.0.
-8. **Walker, Quail and McMaster 1996** (_Cereal Foods World_ 41(3):127-133) is `not read`,
+7. **Walker, Quail and McMaster 1996** (_Cereal Foods World_ 41(3):127-133) is `not read`,
    `access refused` (publisher HTTP 403 Forbidden, 2026-11-13T15:40Z UTC; sources.md): a copy
    supplied by the owner would let it be read.
