@@ -35,10 +35,11 @@ change. Delegate validation and independent caller validation must each record t
 
 Reuse existing human authorization for the same repository, preview and reviewer scope.
 When recovery is authorized, use the host's approved execution path with a **PTY** and the
-native executable. Resume the exact owned conversation, never the global most-recent one:
+native executable. Resume the exact owned conversation using the model recorded for that run, never the global
+most-recent one:
 
 ```text
-agy --conversation <recorded-id> --model gemini-3.8-flash-high --mode plan --log-file <private-log> --prompt-interactive <bounded-permission-and-probe-brief>
+agy --conversation <recorded-id> --model <model-from-recorded-run> --mode plan --log-file <private-log> --prompt-interactive <bounded-permission-and-probe-brief>
 ```
 
 - Unlike `--print`, this presents actual tool confirmation menus. `--prompt-interactive` is
@@ -163,7 +164,7 @@ raw command. Do not infer a network or login problem from another confirmation.
 3. Launch the native CLI in an attached PTY, adding only the approved artifact directory:
 
    ```text
-   agy --model gemini-3.8-flash-high --mode plan --settings .agy-runs/session-settings.json --add-dir <capture-directory> --log-file <private-log> --prompt-interactive <bounded-brief>
+   agy --model gemini-4-hydrogen-high --mode plan --settings .agy-runs/session-settings.json --add-dir <capture-directory> --log-file <private-log> --prompt-interactive <bounded-brief>
    ```
 
    The current stream-json helper does not forward `--settings`; do not invent that helper flag.

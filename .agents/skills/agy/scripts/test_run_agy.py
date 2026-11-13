@@ -26,7 +26,7 @@ class LauncherTests(unittest.TestCase):
         self.output = self.root / "run-01"
         self.options = [
             "--repo", str(self.root), "--prompt", str(self.prompt), "--out", str(self.output),
-            "--model", "gemini-3.8-flash-high", "--agy", str(self.cli), "--timeout", "20",
+            "--model", "gemini-4-hydrogen-high", "--agy", str(self.cli), "--timeout", "20",
         ]
         self.before = {"head": "fixture-revision", "status": ""}
 
