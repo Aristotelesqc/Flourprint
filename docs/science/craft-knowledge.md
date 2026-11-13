@@ -48,6 +48,16 @@ Their rows in [sources.md](sources.md#classification-of-evidence) say what each 
 computed uncertainty is built and labelled is in
 [evidence-classification.md](evidence-classification.md#8-computed-uncertainty).
 
+## Beyond timing: the behavior model
+
+Craft knowledge about how a dough handles (firmness, stickiness, gas retention, crumb, crust) is
+the main expected source for the behavior model, whose foundations are proposals in
+[behavior-model-foundations.md](behavior-model-foundations.md). It follows every rule of this
+register: the grid below, the ceilings of use, the copyright rule, and the ban on fitting or
+validating a coefficient. That file proposes how a craft claim and a measurement are combined
+without being mixed, and which fields a behavior entry may need beyond the template. The register
+holds no entry about handling yet.
+
 ## Two separate assessments
 
 The standing of the source and the quality of the claim do not always go together, so each is

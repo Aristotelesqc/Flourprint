@@ -13,6 +13,15 @@ contracts and ADRs, the conformance, the engine code, the screens, the pull requ
 the validation, and the project's chosen direction with its authority. The specialist documents
 below hold the evidence; this directory's other files do not repeat each other.
 
+## Two models
+
+The **fermentation model** ([fermentation-model.md](fermentation-model.md)) answers when a dough
+is ready. The **behavior model**, whose foundations are in
+[behavior-model-foundations.md](behavior-model-foundations.md), is meant to answer how the dough
+handles and what it becomes. Both draw on measured science ([evidence-classification.md](evidence-classification.md))
+and on craft knowledge ([craft-knowledge.md](craft-knowledge.md)), kept apart; `dough-behavior.md`
+maps every domain of both. Only the fermentation model is shipped.
+
 ## Authority boundaries and precedence
 
 |               | `docs/contracts/`                                                | `docs/science/`                                                         | `dough-behavior.md`                                                       |
@@ -62,6 +71,11 @@ pull request.
   classifying a scientific source, with the merge rule and the coefficient rule.
 - [craft-knowledge.md](craft-knowledge.md): a separate register of practitioner claims, graded
   A, B or C, which can never calibrate or validate a coefficient.
+- [behavior-model-foundations.md](behavior-model-foundations.md): the foundations of a second model,
+  the behavior model (how a dough handles and what it becomes), as proposals: how measured science
+  and craft knowledge combine and stay apart, the vocabulary, the form of a behavior statement,
+  how uncertainty is expressed, the principles for the app and a roadmap. Not a model, a contract
+  or a knowledge base.
 - `data/`: transcribed source tables (CSV) with a metadata file each (source, DOI, formula,
   endpoint, what the temperature means, who transcribed it, read status, `source_verified`).
 - `data/style-guides.md` and `.json`: consensus ranges and starting points per template style,
