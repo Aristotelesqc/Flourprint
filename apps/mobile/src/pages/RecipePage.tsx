@@ -6,11 +6,13 @@ import {
   IonFooter,
   IonHeader,
   IonPage,
+  IonToast,
   IonToolbar,
   useIonAlert,
   useIonRouter,
   useIonToast,
   useIonViewWillEnter,
+  useIonViewWillLeave,
 } from '@ionic/react';
 import {
   useCallback,
@@ -101,6 +103,9 @@ interface HistorySnapshot {
   readonly process: Process;
 }
 
+const chainNoticeClass =
+  'recipe-chain-notice [--background:var(--color-surface-container-high)] [--color:var(--color-ink)] [--border-radius:var(--radius-card)] [&::part(message)]:text-body [&::part(wrapper)]:pointer-events-none';
+
 const sameSnapshot = (
   snapshot: HistorySnapshot,
   baseline: HistorySnapshot | undefined,
@@ -148,6 +153,7 @@ const RecipePageContent = () => {
   const [failure, setFailure] = useState<DomainError>();
   const [storageFailed, setStorageFailed] = useState(false);
   const [notice, setNotice] = useState<string>();
+  const [chainNotice, setChainNotice] = useState<string>();
   // Set while the recipe is in the trash: it is then read-only until restored.
   const [trashedAt, setTrashedAt] = useState<Instant>();
   const [loading, setLoading] = useState<'loading' | 'missing' | 'failed' | 'ready'>('loading');
@@ -326,6 +332,7 @@ const RecipePageContent = () => {
     }
   }, [services, recipeId]);
   useIonViewWillEnter(() => void refreshBakes(), [refreshBakes]);
+  useIonViewWillLeave(() => setChainNotice(undefined), []);
   useEffect(() => void refreshBakes(), [refreshBakes, simulation]);
 
   const draft: Working | undefined = stored ?? base?.revision;
@@ -713,6 +720,7 @@ const RecipePageContent = () => {
     }
     setFailure(undefined);
     setNotice(undefined);
+    setChainNotice(undefined);
     setEditorGeneration((generation) => generation + 1);
   };
 
@@ -812,6 +820,7 @@ const RecipePageContent = () => {
 
   const handleDragStart = () => {
     setNotice(undefined);
+    setChainNotice(undefined);
     ensureDraft();
   };
 
@@ -848,7 +857,7 @@ const RecipePageContent = () => {
       moveResult.changedEdges &&
       moveResult.changedEdges.length > 0
     ) {
-      setNotice(formatChangedEdges(moveResult.changedEdges, moveResult.process, t, stepName));
+      setChainNotice(formatChangedEdges(moveResult.changedEdges, moveResult.process, t, stepName));
     }
 
     return 'accepted';
@@ -950,6 +959,7 @@ const RecipePageContent = () => {
             resumedAtStartRef.current = false;
             setEditorGeneration((generation) => generation + 1);
             setFailure(undefined);
+            setChainNotice(undefined);
             if (id !== undefined) {
               saving.current = saving.current
                 .then(() => services.recipes.deleteDraft(id))
@@ -1645,6 +1655,17 @@ const RecipePageContent = () => {
           </Ui>
         </IonFooter>
       )}
+      <IonToast
+        isOpen={chainNotice !== undefined}
+        {...(chainNotice ? { message: chainNotice } : {})}
+        position="top"
+        {...(headerRef.current ? { positionAnchor: headerRef.current } : {})}
+        cssClass={chainNoticeClass}
+        duration={3500}
+        onWillDismiss={(event) => {
+          if (event.detail.role !== undefined) setChainNotice(undefined);
+        }}
+      />
     </IonPage>
   );
 };
