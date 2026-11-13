@@ -32,6 +32,31 @@ model (how a dough handles and what it becomes, as opposed to when it is ready) 
 timing, behavior or both. The behavior model has no contract, code or screen: its place in this
 map is domain 14 and, for the formula and process drivers, domains 6b, 7, 8 and 12b.
 
+## Roles of the domains in the two models
+
+A Proposal from [behavior-model-foundations.md](behavior-model-foundations.md), read from each
+domain's own definition below. The fermentation model answers when a dough is ready; the behavior
+model, how it handles and what it becomes.
+
+- **Timing:** [1a](#d01a-yeast-dose-and-form), [1b](#d01b-yeast-strain-viability-lag-biomass),
+  [2a](#d02a-kinetic-temperature-response), [2b](#d02b-cold-end-and-long-refrigeration),
+  [2c](#d02c-dough-temperature-history-and-recording),
+  [2d](#d02d-physical-dough-thermal-model-and-self-heating),
+  [4a](#d04a-readiness-profiles-and-end-point), [12a](#d12a-water-temperature-and-friction),
+  [13](#d13-geometry-vessel-and-core-versus-mean).
+- **Behavior:** [8](#d08-enzymes-and-substrates) (stickiness, crumb),
+  [9](#d09-flour-properties), [10](#d10-effective-hydration-and-water-binding),
+  [14](#d14-rheology-and-structure-over-time), [15](#d15-baking-transitions-interface).
+- **Both:** [3](#d03-co2-production-retention-and-volume) (production is timing, retention and
+  volume are behavior), [4b](#d04b-cues-ranges-and-live-forecast),
+  [5](#d05-humidity-evaporation-skin-and-water-activity) (water activity is timing, skin is
+  behavior), [6a](#d06a-ingredient-composition-accounting),
+  [6b](#d06b-effects-of-enriched-and-complex-ingredients), [7](#d07-salt),
+  [11](#d11-preferments-levain-scald-soaker),
+  [12b](#d12b-mixing-autolyse-folds-degassing-shaping),
+  [16a](#d16a-recording-personal-learning-and-global-refit), [16b](#d16b-data-export),
+  [17](#d17-intervals-provenance-out-of-domain-and-promotion).
+
 ## As of
 
 | Item                            | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
