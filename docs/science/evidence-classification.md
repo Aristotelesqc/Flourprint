@@ -175,11 +175,16 @@ read, and the routes not tried. Five kinds, in order of trust:
 | 2     | Another article reproducing the data                                             | Good for the reproduced figures only (for example the AACC schedule printed in Finney 1984).                   |
 | 3     | Publisher abstract obtained through a third-party index (for example Europe PMC) | Conclusions only. No number from it is usable for a coefficient.                                               |
 | 4     | Literature review or third-party citation                                        | A lead to confirm.                                                                                             |
-| 5     | Unauthenticated transcription (for example a forum or a document-sharing copy)   | A lead only, never "verified".                                                                                 |
+| 5     | Unauthenticated transcription: retyped or re-set text (for example a forum post) | A lead only, never "verified".                                                                                 |
 
 Rules:
 
 - The original's reading class does not rise because a workaround was read.
+- A **page-image copy** of the published pages (the journal layout, with its page numbers) is the
+  original for the purpose of reading, whatever host it came from: it is read and classified as
+  the source itself, not as a workaround (owner decision, 2026-11-13 UTC). Its record says that the
+  copy was not the publisher file. Route 5 covers retyped or re-set text only. The repository still
+  links only to the publisher or the DOI, and stores no copy.
 - An abstract read on the publisher's own page is `abstract only` with no route entry; the same
   abstract obtained through a third-party index is `abstract only` and route 3.
 - A number obtained through a workaround keeps that label until it is compared with the original.
@@ -237,8 +242,3 @@ Nothing below is decided. Each is also recorded where it arises.
    shown any level.
 6. **Workaround rules.** Section 6 lists four rules; confirm that they match the owner's decision
    (the verifier could not match the count).
-7. **Page-image copies from a third-party host** (section 6). Route 5 names an unauthenticated
-   transcription. A copy made of page images in the journal layout, with page numbers and the DOI
-   line, is not a retyped text, but it is not authenticated against the publisher file either.
-   Does such a copy count as the original, as route 5, or as a route of its own? Rattin 2009 is
-   the case in hand (sources.md); it is held as route 5 until decided.
