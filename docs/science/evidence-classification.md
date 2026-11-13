@@ -115,59 +115,43 @@ beaker or incubator at a temperature inside the gate is. A source whose record d
 vessel, the mass or the dough temperature has its conditions `not recorded`, and the class says so. The
 dose and the formulation are judged against the contract's own gates, so a dose range that crosses a gate counts
 as outside for the part above it. For the thermal sub-model, the domain is a domestic fridge or room and a dough
-mass; a source on heat transfer there is `adjacent` at best (**Proposal**, item 6; see open question 2 below).
+mass; a source on heat transfer there is `adjacent` at best (**Proposal**, item 6; see the heat-transfer open question below).
+
+**Decided: the class is judged per cell, with a salt tolerance (owner decision, 2026-11-13
+(UTC), provisional, open to challenge by an independent review).**
+
+1. **Salt tolerance.** A deviation of at most 0.2 point of salt from the contract's range is named
+   in the scope cell but does not move the class. No tolerance is decided for water or for larger
+   salt deviations: those stay as the rule is written, and the choice of a size for them is open.
+2. **The class is assigned per cell (per measurement), not per source.** A cell at 2 % fresh
+   yeast is inside the dose gate. A cell above the gate (4 and 6 %, and the Birch cells above
+   3 %) is `adjacent` on the dose axis: usable to study the dose response, flagged as an
+   extrapolation beyond the gate. A source row names its cell groups and gives the class of each.
+
+Everything else in this section is unchanged. Where the rule is applied, the
+[per-subset analysis](sources.md#role-versus-scope-the-subsets-behind-each-research-fit-or-hold-out)
+gives the classes, the roles that stand and what a subset of in-gate doses can and cannot
+identify. The home-conditions Proposal is applied as it stands: a dough temperature that is not
+reported makes the conditions `not recorded`, and the class says so.
 
 **Open questions on this section (owner decision needed; neither is decided or applied).**
 
-1. **Scope of the role-bearing rows (formulation and dose tolerance).** The rule as written judges
-   the dose and the formulation against the contract's own gates: dose 0.01 to 3 % fresh-equivalent,
-   salt 1.5 to 3 % (values in [fermentation.md](../contracts/fermentation.md), Domain table).
-   Under it, both Izzreen rows (salt 1.4 % of flour; doses 4 and 6 %) and Birch Papers I, II and
-   III (salt 1.3 %; doses 4 and 6 % in II, 20 to 120 g/kg in I, 20 to 40 g/kg in III) have two axes
-   outside, so each is `outside`. Those five rows carry the only `fit` (Izzreen _Food Chem._) and
-   the only `independent validation` (Birch Paper II), and `fit` needs the source in or adjacent
-   to the domain (section 5); section 5 does not say whether `independent validation` needs the same
-   condition, and the verifier's reading is that it does. Applying the rule as written therefore
-   removes both roles.
-   - **Option A.** Apply the rule as written: re-class the five rows `outside`; their roles drop
-     to `none` or `order-of-magnitude check`.
-   - **Option B.** Add a tolerance on the formulation axes (salt, water): a small deviation is named
-     in the cell but does not move the class, and each `adjacent` cell names its one outside axis
-     (for example the dose). The sizes are for the owner to choose; the verifier's 0.5 point of salt
-     and 5 points of water are placeholders that show the effect, not a decision. This is a choice
-     of policy with arguments on both sides, not a device to keep a role. _For:_ the contract itself treats salt and water outside their
-     ranges as extrapolation flags (`ok` with `extrapolations`), not as a refusal, and says that
-     salt, sugar, fat and water only gate the domain and do not change the rate (Domain table), so
-     it does not treat a shortfall of 0.1 to 0.2 point of salt as a ground for refusing an estimate; the two lean
-     matrices are otherwise close to the formulation the model targets. _Against:_ salt strongly
-     changes gas production over 0 to 3 % (Belz 2017, Boudrag 2026), and no source in the index
-     measures what 0.2 point near 1.3 to 1.5 % does to the times, so the tolerance is an assumed
-     size, not a measured equivalence; any cut falls somewhere arbitrary; it would be chosen after
-     seeing which rows it keeps, which the owner can avoid by fixing the size without reference to
-     these rows; and it leaves the dose axis untouched, so the 4 and 6 % cells stay above the gate
-     either way.
-
-   A **per-subset analysis** of the cells that each research fit or hold-out actually uses (which
-   cells, their salt, dose, temperatures, end point and container, the class of each group under
-   each option, and the subset restricted to doses inside the gate) is in
-   [sources.md](sources.md#role-versus-scope-the-subsets-behind-each-research-fit-or-hold-out).
-   Its finding in brief: the 2 % cells (3 per matrix) are `adjacent` under A and `in domain` under
-   B, but three cells at one dose cannot identify a dose exponent or run the hold-out.
-
-   Until the owner decides, the five scope cells in [sources.md](sources.md#classification-of-evidence)
-   name the axes that are outside, with their values, and say "class pending the owner's decision
-   on the formulation tolerance"; the roles of those rows carry the same mark.
-
-   **Question 1a (also the owner's).** The rule is applied to a source as a whole, one class per
-   row. Whether a row may be split by group of cells, or carries the class of its worst cell, is not
-   decided; it changes which roles survive option A (sources.md, Role versus scope).
-
-2. **Heat-transfer sources.** The `outside` row above lists "a fridge wall", while the last
+1. **Heat-transfer scope.** The `outside` row above lists "a fridge wall", while the last
    sentence of the Proposal says a source on heat transfer in the thermal domain is `adjacent` at
    best. The two contradict each other for Williams 1994 and Laguerre 2010, which are
-   `adjacent` in `sources.md` with the same pending mark (the Lança candidate is `not recorded`: it
+   `adjacent` in `sources.md` with a pending mark (the Lança candidate is `not recorded`: it
    was not read). Not chosen here: either a fridge wall is
    `outside` (the sentence goes), or such a source is `adjacent` (the list entry goes).
+2. **A `not recorded` axis and the dough temperature after mixing.** Neither Izzreen nor Birch
+   reports the dough temperature after mixing (19-min machine mix with 30 °C water); the chamber
+   temperature, which is inside the gate, is reported. Under the Proposal, the conditions of every
+   cell are therefore `not recorded`. The Proposal does not say how a `not recorded` axis counts
+   in the class. This file keeps it as written: the axis is not counted as `outside`, and each
+   cell carries the mark "conditions `not recorded`". Were it counted as `outside`, the cells
+   above the dose gate (two axes) would become `outside` and the 2 % cells `adjacent`; the roles
+   that need a source in or adjacent to the domain (`fit`, `independent validation`) would then
+   hold only on the 2 % cells, which cannot identify a dose exponent (sources.md, Role versus
+   scope).
 
 ## 5. Role for the model
 
@@ -220,8 +204,8 @@ given to the Craig table, and no constant changes.
 **Proposal.** A source whose soundness is `weak` cannot hold `fit` or `independent validation`.
 
 **Proposal.** The conditions on `fit` in the table above: the source is in or adjacent to the
-domain, and was read by route 1 or in the original (item 9). The first condition depends on open
-question 1 of section 4.
+domain, and was read by route 1 or in the original (item 9). The first condition is judged per cell, by the
+owner decision recorded in section 4.
 
 ## 6. Workarounds
 
@@ -302,8 +286,8 @@ Each waits for the owner's confirmation; none changes a model.
    (section 2), and the sentence that a `full` reading may record parts read and out of scope
    (section 2).
 9. The conditions on the role `fit`: in or adjacent to the domain, and read by route 1 or in the
-   original (section 5); the same conditions applied to `independent validation` (section 4, open
-   question 1, is the verifier's reading).
+   original (section 5); the same conditions applied to `independent validation` (the verifier's reading, applied in
+   section 4).
 10. The rules for taking the reading class from the reader's record (section 1: the class follows
     the record, a part named as not read makes a source `partial`, an unnamed section needs a
     reason).
@@ -322,15 +306,20 @@ Owner decisions of 2026-11-13 (UTC), given in chat. Each is written once, where 
    a probability only on real observations.
 3. **Craft knowledge may set an uncertainty range**, never fit or validate a coefficient
    ([craft-knowledge.md](craft-knowledge.md#craft-knowledge-and-uncertainty-ranges)).
+4. **Scope is judged per cell, with a salt tolerance** (section 4; owner decision, 2026-11-13
+   (UTC), provisional, open to challenge by an independent review). This settles the former
+   open question on the formulation and dose tolerance (the strict reading, "option A", and the
+   tolerance, "option B") and the question whether a class belongs to a source or to its cells.
+   The size of a tolerance for water or for larger salt deviations is not decided.
 
 ## Open questions for the owner
 
 Nothing below is decided. Each is also recorded where it arises.
 
-1. **Formulation and dose tolerance** (section 4, open question 1): option A (apply the rule as
-   written; five rows `outside`; the only `fit` and the only `independent validation` drop) or
-   option B (a tolerance; small salt or water deviations are named but do not move the class).
-2. **Heat-transfer scope** (section 4, open question 2): is a fridge wall `outside` or `adjacent`
+1. **Not recorded dough temperature** (section 4, second open question): how a `not recorded`
+   axis counts in the class of a cell, given that no cell of the Izzreen or Birch matrices reports
+   the dough temperature after mixing.
+2. **Heat-transfer scope** (section 4, first open question): is a fridge wall `outside` or `adjacent`
    for Williams 1994, Laguerre 2010 and, if it is read, the Lança candidate?
 3. **The two Gélinas 2010 papers.** Confirm that Europe PMC records 33467828 (patents on baker's
    yeast manufacture) and 20653548 (baker's yeast storage and activation) are the papers the
