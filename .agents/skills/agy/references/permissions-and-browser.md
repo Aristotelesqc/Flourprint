@@ -35,10 +35,11 @@ change. Delegate validation and independent caller validation must each record t
 
 Reuse existing human authorization for the same repository, preview and reviewer scope.
 When recovery is authorized, use the host's approved execution path with a **PTY** and the
-native executable. Resume the exact owned conversation, never the global most-recent one:
+native executable. Resume the exact owned conversation using the model recorded for that run, never the global
+most-recent one:
 
 ```text
-agy --conversation <recorded-id> --model gemini-3.8-flash-high --mode plan --log-file <private-log> --prompt-interactive <bounded-permission-and-probe-brief>
+agy --conversation <recorded-id> --model <model-from-recorded-run> --mode plan --log-file <private-log> --prompt-interactive <bounded-permission-and-probe-brief>
 ```
 
 - Unlike `--print`, this presents actual tool confirmation menus. `--prompt-interactive` is
@@ -164,7 +165,7 @@ raw command. Do not infer a network or login problem from another confirmation.
 3. Launch the native CLI in an attached PTY, adding only the approved artifact directory:
 
    ```text
-   agy --model gemini-3.8-flash-high --settings .agy-runs/session-settings.json --add-dir <capture-directory> --log-file <private-log> --prompt-interactive <bounded-brief>
+   agy --model gemini-4-hydrogen-high --settings .agy-runs/session-settings.json --add-dir <capture-directory> --log-file <private-log> --prompt-interactive <bounded-brief>
    ```
 
    For an already approved live journey, use default request-review mode (`agentMode: ""`
@@ -192,13 +193,9 @@ raw command. Do not infer a network or login problem from another confirmation.
    final response or an explicitly permitted artifact writer; do not mine private conversation
    databases or treat a queued message as a completed report.
 
-   An owner configuration may separately require a plan-scoped private READ marker before
-   any tool call. Tool grants do not satisfy that prompt gate. Relay the marker privately only
-   for the approved review; read its exact definition from the owner configuration only with
-   explicit authorization for that targeted read and relay. Otherwise, the owner supplies it.
-   Never extract markers from conversation databases or read unrelated credentials. Keep the
-   value in private prompts/artifacts only; redact surfaced transcripts and never put it in
-   command arguments, committed files or public reports.
+   The current headless workflow uses the owner's scoped authorization described in
+   [assignment.md](assignment.md). Keep private markers and machine configuration out of
+   prompts, artifacts and public reports.
 
 Verified with the same CLI on 2026-11-04: the native CLI also accepts this session profile with
 `--input-format stream-json --output-format stream-json`. This is a direct CLI invocation, not
@@ -213,14 +210,6 @@ the scoped rule. The observed headless turn then ended with `SUCCESS`, an empty 
 `denied_actions`; this was incomplete review evidence. Stop on that denial. Resume the same
 reviewer only after a new inspected, scoped permission decision, within the remaining budget;
 never infer permission from the final status or retry by rephrasing the command.
-
-For an explicitly authorized private marker relay, keep the value in memory and send it directly
-to that CLI's structured stdin. Authorization to relay does not authorize printing the prompt
-through a host tool result or saving a marker-bearing prompt file. Redact the value before
-retaining any returned events, suppress optional caller-created CLI logs that might echo it, and
-never place it in argv. If host approval rejects an exposure point, remove that exposure rather
-than weakening permissions or repeating the same action. Record the exact scope of approval;
-this procedure grants no access to unrelated configuration or credentials.
 
 Keep the profile, prompts and raw logs private. Publish the source/build, tested environment,
 observed interactions and remaining cases on the relevant issue/PR. The access probe alone
