@@ -293,6 +293,6 @@ Nothing below is decided. Each is also recorded where it arises.
 7. **Application of the coefficient rule to the shipped model** (section 5): (i) the rule governs
    future coefficient promotions and 0.1.0 is recorded as provisional and unvalidated
    (grandfathered; the agent's proposal), or (ii) it requires a separate owner action on 0.1.0.
-8. **Walker, Quail and McMaster 1996** (_Cereal Foods World_ 41(3):127-133) is `not read` and
-   `not finished` (sources.md, open reading debts): the owner may supply a copy or accept a
-   justified status.
+8. **Walker, Quail and McMaster 1996** (_Cereal Foods World_ 41(3):127-133) is `not read`,
+   `access refused` (publisher HTTP 403 Forbidden, 2026-11-13T15:40Z UTC; sources.md): a copy
+   supplied by the owner would let it be read.
