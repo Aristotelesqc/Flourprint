@@ -25,9 +25,11 @@ import { useParams } from 'react-router-dom';
 import {
   applyModelDurations,
   flourRefsOf,
+  nextDraftName,
   processEquipmentEntries,
   RECIPE_TEMPLATES,
   saveDraft,
+  saveRevision,
   type Draft,
 } from '@flourprint/core/application';
 import {
@@ -60,7 +62,7 @@ import { RecipeMethod } from '../blocks/RecipeMethod';
 import { RecipeOutcome } from '../blocks/RecipeOutcome';
 import { ChangeReviewSheet } from '../blocks/ChangeReviewSheet';
 import { DraftActionBar } from '../blocks/DraftActionBar';
-import { OverflowMenu } from '../ui/OverflowMenu';
+import { OverflowMenu, type OverflowAction } from '../ui/OverflowMenu';
 import { InfoButton } from '../ui/InfoButton';
 import { usePanelScroll } from '../ui/PanelContext';
 import { useStepDragBack } from '../ui/use-step-drag-back';
@@ -1134,6 +1136,44 @@ const RecipePageContent = () => {
         ? t('recipe.header.atLeast', { duration: formatDuration(savedDuration.seconds) })
         : t('recipe.header.durationUnknown');
 
+  const duplicate = async () => {
+    if (!base || trashedAt !== undefined || dirty || hasInvalid || writes.busy) {
+      return;
+    }
+    const result = await writes.run(async () => {
+      const taken = [
+        ...(await services.recipes.listRecipes()).map((r) => r.name),
+        ...(await services.recipes.listDrafts()).map((d) => d.name),
+      ];
+      const name = nextDraftName(base.name, taken);
+      return saveRevision(services.recipes, {
+        recipeId: services.ids.next(),
+        expectedHead: 0,
+        name,
+        formula: base.revision.formula,
+        process: base.revision.process,
+        createdAt: services.realClock.now(),
+      });
+    });
+    if (!result.ok) {
+      setStorageFailed(result.reason === 'storage');
+      return;
+    }
+    setStorageFailed(false);
+    if (!result.value.ok) {
+      setFailure(result.value.error);
+      return;
+    }
+    setFailure(undefined);
+    router.push(`/recipes/${result.value.value.recipeId}`);
+  };
+
+  const duplicateAction: OverflowAction = {
+    label: t('recipe.duplicate'),
+    disabled: dirty || hasInvalid || writes.busy,
+    handler: () => void duplicate(),
+  };
+
   return (
     <IonPage>
       <IonHeader ref={headerRef} className="ion-no-border">
@@ -1274,6 +1314,7 @@ const RecipePageContent = () => {
                           ...(base && trashedAt === undefined
                             ? [
                                 'divider' as const,
+                                duplicateAction,
                                 {
                                   label: t('recipe.trash'),
                                   destructive: true,
@@ -1286,6 +1327,7 @@ const RecipePageContent = () => {
                       : [
                           ...(base && trashedAt === undefined
                             ? [
+                                duplicateAction,
                                 {
                                   label: t('recipe.trash'),
                                   destructive: true,
