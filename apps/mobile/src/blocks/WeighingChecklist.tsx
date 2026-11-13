@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type CSSProperties } from 'react';
 import {
   sameWeighingRow,
   weighingGroups,
@@ -10,6 +10,7 @@ import {
   type WeighingItem as CoreWeighingItem,
   type WeighingRow,
 } from '@flourprint/core/domain';
+import { transitionCss, useMotion } from '@flourprint/ui';
 import { useMessages } from '../i18n/use-messages';
 import { InfoButton } from '../ui/InfoButton';
 import { SectionTitle } from '../ui/Layout';
@@ -48,6 +49,10 @@ interface Props {
   readonly recipePresentation?: boolean;
 }
 
+type RecipeCheckStyle = CSSProperties & {
+  '--recipe-weighing-check-transition': string;
+};
+
 export const WeighingChecklist = ({
   formula,
   resolved,
@@ -62,6 +67,11 @@ export const WeighingChecklist = ({
   recipePresentation = false,
 }: Props) => {
   const { t, grams, pct, name, componentName } = useMessages();
+  const checkMotion = useMotion('fp.motion.check');
+  const recipeCheckStyle: RecipeCheckStyle | undefined =
+    recipePresentation && checkMotion.kind === 'transition'
+      ? { '--recipe-weighing-check-transition': transitionCss(checkMotion, false) }
+      : undefined;
   const detailErrorId = useId();
   const checklistId = useId();
   const [sheetIngredientId, setSheetIngredientId] = useState<string | null>(null);
@@ -190,7 +200,16 @@ export const WeighingChecklist = ({
                       <input
                         id={`check-${rowKey}`}
                         type="checkbox"
-                        className="size-[22px] shrink-0 accent-[var(--color-accent)]"
+                        style={recipeCheckStyle}
+                        className={`size-[22px] shrink-0 accent-[var(--color-accent)] ${
+                          recipeCheckStyle
+                            ? '[transition:var(--recipe-weighing-check-transition)] motion-reduce:[transition:none]! in-data-[motion=reduced]:[transition:none]!'
+                            : ''
+                        } ${
+                          recipeCheckStyle && done
+                            ? 'motion-safe:[transform:scale(1.05)] in-data-[motion=reduced]:[transform:none]!'
+                            : ''
+                        }`}
                         checked={done}
                         aria-labelledby={labelledBy}
                         onChange={() => onToggle({ stage: row.stage, item: row.item })}

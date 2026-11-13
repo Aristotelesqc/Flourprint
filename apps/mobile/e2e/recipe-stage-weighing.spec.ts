@@ -270,7 +270,44 @@ for (const english of [false, true]) {
     await counter(page, english, final, 0, 4);
     await counter(page, english, finishing, 0, 1);
     await expect(routed(page).getByRole('checkbox')).toHaveCount(9);
-    await row(page, 'poolish', waterName).check();
+    const poolishWater = row(page, 'poolish', waterName);
+    const readCheckTransition = () =>
+      poolishWater.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return {
+          property: style.transitionProperty,
+          duration: style.transitionDuration,
+          transform: style.transform,
+        };
+      });
+    const normalMotion = await readCheckTransition();
+    const normalProps = normalMotion.property.split(',').map((item) => item.trim());
+    const normalDurations = normalMotion.duration.split(',').map((item) => parseFloat(item));
+    const transformIndex = normalProps.indexOf('transform');
+    expect(transformIndex).toBeGreaterThanOrEqual(0);
+    expect(normalDurations[transformIndex] ?? normalDurations[0] ?? 0).toBeGreaterThan(0);
+    await poolishWater.check();
+    expect(await poolishWater.isChecked()).toBe(true);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const osReducedMotion = await readCheckTransition();
+    expect(osReducedMotion.property).toBe('none');
+    expect(osReducedMotion.transform).toBe('none');
+    await page.emulateMedia({ reducedMotion: null });
+    const previousDataMotion = await page.evaluate(() => {
+      const prev = document.documentElement.getAttribute('data-motion');
+      document.documentElement.setAttribute('data-motion', 'reduced');
+      return prev;
+    });
+    const manualReducedMotion = await readCheckTransition();
+    expect(manualReducedMotion.property).toBe('none');
+    expect(manualReducedMotion.transform).toBe('none');
+    await page.evaluate((prev) => {
+      if (prev === null) {
+        document.documentElement.removeAttribute('data-motion');
+      } else {
+        document.documentElement.setAttribute('data-motion', prev);
+      }
+    }, previousDataMotion);
     const poolishTrigger = group(page, 'poolish').getByRole('button', { name: /^poolish\b/i });
     await expect(poolishTrigger).toHaveAttribute('aria-expanded', 'true');
     await poolishTrigger.click();
