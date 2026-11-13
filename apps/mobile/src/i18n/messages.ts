@@ -943,6 +943,9 @@ export const en = {
   'fermentation.extra.sugar_unknown': 'sugar unknown',
   'fermentation.extra.fat_unknown': 'fat unknown',
   'fermentation.extra.water_unknown': 'hydration unknown',
+  'fermentation.extra.dough_above_28c': 'dough above 28 °C',
+  'fermentation.extra.cold_stage_uncalibrated': 'cold stage not calibrated',
+  'fermentation.extra.cold_hold_over_72h': 'more than 72 h in the cold',
   'fermentation.reason.no_commercial_yeast': 'No ingredient is marked as commercial yeast.',
   'fermentation.reason.temperature_unknown': 'Enter the room temperature to get the times.',
   'fermentation.reason.dose_outside_domain':
@@ -2190,6 +2193,9 @@ export const fr: Catalog = {
   'fermentation.extra.sugar_unknown': 'sucre inconnu',
   'fermentation.extra.fat_unknown': 'gras inconnu',
   'fermentation.extra.water_unknown': 'hydratation inconnue',
+  'fermentation.extra.dough_above_28c': 'pâte au-dessus de 28 °C',
+  'fermentation.extra.cold_stage_uncalibrated': 'étape au froid non calibrée',
+  'fermentation.extra.cold_hold_over_72h': 'plus de 72 h au froid',
   'fermentation.reason.no_commercial_yeast': 'Aucun ingrédient n’est marqué comme levure.',
   'fermentation.reason.temperature_unknown': 'Entrer la température ambiante pour avoir les temps.',
   'fermentation.reason.dose_outside_domain':
