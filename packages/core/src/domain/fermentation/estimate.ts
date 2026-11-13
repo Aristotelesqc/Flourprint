@@ -234,42 +234,87 @@ const openSegment = (s: Segment): Segment => ({
 const runaway = (reason: Extract<SimulationResult, { kind: 'unbounded' }>['reason']): Failure =>
   failure('out_of_domain', reason);
 
-const estimateMass = (mass: Mass, options: { readonly dose?: boolean } = {}): MassEstimates => {
-  const open = mass.segments.map((s, i) => (i === mass.openIndex ? openSegment(s) : s));
-  const planned = mass.segments.every((s) => s.hours !== undefined);
-  const yeastIds = mass.yeasts.map((y) => y.id);
-  const domain = inDomain(mass);
+/** Thresholds of the learning flags (fermentation.md, Learning flags, 0.25.0). Owner choices. */
+export const LEARNING_FLAGS = {
+  warmAboveC: 28,
+  coldAtOrBelowC: 10,
+  coldHoldOverH: 72,
+} as const;
+
+/**
+ * The learning flags of a mass (fermentation.md, Learning flags): evidence-limited regimes, given
+ * as extrapolations; they change no value and no band. Every segment counts with its planned
+ * duration except the open one, which counts with `openHours` (the central solved duration, or its
+ * fallback when the duration estimate is not ok). A segment of zero duration counts for no cold
+ * code; its ambient is the effective one (inherited, as the segments carry it).
+ */
+export const learningFlags = (
+  mass: Pick<Mass, 'startC' | 'segments' | 'openIndex'>,
+  openHours: number,
+): string[] => {
+  const { warmAboveC, coldAtOrBelowC, coldHoldOverH } = LEARNING_FLAGS;
+  const temperatures = [
+    mass.startC,
+    ...mass.segments.flatMap((s) =>
+      s.resetC === undefined ? [s.ambientC] : [s.ambientC, s.resetC],
+    ),
+  ];
+  const hours = mass.segments.map((s, i) => (i === mass.openIndex ? openHours : (s.hours ?? 0)));
+  const coldHours = mass.segments.reduce(
+    (sum, s, i) => (s.ambientC <= coldAtOrBelowC ? sum + (hours[i] ?? 0) : sum),
+    0,
+  );
+  const cold = mass.segments.some((s, i) => s.ambientC <= coldAtOrBelowC && (hours[i] ?? 0) > 0);
+  return [
+    ...(temperatures.some((t) => t > warmAboveC) ? ['dough_above_28c'] : []),
+    ...(cold ? ['cold_stage_uncalibrated'] : []),
+    ...(coldHours > coldHoldOverH ? ['cold_hold_over_72h'] : []),
+  ];
+};
+
+const estimateMass = (input: Mass, options: { readonly dose?: boolean } = {}): MassEstimates => {
+  const open = input.segments.map((s, i) => (i === input.openIndex ? openSegment(s) : s));
+  const planned = input.segments.every((s) => s.hours !== undefined);
+  const yeastIds = input.yeasts.map((y) => y.id);
+  const domain = inDomain(input);
+  const run = (p: FermentationParameters, target: number) =>
+    solveOpenSegment(p, {
+      freshPct: freshPct(p, input.yeasts),
+      startC: input.startC,
+      segments: open,
+      target,
+    });
+  const central = domain ? undefined : run(CENTRAL, input.calibration.readyProgress);
+  // The open step counts with its central solved duration when the duration estimate can be ok
+  // (0 h when the end point comes earlier), else with its planned duration, else 0 h.
+  const openHours =
+    central?.kind === 'remaining' ? central.hours : (input.segments[input.openIndex]?.hours ?? 0);
+  const flags = domain ? [] : learningFlags(input, openHours);
+  const mass: Mass =
+    flags.length === 0
+      ? input
+      : { ...input, extrapolations: [...new Set([...input.extrapolations, ...flags])] };
 
   let duration: Estimate;
   if (domain) duration = domain;
-  else {
-    const run = (p: FermentationParameters, target: number) =>
-      solveOpenSegment(p, {
-        freshPct: freshPct(p, mass.yeasts),
-        startC: mass.startC,
-        segments: open,
-        target,
-      });
-    const central = run(CENTRAL, mass.calibration.readyProgress);
-    if (central.kind === 'unbounded') duration = runaway(central.reason);
-    else if (central.kind !== 'remaining') {
-      duration = failure('out_of_domain', 'end_point_not_reached');
-    } else {
-      const hours = corners(mass)
-        .map(({ p, target }) => run(p, target))
-        .map((r) => (r.kind === 'remaining' ? r.hours : r.kind === 'unbounded' ? NaN : Infinity));
-      duration = ok(
-        central.hours * 3600,
-        hours.map((h) => h * 3600),
-        mass,
-        {
-          duration: true,
-          assumptions: central.reachedBefore
-            ? [...mass.assumptions, 'end_point_before_last_step']
-            : mass.assumptions,
-        },
-      );
-    }
+  else if (central?.kind === 'unbounded') duration = runaway(central.reason);
+  else if (central?.kind !== 'remaining') {
+    duration = failure('out_of_domain', 'end_point_not_reached');
+  } else {
+    const hours = corners(mass)
+      .map(({ p, target }) => run(p, target))
+      .map((r) => (r.kind === 'remaining' ? r.hours : r.kind === 'unbounded' ? NaN : Infinity));
+    duration = ok(
+      central.hours * 3600,
+      hours.map((h) => h * 3600),
+      mass,
+      {
+        duration: true,
+        assumptions: central.reachedBefore
+          ? [...mass.assumptions, 'end_point_before_last_step']
+          : mass.assumptions,
+      },
+    );
   }
 
   const missing = mass.segments[mass.openIndex]?.hours === undefined ? [mass.stepId] : [];
