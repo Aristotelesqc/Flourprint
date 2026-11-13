@@ -138,7 +138,7 @@ high-risk or disputed changes, or audits. Small mechanical fixes need no indepen
 Engine and contract mathematics retain an independent Claude reviewer. Implementation retains
 one writer per overlapping file set.
 
-Owner guidance (2026-11-03): Flash has the more generous allowance and remains the ordinary
+Owner guidance (2026-11-03, model updated 2026-11-13 UTC): Hydrogen is the ordinary
 implementer, correction agent and live UI reviewer. Argon is authorized as a narrowly assigned
 specialist for a concrete difficult question or a resistant defect, not a routine extra review
 or general implementation worker. Before an Argon call, state that question, why the specialist
