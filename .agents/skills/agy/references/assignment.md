@@ -119,7 +119,7 @@ conventions that made the runs succeed, not permission settings.
 
 ## Implementation and ordinary review (owner decision of 2026-10-28)
 
-Gemini Flash implements substantial interface changes. The coordinator prepares exact tasks,
+Gemini 4 Hydrogen implements substantial interface changes. The coordinator prepares exact tasks,
 allowed files, existing APIs, ledger lines, expected behaviour and implementation approach;
 only necessary, authorized sources/assets belong in the delegate workspace. Request an
 implementation, not an exploration followed by implementation. Apply the headless lessons
@@ -130,13 +130,82 @@ new delegation: a CSS class, handler, import, focus correction, generated-code i
 or documentation edit. Never cross domain/contract boundaries.
 
 For a meaningful ordinary change, first check the diff's scope, interfaces and boundaries,
-then send one Gemini Flash reviewer the diff, involved files and acceptance lines before
+then send one Gemini 4 Hydrogen reviewer the diff, involved files and acceptance lines before
 coordinator detailed review. Request numbered concrete defects only, each with severity,
 file and line, and a failure scenario. Verify each finding in code/tests: fix confirmed
 ones and dismiss unconfirmed ones in one line each. Use extra reviewers only for clearly
 high-risk or disputed changes, or audits. Small mechanical fixes need no independent review.
 Engine and contract mathematics retain an independent Claude reviewer. Argon is used only
 on the owner's request. Implementation retains one writer per overlapping file set.
+
+## Coordinated UI tranche
+
+Use this path only when the task explicitly asks for nested Gemini/Hydrogen delegation on a
+cohesive UI tranche with agreed acceptance criteria; otherwise keep the ordinary single-pass headless path.
+[Google's CLI subagents documentation](https://antigravity.google/docs/subagents?tab=cli)
+describes native `invoke_subagent`, workspace inheritance or isolated branch worktree selection,
+and `/agents` or `Alt+J` monitoring. Nested execution is unverified on this Windows host with
+AGY CLI 1.5.8. When headless nesting is unverified, start the root with
+`agy --model gemini-4-hydrogen-high --sandbox` in an owned interactive PTY. Use normal scoped
+approvals and native subagents.
+
+- **Topology & fallback:** Codex assigns one cohesive UI tranche to the Hydrogen root. When
+  explicitly requested, the root uses `invoke_subagent` to hand a bounded work package to a
+  coordinator subagent (built-in `self` with inherited Hydrogen where available). That coordinator
+  uses `invoke_subagent` to assign disjoint UI implementation and FR/EN test files to its own
+  workers (one writer per file; isolated branch worktree for concurrent writers when needed,
+  workspace inheritance for readers/verifiers), integrates isolated diffs, and sequences a
+  read-only live journey after integration when browser/app tooling is available. If nesting is
+  unavailable, the root assigns workers directly and records that limit.
+- **Explicit context & observability:** Subagents start without the parent's chat context. Pass
+  exact source SHA, allowed files, ledger items, existing APIs, scope, acceptance, and finite
+  budgets down each level. Verify actual launches and parent-child relationships in `/agents`
+  (`Alt+J`) or captured tool events.
+- **Coordinator & root gate:** Each coordinator personally reads every child diff, checks scope
+  and behavior, requests focused fixes, reviews the combined changes, and exercises the integrated
+  journey before returning revision/diff, child scopes and findings, actual test results, and
+  outstanding gaps. The Hydrogen root repeats that review on the coordinator's combined result
+  before handoff.
+- **Codex & audit boundaries:** Codex retains final independent exact-build acceptance,
+  publication, and one full pre-push validation per cohesive candidate under the existing PR flow.
+  Independent audit rules remain unchanged with no extra mandatory review cohorts; the coordinated
+  worker's live-use evidence may be gathered by a read-only reviewer.
+
+### Practical steps
+
+1. Confirm quota, target model (`gemini-4-hydrogen-high`), exact base SHA, allowed paths, and
+   whether an interactive PTY is required on this host.
+2. Launch the Hydrogen root with the nested brief below and observe `/agents` (`Alt+J`) or
+   captured tool events to confirm actual `invoke_subagent` launches and parent-child links.
+3. Have the coordinator integrate any isolated child worktrees (one writer per file), fix defects,
+   and run a read-only live journey if available; verify the root checks the combined result.
+4. Collect revision/integrated diff, child scopes/findings, actual test results, and gaps, then
+   run Codex's independent build, checks, and PR verification.
+
+### Copyable nested task brief
+
+```text
+Work from exact revision <SHA> in <WORKSPACE_PATH>. Scope: one cohesive UI tranche for <ISSUE/PR>.
+Ledger/contracts: <L-ITEMS / CONTRACTS>. Existing APIs/components to reuse: <APIS>.
+Allowed files (one writer per file): UI <UI_PATHS>; FR/EN tests <TEST_PATHS>.
+Budget: <MAX_WORKERS> workers, <MAX_TURNS> turns, <TIME_BUDGET>. Return report directly in reply.
+
+1. Use `invoke_subagent` to hand this bounded work package to a coordinator subagent using the
+   built-in `self` subagent (inheriting Hydrogen where available). Include exact SHA, allowed
+   files, ledger items, existing APIs, scope, acceptance criteria, and budgets because subagents
+   start without your chat context. If nesting is unavailable, assign workers directly and record
+   that limit.
+2. Instruct the coordinator to use `invoke_subagent` for disjoint UI implementation and FR/EN
+   test workers (workspace inheritance for read-only verifiers, isolated branch worktrees only when
+   concurrent writers need isolation) and integrate isolated diffs cleanly.
+3. After integration, instruct the coordinator to sequence a read-only live-use journey if
+   browser/app tooling is available (otherwise record the missing capability honestly).
+4. Coordinator gate: personally read every child diff, verify scope and behavior, request focused
+   fixes, review the combined changes, and exercise the integrated journey before returning
+   revision/diff, child scopes and findings, actual test results, and outstanding gaps.
+5. Root gate: inspect the coordinator's combined diff, behavior, and evidence against acceptance
+   before returning the consolidated handoff to Codex.
+```
 
 ## Parallel independent audits (owner decision of 2026-10-28)
 
