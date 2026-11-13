@@ -28,8 +28,9 @@ Never silently switch models, enable paid overages or consume a reset.
 - Read repository `AGENTS.md`; select the relevant contracts/ADRs rather than copying the whole
   repository. Confirm the checkout, HEAD, PR base/head and any uncommitted changes being reviewed.
 - Resolve `agy` on PATH (PowerShell: `Get-Command agy`), inspect `agy --help` and `agy models`.
-  Use the requested model when available. Flourprint's established preference is
-  `gemini-3.8-flash-high`; model availability must be checked, not assumed or silently upgraded.
+  Use the requested model when available. Flourprint's established preference is Gemini 4 Hydrogen
+  High (`gemini-4-hydrogen-high`); model availability must be checked, not assumed or silently
+  upgraded.
   The helper expects a native executable; for a shell wrapper, resolve its native binary and
   supply `--agy` rather than executing a shell-built command.
 - Use current user instructions and trusted existing authorization for external sharing. This
@@ -81,7 +82,7 @@ there is no project dependency or hard-coded machine path. Read
 [cli.md](references/cli.md) before the first run, a resumed run or a permission failure.
 
 ```text
-python .agents/skills/agy/scripts/run_agy.py --repo . --prompt .agy-runs/prompts/ui.md --out .agy-runs/ui-review-01 --model gemini-3.8-flash-high --mode plan --timeout 600
+python .agents/skills/agy/scripts/run_agy.py --repo . --prompt .agy-runs/prompts/ui.md --out .agy-runs/ui-review-01 --model gemini-4-hydrogen-high --mode plan --timeout 600
 ```
 
 Prepare the prompt first. `--dry-run` checks the invocation without starting AGY or creating run
