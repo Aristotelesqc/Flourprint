@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { recipeSortEn, recipeSortFr } from '../src/i18n/recipe-sort-messages';
 import { editorSection, routed } from './ui-actions';
 
 const recipeName = 'Draft sorting fixture';
@@ -134,6 +135,32 @@ for (const english of [false, true]) {
     await selectSlot(page, 'Alpha', 'gamma', 'ArrowDown');
     await page.keyboard.press('Space');
     await expect.poll(() => order(page)).toEqual(['beta', 'gamma', 'alpha']);
+    const catalog = english ? recipeSortEn : recipeSortFr;
+    const formatEdge = (step: string, before: string, after: string) =>
+      catalog['recipe.sort.edgeSummary']
+        .replace('{step}', step)
+        .replace('{before}', before)
+        .replace('{after}', after);
+    const chainMessage = catalog['recipe.sort.chainNotice'].replace(
+      '{summary}',
+      [
+        formatEdge('Beta', 'Alpha', catalog['recipe.sort.start']),
+        formatEdge('Alpha', catalog['recipe.sort.start'], 'Gamma'),
+      ].join('; '),
+    );
+    const chainToast = page
+      .locator('ion-toast:not(.recipe-move-toast)')
+      .filter({ visible: true })
+      .filter({ hasText: chainMessage });
+    const chainStatus = chainToast.getByRole('status');
+    await expect(chainStatus).toBeVisible();
+    await expect(chainStatus).toHaveText(chainMessage);
+    await expect(chainStatus).toHaveAttribute('aria-live', 'polite');
+    const headerBox = await box(routed(page).locator('ion-header'));
+    const wrapper = chainToast.locator('[part=wrapper]');
+    await expect
+      .poll(async () => (await box(wrapper)).y)
+      .toBeGreaterThanOrEqual(headerBox.y + headerBox.height - 1);
     await expect(save(page)).toBeEnabled();
     await footer(page)
       .getByRole('button', { name: /^(Undo last change|Annuler la dernière modification)$/ })

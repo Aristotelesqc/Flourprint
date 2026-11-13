@@ -848,12 +848,7 @@ const RecipePageContent = () => {
       moveResult.changedEdges &&
       moveResult.changedEdges.length > 0
     ) {
-      const summary = formatChangedEdges(moveResult.changedEdges, moveResult.process, t, stepName);
-      void presentToast({
-        message: summary,
-        duration: 3500,
-        position: 'top',
-      });
+      setNotice(formatChangedEdges(moveResult.changedEdges, moveResult.process, t, stepName));
     }
 
     return 'accepted';
