@@ -281,7 +281,7 @@ A probability is shown only when it rests on real observations, that is, for ori
 only as far as its records go. The 89 recipes are craft-knowledge data
 ([craft-knowledge.md](craft-knowledge.md)): used to observe the model's error, they neither fit
 nor validate a coefficient. This section is a documentation principle; the engine and interface
-work is tracked in a separate issue.
+work is tracked in issue #287.
 
 ## Proposals beyond the owner's decision
 
