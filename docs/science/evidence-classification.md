@@ -237,3 +237,8 @@ Nothing below is decided. Each is also recorded where it arises.
    shown any level.
 6. **Workaround rules.** Section 6 lists four rules; confirm that they match the owner's decision
    (the verifier could not match the count).
+7. **Page-image copies from a third-party host** (section 6). Route 5 names an unauthenticated
+   transcription. A copy made of page images in the journal layout, with page numbers and the DOI
+   line, is not a retyped text, but it is not authenticated against the publisher file either.
+   Does such a copy count as the original, as route 5, or as a route of its own? Rattin 2009 is
+   the case in hand (sources.md); it is held as route 5 until decided.
