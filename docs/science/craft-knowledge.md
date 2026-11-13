@@ -21,8 +21,10 @@ or screen changes. The separate scheme for scientific sources is in
 | Suggest a hypothesis to test.                                          | Be presented as a measurement, or averaged with one (**Proposal**: the second half).                                                          |
 | Supply a starting value for a recipe.                                  |                                                                                                                                               |
 
-Comparing a forecast with published schedules is a plausibility check of a prediction; it is
-never a validation or a fit of a coefficient.
+**Proposal (item 8).** Comparing a forecast with published schedules is a plausibility check of a
+prediction; it is never a validation or a fit of a coefficient. The three uses in the "May" column
+beyond the plausibility check (a readiness criterion, a hypothesis, a starting value) are likewise
+agent-authored and wait for the owner's confirmation.
 
 ## Two separate assessments
 
@@ -43,6 +45,10 @@ Observable facts, not impressions. Each is written with where it was observed, o
 
 ### The claim: what is said
 
+**Proposal (item 2).** The three ratings per criterion and their definitions in the table below,
+and the rule that `not recorded` counts as `weak`, are agent-authored and wait for the owner's
+confirmation; so does the factor of 1.5 in the convergence row.
+
 | Criterion                                                          | `strong`                                                                                                                                                             | `partial`                                                                                                               | `weak`                                                                                 |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | Subject                                                            | Always recorded: the domain of [dough-behavior.md](dough-behavior.md#domains) the claim attaches to, by its anchor. Not rated.                                       |                                                                                                                         |                                                                                        |
@@ -55,13 +61,15 @@ Observable facts, not impressions. Each is written with where it was observed, o
 dose and temperature, and the listing of the other entries used, which the entry template asks
 for) are a Proposal (item 6); they were added after the calibration run below.
 
-A field the record does not hold is written `not recorded` and counts as `weak` for the level. The
+**Proposal (item 2).** A field the record does not hold is written `not recorded` and counts as `weak` for the level. The
 level is then marked as resting on an incomplete record, and filling the field can raise it,
 never lower it.
 
 ## Level A, B or C
 
 One level per claim, with the reason written beside it. There is no score out of 100.
+**Proposal (item 3):** the rules of the table below that map the ratings to level A, B or C are
+agent-authored and wait for the owner's confirmation.
 
 | Level | Rule                                                                                                                                 |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -74,6 +82,9 @@ plausibility check, a recipe default or a hypothesis; C only as a hypothesis to 
 to a baker as guidance.
 
 ### Rules that qualify the level
+
+**Proposal (items 2 and 8).** The three rules below are agent-authored and wait for the owner's
+confirmation.
 
 - **Popularity counts, but less than the rest.** It shows that a method works often enough for
   many people, not that it is exact, and popular errors get copied. It is recorded under reach,
@@ -126,7 +137,8 @@ style guides were read through web-search excerpts was corrected on 2026-11-12 (
 
 ## Register: first entries
 
-Three worked examples, all taken from the survey's records; nothing was fetched and no quotation
+**Proposal (item 5):** the three entries and their levels are agent-authored ratings and wait for
+the owner's confirmation. Three worked examples, all taken from the survey's records; nothing was fetched and no quotation
 is added from memory. They are classified with the grid above, and they are examples of the
 method, not endorsements of the sources.
 
@@ -229,7 +241,7 @@ sources. Levels as re-rated: baguette C (was B), no-knead C, Neapolitan C.
 
 ## Calibration
 
-The grid is tried by an independent agent on the same three examples, working only from the
+**Proposal (item 8):** the calibration procedure below is agent-authored. The grid is tried by an independent agent on the same three examples, working only from the
 survey's records and this file, without the levels above, to see whether it reaches the same
 levels. If it does not, the definitions are revised, not the agent, and the difference is recorded
 here with its UTC date.
@@ -274,4 +286,5 @@ Each waits for the owner's confirmation; none changes a model.
    a comparison of a forecast with published schedules is a plausibility check, never a validation
    or fit of a coefficient (stated to resolve a tension with the model's acceptance criterion); the
    three uses of the "May" column beyond the plausibility check (a readiness criterion, a
-   hypothesis, a starting value); the calibration procedure.
+   hypothesis, a starting value); the three rules under "Rules that qualify the level" (the standing
+   of a source is a starting point, copies are not convergence); the calibration procedure.

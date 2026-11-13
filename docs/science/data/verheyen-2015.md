@@ -44,9 +44,24 @@ the two are printed differently).
 | 2.50 | 3.07 x 10^10 | 1430 +/- 10 | 1.69 x 10^9 | 1430 +/- 50  |
 | 3.00 | 3.67 x 10^10 | 1490 +/- 40 | 2.02 x 10^9 | 1530 +/- 80  |
 
-At equal dry-matter dose the total CO2 over 180 min is the same within the printed spread, from
-0.75 on a plateau near 1400 to 1500 ml (p. 41: "the CO2 volume changed only slightly" above
-0.75 g/100 g flour). The IDY cfu are about one eighteenth of the CY cfu at every dose (computed
+**What the table shows (re-read on the thesis page image, 2026-11-13 (UTC); all 16 printed
+CO2 cells agree with the transcription).** At equal dry-matter dose the 180-min totals of CY and
+IDY are of the same size: they differ by 70 ml or less, at most 5.5 % of the CY value, and from
+0.75 on both sit on a plateau of 1390 to 1530 ml (p. 41: "the CO2 volume changed only slightly"
+above 0.75 g/100 g flour). The printed intervals (value ± the printed spread, the caption not
+saying what the spread is; the Fig. 3 and 4 captions give means, n = 3, with standard deviation)
+**overlap at 6 of the 8 doses**, computed here from `verheyen-2015.csv` by a script kept outside
+the repository. They do **not** overlap at two doses, in both CY higher: 0.50 g (CY 1100 ± 10,
+IDY 1040 ± 10: 60 ml, 5.5 % of CY) and 1.50 g (CY 1460 ± 0, IDY 1390 ± 10: 70 ml, 4.8 % of CY).
+At the other six doses the difference is 40 ml or less, with changing sign. Non-overlap of
+printed spreads is not a significance test, and no test of CY against IDY for the totals was seen
+on the pages re-read (pp. 41, 42, 59); the table therefore supports "similar", not "the same
+within the printed spread" at every dose. **What the authors themselves say:** the samples
+"resulted in a similar total CO2 volume" despite large differences in cfu (p. 41), and the
+discussion calls "approximately 1500 ml per 315 g sample ... identical for both trading forms"
+(p. 59), which is the plateau level; they print no per-dose comparison of the totals. Total gas
+is one quantity here; the maximum rate, the gas held at escape and the loaf volume differ between
+the forms and are separate (below). The IDY cfu are about one eighteenth of the CY cfu at every dose (computed
 here from the table: 18.1 at 0.25 and at 0.75, 18.2 at 3.00); the text says "lower cfu value than
 CY by approximately ten-fold" (p. 40). The maximum gas formation rate was higher for IDY at the top
 dose: "the vCO2 of 1630 ml/h was significantly higher than for CY with 1260 ml/h" (p. 59, dose
@@ -148,13 +163,16 @@ rheofermentometer characteristic times (T0, T1, T'1, T'2, T2, Tx, Tv) of each do
   which is not printed for these two products.
 - General statements in the introduction (p. 12), not measurements of these products: compressed
   yeast "with a dry matter content of 28-33%"; dry yeast with "less than 10%" water.
-- At equal dry matter the 180-min total CO2 is the same for CY and IDY (Table 2, above); the gas
-  formation rate and the loaf outcome are not (above). "the total CO2-volume of approximately
-  1500 ml per 315 g sample, however, was identical for both trading forms" (p. 59). The thesis
+- At equal dry matter the 180-min total CO2 of CY and IDY is of the same size (Table 2, above:
+  printed intervals overlap at 6 of 8 doses, the two that do not differ by 60 and 70 ml); the gas
+  formation rate, the gas held at escape and the loaf outcome are not the same (above). The
+  authors write: "the total CO2-volume of approximately 1500 ml per 315 g sample, however, was
+  identical for both trading forms" (p. 59), a statement about the plateau level, not a per-dose
+  test. The thesis
   attributes the faster IDY rate to higher vitality, with trehalose, glycogen or zymase from lysed
   cells named as candidates (p. 59: "seems", "seems reasonable", "plausible"); these are
   hypotheses, not measurements.
-- cfu: IDY has a tenth to a twentieth of the CY cfu at equal dry matter (about 1/18 from Table 2) yet the same total gas; the
+- cfu: IDY has a tenth to a twentieth of the CY cfu at equal dry matter (about 1/18 from Table 2) yet a total gas of the same size; the
   authors read this as "higher yeast activity in IDY" (p. 40) and note "manufacturers have been
   able to standardize both products well" (p. 44).
 

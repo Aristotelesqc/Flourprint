@@ -38,13 +38,13 @@ A reading cell names the parts actually read (pages, tables, figures), who read 
 date, so that a verifier can retrace it. A reading made outside the repository and relayed is
 not a reading here: it is a lead (section 6).
 
-The class is taken from the reader's own record. A part the record names as not read makes the
+**Proposal (items 4 and 10).** The class is taken from the reader's own record. A part the record names as not read makes the
 source `partial`. A record that names only some sections of a paper makes the source `partial`;
 each unnamed section needs a reason from section 2, or is `not finished`. A `full` reading whose
 record names no pages, tables or figures is written `full`, per the named agent's record of the UTC
 date; pages and tables not recorded (**Proposal**, item 8).
 
-Legacy labels in the index tables map as follows: `full` stays `full`; `abstract` is `abstract only`;
+**Proposal (item 4).** Legacy labels in the index tables map as follows: `full` stays `full`; `abstract` is `abstract only`;
 `secondary` is `not read` plus a workaround route (section 6); `external` is `not read` here, the
 relayed reading being a lead; "full text available, skimmed" is `partial` plus a reason.
 
@@ -72,7 +72,9 @@ request that is ready to merge: finish it, or establish one of the other three r
 
 A short factual statement and a three-level label, `sound`, `limited` or `weak`. There is no
 numeric score: a single number would be false precision. The label is assigned only to the parts
-actually read, and rests on five questions, each answered yes, no or not recorded:
+actually read. **Proposal (item 1):** the five questions below, the rule that "not recorded" counts as
+"no", and the thresholds of the three labels are agent-authored and wait for the owner's
+confirmation. The label rests on five questions, each answered yes, no or not recorded:
 
 1. **Replication.** Is the replication real (separate mixes or batches), not portions of one mix?
 2. **Dough temperature.** Is a dough temperature reported, not only a chamber or set temperature?
@@ -80,7 +82,7 @@ actually read, and rests on five questions, each answered yes, no or not recorde
 4. **Sample and spread.** Are the sample size and the spread printed?
 5. **Consistent.** Is the source free of an unresolved inconsistency in the figures used?
 
-An answer "not recorded" counts as "no", so a label can rise when the record is completed and
+**Proposal (item 1).** An answer "not recorded" counts as "no", so a label can rise when the record is completed and
 cannot fall unseen. Labels follow from the count of answers other than yes: `sound` for at most
 one, `limited` for two or three, `weak` for four or five. The statement names the failed
 questions and says what each does to the use of the data. A source that was not read in the part
@@ -89,7 +91,9 @@ concerned is `not assessed`, and the cell says what is missing.
 ## 4. Scope
 
 Where the source stands relative to the model's domain: lean dough, low yeast dose, home
-conditions. Three classes, always with the reason (a scope cell without its reason is incomplete):
+conditions. Three classes, always with the reason (a scope cell without its reason is incomplete).
+**Proposal (item 2):** the operational definition in the table below ("exactly one", "two or
+more" of the three axes) is agent-authored and waits for the owner's confirmation.
 
 | Class       | Meaning                                                                                                             |
 | ----------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -124,19 +128,42 @@ mass; a source on heat transfer there is `adjacent` at best (**Proposal**, item 
    removes both roles.
    - **Option A.** Apply the rule as written: re-class the five rows `outside`; their roles drop
      to `none` or `order-of-magnitude check`.
-   - **Option B.** Add a tolerance: a small deviation of salt or water is named in the cell but
-     does not move the class, and each `adjacent` cell names its one outside axis (for example the
-     dose). The verifier suggested 0.5 point of salt and 5 points of water as the sizes; that is a
-     suggestion, not a decision.
+   - **Option B.** Add a tolerance on the formulation axes (salt, water): a small deviation is named
+     in the cell but does not move the class, and each `adjacent` cell names its one outside axis
+     (for example the dose). The sizes are for the owner to choose; the verifier's 0.5 point of salt
+     and 5 points of water are placeholders that show the effect, not a decision. This is a choice
+     of policy with arguments on both sides, not a device to keep a role. _For:_ the contract itself treats salt and water outside their
+     ranges as extrapolation flags (`ok` with `extrapolations`), not as a refusal, and says that
+     salt, sugar, fat and water only gate the domain and do not change the rate (Domain table), so
+     it does not treat a shortfall of 0.1 to 0.2 point of salt as a ground for refusing an estimate; the two lean
+     matrices are otherwise close to the formulation the model targets. _Against:_ salt strongly
+     changes gas production over 0 to 3 % (Belz 2017, Boudrag 2026), and no source in the index
+     measures what 0.2 point near 1.3 to 1.5 % does to the times, so the tolerance is an assumed
+     size, not a measured equivalence; any cut falls somewhere arbitrary; it would be chosen after
+     seeing which rows it keeps, which the owner can avoid by fixing the size without reference to
+     these rows; and it leaves the dose axis untouched, so the 4 and 6 % cells stay above the gate
+     either way.
+
+   A **per-subset analysis** of the cells that each research fit or hold-out actually uses (which
+   cells, their salt, dose, temperatures, end point and container, the class of each group under
+   each option, and the subset restricted to doses inside the gate) is in
+   [sources.md](sources.md#role-versus-scope-the-subsets-behind-each-research-fit-or-hold-out).
+   Its finding in brief: the 2 % cells (3 per matrix) are `adjacent` under A and `in domain` under
+   B, but three cells at one dose cannot identify a dose exponent or run the hold-out.
 
    Until the owner decides, the five scope cells in [sources.md](sources.md#classification-of-evidence)
    name the axes that are outside, with their values, and say "class pending the owner's decision
    on the formulation tolerance"; the roles of those rows carry the same mark.
 
+   **Question 1a (also the owner's).** The rule is applied to a source as a whole, one class per
+   row. Whether a row may be split by group of cells, or carries the class of its worst cell, is not
+   decided; it changes which roles survive option A (sources.md, Role versus scope).
+
 2. **Heat-transfer sources.** The `outside` row above lists "a fridge wall", while the last
    sentence of the Proposal says a source on heat transfer in the thermal domain is `adjacent` at
-   best. The two contradict each other for Williams 1994, Laguerre 2010 and Lança 2025, which are
-   `adjacent` in `sources.md` with the same pending mark. Not chosen here: either a fridge wall is
+   best. The two contradict each other for Williams 1994 and Laguerre 2010, which are
+   `adjacent` in `sources.md` with the same pending mark (the Lança candidate is `not recorded`: it
+   was not read). Not chosen here: either a fridge wall is
    `outside` (the sentence goes), or such a source is `adjacent` (the list entry goes).
 
 ## 5. Role for the model
@@ -158,6 +185,17 @@ sources whose role is `fit` or `independent validation`. Craft knowledge may nev
 a finding to list, never a reason to change the model in the same pull request; findings are in
 [sources.md](sources.md#findings-shipped-coefficients-and-source-roles).
 
+**Application to the shipped 0.1.0 coefficients: undecided (open question 7).** The shipped
+`A` 3.43 h, `k` 0.729 and `Ea` 98.3 kJ/mol come from a fit to a third-party model-output table
+(Craig, MODEL OUTPUT; source role `none`), and no source in the index supports 98.3. Whether the
+coefficient rule reaches them is not decided here. Two readings: (i) the rule governs **future
+coefficient promotions**, and 0.1.0 is recorded as provisional and unvalidated (grandfathered),
+its sources' roles listed as findings; (ii) the rule requires a **separate owner action on 0.1.0**
+(a re-derivation, a relabelling or a replacement, each a contract change of its own). **Proposal:**
+reading (i): the contract already carries 0.1.0 as `provisional`, and the findings list makes the
+gap visible without touching a constant. It is a proposal only. No `fit` label is given to the
+Craig table, and no constant changes here.
+
 **Proposal.** A source whose soundness is `weak` cannot hold `fit` or `independent validation`.
 
 **Proposal.** The conditions on `fit` in the table above: the source is in or adjacent to the
@@ -173,7 +211,7 @@ read, and the routes not tried. Five kinds, in order of trust:
 | ----- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | 1     | Same author, other medium (thesis, preprint, repository copy)                    | Equivalent to the original if the differences found are noted (for example Birch and Verheyen through theses). |
 | 2     | Another article reproducing the data                                             | Good for the reproduced figures only (for example the AACC schedule printed in Finney 1984).                   |
-| 3     | Publisher abstract obtained through a third-party index (for example Europe PMC) | Conclusions only. No number from it is usable for a coefficient.                                               |
+| 3     | Publisher abstract obtained through a third-party index (for example Europe PMC) | Conclusions only. No number from it is usable for a coefficient. (**Proposal**, item 7: the narrowing.)        |
 | 4     | Literature review or third-party citation                                        | A lead to confirm.                                                                                             |
 | 5     | Unauthenticated transcription: retyped or re-set text (for example a forum post) | A lead only, never "verified".                                                                                 |
 
@@ -188,7 +226,7 @@ Rules:
 - An abstract read on the publisher's own page is `abstract only` with no route entry; the same
   abstract obtained through a third-party index is `abstract only` and route 3.
 - A number obtained through a workaround keeps that label until it is compared with the original.
-- Only route 1 may support `fit` or `independent validation`. A route 1 reading whose equivalence
+- **Proposal (item 9).** Only route 1 may support `fit` or `independent validation`. A route 1 reading whose equivalence
   to the original was not checked says so (`not assessed`) in its record.
 
 ## 7. Where each fact is written
@@ -221,7 +259,13 @@ Each waits for the owner's confirmation; none changes a model.
    (section 2), and the sentence that a `full` reading may record parts read and out of scope
    (section 2).
 9. The conditions on the role `fit`: in or adjacent to the domain, and read by route 1 or in the
-   original (section 5).
+   original (section 5); the same conditions applied to `independent validation` (section 4, open
+   question 1, is the verifier's reading).
+10. The rules for taking the reading class from the reader's record (section 1: the class follows
+    the record, a part named as not read makes a source `partial`, an unnamed section needs a
+    reason).
+11. The reading of the coefficient rule as governing future coefficient promotions only, with the
+    shipped 0.1.0 coefficients recorded as provisional and unvalidated (section 5; open question 7).
 
 ## Open questions for the owner
 
@@ -231,14 +275,24 @@ Nothing below is decided. Each is also recorded where it arises.
    written; five rows `outside`; the only `fit` and the only `independent validation` drop) or
    option B (a tolerance; small salt or water deviations are named but do not move the class).
 2. **Heat-transfer scope** (section 4, open question 2): is a fridge wall `outside` or `adjacent`
-   for Williams 1994, Laguerre 2010 and Lança 2025?
+   for Williams 1994, Laguerre 2010 and, if it is read, the Lança candidate?
 3. **The two Gélinas 2010 papers.** Confirm that Europe PMC records 33467828 (patents on baker's
    yeast manufacture) and 20653548 (baker's yeast storage and activation) are the papers the
    source-access guide calls 2010a and 2010b. The match is an inference from an index search.
-4. **Lança et al. 2025.** The citation (or a copy) is not recorded anywhere; it is the one
-   `not finished` source (sources.md, open reading debts).
+4. **Lança et al. 2025.** The repository records only the name and year. A candidate citation
+   (_Energies_ 18(23):6280, DOI 10.3390/en18236280) was proposed by the independent reviewer; its
+   identity with the paper the #176 reports cited is **not established**, and it could not be
+   read (publisher host refused, HTTP 403 on CONNECT, 2026-11-13 (UTC); sources.md). Confirm or
+   reject the candidate, or supply the intended citation or a copy. It is no longer a
+   `not finished` source; it is `access refused` for the candidate.
 5. **Blind calibration of the craft-knowledge grid.** The two ratings so far were not blind
    ([craft-knowledge.md](craft-knowledge.md#calibration)); a blind one needs an agent that has not been
    shown any level.
 6. **Workaround rules.** Section 6 lists four rules; confirm that they match the owner's decision
    (the verifier could not match the count).
+7. **Application of the coefficient rule to the shipped model** (section 5): (i) the rule governs
+   future coefficient promotions and 0.1.0 is recorded as provisional and unvalidated
+   (grandfathered; the agent's proposal), or (ii) it requires a separate owner action on 0.1.0.
+8. **Walker, Quail and McMaster 1996** (_Cereal Foods World_ 41(3):127-133) is `not read` and
+   `not finished` (sources.md, open reading debts): the owner may supply a copy or accept a
+   justified status.
