@@ -271,6 +271,7 @@ for (const english of [false, true]) {
     await counter(page, english, finishing, 0, 1);
     await expect(routed(page).getByRole('checkbox')).toHaveCount(9);
     const poolishWater = row(page, 'poolish', waterName);
+    const poolishWaterRow = poolishWater.locator('xpath=../..');
     const readCheckTransition = () =>
       poolishWater.evaluate((el) => {
         const style = getComputedStyle(el);
@@ -280,18 +281,34 @@ for (const english of [false, true]) {
           transform: style.transform,
         };
       });
+    const readRowTransition = () =>
+      poolishWaterRow.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return {
+          property: style.transitionProperty,
+          duration: style.transitionDuration,
+        };
+      });
     const normalMotion = await readCheckTransition();
     const normalProps = normalMotion.property.split(',').map((item) => item.trim());
     const normalDurations = normalMotion.duration.split(',').map((item) => parseFloat(item));
     const transformIndex = normalProps.indexOf('transform');
     expect(transformIndex).toBeGreaterThanOrEqual(0);
     expect(normalDurations[transformIndex] ?? normalDurations[0] ?? 0).toBeGreaterThan(0);
+    const normalRowMotion = await readRowTransition();
+    const normalRowProps = normalRowMotion.property.split(',').map((item) => item.trim());
+    const normalRowDurations = normalRowMotion.duration.split(',').map((item) => parseFloat(item));
+    const backgroundIndex = normalRowProps.indexOf('background-color');
+    expect(backgroundIndex).toBeGreaterThanOrEqual(0);
+    expect(normalRowDurations[backgroundIndex] ?? normalRowDurations[0] ?? 0).toBeGreaterThan(0);
     await poolishWater.check();
     expect(await poolishWater.isChecked()).toBe(true);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     const osReducedMotion = await readCheckTransition();
     expect(osReducedMotion.property).toBe('none');
     expect(osReducedMotion.transform).toBe('none');
+    const osReducedRowMotion = await readRowTransition();
+    expect(osReducedRowMotion.property).toBe('none');
     await page.emulateMedia({ reducedMotion: null });
     const previousDataMotion = await page.evaluate(() => {
       const prev = document.documentElement.getAttribute('data-motion');
@@ -301,6 +318,8 @@ for (const english of [false, true]) {
     const manualReducedMotion = await readCheckTransition();
     expect(manualReducedMotion.property).toBe('none');
     expect(manualReducedMotion.transform).toBe('none');
+    const manualReducedRowMotion = await readRowTransition();
+    expect(manualReducedRowMotion.property).toBe('none');
     await page.evaluate((prev) => {
       if (prev === null) {
         document.documentElement.removeAttribute('data-motion');

@@ -53,6 +53,10 @@ type RecipeCheckStyle = CSSProperties & {
   '--recipe-weighing-check-transition': string;
 };
 
+type RecipeRowStyle = CSSProperties & {
+  '--recipe-weighing-row-transition': string;
+};
+
 export const WeighingChecklist = ({
   formula,
   resolved,
@@ -68,9 +72,14 @@ export const WeighingChecklist = ({
 }: Props) => {
   const { t, grams, pct, name, componentName } = useMessages();
   const checkMotion = useMotion('fp.motion.check');
+  const highlightMotion = useMotion('fp.motion.highlight');
   const recipeCheckStyle: RecipeCheckStyle | undefined =
     recipePresentation && checkMotion.kind === 'transition'
       ? { '--recipe-weighing-check-transition': transitionCss(checkMotion, false) }
+      : undefined;
+  const recipeRowStyle: RecipeRowStyle | undefined =
+    recipePresentation && highlightMotion.kind === 'transition'
+      ? { '--recipe-weighing-row-transition': transitionCss(highlightMotion, false) }
       : undefined;
   const detailErrorId = useId();
   const checklistId = useId();
@@ -191,9 +200,12 @@ export const WeighingChecklist = ({
                 return (
                   <div
                     key={rowKey}
+                    style={recipeRowStyle}
                     className={`flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2 ${
-                      done ? 'text-muted line-through bg-muted/5' : ''
-                    }`}
+                      recipeRowStyle
+                        ? '[transition:var(--recipe-weighing-row-transition)] motion-reduce:[transition:none]! in-data-[motion=reduced]:[transition:none]!'
+                        : ''
+                    } ${done ? 'text-muted line-through bg-muted/5' : ''}`}
                   >
                     {/* Separate accessible checkbox hit target; no nested input controls */}
                     <div className="flex min-h-[48px] min-w-0 flex-1 basis-32 items-center gap-3">
