@@ -50,7 +50,9 @@ jobs:
   e2e:
     # Browser journeys on the web build (Playwright); screenshots and traces are kept as artifacts.
     needs: check
-    runs-on: ubuntu-latest
+    # Pinned: the pinned Playwright version cannot install Chromium on the image that
+    # ubuntu-latest moved to (ubuntu 26.04). Lift the pin when Playwright is upgraded.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
