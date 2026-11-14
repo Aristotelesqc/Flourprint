@@ -108,75 +108,78 @@ export const en = {
     'Restore values to the start of this editing session? Unsaved changes and unconfirmed input will be lost.',
   'template.dutchOven.bakeShort': 'Dutch oven bake',
   'template.dutchOven.bake':
-    'Bake in preheated 6–8 qt Dutch oven at 450 °F (232 °C): 30 min covered, then 22.5 min uncovered',
+    'Bake in preheated 6–8 qt Dutch oven: 30 min covered, then 22.5 min uncovered',
   'template.baguette.bakeShort': 'Steam bake',
-  'template.baguette.bake': 'Bake at 450 °F (232 °C) on stone or pan with steam',
+  'template.baguette.bake': 'Bake on stone or pan with steam',
   'template.ciabatta.bakeShort': 'Steam bake',
-  'template.ciabatta.bake': 'Bake at 460 °F (238 °C) with steam',
+  'template.ciabatta.bake': 'Bake with steam',
   'template.bagels.boilShort': 'Water bath simmer',
   'template.bagels.boil': 'Simmer 30 s per side in gentle water bath in batches of 3–4',
   'template.bagels.bakeShort': 'Sheet pan bake',
-  'template.bagels.bake': 'Bake on parchment-lined sheet pan at 425 °F (218 °C)',
+  'template.bagels.bake': 'Bake on parchment-lined sheet pan',
   'template.focaccia.bakeShort': 'Lower rack pan bake',
-  'template.focaccia.bake': 'Bake in pan on lower rack at 475 °F (246 °C)',
+  'template.focaccia.bake': 'Bake in pan on lower rack',
   'template.focaccia.bakeFinishShort': 'Residual heat finish',
   'template.focaccia.bakeFinish':
     'Finish out of pan on lower rack with oven turned off (residual heat)',
   'template.pizzaNeoNeapolitan.bakeShort': 'Baking Steel bake',
-  'template.pizzaNeoNeapolitan.bake': 'Bake on Baking Steel at 500–550 °F (274 °C)',
-  'template.pizzaRoman.bakeShort': 'High-heat oven bake',
-  'template.pizzaRoman.bake': 'Bake in professional pizza oven (≤350 °C)',
+  'template.pizzaNeoNeapolitan.bake': 'Bake on Baking Steel',
+  'template.pizzaRoman.bakeShort': 'Professional oven bake',
+  'template.pizzaRoman.bake': 'Bake in a professional pizza oven',
+  'template.pizzaRoman.bakeHomeShort': 'Stone bake',
+  'template.pizzaRoman.bakeHome': 'Bake on a preheated stone in a home oven',
   'template.pizzaNewYork.bakeShort': 'Stone or steel bake',
-  'template.pizzaNewYork.bake': 'Bake on preheated stone or steel at 550 °F (288 °C)',
+  'template.pizzaNewYork.bake': 'Bake on preheated stone or steel',
   'template.pizzaChicago.assemblyShort': 'Skillet layering',
   'template.pizzaChicago.assembly': 'Layer cheeses, vegetables, meats, and sauce in skillet',
   'template.pizzaChicago.bakeShort': 'Cast-iron skillet bake',
-  'template.pizzaChicago.bake':
-    'Bake in cast-iron skillet at 450 °F (230 °C), tent with foil after 20 min',
+  'template.pizzaChicago.bake': 'Bake in cast-iron skillet, tent with foil after 20 min',
   'template.pizzaSicilian.finishStretchShort': 'Pan stretch',
   'template.pizzaSicilian.finishStretch':
     'Stretch to fill pan; repeat 10–15 min rest and stretch manually if needed',
   'template.pizzaSicilian.parBakeShort': 'Sheet pan par-bake',
-  'template.pizzaSicilian.parBake':
-    'Par-bake untopped crust in 18×13-inch half-sheet pan at 450 °F (232 °C)',
+  'template.pizzaSicilian.parBake': 'Par-bake untopped crust in 18×13-inch half-sheet pan',
   'template.pizzaSicilian.assemblyShort': 'Crust topping',
   'template.pizzaSicilian.assembly': 'Top par-baked crust with sauce, cheese, and toppings',
   'template.pizzaSicilian.bakeShort': 'Topped pizza bake',
-  'template.pizzaSicilian.bake': 'Bake topped pizza at 450 °F (232 °C)',
+  'template.pizzaSicilian.bake': 'Bake topped pizza',
   'template.pizzaSicilian.coolShort': 'Pre-slicing rest',
   'template.pizzaSicilian.cool': 'Rest before slicing',
   'template.pizzaTeglia.bakeShort': 'Deck oven bake',
-  'template.pizzaTeglia.bake': 'Bake in electric deck oven (deck 300–320 °C, top 200 °C, static)',
+  'template.pizzaTeglia.bake':
+    'Bake in electric deck oven (deck {deckLow} to {deckHigh}, top {top}, static)',
+  'template.pizzaTeglia.bakeHomeShort': 'Home oven pan bake',
+  'template.pizzaTeglia.bakeHome':
+    'Bake in pan in a home oven: first half on the low rack, then on the middle rack',
   'template.brioche.mixShort': 'Butter incorporation mix',
   'template.brioche.mix':
-    'Mix 2 min low speed, 8 min medium speed, then incorporate butter gradually (DDT <=26 °C)',
+    'Mix 2 min low speed, 8 min medium speed, then incorporate butter gradually',
   'template.brioche.shapeShort': 'Tin arrangement shaping',
   'template.brioche.shape': 'Shape into 50 g balls, arrange 7 per loaf tin',
   'template.brioche.proofShort': 'Proofer rise',
-  'template.brioche.proof': 'Proof in proofer at 28 °C',
+  'template.brioche.proof': 'Proof in proofer',
   'template.brioche.bakeShort': 'Fan oven bake',
-  'template.brioche.bake': 'Brush with separate egg wash, then bake in fan-assisted oven at 180 °C',
+  'template.brioche.bake': 'Brush with separate egg wash, then bake in fan-assisted oven',
   'template.burgerBuns.shapeShort': 'Bun ball shaping',
   'template.burgerBuns.shape': 'Shape each piece into a ball and flatten to about 3 inches',
   'template.burgerBuns.bakeShort': 'Glazed sheet bake',
-  'template.burgerBuns.bake':
-    'Brush with half the separate 43 g melted butter, then bake on sheet at 375 °F (191 °C)',
+  'template.burgerBuns.bake': 'Brush with half the separate 43 g melted butter, then bake on sheet',
   'template.burgerBuns.coolShort': 'Glazing and cooling',
   'template.burgerBuns.cool': 'Brush with remaining glaze butter and cool on rack',
   'template.pullman.mixShort': 'Full development mix',
-  'template.pullman.mix': 'Mix by machine to full gluten development (DDT 24–26 °C)',
+  'template.pullman.mix': 'Mix by machine to full gluten development',
   'template.pullman.shapeShort': 'Pullman bâtard shaping',
   'template.pullman.shape':
     'Shape oblong bâtard and place in prepared lidded 13x4x4-inch Pullman pan',
   'template.pullman.proofShort': 'Open pan proof',
   'template.pullman.proof': 'Proof in prepared 13x4x4-inch Pullman pan with the lid off',
   'template.pullman.bakeShort': 'Covered Pullman bake',
-  'template.pullman.bake': 'Home bake covered in lidded 13x4x4-inch Pullman pan at 200 °C',
+  'template.pullman.bake': 'Home bake covered in lidded 13x4x4-inch Pullman pan',
   'template.pullman.bakeVentedShort': 'Vented rack bake',
-  'template.pullman.bakeVented': 'Remove lid, invert loaf onto wire rack, bake vented at 200 °C',
+  'template.pullman.bakeVented': 'Remove lid, invert loaf onto wire rack, bake vented',
   'template.shokupan.tangzhongShort': 'Tangzhong cooking',
   'template.shokupan.tangzhong':
-    'Cook 14 g flour, 43 g water and 43 g milk on low heat until thickened',
+    'Cook the tangzhong flour, water and milk on low heat until thickened',
   'template.shokupan.tangzhongCoolShort': 'Tangzhong cooling',
   'template.shokupan.tangzhongCool':
     'Cool tangzhong to lukewarm before mixing; 60 min is an editable editorial allowance',
@@ -184,8 +187,7 @@ export const en = {
   'template.shokupan.shape':
     'Roll and fold each piece into a 4-inch log, place in 9x5-inch loaf pan',
   'template.shokupan.bakeShort': 'Loaf pan bake',
-  'template.shokupan.bake':
-    'Brush with separate milk wash, then bake in 9x5-inch loaf pan at 350 °F (177 °C)',
+  'template.shokupan.bake': 'Brush with separate milk wash, then bake in 9x5-inch loaf pan',
 
   ...helpEn,
   'recipe.trash': 'Move to trash',
@@ -347,7 +349,7 @@ export const en = {
   'guide.unverified':
     'Typical ranges gathered from baking references, not yet checked against the full sources.',
   'guide.ranges': 'Selected recipe reference values',
-  'guide.basis': 'Source and editorial choices (English)',
+  'guide.basis': 'Source note and editorial choices (English, original units)',
   'guide.referenceNote':
     'Values describe the selected published variant, not a consensus or a prediction.',
   'guide.use': 'Start from this template',
@@ -943,9 +945,9 @@ export const en = {
   'fermentation.extra.sugar_unknown': 'sugar unknown',
   'fermentation.extra.fat_unknown': 'fat unknown',
   'fermentation.extra.water_unknown': 'hydration unknown',
-  'fermentation.extra.dough_above_28c': 'dough above 28 °C',
+  'fermentation.extra.dough_above_28c': 'dough above {limit}',
   'fermentation.extra.cold_stage_uncalibrated': 'cold stage not calibrated',
-  'fermentation.extra.cold_hold_over_72h': 'more than 72 h in the cold',
+  'fermentation.extra.cold_hold_over_72h': 'more than {hours} h in the cold',
   'fermentation.reason.no_commercial_yeast': 'No ingredient is marked as commercial yeast.',
   'fermentation.reason.temperature_unknown': 'Enter the room temperature to get the times.',
   'fermentation.reason.dose_outside_domain':
@@ -1328,72 +1330,72 @@ export const fr: Catalog = {
     'Rétablir les valeurs du début de cette session de modification ? Les modifications non enregistrées et les saisies non confirmées seront perdues.',
   'template.dutchOven.bakeShort': 'Cuisson en cocotte',
   'template.dutchOven.bake':
-    'Cuisson en cocotte préchauffée de 6–8 qt à 450 °F (232 °C) : 30 min avec couvercle, puis 22,5 min sans couvercle',
-  'template.baguette.bakeShort': 'Cuisson avec buée',
-  'template.baguette.bake': 'Cuisson à 450 °F (232 °C) sur pierre ou plaque avec buée',
-  'template.ciabatta.bakeShort': 'Cuisson avec buée',
-  'template.ciabatta.bake': 'Cuisson à 460 °F (238 °C) avec buée',
+    'Cuisson en cocotte préchauffée de 6–8 qt : 30 min avec couvercle, puis 22,5 min sans couvercle',
+  'template.baguette.bakeShort': 'Cuisson avec vapeur',
+  'template.baguette.bake': 'Cuisson sur pierre ou plaque avec vapeur',
+  'template.ciabatta.bakeShort': 'Cuisson avec vapeur',
+  'template.ciabatta.bake': 'Cuisson avec vapeur',
   'template.bagels.boilShort': 'Pochage dans l’eau',
   'template.bagels.boil': 'Pocher 30 s par face dans un bain d’eau frémissante par fournées de 3–4',
   'template.bagels.bakeShort': 'Cuisson sur plaque',
-  'template.bagels.bake': 'Cuisson sur plaque chemisée de papier sulfurisé à 425 °F (218 °C)',
+  'template.bagels.bake': 'Cuisson sur plaque chemisée de papier sulfurisé',
   'template.focaccia.bakeShort': 'Cuisson en plaque niveau bas',
-  'template.focaccia.bake': 'Cuisson en plaque sur la grille inférieure à 475 °F (246 °C)',
+  'template.focaccia.bake': 'Cuisson en plaque sur la grille inférieure',
   'template.focaccia.bakeFinishShort': 'Finition à chaleur résiduelle',
   'template.focaccia.bakeFinish':
     'Finir hors de la plaque sur la grille inférieure avec le four éteint (chaleur résiduelle)',
   'template.pizzaNeoNeapolitan.bakeShort': 'Cuisson sur plaque d’acier',
-  'template.pizzaNeoNeapolitan.bake':
-    'Cuisson sur plaque d’acier (Baking Steel) à 500–550 °F (274 °C)',
-  'template.pizzaRoman.bakeShort': 'Cuisson four à pizza',
-  'template.pizzaRoman.bake': 'Cuisson au four à pizza professionnel (≤350 °C)',
+  'template.pizzaNeoNeapolitan.bake': 'Cuisson sur plaque d’acier (Baking Steel)',
+  'template.pizzaRoman.bakeShort': 'Cuisson four à pizza professionnel',
+  'template.pizzaRoman.bake': 'Cuisson au four à pizza professionnel',
+  'template.pizzaRoman.bakeHomeShort': 'Cuisson sur pierre',
+  'template.pizzaRoman.bakeHome': 'Cuisson sur pierre préchauffée dans un four domestique',
   'template.pizzaNewYork.bakeShort': 'Cuisson sur pierre ou acier',
-  'template.pizzaNewYork.bake':
-    'Cuisson sur pierre ou plaque d’acier préchauffée à 550 °F (288 °C)',
+  'template.pizzaNewYork.bake': 'Cuisson sur pierre ou plaque d’acier préchauffée',
   'template.pizzaChicago.assemblyShort': 'Garnissage en poêle',
   'template.pizzaChicago.assembly':
     'Disposer par couches dans la poêle : fromages, légumes, viandes et sauce',
   'template.pizzaChicago.bakeShort': 'Cuisson en poêle en fonte',
   'template.pizzaChicago.bake':
-    'Cuisson en poêle en fonte à 450 °F (230 °C), couvrir d’une feuille d’aluminium après 20 min',
+    'Cuisson en poêle en fonte, couvrir d’une feuille d’aluminium après 20 min',
   'template.pizzaSicilian.finishStretchShort': 'Étirement en plaque',
   'template.pizzaSicilian.finishStretch':
     'Étirer pour remplir la plaque ; répéter le repos de 10–15 min et étirer manuellement si nécessaire',
   'template.pizzaSicilian.parBakeShort': 'Précuisson en plaque',
-  'template.pizzaSicilian.parBake':
-    'Précuire la pâte sans garniture en plaque 18×13 pouces à 450 °F (232 °C)',
+  'template.pizzaSicilian.parBake': 'Précuire la pâte sans garniture en plaque 18×13 pouces',
   'template.pizzaSicilian.assemblyShort': 'Garnissage de la pâte',
   'template.pizzaSicilian.assembly':
     'Garnir la pâte précuite avec la sauce, le fromage et les garnitures',
   'template.pizzaSicilian.bakeShort': 'Cuisson de la pizza garnie',
-  'template.pizzaSicilian.bake': 'Cuire la pizza garnie à 450 °F (232 °C)',
+  'template.pizzaSicilian.bake': 'Cuire la pizza garnie au four',
   'template.pizzaSicilian.coolShort': 'Repos avant découpe',
   'template.pizzaSicilian.cool': 'Laisser reposer avant de découper',
   'template.pizzaTeglia.bakeShort': 'Cuisson au four à sole',
   'template.pizzaTeglia.bake':
-    'Cuisson au four à sole électrique (sole 300–320 °C, voûte 200 °C, statique)',
+    'Cuisson au four à sole électrique (sole de {deckLow} à {deckHigh}, voûte {top}, statique)',
+  'template.pizzaTeglia.bakeHomeShort': 'Cuisson en plaque au four domestique',
+  'template.pizzaTeglia.bakeHome':
+    'Cuisson en plaque au four domestique : la première moitié du temps sur la grille basse, puis sur la grille du milieu',
   'template.brioche.mixShort': 'Pétrissage et incorporation du beurre',
   'template.brioche.mix':
-    'Pétrir 2 min à basse vitesse, 8 min à vitesse moyenne, puis incorporer le beurre progressivement (température de pâte <=26 °C)',
+    'Pétrir 2 min à basse vitesse, 8 min à vitesse moyenne, puis incorporer le beurre progressivement',
   'template.brioche.shapeShort': 'Façonnage en boules',
   'template.brioche.shape': 'Façonner en boules de 50 g, disposer 7 boules par moule à cake',
   'template.brioche.proofShort': 'Apprêt en étuve',
-  'template.brioche.proof': 'Apprêt en étuve à 28 °C',
+  'template.brioche.proof': 'Apprêt en étuve',
   'template.brioche.bakeShort': 'Cuisson chaleur tournante',
-  'template.brioche.bake':
-    'Dorer avec la dorure à l’œuf, puis cuire au four à chaleur tournante à 180 °C',
+  'template.brioche.bake': 'Dorer avec la dorure à l’œuf, puis cuire au four à chaleur tournante',
   'template.burgerBuns.shapeShort': 'Façonnage des pâtons',
   'template.burgerBuns.shape':
     'Façonner chaque pâton en boule et aplatir à environ 3 pouces (7,5 cm)',
   'template.burgerBuns.bakeShort': 'Cuisson sur plaque beurrée',
   'template.burgerBuns.bake':
-    'Badigeonner de la moitié des 43 g de beurre fondu, puis cuire sur plaque à 375 °F (191 °C)',
+    'Badigeonner de la moitié des 43 g de beurre fondu, puis cuire sur plaque',
   'template.burgerBuns.coolShort': 'Beurrage et ressuage',
   'template.burgerBuns.cool':
     'Badigeonner du reste de beurre fondu et laisser refroidir sur grille',
   'template.pullman.mixShort': 'Pétrissage intensif',
-  'template.pullman.mix':
-    'Pétrir au robot jusqu’au développement complet du réseau glutineux (température de pâte 24–26 °C)',
+  'template.pullman.mix': 'Pétrir au robot jusqu’au développement complet du réseau glutineux',
   'template.pullman.shapeShort': 'Façonnage en bâtard',
   'template.pullman.shape':
     'Façonner en bâtard allongé et placer dans le moule à pain de mie 13x4x4 pouces préparé',
@@ -1402,13 +1404,13 @@ export const fr: Catalog = {
     'Laisser lever dans le moule à pain de mie 13x4x4 pouces préparé, sans le couvercle',
   'template.pullman.bakeShort': 'Cuisson en moule fermé',
   'template.pullman.bake':
-    'Cuisson à couvert dans le moule à pain de mie 13x4x4 pouces avec couvercle à 200 °C',
+    'Cuisson à couvert dans le moule à pain de mie 13x4x4 pouces avec couvercle',
   'template.pullman.bakeVentedShort': 'Cuisson démoulée ventilée',
   'template.pullman.bakeVented':
-    'Retirer le couvercle, démouler le pain sur une grille et cuire à four ventilé à 200 °C',
+    'Retirer le couvercle, démouler le pain sur une grille et cuire à four ventilé',
   'template.shokupan.tangzhongShort': 'Cuisson du tangzhong',
   'template.shokupan.tangzhong':
-    'Cuire 14 g de farine, 43 g d’eau et 43 g de lait à feu doux jusqu’à épaississement',
+    'Cuire la farine, l’eau et le lait du tangzhong à feu doux jusqu’à épaississement',
   'template.shokupan.tangzhongCoolShort': 'Refroidissement du tangzhong',
   'template.shokupan.tangzhongCool':
     'Laisser refroidir le tangzhong jusqu’à ce qu’il soit tiède avant le mélange ; 60 min est une durée indicative modifiable',
@@ -1416,8 +1418,7 @@ export const fr: Catalog = {
   'template.shokupan.shape':
     'Rouler et plier chaque pâton en boudin de 4 pouces, placer dans le moule 9x5 pouces',
   'template.shokupan.bakeShort': 'Cuisson en moule',
-  'template.shokupan.bake':
-    'Dorer avec la dorure au lait, puis cuire en moule 9x5 pouces à 350 °F (177 °C)',
+  'template.shokupan.bake': 'Dorer avec la dorure au lait, puis cuire en moule 9x5 pouces',
 
   ...helpFr,
   'recipe.trash': 'Mettre à la corbeille',
@@ -1587,7 +1588,7 @@ export const fr: Catalog = {
   'guide.unverified':
     'Fourchettes typiques tirées de références de boulangerie, pas encore vérifiées dans les sources complètes.',
   'guide.ranges': 'Valeurs de référence de la recette retenue',
-  'guide.basis': 'Source et choix éditoriaux (anglais)',
+  'guide.basis': 'Note de source et choix éditoriaux (anglais, unités d’origine)',
   'guide.referenceNote':
     'Ces valeurs décrivent la variante publiée retenue, sans constituer un consensus ni une prédiction.',
   'guide.use': 'Partir de ce modèle',
@@ -1631,7 +1632,7 @@ export const fr: Catalog = {
   'guide.key.dough_g_half_sheet': 'Pâte pour une demi-plaque',
   'guide.key.flour_w': 'Force de la farine (W)',
   'template.baguette.traits':
-    'Un pain long et mince, de farine, eau, sel et levure, souvent sur poolish, cuit très chaud avec buée : croûte fine et croustillante, mie ouverte.',
+    'Un pain long et mince, de farine, eau, sel et levure, souvent sur poolish, cuit très chaud avec vapeur : croûte fine et croustillante, mie ouverte.',
   'template.boule-dutch-oven.traits':
     'Un pain rond maigre cuit dans une cocotte préchauffée et couverte qui garde la vapeur, puis découverte pour dorer ; plus hydraté qu’une baguette, fermentation lente avec peu de levure.',
   'template.ciabatta.traits':
@@ -2193,9 +2194,9 @@ export const fr: Catalog = {
   'fermentation.extra.sugar_unknown': 'sucre inconnu',
   'fermentation.extra.fat_unknown': 'gras inconnu',
   'fermentation.extra.water_unknown': 'hydratation inconnue',
-  'fermentation.extra.dough_above_28c': 'pâte au-dessus de 28 °C',
+  'fermentation.extra.dough_above_28c': 'pâte au-dessus de {limit}',
   'fermentation.extra.cold_stage_uncalibrated': 'étape au froid non calibrée',
-  'fermentation.extra.cold_hold_over_72h': 'plus de 72 h au froid',
+  'fermentation.extra.cold_hold_over_72h': 'plus de {hours} h au froid',
   'fermentation.reason.no_commercial_yeast': 'Aucun ingrédient n’est marqué comme levure.',
   'fermentation.reason.temperature_unknown': 'Entrer la température ambiante pour avoir les temps.',
   'fermentation.reason.dose_outside_domain':

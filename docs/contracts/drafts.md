@@ -160,6 +160,26 @@ interface RecipeTemplate {
   the document they come from. The interface shows it with the style's traits (localized text)
   and says when the ranges are not verified. A guide describes the style; it never changes a
   recipe or a check.
+- **Proposal, awaiting the owner's approval (not yet a rule, no `CONTRACT_VERSION` change):
+  templates are executable at home.** A template is a starting point for a home baker, so:
+  1. **Home scale.** Its quantities are those of a home batch (a source recorded at professional
+     scale is scaled by one stated factor, kept in `basis`, with every baker's percentage
+     unchanged). Proposed test bounds, a default for the owner to confirm: total flour 100 to
+     2 500 g, dough weight under 5 kg, no ingredient at or below 0 g.
+  2. **Every `bake` step has a `temperatureC`** within a home-oven range (proposed: 150 to 300 °C),
+     taken from sourced data. A step that has none (for example a finish with the oven off) is on
+     an explicit exception list in the template test, with its reason.
+  3. **No professional-only equipment without a note.** A template whose source needs equipment a
+     home does not have (a pizza oven, a deck oven) either carries a sourced home version of the
+     bake or says in a localized step text that the bake as written needs that equipment; the
+     exception list names it.
+  4. **No literal unit in step texts.** A curated or localized step text never contains a
+     temperature unit (`°C`, `°F`); the temperature of a step is its data (`conditions`), shown
+     in the baker's unit (values-and-units.md, Temperature display units). A quantity that is in
+     the formula is not written in a step text either, since it changes when the recipe is
+     resized.
+  5. **Yield.** Where the source states a number of pieces, the template records it with the
+     `pieces` anchor (formula.md); where it does not, it records none.
 - The blank recipe is not a template: flour 100 %, water 65 %, salt 2 %, instant yeast 0.5 %, and
   the steps frasage, bulk, shape, proof, bake, with durations (a first `frasage`: process.md,
   Mixing steps).

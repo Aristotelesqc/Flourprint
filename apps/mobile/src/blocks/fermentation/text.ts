@@ -1,5 +1,6 @@
 import {
   DOMAIN,
+  LEARNING_FLAGS,
   type Estimate,
   type Process,
   type RangeBound,
@@ -58,9 +59,14 @@ export const useEstimateText = () => {
   };
   const extrapolations = (e: Estimate) => {
     if (e.status !== 'ok' || !e.extrapolations || e.extrapolations.length === 0) return '';
+    // The thresholds are the engine's own, shown in the device's unit (never a literal in a message).
+    const values = {
+      limit: temperature.format(LEARNING_FLAGS.warmAboveC, 'ambient'),
+      hours: LEARNING_FLAGS.coldHoldOverH,
+    };
     const reasons = e.extrapolations.map((code) => {
       const key = `fermentation.extra.${code}`;
-      return isKey(key) ? t(key) : code;
+      return isKey(key) ? t(key, values) : code;
     });
     return t('fermentation.extrapolated', { reasons: reasons.join(', ') });
   };

@@ -1,5 +1,5 @@
 import type { Ingredient, RecipeTemplate } from '../../domain/index.js';
-import { alapStep, H, MIN, preset, step } from './build.js';
+import { alapStep, H, MIN, preset, step, withPieces } from './build.js';
 
 /**
  * Focaccia and pizza templates (drafts.md, Templates): updated to coherent, verified source
@@ -21,7 +21,7 @@ const freshYeast = (bakerPct: number): Ingredient => ({
 
 export const focaccia: RecipeTemplate = {
   id: 'focaccia',
-  version: '4',
+  version: '5',
   category: 'flatbread',
   basis:
     'King Arthur Baking — Big and Bubbly Focaccia (https://www.kingarthurbaking.com/recipes/big-and-bubbly-focaccia-recipe). ' +
@@ -61,7 +61,7 @@ export const focaccia: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['proof', 'preheat'], 990, {
         conditions: { temperatureC: 246 },
-        label: 'Bake in pan on lower rack at 475 °F (246 °C)',
+        label: 'Bake in pan on lower rack',
       }),
       step('bake-finish', 'bake', ['bake'], 6 * MIN, {
         label: 'Finish out of pan on lower rack with oven turned off (residual heat)',
@@ -73,7 +73,7 @@ export const focaccia: RecipeTemplate = {
 
 export const pizzaNeoNeapolitan: RecipeTemplate = {
   id: 'pizza-neo-neapolitan',
-  version: '3',
+  version: '4',
   category: 'pizza',
   basis:
     'Baking Steel / Andris Lagsdin — 72-Hour Pizza Dough (https://bakingsteel.com/blogs/recipes/72-hour-pizza-dough). ' +
@@ -85,12 +85,15 @@ export const pizzaNeoNeapolitan: RecipeTemplate = {
     'covers the 24 h room bulk + 48 h cold retard, excluding the subsequent divide and final room-temperature proof; divide/ball is ' +
     '10 min editorial default; final proof is 3.5 h (midpoint of sourced 3–4 h); preheat is 60 min sourced preheat on Baking Steel at ' +
     '274 °C (midpoint of sourced 500–550 °F / 260–288 °C); bake is 6.5 min (midpoint of sourced 5–8 min) at 274 °C on Baking Steel.',
-  formula: {
-    flours: [{ id: 'bread-flour', sharePct: 100 }],
-    ingredients: [preset('water', 70), preset('salt', 3.2), preset('instant-yeast', 0.2)],
-    components: [],
-    anchor: { kind: 'flourTotal', grams: 500 },
-  },
+  formula: withPieces(
+    {
+      flours: [{ id: 'bread-flour', sharePct: 100 }],
+      ingredients: [preset('water', 70), preset('salt', 3.2), preset('instant-yeast', 0.2)],
+      components: [],
+      anchor: { kind: 'flourTotal', grams: 500 },
+    },
+    3,
+  ),
   process: {
     steps: [
       step('mix', 'mix', [], 150, room),
@@ -101,7 +104,7 @@ export const pizzaNeoNeapolitan: RecipeTemplate = {
       alapStep('preheat', 'preheat', H),
       step('bake', 'bake', ['proof', 'preheat'], 390, {
         conditions: { temperatureC: 274 },
-        label: 'Bake on Baking Steel at 500–550 °F (274 °C)',
+        label: 'Bake on Baking Steel',
       }),
     ],
   },
@@ -109,19 +112,21 @@ export const pizzaNeoNeapolitan: RecipeTemplate = {
 
 export const pizzaRoman: RecipeTemplate = {
   id: 'pizza-roman',
-  version: '3',
+  version: '4',
   category: 'pizza',
   basis:
     'Molino Vigevano / Gabriele Valdes — Pizza Scrocchiarella Romana (https://molinovigevano.com/pizza-scrocchiarella-romana/). ' +
     'Direct method with cold fermentation (not the 40 % poolish branch). ' +
     'Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). ' +
     'Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. ' +
-    'Sourced vs. editorial choices: retains professional pizza oven (≤350 °C, 120–180 s; midpoint 2.5 min = 150 s), not converted to ' +
-    'domestic oven; mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide ' +
+    'Sourced vs. editorial choices: the professional pizza oven of the primary source (≤350 °C, 120–180 s) is not used; the bake is the ' +
+    'home-oven version recorded in docs/science/data/published-recipes-2026-10.json, pizzas/tonda-2 (Vincenzo’s Plate, same 1,000 g flour and ' +
+    '60 % water, electric oven with stone): 250 °C, 3–5 min, planned at the 4 min midpoint (derived), with the stone preheated at least 45 min ' +
+    '(pizzas/tonda-1, Napo); mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide ' +
     'is 10 min editorial default into 180 g balls; ambient ball rest is 90 min at 23.5 °C (midpoint of sourced 22–25 °C); cold retard ' +
     'is 24 h editorial duration at sourced 4 °C (source prescribes "use within 48 h" without establishing a mandatory minimum duration); ' +
-    'warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 30 min ' +
-    'editorial default at 350 °C. The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.',
+    'warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 45 min ' +
+    '(stone preheated at least 45 min, pizzas/tonda-1). The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.',
   formula: {
     flours: [{ id: 'flour', sharePct: 100 }],
     ingredients: [preset('water', 60), preset('salt', 2.6), freshYeast(0.2)],
@@ -139,10 +144,10 @@ export const pizzaRoman: RecipeTemplate = {
       step('retard', 'retard', ['rest'], 24 * H, fridge),
       step('proof', 'proof', ['retard'], 2 * H, room),
       step('shape', 'shape', ['proof'], 10 * MIN),
-      alapStep('preheat', 'preheat', 30 * MIN),
-      step('bake', 'bake', ['shape', 'preheat'], 150, {
-        conditions: { temperatureC: 350 },
-        label: 'Bake in professional pizza oven (≤350 °C)',
+      alapStep('preheat', 'preheat', 45 * MIN),
+      step('bake', 'bake', ['shape', 'preheat'], 4 * MIN, {
+        conditions: { temperatureC: 250 },
+        label: 'Bake on a preheated stone in a home oven',
       }),
     ],
   },
@@ -150,7 +155,7 @@ export const pizzaRoman: RecipeTemplate = {
 
 export const pizzaNewYork: RecipeTemplate = {
   id: 'pizza-new-york',
-  version: '3',
+  version: '4',
   category: 'pizza',
   basis:
     'Feeling Foodish / Marie — The Best New York Style Pizza Dough (https://feelingfoodish.com/the-best-new-york-style-pizza-dough/). ' +
@@ -164,18 +169,21 @@ export const pizzaNewYork: RecipeTemplate = {
     'notes day 3 is optimal) at editorial 4 °C fridge; temper/relaxation is 40 min (midpoint of 20–60 min body guidance / within 1 h) ' +
     'at editorial 21 °C room; stretch and top is 10 min editorial default; preheat is 60 min sourced preheat at 550 °F (288 °C) on ' +
     'stone/steel; bake is 5 min (midpoint of sourced 4–6 min) at 550 °F (288 °C).',
-  formula: {
-    flours: [{ id: 'bread-flour', sharePct: 100 }],
-    ingredients: [
-      preset('water', (493 / 796) * 100),
-      preset('olive-oil', (11.8 / 796) * 100),
-      preset('sugar', (7.8 / 796) * 100),
-      preset('salt', (15.6 / 796) * 100),
-      preset('instant-yeast', (3.5 / 796) * 100),
-    ],
-    components: [],
-    anchor: { kind: 'flourTotal', grams: 796 },
-  },
+  formula: withPieces(
+    {
+      flours: [{ id: 'bread-flour', sharePct: 100 }],
+      ingredients: [
+        preset('water', (493 / 796) * 100),
+        preset('olive-oil', (11.8 / 796) * 100),
+        preset('sugar', (7.8 / 796) * 100),
+        preset('salt', (15.6 / 796) * 100),
+        preset('instant-yeast', (3.5 / 796) * 100),
+      ],
+      components: [],
+      anchor: { kind: 'flourTotal', grams: 796 },
+    },
+    4,
+  ),
   process: {
     steps: [
       step('mix', 'mix', [], 270, {
@@ -188,7 +196,7 @@ export const pizzaNewYork: RecipeTemplate = {
       alapStep('preheat', 'preheat', H),
       step('bake', 'bake', ['shape', 'preheat'], 300, {
         conditions: { temperatureC: 288 },
-        label: 'Bake on preheated stone or steel at 550 °F (288 °C)',
+        label: 'Bake on preheated stone or steel',
       }),
     ],
   },
@@ -196,7 +204,7 @@ export const pizzaNewYork: RecipeTemplate = {
 
 export const pizzaChicago: RecipeTemplate = {
   id: 'pizza-chicago',
-  version: '3',
+  version: '4',
   category: 'pizza',
   basis:
     'Bake from Scratch — Baking School module 4, Chicago Deep-Dish Pizza (https://bakefromscratch.com/wp-content/uploads/2022/04/Module-4-Low-Res.pdf). ' +
@@ -239,7 +247,7 @@ export const pizzaChicago: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['assembly', 'preheat'], 1650, {
         conditions: { temperatureC: 230 },
-        label: 'Bake in cast-iron skillet at 450 °F (230 °C), tent with foil after 20 min',
+        label: 'Bake in cast-iron skillet, tent with foil after 20 min',
       }),
       step('cool', 'cool', ['bake'], 750),
     ],
@@ -248,7 +256,7 @@ export const pizzaChicago: RecipeTemplate = {
 
 export const pizzaSicilian: RecipeTemplate = {
   id: 'pizza-sicilian',
-  version: '3',
+  version: '4',
   category: 'pizza',
   basis:
     'King Arthur Baking — Sicilian-Style Pizza (https://www.kingarthurbaking.com/recipes/sicilian-style-pizza-recipe). ' +
@@ -286,14 +294,14 @@ export const pizzaSicilian: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('par-bake', 'bake', ['proof', 'preheat'], 11 * MIN, {
         conditions: { temperatureC: 232 },
-        label: 'Par-bake untopped crust in 18×13-inch half-sheet pan at 450 °F (232 °C)',
+        label: 'Par-bake untopped crust in 18×13-inch half-sheet pan',
       }),
       step('assembly', 'shape', ['par-bake'], 10 * MIN, {
         label: 'Top par-baked crust with sauce, cheese, and toppings',
       }),
       step('bake', 'bake', ['assembly'], 1050, {
         conditions: { temperatureC: 232 },
-        label: 'Bake topped pizza at 450 °F (232 °C)',
+        label: 'Bake topped pizza',
       }),
       step('cool', 'cool', ['bake'], 10 * MIN, { label: 'Rest before slicing' }),
     ],
@@ -302,7 +310,7 @@ export const pizzaSicilian: RecipeTemplate = {
 
 export const pizzaTeglia: RecipeTemplate = {
   id: 'pizza-teglia',
-  version: '3',
+  version: '4',
   category: 'pizza',
   basis:
     'La Confraternita della Pizza — Disciplinare Autentica Pizza in Teglia alla Romana ' +
@@ -310,9 +318,11 @@ export const pizzaTeglia: RecipeTemplate = {
     'Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu). ' +
     'Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), ' +
     '4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. ' +
-    'Sourced vs. editorial choices & equipment: retains professional electric deck oven; generic ambient temperature is left unset ' +
-    'because floor (platea 300–320 °C) and top (cielo 200 °C) have independent controls; bake duration is 10.5 min (midpoint of sourced ' +
-    '8–13 min); water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min ' +
+    'Sourced vs. editorial choices & equipment: the professional electric deck oven of the disciplinare (floor 300–320 °C, top 200 °C, ' +
+    '8–13 min, 40×60 cm pan) is not used; the bake is the home-oven version recorded in ' +
+    'docs/science/data/published-recipes-2026-10.json, pizzas/teglia-5 (250 °C, 20 min: 10 min on the low rack, then 10 min on the ' +
+    'middle rack) and pizzas/teglia-4 (home oven, 250 °C, 15–22 min, 30×40 cm trays), consistent with pizzas/teglia-3 (250 °C then ' +
+    '230 °C, 20 min); the pan size of the dough formula is not converted; water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min ' +
     '(midpoint of sourced 20–25 min); target DDT is 22 °C (midpoint of preferred 21–23 °C range); bench rest is 1 h (tied to finished dough ' +
     'temperature in source); room 21 °C is an editorial default, not a published ambient fact; cold retard is 44 h at sourced 4 °C; ' +
     'staglio (divide) is 10 min editorial default; appretto (proof) is 3.5 h (midpoint of sourced 3–4 h) at editorial room 21 °C; ' +
@@ -340,8 +350,9 @@ export const pizzaTeglia: RecipeTemplate = {
       step('proof', 'proof', ['divide'], 210 * MIN, room),
       step('shape', 'shape', ['proof'], 10 * MIN),
       alapStep('preheat', 'preheat', 30 * MIN),
-      step('bake', 'bake', ['shape', 'preheat'], 630, {
-        label: 'Bake in electric deck oven (deck 300–320 °C, top 200 °C, static)',
+      step('bake', 'bake', ['shape', 'preheat'], 20 * MIN, {
+        conditions: { temperatureC: 250 },
+        label: 'Bake in pan in a home oven: first half on the low rack, then on the middle rack',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN),
     ],

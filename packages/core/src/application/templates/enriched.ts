@@ -1,5 +1,5 @@
 import type { RecipeTemplate } from '../../domain/index.js';
-import { alapStep, component, H, MIN, preset, step } from './build.js';
+import { alapStep, component, H, MIN, preset, step, withPieces } from './build.js';
 
 /**
  * Enriched and pan bread templates (drafts.md, Templates).
@@ -11,7 +11,7 @@ const fridge = { conditions: { temperatureC: 4 } } as const;
 
 export const brioche: RecipeTemplate = {
   id: 'brioche',
-  version: '2',
+  version: '3',
   category: 'enriched',
   basis:
     'Meilleur du Chef / Chef Philippe — Classic Brioche Loaf (https://www.meilleurduchef.com/en/recipe/brioche-loaf.html; Nanterre loaf). ' +
@@ -46,8 +46,7 @@ export const brioche: RecipeTemplate = {
     steps: [
       step('mix', 'mix', [], 18 * MIN, {
         conditions: { doughTemperatureC: 24 },
-        label:
-          'Mix 2 min low speed, 8 min medium speed, then incorporate butter gradually (DDT <=26 °C)',
+        label: 'Mix 2 min low speed, 8 min medium speed, then incorporate butter gradually',
       }),
       step('bulk', 'bulk', ['mix'], 30 * MIN, room),
       step('degas', 'degas', ['bulk'], MIN),
@@ -58,12 +57,12 @@ export const brioche: RecipeTemplate = {
       }),
       step('proof', 'proof', ['shape'], 2 * H, {
         conditions: { temperatureC: 28 },
-        label: 'Proof in proofer at 28 °C',
+        label: 'Proof in proofer',
       }),
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['proof', 'preheat'], 1650, {
         conditions: { temperatureC: 180 },
-        label: 'Brush with separate egg wash, then bake in fan-assisted oven at 180 °C',
+        label: 'Brush with separate egg wash, then bake in fan-assisted oven',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN),
     ],
@@ -72,7 +71,7 @@ export const brioche: RecipeTemplate = {
 
 export const burgerBuns: RecipeTemplate = {
   id: 'burger-buns',
-  version: '3',
+  version: '4',
   category: 'enriched',
   basis:
     'King Arthur Baking / Ellen Dorsey ("Moomie") — Beautiful Burger Buns (https://www.kingarthurbaking.com/recipes/beautiful-burger-buns-recipe). ' +
@@ -88,19 +87,22 @@ export const burgerBuns: RecipeTemplate = {
     'preheat 30 min (editorial default); ' +
     'bake 16.5 min (990 s, editorial midpoint of sourced 15–18 min range) on baking sheet at 375 °F (191 °C converted); ' +
     'cool 60 min on rack (editorial default).',
-  formula: {
-    flours: [{ id: 'all-purpose-flour', sharePct: 100 }],
-    ingredients: [
-      preset('water', (198 / 420) * 100),
-      preset('butter', (28 / 420) * 100),
-      preset('sugar', (50 / 420) * 100),
-      preset('egg', (50 / 420) * 100),
-      preset('salt', (7.5 / 420) * 100),
-      preset('instant-yeast', (9 / 420) * 100),
-    ],
-    components: [],
-    anchor: { kind: 'flourTotal', grams: 420 },
-  },
+  formula: withPieces(
+    {
+      flours: [{ id: 'all-purpose-flour', sharePct: 100 }],
+      ingredients: [
+        preset('water', (198 / 420) * 100),
+        preset('butter', (28 / 420) * 100),
+        preset('sugar', (50 / 420) * 100),
+        preset('egg', (50 / 420) * 100),
+        preset('salt', (7.5 / 420) * 100),
+        preset('instant-yeast', (9 / 420) * 100),
+      ],
+      components: [],
+      anchor: { kind: 'flourTotal', grams: 420 },
+    },
+    8,
+  ),
   process: {
     steps: [
       step('mix', 'mix', [], 8 * MIN, room),
@@ -113,8 +115,7 @@ export const burgerBuns: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['proof', 'preheat'], 990, {
         conditions: { temperatureC: 191 },
-        label:
-          'Brush with half the separate 43 g melted butter, then bake on sheet at 375 °F (191 °C)',
+        label: 'Brush with half the separate 43 g melted butter, then bake on sheet',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN, {
         label: 'Brush with remaining glaze butter and cool on rack',
@@ -125,7 +126,7 @@ export const burgerBuns: RecipeTemplate = {
 
 export const pullman: RecipeTemplate = {
   id: 'pullman',
-  version: '3',
+  version: '4',
   category: 'pan',
   basis:
     'Modernist Cuisine — Pain de Mie, volume 4 p.296 errata (https://modernistcuisine.com/wp-content/uploads/2018/12/BREAD_Vol4_296_Errata.pdf; home oven branch in 13x4x4-inch lidded Pullman pan). ' +
@@ -158,7 +159,7 @@ export const pullman: RecipeTemplate = {
     steps: [
       step('mix', 'mix', [], 810, {
         conditions: { doughTemperatureC: 25 },
-        label: 'Mix by machine to full gluten development (DDT 24–26 °C)',
+        label: 'Mix by machine to full gluten development',
       }),
       step('bulk', 'bulk', ['mix'], 90 * MIN, {
         ...room,
@@ -174,11 +175,11 @@ export const pullman: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['proof', 'preheat'], 3150, {
         conditions: { temperatureC: 200 },
-        label: 'Home bake covered in lidded 13x4x4-inch Pullman pan at 200 °C',
+        label: 'Home bake covered in lidded 13x4x4-inch Pullman pan',
       }),
       step('bake-vented', 'bake', ['bake'], 10 * MIN, {
         conditions: { temperatureC: 200 },
-        label: 'Remove lid, invert loaf onto wire rack, bake vented at 200 °C',
+        label: 'Remove lid, invert loaf onto wire rack, bake vented',
       }),
       step('cool', 'cool', ['bake-vented'], 60 * MIN),
     ],
@@ -187,7 +188,7 @@ export const pullman: RecipeTemplate = {
 
 export const shokupan: RecipeTemplate = {
   id: 'shokupan',
-  version: '2',
+  version: '3',
   category: 'pan',
   basis:
     'King Arthur Baking / Charlotte Rutledge — Japanese Milk Bread (https://www.kingarthurbaking.com/recipes/japanese-milk-bread-recipe; tangzhong loaf in 9x5-inch pan). ' +
@@ -206,50 +207,53 @@ export const shokupan: RecipeTemplate = {
     'preheat 30 min (editorial default); ' +
     'bake 32.5 min (1950 s, editorial midpoint of sourced 30–35 min range) at 350 °F (177 °C converted) in 9x5-inch loaf pan; ' +
     'cool 60 min on rack (editorial default).',
-  formula: {
-    flours: [{ id: 'bread-flour', sharePct: 100 }],
-    ingredients: [
-      preset('water', (43 / 314) * 100),
-      preset('milk', (156 / 314) * 100),
-      {
-        id: 'milk-powder',
-        kind: 'other',
-        role: 'dough',
-        bakerPct: (14 / 314) * 100,
-        // Nonfat dry milk: USDA SR Legacy lists 3.2 to 3.9 g water per 100 g (ndb 01085, 01092) and
-        // the US standard caps moisture at 5 %, hence 3.5 % within [3, 5].
-        water: {
-          status: 'estimated',
-          valuePct: 3.5,
-          rangePct: [3, 5],
-          source: 'USDA SR Legacy (approx.)',
+  formula: withPieces(
+    {
+      flours: [{ id: 'bread-flour', sharePct: 100 }],
+      ingredients: [
+        preset('water', (43 / 314) * 100),
+        preset('milk', (156 / 314) * 100),
+        {
+          id: 'milk-powder',
+          kind: 'other',
+          role: 'dough',
+          bakerPct: (14 / 314) * 100,
+          // Nonfat dry milk: USDA SR Legacy lists 3.2 to 3.9 g water per 100 g (ndb 01085, 01092) and
+          // the US standard caps moisture at 5 %, hence 3.5 % within [3, 5].
+          water: {
+            status: 'estimated',
+            valuePct: 3.5,
+            rangePct: [3, 5],
+            source: 'USDA SR Legacy (approx.)',
+          },
         },
-      },
-      preset('sugar', (50 / 314) * 100),
-      preset('salt', (6 / 314) * 100),
-      preset('butter', (57 / 314) * 100),
-      preset('egg', (50 / 314) * 100),
-      preset('instant-yeast', (9 / 314) * 100),
-    ],
-    components: [
-      {
-        id: 'tangzhong',
-        kind: 'scald',
-        flourPct: (14 / 314) * 100,
-        flourBlend: [{ flour: 'bread-flour', sharePct: 100 }],
-        hydrationPct: (43 / 14) * 100,
-        waterLossPct: 0,
-        allocations: [{ ingredient: 'milk', bakerPct: (43 / 314) * 100 }],
-      },
-    ],
-    anchor: { kind: 'flourTotal', grams: 314 },
-  },
+        preset('sugar', (50 / 314) * 100),
+        preset('salt', (6 / 314) * 100),
+        preset('butter', (57 / 314) * 100),
+        preset('egg', (50 / 314) * 100),
+        preset('instant-yeast', (9 / 314) * 100),
+      ],
+      components: [
+        {
+          id: 'tangzhong',
+          kind: 'scald',
+          flourPct: (14 / 314) * 100,
+          flourBlend: [{ flour: 'bread-flour', sharePct: 100 }],
+          hydrationPct: (43 / 14) * 100,
+          waterLossPct: 0,
+          allocations: [{ ingredient: 'milk', bakerPct: (43 / 314) * 100 }],
+        },
+      ],
+      anchor: { kind: 'flourTotal', grams: 314 },
+    },
+    4,
+  ),
   process: {
     steps: [
       {
         ...alapStep('tangzhong', 'scald', 4 * MIN),
         subject: component('tangzhong'),
-        label: 'Cook 14 g flour, 43 g water and 43 g milk on low heat until thickened',
+        label: 'Cook the tangzhong flour, water and milk on low heat until thickened',
       },
       step('tangzhong-cool', 'cool', ['tangzhong'], 60 * MIN, {
         subject: component('tangzhong'),
@@ -266,7 +270,7 @@ export const shokupan: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['proof', 'preheat'], 1950, {
         conditions: { temperatureC: 177 },
-        label: 'Brush with separate milk wash, then bake in 9x5-inch loaf pan at 350 °F (177 °C)',
+        label: 'Brush with separate milk wash, then bake in 9x5-inch loaf pan',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN),
     ],

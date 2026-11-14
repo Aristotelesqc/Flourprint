@@ -1,5 +1,5 @@
 import type { RecipeTemplate } from '../../domain/index.js';
-import { alapStep, component, H, MIN, preset, step } from './build.js';
+import { alapStep, component, H, MIN, preset, step, withPieces } from './build.js';
 
 /** Lean breads (drafts.md, Templates): selected published variants; editable plans are not prediction validation. */
 
@@ -7,7 +7,7 @@ const room = { conditions: { temperatureC: 21 } } as const;
 
 export const baguette: RecipeTemplate = {
   id: 'baguette',
-  version: '2',
+  version: '3',
   category: 'bread',
   basis:
     'King Arthur Baking — Classic Baguettes (https://www.kingarthurbaking.com/recipes/classic-baguettes-recipe). ' +
@@ -21,25 +21,28 @@ export const baguette: RecipeTemplate = {
     'sourced 20 °C (68 °F); preheat 30 min (editorial default) to 450 °F (232 °C); bake 26 min (midpoint ' +
     'of 24–28 min) on stone or pan with steam; cool 60 min (editorial default). Optional ADY branch and ' +
     '3 h low-yeast bulk alternative omitted.',
-  formula: {
-    flours: [{ id: 'all-purpose-flour', sharePct: 100 }],
-    ingredients: [
-      preset('water', (368 / 540) * 100),
-      preset('salt', (12 / 540) * 100),
-      preset('instant-yeast', (4.6875 / 540) * 100),
-    ],
-    components: [
-      {
-        id: 'poolish',
-        kind: 'preferment',
-        flourPct: (120 / 540) * 100,
-        flourBlend: [{ flour: 'all-purpose-flour', sharePct: 100 }],
-        hydrationPct: (113 / 120) * 100,
-        allocations: [{ ingredient: 'instant-yeast', bakerPct: (0.1875 / 540) * 100 }],
-      },
-    ],
-    anchor: { kind: 'flourTotal', grams: 540 },
-  },
+  formula: withPieces(
+    {
+      flours: [{ id: 'all-purpose-flour', sharePct: 100 }],
+      ingredients: [
+        preset('water', (368 / 540) * 100),
+        preset('salt', (12 / 540) * 100),
+        preset('instant-yeast', (4.6875 / 540) * 100),
+      ],
+      components: [
+        {
+          id: 'poolish',
+          kind: 'preferment',
+          flourPct: (120 / 540) * 100,
+          flourBlend: [{ flour: 'all-purpose-flour', sharePct: 100 }],
+          hydrationPct: (113 / 120) * 100,
+          allocations: [{ ingredient: 'instant-yeast', bakerPct: (0.1875 / 540) * 100 }],
+        },
+      ],
+      anchor: { kind: 'flourTotal', grams: 540 },
+    },
+    3,
+  ),
   process: {
     steps: [
       step('poolish', 'preferment', [], 14 * H, { ...room, subject: component('poolish') }),
@@ -55,7 +58,7 @@ export const baguette: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['proof', 'preheat'], 26 * MIN, {
         conditions: { temperatureC: 232 },
-        label: 'Bake at 450 °F (232 °C) on stone or pan with steam',
+        label: 'Bake on stone or pan with steam',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN),
     ],
@@ -64,7 +67,7 @@ export const baguette: RecipeTemplate = {
 
 export const bouleDutchOven: RecipeTemplate = {
   id: 'boule-dutch-oven',
-  version: '4',
+  version: '5',
   category: 'bread',
   basis:
     'Leite’s Culinaria — Jim Lahey’s No-Knead Bread (https://leitesculinaria.com/99521/recipes-jim-laheys-no-knead-bread.html). ' +
@@ -96,8 +99,7 @@ export const bouleDutchOven: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['proof', 'preheat'], 52.5 * MIN, {
         conditions: { temperatureC: 232 },
-        label:
-          'Bake in preheated 6–8 qt Dutch oven at 450 °F (232 °C): 30 min covered, then 22.5 min uncovered',
+        label: 'Bake in preheated 6–8 qt Dutch oven: 30 min covered, then 22.5 min uncovered',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN),
     ],
@@ -106,11 +108,15 @@ export const bouleDutchOven: RecipeTemplate = {
 
 export const ciabatta: RecipeTemplate = {
   id: 'ciabatta',
-  version: '4',
+  version: '5',
   category: 'bread',
   basis:
     'King Arthur Baking — Professional Ciabatta (https://www.kingarthurbaking.com/pro/formulas/ciabatta). ' +
-    'Professional published formula. Original measures: 10 kg total flour (Sir Galahad flour), 7.6 kg water (76 %), ' +
+    'Professional published formula, scaled for home by 1/10: this template is the source formula divided by ten ' +
+    '(1 000 g flour, 760 g water, 20 g salt, 12 g yeast, biga 300 g flour + 180 g water + 0.3 g yeast; every baker’s ' +
+    'percentage and the biga proportions are unchanged). The source divides into 0.57 kg rectangles, about 3 at this ' +
+    'scale; no piece count is recorded. The quantities in the rest of this note are the unscaled source values. ' +
+    'Original measures: 10 kg total flour (Sir Galahad flour), 7.6 kg water (76 %), ' +
     '0.2 kg salt (2 %), 0.12 kg yeast (1.2 %). Biga: 3 kg flour (30 % preferment), 1.8 kg water (60 % component ' +
     'hydration), 3 g yeast (0.03 % total flour); ripened ~16 h at 21 °C (room unspecified). Final dough additions: ' +
     '7 kg flour, 5.8 kg water, 200 g salt, 117 g yeast. Evidence gap: yeast form is unspecified in the professional ' +
@@ -142,7 +148,7 @@ export const ciabatta: RecipeTemplate = {
         allocations: [{ ingredient: 'yeast', bakerPct: 0.03 }],
       },
     ],
-    anchor: { kind: 'flourTotal', grams: 10000 },
+    anchor: { kind: 'flourTotal', grams: 1000 },
   },
   process: {
     steps: [
@@ -166,7 +172,7 @@ export const ciabatta: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['proof', 'preheat'], 36 * MIN, {
         conditions: { temperatureC: 238 },
-        label: 'Bake at 460 °F (238 °C) with steam',
+        label: 'Bake with steam',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN),
     ],
@@ -175,7 +181,7 @@ export const ciabatta: RecipeTemplate = {
 
 export const bagels: RecipeTemplate = {
   id: 'bagels',
-  version: '3',
+  version: '4',
   category: 'bread',
   basis:
     'King Arthur Baking — Water Bagels (https://www.kingarthurbaking.com/recipes/water-bagels-recipe). ' +
@@ -191,23 +197,26 @@ export const bagels: RecipeTemplate = {
     'default) to 425 °F (218 °C); simmer planned at 10 min (editorial batch logistics for 16 bagels in batches ' +
     'of 3–4, simmered 30 s per side); bake 20 min on parchment-lined sheet at 425 °F (218 °C); cool 60 min ' +
     '(editorial default). Overnight refrigeration alternative omitted to retain same-day baseline.',
-  formula: {
-    flours: [{ id: 'all-purpose-flour', sharePct: 100 }],
-    ingredients: [
-      preset('water', (454 / 690) * 100),
-      {
-        id: 'non-diastatic-malt-powder',
-        kind: 'other',
-        role: 'dough',
-        bakerPct: (35 / 690) * 100,
-      },
-      preset('sugar', (25 / 690) * 100),
-      preset('salt', (18 / 690) * 100),
-      preset('instant-yeast', (6.75 / 690) * 100),
-    ],
-    components: [],
-    anchor: { kind: 'flourTotal', grams: 690 },
-  },
+  formula: withPieces(
+    {
+      flours: [{ id: 'all-purpose-flour', sharePct: 100 }],
+      ingredients: [
+        preset('water', (454 / 690) * 100),
+        {
+          id: 'non-diastatic-malt-powder',
+          kind: 'other',
+          role: 'dough',
+          bakerPct: (35 / 690) * 100,
+        },
+        preset('sugar', (25 / 690) * 100),
+        preset('salt', (18 / 690) * 100),
+        preset('instant-yeast', (6.75 / 690) * 100),
+      ],
+      components: [],
+      anchor: { kind: 'flourTotal', grams: 690 },
+    },
+    16,
+  ),
   process: {
     steps: [
       step('mix', 'mix', [], 8 * MIN, room),
@@ -220,7 +229,7 @@ export const bagels: RecipeTemplate = {
       }),
       step('bake', 'bake', ['boil', 'preheat'], 20 * MIN, {
         conditions: { temperatureC: 218 },
-        label: 'Bake on parchment-lined sheet pan at 425 °F (218 °C)',
+        label: 'Bake on parchment-lined sheet pan',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN),
     ],
