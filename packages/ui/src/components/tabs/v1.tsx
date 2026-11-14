@@ -183,13 +183,13 @@ export const Tabs = ({
   };
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full @container">
       <div
         ref={setStrip}
         role="tablist"
         aria-label={label}
         aria-orientation="horizontal"
-        className={`relative flex flex-row overflow-x-auto border-b border-outline gap-2 px-2 py-1 min-w-0 max-w-full ${gestureSurfaceRef ? 'touch-pan-y' : ''}`}
+        className={`relative flex flex-row overflow-x-auto border-b border-outline gap-1 px-1 @[21rem]:gap-2 @[21rem]:px-2 py-1 min-w-0 max-w-full ${gestureSurfaceRef ? 'touch-pan-y' : ''}`}
       >
         {items.map((item) => {
           const isSelected = item.id === selected && item.disabled !== true;
@@ -271,7 +271,7 @@ export const Tabs = ({
                 }
               }}
               onKeyDown={(e) => handleKeyDown(e, item.id)}
-              className={`fp-control-reset min-h-touch min-w-touch px-4 py-2 text-supporting font-medium whitespace-nowrap grow shrink-0 fp-focus border-b-2 ${
+              className={`fp-control-reset min-h-touch min-w-touch px-1 @[21rem]:px-4 py-2 text-supporting font-medium whitespace-nowrap grow shrink-0 fp-focus border-b-2 ${
                 isSelected
                   ? 'border-transparent text-action-text font-semibold'
                   : 'border-transparent text-muted hover:text-on-surface'
