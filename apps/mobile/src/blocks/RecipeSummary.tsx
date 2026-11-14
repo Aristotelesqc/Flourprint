@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type SyntheticEvent } from 'react';
 import type { Anchor, ResolvedFormula, WaterBalance } from '@flourprint/core/domain';
 import { transitionCss, useMotion } from '@flourprint/ui';
 import { useMessages } from '../i18n/use-messages';
@@ -31,6 +31,10 @@ type Metric = keyof typeof glyphs;
 
 type InfoIconStyle = CSSProperties & {
   '--recipe-summary-info-transition': string;
+};
+
+const clearInfoPress = ({ currentTarget }: SyntheticEvent<HTMLButtonElement>) => {
+  delete currentTarget.dataset.pressed;
 };
 
 interface RecipeSummaryProps {
@@ -157,6 +161,15 @@ export const RecipeSummary = ({
                   }
                   aria-haspopup="dialog"
                   className="group/info fp-control-reset fp-focus inline-grid size-[48px] place-items-center rounded-pill text-muted hover:text-ink"
+                  onPointerDown={(event) => {
+                    if (event.isPrimary && event.button === 0) {
+                      event.currentTarget.dataset.pressed = 'true';
+                    }
+                  }}
+                  onPointerUp={clearInfoPress}
+                  onPointerCancel={clearInfoPress}
+                  onPointerLeave={clearInfoPress}
+                  onBlur={clearInfoPress}
                   onClick={(event) => {
                     event.currentTarget.focus({ preventScroll: true });
                     if (metric === 'hydration' && resolved) {
@@ -178,7 +191,7 @@ export const RecipeSummary = ({
                     style={infoIconStyle}
                     className={
                       infoIconStyle
-                        ? '[transition:var(--recipe-summary-info-transition)] motion-reduce:[transition:none]! in-data-[motion=reduced]:[transition:none]! motion-safe:group-active/info:[transform:scale(0.95)] in-data-[motion=reduced]:[transform:none]!'
+                        ? '[transition:var(--recipe-summary-info-transition)] motion-reduce:[transition:none]! in-data-[motion=reduced]:[transition:none]! motion-safe:group-active/info:[transform:scale(0.95)] motion-safe:group-data-[pressed=true]/info:[transform:scale(0.95)] in-data-[motion=reduced]:[transform:none]!'
                         : undefined
                     }
                   >
