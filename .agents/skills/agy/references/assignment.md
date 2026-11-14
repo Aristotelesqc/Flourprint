@@ -92,8 +92,8 @@ conventions that made the runs succeed, not permission settings.
   hitting a filesystem denial. Do not switch implementation tasks to partial-excerpt snapshot
   prompts: the delegate can open the real repository files in `--mode accept-edits`, whereas
   partial excerpts cause it to invent non-existent fields.
-- **No commands, no MCP tools.** Headless runs auto-deny terminal commands and MCP tool calls
-  (CodeGraph included): a run that tries one ends with an empty response and no edit (#194). Say
+- **No commands, no MCP tools.** Headless runs auto-deny terminal commands and MCP tool calls:
+  a run that tries one ends with an empty response and no edit (#194). Say
   so in the brief ("do not run commands or call MCP tools; use file read, search and edit tools;
   the caller runs the checks"). The caller runs
   `pnpm check`, the builds and Playwright, then sends the exact failures back through
