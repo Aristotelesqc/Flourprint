@@ -13,7 +13,7 @@ beyond that decision is marked **Proposal** and waits for the owner's confirmati
 at the end. Three owner decisions of 2026-11-13 (UTC), given in chat, relax the coefficient rule
 (section 5), add the principle of computed uncertainty (section 8) and let craft knowledge set an
 uncertainty range ([craft-knowledge.md](craft-knowledge.md#craft-knowledge-and-uncertainty-ranges));
-they are listed as decided at the end.
+they are listed as decided at the end, with a fourth decision of 2026-11-14 (UTC) on `Ea`.
 
 **Two schemes, never mixed.**
 
@@ -169,7 +169,11 @@ The highest use the classification supports for a source, from a closed list:
 **Coefficient rule (owner decision, 2026-11-12 (UTC); relaxed by owner decision, 2026-11-13
 (UTC)).** A model coefficient may rest on:
 
-1. sources whose role is `fit` or `independent validation` (measurements); or
+1. measurements, from sources whose role is `fit` or `independent validation`. Two uses are kept
+   apart: data used to **derive** a coefficient (a `fit`, or a borrowed model in item 2) and
+   independent evidence used to **test** it (`independent validation`). The second must stay
+   outside the calibration of that same coefficient; a source that calibrated a coefficient is a
+   `fit` for it and cannot also validate it (**Proposal**: this clarifying wording); or
 2. failing that, **another recognised model**, when no raw measurements exist for the doughs
    concerned. All four conditions are needed:
    - (a) the coefficient carries the visible label `model-derived`, so that it is never confused
@@ -179,6 +183,9 @@ The highest use the classification supports for a source, from a closed list:
    - (c) the borrowed model passed a plausibility check against what the repository holds, and
      the record says which checks;
    - (d) measurements replace it as soon as sound ones exist.
+
+   The four conditions are **assessed for each coefficient separately**; one coefficient meeting a
+   condition does not carry another (**Proposal**: this clarifying wording).
 
 Craft knowledge may never be a basis for a coefficient
 ([craft-knowledge.md](craft-knowledge.md)). A shipped coefficient that rests on neither basis is a
@@ -195,11 +202,27 @@ by this rule. The provenance labels of [README.md](README.md#provenance-labels) 
 the number (a coefficient fitted by Flourprint to a third-party table is DERIVED / FITTED; the
 table is MODEL OUTPUT).
 
-**Applied to the shipped 0.1.0 coefficients (owner decision, 2026-11-13 (UTC)).** `A` 3.43 h,
-`k` 0.729 and `Ea` 98.3 kJ/mol are `model-derived` (from the Craig table). That is permitted by
-item 2, and they stay provisional and not validated. The record and the plausibility checks found
-are in [sources.md](sources.md#findings-shipped-coefficients-and-source-roles). No `fit` label is
-given to the Craig table, and no constant changes.
+**Applied to the shipped 0.1.0 coefficients (owner decision, 2026-11-13 (UTC); `Ea` decision,
+2026-11-14 (UTC)).** `A` 3.43 h, `k` 0.729 and `Ea` 98.3 kJ/mol are `model-derived` (from the
+Craig table), provisional and not validated. Assessed per coefficient (the record and the checks
+found are in [sources.md](sources.md#findings-shipped-coefficients-and-source-roles)):
+
+| Coefficient | (a) label | (b) model, how, why | (c) plausibility check                                                 | (d) replacement |
+| ----------- | --------- | ------------------- | ---------------------------------------------------------------------- | --------------- |
+| `A`         | met       | met                 | met, weakly: one secondary transcription at one temperature, one curve | recorded        |
+| `k`         | met       | met                 | met: Finney 1976 (order of magnitude), Calvel transcription            | recorded        |
+| `Ea`        | met       | met                 | **not met**                                                            | recorded        |
+
+For `A` and `k` item 2 therefore applies. For `Ea` condition (c) is **not met**: no check in the
+repository bears on 98.3, and the evidence available points lower. **Owner decision, 2026-11-14
+(UTC), given in chat:** `Ea` is kept as an **approved provisional exception**, "in the absence of
+better data, the imperfection is accepted". It is not claimed to satisfy the rule, and it is to be
+replaced when sound measurements allow. The experiment of 2026-11-14 (UTC) (research only,
+[fermentation-model.md, section 15](fermentation-model.md#temperature-sensitivity-base-speed-and-readiness-target-against-the-published-schedules-research-2026-11-14-utc))
+found that on the published schedules a lower `Ea` does not reduce the disagreement, that the free
+estimate is about 85 kJ/mol with a wide bootstrap interval (65 to 110), and that almost all recipe
+temperatures are assumed; this plausibility check neither supports nor contradicts 98.3. No `fit`
+label is given to the Craig table, and no constant changes.
 
 **Proposal.** A source whose soundness is `weak` cannot hold `fit` or `independent validation`.
 
@@ -254,17 +277,20 @@ each computed quantity states what kind of thing it is, so that nothing is prese
 it is. The uncertainty of a forecast has four origins, each computed differently, and they are not
 merged into one number without saying so:
 
-| Origin                                                                   | Computed by                                                                                                                                                                                                                                                                | What it is                                        |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| (i) The baker's inputs (for example room temperature to within a degree) | Propagation through the model                                                                                                                                                                                                                                              | An exact sensitivity of the forecast to the input |
-| (ii) The model's coefficients                                            | Varying them within their bounds                                                                                                                                                                                                                                           | A possible range, not a probability               |
-| (iii) The model's own error                                              | Comparing forecasts with records: the root-mean-square error factor on the 89 published recipes (×1.89, [fermentation-model.md, section 15](fermentation-model.md#15-predictive-uncertainty-research-2026-11-03-rerun-2026-11-06)), and the user's own bakes once recorded | An observed error margin                          |
-| (iv) The definition of "ready"                                           | Per definition: each readiness profile gives its own end point                                                                                                                                                                                                             | The difference between definitions, not an error  |
+| Origin                                                                   | Computed by                                                                                                                                                                                                                                                                                                                                                                                                             | What it is                                                                                                                   |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| (i) The baker's inputs (for example room temperature to within a degree) | Propagation through the model                                                                                                                                                                                                                                                                                                                                                                                           | An exact sensitivity of the forecast to the input                                                                            |
+| (ii) The model's coefficients                                            | Varying them within their bounds                                                                                                                                                                                                                                                                                                                                                                                        | A possible range, not a probability                                                                                          |
+| (iii) The model's own error                                              | Comparing forecasts with records. What exists at this commit is the root-mean-square disagreement with prescribed published schedules (×1.89 on 50 scored recipes in 39 source groups, from a collection of 89; [fermentation-model.md, section 15](fermentation-model.md#15-predictive-uncertainty-research-2026-11-03-rerun-2026-11-06)). An observed error margin exists only once the user's own bakes are recorded | At this commit: a disagreement with published practice (craft-knowledge data). With recorded bakes: an observed error margin |
+| (iv) The definition of "ready"                                           | Per definition: each readiness profile gives its own end point                                                                                                                                                                                                                                                                                                                                                          | The difference between definitions, not an error                                                                             |
 
 A probability is shown only when it rests on real observations, that is, for origin (iii) and
-only as far as its records go. The 89 recipes are craft-knowledge data
-([craft-knowledge.md](craft-knowledge.md)): used to observe the model's error, they neither fit
-nor validate a coefficient. This section is a documentation principle; the engine and interface
+only as far as recorded bakes go. The ×1.89 is **not** such a record: it is a disagreement with
+prescribed published schedules, not an observed error of dough-readiness forecasts, and not a
+probability distribution (its coverage is partly fitted, by construction; fermentation-model.md,
+section 15). The recipes (50 scored of 89 collected) are craft-knowledge data
+([craft-knowledge.md](craft-knowledge.md)): used as a plausibility check, they neither fit nor
+validate a coefficient. This section is a documentation principle; the engine and interface
 work is tracked in issue #287.
 
 ## Proposals beyond the owner's decision
@@ -291,16 +317,21 @@ Each waits for the owner's confirmation; none changes a model.
 10. The rules for taking the reading class from the reader's record (section 1: the class follows
     the record, a part named as not read makes a source `partial`, an unnamed section needs a
     reason).
+11. The clarifying wording of the coefficient rule (section 5), added after the independent review
+    of PR #276 (comment 6871622211): the distinction between data used to derive a coefficient
+    and independent evidence used to test it, and the assessment of the four conditions for each
+    coefficient separately. The decisions it restates are unchanged.
 
 ## Decided
 
-Owner decisions of 2026-11-13 (UTC), given in chat. Each is written once, where it is linked.
+Owner decisions of 2026-11-13 (UTC) (items 1 to 4) and 2026-11-14 (UTC) (item 5), given in chat.
+Each is written once, where it is linked.
 
 1. **The coefficient rule is relaxed** (section 5): a coefficient may rest on `fit` or
    `independent validation` sources, or, when no raw measurements exist, on another recognised
    model under four conditions, with the label `model-derived`. This settles the former open
-   question on the shipped model: `A`, `k` and `Ea` of 0.1.0 are `model-derived`, permitted,
-   provisional and not validated. The Proposal to read the rule as governing promotions
+   question on the shipped model: `A`, `k` and `Ea` of 0.1.0 are `model-derived`, provisional
+   and not validated; conditions are assessed per coefficient, and `Ea` is item 5. The Proposal to read the rule as governing promotions
    only (grandfathering 0.1.0) is settled by this decision.
 2. **Computed uncertainty** (section 8): four origins, each computed and labelled for what it is;
    a probability only on real observations.
@@ -311,6 +342,10 @@ Owner decisions of 2026-11-13 (UTC), given in chat. Each is written once, where 
    open question on the formulation and dose tolerance (the strict reading, "option A", and the
    tolerance, "option B") and the question whether a class belongs to a source or to its cells.
    The size of a tolerance for water or for larger salt deviations is not decided.
+5. **`Ea` 98.3 kJ/mol is kept as an approved provisional exception** (section 5; owner decision,
+   2026-11-14 (UTC), given in chat): condition (c) is not met, the value stays "in the absence of
+   better data, the imperfection is accepted", it is not claimed to satisfy the rule, and it is
+   replaced when sound measurements allow. No constant changes.
 
 ## Open questions for the owner
 
@@ -338,3 +373,8 @@ Nothing below is decided. Each is also recorded where it arises.
 7. **Walker, Quail and McMaster 1996** (_Cereal Foods World_ 41(3):127-133) is `not read`,
    `access refused` (publisher HTTP 403 Forbidden, 2026-11-13T15:40Z UTC; sources.md): a copy
    supplied by the owner would let it be read.
+8. **Back-links from the ADRs to the science domains** (suggested by the independent review of
+   PR #276, comment 6871622211; **not done**). A small "Affects: science domains ..." line in each
+   governing ADR would give the reverse traceability that
+   [dough-behavior.md](dough-behavior.md#architecture-decision-records) gives forward. ADR files
+   were not edited and no ADR changes status. Should it be added, in what form, or left out?

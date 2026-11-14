@@ -154,7 +154,7 @@ the last restriction). A claim is recorded by what it says and where to find it,
 
 ## The existing recipe and style-guide survey
 
-[data/published-recipes-2026-10.md](data/published-recipes-2026-10.md) (89 recipes, with `.json`)
+[data/published-recipes-2026-10.md](data/published-recipes-2026-10.md) (89 recipes collected, 50 of them scored in 39 source groups by the uncertainty study, with `.json`)
 and [data/style-guides.md](data/style-guides.md) (15 preset sources and one normative record, with
 `.json`) are the first craft-knowledge dataset of this repository. They are not rewritten here.
 They record formulas, schedules, source kind and a transcription confidence (`high`, `medium`,

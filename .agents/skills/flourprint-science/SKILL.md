@@ -33,7 +33,11 @@ was measured. Do not equate unrelated endpoints or generalize one selected recip
   Classify each source with the closed vocabulary of `docs/science/evidence-classification.md`
   (reading class, reason for an incomplete reading, soundness, scope, role, workarounds); a
   transcription or a relayed reading is a lead, never `full`. No source stays `not finished` in a
-  PR ready to merge, and a coefficient rests only on a `fit` or `independent validation` source.
+  PR ready to merge. A coefficient's basis is set by the
+  [coefficient rule](../../../docs/science/evidence-classification.md#5-role-for-the-model), the
+  single authority: measurements (sources of role `fit` or `independent validation`) or, failing
+  that, a `model-derived` basis under that section's conditions, assessed per coefficient. A
+  source's role and a coefficient's basis are different things; do not copy the rule here.
   Practitioner claims go to `docs/science/craft-knowledge.md`, never to a fit. A missing
   paper/paywall or unreadable graph remains unverified; do not invent measurements, ranges or
   confidence to fill it.

@@ -286,6 +286,9 @@ Screens, components and copy belong to the UI owners and to mockups accepted by 
 someone making a baguette, and detail on demand, for example a bottom drawer opened from a time
 range with a fan chart (#287 section 3).
 
+The bullets below elaborate that direction and are **Proposals**, except the two recorded lines
+(rules for copy; estimates are not facts).
+
 - **Main flow.** The time range as it is. A behavior cue is one short plain sentence at the step
   where the baker acts, shown only for a statement whose basis allows it; no provenance, label,
   level or source name.

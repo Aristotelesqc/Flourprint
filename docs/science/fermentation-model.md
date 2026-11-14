@@ -1069,7 +1069,10 @@ conditions (section 12). The universal spread then serves as the prior, and each
 and spread are updated from their own bakes (section 11), for example with a conjugate
 normal-inverse-gamma update; N = 1 data never change the universal spread.
 
-### First measurement: published practice (n = 50, 39 source groups)
+### First measurement: published practice (n = 50, 39 source groups, of 89 collected)
+
+Every ×1.89 below is a **disagreement with prescribed published schedules**, not an observed error
+of dough-readiness forecasts and not a probability distribution.
 
 For each held-out source, a predictor's distribution is a normal law in `ln T` whose bias and
 spread come from the training sources only; an empirical-quantile interval uses the same training
@@ -1130,7 +1133,7 @@ Limits:
 ### Next steps (research)
 
 1. Propagate input uncertainty (unstated room temperature, yeast form) through the engine. This
-   shows how much of the ×1.9 the inputs alone explain, and needs no new data.
+   shows how much of the ×1.9 disagreement the inputs alone explain, and needs no new data.
 2. Let the spread depend on the regime only if held-out scores improve.
 3. A contract proposal for gate 5 comes after these steps: replace the envelope with a measured
    predictive interval that names its basis ("published practice, n = 50"), plus the personal
