@@ -138,6 +138,7 @@ async function pressInfoAndVerifySheet(options: {
   const modal = page.locator('ion-modal:not(.overlay-hidden)');
   await expect(modal).toBeVisible();
   await expect(modal.getByRole('heading', { name: sheetTitle })).toBeVisible();
+  await expect(modal.getByRole('button', { name: /adjust.*size|resize/i })).toHaveCount(0);
 
   await modal.getByRole('button', { name: closeLabel }).click();
   await expect(modal).toHaveCount(0);

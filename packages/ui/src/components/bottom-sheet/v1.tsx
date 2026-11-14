@@ -108,6 +108,7 @@ export function BottomSheet({
       keepContentsMounted={true}
       breakpoints={[0, 1]}
       initialBreakpoint={1}
+      handle={false}
       canDismiss={canDismiss}
       animated={!inferredReduced}
       aria-label={title}

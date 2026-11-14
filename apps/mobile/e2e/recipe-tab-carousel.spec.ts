@@ -309,15 +309,37 @@ for (const english of [false, true]) {
     expect(Math.abs(a.x - row.x - (row.x + row.width - z.x - z.width))).toBeLessThanOrEqual(1);
     await page.setViewportSize({ width: 360, height: 900 });
     await page.addStyleTag({ content: 'html,body { font-size:20.8px !important }' });
+    const expectAllTabsWithinStrip = async () => {
+      await expect
+        .poll(async () => {
+          const viewport = await bounds(strip);
+          const count = await tabs(page).count();
+          if (count !== 3) return false;
+          for (let i = 0; i < count; i++) {
+            const tab = tabs(page).nth(i);
+            const tabBox = await bounds(tab);
+            const labelBox = await bounds(tab.locator('[aria-hidden="true"] + span'));
+            if (
+              tabBox.x < viewport.x - 1 ||
+              tabBox.x + tabBox.width > viewport.x + viewport.width + 1 ||
+              labelBox.x < viewport.x - 1 ||
+              labelBox.x + labelBox.width > viewport.x + viewport.width + 1
+            ) {
+              return false;
+            }
+          }
+          return true;
+        })
+        .toBe(true);
+    };
+    await expect(tabs(page).nth(0)).toHaveAttribute('aria-selected', 'true');
+    await expectAllTabsWithinStrip();
     await tabs(page).nth(2).click();
     await expect(tabs(page).nth(2)).toHaveAttribute('aria-selected', 'true');
-    await expect
-      .poll(async () => {
-        const tab = await bounds(tabs(page).nth(2));
-        const viewport = await bounds(strip);
-        return tab.x >= viewport.x - 1 && tab.x + tab.width <= viewport.x + viewport.width + 1;
-      })
-      .toBe(true);
+    await expectAllTabsWithinStrip();
+    await tabs(page).nth(0).click();
+    await expect(tabs(page).nth(0)).toHaveAttribute('aria-selected', 'true');
+    await expectAllTabsWithinStrip();
   });
 
   for (const input of ['touch', 'mouse'] as const) {
