@@ -39,7 +39,7 @@ A process may also name the readiness profile of its dough (`fermentation.md`):
 ```ts
 interface Process {
   steps: ProcessStep[];
-  readiness?: { id: string; version: string }; // absent = the default profile
+  readiness?: { id: string; version: string }; // absent = the model-end-point fallback (fermentation.md)
   intendedOutcome?: PreparationOutcome; // absent = derived (bake-session.md, Outcome)
 }
 ```
