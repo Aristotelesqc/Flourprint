@@ -1,5 +1,130 @@
+import type { Locator, Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 import { enterEditor, expectRecipeRevision, routed } from './ui-actions';
+
+type RecordedAlertAnimation = {
+  target: 'wrapper' | 'backdrop';
+  duration: number | undefined;
+  easing: string | undefined;
+};
+
+type AlertTimingWindow = Window & {
+  __alertTimingLog?: RecordedAlertAnimation[];
+  __alertTimingInstalled?: boolean;
+};
+
+const EFFECT_DURATION_MS = 150;
+const BACKDROP_DURATION_MS = 260;
+const STANDARD_EASING = 'cubic-bezier(0.2, 0, 0, 1)';
+
+async function installAlertTimingCollector(page: Page) {
+  await page.evaluate(() => {
+    const win = window as AlertTimingWindow;
+    if (win.__alertTimingInstalled) {
+      win.__alertTimingLog = [];
+      return;
+    }
+    win.__alertTimingInstalled = true;
+    win.__alertTimingLog = [];
+    const originalPlay = Animation.prototype.play;
+    Animation.prototype.play = function playAlertCollector(this: Animation) {
+      const effect = this.effect;
+      if (effect instanceof KeyframeEffect && effect.target instanceof Element) {
+        const targetEl = effect.target;
+        if (targetEl.closest('ion-alert') !== null) {
+          const roleTarget = targetEl.matches('.alert-wrapper')
+            ? 'wrapper'
+            : targetEl.matches('ion-backdrop')
+              ? 'backdrop'
+              : null;
+          if (roleTarget !== null) {
+            queueMicrotask(() => {
+              const timing = effect.getTiming();
+              win.__alertTimingLog?.push({
+                target: roleTarget,
+                duration: typeof timing.duration === 'number' ? timing.duration : undefined,
+                easing: timing.easing,
+              });
+            });
+          }
+        }
+      }
+      return originalPlay.call(this);
+    };
+  });
+}
+
+async function drainAlertLog(page: Page): Promise<RecordedAlertAnimation[]> {
+  return page.evaluate(() => {
+    const win = window as AlertTimingWindow;
+    const entries = win.__alertTimingLog ?? [];
+    win.__alertTimingLog = [];
+    return entries;
+  });
+}
+
+async function expectAlertTiming(
+  page: Page,
+  expected: { wrapperDuration: number; backdropDuration: number; easing?: string },
+) {
+  await expect
+    .poll(async () => {
+      const entries = await page.evaluate(() => {
+        const win = window as AlertTimingWindow;
+        return win.__alertTimingLog ?? [];
+      });
+      return (
+        entries.some((entry) => entry.target === 'wrapper') &&
+        entries.some((entry) => entry.target === 'backdrop')
+      );
+    })
+    .toBe(true);
+
+  const entries = await drainAlertLog(page);
+  const wrapperEntries = entries.filter((entry) => entry.target === 'wrapper');
+  const backdropEntries = entries.filter((entry) => entry.target === 'backdrop');
+  const wrapper = wrapperEntries[wrapperEntries.length - 1];
+  const backdrop = backdropEntries[backdropEntries.length - 1];
+
+  expect(wrapper?.duration).toBe(expected.wrapperDuration);
+  expect(backdrop?.duration).toBe(expected.backdropDuration);
+  if (expected.easing !== undefined) {
+    expect(wrapper?.easing).toBe(expected.easing);
+    expect(backdrop?.easing).toBe(expected.easing);
+  }
+}
+
+async function verifyDiscardCancelCycle(
+  page: Page,
+  cancelButton: Locator,
+  poolishWaterInput: Locator,
+  labels: { discardConfirm: string; cancel: string },
+  expected: { wrapperDuration: number; backdropDuration: number; easing?: string },
+) {
+  await drainAlertLog(page);
+  await cancelButton.click();
+
+  const alert = page.locator('ion-alert');
+  await expect(alert).toBeVisible();
+  await expectAlertTiming(page, expected);
+
+  const alertDialog = alert.getByRole('alertdialog');
+  await expect(alertDialog).toBeVisible();
+  const visibleTitle = (await alert.locator('.alert-title').innerText()).trim();
+  expect(visibleTitle).toBe(labels.discardConfirm);
+  await expect(alertDialog).toHaveAccessibleName(visibleTitle);
+  await expect(alert.locator('.alert-wrapper')).toHaveCSS('opacity', '1');
+
+  const alertCancelButton = alert
+    .getByRole('button', { name: labels.cancel, exact: true })
+    .locator('visible=true');
+  await alertCancelButton.click();
+  await expect(alert).toBeHidden();
+  await expectAlertTiming(page, expected);
+
+  await expect(cancelButton).toBeFocused();
+  await expect(poolishWaterInput).toHaveValue('310');
+}
 
 for (const en of [false, true]) {
   const suffix = en ? ' @en' : '';
@@ -315,6 +440,7 @@ for (const en of [false, true]) {
 
     test(`Dirty Cancel${suffix}`, async ({ page }) => {
       await enterEditor(page);
+      await installAlertTimingCollector(page);
 
       const poolishGroup = routed(page).getByRole('group', { name: labels.poolish });
       const poolishWaterInput = poolishGroup.getByRole('textbox', {
@@ -334,28 +460,48 @@ for (const en of [false, true]) {
         .locator('ion-footer, [data-testid="recipe-draft-bar"]')
         .getByRole('button', { name: labels.discardConfirm, exact: true })
         .locator('visible=true');
-      await cancelButton.click();
 
-      const alert = page.locator('ion-alert');
-      await expect(alert).toBeVisible();
+      const standardTiming = {
+        wrapperDuration: EFFECT_DURATION_MS,
+        backdropDuration: BACKDROP_DURATION_MS,
+        easing: STANDARD_EASING,
+      };
+      const reducedTiming = { wrapperDuration: 0, backdropDuration: 0 };
 
-      // Cancel the alert
-      const alertCancelButton = alert
-        .getByRole('button', { name: labels.cancel, exact: true })
-        .locator('visible=true');
-      await alertCancelButton.click();
-      await expect(alert).toBeHidden();
+      // Normal motion: verify centered confirmation timing, accessible name, focus return, dirty 310
+      await verifyDiscardCancelCycle(page, cancelButton, poolishWaterInput, labels, standardTiming);
 
-      // Verify still editing with dirty input 310
-      await expect(poolishWaterInput).toHaveValue('310');
+      // OS reduced motion: zero duration on entry and exit
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await verifyDiscardCancelCycle(page, cancelButton, poolishWaterInput, labels, reducedTiming);
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+
+      // Manual reduced motion: zero duration on entry and exit
+      const previousDataMotion = await page.locator('html').evaluate((html) => {
+        const prev = html.getAttribute('data-motion');
+        html.setAttribute('data-motion', 'reduced');
+        return prev;
+      });
+      await verifyDiscardCancelCycle(page, cancelButton, poolishWaterInput, labels, reducedTiming);
+      await page.locator('html').evaluate((html, prev) => {
+        if (prev === null) {
+          html.removeAttribute('data-motion');
+        } else {
+          html.setAttribute('data-motion', prev);
+        }
+      }, previousDataMotion);
 
       // Click Cancel again and accept discard
+      await drainAlertLog(page);
       await cancelButton.click();
+      const alert = page.locator('ion-alert');
       await expect(alert).toBeVisible();
+      await expectAlertTiming(page, standardTiming);
 
       const discardButton = alert.getByRole('button', { name: labels.discardConfirm, exact: true });
       await discardButton.click();
       await expect(alert).toBeHidden();
+      await expectAlertTiming(page, standardTiming);
 
       // Re-enter or inspect editor: original 300 preserved and revision remains 1
       await enterEditor(page);

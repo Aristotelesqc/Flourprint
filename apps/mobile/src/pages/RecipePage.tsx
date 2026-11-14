@@ -68,6 +68,7 @@ import { OverflowMenu, type OverflowAction } from '../ui/OverflowMenu';
 import { InfoButton } from '../ui/InfoButton';
 import { usePanelScroll } from '../ui/PanelContext';
 import { useStepDragBack } from '../ui/use-step-drag-back';
+import { useRecipeDiscardMotion } from '../ui/useRecipeDiscardMotion';
 import { useMessages } from '../i18n/use-messages';
 import { formatDuration } from '../i18n/time';
 import { formatChangedEdges } from '../i18n/recipe-sort-messages';
@@ -141,6 +142,7 @@ const RecipePageContent = () => {
   const flourCatalog = useFlourCatalog();
   const router = useIonRouter();
   const [presentAlert] = useIonAlert();
+  const discardMotion = useRecipeDiscardMotion();
   const { t, error, stepName } = useMessages();
   const [tab, setTab] = useState<Tab>('formula');
   const [base, setBase] = useState<{ name: string; revision: Revision }>();
@@ -941,6 +943,7 @@ const RecipePageContent = () => {
 
   const discard = () => {
     void presentAlert({
+      ...discardMotion,
       header: t(newRecipe ? 'draft.delete' : 'draft.discard'),
       message: t(newRecipe ? 'draft.deleteConfirm' : 'draft.discardConfirm'),
       buttons: [
