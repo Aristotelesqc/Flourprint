@@ -35,10 +35,10 @@ repeated. Consequently:
   such lead is marked "lead, unread" below and none is entered in the register.
 - **The craft evidence that is graded here is what the repository already holds**: the style-guide
   snapshots (15 preset sources and one normative record, full snapshot reads of 2026-10-10 (UTC)
-  by earlier agents, with hashes) and the 89-recipe survey (page-reading agents, 2026-10-29 (UTC)).
+  by other agents, with hashes) and the 89-recipe survey (page-reading agents, 2026-10-29 (UTC)).
   This session read their records in the repository, not the pages. Their records keep numbers
   and schedules and mostly omit cues, so they under-report criteria (see the count below).
-- **Science**: five open-access papers were read in part through the Europe PMC full-text XML
+- **Science**: six open-access papers were read, five in part through the Europe PMC full-text XML and one by its abstract
   (list in [sources.md](sources.md#classification-of-evidence)), plus the repository's records of
   Verheyen, Covino, Izzreen, Birch and Rattin.
 
@@ -235,7 +235,7 @@ lower crumb brightness, fewer and larger cells and thicker walls than optimally 
 overkneading lower quality (a review; lead for the primary work). Iwaki 2020 (flours mixed to 20
 min): as mixing passed peak consistency to breakdown and overmixing, larger aggregates broke
 into smaller ones; Vidal 2022: a torque maximum at a development time (reference 150 s in a lab
-kneader), a short stability phase, then breakdown. Fermentation activity: Verheyen 2015, the lowest
+kneader), a short stability phase, then breakdown. Gluten quality and gas retention move together in an abstract-only source (Takata 2019: the dough stress at the end of proofing correlates with gas retention and specific loaf volume across eleven wheat lines; conclusions only). Fermentation activity: Verheyen 2015, the lowest
 compressed-yeast dose needed three times the time of the highest to reach the same gas volume and
 gave a loaf volume of 3.1 against 3.5 mL/g. Verheyen 2014 qualifies the claim: gas retention is
 "exclusively limited by the amount of gas and the stability of the dough matrix", not by how fast
@@ -385,6 +385,17 @@ Actions beyond "proceed": 3 (`rest.relax-and-repeat`, `cold.return-to-room`, `pi
   (preferment, mixing end, relaxation), a core-temperature or dough-temperature kind of cue, a
   mark in the tin as a cue kind, negative signs and their remedies, and the smell and sound senses.
 
+- **Proposed direction, not accepted.** A proposed ADR (0025, pull request #296, branch
+  `docs/adr-0025-product-scope`, status Proposed) would make the fermentation engine a planning tool
+  that reports how far a dough has fermented and does not judge readiness, put the end criterion in
+  the step of a recipe and in the baker's judgement, and have the product carry a codified body of
+  baking knowledge with its sources and grades. It leaves the form of a step's criterion and the
+  record format of a knowledge entry undecided. This document is a first, thin material for that
+  body, and it is findings and questions: it neither assumes the ADR nor decides anything it
+  leaves open. The ADR also requires that a trade term never be shown without a definition being
+  available; this catalogue uses terms (poolish, biga, appretto, staglio, dough development time,
+  autolyse) that have no entry yet.
+
 ## What this implies, as questions for the design
 
 These are questions, not decisions.
@@ -423,6 +434,10 @@ Bread and Pastry_ (textbook criteria for each stage); Calvel's work (the French 
 ripeness); Weekend Bakery's article criticising "double in size" (the strongest craft critique, now
 a lead); BAKERpedia's pages on proofing and mixing; and the primary papers cited by Rathnayake:
 Zghal, Scanlon and Sapirstein on proofing and cell structure.
+
+**Terms that would need a definition entry** before any catalogue entry is shown: poolish, biga,
+sponge, autolyse, windowpane, bulk, preshape, bench rest, appretto, staglio, dough development
+time, proof, retard, poke test.
 
 **Search terms tried.** Europe PMC REST over open access: over-proofing and its spellings,
 "poke test", "springs back", "windowpane test", "float test", "dark spots" with pizza,

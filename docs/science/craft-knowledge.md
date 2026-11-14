@@ -274,7 +274,7 @@ sources. Levels as re-rated: baguette C (was B), no-knead C, Neapolitan C.
 ## Register entries from the readiness research (2026-11-14 UTC)
 
 Ten entries grounded in the repository's own records of the style-guide snapshots (full snapshot
-reads of 2026-10-10 (UTC) by earlier agents, with hashes) and of the recipe survey. **No page was
+reads of 2026-10-10 (UTC) by other agents, with hashes) and of the recipe survey. **No page was
 re-read in this session**: the craft hosts were refused by the session's network policy (see
 [readiness-criteria.md](readiness-criteria.md)). Every field the records do not hold is `not recorded` and counts as `weak`, so
 each level rests on an incomplete record; filling a field can raise it, never lower it. Source type
