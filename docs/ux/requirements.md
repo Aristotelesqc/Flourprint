@@ -164,6 +164,7 @@ Screens: recipe, preparation. Source: docs/contracts/fermentation.md (status: ow
 
 **L25.** Required coverage: 360 and 393 px, FR and EN, larger text (125–130 %) and Light/Dark/AMOLED. At 360 px with 125–130 % text:
 
+- interactive controls remain clear of system insets and the physical rounded corners of modern phone displays; backgrounds may extend to the edges, but action hit areas may not be clipped (owner, 2026-11-06);
 - no mid-word breaks (no `overflow-wrap:anywhere` on labels);
 - titles, including the recipe name in B's edit bar, are not truncated ("Shoku…", "Fournée …");
 - pills ("+00:00 → +00:10", "Étape 7 / 7") do not wrap inside their rounded background;
@@ -209,11 +210,13 @@ Sheets open from the bottom of the **viewport**, not the bottom of the content. 
 
 **L30.** Deleting a recipe uses the trash flow ("Mettre à la corbeille", restorable), never a permanent "Supprimer la recette". Screens: recipe, registry/settings. Source: GH/issues/134#issuecomment-6228651482 ("delete versus trash" stays on the checklist); GH/issues/134#issuecomment-6227770682 item 4. Kind: OD-R.
 
-**L31.** No persistent full-width bottom call-to-action ("Démarrer/Lancer la préparation", "+ Nouvelle recette"). Each screen's actions sit in a thumb-reachable bar, and Start lives in that bar. Screens: global, library, recipe. Source: GH/issues/111#issuecomment-6189930425 ("Owner notes"); GH/issues/112 "Need"; GH/issues/120 direction 7; GH/issues/134#issuecomment-6226235543 ("Unchanged since #111 / #120: no persistent full-width bottom button"). Kind: OD-R.
+**L31.** Reading mode has no permanent bottom bar; content keeps that vertical space. Start and all later time controls (play, fast-forward, rewind) belong to Planning only, never Recipe. The editing bar follows L60. Screens: recipe, planning. Source: Owner, coordinating session 2026-11-04; supersedes the contextual reading-bar placement in earlier L31. Kind: OD.
 
 **L32.** Global destinations (Preparations, Registry, Catalogue, Settings) are never silently hidden behind an overflow menu. A running preparation is reachable in one tap from anywhere (a badge or chip). Screens: global, library, recipe. Source: GH/issues/120 "Open decisions… Navigation"; GH/issues/112 option A; GH/issues/134 body, "Global destination hidden in an overflow menu". Kind: OI + CL.
 
 **L33.** While editing, navigation that would leave unsaved changes (tabs, Back, global nav) is guarded. Toolbar or mode changes never reset exact input, Undo/Redo, scroll or group state. Screens: global, edit. Source: GH/issues/112 "Coordination"; GH/issues/121 acceptance 3; GH/issues/134#issuecomment-6227770682 ("tabs stay live during edit mode"). Kind: OI + CL.
+
+**L151.** A recipe draft and a detailed editor are separate UI states sharing one draft and one Undo/Redo history. Creating or resuming a draft does not activate ingredient inputs or detailed step controls. Tab changes preserve both states and exact raw input. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L33. Kind: OD.
 
 **L34.** One visually dominant action per screen. Occasional actions go in an overflow menu. Destructive actions are separated and never placed beside Start or Resume. Screens: global. Source: DESIGN.md "Layout" (approved v2); GH/issues/35#issuecomment-6134493225. Kind: C (owner-approved).
 
@@ -245,9 +248,12 @@ Screens: global. Source: GH/issues/134 body, "Pictograms" (_Owner: pictograms ar
 **L101.** Navigation is **A**, with the section tabs at the top (owner decision, 2026-10-19, which
 settles O1; navigation B and its bottom bar of large destination buttons are no longer developed):
 
-- each screen keeps A's contextual bottom toolbar (L31, L32, L60);
+- the fixed top tabs are Recipe | Planning | History; Preparation is a separate active screen, not a tab;
+- Recipe contains the whole authored recipe (ingredients, weighing, steps); Planning contains the generated schedule and its controls, not another editable step list;
+- reading and editing actions follow the owner's updated L31, L50 and L60; active preparations remain reachable under L32;
 - the tabs at the top stay tappable, and a horizontal swipe also moves to the next or previous
-  tab;
+  tab, including a swipe that starts on the tab strip itself (owner, 2026-11-06);
+- tab buttons share available row width with centered labels; when labels do not fit, keep horizontal scrolling rather than squeezing them (owner clarification, 2026-11-05);
 - both gestures change the tab: a slow drag past half the width, or a short quick flick above a
   velocity threshold, whatever the distance;
 - the current screen follows the finger and the next one slides in like a carousel; on release
@@ -255,12 +261,14 @@ settles O1; navigation B and its bottom bar of large destination buttons are no 
   moves with it;
 - a swipe starts only on a clearly horizontal gesture; vertical scrolling wins otherwise;
 - no swipe starts near the screen edges (Android Back gesture), during a step drag (L96), or
-  inside an area that already scrolls horizontally;
+  inside an area that already scrolls horizontally, except the carousel-linked tab strip: its
+  horizontal gesture changes sections and keeps the selected label visible even with overflowing
+  labels (owner, 2026-11-06);
 - with reduced motion the tab changes at once, without the slide;
 - switching tabs while editing keeps the same draft (L33).
 
 The motion is a library item (`fp.motion.*`) shown in the catalogue. The owner wants it truly
-fluid. Polishing the other animations is deferred, possibly to 0.4; L28 still applies. Screens:
+fluid. The essential L28 transitions (presses, disclosures, menus, sheets/backdrops, step movement/completion and screen changes) are foundations for 0.3, not deferred polish (owner, 2026-11-04). Screens:
 global, recipe. Source: owner, 2026-10-19 ("je veux A avec les tabs au haut", "on devrait aussi
 pouvoir swiper à gauche ou à droite", "un petit flick rapide horizontal du doigt"). Kind: OD.
 
@@ -277,6 +285,10 @@ _Amended: scope narrowed by L105 (style only)._
 **L115.** Blocker: at 360 px / 130 % the bottom bar must not overflow. `⋯` (Duplicate, Trash, Reset) stays reachable, Save is not clipped, and the tabs do not overflow. Screens: global, recipe, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
 **L116.** Step drop: the drop hit-test matches the drawn slot, so releasing in the visibly opened slot above "Pointage" is accepted. Every refusal shows a visible reason (extends L104). Screens: steps, edit. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
+
+**L156.** The accepted drop matches the live slot. Preserve the real card under the finger and scrim, live neighbour reflow, pre-release `getDropFeedback`, settling and focus restoration from the approved reference. A neighbour moves once when the dragged card crosses its midpoint; directional hysteresis prevents oscillation around the boundary, including sub-pixel pointer changes and scrolling. Use the 350 ms hold; scrolling must not accidentally drag, and reduced motion preserves final state. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L116. Kind: OD.
+
+**L159.** Step drag handles are on the right of the cards, including the floating card during a drag. Their position and touch target stay stable across draft states and the required narrow/large-text layouts. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04 ("les poignées de déplacement soient à droite des cartes d'étapes"). Kind: OD.
 
 **L117.** A tab-carousel commit animates to its final position (see L106). Screens: global. Source: independent UI audit of #133 at 0d63eb4 (2026-10-22). Kind: CL.
 
@@ -350,7 +362,9 @@ Screens: library. Source: GH/issues/128; GH/issues/111#issuecomment-6205813397 �
 
 **L49.** One Recipe destination. Reading and editing share the same page, layout and section structure. Editing is a **state in place**, not a separate screen, and the separate Composition/Components/Steps/Result tab set is never reintroduced. Leaving edit mode returns to the same page, scroll position and focus. Screens: recipe, edit. Source: GH/issues/111#issuecomment-6190006177 and GH/issues/112#issuecomment-6190005920 ("Owner clarification (2026-10-15)"); GH/issues/121; GH/issues/120 direction 1. Kind: OD-R. Superseded in part by L108 (steps sit under the ingredients in the Recipe tab).
 
-**L50.** Edit is discoverable from reading. Under A it sits in the bar (Edit · Plan · ▶ Start · ⋯), not hidden in ⋮. Start follows the #112 hierarchy. Screens: recipe. Source: GH/issues/121 acceptance 2; GH/issues/112 option A; GH/issues/111 body, finding 1. Kind: OI. (DESIGN.md's older "Edit in overflow" (#67) conflicts: see O18. An actual step drag may also enter editing: L104.)
+**L50.** Edit is a pencil icon, always visible in the Recipe header next to the anchored overflow menu. Duplicate, export and trash are rare actions in that menu. Detailed step editing opens only through an explicit per-step Edit action and the existing step sheet (L153/L155). Screens: recipe. Source: Owner, coordinating session 2026-11-04; supersedes the former bottom-bar Edit placement and resolves O18. Kind: OD.
+
+**L157.** In-place value editing, such as a long press on a number, is a future feature and is not part of 0.3. It must not conflict with step-drag long press. Screens: recipe. Source: Owner, coordinating session 2026-11-04. Kind: OD.
 
 **L51.** One hierarchical ingredient list:
 
@@ -435,6 +449,10 @@ Screens: recipe, edit. Source: Owner, coordinating session 2026-10-22. Kind: OD.
 
 **L126.** Summary figures stay as plain numbers with a small ⓘ that opens the detail sheet: no "Detail" button and no segmented bar in the summary (segments are too small to touch on a phone and have no hover). No pie charts for baker's percentages: they are ratios to flour, not parts of a whole. The hydration detail sheet shows the split of total water by source as a ring or stacked bar with a legend of colour chips (one row per source: chip, name, grams, share of total water); interaction is on the legend rows, not the chart segments; an unknown share (ingredient without composition) is shown hatched and explains the "≥". Fat and sugar sheets may reuse the same pattern later. Screens: recipe. Source: Owner, coordinating session 2026-10-22. Kind: OD.
 
+**L158.** The Recipe summary uses the approved two-column tiles. Port Recipe step cards through the shared compact `fp.step-node`; add shared compact component tiers rather than per-screen arbitrary typography, padding or radii. Compare against frozen #133 at `e7aaad3`, correcting known ledger defects, at 393 px/100% and 360 px/130% in Light, Warm Dark and AMOLED. Screens: recipe, shared components. Source: Owner, coordinating session 2026-11-04. Kind: OD.
+
+**L160.** Use the four monochrome SVG pictograms from [summary study v5](https://aristotelesqc.github.io/Flourprint/review-2026-11-08-summary-icons-v5/): dough ball, water drop, butter on its unfolded wrapper and two sugar cubes. Use 22 px for the four pictograms in the Recipe summary. Use the lightly raised tiles (variant B), with opaque surfaces, subtle shadows in Light and Warm Dark, and a fine upper highlight for depth in AMOLED. The tiles are readouts and each ⓘ is a separate control (L126). Verify the result in the L25 review layouts. Screens: recipe. Source: Owner, coordinating session 2026-11-08, accepting the v5 pictograms and relief. Kind: OD.
+
 **L127.** The active step of a Preparation is one focused screen, top to bottom: the header "Preparation · <recipe>"; the step line "n / N · <step name>"; the estimated remaining time as the largest element (e.g. "00:10:00") with its label "Estimated remaining time"; the accumulated adjustment ("Adjustment: +0 min"); then two visually separate, labelled control groups — **Countdown**: three buttons in one row, −15 min, Pause/Resume, +15 min; **Progression**: two buttons in one row, ← Previous and Next →. No other primary actions compete with these five; secondary information (parallel steps, quick notes) stays below and compact. Rendered with the shared components and visual system. Semantics:
 
 - **Next** records only the end of the current step (`CompleteStep`), without confirmation; the following step shows as running from that time, and its start is recorded only at the baker's first real action in it (fold, dough-ready observation, adjustment). This satisfies L124's "or undo".
@@ -448,7 +466,7 @@ Screens: recipe, edit. Source: Owner, coordinating session 2026-10-22. Kind: OD.
 
 ## 6. Edit (in-place state of Recipe)
 
-**L60.** The edit toolbar (undo · redo · **Save** · ⋯) replaces the Recipe toolbar while editing. **Cancel / Annuler** is visible in both navigation options. The recipe name is shown in full and is not truncated by the toolbar. Screens: edit. Source: GH/issues/111#issuecomment-6190006177; GH/issues/112 (Edit mode row); GH/issues/134 body, "Option B edit state". Kind: OD-R + CL.
+**L60.** Editing shows one bottom bar of constant height: icon-only Discard (cross), quiet Undo and Redo, and filled Save at the right. The same bar remains available across Recipe, Planning and History while the recipe draft/editor is active; it replaces the Planning time-action footer during editing rather than stacking another bar. Discard confirms when changes exist. The flat, continuous opaque surface reaches the screen bottom; side and bottom padding protect action hit areas from physical rounded corners and system insets (L25). The bar overlays the screen bottom without pushing or resizing the content above, including when a step drag creates the draft; the final content stays scrollable above it. Status and notices must not create a second row or change geometry. The full recipe title stays readable. Screens: recipe, planning, history, edit. Source: Owner, coordinating sessions 2026-11-04 and 2026-11-06; approved [editor-controls-v1-20261106](https://aristotelesqc.github.io/Flourprint/review-2026-11-06-editor-controls-v1/), superseding the former replacement toolbar arrangement and Recipe-only editing-bar placement. Kind: OD.
 
 **L61.** The recipe name is edited in place, in the page title field. It is not reached through ⋮ → Rename alert, and it does not disappear when a section changes. Screens: edit. Source: GH/issues/121 scope ("in-place name editing"); GH/issues/111#issuecomment-6205731046 §1.2–1.3; GH/issues/128 acceptance 4. Kind: OI.
 
@@ -546,10 +564,14 @@ non-drag path (L72). Arrow buttons alone do not meet the request. Screens: steps
 review of the `dd10bd9` mockup, 2026-10-19 ("le glisser déplacer ne semble pas fonctionner").
 Kind: OD.
 
+**L152.** Dragging reorders through core `moveStep` and changes only order and a subtle pending-change mark. Card heights, density, layout and editor controls stay visually invariant during activation, drop, cancellation and refusal. Preserve scroll position and keep the moved card in view. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L96. Kind: OD.
+
 **L97.** The step list is **dense**: no large empty vertical gaps inside or between step rows.
 Rows keep round 2's compact rhythm; details sit next to the title, not in tall padded blocks.
 Screens: steps. Source: owner review, 2026-10-19 ("la densité est manquante, trop d'espace
 vertical"). Kind: OD.
+
+**L153.** Step cards use the same compact presentation before and after a draft exists. Detailed controls, including duration inputs, open only in the existing step sheet through an explicit per-step Edit action; they never appear inline because dragging started a draft. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L97. Kind: OD.
 
 **L98.** A **bottom sheet is not a menu** and a confirmation never repeats itself. Short action
 lists use the anchored menu; confirmations are a compact dialog whose title, text and button do not
@@ -560,6 +582,8 @@ global. Source: owner review, 2026-10-19. Kind: OD.
 or by move actions (L72, L96). Editing what a step waits for is a separate, explicit dependency
 edit that shows only the meaningful choices, never a checkbox list of every step. Screens: steps.
 Source: owner review, 2026-10-19 ("une checklist pour déplacer l'étape, wtf?"). Kind: OD.
+
+**L154.** A cancelled, refused or outside move leaves the prior draft and history unchanged. Show pre-release and final refusal in a transient Ionic toast at the bottom, above the editing bar when present: readable tokenized body text, polite screen-reader announcement and automatic dismissal. Never overlay feedback on a step card, substitute another move or work around a core refusal. The refused card returns with the normal settle animation. Screens: recipe, steps, edit. Source: Owner test relayed 2026-11-06, superseding the at-card placement of 2026-11-04 and clarifying L99. Kind: OD.
 
 **L100.** No `⋯` menu button floating in the middle of each step row. Per-step actions sit at a
 consistent row edge with the edit control, or in the anchored menu of the row. Screens: steps.
@@ -672,6 +696,8 @@ earlier draft edits are kept; a refusal gives a short reason and is never turned
 This amends the explicit-Edit-only policy (#67, L50, O18) by a direct-manipulation entry point; it
 selects nothing in O3. The contract is drafts.md, Drag enters editing. Screens: steps, edit. Source:
 GH/issues/123 owner direction 2026-10-20. Kind: OD.
+
+**L155.** Drag activation creates or reuses the recipe draft without changing the document into editors. Remove presentation-freeze workarounds at drop: draft state and explicit editor state remain independent throughout. Undo, Redo, Save and Discard retain their existing meaning. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L104. Kind: OD.
 
 ## 12. Mockup and redesign process (owner requirements on deliverables)
 
@@ -874,4 +900,4 @@ cuite / Never baked", because a preparation does not always end in cooking. `DES
 "Recipes" (approved v2, GH/issues/35#issuecomment-6135427798) and the current app
 (`recipes.card.neverBaked`) still carry the old label and must be reconciled.
 
-**O18. Where Edit lives.** DESIGN.md (#67) still says "explicit Edit in overflow". #120/#121/#112 require a discoverable Edit in the thumb bar (L50). DESIGN.md on `origin/dev` predates #120 and the ADR 0020/0021 library work (the #133 branch updates it).
+**O18. Where Edit lives: resolved by the owner on 2026-11-04.** L50 applies: a permanent pencil action in the Recipe header beside overflow. The reading bottom bar is removed; the editing overlay follows L60.

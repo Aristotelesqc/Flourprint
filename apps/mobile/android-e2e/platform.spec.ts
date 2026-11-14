@@ -9,6 +9,36 @@ test.describe.configure({ mode: 'serial' });
 
 let device: AndroidDevice;
 
+/** L103: verify the actual native revision, never an internal version badge. */
+const expectNativeRevision = async (page: Page, version: number) => {
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const id = decodeURIComponent(location.pathname.split('/').at(-1) ?? '');
+        const capacitor = Reflect.get(window, 'Capacitor') as {
+          Plugins: {
+            CapacitorSQLite: {
+              query(options: {
+                database: string;
+                statement: string;
+                values: string[];
+                readonly: boolean;
+              }): Promise<{ values?: { head_version: number }[] }>;
+            };
+          };
+        };
+        const result = await capacitor.Plugins.CapacitorSQLite.query({
+          database: 'flourprint',
+          statement: 'SELECT head_version FROM recipes WHERE id = ?',
+          values: [id],
+          readonly: false,
+        });
+        return result.values?.[0]?.head_version;
+      }),
+    )
+    .toBe(version);
+};
+
 /**
  * The app seeds no recipe (persistence.md, Recipe trash): the suite imports the reference recipe
  * through Advanced, the way a baker would, unless the database already holds it. In-app
@@ -164,24 +194,21 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
   // Native SQLite: no browser-preview notice.
   await expect(page.getByText(/Browser preview/)).toHaveCount(0);
   await page.getByText('Poolish + tangzhong').first().click();
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectNativeRevision(page, 1);
   // A saved recipe opens in consultation (#70): editing is explicit.
-  await page.getByRole('button', { name: 'Recipe actions', exact: true }).click();
-  const actions = page.locator('ion-action-sheet');
-  await actions.getByRole('button', { name: 'Edit recipe', exact: true }).click();
-  await expect(actions).toHaveCount(0);
-  const salt = page.getByLabel('Salt (g)', { exact: true });
+  await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+  const salt = page.getByLabel('Salt, Final mix (g)', { exact: true });
   await salt.fill('25');
   await salt.press('Enter');
-  await page.getByRole('button', { name: 'Save v2' }).click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 2);
 
   page = await test.step('forced stop, reopen', async () => {
     await forceStop();
     return open();
   });
   await page.getByText('Poolish + tangzhong').first().click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectNativeRevision(page, 2);
 
   // Reinstalling over the app (as an update does) keeps the database.
   page = await test.step('reinstall over the app, reopen', async () => {
@@ -192,7 +219,7 @@ test('a saved revision survives a forced stop and a reinstall', async () => {
     return open();
   });
   await page.getByText('Poolish + tangzhong').first().click();
-  await expect(page.getByText('Version 2', { exact: true })).toBeVisible();
+  await expectNativeRevision(page, 2);
   await forceStop();
 });
 
@@ -203,7 +230,7 @@ test('the Android back button returns to the recipe list', async () => {
   // The URL changes when the page transition starts; a back press during it is dropped by Ionic.
   // Wait for the transition to end: the list page is hidden and the recipe page fully shown.
   // The earlier test saved a second version: any version number will do.
-  await expect(page.getByText(/^Version \d+$/).first()).toBeVisible();
+  await expectNativeRevision(page, 2);
   await expect(page.locator('.ion-page.ion-page-hidden').first()).toBeAttached();
   await expect(page.locator('.ion-page.ion-page-invisible')).toHaveCount(0);
   // Count the back events Ionic receives, to tell a press that never reached the WebView from
@@ -229,7 +256,9 @@ test('the Android back button returns to the recipe list', async () => {
         backEvents: (window as unknown as { fpBackEvents: number }).fpBackEvents,
         visibility: document.visibilityState,
         focused: document.hasFocus(),
-        overlays: [...document.querySelectorAll('ion-modal, ion-alert, ion-action-sheet')]
+        overlays: [
+          ...document.querySelectorAll('ion-modal, ion-alert, ion-popover, ion-action-sheet'),
+        ]
           .filter((o) => !o.classList.contains('overlay-hidden'))
           .map((o) => o.tagName.toLowerCase()),
         pages: [...document.querySelectorAll('.ion-page')].map((p) => p.className),
@@ -242,5 +271,437 @@ test('the Android back button returns to the recipe list', async () => {
       cause,
     });
   }
+  await forceStop();
+});
+
+test('Android Back dismisses shared overlays before leaving the recipe', async () => {
+  const page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 2);
+  const recipeUrl = page.url();
+  const opener = page.getByRole('button', { name: 'Recipe actions', exact: true });
+  await opener.click();
+  const menu = page.getByRole('menu');
+  await expect(menu.getByRole('menuitem').first()).toBeFocused();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(menu).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(opener).toBeFocused();
+
+  const help = page.getByRole('button', { name: 'Hydration breakdown', exact: true });
+  await help.click();
+  const sheet = page.getByRole('dialog', { name: 'Hydration breakdown', exact: true });
+  await expect(
+    page.locator('ion-modal:visible').getByRole('button', { name: 'Close', exact: true }),
+  ).toBeFocused();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(sheet).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(help).toBeFocused();
+  await forceStop();
+});
+
+test('step duplication reviews before saving and Android Back discards a proposal', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 2);
+  await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+  const method = () => page.getByTestId('recipe-method').filter({ visible: true });
+  const source = () => method().getByRole('button', { name: 'Edit step Mix', exact: true });
+  const originalCount = await method().locator('[data-sortable-id]').count();
+  const recipeUrl = page.url();
+  await source().click();
+  await page.getByRole('button', { name: 'Duplicate step', exact: true }).click();
+  const review = () => page.getByRole('dialog', { name: 'Duplicate step proposal', exact: true });
+  await expect(review()).toBeVisible();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(review()).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(source()).toBeFocused();
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount);
+  await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+
+  await source().click();
+  await page.getByRole('button', { name: 'Duplicate step', exact: true }).click();
+  await expect(review()).toBeVisible();
+  await page.getByRole('button', { name: 'Keep copy', exact: true }).click();
+  await expect(review()).toBeHidden();
+  await page
+    .locator('ion-modal:visible')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount + 1);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 3);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 3);
+  await expect(method().locator('[data-sortable-id]')).toHaveCount(originalCount + 1);
+  await forceStop();
+});
+
+test('equipment setpoint keeps invalid raw input through Android Back and persists a correction', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 3);
+  const editMix = async () => {
+    await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+    await page
+      .getByTestId('recipe-method')
+      .filter({ visible: true })
+      .getByRole('button', { name: 'Edit step Mix', exact: true })
+      .first()
+      .click();
+  };
+  await editMix();
+  const panel = () => page.getByTestId('step-equipment-fields').filter({ visible: true });
+  const setpoint = () => panel().getByRole('textbox', { name: 'Setpoint (°C)', exact: true });
+  const close = () =>
+    page.locator('ion-modal:visible').getByRole('button', { name: 'Close', exact: true });
+  await expect(setpoint()).toHaveValue('');
+  await setpoint().fill('-');
+  await setpoint().blur();
+  await expect(setpoint()).toHaveAttribute('aria-invalid', 'true');
+  await close().click();
+  await expect(panel()).toBeVisible();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(panel()).toBeVisible();
+  await expect(setpoint()).toHaveValue('-');
+  const level = () => panel().getByRole('textbox', { name: 'Power level', exact: true });
+  await level().fill('-');
+  await level().blur();
+  await setpoint().fill('35');
+  await setpoint().press('Enter');
+  await close().click();
+  await expect(panel()).toBeVisible();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(panel()).toBeVisible();
+  await expect(level()).toHaveValue('-');
+  await level().fill('3');
+  await level().press('Enter');
+  await close().click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 4);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 4);
+  await editMix();
+  await expect(setpoint()).toHaveValue('35');
+  await expect(level()).toHaveValue('3');
+  await expect(
+    page.locator('ion-modal:visible').getByRole('combobox', { name: 'Operation', exact: true }),
+  ).toHaveValue('mix');
+  await forceStop();
+});
+
+test('personal equipment creation guards Android Back and persists an explicitly selected vessel', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 4);
+  const editMix = async () => {
+    await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+    await page
+      .getByTestId('recipe-method')
+      .filter({ visible: true })
+      .getByRole('button', { name: 'Edit step Mix', exact: true })
+      .first()
+      .click();
+  };
+  await editMix();
+  const items = () => page.getByTestId('step-equipment-items').filter({ visible: true });
+  const form = () => page.getByRole('region', { name: 'New personal baking vessel', exact: true });
+  await items().getByRole('button', { name: 'Add personal vessel', exact: true }).click();
+  await form().getByRole('textbox', { name: 'Name', exact: true }).fill('Native personal pot');
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(form().getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(
+    'Native personal pot',
+  );
+  await form().getByRole('button', { name: 'Create equipment', exact: true }).click();
+  await expect(form()).toBeHidden();
+  const vessel = () => items().getByRole('button', { name: /^Baking vessel,/ });
+  await expect(vessel()).not.toHaveAccessibleName(/Native personal pot/);
+  await vessel().press('Space');
+  await page.getByRole('radio', { name: 'Native personal pot', exact: true }).click();
+  await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+  await page
+    .locator('ion-modal:visible')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 5);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 5);
+  await editMix();
+  await expect(vessel()).toHaveAccessibleName(/Native personal pot/);
+  await expect(items().getByRole('button', { name: /^Vessel cover,/ })).toHaveAccessibleName(
+    /Unknown/,
+  );
+  await forceStop();
+});
+
+test('optional appliance profile survives native Back and restart without changing step appliance', async () => {
+  let page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 5);
+  const editMix = async () => {
+    await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+    await page
+      .getByTestId('recipe-method')
+      .filter({ visible: true })
+      .getByRole('button', { name: 'Edit step Mix', exact: true })
+      .first()
+      .click();
+  };
+  await editMix();
+  const panel = () => page.getByTestId('step-equipment-fields').filter({ visible: true });
+  const picker = () => panel().getByRole('button', { name: /^Appliance profile,/ });
+  await panel().getByRole('button', { name: 'Add appliance profile', exact: true }).click();
+  const form = () => page.getByRole('region', { name: /^New (personal )?appliance profile$/ });
+  await form().getByRole('textbox', { name: 'Name', exact: true }).fill('Native kitchen profile');
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(form().getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(
+    'Native kitchen profile',
+  );
+  await form()
+    .getByRole('button', { name: /^(Appliance|Type)/ })
+    .press('Space');
+  await page.getByRole('radio', { name: 'Oven', exact: true }).click();
+  await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+  await form()
+    .getByRole('button', { name: /^Create (equipment|profile)$/ })
+    .click();
+  await expect(form()).toBeHidden();
+  await expect(picker()).not.toHaveAccessibleName(/Native kitchen profile/);
+  await picker().press('Space');
+  await page.getByRole('radio', { name: 'Native kitchen profile', exact: true }).click();
+  await expect(page.locator('ion-popover:visible')).toHaveCount(0);
+  await expect(panel().getByRole('button', { name: /^Appliance,/ })).toHaveAccessibleName(
+    /Not specified/,
+  );
+  await page
+    .locator('ion-modal:visible')
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 6);
+  await forceStop();
+  page = await open();
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectNativeRevision(page, 6);
+  await editMix();
+  await expect(picker()).toHaveAccessibleName(/Native kitchen profile/);
+  await expect(panel().getByRole('button', { name: /^Appliance,/ })).toHaveAccessibleName(
+    /Not specified/,
+  );
+  await expect(panel().getByRole('textbox', { name: 'Setpoint (°C)', exact: true })).toHaveValue(
+    '35',
+  );
+  await expect(panel().getByRole('textbox', { name: 'Power level', exact: true })).toHaveValue('3');
+  await forceStop();
+});
+
+test('native touch drag keeps Recipe geometry and draft/editor states independent', async () => {
+  let page = await open();
+  const recipeName = 'Native foundation touch';
+  await page.getByRole('link', { name: 'Advanced', exact: true }).click();
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'foundation-touch.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(
+      JSON.stringify({
+        kind: 'flourprint-recipes',
+        schemaVersion: 1,
+        exportedAt: '2026-11-04T00:00:00.000Z',
+        families: [],
+        recipes: [
+          {
+            id: 'native-foundation-touch',
+            name: recipeName,
+            revisions: [
+              {
+                recipeId: 'native-foundation-touch',
+                version: 1,
+                createdAt: '2026-11-04T00:00:00.000Z',
+                formula: {
+                  flours: [{ id: 'bread-flour', sharePct: 100 }],
+                  ingredients: [{ id: 'water', kind: 'water', bakerPct: 70, role: 'dough' }],
+                  components: [],
+                  anchor: { kind: 'flourTotal', grams: 500 },
+                },
+                process: {
+                  steps: ['Alpha', 'Beta', 'Gamma'].map((label, index, names) => ({
+                    id: label.toLowerCase(),
+                    label,
+                    operation: 'rest',
+                    schedule: 'asap',
+                    dependsOn: index === 0 ? [] : [(names[index - 1] ?? '').toLowerCase()],
+                    plannedDurationS: 300,
+                  })),
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    ),
+  });
+  await expect(page.getByText('1 recipe imported.', { exact: true })).toBeVisible();
+  await page.locator('ion-back-button:visible').click();
+  await page.getByRole('heading', { name: recipeName, level: 2, exact: true }).click();
+  const method = () => page.getByTestId('recipe-method').filter({ visible: true });
+  const handle = () => method().getByRole('button', { name: /^(Move|Drag).*Gamma$/ });
+  const order = () =>
+    method()
+      .locator('[data-sortable-id]')
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-sortable-id')));
+  const layout = () =>
+    page.locator('ion-content:visible').evaluate(async (content) => {
+      const scroll = await (
+        content as HTMLElement & { getScrollElement(): Promise<HTMLElement> }
+      ).getScrollElement();
+      return {
+        height: content.getBoundingClientRect().height,
+        scrollTop: scroll.scrollTop,
+        cards: Array.from(content.querySelectorAll('[data-sortable-id]')).map((card) => ({
+          id: card.getAttribute('data-sortable-id'),
+          height: card.getBoundingClientRect().height,
+        })),
+      };
+    });
+  await expect(page.getByRole('button', { name: 'Edit recipe', exact: true })).toBeVisible();
+  await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  await expect(page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)')).toHaveCount(1);
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  await dismissSystemDialog();
+  await handle().scrollIntoViewIfNeeded();
+  let previousBounds = '';
+  await expect
+    .poll(async () => {
+      const current = await handle().boundingBox();
+      const stamp = JSON.stringify(current);
+      const settled = current !== null && stamp === previousBounds;
+      previousBounds = stamp;
+      return settled;
+    })
+    .toBe(true);
+  const before = await layout();
+  expect(before.scrollTop).toBeGreaterThan(0);
+  await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
+  // Native input uses screen pixels; API/device insets can move the WebView below screen origin.
+  const boundsPath = '/sdcard/flourprint-touch-bounds.xml';
+  await device.shell(`uiautomator dump ${boundsPath}`);
+  const hierarchy = (await device.shell(`cat ${boundsPath}`)).toString();
+  await device.shell(`rm ${boundsPath}`);
+  const webViewTag = hierarchy.match(/<node\b[^>]*class="android\.webkit\.WebView"[^>]*>/)?.[0];
+  const bounds = webViewTag?.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);
+  if (!bounds) throw new Error('Native WebView screen bounds unavailable');
+  const nativeLeft = Number(bounds[1]);
+  const nativeTop = Number(bounds[2]);
+  const nativeWidth = Number(bounds[3]) - nativeLeft;
+  const viewport = await page.evaluate(() => ({
+    width: window.visualViewport?.width ?? window.innerWidth,
+    left: window.visualViewport?.offsetLeft ?? 0,
+    top: window.visualViewport?.offsetTop ?? 0,
+  }));
+  const scale = nativeWidth / viewport.width;
+  const point = (rect: { x: number; y: number; width: number; height: number }) => ({
+    x: Math.round(nativeLeft + (rect.x + rect.width / 2 - viewport.left) * scale),
+    y: Math.round(nativeTop + (rect.y + rect.height / 2 - viewport.top) * scale),
+  });
+  const source = await handle().boundingBox();
+  if (!source) throw new Error('Native touch source missing');
+  let finger = point(source);
+  console.log(
+    'Native drag source',
+    JSON.stringify({ before, source, scale, finger, nativeLeft, nativeTop, viewport }),
+  );
+  await device.shell(`input touchscreen motionevent DOWN ${finger.x} ${finger.y}`);
+  try {
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+    await expect(page.locator('[popover]:popover-open')).toContainText('Gamma');
+    await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
+    expect((await layout()).height).toBeCloseTo(before.height, 0);
+    const slot = method().locator('[data-slot-after="alpha"]');
+    const initial = await slot.boundingBox();
+    if (!initial) throw new Error('Native insertion slot missing');
+    finger = point(initial);
+    await device.shell(`input touchscreen motionevent MOVE ${finger.x} ${finger.y}`);
+    await expect(slot).toHaveAttribute('data-drop-target', 'true');
+    await expect.poll(async () => (await slot.boundingBox())?.height ?? 0).toBeGreaterThan(1);
+    const expanded = await slot.boundingBox();
+    if (!expanded) throw new Error('Expanded native insertion slot missing');
+    finger = point(expanded);
+    await device.shell(`input touchscreen motionevent MOVE ${finger.x} ${finger.y}`);
+  } finally {
+    await device.shell(`input touchscreen motionevent UP ${finger.x} ${finger.y}`);
+  }
+  await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+  await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  const safeArea = await page
+    .getByTestId('recipe-draft-bar')
+    .getByRole('toolbar')
+    .evaluate((toolbar) => ({
+      bottom: toolbar.getBoundingClientRect().bottom,
+      allowedBottom:
+        window.innerHeight -
+        (parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue('--ion-safe-area-bottom'),
+        ) || 0),
+    }));
+  expect(safeArea.bottom).toBeLessThanOrEqual(safeArea.allowedBottom + 1);
+  const after = await layout();
+  expect(after.height).toBeCloseTo(before.height, 0);
+  expect(Math.abs(after.scrollTop - before.scrollTop)).toBeLessThanOrEqual(1);
+  for (const card of before.cards)
+    expect(after.cards.find((item) => item.id === card.id)?.height).toBeCloseTo(card.height, 0);
+  await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo last change', exact: true }).click();
+  await expect.poll(order).toEqual(['alpha', 'beta', 'gamma']);
+  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expectNativeRevision(page, 2);
+  await forceStop();
+  page = await open();
+  await page.getByRole('heading', { name: recipeName, level: 2, exact: true }).click();
+  await expectNativeRevision(page, 2);
+  await handle().scrollIntoViewIfNeeded();
+  await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  const restored = await handle().boundingBox();
+  if (!restored) throw new Error('Restored native handle missing');
+  finger = point(restored);
+  await device.shell(
+    `input touchscreen swipe ${finger.x} ${finger.y} ${finger.x} ${finger.y - 150} 120`,
+  );
+  await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+  await expect(page.locator('ion-footer:visible')).toHaveCount(0);
+  await handle().scrollIntoViewIfNeeded();
+  const cancelSource = await handle().boundingBox();
+  if (!cancelSource) throw new Error('Native cancellation source missing');
+  finger = point(cancelSource);
+  await device.shell(`input touchscreen motionevent DOWN ${finger.x} ${finger.y}`);
+  try {
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(1);
+    await device.shell('input keyevent KEYCODE_BACK');
+    await expect(page.locator('[popover]:popover-open')).toHaveCount(0);
+  } finally {
+    await device.shell(`input touchscreen motionevent UP ${finger.x} ${finger.y}`);
+  }
+  await expect.poll(order).toEqual(['alpha', 'gamma', 'beta']);
+  await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
   await forceStop();
 });

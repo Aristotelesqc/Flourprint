@@ -2,6 +2,7 @@ import './theme/app.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { defaultMotionManifest, MotionProvider } from '@flourprint/ui';
 import { catalogs, pickLocale } from './i18n/messages';
 import { startDevVersions } from './services/dev-versions';
 import { createServices } from './services/services';
@@ -21,7 +22,9 @@ try {
   const devVersions = await startDevVersions(services);
   root.render(
     <StrictMode>
-      <App services={services} locale={locale} copyOutcome={devVersions?.copy} />
+      <MotionProvider value={defaultMotionManifest}>
+        <App services={services} locale={locale} copyOutcome={devVersions?.copy} />
+      </MotionProvider>
     </StrictMode>,
   );
 } catch (error) {

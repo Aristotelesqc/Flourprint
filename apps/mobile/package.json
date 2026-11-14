@@ -26,7 +26,8 @@
     "react-hook-form": "^7.89.0",
     "react-intl": "^12.1.4",
     "react-router": "^6.30.6",
-    "react-router-dom": "^6.30.6"
+    "react-router-dom": "^6.30.6",
+    "@flourprint/ui": "workspace:*"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",

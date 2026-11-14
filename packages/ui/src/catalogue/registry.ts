@@ -1,11 +1,62 @@
-/**
- * Every version of every Flourprint component, for the catalogue and for comparison overrides
- * (ADR 0020). This module imports all versions, so release builds must not import it: consumers
- * load it only behind a build-time flag (see the package README).
- */
+/** All versions and guides. Release consumers must import a selected manifest instead. */
 import { library } from '../index.ts';
+import version0 from '../components/button/v1.tsx';
+import guide0 from '../components/button/guide.ts';
+import version1 from '../components/surface/v1.tsx';
+import guide1 from '../components/surface/guide.ts';
+import version2 from '../components/number-field/v1.tsx';
+import guide2 from '../components/number-field/guide.ts';
+import version3 from '../components/disclosure/v1.tsx';
+import guide3 from '../components/disclosure/guide.ts';
+import version4 from '../components/tabs/v1.tsx';
+import guide4 from '../components/tabs/guide.ts';
+import version5 from '../components/floating-menu/v1.tsx';
+import guide5 from '../components/floating-menu/guide.ts';
+import version6 from '../components/bottom-sheet/v1.tsx';
+import guide6 from '../components/bottom-sheet/guide.ts';
+import version7 from '../components/dialog/v1.tsx';
+import guide7 from '../components/dialog/guide.ts';
+import version8 from '../components/select/v1.tsx';
+import guide8 from '../components/select/guide.ts';
+import version9 from '../components/bottom-bar/v1.tsx';
+import guide9 from '../components/bottom-bar/guide.ts';
+import stepNode from '../components/step-node/v1.tsx';
+import stepNodeGuide from '../components/step-node/guide.ts';
 
-export const catalogue = library.catalogue({});
+import sortableList from '../components/sortable-list/v1.tsx';
+import sortableGuide from '../components/sortable-list/guide.ts';
 
-/** One guide per component id (ADR 0021). */
-export const guides = library.guides({});
+import sectionCarousel from '../components/section-carousel/v1.tsx';
+import sectionCarouselGuide from '../components/section-carousel/guide.ts';
+
+export const catalogue = library.catalogue({
+  'fp.button': [version0],
+  'fp.surface': [version1],
+  'fp.number-field': [version2],
+  'fp.disclosure': [version3],
+  'fp.tabs': [version4],
+  'fp.section-carousel': [sectionCarousel],
+  'fp.floating-menu': [version5],
+  'fp.bottom-sheet': [version6],
+  'fp.dialog': [version7],
+  'fp.select': [version8],
+  'fp.sortable-list': [sortableList],
+  'fp.bottom-bar': [version9],
+  'fp.step-node': [stepNode],
+});
+
+export const guides = library.guides({
+  'fp.button': guide0,
+  'fp.surface': guide1,
+  'fp.number-field': guide2,
+  'fp.disclosure': guide3,
+  'fp.tabs': guide4,
+  'fp.section-carousel': sectionCarouselGuide,
+  'fp.floating-menu': guide5,
+  'fp.bottom-sheet': guide6,
+  'fp.dialog': guide7,
+  'fp.select': guide8,
+  'fp.sortable-list': sortableGuide,
+  'fp.bottom-bar': guide9,
+  'fp.step-node': stepNodeGuide,
+});

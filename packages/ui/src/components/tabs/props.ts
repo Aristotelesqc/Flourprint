@@ -1,0 +1,36 @@
+import type { SectionCarouselProgressDetail as TabGestureProgress } from '../section-carousel/props.ts';
+import type { ReactNode, Ref } from 'react';
+
+export interface TabsControl {
+  setGestureProgress(detail: TabGestureProgress | null): void;
+}
+
+export interface TabItem {
+  /** Unique identifier for the tab item. */
+  readonly id: string;
+  /** Display label for the tab button. */
+  readonly label: ReactNode;
+  /** Content rendered inside the associated tab panel. Optional when panels are rendered externally. */
+  readonly panel?: ReactNode | undefined;
+  /** Optional disabled state for this tab item. */
+  readonly disabled?: boolean | undefined;
+}
+
+export interface TabsProps {
+  /** Measured carousel tracking and settle progress; null means stationary. */
+  readonly gestureProgress?: TabGestureProgress | null | undefined;
+  /** Optional imperative control ref for zero-React-render indicator tracking. */
+  readonly control?: Ref<TabsControl> | undefined;
+  /** Exposes the strip and reserves its horizontal gesture for a linked carousel. */
+  readonly gestureSurfaceRef?: Ref<HTMLDivElement> | undefined;
+  /** Identifier of the currently selected tab item. */
+  readonly selected: string;
+  /** Callback fired when a tab is selected. */
+  readonly onSelectedChange: (id: string) => void;
+  /** Required localized accessible label describing the tab list (applied as aria-label). */
+  readonly label: string;
+  /** Readonly list of tab items. */
+  readonly items: readonly TabItem[];
+  /** Whether to render tab panels internally. Defaults to true. When false, caller mounts panels externally. */
+  readonly renderPanels?: boolean | undefined;
+}

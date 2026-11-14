@@ -136,8 +136,10 @@ Today's values stay in place until the owner approves the generated roles in the
 
 ### Elevation rule
 
-- Surfaces anchored in the page (cards, rows, panels, summaries) are **opaque and flat**. They
-  show hierarchy through tonal surfaces and separators, as DESIGN.md already asks.
+- Surfaces anchored in the page (cards, rows, panels, summaries) are **opaque and flat by default**.
+  They show hierarchy through tonal surfaces and separators. The owner approved a narrow exception
+  for the Recipe summary tiles (L160, 2026-11-08): their opaque surfaces use shallow elevation,
+  with a fine upper highlight in AMOLED.
 - Only **floating layers** may be translucent or blurred: sheets, popovers, menus, toasts and a
   drag overlay. Every future floating component follows the same rule.
 - The rule is a theme-builder and guide concern: floating roles get their own tokens, and each

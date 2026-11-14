@@ -135,8 +135,16 @@ coordinator detailed review. Request numbered concrete defects only, each with s
 file and line, and a failure scenario. Verify each finding in code/tests: fix confirmed
 ones and dismiss unconfirmed ones in one line each. Use extra reviewers only for clearly
 high-risk or disputed changes, or audits. Small mechanical fixes need no independent review.
-Engine and contract mathematics retain an independent Claude reviewer. Argon is used only
-on the owner's request. Implementation retains one writer per overlapping file set.
+Engine and contract mathematics retain an independent Claude reviewer. Implementation retains
+one writer per overlapping file set.
+
+Owner guidance (2026-11-03, model updated 2026-11-13 UTC): Hydrogen is the ordinary
+implementer, correction agent and live UI reviewer. Argon is authorized as a narrowly assigned
+specialist for a concrete difficult question or a resistant defect, not a routine extra review
+or general implementation worker. Before an Argon call, state that question, why the specialist
+is useful, the permitted sources/actions, and finite turn/time/output budgets; check its actual
+native quota group rather than assuming a separate allowance. Verify each finding. Availability
+alone does not justify a call or a model switch.
 
 ## Coordinated UI tranche
 

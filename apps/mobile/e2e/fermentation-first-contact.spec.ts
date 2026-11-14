@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { editorSection, enterEditor, routed } from './ui-actions';
+import { editorSection, enterEditor, expectRecipeRevision, routed } from './ui-actions';
 import type { Page } from '@playwright/test';
 import type { Process } from '@flourprint/core/domain';
 import fermentation from '../../../docs/contracts/fixtures/fermentation/cases.json' with { type: 'json' };
@@ -77,7 +77,7 @@ const importRecipe = async (page: Page) => {
   await expect(page.getByText(/1 (recette importée|recipe imported)/)).toBeVisible();
   await routed(page).locator('ion-back-button').click();
   await routed(page).getByText('QA — deux pièces', { exact: true }).click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await enterEditor(page);
   await editorSection(page, 'result');
 };
@@ -113,7 +113,7 @@ test('fermentation: one room field when the first contact is the reference mixin
 }) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong').first().click();
-  await expect(page.getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await enterEditor(page);
   await editorSection(page, 'result');
   await routed(page).getByText('Advanced', { exact: true }).click();

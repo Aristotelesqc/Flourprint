@@ -1,0 +1,34 @@
+@import './tokens.css';
+@import './exceptions.css';
+
+@utility fp-focus-ring {
+  @apply outline-solid outline-2 outline-offset-2 outline-primary;
+}
+
+@utility fp-focus {
+  @apply focus-visible:fp-focus-ring;
+}
+
+/* Scoped native defaults: the Ionic host deliberately does not load Tailwind Preflight. */
+@utility fp-control-reset {
+  @apply appearance-none border-0 bg-transparent;
+}
+
+/* L160: shallow relief on the opaque Recipe summary tiles. */
+@utility fp-recipe-summary-relief {
+  box-shadow:
+    0 1px 2px rgb(70 46 29 / 12%),
+    0 3px 6px rgb(70 46 29 / 8%),
+    inset 0 1px rgb(255 255 255 / 52%);
+
+  [data-theme='dark'] & {
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 34%),
+      0 3px 6px rgb(0 0 0 / 23%),
+      inset 0 1px rgb(255 237 211 / 7%);
+  }
+
+  [data-theme='amoled'] & {
+    box-shadow: inset 0 1px rgb(255 237 211 / 12%);
+  }
+}
