@@ -8,6 +8,9 @@ dough, then kinetics (`docs/contracts/fermentation.md`, Personal correction). Th
 calibration evidence, never a gate for a feature (`docs/contracts/capability-levels.md`). Each
 protocol says what to record. A measurement without its conditions is not usable as data.
 
+Where each measurement lands in the model, the code and the screens is mapped in
+[dough-behavior.md](dough-behavior.md).
+
 Units, as the repository stores them: masses in grams, temperatures in °C, times as read on the
 clock (converted later), heights in millimetres, percentages of flour in points.
 

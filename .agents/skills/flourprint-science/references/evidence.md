@@ -9,8 +9,10 @@ description below uses that word.
 A source record needs enough detail to trace a claim:
 
 - author/title/date, DOI or stable original URL, and specific table/figure/passage;
-- actual read status (full text, abstract, snippet or secondary transcription), who extracted it,
-  access date and `source_verified` according to the existing records;
+- actual reading class (`full`, `partial`, `abstract only`, `not read`, with the reason for any
+  incomplete reading, as in `docs/science/evidence-classification.md`; a snippet or a secondary
+  transcription is `not read` plus a workaround route), who extracted it, access date and
+  `source_verified` according to the existing records;
 - provenance label from the science README, separately from access/verification status;
 - original values/units, experimental material, control/treatment, sample/replicate information
   and uncertainty reported by the source; missing fields explicit;

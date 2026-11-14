@@ -1,0 +1,18 @@
+quantity,value,unit,label,location
+flour,60.35,% of dough,stated,section 2.2
+water,37.72,% of dough,stated,section 2.2
+salt,1.88,% of dough,stated,section 2.2
+fresh_brewers_yeast,0.04,% of dough,stated,section 2.2
+rest_before_division,20,min at room temperature,stated,section 2.2
+dough_ball_mass,250,g,stated,section 2.2
+leavening_temperature,22,degC,stated,section 2.2
+leavening_relative_humidity,80,%,stated,section 2.2
+photograph_interval,1,h,stated,section 2.3
+volume_index_after_8_h,1.3,V/V0 ("just reaches"),stated,section 3.1
+volume_tripled_by,30,h (growing phase "until about the 30th h"),stated,section 3.1 and abstract
+volume_doubled_after,16,h,stated,conclusions
+volume_tripled_in,24,h,stated,conclusions
+volume_constant_from,30,h (unchanged up to 48 h),stated,conclusions
+yeast_pct_flour,0.0663,% of flour,derived (0.04 / 60.35 * 100),our division
+salt_pct_flour,3.12,% of flour,derived (1.88 / 60.35 * 100),our division
+water_pct_flour,62.5,% of flour,derived (37.72 / 60.35 * 100),our division
