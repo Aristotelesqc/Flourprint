@@ -82,6 +82,7 @@ export {
   type ThermalReading,
 } from './thermal-calibration.js';
 export {
+  LEARNING_FLAGS,
   doughReadyStage,
   doughStepAmbients,
   estimateFermentation,

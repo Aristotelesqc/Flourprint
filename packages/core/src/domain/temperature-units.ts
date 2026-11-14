@@ -20,6 +20,14 @@ export const temperatureContext = (
 };
 
 /**
+ * The context of an equipment `setpointC`: it follows its appliance, not its step
+ * (values-and-units.md): `ambient` for a proofer, `oven` for every other appliance or when none is
+ * named, an oven in Proof mode included.
+ */
+export const setpointContext = (equipment: { readonly appliance?: string }): TemperatureContext =>
+  equipment.appliance === 'proofer' ? 'ambient' : 'oven';
+
+/**
  * A stored °C value in the display unit. A difference (a mixer friction) converts by the scale
  * only: `× 9 / 5`, without the 32° shift.
  */

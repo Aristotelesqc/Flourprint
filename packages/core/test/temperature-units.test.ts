@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { celsiusFrom, celsiusTo, temperatureContext } from '../src/domain/index.js';
+import {
+  celsiusFrom,
+  celsiusTo,
+  setpointContext,
+  temperatureContext,
+} from '../src/domain/index.js';
 
 describe('temperature display units (values-and-units.md)', () => {
   it('converts a temperature both ways', () => {
@@ -33,5 +38,17 @@ describe('temperature display units (values-and-units.md)', () => {
     );
     expect(temperatureContext({ operation: 'bulk' })).toBe('ambient');
     expect(temperatureContext({ operation: 'mix' })).toBe('ambient');
+  });
+
+  it('classifies an equipment setpoint by its appliance, not by its step', () => {
+    expect(setpointContext({ appliance: 'proofer' })).toBe('ambient');
+    expect(setpointContext({ appliance: 'oven' })).toBe('oven');
+    expect(setpointContext({ appliance: 'fryer' })).toBe('oven');
+    expect(setpointContext({ appliance: 'other' })).toBe('oven');
+    expect(setpointContext({})).toBe('oven');
+    // An oven used for a proof (equipment.md, example 5) keeps the oven unit although the step
+    // is a proof, which `temperatureContext` classifies as ambient.
+    expect(temperatureContext({ operation: 'proof' })).toBe('ambient');
+    expect(setpointContext({ appliance: 'oven' })).toBe('oven');
   });
 });
