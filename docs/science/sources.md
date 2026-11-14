@@ -579,7 +579,9 @@ conditions of the [coefficient rule](evidence-classification.md#5-role-for-the-m
     matrix give 52.8 to 79.8 kJ/mol, and no source in the index supports 98.3 (the contract band
     tops out at 100). That the Arrhenius form fitted the Craig table closely (within ×1.13) is a
     statement about the table, not about dough. For `Ea`, condition (c) is therefore met only
-    by the checks that exist; no check supports the value. This is recorded, not resolved here.
+    by the checks that exist; no check supports the value. This is recorded, not resolved here. A numerical
+    experiment of 2026-11-14 (UTC) found that the 50 scored prescribed published schedules (of 89
+    collected) cannot distinguish a lower `Ea` from 98.3 (research only; [fermentation-model.md, section 15](fermentation-model.md#temperature-sensitivity-base-speed-and-readiness-target-against-the-published-schedules-research-2026-11-14-utc)).
 - **(d) Replacement.** Measurements replace these coefficients as soon as sound ones exist; the
   candidates and gates are in [fermentation-model.md, section 12](fermentation-model.md#12-open-questions-and-promotion-gates).
 

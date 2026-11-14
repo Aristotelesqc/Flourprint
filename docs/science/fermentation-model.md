@@ -925,6 +925,20 @@ adopted, nothing enters the contract).**
   exponent other than 1 the summed activity depends on the flour mass (an artefact). It is bookkeeping,
   not conserved biology. Test: the same paired preferment trials.
 
+**Candidate hypotheses from the published-schedule experiment (2026-11-14 UTC; research, not adopted,
+nothing enters the contract).**
+
+- **A readiness profile near `F*` 1.6.** Against the 50 scored prescribed schedules the best-fit `F*` alone is
+  1.60 (95 % interval 1.40 to 1.95), and it removes about two fifths of the disagreement held out; it
+  cannot be told from a change of `A` (same rescaling). Evidence needed to promote it as a profile:
+  recorded `doughReady` observations with `stage: 'bake'` and measured dough temperature (section 4),
+  independent of the recipes, with `A` fixed from dough measurements (gates 1, 2, 3 and 9).
+- **A lower `Ea` (about 85, interval 65 to 110).** The published schedules cannot distinguish it from
+  98.3 (difference −0.007, interval [−0.071, +0.061]) and the cold recipes' temperatures are
+  largely assumed. Evidence needed: primary dough data at measured dough temperature including the
+  cold range at low dose (gates 2, 3, 6), and the Izzreen and Birch fits with lag credited, which
+  already point to 53 to 80 kJ/mol.
+
 Follow-ups kept apart: #268 (recording and export of timestamped temperatures, contract 0.26.0), #243
 (saying explicitly what the model predicts, and the baker's sensory readiness criteria and
 observations), #260 (home measurement protocols, including heights and cooling curves) and #275
@@ -1121,3 +1135,145 @@ Limits:
 3. A contract proposal for gate 5 comes after these steps: replace the envelope with a measured
    predictive interval that names its basis ("published practice, n = 50"), plus the personal
    update from recorded bakes.
+
+### Temperature sensitivity, base speed and readiness target against the published schedules (research, 2026-11-14 UTC)
+
+Status: research only; no contract, constant, band or estimate changes. Script:
+`scripts/ea_sensitivity_published.mjs` (about 7 minutes on four cores; fixed seed 20261114, 2000
+resamples). It reuses the recipes, filter, dough clock, source groups and metric of section 15.
+**Wording (review of PR #276, comment 6871622211):** every figure below is the disagreement of the
+forecast with **prescribed published schedules**, on the **50 recipes this run scores, in 39 source
+groups, out of the 89 collected** (39 not scored: dose outside the gate or incomplete schedule). It
+is not an observed error of dough-readiness forecasts, and section 15's ×1.89 is the same kind of
+number. The recipes are craft-knowledge data: this is a plausibility check, never a validation or a
+fit of a coefficient, so nothing here can justify a new `Ea`, `A` or `F*`.
+
+**Reproduction (MODEL OUTPUT of the engine, DERIVED).** The script reproduces section 15 exactly:
+n = 50, RMS factor ×1.89, bias ×1.00; no cold stage (none at or below 8 °C) n = 22, ×2.12, ×1.14;
+cold share above 50 % n = 27, ×1.69, ×0.92. No mismatch.
+
+**Method.** `e = ln(published / predicted)`; the predicted time stretches every dough-clock stage by
+one ratio until the engine's progress reaches the end point. RMS factor = exp(RMS e); bias factor
+below 1 means the published time is shorter than forecast. The law pivots around 21.1 °C: with `A`
+and `k` fixed, a lower `Ea` makes stages above 21.1 °C slower (×0.83 at 27 °C for 75 against 98.3)
+and cold stages faster (×1.80 at 4 °C, ×1.45 at 10 °C); at room temperature nothing moves.
+Treatment **(a)**: `A`, `k` and the end point `F*` = 1 as shipped. Treatment **(b)**: the scale
+refitted for each `Ea` through the section 15 end point (one parameter, leave one source group out;
+checked against a direct refit of `A`: identical, largest difference in `e` below 0.001).
+**(c)**, `A` and `Ea` free together, is the free-`Ea` row of (b). Fitted variants are scored
+leave-one-source-group-out; `Ea` is searched on 5 kJ/mol steps (an analysis resolution).
+Cold = any dough-clock stage at or below 10 °C.
+
+**Results, `Ea` (all DERIVED / FITTED by this script; RMS factor / median bias factor; difference
+in RMS ln to the shipped row with its 95 % interval, recipes resampled).**
+
+| Variant                          | Overall (n 50) | No cold (n 22) | Cold (n 28)   | Cross-validated RMS | Difference overall      | no cold                 | cold                    |
+| -------------------------------- | -------------- | -------------- | ------------- | ------------------- | ----------------------- | ----------------------- | ----------------------- |
+| (a) `Ea` 98.3, `F*` 1 (shipped)  | ×2.24 / ×1.61  | ×2.54 / ×1.78  | ×2.00 / ×1.54 | not fitted          | 0                       | 0                       | 0                       |
+| (a) `Ea` 75                      | ×2.62 / ×1.93  | ×2.46 / ×1.78  | ×2.75 / ×2.02 | not fitted          | +0.156 [+0.075, +0.244] | −0.033 [−0.068, 0.000]  | +0.318 [+0.236, +0.399] |
+| (a) `Ea` 55                      | ×3.19 / ×2.35  | ×2.40 / ×1.73  | ×3.83 / ×2.94 | not fitted          | +0.352 [+0.196, +0.504] | −0.059 [−0.126, 0.000]  | +0.649 [+0.510, +0.769] |
+| (a) `Ea` free (120, grid edge)   | ×2.14 / ×1.26  | ×2.63 / ×1.78  | ×1.73 / ×1.09 | ×2.16               | −0.038 [−0.098, +0.013] | +0.033 [0.000, +0.066]  | −0.125 [−0.209, −0.030] |
+| (b) `Ea` 98.3, scale refitted    | ×1.89 / ×0.94  | ×2.12 / ×1.14  | ×1.70 / ×0.88 | ×1.89 (held out)    | 0                       | 0                       | 0                       |
+| (b) `Ea` 75                      | ×1.88 / ×0.98  | ×2.04 / ×0.95  | ×1.75 / ×1.00 | ×1.88 (held out)    | −0.007 [−0.071, +0.061] | −0.036 [−0.120, +0.071] | +0.024 [−0.062, +0.107] |
+| (b) `Ea` 55                      | ×1.99 / ×0.94  | ×2.09 / ×0.78  | ×1.90 / ×1.18 | ×1.99 (held out)    | +0.049 [−0.076, +0.175] | −0.011 [−0.193, +0.189] | +0.110 [−0.043, +0.254] |
+| (b)=(c) `Ea` free (85 in-sample) | ×1.84 / ×0.99  | ×2.03 / ×1.01  | ×1.69 / ×0.98 | ×1.90               | +0.005 [−0.026, +0.039] | −0.000 [−0.033, +0.040] | +0.011 [−0.044, +0.068] |
+
+Free `Ea` in (b): in-sample optimum 85 kJ/mol, bootstrap 95 % interval [65, 110] (recipes) and
+[60, 110] (source groups); chosen on each held-out training set: 80 to 95. Free `Ea` in (a): 120,
+the edge of the grid, because at `F*` = 1 the forecast is too fast by ×1.65 (bias) and a higher `Ea`
+slows the cold stages; it compensates the end point and is not a temperature estimate.
+The root-mean-square profile of (b) is flat: ×1.84 to ×1.86 for 80 to 100 kJ/mol.
+
+**Robustness (DERIVED).**
+
+- Overall, a lower `Ea` is **not distinguishable from noise** in (b): 75 minus 98.3 is −0.007
+  with an interval containing 0 (source-group bootstrap [−0.071, +0.063]); the cross-validated free
+  `Ea` (×1.90) is no better than the shipped one (×1.89).
+- In (a) at `F*` = 1 a lower `Ea` is **worse** (+0.156, interval above 0): in all 39 leave-one-group-out
+  sets. At `F*` = 2 it is slightly better (75: −0.041 [−0.108, +0.029]; free `Ea` 80, held out ×1.87
+  against ×1.93), not distinguishable. The direction depends on the end point, which the data cannot fix.
+- Cold against no-cold (exploratory, **added after seeing the first results**): the `Ea` at which
+  cold and no-cold recipes have the same mean disagreement is 83.4 kJ/mol, bootstrap 95 % [62.6, 107.1]:
+  the sign of the relative bias agrees with a value below 98.3, with an interval that includes it.
+- Warm no-cold recipes (mean temperature above 21.1 °C, n = 5): lower `Ea` helps in (a)
+  (−0.111 [−0.160, −0.043]) and not distinguishably in (b) (−0.159 [−0.299, +0.131]). Five recipes.
+- Assumed temperatures (ASSUMED): room 20, 22, 24 °C and fridge 2, 6 °C move the (b) difference
+  75 minus 98.3 between −0.036 and +0.018, every interval containing 0, and the free-`Ea` optimum between 75
+  and 98.3 (fridge 2 °C: 75; room 24 °C: 75; fridge 6 °C: 98.3). The assumption alone moves the optimum across the range.
+- Leave one style out: free `Ea` (b) 80 to 95, difference 75 minus 98.3 from −0.023 to +0.023; leave
+  one source group out: 80 to 95, −0.015 to +0.022 (75 errs more than 98.3 in 5 of 39). No style or
+  source dominates, and none gives a decisive result.
+
+**Readiness target `F*` as a third explanation** (the owner's question after the audit of the built-in
+templates; `A`, `k`, `Ea` as shipped; DERIVED unless noted).
+
+- **`F*` and `A` are the same rescaling of time** in this law (progress is `F / F*` and `F` is
+  proportional to `1 / A`); a direct engine run with `A` × `F*` gives the same errors to four decimals.
+  Nothing in the data separates them: the recipes record durations and temperatures, never progress,
+  volume or a readiness decision. A distinguishing signal could only be a dependence of the
+  implied end point on process shape. It is weak: fitted `F*` 1.70 [1.35, 2.25] for bulk only
+  (n = 22) and 1.55 [1.25, 2.00] for bulk plus final proof (n = 28), the wrong order for a readiness
+  defined after proof and overlapping. Shape is read from stage names (ASSUMED rule). So `F*`
+  and `A` are one parameter here, and sections 3 and 4 stand: planned schedules cannot separate
+  readiness from kinetic rate, temperature history and end-point definition.
+- `F*` = 1: ×2.24, bias ×1.65; `F*` = 2 (`flourprint.experimental-ready`): ×1.93, bias ×0.80.
+- Best-fit `F*` alone: **1.60**, 95 % interval [1.40, 1.95] (recipes), [1.35, 1.95] (source groups);
+  held out by source group ×1.89 (bias ×0.99); difference to `F*` = 1 −0.170 [−0.262, −0.067].
+  By subset (n; `F*` [interval]): no cold stage 22; 1.85 [1.40, 2.55]; cold stage 28; 1.50 [1.25, 1.80];
+  with a preferment 9; 1.25 [0.95, 1.60]; no preferment 41; 1.70 [1.40, 2.10]; styles with at least 4
+  recipes range from 1.20 (teglia, n 4) to 2.85 (lean boule, n 4, interval [1.05, 5.00]); new-york 2.00
+  [1.65, 2.60] (n 6). Subsets overlap and are small; none is distinguished.
+- **Decomposition** (share of the mean-square disagreement removed, all 50; shipped mean square 0.653 =
+  bias squared 0.251, a uniform ×1.65 shift (38 %), plus scatter 0.402 (62 %)): `F*` alone 41 %
+  in-sample, 38 % held out; `A` alone identical; `Ea` alone (free, at the grid edge) 11 % in-sample,
+  9 % held out; `Ea` 75 alone −42 %; `F*` and `Ea` together 43 % in-sample, 37 % held out; `F*` with `A`
+  is one parameter. About two fifths is a shift of the whole scale, which `F*` or `A` removes alike;
+  the remaining three fifths is scatter that none of the three removes, and `Ea` adds nothing held out.
+- **Progress at the end of the published schedule** (shipped law, 100 % = `F` of 1; MODEL OUTPUT, 50
+  recipes): median 153 %, quartiles 108 to 207 %, range 54 to 1431 %, geometric mean 161 %. No cold
+  stage 180 % (108 to 244); cold stage 147 % (115 to 166); bulk only 162 %; bulk plus proof 142 %. By style
+  (n at least 4): ciabatta 121 %, lean boule 253 %, neapolitan 176 %, neo-neapolitan 256 %, new-york 178 %,
+  roman tonda 89 %, teglia 133 %. For bulk plus proof recipes the engine's progress at the end of bulk
+  is 94 % (60 to 137 %) and at the end of the schedule 142 % (108 to 191 %). This is what published
+  practice prescribes, in the model's unit and with its own undefined readiness criteria, not a
+  measured readiness; the model carries progress through shaping unchanged.
+
+**Side checks (context only).** Time to `F` = 1 for Covino 2023 (0.066 % fresh, 22 °C, no lag, the
+`shipped_law_vs_covino.mjs` inputs): 21.94 h for 98.3, 22.59 h for 75, 23.16 h for 55 (against doubled
+at 16 h, tripled at 24 h): `Ea` barely moves it, since 22 °C is next to the pivot. Apparent
+activation energy of the 2 % cells (DERIVED, chamber temperatures, three cells each): Izzreen 67.8
+kJ/mol (8 to 16 °C 83.9; 16 to 32 °C 60.6), Birch Paper II 73.1 (5 to 15 °C 129.7; 15 to 35 °C 47.3).
+Both are steeper in the cold pair, and neither can separate dough lag from kinetics.
+
+**Limits.** (1) Published times are what authors recommend, with their own readiness target and
+convenience (12 or 24 h retards, overnight), not measured readiness: a cold stage chosen for
+convenience is longer than the dough needs and could bias the cold response in either direction; this
+cannot be separated here. (2) The temperatures are largely assumed (ASSUMED): 49 of 50 recipes have at least one
+stage at an assumed temperature (113 room stages at 21 °C, 26 fridge stages at 4 °C, 4 warm at 27 °C;
+12 stated); in 45 more than half of the dough-clock hours are assumed; 25 of 28 cold recipes are cold
+only through the assumed 4 °C fridge, 3 have a stated cold temperature. The data cannot tell
+the temperature function in the cold. (3) The 29 recipes refused for dose and the 10 with
+incomplete schedules are not scored. (4) The schedule is stretched in proportion, cold and room
+stages alike. (5) Recipes in one source group are not independent; the source-group bootstrap is
+the more conservative interval. (6) The split at 21.1 °C separates stated or assumed-warm recipes (n 5)
+from the rest (n 17, all unspecified rooms at 21 °C, no information about `Ea`). (7) The grid choice of
+5 kJ/mol steps was made after a first run at 2.5 kJ/mol had been timed, for run time only. The cold
+against no-cold comparison was added after the first results.
+
+**Gates (section 12) a change would have to pass.** This experiment addresses gate 9 only in part
+(disagreement with held-out published schedules, reported next to the shipped model, held out by
+source group, which is not the accuracy on observed bakes) and gate 4 in form (a script on data in
+`data/`; the recipes are craft-knowledge data, not `source_verified` measurements). It does not address
+gate 1 (observable and end point), 2 (dough-temperature histories), 3 (independent validation set), 5,
+6 (lag double count), 7, or 8 (contract pull request).
+
+**Conclusion.** Against these 50 prescribed schedules a lower `Ea` does not make the forecasts
+disagree less: with the scale refitted the difference is nil (75 against 98.3: −0.007, interval
+[−0.071, +0.061]) and a fitted `Ea` (about 85, interval 65 to 110) does no better held out; at the
+shipped `F*` = 1 it is worse. The part of the gap the data can explain is mostly a uniform shift of
+the scale (about ×1.6), which a readiness target near 1.6 (or an equivalent `A`, indistinguishable)
+removes, held out, for about two fifths of the disagreement; the rest is scatter that no single change
+removes. Because temperatures are largely assumed and the schedules are prescriptions, the data
+cannot discriminate the temperature function and cannot separate `F*` from `A`.
+
+Candidate hypotheses for section 12 (not adopted): see the two entries added there.
