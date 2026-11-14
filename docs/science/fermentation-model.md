@@ -933,6 +933,7 @@ nothing enters the contract).**
   cannot be told from a change of `A` (same rescaling). Evidence needed to promote it as a profile:
   recorded `doughReady` observations with `stage: 'bake'` and measured dough temperature (section 4),
   independent of the recipes, with `A` fixed from dough measurements (gates 1, 2, 3 and 9).
+  Proposed as the default of a new recipe, provisionally, in contract 0.27.0 (`docs/contracts/fermentation.md`, Published-practice profile; awaiting the owner's approval).
 - **A lower `Ea` (about 85, interval 65 to 110).** The published schedules cannot distinguish it from
   98.3 (difference −0.007, interval [−0.071, +0.061]) and the cold recipes' temperatures are
   largely assumed. Evidence needed: primary dough data at measured dough temperature including the

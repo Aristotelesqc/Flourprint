@@ -138,14 +138,17 @@ interface ReadinessProfile {
 type ReadinessRef = { id: string; version: string };
 ```
 
-| Profile                             | `readyProgress` | Band      | Basis                                                                                                                                                                                                                          |
-| ----------------------------------- | --------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `flourprint.model-end-point` `1`    | 1.0             | 1.0 – 1.0 | the model's own end point, Craig's "about doubled once"; **the default**, uncalibrated                                                                                                                                         |
-| `flourprint.experimental-ready` `1` | 2.0             | 1.5 – 2.5 | an assumed prior, not measured: planned TOST schedules, read as examples, imply about twice Craig's time for "ready to bake" after degassing, shaping and proof (#33). The band is a sensitivity range, not a prediction error |
+| Profile                             | `readyProgress` | Band      | Basis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----------------------------------- | --------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flourprint.model-end-point` `1`    | 1.0             | 1.0 – 1.0 | the model's own end point, Craig's "about doubled once"; uncalibrated; **the fallback of a recipe that records no profile** (below)                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `flourprint.experimental-ready` `1` | 2.0             | 1.5 – 2.5 | an assumed prior, not measured: planned TOST schedules, read as examples, imply about twice Craig's time for "ready to bake" after degassing, shaping and proof (#33). The band is a sensitivity range, not a prediction error                                                                                                                                                                                                                                                                                                                     |
+| `flourprint.published-practice` `1` | 1.6             | 1.1 – 2.1 | **proposal (0.27.0), awaiting the owner's approval; the default of a new recipe if approved.** Published practice, a craft-knowledge datum: the progress this model reaches at the end of 50 prescribed published schedules (median 153 %, quartiles 108 to 207 %) and the one `F*` that best agrees with them, 1.60 (bootstrap interval 1.40 to 1.95). A readiness target, not a kinetic coefficient; provisional. The band is a possible range (a hypothesis), not a probability or a confidence interval. See Published-practice profile, below |
 
 - A recipe selects its profile on its process (`readiness?: ReadinessRef`, process.md). Without
-  one the default applies and the dough estimate adds the assumption `readiness_default`. Choosing
-  another profile is an explicit edit of the recipe, never a silent default.
+  one the fallback applies (`flourprint.model-end-point`, `F*` = 1) and the dough estimate adds the
+  assumption `readiness_default`. Choosing another profile is an explicit edit of the recipe, never
+  a silent default. **From 0.27.0 (proposal) the fallback is frozen**: it never changes, whatever
+  profile new recipes receive (Default profile of a new recipe, below).
 - An unknown profile makes the dough estimate `insufficient_data` (`readiness_profile_unknown`).
 - A profile is valid when `readyProgress` and both ends of `band` are finite and positive and
   `band[0] ≤ readyProgress ≤ band[1]`. Otherwise the dough estimate is `unsupported`
@@ -163,6 +166,152 @@ type ReadinessRef = { id: string; version: string };
   constants. Automatic learning is deferred.
 - "Ready to bake" is an observable decision of the baker, distinct from gas produced, volume and
   height. The Izzreen M5 fit is research only and changes none of this.
+
+### Published-practice profile and the default of a new recipe (0.27.0, proposal: awaiting the owner's approval)
+
+**Status.** A proposal written for the owner to approve or refuse. Nothing here is in force, and no
+code, fixture or `CONTRACT_VERSION` changes until he approves it. One point (Stored recipes) stops
+at a decision of his, with its options; the text below is written for the recommended option.
+
+**Why.** (Research of 2026-11-14 UTC.) `F*` = 1 is the model's own unit, "about doubled once" in Craig's table: a hobbyist
+model's working end point, not a baker's readiness. The owner folds, degasses, shapes and proofs,
+so volume is not observable in his practice and no interface presents a "doubled" target (State and
+equations; ledger L21). Against 50 prescribed published schedules (39 source groups, of 89
+collected; `docs/science/fermentation-model.md`, sections 15 and 12) the forecast at `F*` = 1 ends
+before the published time: the bias factor is ×1.65, and the model reaches a median of 153 % of its
+end point (quartiles 108 to 207 %) at the end of the published schedule. These are craft-knowledge
+data, a plausibility check: they are not a fit or a validation of a coefficient, and they are
+disagreements with prescriptions, not observed readiness.
+
+**The profile.** `flourprint.published-practice` version `1`: `readyProgress` 1.6, band 1.1 to 2.1.
+`F*` 1.6 means that the dough is taken as ready when the model's progress `F` reaches 1.6, that is
+at 1.6 times the time the model gives for `F` = 1 under the same conditions. It is a ratio of
+times in the model's unit, never a volume, and no interface says otherwise.
+
+- **Basis, in the contract's vocabulary.** Published practice, craft-knowledge data
+  (`docs/science/craft-knowledge.md`). The value is the best-fit `F*` alone against the 50 scored
+  schedules, 1.60 (bootstrap 95 % interval 1.40 to 1.95 over recipes, 1.35 to 1.95 over source
+  groups), which removes about 38 % of the held-out mean-square disagreement; it also matches the
+  median progress reached at the end of the published schedules (153 %) and its geometric mean
+  (161 %). It is a **readiness target** (the definition of "ready", origin (iv) of
+  `evidence-classification.md` section 8), not a kinetic coefficient: `A`, `k`, `Ea`, the
+  conversions and the thermal model are not touched and keep their `model-derived` status. It
+  rests on no measured readiness, and the evidence rules do not let it become a coefficient.
+- **Band.** 1.1 to 2.1, the quartiles of the progress reached at the end of the published
+  schedules (108 to 207 %), to one decimal. It is a **possible range, a hypothesis**: it is not a
+  probability, not a confidence interval, and the interface never calls it "50 %" or an error
+  margin. As for every profile, the band of an estimate multiplies it with the parameter ranges
+  (The band is not a confidence interval, Parameters).
+- **Choice of the band among the candidates.**
+
+  | Candidate                                         | Band       | Displayed range at 1 % fresh, 21 °C (central 5 h 34 min) | Meaning                                                                                                                       | Decision                                                                                                        |
+  | ------------------------------------------------- | ---------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+  | Quartiles of the progress reached (**proposed**)  | 1.1 – 2.1  | 2 h 51 min to 9 h 08 min (×3.2)                          | How far prescribed end points spread from one published recipe to the next: the scatter, which is 62 % of the disagreement    | **Proposed.** It answers "where may a recipe like mine end", and owns the scatter that no single target removes |
+  | Bootstrap interval of the fitted value            | 1.4 – 1.95 | 3 h 38 min to 8 h 29 min (×2.3)                          | The sampling uncertainty of one fitted number, on assumed temperatures (49 of 50 recipes); it narrows with more recipes alone | Not chosen: it would show a precision the data do not have, as the scatter is not in it                         |
+  | A symmetric ±25 % around 1.6, by analogy with `A` | 1.2 – 2.0  | 3 h 07 min to 8 h 42 min (×2.8)                          | Nothing measured                                                                                                              | Not chosen: no basis in the data                                                                                |
+
+  The quartile band is wide, and it shows. It also overlaps the rescaling already in the band of
+  `A` (×0.75 to ×1.25), because `F*` and `A` are the same rescaling of time in this law: the
+  envelope counts that rescaling twice, as it already does for `flourprint.experimental-ready`.
+  The proposal keeps the existing rule (every combination of the parameter ranges and of the two
+  ends of the band) and states the overlap here instead of changing the rule.
+
+- A profile is valid under the existing rule: `1.1 ≤ 1.6 ≤ 2.1`, all finite and positive.
+
+**Default of a new recipe.** A recipe created after this contract is approved records
+`readiness: { id: 'flourprint.published-practice', version: '1' }` on its process at creation:
+the blank recipe (drafts.md) and every built-in template, when they are turned into a draft. A
+duplicate keeps the profile of its source, and an imported document keeps what it holds. The
+interface writes the profile the baker chooses **explicitly in every case**: choosing
+`flourprint.model-end-point` records it too, and the field is never removed. The engine's
+fallback for an absent `readiness` stays `flourprint.model-end-point`, so that a change of
+what new recipes receive never reaches a stored recipe.
+
+**Stored recipes (decision needed).** What the code does, verified at `efca91c`:
+`Process.readiness` is optional (`domain/process/types.ts`); the engine takes
+`flourprint.model-end-point` when it is absent (`domain/fermentation/estimate.ts`, `doughOf`); the
+interface **removes** the field when the baker selects the first profile
+(`apps/mobile/src/blocks/fermentation/Result.tsx`); no built-in template or the blank recipe
+sets it. Almost every stored recipe therefore **records no profile** and is read as `F*` = 1. A
+saved revision is immutable (persistence.md), a bake snapshot carries the process as it was
+(history.md), and the live forecast of a running Preparation is computed from that process
+(Live recomputation). If the engine's fallback became `flourprint.published-practice`, the forecast
+and the progress of every stored recipe, the model-driven duration of its next edit and the live
+forecast of a bake in progress would all change without the baker touching anything. That breaks
+the rule above ("never a silent default") and is not specified here. The options:
+
+| Option                                                                                                                                         | Stored recipe                                              | Running bake                         | Cost                                                                                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| **A (recommended; the text above).** The fallback stays at `F*` = 1; new recipes get the new profile explicitly; the interface offers a switch | Keeps its forecast; the baker switches by an explicit edit | Unchanged                            | Two profiles are in use at once; "the default" means "the default of a new recipe"                                            |
+| B. The fallback becomes the new profile                                                                                                        | Every forecast changes silently                            | The remaining time and progress jump | Contradicts the explicit-selection rule; only acceptable with a migration that rewrites recipes, which saved revisions forbid |
+| C. B plus an engine rule that an absent profile means the old one for every revision or snapshot created before a given contract version       | Keeps its forecast                                         | Unchanged                            | Needs a persisted marker of the contract version on every revision and snapshot that does not exist today                     |
+
+The owner chooses. If B or C is chosen this subsection is rewritten before approval; A needs no
+persisted change.
+
+**Moving a stored recipe.** Under A the readiness row of the recipe's result offers, for a recipe
+whose process records no profile or records `flourprint.model-end-point`, a clear action to take
+the new profile. It is an explicit edit of the draft: it is saved or discarded like any edit, the
+new forecast is shown next to the previous one (the duration, the progress and the dose in the
+two profiles), and a model-driven step follows it as it follows any edit (Model-driven duration).
+It is never applied by itself, and never in a bake.
+
+**The other two profiles stay selectable and unchanged**: `flourprint.model-end-point` `1` and
+`flourprint.experimental-ready` `1` keep their ids, versions, values and bands, and their
+estimates are those of 0.26.0. Only the interface's description of the first changes: it does not
+say "default", and its hint drops the words "about doubled once" (ledger L21; #246), see Interface.
+
+**Interface.** Message keys, in French and English, before or with the engine change (ADR 0009);
+the French never addresses the baker; no text presents doubling as the target:
+
+| Key                                                                         | English                                                                                                                                                                                                   | French                                                                                                                                                                                                                                    |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fermentation.readiness.published` (new)                                    | Published practice (×1.6)                                                                                                                                                                                 | Pratique publiée (×1,6)                                                                                                                                                                                                                   |
+| `fermentation.readinessHint.published` (new)                                | What published recipes prescribe, in the model's unit: about 1.6 times its reference time. A provisional starting value, not measured on real doughs. Its range is a possible range, not an error margin. | Ce que prescrivent les recettes publiées, dans l'unité du modèle : environ 1,6 fois son temps de référence. Valeur de départ provisoire, non mesurée sur des pâtes réelles. Sa fourchette est une plage possible, pas une marge d'erreur. |
+| `fermentation.readinessHint.model` (changed)                                | The model's own reference point, uncalibrated. Kept for recipes that record no target.                                                                                                                    | Le point de référence du modèle lui-même, non calibré. Conservé pour les recettes sans cible enregistrée.                                                                                                                                 |
+| `fermentation.readiness.switch` (new)                                       | Use the published-practice target                                                                                                                                                                         | Passer à la cible de la pratique publiée                                                                                                                                                                                                  |
+| `help.readiness.body2`, `body3` (changed), a body for the new profile (new) | the same facts, without "default" and without "doubled"                                                                                                                                                   | idem                                                                                                                                                                                                                                      |
+
+`fermentation.readiness.model` and `fermentation.readiness.experimental` keep their labels.
+
+**Worked examples** (acceptance cases; computed outside the engine from the equations of State and
+equations, with `A` 3.43 h, `k` 0.729, `Ea` 98.3 kJ/mol, `R` 8.314462618, `r(21 °C)` 0.98643,
+fresh yeast, a constant 21 °C with the dough at the ambient, so no lag; the band is the minimum and
+maximum over every combination of `A` ×0.75 and ×1.25, `k` 0.6 and 0.9, `Ea` 50 and 100 kJ/mol and
+the two ends of the profile's band). `t = F* A d^−k / r(T)`, and the dose `d = (F* A / (t r))^(1/k)`.
+
+| Case                                                 | `flourprint.model-end-point` (`F*` 1)   | `flourprint.published-practice` (`F*` 1.6)  | `flourprint.experimental-ready` (`F*` 2) |
+| ---------------------------------------------------- | --------------------------------------- | ------------------------------------------- | ---------------------------------------- |
+| 1. 1 % fresh, 21 °C: time to the end point           | 3 h 29 min (2 h 35 min to 4 h 21 min)   | **5 h 34 min (2 h 51 min to 9 h 08 min)**   | 6 h 57 min (3 h 53 min to 10 h 52 min)   |
+| 2. 0.2 % fresh, 21 °C (a long, low-dose ferment)     | 11 h 14 min (6 h 48 min to 18 h 30 min) | **17 h 59 min (7 h 29 min to 38 h 52 min)** | 22 h 29 min (10 h 12 min to 46 h 16 min) |
+| 3. Dose for a planned 5 h 30 min at 21 °C (inverse)  | 0.533 % fresh (0.285 to 0.770)          | **1.016 % fresh (0.334 to 2.327)**          | 1.380 % fresh (0.560 to 3.112)           |
+| 3b. The same for a planned 12 h at 21 °C             | 0.183 % fresh (0.078 to 0.324)          | **0.348 % fresh (0.091 to 0.738)**          | 0.473 % fresh (0.153 to 0.896)           |
+| 4. Progress of a 5 h 30 min plan at 1 % fresh, 21 °C | 158 % of the target                     | **99 % of the target**                      | 79 % of the target                       |
+
+At the same schedule the new profile asks for about ×1.9 the yeast (`1.6^(1/k)` = 1.906, case 3
+against its first column), and the dose limit of the model's domain (3 % fresh) is reached at a
+planned 2 h 30 min at 21 °C instead of 1 h 34 min, so a short plan that had an in-domain dose
+suggestion can be `out_of_domain` (Domain). The central values above are the acceptance
+cases; the engine, on a recipe in basic mode at a constant ambient, must reproduce them to the
+rounding shown. (The band of the first and third columns is the band of 0.26.0, unchanged.)
+
+**Limits, stated plainly.**
+
+- The value rests on **prescribed published schedules**, not on observed readiness, and on
+  temperatures that are mostly assumed: 49 of the 50 recipes have at least one stage at an assumed
+  temperature, and in 45 more than half of the dough-clock hours are assumed.
+- It **cannot be told apart from a slower base rate**: `F*` and `A` are the same rescaling of time
+  in this law, and durations alone cannot separate them. Adopting 1.6 is not a finding that
+  readiness sits at 1.6; it may as well be that the dough is slower than Craig's table says.
+- About **62 % of the disagreement is scatter** that no single target removes (the shift removes
+  38 % held out). The forecast stays wide, and the band says so; the recipe-to-recipe spread of
+  the best-fit `F*` by style (1.20 to 2.85, small groups, overlapping intervals) is not resolved.
+- It is **provisional** and is to be replaced by the baker's observed readiness: recorded
+  `doughReady` observations with `stage: 'bake'` and a measured dough temperature (bake-session.md;
+  #275), which produce a new profile version, never a change of a kinetic constant (this section,
+  Recalibration). A recorded "dough ready" always prevails over the model.
+- The promotion gates of `docs/science/fermentation-model.md` section 12 are **not all met**; see
+  the 0.27.0 entry of Versions.
 
 ## Dough temperature
 
@@ -797,7 +946,7 @@ ambient, the wider or the more open the range. Cases E2 and E3 show it; this is 
 model, not a defect, and the interface presents the suggestion as a guide.
 
 **Examples** (fixtures `temperatures/cases.json`, E1 to E5, computed outside the engine). Direct
-dough, default readiness profile (`F*` = 1), a 10 min `mix` at 24 °C as the first-contact step, then:
+dough, readiness profile `flourprint.model-end-point` (`F*` = 1), a 10 min `mix` at 24 °C as the first-contact step, then:
 
 1. **E1.** 0.25 % instant yeast (0.758 % fresh-equivalent); bulk 1 h at 24, fridge 10 h at 4, proof 1 h
    at 24. Suggestion **27.07 °C**, range **12.82 – 32.13 °C** (the plan stretched ×1.9 needs a 12.8 °C
@@ -1244,3 +1393,112 @@ contract pull request does not touch `packages/core/src/domain/version.ts`. Refe
 The number `0.26.0` is written in `bake-session.md`, `fermentation.md`, `history.md`,
 `persistence.md`, `process.md`, `fixtures/README.md` and `fixtures/temperatures/cases.json`. #259 is merged, so `0.25.0` is taken;
 if a different number is needed, rename it in those files.
+
+Version `0.27.0` (**proposal, awaiting the owner's approval**; the next minor after the proposed `0.26.0`, which
+the preparation-temperature contract of #268 holds; `CONTRACT_VERSION` is `0.25.0` at `efca91c` and no other proposal uses
+`0.27.0`) adds the readiness profile `flourprint.published-practice` `1` (`F*` 1.6, band 1.1 to 2.1) and makes it the
+profile a **new** recipe records (Readiness profiles, Published-practice profile and the default of a new recipe;
+issues #231 and #287). It answers the owner's statement that a single doubling is not the right criterion: the
+default readiness target of a new dough moves from the model's own end point to what published practice prescribes,
+provisionally. What does not change: `A`, `k`, `Ea`, the conversions and the dose exponent, the kinetic model
+(`flourprint.commercial-yeast` `0.1.0`), the thermal model (`flourprint.dough-thermal` `0.2.1`), the law and the
+band rule, the preferment's end point (1), the two existing profiles, and the forecast of every stored recipe.
+
+- **Before and after.** A new recipe at 1 % fresh yeast and a constant 21 °C: central 3 h 29 min before, 5 h 34 min
+  after; a 0.2 % ferment: 11 h 14 min before, 17 h 59 min after; the dose for a planned 5 h 30 min: 0.533 % before,
+  1.016 % after (worked examples in Readiness profiles). Owner requirement: ledger L21 and #246 (no "doubled"
+  target), the owner's direction of 2026-11-13 (UTC) on #287 (a broad forecast that owns its uncertainty).
+- **Stored recipes (decision pending, option A recommended).** The engine's fallback for an absent `readiness`
+  stays `flourprint.model-end-point`; new recipes record the new profile explicitly; the interface records every
+  choice explicitly and offers an explicit switch. No stored recipe, bake snapshot or live forecast changes. The
+  options B and C of the subsection are not recommended.
+- **Persisted shapes and migration.** None changes: `readiness` is already an optional `{ id, version }`
+  (process.md; `decodeProcess`, `documents.ts`). No migration; no `schemaVersion` change of the recipe export or the
+  backup. A document holding the new id opens in an older build as an `insufficient_data` dough estimate
+  (`readiness_profile_unknown`, existing message), never as a refused document; downgrades are not otherwise
+  supported (persistence.md).
+- **Events and replay.** No event changes. A bake snapshot keeps its process (so its `readiness`, or none) and its
+  accepted estimates with the `calibration` they named; replay never recomputes them (history.md). A past bake's
+  reconstruction does not change. The live forecast of a bake in progress reads the snapshot's process: a bake
+  started on a new recipe uses the new profile for its whole life, one started on a stored recipe keeps `F*` = 1.
+  Statistics compare recorded `doughReady` marks with the accepted estimate, which keeps its own profile: not
+  affected.
+- **Engine and models.** `ReadinessProfile` gains the constant `PUBLISHED_PRACTICE` and joins `READINESS_PROFILES`
+  (`calibration.ts`); `findReadinessProfile` resolves it; `estimateFermentation`, `liveDoughForecast` and
+  `applyModelDurations` need no change of logic. Estimates of the new profile carry
+  `ready_target_progress:1.6` and `calibration` naming it. The implementing pull request bumps `CONTRACT_VERSION` to `0.27.0` and `ENGINE_VERSION` one minor step (new outputs
+  for a profile that did not exist; no existing output changes), each from the version current at its merge. The models keep their versions: the model
+  version names the law and its constants, not the readiness profile, as in 0.6.0.
+- **Suggested dough target.** The suggestion (Suggested dough target) reads the recipe's `F*`: for a recipe on the
+  new profile the same plan needs a warmer dough, and the `plan_unreachable_too_slow` and `…_too_fast` limits move
+  (a plan that was too fast at 1.7 °C may become feasible, a slow one infeasible at 35 °C). The fixtures E1 to E5
+  name `flourprint.model-end-point` and are unchanged.
+- **Interface.** Message keys (above); the selector lists three profiles; the legacy recipe note and the switch;
+  `help.readiness.*` rewritten without "default" or "doubled" (this overlaps #246 N3). The built-in templates and the
+  blank recipe record the profile when they are turned into a draft: 16 process literals at `efca91c`
+  (`templates/breads.ts` 4, `enriched.ts` 4, `pizzas.ts` 7, `blank.ts` 1), none selects a profile. The model-driven
+  step of a template then solves a longer time for a new recipe; the planned durations written in the templates are
+  not edited by this change.
+- **Tests and fixtures that would change.** Fixtures: none (`fermentation/cases.json` passes
+  `flourprint.experimental-ready` and `temperatures/cases.json` names `flourprint.model-end-point` explicitly; they
+  are computed outside the engine and are not regenerated). New fixture cases for the three examples above are
+  computed by a script outside the engine. Tests: `packages/core/test/fermentation.test.ts` (the default-case
+  assertion stays valid under A; new cases for the profile, its validity and the examples),
+  `model-durations.test.ts`, `recipe-check.test.ts`, `sourced-*.test.ts` and `template-subjects.test.ts` where they
+  read an estimate from a template or the blank recipe, a new test that every template and the blank recipe record
+  the profile, the message-catalogue test (`apps/mobile/test/i18n.test.ts`) for the new keys and the absence of
+  "doubled", and `apps/mobile/e2e/journey.spec.ts` (the readiness selector expects `flourprint.model-end-point` on a
+  new recipe and a changed progress when switching). The adapters' persistence tests are unchanged.
+- **Learning flags and domain.** The three flags and every `out_of_domain` temperature gate are unchanged. The dose
+  gate (0.01 to 3 % fresh) is unchanged, but the inverse dose of a new recipe is about ×1.9, so short plans leave it
+  at longer durations (2 h 30 min at 21 °C instead of 1 h 34 min).
+- **Wording to align in the implementing pull request.** `fixtures/README.md` ("the default readiness profile" for
+  E1 to E5), and in `docs/science/` the sentences that call `flourprint.model-end-point` "the default"
+  (`fermentation-model.md` section 4, `sources.md`, `home-measurements.md`, `dough-behavior.md` 4a): this proposal
+  edits none of them, and they are not wrong until it is approved.
+
+**Promotion gates (`fermentation-model.md`, section 12).** The gates are written for a candidate that enters the
+shipped model; this change is a readiness profile, and section 12 itself lists the evidence to promote `F*` near 1.6
+as a profile: recorded `doughReady` observations with a measured dough temperature, independent of the recipes, with
+`A` fixed from dough measurements (gates 1, 2, 3 and 9). Against the nine gates:
+
+| Gate                                                                         | Status                                                                                                                                                   |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. The observable is defined in the contract first                           | Partly: this contract text defines the profile as an end point in the model's unit; the observable it stands for, the baker's readiness, is not measured |
+| 2. Dough-temperature histories                                               | **Not met**: 49 of 50 recipes assume a temperature                                                                                                       |
+| 3. Validation set independent of the fit                                     | **Not met**: held out by source group is an internal split of one collection                                                                             |
+| 4. Reproducible from a script on data                                        | In form: `scripts/ea_sensitivity_published.mjs` on the recipe collection, which is craft-knowledge data and not `source_verified`                        |
+| 5. Measured error band, or the envelope said not to be a confidence interval | Met by wording: the envelope is kept and said not to be a confidence interval or a probability                                                           |
+| 6. Transfer from endpoint times to a rate under changing temperature         | Not addressed; the law and the thermal model are not touched                                                                                             |
+| 7. Inverse uses the same forward implementation                              | Met: the inverse is unchanged                                                                                                                            |
+| 8. A dedicated contract pull request, then code                              | Met by procedure: this proposal, then the implementation after approval                                                                                  |
+| 9. Errors reported next to the shipped model, and lower                      | Partly: held out ×1.89 against ×2.24 on disagreement with prescribed schedules, not accuracy on observed bakes                                           |
+
+So gates 2, 3 and 9 (the accuracy on observed bakes) are not satisfied, and the proposal asks the owner to accept the
+profile as a **provisional default on his own decision**, as he accepted the `Ea` exception on 2026-11-14 (UTC)
+(`evidence-classification.md`, Decided, item 5), not as a promotion. It is replaced when his own bakes allow.
+
+**Alternatives considered.**
+
+| Alternative                                               | Why not chosen                                                                                                                                                                                                                                                       |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keep `F*` = 1 as the default                              | The forecast ends before the published schedules by ×1.65 (progress 153 % at their end), and its "about doubled once" origin is the target the product must not present                                                                                              |
+| Make `flourprint.experimental-ready` (`F*` 2) the default | It is already selectable; at 2 the forecast runs the other way (bias ×0.80, ×1.93 against ×1.89). Its value comes from the owner's own schedules by construction (`fermentation-model.md` section 4): contract 0.4.0 made it a product default and 0.6.0 reversed it |
+| A target per style or per process shape                   | The best-fit values by style or shape overlap (bulk only 1.70, 1.35 to 2.25; bulk plus proof 1.55, 1.25 to 2.00; styles 1.20 to 2.85 in groups of 4 to 6): none is distinguished, and each would be a hidden fit of a few recipes                                    |
+| Refit `A` instead (3.43 h to about 5.5 h)                 | The same rescaling, which the data cannot tell apart, but `A` is a kinetic coefficient (a new model version, with its gates), is shared with the preferment's end point (ripe at 1), the dose and the thermal derivations, and changes every stored recipe           |
+
+**Open questions for the owner.**
+
+A. **The value**: 1.6 (proposed: the fitted value and the geometric mean of the progress reached), 1.5 (the median
+progress, 153 %) or 1.75. In time the three differ by ×0.94 and ×1.09 from 1.6, well inside the scatter.
+
+B. **The band**: 1.1 to 2.1 (proposed), 1.4 to 1.95 (bootstrap, ×2.3 at the example) or something else.
+
+C. **Stored recipes**: option A (recommended), B or C of the subsection; and with A, whether the interface offers the
+one-tap switch on every legacy recipe or only on request in the readiness row.
+
+D. **The displayed name**: "Published practice (×1.6)" / "Pratique publiée (×1,6)", or a name without the number.
+
+E. **The basis**: whether a craft-knowledge datum may supply the starting value of a readiness target (the register
+lists "supply a starting value for a recipe" as a proposal awaiting his confirmation) and whether he accepts the
+provisional exception of the gates above.
