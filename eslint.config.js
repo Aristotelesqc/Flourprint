@@ -32,7 +32,6 @@ export default tseslint.config(
       'apps/desktop/test-results/**',
       '.agy-runs/**',
       '.claude/worktrees/**',
-      '.codegraph-local/**',
     ],
   },
   js.configs.recommended,
