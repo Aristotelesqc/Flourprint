@@ -9,13 +9,20 @@ Read repository `AGENTS.md`, `docs/ux/requirements.md` and the acceptance of the
 issue/PR first. Check the L-items the change touches, in the rendered app, and name any it
 breaks. This skill verifies
 the requested change; it does not choose a new framework, redesign the logo or reduce feature
-scope. UI implementation is assigned to Gemini under Codex review; use the `agy` skill when that
-delegation is requested or required. The verifier owns the acceptance evidence.
-Gemini implementation does not imply an additional independent reviewer cohort for every edit.
-Use current owner instructions and the [AGY review budget](../agy/SKILL.md#bound-review-and-recovery-costs).
-For requested Gemini running-app checks, verify actual browser capability; diagnose failures
-before using [AGY's recovery reference](../agy/references/permissions-and-browser.md). A successful
-URL-text read or static capture review does not prove independent app use.
+scope. UI implementation is assigned to Gemini under Codex review; use the
+[AGY workflow](../agy/SKILL.md) (and its
+[Coordinated UI tranche](../agy/references/assignment.md#coordinated-ui-tranche) procedure when
+nested delegation is requested). In a coordinated tranche, the coordinator's own review of child
+diffs, scope, combined changes and live journey is required before handoff, and Codex still
+verifies the exact build independently before acceptance or push. The verifier owns the acceptance
+evidence. Gemini implementation does not imply an additional independent reviewer cohort for every
+edit. Use current owner instructions and the
+[AGY review budget](../agy/SKILL.md#bound-review-and-recovery-costs). For requested Gemini
+running-app checks, verify actual browser capability; diagnose failures before using
+[AGY's recovery reference](../agy/references/permissions-and-browser.md). Keep running
+app/browser journeys, emulator/device checks and code or static-capture review distinct; a
+code-only or static-capture review does not prove running-app use, and any unavailable capability
+must be recorded honestly rather than relabelled.
 
 For an independent critical review of the interface by an agent that did not build it, use
 [flourprint-ui-audit](../flourprint-ui-audit/SKILL.md) instead.
