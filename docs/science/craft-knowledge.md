@@ -271,6 +271,128 @@ No example reaches A or B: the survey records no observable criteria and no just
 A and B need beyond precision. That is a gap in the survey's fields, not a verdict on the
 sources. Levels as re-rated: baguette C (was B), no-knead C, Neapolitan C.
 
+## Register entries from the readiness research (2026-11-14 UTC)
+
+Ten entries grounded in the repository's own records of the style-guide snapshots (full snapshot
+reads of 2026-10-10 (UTC) by earlier agents, with hashes) and of the recipe survey. **No page was
+re-read in this session**: the craft hosts were refused by the session's network policy (see
+[readiness-criteria.md](readiness-criteria.md)). Every field the records do not hold is `not recorded` and counts as `weak`, so
+each level rests on an incomplete record; filling a field can raise it, never lower it. Source type
+and standing, for all ten: type as named per entry; recognition in the trade, longevity and
+revisions, reach: `not recorded`; commercial interest: `not recorded`, except that King Arthur
+Baking and the flour and yeast makers named sell baking ingredients. Entries in this section are
+**Proposals** to be rated like the first three (items 2 and 5 below); nothing in them changes a
+model. Statements the owner made that no source read supports are not entered; they are in
+[readiness-criteria.md](readiness-criteria.md).
+
+### A finished-dough temperature is prescribed before bulk, 18 to 26 °C by style
+
+- Source: five voices of the style-guide records: a professional formula of King Arthur Baking
+  (ciabatta, 75 °F, 23.9 °C); Modernist Cuisine (Pullman, 24 to 26 °C); La Confraternita della Pizza,
+  a normative disciplinare (Roman pan pizza, 18 to 26 °C, preferment 21 to 23 °C); Molino Vigevano
+  (Roman scrocchiarella, about 24 °C); Meilleur du Chef (brioche, at most 26 °C). Other fields as above.
+- Where to find it: the `Published process` lines of `data/style-guides.md` for ciabatta, Pullman,
+  teglia, Roman and brioche, with the URLs recorded there (snapshots read 2026-10-10 UTC).
+- Claim: each of these recipes states a target temperature for the dough at the end of mixing, between
+  18 and 26 °C, and none of them states a sign of gluten development as the end of mixing (paraphrase).
+- Subject: [mixing, autolyse, folds, degassing, shaping](dough-behavior.md#d12b-mixing-autolyse-folds-degassing-shaping).
+- Conditions as stated: styles differ (a lean bread, a pan pizza, a milk-and-egg dough); the
+  value is a target to reach by choosing the water temperature, not a rule for all doughs.
+- Claim assessment: precision `strong` (degrees); observable criteria `strong` (a thermometer
+  reading); justification `not recorded`; convergence `partial` (five independent voices say a
+  target exists and the values lie within a factor of 1.5 of one another, 18 to 26 °C; they do not
+  compare like with like).
+- Level: **A**, on an incomplete record (justification not recorded).
+- Role: readiness criterion for the end of mixing, as a measure of the dough's temperature; it is
+  not a criterion of gluten development.
+- Checked: 2026-11-14 (UTC), research agent.
+
+### Bulk fermentation ends when the dough has doubled, in three recipes (1 to 2 h)
+
+- Source: recipe pages of King Arthur Baking (water bagels; burger buns) and Bake from Scratch
+  (Chicago deep-dish, a baking-school module); the first two share a site, so they count as one voice.
+- Where to find it: the `Published process` lines for bagels, burger buns and Chicago in
+  `data/style-guides.md`.
+- Claim: bulk lasts 1 to 1.5 h "to double" (bagels), 1 to 2 h "to nearly double" (burger buns), and
+  30 to 45 min at 75 °F (24 °C) "to double" (deep-dish) (paraphrase).
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
+- Conditions as stated: doses and flours as in the records (the survey's bagel record: 1.88 % yeast of flour);
+  no vessel, no mark, and no statement of what the volume is measured against.
+- Claim assessment: precision `partial` (times and one temperature); observable criteria `partial`
+  (a cue without conditions); justification `not recorded`; convergence `weak` (one independent
+  voice besides the shared site, times not within a factor of 1.5).
+- Level: **B**, on an incomplete record.
+- Role: plausibility check or hypothesis. It does not hold after a fold or degassing (the contract's
+  volume-cue rule).
+- Checked: 2026-11-14 (UTC), research agent.
+
+### Stretch the pan dough in rounds, relaxing 10 to 15 min between rounds, until the pan is filled
+
+- Source: a recipe page of King Arthur Baking (Sicilian-style pizza).
+- Where to find it: the `Published process` line for Sicilian in `data/style-guides.md`.
+- Claim: while stretching the dough into an oiled 18 by 13 in pan, let it relax 10 to 15 min and
+  repeat as needed until the pan is filled (paraphrase).
+- Subject: [rheology and structure over time](dough-behavior.md#d14-rheology-and-structure-over-time).
+- Conditions as stated: a very soft dough after 1 h of room bulk (optionally fridge up to 24 h).
+- Claim assessment: precision `partial` (minutes, a pan size); observable criteria `partial` (the
+  pan filled; how the dough "relaxes" is not described); justification `not recorded`; convergence `weak` (one voice).
+- Level: **B**.
+- Role: hypothesis, and a first handling criterion for relaxation (measured on a different clock:
+  Covino's disc diameter after pressing).
+- Checked: 2026-11-14 (UTC), research agent.
+
+### Roman pan-pizza dough is stretched when its core reaches 19 °C (3 to 4 h of room-temperature proof)
+
+- Source: La Confraternita della Pizza, a normative disciplinare of an association (Roman pan pizza).
+- Where to find it: the `Published process` line for teglia in `data/style-guides.md` (URL recorded there).
+- Claim: after about 44 h at 4 °C, the dough proofs 3 to 4 h at room temperature until the core is at least 19 °C
+  before stretching (paraphrase).
+- Subject: [temperature history and recording](dough-behavior.md#d02c-dough-temperature-history-and-recording).
+- Conditions as stated: machine mix 20 to 25 min with 4 °C water, dough 18 to 26 °C, bench about 1 h.
+- Claim assessment: precision `strong`; observable criteria `strong` (a probe reading); justification `not recorded`; convergence `weak` (one voice).
+- Level: **B**.
+- Role: plausibility check and hypothesis; a criterion that is a temperature, not a gas or volume.
+- Checked: 2026-11-14 (UTC), research agent.
+
+### A refrigerated pizza dough keeps for 24, 48 or 72 h, by recipe
+
+- Source: recipes of Feeling Foodish (New York, at least 24 h up to 72 h), Molino Vigevano (Roman, at 4 °C and use within 48 h), Baking Steel (72-hour: 24 h at room temperature, then 48 h cold) and King Arthur Baking (Sicilian, optional fridge up to 24 h).
+- Where to find it: the `Published process` lines of the four presets in `data/style-guides.md`.
+- Claim: a fridge hold of at least 24 h and up to 48 to 72 h is prescribed, with a ceiling that differs by recipe (paraphrase).
+- Subject: [cold end and long refrigeration](dough-behavior.md#d02b-cold-end-and-long-refrigeration).
+- Conditions as stated: doses 0.44 % instant yeast (New York) and others in the records; 4 °C.
+- Claim assessment: precision `strong` (hours, 4 °C); observable criteria `weak` (no sign of the end of the window); justification `not recorded`; convergence `partial` (four independent voices agree on a hold of at least 24 h; ceilings differ by a factor of 3).
+- Level: **B**, on an incomplete record.
+- Role: plausibility check; it does not say what degrades at the end of the window.
+- Checked: 2026-11-14 (UTC), research agent.
+
+### Final proof ends when the dough reaches the top of the tin, in two enriched recipes
+
+- Source: two recipe pages of the survey (`enriched/brioche-3`, `enriched/shokupan-3`), transcription confidence `low`, volume units only.
+- Where to find it: `data/published-recipes-2026-10.json`, flags of the two records.
+- Claim: the proof lasts until the dough nears or reaches the top of the pan; no duration is given (paraphrase of the survey's flag).
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
+- Conditions as stated: enriched doughs (brioche, milk bread); pan sizes not recorded.
+- Claim assessment: precision `weak`; observable criteria `partial` (a physical mark in the tin); justification `not recorded`; convergence `weak` (two voices, independence not recorded).
+- Level: **C**.
+- Role: hypothesis. It is not shown for a lean loaf, and not for 87 of the 89 surveyed recipes, whose records hold no mark.
+- Checked: 2026-11-14 (UTC), research agent.
+
+### Four short craft statements at level C
+
+- **"Puffy" as a stage end.** King Arthur Baking's burger-bun proof (about 1 h, to puffy) and milk-bread bulk (1 to 1.5 h, to puffy), from the style-guide records; one site, one voice; precision `partial`, observable criteria `partial`, justification and convergence `weak`; level **C**, role hypothesis.
+- **Kneading to windowpane.** One flag of the survey (`breads/baguette-4`, The Fresh Loaf, a forum), duration not given; precision `weak`; observable criteria `partial`; level **C**, role hypothesis; criticism of the test: no source read.
+- **Pullman proof at two temperatures.** Modernist Cuisine (volume 4, page 296 errata, via the record): 1.5 to 2 h at 27 °C and 65 % humidity, or 2.5 to 3 h at 21 °C, with the lid off during the proof and on before baking; precision `strong` (degrees, hours); observable criteria `not recorded`; convergence `weak`; level **C**, role hypothesis. The two times, 6 °C apart, differ by about 1.5 times.
+- **Out of the fridge before baking.** Feeling Foodish (New York): bring the balls to room temperature within 20 to 60 min before baking; precision `strong` (minutes); observable criteria `not recorded`; level **C**, role hypothesis.
+
+Each of the four was checked 2026-11-14 (UTC) by the research agent; their subjects are
+[readiness profiles](dough-behavior.md#d04a-readiness-profiles-and-end-point),
+[mixing and folds](dough-behavior.md#d12b-mixing-autolyse-folds-degassing-shaping) and
+[temperature history](dough-behavior.md#d02c-dough-temperature-history-and-recording).
+
+**Levels as given:** A 1, B 4, C 5 (the four short statements count as four entries in the list above,
+the pan-top mark as one). These ratings were not calibrated and wait for the owner like the first three.
+
 ## Calibration
 
 **Proposal (item 8):** the calibration procedure below is agent-authored. The grid is tried by an independent agent on the same three examples, working only from the

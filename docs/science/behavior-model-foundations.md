@@ -352,6 +352,11 @@ first.
 
 1. Fill the craft register ([template](craft-knowledge.md#entry-template)): needs a source list
    from the owner and a decision on fields for property and driver (open question 8).
+   A first catalogue of readiness signs (sense, indicated state, action, consequence), with a
+   proposed record shape that specialises the statement of section 4c, is in
+   [readiness-criteria.md](readiness-criteria.md): findings and questions, not decisions. The
+   register's first handling-adjacent entries date from the same pass; the "no entry yet" notes
+   above predate it and were not rewritten.
 2. Draft the statement schema as a contract proposal with independent examples: needs open
    questions 2, 4, 5, 7 and the division of scope.
 3. Uncertainty and enriched ingredients (#287): needs the contract, the accepted mockup and the
