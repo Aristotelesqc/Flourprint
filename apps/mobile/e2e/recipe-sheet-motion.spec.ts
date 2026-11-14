@@ -179,4 +179,67 @@ for (const english of [false, true]) {
     await verifySheetCycle(page, sheet, close, editStep, duration, openStep, true);
     await verifySheetCycle(page, sheet, close, editActions, reviewHeading, openReview, true);
   });
+
+  test(`recipe checks sheet motion and semantics${english ? ' @en' : ''}`, async ({ page }) => {
+    await installTimingCollector(page);
+    await page.goto('/recipes');
+    await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
+    await expectRecipeRevision(page, 1);
+    await enterEditor(page);
+
+    const editActions = routed(page).getByRole('button', {
+      name: english ? 'Edit actions' : 'Menu édition',
+      exact: true,
+    });
+    const checksTitle = english ? 'Recipe check' : 'Vérification de la recette';
+    const sheet = page.locator('ion-modal:not(.overlay-hidden)');
+    const close = sheet.getByRole('button', { name: english ? 'Close' : 'Fermer', exact: true });
+    const checksDialog = page.getByRole('dialog', { name: checksTitle, exact: true });
+    const checksStatus = sheet.getByRole('status');
+    const openChecks = () =>
+      menuAction(
+        page,
+        english ? /^Check recipe(?: \(\d+\))?$/ : /^Vérifier la recette(?: \(\d+\))?$/,
+      );
+    const expectChecksDialog = async () => {
+      await expect(checksDialog).toBeVisible();
+      await expect(close).toBeVisible();
+    };
+
+    await verifySheetCycle(
+      page,
+      sheet,
+      close,
+      editActions,
+      checksStatus,
+      openChecks,
+      false,
+      expectChecksDialog,
+    );
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await verifySheetCycle(
+      page,
+      sheet,
+      close,
+      editActions,
+      checksStatus,
+      openChecks,
+      true,
+      expectChecksDialog,
+    );
+
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.locator('html').evaluate((html) => html.setAttribute('data-motion', 'reduced'));
+    await verifySheetCycle(
+      page,
+      sheet,
+      close,
+      editActions,
+      checksStatus,
+      openChecks,
+      true,
+      expectChecksDialog,
+    );
+  });
 }
