@@ -640,6 +640,125 @@ for (const english of [false, true]) {
     expect((await box(card)).height).toBeCloseTo(bounds.height, 0);
   });
 
+  test(`step pencil touch press scales only the icon, clears on cancel, and opens sheet on tap${english ? ' @en' : ''}`, async ({
+    page,
+  }) => {
+    await open(page);
+    const card = method(page).locator('[data-sortable-id="alpha"]');
+    const edit = card.getByRole('button', {
+      name: english ? 'Edit step Alpha' : 'Modifier l’étape Alpha',
+      exact: true,
+    });
+    const svg = edit.locator('svg');
+    await edit.scrollIntoViewIfNeeded();
+
+    const buttonBefore = await box(edit);
+    expect(buttonBefore.width).toBeCloseTo(48, 0);
+    expect(buttonBefore.height).toBeCloseTo(48, 0);
+    const svgBefore = await box(svg);
+    const cardBefore = await box(card);
+    const expectSameBox = (
+      actual: Awaited<ReturnType<typeof box>>,
+      expected: Awaited<ReturnType<typeof box>>,
+    ) => {
+      expect(actual.x).toBeCloseTo(expected.x, 1);
+      expect(actual.y).toBeCloseTo(expected.y, 1);
+      expect(actual.width).toBeCloseTo(expected.width, 1);
+      expect(actual.height).toBeCloseTo(expected.height, 1);
+    };
+    const center = {
+      x: buttonBefore.x + buttonBefore.width / 2,
+      y: buttonBefore.y + buttonBefore.height / 2,
+    };
+
+    const cdp = await page.context().newCDPSession(page);
+    try {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [center],
+      });
+      await expect(edit).toHaveAttribute('data-pressed', 'true');
+      await expect(edit).toHaveCSS('transform', 'none');
+      await expect(svg).toHaveCSS('transform', 'matrix(0.95, 0, 0, 0.95, 0, 0)');
+      const svgHeld = await box(svg);
+      expect(svgHeld.width / svgBefore.width).toBeCloseTo(0.95, 2);
+      expect(svgHeld.height / svgBefore.height).toBeCloseTo(0.95, 2);
+      expectSameBox(await box(edit), buttonBefore);
+      expectSameBox(await box(card), cardBefore);
+      await expect(page.locator('ion-modal:not(.overlay-hidden)')).toHaveCount(0);
+      await expect(footer(page)).toHaveCount(0);
+
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchCancel',
+        touchPoints: [],
+      });
+      await expect.poll(() => edit.getAttribute('data-pressed')).toBeNull();
+      await expect(svg).toHaveCSS('transform', 'none');
+      expectSameBox(await box(svg), svgBefore);
+      expectSameBox(await box(edit), buttonBefore);
+      expectSameBox(await box(card), cardBefore);
+      await expect.poll(() => order(page)).toEqual(original.map((value) => value.toLowerCase()));
+      await expect(page.locator('ion-modal:not(.overlay-hidden)')).toHaveCount(0);
+      await expect(footer(page)).toHaveCount(0);
+
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [center],
+      });
+      await expect(edit).toHaveAttribute('data-pressed', 'true');
+      await expect(svg).toHaveCSS('transition-property', 'none');
+      await expect(svg).toHaveCSS('transform', 'none');
+      expectSameBox(await box(svg), svgBefore);
+      expectSameBox(await box(edit), buttonBefore);
+      await expect(page.locator('ion-modal:not(.overlay-hidden)')).toHaveCount(0);
+      await expect(footer(page)).toHaveCount(0);
+
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchCancel',
+        touchPoints: [],
+      });
+      await expect.poll(() => edit.getAttribute('data-pressed')).toBeNull();
+      await expect(svg).toHaveCSS('transform', 'none');
+      await expect(page.locator('ion-modal:not(.overlay-hidden)')).toHaveCount(0);
+      await expect(footer(page)).toHaveCount(0);
+
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        touchPoints: [center],
+      });
+      await expect(edit).toHaveAttribute('data-pressed', 'true');
+      await expect(svg).toHaveCSS('transform', 'matrix(0.95, 0, 0, 0.95, 0, 0)');
+      expectSameBox(await box(edit), buttonBefore);
+      await expect(page.locator('ion-modal:not(.overlay-hidden)')).toHaveCount(0);
+      await expect(footer(page)).toHaveCount(0);
+
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchEnd',
+        touchPoints: [],
+      });
+      const sheet = page.locator('ion-modal:not(.overlay-hidden)');
+      await expect(sheet).toBeVisible();
+      await expect(
+        sheet.getByRole('textbox', {
+          name: english ? 'Duration of Alpha' : 'Durée : Alpha',
+          exact: true,
+        }),
+      ).toBeVisible();
+      await sheet.getByRole('button', { name: english ? 'Close' : 'Fermer', exact: true }).click();
+      await expect(sheet).toHaveCount(0);
+      await expect(edit).toBeFocused();
+      await expect.poll(() => edit.getAttribute('data-pressed')).toBeNull();
+      await expect(svg).toHaveCSS('transform', 'none');
+      const buttonAfter = await box(edit);
+      expect(buttonAfter.width).toBeCloseTo(buttonBefore.width, 1);
+      expect(buttonAfter.height).toBeCloseTo(buttonBefore.height, 1);
+    } finally {
+      await cdp.detach();
+    }
+  });
+
   for (const theme of ['light', 'dark', 'amoled'])
     for (const large of [false, true]) {
       test(`compact step rows and actual pointer drop ${theme} ${large ? '360/130' : '393/100'}${english ? ' @en' : ''}`, async ({

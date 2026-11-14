@@ -8,6 +8,8 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
+  type SyntheticEvent,
 } from 'react';
 import {
   duplicateStep,
@@ -18,6 +20,7 @@ import {
   type Process,
   type ProcessStep,
 } from '@flourprint/core/domain';
+import { transitionCss, useMotion } from '@flourprint/ui';
 import { SortableItem, SortableSlot } from '@flourprint/ui/components/sortable-list/v1';
 import { useMessages } from '../i18n/use-messages';
 import { formatMoveError } from '../i18n/recipe-sort-messages';
@@ -68,6 +71,14 @@ interface Props {
   readonly onEnsureDraft?: () => void;
 }
 
+type EditIconStyle = CSSProperties & {
+  '--recipe-step-edit-transition': string;
+};
+
+const clearEditPress = ({ currentTarget }: SyntheticEvent<HTMLButtonElement>) => {
+  delete currentTarget.dataset.pressed;
+};
+
 /** Whether a step depends exclusively on the immediately preceding authored step. */
 export const isImmediatelyPreceding = (
   step: ProcessStep,
@@ -101,6 +112,11 @@ export const RecipeMethod = ({
   onEnsureDraft,
 }: Props) => {
   const { t, error, stepName, stepInstructions } = useMessages();
+  const pressIconMotion = useMotion('fp.motion.press-icon');
+  const editIconStyle: EditIconStyle | undefined =
+    pressIconMotion.kind === 'transition'
+      ? { '--recipe-step-edit-transition': transitionCss(pressIconMotion, false) }
+      : undefined;
   const { ids } = useServices();
   const validationActions = useValidationActions();
   const temperature = useTemperature();
@@ -433,8 +449,17 @@ export const RecipeMethod = ({
                       }}
                       type="button"
                       disabled={disabled}
-                      className="fp-reset flex h-touch w-touch shrink-0 items-center justify-center rounded-segmented-option text-ink hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
+                      className="group/edit fp-reset flex h-touch w-touch shrink-0 items-center justify-center rounded-segmented-option text-ink hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
                       aria-label={t('process.editStep', { step: stepName(step) })}
+                      onPointerDown={(event) => {
+                        if (!disabled && event.isPrimary && event.button === 0) {
+                          event.currentTarget.dataset.pressed = 'true';
+                        }
+                      }}
+                      onPointerUp={clearEditPress}
+                      onPointerCancel={clearEditPress}
+                      onPointerLeave={clearEditPress}
+                      onBlur={clearEditPress}
                       onClick={() => {
                         onEnsureDraft?.();
                         setHighlightedStepId(step.id);
@@ -452,6 +477,12 @@ export const RecipeMethod = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         aria-hidden="true"
+                        style={editIconStyle}
+                        className={
+                          editIconStyle
+                            ? '[transition:var(--recipe-step-edit-transition)] motion-reduce:[transition:none]! in-data-[motion=reduced]:[transition:none]! motion-safe:group-active/edit:[transform:scale(0.95)] motion-safe:group-data-[pressed=true]/edit:[transform:scale(0.95)] in-data-[motion=reduced]:[transform:none]!'
+                            : undefined
+                        }
                       >
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
