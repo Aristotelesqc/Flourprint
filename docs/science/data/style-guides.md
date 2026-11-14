@@ -8,7 +8,7 @@ Source quantities are kept separately from the declared implementation. Unknown 
 
 Recipe transformations (poolish, biga, tangzhong, yudane, cold retard, whole grain and enrichment) remain follow-on work.
 
-## baguette — preset v2
+## baguette — preset v3
 
 [Classic Baguettes Recipe](https://www.kingarthurbaking.com/recipes/classic-baguettes-recipe) — PJ Hamel. Primary published recipe; poolish branch.
 
@@ -36,7 +36,7 @@ Full source read: 2026-10-10T18:45:13.030395+00:00. Snapshot SHA-256: `4f7a5d8b4
 | bake_c            |      232 |      232 | °C, stone with steam; source-derived. 450 °F = 232.2 °C                                                                                       |
 | bake_min          |       24 |       28 | min; source-derived. Source states 24 to 28 min                                                                                               |
 
-## boule-dutch-oven — preset v4
+## boule-dutch-oven — preset v5
 
 [Jim Lahey's No-Knead Bread](https://leitesculinaria.com/99521/recipes-jim-laheys-no-knead-bread.html) — David Leite / Jim Lahey. Attributed Lahey recipe; publication/adaptation lineage.
 
@@ -62,7 +62,7 @@ Full source read: 2026-10-10T18:45:13.196597+00:00. Snapshot SHA-256: `db746aede
 | bake_c            |      232 |      232 | °C, covered pot then uncovered; source-derived. 450 °F = 232.2 °C                                                                      |
 | bake_min          |       45 |       60 | min; source-derived. 30 min covered + 15-30 min uncovered = 45-60 min                                                                  |
 
-## ciabatta — preset v4
+## ciabatta — preset v5
 
 [Ciabatta (professional formula)](https://www.kingarthurbaking.com/pro/formulas/ciabatta) — King Arthur Baking. Professional published formula.
 
@@ -74,7 +74,7 @@ Full source read: 2026-10-10T18:45:13.310760+00:00. Snapshot SHA-256: `f06c0ef86
 
 **Published process.** Biga ~16 h at room temperature; mix 3 min 1st speed + 4-5 min 2nd speed; DDT 75 °F (23.9 °C); bulk 2 h with fold at 1 h; divide 0.57 kg rectangles; proof ~1 h; bake 460 °F (237.8 °C) ~36 min with steam.
 
-**Selected preset and editorial choices.** King Arthur Baking — Professional Ciabatta (https://www.kingarthurbaking.com/pro/formulas/ciabatta). Professional published formula. Original measures: 10 kg total flour (Sir Galahad flour), 7.6 kg water (76 %), 0.2 kg salt (2 %), 0.12 kg yeast (1.2 %). Biga: 3 kg flour (30 % preferment), 1.8 kg water (60 % component hydration), 3 g yeast (0.03 % total flour); ripened ~16 h at 21 °C (room unspecified). Final dough additions: 7 kg flour, 5.8 kg water, 200 g salt, 117 g yeast. Evidence gap: yeast form is unspecified in the professional source; preserved as an inline dough ingredient without yeast marker, with unknown composition, avoiding unsupported assumptions of fresh vs instant. Editorial planned values: mix 7.5 min (3 min low speed + 4.5 min medium speed [midpoint of 4–5 min range]) with DDT 23.9 °C (75 °F) at 21 °C room; bulk 2 h at 21 °C with 1 fold at 1 h; divide 10 min (editorial default) into 0.57 kg rectangles; proof 1 h at 21 °C (room unspecified); preheat 30 min (editorial default); bake 36 min at 460 °F (238 °C) with steam; cool 60 min (editorial default).
+**Selected preset and editorial choices.** King Arthur Baking — Professional Ciabatta (https://www.kingarthurbaking.com/pro/formulas/ciabatta). Professional published formula, scaled for home by 1/10: this template is the source formula divided by ten (1 000 g flour, 760 g water, 20 g salt, 12 g yeast, biga 300 g flour + 180 g water + 0.3 g yeast; every baker’s percentage and the biga proportions are unchanged). The source divides into 0.57 kg rectangles, about 3 at this scale; no piece count is recorded. The quantities in the rest of this note are the unscaled source values. Original measures: 10 kg total flour (Sir Galahad flour), 7.6 kg water (76 %), 0.2 kg salt (2 %), 0.12 kg yeast (1.2 %). Biga: 3 kg flour (30 % preferment), 1.8 kg water (60 % component hydration), 3 g yeast (0.03 % total flour); ripened ~16 h at 21 °C (room unspecified). Final dough additions: 7 kg flour, 5.8 kg water, 200 g salt, 117 g yeast. Evidence gap: yeast form is unspecified in the professional source; preserved as an inline dough ingredient without yeast marker, with unknown composition, avoiding unsupported assumptions of fresh vs instant. Editorial planned values: mix 7.5 min (3 min low speed + 4.5 min medium speed [midpoint of 4–5 min range]) with DDT 23.9 °C (75 °F) at 21 °C room; bulk 2 h at 21 °C with 1 fold at 1 h; divide 10 min (editorial default) into 0.57 kg rectangles; proof 1 h at 21 °C (room unspecified); preheat 30 min (editorial default); bake 36 min at 460 °F (238 °C) with steam; cool 60 min (editorial default).
 
 **Evidence gaps and conflicts.** Yeast form is unspecified in source (1.2% total). Preserved as inline dough ingredient with unknown composition, not converted to instant.
 
@@ -90,7 +90,7 @@ Full source read: 2026-10-10T18:45:13.310760+00:00. Snapshot SHA-256: `f06c0ef86
 | bake_c             | 238 |  238 | °C, with steam; source-derived. 460 °F = 237.8 °C -> 238 °C                         |
 | bake_min           |  36 |   36 | min; source-derived. Source states approximately 36 minutes for 0.57 kg loaves      |
 
-## bagels — preset v3
+## bagels — preset v4
 
 [Water Bagels](https://www.kingarthurbaking.com/recipes/water-bagels-recipe) — Arnold Golfman / King Arthur Baking. Primary published recipe; same-day water-bagel variant.
 
@@ -118,7 +118,7 @@ Full source read: 2026-10-10T18:47:27.948433+00:00. Snapshot SHA-256: `92086947f
 | bake_c                 |      218 |      218 | °C, sheet pan; source-derived. 425 °F = 218.3 °C -> 218 °C                                                                      |
 | bake_min               |       20 |       20 | min; source-derived. Source states about 20 minutes                                                                             |
 
-## focaccia — preset v4
+## focaccia — preset v5
 
 [Big and Bubbly Focaccia Recipe](https://www.kingarthurbaking.com/recipes/big-and-bubbly-focaccia-recipe) — King Arthur Test Kitchen / Martin Philip. Primary published recipe; high-hydration pan variant.
 
@@ -145,7 +145,7 @@ Full source read: 2026-10-10T18:45:14.019637+00:00. Snapshot SHA-256: `1328fb702
 | bake_c            |      246 |      246 | °C, 9-in square pan; source-derived. 475 °F = 246.1 °C -> 246 °C                                  |
 | bake_min          |       15 |       18 | min in pan; source-derived. Source states 15 to 18 min in pan (plus 5-7 min in switched-off oven) |
 
-## brioche — preset v2
+## brioche — preset v3
 
 [Classic Brioche Loaf (Brioche Nanterre)](https://www.meilleurduchef.com/en/recipe/brioche-loaf.html) — Chef Philippe. Primary published Nanterre recipe.
 
@@ -172,7 +172,7 @@ Full source read: 2026-10-10T18:47:52.629536+00:00. Snapshot SHA-256: `51d20b5f9
 | bake_c            | 180 |  180 | °C fan oven; source-derived. Source specifies fan oven 180 °C                                                  |
 | bake_min          |  25 |   30 | min; source-derived. Source specifies 25 to 30 min                                                             |
 
-## burger-buns — preset v3
+## burger-buns — preset v4
 
 [Beautiful Burger Buns Recipe](https://www.kingarthurbaking.com/recipes/beautiful-burger-buns-recipe) — Ellen Dorsey ('Moomie') / King Arthur Baking. Published recipe attributed to community origin.
 
@@ -201,7 +201,7 @@ Full source read: 2026-10-10T18:45:14.502905+00:00. Snapshot SHA-256: `135818d8c
 | bake_c            |     191 |     191 | °C, baking sheet; source-derived. 375 °F = 190.6 °C -> 191 °C                                                  |
 | bake_min          |      15 |      18 | min; source-derived. Source states 15 to 18 min                                                                |
 
-## pullman — preset v3
+## pullman — preset v4
 
 [Pain de Mie (Modernist Cuisine Vol 4 p.296 Errata)](https://modernistcuisine.com/wp-content/uploads/2018/12/BREAD_Vol4_296_Errata.pdf) — Nathan Myhrvold, Francisco Migoya / Modernist Cuisine. Primary professional errata/formula.
 
@@ -231,7 +231,7 @@ Full source read: 2026-10-10T18:49:13.451630+00:00. Snapshot SHA-256: `54b6d4214
 | bake_c            |      200 |      200 | °C (185 °C convection / 200 °C home); source-derived. Source specifies 185 °C convection or 200 °C home                                           |
 | bake_min          |       55 |       70 | min total including vented finish; source-derived. Convection: 30-35 min + 10 min vented (40-45 min); Home: 45-60 min + 10 min vented (55-70 min) |
 
-## shokupan — preset v2
+## shokupan — preset v3
 
 [Japanese Milk Bread Recipe](https://www.kingarthurbaking.com/recipes/japanese-milk-bread-recipe) — Charlotte Rutledge. Primary published tangzhong variant.
 
@@ -263,7 +263,7 @@ Full source read: 2026-10-10T18:45:15.504307+00:00. Snapshot SHA-256: `0cf4cd8ea
 | bake_c            |      177 |      177 | °C, 9x5-in pan; source-derived. 350 °F = 176.7 °C -> 177 °C                                                                 |
 | bake_min          |       30 |       35 | min; source-derived. Source states 30 to 35 minutes                                                                         |
 
-## pizza-neo-neapolitan — preset v3
+## pizza-neo-neapolitan — preset v4
 
 [72-Hour Pizza Dough](https://bakingsteel.com/blogs/recipes/72-hour-pizza-dough-recipe) — Andris Lagsdin. Author adaptation explicitly acknowledging Jim Lahey lineage; domestic-steel variant.
 
@@ -291,7 +291,7 @@ Full source read: 2026-10-10T18:47:28.994365+00:00. Snapshot SHA-256: `7b6907618
 | bake_c            | 260 |  288 | °C, on preheated steel; source-derived. 500 to 550 °F = 260 to 287.8 °C -> 260-288 °C           |
 | bake_min          |   5 |    8 | min; source-derived. Source states 5 to 8 minutes                                               |
 
-## pizza-roman — preset v3
+## pizza-roman — preset v4
 
 [Pizza Scrocchiarella Romana](https://molinovigevano.com/guide/pizza-scrocchiarella-romana/) — Gabriele Valdes. Primary professional guide with two distinct formulas.
 
@@ -303,7 +303,7 @@ Full source read: 2026-10-10T18:45:15.534330+00:00. Snapshot SHA-256: `b9d7ef3ba
 
 **Published process.** Mix in 1st speed to development; DDT ~24 °C; bulk ~1 h covered; staglio 180 g balls; rest 90 min at 22-25 °C; fridge +4 °C, use within 48 h; roll thin with rolling pin; bake <= 350 °C 120-180 s.
 
-**Selected preset and editorial choices.** Molino Vigevano / Gabriele Valdes — Pizza Scrocchiarella Romana (https://molinovigevano.com/pizza-scrocchiarella-romana/). Direct method with cold fermentation (not the 40 % poolish branch). Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. Sourced vs. editorial choices: retains professional pizza oven (≤350 °C, 120–180 s; midpoint 2.5 min = 150 s), not converted to domestic oven; mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide is 10 min editorial default into 180 g balls; ambient ball rest is 90 min at 23.5 °C (midpoint of sourced 22–25 °C); cold retard is 24 h editorial duration at sourced 4 °C (source prescribes "use within 48 h" without establishing a mandatory minimum duration); warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 30 min editorial default at 350 °C. The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.
+**Selected preset and editorial choices.** Molino Vigevano / Gabriele Valdes — Pizza Scrocchiarella Romana (https://molinovigevano.com/pizza-scrocchiarella-romana/). Direct method with cold fermentation (not the 40 % poolish branch). Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. Sourced vs. editorial choices: the professional pizza oven of the primary source (≤350 °C, 120–180 s) is not used; the bake is the home-oven version recorded in docs/science/data/published-recipes-2026-10.json, pizzas/tonda-2 (Vincenzo’s Plate, same 1,000 g flour and 60 % water, electric oven with stone): 250 °C, 3–5 min, planned at the 4 min midpoint (derived), with the stone preheated at least 45 min (pizzas/tonda-1, Napo); mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide is 10 min editorial default into 180 g balls; ambient ball rest is 90 min at 23.5 °C (midpoint of sourced 22–25 °C); cold retard is 24 h editorial duration at sourced 4 °C (source prescribes "use within 48 h" without establishing a mandatory minimum duration); warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 45 min (stone preheated at least 45 min, pizzas/tonda-1). The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.
 
 **Evidence gaps and conflicts.** Poolish branch exists in same source (40% poolish, 4 g yeast). Retard is flexible up to 48 h, not mandatory 48 h.
 
@@ -319,7 +319,7 @@ Full source read: 2026-10-10T18:45:15.534330+00:00. Snapshot SHA-256: `b9d7ef3ba
 | bake_max_c        | 350 |  350 | °C pizza oven; source-derived. Upper oven limit from guide context, not a separately prescribed setpoint for the direct formula; 350 C is an editorial selection. |
 | bake_min          |   2 |    3 | min; source-derived. Source specifies 120 to 180 seconds                                                                                                          |
 
-## pizza-teglia — preset v3
+## pizza-teglia — preset v4
 
 [Disciplinare di produzione della Autentica Pizza in Teglia alla Romana](https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf) — La Confraternita della Pizza. Normative standard with explicit 48 h example.
 
@@ -331,7 +331,7 @@ Full source read: 2026-10-10T18:45:16.036924+00:00. Snapshot SHA-256: `33af459ef
 
 **Published process.** Machine mix 20-25 min with 4 °C water; DDT 18-26 °C (pref 21-23 °C); bench ~1 h (0.5-1.5 h depending on DDT); fridge ~44 h at 4 °C (total 48 h); staglio; appretto 3-4 h at room temp until core >= 19 °C; stretch in oiled blue-steel pan; electric deck bake: floor 300-320 °C, top 200 °C, 8-13 min.
 
-**Selected preset and editorial choices.** La Confraternita della Pizza — Disciplinare Autentica Pizza in Teglia alla Romana (https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf). Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu). Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), 4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. Sourced vs. editorial choices & equipment: retains professional electric deck oven; generic ambient temperature is left unset because floor (platea 300–320 °C) and top (cielo 200 °C) have independent controls; bake duration is 10.5 min (midpoint of sourced 8–13 min); water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min (midpoint of sourced 20–25 min); target DDT is 22 °C (midpoint of preferred 21–23 °C range); bench rest is 1 h (tied to finished dough temperature in source); room 21 °C is an editorial default, not a published ambient fact; cold retard is 44 h at sourced 4 °C; staglio (divide) is 10 min editorial default; appretto (proof) is 3.5 h (midpoint of sourced 3–4 h) at editorial room 21 °C; stesura (pan stretch) is 10 min editorial default; dough core must be ≥19 °C before stretching into lightly oiled blue-steel pan; cooling is 60 min editorial default on wire rack.
+**Selected preset and editorial choices.** La Confraternita della Pizza — Disciplinare Autentica Pizza in Teglia alla Romana (https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf). Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu). Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), 4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. Sourced vs. editorial choices & equipment: the professional electric deck oven of the disciplinare (floor 300–320 °C, top 200 °C, 8–13 min, 40×60 cm pan) is not used; the bake is the home-oven version recorded in docs/science/data/published-recipes-2026-10.json, pizzas/teglia-5 (250 °C, 20 min: 10 min on the low rack, then 10 min on the middle rack) and pizzas/teglia-4 (home oven, 250 °C, 15–22 min, 30×40 cm trays), consistent with pizzas/teglia-3 (250 °C then 230 °C, 20 min); the pan size of the dough formula is not converted; water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min (midpoint of sourced 20–25 min); target DDT is 22 °C (midpoint of preferred 21–23 °C range); bench rest is 1 h (tied to finished dough temperature in source); room 21 °C is an editorial default, not a published ambient fact; cold retard is 44 h at sourced 4 °C; staglio (divide) is 10 min editorial default; appretto (proof) is 3.5 h (midpoint of sourced 3–4 h) at editorial room 21 °C; stesura (pan stretch) is 10 min editorial default; dough core must be ≥19 °C before stretching into lightly oiled blue-steel pan; cooling is 60 min editorial default on wire rack.
 
 **Evidence gaps and conflicts.** Disciplinare allows 75-100% water and 24-72 h fermentation; the 80% / 48 h example is selected here.
 
@@ -346,7 +346,7 @@ Full source read: 2026-10-10T18:45:16.036924+00:00. Snapshot SHA-256: `33af459ef
 | proof_h       |       3 |       4 | h appretto at room temp; source-derived. Disciplinare specifies 3 to 4 hours appretto until core >= 19 °C                           |
 | bake_min      |       8 |      13 | min electric deck oven; source-derived. Disciplinare specifies 8 to 13 min (floor 300-320 °C, top 200 °C)                           |
 
-## pizza-new-york — preset v3
+## pizza-new-york — preset v4
 
 [The Best New York Style Pizza Dough](https://feelingfoodish.com/the-best-new-york-style-pizza-dough/) — Marie Pinto Bialek. Author recipe acknowledging pizzamaking/Tom Lehmann influence.
 
@@ -375,7 +375,7 @@ Full source read: 2026-10-10T18:53:17.542441+00:00. Snapshot SHA-256: `146da6426
 | bake_c            |      288 |      288 | °C, stone or steel; source-derived. 550 °F = 287.8 °C -> 288 °C                                                                             |
 | bake_min          |        4 |        6 | min; source-derived. Source specifies 4 to 6 minutes                                                                                        |
 
-## pizza-sicilian — preset v3
+## pizza-sicilian — preset v4
 
 [Sicilian-Style Pizza Recipe](https://www.kingarthurbaking.com/recipes/sicilian-style-pizza-recipe) — Charlotte Rutledge / King Arthur Baking. Primary published pan-pizza adaptation.
 
@@ -403,7 +403,7 @@ Full source read: 2026-10-10T18:45:17.445836+00:00. Snapshot SHA-256: `d322a8332
 | bake_c             |     232 |     232 | °C, half-sheet pan; source-derived. 450 °F = 232.2 °C -> 232 °C                                                             |
 | bake_min           |      25 |      32 | min total (10-12 bare + 15-20 topped); source-derived. 10-12 min bare crust + 15-20 min topped = 25 to 32 min               |
 
-## pizza-chicago — preset v3
+## pizza-chicago — preset v4
 
 [Chicago Deep-Dish Pizza (Baking School Module 4)](https://bakefromscratch.com/wp-content/uploads/2022/04/Module-4-Low-Res.pdf) — Bake from Scratch. Primary published recipe; cornmeal home variant.
 

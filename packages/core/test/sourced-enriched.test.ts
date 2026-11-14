@@ -15,24 +15,35 @@ const resolve = (formula: Parameters<typeof resolveFormula>[0]): ResolvedFormula
   return res.value;
 };
 
+/** A yield recorded as `count` pieces of the source's dough weight (formula.md, Anchor). */
+const expectPieces = (
+  anchor: { kind: string; count?: number; gramsEach?: number },
+  count: number,
+  doughWeight: number,
+) => {
+  expect(anchor.kind).toBe('pieces');
+  expect(anchor.count).toBe(count);
+  expect(Math.abs((anchor.gramsEach ?? 0) * count - doughWeight)).toBeLessThanOrEqual(1e-9);
+};
+
 describe('Sourced enriched bread presets (#34)', () => {
   const templates = [brioche, burgerBuns, pullman, shokupan] as const;
 
   it('maintains stable IDs, bumped versions and valid domain recipes', () => {
     expect(brioche.id).toBe('brioche');
-    expect(brioche.version).toBe('2');
+    expect(brioche.version).toBe('3');
     expect(brioche.category).toBe('enriched');
 
     expect(burgerBuns.id).toBe('burger-buns');
-    expect(burgerBuns.version).toBe('3');
+    expect(burgerBuns.version).toBe('4');
     expect(burgerBuns.category).toBe('enriched');
 
     expect(pullman.id).toBe('pullman');
-    expect(pullman.version).toBe('3');
+    expect(pullman.version).toBe('4');
     expect(pullman.category).toBe('pan');
 
     expect(shokupan.id).toBe('shokupan');
-    expect(shokupan.version).toBe('2');
+    expect(shokupan.version).toBe('3');
     expect(shokupan.category).toBe('pan');
 
     for (const t of templates) {
@@ -80,10 +91,10 @@ describe('Sourced enriched bread presets (#34)', () => {
   });
 
   it('burger-buns: resolves exact KAB Moomie dough measures and excludes external glaze/topping', () => {
-    expect(burgerBuns.formula.anchor).toEqual({ kind: 'flourTotal', grams: 420 });
+    expectPieces(burgerBuns.formula.anchor, 8, 762.5); // the source divides into 8 buns
     const resolved = resolve(burgerBuns.formula);
 
-    expect(resolved.flourTotal).toBe(420);
+    expect(resolved.flourTotal).toBeCloseTo(420, 9);
     expect(resolved.grams['water']).toBeCloseTo(198, 5);
     expect(resolved.grams['butter']).toBeCloseTo(28, 5);
     expect(resolved.grams['sugar']).toBeCloseTo(50, 5);
@@ -169,10 +180,10 @@ describe('Sourced enriched bread presets (#34)', () => {
   });
 
   it('shokupan: draws tangzhong scald accurately with pure water and milk allocation', () => {
-    expect(shokupan.formula.anchor).toEqual({ kind: 'flourTotal', grams: 314 });
+    expectPieces(shokupan.formula.anchor, 4, 699); // the source divides into 4 pieces
     const resolved = resolve(shokupan.formula);
 
-    expect(resolved.flourTotal).toBe(314);
+    expect(resolved.flourTotal).toBeCloseTo(314, 9);
     expect(resolved.pureWaterTotal).toBeCloseTo(43, 5);
     expect(resolved.grams['milk']).toBeCloseTo(156, 5);
     expect(resolved.grams['milk-powder']).toBeCloseTo(14, 5);

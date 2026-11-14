@@ -117,7 +117,7 @@
       ],
       "sources": [1],
       "implemented_preset": {
-        "version": "2",
+        "version": "3",
         "basis": "King Arthur Baking — Classic Baguettes (https://www.kingarthurbaking.com/recipes/classic-baguettes-recipe). Selected primary published recipe; poolish branch with instant yeast. Original measures: 540 g total flour (120 g poolish + 420 g final dough), 368 g water (113 g poolish [94.167 % hydration] + 255 g final [68.148 % total hydration]), 12 g table salt (2.222 %). Instant yeast: 1/16 tsp poolish + 1.5 tsp final; converted using KAB weight chart (3 g/tsp) to 0.1875 g poolish (0.0347 % total flour) and 4.5 g final, totaling 4.6875 g (0.8681 %). Editorial planned values: poolish 14 h at 21 °C (room unspecified); mix 4 min; bulk 90 min at 21 °C with 1 fold at 45 min; divide 10 min (editorial default); bench rest 37.5 min (midpoint of 15–60 min); shape 10 min (editorial default); proof 52.5 min (midpoint of 45–60 min) at sourced 20 °C (68 °F); preheat 30 min (editorial default) to 450 °F (232 °C); bake 26 min (midpoint of 24–28 min) on stone or pan with steam; cool 60 min (editorial default). Optional ADY branch and 3 h low-yeast bulk alternative omitted.",
         "formula": {
           "flours": [
@@ -203,8 +203,9 @@
             }
           ],
           "anchor": {
-            "kind": "flourTotal",
-            "grams": 540
+            "kind": "pieces",
+            "count": 3,
+            "gramsEach": 308.2291666666667
           }
         },
         "process": {
@@ -215,10 +216,10 @@
               "dependsOn": [],
               "schedule": "asap",
               "plannedDurationS": 50400,
-              "subject": { "kind": "component", "id": "poolish" },
               "conditions": {
                 "temperatureC": 21
-              }
+              },
+              "subject": { "kind": "component", "id": "poolish" }
             },
             {
               "id": "mix",
@@ -294,7 +295,7 @@
               "conditions": {
                 "temperatureC": 232
               },
-              "label": "Bake at 450 °F (232 °C) on stone or pan with steam"
+              "label": "Bake on stone or pan with steam"
             },
             {
               "id": "cool",
@@ -402,7 +403,7 @@
       ],
       "sources": [2],
       "implemented_preset": {
-        "version": "4",
+        "version": "5",
         "basis": "Leite’s Culinaria — Jim Lahey’s No-Knead Bread (https://leitesculinaria.com/99521/recipes-jim-laheys-no-knead-bread.html). Attributed Lahey recipe (Sullivan Street Bakery) via David Leite. Normalized measures using KAB weight chart: 3 cups AP flour (360 g), 1 1/3 cups lukewarm water (302.667 g, 84.074 % hydration), 1/4 tsp instant yeast (0.75 g, 0.2083 %), 1 1/4 tsp salt with explicit table-salt assumption (6 g/tsp = 7.5 g, 2.083 %). Direct dough, no preferment. Editorial planned values: mix 30 s (sourced); bulk planned at 15 h (editorial midpoint of 12–18 h range, noting source’s preferred 18 h recommendation) at sourced ideal 22.2 °C (72 °F); shape/fold 10 min (editorial default); proof 2 h (sourced) at 21 °C (room unspecified); preheat 30 min (sourced) with 6–8 qt lidded Dutch oven at 450 °F (232 °C); bake planned at 52.5 min (editorial midpoint of 45–60 min: 30 min covered + 22.5 min uncovered [15–30 min range]) at 450 °F (232 °C); cool 60 min (sourced: at least 1 h).",
         "formula": {
           "flours": [
@@ -528,7 +529,7 @@
               "conditions": {
                 "temperatureC": 232
               },
-              "label": "Bake in preheated 6–8 qt Dutch oven at 450 °F (232 °C): 30 min covered, then 22.5 min uncovered"
+              "label": "Bake in preheated 6–8 qt Dutch oven: 30 min covered, then 22.5 min uncovered"
             },
             {
               "id": "cool",
@@ -655,8 +656,8 @@
       ],
       "sources": [3],
       "implemented_preset": {
-        "version": "4",
-        "basis": "King Arthur Baking — Professional Ciabatta (https://www.kingarthurbaking.com/pro/formulas/ciabatta). Professional published formula. Original measures: 10 kg total flour (Sir Galahad flour), 7.6 kg water (76 %), 0.2 kg salt (2 %), 0.12 kg yeast (1.2 %). Biga: 3 kg flour (30 % preferment), 1.8 kg water (60 % component hydration), 3 g yeast (0.03 % total flour); ripened ~16 h at 21 °C (room unspecified). Final dough additions: 7 kg flour, 5.8 kg water, 200 g salt, 117 g yeast. Evidence gap: yeast form is unspecified in the professional source; preserved as an inline dough ingredient without yeast marker, with unknown composition, avoiding unsupported assumptions of fresh vs instant. Editorial planned values: mix 7.5 min (3 min low speed + 4.5 min medium speed [midpoint of 4–5 min range]) with DDT 23.9 °C (75 °F) at 21 °C room; bulk 2 h at 21 °C with 1 fold at 1 h; divide 10 min (editorial default) into 0.57 kg rectangles; proof 1 h at 21 °C (room unspecified); preheat 30 min (editorial default); bake 36 min at 460 °F (238 °C) with steam; cool 60 min (editorial default).",
+        "version": "5",
+        "basis": "King Arthur Baking — Professional Ciabatta (https://www.kingarthurbaking.com/pro/formulas/ciabatta). Professional published formula, scaled for home by 1/10: this template is the source formula divided by ten (1 000 g flour, 760 g water, 20 g salt, 12 g yeast, biga 300 g flour + 180 g water + 0.3 g yeast; every baker’s percentage and the biga proportions are unchanged). The source divides into 0.57 kg rectangles, about 3 at this scale; no piece count is recorded. The quantities in the rest of this note are the unscaled source values. Original measures: 10 kg total flour (Sir Galahad flour), 7.6 kg water (76 %), 0.2 kg salt (2 %), 0.12 kg yeast (1.2 %). Biga: 3 kg flour (30 % preferment), 1.8 kg water (60 % component hydration), 3 g yeast (0.03 % total flour); ripened ~16 h at 21 °C (room unspecified). Final dough additions: 7 kg flour, 5.8 kg water, 200 g salt, 117 g yeast. Evidence gap: yeast form is unspecified in the professional source; preserved as an inline dough ingredient without yeast marker, with unknown composition, avoiding unsupported assumptions of fresh vs instant. Editorial planned values: mix 7.5 min (3 min low speed + 4.5 min medium speed [midpoint of 4–5 min range]) with DDT 23.9 °C (75 °F) at 21 °C room; bulk 2 h at 21 °C with 1 fold at 1 h; divide 10 min (editorial default) into 0.57 kg rectangles; proof 1 h at 21 °C (room unspecified); preheat 30 min (editorial default); bake 36 min at 460 °F (238 °C) with steam; cool 60 min (editorial default).",
         "formula": {
           "flours": [
             {
@@ -721,7 +722,7 @@
           ],
           "anchor": {
             "kind": "flourTotal",
-            "grams": 10000
+            "grams": 1000
           }
         },
         "process": {
@@ -732,10 +733,10 @@
               "dependsOn": [],
               "schedule": "asap",
               "plannedDurationS": 57600,
-              "subject": { "kind": "component", "id": "biga" },
               "conditions": {
                 "temperatureC": 21
-              }
+              },
+              "subject": { "kind": "component", "id": "biga" }
             },
             {
               "id": "mix",
@@ -811,7 +812,7 @@
               "conditions": {
                 "temperatureC": 238
               },
-              "label": "Bake at 460 °F (238 °C) with steam"
+              "label": "Bake with steam"
             },
             {
               "id": "cool",
@@ -939,7 +940,7 @@
       ],
       "sources": [4],
       "implemented_preset": {
-        "version": "3",
+        "version": "4",
         "basis": "King Arthur Baking — Water Bagels (https://www.kingarthurbaking.com/recipes/water-bagels-recipe). Selected primary published recipe; same-day water bagel variant by Arnold Golfman. Original measures: 690 g AP flour, 454 g water (65.797 %), 35 g non-diastatic malt powder (5.072 %), 25 g granulated sugar (3.623 %), 18 g table salt (2.609 %), 6.75 g instant yeast (0.9783 %, converted from 2 1/4 tsp via KAB weight chart at 3 g/tsp). Malt represented as inline non-diastatic malt powder with unknown composition, avoiding substitution with barley malt syrup or diastatic malt. External water bath (1814 g water, 18 g malt powder, 14 g sugar) and optional toppings excluded from dough formula. Editorial planned values: mix 8 min (editorial default, source unstated); bulk 75 min (midpoint of 1–1.5 h range to double) at 21 °C (room unstated); divide 10 min (editorial default) into 16 pieces; shape 10 min (editorial default); no separate final proof prescribed (dough moves directly from shaping to simmering bath); preheat 30 min (editorial default) to 425 °F (218 °C); simmer planned at 10 min (editorial batch logistics for 16 bagels in batches of 3–4, simmered 30 s per side); bake 20 min on parchment-lined sheet at 425 °F (218 °C); cool 60 min (editorial default). Overnight refrigeration alternative omitted to retain same-day baseline.",
         "formula": {
           "flours": [
@@ -1033,8 +1034,9 @@
           ],
           "components": [],
           "anchor": {
-            "kind": "flourTotal",
-            "grams": 690
+            "kind": "pieces",
+            "count": 16,
+            "gramsEach": 76.796875
           }
         },
         "process": {
@@ -1097,7 +1099,7 @@
               "conditions": {
                 "temperatureC": 218
               },
-              "label": "Bake on parchment-lined sheet pan at 425 °F (218 °C)"
+              "label": "Bake on parchment-lined sheet pan"
             },
             {
               "id": "cool",
@@ -1215,7 +1217,7 @@
       ],
       "sources": [5],
       "implemented_preset": {
-        "version": "4",
+        "version": "5",
         "basis": "King Arthur Baking — Big and Bubbly Focaccia (https://www.kingarthurbaking.com/recipes/big-and-bubbly-focaccia-recipe). High-hydration pan variant (one 9-inch square pan). Original measures: 360 g all-purpose flour, 284 g water (78.889 %), 18 g olive oil in dough (5.0 %), 9 g table salt (2.5 %), 5 g sugar (1.389 %), 3 g instant yeast (0.833 %). Non-dough exclusions: 26 g divided olive oil (pan coating and top drizzle) and flaky sea salt topping are excluded from dough. Sourced vs. editorial choices: mix duration is 8 min editorial default (unspecified in source); DDT 29 °C is editorial midpoint of sourced 82–86 °F (27.8–30.0 °C); bulk is 2 h (four bowl fold sets at 15 min intervals followed by 1 h rest) at 22.5 °C (midpoint of sourced 70–75 °F / 21.1–23.9 °C); pan transfer/stretch is 10 min editorial default; pan proof temperature 22.5 °C is an editorial reuse of the bulk setting; duration is 75 min (midpoint of sourced 1–1.5 h) at 22.5 °C; preheat is 30 min editorial default at 475 °F (246 °C); lower-rack bake is 16.5 min (midpoint of sourced 15–18 min) at 475 °F (246 °C), optional broil omitted; rack finish is 6 min (midpoint of sourced 5–7 min) directly on lower rack in a switched-off oven using residual heat (no active temperature setpoint); cooling is 60 min editorial default.",
         "formula": {
           "flours": [
@@ -1391,7 +1393,7 @@
               "conditions": {
                 "temperatureC": 246
               },
-              "label": "Bake in pan on lower rack at 475 °F (246 °C)"
+              "label": "Bake in pan on lower rack"
             },
             {
               "id": "bake-finish",
@@ -1517,7 +1519,7 @@
       ],
       "sources": [6],
       "implemented_preset": {
-        "version": "2",
+        "version": "3",
         "basis": "Meilleur du Chef / Chef Philippe — Classic Brioche Loaf (https://www.meilleurduchef.com/en/recipe/brioche-loaf.html; Nanterre loaf). Formula: 500 g T45 flour (100 %), 300 g whole eggs (60 %), 250 g butter (50 % ingredient mass), 60 g castor sugar (12 %), 10 g salt (2 %), 20 g fresh baker's yeast (4 %). Direct dough with no milk or pure water; egg wash (1 egg, pinch of salt) and optional pearl sugar excluded from dough. Process: mix 18 min (2 min low speed + 8 min medium speed, plus editorial 8 min for gradual butter incorporation; editorial DDT target 24 °C, below sourced <=26 °C ceiling); bulk 30 min at editorial 21 °C room; degas 1 min (editorial); retard 1 h cold at editorial 4 °C fridge (sourced minimum of >=1 h cold; overnight branch preserved in notes); divide 10 min into 50 g balls (editorial); shape 10 min into 7 balls per tin (editorial); proof 2 h in proofer at sourced 28 °C; preheat 30 min (editorial default); bake in fan oven at 180 °C for 27.5 min (editorial midpoint of sourced 25–30 min range); cool 60 min (editorial default). Fresh yeast composition unknown beyond form; T45 protein unstated.",
         "formula": {
           "flours": [
@@ -1644,7 +1646,7 @@
               "conditions": {
                 "doughTemperatureC": 24
               },
-              "label": "Mix 2 min low speed, 8 min medium speed, then incorporate butter gradually (DDT <=26 °C)"
+              "label": "Mix 2 min low speed, 8 min medium speed, then incorporate butter gradually"
             },
             {
               "id": "bulk",
@@ -1697,7 +1699,7 @@
               "conditions": {
                 "temperatureC": 28
               },
-              "label": "Proof in proofer at 28 °C"
+              "label": "Proof in proofer"
             },
             {
               "id": "preheat",
@@ -1715,7 +1717,7 @@
               "conditions": {
                 "temperatureC": 180
               },
-              "label": "Brush with separate egg wash, then bake in fan-assisted oven at 180 °C"
+              "label": "Brush with separate egg wash, then bake in fan-assisted oven"
             },
             {
               "id": "cool",
@@ -1853,7 +1855,7 @@
       ],
       "sources": [7],
       "implemented_preset": {
-        "version": "3",
+        "version": "4",
         "basis": "King Arthur Baking / Ellen Dorsey (\"Moomie\") — Beautiful Burger Buns (https://www.kingarthurbaking.com/recipes/beautiful-burger-buns-recipe). Formula: 420 g AP flour (100 %), 198 g lukewarm water (47.143 %), 28 g room-temperature butter (6.667 % ingredient mass), 50 g granulated sugar (11.905 %), 9 g instant yeast (2.143 %), 1 large egg assumed 50 g (11.905 %), table salt 1 1/4 tsp normalized to 7.5 g via KAB chart (1.786 %). No milk or preferment in dough. Separate butter glaze (43 g melted butter) and optional seed topping (1 egg white + 2 tbsp cold water, sesame seeds) excluded from dough. Process: mix 8 min (editorial default for unsourced mix duration) at editorial 21 °C room; bulk 1.5 h (editorial midpoint of sourced 1–2 h range) at editorial 21 °C room; deflate and divide 10 min into 8 buns (~95 g each, sourced ~100 g claim; editorial duration); shape 10 min into balls and flatten to 3 inches (editorial duration); proof 60 min (sourced \"about an hour\") at editorial 21 °C room; preheat 30 min (editorial default); bake 16.5 min (990 s, editorial midpoint of sourced 15–18 min range) on baking sheet at 375 °F (191 °C converted); cool 60 min on rack (editorial default).",
         "formula": {
           "flours": [
@@ -1989,8 +1991,9 @@
           ],
           "components": [],
           "anchor": {
-            "kind": "flourTotal",
-            "grams": 420
+            "kind": "pieces",
+            "count": 8,
+            "gramsEach": 95.3125
           }
         },
         "process": {
@@ -2056,7 +2059,7 @@
               "conditions": {
                 "temperatureC": 191
               },
-              "label": "Brush with half the separate 43 g melted butter, then bake on sheet at 375 °F (191 °C)"
+              "label": "Brush with half the separate 43 g melted butter, then bake on sheet"
             },
             {
               "id": "cool",
@@ -2205,7 +2208,7 @@
       ],
       "sources": [8],
       "implemented_preset": {
-        "version": "3",
+        "version": "4",
         "basis": "Modernist Cuisine — Pain de Mie, volume 4 p.296 errata (https://modernistcuisine.com/wp-content/uploads/2018/12/BREAD_Vol4_296_Errata.pdf; home oven branch in 13x4x4-inch lidded Pullman pan). Formula: 560 g bread flour (100 %), 360 g water (64.286 % pure water), 35 g softened butter (6.25 % ingredient mass), 25 g sugar (4.464 %), 10 g fine salt (1.786 %), 5 g osmotolerant instant yeast (0.893 %), 2 g barley malt syrup (0.357 % ingredient mass). Total dough 997 g. No milk, egg, or preferment in formula. Net lipid/moisture table in errata reports net compositions rather than added baker percentages. Process: machine mix 13.5 min (810 s, editorial midpoint of sourced 10–17 min range; DDT setpoint 25 °C within sourced 24–26 °C range); bulk ferment 1.5 h at editorial 21 °C room with 1 fold after 45 min recorded in technique; shape oblong bâtard 1.5 min (90 s, editorial midpoint of sourced 1–2 min range); final proof in lidded 13x4x4-inch pan selects 21 °C room branch for 2.75 h (9900 s, editorial midpoint of sourced 2.5–3 h range at 21 °C; proofer branch 1.5–2 h at 27 °C/65 % RH preserved in science notes); preheat 30 min (editorial default); home bake phase 1 covered in lidded pan at 200 °C for 52.5 min (3150 s, editorial midpoint of sourced 45–60 min range); home bake phase 2 vented inverted on wire rack at 200 °C for 10 min (600 s); cool 60 min (editorial default). Convection alternative 185 °C for 30–35 min + 10 min vented preserved in notes.",
         "formula": {
           "flours": [
@@ -2356,7 +2359,7 @@
               "conditions": {
                 "doughTemperatureC": 25
               },
-              "label": "Mix by machine to full gluten development (DDT 24–26 °C)"
+              "label": "Mix by machine to full gluten development"
             },
             {
               "id": "bulk",
@@ -2410,7 +2413,7 @@
               "conditions": {
                 "temperatureC": 200
               },
-              "label": "Home bake covered in lidded 13x4x4-inch Pullman pan at 200 °C"
+              "label": "Home bake covered in lidded 13x4x4-inch Pullman pan"
             },
             {
               "id": "bake-vented",
@@ -2421,7 +2424,7 @@
               "conditions": {
                 "temperatureC": 200
               },
-              "label": "Remove lid, invert loaf onto wire rack, bake vented at 200 °C"
+              "label": "Remove lid, invert loaf onto wire rack, bake vented"
             },
             {
               "id": "cool",
@@ -2589,7 +2592,7 @@
       ],
       "sources": [9],
       "implemented_preset": {
-        "version": "2",
+        "version": "3",
         "basis": "King Arthur Baking / Charlotte Rutledge — Japanese Milk Bread (https://www.kingarthurbaking.com/recipes/japanese-milk-bread-recipe; tangzhong loaf in 9x5-inch pan). Formula: 314 g bread flour total (14 g tangzhong + 300 g final dough); 43 g pure water (13.694 % of total flour), allocated entirely to tangzhong (scald hydration 307.143 % relative to scald flour); 156 g whole milk (49.682 % of total flour), allocated 43 g to tangzhong (43/314*100 = 13.694 % of total flour) and 113 g to final dough; 14 g dry milk powder (4.459 %, inline ingredient; water estimated at 3.5 % [3, 5] from USDA SR Legacy nonfat dry milk, fat and sugar unknown); 50 g granulated sugar (15.924 %); 6 g table salt (1.911 %); 57 g unsalted butter (18.153 % ingredient mass); 1 large egg assumed 50 g (15.924 %); instant yeast 1 tbsp normalized via KAB chart to 9 g (2.866 %). Separate milk wash excluded from dough. Process: tangzhong cooked 4 min (editorial midpoint of sourced 3–5 min range) on low heat, then cooled to lukewarm (editorial cooling duration 60 min, separate from the 4 min cook step); machine mix/knead 15 min (sourced \"almost 15 minutes\") at editorial 21 °C room; bulk 75 min (editorial midpoint of sourced 1–1.5 h range) at editorial 21 °C room; deflate and divide 10 min into 4 equal pieces (~170–175 g each; editorial duration); shape 10 min into rolled logs and arrange in greased 9x5-inch loaf pan (editorial duration); proof 45 min (editorial midpoint of sourced 40–50 min range) at editorial 21 °C room; preheat 30 min (editorial default); bake 32.5 min (1950 s, editorial midpoint of sourced 30–35 min range) at 350 °F (177 °C converted) in 9x5-inch loaf pan; cool 60 min on rack (editorial default).",
         "formula": {
           "flours": [
@@ -2781,8 +2784,9 @@
             }
           ],
           "anchor": {
-            "kind": "flourTotal",
-            "grams": 314
+            "kind": "pieces",
+            "count": 4,
+            "gramsEach": 174.75
           }
         },
         "process": {
@@ -2794,7 +2798,7 @@
               "schedule": "alap",
               "plannedDurationS": 240,
               "subject": { "kind": "component", "id": "tangzhong" },
-              "label": "Cook 14 g flour, 43 g water and 43 g milk on low heat until thickened"
+              "label": "Cook the tangzhong flour, water and milk on low heat until thickened"
             },
             {
               "id": "tangzhong-cool",
@@ -2802,8 +2806,8 @@
               "dependsOn": ["tangzhong"],
               "schedule": "asap",
               "plannedDurationS": 3600,
-              "subject": { "kind": "component", "id": "tangzhong" },
-              "label": "Cool tangzhong to lukewarm before mixing; 60 min is an editable editorial allowance"
+              "label": "Cool tangzhong to lukewarm before mixing; 60 min is an editable editorial allowance",
+              "subject": { "kind": "component", "id": "tangzhong" }
             },
             {
               "id": "mix",
@@ -2866,7 +2870,7 @@
               "conditions": {
                 "temperatureC": 177
               },
-              "label": "Brush with separate milk wash, then bake in 9x5-inch loaf pan at 350 °F (177 °C)"
+              "label": "Brush with separate milk wash, then bake in 9x5-inch loaf pan"
             },
             {
               "id": "cool",
@@ -2994,7 +2998,7 @@
       ],
       "sources": [10],
       "implemented_preset": {
-        "version": "3",
+        "version": "4",
         "basis": "Baking Steel / Andris Lagsdin — 72-Hour Pizza Dough (https://bakingsteel.com/blogs/recipes/72-hour-pizza-dough). Domestic Baking Steel variant (adaptation of Jim Lahey no-knead lineage for home baking steel). Original measures: 500 g bread flour, 350 g water (70 %), 16 g sea salt (3.2 %), 1 g instant yeast (0.2 %). Total dough weight 867 g, yielding 3 balls of ~289 g each for 12–14 inch pizzas. Sourced vs. editorial choices: mix is 2.5 min (midpoint of sourced 2–3 min in-bowl knead); unstated room temperature is 21 °C editorial default for mix, initial bulk, divide, and final proof; cold retard is 48 h at editorial 4 °C fridge; \"72-hour\" name covers the 24 h room bulk + 48 h cold retard, excluding the subsequent divide and final room-temperature proof; divide/ball is 10 min editorial default; final proof is 3.5 h (midpoint of sourced 3–4 h); preheat is 60 min sourced preheat on Baking Steel at 274 °C (midpoint of sourced 500–550 °F / 260–288 °C); bake is 6.5 min (midpoint of sourced 5–8 min) at 274 °C on Baking Steel.",
         "formula": {
           "flours": [
@@ -3061,8 +3065,9 @@
           ],
           "components": [],
           "anchor": {
-            "kind": "flourTotal",
-            "grams": 500
+            "kind": "pieces",
+            "count": 3,
+            "gramsEach": 289
           }
         },
         "process": {
@@ -3133,7 +3138,7 @@
               "conditions": {
                 "temperatureC": 274
               },
-              "label": "Bake on Baking Steel at 500–550 °F (274 °C)"
+              "label": "Bake on Baking Steel"
             }
           ]
         }
@@ -3254,8 +3259,8 @@
       ],
       "sources": [11],
       "implemented_preset": {
-        "version": "3",
-        "basis": "Molino Vigevano / Gabriele Valdes — Pizza Scrocchiarella Romana (https://molinovigevano.com/pizza-scrocchiarella-romana/). Direct method with cold fermentation (not the 40 % poolish branch). Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. Sourced vs. editorial choices: retains professional pizza oven (≤350 °C, 120–180 s; midpoint 2.5 min = 150 s), not converted to domestic oven; mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide is 10 min editorial default into 180 g balls; ambient ball rest is 90 min at 23.5 °C (midpoint of sourced 22–25 °C); cold retard is 24 h editorial duration at sourced 4 °C (source prescribes \"use within 48 h\" without establishing a mandatory minimum duration); warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 30 min editorial default at 350 °C. The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.",
+        "version": "4",
+        "basis": "Molino Vigevano / Gabriele Valdes — Pizza Scrocchiarella Romana (https://molinovigevano.com/pizza-scrocchiarella-romana/). Direct method with cold fermentation (not the 40 % poolish branch). Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. Sourced vs. editorial choices: the professional pizza oven of the primary source (≤350 °C, 120–180 s) is not used; the bake is the home-oven version recorded in docs/science/data/published-recipes-2026-10.json, pizzas/tonda-2 (Vincenzo’s Plate, same 1,000 g flour and 60 % water, electric oven with stone): 250 °C, 3–5 min, planned at the 4 min midpoint (derived), with the stone preheated at least 45 min (pizzas/tonda-1, Napo); mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide is 10 min editorial default into 180 g balls; ambient ball rest is 90 min at 23.5 °C (midpoint of sourced 22–25 °C); cold retard is 24 h editorial duration at sourced 4 °C (source prescribes \"use within 48 h\" without establishing a mandatory minimum duration); warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 45 min (stone preheated at least 45 min, pizzas/tonda-1). The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.",
         "formula": {
           "flours": [
             {
@@ -3382,18 +3387,18 @@
               "operation": "preheat",
               "dependsOn": [],
               "schedule": "alap",
-              "plannedDurationS": 1800
+              "plannedDurationS": 2700
             },
             {
               "id": "bake",
               "operation": "bake",
               "dependsOn": ["shape", "preheat"],
               "schedule": "asap",
-              "plannedDurationS": 150,
+              "plannedDurationS": 240,
               "conditions": {
-                "temperatureC": 350
+                "temperatureC": 250
               },
-              "label": "Bake in professional pizza oven (≤350 °C)"
+              "label": "Bake on a preheated stone in a home oven"
             }
           ]
         }
@@ -3503,8 +3508,8 @@
       ],
       "sources": [12],
       "implemented_preset": {
-        "version": "3",
-        "basis": "La Confraternita della Pizza — Disciplinare Autentica Pizza in Teglia alla Romana (https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf). Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu). Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), 4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. Sourced vs. editorial choices & equipment: retains professional electric deck oven; generic ambient temperature is left unset because floor (platea 300–320 °C) and top (cielo 200 °C) have independent controls; bake duration is 10.5 min (midpoint of sourced 8–13 min); water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min (midpoint of sourced 20–25 min); target DDT is 22 °C (midpoint of preferred 21–23 °C range); bench rest is 1 h (tied to finished dough temperature in source); room 21 °C is an editorial default, not a published ambient fact; cold retard is 44 h at sourced 4 °C; staglio (divide) is 10 min editorial default; appretto (proof) is 3.5 h (midpoint of sourced 3–4 h) at editorial room 21 °C; stesura (pan stretch) is 10 min editorial default; dough core must be ≥19 °C before stretching into lightly oiled blue-steel pan; cooling is 60 min editorial default on wire rack.",
+        "version": "4",
+        "basis": "La Confraternita della Pizza — Disciplinare Autentica Pizza in Teglia alla Romana (https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf). Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu). Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), 4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. Sourced vs. editorial choices & equipment: the professional electric deck oven of the disciplinare (floor 300–320 °C, top 200 °C, 8–13 min, 40×60 cm pan) is not used; the bake is the home-oven version recorded in docs/science/data/published-recipes-2026-10.json, pizzas/teglia-5 (250 °C, 20 min: 10 min on the low rack, then 10 min on the middle rack) and pizzas/teglia-4 (home oven, 250 °C, 15–22 min, 30×40 cm trays), consistent with pizzas/teglia-3 (250 °C then 230 °C, 20 min); the pan size of the dough formula is not converted; water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min (midpoint of sourced 20–25 min); target DDT is 22 °C (midpoint of preferred 21–23 °C range); bench rest is 1 h (tied to finished dough temperature in source); room 21 °C is an editorial default, not a published ambient fact; cold retard is 44 h at sourced 4 °C; staglio (divide) is 10 min editorial default; appretto (proof) is 3.5 h (midpoint of sourced 3–4 h) at editorial room 21 °C; stesura (pan stretch) is 10 min editorial default; dough core must be ≥19 °C before stretching into lightly oiled blue-steel pan; cooling is 60 min editorial default on wire rack.",
         "formula": {
           "flours": [
             {
@@ -3649,8 +3654,11 @@
               "operation": "bake",
               "dependsOn": ["shape", "preheat"],
               "schedule": "asap",
-              "plannedDurationS": 630,
-              "label": "Bake in electric deck oven (deck 300–320 °C, top 200 °C, static)"
+              "plannedDurationS": 1200,
+              "conditions": {
+                "temperatureC": 250
+              },
+              "label": "Bake in pan in a home oven: first half on the low rack, then on the middle rack"
             },
             {
               "id": "cool",
@@ -3788,7 +3796,7 @@
       ],
       "sources": [13],
       "implemented_preset": {
-        "version": "3",
+        "version": "4",
         "basis": "Feeling Foodish / Marie — The Best New York Style Pizza Dough (https://feelingfoodish.com/the-best-new-york-style-pizza-dough/). Metric branch for four 14-inch pizzas (distinct from US volume branch). Original formula: 796 g bread flour, 493 g water (61.935 %), 15.6 g salt (1.960 %), 7.8 g sugar (0.980 %), 11.8 g olive oil (1.482 %), 3.5 g instant dry yeast (0.4397 %). Yield conflict noted: Total formula dough weight is 1,327.7 g (4 × 331.9 g), which conflicts with the source text claim of four 11.5 oz (~326 g) dough balls (1,304 g total). Sourced vs. editorial choices: mix is 4.5 min (midpoint of sourced 4–5 min); DDT 27 °C is an editorial target informed by the qualitative high-70s to low-80s °F guidance; divide/ball is 10 min editorial default; cold retard is 48 h (midpoint of sourced 24–72 h range; author notes day 3 is optimal) at editorial 4 °C fridge; temper/relaxation is 40 min (midpoint of 20–60 min body guidance / within 1 h) at editorial 21 °C room; stretch and top is 10 min editorial default; preheat is 60 min sourced preheat at 550 °F (288 °C) on stone/steel; bake is 5 min (midpoint of sourced 4–6 min) at 550 °F (288 °C).",
         "formula": {
           "flours": [
@@ -3897,8 +3905,9 @@
           ],
           "components": [],
           "anchor": {
-            "kind": "flourTotal",
-            "grams": 796
+            "kind": "pieces",
+            "count": 4,
+            "gramsEach": 331.925
           }
         },
         "process": {
@@ -3967,7 +3976,7 @@
               "conditions": {
                 "temperatureC": 288
               },
-              "label": "Bake on preheated stone or steel at 550 °F (288 °C)"
+              "label": "Bake on preheated stone or steel"
             }
           ]
         }
@@ -4088,7 +4097,7 @@
       ],
       "sources": [14],
       "implemented_preset": {
-        "version": "3",
+        "version": "4",
         "basis": "King Arthur Baking — Sicilian-Style Pizza (https://www.kingarthurbaking.com/recipes/sicilian-style-pizza-recipe). Same-day pan pizza adaptation for an 18×13-inch half-sheet pan (the optional up to 24 h refrigeration is documented as an alternative branch, not forced into the baseline). Original formula: 540 g high-gluten flour, up to 397 g water (up to 73.519 %), 12 g table salt (2.222 %), 2 tsp instant yeast (6 g via KAB weight chart, 1.111 %). Non-dough exclusions: the listed 14 g olive oil belongs exclusively to the sautéed onion topping, not the dough. Pan coating oil, 8 g optional pizza flavor, and toppings (onions, tomato sauce, anchovies, mozzarella, herbs) are excluded from dough. Sourced vs. editorial choices: mix is 8 min editorial default at editorial room 21 °C; bulk is 1 h at editorial room 21 °C (same-day branch); pan/stretch is 10 min editorial default in oiled half-sheet pan; pan proof is 1.5 h (midpoint of sourced 1–2 h) at editorial room 21 °C; preheat is 30 min editorial default at 450 °F (232 °C); two-stage bake: par-bake untopped crust for 11 min (midpoint of sourced 10–12 min) at 450 °F (232 °C); 10 min editorial default assembly; final bake 17.5 min (midpoint of sourced 15–20 min) at 450 °F (232 °C); rest is 10 min sourced rest before slicing.",
         "formula": {
           "flours": [
@@ -4232,7 +4241,7 @@
               "conditions": {
                 "temperatureC": 232
               },
-              "label": "Par-bake untopped crust in 18×13-inch half-sheet pan at 450 °F (232 °C)"
+              "label": "Par-bake untopped crust in 18×13-inch half-sheet pan"
             },
             {
               "id": "assembly",
@@ -4251,7 +4260,7 @@
               "conditions": {
                 "temperatureC": 232
               },
-              "label": "Bake topped pizza at 450 °F (232 °C)"
+              "label": "Bake topped pizza"
             },
             {
               "id": "cool",
@@ -4379,7 +4388,7 @@
       ],
       "sources": [15],
       "implemented_preset": {
-        "version": "3",
+        "version": "4",
         "basis": "Bake from Scratch — Baking School module 4, Chicago Deep-Dish Pizza (https://bakefromscratch.com/wp-content/uploads/2022/04/Module-4-Low-Res.pdf). Cornmeal deep-dish variant baked in a 10¼-inch Lodge cast-iron baker's skillet (noted skillet mismatch: header says \"Makes 1 (9-inch) deep-dish pizza\", body specifies 10¼-inch skillet; mismatch retained). Original formula: all-grain denominator 257 g total flour composed of 219 g all-purpose flour (85.214 %) and 38 g fine yellow cornmeal (14.786 %). Water 160 g (62.257 % all-grain hydration; 73.059 % wheat-only), kosher salt 4.5 g (1.751 %), instant yeast 3 g (1.167 %), sugar 4 g (1.556 %), dough olive oil 14 g (5.447 %), dough melted butter 14 g (5.447 %). Non-dough exclusions: vegetable oil for sautéing (14 g), skillet butter (10 g), and layered toppings (mushrooms, onion, green bell pepper, Italian sausage, pepperoni, mozzarella, provolone, pizza sauce, Parmesan) are excluded from dough. Sourced vs. editorial choices: hot water 120–130 °F (49–54 °C) is mixing liquid, not dough or ambient temperature; knead duration is 12 min (sourced); bulk rise is 37.5 min (midpoint of sourced 30–45 min) at sourced 75 °F (24 °C); pan/stretch is 10 min editorial default; assembly is 10 min editorial default; no separate final proof stage (dough is assembled and baked immediately); preheat is 30 min editorial default at 450 °F (230 °C); bake is 27.5 min (midpoint of sourced 25–30 min) at 450 °F (230 °C), tented with foil after 20 min; cool is 12.5 min (midpoint of sourced 10–15 min).",
         "formula": {
           "flours": [
@@ -4573,7 +4582,7 @@
               "conditions": {
                 "temperatureC": 230
               },
-              "label": "Bake in cast-iron skillet at 450 °F (230 °C), tent with foil after 20 min"
+              "label": "Bake in cast-iron skillet, tent with foil after 20 min"
             },
             {
               "id": "cool",

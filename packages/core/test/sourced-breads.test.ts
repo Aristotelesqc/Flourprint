@@ -23,24 +23,35 @@ const close = (actual: number, expected: number, tolerance = 1e-4) => {
   expect(Math.abs(actual - expected)).toBeLessThanOrEqual(tolerance);
 };
 
+/** A yield recorded as `count` pieces of the source's dough weight (formula.md, Anchor). */
+const expectPieces = (
+  anchor: { kind: string; count?: number; gramsEach?: number },
+  count: number,
+  doughWeight: number,
+) => {
+  expect(anchor.kind).toBe('pieces');
+  expect(anchor.count).toBe(count);
+  expect(Math.abs((anchor.gramsEach ?? 0) * count - doughWeight)).toBeLessThanOrEqual(1e-9);
+};
+
 describe('Sourced lean bread templates (issue #34)', () => {
   const templates = [baguette, bouleDutchOven, ciabatta, bagels];
 
   it('preserves stable IDs, categories, and increments versions by 1', () => {
     expect(baguette.id).toBe('baguette');
-    expect(baguette.version).toBe('2');
+    expect(baguette.version).toBe('3');
     expect(baguette.category).toBe('bread');
 
     expect(bouleDutchOven.id).toBe('boule-dutch-oven');
-    expect(bouleDutchOven.version).toBe('4');
+    expect(bouleDutchOven.version).toBe('5');
     expect(bouleDutchOven.category).toBe('bread');
 
     expect(ciabatta.id).toBe('ciabatta');
-    expect(ciabatta.version).toBe('4');
+    expect(ciabatta.version).toBe('5');
     expect(ciabatta.category).toBe('bread');
 
     expect(bagels.id).toBe('bagels');
-    expect(bagels.version).toBe('3');
+    expect(bagels.version).toBe('4');
     expect(bagels.category).toBe('bread');
   });
 
@@ -59,10 +70,10 @@ describe('Sourced lean bread templates (issue #34)', () => {
   describe('baguette (King Arthur Baking — Classic Baguettes)', () => {
     it('matches exact source gram accounting and poolish allocation', () => {
       const resolved = resolve(baguette);
-      expect(baguette.formula.anchor).toEqual({ kind: 'flourTotal', grams: 540 });
+      expectPieces(baguette.formula.anchor, 3, 924.6875); // the source divides into 3 pieces
 
       // Total flour
-      expect(resolved.flourTotal).toBe(540);
+      close(resolved.flourTotal, 540, 1e-9);
       close(required(resolved.grams['water']), 368);
       close(required(resolved.grams['salt']), 12);
       close(required(resolved.grams['instant-yeast']), 4.6875);
@@ -170,35 +181,61 @@ describe('Sourced lean bread templates (issue #34)', () => {
   });
 
   describe('ciabatta (King Arthur Baking — Professional Ciabatta)', () => {
-    it('matches professional 10 kg baseline and preserves unspecified yeast form', () => {
+    // The source formula, as published (docs/science/data/style-guides.md, ciabatta): 10 kg flour.
+    const SOURCE = {
+      flour: 10000,
+      water: 7600,
+      salt: 200,
+      yeast: 120,
+      bigaFlour: 3000,
+      bigaWater: 1800,
+      bigaYeast: 3,
+    };
+    // The home template is that formula divided by ten (basis): every ratio is the source's.
+    const SCALE = 1 / 10;
+
+    it('is the professional 10 kg source formula scaled by 1/10, ratios unchanged', () => {
       const resolved = resolve(ciabatta);
-      expect(ciabatta.formula.anchor).toEqual({ kind: 'flourTotal', grams: 10000 });
+      expect(ciabatta.formula.anchor).toEqual({ kind: 'flourTotal', grams: SOURCE.flour * SCALE });
+      expect(ciabatta.basis).toContain('scaled for home by 1/10');
 
-      expect(resolved.flourTotal).toBe(10000);
-      close(required(resolved.grams['water']), 7600);
-      close(required(resolved.grams['salt']), 200);
-      close(required(resolved.grams['yeast']), 120);
+      expect(resolved.flourTotal).toBe(1000);
+      close(required(resolved.grams['water']), SOURCE.water * SCALE);
+      close(required(resolved.grams['salt']), SOURCE.salt * SCALE);
+      close(required(resolved.grams['yeast']), SOURCE.yeast * SCALE);
+      close(
+        resolved.doughWeight,
+        (SOURCE.flour + SOURCE.water + SOURCE.salt + SOURCE.yeast) * SCALE,
+      );
 
+      // Fidelity to the source ratios: every baker's percentage is the source's, not a rounding of it.
+      const pct = (grams: number) => (grams / resolved.flourTotal) * 100;
+      close(pct(required(resolved.grams['water'])), (SOURCE.water / SOURCE.flour) * 100, 1e-9);
+      close(pct(required(resolved.grams['salt'])), (SOURCE.salt / SOURCE.flour) * 100, 1e-9);
+      close(pct(required(resolved.grams['yeast'])), (SOURCE.yeast / SOURCE.flour) * 100, 1e-9);
+
+      const biga = required(resolved.components['biga']);
+      close(biga.flour, SOURCE.bigaFlour * SCALE);
+      close(biga.water, SOURCE.bigaWater * SCALE);
+      close(required(biga.allocations['yeast']), SOURCE.bigaYeast * SCALE);
+      close(biga.mass, (SOURCE.bigaFlour + SOURCE.bigaWater + SOURCE.bigaYeast) * SCALE);
+      // The biga proportions: 30 % of the flour, 60 % hydration.
+      close(biga.flour / resolved.flourTotal, 0.3, 1e-12);
+      close(biga.water / biga.flour, 0.6, 1e-12);
+
+      close(required(resolved.finalMix.flourByFlour['all-purpose-flour']), 700);
+      close(resolved.finalMix.water, 580);
+      close(required(resolved.finalMix.grams['salt']), 20);
+      close(required(resolved.finalMix.grams['yeast']), 11.7);
+    });
+
+    it('preserves the unspecified yeast form of the source', () => {
       const yeastIng = required(ciabatta.formula.ingredients.find((i) => i.id === 'yeast'));
       expect(yeastIng).toBeDefined();
       expect(yeastIng.yeast).toBeUndefined();
       expect(yeastIng.water).toBeUndefined();
       expect(yeastIng.fat).toBeUndefined();
       expect(yeastIng.sugar).toBeUndefined();
-
-      const biga = required(resolved.components['biga']);
-      expect(biga).toBeDefined();
-      close(biga.flour, 3000);
-      close(biga.water, 1800);
-      close(required(biga.allocations['yeast']), 3);
-      close(biga.mass, 3000 + 1800 + 3);
-
-      close(required(resolved.finalMix.flourByFlour['all-purpose-flour']), 7000);
-      close(resolved.finalMix.water, 5800);
-      close(required(resolved.finalMix.grams['salt']), 200);
-      close(required(resolved.finalMix.grams['yeast']), 117);
-
-      close(resolved.doughWeight, 17920);
     });
 
     it('enforces machine mix phases, DDT semantics, and direct proof after divide', () => {
@@ -250,9 +287,9 @@ describe('Sourced lean bread templates (issue #34)', () => {
   describe('bagels (King Arthur Baking — Water Bagels)', () => {
     it('matches non-diastatic malt powder and excludes water bath from dough', () => {
       const resolved = resolve(bagels);
-      expect(bagels.formula.anchor).toEqual({ kind: 'flourTotal', grams: 690 });
+      expectPieces(bagels.formula.anchor, 16, 454 + 690 + 35 + 25 + 18 + 6.75); // 16 rings
 
-      expect(resolved.flourTotal).toBe(690);
+      close(resolved.flourTotal, 690, 1e-9);
       close(required(resolved.grams['water']), 454);
       close(required(resolved.grams['non-diastatic-malt-powder']), 35);
       close(required(resolved.grams['sugar']), 25);
