@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import {
   IonButton,
   IonContent,
@@ -13,6 +14,7 @@ import type { Process, RecipeIssue } from '@flourprint/core/domain';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
 import { InfoButton } from '../ui/InfoButton';
+import { useRecipeModalMotion } from '../ui/useRecipeModalMotion';
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
 
@@ -34,6 +36,8 @@ export const RecipeChecks = ({
   onDismissed?: () => void;
 }) => {
   const { t, error, stepName, pct } = useMessages();
+  const titleId = useId();
+  const { enterAnimation, leaveAnimation } = useRecipeModalMotion();
   const text = (issue: RecipeIssue): string => {
     const details = issue.details ?? {};
     if (issue.severity === 'blocking') {
@@ -54,6 +58,10 @@ export const RecipeChecks = ({
   return (
     <IonModal
       isOpen={open}
+      {...(enterAnimation ? { enterAnimation } : {})}
+      {...(leaveAnimation ? { leaveAnimation } : {})}
+      aria-label={t('check.title')}
+      aria-labelledby={titleId}
       onDidDismiss={() => {
         onClose();
         onDismissed?.();
@@ -61,7 +69,7 @@ export const RecipeChecks = ({
     >
       <IonHeader>
         <IonToolbar>
-          <IonTitle>{t('check.title')}</IonTitle>
+          <IonTitle id={titleId}>{t('check.title')}</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent className="ion-padding">

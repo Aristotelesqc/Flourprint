@@ -5,7 +5,6 @@ import {
   IonHeader,
   IonModal,
   IonTitle,
-  createAnimation,
   IonToolbar,
 } from '@ionic/react';
 import { useEffect, useEffectEvent, useId, useRef, useState, type ReactNode } from 'react';
@@ -20,7 +19,6 @@ import {
   type StepChanges,
   type StepTechnique,
 } from '@flourprint/core/domain';
-import { ionicAnimation, useMotion, type Motion } from '@flourprint/ui';
 import { en, type MessageKey } from '../i18n/messages';
 import { formatDuration } from '../i18n/time';
 import { useMessages } from '../i18n/use-messages';
@@ -35,6 +33,7 @@ import { DurationField, OptionalNumberField } from '../ui/Field';
 import { InfoButton } from '../ui/InfoButton';
 import { SectionTitle } from '../ui/Layout';
 import { Ui } from '../ui/library';
+import { useRecipeModalMotion } from '../ui/useRecipeModalMotion';
 import { useValidationActions } from '../ui/ValidationContext';
 import { StepEquipmentFields } from './StepEquipmentFields';
 
@@ -151,34 +150,7 @@ export const StepSheet = ({
   const validationActions = useValidationActions();
   const currentProcessRef = useRef(process);
   currentProcessRef.current = process;
-  const sheetEnter = useMotion('fp.motion.sheet-enter');
-  const sheetExit = useMotion('fp.motion.sheet-exit');
-  const backdropEnter = useMotion('fp.motion.backdrop-enter');
-  const backdropExit = useMotion('fp.motion.backdrop-exit');
-
-  const buildAnimation = (panel: Motion, backdrop: Motion) => {
-    if (panel.kind !== 'keyframes' || backdrop.kind !== 'keyframes') return undefined;
-    return (host: HTMLElement) =>
-      createAnimation().addAnimation([
-        ionicAnimation(panel, createAnimation, '.modal-wrapper')(host).beforeStyles({ opacity: 1 }),
-        ionicAnimation(
-          {
-            ...backdrop,
-            standard: {
-              ...backdrop.standard,
-              keyframes: backdrop.standard.keyframes.map((frame) => ({
-                ...frame,
-                opacity: frame.opacity === 1 ? 'var(--backdrop-opacity)' : frame.opacity,
-              })),
-            },
-          },
-          createAnimation,
-          'ion-backdrop',
-        )(host),
-      ]);
-  };
-  const enterAnimation = buildAnimation(sheetEnter, backdropEnter);
-  const leaveAnimation = buildAnimation(sheetExit, backdropExit);
+  const { enterAnimation, leaveAnimation } = useRecipeModalMotion();
 
   const stepId = step?.id;
   const initialDisplayLabel = step?.label ? stepName(step) : '';
