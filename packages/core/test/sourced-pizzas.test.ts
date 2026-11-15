@@ -136,7 +136,8 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
     // Home-oven version of the same style (published-recipes-2026-10, pizzas/tonda-2): 250 °C, 4 min.
     expect(bake?.conditions?.temperatureC).toBe(250);
     expect(bake?.plannedDurationS).toBe(4 * 60);
-    expect(pizzaRoman.basis).toContain('pizzas/tonda-2');
+    expect(pizzaRoman.basis).toContain('vincenzosplate.com/roman-style-pizza-recipe');
+    expect(pizzaRoman.basis).not.toContain('docs/science');
   });
 
   it('verifies Feeling Foodish New York metric branch and yield conflict documentation', () => {
@@ -198,7 +199,8 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
   });
 
   it('verifies Confraternita Teglia electric deck oven semantics and fresh yeast', () => {
-    expect(pizzaTeglia.formula.anchor).toEqual({ kind: 'flourTotal', grams: 725 });
+    // Two 30×40 cm home trays (half the area of the source's 40×60 cm pan): 2 × 671 g, flour unchanged.
+    expectPieces(pizzaTeglia.formula.anchor, 2, 1342);
     const resolved = resolveFormula(pizzaTeglia.formula);
     expect(resolved.ok).toBe(true);
     if (!resolved.ok) return;
@@ -217,7 +219,9 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
     // Home-oven version of the same style (published-recipes-2026-10, pizzas/teglia-5, teglia-4): 250 °C, 20 min.
     expect(bake?.conditions?.temperatureC).toBe(250);
     expect(bake?.plannedDurationS).toBe(20 * 60);
-    expect(pizzaTeglia.basis).toContain('pizzas/teglia-5');
+    expect(pizzaTeglia.basis).toContain('lericettedisimo');
+    expect(pizzaTeglia.basis).toContain('spadellalapadella');
+    expect(pizzaTeglia.basis).not.toContain('docs/science');
     expect(pizzaTeglia.basis).toContain('deck oven of the disciplinare');
   });
 });

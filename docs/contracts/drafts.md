@@ -161,7 +161,10 @@ interface RecipeTemplate {
   and says when the ranges are not verified. A guide describes the style; it never changes a
   recipe or a check.
 - **Proposal, awaiting the owner's approval (not yet a rule, no `CONTRACT_VERSION` change):
-  templates are executable at home.** A template is a starting point for a home baker, so:
+  templates are executable at home.** A template is a starting point for a home baker, so the
+  rules below are proposed. The tests of the pull request that carries this text
+  (`template-plausibility.test.ts`, `catalog-units.test.ts`) already enforce them: merging that
+  pull request makes them rules in practice, even while this text is marked as a proposal.
   1. **Home scale.** Its quantities are those of a home batch (a source recorded at professional
      scale is scaled by one stated factor, kept in `basis`, with every baker's percentage
      unchanged). Proposed test bounds, a default for the owner to confirm: total flour 100 to
@@ -171,13 +174,17 @@ interface RecipeTemplate {
      an explicit exception list in the template test, with its reason.
   3. **No professional-only equipment without a note.** A template whose source needs equipment a
      home does not have (a pizza oven, a deck oven) either carries a sourced home version of the
-     bake or says in a localized step text that the bake as written needs that equipment; the
-     exception list names it.
+     bake or says in a localized step text that the bake as written needs that equipment. A
+     template that needs such equipment is named, with its reason, in an exception list in the
+     test (`PROFESSIONAL_ONLY`; empty today).
   4. **No literal unit in step texts.** A curated or localized step text never contains a
      temperature unit (`°C`, `°F`); the temperature of a step is its data (`conditions`), shown
      in the baker's unit (values-and-units.md, Temperature display units). A quantity that is in
      the formula is not written in a step text either, since it changes when the recipe is
-     resized.
+     resized; a quantity outside the formula (a glaze, a bath, the size of a piece) may stay. The
+     labels of earlier template versions stay recognised, so a recipe made from one keeps its
+     curated text; a temperature such an old text stated and the step does not carry is a
+     parameter formatted in the baker's unit.
   5. **Yield.** Where the source states a number of pieces, the template records it with the
      `pieces` anchor (formula.md); where it does not, it records none.
 - The blank recipe is not a template: flour 100 %, water 65 %, salt 2 %, instant yeast 0.5 %, and

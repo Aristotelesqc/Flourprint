@@ -3247,20 +3247,40 @@
           "evidence": "source-derived"
         },
         {
-          "key": "bake_min",
+          "key": "bake_pro_min",
           "low": 2,
           "high": 3,
-          "unit": "min",
+          "unit": "min professional oven",
           "source": 11,
           "note": "Source specifies 120 to 180 seconds",
-          "basis": "min",
+          "basis": "min professional oven",
           "evidence": "source-derived"
+        },
+        {
+          "key": "bake_home_c",
+          "low": 250,
+          "high": 275,
+          "unit": "°C home oven with stone",
+          "source": 11,
+          "note": "Home-oven versions of the same style in published-recipes-2026-10: tonda-2 (250 °C) and tonda-1 (275 °C), both on a stone.",
+          "basis": "°C home oven with stone",
+          "evidence": "published-recipes-2026-10"
+        },
+        {
+          "key": "bake_home_min",
+          "low": 3,
+          "high": 5,
+          "unit": "min home oven with stone",
+          "source": 11,
+          "note": "tonda-2 states 3 to 5 min; tonda-1 states 4 min.",
+          "basis": "min home oven with stone",
+          "evidence": "published-recipes-2026-10"
         }
       ],
       "sources": [11],
       "implemented_preset": {
         "version": "4",
-        "basis": "Molino Vigevano / Gabriele Valdes — Pizza Scrocchiarella Romana (https://molinovigevano.com/pizza-scrocchiarella-romana/). Direct method with cold fermentation (not the 40 % poolish branch). Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. Sourced vs. editorial choices: the professional pizza oven of the primary source (≤350 °C, 120–180 s) is not used; the bake is the home-oven version recorded in docs/science/data/published-recipes-2026-10.json, pizzas/tonda-2 (Vincenzo’s Plate, same 1,000 g flour and 60 % water, electric oven with stone): 250 °C, 3–5 min, planned at the 4 min midpoint (derived), with the stone preheated at least 45 min (pizzas/tonda-1, Napo); mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide is 10 min editorial default into 180 g balls; ambient ball rest is 90 min at 23.5 °C (midpoint of sourced 22–25 °C); cold retard is 24 h editorial duration at sourced 4 °C (source prescribes \"use within 48 h\" without establishing a mandatory minimum duration); warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 45 min (stone preheated at least 45 min, pizzas/tonda-1). The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.",
+        "basis": "Molino Vigevano / Gabriele Valdes — Pizza Scrocchiarella Romana (https://molinovigevano.com/pizza-scrocchiarella-romana/). Direct method with cold fermentation (not the 40 % poolish branch). Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. Sourced vs. editorial choices: the professional pizza oven of the primary source (≤350 °C, 120–180 s) is not used; the bake is the home-oven version of the same style from Vincenzo’s Plate — Roman Style Pizza (https://www.vincenzosplate.com/roman-style-pizza-recipe/; same 1,000 g flour and 60 % water, electric oven with stone): 250 °C, 3–5 min, planned at the 4 min midpoint (derived), with the stone preheated at least 45 min (Napo — Tonda Romana, https://www.napo.pizza/en/recipes/en-tonda-romana); mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide is 10 min editorial default into 180 g balls; ambient ball rest is 90 min at 23.5 °C (midpoint of sourced 22–25 °C); cold retard is 24 h editorial duration at sourced 4 °C (source prescribes \"use within 48 h\" without establishing a mandatory minimum duration); warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 45 min (stone preheated at least 45 min, Napo). The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.",
         "formula": {
           "flours": [
             {
@@ -3496,7 +3516,7 @@
           "evidence": "source-derived"
         },
         {
-          "key": "bake_min",
+          "key": "bake_deck_min",
           "low": 8,
           "high": 13,
           "unit": "min electric deck oven",
@@ -3504,12 +3524,32 @@
           "note": "Disciplinare specifies 8 to 13 min (floor 300-320 °C, top 200 °C)",
           "basis": "min electric deck oven",
           "evidence": "source-derived"
+        },
+        {
+          "key": "bake_home_c",
+          "low": 240,
+          "high": 250,
+          "unit": "°C home oven",
+          "source": 12,
+          "note": "Home-oven versions in published-recipes-2026-10: teglia-4 and teglia-5 (250 °C), teglia-3 (240 °C, derived from 250 then 230).",
+          "basis": "°C home oven",
+          "evidence": "published-recipes-2026-10"
+        },
+        {
+          "key": "bake_home_min",
+          "low": 15,
+          "high": 22,
+          "unit": "min home oven",
+          "source": 12,
+          "note": "teglia-4 states 15 to 22 min; teglia-5 and teglia-3 state 20 min.",
+          "basis": "min home oven",
+          "evidence": "published-recipes-2026-10"
         }
       ],
       "sources": [12],
       "implemented_preset": {
         "version": "4",
-        "basis": "La Confraternita della Pizza — Disciplinare Autentica Pizza in Teglia alla Romana (https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf). Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu). Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), 4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. Sourced vs. editorial choices & equipment: the professional electric deck oven of the disciplinare (floor 300–320 °C, top 200 °C, 8–13 min, 40×60 cm pan) is not used; the bake is the home-oven version recorded in docs/science/data/published-recipes-2026-10.json, pizzas/teglia-5 (250 °C, 20 min: 10 min on the low rack, then 10 min on the middle rack) and pizzas/teglia-4 (home oven, 250 °C, 15–22 min, 30×40 cm trays), consistent with pizzas/teglia-3 (250 °C then 230 °C, 20 min); the pan size of the dough formula is not converted; water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min (midpoint of sourced 20–25 min); target DDT is 22 °C (midpoint of preferred 21–23 °C range); bench rest is 1 h (tied to finished dough temperature in source); room 21 °C is an editorial default, not a published ambient fact; cold retard is 44 h at sourced 4 °C; staglio (divide) is 10 min editorial default; appretto (proof) is 3.5 h (midpoint of sourced 3–4 h) at editorial room 21 °C; stesura (pan stretch) is 10 min editorial default; dough core must be ≥19 °C before stretching into lightly oiled blue-steel pan; cooling is 60 min editorial default on wire rack.",
+        "basis": "La Confraternita della Pizza — Disciplinare Autentica Pizza in Teglia alla Romana (https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf). Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu); the dough is recorded as two pieces for two 30×40 cm home trays (about 671 g each, half the area of the 40×60 cm pan), total flour unchanged. Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), 4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. Sourced vs. editorial choices & equipment: the professional electric deck oven of the disciplinare (floor 300–320 °C, top 200 °C, 8–13 min, 40×60 cm pan) is not used; the bake is the home-oven version of the same style from Pizza in teglia 24 ore (Bonci type, https://blog.giallozafferano.it/lericettedisimo/ricetta-pizza-in-teglia-24-ore-di-lievitazione-pizza-bonci/: 250 °C, 20 min, 10 min on the low rack then 10 min on the middle rack) and Pizza in teglia alta idratazione (https://blog.giallozafferano.it/spadellalapadella/pizza-in-teglia-alta-idratazione/: home oven, 250 °C, 15–22 min, three 30×40 cm trays for 1,150 g flour), consistent with Pizza in teglia recipe (https://www.fattiretours.com/travel-to-eat/pizza-in-teglia-recipe/: 250 °C then 230 °C, 20 min); the 30×40 cm tray size comes from the second one; water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min (midpoint of sourced 20–25 min); target DDT is 22 °C (midpoint of preferred 21–23 °C range); bench rest is 1 h (tied to finished dough temperature in source); room 21 °C is an editorial default, not a published ambient fact; cold retard is 44 h at sourced 4 °C; staglio (divide) is 10 min editorial default; appretto (proof) is 3.5 h (midpoint of sourced 3–4 h) at editorial room 21 °C; stesura (pan stretch) is 10 min editorial default; dough core must be ≥19 °C before stretching into lightly oiled blue-steel pan; cooling is 60 min editorial default on wire rack.",
         "formula": {
           "flours": [
             {
@@ -3578,8 +3618,9 @@
           ],
           "components": [],
           "anchor": {
-            "kind": "flourTotal",
-            "grams": 725
+            "kind": "pieces",
+            "count": 2,
+            "gramsEach": 671
           }
         },
         "process": {
@@ -3658,7 +3699,7 @@
               "conditions": {
                 "temperatureC": 250
               },
-              "label": "Bake in pan in a home oven: first half on the low rack, then on the middle rack"
+              "label": "Bake each piece in a 30×40 cm tray in a home oven: first half on the low rack, then on the middle rack"
             },
             {
               "id": "cool",

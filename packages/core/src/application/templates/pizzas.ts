@@ -120,13 +120,13 @@ export const pizzaRoman: RecipeTemplate = {
     'Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). ' +
     'Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. ' +
     'Sourced vs. editorial choices: the professional pizza oven of the primary source (≤350 °C, 120–180 s) is not used; the bake is the ' +
-    'home-oven version recorded in docs/science/data/published-recipes-2026-10.json, pizzas/tonda-2 (Vincenzo’s Plate, same 1,000 g flour and ' +
-    '60 % water, electric oven with stone): 250 °C, 3–5 min, planned at the 4 min midpoint (derived), with the stone preheated at least 45 min ' +
-    '(pizzas/tonda-1, Napo); mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide ' +
+    'home-oven version of the same style from Vincenzo’s Plate — Roman Style Pizza (https://www.vincenzosplate.com/roman-style-pizza-recipe/; ' +
+    'same 1,000 g flour and 60 % water, electric oven with stone): 250 °C, 3–5 min, planned at the 4 min midpoint (derived), with the stone ' +
+    'preheated at least 45 min (Napo — Tonda Romana, https://www.napo.pizza/en/recipes/en-tonda-romana); mix duration is 8 min editorial default; DDT 24 °C is sourced; bench bulk is 1 h at editorial room 21 °C; divide ' +
     'is 10 min editorial default into 180 g balls; ambient ball rest is 90 min at 23.5 °C (midpoint of sourced 22–25 °C); cold retard ' +
     'is 24 h editorial duration at sourced 4 °C (source prescribes "use within 48 h" without establishing a mandatory minimum duration); ' +
     'warm-up/temper before rolling is 2 h editorial default at 21 °C; stretch/roll is 10 min editorial default; preheat is 45 min ' +
-    '(stone preheated at least 45 min, pizzas/tonda-1). The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.',
+    '(stone preheated at least 45 min, Napo). The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.',
   formula: {
     flours: [{ id: 'flour', sharePct: 100 }],
     ingredients: [preset('water', 60), preset('salt', 2.6), freshYeast(0.2)],
@@ -315,30 +315,35 @@ export const pizzaTeglia: RecipeTemplate = {
   basis:
     'La Confraternita della Pizza — Disciplinare Autentica Pizza in Teglia alla Romana ' +
     '(https://laconfraternitadellapizza.net/documenti/Disciplinare-Autentica-Pizza-In-Teglia-Alla-Romana.pdf). ' +
-    'Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu). ' +
+    'Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu); the dough is recorded as ' +
+    'two pieces for two 30×40 cm home trays (about 671 g each, half the area of the 40×60 cm pan), total flour unchanged. ' +
     'Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), ' +
     '4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. ' +
     'Sourced vs. editorial choices & equipment: the professional electric deck oven of the disciplinare (floor 300–320 °C, top 200 °C, ' +
-    '8–13 min, 40×60 cm pan) is not used; the bake is the home-oven version recorded in ' +
-    'docs/science/data/published-recipes-2026-10.json, pizzas/teglia-5 (250 °C, 20 min: 10 min on the low rack, then 10 min on the ' +
-    'middle rack) and pizzas/teglia-4 (home oven, 250 °C, 15–22 min, 30×40 cm trays), consistent with pizzas/teglia-3 (250 °C then ' +
-    '230 °C, 20 min); the pan size of the dough formula is not converted; water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min ' +
+    '8–13 min, 40×60 cm pan) is not used; the bake is the home-oven version of the same style from Pizza in teglia 24 ore (Bonci type, ' +
+    'https://blog.giallozafferano.it/lericettedisimo/ricetta-pizza-in-teglia-24-ore-di-lievitazione-pizza-bonci/: 250 °C, 20 min, 10 min on the ' +
+    'low rack then 10 min on the middle rack) and Pizza in teglia alta idratazione (https://blog.giallozafferano.it/spadellalapadella/pizza-in-teglia-alta-idratazione/: ' +
+    'home oven, 250 °C, 15–22 min, three 30×40 cm trays for 1,150 g flour), consistent with Pizza in teglia recipe ' +
+    '(https://www.fattiretours.com/travel-to-eat/pizza-in-teglia-recipe/: 250 °C then 230 °C, 20 min); the 30×40 cm tray size comes from the second one; water at 4 °C is an ingredient operating temperature, not an ambient proofing condition; machine mix duration is 22.5 min ' +
     '(midpoint of sourced 20–25 min); target DDT is 22 °C (midpoint of preferred 21–23 °C range); bench rest is 1 h (tied to finished dough ' +
     'temperature in source); room 21 °C is an editorial default, not a published ambient fact; cold retard is 44 h at sourced 4 °C; ' +
     'staglio (divide) is 10 min editorial default; appretto (proof) is 3.5 h (midpoint of sourced 3–4 h) at editorial room 21 °C; ' +
     'stesura (pan stretch) is 10 min editorial default; dough core must be ≥19 °C before stretching into lightly oiled blue-steel pan; ' +
     'cooling is 60 min editorial default on wire rack.',
-  formula: {
-    flours: [{ id: 'bread-flour', sharePct: 100 }],
-    ingredients: [
-      preset('water', 80),
-      preset('olive-oil', (15 / 725) * 100),
-      preset('salt', (18 / 725) * 100),
-      freshYeast((4 / 725) * 100),
-    ],
-    components: [],
-    anchor: { kind: 'flourTotal', grams: 725 },
-  },
+  formula: withPieces(
+    {
+      flours: [{ id: 'bread-flour', sharePct: 100 }],
+      ingredients: [
+        preset('water', 80),
+        preset('olive-oil', (15 / 725) * 100),
+        preset('salt', (18 / 725) * 100),
+        freshYeast((4 / 725) * 100),
+      ],
+      components: [],
+      anchor: { kind: 'flourTotal', grams: 725 },
+    },
+    2,
+  ),
   process: {
     steps: [
       step('mix', 'mix', [], 1350, {
@@ -352,7 +357,8 @@ export const pizzaTeglia: RecipeTemplate = {
       alapStep('preheat', 'preheat', 30 * MIN),
       step('bake', 'bake', ['shape', 'preheat'], 20 * MIN, {
         conditions: { temperatureC: 250 },
-        label: 'Bake in pan in a home oven: first half on the low rack, then on the middle rack',
+        label:
+          'Bake each piece in a 30×40 cm tray in a home oven: first half on the low rack, then on the middle rack',
       }),
       step('cool', 'cool', ['bake'], 60 * MIN),
     ],

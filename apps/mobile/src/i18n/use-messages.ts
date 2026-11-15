@@ -94,10 +94,11 @@ export const TEMPLATE_STEP_LABELS: Readonly<Record<string, CuratedStepPresentati
     shortKey: 'template.pizzaSicilian.coolShort',
     fullKey: 'template.pizzaSicilian.cool',
   },
-  'Bake in pan in a home oven: first half on the low rack, then on the middle rack': {
-    shortKey: 'template.pizzaTeglia.bakeHomeShort',
-    fullKey: 'template.pizzaTeglia.bakeHome',
-  },
+  'Bake each piece in a 30×40 cm tray in a home oven: first half on the low rack, then on the middle rack':
+    {
+      shortKey: 'template.pizzaTeglia.bakeHomeShort',
+      fullKey: 'template.pizzaTeglia.bakeHome',
+    },
   'Mix 2 min low speed, 8 min medium speed, then incorporate butter gradually': {
     shortKey: 'template.brioche.mixShort',
     fullKey: 'template.brioche.mix',

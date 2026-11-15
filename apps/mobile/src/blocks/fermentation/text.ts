@@ -61,7 +61,8 @@ export const useEstimateText = () => {
     if (e.status !== 'ok' || !e.extrapolations || e.extrapolations.length === 0) return '';
     // The thresholds are the engine's own, shown in the device's unit (never a literal in a message).
     const values = {
-      limit: temperature.format(LEARNING_FLAGS.warmAboveC, 'ambient'),
+      // One decimal: 28 °C is 82.4 °F, and the flag fires above that exact value.
+      limit: temperature.format(LEARNING_FLAGS.warmAboveC, 'ambient', { digits: 1 }),
       hours: LEARNING_FLAGS.coldHoldOverH,
     };
     const reasons = e.extrapolations.map((code) => {

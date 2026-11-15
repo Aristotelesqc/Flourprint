@@ -15,7 +15,17 @@ import { formatTemperature } from '../src/i18n/temperature';
  * Temperature display units): no message carries a literal unit. The only place a unit may be
  * written is an explanation of the setting itself.
  */
-const LITERAL_UNIT = /°\s*[CF]\b/;
+const LITERAL_UNIT = new RegExp(
+  [
+    // A degree-like sign (° º ˚) or a one-character unit (℃ ℉), whatever follows.
+    '[°º˚℃℉]',
+    // A number followed by C or F, with or without a degree word: "232C", "232 F", "232 degrees C".
+    String.raw`\d\s*(?:deg(?:rees?|rés?)?\s*)?[CF]\b`,
+  ].join('|') +
+    // The scale named in words, in either language, in any case.
+    String.raw`|\b(?:celsius|fahrenheit|degrees?|degrés?)\b`,
+  'iu',
+);
 
 /** Messages allowed to name a unit, with the reason. */
 const ALLOWED: ReadonlySet<string> = new Set([
@@ -98,8 +108,8 @@ describe('curated template step texts', () => {
 
   it('restate no formula quantity of the template they belong to (they follow resizing)', () => {
     const gramsIn = (text: string) =>
-      [...text.matchAll(/(\d+(?:[.,]\d+)?)\s*g\b/g)].map((m) =>
-        Number((m[1] ?? '').replace(',', '.')),
+      [...text.matchAll(/(\d+(?:[.,]\d+)?)\s*(kg|g)\b/g)].map(
+        (m) => Number((m[1] ?? '').replace(',', '.')) * (m[2] === 'kg' ? 1000 : 1),
       );
     for (const template of RECIPE_TEMPLATES) {
       const resolved = resolveFormula(template.formula);
@@ -145,15 +155,81 @@ describe('learning flag texts', () => {
       const intl = createIntl({ locale: name, messages });
       const warm = intl.formatMessage(
         { id: 'fermentation.extra.dough_above_28c' },
-        { limit: formatTemperature(LEARNING_FLAGS.warmAboveC, 'F', name) },
+        { limit: formatTemperature(LEARNING_FLAGS.warmAboveC, 'F', name, { digits: 1 }) },
       );
-      expect(warm).toContain('82 °F');
+      expect(warm).toMatch(/82[.,]4 °F/);
       expect(warm).not.toContain('°C');
       const cold = intl.formatMessage(
         { id: 'fermentation.extra.cold_hold_over_72h' },
         { hours: LEARNING_FLAGS.coldHoldOverH },
       );
       expect(cold).toContain(String(LEARNING_FLAGS.coldHoldOverH));
+    }
+  });
+});
+
+describe('the unit lint', () => {
+  it.each([
+    '450 °F',
+    '450 ºF',
+    '450 ˚C',
+    '450 °c',
+    '450℃',
+    '450℉',
+    '450 degrees',
+    '450 degrés',
+    '450 degrees C',
+    '232C',
+    '232 C',
+    '450 F',
+    '232 Celsius',
+    '450 fahrenheit',
+    '450 °Celsius',
+  ])('catches "%s"', (text) => {
+    expect(LITERAL_UNIT.test(text)).toBe(true);
+  });
+
+  it.each([
+    'Cuisson avec vapeur',
+    'Bake 2 cups, 3 flours and 1 tray',
+    'Cook 30 s per side',
+    'Pétrir 2 min à basse vitesse',
+    'Gluten at 10 % of the flour',
+  ])('leaves "%s" alone', (text) => {
+    expect(LITERAL_UNIT.test(text)).toBe(false);
+  });
+});
+
+/**
+ * Professional-only equipment (drafts.md, Templates, proposed rule 3): a built-in template says
+ * nothing in its step texts or its traits that needs a professional oven or mixer, unless it is on
+ * this list with its reason. The list is empty: the Roman and teglia templates carry a sourced
+ * home bake instead. (The retired professional labels stay in the legacy table by design.)
+ */
+const PROFESSIONAL_ONLY: Readonly<Record<string, string>> = {};
+const PROFESSIONAL = /professional|professionnel|deck oven|four à sole|four à pizza|spiral/i;
+
+describe('no built-in template needs professional-only equipment', () => {
+  it('in its step texts or its traits, in both languages', () => {
+    for (const template of RECIPE_TEMPLATES) {
+      if (template.id in PROFESSIONAL_ONLY) continue;
+      const texts: [string, string][] = [];
+      const traits = `template.${template.id}.traits` as keyof typeof en;
+      texts.push(
+        [`${template.id} traits en`, en[traits]],
+        [`${template.id} traits fr`, fr[traits]],
+      );
+      for (const step of template.process.steps) {
+        const curated = getCuratedStepPresentation(step.label);
+        if (!curated) continue;
+        for (const key of [curated.shortKey, curated.fullKey]) {
+          texts.push(
+            [`${template.id}/${step.id} en`, en[key]],
+            [`${template.id}/${step.id} fr`, fr[key]],
+          );
+        }
+      }
+      for (const [where, text] of texts) expect(text, where).not.toMatch(PROFESSIONAL);
     }
   });
 });

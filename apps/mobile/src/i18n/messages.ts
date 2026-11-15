@@ -150,7 +150,7 @@ export const en = {
     'Bake in electric deck oven (deck {deckLow} to {deckHigh}, top {top}, static)',
   'template.pizzaTeglia.bakeHomeShort': 'Home oven pan bake',
   'template.pizzaTeglia.bakeHome':
-    'Bake in pan in a home oven: first half on the low rack, then on the middle rack',
+    'Bake each piece in a 30×40 cm tray in a home oven: first half on the low rack, then on the middle rack',
   'template.brioche.mixShort': 'Butter incorporation mix',
   'template.brioche.mix':
     'Mix 2 min low speed, 8 min medium speed, then incorporate butter gradually',
@@ -365,6 +365,10 @@ export const en = {
   'guide.key.cold_retard_min_h': 'Cold rest (source minimum)',
   'guide.key.cold_retard_max_h': 'Cold use window (source maximum)',
   'guide.key.bake_max_c': 'Professional oven (guide maximum)',
+  'guide.key.bake_pro_min': 'Professional oven bake',
+  'guide.key.bake_deck_min': 'Deck oven bake',
+  'guide.key.bake_home_c': 'Home oven',
+  'guide.key.bake_home_min': 'Home oven bake',
   'guide.key.simmer_per_side_s': 'Simmer per side, per bagel',
   'guide.key.sugar_pct': 'Sugar',
   'guide.key.fat_pct': 'Fat',
@@ -413,7 +417,7 @@ export const en = {
   'template.pizza-neo-neapolitan.traits':
     'A home-oven pizza baked on a steel: 24 hours of room bulk followed by 48 hours cold, then balling and a separate final rise. This is a home adaptation, not an AVPN certification.',
   'template.pizza-roman.traits':
-    'A thin, crisp Roman round pizza from the selected direct professional formula: small balls, no dough oil, and a hot pizza oven.',
+    'A thin, crisp Roman round pizza from the selected direct formula: small balls, no dough oil, baked on a preheated stone in a home oven.',
   'template.pizza-teglia.traits':
     'Roman pan pizza: a very wet dough of strong flour, matured cold for a day or more, stretched into an oiled pan: airy crumb, crisp base.',
   'template.pizza-new-york.traits':
@@ -1375,7 +1379,7 @@ export const fr: Catalog = {
     'Cuisson au four à sole électrique (sole de {deckLow} à {deckHigh}, voûte {top}, statique)',
   'template.pizzaTeglia.bakeHomeShort': 'Cuisson en plaque au four domestique',
   'template.pizzaTeglia.bakeHome':
-    'Cuisson en plaque au four domestique : la première moitié du temps sur la grille basse, puis sur la grille du milieu',
+    'Cuire chaque pâton dans une plaque de 30×40 cm au four domestique : la première moitié du temps sur la grille basse, puis sur la grille du milieu',
   'template.brioche.mixShort': 'Pétrissage et incorporation du beurre',
   'template.brioche.mix':
     'Pétrir 2 min à basse vitesse, 8 min à vitesse moyenne, puis incorporer le beurre progressivement',
@@ -1604,6 +1608,10 @@ export const fr: Catalog = {
   'guide.key.cold_retard_min_h': 'Repos au froid (minimum publié)',
   'guide.key.cold_retard_max_h': 'Délai d’utilisation au froid (maximum publié)',
   'guide.key.bake_max_c': 'Four professionnel (maximum du guide)',
+  'guide.key.bake_pro_min': 'Cuisson au four professionnel',
+  'guide.key.bake_deck_min': 'Cuisson au four à sole',
+  'guide.key.bake_home_c': 'Four domestique',
+  'guide.key.bake_home_min': 'Cuisson au four domestique',
   'guide.key.simmer_per_side_s': 'Pochage par côté, par bagel',
   'guide.key.sugar_pct': 'Sucre',
   'guide.key.fat_pct': 'Gras',
@@ -1652,7 +1660,7 @@ export const fr: Catalog = {
   'template.pizza-neo-neapolitan.traits':
     'Une pizza au four maison sur acier : un pointage de 24 heures à température ambiante puis 48 heures au froid, suivi du boulage et d’un apprêt distinct. Une adaptation domestique, sans certification AVPN.',
   'template.pizza-roman.traits':
-    'Une pizza romaine ronde, mince et croustillante, selon la formule professionnelle directe retenue : de petits pâtons, sans huile dans la pâte, avec un four à pizza très chaud.',
+    'Une pizza romaine ronde, mince et croustillante, selon la formule directe retenue : de petits pâtons, sans huile dans la pâte, cuits sur une pierre préchauffée dans un four domestique.',
   'template.pizza-teglia.traits':
     'La pizza romaine en plaque : une pâte très hydratée de farine forte, maturée au froid un jour ou plus, étirée dans une plaque huilée : mie aérée, dessous croustillant.',
   'template.pizza-new-york.traits':

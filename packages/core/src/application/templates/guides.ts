@@ -572,9 +572,19 @@ export const STYLE_GUIDES: Readonly<Record<string, NonNullable<RecipeTemplate['g
         high: 350,
       },
       {
-        key: 'bake_min',
+        key: 'bake_pro_min',
         low: 2,
         high: 3,
+      },
+      {
+        key: 'bake_home_c',
+        low: 250,
+        high: 275,
+      },
+      {
+        key: 'bake_home_min',
+        low: 3,
+        high: 5,
       },
     ],
   },
@@ -618,9 +628,19 @@ export const STYLE_GUIDES: Readonly<Record<string, NonNullable<RecipeTemplate['g
         high: 4,
       },
       {
-        key: 'bake_min',
+        key: 'bake_deck_min',
         low: 8,
         high: 13,
+      },
+      {
+        key: 'bake_home_c',
+        low: 240,
+        high: 250,
+      },
+      {
+        key: 'bake_home_min',
+        low: 15,
+        high: 22,
       },
     ],
   },
