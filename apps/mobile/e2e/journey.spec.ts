@@ -1021,7 +1021,7 @@ test('the planner can follow now; starting always starts now', async ({ page }) 
   await page.clock.install({ time: new Date('2026-03-02T08:00:00-05:00') });
   await openRecipe(page);
   await showPlanning(page);
-  // "Now" is the default: no time to pick, the plan starts at the current time.
+  // The initial relative plan has no date input. "Now" is an explicit anchor.
   await expect(page.getByRole('button', { name: 'Maintenant' })).toBeVisible();
   await expect(page.locator('input[type="datetime-local"]')).toBeHidden();
   await page.getByRole('button', { name: 'À une heure' }).click();
