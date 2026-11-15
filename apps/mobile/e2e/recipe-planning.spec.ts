@@ -92,6 +92,48 @@ for (const english of [false, true]) {
     await expect(modal(page)).toHaveCount(0);
   };
 
+  test(`Planning uses relative times until a clock anchor is chosen${suffix}`, async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-11-05T08:00:00-05:00') });
+    await openSaved(page);
+    await page.setViewportSize({ width: 360, height: 851 });
+    await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
+    await showPlanning(page);
+    const view = routed(page);
+    const time = view.getByTestId('planning-step-time-poolish');
+    const relative = view.getByRole('button', {
+      name: english ? 'Relative' : 'Relatif',
+      exact: true,
+    });
+    const datetime = view.locator('input[type="datetime-local"]:visible');
+    await expect(relative).toHaveAttribute('aria-pressed', 'true');
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+    await expect(datetime).toHaveCount(0);
+
+    await view.getByRole('button', { name: english ? 'Now' : 'Maintenant', exact: true }).click();
+    await expect(time).toHaveText(
+      english ? /^08:00\s*AM\s*–\s*08:00\s*PM$/i : /^08:00\s*–\s*20:00$/,
+    );
+    await relative.click();
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+
+    await view
+      .getByRole('button', { name: english ? 'At a time' : 'À une heure', exact: true })
+      .click();
+    await expect(datetime).toHaveValue('');
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+    await datetime.fill('2026-11-05T07:00');
+    await expect(time).toHaveText(
+      english ? /^07:00\s*AM\s*–\s*07:00\s*PM$/i : /^07:00\s*–\s*19:00$/,
+    );
+    await datetime.fill('');
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+    await view
+      .getByRole('button', { name: english ? 'Ready by' : 'Prêt pour', exact: true })
+      .click();
+    await expect(datetime).toHaveValue('');
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+  });
+
   test(`Planning displays generated times and keeps time, target and scroll across tabs${suffix}`, async ({
     page,
   }) => {

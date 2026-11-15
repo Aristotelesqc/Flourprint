@@ -2,12 +2,14 @@ import { IonButton } from '@ionic/react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   projectProcess,
+  relativeTimeline,
   temperatureContext,
   type Instant,
   type Process,
   type ProjectedStep,
   type ProcessStep,
   type ProjectionMode,
+  type StepTiming,
 } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
 import { useServices } from '../services/services';
@@ -36,18 +38,13 @@ interface Props {
   readonly showSaveHint?: boolean;
 }
 
-/** `datetime-local` value (local time, minutes) ↔ UTC instant. */
-const toLocalInput = (date: Date): string => {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-};
-const fromLocalInput = (value: string): Instant => new Date(value).toISOString() as Instant;
+type StartSource = 'relative' | 'now' | 'chosen';
 
-const nextQuarterHour = (): Date => {
-  const date = new Date();
-  date.setSeconds(0, 0);
-  date.setMinutes(Math.ceil((date.getMinutes() + 1) / 15) * 15);
-  return date;
+/** `datetime-local` value (local time, minutes) → UTC instant when valid. */
+const parseLocalInput = (value: string): Instant | undefined => {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : (date.toISOString() as Instant);
 };
 
 /** Default step a "ready by" time refers to: the bake when there is one, else the last step. */
@@ -56,32 +53,47 @@ const defaultTarget = (process: Process): ProcessStep | undefined =>
 
 interface Planned {
   readonly step: ProcessStep;
+  readonly index: number;
+  readonly sortAt: number;
   readonly planned?: ProjectedStep;
+  readonly relative?: StepTiming;
 }
 
 const formatStepTimeRange = (
   planned: ProjectedStep | undefined,
   locale: string,
-): { readonly text: string; readonly overnight: boolean } => {
+): { readonly text: string; readonly wrap: boolean } => {
   const start = planned?.start;
   const end = planned?.end;
   if (start === undefined) {
-    return { text: end === undefined ? '—' : `— – ${formatTime(end, locale)}`, overnight: false };
+    return { text: end === undefined ? '—' : `— – ${formatTime(end, locale)}`, wrap: false };
   }
   const startTime = formatTime(start, locale);
   if (end === undefined) {
-    return { text: `${startTime} – —`, overnight: false };
+    return { text: `${startTime} – —`, wrap: false };
   }
   const overnight = localDayKey(start) !== localDayKey(end);
   return {
     text: overnight
       ? `${startTime} – ${formatDayTime(end, locale)}`
       : `${startTime}–${formatTime(end, locale)}`,
-    overnight,
+    wrap: overnight,
   };
 };
 
-/** Planning tab (#71, #170): read-only projected timeline with time and target controls. */
+const formatRelativeTimeRange = (
+  stepTiming: StepTiming | undefined,
+): { readonly text: string; readonly wrap: boolean } => {
+  if (stepTiming?.timing.status !== 'known') {
+    return { text: '—', wrap: false };
+  }
+  return {
+    text: `+${formatDuration(stepTiming.timing.startS)} – +${formatDuration(stepTiming.timing.endS)}`,
+    wrap: true,
+  };
+};
+
+/** Planning tab (#71, #170): read-only timeline with relative, clock-anchored and target controls. */
 export const ProcessSection = ({
   process,
   canStart,
@@ -95,10 +107,10 @@ export const ProcessSection = ({
   const temperature = useTemperature();
   const services = useServices();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
-  const [fromNow, setFromNow] = useState(true);
+  const [startSource, setStartSource] = useState<StartSource>('relative');
   const [now, setNow] = useState(() => services.clock.now());
-  const [when, setWhen] = useState(() => toLocalInput(nextQuarterHour()));
-  const followsClock = modeKind === 'startAt' && fromNow;
+  const [when, setWhen] = useState('');
+  const followsClock = modeKind === 'startAt' && startSource === 'now';
   useEffect(() => {
     if (!followsClock) return;
     setNow(services.clock.now());
@@ -108,39 +120,73 @@ export const ProcessSection = ({
   const [targetId, setTargetId] = useState(() => defaultTarget(process)?.id);
   const target = process.steps.find((s) => s.id === targetId) ?? defaultTarget(process);
 
-  const mode: ProjectionMode = useMemo(() => {
-    const at = followsClock ? now : fromLocalInput(when);
-    return modeKind === 'readyBy' && target
-      ? { kind: 'readyBy', at, target: target.id }
-      : { kind: 'startAt', at };
-  }, [modeKind, followsClock, now, when, target]);
-  const projection = useMemo(() => projectProcess(process, { mode }), [process, mode]);
+  const chosenInstant = useMemo(() => parseLocalInput(when), [when]);
+  const mode: ProjectionMode | undefined = useMemo(() => {
+    if (modeKind === 'readyBy') {
+      return chosenInstant && target
+        ? { kind: 'readyBy', at: chosenInstant, target: target.id }
+        : undefined;
+    }
+    if (startSource === 'now') {
+      return { kind: 'startAt', at: now };
+    }
+    if (startSource === 'chosen' && chosenInstant) {
+      return { kind: 'startAt', at: chosenInstant };
+    }
+    return undefined;
+  }, [modeKind, startSource, now, chosenInstant, target]);
+  const timeline = useMemo(() => relativeTimeline(process), [process]);
+  const timingById = useMemo(
+    () =>
+      new Map<ProcessStep['id'], StepTiming>(
+        timeline.ok ? timeline.value.steps.map((s) => [s.stepId, s]) : [],
+      ),
+    [timeline],
+  );
+  const projection = useMemo(
+    () => (mode ? projectProcess(process, { mode }) : undefined),
+    [process, mode],
+  );
+  const activeResult = projection ?? timeline;
 
   const planned: Planned[] = process.steps
-    .map((step) => {
-      const p = projection.ok ? projection.value.steps[step.id] : undefined;
-      return p === undefined ? { step } : { step, planned: p };
+    .map((step, index) => {
+      const p = projection?.ok ? projection.value.steps[step.id] : undefined;
+      const r = projection ? undefined : timingById.get(step.id);
+      const sortAt = projection
+        ? p?.start
+          ? Date.parse(p.start)
+          : Infinity
+        : r?.timing.status === 'known'
+          ? r.timing.startS
+          : Infinity;
+      return {
+        step,
+        index,
+        sortAt,
+        ...(p === undefined ? {} : { planned: p }),
+        ...(r === undefined ? {} : { relative: r }),
+      };
     })
-    .sort(
-      (a, b) =>
-        (a.planned?.start ? Date.parse(a.planned.start) : Infinity) -
-          (b.planned?.start ? Date.parse(b.planned.start) : Infinity) ||
-        process.steps.indexOf(a.step) - process.steps.indexOf(b.step),
-    );
-  const days: { key: string; label: string; steps: Planned[] }[] = [];
-  for (const item of planned) {
-    const start = item.planned?.start;
-    const key = start ? localDayKey(start) : 'unknown';
-    const label = start ? formatDay(start, locale) : t('process.unknownDay');
-    const day = days.find((d) => d.key === key);
-    if (day) day.steps.push(item);
-    else days.push({ key, label, steps: [item] });
+    .sort((a, b) => a.sortAt - b.sortAt || a.index - b.index);
+  const groups: { key: string; label: string; steps: Planned[] }[] = [];
+  if (projection) {
+    for (const item of planned) {
+      const start = item.planned?.start;
+      const key = start ? localDayKey(start) : 'unknown';
+      const label = start ? formatDay(start, locale) : t('process.unknownDay');
+      const group = groups.find((d) => d.key === key);
+      if (group) group.steps.push(item);
+      else groups.push({ key, label, steps: [item] });
+    }
+  } else if (planned.length > 0) {
+    groups.push({ key: 'relative', label: t('process.fromStart'), steps: planned });
   }
 
   const first = planned[0];
-  const targetEnd = target && projection.ok ? projection.value.steps[target.id]?.end : undefined;
-  const summary =
-    modeKind === 'readyBy'
+  const targetEnd = target && projection?.ok ? projection.value.steps[target.id]?.end : undefined;
+  const summary = projection?.ok
+    ? modeKind === 'readyBy'
       ? first?.planned?.start &&
         t('process.summary.readyBy', {
           step: stepName(first.step),
@@ -151,7 +197,8 @@ export const ProcessSection = ({
         t('process.summary.startAt', {
           step: stepName(target),
           when: formatDayTime(targetEnd, locale),
-        });
+        })
+    : undefined;
   const nameOf = (id: string) => {
     const step = process.steps.find((s) => s.id === id);
     return step ? stepName(step) : id;
@@ -178,16 +225,17 @@ export const ProcessSection = ({
             <span>{t('process.when.startAt')}</span>
             <Segmented
               size="small"
-              value={fromNow ? 'now' : 'chosen'}
+              value={startSource}
               options={[
+                { value: 'relative', label: t('process.when.relative') },
                 { value: 'now', label: t('process.when.now') },
                 { value: 'chosen', label: t('process.when.chosen') },
               ]}
-              onChange={(value) => setFromNow(value === 'now')}
+              onChange={setStartSource}
             />
           </div>
         )}
-        {!followsClock && (
+        {((modeKind === 'startAt' && startSource === 'chosen') || modeKind === 'readyBy') && (
           <label className="flex flex-wrap items-center justify-between gap-2">
             <span className="min-w-0">
               {modeKind === 'readyBy' && target
@@ -198,7 +246,7 @@ export const ProcessSection = ({
               type="datetime-local"
               className="fp-field h-12 w-full min-w-0 max-w-full rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 font-bold text-ink sm:w-auto"
               value={when}
-              onChange={(e) => e.target.value && setWhen(e.target.value)}
+              onChange={(e) => setWhen(e.target.value)}
             />
           </label>
         )}
@@ -218,9 +266,9 @@ export const ProcessSection = ({
             </select>
           </label>
         )}
-        {!projection.ok && (
+        {!activeResult.ok && (
           <p role="alert" className="m-0 text-alert">
-            {error(projection.error)}
+            {error(activeResult.error)}
           </p>
         )}
         {summary && (
@@ -231,21 +279,28 @@ export const ProcessSection = ({
         )}
       </Card>
 
-      {days.map((day) => (
-        <section key={day.key} className="flex flex-col gap-2">
-          <SectionTitle>{day.label}</SectionTitle>
+      {groups.map((group) => (
+        <section key={group.key} className="flex flex-col gap-2">
+          <SectionTitle>{group.label}</SectionTitle>
           <Rows>
-            {day.steps.map(({ step, planned: p }) => {
+            {group.steps.map(({ step, planned: p, relative: r }) => {
               const isLinearPrev = isImmediatelyPreceding(step, process.steps);
+              const unknownAfter = projection
+                ? (p?.unknownAfter ?? [])
+                : r?.timing.status === 'unknown'
+                  ? r.timing.unknownAfter
+                  : [];
               const hints = [
                 ...(step.dependsOn.length > 0 && !isLinearPrev
                   ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
                   : []),
-                ...(p && p.unknownAfter.length > 0
-                  ? [t('process.unknown', { steps: p.unknownAfter.map(nameOf).join(', ') })]
+                ...(unknownAfter.length > 0
+                  ? [t('process.unknown', { steps: unknownAfter.map(nameOf).join(', ') })]
                   : []),
               ];
-              const timeRange = formatStepTimeRange(p, locale);
+              const timeRange = projection
+                ? formatStepTimeRange(p, locale)
+                : formatRelativeTimeRange(r);
               const durationText =
                 step.durationMode === 'model'
                   ? step.plannedDurationS !== undefined
@@ -263,7 +318,7 @@ export const ProcessSection = ({
                   <div
                     data-testid={`planning-step-time-${step.id}`}
                     className={`min-w-0 font-bold tabular-nums text-ink ${
-                      timeRange.overnight ? 'whitespace-normal' : 'whitespace-nowrap'
+                      timeRange.wrap ? 'whitespace-normal' : 'whitespace-nowrap'
                     }`}
                   >
                     {timeRange.text}
@@ -343,7 +398,7 @@ export const ProcessSection = ({
       {!canStart && showSaveHint && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>
       )}
-      {canStart && !followsClock && (
+      {canStart && mode !== undefined && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
       )}
       {showActions && activeBakeId && (
@@ -351,7 +406,7 @@ export const ProcessSection = ({
           <IonButton expand="block" size="large" onClick={() => onOpenBake(activeBakeId)}>
             {t('process.openBake')}
           </IonButton>
-          <IonButton fill="clear" disabled={!canStart || !projection.ok} onClick={onStart}>
+          <IonButton fill="clear" disabled={!canStart || !activeResult.ok} onClick={onStart}>
             {t('process.startAnother')}
           </IonButton>
         </>
