@@ -194,8 +194,6 @@ const RecipePageContent = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isDraftMode, setIsDraftMode] = useState(false);
   const [hasEnteredEdit, setHasEnteredEdit] = useState(false);
-  const [targetedStepId, setTargetedStepId] = useState<string>();
-  const [returnToPlanning, setReturnToPlanning] = useState(false);
   const [presentToast] = useIonToast();
   const contentScrollRef = useRef<HTMLElement | null>(null);
   const pendingScrollAnchorRef = useRef<{ stepId: string; scrollTop: number } | null>(null);
@@ -370,10 +368,6 @@ const RecipePageContent = () => {
 
   const isSortDisabled = trashedAt !== undefined || writes.busy || hasInvalid;
 
-  const handleClearTargetedStep = useCallback(() => {
-    setTargetedStepId(undefined);
-  }, []);
-
   const dirty =
     stored !== undefined &&
     (newRecipe ||
@@ -426,17 +420,6 @@ const RecipePageContent = () => {
     return doc;
   }, [draft, base, name, recipeId, services, persist]);
 
-  const editStepInRecipe = useCallback(
-    (stepId: string) => {
-      if (trashedAt !== undefined) return;
-      ensureDraft();
-      switchTab('formula');
-      setReturnToPlanning(true);
-      setTargetedStepId(stepId);
-    },
-    [trashedAt, switchTab, ensureDraft],
-  );
-
   // Commit only the focused field through its normal blur path, including keyboard/AT activation.
   const blurActiveEditor = useCallback(() => {
     const focused = document.activeElement;
@@ -446,21 +429,12 @@ const RecipePageContent = () => {
   }, []);
 
   const leaveEditing = useCallback(
-    async (destination: Tab = 'formula', options: { readonly keepEditing?: boolean } = {}) => {
+    async (destination: Tab = 'formula') => {
       blurActiveEditor();
       await saving.current;
-      // Planning is a preview of accepted values: keep mounted raw fields for the return journey.
-      if (destination === 'process' && options.keepEditing) {
-        setReturnToPlanning(false);
-        setTargetedStepId(undefined);
-        switchTab(destination);
-        return;
-      }
       const invalid = validationActions?.isBlocked() ?? false;
       const leave = () => {
         if (invalid) setEditorGeneration((generation) => generation + 1);
-        setReturnToPlanning(false);
-        setTargetedStepId(undefined);
         if (newRecipe && destination === 'formula') {
           router.push('/recipes', 'back');
           return;
@@ -488,10 +462,6 @@ const RecipePageContent = () => {
     },
     [blurActiveEditor, validationActions, newRecipe, router, switchTab, presentAlert, t, dirty],
   );
-
-  const handleReturnToPlanning = useCallback(() => {
-    void leaveEditing('process', { keepEditing: true });
-  }, [leaveEditing]);
 
   const hydrationRef = useRef<HTMLDivElement>(null);
 
@@ -1513,11 +1483,6 @@ const RecipePageContent = () => {
                 preparationIds={draft.formula.components.map((c) => c.id)}
                 editable={isEditing}
                 showOutcome={!isEditing}
-                {...(targetedStepId !== undefined && effectivePanel === 'formula'
-                  ? { targetedStepId }
-                  : {})}
-                onClearTargetedStep={handleClearTargetedStep}
-                {...(returnToPlanning ? { onReturnToPlanning: handleReturnToPlanning } : {})}
                 onEnsureDraft={ensureDraft}
               />
             </div>,
@@ -1535,7 +1500,7 @@ const RecipePageContent = () => {
                 onStart={confirmStart}
                 {...(active ? { activeBakeId: active.bakeId } : {})}
                 onOpenBake={openBake}
-                {...(trashedAt === undefined ? { onEditStepInRecipe: editStepInRecipe } : {})}
+                showSaveHint={trashedAt === undefined}
               />
               {resolved.ok && trashedAt === undefined && (
                 <div className="mt-5 pb-6">
