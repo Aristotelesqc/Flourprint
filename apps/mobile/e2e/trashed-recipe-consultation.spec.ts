@@ -32,10 +32,12 @@ for (const english of [false, true]) {
       name: english ? 'Edit hydration' : 'Modifier l’hydratation',
       exact: true,
     });
+    const startPreparation = routed.getByRole('button', {
+      name: english ? 'Start preparation' : 'Démarrer la préparation',
+      exact: true,
+    });
     await expect(editHydration).toHaveCount(0);
-    await expect(
-      routed.getByRole('button', { name: english ? 'Start' : 'Démarrer', exact: true }),
-    ).toHaveCount(0);
+    await expect(startPreparation).toHaveCount(0);
     await routed
       .getByRole('tab', { name: english ? 'Planning' : 'Planification', exact: true })
       .click();
@@ -43,15 +45,14 @@ for (const english of [false, true]) {
       routed.getByRole('button', { name: english ? / in recipe$/ : / dans la recette$/ }),
     ).toHaveCount(0);
     await expect(routed.locator('input:visible')).toHaveCount(0);
+    await expect(startPreparation).toHaveCount(0);
     await routed
       .getByRole('button', { name: english ? 'Restore' : 'Restaurer', exact: true })
       .click();
+    await expect(startPreparation).toBeVisible();
     await expect(
-      routed.getByRole('button', {
-        name: english ? 'Edit Bulk fermentation in recipe' : 'Modifier Pointage dans la recette',
-        exact: true,
-      }),
-    ).toBeVisible();
+      routed.getByRole('button', { name: english ? / in recipe$/ : / dans la recette$/ }),
+    ).toHaveCount(0);
     await routed.getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true }).click();
     await enterEditor(page);
     await expect(

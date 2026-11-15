@@ -47,12 +47,6 @@ interface Props {
   readonly preparationIds: readonly string[];
   /** Whether authored steps are editable or read-only consultation. */
   readonly editable: boolean;
-  /** Step to target/open directly when navigating from Planning shortcut (#71). */
-  readonly targetedStepId?: string;
-  /** Called once targetedStepId is consumed so sheet closure does not conflict. */
-  readonly onClearTargetedStep?: () => void;
-  /** Callback to return to the Planning tab if shortcut was used. */
-  readonly onReturnToPlanning?: () => void;
   /** Whether to show RecipeOutcome (defaults to true; false when authored in Result section). */
   readonly showOutcome?: boolean;
   /** Called with the drop intent; returns accepted, refused, or unchanged. */
@@ -100,9 +94,6 @@ export const RecipeMethod = ({
   onProcessChange,
   preparationIds,
   editable,
-  targetedStepId,
-  onClearTargetedStep,
-  onReturnToPlanning,
   showOutcome = true,
   onDropIntent,
   onDragStart,
@@ -126,7 +117,6 @@ export const RecipeMethod = ({
   const stepButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const containerRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLDivElement>(null);
-  const returnBtnRef = useRef<HTMLButtonElement>(null);
   const stepSnapshotRef = useRef<ProcessStep | undefined>(undefined);
   const frameRef = useRef<number | undefined>(undefined);
   const [pendingProposal, setPendingProposal] = useState<{
@@ -183,26 +173,6 @@ export const RecipeMethod = ({
     stepSnapshotRef.current = activeStep;
   }
   const modalStep = activeStep ?? stepSnapshotRef.current;
-
-  useEffect(() => {
-    if (!targetedStepId) return;
-    const targetExists = process.steps.some((s) => s.id === targetedStepId);
-    if (!targetExists) {
-      onClearTargetedStep?.();
-      return;
-    }
-    setHighlightedStepId(targetedStepId);
-    setSelectedStepId(targetedStepId);
-    setIsSheetOpen(true);
-    onClearTargetedStep?.();
-
-    return () => {
-      if (frameRef.current !== undefined) {
-        cancelAnimationFrame(frameRef.current);
-        frameRef.current = undefined;
-      }
-    };
-  }, [targetedStepId, process.steps, onClearTargetedStep]);
 
   useEffect(() => {
     return () => {
@@ -308,7 +278,7 @@ export const RecipeMethod = ({
         btn.scrollIntoView({ behavior: 'auto', block: 'nearest' });
         btn.focus({ preventScroll: true });
       } else {
-        const fallback = returnBtnRef.current ?? headingRef.current;
+        const fallback = headingRef.current;
         fallback?.scrollIntoView({ behavior: 'auto', block: 'nearest' });
         fallback?.focus({ preventScroll: true });
       }
@@ -388,7 +358,7 @@ export const RecipeMethod = ({
         btn.scrollIntoView({ behavior: 'auto', block: 'nearest' });
         btn.focus({ preventScroll: true });
       } else {
-        const fallback = returnBtnRef.current ?? headingRef.current;
+        const fallback = headingRef.current;
         fallback?.scrollIntoView({ behavior: 'auto', block: 'nearest' });
         fallback?.focus({ preventScroll: true });
       }
@@ -611,17 +581,6 @@ export const RecipeMethod = ({
           <SectionTitle>{t('recipe.methodTitle')}</SectionTitle>
           <InfoButton topic="technique" term={t('recipe.methodTitle')} />
         </span>
-        {onReturnToPlanning && (
-          <button
-            ref={returnBtnRef}
-            type="button"
-            className="fp-reset inline-flex min-h-12 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-accent-text shadow-sm hover:bg-field-bg active:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-            onClick={onReturnToPlanning}
-          >
-            <span aria-hidden="true">←</span>
-            <span>{t('recipe.returnToPlanning')}</span>
-          </button>
-        )}
       </div>
 
       <Ui

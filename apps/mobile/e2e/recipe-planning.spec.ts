@@ -83,16 +83,8 @@ for (const english of [false, true]) {
   };
   const recipe = (page: Page) =>
     routed(page).getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true });
-  const shortcut = (page: Page) =>
-    routed(page).getByRole('button', {
-      name: english ? 'Edit Bulk fermentation in recipe' : 'Modifier Pointage dans la recette',
-      exact: true,
-    });
-  const returnToPlanning = (page: Page) =>
-    routed(page).getByRole('button', {
-      name: english ? 'Return to planning' : 'Revenir à la planification',
-      exact: true,
-    });
+  const planningPencils = (page: Page) =>
+    routed(page).getByRole('button', { name: /Edit .+ in recipe|Modifier .+ dans la recette/ });
   const close = async (page: Page) => {
     await modal(page)
       .getByRole('button', { name: english ? 'Close' : 'Fermer', exact: true })
@@ -100,7 +92,7 @@ for (const english of [false, true]) {
     await expect(modal(page)).toHaveCount(0);
   };
 
-  test(`Planning shortcuts retain the chosen time, target and scroll; repeated step entry works${suffix}`, async ({
+  test(`Planning displays generated times and keeps time, target and scroll across tabs${suffix}`, async ({
     page,
   }) => {
     await openSaved(page);
@@ -116,33 +108,19 @@ for (const english of [false, true]) {
     await target.selectOption('proof');
     await setScroll(page, 260);
     await expect.poll(() => scrollTop(page)).toBe(260);
-    await shortcut(page).evaluate((button: HTMLButtonElement) => button.click());
-    await expect(modal(page)).toBeVisible();
-    await expect(modal(page).locator('ion-title')).toHaveText(
-      english ? 'Bulk fermentation' : 'Pointage',
-    );
-    await close(page);
-    await expect(footer(page).getByRole('status')).toHaveText(english ? 'Up to date' : 'À jour');
-    await returnToPlanning(page).evaluate((button: HTMLButtonElement) => button.click());
+    await expect(planningPencils(page)).toHaveCount(0);
+    const timing = routed(page).getByTestId('planning-step-time-proof');
+    await expect(timing).toHaveText(/\d.*–.*\d/);
+    const timingBefore = await timing.innerText();
+    await recipe(page).click();
+    await showPlanning(page);
     await expect.poll(() => scrollTop(page)).toBe(260);
     await expect(when).toHaveValue('2026-11-05T14:00');
     await expect(target).toHaveValue('proof');
     await expect(
       routed(page).locator('input:not([type="datetime-local"]):not([type="checkbox"]):visible'),
     ).toHaveCount(0);
-    await shortcut(page).click();
-    await expect(modal(page)).toBeVisible();
-    await close(page);
-    await expect(
-      routed(page)
-        .getByRole('button', {
-          name: english ? 'Edit step Bulk fermentation' : 'Modifier l’étape Pointage',
-          exact: true,
-        })
-        .filter({ visible: true }),
-    ).toBeFocused();
-    await returnToPlanning(page).click();
-    await expect(when).toHaveValue('2026-11-05T14:00');
+    await expect(timing).toHaveText(timingBefore);
   });
 
   test(`Recipe owns authored durations; Planning preserves pending invalid composition${suffix}`, async ({
@@ -177,10 +155,7 @@ for (const english of [false, true]) {
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
     ).toBeVisible();
-    await shortcut(page).click();
-    await expect(modal(page)).toBeVisible();
-    await close(page);
-    await returnToPlanning(page).click();
+    await expect(planningPencils(page)).toHaveCount(0);
     await recipe(page).click();
     await enterEditor(page);
     await expect(water).toHaveValue('abc');
@@ -378,9 +353,8 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
   await expectRecipeRevision(page, 1);
   await expect(routed(page)).toHaveCount(1);
-  await routed(page).getByRole('tab', { name: 'Planification', exact: true }).click();
   await routed(page)
-    .getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true })
+    .getByRole('button', { name: 'Modifier l’étape Façonnage', exact: true })
     .click();
   await expect(modal(page)).toBeVisible();
   await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
@@ -398,15 +372,15 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
   await confirmation.getByRole('button', { name: 'Supprimer l’étape', exact: true }).dblclick();
   await expect(confirmation).toBeHidden();
   await expect(modal(page)).toHaveCount(0);
-  const back = routed(page).getByRole('button', {
-    name: 'Revenir à la planification',
-    exact: true,
-  });
-  await expect(back).toBeFocused();
+  const methodHeading = routed(page)
+    .getByTestId('recipe-method')
+    .locator('[tabindex="-1"]')
+    .first();
+  await expect(methodHeading).toBeFocused();
   await expect(
     routed(page).getByRole('button', { name: 'Modifier l’étape Façonnage', exact: true }),
   ).toHaveCount(0);
-  await back.click();
+  await showPlanning(page);
   await expect(
     routed(page).getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true }),
   ).toHaveCount(0);

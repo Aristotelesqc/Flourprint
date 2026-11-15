@@ -32,8 +32,8 @@ interface Props {
   readonly onOpenBake: (bakeId: string) => void;
   /** The Recipe page supplies the single primary action and its overflow alternatives. */
   readonly showActions?: boolean;
-  /** Shortcut to edit a specific step in the authored method in Recipe tab (#71). */
-  readonly onEditStepInRecipe?: (stepId: string) => void;
+  /** Show the save-first hint when `canStart` is false (non-trashed RecipePage drafts/invalid state). */
+  readonly showSaveHint?: boolean;
 }
 
 /** `datetime-local` value (local time, minutes) ↔ UTC instant. */
@@ -59,7 +59,29 @@ interface Planned {
   readonly planned?: ProjectedStep;
 }
 
-/** Planning tab (#71): read-only projected timeline with time/target controls and edit-in-Recipe shortcuts. */
+const formatStepTimeRange = (
+  planned: ProjectedStep | undefined,
+  locale: string,
+): { readonly text: string; readonly overnight: boolean } => {
+  const start = planned?.start;
+  const end = planned?.end;
+  if (start === undefined) {
+    return { text: end === undefined ? '—' : `— – ${formatTime(end, locale)}`, overnight: false };
+  }
+  const startTime = formatTime(start, locale);
+  if (end === undefined) {
+    return { text: `${startTime} – —`, overnight: false };
+  }
+  const overnight = localDayKey(start) !== localDayKey(end);
+  return {
+    text: overnight
+      ? `${startTime} – ${formatDayTime(end, locale)}`
+      : `${startTime}–${formatTime(end, locale)}`,
+    overnight,
+  };
+};
+
+/** Planning tab (#71, #170): read-only projected timeline with time and target controls. */
 export const ProcessSection = ({
   process,
   canStart,
@@ -67,7 +89,7 @@ export const ProcessSection = ({
   activeBakeId,
   onOpenBake,
   showActions = true,
-  onEditStepInRecipe,
+  showSaveHint = false,
 }: Props) => {
   const { t, error, stepName, stepInstructions, locale } = useMessages();
   const temperature = useTemperature();
@@ -223,63 +245,54 @@ export const ProcessSection = ({
                   ? [t('process.unknown', { steps: p.unknownAfter.map(nameOf).join(', ') })]
                   : []),
               ];
+              const timeRange = formatStepTimeRange(p, locale);
+              const durationText =
+                step.durationMode === 'model'
+                  ? step.plannedDurationS !== undefined
+                    ? `≈ ${formatDuration(step.plannedDurationS)}`
+                    : t('fermentation.auto')
+                  : step.plannedDurationS !== undefined
+                    ? formatDuration(step.plannedDurationS)
+                    : '—';
               return (
                 <div
                   key={step.id}
-                  className="flex flex-col gap-2 border-b border-line/40 px-3 py-3 last:border-b-0"
+                  data-testid={`planning-step-${step.id}`}
+                  className="flex min-w-0 flex-col gap-2 border-b border-line/40 px-3 py-3 last:border-b-0"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="w-14 shrink-0 font-bold text-ink">
-                        {p?.start ? formatTime(p.start, locale) : '—'}
-                      </span>
-                      <span className="font-semibold text-ink">{stepName(step)}</span>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="font-medium text-ink">
-                        {step.durationMode === 'model'
-                          ? step.plannedDurationS !== undefined
-                            ? `≈ ${formatDuration(step.plannedDurationS)}`
-                            : t('fermentation.auto')
-                          : step.plannedDurationS !== undefined
-                            ? formatDuration(step.plannedDurationS)
-                            : '—'}
-                      </span>
-                      {onEditStepInRecipe && (
-                        <button
-                          type="button"
-                          className="fp-reset inline-flex min-h-12 min-w-12 h-12 w-12 items-center justify-center rounded-lg border border-line bg-surface text-muted hover:text-accent-text hover:bg-field-bg active:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                          aria-label={t('planning.editStepInRecipe', { step: stepName(step) })}
-                          onClick={() => onEditStepInRecipe(step.id)}
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
+                  <div
+                    data-testid={`planning-step-time-${step.id}`}
+                    className={`min-w-0 font-bold tabular-nums text-ink ${
+                      timeRange.overnight ? 'whitespace-normal' : 'whitespace-nowrap'
+                    }`}
+                  >
+                    {timeRange.text}
+                  </div>
+                  <div
+                    data-testid={`planning-step-title-${step.id}`}
+                    className="min-w-0 font-semibold text-ink"
+                  >
+                    {stepName(step)}
                   </div>
                   {step.technique && (
-                    <span className="text-[13px] text-ink">
+                    <span className="min-w-0 text-supporting text-ink">
                       {techniqueSummary(t, step.technique)}
                     </span>
                   )}
                   {stepInstructions(step) && (
-                    <span className="text-[13px] text-muted">{stepInstructions(step)}</span>
+                    <span className="min-w-0 text-supporting text-muted">
+                      {stepInstructions(step)}
+                    </span>
                   )}
+                  <div
+                    data-testid={`planning-step-duration-${step.id}`}
+                    className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-supporting"
+                  >
+                    <span className="text-muted">{t('prep.duration')}</span>
+                    <span className="font-medium tabular-nums text-ink">{durationText}</span>
+                  </div>
                   {step.conditions && (
-                    <span className="text-[13px] text-muted">
+                    <span className="min-w-0 text-supporting text-muted">
                       {[
                         step.conditions.location,
                         step.conditions.temperatureC !== undefined
@@ -305,7 +318,7 @@ export const ProcessSection = ({
                   )}
                   <StepEquipmentDetails step={step} />
                   {(hints.length > 0 || step.schedule === 'alap') && (
-                    <span className="text-[13px] text-muted">
+                    <span className="text-supporting text-muted">
                       {step.schedule === 'alap' && (
                         <span className="mr-1 inline-flex items-center gap-1 font-semibold">
                           {t('process.alap')}
@@ -327,7 +340,7 @@ export const ProcessSection = ({
         <RecipeOutcome process={process} editable={false} />
       </div>
 
-      {!canStart && onEditStepInRecipe && (
+      {!canStart && showSaveHint && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>
       )}
       {canStart && !followsClock && (
