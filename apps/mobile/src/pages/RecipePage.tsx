@@ -1488,6 +1488,7 @@ const RecipePageContent = () => {
             </div>,
             <div key="process">
               <ProcessSection
+                formula={draft.formula}
                 process={draft.process}
                 canStart={
                   base !== undefined &&

@@ -195,7 +195,7 @@ destructive actions are separated there and never placed beside Start/Resume. Fr
 Preparation shortcuts (+15 min, Duration, Note and readiness observations) remain visible.
 
 Recipe presents composition and authored method. Planning presents generated projections with
-time controls and a shortcut to the single Recipe step editor. Preparation presents actual work.
+time controls. Preparation presents actual work.
 Follow the contracts for semantics; do not build a second editable recipe inside Planning.
 
 **Consultation/editing composition (owner, 2026-11-04; L31/L50/L60/L151-L157):**
@@ -219,7 +219,7 @@ under the pointer and in the list so dragging preserves its presentation.
 In-place value editing is future work, outside 0.3, and must not compete with drag activation.
 
 The implementation uses `FormulaConsultation`, `FormulaSection` and `RecipeMethod` for the Recipe tab,
-and a read-only projection `ProcessSection` for the Planning tab with shortcuts to the step editor.
+and a read-only projection `ProcessSection` for the Planning tab. Step editing opens from Recipe.
 Hydration lock controls exist exclusively within the formula editor; consultation presents resolved hydration without an edit shortcut or lock glyph. Planner inputs survive mode changes.
 Intended outcome is authored in Recipe and summarized in Planning (with an inference hint for automatic outcomes, and an authored label when explicit). Equipment attached to a step
 uses one compact summary and progressive details in both views. Explicit settings and unknowns
@@ -314,10 +314,10 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   predictions as 0 min–0 min ranges. Bottom outer scroll content uses ordinary trailing spacing (`pb-6`)
   alongside the Ionic footer's reserved viewport, rather than duplicating the footer height. The final
   result remains fully visible above the primary action at 360 px and with enlarged text, without a dead gap.
-- **Planning:** concise step-first summary wording (`{step} · fin {when}` / `{step} · end {when}`, with
-  `début` / `start` for the reverse projection), single discoverable
-  pencil edit affordance per step navigating to Recipe step editing, linear dependency omission matching Recipe,
-  and clear preview explanations when raw fields are invalid.
+- **Planning.** Show the total planned span and the window for each phase. Show elapsed offsets
+  before choosing a time and clock times after anchoring. A partial or unknown window names its
+  blockers when known. Keep concise step-first wording in the anchor summary, omit redundant
+  linear dependency hints, and explain when invalid raw fields affect the preview.
 - **Completed preparation steps:** show the actual end clock alongside an explicitly labelled planned
   recipe duration. Never present the planned duration as elapsed time; the journal retains actual facts.
 - **Active preparation cards:** put the current step action on its own full-width row, with Note and

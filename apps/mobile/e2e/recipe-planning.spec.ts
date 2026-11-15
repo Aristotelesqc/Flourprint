@@ -134,6 +134,52 @@ for (const english of [false, true]) {
     await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
   });
 
+  test(`Planning phase windows show elapsed time, cooling and unknown constraints${suffix}`, async ({
+    page,
+  }) => {
+    await openSaved(page);
+    await page.setViewportSize({ width: 360, height: 851 });
+    await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
+    await showPlanning(page);
+
+    const view = routed(page);
+    const total = view.getByTestId('planning-window-total');
+    const cooking = view.getByTestId('planning-window-cooking');
+    await expect(total).toContainText('+20 h 10 min');
+    await expect(view.getByTestId('planning-window-component:poolish')).toContainText('+12 h');
+    await expect(cooking).toContainText('+20 h 10 min');
+    await expect(view.getByTestId('planning-window-mainDough')).toBeVisible();
+
+    await view
+      .getByRole('button', { name: english ? 'Ready by' : 'Prêt pour', exact: true })
+      .click();
+    const when = view.locator('input[type="datetime-local"]:visible');
+    await when.fill('2026-11-05T14:00');
+    const finish = english ? /04:00\s*PM/i : /16:00/;
+    await expect(total).toContainText(finish);
+    await expect(cooking).toContainText(finish);
+    await when.fill('');
+
+    await recipe(page).click();
+    await enterEditor(page);
+    await editorSection(page, 'steps');
+    await view
+      .getByRole('button', {
+        name: english ? 'Edit step Mix' : 'Modifier l’étape Pétrissage',
+        exact: true,
+      })
+      .click();
+    const duration = modal(page).getByLabel(english ? 'Duration of Mix' : 'Durée : Pétrissage', {
+      exact: true,
+    });
+    await duration.fill('');
+    await duration.press('Enter');
+    await close(page);
+    await showPlanning(page);
+    await expect(total).toContainText(english ? 'Mix' : 'Pétrissage');
+    await expect(total).not.toContainText(/\+|20 h 10 min/);
+  });
+
   test(`Planning displays generated times and keeps time, target and scroll across tabs${suffix}`, async ({
     page,
   }) => {
