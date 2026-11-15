@@ -1,9 +1,11 @@
 import { IonButton } from '@ionic/react';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  anchorTimeline,
   projectProcess,
   relativeTimeline,
   temperatureContext,
+  type Formula,
   type Instant,
   type Process,
   type ProjectedStep,
@@ -18,12 +20,14 @@ import { useTemperature } from '../i18n/temperature';
 import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
 import { Segmented } from '../ui/Segmented';
+import { PlanningWindows } from './PlanningWindows';
 import { RecipeOutcome } from './RecipeOutcome';
 import { StepEquipmentDetails } from './StepEquipmentDetails';
 import { techniqueSummary } from './StepSheet';
 import { isImmediatelyPreceding } from './RecipeMethod';
 
 interface Props {
+  readonly formula: Formula;
   readonly process: Process;
   /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
   readonly canStart: boolean;
@@ -95,6 +99,7 @@ const formatRelativeTimeRange = (
 
 /** Planning tab (#71, #170): read-only timeline with relative, clock-anchored and target controls. */
 export const ProcessSection = ({
+  formula,
   process,
   canStart,
   onStart,
@@ -135,7 +140,13 @@ export const ProcessSection = ({
     }
     return undefined;
   }, [modeKind, startSource, now, chosenInstant, target]);
-  const timeline = useMemo(() => relativeTimeline(process), [process]);
+  const timeline = useMemo(
+    () =>
+      relativeTimeline(process, {
+        components: new Set(formula.components.map((component) => component.id)),
+      }),
+    [process, formula.components],
+  );
   const timingById = useMemo(
     () =>
       new Map<ProcessStep['id'], StepTiming>(
@@ -146,6 +157,11 @@ export const ProcessSection = ({
   const projection = useMemo(
     () => (mode ? projectProcess(process, { mode }) : undefined),
     [process, mode],
+  );
+  const anchored = useMemo(
+    () =>
+      timeline.ok && mode && projection?.ok ? anchorTimeline(timeline.value, mode) : undefined,
+    [timeline, mode, projection],
   );
   const activeResult = projection ?? timeline;
 
@@ -278,6 +294,17 @@ export const ProcessSection = ({
           </div>
         )}
       </Card>
+
+      {timeline.ok &&
+        timeline.value.steps.length > 0 &&
+        (!mode || (projection?.ok && anchored?.ok)) && (
+          <PlanningWindows
+            formula={formula}
+            process={process}
+            timeline={timeline.value}
+            {...(anchored?.ok ? { anchored: anchored.value } : {})}
+          />
+        )}
 
       {groups.map((group) => (
         <section key={group.key} className="flex flex-col gap-2">
