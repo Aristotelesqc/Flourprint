@@ -19,6 +19,7 @@ import { formatDay, formatDayTime, formatDuration, formatTime, localDayKey } fro
 import { useTemperature } from '../i18n/temperature';
 import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
+import { Ui } from '../ui/library';
 import { Segmented } from '../ui/Segmented';
 import { PlanningWindows } from './PlanningWindows';
 import { RecipeOutcome } from './RecipeOutcome';
@@ -115,6 +116,7 @@ export const ProcessSection = ({
   const [startSource, setStartSource] = useState<StartSource>('relative');
   const [now, setNow] = useState(() => services.clock.now());
   const [when, setWhen] = useState('');
+  const [scheduleDetailsOpen, setScheduleDetailsOpen] = useState(false);
   const followsClock = modeKind === 'startAt' && startSource === 'now';
   useEffect(() => {
     if (!followsClock) return;
@@ -306,117 +308,128 @@ export const ProcessSection = ({
           />
         )}
 
-      {groups.map((group) => (
-        <section key={group.key} className="flex flex-col gap-2">
-          <SectionTitle>{group.label}</SectionTitle>
-          <Rows>
-            {group.steps.map(({ step, planned: p, relative: r }) => {
-              const isLinearPrev = isImmediatelyPreceding(step, process.steps);
-              const unknownAfter = projection
-                ? (p?.unknownAfter ?? [])
-                : r?.timing.status === 'unknown'
-                  ? r.timing.unknownAfter
-                  : [];
-              const hints = [
-                ...(step.dependsOn.length > 0 && !isLinearPrev
-                  ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
-                  : []),
-                ...(unknownAfter.length > 0
-                  ? [t('process.unknown', { steps: unknownAfter.map(nameOf).join(', ') })]
-                  : []),
-              ];
-              const timeRange = projection
-                ? formatStepTimeRange(p, locale)
-                : formatRelativeTimeRange(r);
-              const durationText =
-                step.durationMode === 'model'
-                  ? step.plannedDurationS !== undefined
-                    ? `≈ ${formatDuration(step.plannedDurationS)}`
-                    : t('fermentation.auto')
-                  : step.plannedDurationS !== undefined
-                    ? formatDuration(step.plannedDurationS)
-                    : '—';
-              return (
-                <div
-                  key={step.id}
-                  data-testid={`planning-step-${step.id}`}
-                  className="flex min-w-0 flex-col gap-2 border-b border-line/40 px-3 py-3 last:border-b-0"
-                >
-                  <div
-                    data-testid={`planning-step-time-${step.id}`}
-                    className={`min-w-0 font-bold tabular-nums text-ink ${
-                      timeRange.wrap ? 'whitespace-normal' : 'whitespace-nowrap'
-                    }`}
-                  >
-                    {timeRange.text}
-                  </div>
-                  <div
-                    data-testid={`planning-step-title-${step.id}`}
-                    className="min-w-0 font-semibold text-ink"
-                  >
-                    {stepName(step)}
-                  </div>
-                  {step.technique && (
-                    <span className="min-w-0 text-supporting text-ink">
-                      {techniqueSummary(t, step.technique)}
-                    </span>
-                  )}
-                  {stepInstructions(step) && (
-                    <span className="min-w-0 text-supporting text-muted">
-                      {stepInstructions(step)}
-                    </span>
-                  )}
-                  <div
-                    data-testid={`planning-step-duration-${step.id}`}
-                    className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-supporting"
-                  >
-                    <span className="text-muted">{t('prep.duration')}</span>
-                    <span className="font-medium tabular-nums text-ink">{durationText}</span>
-                  </div>
-                  {step.conditions && (
-                    <span className="min-w-0 text-supporting text-muted">
-                      {[
-                        step.conditions.location,
-                        step.conditions.temperatureC !== undefined
-                          ? `${
-                              temperatureContext(step) === 'oven'
-                                ? t('equipment.label.setpoint')
-                                : t('fermentation.room')
-                            } : ${temperature.format(
-                              step.conditions.temperatureC,
-                              temperatureContext(step),
-                            )}`
-                          : undefined,
-                        step.conditions.doughTemperatureC !== undefined
-                          ? `${t('fermentation.target')} : ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
-                          : undefined,
-                        step.conditions.frictionC !== undefined
-                          ? `${t('fermentation.friction')} : ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
-                          : undefined,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </span>
-                  )}
-                  <StepEquipmentDetails step={step} />
-                  {(hints.length > 0 || step.schedule === 'alap') && (
-                    <span className="text-supporting text-muted">
-                      {step.schedule === 'alap' && (
-                        <span className="mr-1 inline-flex items-center gap-1 font-semibold">
-                          {t('process.alap')}
-                          <InfoButton topic="alap" term={t('process.alap')} />
-                        </span>
-                      )}
-                      {step.schedule === 'alap' && hints.length > 0 && ' · '}
-                      {hints.join(' · ')}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </Rows>
-        </section>
-      ))}
+      {groups.length > 0 && (
+        <Ui
+          component="fp.disclosure"
+          expanded={scheduleDetailsOpen}
+          onExpandedChange={setScheduleDetailsOpen}
+          label={t('process.scheduleDetails')}
+        >
+          <div className="flex flex-col gap-3">
+            {groups.map((group) => (
+              <section key={group.key} className="flex flex-col gap-2">
+                <SectionTitle>{group.label}</SectionTitle>
+                <Rows>
+                  {group.steps.map(({ step, planned: p, relative: r }) => {
+                    const isLinearPrev = isImmediatelyPreceding(step, process.steps);
+                    const unknownAfter = projection
+                      ? (p?.unknownAfter ?? [])
+                      : r?.timing.status === 'unknown'
+                        ? r.timing.unknownAfter
+                        : [];
+                    const hints = [
+                      ...(step.dependsOn.length > 0 && !isLinearPrev
+                        ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
+                        : []),
+                      ...(unknownAfter.length > 0
+                        ? [t('process.unknown', { steps: unknownAfter.map(nameOf).join(', ') })]
+                        : []),
+                    ];
+                    const timeRange = projection
+                      ? formatStepTimeRange(p, locale)
+                      : formatRelativeTimeRange(r);
+                    const durationText =
+                      step.durationMode === 'model'
+                        ? step.plannedDurationS !== undefined
+                          ? `≈ ${formatDuration(step.plannedDurationS)}`
+                          : t('fermentation.auto')
+                        : step.plannedDurationS !== undefined
+                          ? formatDuration(step.plannedDurationS)
+                          : '—';
+                    return (
+                      <div
+                        key={step.id}
+                        data-testid={`planning-step-${step.id}`}
+                        className="flex min-w-0 flex-col gap-2 border-b border-line/40 px-3 py-3 last:border-b-0"
+                      >
+                        <div
+                          data-testid={`planning-step-time-${step.id}`}
+                          className={`min-w-0 font-bold tabular-nums text-ink ${
+                            timeRange.wrap ? 'whitespace-normal' : 'whitespace-nowrap'
+                          }`}
+                        >
+                          {timeRange.text}
+                        </div>
+                        <div
+                          data-testid={`planning-step-title-${step.id}`}
+                          className="min-w-0 font-semibold text-ink"
+                        >
+                          {stepName(step)}
+                        </div>
+                        {step.technique && (
+                          <span className="min-w-0 text-supporting text-ink">
+                            {techniqueSummary(t, step.technique)}
+                          </span>
+                        )}
+                        {stepInstructions(step) && (
+                          <span className="min-w-0 text-supporting text-muted">
+                            {stepInstructions(step)}
+                          </span>
+                        )}
+                        <div
+                          data-testid={`planning-step-duration-${step.id}`}
+                          className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-supporting"
+                        >
+                          <span className="text-muted">{t('prep.duration')}</span>
+                          <span className="font-medium tabular-nums text-ink">{durationText}</span>
+                        </div>
+                        {step.conditions && (
+                          <span className="min-w-0 text-supporting text-muted">
+                            {[
+                              step.conditions.location,
+                              step.conditions.temperatureC !== undefined
+                                ? `${
+                                    temperatureContext(step) === 'oven'
+                                      ? t('equipment.label.setpoint')
+                                      : t('fermentation.room')
+                                  } : ${temperature.format(
+                                    step.conditions.temperatureC,
+                                    temperatureContext(step),
+                                  )}`
+                                : undefined,
+                              step.conditions.doughTemperatureC !== undefined
+                                ? `${t('fermentation.target')} : ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
+                                : undefined,
+                              step.conditions.frictionC !== undefined
+                                ? `${t('fermentation.friction')} : ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
+                                : undefined,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </span>
+                        )}
+                        <StepEquipmentDetails step={step} />
+                        {(hints.length > 0 || step.schedule === 'alap') && (
+                          <span className="text-supporting text-muted">
+                            {step.schedule === 'alap' && (
+                              <span className="mr-1 inline-flex items-center gap-1 font-semibold">
+                                {t('process.alap')}
+                                <InfoButton topic="alap" term={t('process.alap')} />
+                              </span>
+                            )}
+                            {step.schedule === 'alap' && hints.length > 0 && ' · '}
+                            {hints.join(' · ')}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </Rows>
+              </section>
+            ))}
+          </div>
+        </Ui>
+      )}
 
       <div className="pt-1">
         <RecipeOutcome process={process} editable={false} />
