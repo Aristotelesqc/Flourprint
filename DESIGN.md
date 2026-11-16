@@ -317,7 +317,9 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 - **Planning.** Show the total planned span and the window for each phase. Show elapsed offsets
   before choosing a time and clock times after anchoring. A partial or unknown window names its
   blockers when known. Keep concise step-first wording in the anchor summary, omit redundant
-  linear dependency hints, and explain when invalid raw fields affect the preview.
+  linear dependency hints, and explain when invalid raw fields affect the preview. Keep the
+  read-only chronology in a shared disclosure below the phase windows. It starts collapsed and
+  retains its state across the Recipe tabs.
 - **Completed preparation steps:** show the actual end clock alongside an explicitly labelled planned
   recipe duration. Never present the planned duration as elapsed time; the journal retains actual facts.
 - **Active preparation cards:** put the current step action on its own full-width row, with Note and

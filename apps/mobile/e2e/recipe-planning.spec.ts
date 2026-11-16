@@ -85,6 +85,11 @@ for (const english of [false, true]) {
     routed(page).getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true });
   const planningPencils = (page: Page) =>
     routed(page).getByRole('button', { name: /Edit .+ in recipe|Modifier .+ dans la recette/ });
+  const scheduleDetails = (page: Page) =>
+    routed(page).getByRole('button', {
+      name: english ? 'Schedule details' : 'Détail de l’échéancier',
+      exact: true,
+    });
   const close = async (page: Page) => {
     await modal(page)
       .getByRole('button', { name: english ? 'Close' : 'Fermer', exact: true })
@@ -106,6 +111,7 @@ for (const english of [false, true]) {
     });
     const datetime = view.locator('input[type="datetime-local"]:visible');
     await expect(relative).toHaveAttribute('aria-pressed', 'true');
+    await scheduleDetails(page).click();
     await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
     await expect(datetime).toHaveCount(0);
 
@@ -149,6 +155,7 @@ for (const english of [false, true]) {
     await expect(view.getByTestId('planning-window-component:poolish')).toContainText('+12 h');
     await expect(cooking).toContainText('+20 h 10 min');
     await expect(view.getByTestId('planning-window-mainDough')).toBeVisible();
+    await expect(scheduleDetails(page)).toHaveAttribute('aria-expanded', 'false');
 
     await view
       .getByRole('button', { name: english ? 'Ready by' : 'Prêt pour', exact: true })
@@ -194,6 +201,10 @@ for (const english of [false, true]) {
     });
     await when.fill('2026-11-05T14:00');
     await target.selectOption('proof');
+    const details = scheduleDetails(page);
+    await expect(details).toHaveAttribute('aria-expanded', 'false');
+    await details.press('Enter');
+    await expect(details).toHaveAttribute('aria-expanded', 'true');
     await setScroll(page, 260);
     await expect.poll(() => scrollTop(page)).toBe(260);
     await expect(planningPencils(page)).toHaveCount(0);
@@ -205,10 +216,14 @@ for (const english of [false, true]) {
     await expect.poll(() => scrollTop(page)).toBe(260);
     await expect(when).toHaveValue('2026-11-05T14:00');
     await expect(target).toHaveValue('proof');
+    await expect(details).toHaveAttribute('aria-expanded', 'true');
     await expect(
       routed(page).locator('input:not([type="datetime-local"]):not([type="checkbox"]):visible'),
     ).toHaveCount(0);
     await expect(timing).toHaveText(timingBefore);
+    await details.click();
+    await expect(details).toHaveAttribute('aria-expanded', 'false');
+    await expect(routed(page).getByTestId('planning-window-total')).toBeVisible();
   });
 
   test(`Recipe owns authored durations; Planning preserves pending invalid composition${suffix}`, async ({
@@ -239,6 +254,7 @@ for (const english of [false, true]) {
     await water.fill('abc');
     await water.blur();
     await showPlanning(page);
+    await scheduleDetails(page).click();
     await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
