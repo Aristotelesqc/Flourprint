@@ -1317,9 +1317,8 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await advance.getByRole('button', { name: 'Au prochain moment prévu' }).click();
   await expect(page.getByText('À faire aussi maintenant', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Commencer Échaudage' })).toBeVisible();
-  await expect(page.getByRole('progressbar', { name: 'Préferment' })).toHaveAttribute(
-    'aria-valuetext',
-    '1 h restantes',
+  await expect(page.getByRole('timer', { name: 'Temps restant estimé' })).toHaveText(
+    /^(?:01:00:00|00:59:[0-5]\d)$/,
   );
 
   // Real mode: the simulated bake is gone from the bakes and the history.

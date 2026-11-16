@@ -128,9 +128,9 @@ for (const english of [false, true]) {
       await open.click();
       await expect(page).toHaveURL(/\/bakes\//);
       await expect(routed(page)).toHaveCount(1);
-      await expect(
-        routed(page).getByRole('heading', { name: longName, exact: true }),
-      ).toBeVisible();
+      const heading = routed(page).getByRole('heading', { level: 2, name: /^1 \/ \d+ · / });
+      await expect(heading).toBeVisible();
+      await expect(heading).toContainText(longName);
       await expect(routed(page)).toHaveCount(1);
     });
   }
