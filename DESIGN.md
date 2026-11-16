@@ -364,8 +364,11 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   Undo/Redo/Save path; refusal, outside release and cancellation preserve earlier edits.
   Hardware, toolbar and browser Back cancel the active gesture before normal navigation resumes.
   System/manual reduced motion retains focus and final state with zero-duration settling.
-- **Preparation:** large remaining time, planned end, actual start and temporal progress; visible
-  quick controls and readiness observations. Upcoming steps with clock times precede completed
+- **Preparation:** use the step number and name above the large, tabular countdown. The estimated
+  countdown uses the engine's explicit or implicit start and projected deadline. At zero the step
+  stays active and the timer shows a signed overrun. Show duration adjustments separately from the
+  step's planned end, start and temporal progress. Keep quick controls and readiness observations
+  visible. Upcoming steps with clock times precede completed
   steps. Keep the full journal accessible (all existing notes, observations and step completions)
   and actual lifecycle/outcome actions. A readiness observation neither completes the stage nor
   establishes a cooked result. Unknown times remain unknown.

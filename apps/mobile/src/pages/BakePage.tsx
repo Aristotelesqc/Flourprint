@@ -11,13 +11,14 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { loadBake } from '@flourprint/core/application';
 import {
   doughContextOf,
   doughReadyStage,
   intendedOutcome,
+  isStepHeld,
   outcomeChoiceRequired,
   type BakeCommandPayload,
   type BakeState,
@@ -30,6 +31,7 @@ import { techniqueSummary } from '../blocks/StepSheet';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
 import {
+  formatClock,
   formatDayTime,
   formatDuration,
   formatTime,
@@ -164,6 +166,12 @@ export const BakePage = () => {
 
   const view = state.status === 'active' ? bakeView(state, now) : undefined;
   const focus = view?.focus;
+  const focusStepIndex =
+    focus && state.process ? state.process.steps.findIndex((s) => s.id === focus.step.id) + 1 : 0;
+  const focusStepTotal = state.process?.steps.length ?? view?.total ?? 0;
+  const focusBaselineDurationS = focus
+    ? state.snapshot?.process.steps.find((s) => s.id === focus.step.id)?.plannedDurationS
+    : undefined;
   const log = bakeLog(state);
   const completedSteps =
     state.process?.steps.filter((s) => state.steps[s.id]?.endedAt !== undefined) ?? [];
@@ -452,7 +460,16 @@ export const BakePage = () => {
             </div>
           )}
 
-          {focus && <Focus focus={focus} now={now} />}
+          {focus && (
+            <Focus
+              focus={focus}
+              now={now}
+              held={isStepHeld(state, focus.step.id)}
+              stepIndex={focusStepIndex}
+              totalSteps={focusStepTotal}
+              baselineDurationS={focusBaselineDurationS}
+            />
+          )}
 
           {focus && (
             <>
@@ -839,48 +856,118 @@ const remainingText = (end: Instant, now: Instant, t: Translate): string => {
   return `${formatDuration(seconds)} ${t(seconds >= 0 ? 'bake.left' : 'bake.over')}`;
 };
 
-const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now: Instant }) => {
+const Focus = ({
+  focus,
+  now,
+  held,
+  stepIndex,
+  totalSteps,
+  baselineDurationS,
+}: {
+  focus: BakeStepView & { running: boolean };
+  now: Instant;
+  held: boolean;
+  stepIndex: number;
+  totalSteps: number;
+  baselineDurationS: number | undefined;
+}) => {
   const { t, stepName, locale } = useMessages();
+  const { clock } = useServices();
+  const timerLabelId = useId();
   const { projected, startedAt } = focus;
+  const effectiveStart = startedAt ?? (projected?.implicit ? projected.start : undefined);
+  const isActive = effectiveStart !== undefined;
   const duration = focus.step.plannedDurationS;
-  let big = '—';
-  let unit = '';
-  if (focus.running && projected?.end) {
-    const seconds = (Date.parse(projected.end) - Date.parse(now)) / 1000;
-    big = formatDuration(seconds);
-    unit = t(seconds >= 0 ? 'bake.left' : 'bake.over');
-  } else if (duration !== undefined) {
-    big = formatDuration(duration);
-    unit = t('bake.planned');
-  }
-  const progress =
-    focus.running && startedAt && projected?.end
-      ? stepProgress(Date.parse(startedAt), Date.parse(projected.end), Date.parse(now))
-      : 0;
+  const startMs = effectiveStart === undefined ? Number.NaN : Date.parse(effectiveStart);
+  const endMs = projected?.end === undefined ? Number.NaN : Date.parse(projected.end);
+  const hasActiveCountdown = isActive && Number.isFinite(endMs);
+  const [timerNow, setTimerNow] = useState(() => clock.now());
+  useEffect(() => {
+    if (!hasActiveCountdown || held) return;
+    const tick = () => setTimerNow(clock.now());
+    tick();
+    const interval = setInterval(tick, 1_000);
+    return () => clearInterval(interval);
+  }, [clock, hasActiveCountdown, held]);
+  // A held projection is calculated using the same clock sample as the parent.
+  const nowMs = Date.parse(held ? now : timerNow);
+
+  const remainingSeconds = Math.ceil((endMs - nowMs) / 1_000);
+  const overrun = remainingSeconds < 0;
+  const plannedDuration = isActive ? undefined : duration;
+
+  const showProgress = isActive && Number.isFinite(startMs) && Number.isFinite(endMs);
+  const progress = showProgress ? stepProgress(startMs, endMs, nowMs) : 0;
+  const adjustmentS =
+    baselineDurationS !== undefined &&
+    Number.isFinite(baselineDurationS) &&
+    duration !== undefined &&
+    Number.isFinite(duration)
+      ? duration - baselineDurationS
+      : undefined;
+  const adjustmentDelta =
+    adjustmentS === undefined
+      ? undefined
+      : Math.round(Math.abs(adjustmentS) / 60) === 0 || adjustmentS > 0
+        ? `+${formatDuration(adjustmentS)}`
+        : `−${formatDuration(adjustmentS)}`;
+  const stepTitle = stepName(focus.step);
+  const heading =
+    stepIndex > 0 && totalSteps > 0
+      ? t('bake.stepHeading', { index: stepIndex, total: totalSteps, step: stepTitle })
+      : stepTitle;
+  const technique = techniqueSummary(t, focus.step.technique);
+  const heroTimerClass = 'm3-type-hero-timer max-w-full text-[min(3.25rem,14vw)] tabular-nums';
+
   return (
     <section className="flex flex-col gap-1.5">
-      <span className="flex items-center gap-1.5 text-sm font-bold tracking-wider text-accent-text uppercase">
-        {t(focus.running ? 'bake.now' : 'bake.upNext')}
-        <InfoButton topic="bakeFocus" term={t(focus.running ? 'bake.now' : 'bake.upNext')} />
-      </span>
-      <h2 className="m3-type-title m-0 break-words">{stepName(focus.step)}</h2>
-      {focus.step.technique && (
-        <span className="text-[15px] text-muted">{techniqueSummary(t, focus.step.technique)}</span>
-      )}
-      <div className="flex flex-wrap items-baseline gap-2">
-        <span className="m3-type-hero-timer min-w-0">{big}</span>
-        <span className="m3-type-supporting text-muted">{unit}</span>
+      <div className="flex items-center gap-3 pe-3">
+        <h2 className="m3-type-title m-0 min-w-0 break-words">{heading}</h2>
+        <InfoButton topic="bakeFocus" term={stepTitle} />
       </div>
-      {focus.running && startedAt && projected?.end && (
+      {hasActiveCountdown ? (
+        <div className="flex flex-col items-start gap-0.5">
+          <span
+            role="timer"
+            aria-labelledby={timerLabelId}
+            aria-live="off"
+            className={`${heroTimerClass} whitespace-nowrap${overrun ? ' text-alert' : ''}`}
+          >
+            {overrun && '+'}
+            {formatClock(remainingSeconds)}
+          </span>
+          <span
+            id={timerLabelId}
+            className={`m3-type-supporting ${overrun ? 'font-semibold text-alert' : 'text-muted'}`}
+          >
+            {t(overrun ? 'bake.overrun' : 'bake.estimatedRemaining')}
+          </span>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className={`${heroTimerClass} min-w-0`}>
+            {plannedDuration === undefined ? '—' : formatDuration(plannedDuration)}
+          </span>
+          <span className="m3-type-supporting text-muted">
+            {t(plannedDuration === undefined ? 'bake.noDuration' : 'bake.planned')}
+          </span>
+        </div>
+      )}
+      {adjustmentDelta !== undefined && (
+        <div className="m3-type-supporting text-muted tabular-nums">
+          {t('bake.adjustment', { delta: adjustmentDelta })}
+        </div>
+      )}
+      {showProgress && (
         <>
           <div
             className="mt-2.5 h-2 rounded bg-track"
             role="progressbar"
-            aria-label={stepName(focus.step)}
+            aria-label={stepTitle}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progress * 100)}
-            aria-valuetext={unit ? `${big} ${unit}` : big}
+            aria-valuetext={t('prep.progressPct', { pct: Math.round(progress * 100) })}
           >
             <div className="h-2 rounded bg-accent" style={{ width: `${progress * 100}%` }} />
           </div>
@@ -889,6 +976,7 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
           </div>
         </>
       )}
+      {technique && <span className="text-[15px] text-muted">{technique}</span>}
       <div className="m3-type-supporting flex flex-wrap justify-between gap-2 text-muted">
         <span>
           {startedAt
