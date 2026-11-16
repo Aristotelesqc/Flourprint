@@ -736,7 +736,27 @@ the first entries (items 2 and 5 below).
   `partial` (consistent with the earlier entry on hold windows).
 - Level: **B**. Role: plausibility check. No page read says what degrades at the end of a window.
 
-Levels recorded in this section (15 entries): A 1, B 11, C 3.
+### Autolyse: 20 to 60 minutes at 23 to 25 °C, and a dough that feels less sticky and very smooth
+
+- Source: BAKERpedia, "Autolyse" (David Wallace, 2015-06-07, modified 2024-02-19), citing Calvel's 1974
+  discovery (reference not read).
+- Where to find it: https://bakerpedia.com/processes/autolyse/, read 2026-11-15 (UTC).
+- Claim: flour and water are pre-blended and rested; protein bonds continue to form without
+  mechanical work, protease activity acts on the gluten (higher at low pH, so autolysed doughs with
+  yeast or a preferment are more extensible, weaker and softer), and afterwards the dough feels less
+  sticky and very smooth; the longer the autolyse, the shorter the mixing, the more extensible and less elastic
+  the dough and the lower its tolerance to overmixing; 2 to 3 min of blending, 20 to 60 min of rest at 73 to
+  77 °F (23 to 25 °C), covered (paraphrase).
+- Subject: [mixing, autolyse, folds, degassing, shaping](dough-behavior.md#d12b-mixing-autolyse-folds-degassing-shaping).
+- Conditions as stated: commercial and artisan bread, croissant and brioche doughs.
+- Claim assessment: precision `strong` (minutes, degrees); observable criteria `partial` (feel: less
+  sticky, very smooth); justification `strong` (hydration, proteases); convergence `weak` (one voice here).
+- Level: **B** (observable criteria `partial` keeps it below A).
+- Role: hypothesis. **Relevant to C6:** a smooth, less sticky, more extensible dough is what a long rest of
+  flour and water is said to produce, which is a plausible mechanism for the owner's no-knead sign; no
+  source read describes the 24 to 48 h no-knead procedure itself.
+
+Levels recorded in this section (16 entries): A 1, B 12, C 3.
 
 ## Calibration
 
