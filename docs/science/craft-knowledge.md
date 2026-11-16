@@ -56,7 +56,7 @@ the main expected source for the behavior model, whose foundations are proposals
 register: the grid below, the ceilings of use, the copyright rule, and the ban on fitting or
 validating a coefficient. That file proposes how a craft claim and a measurement are combined
 without being mixed, and which fields a behavior entry may need beyond the template. The register
-holds no entry about handling yet.
+holds a few handling-adjacent entries (stretching and relaxation, extensibility, pizza maturity; see the sections of 2026-11-14, 2026-11-15 and 2026-11-16 below), none about gas retention or crumb.
 
 ## Two separate assessments
 
@@ -275,8 +275,9 @@ sources. Levels as re-rated: baguette C (was B), no-knead C, Neapolitan C.
 
 Ten entries grounded in the repository's own records of the style-guide snapshots (full snapshot
 reads of 2026-10-10 (UTC) by other agents, with hashes) and of the recipe survey. **No page was
-re-read in this session**: the craft hosts were refused by the session's network policy (see
-[readiness-criteria.md](readiness-criteria.md)). Every field the records do not hold is `not recorded` and counts as `weak`, so
+re-read in that pass**: the craft hosts were refused by the session's network policy at the time
+(see [readiness-criteria.md](readiness-criteria.md); the hosts were allowed afterwards and the sections of
+2026-11-15 and 2026-11-16 record the pages read then). Every field the records do not hold is `not recorded` and counts as `weak`, so
 each level rests on an incomplete record; filling a field can raise it, never lower it. Source type
 and standing, for all ten: type as named per entry; recognition in the trade, longevity and
 revisions, reach: `not recorded`; commercial interest: `not recorded`, except that King Arthur
@@ -418,8 +419,12 @@ the first entries (items 2 and 5 below).
   dough and sourdough starter" (PJ Hamel, 2019-01-02), "How to tell if bread dough has risen
   enough" (Annabelle Shippee, 2022-08-22) and "What is proofing bread?" (Rossi Anastopoulo,
   2023-08-31). One organisation, so one voice. Commercial interest: sells flour, buckets and proofers.
-- Where to find it: https://www.kingarthurbaking.com/blog/2022/08/22/how-to-tell-if-bread-dough-has-risen-enough
-  (and the other three, under the same host and the dates above), read 2026-11-15 (UTC).
+- Where to find it: https://www.kingarthurbaking.com/blog/2022/08/22/how-to-tell-if-bread-dough-has-risen-enough,
+  https://www.kingarthurbaking.com/blog/2014/06/20/the-bread-also-rises (2014; re-read 2026-11-16 (UTC), published
+  2014-06-20, revised 2020-09-25), https://www.kingarthurbaking.com/blog/2019/01/02/the-float-test-for-yeast-dough-and-sourdough-starter
+  and https://www.kingarthurbaking.com/blog/2023/08/31/proofing-bread (re-read 2026-11-16 (UTC), published 2023-08-31,
+  revised 2024-11-01), all read 2026-11-15 (UTC) and the two re-reads confirmed on 2026-11-16 (UTC). The 2014 page
+  says to press to about the bed of the fingernail, the 2022 and 2023 pages about 1 inch.
 - Claim: lightly flour a finger and poke the dough down about 1 inch; if the indent stays, bake; if it
   pops back out, give it more time; dough that has risen too long feels fragile and may collapse as it
   is poked (paraphrase). The 2014 page adds that the "belly button" will bake out.
@@ -521,7 +526,8 @@ the first entries (items 2 and 5 below).
 - Source: King Arthur Baking, "Over-proofed bread dough: How to save your loaf" (PJ Hamel, 2018-02-21,
   revised 2025-05-06), quoting a food editor of the company's magazine; "How to avoid over-risen
   bread" (2014). One voice. Modernist Cuisine's "Dough CPR" page is a lead only (unread).
-- Where to find it: https://www.kingarthurbaking.com/blog/2018/02/21/over-proofed-bread, read 2026-11-15 (UTC).
+- Where to find it: https://www.kingarthurbaking.com/blog/2018/02/21/over-proofed-bread and
+  https://www.kingarthurbaking.com/blog/2014/06/20/the-bread-also-rises, read 2026-11-15 (UTC); the 2014 page re-read 2026-11-16 (UTC).
 - Claim: a loaf towering 4 inches over the rim was deflated, reshaped, put back in the pan and baked
   when it was no more than an inch over the rim after about 20 min; it rose a little higher than the
   correctly timed loaf and had no discernible flavour difference; baked as it was, the first loaf
@@ -540,7 +546,8 @@ the first entries (items 2 and 5 below).
 
 - Source: King Arthur Baking, "How to avoid over-risen bread" (2014); BAKERpedia, "Final Proof" (2015,
   modified 2024).
-- Where to find it: the two pages above, read 2026-11-15 (UTC).
+- Where to find it: https://www.kingarthurbaking.com/blog/2014/06/20/the-bread-also-rises and
+  https://bakerpedia.com/processes/final-proof/, read 2026-11-15 (UTC).
 - Claim: a loaf at the limit has a nearly transparent dome that wobbles, crests over the rim and
   starts to overflow, the gluten structure is "compromised and weaker"; baked, it shows a sunken centre,
   a curl of crust over the edge, a coarse crumb and a sour "over-ripe fruit" smell (King Arthur
@@ -726,7 +733,9 @@ the first entries (items 2 and 5 below).
 - Source: King Arthur Baking, Pizza Crust Recipe and Whole Wheat Pizza Crust Recipe (above); Weekend Bakery,
   "The Temperature Equation" (2026): fridge retard 12 to 16 h at 2 to 4 °C, 16 to 24 h for well-bulked dough, with a table of
   bulk times against room temperature (18 °C: 7 to 9 h, 24 °C: 4 to 5 h, 30 °C: 2 to 3 h).
-- Where to find it: the pages above, read 2026-11-15 (UTC).
+- Where to find it: https://www.kingarthurbaking.com/recipes/pizza-crust-recipe,
+  https://www.kingarthurbaking.com/recipes/whole-wheat-pizza-crust-recipe and
+  https://www.weekendbakery.com/posts/the-temperature-equation-timing-your-fermentation/, read 2026-11-15 (UTC).
 - Claim: the pizza dough rises 45 min at room temperature, then keeps in the fridge 4 to 24 h while
   rising slowly, and is taken out 2 to 3 h before serving; whole wheat up to 18 h (King Arthur Baking). A colder
   fridge allows a longer retard (Weekend Bakery).
@@ -757,6 +766,232 @@ the first entries (items 2 and 5 below).
   source read describes the 24 to 48 h no-knead procedure itself.
 
 Levels recorded in this section (16 entries): A 1, B 12, C 3.
+
+## Register entries from craft pages read on 2026-11-16 (UTC)
+
+A third reading pass, to fill the stages the first two left thin. Pages were fetched from the shell
+with a generic client name and an `Accept: text/html` header. `modernistcuisine.com` was tried again and
+refused again: the shell got an HTTP/2 protocol error and the fetch tool could not resolve the name, so it
+stays unread. Two pages of the 2026-11-15 pass (the 2014 over-risen page, the 2023 proofing page) were
+re-read because the earlier entries gave no URL for them; they are now given. Reader comments on a blog
+are recorded as comments, never as the author's statement, and are level C. Common fields: recognition,
+longevity, reach: `not recorded` unless stated; King Arthur Baking sells flour and equipment and is one
+voice; BAKERpedia is a trade publisher's reference site; Weekend Bakery is a micro-bakery blog. All
+entries: Checked 2026-11-16 (UTC), research agent; **Proposals** like the others.
+
+### The poke test judged by the tightness of the dough, and a starter used as it just turns ripe
+
+- Source: King Arthur Baking, "How to produce an open crumb in sourdough bread" (Maurizio Leo, a
+  contributor who bakes sourdough at home and blogs on it; published 2020-11-05, revised 2024-08-19). One voice.
+- Where to find it: https://www.kingarthurbaking.com/blog/2020/11/05/how-to-produce-an-open-crumb-in-sourdough-bread,
+  read 2026-11-16 (UTC).
+- Claim: for the final proof the dough should be risen, puffy, light and soft; a gentle poke should not feel
+  dense and tight; if the inside still feels tight give it another 30 min at room temperature and check
+  again; if it feels very soft and weak, or large bubbles show beneath the surface, bake. The starter is used
+  as it just turns ripe (risen perceptibly in its jar, scattered bubbles on top and sides, a sour but not too
+  sour aroma, a loosened consistency); one that is overly sour and broken down passes too much acidity to the
+  dough and in the author's experience gives a tighter crumb (paraphrase).
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
+- Conditions as stated: a sourdough boule, a starter fed about every 12 h at 74 to 78 °F, room or overnight fridge proof.
+- Claim assessment: precision `partial` (30 min steps, feeding temperature; no poke depth); observable criteria
+  `strong` (feel, bubbles, aroma, consistency); justification `partial` (acidity and crumb); convergence `weak` (one voice).
+- Level: **B**. Role: hypothesis. A third way to read the poke: by the feel of the interior, not by whether the
+  dent stays. The starter signs are for a sourdough starter, not for a yeast poolish.
+
+### Pan focaccia is proofed until very bubbly, because the pan limits the cost of over-proofing
+
+- Source: King Arthur Baking, "How can I get a more bubbly, open crumb in my focaccia?" (page by Rossi Anastopoulo,
+  2026-04-09), an edited excerpt of the company's podcast "Things Bakers Know" with its two hosts speaking.
+  One voice; a spoken opinion, not a recipe.
+- Where to find it: https://www.kingarthurbaking.com/blog/2026/04/09/open-crumb-focaccia, read 2026-11-16 (UTC).
+- Claim: the dough in the pan should wait in a warm place until it looks visibly very bubbly and jiggles like a
+  marshmallow when the pan is shaken; over-proofing a free-standing loaf makes it spread and lose its shape,
+  whereas a pan holds it, so a pan bread can be pushed further, which is not a licence to over-proof every pan
+  loaf (paraphrase). A hydration of about 80 % or more is said to give a reasonably open crumb.
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
+- Conditions as stated: a high-hydration focaccia in an oiled pan.
+- Claim assessment: precision `weak` (no times, no temperature); observable criteria `partial` (bubbly, jiggle); justification
+  `partial` (the pan holds the shape); convergence `weak` (one voice).
+- Level: **C**. Role: hypothesis. Qualifies the idea that "over-proofed" is one state for every dough: the cost depends on whether the dough can spread.
+
+### The poke test on chilled dough, and a small sample to read the volume: reader comments
+
+- Source: reader comments under Weekend Bakery, "The myth of double in size +tips!" (page published 2012-02-12, modified
+  2019-05-18): a reader "Jacob" (2018-12-15 21:12) and the blog's reply "Weekend Bakers" (2018-12-18 21:48); readers
+  "Eric S" (2021-08-06 16:01), "Steph" (2025-02-08 21:33) and others on the jar. 105 comments in all; commenters are not
+  identified as bakers. Level C by the register's rule on comments.
+- Where to find it: https://www.weekendbakery.com/posts/the-myth-of-double-in-size/, read 2026-11-15 and again 2026-11-16 (UTC).
+- Claim: (1) the poke test does not help once the dough has been chilled, because it always feels too tough or
+  pliable (Jacob); the reply gives no test, only advice to be patient with a cold dough and let it reach its size.
+  (2) To read volume, put a small piece of dough in a straight-sided jar or a shot glass beside the bowl, mark its
+  level (a pen mark or an elastic band) and compare (several readers); Eric S calls the technique an "aliquot jar"
+  and says it has caught on among serious home bakers and has a tradition in panettone making (paraphrase).
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
+- Conditions as stated: sourdough and yeast doughs; the shot-glass reader squashes the ball to half fill the glass.
+- Claim assessment: precision `weak`; observable criteria `partial` (a marked sample); justification `weak`;
+  convergence `weak` (several readers on the jar; independence not recorded).
+- Level: **C**. Role: hypothesis. The sample-jar method has no author's statement and no other page read mentions it.
+
+### Marks in the lidded tin: one half to one inch below the lip, in five more recipes
+
+- Source: King Arthur Baking recipes, one voice: 100% Whole Wheat Pain de Mie (PJ Hamel, 2007, revised 2026-11-14),
+  A Smaller 100% Whole Wheat Pain de Mie (2010, revised 2026-07-30), A Smaller Pain de Mie (2010, revised 2026-11-14),
+  Bee Keeper's Pain de Mie (2016, revised 2026-10-08), Golden Spiced Pullman Loaf (2017, revised 2026-11-14), and the
+  blog post "Honey-Oat Pain de Mie" (2011, revised 2024-07-22).
+- Where to find it: https://www.kingarthurbaking.com/recipes/100-whole-wheat-pain-de-mie-recipe,
+  https://www.kingarthurbaking.com/recipes/a-smaller-100-whole-wheat-pain-de-mie-recipe,
+  https://www.kingarthurbaking.com/recipes/a-smaller-pain-de-mie-recipe,
+  https://www.kingarthurbaking.com/recipes/bee-keepers-pain-de-mie-recipe,
+  https://www.kingarthurbaking.com/recipes/golden-spiced-pullman-loaf-recipe,
+  https://www.kingarthurbaking.com/blog/2011/10/18/honey-oat-pain-de-mie-comfort-bread; read 2026-11-16 (UTC).
+- Claim: 13 inch lidded pan, whole wheat: rise until about 1/2 inch below the lip, about 45 min; 9 inch pan,
+  whole wheat: until the domed centre is about 3/4 inch below the lip, 60 to 90 min; 9 inch pan, white: within about
+  1/2 inch of the top edge, about 60 min; Bee Keeper's: just below the lip, 60 to 90 min, with the lid left open about an inch to
+  watch; Golden Spiced: after 30 min push the lid back, and when the dough is within 1/2 inch of the top close it and bake;
+  Honey-Oat post: about 1 inch from the lid, and if it is not risen enough it will not fill the pan whereas too much risks
+  popping the lid off. Bulk in the same recipes: "puffy though not necessarily doubled", about 1.5 h (paraphrase).
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
+- Conditions as stated: yeast sandwich doughs in 9 or 13 inch lidded pans; oven 350 °F in the small recipe.
+- Claim assessment: precision `partial` (inches, minutes; no room temperature); observable criteria `strong` (a
+  mark against a rim, with the lid as a guard); justification `partial` (fill the pan without lifting the lid);
+  convergence `weak` (one voice, whose own figures differ by a factor of two).
+- Level: **B**. Role: hypothesis. **Qualifies C6:** about 1/2 inch (1.3 cm) to 1 inch (2.5 cm) below the lip; the owner's 1 cm is
+  close to the smaller figures and not outside the range of one site's own recipes.
+
+### Refrigerating dough: one rise cold, 8 to 12 hours, and what to do on the way out
+
+- Source: King Arthur Baking, "Can you refrigerate bread dough and bake it later?" (Annabelle Shippee, with a member of the
+  company's Baker's Hotline, 2021-09-28, revised 2025-04-01). One voice.
+- Where to find it: https://www.kingarthurbaking.com/blog/2021/09/28/how-to-refrigerate-bread-dough-to-bake-later, read 2026-11-16 (UTC).
+- Claim: replace a 1 to 3 h room rise by an 8 to 12 h rise in the fridge (up to about 16 h, depending on the recipe, without
+  over-proofing); chill during only one of the two rises; let the dough rise 20 to 30 min on the counter first (less in a warm
+  kitchen or with a high dose); start the dough at 75 to 80 °F because above 80 °F the fridge may not cool it before it
+  over-proofs; fill the container to about one third; keep it covered. After a cold bulk, let the dough warm 40 to 60 min until
+  slightly puffy before shaping, helped by a stretch and fold; rolls can be shaped straight from the fridge. A shaped loaf that
+  has not puffed in the fridge may need an hour on the counter: "a judgment call" (paraphrase).
+- Subject: [cold end and long refrigeration](dough-behavior.md#d02b-cold-end-and-long-refrigeration).
+- Conditions as stated: yeast doughs, sandwich and artisan loaves, rolls, focaccia.
+- Claim assessment: precision `strong` (hours, degrees, a fill ratio); observable criteria `partial` (slightly puffy; no sign for the end of the window); justification `partial` (cold slows
+  fermentation; dryness limits the rise); convergence `partial` (agrees with the pizza and bagel windows of other entries).
+- Level: **B**. Role: plausibility check, hypothesis. **Bears on C4:** the folds here warm and strengthen a dough coming out of the fridge; no
+  page read says that folds or degassing keep a held dough in check.
+
+### A preferment past its peak: its look, a way to buy time, and a rescue (replies in comments)
+
+- Source: replies by "Weekend Bakers" (the blog's authors) to readers under "Artisan bread baking tips: Poolish & biga"
+  (page published 2010-07-29, modified 2023-12-04): 2012-04-03 09:57 (to a reader whose poolish tripled, then fell to double, with a
+  stronger alcohol smell) and 2018-09-15 19:54 (to a reader asking how to tell). Replies in comments: level C by the rule on comments.
+- Where to find it: https://www.weekendbakery.com/posts/more-artisan-bread-baking-tips-poolish-biga/comment-page-1/ and
+  https://www.weekendbakery.com/posts/more-artisan-bread-baking-tips-poolish-biga/comment-page-4/, read 2026-11-16 (UTC).
+- Claim: an over-ripe poolish becomes thinner and eventually soupy, and leaves a rim in the bowl where it rose and fell; one
+  that is foamy and collapsed has a weaker gluten structure, and as a rescue the final dough can be made with less water (not a
+  habit, it will not be the best loaf); one that is not yet fully active can be compensated with a little more yeast in the final
+  dough; to gain time, use less yeast in the poolish or use the fridge to slow it. The reply does not address the alcohol smell the reader
+  reported. A reader quotes a video: a poolish that has risen and collapsed is over-ripe, one just starting to collapse is ready (paraphrase).
+- Subject: [preferments, levain, scald, soaker](dough-behavior.md#d11-preferments-levain-scald-soaker).
+- Conditions as stated: yeast poolish at 8 to 16 h; no temperature, no flour.
+- Claim assessment: precision `weak`; observable criteria `partial` (consistency, rim); justification `partial` (gluten broken down);
+  convergence `partial` (agrees with the main article and BAKERpedia on weakening; no other page gives the fridge or the water action).
+- Level: **C** (precision `weak`). Role: hypothesis. **Bears on C12:** the "use soon or chill" action is stated here, for a collapsed or
+  soupy poolish and not for the alcohol smell; the smell itself is only a reader's observation.
+
+### Bagel dough in two more King Arthur recipes: a retard of 8 to 12 hours, or a rise to double and a short chill
+
+- Source: King Arthur Baking, Martin's Bagels (Martin Philip, published 2019-04-21, revised 2026-11-13) and Bagels with Pâte
+  Fermentée (a recipe by Jeffrey Hamelman, published 2020-05-07, revised 2026-11-14). One voice for convergence.
+- Where to find it: https://www.kingarthurbaking.com/recipes/martins-bagels-recipe and
+  https://www.kingarthurbaking.com/recipes/bagels-with-pate-fermentee-recipe, read 2026-11-16 (UTC).
+- Claim: Martin's: a poolish of 2 to 8 h at room temperature, a dough rested 2 h with three or four folds after the first hour, then 8 to 12
+  h in the fridge, 1 to 2 h on the counter, divide, shape, rest 20 to 30 min, boil 30 s then 60 to 90 s on the other side; shaped bagels can
+  also be refrigerated overnight and boiled straight from the fridge. Hamelman's: the dough rests 2 h at 75 to 78 °F "to double in bulk,
+  or at least expand considerably", shaped bagels are refrigerated 2 h, boiled 1 min per side; or rise 1 h then refrigerate overnight
+  and deflate next day. Neither recipe uses a float test or a rise target after shaping (paraphrase).
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
+- Conditions as stated: bread flour bagels; dose by volume (1/4 to 3/4 tsp in the poolish and dough; 1 3/4 tsp instant yeast in the pâte fermentée version).
+- Claim assessment: precision `partial` (times, degrees, yeast by volume); observable criteria `partial`; justification `partial` (the
+  chill relaxes and flavours); convergence `partial` (agrees with the earlier bagel entry from the same site).
+- Level: **B**. Role: hypothesis. **Bears on C7:** two further recipes with no rise target after shaping and, in one, a rise to "double or at least
+  considerably" in bulk; no source read gives a dose near 2 % of flour.
+
+### A pizza dough kept 24 hours at 6 °C is taken out an hour before use
+
+- Source: Weekend Bakery, "A pizza adventure part II + new 24h dough recipe" ("Weekend Bakers", published 2018-08-12, modified
+  2025-06-01); the authors tested short, medium and long fermentation and prefer the long fridge-retarded one.
+- Where to find it: https://www.weekendbakery.com/posts/a-pizza-adventure-part-ii-new-24h-dough-recipe/, read 2026-11-16 (UTC).
+- Claim: the shaped balls ferment about 24 h in a fridge at about 6 °C with the yeast dose set for that time and temperature
+  (a table of yeast against time and temperature is given); the dough is taken out about 1 h before use because it is easier
+  to handle; the long dough is better in depth of flavour and structure than a 2 h dough (paraphrase).
+- Subject: [cold end and long refrigeration](dough-behavior.md#d02b-cold-end-and-long-refrigeration).
+- Conditions as stated: a 13 % protein Italian 00 flour (W above 300); the fridge temperature is the one of the authors' fridge.
+- Claim assessment: precision `strong` (hours, 6 °C, yeast by weight); observable criteria `weak` (no sign of ripeness); justification `weak`;
+  convergence `partial` (a fourth window next to the Association's 8 to 24 h at 23 °C and King Arthur Baking's 4 to 24 h).
+- Level: **B**. Role: plausibility check. Nothing on the end of the window or on an over-matured ball.
+
+### Dark spots in the proofer come from humidity, not from the age of the dough
+
+- Source: BAKERpedia, "The Importance of Proofing" (Ray Pearce, published 2020-07-08, modified 2024-02-20), a trade reference
+  blog on commercial pan bread and rolls.
+- Where to find it: https://bakerpedia.com/the-importance-of-proofing/, read 2026-11-16 (UTC).
+- Claim: a proof box saturated with water vapour causes blisters and a tough crust and can cause dark spots from sugars leaching to
+  the surface; too high a humidity also weakens the crust and sticks the dough; a dough leaving the proofer above about 33 to 36 °C is more
+  fluid and extensible and more exposed to rupture, and enzyme activity doubles for every 18 °F (10 °C); in the worst case the dough breaks
+  down and is discarded or baked below volume (paraphrase).
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
+- Conditions as stated: commercial proofing of pan bread, buns and rolls.
+- Claim assessment: precision `weak` (no figures for the spots); observable criteria `partial`; justification `partial`; convergence `weak` (one voice).
+- Level: **C**. Role: hypothesis, and a negative finding: the only page read that names dark spots on dough ties them to proofer humidity.
+  **Bears on C9:** it does not support dark spots as a sign of a matured pizza ball, and it does not contradict it either (another dough, another cause).
+
+### Over- and under-proofed bread: causes and remedies for the next batch, and the temperature rule of thumb
+
+- Source: BAKERpedia, "BAKERguide: Baking Bread" (a 20-page PDF from the site's downloads, file created 2026-03-04) and
+  "Final Proofing: A Key Thermal Step" (Ray Pearce, published 2019-07-24, modified 2024-02-20), "A Proof Tolerant Yeast to Control Your Dough"
+  (Lin Carson, published 2019-07-09, modified 2024-02-20; a product page for a maltose-negative yeast).
+- Where to find it: https://bakerpedia.com/wp-content/uploads/simple-file-list/BAKERguides/BAKERguide-Baking-Bread.pdf,
+  https://bakerpedia.com/final-proofing-a-key-thermal-step/, https://bakerpedia.com/proof-tolerant-yeast-to-control-dough/; read 2026-11-16 (UTC).
+- Claim: over-proofed bread is caused by too much yeast, too much fermentable sugar, a warm proofing environment or a long rise, and
+  the remedies are less yeast, less sugar, cooler water or room, and a cooler proof; under-proofed bread is the reverse, with colder dough and too
+  short a rise; none of the three pages says how to rescue a dough already over-proofed. The final proof makes the gluten extensible again
+  after moulding, and yeast activity doubles for every 18 °F (10 °C). A proof-tolerant yeast is sold so that a dough can wait at ambient temperature for up to 24 h
+  (a product claim) (paraphrase).
+- Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point) and
+  [temperature history and recording](dough-behavior.md#d02c-dough-temperature-history-and-recording).
+- Conditions as stated: commercial proofing at 90 to 100 °F, 50 to 70 min, 80 to 90 % humidity.
+- Claim assessment: precision `weak` (qualitative table); observable criteria `weak`; justification `partial`; convergence `weak`.
+- Level: **C**. Role: hypothesis; plausibility check of the temperature response. **A disagreement, recorded and not averaged:**
+  BAKERpedia says activity doubles per 10 °C; Weekend Bakery's 2026 page says it doubles per 5 °C, yet says a dough at 30 °C ferments "nearly twice as fast" as one at
+  21 °C (a 9 °C gap).
+
+### A too-extensible dough is a slack, over-mixed or over-watered dough, in the trade reference
+
+- Source: BAKERpedia, "Dough Handling Properties" (Joanna Evoniuk, published 2019-02-25, modified 2024-07-28), citing Cauvain and Steffe (not read).
+- Where to find it: https://bakerpedia.com/processes/dough-handling-properties/, read 2026-11-16 (UTC).
+- Claim: extensibility is the ability to be stretched, elasticity the ability to spring back; a dough that is too extensible, with very low
+  elasticity and poor resistance, is slack, may be overmixed (warm and sticky) or over-hydrated, and gives too much pan flow, sharp
+  corners, and excessive volume or collapse from excessive oven spring; a dough that is too elastic may be undermixed, stiff and tough, and
+  gives poor volume and a poor shape (paraphrase).
+- Subject: [rheology and structure over time](dough-behavior.md#d14-rheology-and-structure-over-time).
+- Conditions as stated: commercial bread and pizza crust processing.
+- Claim assessment: precision `weak`; observable criteria `partial` (slack, sticky); justification `partial`; convergence `weak`.
+- Level: **C**. Role: hypothesis. **Bears on C8:** the page names "too extensible" as a defect of mixing and water, not of long maturation; no source read
+  connects it to a short fridge stay.
+
+### A laboratory bread test sets the exit temperature of the dough and checks the gluten film
+
+- Source: BAKERpedia, "Bread Baking Test" (Joanna Evoniuk, published 2019-05-16, modified 2024-02-19), a method summary after an
+  AACC International method.
+- Where to find it: https://bakerpedia.com/processes/bread-baking-test/, read 2026-11-16 (UTC).
+- Claim: the mixing time depends on flour strength and mixing speed, and the end point is checked with a gluten film test; the water is
+  adjusted so that the dough leaves the mixer at 84 ± 1 °F (29 ± 0.5 °C); fermentation and proof run at 86 ± 2 °F (30 ± 1 °C) and 85 % humidity (paraphrase).
+- Subject: [mixing, autolyse, folds, degassing, shaping](dough-behavior.md#d12b-mixing-autolyse-folds-degassing-shaping).
+- Conditions as stated: micro-mixer test bakes of 10 to 100 g flour; not a home process.
+- Claim assessment: precision `strong`; observable criteria `strong` (a thermometer and a film); justification `partial`; convergence `partial`
+  (the two readiness checks of the mixing end appear together here, as in the other pages).
+- Level: **B**. Role: plausibility; it shows that the temperature check and the film check are used together.
+
+Levels recorded in this section (12 entries): A 0, B 6, C 6. Across the three sections of
+2026-11-14 (10 entries, the four short statements counted individually), 2026-11-15 (16) and 2026-11-16 (12) together:
+38 entries, A 2, B 22, C 14.
 
 ## Calibration
 
