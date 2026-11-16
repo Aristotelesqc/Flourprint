@@ -488,7 +488,11 @@ the first entries (items 2 and 5 below).
   Arthur Baking, 2019); a 50 to 75 % increase in volume with a domed top, bubbles at the surface and
   sides and a jiggle (Weekend Bakery 2026, sourdough). (4) Two King Arthur sandwich-loaf recipes
   say the bulk is done "puffy though not necessarily doubled" or "risen noticeably; it won't
-  necessarily double" (paraphrase).
+  necessarily double". (5) On folds (King Arthur Baking 2019, re-read 2026-11-16 (UTC)): sets are spaced about 30 min apart, the
+  first 30 min after the start of bulk, because another set too soon finds the dough too tight and hard to stretch, and it may tear;
+  if the dough was hard to stretch after a set, later sets can be omitted; a 100 % rye dough, a stiff low-hydration dough or one
+  kneaded to full development needs none; cutting bulk short leaves the dough under-proofed, pushing it too far makes it hard to handle
+  and on the verge of over-proofing (paraphrase).
 - Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
 - Conditions as stated: lean and enriched sandwich doughs, sourdough (Weekend Bakery 2026), 3 to 5 h
   bulk at room temperature (King Arthur Baking, sourdough).
@@ -773,7 +777,7 @@ A third reading pass, to fill the stages the first two left thin. Pages were fet
 with a generic client name and an `Accept: text/html` header. `modernistcuisine.com` was tried again and
 refused again: the shell got an HTTP/2 protocol error and the fetch tool could not resolve the name, so it
 stays unread. Two pages of the 2026-11-15 pass (the 2014 over-risen page, the 2023 proofing page) were
-re-read because the earlier entries gave no URL for them; they are now given. Reader comments on a blog
+re-read because the entries of the 2026-11-15 pass gave no URL for them; the URLs are given in those entries. Reader comments on a blog
 are recorded as comments, never as the author's statement, and are level C. Common fields: recognition,
 longevity, reach: `not recorded` unless stated; King Arthur Baking sells flour and equipment and is one
 voice; BAKERpedia is a trade publisher's reference site; Weekend Bakery is a micro-bakery blog. All
@@ -887,7 +891,8 @@ entries: Checked 2026-11-16 (UTC), research agent; **Proposals** like the others
   that is foamy and collapsed has a weaker gluten structure, and as a rescue the final dough can be made with less water (not a
   habit, it will not be the best loaf); one that is not yet fully active can be compensated with a little more yeast in the final
   dough; to gain time, use less yeast in the poolish or use the fridge to slow it. The reply does not address the alcohol smell the reader
-  reported. A reader quotes a video: a poolish that has risen and collapsed is over-ripe, one just starting to collapse is ready (paraphrase).
+  reported. To another reader (2018-03-21 19:24) whose neglected rye starter smelled of alcohol with a hint of acetone, the reply
+  (2018-03-23 20:25) says the acetone hint is unwanted and to refresh the starter sooner or stir more, since the "nail polish" bacteria dislike oxygen. A reader quotes a video: a poolish that has risen and collapsed is over-ripe, one just starting to collapse is ready (paraphrase).
 - Subject: [preferments, levain, scald, soaker](dough-behavior.md#d11-preferments-levain-scald-soaker).
 - Conditions as stated: yeast poolish at 8 to 16 h; no temperature, no flour.
 - Claim assessment: precision `weak`; observable criteria `partial` (consistency, rim); justification `partial` (gluten broken down);
@@ -909,7 +914,7 @@ entries: Checked 2026-11-16 (UTC), research agent; **Proposals** like the others
 - Subject: [readiness profiles and end point](dough-behavior.md#d04a-readiness-profiles-and-end-point).
 - Conditions as stated: bread flour bagels; dose by volume (1/4 to 3/4 tsp in the poolish and dough; 1 3/4 tsp instant yeast in the pâte fermentée version).
 - Claim assessment: precision `partial` (times, degrees, yeast by volume); observable criteria `partial`; justification `partial` (the
-  chill relaxes and flavours); convergence `partial` (agrees with the earlier bagel entry from the same site).
+  chill relaxes and flavours); convergence `partial` (agrees with the 2026-11-15 bagel entry from the same site).
 - Level: **B**. Role: hypothesis. **Bears on C7:** two further recipes with no rise target after shaping and, in one, a rise to "double or at least
   considerably" in bulk; no source read gives a dose near 2 % of flour.
 
