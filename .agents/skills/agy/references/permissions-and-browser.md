@@ -228,8 +228,8 @@ owned captures; screenshots are not app source changes. `--save-session` supplie
 browser interaction record alongside the owned AGY transcript.
 
 Keep browser setup scripts/dependencies and frozen compiled builds in private task tooling
-outside the product checkout when possible. Although `eslint.config.js` now ignores `.agy-runs/**`,
-`.claude/worktrees/**` and `.codegraph-local/**`, git-ignored directories are not automatically
+outside the product checkout when possible. Although `eslint.config.js` now ignores `.agy-runs/**`
+and `.claude/worktrees/**`, git-ignored directories are not automatically
 skipped by every tool: an earlier unchanged `eslint .` scanned a run's helper and minified frozen
 assets before those ignores existed. Keeping task-tooling packages outside the product checkout
 and updating the launcher through normal `agy mcp add` preserves the checkout guard, isolated
