@@ -367,8 +367,10 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 - **Preparation:** use the step number and name above the large, tabular countdown. The estimated
   countdown uses the engine's explicit or implicit start and projected deadline. At zero the step
   stays active and the timer shows a signed overrun. Show duration adjustments separately from the
-  step's planned end, start and temporal progress. Keep quick controls and readiness observations
-  visible. Upcoming steps with clock times precede completed
+  step's planned end, start and temporal progress. Group the three countdown commands in one
+  labelled row of compact shared buttons with full touch targets. Pause and Resume share the
+  middle button and reflect the recorded hold. Keep notes and readiness observations accessible.
+  Upcoming steps with clock times precede completed
   steps. Keep the full journal accessible (all existing notes, observations and step completions)
   and actual lifecycle/outcome actions. A readiness observation neither completes the stage nor
   establishes a cooked result. Unknown times remain unknown.
