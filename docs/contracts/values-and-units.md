@@ -61,7 +61,7 @@ type Estimate<T = number> =
       model: ModelRef;
       assumptions: string[];
       extrapolations?: string[]; // outside the fitted data, or thin evidence; still given
-      calibration?: { id: string; version: string }; // readiness profile used (fermentation.md)
+      calibration?: { id: string; version: string }; // readiness profile, or end-target reading (0.27.0 proposal), used (fermentation.md)
     }
   | {
       status: 'unsupported' | 'out_of_domain' | 'insufficient_data';

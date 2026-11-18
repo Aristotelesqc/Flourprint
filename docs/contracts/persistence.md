@@ -215,6 +215,33 @@ interface ThermalProfile {
   1 or 2 document that nonetheless carries `thermal` or `thermalProfiles` (no writer produces
   one) is read as is, not refused.
 
+## End criteria in documents (0.27.0, proposal)
+
+The end criteria of a step and `Process.endCriteriaVersion` (process.md, End criteria) are fields of
+the process document, inside a revision, a draft and the process of a bake snapshot.
+
+- **Version bump** (the `0.21.0` precedent, Personal thermal profile). An older reader would reject
+  the five new kinds of `endCriterion` and the new field only as a generic unknown discriminant or
+  field. So the recipe export and the full backup `schemaVersion` go from 3 to 4
+  (`EXPORT_SCHEMA_VERSION`; revision documents stay at 1; the event envelope, the log and the feedback
+  export are unchanged), and an older reader refuses a version-4 document with
+  `UnsupportedDocumentVersion`. Documents of version 1 to 3 are read unchanged, as processes with no
+  `endCriteriaVersion` (the legacy reading, fermentation.md) whose criteria are the legacy kinds or
+  none; no stored value is rewritten. A version-4 writer may write a document with none of the
+  new kinds and no field; it is still version 4. Downgrades are not supported.
+- **No SQL migration.** Revisions and drafts are JSON documents; the SQLite schema stays at version 9.
+  Revisions are immutable: no stored revision is rewritten, and a revision gets the new shape only
+  when the baker saves a new one.
+- **A document at version 1 to 3 that nonetheless holds a new kind or the field** (no writer
+  produces one) is read as is, as for `thermal`; the rules of process.md still apply to it (a new
+  kind without the field is `InvalidProcess`).
+- **Restore** decodes the criteria structurally, then validates the process (process.md): a
+  `volumeRatio` or a `window` on a step that is not a fermentation step, a `readiness` beside
+  `endCriteriaVersion: 1`, or a new kind without the field, is `InvalidProcess` and refuses the
+  document. A `signId` the app does not know is kept.
+- **A bake snapshot** carries the process as it was, so the criteria and the version; the reading of a
+  bake never changes (fermentation.md, Stored recipes and live bakes).
+
 ## SQLite schema (version 9)
 
 ```sql

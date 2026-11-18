@@ -664,7 +664,9 @@ judges the dough ready for its next stage:
   (`BakeNotActive`).
 - The domain records its `stage` in the event: `bake` when the step is the last fermentation step
   (ready to bake), `shape` otherwise (ready to shape, e.g. at the end of the bulk). Only `stage: 'bake'`
-  observations are data for the readiness profile; `shape` ones are kept for later stage models.
+  observations are data for the readiness profile of the legacy reading (fermentation.md); in the
+  criteria reading (0.27.0, proposal) they are the baker's record against which an estimate can be
+  compared and calibrate nothing; `shape` ones are kept for later stage models.
   Events written before `0.6.0` have no `stage`: unknown, never pooled with `bake`.
 - Category `fermentation`, an optional short `criterion` code (`poke`, `feel`, `time`, `other`)
   and free `text`, shown in the journal. Its time is its `occurredAt` (now).
