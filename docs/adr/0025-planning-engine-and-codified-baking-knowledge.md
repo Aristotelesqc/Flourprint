@@ -1,8 +1,7 @@
 # ADR 0025: A planning engine, a codified body of baking knowledge, and one app for every level
 
-Status: Proposed (owner direction of 2026-11-13 and 2026-11-14, given in conversation; awaiting the
-owner's approval of this pull request). Relates to ADR 0010 and ADR 0008; amends nothing until
-accepted.
+Status: Accepted (owner approval of 2026-11-18, UTC; owner direction of 2026-11-13 and 2026-11-14,
+given in conversation). Relates to ADR 0010 and ADR 0008; amends nothing.
 
 ## Context
 

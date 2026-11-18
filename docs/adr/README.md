@@ -31,4 +31,4 @@ Template: `Status`, `Context`, `Decision`, `Consequences`.
 | [0022](0022-port-to-app-and-tailwind.md)                      | Port the interface into the app, styled with Tailwind v4              | Accepted                                        |
 | [0023](0023-dev-app-version-picker.md)                        | Choosing the web version in the dev apps                              | Proposed                                        |
 | [0024](0024-phone-only-ui-desktop-frame.md)                   | Phone-only UI and the 1:1 phone frame on desktop                      | Accepted (2026-11-09)                           |
-| [0025](0025-planning-engine-and-codified-baking-knowledge.md) | A planning engine, codified baking knowledge, one app for every level | Proposed                                        |
+| [0025](0025-planning-engine-and-codified-baking-knowledge.md) | A planning engine, codified baking knowledge, one app for every level | Accepted (2026-11-18)                           |
