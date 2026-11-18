@@ -3,33 +3,85 @@
 This directory holds the scientific basis of Flourprint's models: the evidence behind each
 coefficient, how it was obtained, and where it stops being valid.
 
-## How it relates to `docs/contracts`
+## Start here
 
-|               | `docs/contracts/`                                  | `docs/science/`                                                         |
-| ------------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
-| Answers       | What ships: equations, parameters, domains, units. | Why: the evidence, the fits, the alternatives and their limits.         |
-| Authority     | An implementation that contradicts it is wrong.    | Justifies a contract. It never overrides one.                           |
-| Changes via   | A dedicated pull request, before dependent code.   | A pull request that cites the source, the provenance label and the fit. |
-| Numbers in it | The ones the engine uses.                          | All numbers considered, including those rejected or research-only.      |
+[dough-behavior.md](dough-behavior.md) is the canonical entry point. It lists, for each domain of
+fermented dough behavior (yeast, temperature, gas, readiness, humidity, ingredients, salt, enzymes,
+flour, hydration, preferments, process, geometry, rheology, baking interface, calibration,
+uncertainty), ten separate facts at a stated commit and date: the science, the open issues, the
+contracts and ADRs, the conformance, the engine code, the screens, the pull requests and branches,
+the validation, and the project's chosen direction with its authority. The specialist documents
+below hold the evidence; this directory's other files do not repeat each other.
+
+## Two models
+
+The **fermentation model** ([fermentation-model.md](fermentation-model.md)) answers when a dough
+is ready. The **behavior model**, whose foundations are in
+[behavior-model-foundations.md](behavior-model-foundations.md), is meant to answer how the dough
+handles and what it becomes. Both draw on measured science ([evidence-classification.md](evidence-classification.md))
+and on craft knowledge ([craft-knowledge.md](craft-knowledge.md)), kept apart; `dough-behavior.md`
+maps every domain of both. Only the fermentation model is shipped.
+
+## Authority boundaries and precedence
+
+|               | `docs/contracts/`                                                | `docs/science/`                                                         | `dough-behavior.md`                                                       |
+| ------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Answers       | What the program must do: equations, parameters, domains, units. | Why: the evidence, the fits, the alternatives and their limits.         | Where each fact stands today: code, screen, branch, validation, decision. |
+| Authority     | An implementation that contradicts it is wrong.                  | Justifies a contract. It never overrides one.                           | None of its own: it links, and states what is checked and when.           |
+| Changes via   | A dedicated pull request, before dependent code.                 | A pull request that cites the source, the provenance label and the fit. | Any pull request that changes a domain it describes (maintenance rule).   |
+| Numbers in it | The ones the engine uses.                                        | All numbers considered, including those rejected or research-only.      | None, except pointers.                                                    |
+
+- **Contracts** say what the program is contractually supposed to do. A contract is not evidence
+  that the code conforms, nor that the biology is right.
+- **Science** explains why, on what evidence and with what limits. A research candidate is not a
+  shipping model; a scientific assumption does not become a contract or a decision by appearing
+  in a report.
+- **ADRs** (`docs/adr/`) record architecturally consequential choices, alternatives and
+  supersession. A proposed ADR is not accepted authority, and an accepted ADR does not prove
+  implementation, UI wiring or validity.
+- **Project decisions** are the owner's: a dated owner statement, an accepted ADR, or a contract
+  the owner approved. An agent's suggestion, a roadmap or an unmerged proposal is not a decision.
+  `dough-behavior.md` records each decision's authority; "no recorded decision" is never "rejected".
+- **Precedence on conflict.** Verified evidence and explicit supersession decide, not the rank of
+  whoever wrote it. A later document that says it supersedes an earlier one, with the reason and
+  the evidence, replaces it as the current position; the earlier one stays as history. Between
+  documents: the contract governs what ships, the science document governs what is known about it,
+  and a disagreement is logged in the "Known inconsistencies" section of `dough-behavior.md`
+  until a pull request resolves it. Issues are the discussion log; the repository holds the
+  canonical state, and a supported conclusion is moved into it before its issue closes.
 
 A coefficient that appears in a contract must have a provenance entry here. A candidate that is
 only documented here is not adopted. Promotion needs the gates listed in
-[fermentation-model.md](fermentation-model.md#open-questions-and-promotion-gates), then a contract
+[fermentation-model.md](fermentation-model.md#12-open-questions-and-promotion-gates), then a contract
 pull request.
 
 ## Contents
 
+- [dough-behavior.md](dough-behavior.md): the canonical map from science to issues, ADRs,
+  contracts, conformance, backend, frontend, pull requests, validation and project decisions.
 - [fermentation-model.md](fermentation-model.md): the fermentation model, its evidence, its limits
-  and its changelog by model version.
+  and its changelog by model version. The specialist account of the shipped kinetic law, the
+  physical temperature approximation, alternative fits, gates and open questions.
 - [home-measurements.md](home-measurements.md): the measurements the owner's bakes can make to
   calibrate the weakest points (fridge cooling, cold end, end point), with what to record.
 - [sources.md](sources.md): the index of every source considered, with legal access links, read
-  status and use. No PDFs are stored in the repository.
+  status and use, and the classification of each source (reading, reason, soundness, scope, role,
+  workarounds). No PDFs are stored in the repository.
+- [evidence-classification.md](evidence-classification.md): the one authoritative vocabulary for
+  classifying a scientific source, with the merge rule and the coefficient rule.
+- [craft-knowledge.md](craft-knowledge.md): a separate register of practitioner claims, graded
+  A, B or C, which can never calibrate or validate a coefficient.
+- [behavior-model-foundations.md](behavior-model-foundations.md): the foundations of a second model,
+  the behavior model (how a dough handles and what it becomes), as proposals: how measured science
+  and craft knowledge combine and stay apart, the vocabulary, the form of a behavior statement,
+  how uncertainty is expressed, the principles for the app and a roadmap. Not a model, a contract
+  or a knowledge base.
 - `data/`: transcribed source tables (CSV) with a metadata file each (source, DOI, formula,
   endpoint, what the temperature means, who transcribed it, read status, `source_verified`).
 - `data/style-guides.md` and `.json`: consensus ranges and starting points per template style,
-  with sources, read through web-search excerpts only (`source_verified: false`): a reference for
-  template versions, not a contract.
+  with sources, each recorded as a complete source snapshot read on 2026-10-10 (UTC)
+  (`full_snapshot_read`, with a hash; the files carry no `source_verified` field): a reference
+  for template versions, not a contract.
 - `scripts/`: small reproducible scripts that recompute fits from `data/`. They import nothing
   from the application and are not engine code.
 
@@ -46,18 +98,37 @@ table.
 | EXTRAPOLATED     | A model applied outside the domain where it was calibrated.                                                                                  |
 | MODEL OUTPUT     | The output of a third-party model (for example Craig's yeast table). It is not data about dough, even when it looks like a table of results. |
 
-A second, separate field gives the **read status**: full text read (by whom), abstract only, or
-secondary (a transcription or a citing text). A label is never upgraded by a source we could not
+A second, separate field gives the **read status**, a closed class (`full`, `partial`,
+`abstract only`, `not read`) defined in [evidence-classification.md](evidence-classification.md#1-reading);
+the legacy wording was full text read (by whom), abstract only, or secondary (a transcription or a
+citing text). A label is never upgraded by a source we could not
 read: a MEASURED value known only through a secondary transcription stays marked as such, and
 `source_verified=false` in the data files.
+
+## Classification of evidence
+
+Two schemes, one authoritative place each (owner decision, 2026-11-12 (UTC)). Other files link to
+them and never copy their definitions.
+
+| Scheme                                    | Applies to                                    | Vocabulary lives in                                      | Filled in                                                       |
+| ----------------------------------------- | --------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------- |
+| Classification of a scientific source     | Every source in the index                     | [evidence-classification.md](evidence-classification.md) | [sources.md](sources.md#classification-of-evidence)             |
+| Craft-knowledge level A, B or C per claim | Practitioner claims (books, courses, recipes) | [craft-knowledge.md](craft-knowledge.md)                 | [craft-knowledge.md](craft-knowledge.md#register-first-entries) |
+
+The merge rule and the coefficient rule are defined only in
+[evidence-classification.md](evidence-classification.md#2-reason-for-an-incomplete-reading) and
+[evidence-classification.md](evidence-classification.md#5-role-for-the-model).
 
 ## Rules
 
 - Issues are the discussion log. The repository holds the canonical scientific state. A
   conclusion reached in an issue thread is not part of the model until it is written here with its
   provenance.
-- Where sources disagree, later audits override earlier reports. The record of arbitration is the
-  issue #33 thread (the Gemini research report, the GPT audit, then the Codex synthesis).
+- Where sources disagree, the verified evidence and the explicit, dated supersession decide, not
+  a fixed ranking of the agents who wrote them. The first reports on issue #33 (a Gemini research
+  report, a GPT audit, a Codex synthesis) are history: where a later primary-source check or audit
+  corrected them, the correction stands and says so. The discussion record is issue #33 (closed as superseded, 2026-11-11 UTC, history only) and
+  issue #231 (the active consolidated issue).
 - Fitted values are not measurements. A fit's output is never presented with the authority of its
   inputs.
 - No invented ranges, error bands or multipliers. A domain that was not measured is

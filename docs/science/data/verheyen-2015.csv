@@ -1,0 +1,89 @@
+observable,paper,yeast_form,dose_g_per_100g_flour,value,sd,value_high,unit,thesis_page,location,note,source_verified
+cfu,FRI2015,compressed,0.25,3.11e9,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,compressed,0.25,740,30,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,instant_dry,0.25,1.72e8,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,instant_dry,0.25,720,10,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,compressed,0.50,6.21e9,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,compressed,0.50,1100,10,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,instant_dry,0.50,3.43e8,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,instant_dry,0.50,1040,10,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,compressed,0.75,9.29e9,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,compressed,0.75,1440,11,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,instant_dry,0.75,5.13e8,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,instant_dry,0.75,1450,10,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,compressed,1.00,1.24e10,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,compressed,1.00,1410,30,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,instant_dry,1.00,6.83e8,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,instant_dry,1.00,1370,61,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,compressed,1.50,1.86e10,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,compressed,1.50,1460,0,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,instant_dry,1.50,1.02e9,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,instant_dry,1.50,1390,10,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,compressed,2.00,2.46e10,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,compressed,2.00,1500,10,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,instant_dry,2.00,1.36e9,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,instant_dry,2.00,1510,30,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,compressed,2.50,3.07e10,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,compressed,2.50,1430,10,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,instant_dry,2.50,1.69e9,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,instant_dry,2.50,1430,50,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,compressed,3.00,3.67e10,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,compressed,3.00,1490,40,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+cfu,FRI2015,instant_dry,3.00,2.02e9,,,cfu/100 g flour,42,2015 FRI Table 2 (journal p. 864),"dose is dry matter of the yeast product, p. 39",true
+total_co2_180min,FRI2015,instant_dry,3.00,1530,80,,ml per 315 g dough,42,2015 FRI Table 2 (journal p. 864),"Rheofermentometer, 30 C, 180 min",true
+time_of_porosity_Tx,LWT2014,dry_yeast,0.5,142,,,min,32,"2014 LWT p. 197 (thesis p. 32), text","Rheofermentometer, 315 g, 30 C; Table 1 caption (p. 34) repeats 142, 99, 60, 49 min",true
+density_at_Tx,LWT2014,dry_yeast,0.5,350.52,25.03,,kg/m3,32,"2014 LWT p. 197 (thesis p. 32), text",printed as 'Tx = ...: density'; the printed average of the four is 311.5 +/- 35.93,true
+time_of_porosity_Tx,LWT2014,dry_yeast,1.0,99,,,min,32,"2014 LWT p. 197 (thesis p. 32), text","Rheofermentometer, 315 g, 30 C; Table 1 caption (p. 34) repeats 142, 99, 60, 49 min",true
+density_at_Tx,LWT2014,dry_yeast,1.0,318.04,14.61,,kg/m3,32,"2014 LWT p. 197 (thesis p. 32), text",printed as 'Tx = ...: density'; the printed average of the four is 311.5 +/- 35.93,true
+time_of_porosity_Tx,LWT2014,dry_yeast,1.5,60,,,min,32,"2014 LWT p. 197 (thesis p. 32), text","Rheofermentometer, 315 g, 30 C; Table 1 caption (p. 34) repeats 142, 99, 60, 49 min",true
+density_at_Tx,LWT2014,dry_yeast,1.5,310.55,34.41,,kg/m3,32,"2014 LWT p. 197 (thesis p. 32), text",printed as 'Tx = ...: density'; the printed average of the four is 311.5 +/- 35.93,true
+time_of_porosity_Tx,LWT2014,dry_yeast,2.0,49,,,min,32,"2014 LWT p. 197 (thesis p. 32), text","Rheofermentometer, 315 g, 30 C; Table 1 caption (p. 34) repeats 142, 99, 60, 49 min",true
+density_at_Tx,LWT2014,dry_yeast,2.0,284.79,47.97,,kg/m3,32,"2014 LWT p. 197 (thesis p. 32), text",printed as 'Tx = ...: density'; the printed average of the four is 311.5 +/- 35.93,true
+density_at_Tx_average_all_doses,LWT2014,dry_yeast,0.5-2.0,311.5,35.93,,kg/m3,32,"2014 LWT p. 197 (thesis p. 32), text",,true
+density_unyeasted_rheofermentometer,LWT2014,none,0,1000,15.2,,kg/m3,32,"2014 LWT p. 197 (thesis p. 32), text",remained stable except a slight decrease 0-15 min,true
+pH_unyeasted_throughout,LWT2014,none,0,5.80,0.06,,-,32,"2014 LWT p. 197 (thesis p. 32), text",,true
+pH_yeasted_asymptotic_minimum,LWT2014,dry_yeast,0.5-2.0,5.33,0.03,,-,32,"2014 LWT p. 197 (thesis p. 32), text",'dependent on the concentration'; one value printed for the yeasted samples; lowest pH with the highest yeast amounts,true
+tan_delta_unyeasted_start_to_135min,LWT2014,none,0,0.35,0.01,0.39,-,36,"2014 LWT p. 201 (thesis p. 36), text","low=start, high=135 min; sd 0.01 on both; +11.0 % printed; thesis p. 58 rounds the start to 0.36",true
+tan_delta_after_kneading_range_over_doses,LWT2014,dry_yeast,0-2.0,0.36,,0.55,-,58,thesis discussion p. 58,"low=0 dose, high=2.0 dose; 'asymptotically'; only the end values are printed as text",true
+loss_factor_increase_after_kneading_max,LWT2014,dry_yeast,0.5-2.0,57,,,%,36,2014 LWT p. 201 (thesis p. 36),'up to 57% higher loss factors immediately after kneading'; reference not stated in the sentence,true
+complex_shear_modulus_reduction_by_yeast,LWT2014,dry_yeast,0.5-2.0,20,,50,%,36,2014 LWT p. 201 (thesis p. 36),range printed 20-50 %,true
+gas_volume_fraction_after_kneading_max,FRI2015,compressed,0.5-3.0,23,,,%,40,"2015 FRI (journal p. 862-864, thesis p. 40-42), text",'up to 23% for CY'; unyeasted 6-9 %,true
+gas_volume_fraction_after_kneading_max,FRI2015,instant_dry,0.5-3.0,26,,,%,40,"2015 FRI (journal p. 862-864, thesis p. 40-42), text",'up to 26% for IDY',true
+gas_volume_fraction_unyeasted_after_kneading,FRI2015,none,0,6,,9,%,40,"2015 FRI (journal p. 862-864, thesis p. 40-42), text",range printed 6-9 %,true
+critical_co2_at_Tx,FRI2015,instant_dry,0.25-3.0,538,,564,ml per 315 g dough,42,"2015 FRI (journal p. 862-864, thesis p. 40-42), text",'remained at an almost constant level between 538 and 564 ml',true
+critical_co2_at_Tx_minimum,FRI2015,compressed,0.25-3.0,372,,,ml per 315 g dough,60,thesis discussion p. 60,'reduced to a minimum of 372 ml' with rising gas formation rates,true
+max_gas_formation_rate_vCO2,FRI2015,instant_dry,not printed,1630,,,ml/h,59,thesis discussion p. 59,dose not printed in the sentence; compared with CY 1260 ml/h; plotted against cfu in Fig. 3A (not digitised),true
+max_gas_formation_rate_vCO2,FRI2015,compressed,not printed,1260,,,ml/h,59,thesis discussion p. 59,dose not printed in the sentence,true
+max_specific_bread_volume,FRI2015,compressed,1.5 (dose of the maximum),3.9,,,ml/g,42,2015 FRI p. 864 (thesis p. 42),'(3.9 ml/g; density: 0.257 g/ml) resulted from fermentation with 1.5% of yeast until reaching T1 (116 min)'; conclusion p. 44 prints 3.88,true
+max_specific_bread_volume,FRI2015,instant_dry,not printed,3.3,,,ml/g,42,2015 FRI p. 864 (thesis p. 42),'approximately 3.3 ml/g'; conclusion p. 44 prints 3.28; thesis p. 61 prints 3.3,true
+max_specific_bread_volume_conclusion,FRI2015,compressed,not printed,3.88,,,ml/g,44,2015 FRI p. 866 (thesis p. 44),,true
+max_specific_bread_volume_conclusion,FRI2015,instant_dry,not printed,3.28,,,ml/g,44,2015 FRI p. 866 (thesis p. 44),,true
+specific_bread_volume_lowest_CY_dose,FRI2015,compressed,0.5,3.1,,,ml/g,43,2015 FRI p. 865 (thesis p. 43),'the loaf volume was significantly lower at 3.1 ml/g rather than 3.5 ml/g' (3.5 is the volume at the 2.5 and 3 % doses),true
+bread_volume_highest_co2_CY,FRI2015,compressed,2.0,1190,,,ml CO2,42,2015 FRI p. 864 (thesis p. 42),180 min; density 0.264 g/ml; 79.8 % gas,true
+dead_cells_fresh_yeast,FoodChem2015,compressed,n=6 products,1.77,,8.82,%,47,"2015 Food Chem (journal p. 245-248, thesis p. 47-49), text",range across 6 fresh products,true
+gsh_fresh_yeast,FoodChem2015,compressed,n=6 products,1.16,,10.51,mg/g yeast dry basis,48,"2015 Food Chem (journal p. 245-248, thesis p. 47-49), text",,true
+dead_cells_dry_yeast,FoodChem2015,dry,n=21 products,7.42,,75.14,%,48,"2015 Food Chem (journal p. 245-248, thesis p. 47-49), text",,true
+gsh_dry_yeast,FoodChem2015,dry,n=21 products,5.37,,81.22,mg/g yeast dry basis,48,"2015 Food Chem (journal p. 245-248, thesis p. 47-49), text",,true
+gsh_dead_cell_correlation_R2,FoodChem2015,both,n=27 products,0.8483,,,-,47,"2015 Food Chem (journal p. 245-248, thesis p. 47-49), Fig. 1",p < 0.001,true
+batch_to_batch_relative_deviation_dead_cells_max,FoodChem2015,both,"same product, two batches",75,,,%,48,"2015 Food Chem (journal p. 245-248, thesis p. 47-49), text","'for all of the six products that were tested, significant differences' p < 0.001; data not shown",true
+batch_to_batch_relative_deviation_gsh_max,FoodChem2015,both,"same product, two batches",91,,,%,48,"2015 Food Chem (journal p. 245-248, thesis p. 47-49), text",,true
+dough_development_time_no_gsh,FoodChem2015,none,0 mg GSH/100 g flour,7.4,0.57,,min,48,"2015 Food Chem p. 246 (thesis p. 48), text; non-leavened model dough, flour type 550, 58.8 parts water",Z-kneader,true
+dough_development_time_gsh_76.2,FoodChem2015,none,76.2 mg GSH/100 g flour,2.5,0.17,,min,48,"2015 Food Chem p. 246 (thesis p. 48), text; non-leavened model dough, flour type 550, 58.8 parts water","yeast-equivalent GSH of 1 g dry yeast per 100 g flour was 7.3, 27.8, 58.6 or 76.2 mg (p. 47)",true
+dough_stability_gsh_76.2,FoodChem2015,none,76.2 mg GSH/100 g flour,1.8,0.10,,min,48,"2015 Food Chem p. 246 (thesis p. 48), text; non-leavened model dough, flour type 550, 58.8 parts water",,true
+dough_softening_gsh_76.2,FoodChem2015,none,76.2 mg GSH/100 g flour,282,13.57,,FU,48,"2015 Food Chem p. 246 (thesis p. 48), text; non-leavened model dough, flour type 550, 58.8 parts water",asymptotic rise,true
+complex_shear_modulus_no_gsh,FoodChem2015,none,0 mg GSH/100 g flour,8170,570,,Pa,48,"2015 Food Chem p. 246 (thesis p. 48), text; non-leavened model dough, flour type 550, 58.8 parts water",rheometer,true
+complex_shear_modulus_gsh_76.2,FoodChem2015,none,76.2 mg GSH/100 g flour,3550,780,,Pa,48,"2015 Food Chem p. 246 (thesis p. 48), text; non-leavened model dough, flour type 550, 58.8 parts water",,true
+tan_delta_no_gsh,FoodChem2015,none,0 mg GSH/100 g flour,0.39,0.01,,-,48,"2015 Food Chem p. 246 (thesis p. 48), text; non-leavened model dough, flour type 550, 58.8 parts water",,true
+tan_delta_gsh_76.2,FoodChem2015,none,76.2 mg GSH/100 g flour,0.55,0.03,,-,48,"2015 Food Chem p. 246 (thesis p. 48), text; non-leavened model dough, flour type 550, 58.8 parts water",,true
+chemical_leavening_total_co2,FoodChem2015,none,9.9 g SAPP 10 + 7.2 g NaHCO3 per 100 g flour,666,30,,"ml (180 min, 300 g flour)",49,"2015 Food Chem p. 247 (thesis p. 49), text",'close to the typical CO2 volume (700 ml) produced by 0.5 g dry yeast per 100 g flour',true
+weakening_coefficient_gsh_lowest,FoodChem2015,none,lowest GSH of the 0-58.6 interval,0.25,0.07,,%,49,"2015 Food Chem p. 247 (thesis p. 49), text",'within the interval of 0.0-58.6 mg GSH per 100 g flour ... WC increased from 0.25 +/- 0.07% to 5.95 +/- 0.21%'; the exact GSH level of the 0.25 value is not printed,true
+weakening_coefficient_gsh_58.6,FoodChem2015,none,58.6 mg GSH/100 g flour,5.95,0.21,,%,49,"2015 Food Chem p. 247 (thesis p. 49), text",the end of the interval is printed as 58.6 mg; no Tx (gas release) within the interval,true
+weakening_coefficient_gsh_76.2,FoodChem2015,none,76.2 mg GSH/100 g flour,20.4,1.56,,%,49,"2015 Food Chem p. 247 (thesis p. 49), text",no Tx (gas release) up to 58.6,true
+table2_T1_chemical_SAPP,FoodChem2015,none,chemical,129.1,2.3,,min,49,"2015 Food Chem p. 247 (thesis p. 49), Table 2",time to maximum dough height,true
+table2_Hm_chemical_SAPP,FoodChem2015,none,chemical,48.5,0.4,,mm,49,"2015 Food Chem p. 247 (thesis p. 49), Table 2",,true
+table2_Tprime1_chemical_SAPP,FoodChem2015,none,chemical,11.9,0.2,,min,49,"2015 Food Chem p. 247 (thesis p. 49), Table 2",time to maximum gas formation rate,true
+table2_Hprimem_chemical_SAPP,FoodChem2015,none,chemical,149.7,0.8,,mm,49,"2015 Food Chem p. 247 (thesis p. 49), Table 2",maximum gas formation rate (the unit is as printed in the column heading),true
+table2_T1_yeast,FoodChem2015,dry,0.5,178.5,1.5,,min,49,"2015 Food Chem p. 247 (thesis p. 49), Table 2",,true
+table2_Hm_yeast,FoodChem2015,dry,0.5,42.4,1.1,,mm,49,"2015 Food Chem p. 247 (thesis p. 49), Table 2",,true
+table2_Tprime1_yeast,FoodChem2015,dry,0.5,176,0.8,,min,49,"2015 Food Chem p. 247 (thesis p. 49), Table 2",the plus-minus sign is not printed before 0.8,true
+table2_Hprimem_yeast,FoodChem2015,dry,0.5,40.9,0.1,,mm,49,"2015 Food Chem p. 247 (thesis p. 49), Table 2",the plus-minus sign is not printed before 0.1,true
