@@ -817,7 +817,9 @@ test('a template starts a named draft that becomes a recipe once saved', async (
   const guide = page.getByRole('region', { name: 'À propos de ce style' });
   await expect(guide).toContainText('Valeurs de référence de la recette retenue');
   await expect(guide).toContainText('sans constituer un consensus ni une prédiction');
-  await guide.getByText('Source et choix éditoriaux (anglais)', { exact: true }).click();
+  await guide
+    .getByText('Note de source et choix éditoriaux (anglais, unités d’origine)', { exact: true })
+    .click();
   await expect(guide).toContainText('Baking Steel');
   await page.getByRole('button', { name: 'Partir de ce modèle' }).click();
   await expect(page).toHaveURL(/\/drafts\//);

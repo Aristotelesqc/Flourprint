@@ -191,6 +191,8 @@ test('legacy template instructions localize with a short name without becoming a
   const method = routed(page).getByTestId('recipe-method');
   await expect(method.getByText('Cuisson en cocotte', { exact: true })).toBeVisible();
   await expect(method).toContainText('30 min avec couvercle, puis 22,5 min sans couvercle');
+  // The old label carried both units; the curated text no longer does.
+  expect(await method.innerText()).not.toMatch(/°[CF]/);
   await enterEditor(page);
   await editorSection(page, 'steps');
   await routed(page)
@@ -206,6 +208,63 @@ test('legacy template instructions localize with a short name without becoming a
   await expect(
     routed(page).locator('ion-footer').getByRole('button', { name: 'Annuler', exact: true }),
   ).toBeDisabled();
+});
+
+/** Sets the oven temperature unit to °F from the recipe list, then opens the imported recipe. */
+const openWithFahrenheitOven = async (page: Page) => {
+  await routed(page).locator('ion-back-button').click();
+  await page.getByLabel('Avancé').locator('visible=true').first().click();
+  await expect(page).toHaveURL(/\/advanced$/);
+  await page.getByRole('group', { name: 'Four' }).getByRole('button', { name: '°F' }).click();
+  await routed(page).locator('ion-back-button').click();
+  await routed(page).getByText('QA — étapes', { exact: true }).click();
+  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+};
+
+test('a bake step shows one temperature unit under a Fahrenheit oven setting', async ({ page }) => {
+  await importRecipe(page, {
+    steps: [
+      {
+        id: 'bake',
+        operation: 'bake',
+        dependsOn: [],
+        schedule: 'asap',
+        plannedDurationS: 1560,
+        conditions: { temperatureC: 232 },
+        equipment: { appliance: 'oven', setpointC: 232 },
+        label: 'Bake on stone or pan with steam',
+      },
+    ],
+  });
+  await openWithFahrenheitOven(page);
+  const method = routed(page).getByTestId('recipe-method');
+  // The curated text says what to do; the step's own data gives the temperature, once.
+  await expect(method).toContainText('Cuisson sur pierre ou plaque avec vapeur');
+  await expect(method).toContainText('450 °F');
+  const text = await method.innerText();
+  expect(text).not.toContain('°C');
+  expect(text).not.toContain('232');
+});
+
+test('a legacy template text states its deck and top temperatures in the baker’s unit', async ({
+  page,
+}) => {
+  await importRecipe(page, {
+    steps: [
+      {
+        id: 'bake',
+        operation: 'bake',
+        dependsOn: [],
+        schedule: 'asap',
+        plannedDurationS: 630,
+        label: 'Bake in electric deck oven (deck 300–320 °C, top 200 °C, static)',
+      },
+    ],
+  });
+  await openWithFahrenheitOven(page);
+  const method = routed(page).getByTestId('recipe-method');
+  await expect(method).toContainText('sole de 572 °F à 608 °F, voûte 392 °F');
+  expect(await method.innerText()).not.toContain('°C');
 });
 
 test('operation changes cannot silently discard an invalid uncommitted phase field', async ({

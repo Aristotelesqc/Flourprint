@@ -71,6 +71,7 @@ export const RecipeMethod = ({
 }: Props) => {
   const { t, stepName, stepInstructions } = useMessages();
   const temperature = useTemperature();
+  const formatOven = (celsius: number) => temperature.format(celsius, 'oven');
   const [selectedStepId, setSelectedStepId] = useState<string>();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [highlightedStepId, setHighlightedStepId] = useState<string>();
@@ -236,8 +237,10 @@ export const RecipeMethod = ({
                     {techniqueSummary(t, step.technique)}
                   </span>
                 )}
-                {stepInstructions(step) && (
-                  <span className="text-[13px] text-muted">{stepInstructions(step)}</span>
+                {stepInstructions(step, formatOven) && (
+                  <span className="text-[13px] text-muted">
+                    {stepInstructions(step, formatOven)}
+                  </span>
                 )}
                 {step.conditions && (
                   <span className="text-[13px] text-muted">

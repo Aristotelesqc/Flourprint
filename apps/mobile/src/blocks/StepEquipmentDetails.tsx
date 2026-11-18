@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   builtInEquipment,
-  temperatureContext,
+  setpointContext,
   type EquipmentEntry,
   type EquipmentRef,
   type ProcessStep,
@@ -162,7 +162,7 @@ export const StepEquipmentDetails = ({ step }: Props) => {
 
   // 2. Setpoint and power level (no else-if)
   if (eq.setpointC !== undefined) {
-    const tempStr = temperature.format(eq.setpointC, temperatureContext(step));
+    const tempStr = temperature.format(eq.setpointC, setpointContext(eq));
     const preheatKey = eq.preheated?.appliance
       ? `equipment.preheat.${eq.preheated.appliance}`
       : undefined;
