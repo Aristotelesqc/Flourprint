@@ -15,6 +15,14 @@ poke test, bubbles at the surface and the sides, jiggle, feel) come first and de
 overrides the model for that step, and the model never presents a computed end as the dough being
 ready.
 
+**Scope of the engine (ADR 0025, accepted 2026-11-18; proposal 0.27.0).** The fermentation engine
+is a planning tool: how much yeast for a rising time at room temperature, in the fridge or a
+combination, and the reverse, and how far a dough has fermented. It does not decide that a dough is
+ready. Readiness belongs to the step of a recipe and to the baker; where a calculation needs a
+target, the target comes from the step's end criterion (process.md, End criteria; below, End
+criteria and targets), not from one default. The readiness profiles of the legacy reading (below)
+are kept only to read what was stored.
+
 ## What it predicts
 
 The time a dough or a commercial-yeast preferment takes to reach its end point, and the yeast
@@ -34,9 +42,11 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
   also the last mixing step, as in a lone `mix` or a lone `frasage`, nothing changes from the
   older rule.
 - **Dough end point**: from the end of the first-contact step to the start of the bake, the dough
-  is "ready to bake" (the baker's readiness decision, see Readiness profiles below). Kneading
-  after the first contact, bulk, cold retard, shaping and proof are counted together: the state is
-  never reset between steps (#9).
+  ferments; whether it is ready to bake is the baker's decision. Its target, when a calculation
+  needs one, is read as End criteria and targets says (0.27.0, proposal), or, in the legacy
+  reading, from the readiness profile (Readiness profiles below). Kneading after the first
+  contact, bulk, cold retard, shaping and proof are counted together: the state is never reset
+  between steps (#9).
 - **Dough steps**: the `asap` steps **after** the first-contact step and before the first **heat
   step** (a cooking operation, process.md: boiling bagels, grilling or frying a dough ends the
   fermentation as baking does) in the graph, in process order; kneading steps among them, each
@@ -82,7 +92,8 @@ needed for a given schedule. One forward `simulate()` serves both directions (#2
 One state per fermenting mass, its progress `F` (0 at the start). The unit of `F` is Craig's:
 `F = 1` is "about doubled once" in his table. It is internal to the model. With stretch-and-folds,
 degassing and shaping the volume of a dough is not observable, so no interface presents a volume
-or a "doubled" target. Each mass has an end-point target `F*` (below):
+or a "doubled" target. Each mass has, when a calculation needs one, a target (End criteria and targets, below; in the
+legacy reading an end point `F*`, Readiness profiles):
 
 ```text
 dF/dt = (d / 1 %)^k / A × r(T(t))           [per hour]
@@ -120,7 +131,301 @@ r(T)  = exp( (Ea / R) × (1 / 294.25 K − 1 / T) )      (r = 1 at 21.1 °C)
 - The **band** is the minimum and maximum over every combination of the parameter ranges; the
   value uses the central parameters. The band is not a confidence interval.
 
+## End criteria and targets (0.27.0, proposal: awaiting the owner's approval)
+
+Status: **proposal of 2026-11-18** under ADR 0025 (accepted 2026-11-18; issues #243 and #287). It
+supersedes the readiness-default proposal of pull request #295. Nothing here is in force, and no
+code, fixture, template or `CONTRACT_VERSION` changes until the owner approves it. The data shape
+is in process.md, End criteria; this section says what the engine does with it. A recipe's step may
+state how the baker decides it is done; a calculation that needs a target reads the step's
+criterion, and a step that states none has no target.
+
+### Two readings of a process
+
+`Process.endCriteriaVersion` (process.md) selects the reading:
+
+| `endCriteriaVersion` | Reading  | Where a target comes from                                                                                       |
+| -------------------- | -------- | --------------------------------------------------------------------------------------------------------------- |
+| absent               | legacy   | the dough's readiness profile, or the model's own end point (Readiness profiles); step criteria are not read    |
+| `1`                  | criteria | the criterion of a step (below); a step with none has no target; no profile is read; `readiness` must be absent |
+
+Every number of the legacy reading stays what it was (Stored recipes and live bakes).
+
+### What the engine does with each kind (criteria reading)
+
+A **target step** is a fermentation step whose criterion gives a target. Only one kind does.
+
+| Criterion                                                     | Target                                                                             | The engine reports                                                                                           |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `volumeRatio`, `ratio` = 2, volume cue valid on the step      | the increment of `F` over the step: central 1, band 0.73 to 1 (the reading, below) | everything below, and the duration or dose that reaches the target, with their ranges                        |
+| `volumeRatio` with another ratio, or the volume cue not valid | none                                                                               | progress and its range; assumption `volume_ratio_unmapped` or `volume_ratio_after_degassing`; shown as a cue |
+| `mark`                                                        | none                                                                               | progress and its range, labelled an estimate; never a level, never "ready"                                   |
+| `sign`                                                        | none                                                                               | the same                                                                                                     |
+| `window`                                                      | none                                                                               | the same, and the progress at each bound of the window and where the planned time falls (below)              |
+| `none`, a legacy kind, or no criterion                        | none                                                                               | the step has its planned duration, and the progress reached at its end with its range                        |
+
+- The **volume cue is valid** on a step exactly when `volumeCueValid(step)` is true (Live
+  recomputation and readiness cues): in a plan, the step's technique declares no `folds` and its
+  operation is not `fold`, `degas`, `preshape` or `shape`; in a Preparation, no degassing was
+  recorded on the dough since the step started. A cue that becomes invalid during a Preparation
+  removes the target from that point: the forecast of the step then reports progress only, with
+  `volume_ratio_after_degassing`, and the baker's own observation decides.
+- **Progress without a target.** Every step of the dough lists, in addition to the existing
+  fields, `endProgress` (the cumulative `F` at the end of the step, in the unit of `F`) and
+  `progressIncrement` (the `F` gained during the step), each an `Estimate` with its `range` over the
+  same envelope as every other dough estimate (The band and the envelope). They carry no percentage
+  and no target, and are labelled as estimates. `endProgressPct` (a percentage of a target) exists
+  only on a target step, as `100 × increment / target increment`.
+- **A window** adds, on its step, `windowProgress`: the cumulative `F` at `minS` and at `maxS` of the
+  step's own time (each an `Estimate`, either absent when the bound is), computed with the step's
+  conditions and the dose of the recipe, and `planned`: `before`, `within` or `after`, the plain
+  comparison of the planned duration with the author's bounds. It is a comparison of two times that
+  the recipe states; it says nothing of the dough, and it never shortens or lengthens a step.
+- **A sign, a mark and a window never end a step, never drive a duration or a dose, and never
+  appear as "ready".** A baker's recorded `doughReady`, or "not ready", still decides (Role of
+  every forecast).
+
+### The volume ratio and the unit of progress (why only a ratio of 2)
+
+The unit of `F` is Craig's: `F = 1` is "about doubled once" in a hobbyist's table, which is model
+output and not dough data (State and equations; `docs/science/fermentation-model.md`, section 3).
+Section 3 also records that no measured data establish the equivalence of `F` with a volume, that
+gas produced, gas retained, volume and height are separate quantities, and that after folds,
+degassing and shaping a volume is not observable. The repository holds exactly two things that
+relate a volume to `F`:
+
+| Point                                         | Source                                                                                                                                                      | `F` by the shipped law                                                     |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| a volume of 2 is `F = 1`                      | the definition of the unit (Craig's table, through its open-source transcription); model output                                                             | 1, by definition                                                           |
+| volumes 1.3, 2 and 3 at 8 h, 16 h, 24 to 30 h | Covino 2023, one free-standing 250 g ball at 22 °C, 0.0663 % fresh yeast of flour, volume from photographs; the paper's text and figure differ on the times | 0.36, 0.73, 1.09 to 1.37 (shipped law, constant 22 °C, 21.94 h to `F` = 1) |
+
+No sound mapping of an arbitrary ratio `r` to a progress `G(r)` exists on this evidence: one curve,
+a sigmoid, in one dough, in one container-free geometry, against a table that is itself a model.
+`G(r) = log2(r)` would be an assumption of exponential growth that the single curve does not support
+(it gives 0.73 where the unit says 1, and 1.09 to 1.37 where `log2(3)` is 1.58), and the dough the
+baker reads in practice is degassed, folded or shaped, which the contract already declares
+unobservable. So the contract proposes the least it can defend:
+
+- **One reading, one ratio.** The reading `flourprint.volume-ratio-anchor` `1`: for a `volumeRatio`
+  of **2**, the increment of `F` over the step that carries it is `1.0` (the unit's own definition,
+  the central value), with the band **0.73 to 1.0** (the lower end is the one measured point). It is
+  a **provisional, uncalibrated target reading, not a kinetic constant and not a volume**; it
+  changes only through a new reading version in a contract pull request, like a profile. It is
+  valid when its values are finite and positive and `band[0] ≤ central ≤ band[1]`, as a profile.
+- **Any other ratio is not mapped.** A ratio of 1.5, 3 or 2.5 is stored and shown as the baker's cue;
+  the engine reports progress only (`volume_ratio_unmapped`) and solves nothing from it. No
+  interpolation, no table of ratios.
+- **What the estimate says.** The estimate names the reading in `calibration`
+  (`{ id: 'flourprint.volume-ratio-anchor', version: '1' }`, values-and-units.md), lists
+  `end_target:volume_ratio` and `end_target_increment:1`, and its band is the minimum and maximum
+  over every combination of the parameter ranges **and** of the two ends of the reading's band
+  (the rule of the profiles). The interface says "provisional", never that the dough has doubled
+  (ledger L21, L145).
+- **Measured from the step's start.** The increment is `F(end of step) − F(start of step)`, with the
+  state carried unchanged from step to step (a shaping resets the visible-volume baseline, never the
+  biochemical age, section 3). This is why the criterion sits on the step that begins after a
+  degassing (process.md).
+
+Why this and not nothing. Without it a new recipe would have no step from which a duration or a dose
+can be solved, and the model-driven step of L146 would have no source. The cost is a target that the
+owner may refuse: open question 1 asks whether to keep the reading or to treat a volume ratio as a
+cue only.
+
+### What each calculation reads
+
+| Calculation                                                  | Target read                                                                                                                                                                         | Without a target                                    |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Duration of the model-driven step (Model-driven duration)    | the target of that step, which must be the target step (`InvalidProcess`, `model_step_without_target`, otherwise)                                                                   | `insufficient_data`, `no_end_target`                |
+| Dose for the planned schedule (inverse)                      | the target step the caller names; by default the model-driven step, else the only target step; with several target steps and none named, `insufficient_data`, `several_end_targets` | `insufficient_data`, `no_end_target`                |
+| Suggested dough target (Suggested dough target)              | the same target step, solving the starting temperature so that its increment is the target (the bisection and the limits of that section are unchanged)                             | `insufficient_data`, `no_end_target`, no suggestion |
+| Progress, its range, the learning flags, the thermal results | none                                                                                                                                                                                | reported as usual                                   |
+
+- **A planning reference.** A planning question needs a target even when the recipe states none
+  ("the dose that ferments this dough in 14 h in the fridge as much as 3 h on the counter does").
+  The caller (the planning screen, the editor) may give the call an explicit **reference**: a
+  cumulative `F` at the end of a named step, with an optional band, chosen by the baker or taken
+  from the progress of another plan of the same recipe (the equal-progress question; example 3).
+  The reference is an **input of the call**, never stored in the recipe: the estimate lists it as
+  `planning_reference:<F>` and names no profile. Applying the result is an explicit edit with its
+  `accepted` provenance (Accepted suggestions), which keeps the estimate and so the reference. The
+  existing override of the profile (`profile` of the estimate functions: tests, comparisons) is
+  this input in the legacy reading.
+- **No default.** In the criteria reading nothing replaces the default profile: there is no
+  `F* = 1` fallback, no `readiness_default`, and no `ready_target_progress`. A step with no
+  criterion has a duration and no forecast target.
+- **Thermal porosity.** The class of a step without `thermal.porosity` (Dough thermal model, Mass)
+  is chosen from `f = F / F_ref` at the start of the step. `F_ref` is the profile's `readyProgress`
+  in the legacy reading (unchanged), and `1`, the unit's reference, in the criteria reading: it
+  classifies how proofed the dough is for its heat exchange, and says nothing of readiness.
+- **The band's readiness ends.** The envelope counts the two ends of the target's band when a target
+  exists (the profile's in the legacy reading, the reading's in the criteria reading), and nothing
+  when none does.
+- **The preferment.** It keeps its own clock and its end point `F = 1`, stated as the planning
+  reference of the preferment, not as a verdict that it is ripe. Its steps may carry a `sign`, a
+  `mark` or `none` (process.md); no preferment target derives from a criterion in this version
+  (open question 8). Its numbers do not change.
+
+### Stored recipes and live bakes
+
+What is stored, from the code at `077a39e`:
+
+- Stored recipes record no profile. `Process.readiness` is optional (`documents.ts`), no template,
+  schedule or blank recipe writes it, and its only writer is the explicit selector of the recipe
+  screen (`apps/mobile/src/blocks/fermentation/Result.tsx`). The estimate falls back to
+  `MODEL_END_POINT` (`F*` = 1) and adds `readiness_default` when it is absent
+  (`packages/core/src/domain/fermentation/estimate.ts`, `doughOf`). A baker who chose the experimental
+  profile has `readiness` stored.
+- `endCriterion` is already stored on some steps (`userDecision` on the steps the app creates for a
+  preparation, `apps/mobile/src/services/preparations.ts`, and on steps written by importers); no
+  calculation reads it.
+
+Rules:
+
+1. **A stored recipe's forecast never changes.** A process without `endCriteriaVersion` is read by
+   the legacy reading: the same target, the same assumptions (`readiness_default`,
+   `ready_target_progress:<F*>`), the same numbers. A legacy `endCriterion` (`duration`,
+   `observation`, `userDecision`) is not a target in either reading.
+2. **No migration and no rewrite.** Revisions are immutable (persistence.md; ADR 0003); no stored
+   revision is rewritten, no SQL migration is added, no field is inferred. The legacy reading is the
+   permanent reading of every document written before 0.27.0, as the fixed lag is the permanent
+   reading of a step without `thermal`.
+3. **Conversion is an explicit act.** Only the baker's explicit act writes `endCriteriaVersion: 1`
+   on a recipe (process.md). It produces a **new revision**; the interface says first that the
+   target of the recipe changes (the legacy `F*` no longer applies and the dose, duration and
+   suggested target need a criterion), and the previous revision keeps its forecast.
+   `readiness` is dropped from that revision. The interface may offer to attach a `volumeRatio` to
+   the last fermentation step; the contract writes none by itself.
+4. **A running bake keeps its forecast.** A bake reads the process of its snapshot (history.md): a
+   bake started on a stored recipe is read by the legacy reading for its whole life, and
+   `liveDoughForecast` gives it the numbers it gave before. A bake started on a recipe at version 1
+   uses the criteria reading for its whole life. Nothing converts a bake in progress.
+5. **A past bake's reconstruction is kept.** `BakeStarted` carries the process, so the criteria and
+   the version, and `plan.estimates` carries the accepted suggestions verbatim with their
+   `calibration` and assumptions. Replay is structural and never calls the engine (history.md,
+   Reading history). The recorded `doughReady` observations, their `stage` and `criterion` code are
+   unchanged, and the statistics that compare a mark with the accepted estimate read that estimate,
+   whatever profile or reading produced it.
+6. **Documents.** Recipe files and backups written before 0.27.0 are read unchanged
+   (persistence.md, End criteria in documents). A document with a new kind or the new field is read
+   only by an app that knows 0.27.0.
+
+### What replaces the default profile, and what keeps the profiles
+
+For a step with no criterion in the criteria reading: **nothing**; the step has a duration and its
+progress is reported. The profiles `flourprint.model-end-point` `1` (`F*` 1) and
+`flourprint.experimental-ready` `1` (`F*` 2, band 1.5 to 2.5) stay in the registry, with their
+values and their validity checks, only because the legacy reading needs them: a stored recipe at
+`F*` = 1 without a profile, and one that selected the second explicitly. No new recipe records one,
+the selector of the recipe screen is retired (an interface task), and no profile is added: the
+published-practice profile proposed in #295 is not created (its evidence stays a plausibility
+check, `docs/science/fermentation-model.md`, section 15).
+
+### Worked examples (proposal)
+
+Computed outside the engine. At a constant temperature `F` gained over `t` hours is
+`d^k / A × r(T) × t` (State and equations), with `d` the fresh-equivalent dose in percent of flour
+(instant yeast `÷ 0.33`), `r(T) = exp((Ea / R)(1 / 294.25 − 1 / (T + 273.15)))`, `R` = 8.314462618,
+`A` 3.43 h, `k` 0.729, `Ea` 98.3 kJ/mol. A range is the minimum and maximum over the 16 corners of
+`A` (×0.75, ×1.25), `k` (0.6, 0.9), `Ea` (50, 100 kJ/mol) and the instant conversion (÷0.32, ÷0.42),
+and over the two ends of a target's band when there is one. Examples 1 to 3 hold the ambient
+constant, so the dough has no lag. Example 4 uses the first-order lag, `τ` 1.5 h, integrated by
+Simpson's rule on 20 000 intervals; its ranges are over the kinetic corners at that `τ` (the thermal
+envelope of the engine widens them). Each dough: 1000 g flour, water and salt inside the
+model's domain; the first-contact `mix` ends at `t` = 0. Values are central, rounded to three or four digits; the
+engine matches the central values to 0.5 % and the ranges as the implementing pull request's
+fixtures (computed by a script outside the engine) say. Numbers of ingredients and durations are
+illustrative, not templates.
+
+**1. Two-rise lean bread: a volume-ratio bulk, a poke-test final proof.** Instant yeast 0.35 %
+(`d` = 1.0606 % fresh), everything at 22 °C (`r` = 1.1303). Steps: `mix` 10 min (first contact);
+`bulk`, `volumeRatio` 2, no folds, `durationMode: 'model'`; `shape` 10 min; `proof` 60 min,
+`sign` `proof.poke-feel`; `bake`. The bulk is a target step, and the proof states a sign.
+
+- The baker sees on the bulk: the cue "about double the volume since the start of the step, read in a
+  straight-sided marked container", the estimated end with its range, labelled provisional. On the
+  proof: the poke-test entry of the catalogue, the planned 60 min, and the progress reached with its
+  range, labelled an estimate.
+- The engine computes, for the bulk: rate `d^k / A × r` = 0.3440 per hour, so the duration that gains
+  1.0 is **174.4 min**, range **91.8 to 284.8 min** (the band of the reading, 0.73 to 1.0, widens
+  the low end); the editor writes 175 min with its `accepted` provenance. Dose for a planned 3 h
+  bulk: **0.3352 % instant**, range **0.1191 to 0.6865 %**. With the bulk at 175 min, the bulk's
+  increment is 1.0033 (100.3 % of the target) and, at the end of the proof, `endProgress` is
+  **1.405**, range 0.860 to 1.949, with the proof's own `progressIncrement` **0.344**, range 0.211 to
+  0.477. No duration or dose is solved for the proof (it states no target): asking for one gives
+  `no_end_target`. Assumptions: `end_target:volume_ratio`, `end_target_increment:1`; `calibration`
+  names the reading.
+
+**2. A pan loaf: a mark in the tin.** Instant yeast 0.5 % (`d` = 1.5152 % fresh), everything at 24 °C
+(`r` = 1.4801), rate 0.5842 per hour. Steps: `mix` 10 min; `bulk` 90 min, `sign`
+`bulk.feel-smooth-less-sticky-extensible`; `shape` 5 min; `proof` 75 min, `mark` `rim`, `offsetMm`
+−25 (about 1 inch below the top of the pan, the catalogue's `proof.lidded-mark`); `bake`.
+
+- The baker sees: on the bulk, the sign; on the proof, "dough about 25 mm below the rim of the tin"
+  as the cue, the planned 75 min, and the progress with its range, labelled an estimate. No
+  predicted time to the mark, because none can be computed.
+- The engine computes `endProgress` of **0.876** (0.474 to 1.298) at the end of the bulk, **0.925**
+  (0.501 to 1.371) after the shape and **1.655** (0.896 to 2.453) at the end of the proof, whose
+  `progressIncrement` is **0.730** (0.395 to 1.082). It solves no duration and no dose (no target
+  step). Changing `offsetMm` to −10, the `reference` to `lid` or the `signId` changes none of these
+  values; this is the acceptance test of "carries no number".
+
+**3. A same-day bagel with no rise criterion.** Instant yeast 0.9 % (`d` = 2.7273 % fresh, inside the
+0.01 to 3 % domain), 22 °C (`r` = 1.1303), rate 0.6848 per hour. Steps: `mix` 8 min (first contact); `bulk` 75 min, `none`;
+`divide` 10 min; `shape` 10 min; `rest` 20 min, `none`; `boil`, `bake` (heat steps end the
+fermentation). The recipe states no rise criterion (the catalogue's `bagel.before-doubling` is a
+ceiling, not a target).
+
+- The baker sees the planned durations of the steps and, on request, the progress reached at each
+  end with its range, as an estimate; no target and no "ready".
+- The engine computes `endProgress` **0.856** (0.490 to 1.396) after the bulk, **0.970** (0.556 to
+  1.582) after the divide, **1.084** (0.621 to 1.768) after the shape and **1.313** (0.752 to 2.140)
+  after the rest. A duration or a dose for the rest: `insufficient_data`, `no_end_target`. A
+  **planning reference** answers the equal-progress question: the baker lengthens the bulk to 105
+  min (the dough steps then total 145 min instead of 115) and asks for the dose that reaches the
+  same `endProgress` at the end of the rest (1.313): `(115 / 145)^(1/0.729)` times 0.9 % gives
+  **0.6549 % instant**, with the assumption `planning_reference:1.313`.
+
+**4. A cold-retarded pizza ball with a maturity window.** Instant yeast 0.2 % (`d` = 0.6061 % fresh).
+Steps: `mix` 4.5 min at 22 °C (first contact); `divide` 10 min at 22 °C; `retard` 48 h at 4 °C
+(`r` = 0.0838), `window` `minS` 86 400 (24 h), `maxS` 259 200 (72 h); `proof` 40 min at 22 °C,
+`none`; `bake`. (The window is the one the New York preset states, Templates in drafts.md.)
+
+- The baker sees on the retard: "usable between 24 h and 72 h" with the recipe's own words, the
+  planned 48 h marked as within the window, and the progress reached at each bound with its range,
+  labelled an estimate; the cold-stage flag (`cold_stage_uncalibrated`) beside it. No instant is
+  presented as the moment the ball is ready.
+- The engine computes the cumulative `F` from the first contact (the 10 min of divide at 22 °C
+  included) at the window bounds and at the planned end: **0.605** at 24 h of retard (0.347 to
+  2.295), **1.013** at 48 h (0.578 to 4.289) and **1.420** at 72 h (0.808 to 6.284); at the end of
+  the proof **1.032** (0.589 to 4.363), the dough warming from about 4 °C during the 40 min and
+  gaining 0.020. `planned`: `within`. No duration or dose is solved. The range is wide because the
+  cold end of the curve is a prior (Learning flags).
+
+**5. A stored recipe, unchanged, then converted.** A recipe stored before 0.27.0 (no
+`endCriteriaVersion`, no `readiness`): 1 % fresh yeast, constant 21.1 °C, a first-contact `mix`
+then a model-driven proof as its only dough step. It
+gives **3.43 h**, range **2.5725 to 4.2875 h** (`A` × `F*` = 1, the band of the profile 1 to 1) with
+`readiness_default`, before and after this proposal. The baker converts it by an explicit act and
+puts `volumeRatio` 2 on the proof: the duration is 3.43 h, range **1.878 to 4.2875 h** (the reading's
+band 0.73 to 1.0 times the parameter corners; 0.73 × 0.75 × 3.43 = 1.878). Converted with `none` on
+the proof instead: `no_end_target`. The previous revision still gives 3.43 h.
+
+Plausibility, not validation. Of the three built-in bulks that state a ratio of 2, only the water
+bagels have a dose inside the model's domain: 75 min at 21 °C with 0.978 % instant yeast (2.96 %
+fresh) gain **0.794** (shipped law, central, computed outside the engine), against a target of 1.0
+(0.73 to 1.0). Burger buns (2.143 % instant, 6.5 % fresh) and Chicago deep dish (2.866 % instant,
+8.7 % fresh) are above the 3 % fresh-equivalent limit, so the engine answers `out_of_domain` for
+them, as it does today; the contract does not move that limit. None of this validates the reading.
+
+### Message keys, tests and impact
+
+See Versions, 0.27.0.
+
 ## Readiness profiles: when the dough is ready
+
+**Under 0.27.0 (proposal) this section describes the legacy reading only** (End criteria and
+targets): it applies to a process without `endCriteriaVersion`, and nothing in it changes for those
+documents. The profiles are kept to read what was stored; no new recipe records one.
 
 The kinetic law and its constants (`A`, `k`, `Ea`, conversions, `τ`) say how fast `F` grows. They
 do not say when a dough is ready to bake. That is the baker's decision, held in a **readiness
@@ -143,8 +448,8 @@ type ReadinessRef = { id: string; version: string };
 | `flourprint.model-end-point` `1`    | 1.0             | 1.0 – 1.0 | the model's own end point, Craig's "about doubled once"; **the default**, uncalibrated                                                                                                                                         |
 | `flourprint.experimental-ready` `1` | 2.0             | 1.5 – 2.5 | an assumed prior, not measured: planned TOST schedules, read as examples, imply about twice Craig's time for "ready to bake" after degassing, shaping and proof (#33). The band is a sensitivity range, not a prediction error |
 
-- A recipe selects its profile on its process (`readiness?: ReadinessRef`, process.md). Without
-  one the default applies and the dough estimate adds the assumption `readiness_default`. Choosing
+- A recipe in the legacy reading selects its profile on its process (`readiness?: ReadinessRef`,
+  process.md). Without one the default applies and the dough estimate adds the assumption `readiness_default`. Choosing
   another profile is an explicit edit of the recipe, never a silent default.
 - An unknown profile makes the dough estimate `insufficient_data` (`readiness_profile_unknown`).
 - A profile is valid when `readyProgress` and both ends of `band` are finite and positive and
@@ -279,7 +584,9 @@ representative piece. Steps before the division use the whole mass. The applicat
 `cp` = 2800 J/(kg·K), range 2700 – 2930. When `thermal.porosity` is absent the class is chosen
 from the progress `f = F / F*` at the start of the step: `f < 1/3` unproofed, `f < 2/3` mid,
 otherwise proofed. `F*` is the end-point target of the step's mass under the recipe's readiness
-profile (Readiness profiles: `readyProgress`), not the preferment's 1.
+profile (Readiness profiles: `readyProgress`), not the preferment's 1. In the criteria reading
+(0.27.0, proposal) there is no profile and `F*` is replaced by the reference `F_ref` = 1 (End
+criteria and targets, Thermal porosity).
 
 ### Geometry classes
 
@@ -457,8 +764,8 @@ rate(T_amb, d)` with the central `ΔT_ad` and the **effective** lag, `τ_eff` af
   not a confidence interval.
 
 - **The envelope of an estimate** is the minimum and maximum over every combination of the
-  kinetic ranges (`A`, `k`, `Ea`, conversions), the two ends of the readiness band, and the two
-  thermal paths. The two paths replace the two shared corners of `τ` of `0.20.0`, so the count is unchanged (64 per dose) and does not grow with the number of steps.
+  kinetic ranges (`A`, `k`, `Ea`, conversions), the two ends of the readiness band (in the criteria
+  reading of 0.27.0, of the target's band when there is one), and the two thermal paths. The two paths replace the two shared corners of `τ` of `0.20.0`, so the count is unchanged (64 per dose) and does not grow with the number of steps.
   Every combination is computed: none is sampled or dropped. A combination that fails (Semenov
   bound, temperature gate, horizon) follows the existing rule: the central estimate stands and the
   estimate has no `range` and the assumption `band_unbounded`. The Semenov test of the upper path
@@ -742,7 +1049,10 @@ is never written into the recipe, and is applied to the recipe only by an explic
 
 **Definition.** Let the _dough steps_ be those of What it predicts (after the first-contact step, up
 to the first heat step, in order), `d_i` the planned duration of each and `T_i` its ambient, and
-`F*` the central end point of the recipe's readiness profile (`readyProgress`). Let `F(T₀)` be the
+`F*` the central end point of the recipe's readiness profile (`readyProgress`; in the criteria
+reading of 0.27.0 the target increment of the target step, End criteria and targets, which the
+dough start `T₀` is solved for in the same way, and with no target step there is no suggestion:
+`insufficient_data`, `no_end_target`). Let `F(T₀)` be the
 progress at the **end of the last dough step** when the dough starts at `T₀` at the end of the
 first-contact step and follows the model: the kinetic law, the lag and any thermal inputs and
 self-heating of the steps (central values), the yeast dose of the dough. The suggestion is the `T₀`
@@ -1012,6 +1322,9 @@ and 8 state the dependence.
 - The progress reached at the end of the planned schedule, when every duration is planned, as
   `progressPct = 100 × F / F*`: a percentage of the planned fermentation (of the end point of that
   mass). The interface shows it as such, labels the target "provisional" and never as a volume.
+  In the criteria reading (0.27.0, proposal) the percentage exists only against a target
+  (`100 × increment / target increment` on a target step), and every step also lists `endProgress`
+  and `progressIncrement` in the unit of `F`, with no target (End criteria and targets).
 - The yeast for the planned schedule (inverse), in the yeast ingredient's own form, as a baker's
   percentage with its band.
 - Estimates never end a step and never change the recipe by themselves: applying a suggested
@@ -1055,6 +1368,10 @@ interface AcceptedSuggestion {
 
 A dough step may be set to follow the model (`ProcessStep.durationMode: 'model'`, process.md):
 
+- In the criteria reading (0.27.0, proposal) a model-driven step must be the **target step** of
+  its process (End criteria and targets): `durationMode: 'model'` on any other step is
+  `InvalidProcess` (`model_step_without_target`), and without a model-driven step no duration is
+  solved. The rules below are those of the legacy reading, which is unchanged.
 - Only a **fermentation step** (a dough step that is not a mixing step, Dough steps) can be
   model-driven. `durationMode: 'model'` on a mixing step (`frasage`, `mix`, a kneading) is
   `InvalidProcess` (the step as `path`): the model solves the time of a fermentation, never of a
@@ -1244,3 +1561,101 @@ contract pull request does not touch `packages/core/src/domain/version.ts`. Refe
 The number `0.26.0` is written in `bake-session.md`, `fermentation.md`, `history.md`,
 `persistence.md`, `process.md`, `fixtures/README.md` and `fixtures/temperatures/cases.json`. #259 is merged, so `0.25.0` is taken;
 if a different number is needed, rename it in those files.
+
+Version `0.27.0` (**proposal, awaiting the owner's approval**; the next minor after the proposed `0.26.0`; the number
+that pull request #295 held, free because #295 is superseded; `CONTRACT_VERSION` is `0.25.0` at `077a39e` and no other
+open contract proposal uses `0.27.0`) adds the **end criterion of a step** and the targets that derive from it (process.md, End
+criteria; End criteria and targets; ADR 0025, owner direction of 2026-11-13 and 2026-11-14; issues #243 and #287).
+The fermentation engine becomes a planning tool: it reports how far a dough has fermented, solves a dose or a duration
+toward a target that the step's criterion supplies (or that the baker names for the call), and never decides that a dough
+is ready. **Pull request #295 (the `flourprint.published-practice` profile as the default of a new recipe) is superseded**
+and not merged: a new default target is exactly what this version removes. What does not change: `A`, `k`, `Ea`, the
+conversions and the dose exponent, the kinetic model `flourprint.commercial-yeast` `0.1.0`, the thermal model
+`flourprint.dough-thermal` `0.2.1`, the law and the band rule, the learning flags and their thresholds, the preferment's
+clock and end point, every number of the legacy reading, the two existing profiles and their values, `doughReady`, and
+replay.
+
+- **Before and after.** A recipe made from a template under `0.25.0` (and `0.26.0` once implemented): the process names
+  no profile, so a dose or a model-driven duration is solved to `F*` = 1 and labelled `readiness_default`, though 7 of
+  the 15 templates reach 140 % to 610 % of that end point at the end of their published schedule (ADR 0025,
+  context). After: the template's steps carry the criterion their source records, or none; a dose or a duration is
+  solved only where a step supplies a target (a `volumeRatio` of 2) or the baker names a reference; a step that states a
+  sign, a mark or a window is reported as progress with its range, and a step with none has a duration.
+- **Persisted shapes.** `endCriterion` (existing, optional on a step) widens from three kinds to eight (process.md);
+  `Process.endCriteriaVersion?: 1` is new and optional; `Process.readiness` is unchanged and read only in the legacy
+  reading. No event, no observation kind, no command changes. `doughReady` keeps its `stage` and `criterion` code.
+- **Migration.** None. No stored revision is rewritten (revisions are immutable, ADR 0003; persistence.md), no SQL
+  migration, no inference. Every document written before `0.27.0` is read by the legacy reading, permanently. The
+  recipe export and the full backup `schemaVersion` go from 3 to 4 (`EXPORT_SCHEMA_VERSION`; revision documents stay at
+  1; the event envelope and the feedback export are unchanged), so that an older reader refuses a document that holds a
+  new kind or the new field with `UnsupportedDocumentVersion` instead of a generic decoding error (the `0.21.0` precedent,
+  persistence.md, End criteria in documents). A version-4 writer may write a document with none of them; it is still
+  version 4. Downgrades are not supported.
+- **Events and replay.** `BakeStarted` copies the process (so the criteria and the version) as it copies it for any field;
+  `evolve` stays structural; replay never calls the engine; accepted estimates keep their `calibration` and assumptions.
+  A bake in progress keeps its reading for its whole life (Stored recipes and live bakes). The feedback export is
+  unchanged (its `backup` part holds the snapshot's process).
+- **Adapters.** The decoder of `documents.ts` learns the five new kinds and the version field (unknown kinds and
+  versions are still refused); the memory and SQLite adapters store revision JSON as before; backup, restore, recipe
+  export and import (additive, a present recipe skipped) carry the new shape; the backup contract tests add a case with
+  each kind and one with `endCriteriaVersion`.
+- **Engine and models.** `estimateFermentation`, `liveDoughForecast`, `applyModelDurations` and the suggested dough
+  target read the target of the target step (criteria reading) or the profile (legacy reading); new per-step outputs
+  `endProgress`, `progressIncrement` and, for a window, `windowProgress` and `planned`; new reasons `no_end_target` and
+  `several_end_targets`; new assumptions `end_target:volume_ratio`, `end_target_increment:<value>`,
+  `volume_ratio_unmapped`, `volume_ratio_after_degassing`, `planning_reference:<F>`; the reading
+  `flourprint.volume-ratio-anchor` `1` named in `calibration`. The implementing pull request bumps `CONTRACT_VERSION` to
+  `0.27.0` and `ENGINE_VERSION` one minor step (new outputs; no existing output of a legacy process changes), each from
+  the version current at its merge. The models keep their versions: a model version names the law and its constants,
+  not a target.
+- **Interface message keys** (French and English, before or with the engine change, no raw code reaching the baker,
+  ADR 0009; the wording is the interface owners'). Families: `fermentation.reason.no_end_target` and
+  `fermentation.reason.several_end_targets`; one `fermentation.note.<code>` for each of the five assumption codes above;
+  `step.endCriterion` with `.kind.none`, `.kind.volumeRatio`, `.kind.mark`, `.kind.sign`, `.kind.window`,
+  `.mark.reference.rim`, `.mark.reference.lid`, `.window.planned.before`, `.window.planned.within` and
+  `.window.planned.after`; the per-step progress without a target (`fermentation.progress.estimate`,
+  `fermentation.progress.increment`); the validation reasons `end_criterion_step_kind`, `end_criterion_needs_version`,
+  `readiness_with_end_criteria` and `model_step_without_target`. Retired with the selector: `fermentation.readiness*`
+  and the rewrite of `help.readiness.*` (an overlap with #246). No text says that the dough is ready or that it has
+  doubled (ledger L21, L145, L151).
+- **Tests and fixtures that would change.** Unchanged and still required to pass: every fixture of
+  `fixtures/fermentation/` and `fixtures/temperatures/` (they name a profile explicitly) and the tests that read a
+  legacy process. New: `fixtures/end-criterion/cases.json` for worked examples 1 to 5, generated by a script outside the
+  engine; `packages/core/test` cases for each kind, for the validity rules, for "a sign and a mark change no estimate",
+  for the legacy reading against the values of `0.25.0`, for a bake started under each reading, and for
+  `endCriteriaVersion` round trips through backup and recipe export (`packages/adapters/test/backup.test.ts`); the
+  template tests (`template-subjects.test.ts`, `recipe-check.test.ts`, `sourced-guides.test.ts`,
+  `model-durations.test.ts`) read the new template versions; `apps/mobile/test/i18n.test.ts` for the new keys and the
+  absence of "ready" and "doubled" in them; `apps/mobile/e2e/journey.spec.ts` (the readiness selector steps, around the
+  profile label, are replaced).
+- **Learning flags.** Unchanged: they read step temperatures and durations only (Learning flags). A step with a window
+  or without a target still carries `cold_stage_uncalibrated` and `cold_hold_over_72h` when it is cold.
+- **Capability levels.** Unchanged: a step's criterion is recorded data and guidance (N1/N2); a dose or duration
+  toward a target is the N3 prediction it already was (capability-levels.md). Open question 9.
+- **The built-in templates** carry the criterion their source records, and `none` recorded as an absent criterion
+  otherwise (drafts.md, Templates), each as a new template version; stored drafts and bakes keep their copies.
+- **Superseded.** Pull request #295 and its `0.27.0` proposal; the `flourprint.published-practice` profile is not
+  created.
+
+Open questions for the owner, each with the recommended answer:
+
+1. **Volume ratio and the unit of progress.** Keep the one reading (a ratio of 2 gives an increment of 1.0, band 0.73 to
+   1.0), or treat every volume ratio as a cue with no target? Recommended: keep the reading, provisional, because
+   without it the model-driven step has no source for a new recipe; the band's lower end is the one measured point.
+2. **Other ratios** (1.5, 2.5, 3). Interpolate with `log2(r)`? Recommended: no; report progress only until a second
+   dataset exists.
+3. **The profile selector.** Retire it and keep the two profiles' data only for the legacy reading? Recommended: yes.
+4. **Fermentation schedules** (drafts.md). In the criteria reading, drop `durationMode: 'model'` from the last step of
+   each schedule (the baker plans with a reference instead)? Recommended: yes; a schedule cannot invent a criterion.
+5. **Windows read from the process text.** The science document counts New York and Roman scrocchiarella as "durations
+   only"; their process text states a range ("at least 24 h, up to 72 h"; "use within 48 h"). Write them as windows?
+   Recommended: yes.
+6. **One criterion per step, or several** (a poke test and a mark together)? Recommended: one now; a list is an additive
+   extension in a later version.
+7. **A measured quantity** (a core temperature of 19 °C in the teglia preset): a `sign` that names the catalogue entry,
+   or its own kind? Recommended: a `sign` now; a kind only when the thermal sub-model computes toward it.
+8. **Preferment steps.** Allow criteria on them with no target derived from them, the end point staying `F` = 1 as a
+   reference? Recommended: yes, as written.
+9. **Capability levels.** Does guidance from the catalogue of signs need a level of its own? Recommended: no, until a
+   contract for the catalogue exists.
+10. **The number `0.27.0`**, the one #295 held. Recommended: reuse it, as #295 is superseded and unmerged.

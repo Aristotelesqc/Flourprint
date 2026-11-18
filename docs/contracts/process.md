@@ -25,7 +25,7 @@ interface ProcessStep {
   dependsOn: StepId[]; // finish-to-start
   schedule: 'asap' | 'alap' | 'beforeTarget'; // beforeTarget: Steps before a target, below
   plannedDurationS?: number; // absent = unknown
-  endCriterion?: EndCriterion; // observation or user decision
+  endCriterion?: EndCriterion; // how the recipe says the step is done (End criteria); absent = not stated
   accepted?: AcceptedSuggestion; // set when plannedDurationS was taken from a model suggestion
   durationMode?: 'manual' | 'model'; // absent = manual; 'model' on one fermentation step, never a mixing step (fermentation.md)
   subject?: Subject; // the mass the step works on; absent = derived (Subjects and component phases)
@@ -39,7 +39,8 @@ A process may also name the readiness profile of its dough (`fermentation.md`):
 ```ts
 interface Process {
   steps: ProcessStep[];
-  readiness?: { id: string; version: string }; // absent = the default profile
+  readiness?: { id: string; version: string }; // legacy reading only (see End criteria); absent = the legacy default
+  endCriteriaVersion?: 1; // 0.27.0 proposal: the process is read by its steps' end criteria (End criteria)
   intendedOutcome?: PreparationOutcome; // absent = derived (bake-session.md, Outcome)
 }
 ```
@@ -70,6 +71,8 @@ default outcome when a session finishes (bake-session.md); an invalid one is `In
   on it; `requiredWarmupS` ≥ 0, required unless `startRule` is `afterDependencies` (Steps before a
   target). `target`, `requiredWarmupS` and `startRule` are refused on any other schedule.
 - `plannedDurationS` ≥ 0 when present.
+- End criteria (0.27.0, proposal): the checks of End criteria below; each is `InvalidProcess`, the
+  step as `path`.
 - Per-step incorporations add up exactly to the formula's final-mix quantities (see below).
 - `dependsOn` is never accepted and then ignored, nor dropped on import.
 
@@ -352,6 +355,105 @@ Examples (hand-checked; `+h:mm` from the start of the recipe):
 17. **Target started first.** The bake was started at 14:35 and the oven recorded on at 14:40:
     `unavailable`, `startsAfterTarget`; both records stay as they are.
 
+## End criteria (0.27.0, proposal: awaiting the owner's approval)
+
+Status: **proposal of 2026-11-18**, written for the owner to approve or refuse under ADR 0025
+(accepted 2026-11-18; issues #243 and #287). Nothing here is in force, and no code, fixture,
+template or `CONTRACT_VERSION` changes until he approves it. It supersedes the readiness-default
+proposal of pull request #295 (`fermentation.md`, Versions).
+
+**Why.** The fermentation engine plans (how much yeast for a rising time, and the reverse) and
+reports how far a dough has fermented; it does not decide that a dough is ready (ADR 0025,
+decision 1). Readiness belongs to the step of a recipe and to the baker (decision 2): a recipe says
+how the baker decides that a step is done, and the kinds of criteria differ. `endCriterion` already
+exists on a step (above) with three kinds that no calculation reads. This section gives it the
+kinds ADR 0025 names, says where it lives, and fixes what each kind may carry. What the engine does
+with each kind is in `fermentation.md`, End criteria and targets.
+
+```ts
+type EndCriterion =
+  // Persisted before 0.27.0; kept, read and written back unchanged. Each states no rise criterion.
+  | { kind: 'duration' }
+  | { kind: 'observation'; description?: string }
+  | { kind: 'userDecision' }
+  // 0.27.0, the closed set of criteria that a recipe can state:
+  | { kind: 'none'; description?: string } // the recipe states no criterion: the step ends with its time
+  | { kind: 'volumeRatio'; ratio: number; description?: string } // volume against the step's start
+  | { kind: 'mark'; reference: 'rim' | 'lid'; offsetMm: number; description?: string } // a level in the vessel
+  | { kind: 'sign'; signId: string; description?: string } // a handling or sensory sign of the catalogue
+  | { kind: 'window'; minS?: number; maxS?: number; description?: string }; // usable between two ages
+```
+
+- **Where it lives.** On the step: `ProcessStep.endCriterion`, the existing optional field. It is
+  optional everywhere: an absent criterion means "not stated", never "none". A step has at most one
+  (open question 6 of the proposal). Nothing is added to the formula, the flour or the equipment.
+- **`volumeRatio`.** `ratio` is the volume of the dough divided by its volume at the **start of the
+  step that carries the criterion**: finite, greater than 1. "Since the last degassing" is
+  expressed by position: a baker who means the volume since the last fold, degassing or shaping puts
+  the criterion on the step that begins with it (the step after a `fold`, `degas`, `preshape` or
+  `shape` step), because a recipe's degassing operations are steps (Techniques). Only on a
+  fermentation step (a dough step that is not a mixing step, `fermentation.md`); anywhere else is
+  `InvalidProcess` (`end_criterion_step_kind`). A `volumeRatio` on a step that itself is one of those
+  degassing operations, or whose technique declares `folds`, is stored and shown but is not a
+  target (`fermentation.md`: the volume cue is not valid there, ledger L146).
+- **`mark`.** A level of the dough in its vessel. `reference` is `rim` (the top edge of the pan,
+  the dough over it or below it) or `lid` (the underside of a lid on a lidded tin); `offsetMm` is
+  signed: negative below the reference, `0` at it, positive above, finite and within ±1000. Length
+  is in millimetres (`values-and-units.md`). Valid on any step.
+- **`sign`.** A handling or sensory sign (smooth and less sticky, extensible without tearing, a poke
+  test, windowpane, a core temperature read with a probe) referred to by `signId`, the language
+  neutral id of an entry of the catalogue of signs (`docs/science/readiness-criteria.md`, for
+  example `proof.poke-feel`, `bulk.feel-smooth-less-sticky-extensible`, `pizza.core-temperature-19`).
+  `signId` is a non-empty string; an id the app does not know is kept and shown as given, like an
+  open operation code, never refused. The catalogue entry, not the criterion, says what the sign is,
+  what it indicates and with what source and level; the criterion never copies a number out of it.
+  The catalogue as product data is a later contract (ADR 0025, consequences); until then the ids
+  are those of the science document. Valid on any step.
+- **`window`.** An author's window of acceptable maturity, in seconds of the step's own time:
+  `minS` and `maxS`, finite, at least 0, at least one present, `minS ≤ maxS` when both are. A
+  window states what the recipe says about how long the step may last under **its own conditions**
+  (its temperature, the dose of the recipe); it does not move when either changes. Only on a
+  fermentation step, as `volumeRatio`.
+- **`none`.** The recipe states no criterion for the step, or states that there is none: the step
+  ends when its planned time is over (the bagel that goes from shaping to the water bath). Valid on
+  any step. `none` and an absent criterion have the same effect on every calculation; the
+  difference is that `none` is a statement.
+- **A sign or a mark carries no number the engine can compute toward.** `signId`, `description`,
+  `reference` and `offsetMm` are never read by a calculation: changing them changes no estimate
+  (an acceptance test, below). A distance in a tin is not a progress: the contract has no geometry
+  of the vessel and no density of the dough that could turn one into the other, and a sign is read
+  by the baker's senses. The same holds for `description` on every kind.
+- **How it is shown.** As the baker's cue on the step, beside the planned time and the estimate
+  (ledger L145, L146), in the baker's terms: the ratio against the step's start, the level against
+  the rim or the lid, the catalogue entry of the sign with its definition on demand (L152), the
+  window as the span within which the recipe says the step may end, and the recipe's `description`
+  when there is one. A criterion is never rendered as a computed value, and no screen presents an
+  engine result as the step being done (ledger L151). Screens, components and wording belong to the
+  interface owners; the French wording never addresses the baker (AGENTS.md).
+
+**Reading a process: `endCriteriaVersion`.** The new kinds change what the engine computes toward,
+so a process says by which rule it is read:
+
+- **Absent** (every document written before 0.27.0, and any process the editor has not been asked to
+  convert): the **legacy reading**. The criteria of the steps are not read by any calculation, a
+  `readiness` profile selects the dough's target as before, and a process without one uses the
+  model's own end point (`fermentation.md`, Stored recipes and live bakes). A process in the legacy
+  reading holds only legacy kinds; a new kind in it is `InvalidProcess`
+  (`end_criterion_needs_version`).
+- **`1`**: the **criteria reading**. Targets come from the steps' criteria only
+  (`fermentation.md`, End criteria and targets); a step with no criterion has no target. `readiness`
+  must be absent (`InvalidProcess`, `readiness_with_end_criteria`): one source of truth.
+- Every process the application creates from 0.27.0 (the blank recipe, a template, a duplicate of a
+  recipe already at 1) is written at `1`. The editor **never sets or removes the field on its own**:
+  opening and saving a stored recipe leaves it as it was, and only an explicit act of the baker
+  (adding a criterion to a dough step, or the interface's own "use step criteria" action) writes `1`,
+  after saying that the forecast target of the recipe changes and that the previous revision is kept.
+  A different value of the field is an unsupported document (`UnsupportedDocumentVersion`).
+
+**Duplicate and move** carry `endCriterion` as they carry the other step fields (Duplicate below);
+moving a step changes no criterion, and a `volumeRatio` that no longer sits on a valid step after an
+edit is `InvalidProcess` like any other invalid process.
+
 ## Techniques (#32, first slice)
 
 A step may describe **how** it is done. This is recorded data: no duration, end or dough state is
@@ -395,7 +497,8 @@ interface StepTechnique {
   sense on a step the dough ferments through (typically `bulk`); they do not split it, so the
   fermentation estimate still sees one step.
 - `endCheck` names what ends the step for the baker; with `endCriterion` it is shown, never acted
-  on.
+  on. It is not an end criterion and carries none of its rules (0.27.0, proposal): it stays an open
+  code of the technique, and no calculation reads it.
 - An invalid technique (a phase or interval ≤ 0, a non-integer count) is `InvalidProcess`.
 
 ## Mixing steps (frasage and kneading)

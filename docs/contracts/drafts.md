@@ -130,6 +130,12 @@ the schedule's bulk.
 Schedules are versioned data in the application layer, like templates; the last dough step of each
 is `durationMode: 'model'`. A schedule is a starting point: every value stays editable.
 
+**Under the criteria reading (0.27.0, proposal; process.md, End criteria)** a schedule applied to a
+process at `endCriteriaVersion: 1` writes no criterion and no `durationMode`: a schedule cannot
+invent the criterion that a model-driven step needs (fermentation.md, End criteria and targets), and
+the baker plans its times with a reference instead. Applied to a process in the legacy reading, it
+behaves as above (open question 4 of the 0.27.0 proposal).
+
 ## Templates
 
 ```ts
@@ -148,7 +154,8 @@ interface RecipeTemplate {
 }
 ```
 
-- Templates are shipped with the app, read only. "Start from a template" creates a draft with a
+- Templates are shipped with the app, read only. From 0.27.0 (proposal) every template is a new
+  version written at `endCriteriaVersion: 1`, with the end criteria of the table below. "Start from a template" creates a draft with a
   copy of the template's formula and process (`origin.kind = 'template'`); the template never
   changes afterwards.
 - Every template passes `checkRecipe` without a blocking issue (a test). Warnings are allowed only
@@ -162,4 +169,39 @@ interface RecipeTemplate {
   recipe or a check.
 - The blank recipe is not a template: flour 100 %, water 65 %, salt 2 %, instant yeast 0.5 %, and
   the steps frasage, bulk, shape, proof, bake, with durations (a first `frasage`: process.md,
-  Mixing steps).
+  Mixing steps). From 0.27.0 (proposal) it is written at `endCriteriaVersion: 1` with no criterion
+  on any step.
+
+### End criteria of the built-in templates (0.27.0, proposal)
+
+Each criterion is the one **the preset's own source records** in `docs/science/data/style-guides.md`
+("Published process") and in the count of end criteria of the 15 presets
+(`docs/science/readiness-criteria.md`, "What the repository's recipes record"). Where the source
+records none, the template writes none and the step is **none recorded**. No value is invented, no
+planned duration changes, and a catalogue entry taken from another page than the preset's source is
+not written (it stays available to the baker). Seven templates carry none; eight carry the criteria
+below.
+
+| Template               | Step       | Criterion                                            | Recorded as                                                                                     |
+| ---------------------- | ---------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `baguette`             |            | none recorded                                        | durations only                                                                                  |
+| `boule-dutch-oven`     |            | none recorded                                        | durations only                                                                                  |
+| `ciabatta`             |            | none recorded                                        | durations; the finished-dough temperature is already `doughTemperatureC` on the mix step        |
+| `bagels`               | `bulk`     | `volumeRatio` 2                                      | "bulk 1-1.5 h to double"; no separately timed final proof, so no step to carry one              |
+| `focaccia`             |            | none recorded                                        | durations; `proof.bubbly-jiggle-pan` comes from another page than the preset's source           |
+| `brioche`              |            | none recorded                                        | durations; "keep dough ≤ 26 °C" is a dough temperature, not a rise criterion                    |
+| `burger-buns`          | `bulk`     | `volumeRatio` 2, `description` "to nearly double"    | "bulk 1-2 h to nearly double"                                                                   |
+| `burger-buns`          | `proof`    | `sign` `proof.puffy`                                 | "proof ~1 h to puffy"                                                                           |
+| `pullman`              |            | none recorded                                        | durations; the tin marks (`proof.lidded-mark`) come from other recipes than the preset's source |
+| `shokupan`             | `bulk`     | `sign` `bulk.puffy`                                  | "bulk 1-1.5 h to puffy"; the proof records none                                                 |
+| `pizza-neo-neapolitan` |            | none recorded                                        | durations only                                                                                  |
+| `pizza-roman`          | `retard`   | `window` `maxS` 172 800 (48 h)                       | "fridge +4 °C, use within 48 h"; no lower bound recorded (open question 5)                      |
+| `pizza-teglia`         | `proof`    | `sign` `pizza.core-temperature-19`                   | "appretto 3-4 h at room temp until core ≥ 19 °C" (open question 7)                              |
+| `pizza-new-york`       | `retard`   | `window` `minS` 86 400 (24 h), `maxS` 259 200 (72 h) | "refrigerate at least 24 h, up to 72 h" (open question 5)                                       |
+| `pizza-sicilian`       | `pan-rest` | `sign` `rest.relax-and-repeat`                       | "relax 10-15 min, repeat as needed until the pan is filled"                                     |
+| `pizza-chicago`        | `bulk`     | `volumeRatio` 2                                      | "bulk 30-45 min at 75 °F (24 °C) to double"; no separate final proof, so no step to carry one   |
+
+The readiness-criteria count lists New York and Roman scrocchiarella among the nine presets with
+"durations only"; their process text states the ranges above, which this table reads as windows
+(open question 5). The bulks that state a ratio of 2 are target steps (fermentation.md, End
+criteria and targets); the rest give progress and its range only.
