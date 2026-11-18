@@ -55,3 +55,8 @@ On Android and in the desktop shell, data is stored in SQLite (`docs/contracts/p
 
 The project language is English: code, comments, documentation, commits, issues and pull
 requests. The UI is localizable; see ADR 0009.
+
+## License
+
+Flourprint's source code is licensed under the [GNU Affero General Public License, version 3](LICENSE)
+(`AGPL-3.0-only`).
