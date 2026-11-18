@@ -1,4 +1,5 @@
 import {
+  CENTRAL,
   INGREDIENT_PRESETS,
   resolveFormula,
   type Formula,
@@ -13,6 +14,15 @@ import {
 
 export const H = 3600;
 export const MIN = 60;
+
+/**
+ * Baker's percentage of instant dry yeast that replaces `freshPct` of fresh yeast, by the
+ * engine's own conversion between yeast forms (`CENTRAL.freshPerGram`, fermentation/model.ts):
+ * the fresh-equivalent dose, hence the estimate, is unchanged. Instant dry yeast is the reference
+ * yeast of every built-in template (drafts.md, Templates).
+ */
+export const instantFromFresh = (freshPct: number): number =>
+  freshPct / CENTRAL.freshPerGram.instant;
 
 /** A dough ingredient with the composition of its preset (`formula/presets.ts`). */
 export const preset = (id: string, bakerPct: number): Ingredient => {

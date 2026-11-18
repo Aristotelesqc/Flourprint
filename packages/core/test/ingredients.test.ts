@@ -108,8 +108,8 @@ const problem = (entry: IngredientEntry) => {
 };
 
 describe('contract version', () => {
-  it('is 0.25.0 (learning flags; hydration sheet read model since 0.24.3)', () => {
-    expect(CONTRACT_VERSION).toBe('0.25.0');
+  it('is 0.25.1 (home templates; learning flags since 0.25.0, hydration sheet read model since 0.24.3)', () => {
+    expect(CONTRACT_VERSION).toBe('0.25.1');
   });
 });
 

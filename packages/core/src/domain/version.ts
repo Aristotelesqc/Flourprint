@@ -4,9 +4,11 @@
  * name when free, else `<base> <n>` with n ≥ 2 (drafts.md, Generated names). 0.24.3: the hydration
  * sheet read model (formula.md, Hydration sheet read model, L147), an addition. No persisted shape
  * or calculation changes. 0.25.0: the learning flags, three evidence-limited extrapolation codes
- * (fermentation.md, Learning flags); no persisted shape change.
+ * (fermentation.md, Learning flags); no persisted shape change. 0.25.1: built-in templates are
+ * executable at home (drafts.md, Templates), a rule on shipped template data; no persisted shape,
+ * calculation or engine change.
  */
-export const CONTRACT_VERSION = '0.25.0';
+export const CONTRACT_VERSION = '0.25.1';
 
 /**
  * Version of the calculation engine recorded in bake snapshots (D8). 0.8.0: the dough thermal

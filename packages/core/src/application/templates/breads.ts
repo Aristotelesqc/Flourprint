@@ -1,5 +1,14 @@
 import type { RecipeTemplate } from '../../domain/index.js';
-import { alapStep, component, H, MIN, preset, step, withPieces } from './build.js';
+import {
+  alapStep,
+  component,
+  H,
+  instantFromFresh,
+  MIN,
+  preset,
+  step,
+  withPieces,
+} from './build.js';
 
 /** Lean breads (drafts.md, Templates): selected published variants; editable plans are not prediction validation. */
 
@@ -72,8 +81,10 @@ export const bouleDutchOven: RecipeTemplate = {
   basis:
     'Leite’s Culinaria — Jim Lahey’s No-Knead Bread (https://leitesculinaria.com/99521/recipes-jim-laheys-no-knead-bread.html). ' +
     'Attributed Lahey recipe (Sullivan Street Bakery) via David Leite. Normalized measures using KAB weight chart: ' +
-    '3 cups AP flour (360 g), 1 1/3 cups lukewarm water (302.667 g, 84.074 % hydration), 1/4 tsp instant yeast ' +
-    '(0.75 g, 0.2083 %), 1 1/4 tsp salt with explicit table-salt assumption (6 g/tsp = 7.5 g, 2.083 %). ' +
+    '3 cups AP flour, 1 1/3 cups lukewarm water (302.667 g), 1/4 tsp instant yeast (0.75 g), 1 1/4 tsp salt with ' +
+    'explicit table-salt assumption (6 g/tsp = 7.5 g). Flour reading: 140 g per cup, so 420 g flour and 72.063 % hydration ' +
+    '(owner decision of 2026-11-18: the other reading, 120 g per cup, gives 360 g flour and 84.074 % hydration, a very sticky ' +
+    'first boule); water, yeast and salt keep the source’s absolute quantities, which makes yeast 0.1786 % and salt 1.786 % of the flour. ' +
     'Direct dough, no preferment. Editorial planned values: mix 30 s (sourced); bulk planned at 15 h (editorial ' +
     'midpoint of 12–18 h range, noting source’s preferred 18 h recommendation) at sourced ideal 22.2 °C (72 °F); ' +
     'shape/fold 10 min (editorial default); proof 2 h (sourced) at 21 °C (room unspecified); preheat 30 min ' +
@@ -83,12 +94,12 @@ export const bouleDutchOven: RecipeTemplate = {
   formula: {
     flours: [{ id: 'all-purpose-flour', sharePct: 100 }],
     ingredients: [
-      preset('water', ((227 * 4) / 3 / 360) * 100),
-      preset('salt', (7.5 / 360) * 100),
-      preset('instant-yeast', (0.75 / 360) * 100),
+      preset('water', ((227 * 4) / 3 / 420) * 100),
+      preset('salt', (7.5 / 420) * 100),
+      preset('instant-yeast', (0.75 / 420) * 100),
     ],
     components: [],
-    anchor: { kind: 'flourTotal', grams: 360 },
+    anchor: { kind: 'flourTotal', grams: 420 },
   },
   process: {
     steps: [
@@ -119,9 +130,10 @@ export const ciabatta: RecipeTemplate = {
     'Original measures: 10 kg total flour (Sir Galahad flour), 7.6 kg water (76 %), ' +
     '0.2 kg salt (2 %), 0.12 kg yeast (1.2 %). Biga: 3 kg flour (30 % preferment), 1.8 kg water (60 % component ' +
     'hydration), 3 g yeast (0.03 % total flour); ripened ~16 h at 21 °C (room unspecified). Final dough additions: ' +
-    '7 kg flour, 5.8 kg water, 200 g salt, 117 g yeast. Evidence gap: yeast form is unspecified in the professional ' +
-    'source; preserved as an inline dough ingredient without yeast marker, with unknown composition, avoiding ' +
-    'unsupported assumptions of fresh vs instant. Editorial planned values: mix 7.5 min (3 min low speed + ' +
+    '7 kg flour, 5.8 kg water, 200 g salt, 117 g yeast. Yeast form: unspecified in the professional source; by owner ' +
+    'decision (2026-11-18) it is read as fresh yeast and used as instant dry yeast, the reference yeast of the templates, by the ' +
+    'engine’s conversion (1 g fresh = 0.33 g instant): 1.2 % fresh becomes 0.396 % instant, and the biga’s 0.03 % becomes ' +
+    '0.0099 % (at 1 000 g flour: 3.96 g instant in all, of which 0.099 g in the biga). Editorial planned values: mix 7.5 min (3 min low speed + ' +
     '4.5 min medium speed [midpoint of 4–5 min range]) with DDT 23.9 °C (75 °F) at 21 °C room; bulk 2 h at 21 °C ' +
     'with 1 fold at 1 h; divide 10 min (editorial default) into 0.57 kg rectangles; proof 1 h at 21 °C (room ' +
     'unspecified); preheat 30 min (editorial default); bake 36 min at 460 °F (238 °C) with steam; cool 60 min ' +
@@ -131,12 +143,7 @@ export const ciabatta: RecipeTemplate = {
     ingredients: [
       preset('water', 76),
       preset('salt', 2),
-      {
-        id: 'yeast',
-        kind: 'other',
-        role: 'dough',
-        bakerPct: 1.2,
-      },
+      preset('instant-yeast', instantFromFresh(1.2)),
     ],
     components: [
       {
@@ -145,7 +152,7 @@ export const ciabatta: RecipeTemplate = {
         flourPct: 30,
         flourBlend: [{ flour: 'all-purpose-flour', sharePct: 100 }],
         hydrationPct: 60,
-        allocations: [{ ingredient: 'yeast', bakerPct: 0.03 }],
+        allocations: [{ ingredient: 'instant-yeast', bakerPct: instantFromFresh(0.03) }],
       },
     ],
     anchor: { kind: 'flourTotal', grams: 1000 },

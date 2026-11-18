@@ -143,15 +143,19 @@ describe('Sourced lean bread templates (issue #34)', () => {
   describe('bouleDutchOven (Leite’s Culinaria — Jim Lahey No-Knead Bread)', () => {
     it('matches volume-to-weight conversions and direct dough balance', () => {
       const resolved = resolve(bouleDutchOven);
-      expect(bouleDutchOven.formula.anchor).toEqual({ kind: 'flourTotal', grams: 360 });
+      // Owner decision of 2026-11-18: 140 g of flour per cup, so 3 cups are 420 g and the
+      // hydration is 72.063 % (the 120 g reading gave 360 g and 84.074 %); water, salt and yeast
+      // keep the source's absolute quantities.
+      expect(bouleDutchOven.formula.anchor).toEqual({ kind: 'flourTotal', grams: 420 });
 
-      expect(resolved.flourTotal).toBe(360);
+      expect(resolved.flourTotal).toBe(420);
+      close(resolved.pureWaterPct, 72.0635, 1e-3);
       close(required(resolved.grams['water']), (227 * 4) / 3);
       close(required(resolved.grams['salt']), 7.5);
       close(required(resolved.grams['instant-yeast']), 0.75);
 
       expect(Object.keys(resolved.components)).toHaveLength(0);
-      const expectedDoughWeight = 360 + (227 * 4) / 3 + 7.5 + 0.75;
+      const expectedDoughWeight = 420 + (227 * 4) / 3 + 7.5 + 0.75;
       close(resolved.doughWeight, expectedDoughWeight);
     });
 
@@ -193,6 +197,8 @@ describe('Sourced lean bread templates (issue #34)', () => {
     };
     // The home template is that formula divided by ten (basis): every ratio is the source's.
     const SCALE = 1 / 10;
+    // The engine's conversion of fresh yeast to instant dry yeast (fermentation.md): 0.33 g per g.
+    const FRESH_TO_INSTANT = 0.33;
 
     it('is the professional 10 kg source formula scaled by 1/10, ratios unchanged', () => {
       const resolved = resolve(ciabatta);
@@ -202,23 +208,34 @@ describe('Sourced lean bread templates (issue #34)', () => {
       expect(resolved.flourTotal).toBe(1000);
       close(required(resolved.grams['water']), SOURCE.water * SCALE);
       close(required(resolved.grams['salt']), SOURCE.salt * SCALE);
-      close(required(resolved.grams['yeast']), SOURCE.yeast * SCALE);
+      // Yeast form: read as fresh (owner decision) and used as instant: 1 g fresh = 0.33 g instant.
+      close(required(resolved.grams['instant-yeast']), SOURCE.yeast * SCALE * FRESH_TO_INSTANT);
       close(
         resolved.doughWeight,
-        (SOURCE.flour + SOURCE.water + SOURCE.salt + SOURCE.yeast) * SCALE,
+        (SOURCE.flour + SOURCE.water + SOURCE.salt + SOURCE.yeast * FRESH_TO_INSTANT) * SCALE,
       );
 
       // Fidelity to the source ratios: every baker's percentage is the source's, not a rounding of it.
       const pct = (grams: number) => (grams / resolved.flourTotal) * 100;
       close(pct(required(resolved.grams['water'])), (SOURCE.water / SOURCE.flour) * 100, 1e-9);
       close(pct(required(resolved.grams['salt'])), (SOURCE.salt / SOURCE.flour) * 100, 1e-9);
-      close(pct(required(resolved.grams['yeast'])), (SOURCE.yeast / SOURCE.flour) * 100, 1e-9);
+      close(
+        pct(required(resolved.grams['instant-yeast'])),
+        (SOURCE.yeast / SOURCE.flour) * 100 * FRESH_TO_INSTANT,
+        1e-9,
+      );
 
       const biga = required(resolved.components['biga']);
       close(biga.flour, SOURCE.bigaFlour * SCALE);
       close(biga.water, SOURCE.bigaWater * SCALE);
-      close(required(biga.allocations['yeast']), SOURCE.bigaYeast * SCALE);
-      close(biga.mass, (SOURCE.bigaFlour + SOURCE.bigaWater + SOURCE.bigaYeast) * SCALE);
+      close(
+        required(biga.allocations['instant-yeast']),
+        SOURCE.bigaYeast * SCALE * FRESH_TO_INSTANT,
+      );
+      close(
+        biga.mass,
+        (SOURCE.bigaFlour + SOURCE.bigaWater + SOURCE.bigaYeast * FRESH_TO_INSTANT) * SCALE,
+      );
       // The biga proportions: 30 % of the flour, 60 % hydration.
       close(biga.flour / resolved.flourTotal, 0.3, 1e-12);
       close(biga.water / biga.flour, 0.6, 1e-12);
@@ -226,16 +243,13 @@ describe('Sourced lean bread templates (issue #34)', () => {
       close(required(resolved.finalMix.flourByFlour['all-purpose-flour']), 700);
       close(resolved.finalMix.water, 580);
       close(required(resolved.finalMix.grams['salt']), 20);
-      close(required(resolved.finalMix.grams['yeast']), 11.7);
+      close(required(resolved.finalMix.grams['instant-yeast']), 11.7 * FRESH_TO_INSTANT);
     });
 
-    it('preserves the unspecified yeast form of the source', () => {
-      const yeastIng = required(ciabatta.formula.ingredients.find((i) => i.id === 'yeast'));
-      expect(yeastIng).toBeDefined();
-      expect(yeastIng.yeast).toBeUndefined();
-      expect(yeastIng.water).toBeUndefined();
-      expect(yeastIng.fat).toBeUndefined();
-      expect(yeastIng.sugar).toBeUndefined();
+    it('reads the source’s unspecified yeast as fresh and uses it as instant dry yeast', () => {
+      const yeastIng = required(ciabatta.formula.ingredients.find((i) => i.id === 'instant-yeast'));
+      expect(yeastIng.yeast).toEqual({ form: 'instant' });
+      expect(ciabatta.basis).toContain('owner decision (2026-11-18)');
     });
 
     it('enforces machine mix phases, DDT semantics, and direct proof after divide', () => {

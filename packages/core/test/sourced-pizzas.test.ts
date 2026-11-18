@@ -124,11 +124,12 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
     expect(grams['flour']).toBeCloseTo(1000, 1);
     expect(grams.water).toBeCloseTo(600, 1);
     expect(grams.salt).toBeCloseTo(26, 1);
-    expect(grams['fresh-yeast']).toBeCloseTo(2, 1);
-    expect(resolved.value.doughWeight).toBeCloseTo(1628, 1);
+    // The source's 2 g fresh yeast is used as instant dry yeast: 2 × 0.33 = 0.66 g.
+    expect(grams['instant-yeast']).toBeCloseTo(0.66, 3);
+    expect(resolved.value.doughWeight).toBeCloseTo(1626.66, 2);
 
-    const yeast = pizzaRoman.formula.ingredients.find((i) => i.id === 'fresh-yeast');
-    expect(yeast?.yeast).toEqual({ form: 'fresh' });
+    const yeast = pizzaRoman.formula.ingredients.find((i) => i.id === 'instant-yeast');
+    expect(yeast?.yeast).toEqual({ form: 'instant' });
 
     const mix = pizzaRoman.process.steps.find((s) => s.id === 'mix');
     expect(mix?.conditions?.doughTemperatureC).toBe(24);
@@ -198,9 +199,9 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
     expect(bakeSteps).toEqual(['par-bake', 'bake']);
   });
 
-  it('verifies Confraternita Teglia electric deck oven semantics and fresh yeast', () => {
-    // Two 30×40 cm home trays (half the area of the source's 40×60 cm pan): 2 × 671 g, flour unchanged.
-    expectPieces(pizzaTeglia.formula.anchor, 2, 1342);
+  it('verifies Confraternita Teglia electric deck oven semantics and instant yeast', () => {
+    // Two 30×40 cm home trays (half the area of the source's 40×60 cm pan): 2 × 669.66 g, flour unchanged.
+    expectPieces(pizzaTeglia.formula.anchor, 2, 1339.32);
     const resolved = resolveFormula(pizzaTeglia.formula);
     expect(resolved.ok).toBe(true);
     if (!resolved.ok) return;
@@ -210,10 +211,11 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
     expect(grams.water).toBeCloseTo(580, 0);
     expect(grams.salt).toBeCloseTo(18, 0);
     expect(grams['olive-oil']).toBeCloseTo(15, 0);
-    expect(grams['fresh-yeast']).toBeCloseTo(4, 0);
+    // The source's 4 g compressed fresh yeast is used as instant dry yeast: 4 × 0.33 = 1.32 g.
+    expect(grams['instant-yeast']).toBeCloseTo(1.32, 3);
 
-    const yeast = pizzaTeglia.formula.ingredients.find((i) => i.id === 'fresh-yeast');
-    expect(yeast?.yeast).toEqual({ form: 'fresh' });
+    const yeast = pizzaTeglia.formula.ingredients.find((i) => i.id === 'instant-yeast');
+    expect(yeast?.yeast).toEqual({ form: 'instant' });
 
     const bake = pizzaTeglia.process.steps.find((s) => s.id === 'bake');
     // Home-oven version of the same style (published-recipes-2026-10, pizzas/teglia-5, teglia-4): 250 °C, 20 min.

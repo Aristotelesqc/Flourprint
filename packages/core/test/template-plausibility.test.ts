@@ -32,11 +32,15 @@ const BAKE_WITHOUT_TEMPERATURE: Readonly<Record<string, string>> = {
   'focaccia/bake-finish': 'finish with the oven turned off, on residual heat: there is no setpoint',
 };
 
-/** Templates whose fermentation estimate is `unsupported`, with the reason. */
-const ESTIMATE_UNSUPPORTED: Readonly<Record<string, string>> = {
-  ciabatta:
-    'the source gives the yeast quantity without its form (style-guides.md, evidence gap); the form is the owner’s choice',
-};
+/** Templates whose fermentation estimate is `unsupported`, with the reason. None today. */
+const ESTIMATE_UNSUPPORTED: Readonly<Record<string, string>> = {};
+
+/**
+ * Templates whose commercial yeast is not instant dry yeast, with the reason. None today: instant
+ * dry yeast is the reference yeast of every built-in template (drafts.md, Templates), a source's
+ * fresh yeast being converted by the engine's own ratio and recorded in the basis.
+ */
+const NOT_INSTANT_YEAST: Readonly<Record<string, string>> = {};
 
 const bakeSteps = (t: RecipeTemplate): ProcessStep[] =>
   t.process.steps.filter((s) => s.operation === 'bake');
@@ -120,6 +124,25 @@ describe.each(RECIPE_TEMPLATES)('template $id is a home recipe', (template) => {
     }
   });
 
+  it('uses instant dry yeast as its only commercial yeast, or is on the exception list', () => {
+    const leavened = template.formula.ingredients.filter(
+      (i) => i.yeast !== undefined || /yeast/.test(i.id),
+    );
+    expect(leavened.length).toBeGreaterThan(0);
+    for (const ingredient of leavened) {
+      if (template.id in NOT_INSTANT_YEAST) continue;
+      expect(ingredient.yeast?.form, `${template.id}/${ingredient.id}`).toBe('instant');
+    }
+    for (const component of template.formula.components) {
+      for (const allocation of component.allocations ?? []) {
+        if (!/yeast/.test(allocation.ingredient)) continue;
+        const target = template.formula.ingredients.find((i) => i.id === allocation.ingredient);
+        if (template.id in NOT_INSTANT_YEAST) continue;
+        expect(target?.yeast?.form, `${template.id}/${component.id}`).toBe('instant');
+      }
+    }
+  });
+
   it('has a fermentation estimate, or is on the exception list', () => {
     const estimate = estimateFermentation(template.formula, template.process).dough.duration;
     if (template.id in ESTIMATE_UNSUPPORTED) {
@@ -134,6 +157,7 @@ describe('the exception lists stay honest', () => {
   it('name only existing templates and steps', () => {
     const ids = RECIPE_TEMPLATES.map((t) => t.id);
     for (const key of Object.keys(ESTIMATE_UNSUPPORTED)) expect(ids).toContain(key);
+    for (const key of Object.keys(NOT_INSTANT_YEAST)) expect(ids).toContain(key);
     for (const key of Object.keys(BAKE_WITHOUT_TEMPERATURE)) {
       const [templateId, stepId] = key.split('/');
       const template = RECIPE_TEMPLATES.find((t) => t.id === templateId);

@@ -1,5 +1,5 @@
-import type { Ingredient, RecipeTemplate } from '../../domain/index.js';
-import { alapStep, H, MIN, preset, step, withPieces } from './build.js';
+import type { RecipeTemplate } from '../../domain/index.js';
+import { alapStep, H, instantFromFresh, MIN, preset, step, withPieces } from './build.js';
 
 /**
  * Focaccia and pizza templates (drafts.md, Templates): updated to coherent, verified source
@@ -9,15 +9,6 @@ import { alapStep, H, MIN, preset, step, withPieces } from './build.js';
 
 const room = { conditions: { temperatureC: 21 } } as const;
 const fridge = { conditions: { temperatureC: 4 } } as const;
-
-/** An inline fresh yeast ingredient with unknown composition (issue #34). */
-const freshYeast = (bakerPct: number): Ingredient => ({
-  id: 'fresh-yeast',
-  bakerPct,
-  kind: 'other',
-  role: 'dough',
-  yeast: { form: 'fresh' },
-});
 
 export const focaccia: RecipeTemplate = {
   id: 'focaccia',
@@ -117,7 +108,8 @@ export const pizzaRoman: RecipeTemplate = {
   basis:
     'Molino Vigevano / Gabriele Valdes — Pizza Scrocchiarella Romana (https://molinovigevano.com/pizza-scrocchiarella-romana/). ' +
     'Direct method with cold fermentation (not the 40 % poolish branch). ' +
-    'Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %). ' +
+    'Original formula: 1,000 g tipo 0 flour (W 280–300), 600 g water (60 %), 26 g fine sea salt (2.6 %), 2 g fresh yeast (0.2 %), ' +
+    'used as instant dry yeast, the reference yeast of the templates, by the engine’s conversion (1 g fresh = 0.33 g instant): 0.66 g, 0.066 %. ' +
     'Total dough weight 1,628 g, dividing into 180 g balls for thin, crispy tonda romana. No dough fat or sugar. ' +
     'Sourced vs. editorial choices: the professional pizza oven of the primary source (≤350 °C, 120–180 s) is not used; the bake is the ' +
     'home-oven version of the same style from Vincenzo’s Plate — Roman Style Pizza (https://www.vincenzosplate.com/roman-style-pizza-recipe/; ' +
@@ -129,7 +121,11 @@ export const pizzaRoman: RecipeTemplate = {
     '(stone preheated at least 45 min, Napo). The source specifies tipo 0, represented by generic flour rather than incorrectly marking it tipo 00.',
   formula: {
     flours: [{ id: 'flour', sharePct: 100 }],
-    ingredients: [preset('water', 60), preset('salt', 2.6), freshYeast(0.2)],
+    ingredients: [
+      preset('water', 60),
+      preset('salt', 2.6),
+      preset('instant-yeast', instantFromFresh(0.2)),
+    ],
     components: [],
     anchor: { kind: 'flourTotal', grams: 1000 },
   },
@@ -318,7 +314,7 @@ export const pizzaTeglia: RecipeTemplate = {
     'Normative disciplinare 48 h machine-mixed example for a 40×60 cm blue-steel pan (teglia in ferro blu); the dough is recorded as ' +
     'two pieces for two 30×40 cm home trays (about 671 g each, half the area of the 40×60 cm pan), total flour unchanged. ' +
     'Original formula: 725 g flour (W 300–380), 580 g water at 4 °C (80 %), 18 g salt (2.483 %), 15 g olive oil (2.069 %), ' +
-    '4 g compressed fresh yeast (0.552 %). Total dough ~1,342 g. ' +
+    '4 g compressed fresh yeast (0.552 %), used as instant dry yeast by the engine’s conversion (1 g fresh = 0.33 g instant): 1.32 g, 0.182 %. Total dough ~1,342 g. ' +
     'Sourced vs. editorial choices & equipment: the professional electric deck oven of the disciplinare (floor 300–320 °C, top 200 °C, ' +
     '8–13 min, 40×60 cm pan) is not used; the bake is the home-oven version of the same style from Pizza in teglia 24 ore (Bonci type, ' +
     'https://blog.giallozafferano.it/lericettedisimo/ricetta-pizza-in-teglia-24-ore-di-lievitazione-pizza-bonci/: 250 °C, 20 min, 10 min on the ' +
@@ -337,7 +333,7 @@ export const pizzaTeglia: RecipeTemplate = {
         preset('water', 80),
         preset('olive-oil', (15 / 725) * 100),
         preset('salt', (18 / 725) * 100),
-        freshYeast((4 / 725) * 100),
+        preset('instant-yeast', instantFromFresh((4 / 725) * 100)),
       ],
       components: [],
       anchor: { kind: 'flourTotal', grams: 725 },

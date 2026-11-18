@@ -66,15 +66,13 @@ describe('Sourced enriched bread presets (#34)', () => {
     expect(resolved.grams['butter']).toBeCloseTo(250, 5);
     expect(resolved.grams['sugar']).toBeCloseTo(60, 5);
     expect(resolved.grams['salt']).toBeCloseTo(10, 5);
-    expect(resolved.grams['fresh-yeast']).toBeCloseTo(20, 5);
+    // The source's 20 g fresh yeast is used as instant dry yeast: 20 × 0.33 = 6.6 g.
+    expect(resolved.grams['instant-yeast']).toBeCloseTo(6.6, 5);
+    const yeastIng = brioche.formula.ingredients.find((i) => i.id === 'instant-yeast');
+    expect(yeastIng?.yeast?.form).toBe('instant');
 
-    // Fresh yeast is an inline ingredient with fresh yeast form and unassumed composition
-    const yeastIng = brioche.formula.ingredients.find((i) => i.id === 'fresh-yeast');
-    expect(yeastIng?.yeast?.form).toBe('fresh');
-    expect(yeastIng?.water).toBeUndefined();
-
-    // Total dough mass: 500 + 300 + 250 + 60 + 10 + 20 = 1140 g
-    expect(resolved.doughWeight).toBeCloseTo(1140, 5);
+    // Total dough mass: 500 + 300 + 250 + 60 + 10 + 6.6 = 1126.6 g
+    expect(resolved.doughWeight).toBeCloseTo(1126.6, 5);
     expect(resolved.components).toEqual({});
 
     // DDT ceiling and proofer conditions

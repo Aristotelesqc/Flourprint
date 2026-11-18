@@ -160,16 +160,14 @@ interface RecipeTemplate {
   the document they come from. The interface shows it with the style's traits (localized text)
   and says when the ranges are not verified. A guide describes the style; it never changes a
   recipe or a check.
-- **Proposal, awaiting the owner's approval (not yet a rule, no `CONTRACT_VERSION` change):
-  templates are executable at home.** A template is a starting point for a home baker, so the
-  rules below are proposed. The tests of the pull request that carries this text
-  (`template-plausibility.test.ts`, `catalog-units.test.ts`) already enforce them: merging that
-  pull request makes them rules in practice, even while this text is marked as a proposal.
+- **Templates are executable at home** (owner approval of 2026-11-18, UTC; `CONTRACT_VERSION`
+  0.25.1). A template is a starting point for a home baker, so:
+  The tests `template-plausibility.test.ts` and `catalog-units.test.ts` enforce these rules.
   1. **Home scale.** Its quantities are those of a home batch (a source recorded at professional
      scale is scaled by one stated factor, kept in `basis`, with every baker's percentage
-     unchanged). Proposed test bounds, a default for the owner to confirm: total flour 100 to
-     2 500 g, dough weight under 5 kg, no ingredient at or below 0 g.
-  2. **Every `bake` step has a `temperatureC`** within a home-oven range (proposed: 150 to 300 °C),
+     unchanged). Test bounds, changeable only by editing this file: total flour 100 to 2 500 g,
+     dough weight under 5 kg, no ingredient at or below 0 g.
+  2. **Every `bake` step has a `temperatureC`** within a home-oven range (150 to 300 °C),
      taken from sourced data. A step that has none (for example a finish with the oven off) is on
      an explicit exception list in the template test, with its reason.
   3. **No professional-only equipment without a note.** A template whose source needs equipment a
@@ -187,6 +185,14 @@ interface RecipeTemplate {
      parameter formatted in the baker's unit.
   5. **Yield.** Where the source states a number of pieces, the template records it with the
      `pieces` anchor (formula.md); where it does not, it records none.
+  6. **Instant dry yeast is the reference yeast.** Every built-in template's commercial yeast is
+     instant dry yeast (fresh yeast is rarely available to a home baker). Where a source gives
+     fresh yeast, or a quantity of yeast without its form (read as fresh by owner decision), the
+     template uses the equivalent instant dry yeast by the engine's own conversion between forms
+     (`CENTRAL.freshPerGram`, fermentation/model.ts: 1 g of fresh yeast is 0.33 g of instant), so
+     the fresh-equivalent dose is unchanged, and its `basis` records the source's form and
+     quantity and the conversion. A style that truly needs another form is named, with its
+     reason, in an exception list in the test (`NOT_INSTANT_YEAST`; empty today).
 - The blank recipe is not a template: flour 100 %, water 65 %, salt 2 %, instant yeast 0.5 %, and
   the steps frasage, bulk, shape, proof, bake, with durations (a first `frasage`: process.md,
   Mixing steps).

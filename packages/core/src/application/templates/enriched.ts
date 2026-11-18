@@ -1,5 +1,14 @@
 import type { RecipeTemplate } from '../../domain/index.js';
-import { alapStep, component, H, MIN, preset, step, withPieces } from './build.js';
+import {
+  alapStep,
+  component,
+  H,
+  instantFromFresh,
+  MIN,
+  preset,
+  step,
+  withPieces,
+} from './build.js';
 
 /**
  * Enriched and pan bread templates (drafts.md, Templates).
@@ -23,7 +32,8 @@ export const brioche: RecipeTemplate = {
     'retard 1 h cold at editorial 4 °C fridge (sourced minimum of >=1 h cold; overnight branch preserved in notes); ' +
     'divide 10 min into 50 g balls (editorial); shape 10 min into 7 balls per tin (editorial); proof 2 h in proofer at sourced 28 °C; ' +
     'preheat 30 min (editorial default); bake in fan oven at 180 °C for 27.5 min (editorial midpoint of sourced 25–30 min range); ' +
-    'cool 60 min (editorial default). Fresh yeast composition unknown beyond form; T45 protein unstated.',
+    "cool 60 min (editorial default). Yeast: the source's 20 g fresh yeast (4 %) is used as instant dry yeast, the reference " +
+    "yeast of the templates, by the engine's conversion (1 g fresh = 0.33 g instant): 6.6 g, 1.32 %. T45 protein unstated.",
   formula: {
     flours: [{ id: 'flour', sharePct: 100 }],
     ingredients: [
@@ -31,13 +41,7 @@ export const brioche: RecipeTemplate = {
       preset('butter', 50),
       preset('sugar', 12),
       preset('salt', 2),
-      {
-        id: 'fresh-yeast',
-        kind: 'other',
-        role: 'dough',
-        bakerPct: 4,
-        yeast: { form: 'fresh' },
-      },
+      preset('instant-yeast', instantFromFresh(4)),
     ],
     components: [],
     anchor: { kind: 'flourTotal', grams: 500 },
