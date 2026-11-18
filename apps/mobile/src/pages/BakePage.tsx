@@ -11,12 +11,14 @@ import {
   useIonRouter,
   useIonViewWillEnter,
 } from '@ionic/react';
-import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { loadBake } from '@flourprint/core/application';
 import {
+  adjustedDurationS,
   doughContextOf,
   doughReadyStage,
+  implicitStartOf,
   intendedOutcome,
   isStepHeld,
   outcomeChoiceRequired,
@@ -53,6 +55,7 @@ import { BAKES_CHANGED } from '../services/notifications';
 import { useServices } from '../services/services';
 import { usePreferences } from '../services/use-preferences';
 import { InfoButton } from '../ui/InfoButton';
+import { Ui } from '../ui/library';
 import { SimulationBanner } from '../ui/SimulationBanner';
 import { SectionTitle } from '../ui/Layout';
 
@@ -75,6 +78,10 @@ export const BakePage = () => {
   const [now, setNow] = useState<Instant>(services.clock.now());
   const commands = useBakeCommands(services);
   const { pending } = commands;
+  const countdownActionRef = useRef(false);
+  const [countdownBusy, setCountdownBusy] = useState(false);
+  const countdownLabelId = useId();
+  const noDurationId = useId();
   // The note sheet, open on a step (or on the whole bake).
   const [noteOn, setNoteOn] = useState<{ stepId?: string }>();
   const { simulation } = usePreferences();
@@ -154,6 +161,37 @@ export const BakePage = () => {
 
   const send = async (payload: BakeCommandPayload) => settle(await commands.send(state, payload));
 
+  /**
+   * Records an implicit step start before the first countdown adjustment or hold on an implicitly
+   * running step, stopping on any non-ok outcome (docs/contracts/bake-session.md).
+   */
+  const sendStepCountdownAction = async (
+    stepId: string,
+    payload: BakeCommandPayload,
+  ): Promise<void> => {
+    if (countdownActionRef.current || commands.busy || pending !== undefined) return;
+    countdownActionRef.current = true;
+    setCountdownBusy(true);
+    try {
+      const implicitStart = implicitStartOf(state, stepId);
+      if (implicitStart !== undefined) {
+        const startOutcome = await commands.send(state, {
+          type: 'StartStep',
+          stepId,
+          at: implicitStart,
+        });
+        await settle(startOutcome);
+        if (startOutcome.kind !== 'ok') return;
+        await settle(await commands.send(startOutcome.state, payload));
+        return;
+      }
+      await settle(await commands.send(state, payload));
+    } finally {
+      countdownActionRef.current = false;
+      setCountdownBusy(false);
+    }
+  };
+
   /** A note is closed only once it is durably written; an uncertain one is retried as is. */
   const saveNote = async (payload: BakeCommandPayload): Promise<string | undefined> => {
     const retrying = pending && JSON.stringify(pending.payload) === JSON.stringify(payload);
@@ -172,6 +210,21 @@ export const BakePage = () => {
   const focusBaselineDurationS = focus
     ? state.snapshot?.process.steps.find((s) => s.id === focus.step.id)?.plannedDurationS
     : undefined;
+  const focusHeld = focus ? isStepHeld(state, focus.step.id) : false;
+  const focusImplicitStart = focus ? implicitStartOf(state, focus.step.id) : undefined;
+  const focusPlannedDurationS = focus?.step.plannedDurationS;
+  const focusNoDuration = focusPlannedDurationS === undefined;
+  const focusCanAdjustDuration =
+    focus !== undefined &&
+    focusPlannedDurationS !== undefined &&
+    focus.step.schedule !== 'beforeTarget';
+  const focusCanToggleHold =
+    focus !== undefined &&
+    focusCanAdjustDuration &&
+    (focusHeld
+      ? focus.startedAt !== undefined
+      : focus.startedAt !== undefined || focusImplicitStart !== undefined);
+  const countdownWriteBlocked = commands.busy || countdownBusy || pending !== undefined;
   const log = bakeLog(state);
   const completedSteps =
     state.process?.steps.filter((s) => state.steps[s.id]?.endedAt !== undefined) ?? [];
@@ -217,6 +270,17 @@ export const BakePage = () => {
     });
 
   const note = () => setNoteOn(focus ? { stepId: focus.step.id } : {});
+
+  const adjustFocusDuration = (deltaSeconds: number) => {
+    if (!focus || !focusCanAdjustDuration || focusPlannedDurationS === undefined) return;
+    const value = adjustedDurationS(focusPlannedDurationS, deltaSeconds);
+    if (value === focusPlannedDurationS) return;
+    void sendStepCountdownAction(focus.step.id, {
+      type: 'AdjustStep',
+      stepId: focus.step.id,
+      adjustment: { field: 'plannedDurationS', value },
+    });
+  };
 
   /** The stage a running dough step can be judged ready for (bake-session.md), if any. */
   const readyStage = (target: BakeStepView) =>
@@ -464,7 +528,7 @@ export const BakePage = () => {
             <Focus
               focus={focus}
               now={now}
-              held={isStepHeld(state, focus.step.id)}
+              held={focusHeld}
               stepIndex={focusStepIndex}
               totalSteps={focusStepTotal}
               baselineDurationS={focusBaselineDurationS}
@@ -473,45 +537,65 @@ export const BakePage = () => {
 
           {focus && (
             <>
-              <div className="grid grid-cols-3 gap-2.5">
-                <IonButton
-                  fill="outline"
-                  shape="round"
-                  className="min-h-12 font-semibold btn-pill-secondary"
-                  disabled={
-                    focus.step.plannedDurationS === undefined ||
-                    commands.busy ||
-                    pending !== undefined
-                  }
-                  onClick={() =>
-                    void send({
-                      type: 'AdjustStep',
-                      stepId: focus.step.id,
-                      adjustment: {
-                        field: 'plannedDurationS',
-                        value: (focus.step.plannedDurationS ?? 0) + 900,
-                      },
-                    })
-                  }
-                >
-                  {t('bake.plus15')}
-                </IonButton>
-                <IonButton
-                  fill="outline"
-                  shape="round"
-                  className="min-h-12 font-semibold btn-pill-secondary"
-                  onClick={() => adjust(focus)}
-                >
-                  {t('bake.adjust')}
-                </IonButton>
-                <IonButton
-                  fill="outline"
-                  shape="round"
-                  className="min-h-12 font-semibold btn-pill-secondary"
-                  onClick={note}
-                >
+              <section aria-labelledby={countdownLabelId} className="flex flex-col gap-2">
+                <span id={countdownLabelId}>
+                  <SectionTitle>{t('bake.countdown')}</SectionTitle>
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    fullWidth
+                    disabled={
+                      countdownWriteBlocked ||
+                      !focusCanAdjustDuration ||
+                      focusPlannedDurationS === undefined ||
+                      focusPlannedDurationS <= 0
+                    }
+                    {...(focusNoDuration ? { 'aria-describedby': noDurationId } : {})}
+                    onClick={() => adjustFocusDuration(-900)}
+                  >
+                    {t('bake.minus15')}
+                  </Ui>
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    fullWidth
+                    disabled={countdownWriteBlocked || !focusCanToggleHold}
+                    {...(focusNoDuration ? { 'aria-describedby': noDurationId } : {})}
+                    onClick={() =>
+                      void sendStepCountdownAction(focus.step.id, {
+                        type: focusHeld ? 'ReleaseStepCountdown' : 'HoldStepCountdown',
+                        stepId: focus.step.id,
+                      })
+                    }
+                  >
+                    {t(focusHeld ? 'bake.resume' : 'bake.pause')}
+                  </Ui>
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    fullWidth
+                    disabled={countdownWriteBlocked || !focusCanAdjustDuration}
+                    {...(focusNoDuration ? { 'aria-describedby': noDurationId } : {})}
+                    onClick={() => adjustFocusDuration(900)}
+                  >
+                    {t('bake.plus15')}
+                  </Ui>
+                </div>
+                {focusNoDuration && (
+                  <p id={noDurationId} className="m-0 px-1 text-xs text-muted">
+                    {t('bake.noDuration')}
+                  </p>
+                )}
+              </section>
+              <div className="flex items-center">
+                <Ui component="fp.button" variant="quiet" onClick={note}>
                   {t('bake.note')}
-                </IonButton>
+                </Ui>
               </div>
               {focus.running &&
                 (() => {
