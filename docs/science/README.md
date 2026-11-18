@@ -76,6 +76,10 @@ pull request.
   and craft knowledge combine and stay apart, the vocabulary, the form of a behavior statement,
   how uncertainty is expressed, the principles for the app and a roadmap. Not a model, a contract
   or a knowledge base.
+- [readiness-criteria.md](readiness-criteria.md): what "ready" can mean at each step and how a baker
+  tells, as claims from the owner's practice checked against what could be read, a first catalogue of
+  signs with their meaning and action, the gaps, and a proposed record shape. Findings and questions,
+  not decisions; the first material for a codified body of baking knowledge.
 - `data/`: transcribed source tables (CSV) with a metadata file each (source, DOI, formula,
   endpoint, what the temperature means, who transcribed it, read status, `source_verified`).
 - `data/style-guides.md` and `.json`: consensus ranges and starting points per template style,
