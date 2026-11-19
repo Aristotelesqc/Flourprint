@@ -140,9 +140,7 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
   await expect(
     routed(page).getByRole('heading', { name: 'Recette supprimée', exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Commencer : Préferment' }).locator('visible=true'),
-  ).toHaveCount(1);
+  await expect(routed(page).getByRole('button', { name: 'Suivant', exact: true })).toHaveCount(1);
 
   // Two recipes in the trash, emptied at once, after a confirmation.
   await backToRecipes(page, 'Recettes');
