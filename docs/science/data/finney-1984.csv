@@ -1,0 +1,32 @@
+observable,yeast_pct_flour,time_min,fermentation_min,location,note,source_verified
+table_v_fermentation,2.0,180,180,"p. 26, Table V","prescribed schedule row; fermentation time against yeast concentration",true
+table_v_fermentation,2.5,150,150,"p. 26, Table V","prescribed schedule row",true
+table_v_fermentation,3.5,120,120,"p. 26, Table V","prescribed schedule row",true
+table_v_fermentation,5.3,90,90,"p. 26, Table V","prescribed schedule row",true
+table_v_fermentation,7.2,70,70,"p. 26, Table V","prescribed schedule row",true
+table_v_fermentation,8.6,60,60,"p. 26, Table V","prescribed schedule row",true
+table_v_first_punch_min,2.0,105,180,"p. 26, Table V","minutes from mixing to the first punch",true
+table_v_first_punch_min,2.5,87,150,"p. 26, Table V","minutes from mixing to the first punch",true
+table_v_first_punch_min,3.5,69,120,"p. 26, Table V","minutes from mixing to the first punch",true
+table_v_first_punch_min,5.3,52,90,"p. 26, Table V","minutes from mixing to the first punch",true
+table_v_first_punch_min,7.2,40,70,"p. 26, Table V","minutes from mixing to the first punch",true
+table_v_first_punch_min,8.6,35,60,"p. 26, Table V","minutes from mixing to the first punch",true
+table_v_second_punch_min,2.0,50,180,"p. 26, Table V","interval to the second punch",true
+table_v_second_punch_min,2.5,42,150,"p. 26, Table V","interval to the second punch",true
+table_v_second_punch_min,3.5,34,120,"p. 26, Table V","interval to the second punch",true
+table_v_second_punch_min,5.3,25,90,"p. 26, Table V","interval to the second punch",true
+table_v_second_punch_min,7.2,20,70,"p. 26, Table V","interval to the second punch",true
+table_v_second_punch_min,8.6,17,60,"p. 26, Table V","interval to the second punch",true
+table_v_panning_min,2.0,25,180,"p. 26, Table V","interval to panning",true
+table_v_panning_min,2.5,21,150,"p. 26, Table V","interval to panning",true
+table_v_panning_min,3.5,17,120,"p. 26, Table V","interval to panning",true
+table_v_panning_min,5.3,13,90,"p. 26, Table V","interval to panning",true
+table_v_panning_min,7.2,10,70,"p. 26, Table V","interval to panning",true
+table_v_panning_min,8.6,8,60,"p. 26, Table V","interval to panning",true
+recommended_method_proof,3.5,47,120,"p. 25, Recommended bread-making method","stated: proof 47 +/- 1 min at 30 C after 120 min fermentation (proof to about 7.8 cm for controls of about 12.5 % protein)",true
+recommended_method_proof,5.3,32,90,"p. 25, Recommended bread-making method","stated: proof 32 +/- 1 min after 90 min fermentation (same proof height); no proof time is printed for 150, 70 or 60 min",true
+fig7_fermentation_point,12,45,45,"p. 23, Fig. 7","plotted point read from the figure (about 12 % at 45 min); the 12 % is not printed in the text",true
+fig9_proof_optimum,2.0,55,180,"p. 23 (text), Fig. 9","stated: optimal proof 55 min after 180 min; yeast from Fig. 7",true
+fig9_proof_optimum,3.5,36.5,120,"p. 23 (text), Fig. 9","stated: optimal proof 36.5 min after 120 min; yeast from Fig. 7 and Table V",true
+fig9_proof_optimum,7.2,21.5,70,"p. 23 (text), Fig. 9","stated: optimal proof 21.5 min after 70 min; yeast from Fig. 7 and the text",true
+fig9_proof_optimum,12,12,45,"p. 23 (text), Fig. 9","stated: optimal proof 12 min after 45 min; yeast read from Fig. 7",true

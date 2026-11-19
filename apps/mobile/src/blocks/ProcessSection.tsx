@@ -111,6 +111,7 @@ export const ProcessSection = ({
 }: Props) => {
   const { t, error, stepName, stepInstructions, locale } = useMessages();
   const temperature = useTemperature();
+  const formatOven = (celsius: number) => temperature.format(celsius, 'oven');
   const services = useServices();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
   const [startSource, setStartSource] = useState<StartSource>('relative');
@@ -371,9 +372,9 @@ export const ProcessSection = ({
                             {techniqueSummary(t, step.technique)}
                           </span>
                         )}
-                        {stepInstructions(step) && (
+                        {stepInstructions(step, formatOven) && (
                           <span className="min-w-0 text-supporting text-muted">
-                            {stepInstructions(step)}
+                            {stepInstructions(step, formatOven)}
                           </span>
                         )}
                         <div

@@ -20,6 +20,7 @@ import {
   type StepTechnique,
 } from '@flourprint/core/domain';
 import { en, type MessageKey } from '../i18n/messages';
+import { useTemperature } from '../i18n/temperature';
 import { formatDuration } from '../i18n/time';
 import { useMessages } from '../i18n/use-messages';
 import {
@@ -130,6 +131,8 @@ export const StepSheet = ({
   duplicateDisabled = false,
 }: Props) => {
   const { t, error, stepName, stepInstructions } = useMessages();
+  const temperature = useTemperature();
+  const formatOven = (celsius: number) => temperature.format(celsius, 'oven');
   const id = useId();
   // A phase being added waits for its duration: nothing is invented.
   const [newPhase, setNewPhase] = useState<MixPhase['speed']>();
@@ -435,8 +438,8 @@ export const StepSheet = ({
                 }}
                 onBlur={commitLabel}
               />
-              {stepInstructions(step) && (
-                <span className="text-xs text-muted">{stepInstructions(step)}</span>
+              {stepInstructions(step, formatOven) && (
+                <span className="text-xs text-muted">{stepInstructions(step, formatOven)}</span>
               )}
             </span>
             {step.durationMode === 'model' ? (

@@ -1,5 +1,8 @@
 import {
+  CENTRAL,
   INGREDIENT_PRESETS,
+  resolveFormula,
+  type Formula,
   type Ingredient,
   type ProcessStep,
   type StepConditions,
@@ -12,11 +15,34 @@ import {
 export const H = 3600;
 export const MIN = 60;
 
+/**
+ * Baker's percentage of instant dry yeast that replaces `freshPct` of fresh yeast, by the
+ * engine's own conversion between yeast forms (`CENTRAL.freshPerGram`, fermentation/model.ts):
+ * the fresh-equivalent dose, hence the estimate, is unchanged. Instant dry yeast is the reference
+ * yeast of every built-in template (drafts.md, Templates).
+ */
+export const instantFromFresh = (freshPct: number): number =>
+  freshPct / CENTRAL.freshPerGram.instant;
+
 /** A dough ingredient with the composition of its preset (`formula/presets.ts`). */
 export const preset = (id: string, bakerPct: number): Ingredient => {
   const found = INGREDIENT_PRESETS.find((p) => p.id === id);
   if (!found) throw new Error(`unknown ingredient preset ${id}`);
   return { id, bakerPct, ...found.ingredient };
+};
+
+/**
+ * The formula with its yield recorded as `count` pieces (formula.md, Anchor): `gramsEach` is the
+ * dough weight of the source formula divided by the count the source states, so total flour and
+ * every percentage are those of the source.
+ */
+export const withPieces = (formula: Formula, count: number): Formula => {
+  const resolved = resolveFormula(formula);
+  if (!resolved.ok) throw new Error('template formula does not resolve');
+  return {
+    ...formula,
+    anchor: { kind: 'pieces', count, gramsEach: resolved.value.doughWeight / count },
+  };
 };
 
 /** An `asap` step after `after` (none for the first), with its planned duration. */

@@ -59,18 +59,18 @@ export const STYLE_GUIDES: Readonly<Record<string, NonNullable<RecipeTemplate['g
     ranges: [
       {
         key: 'hydration_pct',
-        low: 84.07407407407408,
-        high: 84.07407407407408,
+        low: 72.06349206349206,
+        high: 72.06349206349206,
       },
       {
         key: 'salt_pct',
-        low: 2.083333333333333,
-        high: 2.083333333333333,
+        low: 1.7857142857142856,
+        high: 1.7857142857142856,
       },
       {
         key: 'yeast_instant_pct',
-        low: 0.20833333333333334,
-        high: 0.20833333333333334,
+        low: 0.17857142857142858,
+        high: 0.17857142857142858,
       },
       {
         key: 'bulk_h',
@@ -572,9 +572,19 @@ export const STYLE_GUIDES: Readonly<Record<string, NonNullable<RecipeTemplate['g
         high: 350,
       },
       {
-        key: 'bake_min',
+        key: 'bake_pro_min',
         low: 2,
         high: 3,
+      },
+      {
+        key: 'bake_home_c',
+        low: 250,
+        high: 275,
+      },
+      {
+        key: 'bake_home_min',
+        low: 3,
+        high: 5,
       },
     ],
   },
@@ -618,9 +628,19 @@ export const STYLE_GUIDES: Readonly<Record<string, NonNullable<RecipeTemplate['g
         high: 4,
       },
       {
-        key: 'bake_min',
+        key: 'bake_deck_min',
         low: 8,
         high: 13,
+      },
+      {
+        key: 'bake_home_c',
+        low: 240,
+        high: 250,
+      },
+      {
+        key: 'bake_home_min',
+        low: 15,
+        high: 22,
       },
     ],
   },

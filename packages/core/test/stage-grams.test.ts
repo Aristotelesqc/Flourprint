@@ -55,7 +55,8 @@ describe('Shokupan template: 14 g flour, 43 g water, 43 g milk in the tangzhong'
     near(r.flourTotal, 314); // flour untouched
     near(r.bakerPct.milk ?? 0, (163 / 314) * 100); // 51.9108...
     near(r.doughWeight, 706); // 699 + (163 - 156)
-    expect(next.anchor).toEqual({ kind: 'flourTotal', grams: 314 });
+    expect(next.anchor).toMatchObject({ kind: 'pieces', count: 4 });
+    near(next.anchor.kind === 'pieces' ? next.anchor.gramsEach : 0, 706 / 4);
   });
 
   it('milk 20 g in the tangzhong keeps the final mix at 113 g: 20 + 113 = 133', () => {
@@ -90,7 +91,8 @@ describe('Shokupan template: 14 g flour, 43 g water, 43 g milk in the tangzhong'
     near(r.grams.milk ?? 0, 156);
     near(r.bakerPct.milk ?? 0, 48.75); // 156 / 320
     near(r.doughWeight, 705); // 699 + 6
-    expect(next.anchor).toEqual({ kind: 'flourTotal', grams: 320 });
+    expect(next.anchor).toMatchObject({ kind: 'pieces', count: 4 });
+    near(next.anchor.kind === 'pieces' ? next.anchor.gramsEach : 0, 705 / 4);
   });
 
   it('flour 310 g at the final mix: total flour 324, tangzhong untouched', () => {
