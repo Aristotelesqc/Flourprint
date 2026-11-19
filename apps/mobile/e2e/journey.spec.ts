@@ -140,14 +140,16 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
   await expect(page).toHaveURL(/\/bakes\//);
   await expect(routed(page)).toHaveCount(1);
 
-  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
-  await expect(page.getByRole('button', { name: 'Préferment terminé' })).toBeVisible();
+  await menuAction(page, /^Commencer : Préferment$/);
+  await expect(page.getByRole('button', { name: 'Suivant', exact: true })).toBeVisible();
   // The scald runs while the preferment ferments: start it from its own row.
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
   await expect(page.getByText('Aussi en cours')).toBeVisible();
-  await page.getByRole('button', { name: 'Échaudage terminé' }).click();
-  await page.getByRole('button', { name: 'Préferment terminé' }).click();
-  await expect(page.getByRole('button', { name: 'Commencer : Pétrissage' })).toBeVisible();
+  await page.getByRole('button', { name: 'Terminé Échaudage' }).click();
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await expect(
+    routed(page).getByRole('heading', { level: 2, name: / · Pétrissage$/ }),
+  ).toBeVisible();
   // Fast manual completion never turns the recipe's planned durations into elapsed-time claims.
   await expect(page.getByText('Prévu : 12 h', { exact: true })).toBeVisible();
   await expect(page.getByText('Prévu : 1 h', { exact: true })).toBeVisible();
@@ -178,17 +180,17 @@ test('dough ready is recorded on a running fermentation step without ending it',
   await openRecipe(page);
   await startBake(page);
 
-  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await menuAction(page, /^Commencer : Préferment$/);
   // Not a dough step: no dough ready mark on the preferment.
   await expect(page.getByRole('button', { name: /Prête à/ })).toBeHidden();
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
-  await page.getByRole('button', { name: 'Échaudage terminé' }).click();
-  await page.getByRole('button', { name: 'Préferment terminé' }).click();
-  await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
+  await page.getByRole('button', { name: 'Terminé Échaudage' }).click();
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await menuAction(page, /^Commencer : Pétrissage$/);
   // The first-contact step is not a dough step, so it is never judged ready (bake-session.md).
   await expect(page.getByRole('button', { name: /Prête à/ })).toBeHidden();
-  await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
-  await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await menuAction(page, /^Commencer : Pointage$/);
   // The bulk is followed by shaping: the dough is ready to shape, not to bake.
   await page.getByRole('button', { name: 'Prête à façonner' }).click();
   await page.getByRole('radio', { name: 'Test du doigt', exact: true }).click();
@@ -197,13 +199,13 @@ test('dough ready is recorded on a running fermentation step without ending it',
   await expect(page.locator('p:visible', { hasText: / · / }).first()).toContainText(
     'Prête à façonner (Pointage, Test du doigt)',
   );
-  await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Suivant', exact: true })).toBeVisible();
 });
 
 test('a note attaches to a step; an ended bake takes a rated review note', async ({ page }) => {
   await openRecipe(page);
   await startBake(page);
-  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await menuAction(page, /^Commencer : Préferment$/);
   await page.getByRole('button', { name: 'Note', exact: true }).click();
   // Attached to the running step by default; the baker may pick another.
   await expect(page.getByRole('button', { name: 'Préferment', pressed: true })).toBeVisible();
@@ -237,20 +239,28 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
   await openRecipe(page);
   await startBake(page);
   // Run every step through the main action until the bake can be finished.
-  const main = routed(page).locator('ion-footer ion-button');
+  const main = routed(page)
+    .getByRole('region', { name: 'Progression' })
+    .getByRole('button', { name: /^(Suivant|Commencer :)/ });
+  const stepHeading = routed(page).getByRole('heading', { level: 2, name: /^\d+ \/ \d+ · / });
+  const preheat = (name: string) => routed(page).getByRole('button', { name, exact: true });
   const allDone = page.getByText('Toutes les étapes sont terminées.');
   for (let i = 0; i < 40 && !(await allDone.isVisible()); i++) {
-    if (await main.count()) {
-      const before = await main.first().textContent();
-      await main.first().click();
-      await expect
-        .poll(async () => !(await main.count()) || (await main.first().textContent()) !== before)
-        .toBe(true);
-    } else
-      await page
-        .getByRole('button', { name: /^Commencer / })
-        .first()
-        .click();
+    const finishPreheat = preheat('Terminé Préchauffage');
+    const startPreheat = preheat('Commencer Préchauffage');
+    if (await finishPreheat.isVisible()) {
+      await finishPreheat.click();
+      await expect(finishPreheat).toBeHidden();
+    } else if (await startPreheat.isVisible()) {
+      await startPreheat.click();
+      await expect(startPreheat).toBeHidden();
+    } else {
+      const before = await stepHeading.textContent();
+      const startsStep = (await main.textContent())?.startsWith('Commencer');
+      await main.click();
+      if (startsStep) await expect(main).toHaveText('Suivant');
+      else await expect(stepHeading.filter({ hasText: before ?? '' })).toHaveCount(0);
+    }
   }
   await expect(allDone).toBeVisible();
   // The recipe bakes: one tap records it as cooked; the choice beside offers another result.
@@ -287,8 +297,8 @@ test('finishes as frozen dough before its planned bake, keeping the steps as rec
   await expect(card()).toContainText('Jamais préparée');
   await openRecipe(page);
   await startBake(page);
-  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
-  await page.getByRole('button', { name: 'Préferment terminé' }).click();
+  await menuAction(page, /^Commencer : Préferment$/);
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
   // The bake is not reached: finishing now asks for the result, completes no step.
   await menuAction(page, /^Terminer maintenant/);
   // The recipe intends a cooked result and nothing is cooked: no outcome is preselected.
@@ -326,7 +336,7 @@ test('copies all data for review, with the bake digest and its notes', async ({
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await openRecipe(page);
   await startBake(page);
-  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await menuAction(page, /^Commencer : Préferment$/);
   await page.getByRole('button', { name: 'Note', exact: true }).click();
   await page.locator('textarea:visible').fill('Bulles fines');
   await page.getByRole('button', { name: 'Enregistrer' }).click();
@@ -888,29 +898,29 @@ test('a proof running beside the preheat still takes its ready-to-bake mark', as
   await openRecipe(page);
   await editorSection(page, 'result');
   await startBake(page);
-  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await menuAction(page, /^Commencer : Préferment$/);
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
-  await page.getByRole('button', { name: 'Échaudage terminé' }).click();
-  await page.getByRole('button', { name: 'Préferment terminé' }).click();
-  await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
-  await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
-  await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
-  await page.getByRole('button', { name: 'Pointage terminé' }).click();
-  await page.getByRole('button', { name: 'Commencer : Façonnage' }).click();
-  await page.getByRole('button', { name: 'Façonnage terminé' }).click();
-  await page.getByRole('button', { name: 'Commencer : Apprêt' }).click();
+  await page.getByRole('button', { name: 'Terminé Échaudage' }).click();
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await menuAction(page, /^Commencer : Pétrissage$/);
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await menuAction(page, /^Commencer : Pointage$/);
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await menuAction(page, /^Commencer : Façonnage$/);
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await menuAction(page, /^Commencer : Apprêt$/);
   await page.getByRole('button', { name: 'Commencer Préchauffage' }).click();
-  // The preheat ends first and holds the focus; the proof runs beside it.
-  await expect(page.getByRole('button', { name: 'Préchauffage terminé' })).toBeVisible();
-  await page.getByRole('button', { name: 'Prête à cuire Apprêt' }).click();
+  // Preheat has its own control while proof keeps the progression focus.
+  await expect(page.getByRole('button', { name: 'Terminé Préchauffage' })).toBeVisible();
+  await page.getByRole('button', { name: 'Prête à cuire' }).click();
   await page.getByText('Toucher', { exact: true }).click();
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.locator('p:visible', { hasText: / · / }).first()).toContainText(
     'Prête à cuire (Apprêt, Toucher)',
   );
   // Neither step ended.
-  await expect(page.getByRole('button', { name: 'Préchauffage terminé' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Terminé Apprêt' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Terminé Préchauffage' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Suivant' })).toBeVisible();
 });
 
 test('a template starts a named draft that becomes a recipe once saved', async ({ page }) => {
@@ -1161,13 +1171,13 @@ test('bake mode shows the next fold set and records it in the log', async ({ pag
   await page.getByRole('button', { name: 'Enregistrer', exact: true }).click();
   await expectRecipeRevision(page, 2);
   await startBake(page);
-  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await menuAction(page, /^Commencer : Préferment$/);
   await page.getByRole('button', { name: 'Commencer Échaudage' }).click();
-  await page.getByRole('button', { name: 'Échaudage terminé' }).click();
-  await page.getByRole('button', { name: 'Préferment terminé' }).click();
-  await page.getByRole('button', { name: 'Commencer : Pétrissage' }).click();
-  await page.getByRole('button', { name: 'Pétrissage terminé' }).click();
-  await page.getByRole('button', { name: 'Commencer : Pointage' }).click();
+  await page.getByRole('button', { name: 'Terminé Échaudage' }).click();
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await menuAction(page, /^Commencer : Pétrissage$/);
+  await page.getByRole('button', { name: 'Suivant', exact: true }).click();
+  await menuAction(page, /^Commencer : Pointage$/);
 
   const folds = page.getByRole('region', { name: 'Rabats : Pointage' });
   await expect(folds).toContainText('Série 1/3 · dans 20 min');
@@ -1177,7 +1187,7 @@ test('bake mode shows the next fold set and records it in the log', async ({ pag
   );
   await expect(folds).toContainText('Série 2/3');
   // The step keeps running: a set never ends it.
-  await expect(page.getByRole('button', { name: 'Pointage terminé' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Suivant', exact: true })).toBeVisible();
 });
 
 test('the browser preview keeps its data across a reload, until it is erased', async ({ page }) => {
@@ -1311,7 +1321,7 @@ test('a simulated bake keeps to its own world, on a clock that can be advanced',
   await expect(routed(page)).toHaveCount(1);
 
   // The preferment runs 12 h; the scald starts as late as it can, 11 h from now.
-  await page.getByRole('button', { name: 'Commencer : Préferment' }).click();
+  await menuAction(page, /^Commencer : Préferment$/);
   const advance = page.getByRole('region', { name: 'Avancer le temps' });
   await expect(advance).toContainText('Échaudage');
   await advance.getByRole('button', { name: 'Au prochain moment prévu' }).click();

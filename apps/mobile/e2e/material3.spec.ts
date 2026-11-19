@@ -277,7 +277,7 @@ test('active preparation journal keeps more than three notes accessible', async 
   await page.locator('ion-alert').getByRole('button', { name: 'Démarrer', exact: true }).click();
   await expect(page).toHaveURL(/\/bakes\//);
   await expect(routed(page)).toHaveCount(1);
-  await routed(page).getByRole('button', { name: 'Commencer : Préferment', exact: true }).click();
+  await menuAction(page, /^Commencer : Préferment$/);
   for (const text of ['QA note one', 'QA note two', 'QA note three', 'QA note four']) {
     await routed(page).getByRole('button', { name: 'Note', exact: true }).click();
     const modal = page.locator('ion-modal:not(.overlay-hidden)');

@@ -370,6 +370,9 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   step's planned end, start and temporal progress. Group the three countdown commands in one
   labelled row of compact shared buttons with full touch targets. Pause and Resume share the
   middle button and reflect the recorded hold. Keep notes and readiness observations accessible.
+  Put Previous and Next in a separate bottom row. Next completes the focused step in authored
+  order. Preheat keeps its own controls. Show a transient Undo action above the footer after a
+  successful completion, without shifting the progression buttons.
   Upcoming steps with clock times precede completed
   steps. Keep the full journal accessible (all existing notes, observations and step completions)
   and actual lifecycle/outcome actions. A readiness observation neither completes the stage nor

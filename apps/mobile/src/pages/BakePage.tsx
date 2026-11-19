@@ -10,6 +10,7 @@ import {
   useIonAlert,
   useIonRouter,
   useIonViewWillEnter,
+  useIonViewWillLeave,
 } from '@ionic/react';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
@@ -22,6 +23,7 @@ import {
   intendedOutcome,
   isStepHeld,
   outcomeChoiceRequired,
+  previousAction,
   type BakeCommandPayload,
   type BakeState,
   type DomainError,
@@ -45,7 +47,9 @@ import {
   bakeAlerts,
   bakeLog,
   bakeView,
+  completedPredecessor,
   foldStatus,
+  lastCompletedStep,
   stepProgress,
   type BakeStepView,
   type LogEntry,
@@ -82,6 +86,9 @@ export const BakePage = () => {
   const [countdownBusy, setCountdownBusy] = useState(false);
   const countdownLabelId = useId();
   const noDurationId = useId();
+  const progressionLabelId = useId();
+  const [undoStepId, setUndoStepId] = useState<string>();
+  const [progressionError, setProgressionError] = useState<string>();
   // The note sheet, open on a step (or on the whole bake).
   const [noteOn, setNoteOn] = useState<{ stepId?: string }>();
   const { simulation } = usePreferences();
@@ -108,6 +115,15 @@ export const BakePage = () => {
   useEffect(() => void reload(), [reload, simulation]);
   // Ionic keeps inactive pages mounted: refresh when the page or the app becomes visible again.
   useIonViewWillEnter(() => void reload(), [reload]);
+  useIonViewWillLeave(() => {
+    setUndoStepId(undefined);
+    setProgressionError(undefined);
+  }, []);
+  useEffect(() => {
+    if (undoStepId === undefined) return;
+    const timer = setTimeout(() => setUndoStepId(undefined), 4000);
+    return () => clearTimeout(timer);
+  }, [undoStepId]);
   useEffect(() => {
     const tick = () => setNow(services.clock.now());
     const timer = setInterval(tick, 15_000);
@@ -142,6 +158,8 @@ export const BakePage = () => {
 
   /** Applies the outcome of a command; resolves to a message when it was not recorded. */
   const settle = async (outcome: CommandOutcome): Promise<string | undefined> => {
+    setUndoStepId(undefined);
+    setProgressionError(undefined);
     setNow(services.clock.now());
     switch (outcome.kind) {
       case 'ok':
@@ -202,7 +220,8 @@ export const BakePage = () => {
     return problem;
   };
 
-  const view = state.status === 'active' ? bakeView(state, now) : undefined;
+  const view =
+    state.status === 'active' ? bakeView(state, now, { progressionFocus: true }) : undefined;
   const focus = view?.focus;
   const focusStepIndex =
     focus && state.process ? state.process.steps.findIndex((s) => s.id === focus.step.id) + 1 : 0;
@@ -212,6 +231,11 @@ export const BakePage = () => {
     : undefined;
   const focusHeld = focus ? isStepHeld(state, focus.step.id) : false;
   const focusImplicitStart = focus ? implicitStartOf(state, focus.step.id) : undefined;
+  const predecessorId = focus
+    ? completedPredecessor(state, focus.step.id)
+    : view?.allDone
+      ? lastCompletedStep(state)
+      : undefined;
   const focusPlannedDurationS = focus?.step.plannedDurationS;
   const focusNoDuration = focusPlannedDurationS === undefined;
   const focusCanAdjustDuration =
@@ -235,6 +259,35 @@ export const BakePage = () => {
   const nameOf = (id: string | undefined) => {
     const step = state.process?.steps.find((s) => s.id === id);
     return step ? stepName(step) : (id ?? '');
+  };
+
+  const retractStep = (stepId: string) => {
+    if (countdownWriteBlocked) return;
+    setUndoStepId(undefined);
+    const action = previousAction(state, stepId);
+    if (action.kind === 'retract') {
+      void send({ type: 'RetractCompletion', targetEventId: action.targetEventId });
+      return;
+    }
+    if (action.reason === 'dependentStarted') {
+      setProgressionError(
+        t('bake.previousBlockedDependents', {
+          count: action.dependents.length,
+          steps: action.dependents.map(nameOf).join(', '),
+        }),
+      );
+    } else {
+      setProgressionError(t('bake.previousUnavailable'));
+    }
+  };
+
+  const completeFocusedStep = async (stepId: string) => {
+    if (countdownWriteBlocked) return;
+    setUndoStepId(undefined);
+    setProgressionError(undefined);
+    const outcome = await commands.send(state, { type: 'CompleteStep', stepId });
+    await settle(outcome);
+    if (outcome.kind === 'ok') setUndoStepId(stepId);
   };
 
   const adjust = (target: BakeStepView) =>
@@ -269,7 +322,10 @@ export const BakePage = () => {
       ],
     });
 
-  const note = () => setNoteOn(focus ? { stepId: focus.step.id } : {});
+  const note = () => {
+    setUndoStepId(undefined);
+    setNoteOn(focus ? { stepId: focus.step.id } : {});
+  };
 
   const adjustFocusDuration = (deltaSeconds: number) => {
     if (!focus || !focusCanAdjustDuration || focusPlannedDurationS === undefined) return;
@@ -420,6 +476,20 @@ export const BakePage = () => {
                   label: t('bake.note'),
                   handler: note,
                 },
+                ...(focus && focusImplicitStart
+                  ? [
+                      {
+                        label: t('bake.start', { step: stepName(focus.step) }),
+                        disabled: countdownWriteBlocked,
+                        handler: () =>
+                          void send({
+                            type: 'StartStep',
+                            stepId: focus.step.id,
+                            at: focusImplicitStart,
+                          }),
+                      },
+                    ]
+                  : []),
                 ...(focus
                   ? [
                       {
@@ -888,34 +958,71 @@ export const BakePage = () => {
           onClose={() => setNoteOn(undefined)}
         />
       </IonContent>
-      {(focus || view?.allDone) && state.status === 'active' && (
-        <IonFooter className="ion-no-border">
-          <IonToolbar>
-            <div className="px-4 py-2">
-              <IonButton
-                expand="block"
-                shape="round"
-                className="h-12 text-base font-bold btn-pill-primary"
-                disabled={commands.busy || pending !== undefined}
-                onClick={() =>
-                  !focus && mustChoose
-                    ? finishWith(t('bake.finish'))
-                    : void send(
-                        !focus
-                          ? { type: 'FinishBake' }
-                          : focus.running
-                            ? { type: 'CompleteStep', stepId: focus.step.id }
-                            : { type: 'StartStep', stepId: focus.step.id },
-                      )
-                }
+      {(focus || view?.allDone || undoStepId !== undefined) && state.status === 'active' && (
+        <IonFooter className="ion-no-border relative">
+          {undoStepId && (
+            <div className="absolute inset-x-4 bottom-full z-10 mb-2 flex items-center justify-between gap-2 rounded-card border border-line bg-surface-container px-3 text-on-surface shadow-md">
+              <span role="status" className="min-w-0 text-supporting">
+                {t('bake.done', { step: nameOf(undoStepId) })}
+              </span>
+              <Ui
+                component="fp.button"
+                variant="quiet"
+                density="compact"
+                onClick={() => retractStep(undoStepId)}
               >
-                {focus
-                  ? t(focus.running ? 'bake.done' : 'bake.start', { step: stepName(focus.step) })
-                  : intended && !mustChoose
-                    ? t('bake.finishAs', { outcome: outcomeText(intended) })
-                    : t('bake.finish')}
-              </IonButton>
+                {t('editor.undo')}
+              </Ui>
             </div>
+          )}
+          <IonToolbar>
+            <section aria-labelledby={progressionLabelId} className="px-4 py-2">
+              <span id={progressionLabelId}>
+                <SectionTitle>{t('bake.progression')}</SectionTitle>
+              </span>
+              {progressionError && (
+                <p role="alert" className="my-1 text-supporting text-alert">
+                  {progressionError}
+                </p>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <Ui
+                  component="fp.button"
+                  variant="secondary"
+                  density="compact"
+                  fullWidth
+                  disabled={countdownWriteBlocked || !(predecessorId ?? undoStepId)}
+                  onClick={() => {
+                    const target = predecessorId ?? undoStepId;
+                    if (target) retractStep(target);
+                  }}
+                >
+                  {t('bake.previous')}
+                </Ui>
+                <Ui
+                  component="fp.button"
+                  density="compact"
+                  fullWidth
+                  disabled={countdownWriteBlocked || (!focus && !view?.allDone)}
+                  onClick={() => {
+                    if (focus) {
+                      if (focus.running || focusImplicitStart)
+                        void completeFocusedStep(focus.step.id);
+                      else void send({ type: 'StartStep', stepId: focus.step.id });
+                    } else if (mustChoose) finishWith(t('bake.finish'));
+                    else void send({ type: 'FinishBake' });
+                  }}
+                >
+                  {focus
+                    ? focus.running || focusImplicitStart
+                      ? t('bake.nextAction')
+                      : t('bake.start', { step: stepName(focus.step) })
+                    : intended && !mustChoose
+                      ? t('bake.finishAs', { outcome: outcomeText(intended) })
+                      : t('bake.finish')}
+                </Ui>
+              </div>
+            </section>
           </IonToolbar>
         </IonFooter>
       )}
