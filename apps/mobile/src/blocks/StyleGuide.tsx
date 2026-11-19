@@ -48,7 +48,9 @@ export const StyleGuide = ({ template }: { template: RecipeTemplate }) => {
       {isKey(traits) && <p className="m-0 text-[15px]">{t(traits)}</p>}
       <details className="text-sm text-muted">
         <summary className="cursor-pointer">{t('guide.basis')}</summary>
-        <p className="mt-2 mb-0 whitespace-pre-line">{template.basis}</p>
+        <p lang="en" className="mt-2 mb-0 whitespace-pre-line">
+          {template.basis}
+        </p>
       </details>
       {guide && guide.ranges.length > 0 && (
         <>

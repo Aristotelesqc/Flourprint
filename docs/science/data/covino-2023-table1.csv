@@ -1,0 +1,7 @@
+leavening_time_h,compression_work_J,compression_work_sd_J,relaxation_a_pct,relaxation_a_sd_pct,decay_rate_b_N_per_s,decay_rate_b_sd,diameter_cm,diameter_sd_cm,n,location
+0,6.59,0.41,82.5,0.7,0.387,0.014,21.50,2.07,8,Table 1
+4,29.96,2.52,79.7,0.3,0.409,0.007,29.25,0.53,8,Table 1
+8,16.16,0.69,78.9,0.4,0.342,0.008,26.06,1.05,8,Table 1
+16,19.72,1.10,80.8,0.3,0.359,0.015,27.50,0.46,8,Table 1
+24,15.97,1.43,80.9,1.0,0.347,0.010,28.37,0.44,8,Table 1
+48,7.65,0.40,85.2,0.3,0.283,0.013,28.06,0.42,8,Table 1

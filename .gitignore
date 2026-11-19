@@ -15,8 +15,7 @@ apps/desktop/test-results/
 .agy-runs/
 __pycache__/
 
-# Checkout-local CodeGraph executable and generated client configuration
-.codegraph-local/
+# Machine-local agent client configuration (MCP servers, absolute paths)
 .codex/config.toml
 .mcp.json
 .agents/mcp_config.json

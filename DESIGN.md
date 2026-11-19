@@ -198,7 +198,7 @@ Recipe presents composition and authored method. Planning presents generated pro
 time controls. Preparation presents actual work.
 Follow the contracts for semantics; do not build a second editable recipe inside Planning.
 
-**Consultation/editing composition (owner, 2026-11-04; L31/L50/L60/L151-L157):**
+**Consultation/editing composition (owner, 2026-11-04; L31/L50/L60/L154-L157/L161-L163):**
 Reading Recipe has no permanent bottom bar. Its header always exposes the pencil Edit action
 beside anchored overflow; rare duplicate, export and trash actions belong to overflow. Time
 actions belong only to Planning. The fixed tabs are Recipe, Planning and History; active

@@ -111,6 +111,7 @@ export const RecipeMethod = ({
   const { ids } = useServices();
   const validationActions = useValidationActions();
   const temperature = useTemperature();
+  const formatOven = (celsius: number) => temperature.format(celsius, 'oven');
   const [selectedStepId, setSelectedStepId] = useState<string>();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [highlightedStepId, setHighlightedStepId] = useState<string>();
@@ -490,8 +491,8 @@ export const RecipeMethod = ({
         {step.technique && (
           <span className="text-supporting text-ink">{techniqueSummary(t, step.technique)}</span>
         )}
-        {stepInstructions(step) && (
-          <span className="text-supporting text-muted">{stepInstructions(step)}</span>
+        {stepInstructions(step, formatOven) && (
+          <span className="text-supporting text-muted">{stepInstructions(step, formatOven)}</span>
         )}
         {step.conditions && (
           <span className="text-supporting text-muted">

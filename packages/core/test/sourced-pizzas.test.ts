@@ -16,6 +16,17 @@ import {
   validateRecipe,
 } from '../src/domain/index.js';
 
+/** A yield recorded as `count` pieces of the source's dough weight (formula.md, Anchor). */
+const expectPieces = (
+  anchor: { kind: string; count?: number; gramsEach?: number },
+  count: number,
+  doughWeight: number,
+) => {
+  expect(anchor.kind).toBe('pieces');
+  expect(anchor.count).toBe(count);
+  expect(Math.abs((anchor.gramsEach ?? 0) * count - doughWeight)).toBeLessThanOrEqual(1e-9);
+};
+
 describe('sourced pizza and flatbread templates (issue #34)', () => {
   const templates = [
     focaccia,
@@ -28,13 +39,13 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
   ];
 
   it('preserves stable IDs and increments versions', () => {
-    expect(focaccia.version).toBe('4');
-    expect(pizzaNeoNeapolitan.version).toBe('3');
-    expect(pizzaRoman.version).toBe('3');
-    expect(pizzaNewYork.version).toBe('3');
-    expect(pizzaChicago.version).toBe('3');
-    expect(pizzaSicilian.version).toBe('3');
-    expect(pizzaTeglia.version).toBe('3');
+    expect(focaccia.version).toBe('5');
+    expect(pizzaNeoNeapolitan.version).toBe('4');
+    expect(pizzaRoman.version).toBe('4');
+    expect(pizzaNewYork.version).toBe('4');
+    expect(pizzaChicago.version).toBe('4');
+    expect(pizzaSicilian.version).toBe('4');
+    expect(pizzaTeglia.version).toBe('4');
   });
 
   it('all 7 templates validate cleanly and pass checkRecipe without warnings', () => {
@@ -84,7 +95,7 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
   });
 
   it('verifies Baking Steel 72-Hour dough mass balances and timeline', () => {
-    expect(pizzaNeoNeapolitan.formula.anchor).toEqual({ kind: 'flourTotal', grams: 500 });
+    expectPieces(pizzaNeoNeapolitan.formula.anchor, 3, 867); // the source makes 3 balls
     const resolved = resolveFormula(pizzaNeoNeapolitan.formula);
     expect(resolved.ok).toBe(true);
     if (!resolved.ok) return;
@@ -113,20 +124,25 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
     expect(grams['flour']).toBeCloseTo(1000, 1);
     expect(grams.water).toBeCloseTo(600, 1);
     expect(grams.salt).toBeCloseTo(26, 1);
-    expect(grams['fresh-yeast']).toBeCloseTo(2, 1);
-    expect(resolved.value.doughWeight).toBeCloseTo(1628, 1);
+    // The source's 2 g fresh yeast is used as instant dry yeast: 2 × 0.33 = 0.66 g.
+    expect(grams['instant-yeast']).toBeCloseTo(0.66, 3);
+    expect(resolved.value.doughWeight).toBeCloseTo(1626.66, 2);
 
-    const yeast = pizzaRoman.formula.ingredients.find((i) => i.id === 'fresh-yeast');
-    expect(yeast?.yeast).toEqual({ form: 'fresh' });
+    const yeast = pizzaRoman.formula.ingredients.find((i) => i.id === 'instant-yeast');
+    expect(yeast?.yeast).toEqual({ form: 'instant' });
 
     const mix = pizzaRoman.process.steps.find((s) => s.id === 'mix');
     expect(mix?.conditions?.doughTemperatureC).toBe(24);
     const bake = pizzaRoman.process.steps.find((s) => s.id === 'bake');
-    expect(bake?.conditions?.temperatureC).toBe(350);
+    // Home-oven version of the same style (published-recipes-2026-10, pizzas/tonda-2): 250 °C, 4 min.
+    expect(bake?.conditions?.temperatureC).toBe(250);
+    expect(bake?.plannedDurationS).toBe(4 * 60);
+    expect(pizzaRoman.basis).toContain('vincenzosplate.com/roman-style-pizza-recipe');
+    expect(pizzaRoman.basis).not.toContain('docs/science');
   });
 
   it('verifies Feeling Foodish New York metric branch and yield conflict documentation', () => {
-    expect(pizzaNewYork.formula.anchor).toEqual({ kind: 'flourTotal', grams: 796 });
+    expectPieces(pizzaNewYork.formula.anchor, 4, 1327.7); // the source makes 4 balls
     const resolved = resolveFormula(pizzaNewYork.formula);
     expect(resolved.ok).toBe(true);
     if (!resolved.ok) return;
@@ -183,8 +199,9 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
     expect(bakeSteps).toEqual(['par-bake', 'bake']);
   });
 
-  it('verifies Confraternita Teglia electric deck oven semantics and fresh yeast', () => {
-    expect(pizzaTeglia.formula.anchor).toEqual({ kind: 'flourTotal', grams: 725 });
+  it('verifies Confraternita Teglia electric deck oven semantics and instant yeast', () => {
+    // Two 30×40 cm home trays (half the area of the source's 40×60 cm pan): 2 × 669.66 g, flour unchanged.
+    expectPieces(pizzaTeglia.formula.anchor, 2, 1339.32);
     const resolved = resolveFormula(pizzaTeglia.formula);
     expect(resolved.ok).toBe(true);
     if (!resolved.ok) return;
@@ -194,13 +211,19 @@ describe('sourced pizza and flatbread templates (issue #34)', () => {
     expect(grams.water).toBeCloseTo(580, 0);
     expect(grams.salt).toBeCloseTo(18, 0);
     expect(grams['olive-oil']).toBeCloseTo(15, 0);
-    expect(grams['fresh-yeast']).toBeCloseTo(4, 0);
+    // The source's 4 g compressed fresh yeast is used as instant dry yeast: 4 × 0.33 = 1.32 g.
+    expect(grams['instant-yeast']).toBeCloseTo(1.32, 3);
 
-    const yeast = pizzaTeglia.formula.ingredients.find((i) => i.id === 'fresh-yeast');
-    expect(yeast?.yeast).toEqual({ form: 'fresh' });
+    const yeast = pizzaTeglia.formula.ingredients.find((i) => i.id === 'instant-yeast');
+    expect(yeast?.yeast).toEqual({ form: 'instant' });
 
     const bake = pizzaTeglia.process.steps.find((s) => s.id === 'bake');
-    expect(bake?.conditions?.temperatureC).toBeUndefined();
-    expect(bake?.label).toContain('deck 300–320 °C, top 200 °C');
+    // Home-oven version of the same style (published-recipes-2026-10, pizzas/teglia-5, teglia-4): 250 °C, 20 min.
+    expect(bake?.conditions?.temperatureC).toBe(250);
+    expect(bake?.plannedDurationS).toBe(20 * 60);
+    expect(pizzaTeglia.basis).toContain('lericettedisimo');
+    expect(pizzaTeglia.basis).toContain('spadellalapadella');
+    expect(pizzaTeglia.basis).not.toContain('docs/science');
+    expect(pizzaTeglia.basis).toContain('deck oven of the disciplinare');
   });
 });

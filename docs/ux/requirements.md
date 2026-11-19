@@ -216,7 +216,7 @@ Sheets open from the bottom of the **viewport**, not the bottom of the content. 
 
 **L33.** While editing, navigation that would leave unsaved changes (tabs, Back, global nav) is guarded. Toolbar or mode changes never reset exact input, Undo/Redo, scroll or group state. Screens: global, edit. Source: GH/issues/112 "Coordination"; GH/issues/121 acceptance 3; GH/issues/134#issuecomment-6227770682 ("tabs stay live during edit mode"). Kind: OI + CL.
 
-**L151.** A recipe draft and a detailed editor are separate UI states sharing one draft and one Undo/Redo history. Creating or resuming a draft does not activate ingredient inputs or detailed step controls. Tab changes preserve both states and exact raw input. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L33. Kind: OD.
+**L161.** A recipe draft and a detailed editor are separate UI states sharing one draft and one Undo/Redo history. Creating or resuming a draft does not activate ingredient inputs or detailed step controls. Tab changes preserve both states and exact raw input. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L33. Kind: OD.
 
 **L34.** One visually dominant action per screen. Occasional actions go in an overflow menu. Destructive actions are separated and never placed beside Start or Resume. Screens: global. Source: DESIGN.md "Layout" (approved v2); GH/issues/35#issuecomment-6134493225. Kind: C (owner-approved).
 
@@ -362,7 +362,7 @@ Screens: library. Source: GH/issues/128; GH/issues/111#issuecomment-6205813397 �
 
 **L49.** One Recipe destination. Reading and editing share the same page, layout and section structure. Editing is a **state in place**, not a separate screen, and the separate Composition/Components/Steps/Result tab set is never reintroduced. Leaving edit mode returns to the same page, scroll position and focus. Screens: recipe, edit. Source: GH/issues/111#issuecomment-6190006177 and GH/issues/112#issuecomment-6190005920 ("Owner clarification (2026-10-15)"); GH/issues/121; GH/issues/120 direction 1. Kind: OD-R. Superseded in part by L108 (steps sit under the ingredients in the Recipe tab).
 
-**L50.** Edit is a pencil icon, always visible in the Recipe header next to the anchored overflow menu. Duplicate, export and trash are rare actions in that menu. Detailed step editing opens only through an explicit per-step Edit action and the existing step sheet (L153/L155). Screens: recipe. Source: Owner, coordinating session 2026-11-04; supersedes the former bottom-bar Edit placement and resolves O18. Kind: OD.
+**L50.** Edit is a pencil icon, always visible in the Recipe header next to the anchored overflow menu. Duplicate, export and trash are rare actions in that menu. Detailed step editing opens only through an explicit per-step Edit action and the existing step sheet (L155/L163). Screens: recipe. Source: Owner, coordinating session 2026-11-04; supersedes the former bottom-bar Edit placement and resolves O18. Kind: OD.
 
 **L157.** In-place value editing, such as a long press on a number, is a future feature and is not part of 0.3. It must not conflict with step-drag long press. Screens: recipe. Source: Owner, coordinating session 2026-11-04. Kind: OD.
 
@@ -564,14 +564,14 @@ non-drag path (L72). Arrow buttons alone do not meet the request. Screens: steps
 review of the `dd10bd9` mockup, 2026-10-19 ("le glisser déplacer ne semble pas fonctionner").
 Kind: OD.
 
-**L152.** Dragging reorders through core `moveStep` and changes only order and a subtle pending-change mark. Card heights, density, layout and editor controls stay visually invariant during activation, drop, cancellation and refusal. Preserve scroll position and keep the moved card in view. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L96. Kind: OD.
+**L162.** Dragging reorders through core `moveStep` and changes only order and a subtle pending-change mark. Card heights, density, layout and editor controls stay visually invariant during activation, drop, cancellation and refusal. Preserve scroll position and keep the moved card in view. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L96. Kind: OD.
 
 **L97.** The step list is **dense**: no large empty vertical gaps inside or between step rows.
 Rows keep round 2's compact rhythm; details sit next to the title, not in tall padded blocks.
 Screens: steps. Source: owner review, 2026-10-19 ("la densité est manquante, trop d'espace
 vertical"). Kind: OD.
 
-**L153.** Step cards use the same compact presentation before and after a draft exists. Detailed controls, including duration inputs, open only in the existing step sheet through an explicit per-step Edit action; they never appear inline because dragging started a draft. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L97. Kind: OD.
+**L163.** Step cards use the same compact presentation before and after a draft exists. Detailed controls, including duration inputs, open only in the existing step sheet through an explicit per-step Edit action; they never appear inline because dragging started a draft. Screens: recipe, steps, edit. Source: Owner, coordinating session 2026-11-04, clarifying L97. Kind: OD.
 
 **L98.** A **bottom sheet is not a menu** and a confirmation never repeats itself. Short action
 lists use the anchored menu; confirmations are a compact dialog whose title, text and button do not
@@ -837,6 +837,13 @@ Screens: preparation, planning, recipe. Source: Owner, 2026-10-25 (#176 thread).
 - the conformity checks are **modular**. Each check is its own versioned module (id, the rule it enforces, which components it applies to, how it is evaluated) that reports into the sheet; adding a requirement adds a module, without changing the catalogue or the other checks. Checks tied to the current stack (Material 3, Tailwind, Ionic) are grouped in a **stack profile**, separate from stack-independent checks (accessibility, units, text, repository rules), so a future change of stack replaces a profile instead of rewriting the system.
 
 Agents use the same catalogue as a quick alternative to reading the code. Everything the catalogue shows (stack page, guides, versions, source, usage status with screens, conformity sheets) is also generated as files in the repository from the same data: the existing `packages/ui/CATALOGUE.md` index, extended, and a structured JSON file, both regenerated and drift-checked in CI so they never disagree with the in-app catalogue. A command answers the same searches and filters from the command line (for example every shelved component, or every component with a Tailwind exception), so an agent does not need a browser. The catalogue reads the library and never changes what the app uses. Screens: settings. Source: Owner, 2026-10-27. Kind: OD.
+
+**L151.** The fermentation engine is a planning tool, not a judge of readiness. It answers how much yeast for a rising time at room temperature, in the fridge or a combination, and the reverse, and it reports how far a dough has fermented. No screen presents an engine result as the dough being ready (extends L145). Readiness belongs to the step of a recipe and to the baker: a step may state its own end criterion (a volume since the last degassing, a physical mark, a handling or sensory sign, a window of maturity, or none), and fermentation is one condition among others, with gluten development. Screens: recipe, planning, preparation. Source: Owner, 2026-11-14 (ADR 0025). Kind: OD.
+
+**L152.** The app carries a codified body of baking knowledge beside measured science: the stages, the signs to check with every sense, what each sign means and what to do about it, and how ingredients and process interact. It is shown at the step where it is useful and is never presented as a measurement. A trade term (for example "pointage", "apprêt", "buée") is kept, and is never shown without a definition being available; where none is offered, the everyday word is used. Engineering or internal wording that is not baking vocabulary is the owner's to judge term by term. Screens: global. Source: Owner, 2026-11-13 and 2026-11-14 (ADR 0025). Kind: OD.
+
+**L153.** One app serves the professional and the first-time baker. The main flow stays simple and never forces guidance on someone who does not need it; explanations, signs, definitions and the basis of a forecast are available on demand (extends L56). No data provenance is put in the main flow. How levels of detail are presented is an open choice (O19). Screens: global. Source: Owner, 2026-11-13 and 2026-11-14 (ADR 0025). Kind: OD.
+
 ---
 
 ## 13. OPEN owner choices (do not decide silently)
@@ -901,3 +908,5 @@ cuite / Never baked", because a preparation does not always end in cooking. `DES
 (`recipes.card.neverBaked`) still carry the old label and must be reconciled.
 
 **O18. Where Edit lives: resolved by the owner on 2026-11-04.** L50 applies: a permanent pencil action in the Recipe header beside overflow. The reading bottom bar is removed; the editing overlay follows L60.
+
+**O19. Presenting guidance by level of need.** How the same screens serve a professional and a first-time baker (L153): what is shown by default, what opens on demand, whether a preference exists, and where signs and definitions (L152) appear in a step. The owner has not chosen; mockups come first. Source: Owner, 2026-11-14 (ADR 0025).
