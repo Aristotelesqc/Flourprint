@@ -29,6 +29,22 @@ export interface Running {
   readonly page: Page;
 }
 
+/** Track Ionic's completed presentation, including when native animations start after visibility. */
+const trackPopoverPresentation = () => {
+  const key = Symbol.for('flourprint.desktop.presentedPopovers');
+  if (Reflect.has(window, key)) return;
+  const presented = new WeakSet<Element>();
+  document.addEventListener('ionPopoverDidPresent', (event) => {
+    if (event.target instanceof Element) presented.add(event.target);
+  });
+  for (const type of ['ionPopoverWillPresent', 'ionPopoverWillDismiss', 'ionPopoverDidDismiss']) {
+    document.addEventListener(type, (event) => {
+      if (event.target instanceof Element) presented.delete(event.target);
+    });
+  }
+  Reflect.set(window, key, presented);
+};
+
 export const launch = async (options: {
   readonly executable: string;
   readonly userData: string;
@@ -60,6 +76,9 @@ export const launch = async (options: {
   const appPage = () => context.pages().find((p) => p.url().startsWith(options.appUrl));
   await expect.poll(() => appPage() !== undefined).toBe(true);
   const page = appPage() as Page;
+  await context.addInitScript(trackPopoverPresentation);
+  await page.waitForLoadState('domcontentloaded');
+  await page.evaluate(trackPopoverPresentation);
   return { process: child, browser, page };
 };
 
@@ -79,8 +98,53 @@ export const quit = async ({ process: child, browser }: Running) => {
 export const tap = async (page: Page, target: Locator) => {
   await expect(target).toBeVisible();
   await expect(target).toBeEnabled();
-  // CDP mouse events bypass Playwright's click actionability checks. Wait for finite Ionic
-  // overlay/page movement before taking coordinates, so a release cannot hit the backdrop.
+  // Visibility precedes Ionic's DidPresent: a native animation may not exist yet. Wait for
+  // that lifecycle event before considering the menu's coordinates usable.
+  await target.evaluate(async (element) => {
+    const popover = element.closest('ion-popover');
+    if (!popover) return;
+    const presented = Reflect.get(window, Symbol.for('flourprint.desktop.presentedPopovers')) as
+      WeakSet<Element> | undefined;
+    if (!presented) throw new Error('Native popover presentation tracker was not installed');
+    if (presented.has(popover)) return;
+    await new Promise<void>((resolvePresented, reject) => {
+      const onPresented = () => {
+        clearTimeout(deadline);
+        resolvePresented();
+      };
+      const deadline = setTimeout(() => {
+        popover.removeEventListener('ionPopoverDidPresent', onPresented);
+        reject(new Error('Native popover did not finish presenting'));
+      }, 5_000);
+      popover.addEventListener('ionPopoverDidPresent', onPresented, { once: true });
+    });
+  });
+  // Even Playwright's trial click waits for a CDP input acknowledgement in this shell.
+  // Check stable bounds and hit testing on animation frames without sending any input.
+  await target.evaluate(async (element) => {
+    const deadline = performance.now() + 5_000;
+    let previous: DOMRect | undefined;
+    while (performance.now() < deadline) {
+      await new Promise<void>((done) => requestAnimationFrame(() => done()));
+      const box = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+      if (
+        previous &&
+        box.x === previous.x &&
+        box.y === previous.y &&
+        box.width === previous.width &&
+        box.height === previous.height &&
+        box.width > 0 &&
+        box.height > 0 &&
+        hit &&
+        element.contains(hit)
+      ) {
+        return;
+      }
+      previous = box;
+    }
+    throw new Error('Native touch target did not become stable and uncovered');
+  });
   await page.evaluate(async () => {
     await new Promise(requestAnimationFrame);
     await Promise.all(

@@ -2,11 +2,13 @@ import {
   foldSchedule,
   isStepHeld,
   liveProjection,
+  subjectOf,
   type BakeState,
   type Instant,
   type ProcessStep,
   type ProjectedStep,
   type StepId,
+  type Subject,
 } from '@flourprint/core/domain';
 
 /**
@@ -78,7 +80,22 @@ const stepViews = (state: BakeState, now: Instant): BakeStepView[] | undefined =
   });
 };
 
-export const bakeView = (state: BakeState, now: Instant): BakeView | undefined => {
+export interface BakeViewOptions {
+  /** Follow authored order and keep preheat in the parallel lists. */
+  readonly progressionFocus?: boolean;
+}
+
+const isPreheatStep = (step: ProcessStep): boolean =>
+  step.operation === 'preheat' || step.schedule === 'beforeTarget';
+
+const sameSubject = (a: Subject, b: Subject): boolean =>
+  a.kind === 'mainDough' ? b.kind === 'mainDough' : b.kind === 'component' && a.id === b.id;
+
+export const bakeView = (
+  state: BakeState,
+  now: Instant,
+  options?: BakeViewOptions,
+): BakeView | undefined => {
   const process = state.process;
   const views = stepViews(state, now);
   if (!process || !views) return undefined;
@@ -91,7 +108,14 @@ export const bakeView = (state: BakeState, now: Instant): BakeView | undefined =
     .filter((v) => v.startedAt !== undefined && v.endedAt === undefined)
     .sort((a, b) => time(a.projected?.end) - time(b.projected?.end));
   const ready = order.filter((v) => v.ready);
-  const focusView = running[0] ?? ready[0];
+  const focusView = options?.progressionFocus
+    ? views.find(
+        (v) =>
+          !isPreheatStep(v.step) &&
+          v.endedAt === undefined &&
+          (v.ready || v.startedAt !== undefined),
+      )
+    : (running[0] ?? ready[0]);
   const focus = focusView && { ...focusView, running: focusView.startedAt !== undefined };
   const upcoming = order.filter(
     (v) => v.startedAt === undefined && v.endedAt === undefined && v !== focusView,
@@ -108,6 +132,88 @@ export const bakeView = (state: BakeState, now: Instant): BakeView | undefined =
     total: order.length,
     allDone: views.every((v) => v.endedAt !== undefined),
   };
+};
+
+/**
+ * Selects a completed direct predecessor from `stepId`'s `dependsOn` using `state.process` and
+ * the real completed end timestamp. Prefers the most recently ended same-subject non-preheat
+ * dependency; if there are no same-subject dependencies, accepts a single completed non-preheat
+ * direct dependency only (never picking a branch among multiple cross-subject dependencies).
+ */
+export const completedPredecessor = (state: BakeState, stepId: StepId): StepId | undefined => {
+  const process = state.process;
+  const step = process?.steps.find((s) => s.id === stepId);
+  if (!process || !step) return undefined;
+
+  const nonPreheatDeps = step.dependsOn.flatMap((depId) => {
+    const dep = process.steps.find((s) => s.id === depId);
+    return dep && !isPreheatStep(dep) ? [dep] : [];
+  });
+  if (nonPreheatDeps.length === 0) return undefined;
+
+  const focusSubject = subjectOf(process, step);
+  const hasSameSubject = nonPreheatDeps.some((dep) =>
+    sameSubject(subjectOf(process, dep), focusSubject),
+  );
+  const eventIds = Object.keys(state.stepEvents);
+  const completed = nonPreheatDeps.flatMap((dep) => {
+    const record = state.steps[dep.id];
+    if (record?.endedAt === undefined) return [];
+    return [
+      {
+        step: dep,
+        endedAt: record.endedAt,
+        eventOrder: record.endEventId ? eventIds.indexOf(record.endEventId) : -1,
+        processOrder: process.steps.indexOf(dep),
+      },
+    ];
+  });
+
+  if (hasSameSubject) {
+    const sameSubjectCompleted = completed.filter((entry) =>
+      sameSubject(subjectOf(process, entry.step), focusSubject),
+    );
+    if (sameSubjectCompleted.length === 0) return undefined;
+    sameSubjectCompleted.sort(
+      (a, b) =>
+        Date.parse(b.endedAt) - Date.parse(a.endedAt) ||
+        b.eventOrder - a.eventOrder ||
+        b.processOrder - a.processOrder,
+    );
+    return sameSubjectCompleted[0]?.step.id;
+  }
+
+  return nonPreheatDeps.length === 1 && completed.length === 1 ? completed[0]?.step.id : undefined;
+};
+
+/**
+ * Most recent successful non-preheat step completion derived from persisted facts, for Previous
+ * once every step is completed.
+ */
+export const lastCompletedStep = (state: BakeState): StepId | undefined => {
+  const process = state.process;
+  if (!process) return undefined;
+  const eventIds = Object.keys(state.stepEvents);
+  const completed = process.steps.flatMap((step, processOrder) => {
+    const record = state.steps[step.id];
+    if (isPreheatStep(step) || record?.endedAt === undefined) return [];
+    return [
+      {
+        stepId: step.id,
+        endedAt: record.endedAt,
+        eventOrder: record.endEventId ? eventIds.indexOf(record.endEventId) : -1,
+        processOrder,
+      },
+    ];
+  });
+  if (completed.length === 0) return undefined;
+  completed.sort(
+    (a, b) =>
+      Date.parse(b.endedAt) - Date.parse(a.endedAt) ||
+      b.eventOrder - a.eventOrder ||
+      b.processOrder - a.processOrder,
+  );
+  return completed[0]?.stepId;
 };
 
 /** Fold sets of a running step (bake-session.md): which are recorded, and the next one due. */

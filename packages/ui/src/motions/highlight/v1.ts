@@ -9,6 +9,6 @@ export default motionLibrary.motion({
   reduced: 'none',
   demo: {
     from: { 'background-color': 'transparent' },
-    to: { 'background-color': 'var(--fp-color-primary-container)' },
+    to: { 'background-color': 'var(--color-primary-container)' },
   },
 });

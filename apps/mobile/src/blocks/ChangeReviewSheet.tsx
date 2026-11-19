@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { IonContent, IonModal } from '@ionic/react';
+import { isReduced, useMotion, useOverlayMotion } from '@flourprint/ui';
 import type { Formula, Process } from '@flourprint/core/domain';
 import { formulaChanges } from '../services/formula-changes';
 import { useMessages } from '../i18n/use-messages';
@@ -26,6 +28,23 @@ export const ChangeReviewSheet = ({
   onClose,
 }: Props) => {
   const { t } = useMessages();
+  const modalRef = useRef<HTMLIonModalElement | null>(null);
+  const sheetEnter = useMotion('fp.motion.sheet-enter');
+  const sheetExit = useMotion('fp.motion.sheet-exit');
+  const backdropEnter = useMotion('fp.motion.backdrop-enter');
+  const backdropExit = useMotion('fp.motion.backdrop-exit');
+
+  useOverlayMotion(modalRef, {
+    enter: [{ part: 'ion-backdrop', motion: backdropEnter }, { motion: sheetEnter }],
+    leave: [{ part: 'ion-backdrop', motion: backdropExit }, { motion: sheetExit }],
+  });
+
+  const syncModalAnimated = (event: Event) => {
+    const modal = modalRef.current;
+    if (!modal || event.target !== modal) return;
+    modal.animated = !isReduced(modal);
+  };
+
   const changes = baseFormula ? formulaChanges(baseFormula, currentFormula) : [];
 
   const processChanged = (() => {
@@ -35,7 +54,10 @@ export const ChangeReviewSheet = ({
 
   return (
     <IonModal
+      ref={modalRef}
       isOpen={open}
+      onWillPresent={syncModalAnimated}
+      onWillDismiss={syncModalAnimated}
       onDidDismiss={onClose}
       breakpoints={[0, 0.7, 0.95]}
       initialBreakpoint={0.7}
