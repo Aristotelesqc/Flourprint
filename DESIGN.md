@@ -373,6 +373,9 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   Put Previous and Next in a separate bottom row. Next completes the focused step in authored
   order. Preheat keeps its own controls. Show a transient Undo action above the footer after a
   successful completion, without shifting the progression buttons.
+  When a later step has started, show why Previous cannot retract a completion and offer time
+  correction or a separate repetition. Completed rows in an active preparation expose the
+  recorded start and end for correction. The journal shows each accepted correction.
   Upcoming steps with clock times precede completed
   steps. Keep the full journal accessible (all existing notes, observations and step completions)
   and actual lifecycle/outcome actions. A readiness observation neither completes the stage nor
