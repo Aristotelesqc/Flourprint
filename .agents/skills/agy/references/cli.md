@@ -78,6 +78,26 @@ and null Git state; source revisions must be in the prompt. Tool permissions sti
 the host/AGY configuration, not this flag. The helper does not silently downgrade checkout mode
 to snapshot mode after a Git error.
 
+## Model selection
+
+Verified with Antigravity CLI **1.5.12** on 2026-11-22 using `agy --version`, `agy --help`,
+`agy models` and `/usage`. Choose an exact ID from the current `agy models` list. Pass `--model`
+explicitly on a new run and retain the recorded model when resuming.
+
+- Hydrogen (`gemini-4-hydrogen-high`, `gemini-4-hydrogen-xhigh`, `gemini-4-hydrogen-medium`,
+  `gemini-4-hydrogen-low`). Hydrogen High remains the usual implementation model.
+- Argon (`gemini-4-argon-high`, `gemini-4-argon-medium`, `gemini-4-argon-low`). Use the
+  [specialist assignment guidance](assignment.md#implementation-and-ordinary-review-owner-decision-of-2026-10-28).
+- Neon (`gemini-4-neon-high`, `gemini-4-neon-xhigh`, `gemini-4-neon-medium`, `gemini-4-neon-low`).
+  The owner authorizes explicit selection for bounded assignments.
+- Orchestrator (Neon) (`gemini-pro-orchestrator-neon`) and Orchestrator (Argon)
+  (`gemini-pro-orchestrator-g1-pro`). Verify child-agent capability for the chosen execution mode
+  before relying on it and follow the [coordination procedure](assignment.md#coordinated-ui-tranche).
+
+Check `/usage` separately. CLI 1.5.12 reported `Gemini Models`, `Claude and GPT models` and the
+`Gemini 4 Argon` weekly group. It exposed no Neon-specific group. Verify which allowance applies
+before budgeting a Neon or orchestrator run.
+
 ## Recovery
 
 Apply the [bounded review/recovery policy](../SKILL.md#bound-review-and-recovery-costs) before
