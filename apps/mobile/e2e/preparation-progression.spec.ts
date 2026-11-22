@@ -111,7 +111,14 @@ for (const english of [false, true]) {
     await expect(view.getByText(english ? 'Mix (repeat)' : 'Pétrissage (reprise)')).toBeVisible();
     await next.tap();
     await expect(focus).toHaveText(english ? / · Mix \(repeat\)$/ : / · Pétrissage \(reprise\)$/);
-    await expect(view.getByRole('timer')).toHaveText('00:07:00');
+    await expect(
+      view.getByRole('timer', {
+        name: english ? /Estimated remaining time|Overrun/ : /Temps restant estimé|Dépassement/,
+      }),
+    ).toHaveText('00:07:00');
+    await expect(
+      view.getByRole('timer', { name: english ? 'Elapsed time' : 'Temps écoulé' }),
+    ).toHaveText('00:00:00');
     await expect(journal).toContainText(english ? 'Mix done' : 'Pétrissage terminé');
   });
 }
