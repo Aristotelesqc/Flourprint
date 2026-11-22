@@ -366,7 +366,12 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   System/manual reduced motion retains focus and final state with zero-duration settling.
 - **Preparation:** use the step number and name above the large, tabular countdown. The estimated
   countdown uses the engine's explicit or implicit start and projected deadline. At zero the step
-  stays active and the timer shows a signed overrun. Show duration adjustments separately from the
+  stays active and the timer shows a signed overrun. Show elapsed time from the engine's actual or
+  implicit start in a compact, labelled readout with tabular numerals and no live announcements.
+  Place it below the countdown and above the adjustment. It keeps advancing during countdown
+  holds and after overrun. For a running step with no planned duration, make elapsed time the
+  primary readout, retain the missing-duration label and disable the countdown controls. An
+  unstarted step keeps its planned or unknown duration. Show duration adjustments separately from the
   step's planned end, start and temporal progress. Group the three countdown commands in one
   labelled row of compact shared buttons with full touch targets. Pause and Resume share the
   middle button and reflect the recorded hold. Keep notes and readiness observations accessible.

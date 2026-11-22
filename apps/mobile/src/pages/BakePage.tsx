@@ -1365,23 +1365,38 @@ const Focus = ({
   const { t, stepName, locale } = useMessages();
   const { clock } = useServices();
   const timerLabelId = useId();
+  const elapsedLabelId = useId();
   const { projected, startedAt } = focus;
   const effectiveStart = startedAt ?? (projected?.implicit ? projected.start : undefined);
-  const isActive = effectiveStart !== undefined;
   const duration = focus.step.plannedDurationS;
   const startMs = effectiveStart === undefined ? Number.NaN : Date.parse(effectiveStart);
+  const isActive = effectiveStart !== undefined && Number.isFinite(startMs);
   const endMs = projected?.end === undefined ? Number.NaN : Date.parse(projected.end);
   const hasActiveCountdown = isActive && Number.isFinite(endMs);
-  const [timerNow, setTimerNow] = useState(() => clock.now());
+  const stepId = focus.step.id;
+  const [timerSample, setTimerSample] = useState<{
+    readonly stepId: string;
+    readonly parentNow: Instant;
+    readonly instant: Instant;
+  }>();
   useEffect(() => {
-    if (!hasActiveCountdown || held) return;
-    const tick = () => setTimerNow(clock.now());
-    tick();
-    const interval = setInterval(tick, 1_000);
+    if (!isActive) return;
+    const interval = setInterval(
+      () => setTimerSample({ stepId, parentNow: now, instant: clock.now() }),
+      1_000,
+    );
     return () => clearInterval(interval);
-  }, [clock, hasActiveCountdown, held]);
+  }, [clock, isActive, now, stepId]);
+  // Render a new focus or clock jump immediately, without a sample from the previous step.
+  const timerNow =
+    timerSample?.stepId === stepId && timerSample.parentNow === now ? timerSample.instant : now;
   // A held projection is calculated using the same clock sample as the parent.
-  const nowMs = Date.parse(held ? now : timerNow);
+  const elapsedNowMs = Date.parse(timerNow);
+  const nowMs = held ? Date.parse(now) : elapsedNowMs;
+  const elapsedSeconds =
+    isActive && Number.isFinite(elapsedNowMs)
+      ? Math.max(0, Math.floor((elapsedNowMs - startMs) / 1_000))
+      : 0;
 
   const remainingSeconds = Math.ceil((endMs - nowMs) / 1_000);
   const overrun = remainingSeconds < 0;
@@ -1433,6 +1448,39 @@ const Focus = ({
           >
             {t(overrun ? 'bake.overrun' : 'bake.estimatedRemaining')}
           </span>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span id={elapsedLabelId} className="m3-type-supporting text-muted">
+              {t('bake.elapsedTime')}
+            </span>
+            <span
+              role="timer"
+              aria-labelledby={elapsedLabelId}
+              aria-live="off"
+              className="m3-type-supporting font-semibold text-on-surface tabular-nums whitespace-nowrap"
+            >
+              {formatClock(elapsedSeconds)}
+            </span>
+          </div>
+        </div>
+      ) : isActive ? (
+        <div className="flex flex-col items-start gap-0.5">
+          <span
+            role="timer"
+            aria-labelledby={elapsedLabelId}
+            aria-live="off"
+            className={`${heroTimerClass} whitespace-nowrap`}
+          >
+            {formatClock(elapsedSeconds)}
+          </span>
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span id={elapsedLabelId} className="m3-type-supporting text-muted">
+              {t('bake.elapsedTime')}
+            </span>
+            <span aria-hidden="true" className="m3-type-supporting text-muted">
+              ·
+            </span>
+            <span className="m3-type-supporting text-muted">{t('bake.noDuration')}</span>
+          </div>
         </div>
       ) : (
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">

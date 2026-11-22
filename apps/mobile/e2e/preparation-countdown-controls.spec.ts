@@ -38,20 +38,28 @@ for (const english of [false, true]) {
     page,
   }) => {
     const initial = Date.parse('2026-03-02T08:00:00-05:00');
-    const atMinute = (minutes: number) => page.clock.setFixedTime(initial + minutes * 60_000);
+    const atMinute = (minutes: number, seconds = 0) =>
+      page.clock.setFixedTime(initial + (minutes * 60 + seconds) * 1_000);
     await atMinute(0);
     await page.setViewportSize({ width: 360, height: 851 });
     await openRecipe(page);
     await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
     await start(page, english);
-    const timer = routed(page).getByRole('timer');
+    const timer = routed(page).getByRole('timer', {
+      name: english ? /Estimated remaining time|Overrun/ : /Temps restant estimé|Dépassement/,
+    });
+    const elapsed = routed(page).getByRole('timer', {
+      name: english ? 'Elapsed time' : 'Temps écoulé',
+    });
     const pause = group(page).getByRole('button', { name: 'Pause', exact: true });
     const resume = group(page).getByRole('button', {
       name: english ? 'Resume' : 'Reprendre',
       exact: true,
     });
+    await expect(elapsed).toHaveText('00:00:00');
     await atMinute(5);
     await expect(timer).toHaveText('11:55:00');
+    await expect(elapsed).toHaveText('00:05:00');
     await pause.tap();
     await expect(resume).toBeVisible();
     const preparation = page.url();
@@ -87,10 +95,15 @@ for (const english of [false, true]) {
     await page.goto(preparation);
     await expect(resume).toBeVisible();
     await expect(timer).toHaveText('11:55:00');
+    await expect(elapsed).toHaveText('00:25:00');
+    await atMinute(25, 1);
+    await expect(elapsed).toHaveText('00:25:01', { timeout: 5_000 });
+    await expect(timer).toHaveText('11:55:00');
     await resume.tap();
     await expect(pause).toBeVisible();
-    await atMinute(26);
+    await atMinute(26, 1);
     await expect(timer).toHaveText('11:54:00');
+    await expect(elapsed).toHaveText('00:26:01');
 
     await group(page).getByRole('button', { name: '+15 min', exact: true }).tap();
     await expect(timer).toHaveText('12:09:00');
@@ -128,7 +141,25 @@ for (const english of [false, true]) {
       .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .tap();
     await expectRecipeRevision(page, 2);
+    const initial = Date.parse('2026-03-02T08:00:00-05:00');
+    await page.clock.setFixedTime(initial);
     await start(page, english);
+    const elapsed = routed(page).getByRole('timer', {
+      name: english ? 'Elapsed time' : 'Temps écoulé',
+    });
+    const countdown = routed(page).getByRole('timer', {
+      name: english ? /Estimated remaining time|Overrun/ : /Temps restant estimé|Dépassement/,
+    });
+    await expect(elapsed).toHaveText('00:00:00');
+    await expect(countdown).toHaveCount(0);
+    await expect(
+      routed(page)
+        .getByText(english ? 'No planned duration' : 'Pas de durée prévue')
+        .first(),
+    ).toBeVisible();
+    await page.clock.setFixedTime(initial + 1_000);
+    await expect(elapsed).toHaveText('00:00:01', { timeout: 5_000 });
+    await expect(countdown).toHaveCount(0);
     await expect(group(page).getByRole('button', { name: '−15 min', exact: true })).toBeDisabled();
     await expect(group(page).getByRole('button', { name: 'Pause', exact: true })).toBeDisabled();
     await expect(group(page).getByRole('button', { name: '+15 min', exact: true })).toBeDisabled();

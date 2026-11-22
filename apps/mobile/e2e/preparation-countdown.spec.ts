@@ -24,7 +24,12 @@ for (const english of [false, true]) {
       .tap();
     await expect(page).toHaveURL(/\/bakes\//);
     await expect(view).toHaveCount(1);
-    const timer = view.getByRole('timer');
+    const timer = view.getByRole('timer', {
+      name: english ? /Estimated remaining time|Overrun/ : /Temps restant estimé|Dépassement/,
+    });
+    const elapsed = view.getByRole('timer', {
+      name: english ? 'Elapsed time' : 'Temps écoulé',
+    });
     const heading = view.getByRole('heading', {
       name: english ? /1 \/ \d+ · Preferment/ : /1 \/ \d+ · Préferment/,
     });
@@ -33,15 +38,21 @@ for (const english of [false, true]) {
       english ? 'Estimated remaining time' : 'Temps restant estimé',
     );
     await expect(timer).toHaveText('12:00:00');
+    await expect(elapsed).toHaveText('00:00:00');
     await expect(
       view.getByText(english ? /Adjustment\s*:\s*\+0 min/ : /Ajustement\s*:\s*\+0 min/),
     ).toBeVisible();
 
     await page.clock.setFixedTime(new Date(startedAt.getTime() + 1_000));
     await expect(timer).toHaveText('11:59:59', { timeout: 5_000 });
+    await expect(elapsed).toHaveText('00:00:01', { timeout: 5_000 });
     await page.clock.setFixedTime(new Date(startedAt.getTime() + 12 * 3_600_000 + 120_000));
     await expect(timer).toHaveText('+00:02:00');
     await expect(timer).toHaveAccessibleName(english ? 'Overrun' : 'Dépassement');
+    await expect(elapsed).toHaveText('12:02:00');
+    await page.clock.setFixedTime(new Date(startedAt.getTime() + 12 * 3_600_000 + 121_000));
+    await expect(timer).toHaveText('+00:02:01', { timeout: 5_000 });
+    await expect(elapsed).toHaveText('12:02:01', { timeout: 5_000 });
     await expect(heading).toBeVisible();
     await expect(page).toHaveURL(/\/bakes\//);
   });
