@@ -30,7 +30,8 @@ Never silently switch models, enable paid overages or consume a reset.
 - Resolve `agy` on PATH (PowerShell: `Get-Command agy`), inspect `agy --help` and `agy models`.
   Use the requested model when available. Flourprint's established preference is Gemini 4 Hydrogen
   High (`gemini-4-hydrogen-high`); model availability must be checked, not assumed or silently
-  upgraded.
+  upgraded. See [Model selection](references/cli.md#model-selection) for the verified model-family
+  snapshot, explicit selection rules and `/usage` quota grouping.
   The helper expects a native executable; for a shell wrapper, resolve its native binary and
   supply `--agy` rather than executing a shell-built command.
 - Use current user instructions and trusted existing authorization for external sharing. This
