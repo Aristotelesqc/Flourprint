@@ -236,6 +236,8 @@ test('a note attaches to a step; an ended bake takes a rated review note', async
 });
 
 test('finishes in one tap with the intended outcome, then corrects it', async ({ page }) => {
+  const start = new Date('2026-10-02T10:00:00.000Z');
+  await page.clock.setFixedTime(start);
   await openRecipe(page);
   await startBake(page);
   // Run every step through the main action until the bake can be finished.
@@ -265,11 +267,24 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
   await expect(allDone).toBeVisible();
   // The recipe bakes: one tap records it as cooked; the choice beside offers another result.
   await expect(page.getByRole('button', { name: 'Autre résultat' })).toBeVisible();
+  await allDone.scrollIntoViewIfNeeded();
+  await page.clock.setFixedTime(new Date(start.getTime() + 75 * 60_000));
   await page.getByRole('button', { name: 'Terminer · Cuit' }).click();
+  await expect(routed(page).getByRole('region', { name: 'Préparation terminée' })).toBeInViewport({
+    ratio: 1,
+  });
   await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Cuit');
+  await expect(page.getByTestId('bake-total-duration')).toHaveText('Durée totale : 1 h 15 min');
+  await expect(routed(page).getByRole('region', { name: 'Compte à rebours' })).toHaveCount(0);
+  await expect(routed(page).getByRole('region', { name: 'Progression' })).toHaveCount(0);
+
+  const journalList = routed(page).getByTestId('preparation-journal').locator('ol[reversed]');
+  await expect(journalList).toBeVisible();
+  const journalRows = journalList.locator('li');
+  expect(await journalRows.count()).toBeGreaterThan(10);
 
   // Two short lists: the result, then what became of the raw dough.
-  await menuAction(page, /^Modifier le résultat$/);
+  await routed(page).getByRole('button', { name: 'Modifier le résultat', exact: true }).click();
   await page.locator('ion-alert').getByText('Cuit et pâte crue', { exact: true }).click();
   await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.locator('ion-alert')).toContainText('Devenir de la pâte crue');
@@ -278,6 +293,8 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
   await expect(page.getByTestId('bake-outcome')).toHaveText(
     'Résultat : Cuit et pâte crue, congelée',
   );
+  await expect(page.getByTestId('bake-total-duration')).toHaveText('Durée totale : 1 h 15 min');
+
   // Another result starts from "not said": saving at once records it.
   await menuAction(page, /^Modifier le résultat$/);
   await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
@@ -285,6 +302,29 @@ test('finishes in one tap with the intended outcome, then corrects it', async ({
   await expect(page.locator('ion-alert')).toContainText('Devenir de la pâte crue');
   await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Pâte crue');
+  await expect(page.getByTestId('bake-total-duration')).toHaveText('Durée totale : 1 h 15 min');
+
+  // Check stable 1-/2-digit journal alignment and viewport fit at 360 px.
+  await page.setViewportSize({ width: 360, height: 800 });
+  const alignment = await journalRows.evaluateAll((items) =>
+    items.map((item) => {
+      const p = item.querySelector('p');
+      const itemRect = item.getBoundingClientRect();
+      const pRect = p?.getBoundingClientRect();
+      return {
+        itemX: Math.round(itemRect.x),
+        pX: pRect ? Math.round(pRect.x) : -1,
+        pRight: pRect ? Math.round(pRect.right) : -1,
+      };
+    }),
+  );
+  const firstX = alignment[0]?.pX ?? -1;
+  expect(firstX).toBeGreaterThan(0);
+  for (const row of alignment) {
+    expect(row.itemX).toBe(firstX);
+    expect(row.pX).toBe(firstX);
+    expect(row.pRight).toBeLessThanOrEqual(360);
+  }
 });
 
 test('finishes as frozen dough before its planned bake, keeping the steps as recorded', async ({

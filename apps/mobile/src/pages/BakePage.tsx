@@ -109,6 +109,7 @@ export const BakePage = () => {
   const outcomeText = useOutcomeText();
   const pickOutcome = useOutcomePicker();
   const [state, setState] = useState<BakeState>();
+  const preparationContent = useRef<HTMLIonContentElement>(null);
   const [recipeName, setRecipeName] = useState<string | null>();
   const [failure, setFailure] = useState<DomainError>();
   const [readFailed, setReadFailed] = useState(false);
@@ -120,6 +121,7 @@ export const BakePage = () => {
   const countdownLabelId = useId();
   const noDurationId = useId();
   const progressionLabelId = useId();
+  const statusHeadingId = useId();
   const [undoStepId, setUndoStepId] = useState<string>();
   const [progressionError, setProgressionError] = useState<string>();
   const [blockedStepId, setBlockedStepId] = useState<string>();
@@ -229,6 +231,9 @@ export const BakePage = () => {
       case 'ok':
         setState(outcome.state);
         setFailure(undefined);
+        if (state.status === 'active' && outcome.state.status === 'finished') {
+          void preparationContent.current?.scrollToTop(0);
+        }
         return undefined;
       case 'rejected':
         setFailure(outcome.error);
@@ -667,6 +672,20 @@ export const BakePage = () => {
       ],
     });
 
+  const outcomeBusy = commands.busy || pending !== undefined;
+  const correctOutcome = () => {
+    if (outcomeBusy) return;
+    pickOutcome(t('bake.outcome.change'), state.outcome, (outcome) => {
+      void send({ type: 'CorrectOutcome', outcome });
+    });
+  };
+  const startMs = state.startedAt === undefined ? Number.NaN : Date.parse(state.startedAt);
+  const endMs = state.endedAt === undefined ? Number.NaN : Date.parse(state.endedAt);
+  const totalDurationS =
+    Number.isFinite(startMs) && Number.isFinite(endMs) && endMs >= startMs
+      ? (endMs - startMs) / 1_000
+      : undefined;
+
   const finishOutcome = (outcome: PreparationOutcome) => {
     void send({ type: 'FinishBake', outcome });
   };
@@ -751,10 +770,8 @@ export const BakePage = () => {
                   ? [
                       {
                         label: t('bake.outcome.change'),
-                        handler: () =>
-                          pickOutcome(t('bake.outcome.change'), state.outcome, (outcome) => {
-                            void send({ type: 'CorrectOutcome', outcome });
-                          }),
+                        disabled: outcomeBusy,
+                        handler: correctOutcome,
                       },
                     ]
                   : []),
@@ -772,7 +789,7 @@ export const BakePage = () => {
         </IonToolbar>
         <SimulationBanner />
       </IonHeader>
-      <IonContent className="ion-padding">
+      <IonContent ref={preparationContent} className="ion-padding">
         <div className="flex flex-col gap-5">
           {failure && (
             <p role="alert" className="m-0 text-alert">
@@ -804,16 +821,44 @@ export const BakePage = () => {
           </div>
 
           {state.status !== 'active' && (
-            <h2 className="m3-type-title m-0">
-              {t(state.status === 'abandoned' ? 'bake.abandoned' : 'bake.finished')}
-            </h2>
-          )}
-          {state.status === 'finished' && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-lg" data-testid="bake-outcome">
-                {t('bake.outcome', { outcome: outcomeText(state.outcome ?? 'unknown') })}
-              </span>
-            </div>
+            <section aria-labelledby={statusHeadingId} className="flex flex-col gap-2">
+              <h2 id={statusHeadingId} className="m3-type-title m-0">
+                {t(state.status === 'abandoned' ? 'bake.abandoned' : 'bake.finished')}
+              </h2>
+              {state.status === 'finished' && (
+                <div className="flex flex-col items-start gap-2">
+                  <div className="flex w-full min-w-0 flex-col gap-1">
+                    <span
+                      className="m3-type-body font-medium text-on-surface break-words"
+                      data-testid="bake-outcome"
+                    >
+                      {t('bake.outcome', { outcome: outcomeText(state.outcome ?? 'unknown') })}
+                    </span>
+                    <span
+                      className="m3-type-supporting text-muted tabular-nums break-words"
+                      data-testid="bake-total-duration"
+                    >
+                      {t('bake.totalDuration', {
+                        duration:
+                          totalDurationS === undefined
+                            ? t('bake.totalDurationUnknown')
+                            : formatDuration(totalDurationS),
+                      })}
+                    </span>
+                  </div>
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    className="max-w-full px-4 text-supporting"
+                    disabled={outcomeBusy}
+                    onClick={correctOutcome}
+                  >
+                    {t('bake.outcome.change')}
+                  </Ui>
+                </div>
+              )}
+            </section>
           )}
 
           {focus && (
@@ -1101,64 +1146,70 @@ export const BakePage = () => {
           )}
 
           {journalItems.length > 0 && (
-            <StepList title={t('bake.log')} testId="preparation-journal">
+            <StepList title={t('bake.log')} testId="preparation-journal" ordered>
               {journalItems.map((item) => {
                 if (item.kind === 'correction') {
                   return (
-                    <p key={item.key} className="m-0 py-2 text-sm text-muted">
-                      {t('bake.log.timeCorrected', {
-                        time: formatTime(item.at, locale),
-                        step: nameOf(item.stepId),
-                        field: t(item.field === 'start' ? 'bake.timeStart' : 'bake.timeEnd'),
-                        newTime: formatTime(item.newAt, locale),
-                      })}
-                    </p>
+                    <li key={item.key} className="py-2">
+                      <p className="m-0 text-sm text-muted break-words">
+                        {t('bake.log.timeCorrected', {
+                          time: formatTime(item.at, locale),
+                          step: nameOf(item.stepId),
+                          field: t(item.field === 'start' ? 'bake.timeStart' : 'bake.timeEnd'),
+                          newTime: formatTime(item.newAt, locale),
+                        })}
+                      </p>
+                    </li>
                   );
                 }
                 const { entry } = item;
                 return (
-                  <p key={item.key} className="m-0 py-2 text-sm text-muted">
-                    {entry.kind === 'note'
-                      ? entry.stepId === undefined
-                        ? t('bake.log.note', {
-                            time: formatTime(entry.at, locale),
-                            text: noteText(entry),
-                          })
-                        : t('bake.log.noteOn', {
-                            time: formatTime(entry.at, locale),
-                            step: nameOf(entry.stepId),
-                            text: noteText(entry),
-                          })
-                      : entry.kind === 'fold'
-                        ? t('bake.log.fold', {
-                            time: formatTime(entry.at, locale),
-                            set: entry.set ?? '?',
-                            count: entry.count ?? '?',
-                            step: nameOf(entry.stepId),
-                          })
-                        : entry.kind === 'doughReady'
-                          ? t('bake.log.ready', {
+                  <li key={item.key} className="py-2">
+                    <p className="m-0 text-sm text-muted break-words">
+                      {entry.kind === 'note'
+                        ? entry.stepId === undefined
+                          ? t('bake.log.note', {
                               time: formatTime(entry.at, locale),
-                              label:
-                                entry.stage === undefined
-                                  ? t('bake.doughReady')
-                                  : readyLabel(entry.stage),
-                              details: [
-                                nameOf(entry.stepId),
-                                ...(entry.criterion === undefined
-                                  ? []
-                                  : [criterionLabel(entry.criterion)]),
-                              ].join(', '),
-                              text: entry.text ?? '',
+                              text: noteText(entry),
                             })
-                          : t(
-                              entry.kind === 'started' ? 'bake.log.started' : 'bake.log.completed',
-                              {
+                          : t('bake.log.noteOn', {
+                              time: formatTime(entry.at, locale),
+                              step: nameOf(entry.stepId),
+                              text: noteText(entry),
+                            })
+                        : entry.kind === 'fold'
+                          ? t('bake.log.fold', {
+                              time: formatTime(entry.at, locale),
+                              set: entry.set ?? '?',
+                              count: entry.count ?? '?',
+                              step: nameOf(entry.stepId),
+                            })
+                          : entry.kind === 'doughReady'
+                            ? t('bake.log.ready', {
                                 time: formatTime(entry.at, locale),
-                                step: nameOf(entry.stepId),
-                              },
-                            )}
-                  </p>
+                                label:
+                                  entry.stage === undefined
+                                    ? t('bake.doughReady')
+                                    : readyLabel(entry.stage),
+                                details: [
+                                  nameOf(entry.stepId),
+                                  ...(entry.criterion === undefined
+                                    ? []
+                                    : [criterionLabel(entry.criterion)]),
+                                ].join(', '),
+                                text: entry.text ?? '',
+                              })
+                            : t(
+                                entry.kind === 'started'
+                                  ? 'bake.log.started'
+                                  : 'bake.log.completed',
+                                {
+                                  time: formatTime(entry.at, locale),
+                                  step: nameOf(entry.stepId),
+                                },
+                              )}
+                    </p>
+                  </li>
                 );
               })}
             </StepList>
@@ -1552,11 +1603,13 @@ const StepList = ({
   title,
   help,
   testId,
+  ordered = false,
   children,
 }: {
   title: string;
   help?: ReactNode;
   testId?: string;
+  ordered?: boolean;
   children: ReactNode;
 }) => (
   <section className="flex flex-col" data-testid={testId}>
@@ -1564,7 +1617,16 @@ const StepList = ({
       <SectionTitle>{title}</SectionTitle>
       {help}
     </div>
-    <div className="[&>*]:border-t [&>*]:border-line">{children}</div>
+    {ordered ? (
+      <ol
+        reversed
+        className="m-0 list-decimal list-outside ps-8 text-sm text-muted tabular-nums [&>li]:border-t [&>li]:border-line"
+      >
+        {children}
+      </ol>
+    ) : (
+      <div className="[&>*]:border-t [&>*]:border-line">{children}</div>
+    )}
   </section>
 );
 
