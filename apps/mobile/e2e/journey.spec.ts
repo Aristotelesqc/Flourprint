@@ -301,12 +301,29 @@ test('finishes as frozen dough before its planned bake, keeping the steps as rec
   await page.getByRole('button', { name: 'Suivant', exact: true }).click();
   // The bake is not reached: finishing now asks for the result, completes no step.
   await menuAction(page, /^Terminer maintenant/);
-  // The recipe intends a cooked result and nothing is cooked: no outcome is preselected.
-  await expect(page.locator('ion-alert [aria-checked="true"]')).toHaveCount(0);
-  await page.locator('ion-alert').getByText('Pâte crue', { exact: true }).click();
-  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
-  await page.locator('ion-alert').getByText('congelée', { exact: true }).click();
-  await page.locator('ion-alert').getByRole('button', { name: 'Enregistrer' }).click();
+  const alert = page.locator('ion-alert');
+  await expect(alert).toBeVisible();
+  await expect(alert).toContainText('Choisir le devenir de la pâte ou abandonner la préparation.');
+  // No cooking step is completed: no outcome is preselected, and no cooked option is offered.
+  await expect(alert.locator('[aria-checked="true"]')).toHaveCount(0);
+  await expect(alert.getByRole('radio', { name: 'Cuit', exact: true })).toHaveCount(0);
+  await expect(alert.getByRole('radio', { name: 'Cuit et pâte crue', exact: true })).toHaveCount(0);
+  await expect(alert.getByRole('radio', { name: 'Pâte conservée', exact: true })).toBeVisible();
+  await expect(
+    alert.getByRole('radio', { name: 'Pâte crue, congelée', exact: true }),
+  ).toBeVisible();
+  await expect(alert.getByRole('radio', { name: 'Pâte crue, donnée', exact: true })).toBeVisible();
+  await expect(
+    alert.getByRole('radio', { name: 'Abandonner la préparation', exact: true }),
+  ).toBeVisible();
+  // Saving without a selection keeps the alert open and records nothing.
+  await alert.getByRole('button', { name: 'Enregistrer', exact: true }).click();
+  await expect(alert).toBeVisible();
+  await expect(alert.locator('[aria-checked="true"]')).toHaveCount(0);
+  await expect(page.getByTestId('bake-outcome')).toHaveCount(0);
+  await alert.getByRole('radio', { name: 'Pâte crue, congelée', exact: true }).click();
+  await alert.getByRole('button', { name: 'Enregistrer', exact: true }).click();
+  await expect(alert).toBeHidden();
   await expect(page.getByTestId('bake-outcome')).toHaveText('Résultat : Pâte crue, congelée');
   await expect(page.getByText(/Préferment terminé/).first()).toBeVisible();
   await expect(page.getByText(/Cuisson terminé/)).toHaveCount(0);
@@ -314,6 +331,79 @@ test('finishes as frozen dough before its planned bake, keeping the steps as rec
     await goBack(page);
   await expect(card()).toContainText('Pâte préparée');
   await expect(card()).not.toContainText('Jamais');
+});
+
+test('early finish lets the baker abandon with a cancelable confirmation @en', async ({ page }) => {
+  await page.goto('/recipes');
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expectRecipeRevision(page, 1);
+  await showPlanning(page);
+  await page
+    .locator('ion-footer:visible, ion-header:visible')
+    .getByRole('button', { name: /^Start/ })
+    .first()
+    .click();
+  const startAlert = page.locator('ion-alert').filter({ hasText: 'Start the preparation now?' });
+  await expect(startAlert).toBeVisible();
+  await startAlert.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(page).toHaveURL(/\/bakes\//);
+  await expect(routed(page)).toHaveCount(1);
+
+  await menuAction(page, /^Start Preferment$/);
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(page.getByTestId('preparation-journal')).toContainText('Preferment done');
+
+  await menuAction(page, /^Finish now/);
+  const outcomeAlert = page
+    .locator('ion-alert')
+    .filter({ hasText: 'Choose what became of the dough, or abandon the preparation.' });
+  await expect(outcomeAlert).toBeVisible();
+  await expect(outcomeAlert.locator('[aria-checked="true"]')).toHaveCount(0);
+  await expect(outcomeAlert.getByRole('radio', { name: 'Cooked', exact: true })).toHaveCount(0);
+  await expect(
+    outcomeAlert.getByRole('radio', { name: 'Cooked and raw dough', exact: true }),
+  ).toHaveCount(0);
+  await expect(outcomeAlert.getByRole('radio', { name: 'Dough kept', exact: true })).toBeVisible();
+  await expect(
+    outcomeAlert.getByRole('radio', { name: 'Raw dough, frozen', exact: true }),
+  ).toBeVisible();
+  await expect(
+    outcomeAlert.getByRole('radio', { name: 'Abandon preparation', exact: true }),
+  ).toBeVisible();
+  await outcomeAlert.getByRole('radio', { name: 'Abandon preparation', exact: true }).click();
+  await outcomeAlert.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(outcomeAlert).toBeHidden();
+
+  const confirmAlert = page
+    .locator('ion-alert')
+    .filter({ hasText: 'Abandon this preparation? Its log is kept.' });
+  await expect(confirmAlert).toBeVisible();
+  await confirmAlert.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(confirmAlert).toBeHidden();
+  await expect(
+    routed(page).getByRole('heading', { level: 2, name: 'Preparation abandoned' }),
+  ).toHaveCount(0);
+  await expect(
+    routed(page).getByRole('button', { name: 'Start Scald', exact: true }),
+  ).toBeVisible();
+  await expect(routed(page).getByRole('button', { name: 'Preparation actions' })).toBeFocused();
+  await expect(page.getByTestId('preparation-journal')).toContainText('Preferment done');
+
+  await menuAction(page, /^Finish now/);
+  await expect(outcomeAlert).toBeVisible();
+  await outcomeAlert.getByRole('radio', { name: 'Abandon preparation', exact: true }).click();
+  await outcomeAlert.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(outcomeAlert).toBeHidden();
+  await expect(confirmAlert).toBeVisible();
+  await confirmAlert.getByRole('button', { name: 'Abandon preparation', exact: true }).click();
+  await expect(confirmAlert).toBeHidden();
+
+  await expect(
+    routed(page).getByRole('heading', { level: 2, name: 'Preparation abandoned' }),
+  ).toBeVisible();
+  await expect(page.getByTestId('bake-outcome')).toHaveCount(0);
+  await expect(page.getByTestId('preparation-journal')).toContainText('Preferment done');
+  await expect(routed(page).getByRole('region', { name: 'Progression' })).toHaveCount(0);
 });
 
 test('a recipe states how it ends', async ({ page }) => {

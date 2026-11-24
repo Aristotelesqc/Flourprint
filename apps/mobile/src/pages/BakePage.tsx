@@ -21,6 +21,7 @@ import {
   doughReadyStage,
   implicitStartOf,
   intendedOutcome,
+  isCookingStep,
   isStepHeld,
   outcomeChoiceRequired,
   previousAction,
@@ -30,6 +31,7 @@ import {
   type BakeState,
   type DomainError,
   type Instant,
+  type PreparationOutcome,
   type ProcessStep,
 } from '@flourprint/core/domain';
 import { NoteSheet } from '../blocks/NoteSheet';
@@ -633,14 +635,14 @@ export const BakePage = () => {
       : undefined;
 
   const intended = state.process ? intendedOutcome(state.process) : undefined;
+  const hasCompletedCooking =
+    state.process?.steps.some(
+      (step) => isCookingStep(step) && state.steps[step.id]?.endedAt !== undefined,
+    ) ?? false;
   // A cooked result is intended but nothing was cooked yet: no outcome is assumed or preselected.
   const mustChoose =
     state.process !== undefined &&
     outcomeChoiceRequired(state.process, (id) => state.steps[id]?.endedAt !== undefined);
-  const finishWith = (header: string) =>
-    pickOutcome(header, mustChoose ? undefined : intended, (outcome) => {
-      void send({ type: 'FinishBake', outcome });
-    });
   const reopen = () =>
     void presentAlert({
       header: t('bake.reopen'),
@@ -664,6 +666,20 @@ export const BakePage = () => {
         },
       ],
     });
+
+  const finishOutcome = (outcome: PreparationOutcome) => {
+    void send({ type: 'FinishBake', outcome });
+  };
+  const finishWith = (header: string) =>
+    pickOutcome(header, mustChoose ? undefined : intended, finishOutcome);
+  const finishNow = () => {
+    const header = t('bake.finishNow');
+    if (hasCompletedCooking) {
+      finishWith(header);
+      return;
+    }
+    pickOutcome(header, undefined, finishOutcome, { onAbandon: abandon });
+  };
 
   return (
     <IonPage>
@@ -718,7 +734,7 @@ export const BakePage = () => {
                   ? [
                       {
                         label: t('bake.finishNow'),
-                        handler: () => finishWith(t('bake.finishNow')),
+                        handler: finishNow,
                       },
                     ]
                   : []),
