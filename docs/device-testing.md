@@ -22,6 +22,24 @@ No Android Studio is needed: CI builds the APKs and publishes them as GitHub rel
 An APK of a pull request is built only on demand (Actions → CI → Run workflow on its branch) and is
 a run artifact, not a release.
 
+## Android upgrade baseline in CI
+
+The [Android 0.1.0 upgrade fixture](https://github.com/Aristotelesqc/Flourprint/releases/tag/android-upgrade-v0.1.0)
+supplies `flourprint-0.1.0-upgrade-baseline.apk` for the emulator migration suite (#24, #319).
+The fixture release tag points at the source of `v0.1.0`, commit
+`240450fcb41c3df484101aef841bfe8b93a59993`, tree `a35934b4f734cd08441a73c4d1d5523cd3cdf9db`.
+This is the tree used by PR #31's former APK artifact.
+
+The fixture was rebuilt on Windows with Node 26.12.1, pnpm 10.28.0, Temurin 21.0.13.1 and Android
+SDK 36. The build uses the tag's locked dependencies, `pnpm build`, `pnpm build:mobile`, Capacitor
+sync and Gradle `assembleDebug`. It uses package `app.flourprint`, versionCode `112`,
+versionName `112-240450f` and the shared debug signer's certificate SHA-256
+`5ff1d4bb4d5d096fe41982621513b4f9ad7c92f68f038ae3be026befee32a7e9`.
+
+The download's SHA-256 is pinned in [the Android upgrade workflow](../.github/workflows/android-upgrade.yml).
+The workflow checks the source tags and file digest, compares the signer with the candidate, and
+installs the candidate over the 0.1.0 setup to verify data survives.
+
 ## Run the checks
 
 1. With the normal app, turn on **airplane mode** (and keep the PC off): the app must open and
