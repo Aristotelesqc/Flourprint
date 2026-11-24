@@ -86,6 +86,26 @@ A bounded supplied-source implementation on that CLI produced a final `SUCCESS` 
 
 The same CLI returned `SUCCESS` with an empty response, zero duration/usage and `finished_reason: print_timeout` for a 180-second source review. Attaching the exact conversation without a new prompt showed an interrupted turn that had already spent almost three minutes thinking: those zero fields were not proof of no work or no quota consumption. One final-only collection turn recovered concrete partial findings; retain the original failure and the recovered result separately, verify each finding, and do not relabel it an uninterrupted completed review. Size the deadline from observed first-response latency as well as expected output; ask for concise findings/replacements rather than repeated analysis when collecting an interrupted result.
 
+## Model selection
+
+Verified with Antigravity CLI **1.5.12** on 2026-11-22 using `agy --version`, `agy --help`,
+`agy models` and `/usage`. Choose an exact ID from the current `agy models` list. Pass `--model`
+explicitly on a new run and retain the recorded model when resuming.
+
+- Hydrogen (`gemini-4-hydrogen-high`, `gemini-4-hydrogen-xhigh`, `gemini-4-hydrogen-medium`,
+  `gemini-4-hydrogen-low`). Hydrogen High remains the usual implementation model.
+- Argon (`gemini-4-argon-high`, `gemini-4-argon-medium`, `gemini-4-argon-low`). Use the
+  [specialist assignment guidance](assignment.md#implementation-and-ordinary-review-owner-decision-of-2026-10-28).
+- Neon (`gemini-4-neon-high`, `gemini-4-neon-xhigh`, `gemini-4-neon-medium`, `gemini-4-neon-low`).
+  The owner authorizes explicit selection for bounded assignments.
+- Orchestrator (Neon) (`gemini-pro-orchestrator-neon`) and Orchestrator (Argon)
+  (`gemini-pro-orchestrator-g1-pro`). Verify child-agent capability for the chosen execution mode
+  before relying on it and follow the [coordination procedure](assignment.md#coordinated-ui-tranche).
+
+Check `/usage` separately. CLI 1.5.12 reported `Gemini Models`, `Claude and GPT models` and the
+`Gemini 4 Argon` weekly group. It exposed no Neon-specific group. Verify which allowance applies
+before budgeting a Neon or orchestrator run.
+
 ## Recovery
 
 Apply the [bounded review/recovery policy](../SKILL.md#bound-review-and-recovery-costs) before
