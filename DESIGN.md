@@ -384,7 +384,9 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   Upcoming steps with clock times precede completed
   steps. Keep the full journal accessible (all existing notes, observations and step completions)
   and actual lifecycle/outcome actions. A readiness observation neither completes the stage nor
-  establishes a cooked result. Unknown times remain unknown.
+  establishes a cooked result. Unknown times remain unknown. A finished session hides active step
+  controls, shows the recorded outcome and elapsed session time above the journal, exposes the
+  action to correct the outcome, and keeps the ordered journal and notes available.
 
 ## Components
 

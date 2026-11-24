@@ -825,6 +825,8 @@ export const en = {
   'outcome.earlyFinishMessage': 'Choose what became of the dough, or abandon the preparation.',
   'bake.outcome': 'Result: {outcome}',
   'bake.outcome.change': 'Change the result',
+  'bake.totalDuration': 'Total time: {duration}',
+  'bake.totalDurationUnknown': 'Not recorded',
   'bake.reopen': 'Reopen',
   'bake.reopenConfirm':
     'The bake becomes active again to record more steps. Its earlier end stays in the history.',
@@ -2160,6 +2162,8 @@ export const fr: Catalog = {
   'outcome.earlyFinishMessage': 'Choisir le devenir de la pâte ou abandonner la préparation.',
   'bake.outcome': 'Résultat : {outcome}',
   'bake.outcome.change': 'Modifier le résultat',
+  'bake.totalDuration': 'Durée totale : {duration}',
+  'bake.totalDurationUnknown': 'Non enregistrée',
   'bake.reopen': 'Rouvrir',
   'bake.reopenConfirm':
     'La fournée redevient active pour enregistrer d’autres étapes. Sa fin précédente reste dans l’historique.',

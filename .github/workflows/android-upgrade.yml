@@ -3,10 +3,8 @@ name: Android upgrade
 # Upgrade from 0.1.0 on an emulator (issue #24, audit finding F43-1): the 0.1.0 APK gets real data
 # through its own interface, then the candidate built from this commit installs over it.
 #
-# No GitHub release was published for 0.1.0 (the v0.1.0 tag says so; ADR 0016): the start APK is
-# the CI artifact `flourprint-debug-apk` of PR #31's last head (run 38163085428, 809aa86), whose
-# tree is the tree of the v0.1.0 tag (240450f). The step below checks that. GitHub keeps that
-# artifact until 2026-11-10; after that this workflow can no longer run as written.
+# The start APK is a durable debug fixture rebuilt from the v0.1.0 tag (#319).
+# See docs/device-testing.md for provenance and how the fixture was built.
 on:
   pull_request:
     paths:
@@ -17,7 +15,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 concurrency:
   group: android-upgrade-${{ github.event.pull_request.number || github.ref }}
@@ -25,8 +22,10 @@ concurrency:
 
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
-  FROM_RUN_ID: '38163085428'
-  FROM_HEAD_SHA: 809aa8600650ab38c2facc044fd81a998408b09a
+  BASELINE_RELEASE: android-upgrade-v0.1.0
+  BASELINE_APK: flourprint-0.1.0-upgrade-baseline.apk
+  BASELINE_SOURCE_SHA: 240450fcb41c3df484101aef841bfe8b93a59993
+  BASELINE_APK_SHA256: 9e6567637db8134a00fb2a5a4d6db702d490c93824a49151942612ba8242953d
 
 jobs:
   upgrade:
@@ -41,27 +40,20 @@ jobs:
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost \
             /usr/local/share/powershell /usr/share/swift "$AGENT_TOOLSDIRECTORY/CodeQL"
           df -h /
-      - name: Download the 0.1.0 APK (PR #31 CI artifact)
-        uses: actions/download-artifact@v4
-        with:
-          name: flourprint-debug-apk
-          run-id: ${{ env.FROM_RUN_ID }}
-          repository: ${{ github.repository }}
-          github-token: ${{ github.token }}
-          path: apk-0.1.0
-      - name: Check the start APK is the v0.1.0 source
+      - name: Download and verify the 0.1.0 baseline APK
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          RUN_SHA=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${FROM_RUN_ID}" --jq .head_sha)
-          echo "Artifact run ${FROM_RUN_ID} built ${RUN_SHA}"
-          test "$RUN_SHA" = "$FROM_HEAD_SHA"
-          git fetch --no-tags origin "$FROM_HEAD_SHA" "+refs/tags/v0.1.0:refs/tags/v0.1.0"
-          FROM_TREE=$(git rev-parse "${FROM_HEAD_SHA}^{tree}")
-          TAG_TREE=$(git rev-parse "v0.1.0^{commit}^{tree}")
-          echo "Tree of ${FROM_HEAD_SHA}: ${FROM_TREE}; tree of v0.1.0 ($(git rev-parse 'v0.1.0^{commit}')): ${TAG_TREE}"
-          test "$FROM_TREE" = "$TAG_TREE"
-          APK=$(ls "$PWD"/apk-0.1.0/*.apk)
+          git fetch --no-tags origin refs/tags/v0.1.0:refs/tags/v0.1.0 \
+            "refs/tags/${BASELINE_RELEASE}:refs/tags/${BASELINE_RELEASE}"
+          test "$(git rev-parse 'v0.1.0^{commit}')" = "$BASELINE_SOURCE_SHA"
+          TAG_TREE=$(git rev-parse 'v0.1.0^{tree}')
+          test "$(git rev-parse "${BASELINE_RELEASE}^{tree}")" = "$TAG_TREE"
+          echo "Baseline ${BASELINE_RELEASE} matches v0.1.0 at ${BASELINE_SOURCE_SHA}, tree ${TAG_TREE}"
+          gh release download "$BASELINE_RELEASE" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$BASELINE_APK" --dir "$RUNNER_TEMP"
+          APK="${RUNNER_TEMP}/${BASELINE_APK}"
+          printf '%s  %s\n' "$BASELINE_APK_SHA256" "$APK" | sha256sum --check
           echo "FLOURPRINT_APK_FROM=${APK}" >> "$GITHUB_ENV"
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
