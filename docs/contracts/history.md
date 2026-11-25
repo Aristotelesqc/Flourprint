@@ -97,6 +97,11 @@ Accepted suggestions (`fermentation.md`):
 ## Reading history
 
 - Reading a bake never calls the current engine.
+- The end criteria and `endCriteriaVersion` of the snapshot's process are part of what is copied
+  (0.27.0, proposal): the live forecast of a bake in progress and the reading of a past bake use the
+  reading the snapshot records, and the accepted estimates keep their `calibration` and assumptions
+  (fermentation.md, Stored recipes and live bakes). A change of the engine's targets never reaches a
+  recorded bake.
 - Event schemas are versioned; upcasters change representation without reinterpreting business
   values.
 - "Recompute with the current engine" is an explicit comparison, never a replacement.
@@ -260,7 +265,7 @@ interface PreparationAnalysis {
     version: number;
     formula: Formula; // the snapshot's, with its pinned entry contents
     resolved: ResolvedFormula; // grams, percentages, total water
-    process: Process; // the snapshot's: steps, conditions, thermal inputs, techniques, equipment, readiness
+    process: Process; // the snapshot's: steps, conditions, thermal inputs, techniques, equipment, readiness, end criteria (0.27.0 proposal)
     equipment?: EquipmentEntry[]; // the copies the process references (equipment.md)
     flours?: FlourRef[];
   };
