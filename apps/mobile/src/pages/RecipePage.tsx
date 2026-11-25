@@ -1450,7 +1450,7 @@ const RecipePageContent = () => {
             {t('recipe.trashed')}
           </p>
         )}
-        {readFailed && (
+        {(readFailed || (bakesStatus === 'failed' && effectivePanel !== 'history')) && (
           <p role="alert" className="mt-0 mb-3 text-alert">
             {t('state.storageRead')}
           </p>
