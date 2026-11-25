@@ -680,6 +680,15 @@ export const en = {
   'check.folds_exceed_step': 'The folds of {step} last longer than the step.',
   'check.thermal_pieces_changed':
     'The number of pieces of {step} differs from the previous step, with no division between them.',
+  'history.preparationsTitle': 'Preparations',
+  'history.loading': 'Loading preparations…',
+  'history.detailLoading': 'Loading details…',
+  'history.revision': 'rev. {version}',
+  'history.revisionUnknown': 'rev. unknown',
+  'history.startedAt': 'Started {time}',
+  'history.startedUnknown': 'Start time not recorded',
+  'history.rating': 'Rating: {rating}/5',
+  'history.unrated': 'Not rated',
   'history.empty': 'No preparation yet. Start one with the Start preparation button.',
   'history.item': '{date} · version {version}',
   'history.status.notStarted': 'Not started',
@@ -793,6 +802,11 @@ export const en = {
   'error.StepAlreadyHeld': 'This step’s countdown is already paused.',
   'error.StepNotHeld': 'This step’s countdown is not paused.',
   'error.InvalidTime': 'This time is not valid for this step.',
+  'error.InvalidTime.hold before start':
+    'Cannot pause before the step started or the last pause ended.',
+  'error.InvalidTime.release before hold': 'Cannot resume before the pause started.',
+  'error.InvalidTime.end before hold': 'The step cannot end before its pause started.',
+  'error.InvalidTime.end before start': 'The step cannot end before it started.',
   'error.InvalidCorrection.end before start': 'The step cannot end before it started.',
   'error.InvalidCorrection.start before a dependency ended':
     'The step cannot start before a preceding step ended.',
@@ -2015,6 +2029,15 @@ export const fr: Catalog = {
   'check.folds_exceed_step': 'Les rabats de {step} durent plus longtemps que l’étape.',
   'check.thermal_pieces_changed':
     'Le nombre de pièces de {step} diffère de celui de l’étape précédente, sans division entre les deux.',
+  'history.preparationsTitle': 'Préparations',
+  'history.loading': 'Chargement des préparations…',
+  'history.detailLoading': 'Chargement des détails…',
+  'history.revision': 'rév. {version}',
+  'history.revisionUnknown': 'rév. inconnue',
+  'history.startedAt': 'Démarrée {time}',
+  'history.startedUnknown': 'Début non enregistré',
+  'history.rating': 'Note : {rating}/5',
+  'history.unrated': 'Non notée',
   'history.empty':
     'Aucune préparation pour l’instant. En démarrer une avec le bouton Démarrer la préparation.',
   'history.item': '{date} · version {version}',
@@ -2130,6 +2153,11 @@ export const fr: Catalog = {
   'error.StepAlreadyHeld': 'Le compte à rebours de cette étape est déjà en pause.',
   'error.StepNotHeld': 'Le compte à rebours de cette étape n’est pas en pause.',
   'error.InvalidTime': 'Cette heure n’est pas valide pour cette étape.',
+  'error.InvalidTime.hold before start':
+    'Impossible de mettre en pause avant le début de l’étape ou la fin de la dernière pause.',
+  'error.InvalidTime.release before hold': 'Impossible de reprendre avant le début de la pause.',
+  'error.InvalidTime.end before hold': 'Impossible de terminer l’étape avant le début de sa pause.',
+  'error.InvalidTime.end before start': 'Impossible de terminer l’étape avant son début.',
   'error.InvalidCorrection.end before start': 'Impossible de terminer l’étape avant son début.',
   'error.InvalidCorrection.start before a dependency ended':
     'Impossible de commencer avant la fin d’une étape préalable.',

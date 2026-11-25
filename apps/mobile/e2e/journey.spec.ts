@@ -166,8 +166,11 @@ test('a double tap starts one bake; parallel steps run with real overlap', async
     .click();
   await page.getByRole('tab', { name: 'Historique' }).click();
   // One bake despite the double tap (the header's "En cours" button is not a history item).
-  await expect(page.locator('ion-item:visible')).toHaveCount(1);
-  await expect(page.locator('ion-item:visible')).toContainText('En cours');
+  const historyRows = routed(page)
+    .getByRole('region', { name: 'Préparations', exact: true })
+    .getByRole('listitem');
+  await expect(historyRows).toHaveCount(1);
+  await expect(historyRows).toContainText('En cours');
   await showPlanning(page);
   await expect(
     routed(page).getByRole('button', { name: 'Reprendre la préparation' }),

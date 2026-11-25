@@ -387,6 +387,10 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   establishes a cooked result. Unknown times remain unknown. A finished session hides active step
   controls, shows the recorded outcome and elapsed session time above the journal, exposes the
   action to correct the outcome, and keeps the ordered journal and notes available.
+- **Recipe History:** list preparations on compact outlined cards, with active sessions before
+  past ones. Keep the saved recipe revision visible on each card. Show the recorded start for
+  active sessions and the recorded result, actual duration and available rating for finished
+  sessions. Label missing values explicitly. Each card links to the shared Preparation screen.
 
 ## Components
 
