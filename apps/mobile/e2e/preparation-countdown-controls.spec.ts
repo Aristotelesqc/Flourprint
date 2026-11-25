@@ -62,6 +62,35 @@ for (const english of [false, true]) {
     await expect(elapsed).toHaveText('00:05:00');
     await pause.tap();
     await expect(resume).toBeVisible();
+    const countdownFeedback = group(page).locator('[aria-live="polite"]');
+    await expect(countdownFeedback).toHaveText('');
+    await atMinute(4);
+    await resume.tap();
+    await expect(countdownFeedback).toBeVisible();
+    await expect(countdownFeedback).toHaveText(
+      english
+        ? 'Cannot resume before the pause started.'
+        : 'Impossible de reprendre avant le début de la pause.',
+    );
+    await expect(routed(page).getByRole('alert')).toHaveCount(0);
+    await expect(resume).toBeVisible();
+    const progression = routed(page).getByRole('region', { name: 'Progression' });
+    await progression
+      .getByRole('button', { name: english ? 'Next' : 'Suivant', exact: true })
+      .tap();
+    await expect(progression.getByRole('alert')).toHaveText(
+      english
+        ? 'The step cannot end before its pause started.'
+        : 'Impossible de terminer l’étape avant le début de sa pause.',
+    );
+    await expect(resume).toBeVisible();
+    await atMinute(5);
+    await resume.tap();
+    await expect(pause).toBeVisible();
+    await expect(countdownFeedback).toHaveText('');
+    await expect(progression.getByRole('alert')).toHaveCount(0);
+    await pause.tap();
+    await expect(resume).toBeVisible();
     const preparation = page.url();
     await routed(page).locator('ion-back-button').tap();
     await expect(page).not.toHaveURL(preparation);
@@ -101,11 +130,22 @@ for (const english of [false, true]) {
     await expect(timer).toHaveText('11:55:00');
     await resume.tap();
     await expect(pause).toBeVisible();
+    await atMinute(24);
+    await pause.tap();
+    await expect(countdownFeedback).toBeVisible();
+    await expect(countdownFeedback).toHaveText(
+      english
+        ? 'Cannot pause before the step started or the last pause ended.'
+        : 'Impossible de mettre en pause avant le début de l’étape ou la fin de la dernière pause.',
+    );
+    await expect(routed(page).getByRole('alert')).toHaveCount(0);
+    await expect(pause).toBeVisible();
     await atMinute(26, 1);
     await expect(timer).toHaveText('11:54:00');
     await expect(elapsed).toHaveText('00:26:01');
 
     await group(page).getByRole('button', { name: '+15 min', exact: true }).tap();
+    await expect(countdownFeedback).toHaveText('');
     await expect(timer).toHaveText('12:09:00');
     await group(page).getByRole('button', { name: '−15 min', exact: true }).tap();
     await expect(timer).toHaveText('11:54:00');

@@ -124,6 +124,7 @@ export const BakePage = () => {
   const statusHeadingId = useId();
   const [undoStepId, setUndoStepId] = useState<string>();
   const [progressionError, setProgressionError] = useState<string>();
+  const [countdownError, setCountdownError] = useState<string>();
   const [blockedStepId, setBlockedStepId] = useState<string>();
   const [stepAction, setStepAction] = useState<PreparationStepAction>();
   const [timeCorrections, setTimeCorrections] = useState<readonly StepTimeCorrectionEvent[]>([]);
@@ -156,6 +157,7 @@ export const BakePage = () => {
   useIonViewWillLeave(() => {
     setUndoStepId(undefined);
     setProgressionError(undefined);
+    setCountdownError(undefined);
     setBlockedStepId(undefined);
     setStepAction(undefined);
   }, []);
@@ -221,24 +223,46 @@ export const BakePage = () => {
     );
   }
 
-  /** Applies the outcome of a command; resolves to a message when it was not recorded. */
-  const settle = async (outcome: CommandOutcome): Promise<string | undefined> => {
+  const commandRefusal = (failure: DomainError): string => {
+    const { code, message, details } = failure;
+    const record = (details ?? {}) as Record<string, unknown>;
+    const fieldKey = typeof record.field === 'string' ? `error.${code}.${record.field}` : undefined;
+    const reasonKey =
+      typeof record.reason === 'string' ? `error.${code}.${record.reason}` : undefined;
+    if (reasonKey !== undefined && isKey(reasonKey)) return t(reasonKey);
+    if (fieldKey !== undefined && isKey(fieldKey)) return error(failure);
+    if (typeof record.reason === 'string' && record.reason.trim() !== '') {
+      return message.trim() !== '' ? message : record.reason;
+    }
+    return isKey(`error.${code}`) || message.trim() === '' ? error(failure) : message;
+  };
+
+  /** Applies the outcome of a command and places a refusal at the initiating controls. */
+  const settle = async (
+    outcome: CommandOutcome,
+    feedback: 'page' | 'countdown' | 'progression' | 'sheet' = 'page',
+  ): Promise<string | undefined> => {
     setUndoStepId(undefined);
     setProgressionError(undefined);
+    setCountdownError(undefined);
     setBlockedStepId(undefined);
+    setFailure(undefined);
     setNow(services.clock.now());
     switch (outcome.kind) {
       case 'ok':
         setState(outcome.state);
-        setFailure(undefined);
         if (state.status === 'active' && outcome.state.status === 'finished') {
           void preparationContent.current?.scrollToTop(0);
         }
         return undefined;
-      case 'rejected':
-        setFailure(outcome.error);
+      case 'rejected': {
+        const message = commandRefusal(outcome.error);
+        if (feedback === 'page') setFailure(outcome.error);
+        if (feedback === 'countdown') setCountdownError(message);
+        if (feedback === 'progression') setProgressionError(message);
         if (outcome.error.code === 'VersionConflict') await reload();
-        return error(outcome.error);
+        return message;
+      }
       case 'storage':
         return t('state.storageWrite');
       case 'busy':
@@ -246,7 +270,8 @@ export const BakePage = () => {
     }
   };
 
-  const send = async (payload: BakeCommandPayload) => settle(await commands.send(state, payload));
+  const send = async (payload: BakeCommandPayload, feedback?: 'progression') =>
+    settle(await commands.send(state, payload), feedback);
 
   /**
    * Records an implicit step start before the first countdown adjustment or hold on an implicitly
@@ -267,35 +292,16 @@ export const BakePage = () => {
           stepId,
           at: implicitStart,
         });
-        await settle(startOutcome);
+        await settle(startOutcome, 'countdown');
         if (startOutcome.kind !== 'ok') return;
-        await settle(await commands.send(startOutcome.state, payload));
+        await settle(await commands.send(startOutcome.state, payload), 'countdown');
         return;
       }
-      await settle(await commands.send(state, payload));
+      await settle(await commands.send(state, payload), 'countdown');
     } finally {
       countdownActionRef.current = false;
       setCountdownBusy(false);
     }
-  };
-
-  const sheetCommandError = (
-    outcome: CommandOutcome,
-    settled: string | undefined,
-  ): string | undefined => {
-    if (outcome.kind !== 'rejected') return settled;
-    const { code, message, details } = outcome.error;
-    const record = (details ?? {}) as Record<string, unknown>;
-    const fieldKey = typeof record.field === 'string' ? `error.${code}.${record.field}` : undefined;
-    const reasonKey =
-      typeof record.reason === 'string' ? `error.${code}.${record.reason}` : undefined;
-    if (reasonKey !== undefined && isKey(reasonKey)) return t(reasonKey);
-    if (fieldKey !== undefined && isKey(fieldKey)) return settled;
-    if (isKey(`error.${code}`) && typeof record.reason !== 'string') return settled;
-    if (typeof record.reason === 'string' && record.reason.trim() !== '') {
-      return message.trim() !== '' ? message : record.reason;
-    }
-    return isKey(`error.${code}`) ? settled : message.trim() !== '' ? message : settled;
   };
 
   /** Corrects a recorded step start or end time; closes only once accepted, retrying uncertain writes as is. */
@@ -303,7 +309,7 @@ export const BakePage = () => {
     if (pending !== undefined) {
       if (pending.payload.type === 'CorrectStepTime') {
         const outcome = await commands.retry();
-        const problem = sheetCommandError(outcome, await settle(outcome));
+        const problem = await settle(outcome, 'sheet');
         if (problem === undefined) setStepAction(undefined);
         return problem;
       }
@@ -314,7 +320,7 @@ export const BakePage = () => {
       targetEventId: eventId,
       newOccurredAt: at,
     });
-    const problem = sheetCommandError(outcome, await settle(outcome));
+    const problem = await settle(outcome, 'sheet');
     if (problem === undefined) setStepAction(undefined);
     return problem;
   };
@@ -328,7 +334,7 @@ export const BakePage = () => {
     if (pending !== undefined) {
       if (pending.payload.type === 'InsertStepAfter') {
         const outcome = await commands.retry();
-        const problem = sheetCommandError(outcome, await settle(outcome));
+        const problem = await settle(outcome, 'sheet');
         if (problem === undefined) setStepAction(undefined);
         return problem;
       }
@@ -362,7 +368,7 @@ export const BakePage = () => {
           : { plannedDurationS: durationS, durationMode: 'manual' as const }),
       },
     });
-    const problem = sheetCommandError(outcome, await settle(outcome));
+    const problem = await settle(outcome, 'sheet');
     if (problem === undefined) setStepAction(undefined);
     return problem;
   };
@@ -476,7 +482,7 @@ export const BakePage = () => {
     const action = previousAction(state, stepId);
     if (action.kind === 'retract') {
       setBlockedStepId(undefined);
-      void send({ type: 'RetractCompletion', targetEventId: action.targetEventId });
+      void send({ type: 'RetractCompletion', targetEventId: action.targetEventId }, 'progression');
       return;
     }
     if (action.reason === 'dependentStarted') {
@@ -499,7 +505,7 @@ export const BakePage = () => {
     setProgressionError(undefined);
     setBlockedStepId(undefined);
     const outcome = await commands.send(state, { type: 'CompleteStep', stepId });
-    await settle(outcome);
+    await settle(outcome, 'progression');
     if (outcome.kind === 'ok') setUndoStepId(stepId);
   };
 
@@ -793,7 +799,7 @@ export const BakePage = () => {
         <div className="flex flex-col gap-5">
           {failure && (
             <p role="alert" className="m-0 text-alert">
-              {error(failure)}
+              {commandRefusal(failure)}
             </p>
           )}
           {pending && (
@@ -928,6 +934,9 @@ export const BakePage = () => {
                     {t('bake.noDuration')}
                   </p>
                 )}
+                <p aria-live="polite" className="m-0 text-supporting text-alert empty:sr-only">
+                  {countdownError}
+                </p>
               </section>
               <div className="flex items-center">
                 <Ui component="fp.button" variant="quiet" onClick={note}>
@@ -1375,7 +1384,7 @@ export const BakePage = () => {
                     if (focus) {
                       if (focus.running || focusImplicitStart)
                         void completeFocusedStep(focus.step.id);
-                      else void send({ type: 'StartStep', stepId: focus.step.id });
+                      else void send({ type: 'StartStep', stepId: focus.step.id }, 'progression');
                     } else if (mustChoose) finishWith(t('bake.finish'));
                     else void send({ type: 'FinishBake' });
                   }}
