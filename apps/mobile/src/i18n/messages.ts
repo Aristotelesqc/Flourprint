@@ -802,6 +802,11 @@ export const en = {
   'error.StepAlreadyHeld': 'This step’s countdown is already paused.',
   'error.StepNotHeld': 'This step’s countdown is not paused.',
   'error.InvalidTime': 'This time is not valid for this step.',
+  'error.InvalidTime.hold before start':
+    'Cannot pause before the step started or the last pause ended.',
+  'error.InvalidTime.release before hold': 'Cannot resume before the pause started.',
+  'error.InvalidTime.end before hold': 'The step cannot end before its pause started.',
+  'error.InvalidTime.end before start': 'The step cannot end before it started.',
   'error.InvalidCorrection.end before start': 'The step cannot end before it started.',
   'error.InvalidCorrection.start before a dependency ended':
     'The step cannot start before a preceding step ended.',
@@ -2148,6 +2153,11 @@ export const fr: Catalog = {
   'error.StepAlreadyHeld': 'Le compte à rebours de cette étape est déjà en pause.',
   'error.StepNotHeld': 'Le compte à rebours de cette étape n’est pas en pause.',
   'error.InvalidTime': 'Cette heure n’est pas valide pour cette étape.',
+  'error.InvalidTime.hold before start':
+    'Impossible de mettre en pause avant le début de l’étape ou la fin de la dernière pause.',
+  'error.InvalidTime.release before hold': 'Impossible de reprendre avant le début de la pause.',
+  'error.InvalidTime.end before hold': 'Impossible de terminer l’étape avant le début de sa pause.',
+  'error.InvalidTime.end before start': 'Impossible de terminer l’étape avant son début.',
   'error.InvalidCorrection.end before start': 'Impossible de terminer l’étape avant son début.',
   'error.InvalidCorrection.start before a dependency ended':
     'Impossible de commencer avant la fin d’une étape préalable.',
