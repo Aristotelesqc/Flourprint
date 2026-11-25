@@ -681,6 +681,47 @@ export const en = {
   'check.thermal_pieces_changed':
     'The number of pieces of {step} differs from the previous step, with no division between them.',
   'history.preparationsTitle': 'Preparations',
+  'history.versions.referencesTitle': 'Reference versions',
+  'history.versions.referencesLoading': 'Loading reference versions…',
+  'history.versions.referencesEmpty':
+    'No reference version yet. Promote a saved revision below to mark a milestone.',
+  'history.versions.referenceNumber': 'Reference #{number}',
+  'history.versions.promotedAt': 'Promoted {time}',
+  'history.versions.savedTitle': 'Saved history',
+  'history.versions.savedLoading': 'Loading earlier saved revisions…',
+  'history.versions.savedEmpty': 'No saved revision yet.',
+  'history.versions.current': 'Current',
+  'history.versions.savedItem': 'Saved revision',
+  'history.versions.savedAt': 'Saved {time}',
+  'history.versions.linked': 'Linked to Reference #{number}',
+  'history.versions.linkedNamed': 'Linked to Reference #{number} · {name}',
+  'history.versions.draftNotice': 'Draft open. These actions apply only to saved revisions.',
+  'history.versions.promote': 'Promote',
+  'history.versions.promoteLabel': 'Promote rev. {version}',
+  'history.versions.promoteTitle': 'Mark as reference version',
+  'history.versions.promoteConfirmMessage':
+    'Creates a numbered reference pointing to saved rev. {version}. Any open draft is kept separate and not included.',
+  'history.versions.promoteNameLabel': 'Reference name (optional)',
+  'history.versions.promoteNamePlaceholder': 'Name (optional)',
+  'history.versions.promoteConfirm': 'Promote',
+  'history.versions.promoted': 'Saved revision marked as Reference #{number}.',
+  'history.versions.promotedNamed': 'Saved revision marked as Reference #{number} ({name}).',
+  'history.versions.restore': 'Restore',
+  'history.versions.restoreLabel': 'Restore rev. {version}',
+  'history.versions.restoreTitle': 'Copy earlier revision as current',
+  'history.versions.restoreConfirmMessage':
+    'Creates a new saved revision copied from rev. {version}. All earlier saved revisions and preparations remain kept.',
+  'history.versions.restoreConfirm': 'Restore',
+  'history.versions.restored': 'Restored as new saved rev. {version}.',
+  'history.versions.restoredNoOp':
+    'The current saved revision (rev. {version}) already matches this content.',
+  'history.versions.error.HeadConflict':
+    'The recipe changed meanwhile (current saved rev. {currentHead}). Reload the recipe before trying again.',
+  'history.versions.error.UnknownRevision': 'Saved rev. {version} no longer exists.',
+  'history.versions.error.AlreadyReferenced':
+    'This saved revision is already promoted as Reference #{number}.',
+  'history.versions.error.UnsupportedDocumentVersion':
+    'Saved revision format {schemaVersion} comes from a newer version of Flourprint.',
   'history.loading': 'Loading preparations…',
   'history.detailLoading': 'Loading details…',
   'history.revision': 'rev. {version}',
@@ -2030,6 +2071,48 @@ export const fr: Catalog = {
   'check.thermal_pieces_changed':
     'Le nombre de pièces de {step} diffère de celui de l’étape précédente, sans division entre les deux.',
   'history.preparationsTitle': 'Préparations',
+  'history.versions.referencesTitle': 'Versions de référence',
+  'history.versions.referencesLoading': 'Chargement des versions de référence…',
+  'history.versions.referencesEmpty':
+    'Aucune version de référence pour l’instant. Promouvoir une révision enregistrée ci-dessous pour marquer un repère.',
+  'history.versions.referenceNumber': 'Référence {number}',
+  'history.versions.promotedAt': 'Promue {time}',
+  'history.versions.savedTitle': 'Historique enregistré',
+  'history.versions.savedLoading': 'Chargement des révisions antérieures…',
+  'history.versions.savedEmpty': 'Aucune révision enregistrée pour l’instant.',
+  'history.versions.current': 'Actuelle',
+  'history.versions.savedItem': 'Révision enregistrée',
+  'history.versions.savedAt': 'Enregistrée {time}',
+  'history.versions.linked': 'Liée à la référence {number}',
+  'history.versions.linkedNamed': 'Liée à la référence {number} · {name}',
+  'history.versions.draftNotice':
+    'Brouillon ouvert. Les actions portent sur les révisions enregistrées.',
+  'history.versions.promote': 'Promouvoir',
+  'history.versions.promoteLabel': 'Promouvoir rév. {version}',
+  'history.versions.promoteTitle': 'Marquer comme version de référence',
+  'history.versions.promoteConfirmMessage':
+    'Crée une référence numérotée vers la rév. {version} enregistrée. Un brouillon ouvert reste séparé et n’est pas inclus.',
+  'history.versions.promoteNameLabel': 'Nom de la référence (facultatif)',
+  'history.versions.promoteNamePlaceholder': 'Nom (facultatif)',
+  'history.versions.promoteConfirm': 'Promouvoir',
+  'history.versions.promoted': 'Révision marquée comme référence {number}.',
+  'history.versions.promotedNamed': 'Révision marquée comme référence {number} ({name}).',
+  'history.versions.restore': 'Restaurer',
+  'history.versions.restoreLabel': 'Restaurer rév. {version}',
+  'history.versions.restoreTitle': 'Reprendre une révision antérieure',
+  'history.versions.restoreConfirmMessage':
+    'Crée une nouvelle révision enregistrée copiée depuis la rév. {version}. Toutes les révisions et préparations antérieures restent conservées.',
+  'history.versions.restoreConfirm': 'Restaurer',
+  'history.versions.restored': 'Restauration enregistrée en rév. {version}.',
+  'history.versions.restoredNoOp':
+    'La révision enregistrée actuelle (rév. {version}) correspond déjà à ce contenu.',
+  'history.versions.error.HeadConflict':
+    'La recette a changé entre-temps (rév. {currentHead} actuelle). Recharger la recette avant de réessayer.',
+  'history.versions.error.UnknownRevision': 'La rév. {version} enregistrée n’existe plus.',
+  'history.versions.error.AlreadyReferenced':
+    'Cette révision enregistrée est déjà promue en tant que référence {number}.',
+  'history.versions.error.UnsupportedDocumentVersion':
+    'Le format de révision {schemaVersion} vient d’une version plus récente de Flourprint.',
   'history.loading': 'Chargement des préparations…',
   'history.detailLoading': 'Chargement des détails…',
   'history.revision': 'rév. {version}',
