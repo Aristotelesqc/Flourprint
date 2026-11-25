@@ -152,19 +152,20 @@ Use this path only when the task explicitly asks for nested Gemini/Hydrogen dele
 cohesive UI tranche with agreed acceptance criteria; otherwise keep the ordinary single-pass headless path.
 [Google's CLI subagents documentation](https://antigravity.google/docs/subagents?tab=cli)
 describes native `invoke_subagent`, workspace inheritance or isolated branch worktree selection,
-and `/agents` or `Alt+J` monitoring. Nested execution is unverified on this Windows host with
-AGY CLI 1.5.8. When headless nesting is unverified, start the root with
-`agy --model gemini-4-hydrogen-high --sandbox` in an owned interactive PTY. Use normal scoped
-approvals and native subagents.
+and `/agents` or `Alt+J` monitoring.
 
-- **Topology & fallback:** Codex assigns one cohesive UI tranche to the Hydrogen root. When
-  explicitly requested, the root uses `invoke_subagent` to hand a bounded work package to a
-  coordinator subagent (built-in `self` with inherited Hydrogen where available). That coordinator
-  uses `invoke_subagent` to assign disjoint UI implementation and FR/EN test files to its own
-  workers (one writer per file; isolated branch worktree for concurrent writers when needed,
-  workspace inheritance for readers/verifiers), integrates isolated diffs, and sequences a
-  read-only live journey after integration when browser/app tooling is available. If nesting is
-  unavailable, the root assigns workers directly and records that limit.
+AGY CLI 1.5.17 on Windows supported Codex → Neon → two Hydrogen workers in an owned interactive
+PTY. Start with `agy --model gemini-pro-orchestrator-neon --sandbox` when Neon is requested.
+The native selector takes tiers. The `flash` tier resolved to `gemini-4-hydrogen-tiered-high`
+for both `self` workers in this run. Check the model in the child transcript metadata before
+authorizing edits and confirm both launches in `/agents`. Recheck the mapping when the version
+or installation changes.
+
+- **Topology & fallback:** Codex assigns one cohesive UI tranche to the requested coordinator.
+  The coordinator assigns disjoint UI implementation and FR/EN test files through
+  `invoke_subagent`. Workspace inheritance works for disjoint writes. Each worker gets the exact
+  paths it may edit. If those workers cannot launch or resolve to the expected model, Codex
+  assigns the same bounded work directly to Hydrogen.
 - **Explicit context & observability:** Subagents start without the parent's chat context. Pass
   exact source SHA, allowed files, ledger items, existing APIs, scope, acceptance, and finite
   budgets down each level. Verify actual launches and parent-child relationships in `/agents`
@@ -172,8 +173,8 @@ approvals and native subagents.
 - **Coordinator & root gate:** Each coordinator personally reads every child diff, checks scope
   and behavior, requests focused fixes, reviews the combined changes, and exercises the integrated
   journey before returning revision/diff, child scopes and findings, actual test results, and
-  outstanding gaps. The Hydrogen root repeats that review on the coordinator's combined result
-  before handoff.
+  outstanding gaps. If the sandbox cannot read a linked worktree's Git metadata, provide the
+  exact base files inside the worktree for the coordinator's diff review.
 - **Codex & audit boundaries:** Codex retains final independent exact-build acceptance,
   publication, and one full pre-push validation per cohesive candidate under the existing PR flow.
   Independent audit rules remain unchanged with no extra mandatory review cohorts; the coordinated
@@ -181,9 +182,9 @@ approvals and native subagents.
 
 ### Practical steps
 
-1. Confirm quota, target model (`gemini-4-hydrogen-high`), exact base SHA, allowed paths, and
+1. Confirm quota, coordinator and worker models, exact base SHA, allowed paths, and
    whether an interactive PTY is required on this host.
-2. Launch the Hydrogen root with the nested brief below and observe `/agents` (`Alt+J`) or
+2. Launch the coordinator with the nested brief below and observe `/agents` (`Alt+J`) or
    captured tool events to confirm actual `invoke_subagent` launches and parent-child links.
 3. Have the coordinator integrate any isolated child worktrees (one writer per file), fix defects,
    and run a read-only live journey if available; verify the root checks the combined result.
@@ -198,14 +199,12 @@ Ledger/contracts: <L-ITEMS / CONTRACTS>. Existing APIs/components to reuse: <API
 Allowed files (one writer per file): UI <UI_PATHS>; FR/EN tests <TEST_PATHS>.
 Budget: <MAX_WORKERS> workers, <MAX_TURNS> turns, <TIME_BUDGET>. Return report directly in reply.
 
-1. Use `invoke_subagent` to hand this bounded work package to a coordinator subagent using the
-   built-in `self` subagent (inheriting Hydrogen where available). Include exact SHA, allowed
-   files, ledger items, existing APIs, scope, acceptance criteria, and budgets because subagents
-   start without your chat context. If nesting is unavailable, assign workers directly and record
-   that limit.
-2. Instruct the coordinator to use `invoke_subagent` for disjoint UI implementation and FR/EN
-   test workers (workspace inheritance for read-only verifiers, isolated branch worktrees only when
-   concurrent writers need isolation) and integrate isolated diffs cleanly.
+1. As the assigned coordinator, use `invoke_subagent` for the UI and FR/EN workers. Give each
+   the exact base SHA, file ownership, ledger items, existing APIs, acceptance, and budget.
+   Workers start without your chat context.
+2. Verify both resolved models and launches. Keep the workers in the same workspace for
+   disjoint file sets. Reuse the workers by conversation ID for focused corrections and review
+   the integrated diff.
 3. After integration, instruct the coordinator to sequence a read-only live-use journey if
    browser/app tooling is available (otherwise record the missing capability honestly).
 4. Coordinator gate: personally read every child diff, verify scope and behavior, request focused

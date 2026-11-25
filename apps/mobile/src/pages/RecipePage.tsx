@@ -44,6 +44,7 @@ import {
   sameWeighingRow,
   weighingGroups,
   type BakeCommandPayload,
+  type BakeOrigin,
   type BakeSummary,
   type Recipe,
   type RecipeFamily,
@@ -151,7 +152,7 @@ const RecipePageContent = () => {
   const [checking, setChecking] = useState(false);
   const pendingChecksReturnRef = useRef<HTMLElement | null>(null);
   const saving = useRef(Promise.resolve());
-  const [bakes, setBakes] = useState<readonly BakeSummary[]>([]);
+  const bakesRequestRef = useRef(0);
   const [failure, setFailure] = useState<DomainError>();
   const [storageFailed, setStorageFailed] = useState(false);
   const [notice, setNotice] = useState<string>();
@@ -178,6 +179,26 @@ const RecipePageContent = () => {
   }>(undefined);
   const [readFailed, setReadFailed] = useState(false);
   const { simulation } = usePreferences();
+  const world: BakeOrigin = simulation ? 'simulation' : 'physical';
+  const [bakesLoad, setBakesLoad] = useState<{
+    readonly services: typeof services;
+    readonly recipeId: string;
+    readonly world: BakeOrigin;
+    readonly status: 'loading' | 'ready' | 'failed';
+    readonly items: readonly BakeSummary[];
+  }>(() => ({
+    services,
+    recipeId,
+    world,
+    status: 'loading',
+    items: [],
+  }));
+  const bakesContextMatch =
+    bakesLoad.services === services && bakesLoad.recipeId === recipeId && bakesLoad.world === world;
+  const bakes = bakesContextMatch ? bakesLoad.items : [];
+  const bakesStatus: 'loading' | 'ready' | 'failed' = bakesContextMatch
+    ? bakesLoad.status
+    : 'loading';
   const confirming = useRef(false);
   const { hasInvalid } = useValidation();
   const validationActions = useValidationActions();
@@ -319,21 +340,48 @@ const RecipePageContent = () => {
   };
 
   const refreshBakes = useCallback(async () => {
+    const requestId = ++bakesRequestRef.current;
+    const targetServices = services;
+    const targetRecipeId = recipeId;
+    const targetWorld = world;
     try {
-      const all = await services.bakes.listBakes();
-      setBakes(
-        all
-          .filter((b) => b.recipeId === recipeId)
-          .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)),
-      );
+      const all = await targetServices.bakes.listBakes();
+      if (bakesRequestRef.current !== requestId) return;
+      const items = all
+        .filter((b) => b.recipeId === targetRecipeId)
+        .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+      setBakesLoad({
+        services: targetServices,
+        recipeId: targetRecipeId,
+        world: targetWorld,
+        status: 'ready',
+        items,
+      });
     } catch (error) {
+      if (bakesRequestRef.current !== requestId) return;
       console.error(error);
-      setStorageFailed(true);
+      setBakesLoad((prev) => ({
+        services: targetServices,
+        recipeId: targetRecipeId,
+        world: targetWorld,
+        status: 'failed',
+        items:
+          prev.services === targetServices &&
+          prev.recipeId === targetRecipeId &&
+          prev.world === targetWorld
+            ? prev.items
+            : [],
+      }));
     }
-  }, [services, recipeId]);
+  }, [services, recipeId, world]);
   useIonViewWillEnter(() => void refreshBakes(), [refreshBakes]);
   useIonViewWillLeave(() => setChainNotice(undefined), []);
-  useEffect(() => void refreshBakes(), [refreshBakes, simulation]);
+  useEffect(() => {
+    void refreshBakes();
+    return () => {
+      bakesRequestRef.current += 1;
+    };
+  }, [refreshBakes]);
 
   const draft: Working | undefined = stored ?? base?.revision;
   type Panel = Tab;
@@ -1518,7 +1566,14 @@ const RecipePageContent = () => {
             ...(base
               ? [
                   <div key="history">
-                    <HistorySection bakes={bakes} />
+                    <HistorySection
+                      bakes={bakes}
+                      loading={bakesStatus === 'loading'}
+                      readFailed={bakesStatus === 'failed'}
+                      recipeId={recipeId}
+                      world={world}
+                      visible={effectivePanel === 'history'}
+                    />
                   </div>,
                 ]
               : []),
