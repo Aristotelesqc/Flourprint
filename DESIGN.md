@@ -387,6 +387,11 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   establishes a cooked result. Unknown times remain unknown. A finished session hides active step
   controls, shows the recorded outcome and elapsed session time above the journal, exposes the
   action to correct the outcome, and keeps the ordered journal and notes available.
+- In **Recipe History**, place the reference versions and the saved revisions in separate sections
+  above preparations. Show each reference version’s own stored number, optional name and source
+  revision. Use compact outlined cards for saved revisions and distinguish the current saved state.
+  Confirm promotion or restoration of the selected saved revision. Keep the open draft and its
+  editing controls available through both actions.
 - **Recipe History:** list preparations on compact outlined cards, with active sessions before
   past ones. Keep the saved recipe revision visible on each card. Show the recorded start for
   active sessions and the recorded result, actual duration and available rating for finished

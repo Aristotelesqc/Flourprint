@@ -60,6 +60,7 @@ import {
 import { RecipeDocument, type RecipeDocumentDisclosures } from '../blocks/RecipeDocument';
 import { WeighingChecklist, type WeighedRow } from '../blocks/WeighingChecklist';
 import { HistorySection } from '../blocks/HistorySection';
+import { RecipeVersionHistory } from '../blocks/RecipeVersionHistory';
 import { ProcessSection } from '../blocks/ProcessSection';
 import { RecipeMethod } from '../blocks/RecipeMethod';
 import { RecipeOutcome } from '../blocks/RecipeOutcome';
@@ -215,7 +216,7 @@ const RecipePageContent = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isDraftMode, setIsDraftMode] = useState(false);
   const [hasEnteredEdit, setHasEnteredEdit] = useState(false);
-  const [presentToast] = useIonToast();
+  const [presentToast, dismissRecipeNotice] = useIonToast();
   const contentScrollRef = useRef<HTMLElement | null>(null);
   const pendingScrollAnchorRef = useRef<{ stepId: string; scrollTop: number } | null>(null);
 
@@ -613,6 +614,23 @@ const RecipePageContent = () => {
       return valid.length === previous.length ? previous : valid;
     });
   }, [draft, resolved]);
+
+  const handleRevisionRestored = useCallback(
+    (revision: Revision) => {
+      setBase((prev) => {
+        if (!prev || prev.revision.recipeId !== revision.recipeId) return prev;
+        return { ...prev, revision };
+      });
+      if (latestDraft.current === undefined && base?.revision.recipeId === revision.recipeId) {
+        baselineRef.current = {
+          name: base.name,
+          formula: revision.formula,
+          process: revision.process,
+        };
+      }
+    },
+    [base],
+  );
 
   const [disclosures, setDisclosures] = useState<RecipeDocumentDisclosures>({
     flours: true,
@@ -1565,7 +1583,18 @@ const RecipePageContent = () => {
 
             ...(base
               ? [
-                  <div key="history">
+                  <div key="history" className="flex flex-col gap-6">
+                    <RecipeVersionHistory
+                      recipeId={recipeId}
+                      baseRevision={base.revision}
+                      visible={effectivePanel === 'history'}
+                      hasDraft={stored !== undefined || hasInvalid}
+                      trashed={trashedAt !== undefined}
+                      busy={writes.busy}
+                      runWrite={writes.run}
+                      dismissRecipeNotice={dismissRecipeNotice}
+                      onRestored={handleRevisionRestored}
+                    />
                     <HistorySection
                       bakes={bakes}
                       loading={bakesStatus === 'loading'}
