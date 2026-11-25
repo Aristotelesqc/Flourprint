@@ -111,8 +111,11 @@ for (const english of [false, true]) {
               request.onerror = () => reject(request.error);
             });
             const backup = raw ? (JSON.parse(raw) as Backup) : undefined;
-            return backup?.bakes.some((bake) =>
-              bake.events.some((event) => event.payload.type === 'StepCountdownHeld'),
+            // The earlier hold was released. Wait until the second hold is durable.
+            return backup?.bakes.some(
+              (bake) =>
+                bake.events.filter((event) => event.payload.type === 'StepCountdownHeld').length ===
+                  2 && bake.events.at(-1)?.payload.type === 'StepCountdownHeld',
             );
           } finally {
             db.close();
