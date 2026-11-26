@@ -277,11 +277,16 @@ for (const english of [false, true]) {
     page,
   }) => {
     await importRecipe(page, false, english);
+    await page.locator('html').evaluate((node) => {
+      node.style.setProperty('--ion-safe-area-bottom', '34px');
+    });
     const trigger = routed(page).getByRole('button', { name: title, exact: true });
     await trigger.tap();
     await expect(page.getByRole('dialog', { name: title, exact: true })).toBeVisible();
     const sheet = overlayWithHeading(page, title);
     await expect(sheet.getByRole('heading', { name: title, exact: true })).toBeVisible();
+    const sheetBody = sheet.locator('.overflow-y-auto').first();
+    await expect(sheetBody).toHaveCSS('padding-bottom', '58px');
     await expect(sheet.getByRole('button', { name: close, exact: true })).toHaveCount(1);
     await expect(sheet.getByText(english ? /^478 g · ≈ 96%$/ : /^478 g · ≈ 96\s%$/)).toBeVisible();
     await expect(sheet.getByText(english ? /^478 g · ≈ 96%$/ : /^478 g · ≈ 96\s%$/)).toBeInViewport(

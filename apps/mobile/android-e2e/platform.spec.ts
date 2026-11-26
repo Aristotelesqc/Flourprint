@@ -640,6 +640,23 @@ test('native touch drag keeps Recipe geometry and draft/editor states independen
     finger = point(initial);
     await device.shell(`input touchscreen motionevent MOVE ${finger.x} ${finger.y}`);
     await expect(slot).toHaveAttribute('data-drop-target', 'true');
+    await expect(slot).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect
+      .poll(() =>
+        slot.evaluate((target) => {
+          const placeholder = target.querySelector('.border-dashed')?.getBoundingClientRect();
+          const previous = target.previousElementSibling?.getBoundingClientRect();
+          const next = target.nextElementSibling?.getBoundingClientRect();
+          return Boolean(
+            placeholder &&
+            previous &&
+            next &&
+            placeholder.top > previous.bottom &&
+            placeholder.bottom < next.top,
+          );
+        }),
+      )
+      .toBe(true);
     await expect.poll(async () => (await slot.boundingBox())?.height ?? 0).toBeGreaterThan(1);
     const expanded = await slot.boundingBox();
     if (!expanded) throw new Error('Expanded native insertion slot missing');

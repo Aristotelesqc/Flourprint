@@ -98,6 +98,39 @@ async function box(locator: Locator) {
   return rect;
 }
 
+async function expectInteriorCandidateCue(
+  page: Page,
+  slot: Locator,
+  previousId: string,
+  nextId: string,
+  sourceHeight: number,
+) {
+  await expect(slot).toHaveAttribute('data-drop-target', 'true');
+  await expect.poll(async () => (await box(slot)).height).toBeGreaterThan(1);
+  await slot.evaluate(async (node) => {
+    await Promise.all(
+      node.getAnimations().map((animation) => animation.finished.catch(() => undefined)),
+    );
+  });
+  const marker = slot.locator(':scope > div.border-dashed');
+  await expect(marker).toBeVisible();
+  await expect
+    .poll(() => slot.evaluate((node) => getComputedStyle(node).backgroundColor))
+    .toBe('rgba(0, 0, 0, 0)');
+  expect(await marker.evaluate((node) => getComputedStyle(node).borderTopStyle)).toBe('dashed');
+  expect(await marker.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe(
+    'rgba(0, 0, 0, 0)',
+  );
+  await expect
+    .poll(async () => Math.abs((await box(marker)).height - sourceHeight))
+    .toBeLessThanOrEqual(1);
+  const previousBox = await box(method(page).locator(`[data-sortable-id="${previousId}"]`));
+  const nextBox = await box(method(page).locator(`[data-sortable-id="${nextId}"]`));
+  const markerBox = await box(marker);
+  expect(markerBox.y - (previousBox.y + previousBox.height)).toBeGreaterThan(0);
+  expect(nextBox.y - (markerBox.y + markerBox.height)).toBeGreaterThan(0);
+}
+
 async function geometry(page: Page) {
   return routed(page).evaluate(async (root) => {
     const content = root.querySelector('ion-content');
@@ -266,9 +299,9 @@ for (const english of [false, true]) {
       const drawn = await box(slot);
       expect(release.y).toBeGreaterThanOrEqual(drawn.y);
       expect(release.y).toBeLessThanOrEqual(drawn.y + drawn.height);
-      expect(await slot.evaluate((node) => getComputedStyle(node).backgroundColor)).not.toBe(
-        'rgba(0, 0, 0, 0)',
-      );
+      const gammaHeight = before.cards.find((card) => card.id === 'gamma')?.height;
+      if (gammaHeight === undefined) throw new Error('Missing gamma card height');
+      await expectInteriorCandidateCue(page, slot, 'alpha', 'beta', gammaHeight);
     } finally {
       await page.mouse.up();
     }
@@ -810,6 +843,7 @@ for (const english of [false, true]) {
         await expect.poll(async () => (await box(slot)).height).toBeGreaterThan(1);
         const target = await box(slot);
         await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2);
+        await expectInteriorCandidateCue(page, slot, 'alpha', 'beta', beforeActivation.height);
         const held = testInfo.outputPath('recipe-step-held.png');
         await page.screenshot({ path: held });
         await testInfo.attach('recipe-step-held', { path: held, contentType: 'image/png' });

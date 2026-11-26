@@ -97,6 +97,9 @@ export function BottomSheet({
     setInferredReduced(isRed);
   };
 
+  const bottomSafePadding =
+    'px-4 pt-4 [padding-bottom:calc(var(--spacing)*6_+_max(var(--ion-safe-area-bottom,0px),env(safe-area-inset-bottom,0px)))]';
+
   // Retain native Ionic sheet animation: breakpoint geometry (currentBreakpoint translateY)
   // and gesture tracking stay native. The overlay motion bridge retimes running native
   // animations: backdropEnter/Exit claims the ion-backdrop group, while sheetEnter/Exit retimes
@@ -142,10 +145,16 @@ export function BottomSheet({
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 text-body min-h-0">{children}</div>
+        <div
+          className={`flex-1 overflow-y-auto text-body min-h-0 ${footer ? 'p-4' : bottomSafePadding}`}
+        >
+          {children}
+        </div>
 
         {footer && (
-          <div className="border-t border-outline/20 p-4 bg-surface-container shrink-0">
+          <div
+            className={`border-t border-outline/20 bg-surface-container shrink-0 ${bottomSafePadding}`}
+          >
             {footer}
           </div>
         )}

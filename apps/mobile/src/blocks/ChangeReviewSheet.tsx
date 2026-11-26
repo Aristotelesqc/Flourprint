@@ -65,7 +65,7 @@ export const ChangeReviewSheet = ({
       aria-label={t('draft.reviewTitle')}
     >
       <IonContent className="ion-padding">
-        <div className="flex flex-col gap-4 pb-4">
+        <div className="flex flex-col gap-4 [padding-bottom:calc(var(--spacing)*6_+_max(var(--ion-safe-area-bottom,0px),env(safe-area-inset-bottom,0px)))]">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xl font-bold">{t('draft.reviewTitle')}</h2>
             <button

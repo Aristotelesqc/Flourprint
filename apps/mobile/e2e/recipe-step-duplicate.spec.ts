@@ -197,6 +197,10 @@ for (const english of [false, true]) {
     await editStep(page, 'Beta');
     await duplicate(page).click();
     await expect(review(page)).toHaveCount(1);
+    const reviewFooter = review(page)
+      .locator('.shrink-0')
+      .filter({ has: page.getByRole('button', { name: /^(Keep copy|Conserver la copie)$/ }) });
+    await expect(reviewFooter).toHaveCSS('padding-bottom', '24px');
     await expect(
       review(page).getByText(english ? 'Planned duration: 3 h' : 'Durée prévue : 3 h', {
         exact: true,
