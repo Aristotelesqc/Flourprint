@@ -358,7 +358,7 @@ export function SortableSlot({
     <div
       ref={setDrawnRef}
       data-slot-after={afterId ?? 'start'}
-      className={`relative transition-[height,margin-top,padding-top] ${activeId ? 'duration-[var(--duration-spatial)]' : 'duration-0'} ease-standard motion-reduce:duration-0 ${isCandidate ? 'rounded-card bg-surface-container' : ''} ${className}`}
+      className={`relative transition-[height,margin-top,padding-top] ${activeId ? 'duration-[var(--duration-spatial)]' : 'duration-0'} ease-standard motion-reduce:duration-0 ${isCandidate ? 'overflow-hidden' : ''} ${className}`}
       style={
         isCandidate && activeDimensions
           ? {

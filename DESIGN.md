@@ -213,6 +213,9 @@ content. Discard confirms changes. Keep pending feedback subtle and refusals in 
 with readable body tokens and a polite announcement. Preserve scroll and keep the dropped card
 visible. Keep notices out of document flow. Anchor the transient save confirmation below the
 Recipe header so the pencil and tabs stay usable while it is announced.
+Bottom drawers reserve `1.5rem` below their last content or footer controls, plus the system's
+bottom safe-area inset. Put this clearance on the footer when it exists and inside the scrollable
+content otherwise. The drawer surface extends through the inset.
 Recipe step rows use `fp.step-node` with a tonal operation badge, a wrapping title and full-width
 details. Narrow rows place the pencil and right-hand grip below the title. The same node renders
 under the pointer and in the list so dragging preserves its presentation.
@@ -355,7 +358,8 @@ not independent radius choices on each page. Shapes alone do not establish an M3
   pre-release and final refusal use the bottom Ionic toast, never a card overlay (L154). Latch
   pointer candidates at stationary row midpoints with directional hysteresis, adjusted for scroll;
   the animated gap must not feed back into collision detection. Source children remain mounted while their
-  measured height and spacing travel to the insertion slot. Settle through `fp.motion.step-drag`
+  measured height and spacing travel to the insertion slot. Draw the placeholder at card height
+  with the normal row gaps visible on each side of an interior drop. Settle through `fp.motion.step-drag`
   and return focus to the exact handle without scrolling or overriding a newer control focus.
   Actual activation opens the recipe draft without marking an unchanged recipe dirty.
   Draft state never switches card/editor rendering; the same method instance stays mounted.
