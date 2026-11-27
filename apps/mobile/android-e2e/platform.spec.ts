@@ -777,3 +777,94 @@ test('native touch drag keeps Recipe geometry and draft/editor states independen
   await expect(page.getByRole('textbox').filter({ visible: true })).toHaveCount(0);
   await forceStop();
 });
+
+test('Note sheet handles Android IME, Back dismissal, focus return, and persists across restart', async () => {
+  let page = await open();
+  const activePage = () => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
+  await page.getByText('Poolish + tangzhong').first().click();
+  await expect(page).toHaveURL(/\/recipes\/[^/]+$/);
+  await expect(activePage()).toHaveCount(1);
+
+  const planningTab = activePage().getByRole('tab', { name: 'Planning', exact: true });
+  await planningTab.click();
+  await expect(planningTab).toHaveAttribute('aria-selected', 'true');
+
+  const startButton = activePage().getByRole('button', {
+    name: 'Start preparation',
+    exact: true,
+  });
+  await expect(startButton).toBeVisible();
+  await startButton.click();
+
+  const startAlert = page.locator('ion-alert').filter({
+    hasText: 'Start the preparation now?',
+  });
+  await expect(startAlert).toBeVisible();
+  await startAlert.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(startAlert).toBeHidden();
+
+  await expect(page).toHaveURL(/\/bakes\/[^/]+$/);
+  const bakeUrl = page.url();
+  await expect(activePage()).toHaveCount(1);
+  await expect(page.locator('.ion-page.ion-page-invisible')).toHaveCount(0);
+  await expect(activePage().getByRole('region', { name: 'Countdown', exact: true })).toBeVisible();
+
+  const opener = activePage().getByRole('button', { name: 'Note', exact: true });
+  await expect(opener).toBeVisible();
+  await opener.click();
+
+  const noteDialog = page.getByRole('dialog', { name: 'Note', exact: true });
+  await expect(noteDialog).toBeVisible();
+  const noteModal = page.locator('ion-modal:not(.overlay-hidden)');
+  await expect(noteModal.getByRole('button', { name: 'Cancel', exact: true })).toBeFocused();
+
+  const textarea = noteModal.getByRole('textbox', { name: 'Note', exact: true });
+  const keyboardShown = async () =>
+    /\b(?:mInputShown|isImeShowing)=true\b/.test(
+      (await device.shell('dumpsys input_method')).toString(),
+    );
+  await dismissSystemDialog();
+  await textarea.click();
+  await expect.poll(keyboardShown).toBe(true);
+
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect.poll(keyboardShown).toBe(false);
+  await expect(noteDialog).toBeVisible();
+  await expect(page).toHaveURL(bakeUrl);
+
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(noteDialog).toBeHidden();
+  await expect(page).toHaveURL(bakeUrl);
+  await expect(opener).toBeFocused();
+
+  await opener.click();
+  await expect(noteDialog).toBeVisible();
+  const noteText = 'Native Android poolish note';
+  await textarea.fill(noteText);
+  const saveButton = noteModal.getByRole('button', { name: 'Save', exact: true });
+  await expect(saveButton).toBeEnabled();
+  await saveButton.click();
+  await expect(noteDialog).toBeHidden();
+  await expect(activePage().getByTestId('preparation-journal')).toContainText(noteText);
+
+  await forceStop();
+  page = await open();
+  await page.getByRole('link', { name: 'Poolish + tangzhong', exact: true }).click();
+  await expect(page).toHaveURL(/\/recipes\/[^/]+$/);
+  await expect(activePage()).toHaveCount(1);
+
+  const historyTab = activePage().getByRole('tab', { name: 'History', exact: true });
+  await historyTab.click();
+  await expect(historyTab).toHaveAttribute('aria-selected', 'true');
+  const preparations = activePage().getByRole('region', { name: 'Preparations', exact: true });
+  await expect(preparations).toBeVisible();
+
+  const bakePath = new URL(bakeUrl).pathname;
+  await preparations.locator(`a[href="${bakePath}"]`).click();
+  await expect(page).toHaveURL(bakeUrl);
+  await expect(activePage()).toHaveCount(1);
+  await expect(activePage().getByTestId('preparation-journal')).toContainText(noteText);
+  await forceStop();
+});
