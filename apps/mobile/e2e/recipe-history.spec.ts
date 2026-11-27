@@ -103,11 +103,36 @@ const expectNoHorizontalOverflow = async (page: Page, list: Locator) => {
   }
 };
 
-const waitForBackupBakes = async (page: Page, session1Id: string, session2Id: string) => {
+const saveNote = async (page: Page, english: boolean, opener: Locator, text: string) => {
+  await opener.scrollIntoViewIfNeeded();
+  await opener.tap();
+  const dialog = page.getByRole('dialog', { name: 'Note', exact: true });
+  await expect(dialog).toBeVisible();
+  const modal = page.locator('ion-modal:not(.overlay-hidden)');
+  await expect(
+    modal.getByRole('button', { name: english ? 'Cancel' : 'Annuler', exact: true }),
+  ).toBeFocused();
+  const saveButton = modal.getByRole('button', {
+    name: english ? 'Save' : 'Enregistrer',
+    exact: true,
+  });
+  await expect(saveButton).toBeDisabled();
+  await modal.getByRole('textbox', { name: 'Note', exact: true }).fill(text);
+  await expect(saveButton).toBeEnabled();
+  await saveButton.tap();
+  await expect(dialog).toBeHidden();
+};
+
+const waitForBackupBakes = async (
+  page: Page,
+  session1Id: string,
+  session2Id: string,
+  expectedNotes: readonly string[],
+) => {
   await expect
     .poll(() =>
       page.evaluate(
-        async ({ s1, s2 }) => {
+        async ({ s1, s2, notes }) => {
           const db = await new Promise<IDBDatabase>((resolve, reject) => {
             const request = indexedDB.open('flourprint-preview', 1);
             request.onsuccess = () => resolve(request.result);
@@ -123,15 +148,23 @@ const waitForBackupBakes = async (page: Page, session1Id: string, session2Id: st
             if (!backup) return false;
             const bake1 = backup.bakes.find((bake) => bake.bakeId === s1);
             const bake2 = backup.bakes.find((bake) => bake.bakeId === s2);
+            const observationTexts = new Set(
+              (bake1?.events ?? []).flatMap((event) =>
+                event.payload.type === 'ObservationAdded' && event.payload.text !== undefined
+                  ? [event.payload.text]
+                  : [],
+              ),
+            );
             return Boolean(
               bake1?.events.some((event) => event.payload.type === 'BakeFinished') &&
+              notes.every((note) => observationTexts.has(note)) &&
               bake2?.events.some((event) => event.payload.type === 'BakeStarted'),
             );
           } finally {
             db.close();
           }
         },
-        { s1: session1Id, s2: session2Id },
+        { s1: session1Id, s2: session2Id, notes: expectedNotes },
       ),
     )
     .toBe(true);
@@ -144,6 +177,8 @@ for (const english of [false, true]) {
     page,
   }) => {
     const t0 = Date.parse('2026-03-02T08:00:00-05:00');
+    const activeNote = english ? 'Poolish mixed smoothly' : 'Poolish bien lisse';
+    const finalNote = english ? 'Dough frozen in two balls' : 'Pâte congelée en deux pâtons';
     await page.clock.setFixedTime(t0);
     await page.setViewportSize(english ? { width: 393, height: 851 } : { width: 360, height: 851 });
 
@@ -162,8 +197,21 @@ for (const english of [false, true]) {
     );
     await expect(region.getByRole('listitem')).toHaveCount(0);
 
-    // 2. Start Session 1 at T0 and finish early at T0 + 75 min as raw dough, frozen.
+    // 2. Start Session 1 at T0, take a note while active, finish early at T0 + 75 min as raw
+    // dough, frozen, and add a final note.
     const session1Url = await startPreparation(page, english);
+    await expect(
+      routed(page).getByRole('region', { name: english ? 'Countdown' : 'Compte à rebours' }),
+    ).toBeVisible();
+    await saveNote(
+      page,
+      english,
+      routed(page).getByRole('button', { name: 'Note', exact: true }),
+      activeNote,
+    );
+    const journal = routed(page).getByTestId('preparation-journal');
+    await expect(journal).toContainText(activeNote);
+
     await page.clock.setFixedTime(t0 + 75 * 60_000);
     await menuAction(page, english ? /^Finish now/ : /^Terminer maintenant/);
     const outcomeAlert = page.locator('ion-alert').filter({
@@ -189,6 +237,17 @@ for (const english of [false, true]) {
     await expect(routed(page).getByTestId('bake-total-duration')).toHaveText(
       english ? 'Total time: 1 h 15 min' : 'Durée totale : 1 h 15 min',
     );
+    await saveNote(
+      page,
+      english,
+      routed(page).getByRole('button', {
+        name: english ? 'Add a note' : 'Ajouter une note',
+        exact: true,
+      }),
+      finalNote,
+    );
+    await expect(journal).toContainText(activeNote);
+    await expect(journal).toContainText(finalNote);
     await goBackToRecipe(page);
 
     // 3. Start Session 2 later and keep it active.
@@ -231,12 +290,26 @@ for (const english of [false, true]) {
     // 7. Wait for both bakes in IndexedDB snapshot, reload, and verify persistence & ordering.
     const session1Id = decodeURIComponent(new URL(session1Url).pathname.split('/').pop() ?? '');
     const session2Id = decodeURIComponent(new URL(session2Url).pathname.split('/').pop() ?? '');
-    await waitForBackupBakes(page, session1Id, session2Id);
+    await waitForBackupBakes(page, session1Id, session2Id, [activeNote, finalNote]);
 
     await page.reload();
     await expect(routed(page)).toHaveCount(1);
     await applyPhoneScale(page, english);
     await openHistory(page, english);
-    await expectHistoryRows(page, english);
+    const reloadedList = await expectHistoryRows(page, english);
+
+    await reloadedList.getByRole('listitem').nth(1).getByRole('link').tap();
+    await expect(page).toHaveURL(session1Url);
+    await expect(routed(page)).toHaveCount(1);
+    await expect(routed(page).getByTestId('bake-outcome')).toHaveText(
+      english ? 'Result: Raw dough, frozen' : 'Résultat : Pâte crue, congelée',
+    );
+    await expect(routed(page).getByTestId('bake-total-duration')).toHaveText(
+      english ? 'Total time: 1 h 15 min' : 'Durée totale : 1 h 15 min',
+    );
+    await expect(routed(page).getByText(/^Version 1\b/)).toBeVisible();
+    const reloadedJournal = routed(page).getByTestId('preparation-journal');
+    await expect(reloadedJournal).toContainText(activeNote);
+    await expect(reloadedJournal).toContainText(finalNote);
   });
 }
