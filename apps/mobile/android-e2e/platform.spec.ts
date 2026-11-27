@@ -781,7 +781,26 @@ test('native touch drag keeps Recipe geometry and draft/editor states independen
 test('Note sheet handles Android IME, Back dismissal, focus return, and persists across restart', async () => {
   let page = await open();
   const activePage = () => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
-  await page.getByText('Poolish + tangzhong').first().click();
+  // Earlier tests edit the sample recipe and can leave a draft. Import an independent recipe for
+  // this journey so that its Planning actions and its preparation history start clean.
+  const recipeId = 'native-note-journey';
+  const recipeName = 'Native note journey';
+  const fixture = sampleRecipesFile();
+  const recipes = fixture.recipes.map((recipe) => ({
+    ...recipe,
+    id: recipeId,
+    name: recipeName,
+    revisions: recipe.revisions.map((revision) => ({ ...revision, recipeId })),
+  }));
+  await page.getByRole('link', { name: 'Advanced', exact: true }).click();
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'native-note-journey.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ ...fixture, recipes })),
+  });
+  await expect(page.getByText('1 recipe imported.', { exact: true })).toBeVisible();
+  await activePage().locator('ion-back-button').click();
+  await activePage().getByRole('link', { name: recipeName, exact: true }).click();
   await expect(page).toHaveURL(/\/recipes\/[^/]+$/);
   await expect(activePage()).toHaveCount(1);
 
@@ -851,7 +870,7 @@ test('Note sheet handles Android IME, Back dismissal, focus return, and persists
 
   await forceStop();
   page = await open();
-  await page.getByRole('link', { name: 'Poolish + tangzhong', exact: true }).click();
+  await activePage().getByRole('link', { name: recipeName, exact: true }).click();
   await expect(page).toHaveURL(/\/recipes\/[^/]+$/);
   await expect(activePage()).toHaveCount(1);
 
