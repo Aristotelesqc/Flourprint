@@ -269,10 +269,11 @@ not independent radius choices on each page. Shapes alone do not establish an M3
 
 ## Approved screen composition
 
-- **Recipes:** readable application/build header, quiet creation with explicit top and bottom close actions,
-  compact active-preparation resume entry with remaining time, and recipe cards with version, dough, hydration,
-  total planned duration and wrapping metadata where last cooking / "Jamais cuite" stays legible without squeezed
-  slivers. Registry, history and settings remain reachable without competing with the recipe list.
+- **Library (Recipes):** keep the application/build header and the existing create and registry actions.
+  Search saved recipe titles and the pre-dough names shown on their elevated cards. The metric pills
+  show yield, hydration and the projected duration with its ending operation when known. Preparation
+  status and the last recorded result appear as wrapping text. An active card gives the recipe title
+  its own line and offers a separate resume link with the whole preparation's remaining time.
 - **Recipe consultation:** summary, clearly named percentage bases, shared `ConsultationRow` items with
   consistent vertical padding when titles wrap, components and authored method ("Étapes de préparation").
   The header puts the planned duration below the full recipe name. When the safe width is narrow,

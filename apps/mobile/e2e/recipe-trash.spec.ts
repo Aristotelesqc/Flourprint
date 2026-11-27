@@ -22,7 +22,7 @@ const backToRecipes = async (page: Page, title: string) => {
 };
 
 const recipeCard = (page: Page, name: string) =>
-  routed(page).locator('ion-router-link[router-link^="/recipes/"]').filter({ hasText: name });
+  routed(page).getByRole('link', { name, exact: true });
 
 const second = (name: string) => ({
   kind: 'flourprint-recipes',
@@ -89,9 +89,10 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
   await expect(recipeCard(page, 'Poolish + tangzhong')).toHaveCount(0);
   // Trashing the recipe leaves its current preparation visible and usable.
   await expect(
-    routed(page)
-      .locator('ion-router-link[router-link^="/bakes/"]')
-      .filter({ hasText: 'Poolish + tangzhong' }),
+    routed(page).getByRole('link', {
+      name: 'Reprendre la préparation : Poolish + tangzhong',
+      exact: true,
+    }),
   ).toHaveCount(1);
 
   // It sits in the trash (Advanced), with the time it went there.
