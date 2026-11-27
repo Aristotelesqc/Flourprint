@@ -328,6 +328,33 @@ test('Android Back dismisses shared overlays before leaving the recipe', async (
   await expect(sheet).toBeHidden();
   await expect(page).toHaveURL(recipeUrl);
   await expect(help).toBeFocused();
+
+  await page.getByRole('button', { name: 'Edit recipe', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit step Mix', exact: true }).click();
+  const stepSheet = page.locator('ion-modal:not(.overlay-hidden)');
+  const duration = stepSheet.getByRole('textbox', { name: 'Duration of Mix', exact: true });
+  await duration.fill('12 min');
+  await duration.press('Tab');
+  await stepSheet.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(stepSheet).toBeHidden();
+
+  const editActions = page.getByRole('button', { name: 'Edit actions', exact: true });
+  await editActions.click();
+  await menu.getByRole('menuitem', { name: 'Review changes', exact: true }).click();
+  const review = page.getByRole('dialog', { name: 'Draft changes', exact: true });
+  await expect(review).toBeVisible();
+  await expect(stepSheet.getByRole('button', { name: 'Close', exact: true })).toBeFocused();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(review).toBeHidden();
+  await expect(page).toHaveURL(recipeUrl);
+  await expect(editActions).toBeFocused();
+
+  await page.getByRole('button', { name: 'Discard changes', exact: true }).click();
+  const confirmation = page.locator('ion-alert:not(.overlay-hidden)');
+  await confirmation.getByRole('button', { name: 'Discard changes', exact: true }).click();
+  await expect(confirmation).toBeHidden();
+  await expectNativeRevision(page, 2);
   await forceStop();
 });
 

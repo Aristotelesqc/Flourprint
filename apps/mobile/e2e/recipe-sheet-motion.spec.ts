@@ -98,6 +98,7 @@ const verifySheetCycle = async (
 for (const english of [false, true]) {
   test(`step and review sheets motion and semantics${english ? ' @en' : ''}`, async ({ page }) => {
     await installTimingCollector(page);
+    await page.setViewportSize({ width: 393, height: 851 });
     await page.goto('/recipes');
     await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
     await expectRecipeRevision(page, 1);
@@ -112,6 +113,7 @@ for (const english of [false, true]) {
       name: english ? 'Edit actions' : 'Menu édition',
       exact: true,
     });
+    const reviewTitle = english ? 'Draft changes' : 'Modifications du brouillon';
     const sheet = page.locator('ion-modal:not(.overlay-hidden)');
     const close = sheet.getByRole('button', { name: english ? 'Close' : 'Fermer', exact: true });
     const duration = sheet.getByRole('textbox', {
@@ -119,12 +121,61 @@ for (const english of [false, true]) {
       exact: true,
     });
     const reviewHeading = sheet.getByRole('heading', {
-      name: english ? 'Draft changes' : 'Modifications du brouillon',
+      name: reviewTitle,
       exact: true,
     });
+    const reviewDialog = page.getByRole('dialog', { name: reviewTitle, exact: true });
     const openStep = () => editStep.click();
     const openReview = () =>
       menuAction(page, english ? /^Review changes$/ : /^Examiner les modifications$/);
+    const expectReviewSemantics = async () => {
+      await expect(reviewDialog).toBeVisible();
+      const headingId = await reviewHeading.getAttribute('id');
+      expect(headingId).toBeTruthy();
+      await expect(sheet).toHaveAttribute('aria-labelledby', headingId ?? '');
+      await expect(close).toBeVisible();
+      await expect(close).toBeFocused();
+      const closeBox = await close.boundingBox();
+      const headingBox = await reviewHeading.boundingBox();
+      const viewport = page.viewportSize();
+      expect(closeBox).not.toBeNull();
+      expect(headingBox).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      if (closeBox && headingBox && viewport) {
+        expect(closeBox.width).toBeGreaterThanOrEqual(48);
+        expect(closeBox.height).toBeGreaterThanOrEqual(48);
+        expect(closeBox.x + closeBox.width).toBeLessThanOrEqual(viewport.width);
+        expect(headingBox.x).toBeGreaterThanOrEqual(0);
+        expect(headingBox.x + headingBox.width).toBeLessThanOrEqual(closeBox.x);
+      }
+      await expect(sheet).toContainText(
+        english ? 'Process parameters modified.' : 'Paramètres du processus modifiés.',
+      );
+      expect(
+        await sheet.evaluate((el) => {
+          const modal = el as HTMLElement & {
+            breakpoints?: number[];
+            initialBreakpoint?: number;
+            handleBehavior?: string;
+          };
+          const handle = el.shadowRoot?.querySelector('[part="handle"]');
+          const rect = handle?.getBoundingClientRect();
+          return {
+            breakpoints: modal.breakpoints,
+            initialBreakpoint: modal.initialBreakpoint,
+            handleBehavior: modal.handleBehavior,
+            hasHandle: Boolean(rect && rect.width > 0 && rect.height > 0),
+            handleLabel: handle?.getAttribute('aria-label'),
+          };
+        }),
+      ).toEqual({
+        breakpoints: [0, 0.7, 0.95],
+        initialBreakpoint: 0.7,
+        handleBehavior: 'cycle',
+        hasHandle: true,
+        handleLabel: english ? 'Adjust sheet size' : 'Ajuster la taille du panneau',
+      });
+    };
 
     await verifySheetCycle(page, sheet, close, editStep, duration, openStep, false, async () => {
       await duration.fill('-');
@@ -142,42 +193,50 @@ for (const english of [false, true]) {
       reviewHeading,
       openReview,
       false,
-      async () => {
-        await expect(sheet).toContainText(
-          english ? 'Process parameters modified.' : 'Paramètres du processus modifiés.',
-        );
-        expect(
-          await sheet.evaluate((el) => {
-            const modal = el as HTMLElement & {
-              breakpoints?: number[];
-              initialBreakpoint?: number;
-              handleBehavior?: string;
-            };
-            const rect = el.shadowRoot?.querySelector('[part="handle"]')?.getBoundingClientRect();
-            return {
-              breakpoints: modal.breakpoints,
-              initialBreakpoint: modal.initialBreakpoint,
-              handleBehavior: modal.handleBehavior,
-              hasHandle: Boolean(rect && rect.width > 0 && rect.height > 0),
-            };
-          }),
-        ).toEqual({
-          breakpoints: [0, 0.7, 0.95],
-          initialBreakpoint: 0.7,
-          handleBehavior: 'cycle',
-          hasHandle: true,
-        });
-      },
+      expectReviewSemantics,
     );
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await verifySheetCycle(page, sheet, close, editStep, duration, openStep, true);
-    await verifySheetCycle(page, sheet, close, editActions, reviewHeading, openReview, true);
+    await verifySheetCycle(
+      page,
+      sheet,
+      close,
+      editActions,
+      reviewHeading,
+      openReview,
+      true,
+      expectReviewSemantics,
+    );
 
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.locator('html').evaluate((html) => html.setAttribute('data-motion', 'reduced'));
     await verifySheetCycle(page, sheet, close, editStep, duration, openStep, true);
-    await verifySheetCycle(page, sheet, close, editActions, reviewHeading, openReview, true);
+    await verifySheetCycle(
+      page,
+      sheet,
+      close,
+      editActions,
+      reviewHeading,
+      openReview,
+      true,
+      expectReviewSemantics,
+    );
+
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.locator('html').evaluate((html) => {
+      html.style.fontSize = '130%';
+    });
+    await verifySheetCycle(
+      page,
+      sheet,
+      close,
+      editActions,
+      reviewHeading,
+      openReview,
+      true,
+      expectReviewSemantics,
+    );
   });
 
   test(`recipe checks sheet motion and semantics${english ? ' @en' : ''}`, async ({ page }) => {
