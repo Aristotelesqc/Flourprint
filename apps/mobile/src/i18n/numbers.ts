@@ -11,15 +11,19 @@ export const parseDecimal = (text: string): number | undefined => {
   return Number.isFinite(value) ? value : undefined;
 };
 
-/** Grams under 100 keep up to one decimal so salt and yeast stay weighable; no trailing zero. */
+/** L148 defaults by magnitude: whole grams from 10, tenths from 1, hundredths below 1. */
 export const formatGrams = (grams: number, locale: string): string =>
-  `${new Intl.NumberFormat(locale, { maximumFractionDigits: grams < 100 ? 1 : 0 }).format(grams)} g`;
+  `${new Intl.NumberFormat(locale, {
+    maximumFractionDigits: Math.abs(grams) >= 10 ? 0 : Math.abs(grams) >= 1 ? 1 : 2,
+  }).format(grams)} g`;
 
 export const formatPct = (pct: number, locale: string): string =>
-  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(pct)} %`;
+  new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 2 }).format(pct / 100);
 
 export const formatWholePct = (pct: number, locale: string): string =>
-  `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Math.round(pct))} %`;
+  new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(
+    Math.round(pct) / 100,
+  );
 
 export const formatNumber = (value: number, locale: string): string =>
   new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);

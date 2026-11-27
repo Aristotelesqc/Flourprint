@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, type RefObject } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 /** Keep mounted editors and independent scroll positions without coupling their state. */
 export function usePanelScroll<T extends string>(
@@ -14,6 +14,7 @@ export function usePanelScroll<T extends string>(
     undefined,
   );
   const restoring = useRef(false);
+  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
 
   const switchTab = useCallback(
     (nextTab: T) => {
@@ -49,6 +50,7 @@ export function usePanelScroll<T extends string>(
     const restore = (element: HTMLElement) => {
       if (cancelled) return;
       scroll.current = { host, element };
+      setScrollElement(element);
       element.scrollTop = target;
       firstFrame = requestAnimationFrame(() => {
         if (cancelled) return;
@@ -72,5 +74,7 @@ export function usePanelScroll<T extends string>(
     };
   }, [contentRef, currentTab, identity, ready]);
 
-  return { switchTab };
+  const getScrollPosition = useCallback((id: string) => positions.current[id as T] ?? 0, []);
+
+  return { switchTab, scrollElement, getScrollPosition };
 }

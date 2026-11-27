@@ -13,6 +13,16 @@ export const formatDuration = (seconds: number): string => {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 };
 
+/** Unsigned `HH:MM:SS` clock value with nonwrapping, unbounded hours (`100 h` -> `100:00:00`). */
+export const formatClock = (seconds: number): string => {
+  const total = Number.isFinite(seconds) ? Math.floor(Math.abs(seconds)) : 0;
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+};
+
 /** Text of a duration field, shortest form that parses back. */
 export const editableDuration = (seconds: number): string => {
   const minutes = Math.round(seconds / 60);

@@ -1,13 +1,4 @@
-import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonModal,
-  IonTitle,
-  IonToolbar,
-} from '@ionic/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type {
   BakeCommandPayload,
   BakeState,
@@ -17,6 +8,7 @@ import type {
 import { useMessages } from '../i18n/use-messages';
 import { defaultCategory, NOTE_CATEGORIES, noteSteps } from '../services/notes';
 import { SectionTitle } from '../ui/Layout';
+import { Ui } from '../ui/library';
 
 interface Props {
   readonly open: boolean;
@@ -50,7 +42,7 @@ export const NoteSheet = ({ open, state, stepId, busy, onSave, onClose }: Props)
   const [problem, setProblem] = useState<string>();
   const ended = state.status !== 'active';
 
-  useEffect(() => {
+  const resetOnOpen = useEffectEvent(() => {
     if (!open) return;
     setText('');
     setStep(stepId);
@@ -58,7 +50,8 @@ export const NoteSheet = ({ open, state, stepId, busy, onSave, onClose }: Props)
     setRating(undefined);
     setProblem(undefined);
     // Reset only when the sheet opens: the state refreshes while it is open.
-  }, [open]);
+  });
+  useEffect(() => resetOnOpen(), [open]);
 
   const pick = (next: StepId | undefined) => {
     setStep(next);
@@ -89,64 +82,62 @@ export const NoteSheet = ({ open, state, stepId, busy, onSave, onClose }: Props)
   };
 
   return (
-    <IonModal isOpen={open} onDidDismiss={onClose}>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonButton onClick={onClose}>{t('bake.cancel')}</IonButton>
-          </IonButtons>
-          <IonTitle>{t('bake.noteTitle')}</IonTitle>
-          <IonButtons slot="end">
-            <IonButton
-              strong
-              disabled={saving || busy || (text.trim() === '' && rating === undefined)}
-              onClick={() => void save()}
-            >
-              {t('bake.save')}
-            </IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent className="ion-padding">
-        <div className="flex flex-col gap-5">
-          {problem && (
-            <p role="alert" className="m-0 text-alert">
-              {problem}
-            </p>
-          )}
-          <textarea
-            aria-label={t('bake.noteTitle')}
-            className="fp-reset min-h-32 w-full rounded-xl border border-line bg-surface p-3 text-lg"
-            placeholder={t('bake.notePlaceholder')}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-          />
+    <Ui
+      component="fp.bottom-sheet"
+      isOpen={open}
+      title={t('bake.noteTitle')}
+      closeLabel={t('bake.cancel')}
+      onDismiss={onClose}
+      footer={
+        <Ui
+          component="fp.button"
+          variant="primary"
+          fullWidth
+          disabled={saving || busy || (text.trim() === '' && rating === undefined)}
+          onClick={() => void save()}
+        >
+          {t('bake.save')}
+        </Ui>
+      }
+    >
+      <div className="flex w-full min-w-0 flex-col gap-4">
+        {problem && (
+          <p role="alert" className="m-0 min-w-0 break-words text-alert">
+            {problem}
+          </p>
+        )}
+        <textarea
+          aria-label={t('bake.noteTitle')}
+          className="fp-reset fp-field fp-focus min-h-32 w-full min-w-0 rounded-card border border-field-outline bg-field-background p-3 text-body text-on-surface placeholder:text-muted"
+          placeholder={t('bake.notePlaceholder')}
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+        />
+        <Choices
+          title={t('note.step')}
+          options={[
+            ...noteSteps(state).map((id) => ({ value: id, label: nameOf(id) })),
+            { value: '', label: t('note.wholeBake') },
+          ]}
+          value={step ?? ''}
+          onChange={(value) => pick(value === '' ? undefined : value)}
+        />
+        <Choices
+          title={t('note.category')}
+          options={NOTE_CATEGORIES.map((c) => ({ value: c, label: t(`note.category.${c}`) }))}
+          value={category}
+          onChange={(value) => setCategory(value as ObservationCategory)}
+        />
+        {ended && (
           <Choices
-            title={t('note.step')}
-            options={[
-              ...noteSteps(state).map((id) => ({ value: id, label: nameOf(id) })),
-              { value: '', label: t('note.wholeBake') },
-            ]}
-            value={step ?? ''}
-            onChange={(value) => pick(value === '' ? undefined : value)}
+            title={t('note.rating')}
+            options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: '★'.repeat(n) }))}
+            value={rating === undefined ? '' : String(rating)}
+            onChange={(value) => setRating(value === String(rating) ? undefined : Number(value))}
           />
-          <Choices
-            title={t('note.category')}
-            options={NOTE_CATEGORIES.map((c) => ({ value: c, label: t(`note.category.${c}`) }))}
-            value={category}
-            onChange={(value) => setCategory(value as ObservationCategory)}
-          />
-          {ended && (
-            <Choices
-              title={t('note.rating')}
-              options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: '★'.repeat(n) }))}
-              value={rating === undefined ? '' : String(rating)}
-              onChange={(value) => setRating(value === String(rating) ? undefined : Number(value))}
-            />
-          )}
-        </div>
-      </IonContent>
-    </IonModal>
+        )}
+      </div>
+    </Ui>
   );
 };
 
@@ -161,9 +152,9 @@ const Choices = ({
   value: string;
   onChange: (value: string) => void;
 }) => (
-  <section className="flex flex-col gap-2">
+  <section className="flex w-full min-w-0 flex-col gap-2">
     <SectionTitle>{title}</SectionTitle>
-    <div role="group" aria-label={title} className="flex flex-wrap gap-2">
+    <div role="group" aria-label={title} className="flex min-w-0 flex-wrap gap-2">
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -172,7 +163,7 @@ const Choices = ({
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
-            className={`fp-reset min-h-10 rounded-full border px-3.5 text-[15px] ${
+            className={`fp-reset min-h-10 max-w-full rounded-full border px-3.5 text-[15px] ${
               selected
                 ? 'border-accent bg-accent font-bold text-on-accent'
                 : 'border-line bg-surface text-ink'

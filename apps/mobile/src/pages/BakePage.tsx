@@ -10,26 +10,41 @@ import {
   useIonAlert,
   useIonRouter,
   useIonViewWillEnter,
+  useIonViewWillLeave,
 } from '@ionic/react';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { loadBake } from '@flourprint/core/application';
 import {
+  adjustedDurationS,
   doughContextOf,
   doughReadyStage,
+  implicitStartOf,
   intendedOutcome,
+  isCookingStep,
+  isStepHeld,
   outcomeChoiceRequired,
+  previousAction,
+  subjectOf,
   type BakeCommandPayload,
+  type BakeEvent,
   type BakeState,
   type DomainError,
   type Instant,
+  type PreparationOutcome,
+  type ProcessStep,
 } from '@flourprint/core/domain';
 import { NoteSheet } from '../blocks/NoteSheet';
+import {
+  PreparationStepActionSheet,
+  type PreparationStepAction,
+} from '../blocks/PreparationStepActionSheet';
 import { useOutcomePicker, useOutcomeText } from '../blocks/Outcome';
 import { techniqueSummary } from '../blocks/StepSheet';
 import { en, type MessageKey } from '../i18n/messages';
 import { useMessages } from '../i18n/use-messages';
 import {
+  formatClock,
   formatDayTime,
   formatDuration,
   formatTime,
@@ -41,21 +56,48 @@ import {
   bakeAlerts,
   bakeLog,
   bakeView,
+  completedPredecessor,
   foldStatus,
+  lastCompletedStep,
   stepProgress,
   type BakeStepView,
   type LogEntry,
 } from '../services/bake-view';
-import { useBakeCommands, type CommandOutcome } from '../services/bake-commands';
+import {
+  useBakeCommands,
+  type CommandOutcome,
+  type PendingCommand,
+} from '../services/bake-commands';
 import { BAKES_CHANGED } from '../services/notifications';
 import { useServices } from '../services/services';
 import { usePreferences } from '../services/use-preferences';
 import { InfoButton } from '../ui/InfoButton';
+import { Ui } from '../ui/library';
 import { SimulationBanner } from '../ui/SimulationBanner';
 import { SectionTitle } from '../ui/Layout';
 
 const isKey = (key: string): key is MessageKey => Object.hasOwn(en, key);
 const CRITERIA = ['poke', 'feel', 'time', 'other'] as const;
+
+type StepTimeCorrectionEvent = BakeEvent & {
+  readonly payload: Extract<BakeEvent['payload'], { type: 'StepTimeCorrected' }>;
+};
+
+const isPendingForAction = (
+  pending: PendingCommand | undefined,
+  action: PreparationStepAction | undefined,
+): boolean => {
+  if (!pending || !action) return false;
+  const { payload } = pending;
+  if (action.kind === 'correct' && payload.type === 'CorrectStepTime') {
+    const { targetEventId } = payload;
+    return action.choices.some((choice) => choice.eventId === targetEventId);
+  }
+  if (action.kind === 'repeat' && payload.type === 'InsertStepAfter') {
+    return payload.after === action.after.id;
+  }
+  return false;
+};
 
 /** Bake mode (#8, #21): "what do I do now?" first; everything is recorded as bake events. */
 export const BakePage = () => {
@@ -67,12 +109,25 @@ export const BakePage = () => {
   const outcomeText = useOutcomeText();
   const pickOutcome = useOutcomePicker();
   const [state, setState] = useState<BakeState>();
+  const preparationContent = useRef<HTMLIonContentElement>(null);
   const [recipeName, setRecipeName] = useState<string | null>();
   const [failure, setFailure] = useState<DomainError>();
   const [readFailed, setReadFailed] = useState(false);
   const [now, setNow] = useState<Instant>(services.clock.now());
   const commands = useBakeCommands(services);
   const { pending } = commands;
+  const countdownActionRef = useRef(false);
+  const [countdownBusy, setCountdownBusy] = useState(false);
+  const countdownLabelId = useId();
+  const noDurationId = useId();
+  const progressionLabelId = useId();
+  const statusHeadingId = useId();
+  const [undoStepId, setUndoStepId] = useState<string>();
+  const [progressionError, setProgressionError] = useState<string>();
+  const [countdownError, setCountdownError] = useState<string>();
+  const [blockedStepId, setBlockedStepId] = useState<string>();
+  const [stepAction, setStepAction] = useState<PreparationStepAction>();
+  const [timeCorrections, setTimeCorrections] = useState<readonly StepTimeCorrectionEvent[]>([]);
   // The note sheet, open on a step (or on the whole bake).
   const [noteOn, setNoteOn] = useState<{ stepId?: string }>();
   const { simulation } = usePreferences();
@@ -99,6 +154,43 @@ export const BakePage = () => {
   useEffect(() => void reload(), [reload, simulation]);
   // Ionic keeps inactive pages mounted: refresh when the page or the app becomes visible again.
   useIonViewWillEnter(() => void reload(), [reload]);
+  useIonViewWillLeave(() => {
+    setUndoStepId(undefined);
+    setProgressionError(undefined);
+    setCountdownError(undefined);
+    setBlockedStepId(undefined);
+    setStepAction(undefined);
+  }, []);
+  const stateBakeId = state?.bakeId;
+  const stateVersion = state?.version;
+  useEffect(() => {
+    if (!stateBakeId || stateVersion === undefined || stateVersion === 0) {
+      setTimeCorrections([]);
+      return;
+    }
+    let cancelled = false;
+    void services.bakes
+      .loadEvents(stateBakeId)
+      .then((events) => {
+        if (cancelled) return;
+        setTimeCorrections(
+          events.filter(
+            (event): event is StepTimeCorrectionEvent => event.payload.type === 'StepTimeCorrected',
+          ),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setTimeCorrections([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [services.bakes, stateBakeId, stateVersion]);
+  useEffect(() => {
+    if (undoStepId === undefined) return;
+    const timer = setTimeout(() => setUndoStepId(undefined), 4000);
+    return () => clearTimeout(timer);
+  }, [undoStepId]);
   useEffect(() => {
     const tick = () => setNow(services.clock.now());
     const timer = setInterval(tick, 15_000);
@@ -131,18 +223,46 @@ export const BakePage = () => {
     );
   }
 
-  /** Applies the outcome of a command; resolves to a message when it was not recorded. */
-  const settle = async (outcome: CommandOutcome): Promise<string | undefined> => {
+  const commandRefusal = (failure: DomainError): string => {
+    const { code, message, details } = failure;
+    const record = (details ?? {}) as Record<string, unknown>;
+    const fieldKey = typeof record.field === 'string' ? `error.${code}.${record.field}` : undefined;
+    const reasonKey =
+      typeof record.reason === 'string' ? `error.${code}.${record.reason}` : undefined;
+    if (reasonKey !== undefined && isKey(reasonKey)) return t(reasonKey);
+    if (fieldKey !== undefined && isKey(fieldKey)) return error(failure);
+    if (typeof record.reason === 'string' && record.reason.trim() !== '') {
+      return message.trim() !== '' ? message : record.reason;
+    }
+    return isKey(`error.${code}`) || message.trim() === '' ? error(failure) : message;
+  };
+
+  /** Applies the outcome of a command and places a refusal at the initiating controls. */
+  const settle = async (
+    outcome: CommandOutcome,
+    feedback: 'page' | 'countdown' | 'progression' | 'sheet' = 'page',
+  ): Promise<string | undefined> => {
+    setUndoStepId(undefined);
+    setProgressionError(undefined);
+    setCountdownError(undefined);
+    setBlockedStepId(undefined);
+    setFailure(undefined);
     setNow(services.clock.now());
     switch (outcome.kind) {
       case 'ok':
         setState(outcome.state);
-        setFailure(undefined);
+        if (state.status === 'active' && outcome.state.status === 'finished') {
+          void preparationContent.current?.scrollToTop(0);
+        }
         return undefined;
-      case 'rejected':
-        setFailure(outcome.error);
+      case 'rejected': {
+        const message = commandRefusal(outcome.error);
+        if (feedback === 'page') setFailure(outcome.error);
+        if (feedback === 'countdown') setCountdownError(message);
+        if (feedback === 'progression') setProgressionError(message);
         if (outcome.error.code === 'VersionConflict') await reload();
-        return error(outcome.error);
+        return message;
+      }
       case 'storage':
         return t('state.storageWrite');
       case 'busy':
@@ -150,7 +270,108 @@ export const BakePage = () => {
     }
   };
 
-  const send = async (payload: BakeCommandPayload) => settle(await commands.send(state, payload));
+  const send = async (payload: BakeCommandPayload, feedback?: 'progression') =>
+    settle(await commands.send(state, payload), feedback);
+
+  /**
+   * Records an implicit step start before the first countdown adjustment or hold on an implicitly
+   * running step, stopping on any non-ok outcome (docs/contracts/bake-session.md).
+   */
+  const sendStepCountdownAction = async (
+    stepId: string,
+    payload: BakeCommandPayload,
+  ): Promise<void> => {
+    if (countdownActionRef.current || commands.busy || pending !== undefined) return;
+    countdownActionRef.current = true;
+    setCountdownBusy(true);
+    try {
+      const implicitStart = implicitStartOf(state, stepId);
+      if (implicitStart !== undefined) {
+        const startOutcome = await commands.send(state, {
+          type: 'StartStep',
+          stepId,
+          at: implicitStart,
+        });
+        await settle(startOutcome, 'countdown');
+        if (startOutcome.kind !== 'ok') return;
+        await settle(await commands.send(startOutcome.state, payload), 'countdown');
+        return;
+      }
+      await settle(await commands.send(state, payload), 'countdown');
+    } finally {
+      countdownActionRef.current = false;
+      setCountdownBusy(false);
+    }
+  };
+
+  /** Corrects a recorded step start or end time; closes only once accepted, retrying uncertain writes as is. */
+  const handleCorrect = async (eventId: string, at: Instant): Promise<string | undefined> => {
+    if (pending !== undefined) {
+      if (pending.payload.type === 'CorrectStepTime') {
+        const outcome = await commands.retry();
+        const problem = await settle(outcome, 'sheet');
+        if (problem === undefined) setStepAction(undefined);
+        return problem;
+      }
+      return t('state.writeBusy');
+    }
+    const outcome = await commands.send(state, {
+      type: 'CorrectStepTime',
+      targetEventId: eventId,
+      newOccurredAt: at,
+    });
+    const problem = await settle(outcome, 'sheet');
+    if (problem === undefined) setStepAction(undefined);
+    return problem;
+  };
+
+  /** Repeats a step after `after`; closes only once accepted, retrying uncertain insertions without regenerating an id. */
+  const handleRepeat = async (
+    step: ProcessStep,
+    after: ProcessStep,
+    durationS: number | undefined,
+  ): Promise<string | undefined> => {
+    if (pending !== undefined) {
+      if (pending.payload.type === 'InsertStepAfter') {
+        const outcome = await commands.retry();
+        const problem = await settle(outcome, 'sheet');
+        if (problem === undefined) setStepAction(undefined);
+        return problem;
+      }
+      return t('state.writeBusy');
+    }
+    if (!state.process) return t('error.InvalidProcess');
+    const sourceStep = state.process.steps.find((s) => s.id === step.id) ?? step;
+    const {
+      accepted: _accepted,
+      plannedDurationS: _plannedDurationS,
+      durationMode: _durationMode,
+      dependsOn: _dependsOn,
+      incorporations: _incorporations,
+      ...rest
+    } = sourceStep;
+    const outcome = await commands.send(state, {
+      type: 'InsertStepAfter',
+      after: after.id,
+      step: {
+        ...rest,
+        id: services.ids.next(),
+        label: t('bake.repeatStepLabel', { step: stepName(sourceStep) }),
+        schedule: 'asap',
+        subject: subjectOf(
+          state.process,
+          sourceStep,
+          state.formula ? doughContextOf(state.formula).components : undefined,
+        ),
+        ...(durationS === undefined
+          ? {}
+          : { plannedDurationS: durationS, durationMode: 'manual' as const }),
+      },
+    });
+    const problem = await settle(outcome, 'sheet');
+    if (problem === undefined) setStepAction(undefined);
+    return problem;
+  };
 
   /** A note is closed only once it is durably written; an uncertain one is retried as is. */
   const saveNote = async (payload: BakeCommandPayload): Promise<string | undefined> => {
@@ -162,9 +383,88 @@ export const BakePage = () => {
     return problem;
   };
 
-  const view = state.status === 'active' ? bakeView(state, now) : undefined;
+  const view =
+    state.status === 'active' ? bakeView(state, now, { progressionFocus: true }) : undefined;
   const focus = view?.focus;
+  const focusStepIndex =
+    focus && state.process ? state.process.steps.findIndex((s) => s.id === focus.step.id) + 1 : 0;
+  const focusStepTotal = state.process?.steps.length ?? view?.total ?? 0;
+  const focusBaselineDurationS = focus
+    ? state.snapshot?.process.steps.find((s) => s.id === focus.step.id)?.plannedDurationS
+    : undefined;
+  const focusHeld = focus ? isStepHeld(state, focus.step.id) : false;
+  const focusImplicitStart = focus ? implicitStartOf(state, focus.step.id) : undefined;
+  const predecessorId = focus
+    ? completedPredecessor(state, focus.step.id)
+    : view?.allDone
+      ? lastCompletedStep(state)
+      : undefined;
+  const focusPlannedDurationS = focus?.step.plannedDurationS;
+  const focusNoDuration = focusPlannedDurationS === undefined;
+  const focusCanAdjustDuration =
+    focus !== undefined &&
+    focusPlannedDurationS !== undefined &&
+    focus.step.schedule !== 'beforeTarget';
+  const focusCanToggleHold =
+    focus !== undefined &&
+    focusCanAdjustDuration &&
+    (focusHeld
+      ? focus.startedAt !== undefined
+      : focus.startedAt !== undefined || focusImplicitStart !== undefined);
+  const countdownWriteBlocked = commands.busy || countdownBusy || pending !== undefined;
+  const blockedStep =
+    blockedStepId === undefined
+      ? undefined
+      : state.process?.steps.find((s) => s.id === blockedStepId);
+  const blockedRecord = blockedStepId === undefined ? undefined : state.steps[blockedStepId];
+  const canCorrectBlocked =
+    blockedStep !== undefined &&
+    blockedRecord?.endEventId !== undefined &&
+    blockedRecord.endedAt !== undefined;
+  const canRepeatBlocked =
+    blockedStep !== undefined && focus !== undefined && focus.step.id !== blockedStep.id;
+  const sheetBlocked =
+    commands.busy ||
+    countdownBusy ||
+    (pending !== undefined && !isPendingForAction(pending, stepAction));
   const log = bakeLog(state);
+  const journalItems: (
+    | {
+        readonly kind: 'log';
+        readonly at: Instant;
+        readonly key: string;
+        readonly entry: LogEntry;
+      }
+    | {
+        readonly kind: 'correction';
+        readonly at: Instant;
+        readonly key: string;
+        readonly stepId: string;
+        readonly field: 'start' | 'end';
+        readonly newAt: Instant;
+      }
+  )[] = [
+    ...log.map((entry) => ({
+      kind: 'log' as const,
+      at: entry.at,
+      key: `${entry.kind}-${entry.at}-${entry.stepId ?? ''}-${entry.set ?? ''}`,
+      entry,
+    })),
+    ...timeCorrections.flatMap((event) => {
+      const target = state.stepEvents[event.payload.targetEventId];
+      if (!target) return [];
+      return [
+        {
+          kind: 'correction' as const,
+          at: event.occurredAt,
+          key: event.eventId,
+          stepId: target.stepId,
+          field: target.kind,
+          newAt: event.payload.newOccurredAt,
+        },
+      ];
+    }),
+  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
   const completedSteps =
     state.process?.steps.filter((s) => state.steps[s.id]?.endedAt !== undefined) ?? [];
   const criterionLabel = (code: string) => {
@@ -174,6 +474,39 @@ export const BakePage = () => {
   const nameOf = (id: string | undefined) => {
     const step = state.process?.steps.find((s) => s.id === id);
     return step ? stepName(step) : (id ?? '');
+  };
+
+  const retractStep = (stepId: string) => {
+    if (countdownWriteBlocked) return;
+    setUndoStepId(undefined);
+    const action = previousAction(state, stepId);
+    if (action.kind === 'retract') {
+      setBlockedStepId(undefined);
+      void send({ type: 'RetractCompletion', targetEventId: action.targetEventId }, 'progression');
+      return;
+    }
+    if (action.reason === 'dependentStarted') {
+      setBlockedStepId(stepId);
+      setProgressionError(
+        t('bake.previousBlockedDependents', {
+          count: action.dependents.length,
+          steps: action.dependents.map(nameOf).join(', '),
+        }),
+      );
+    } else {
+      setBlockedStepId(undefined);
+      setProgressionError(t('bake.previousUnavailable'));
+    }
+  };
+
+  const completeFocusedStep = async (stepId: string) => {
+    if (countdownWriteBlocked) return;
+    setUndoStepId(undefined);
+    setProgressionError(undefined);
+    setBlockedStepId(undefined);
+    const outcome = await commands.send(state, { type: 'CompleteStep', stepId });
+    await settle(outcome, 'progression');
+    if (outcome.kind === 'ok') setUndoStepId(stepId);
   };
 
   const adjust = (target: BakeStepView) =>
@@ -208,7 +541,21 @@ export const BakePage = () => {
       ],
     });
 
-  const note = () => setNoteOn(focus ? { stepId: focus.step.id } : {});
+  const note = () => {
+    setUndoStepId(undefined);
+    setNoteOn(focus ? { stepId: focus.step.id } : {});
+  };
+
+  const adjustFocusDuration = (deltaSeconds: number) => {
+    if (!focus || !focusCanAdjustDuration || focusPlannedDurationS === undefined) return;
+    const value = adjustedDurationS(focusPlannedDurationS, deltaSeconds);
+    if (value === focusPlannedDurationS) return;
+    void sendStepCountdownAction(focus.step.id, {
+      type: 'AdjustStep',
+      stepId: focus.step.id,
+      adjustment: { field: 'plannedDurationS', value },
+    });
+  };
 
   /** The stage a running dough step can be judged ready for (bake-session.md), if any. */
   const readyStage = (target: BakeStepView) =>
@@ -299,14 +646,14 @@ export const BakePage = () => {
       : undefined;
 
   const intended = state.process ? intendedOutcome(state.process) : undefined;
+  const hasCompletedCooking =
+    state.process?.steps.some(
+      (step) => isCookingStep(step) && state.steps[step.id]?.endedAt !== undefined,
+    ) ?? false;
   // A cooked result is intended but nothing was cooked yet: no outcome is assumed or preselected.
   const mustChoose =
     state.process !== undefined &&
     outcomeChoiceRequired(state.process, (id) => state.steps[id]?.endedAt !== undefined);
-  const finishWith = (header: string) =>
-    pickOutcome(header, mustChoose ? undefined : intended, (outcome) => {
-      void send({ type: 'FinishBake', outcome });
-    });
   const reopen = () =>
     void presentAlert({
       header: t('bake.reopen'),
@@ -331,6 +678,34 @@ export const BakePage = () => {
       ],
     });
 
+  const outcomeBusy = commands.busy || pending !== undefined;
+  const correctOutcome = () => {
+    if (outcomeBusy) return;
+    pickOutcome(t('bake.outcome.change'), state.outcome, (outcome) => {
+      void send({ type: 'CorrectOutcome', outcome });
+    });
+  };
+  const startMs = state.startedAt === undefined ? Number.NaN : Date.parse(state.startedAt);
+  const endMs = state.endedAt === undefined ? Number.NaN : Date.parse(state.endedAt);
+  const totalDurationS =
+    Number.isFinite(startMs) && Number.isFinite(endMs) && endMs >= startMs
+      ? (endMs - startMs) / 1_000
+      : undefined;
+
+  const finishOutcome = (outcome: PreparationOutcome) => {
+    void send({ type: 'FinishBake', outcome });
+  };
+  const finishWith = (header: string) =>
+    pickOutcome(header, mustChoose ? undefined : intended, finishOutcome);
+  const finishNow = () => {
+    const header = t('bake.finishNow');
+    if (hasCompletedCooking) {
+      finishWith(header);
+      return;
+    }
+    pickOutcome(header, undefined, finishOutcome, { onAbandon: abandon });
+  };
+
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
@@ -348,6 +723,20 @@ export const BakePage = () => {
                   label: t('bake.note'),
                   handler: note,
                 },
+                ...(focus && focusImplicitStart
+                  ? [
+                      {
+                        label: t('bake.start', { step: stepName(focus.step) }),
+                        disabled: countdownWriteBlocked,
+                        handler: () =>
+                          void send({
+                            type: 'StartStep',
+                            stepId: focus.step.id,
+                            at: focusImplicitStart,
+                          }),
+                      },
+                    ]
+                  : []),
                 ...(focus
                   ? [
                       {
@@ -370,7 +759,7 @@ export const BakePage = () => {
                   ? [
                       {
                         label: t('bake.finishNow'),
-                        handler: () => finishWith(t('bake.finishNow')),
+                        handler: finishNow,
                       },
                     ]
                   : []),
@@ -387,10 +776,8 @@ export const BakePage = () => {
                   ? [
                       {
                         label: t('bake.outcome.change'),
-                        handler: () =>
-                          pickOutcome(t('bake.outcome.change'), state.outcome, (outcome) => {
-                            void send({ type: 'CorrectOutcome', outcome });
-                          }),
+                        disabled: outcomeBusy,
+                        handler: correctOutcome,
                       },
                     ]
                   : []),
@@ -408,11 +795,11 @@ export const BakePage = () => {
         </IonToolbar>
         <SimulationBanner />
       </IonHeader>
-      <IonContent className="ion-padding">
+      <IonContent ref={preparationContent} className="ion-padding">
         <div className="flex flex-col gap-5">
           {failure && (
             <p role="alert" className="m-0 text-alert">
-              {error(failure)}
+              {commandRefusal(failure)}
             </p>
           )}
           {pending && (
@@ -440,61 +827,121 @@ export const BakePage = () => {
           </div>
 
           {state.status !== 'active' && (
-            <h2 className="m3-type-title m-0">
-              {t(state.status === 'abandoned' ? 'bake.abandoned' : 'bake.finished')}
-            </h2>
-          )}
-          {state.status === 'finished' && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-lg" data-testid="bake-outcome">
-                {t('bake.outcome', { outcome: outcomeText(state.outcome ?? 'unknown') })}
-              </span>
-            </div>
+            <section aria-labelledby={statusHeadingId} className="flex flex-col gap-2">
+              <h2 id={statusHeadingId} className="m3-type-title m-0">
+                {t(state.status === 'abandoned' ? 'bake.abandoned' : 'bake.finished')}
+              </h2>
+              {state.status === 'finished' && (
+                <div className="flex flex-col items-start gap-2">
+                  <div className="flex w-full min-w-0 flex-col gap-1">
+                    <span
+                      className="m3-type-body font-medium text-on-surface break-words"
+                      data-testid="bake-outcome"
+                    >
+                      {t('bake.outcome', { outcome: outcomeText(state.outcome ?? 'unknown') })}
+                    </span>
+                    <span
+                      className="m3-type-supporting text-muted tabular-nums break-words"
+                      data-testid="bake-total-duration"
+                    >
+                      {t('bake.totalDuration', {
+                        duration:
+                          totalDurationS === undefined
+                            ? t('bake.totalDurationUnknown')
+                            : formatDuration(totalDurationS),
+                      })}
+                    </span>
+                  </div>
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    className="max-w-full px-4 text-supporting"
+                    disabled={outcomeBusy}
+                    onClick={correctOutcome}
+                  >
+                    {t('bake.outcome.change')}
+                  </Ui>
+                </div>
+              )}
+            </section>
           )}
 
-          {focus && <Focus focus={focus} now={now} />}
+          {focus && (
+            <Focus
+              focus={focus}
+              now={now}
+              held={focusHeld}
+              stepIndex={focusStepIndex}
+              totalSteps={focusStepTotal}
+              baselineDurationS={focusBaselineDurationS}
+            />
+          )}
 
           {focus && (
             <>
-              <div className="grid grid-cols-3 gap-2.5">
-                <IonButton
-                  fill="outline"
-                  shape="round"
-                  className="min-h-12 font-semibold btn-pill-secondary"
-                  disabled={
-                    focus.step.plannedDurationS === undefined ||
-                    commands.busy ||
-                    pending !== undefined
-                  }
-                  onClick={() =>
-                    void send({
-                      type: 'AdjustStep',
-                      stepId: focus.step.id,
-                      adjustment: {
-                        field: 'plannedDurationS',
-                        value: (focus.step.plannedDurationS ?? 0) + 900,
-                      },
-                    })
-                  }
-                >
-                  {t('bake.plus15')}
-                </IonButton>
-                <IonButton
-                  fill="outline"
-                  shape="round"
-                  className="min-h-12 font-semibold btn-pill-secondary"
-                  onClick={() => adjust(focus)}
-                >
-                  {t('bake.adjust')}
-                </IonButton>
-                <IonButton
-                  fill="outline"
-                  shape="round"
-                  className="min-h-12 font-semibold btn-pill-secondary"
-                  onClick={note}
-                >
+              <section aria-labelledby={countdownLabelId} className="flex flex-col gap-2">
+                <span id={countdownLabelId}>
+                  <SectionTitle>{t('bake.countdown')}</SectionTitle>
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    fullWidth
+                    disabled={
+                      countdownWriteBlocked ||
+                      !focusCanAdjustDuration ||
+                      focusPlannedDurationS === undefined ||
+                      focusPlannedDurationS <= 0
+                    }
+                    {...(focusNoDuration ? { 'aria-describedby': noDurationId } : {})}
+                    onClick={() => adjustFocusDuration(-900)}
+                  >
+                    {t('bake.minus15')}
+                  </Ui>
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    fullWidth
+                    disabled={countdownWriteBlocked || !focusCanToggleHold}
+                    {...(focusNoDuration ? { 'aria-describedby': noDurationId } : {})}
+                    onClick={() =>
+                      void sendStepCountdownAction(focus.step.id, {
+                        type: focusHeld ? 'ReleaseStepCountdown' : 'HoldStepCountdown',
+                        stepId: focus.step.id,
+                      })
+                    }
+                  >
+                    {t(focusHeld ? 'bake.resume' : 'bake.pause')}
+                  </Ui>
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    fullWidth
+                    disabled={countdownWriteBlocked || !focusCanAdjustDuration}
+                    {...(focusNoDuration ? { 'aria-describedby': noDurationId } : {})}
+                    onClick={() => adjustFocusDuration(900)}
+                  >
+                    {t('bake.plus15')}
+                  </Ui>
+                </div>
+                {focusNoDuration && (
+                  <p id={noDurationId} className="m-0 px-1 text-xs text-muted">
+                    {t('bake.noDuration')}
+                  </p>
+                )}
+                <p aria-live="polite" className="m-0 text-supporting text-alert empty:sr-only">
+                  {countdownError}
+                </p>
+              </section>
+              <div className="flex items-center">
+                <Ui component="fp.button" variant="quiet" onClick={note}>
                   {t('bake.note')}
-                </IonButton>
+                </Ui>
               </div>
               {focus.running &&
                 (() => {
@@ -662,6 +1109,24 @@ export const BakePage = () => {
             <StepList title={t('bake.completedSteps')}>
               {completedSteps.map((step) => {
                 const record = state.steps[step.id];
+                const choices: {
+                  readonly kind: 'start' | 'end';
+                  readonly eventId: string;
+                  readonly at: Instant;
+                }[] = [
+                  ...(record?.startEventId !== undefined && record.startedAt !== undefined
+                    ? [
+                        {
+                          kind: 'start' as const,
+                          eventId: record.startEventId,
+                          at: record.startedAt,
+                        },
+                      ]
+                    : []),
+                  ...(record?.endEventId !== undefined && record.endedAt !== undefined
+                    ? [{ kind: 'end' as const, eventId: record.endEventId, at: record.endedAt }]
+                    : []),
+                ];
                 return (
                   <StepLine
                     key={step.id}
@@ -674,58 +1139,88 @@ export const BakePage = () => {
                             duration: formatDuration(step.plannedDurationS),
                           })
                     }
+                    {...(state.status === 'active' && choices.length > 0
+                      ? {
+                          action: {
+                            label: t('bake.correctTimeAction'),
+                            disabled: countdownWriteBlocked,
+                            run: () => setStepAction({ kind: 'correct', step, choices }),
+                          },
+                        }
+                      : {})}
                   />
                 );
               })}
             </StepList>
           )}
 
-          {log.length > 0 && (
-            <StepList title={t('bake.log')} testId="preparation-journal">
-              {log.map((entry) => (
-                <p
-                  key={`${entry.kind}-${entry.at}-${entry.stepId ?? ''}-${entry.set ?? ''}`}
-                  className="m-0 py-2 text-sm text-muted"
-                >
-                  {entry.kind === 'note'
-                    ? entry.stepId === undefined
-                      ? t('bake.log.note', {
-                          time: formatTime(entry.at, locale),
-                          text: noteText(entry),
-                        })
-                      : t('bake.log.noteOn', {
-                          time: formatTime(entry.at, locale),
-                          step: nameOf(entry.stepId),
-                          text: noteText(entry),
-                        })
-                    : entry.kind === 'fold'
-                      ? t('bake.log.fold', {
-                          time: formatTime(entry.at, locale),
-                          set: entry.set ?? '?',
-                          count: entry.count ?? '?',
-                          step: nameOf(entry.stepId),
-                        })
-                      : entry.kind === 'doughReady'
-                        ? t('bake.log.ready', {
-                            time: formatTime(entry.at, locale),
-                            label:
-                              entry.stage === undefined
-                                ? t('bake.doughReady')
-                                : readyLabel(entry.stage),
-                            details: [
-                              nameOf(entry.stepId),
-                              ...(entry.criterion === undefined
-                                ? []
-                                : [criterionLabel(entry.criterion)]),
-                            ].join(', '),
-                            text: entry.text ?? '',
-                          })
-                        : t(entry.kind === 'started' ? 'bake.log.started' : 'bake.log.completed', {
-                            time: formatTime(entry.at, locale),
-                            step: nameOf(entry.stepId),
-                          })}
-                </p>
-              ))}
+          {journalItems.length > 0 && (
+            <StepList title={t('bake.log')} testId="preparation-journal" ordered>
+              {journalItems.map((item) => {
+                if (item.kind === 'correction') {
+                  return (
+                    <li key={item.key} className="py-2">
+                      <p className="m-0 text-sm text-muted break-words">
+                        {t('bake.log.timeCorrected', {
+                          time: formatTime(item.at, locale),
+                          step: nameOf(item.stepId),
+                          field: t(item.field === 'start' ? 'bake.timeStart' : 'bake.timeEnd'),
+                          newTime: formatTime(item.newAt, locale),
+                        })}
+                      </p>
+                    </li>
+                  );
+                }
+                const { entry } = item;
+                return (
+                  <li key={item.key} className="py-2">
+                    <p className="m-0 text-sm text-muted break-words">
+                      {entry.kind === 'note'
+                        ? entry.stepId === undefined
+                          ? t('bake.log.note', {
+                              time: formatTime(entry.at, locale),
+                              text: noteText(entry),
+                            })
+                          : t('bake.log.noteOn', {
+                              time: formatTime(entry.at, locale),
+                              step: nameOf(entry.stepId),
+                              text: noteText(entry),
+                            })
+                        : entry.kind === 'fold'
+                          ? t('bake.log.fold', {
+                              time: formatTime(entry.at, locale),
+                              set: entry.set ?? '?',
+                              count: entry.count ?? '?',
+                              step: nameOf(entry.stepId),
+                            })
+                          : entry.kind === 'doughReady'
+                            ? t('bake.log.ready', {
+                                time: formatTime(entry.at, locale),
+                                label:
+                                  entry.stage === undefined
+                                    ? t('bake.doughReady')
+                                    : readyLabel(entry.stage),
+                                details: [
+                                  nameOf(entry.stepId),
+                                  ...(entry.criterion === undefined
+                                    ? []
+                                    : [criterionLabel(entry.criterion)]),
+                                ].join(', '),
+                                text: entry.text ?? '',
+                              })
+                            : t(
+                                entry.kind === 'started'
+                                  ? 'bake.log.started'
+                                  : 'bake.log.completed',
+                                {
+                                  time: formatTime(entry.at, locale),
+                                  step: nameOf(entry.stepId),
+                                },
+                              )}
+                    </p>
+                  </li>
+                );
+              })}
             </StepList>
           )}
 
@@ -786,35 +1281,124 @@ export const BakePage = () => {
           onSave={saveNote}
           onClose={() => setNoteOn(undefined)}
         />
+        <PreparationStepActionSheet
+          action={stepAction}
+          blocked={sheetBlocked}
+          retrying={isPendingForAction(pending, stepAction)}
+          onCorrect={handleCorrect}
+          onRepeat={handleRepeat}
+          onDismiss={() => setStepAction(undefined)}
+        />
       </IonContent>
-      {(focus || view?.allDone) && state.status === 'active' && (
-        <IonFooter className="ion-no-border">
-          <IonToolbar>
-            <div className="px-4 py-2">
-              <IonButton
-                expand="block"
-                shape="round"
-                className="h-12 text-base font-bold btn-pill-primary"
-                disabled={commands.busy || pending !== undefined}
-                onClick={() =>
-                  !focus && mustChoose
-                    ? finishWith(t('bake.finish'))
-                    : void send(
-                        !focus
-                          ? { type: 'FinishBake' }
-                          : focus.running
-                            ? { type: 'CompleteStep', stepId: focus.step.id }
-                            : { type: 'StartStep', stepId: focus.step.id },
-                      )
-                }
+      {(focus || view?.allDone || undoStepId !== undefined) && state.status === 'active' && (
+        <IonFooter className="ion-no-border relative">
+          {undoStepId && (
+            <div className="absolute inset-x-4 bottom-full z-10 mb-2 flex items-center justify-between gap-2 rounded-card border border-line bg-surface-container px-3 text-on-surface shadow-md">
+              <span role="status" className="min-w-0 text-supporting">
+                {t('bake.done', { step: nameOf(undoStepId) })}
+              </span>
+              <Ui
+                component="fp.button"
+                variant="quiet"
+                density="compact"
+                onClick={() => retractStep(undoStepId)}
               >
-                {focus
-                  ? t(focus.running ? 'bake.done' : 'bake.start', { step: stepName(focus.step) })
-                  : intended && !mustChoose
-                    ? t('bake.finishAs', { outcome: outcomeText(intended) })
-                    : t('bake.finish')}
-              </IonButton>
+                {t('editor.undo')}
+              </Ui>
             </div>
+          )}
+          <IonToolbar>
+            <section aria-labelledby={progressionLabelId} className="px-4 py-2">
+              <span id={progressionLabelId}>
+                <SectionTitle>{t('bake.progression')}</SectionTitle>
+              </span>
+              {progressionError && (
+                <p role="alert" className="my-1 text-supporting text-alert">
+                  {progressionError}
+                </p>
+              )}
+              {blockedStep && (
+                <div className="my-1.5 flex flex-wrap gap-2">
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    disabled={countdownWriteBlocked || !canCorrectBlocked}
+                    onClick={() => {
+                      if (!blockedRecord?.endEventId || blockedRecord.endedAt === undefined) {
+                        return;
+                      }
+                      setStepAction({
+                        kind: 'correct',
+                        step: blockedStep,
+                        choices: [
+                          {
+                            kind: 'end',
+                            eventId: blockedRecord.endEventId,
+                            at: blockedRecord.endedAt,
+                          },
+                        ],
+                      });
+                    }}
+                  >
+                    {t('bake.correctTimeAction')}
+                  </Ui>
+                  <Ui
+                    component="fp.button"
+                    variant="secondary"
+                    density="compact"
+                    disabled={countdownWriteBlocked || !canRepeatBlocked}
+                    onClick={() => {
+                      if (!focus || focus.step.id === blockedStep.id) return;
+                      setStepAction({
+                        kind: 'repeat',
+                        step: blockedStep,
+                        after: focus.step,
+                      });
+                    }}
+                  >
+                    {t('bake.repeatStepAction')}
+                  </Ui>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <Ui
+                  component="fp.button"
+                  variant="secondary"
+                  density="compact"
+                  fullWidth
+                  disabled={countdownWriteBlocked || !(predecessorId ?? undoStepId)}
+                  onClick={() => {
+                    const target = predecessorId ?? undoStepId;
+                    if (target) retractStep(target);
+                  }}
+                >
+                  {t('bake.previous')}
+                </Ui>
+                <Ui
+                  component="fp.button"
+                  density="compact"
+                  fullWidth
+                  disabled={countdownWriteBlocked || (!focus && !view?.allDone)}
+                  onClick={() => {
+                    if (focus) {
+                      if (focus.running || focusImplicitStart)
+                        void completeFocusedStep(focus.step.id);
+                      else void send({ type: 'StartStep', stepId: focus.step.id }, 'progression');
+                    } else if (mustChoose) finishWith(t('bake.finish'));
+                    else void send({ type: 'FinishBake' });
+                  }}
+                >
+                  {focus
+                    ? focus.running || focusImplicitStart
+                      ? t('bake.nextAction')
+                      : t('bake.start', { step: stepName(focus.step) })
+                    : intended && !mustChoose
+                      ? t('bake.finishAs', { outcome: outcomeText(intended) })
+                      : t('bake.finish')}
+                </Ui>
+              </div>
+            </section>
           </IonToolbar>
         </IonFooter>
       )}
@@ -839,48 +1423,166 @@ const remainingText = (end: Instant, now: Instant, t: Translate): string => {
   return `${formatDuration(seconds)} ${t(seconds >= 0 ? 'bake.left' : 'bake.over')}`;
 };
 
-const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now: Instant }) => {
+const Focus = ({
+  focus,
+  now,
+  held,
+  stepIndex,
+  totalSteps,
+  baselineDurationS,
+}: {
+  focus: BakeStepView & { running: boolean };
+  now: Instant;
+  held: boolean;
+  stepIndex: number;
+  totalSteps: number;
+  baselineDurationS: number | undefined;
+}) => {
   const { t, stepName, locale } = useMessages();
+  const { clock } = useServices();
+  const timerLabelId = useId();
+  const elapsedLabelId = useId();
   const { projected, startedAt } = focus;
+  const effectiveStart = startedAt ?? (projected?.implicit ? projected.start : undefined);
   const duration = focus.step.plannedDurationS;
-  let big = '—';
-  let unit = '';
-  if (focus.running && projected?.end) {
-    const seconds = (Date.parse(projected.end) - Date.parse(now)) / 1000;
-    big = formatDuration(seconds);
-    unit = t(seconds >= 0 ? 'bake.left' : 'bake.over');
-  } else if (duration !== undefined) {
-    big = formatDuration(duration);
-    unit = t('bake.planned');
-  }
-  const progress =
-    focus.running && startedAt && projected?.end
-      ? stepProgress(Date.parse(startedAt), Date.parse(projected.end), Date.parse(now))
+  const startMs = effectiveStart === undefined ? Number.NaN : Date.parse(effectiveStart);
+  const isActive = effectiveStart !== undefined && Number.isFinite(startMs);
+  const endMs = projected?.end === undefined ? Number.NaN : Date.parse(projected.end);
+  const hasActiveCountdown = isActive && Number.isFinite(endMs);
+  const stepId = focus.step.id;
+  const [timerSample, setTimerSample] = useState<{
+    readonly stepId: string;
+    readonly parentNow: Instant;
+    readonly instant: Instant;
+  }>();
+  useEffect(() => {
+    if (!isActive) return;
+    const interval = setInterval(
+      () => setTimerSample({ stepId, parentNow: now, instant: clock.now() }),
+      1_000,
+    );
+    return () => clearInterval(interval);
+  }, [clock, isActive, now, stepId]);
+  // Render a new focus or clock jump immediately, without a sample from the previous step.
+  const timerNow =
+    timerSample?.stepId === stepId && timerSample.parentNow === now ? timerSample.instant : now;
+  // A held projection is calculated using the same clock sample as the parent.
+  const elapsedNowMs = Date.parse(timerNow);
+  const nowMs = held ? Date.parse(now) : elapsedNowMs;
+  const elapsedSeconds =
+    isActive && Number.isFinite(elapsedNowMs)
+      ? Math.max(0, Math.floor((elapsedNowMs - startMs) / 1_000))
       : 0;
+
+  const remainingSeconds = Math.ceil((endMs - nowMs) / 1_000);
+  const overrun = remainingSeconds < 0;
+  const plannedDuration = isActive ? undefined : duration;
+
+  const showProgress = isActive && Number.isFinite(startMs) && Number.isFinite(endMs);
+  const progress = showProgress ? stepProgress(startMs, endMs, nowMs) : 0;
+  const adjustmentS =
+    baselineDurationS !== undefined &&
+    Number.isFinite(baselineDurationS) &&
+    duration !== undefined &&
+    Number.isFinite(duration)
+      ? duration - baselineDurationS
+      : undefined;
+  const adjustmentDelta =
+    adjustmentS === undefined
+      ? undefined
+      : Math.round(Math.abs(adjustmentS) / 60) === 0 || adjustmentS > 0
+        ? `+${formatDuration(adjustmentS)}`
+        : `−${formatDuration(adjustmentS)}`;
+  const stepTitle = stepName(focus.step);
+  const heading =
+    stepIndex > 0 && totalSteps > 0
+      ? t('bake.stepHeading', { index: stepIndex, total: totalSteps, step: stepTitle })
+      : stepTitle;
+  const technique = techniqueSummary(t, focus.step.technique);
+  const heroTimerClass = 'm3-type-hero-timer max-w-full text-[min(3.25rem,14vw)] tabular-nums';
+
   return (
     <section className="flex flex-col gap-1.5">
-      <span className="flex items-center gap-1.5 text-sm font-bold tracking-wider text-accent-text uppercase">
-        {t(focus.running ? 'bake.now' : 'bake.upNext')}
-        <InfoButton topic="bakeFocus" term={t(focus.running ? 'bake.now' : 'bake.upNext')} />
-      </span>
-      <h2 className="m3-type-title m-0 break-words">{stepName(focus.step)}</h2>
-      {focus.step.technique && (
-        <span className="text-[15px] text-muted">{techniqueSummary(t, focus.step.technique)}</span>
-      )}
-      <div className="flex flex-wrap items-baseline gap-2">
-        <span className="m3-type-hero-timer min-w-0">{big}</span>
-        <span className="m3-type-supporting text-muted">{unit}</span>
+      <div className="flex items-center gap-3 pe-3">
+        <h2 className="m3-type-title m-0 min-w-0 break-words">{heading}</h2>
+        <InfoButton topic="bakeFocus" term={stepTitle} />
       </div>
-      {focus.running && startedAt && projected?.end && (
+      {hasActiveCountdown ? (
+        <div className="flex flex-col items-start gap-0.5">
+          <span
+            role="timer"
+            aria-labelledby={timerLabelId}
+            aria-live="off"
+            className={`${heroTimerClass} whitespace-nowrap${overrun ? ' text-alert' : ''}`}
+          >
+            {overrun && '+'}
+            {formatClock(remainingSeconds)}
+          </span>
+          <span
+            id={timerLabelId}
+            className={`m3-type-supporting ${overrun ? 'font-semibold text-alert' : 'text-muted'}`}
+          >
+            {t(overrun ? 'bake.overrun' : 'bake.estimatedRemaining')}
+          </span>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span id={elapsedLabelId} className="m3-type-supporting text-muted">
+              {t('bake.elapsedTime')}
+            </span>
+            <span
+              role="timer"
+              aria-labelledby={elapsedLabelId}
+              aria-live="off"
+              className="m3-type-supporting font-semibold text-on-surface tabular-nums whitespace-nowrap"
+            >
+              {formatClock(elapsedSeconds)}
+            </span>
+          </div>
+        </div>
+      ) : isActive ? (
+        <div className="flex flex-col items-start gap-0.5">
+          <span
+            role="timer"
+            aria-labelledby={elapsedLabelId}
+            aria-live="off"
+            className={`${heroTimerClass} whitespace-nowrap`}
+          >
+            {formatClock(elapsedSeconds)}
+          </span>
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span id={elapsedLabelId} className="m3-type-supporting text-muted">
+              {t('bake.elapsedTime')}
+            </span>
+            <span aria-hidden="true" className="m3-type-supporting text-muted">
+              ·
+            </span>
+            <span className="m3-type-supporting text-muted">{t('bake.noDuration')}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <span className={`${heroTimerClass} min-w-0`}>
+            {plannedDuration === undefined ? '—' : formatDuration(plannedDuration)}
+          </span>
+          <span className="m3-type-supporting text-muted">
+            {t(plannedDuration === undefined ? 'bake.noDuration' : 'bake.planned')}
+          </span>
+        </div>
+      )}
+      {adjustmentDelta !== undefined && (
+        <div className="m3-type-supporting text-muted tabular-nums">
+          {t('bake.adjustment', { delta: adjustmentDelta })}
+        </div>
+      )}
+      {showProgress && (
         <>
           <div
             className="mt-2.5 h-2 rounded bg-track"
             role="progressbar"
-            aria-label={stepName(focus.step)}
+            aria-label={stepTitle}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progress * 100)}
-            aria-valuetext={unit ? `${big} ${unit}` : big}
+            aria-valuetext={t('prep.progressPct', { pct: Math.round(progress * 100) })}
           >
             <div className="h-2 rounded bg-accent" style={{ width: `${progress * 100}%` }} />
           </div>
@@ -889,6 +1591,7 @@ const Focus = ({ focus, now }: { focus: BakeStepView & { running: boolean }; now
           </div>
         </>
       )}
+      {technique && <span className="text-[15px] text-muted">{technique}</span>}
       <div className="m3-type-supporting flex flex-wrap justify-between gap-2 text-muted">
         <span>
           {startedAt
@@ -909,11 +1612,13 @@ const StepList = ({
   title,
   help,
   testId,
+  ordered = false,
   children,
 }: {
   title: string;
   help?: ReactNode;
   testId?: string;
+  ordered?: boolean;
   children: ReactNode;
 }) => (
   <section className="flex flex-col" data-testid={testId}>
@@ -921,7 +1626,16 @@ const StepList = ({
       <SectionTitle>{title}</SectionTitle>
       {help}
     </div>
-    <div className="[&>*]:border-t [&>*]:border-line">{children}</div>
+    {ordered ? (
+      <ol
+        reversed
+        className="m-0 list-decimal list-outside ps-8 text-sm text-muted tabular-nums [&>li]:border-t [&>li]:border-line"
+      >
+        {children}
+      </ol>
+    ) : (
+      <div className="[&>*]:border-t [&>*]:border-line">{children}</div>
+    )}
   </section>
 );
 

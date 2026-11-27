@@ -167,7 +167,7 @@ export const transitionCss = (motion: TransitionMotion, reduced: boolean): strin
 
 /** The part of Ionic's `createAnimation()` this module uses; passed in, never imported. */
 export interface IonicAnimationBuilder {
-  addElement(element: Element | null): IonicAnimationBuilder;
+  addElement(element: Element): IonicAnimationBuilder;
   duration(ms: number): IonicAnimationBuilder;
   easing(easing: string): IonicAnimationBuilder;
   keyframes(keyframes: Keyframe[]): IonicAnimationBuilder;
@@ -194,8 +194,9 @@ export const ionicAnimation =
     const root: ParentNode = baseElement.shadowRoot ?? baseElement;
     const part = target ? root.querySelector(target) : baseElement;
     const form = formOf(motion, isReduced(baseElement));
-    const animation = createAnimation().addElement(part);
-    if (form === 'none') return animation.duration(0) as A;
+    const animation = createAnimation().addElement(part ?? baseElement);
+    if (form === 'none')
+      return animation.duration(0).keyframes([...motion.standard.keyframes]) as A;
     return animation
       .duration(durationMs(form.duration))
       .easing(easingCurve(form.easing))

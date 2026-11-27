@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveFormula, type Formula } from '@flourprint/core/domain';
 import { totalWaterKey } from '../src/blocks/water-label';
-import { en } from '../src/i18n/messages';
+import { en, fr } from '../src/i18n/messages';
 
 const formula = (extra: Formula['ingredients']): Formula => ({
   flours: [{ id: 'bread', sharePct: 100 }],
@@ -33,10 +33,34 @@ describe('total water label (PR #31 follow-up)', () => {
     );
     expect(water.value).toBe(780);
     expect(water.completeness).toBe('incomplete');
-    expect(key).toBe('formula.stat.totalWaterEstimate');
+    expect(key).toBe('formula.stat.totalWaterSpecifiedEstimate');
+    expect(en[key]).toBe('Specified part (estimated): {pct}');
+    expect(fr[key]).toBe('Partie renseignée (estimée) : {pct}');
     expect(en[key]).not.toContain('≥');
+    expect(fr[key]).not.toContain('≥');
   });
 
+  it('uses a lower bound only when every specified contribution is known', () => {
+    const { key, water } = keyFor(
+      formula([
+        {
+          id: 'milk',
+          kind: 'other',
+          bakerPct: 10,
+          role: 'dough',
+          water: { status: 'known', valuePct: 80 },
+        },
+        { id: 'yeast', kind: 'other', bakerPct: 0.1, role: 'dough', water: { status: 'unknown' } },
+      ]),
+    );
+    expect(water.value).toBe(780);
+    expect(water.completeness).toBe('incomplete');
+    expect(water.range).toBeUndefined();
+    expect(water.unknownContributors).toEqual(['yeast']);
+    expect(key).toBe('formula.stat.totalWaterLowerBound');
+    expect(en[key]).toBe('≥ {pct}');
+    expect(fr[key]).toBe('≥ {pct}');
+  });
   it('shows a plain value only when every contribution is known exactly', () => {
     expect(keyFor(formula([])).key).toBe('formula.stat.totalWaterValue');
     expect(

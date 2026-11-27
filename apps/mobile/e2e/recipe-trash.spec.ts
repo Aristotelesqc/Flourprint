@@ -1,11 +1,16 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
-import { menuAction, routed } from './ui-actions';
+import { menuAction, showPlanning, routed } from './ui-actions';
 
 /** One step back in the app, once the navigation and the Ionic page transition are over. */
 const goBack = async (page: Page) => {
+  await expect(routed(page)).toHaveCount(1);
   const before = page.url();
-  await page.locator('ion-back-button:visible').last().click();
+  await routed(page)
+    .locator(
+      'ion-header ion-back-button, ion-header button[aria-label="Back"], ion-header button[aria-label="Retour"]',
+    )
+    .click();
   await expect(page).not.toHaveURL(before);
   await expect(page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)')).toHaveCount(1);
 };
@@ -17,7 +22,7 @@ const backToRecipes = async (page: Page, title: string) => {
 };
 
 const recipeCard = (page: Page, name: string) =>
-  routed(page).locator('ion-router-link[router-link^="/recipes/"]').filter({ hasText: name });
+  routed(page).getByRole('link', { name, exact: true });
 
 const second = (name: string) => ({
   kind: 'flourprint-recipes',
@@ -56,6 +61,7 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
 
   // A bake of the sample recipe, started before anything goes to the trash.
   await recipeCard(page, 'Poolish + tangzhong').click();
+  await showPlanning(page);
   await page
     .locator('ion-footer:visible, ion-header:visible')
     .getByRole('button', { name: /Démarrer/ })
@@ -83,9 +89,10 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
   await expect(recipeCard(page, 'Poolish + tangzhong')).toHaveCount(0);
   // Trashing the recipe leaves its current preparation visible and usable.
   await expect(
-    routed(page)
-      .locator('ion-router-link[router-link^="/bakes/"]')
-      .filter({ hasText: 'Poolish + tangzhong' }),
+    routed(page).getByRole('link', {
+      name: 'Reprendre la préparation : Poolish + tangzhong',
+      exact: true,
+    }),
   ).toHaveCount(1);
 
   // It sits in the trash (Advanced), with the time it went there.
@@ -134,9 +141,7 @@ test('the trash: put a recipe aside, restore it, delete it for good, empty the t
   await expect(
     routed(page).getByRole('heading', { name: 'Recette supprimée', exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Commencer : Préferment' }).locator('visible=true'),
-  ).toHaveCount(1);
+  await expect(routed(page).getByRole('button', { name: 'Suivant', exact: true })).toHaveCount(1);
 
   // Two recipes in the trash, emptied at once, after a confirmation.
   await backToRecipes(page, 'Recettes');

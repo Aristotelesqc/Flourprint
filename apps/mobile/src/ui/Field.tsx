@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useState, type KeyboardEvent } from 'react';
 import type { TemperatureContext } from '@flourprint/core/domain';
+import { Ui } from './library';
 import { editableNumber, parseDecimal } from '../i18n/numbers';
 import { useTemperature } from '../i18n/temperature';
 import { editableDuration, parseDuration } from '../i18n/time';
@@ -39,13 +40,16 @@ interface FieldProps<V> {
   readonly unit?: string;
   readonly parse: (text: string) => { ok: true; value: V } | { ok: false };
   readonly invalidText: string;
+  readonly domainInvalidText?: string | undefined;
   readonly onCommit: Commit<V>;
   readonly size?: 'regular' | 'large';
   readonly width?: string;
   /** Shown while empty: a value that applies without being stored (e.g. an inherited one). */
   readonly placeholder?: string;
   readonly disabled?: boolean;
-  readonly describedBy?: string;
+  readonly describedBy?: string | undefined;
+  readonly onValidityChange?: (invalid: boolean) => void;
+  readonly hideLabel?: boolean;
 }
 
 /**
@@ -59,15 +63,17 @@ const Field = <V,>({
   unit,
   parse,
   invalidText,
+  domainInvalidText,
   onCommit,
   size = 'regular',
   width = '100%',
   placeholder,
   disabled = false,
   describedBy,
+  onValidityChange,
+  hideLabel = true,
 }: FieldProps<V>) => {
   const id = useId();
-  const errorId = `${id}-error`;
   const [text, setText] = useState(formatted);
   const [invalid, setInvalid] = useState(false);
   const [domainRefused, setDomainRefused] = useState(false);
@@ -106,6 +112,9 @@ const Field = <V,>({
   // Restoration of formatted text clears the blocker immediately.
   const isInvalid = text === formatted ? false : !parse(text).ok || domainRefused || invalid;
 
+  useEffect(() => onValidityChange?.(isInvalid), [onValidityChange, isInvalid]);
+  useEffect(() => () => onValidityChange?.(false), [onValidityChange]);
+
   useEffect(() => {
     if (!validationActions) return;
     return validationActions.register(id);
@@ -128,50 +137,38 @@ const Field = <V,>({
     }
   };
 
+  const accessibleLabel = unit ? `${label} (${unit})` : label;
+
   return (
-    <span className="flex flex-col items-end" style={{ width }}>
-      <span
-        className={`fp-field flex w-full items-center justify-end gap-1 rounded-[10px] border-[1.5px] bg-field-bg px-2.5 ${
-          size === 'large' ? 'h-12 text-xl font-bold' : 'h-11'
-        } ${invalid ? 'border-alert' : 'border-field'}`}
-      >
-        <input
-          id={id}
-          disabled={disabled}
-          aria-label={unit ? `${label} (${unit})` : label}
-          aria-invalid={invalid}
-          aria-describedby={
-            [describedBy, invalid ? errorId : undefined].filter(Boolean).join(' ') || undefined
-          }
-          className={`fp-input w-full ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
-          inputMode="decimal"
-          placeholder={placeholder}
-          enterKeyHint="done"
-          value={text}
-          onChange={(event) => handleChange(event.target.value)}
-          onBlur={commit}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') event.currentTarget.blur();
-          }}
-        />
-        {unit && (
-          <span className="font-normal text-muted" aria-hidden="true">
-            {unit}
-          </span>
-        )}
-      </span>
-      {invalid && (
-        <span id={errorId} className="mt-1 text-xs text-alert">
-          {invalidText}
-        </span>
-      )}
-    </span>
+    <div className="flex flex-col items-end" style={{ width }}>
+      <Ui
+        component="fp.number-field"
+        id={id}
+        label={accessibleLabel}
+        hideLabel={hideLabel}
+        value={text}
+        onValueChange={handleChange}
+        unit={unit}
+        error={invalid ? (domainRefused ? domainInvalidText : invalidText) : undefined}
+        invalid={isInvalid}
+        disabled={disabled}
+        inputMode="decimal"
+        placeholder={placeholder}
+        enterKeyHint="done"
+        size={size}
+        describedBy={describedBy}
+        onBlur={commit}
+        onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+          if (event.key === 'Enter') event.currentTarget.blur();
+        }}
+      />
+    </div>
   );
 };
 
 interface NumberFieldProps {
   readonly label: string;
-  readonly value: number;
+  readonly value: number | undefined;
   readonly unit?: string;
   readonly onCommit: Commit<number>;
   readonly size?: 'regular' | 'large';
@@ -180,7 +177,7 @@ interface NumberFieldProps {
   readonly maximumFractionDigits?: number;
   readonly invalidText?: string;
   readonly disabled?: boolean;
-  readonly describedBy?: string;
+  readonly describedBy?: string | undefined;
 }
 
 export const NumberField = ({
@@ -193,14 +190,19 @@ export const NumberField = ({
   return (
     <Field<number>
       {...props}
-      text={new Intl.NumberFormat(locale, { maximumFractionDigits, useGrouping: false }).format(
-        value,
-      )}
+      text={
+        value === undefined
+          ? ''
+          : new Intl.NumberFormat(locale, { maximumFractionDigits, useGrouping: false }).format(
+              value,
+            )
+      }
       parse={(text) => {
         const parsed = parseDecimal(text);
         return parsed === undefined ? { ok: false } : { ok: true, value: parsed };
       }}
       invalidText={invalidText ?? t('field.invalidNumber')}
+      domainInvalidText={invalidText}
     />
   );
 };
@@ -214,6 +216,11 @@ interface OptionalNumberFieldProps {
   readonly onCommit: Commit<number | undefined>;
   readonly width?: string;
   readonly placeholder?: string;
+  readonly disabled?: boolean;
+  readonly describedBy?: string | undefined;
+  readonly invalidText?: string;
+  readonly domainInvalidText?: string | undefined;
+  readonly onValidityChange?: (invalid: boolean) => void;
 }
 
 /** An optional signed number: empty is unknown (`undefined`), a leading minus is accepted. */
@@ -226,14 +233,20 @@ const parseOptional = (text: string): { ok: true; value: number | undefined } | 
 };
 
 /** A number that may stay unknown, such as a quantity nobody measured. */
-export const OptionalNumberField = ({ value, ...props }: OptionalNumberFieldProps) => {
+export const OptionalNumberField = ({
+  value,
+  invalidText,
+  domainInvalidText,
+  ...props
+}: OptionalNumberFieldProps) => {
   const { t, locale } = useMessages();
   return (
     <Field<number | undefined>
       {...props}
       text={value === undefined ? '' : editableNumber(value, locale)}
       parse={parseOptional}
-      invalidText={t('field.invalidNumber')}
+      invalidText={invalidText ?? t('field.invalidNumber')}
+      domainInvalidText={domainInvalidText}
     />
   );
 };
@@ -251,6 +264,8 @@ interface TemperatureFieldProps {
   readonly width?: string;
   /** °C shown while empty, such as the inherited ambient. */
   readonly placeholderC?: number;
+  /** Allows an enclosing overlay to retain incomplete raw input on dismissal. */
+  readonly onValidityChange?: (invalid: boolean) => void;
 }
 
 /** A temperature typed and shown in the unit of its context, stored in °C. */
@@ -284,6 +299,7 @@ export const TemperatureField = ({
 };
 
 interface DurationFieldProps {
+  readonly hideLabel?: boolean;
   readonly label: string;
   /** Seconds; undefined is an unknown duration, shown empty, never as zero. */
   readonly value: number | undefined;
@@ -291,6 +307,7 @@ interface DurationFieldProps {
   readonly optional?: boolean;
   readonly onCommit: Commit<number | undefined>;
   readonly width?: string;
+  readonly onValidityChange?: (invalid: boolean) => void;
 }
 
 /** Duration in seconds, typed as `45 min`, `1 h 30` or `2,5 h`. */

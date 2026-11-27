@@ -1,13 +1,17 @@
 import { IonButton } from '@ionic/react';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  anchorTimeline,
   projectProcess,
+  relativeTimeline,
   temperatureContext,
+  type Formula,
   type Instant,
   type Process,
   type ProjectedStep,
   type ProcessStep,
   type ProjectionMode,
+  type StepTiming,
 } from '@flourprint/core/domain';
 import { useMessages } from '../i18n/use-messages';
 import { useServices } from '../services/services';
@@ -15,13 +19,16 @@ import { formatDay, formatDayTime, formatDuration, formatTime, localDayKey } fro
 import { useTemperature } from '../i18n/temperature';
 import { InfoButton } from '../ui/InfoButton';
 import { Card, Rows, SectionTitle } from '../ui/Layout';
+import { Ui } from '../ui/library';
 import { Segmented } from '../ui/Segmented';
+import { PlanningWindows } from './PlanningWindows';
 import { RecipeOutcome } from './RecipeOutcome';
 import { StepEquipmentDetails } from './StepEquipmentDetails';
 import { techniqueSummary } from './StepSheet';
 import { isImmediatelyPreceding } from './RecipeMethod';
 
 interface Props {
+  readonly formula: Formula;
   readonly process: Process;
   /** False while the recipe has unsaved changes: a bake starts from a saved revision. */
   readonly canStart: boolean;
@@ -32,22 +39,17 @@ interface Props {
   readonly onOpenBake: (bakeId: string) => void;
   /** The Recipe page supplies the single primary action and its overflow alternatives. */
   readonly showActions?: boolean;
-  /** Shortcut to edit a specific step in the authored method in Recipe tab (#71). */
-  readonly onEditStepInRecipe?: (stepId: string) => void;
+  /** Show the save-first hint when `canStart` is false (non-trashed RecipePage drafts/invalid state). */
+  readonly showSaveHint?: boolean;
 }
 
-/** `datetime-local` value (local time, minutes) ↔ UTC instant. */
-const toLocalInput = (date: Date): string => {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-};
-const fromLocalInput = (value: string): Instant => new Date(value).toISOString() as Instant;
+type StartSource = 'relative' | 'now' | 'chosen';
 
-const nextQuarterHour = (): Date => {
-  const date = new Date();
-  date.setSeconds(0, 0);
-  date.setMinutes(Math.ceil((date.getMinutes() + 1) / 15) * 15);
-  return date;
+/** `datetime-local` value (local time, minutes) → UTC instant when valid. */
+const parseLocalInput = (value: string): Instant | undefined => {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : (date.toISOString() as Instant);
 };
 
 /** Default step a "ready by" time refers to: the bake when there is one, else the last step. */
@@ -56,28 +58,67 @@ const defaultTarget = (process: Process): ProcessStep | undefined =>
 
 interface Planned {
   readonly step: ProcessStep;
+  readonly index: number;
+  readonly sortAt: number;
   readonly planned?: ProjectedStep;
+  readonly relative?: StepTiming;
 }
 
-/** Planning tab (#71): read-only projected timeline with time/target controls and edit-in-Recipe shortcuts. */
+const formatStepTimeRange = (
+  planned: ProjectedStep | undefined,
+  locale: string,
+): { readonly text: string; readonly wrap: boolean } => {
+  const start = planned?.start;
+  const end = planned?.end;
+  if (start === undefined) {
+    return { text: end === undefined ? '—' : `— – ${formatTime(end, locale)}`, wrap: false };
+  }
+  const startTime = formatTime(start, locale);
+  if (end === undefined) {
+    return { text: `${startTime} – —`, wrap: false };
+  }
+  const overnight = localDayKey(start) !== localDayKey(end);
+  return {
+    text: overnight
+      ? `${startTime} – ${formatDayTime(end, locale)}`
+      : `${startTime}–${formatTime(end, locale)}`,
+    wrap: overnight,
+  };
+};
+
+const formatRelativeTimeRange = (
+  stepTiming: StepTiming | undefined,
+): { readonly text: string; readonly wrap: boolean } => {
+  if (stepTiming?.timing.status !== 'known') {
+    return { text: '—', wrap: false };
+  }
+  return {
+    text: `+${formatDuration(stepTiming.timing.startS)} – +${formatDuration(stepTiming.timing.endS)}`,
+    wrap: true,
+  };
+};
+
+/** Planning tab (#71, #170): read-only timeline with relative, clock-anchored and target controls. */
 export const ProcessSection = ({
+  formula,
   process,
   canStart,
   onStart,
   activeBakeId,
   onOpenBake,
   showActions = true,
-  onEditStepInRecipe,
+  showSaveHint = false,
 }: Props) => {
   const { t, error, stepName, stepInstructions, locale } = useMessages();
   const temperature = useTemperature();
   const formatOven = (celsius: number) => temperature.format(celsius, 'oven');
   const services = useServices();
   const [modeKind, setModeKind] = useState<ProjectionMode['kind']>('startAt');
-  const [fromNow, setFromNow] = useState(true);
+  const [startSource, setStartSource] = useState<StartSource>('relative');
   const [now, setNow] = useState(() => services.clock.now());
-  const [when, setWhen] = useState(() => toLocalInput(nextQuarterHour()));
-  const followsClock = modeKind === 'startAt' && fromNow;
+  const [when, setWhen] = useState('');
+  const [scheduleDetailsOpen, setScheduleDetailsOpen] = useState(false);
+  const followsClock = modeKind === 'startAt' && startSource === 'now';
   useEffect(() => {
     if (!followsClock) return;
     setNow(services.clock.now());
@@ -87,39 +128,84 @@ export const ProcessSection = ({
   const [targetId, setTargetId] = useState(() => defaultTarget(process)?.id);
   const target = process.steps.find((s) => s.id === targetId) ?? defaultTarget(process);
 
-  const mode: ProjectionMode = useMemo(() => {
-    const at = followsClock ? now : fromLocalInput(when);
-    return modeKind === 'readyBy' && target
-      ? { kind: 'readyBy', at, target: target.id }
-      : { kind: 'startAt', at };
-  }, [modeKind, followsClock, now, when, target]);
-  const projection = useMemo(() => projectProcess(process, { mode }), [process, mode]);
+  const chosenInstant = useMemo(() => parseLocalInput(when), [when]);
+  const mode: ProjectionMode | undefined = useMemo(() => {
+    if (modeKind === 'readyBy') {
+      return chosenInstant && target
+        ? { kind: 'readyBy', at: chosenInstant, target: target.id }
+        : undefined;
+    }
+    if (startSource === 'now') {
+      return { kind: 'startAt', at: now };
+    }
+    if (startSource === 'chosen' && chosenInstant) {
+      return { kind: 'startAt', at: chosenInstant };
+    }
+    return undefined;
+  }, [modeKind, startSource, now, chosenInstant, target]);
+  const timeline = useMemo(
+    () =>
+      relativeTimeline(process, {
+        components: new Set(formula.components.map((component) => component.id)),
+      }),
+    [process, formula.components],
+  );
+  const timingById = useMemo(
+    () =>
+      new Map<ProcessStep['id'], StepTiming>(
+        timeline.ok ? timeline.value.steps.map((s) => [s.stepId, s]) : [],
+      ),
+    [timeline],
+  );
+  const projection = useMemo(
+    () => (mode ? projectProcess(process, { mode }) : undefined),
+    [process, mode],
+  );
+  const anchored = useMemo(
+    () =>
+      timeline.ok && mode && projection?.ok ? anchorTimeline(timeline.value, mode) : undefined,
+    [timeline, mode, projection],
+  );
+  const activeResult = projection ?? timeline;
 
   const planned: Planned[] = process.steps
-    .map((step) => {
-      const p = projection.ok ? projection.value.steps[step.id] : undefined;
-      return p === undefined ? { step } : { step, planned: p };
+    .map((step, index) => {
+      const p = projection?.ok ? projection.value.steps[step.id] : undefined;
+      const r = projection ? undefined : timingById.get(step.id);
+      const sortAt = projection
+        ? p?.start
+          ? Date.parse(p.start)
+          : Infinity
+        : r?.timing.status === 'known'
+          ? r.timing.startS
+          : Infinity;
+      return {
+        step,
+        index,
+        sortAt,
+        ...(p === undefined ? {} : { planned: p }),
+        ...(r === undefined ? {} : { relative: r }),
+      };
     })
-    .sort(
-      (a, b) =>
-        (a.planned?.start ? Date.parse(a.planned.start) : Infinity) -
-          (b.planned?.start ? Date.parse(b.planned.start) : Infinity) ||
-        process.steps.indexOf(a.step) - process.steps.indexOf(b.step),
-    );
-  const days: { key: string; label: string; steps: Planned[] }[] = [];
-  for (const item of planned) {
-    const start = item.planned?.start;
-    const key = start ? localDayKey(start) : 'unknown';
-    const label = start ? formatDay(start, locale) : t('process.unknownDay');
-    const day = days.find((d) => d.key === key);
-    if (day) day.steps.push(item);
-    else days.push({ key, label, steps: [item] });
+    .sort((a, b) => a.sortAt - b.sortAt || a.index - b.index);
+  const groups: { key: string; label: string; steps: Planned[] }[] = [];
+  if (projection) {
+    for (const item of planned) {
+      const start = item.planned?.start;
+      const key = start ? localDayKey(start) : 'unknown';
+      const label = start ? formatDay(start, locale) : t('process.unknownDay');
+      const group = groups.find((d) => d.key === key);
+      if (group) group.steps.push(item);
+      else groups.push({ key, label, steps: [item] });
+    }
+  } else if (planned.length > 0) {
+    groups.push({ key: 'relative', label: t('process.fromStart'), steps: planned });
   }
 
   const first = planned[0];
-  const targetEnd = target && projection.ok ? projection.value.steps[target.id]?.end : undefined;
-  const summary =
-    modeKind === 'readyBy'
+  const targetEnd = target && projection?.ok ? projection.value.steps[target.id]?.end : undefined;
+  const summary = projection?.ok
+    ? modeKind === 'readyBy'
       ? first?.planned?.start &&
         t('process.summary.readyBy', {
           step: stepName(first.step),
@@ -130,7 +216,8 @@ export const ProcessSection = ({
         t('process.summary.startAt', {
           step: stepName(target),
           when: formatDayTime(targetEnd, locale),
-        });
+        })
+    : undefined;
   const nameOf = (id: string) => {
     const step = process.steps.find((s) => s.id === id);
     return step ? stepName(step) : id;
@@ -157,16 +244,17 @@ export const ProcessSection = ({
             <span>{t('process.when.startAt')}</span>
             <Segmented
               size="small"
-              value={fromNow ? 'now' : 'chosen'}
+              value={startSource}
               options={[
+                { value: 'relative', label: t('process.when.relative') },
                 { value: 'now', label: t('process.when.now') },
                 { value: 'chosen', label: t('process.when.chosen') },
               ]}
-              onChange={(value) => setFromNow(value === 'now')}
+              onChange={setStartSource}
             />
           </div>
         )}
-        {!followsClock && (
+        {((modeKind === 'startAt' && startSource === 'chosen') || modeKind === 'readyBy') && (
           <label className="flex flex-wrap items-center justify-between gap-2">
             <span className="min-w-0">
               {modeKind === 'readyBy' && target
@@ -177,7 +265,7 @@ export const ProcessSection = ({
               type="datetime-local"
               className="fp-field h-12 w-full min-w-0 max-w-full rounded-[10px] border-[1.5px] border-field bg-field-bg px-3 font-bold text-ink sm:w-auto"
               value={when}
-              onChange={(e) => e.target.value && setWhen(e.target.value)}
+              onChange={(e) => setWhen(e.target.value)}
             />
           </label>
         )}
@@ -197,9 +285,9 @@ export const ProcessSection = ({
             </select>
           </label>
         )}
-        {!projection.ok && (
+        {!activeResult.ok && (
           <p role="alert" className="m-0 text-alert">
-            {error(projection.error)}
+            {error(activeResult.error)}
           </p>
         )}
         {summary && (
@@ -210,130 +298,148 @@ export const ProcessSection = ({
         )}
       </Card>
 
-      {days.map((day) => (
-        <section key={day.key} className="flex flex-col gap-2">
-          <SectionTitle>{day.label}</SectionTitle>
-          <Rows>
-            {day.steps.map(({ step, planned: p }) => {
-              const isLinearPrev = isImmediatelyPreceding(step, process.steps);
-              const hints = [
-                ...(step.dependsOn.length > 0 && !isLinearPrev
-                  ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
-                  : []),
-                ...(p && p.unknownAfter.length > 0
-                  ? [t('process.unknown', { steps: p.unknownAfter.map(nameOf).join(', ') })]
-                  : []),
-              ];
-              return (
-                <div
-                  key={step.id}
-                  className="flex flex-col gap-2 border-b border-line/40 px-3 py-3 last:border-b-0"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="w-14 shrink-0 font-bold text-ink">
-                        {p?.start ? formatTime(p.start, locale) : '—'}
-                      </span>
-                      <span className="font-semibold text-ink">{stepName(step)}</span>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="font-medium text-ink">
-                        {step.durationMode === 'model'
-                          ? step.plannedDurationS !== undefined
-                            ? `≈ ${formatDuration(step.plannedDurationS)}`
-                            : t('fermentation.auto')
-                          : step.plannedDurationS !== undefined
-                            ? formatDuration(step.plannedDurationS)
-                            : '—'}
-                      </span>
-                      {onEditStepInRecipe && (
-                        <button
-                          type="button"
-                          className="fp-reset inline-flex min-h-12 min-w-12 h-12 w-12 items-center justify-center rounded-lg border border-line bg-surface text-muted hover:text-accent-text hover:bg-field-bg active:bg-accent-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                          aria-label={t('planning.editStepInRecipe', { step: stepName(step) })}
-                          onClick={() => onEditStepInRecipe(step.id)}
+      {timeline.ok &&
+        timeline.value.steps.length > 0 &&
+        (!mode || (projection?.ok && anchored?.ok)) && (
+          <PlanningWindows
+            formula={formula}
+            process={process}
+            timeline={timeline.value}
+            {...(anchored?.ok ? { anchored: anchored.value } : {})}
+          />
+        )}
+
+      {groups.length > 0 && (
+        <Ui
+          component="fp.disclosure"
+          expanded={scheduleDetailsOpen}
+          onExpandedChange={setScheduleDetailsOpen}
+          label={t('process.scheduleDetails')}
+        >
+          <div className="flex flex-col gap-3">
+            {groups.map((group) => (
+              <section key={group.key} className="flex flex-col gap-2">
+                <SectionTitle>{group.label}</SectionTitle>
+                <Rows>
+                  {group.steps.map(({ step, planned: p, relative: r }) => {
+                    const isLinearPrev = isImmediatelyPreceding(step, process.steps);
+                    const unknownAfter = projection
+                      ? (p?.unknownAfter ?? [])
+                      : r?.timing.status === 'unknown'
+                        ? r.timing.unknownAfter
+                        : [];
+                    const hints = [
+                      ...(step.dependsOn.length > 0 && !isLinearPrev
+                        ? [t('process.after', { steps: step.dependsOn.map(nameOf).join(', ') })]
+                        : []),
+                      ...(unknownAfter.length > 0
+                        ? [t('process.unknown', { steps: unknownAfter.map(nameOf).join(', ') })]
+                        : []),
+                    ];
+                    const timeRange = projection
+                      ? formatStepTimeRange(p, locale)
+                      : formatRelativeTimeRange(r);
+                    const durationText =
+                      step.durationMode === 'model'
+                        ? step.plannedDurationS !== undefined
+                          ? `≈ ${formatDuration(step.plannedDurationS)}`
+                          : t('fermentation.auto')
+                        : step.plannedDurationS !== undefined
+                          ? formatDuration(step.plannedDurationS)
+                          : '—';
+                    return (
+                      <div
+                        key={step.id}
+                        data-testid={`planning-step-${step.id}`}
+                        className="flex min-w-0 flex-col gap-2 border-b border-line/40 px-3 py-3 last:border-b-0"
+                      >
+                        <div
+                          data-testid={`planning-step-time-${step.id}`}
+                          className={`min-w-0 font-bold tabular-nums text-ink ${
+                            timeRange.wrap ? 'whitespace-normal' : 'whitespace-nowrap'
+                          }`}
                         >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                          >
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  {step.technique && (
-                    <span className="text-[13px] text-ink">
-                      {techniqueSummary(t, step.technique)}
-                    </span>
-                  )}
-                  {stepInstructions(step, formatOven) && (
-                    <span className="text-[13px] text-muted">
-                      {stepInstructions(step, formatOven)}
-                    </span>
-                  )}
-                  {step.conditions && (
-                    <span className="text-[13px] text-muted">
-                      {[
-                        step.conditions.location,
-                        step.conditions.temperatureC !== undefined
-                          ? `${
-                              temperatureContext(step) === 'oven'
-                                ? t('equipment.label.setpoint')
-                                : t('fermentation.room')
-                            } : ${temperature.format(
-                              step.conditions.temperatureC,
-                              temperatureContext(step),
-                            )}`
-                          : undefined,
-                        step.conditions.doughTemperatureC !== undefined
-                          ? `${t('fermentation.target')} : ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
-                          : undefined,
-                        step.conditions.frictionC !== undefined
-                          ? `${t('fermentation.friction')} : ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
-                          : undefined,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </span>
-                  )}
-                  <StepEquipmentDetails step={step} />
-                  {(hints.length > 0 || step.schedule === 'alap') && (
-                    <span className="text-[13px] text-muted">
-                      {step.schedule === 'alap' && (
-                        <span className="mr-1 inline-flex items-center gap-1 font-semibold">
-                          {t('process.alap')}
-                          <InfoButton topic="alap" term={t('process.alap')} />
-                        </span>
-                      )}
-                      {step.schedule === 'alap' && hints.length > 0 && ' · '}
-                      {hints.join(' · ')}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </Rows>
-        </section>
-      ))}
+                          {timeRange.text}
+                        </div>
+                        <div
+                          data-testid={`planning-step-title-${step.id}`}
+                          className="min-w-0 font-semibold text-ink"
+                        >
+                          {stepName(step)}
+                        </div>
+                        {step.technique && (
+                          <span className="min-w-0 text-supporting text-ink">
+                            {techniqueSummary(t, step.technique)}
+                          </span>
+                        )}
+                        {stepInstructions(step, formatOven) && (
+                          <span className="min-w-0 text-supporting text-muted">
+                            {stepInstructions(step, formatOven)}
+                          </span>
+                        )}
+                        <div
+                          data-testid={`planning-step-duration-${step.id}`}
+                          className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-supporting"
+                        >
+                          <span className="text-muted">{t('prep.duration')}</span>
+                          <span className="font-medium tabular-nums text-ink">{durationText}</span>
+                        </div>
+                        {step.conditions && (
+                          <span className="min-w-0 text-supporting text-muted">
+                            {[
+                              step.conditions.location,
+                              step.conditions.temperatureC !== undefined
+                                ? `${
+                                    temperatureContext(step) === 'oven'
+                                      ? t('equipment.label.setpoint')
+                                      : t('fermentation.room')
+                                  } : ${temperature.format(
+                                    step.conditions.temperatureC,
+                                    temperatureContext(step),
+                                  )}`
+                                : undefined,
+                              step.conditions.doughTemperatureC !== undefined
+                                ? `${t('fermentation.target')} : ${temperature.format(step.conditions.doughTemperatureC, 'ambient')}`
+                                : undefined,
+                              step.conditions.frictionC !== undefined
+                                ? `${t('fermentation.friction')} : ${temperature.format(step.conditions.frictionC, 'ambient', { difference: true })}`
+                                : undefined,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </span>
+                        )}
+                        <StepEquipmentDetails step={step} />
+                        {(hints.length > 0 || step.schedule === 'alap') && (
+                          <span className="text-supporting text-muted">
+                            {step.schedule === 'alap' && (
+                              <span className="mr-1 inline-flex items-center gap-1 font-semibold">
+                                {t('process.alap')}
+                                <InfoButton topic="alap" term={t('process.alap')} />
+                              </span>
+                            )}
+                            {step.schedule === 'alap' && hints.length > 0 && ' · '}
+                            {hints.join(' · ')}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </Rows>
+              </section>
+            ))}
+          </div>
+        </Ui>
+      )}
 
       <div className="pt-1">
         <RecipeOutcome process={process} editable={false} />
       </div>
 
-      {!canStart && onEditStepInRecipe && (
+      {!canStart && showSaveHint && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.saveFirst')}</p>
       )}
-      {canStart && !followsClock && (
+      {canStart && mode !== undefined && !followsClock && (
         <p className="m-0 px-1 text-sm text-muted">{t('process.startsNow')}</p>
       )}
       {showActions && activeBakeId && (
@@ -341,7 +447,7 @@ export const ProcessSection = ({
           <IonButton expand="block" size="large" onClick={() => onOpenBake(activeBakeId)}>
             {t('process.openBake')}
           </IonButton>
-          <IonButton fill="clear" disabled={!canStart || !projection.ok} onClick={onStart}>
+          <IonButton fill="clear" disabled={!canStart || !activeResult.ok} onClick={onStart}>
             {t('process.startAnother')}
           </IonButton>
         </>

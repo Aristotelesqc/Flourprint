@@ -37,13 +37,18 @@ export const useOutcomeText = () => {
   };
 };
 
+const EARLY_KEPT = 'kept';
+const EARLY_ABANDON = 'abandon';
+
 /**
  * Asks for a result, then, for a raw dough kept, what became of it: two short lists rather than
  * one long one. The current outcome is preselected; its pieces count, if any, is kept when the
- * result still keeps dough.
+ * result still keeps dough. When `onAbandon` is given, presents the restricted single list for
+ * early finish with no cooking step completed: no preselection, raw-dough options, and abandon.
  */
 export const useOutcomePicker = () => {
   const { t } = useMessages();
+  const outcomeText = useOutcomeText();
   const [presentAlert] = useIonAlert();
   // A second controller: the dough list opens as the result list closes.
   const [presentDoughAlert] = useIonAlert();
@@ -55,7 +60,55 @@ export const useOutcomePicker = () => {
     header: string,
     current: PreparationOutcome | undefined,
     onPick: (outcome: PreparationOutcome) => void,
+    options?: { readonly onAbandon?: () => void },
   ) => {
+    const onAbandon = options?.onAbandon;
+    if (onAbandon) {
+      let abandoning = false;
+      void presentAlert({
+        header,
+        message: t('outcome.earlyFinishMessage'),
+        inputs: [
+          {
+            type: 'radio' as const,
+            label: t('outcome.doughKept'),
+            value: EARLY_KEPT,
+            checked: false,
+          },
+          ...DOUGH_DISPOSITIONS.map((dough) => ({
+            type: 'radio' as const,
+            label: outcomeText({ result: 'dough', dough }),
+            value: dough,
+            checked: false,
+          })),
+          {
+            type: 'radio' as const,
+            label: t('bake.abandon'),
+            value: EARLY_ABANDON,
+            checked: false,
+          },
+        ],
+        buttons: buttons((value) => {
+          if (value === undefined) return false;
+          if (value === EARLY_KEPT) {
+            onPick({ result: 'dough' });
+            return true;
+          }
+          if (value === EARLY_ABANDON) {
+            abandoning = true;
+            return true;
+          }
+          const dough = DOUGH_DISPOSITIONS.find((d) => d === value);
+          if (dough === undefined) return false;
+          onPick({ result: 'dough', dough });
+          return true;
+        }),
+        onDidDismiss: () => {
+          if (abandoning) onAbandon();
+        },
+      });
+      return;
+    }
     const pickDough = (result: PreparationOutcome['result']) =>
       void presentDoughAlert({
         header: t('outcome.pickDough'),

@@ -1,5 +1,7 @@
-# Store and check out text files with LF on every platform, so Windows clones match the
-# repository instead of showing every file as modified. Binary files are detected automatically.
+# Store and check out text files with LF on every platform.
 * text=auto eol=lf
 # Windows batch scripts must keep CRLF to run.
 *.bat text eol=crlf
+# External source/reference artifacts retain their exact committed bytes.
+dogfood/*/source/** -text
+docs/mockups/references/** -text

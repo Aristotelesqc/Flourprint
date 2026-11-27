@@ -1,10 +1,12 @@
 import { expect, test } from './fixtures';
 import type { Page } from '@playwright/test';
-import { enterEditor, editorSection, showPlanning } from './ui-actions';
+import { expectRecipeRevision, enterEditor, editorSection, showPlanning } from './ui-actions';
 
 const routed = (page: Page) => page.locator('ion-router-outlet > .ion-page:not(.ion-page-hidden)');
+// L111 adds weighing checkboxes to Planning; assertions below still forbid authoring inputs.
 const modal = (page: Page) => page.locator('ion-modal:not(.overlay-hidden)');
-const footer = (page: Page) => routed(page).locator('ion-footer:visible');
+const footer = (page: Page) =>
+  routed(page).locator('ion-footer:visible, [data-testid="recipe-draft-bar"]:visible');
 const scrollTop = (page: Page) =>
   routed(page)
     .locator('ion-content')
@@ -34,15 +36,11 @@ for (const english of [false, true]) {
     await page.setViewportSize({ width: 360, height: 851 });
     await page.goto('/recipes');
     await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-    await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 1);
     await expect(routed(page)).toHaveCount(1);
-    await page.addStyleTag({ content: 'html, body { font-size: 20px !important; }' });
-    const tabs = routed(page)
-      .getByRole('group')
-      .filter({
-        has: page.getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true }),
-      });
-    const bounds = await tabs.getByRole('button').evaluateAll((buttons) =>
+    await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
+    const tabs = routed(page).getByRole('tablist');
+    const bounds = await tabs.getByRole('tab').evaluateAll((buttons) =>
       buttons.map((button) => {
         const range = document.createRange();
         range.selectNodeContents(button);
@@ -65,6 +63,7 @@ for (const english of [false, true]) {
     expect(bounds.map((b) => b.label)).toEqual(
       english ? ['Recipe', 'Planning', 'History'] : ['Recette', 'Planification', 'Historique'],
     );
+    expect(new Set(bounds.map((button) => button.top)).size).toBe(1);
     for (const button of bounds)
       for (const text of button.text) {
         expect(text.left, button.label ?? '').toBeGreaterThanOrEqual(button.left - 1);
@@ -79,19 +78,16 @@ for (const english of [false, true]) {
     await page.emulateMedia({ colorScheme: english ? 'light' : 'dark' });
     await page.goto('/recipes');
     await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-    await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 1);
     await expect(routed(page)).toHaveCount(1);
   };
   const recipe = (page: Page) =>
-    routed(page).getByRole('button', { name: english ? 'Recipe' : 'Recette', exact: true });
-  const shortcut = (page: Page) =>
+    routed(page).getByRole('tab', { name: english ? 'Recipe' : 'Recette', exact: true });
+  const planningPencils = (page: Page) =>
+    routed(page).getByRole('button', { name: /Edit .+ in recipe|Modifier .+ dans la recette/ });
+  const scheduleDetails = (page: Page) =>
     routed(page).getByRole('button', {
-      name: english ? 'Edit Bulk fermentation in recipe' : 'Modifier Pointage dans la recette',
-      exact: true,
-    });
-  const returnToPlanning = (page: Page) =>
-    routed(page).getByRole('button', {
-      name: english ? 'Return to planning' : 'Revenir à la planification',
+      name: english ? 'Schedule details' : 'Détail de l’échéancier',
       exact: true,
     });
   const close = async (page: Page) => {
@@ -101,7 +97,97 @@ for (const english of [false, true]) {
     await expect(modal(page)).toHaveCount(0);
   };
 
-  test(`Planning shortcuts retain the chosen time, target and scroll; repeated step entry works${suffix}`, async ({
+  test(`Planning uses relative times until a clock anchor is chosen${suffix}`, async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-11-05T08:00:00-05:00') });
+    await openSaved(page);
+    await page.setViewportSize({ width: 360, height: 851 });
+    await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
+    await showPlanning(page);
+    const view = routed(page);
+    const time = view.getByTestId('planning-step-time-poolish');
+    const relative = view.getByRole('button', {
+      name: english ? 'Relative' : 'Relatif',
+      exact: true,
+    });
+    const datetime = view.locator('input[type="datetime-local"]:visible');
+    await expect(relative).toHaveAttribute('aria-pressed', 'true');
+    await scheduleDetails(page).click();
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+    await expect(datetime).toHaveCount(0);
+
+    await view.getByRole('button', { name: english ? 'Now' : 'Maintenant', exact: true }).click();
+    await expect(time).toHaveText(
+      english ? /^08:00\s*AM\s*–\s*08:00\s*PM$/i : /^08:00\s*–\s*20:00$/,
+    );
+    await relative.click();
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+
+    await view
+      .getByRole('button', { name: english ? 'At a time' : 'À une heure', exact: true })
+      .click();
+    await expect(datetime).toHaveValue('');
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+    await datetime.fill('2026-11-05T07:00');
+    await expect(time).toHaveText(
+      english ? /^07:00\s*AM\s*–\s*07:00\s*PM$/i : /^07:00\s*–\s*19:00$/,
+    );
+    await datetime.fill('');
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+    await view
+      .getByRole('button', { name: english ? 'Ready by' : 'Prêt pour', exact: true })
+      .click();
+    await expect(datetime).toHaveValue('');
+    await expect(time).toHaveText(/^\+0 min\s*–\s*\+12 h$/);
+  });
+
+  test(`Planning phase windows show elapsed time, cooling and unknown constraints${suffix}`, async ({
+    page,
+  }) => {
+    await openSaved(page);
+    await page.setViewportSize({ width: 360, height: 851 });
+    await page.addStyleTag({ content: 'html, body { font-size: 20.8px !important; }' });
+    await showPlanning(page);
+
+    const view = routed(page);
+    const total = view.getByTestId('planning-window-total');
+    const cooking = view.getByTestId('planning-window-cooking');
+    await expect(total).toContainText('+20 h 10 min');
+    await expect(view.getByTestId('planning-window-component:poolish')).toContainText('+12 h');
+    await expect(cooking).toContainText('+20 h 10 min');
+    await expect(view.getByTestId('planning-window-mainDough')).toBeVisible();
+    await expect(scheduleDetails(page)).toHaveAttribute('aria-expanded', 'false');
+
+    await view
+      .getByRole('button', { name: english ? 'Ready by' : 'Prêt pour', exact: true })
+      .click();
+    const when = view.locator('input[type="datetime-local"]:visible');
+    await when.fill('2026-11-05T14:00');
+    const finish = english ? /04:00\s*PM/i : /16:00/;
+    await expect(total).toContainText(finish);
+    await expect(cooking).toContainText(finish);
+    await when.fill('');
+
+    await recipe(page).click();
+    await enterEditor(page);
+    await editorSection(page, 'steps');
+    await view
+      .getByRole('button', {
+        name: english ? 'Edit step Mix' : 'Modifier l’étape Pétrissage',
+        exact: true,
+      })
+      .click();
+    const duration = modal(page).getByLabel(english ? 'Duration of Mix' : 'Durée : Pétrissage', {
+      exact: true,
+    });
+    await duration.fill('');
+    await duration.press('Enter');
+    await close(page);
+    await showPlanning(page);
+    await expect(total).toContainText(english ? 'Mix' : 'Pétrissage');
+    await expect(total).not.toContainText(/\+|20 h 10 min/);
+  });
+
+  test(`Planning displays generated times and keeps time, target and scroll across tabs${suffix}`, async ({
     page,
   }) => {
     await openSaved(page);
@@ -115,33 +201,29 @@ for (const english of [false, true]) {
     });
     await when.fill('2026-11-05T14:00');
     await target.selectOption('proof');
+    const details = scheduleDetails(page);
+    await expect(details).toHaveAttribute('aria-expanded', 'false');
+    await details.press('Enter');
+    await expect(details).toHaveAttribute('aria-expanded', 'true');
     await setScroll(page, 260);
     await expect.poll(() => scrollTop(page)).toBe(260);
-    await shortcut(page).evaluate((button: HTMLButtonElement) => button.click());
-    await expect(modal(page)).toBeVisible();
-    await expect(modal(page).locator('ion-title')).toHaveText(
-      english ? 'Bulk fermentation' : 'Pointage',
-    );
-    await close(page);
-    await expect(footer(page).getByRole('status')).toHaveText(english ? 'Up to date' : 'À jour');
-    await returnToPlanning(page).evaluate((button: HTMLButtonElement) => button.click());
+    await expect(planningPencils(page)).toHaveCount(0);
+    const timing = routed(page).getByTestId('planning-step-time-proof');
+    await expect(timing).toHaveText(/\d.*–.*\d/);
+    const timingBefore = await timing.innerText();
+    await recipe(page).click();
+    await showPlanning(page);
     await expect.poll(() => scrollTop(page)).toBe(260);
     await expect(when).toHaveValue('2026-11-05T14:00');
     await expect(target).toHaveValue('proof');
-    await expect(routed(page).locator('input:not([type="datetime-local"]):visible')).toHaveCount(0);
-    await shortcut(page).click();
-    await expect(modal(page)).toBeVisible();
-    await close(page);
+    await expect(details).toHaveAttribute('aria-expanded', 'true');
     await expect(
-      routed(page)
-        .getByRole('button', {
-          name: english ? 'Edit step Bulk fermentation' : 'Modifier l’étape Pointage',
-          exact: true,
-        })
-        .filter({ visible: true }),
-    ).toBeFocused();
-    await returnToPlanning(page).click();
-    await expect(when).toHaveValue('2026-11-05T14:00');
+      routed(page).locator('input:not([type="datetime-local"]):not([type="checkbox"]):visible'),
+    ).toHaveCount(0);
+    await expect(timing).toHaveText(timingBefore);
+    await details.click();
+    await expect(details).toHaveAttribute('aria-expanded', 'false');
+    await expect(routed(page).getByTestId('planning-window-total')).toBeVisible();
   });
 
   test(`Recipe owns authored durations; Planning preserves pending invalid composition${suffix}`, async ({
@@ -150,46 +232,59 @@ for (const english of [false, true]) {
     await openSaved(page);
     await enterEditor(page);
     await editorSection(page, 'steps');
-    const duration = routed(page).getByLabel(english ? 'Duration of Mix' : 'Durée : Pétrissage', {
+    const openMix = () =>
+      routed(page)
+        .getByRole('button', {
+          name: english ? 'Edit step Mix' : 'Modifier l’étape Pétrissage',
+          exact: true,
+        })
+        .click();
+    await openMix();
+    const duration = modal(page).getByLabel(english ? 'Duration of Mix' : 'Durée : Pétrissage', {
       exact: true,
     });
     await duration.fill('12 min');
     await duration.press('Enter');
+    await close(page);
     await editorSection(page, 'composition');
-    const water = routed(page).getByLabel(english ? 'Water (g)' : 'Eau (g)', { exact: true });
+    const water = routed(page).getByLabel(
+      english ? 'Water, Final mix (g)' : 'Eau, Mélange final (g)',
+      { exact: true },
+    );
     await water.fill('abc');
     await water.blur();
     await showPlanning(page);
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await scheduleDetails(page).click();
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
     ).toBeVisible();
-    await shortcut(page).click();
-    await expect(modal(page)).toBeVisible();
-    await close(page);
-    await returnToPlanning(page).click();
+    await expect(planningPencils(page)).toHaveCount(0);
     await recipe(page).click();
     await enterEditor(page);
     await expect(water).toHaveValue('abc');
     await expect(water).toHaveAttribute('aria-invalid', 'true');
-    await expect(duration).toHaveValue('12 min');
     await expect(
       footer(page).getByRole('button', {
-        name: english ? 'Save v2' : 'Enregistrer v2',
+        name: english ? 'Save' : 'Enregistrer',
         exact: true,
       }),
     ).toBeDisabled();
-    await water.fill('750');
+    await water.fill('200');
     await water.press('Enter');
+    await editorSection(page, 'steps');
+    await openMix();
+    await expect(duration).toHaveValue('12 min');
+    await close(page);
     await footer(page)
-      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
     await expect(footer(page).getByRole('status')).toHaveCount(0);
     await showPlanning(page);
     await expect(
       routed(page).getByText('12 min', { exact: true }).filter({ visible: true }),
     ).toBeVisible();
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
   });
 
   test(`Method uses the existing fermentation authoring path and preserves Auto${suffix}`, async ({
@@ -214,16 +309,20 @@ for (const english of [false, true]) {
     await editorSection(page, 'steps');
     await routed(page)
       .getByRole('button', {
-        name: english
-          ? 'Edit fermentation settings for Bulk fermentation'
-          : 'Modifier les paramètres de fermentation pour Pointage',
+        name: english ? 'Edit step Bulk fermentation' : 'Modifier l’étape Pointage',
         exact: true,
       })
       .click();
-    await expect(routed(page).getByTestId('fermentation-card')).toBeFocused();
+    await expect(
+      modal(page).getByLabel(english ? 'Duration of Bulk fermentation' : 'Durée : Pointage', {
+        exact: true,
+      }),
+    ).toHaveCount(0);
+    await expect(modal(page).getByText(english ? /^Duration:/ : /^Durée:/)).toBeVisible();
+    await close(page);
     await expect(auto).toHaveAttribute('aria-pressed', 'true');
     await showPlanning(page);
-    await expect(routed(page).locator('input:visible')).toHaveCount(0);
+    await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
     await expect(routed(page).getByText(/^≈ /).filter({ visible: true })).not.toHaveCount(0);
     await recipe(page).click();
     await enterEditor(page);
@@ -262,7 +361,7 @@ for (const english of [false, true]) {
     await expect(style).toHaveValue('coilFold');
     await close(page);
     await footer(page)
-      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
     await enterEditor(page);
     await editorSection(page, 'steps');
@@ -299,7 +398,7 @@ for (const english of [false, true]) {
     await expect(footer(page).getByRole('status')).toHaveText(english ? 'Up to date' : 'À jour');
     await expect(
       footer(page).getByRole('button', {
-        name: english ? 'Save v2' : 'Enregistrer v2',
+        name: english ? 'Save' : 'Enregistrer',
         exact: true,
       }),
     ).toBeDisabled();
@@ -320,9 +419,9 @@ for (const english of [false, true]) {
       }),
     ).toContain(english ? 'locked' : 'verrouillée');
     await footer(page)
-      .getByRole('button', { name: english ? 'Save v2' : 'Enregistrer v2', exact: true })
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
-    await expect(routed(page).getByText('Version 2', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 2);
     await expect(hydrationEdit).toHaveCount(0);
     await expect(
       routed(page).getByRole('img', {
@@ -339,9 +438,9 @@ for (const english of [false, true]) {
     await expect(rate).toBeEnabled();
     await expect(rate).not.toHaveAttribute('aria-describedby', /.+/);
     await footer(page)
-      .getByRole('button', { name: english ? 'Save v3' : 'Enregistrer v3', exact: true })
+      .getByRole('button', { name: english ? 'Save' : 'Enregistrer', exact: true })
       .click();
-    await expect(routed(page).getByText('Version 3', { exact: true })).toBeVisible();
+    await expectRecipeRevision(page, 3);
     await expect(hydrationEdit).toHaveCount(0);
     await expect(
       routed(page).getByRole('img', {
@@ -356,35 +455,38 @@ test('removing a step from the Recipe sheet dismisses it and returns focus to a 
 }) => {
   await page.goto('/recipes');
   await page.getByText('Poolish + tangzhong', { exact: true }).first().click();
-  await expect(routed(page).getByText('Version 1', { exact: true })).toBeVisible();
+  await expectRecipeRevision(page, 1);
   await expect(routed(page)).toHaveCount(1);
-  await routed(page).getByRole('button', { name: 'Planification', exact: true }).click();
   await routed(page)
-    .getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true })
+    .getByRole('button', { name: 'Modifier l’étape Façonnage', exact: true })
     .click();
   await expect(modal(page)).toBeVisible();
   await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
-  await page.locator('ion-alert').getByRole('button', { name: 'Annuler', exact: true }).click();
-  await expect(page.locator('ion-alert')).toHaveCount(0);
+  const confirmation = page
+    .locator('ion-modal:not(.overlay-hidden)')
+    .filter({ has: page.getByRole('heading', { name: 'Façonnage', exact: true }) });
+  await confirmation
+    .getByRole('button', { name: 'Annuler', exact: true })
+    .filter({ hasText: 'Annuler' })
+    .click();
+  await expect(confirmation).toBeHidden();
   await expect(modal(page)).toBeVisible();
   await expect(modal(page).locator('ion-title')).toHaveText('Façonnage');
   await modal(page).getByRole('button', { name: 'Supprimer l’étape', exact: true }).click();
-  await page
-    .locator('ion-alert')
-    .getByRole('button', { name: 'Retirer cette étape', exact: true })
-    .dblclick();
+  await confirmation.getByRole('button', { name: 'Supprimer l’étape', exact: true }).dblclick();
+  await expect(confirmation).toBeHidden();
   await expect(modal(page)).toHaveCount(0);
-  const back = routed(page).getByRole('button', {
-    name: 'Revenir à la planification',
-    exact: true,
-  });
-  await expect(back).toBeFocused();
+  const methodHeading = routed(page)
+    .getByTestId('recipe-method')
+    .locator('[tabindex="-1"]')
+    .first();
+  await expect(methodHeading).toBeFocused();
   await expect(
     routed(page).getByRole('button', { name: 'Modifier l’étape Façonnage', exact: true }),
   ).toHaveCount(0);
-  await back.click();
+  await showPlanning(page);
   await expect(
     routed(page).getByRole('button', { name: 'Modifier Façonnage dans la recette', exact: true }),
   ).toHaveCount(0);
-  await expect(routed(page).locator('input:visible')).toHaveCount(0);
+  await expect(routed(page).locator('input:not([type="checkbox"]):visible')).toHaveCount(0);
 });
