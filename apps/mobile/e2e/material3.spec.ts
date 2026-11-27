@@ -217,21 +217,19 @@ for (const english of [false, true]) {
     await expectRecipeRevision(page, 2);
   });
 
-  test(`recipe cards name flour percentages once and disabled Save remains a full-size action${english ? ' @en' : ''}`, async ({
+  test(`recipe cards show pre-dough names and disabled Save remains a full-size action${english ? ' @en' : ''}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width: 360, height: 851 });
     await page.emulateMedia({ colorScheme: english ? 'dark' : 'light' });
     await page.goto('/recipes');
-    await expect(
-      routed(page).getByText(
-        english
-          ? 'poolish 30% of the flour · tangzhong 5% of the flour'
-          : 'poolish 30 % de la farine · tangzhong 5 % de la farine',
-        { exact: true },
-      ),
-    ).toBeVisible();
-    await page.getByText('Poolish + tangzhong', { exact: true }).click();
+    const card = routed(page)
+      .getByRole('article')
+      .filter({ has: page.getByRole('heading', { name: 'Poolish + tangzhong', exact: true }) });
+    await expect(card.getByText('poolish', { exact: true })).toBeVisible();
+    await expect(card.getByText('tangzhong', { exact: true })).toBeVisible();
+    await expect(card).not.toContainText(/% (of the flour|de la farine)/);
+    await routed(page).getByRole('link', { name: 'Poolish + tangzhong', exact: true }).click();
     await enterEditor(page);
     const save = routed(page)
       .locator('ion-footer, [data-testid="recipe-draft-bar"]')

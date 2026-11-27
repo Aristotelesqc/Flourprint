@@ -716,8 +716,12 @@ test('imports a recipes file additively; a family shows one variant, the starred
   await expect(page).toHaveURL(/\/recipes\/newer$/);
   await expect(back).toHaveCount(1);
   await back.click();
+  const runningVariant = routed(page)
+    .getByRole('article')
+    .filter({ has: page.getByRole('heading', { name: 'Pain test 2', exact: true }) });
+  await expect(runningVariant).toContainText('Préparation en cours');
   await expect(
-    routed(page).getByRole('link', { name: /Préparation en cours.*Pain test 2.*Reprendre/ }),
+    routed(page).getByRole('link', { name: 'Reprendre la préparation : Pain test 2', exact: true }),
   ).toHaveCount(1);
 });
 
@@ -1415,11 +1419,7 @@ const backToRecipes = async (page: Page) => {
 
 /** Opens the sample recipe from the recipe list shown. */
 const openShownRecipe = async (page: Page) => {
-  await routed(page)
-    .locator('ion-router-link[router-link^="/recipes/"]')
-    .filter({ has: page.locator('.m3-card') })
-    .filter({ hasText: 'Poolish + tangzhong' })
-    .click();
+  await routed(page).getByRole('link', { name: 'Poolish + tangzhong', exact: true }).click();
   await expect(routed(page)).toHaveCount(1);
 };
 

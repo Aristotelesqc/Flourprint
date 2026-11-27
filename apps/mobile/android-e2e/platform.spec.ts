@@ -274,6 +274,34 @@ test('the Android back button returns to the recipe list', async () => {
   await forceStop();
 });
 
+test('Library search uses the Android keyboard and keeps its query after Back', async () => {
+  const page = await open();
+  const search = page.getByRole('searchbox', { name: 'Search recipes' });
+  await expect(search).toBeVisible();
+  await dismissSystemDialog();
+  await search.click();
+  const keyboardShown = async () =>
+    /\b(?:mInputShown|isImeShowing)=true\b/.test(
+      (await device.shell('dumpsys input_method')).toString(),
+    );
+  await expect.poll(keyboardShown).toBe(true);
+  await device.shell('input text tangzhong');
+  await expect(search).toHaveValue('tangzhong');
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect.poll(keyboardShown).toBe(false);
+  await expect(page).toHaveURL(/\/recipes$/);
+  await expect.poll(() => page.evaluate(() => document.visibilityState)).toBe('visible');
+
+  await page.getByRole('heading', { name: 'Poolish + tangzhong', exact: true }).click();
+  await expect(page).toHaveURL(/\/recipes\/.+/);
+  await expect(page.locator('.ion-page.ion-page-hidden').first()).toBeAttached();
+  await dismissSystemDialog();
+  await device.shell('input keyevent KEYCODE_BACK');
+  await expect(page).toHaveURL(/\/recipes$/);
+  await expect(search).toHaveValue('tangzhong');
+  await forceStop();
+});
+
 test('Android Back dismisses shared overlays before leaving the recipe', async () => {
   const page = await open();
   await page.getByText('Poolish + tangzhong').first().click();
